@@ -9,13 +9,13 @@
 		"version": 1,
 		"completionConfigKey": "setup_completed_version",
 		"steps": [
-			{ "id": "welcome", "type": "info", "title": "Welkom bij Shillinq", "body": "Kies eerst het land (juridische regio) en het organisatietype, daarna het rekeningschema-sjabloon, en maak de administratie aan. Tot slot kun je het rekeningschema en de referentiedata laden." },
-			{ "id": "country", "type": "choice", "title": "Juridische regio (land)", "body": "In welk land is deze organisatie juridisch gevestigd? Dit bepaalt de beschikbare organisatietypes en standaarden.", "configKey": "legal_country", "required": true, "options": [ { "value": "nl", "label": "Nederland" }, { "value": "be", "label": "België" }, { "value": "de", "label": "Duitsland" } ] },
-			{ "id": "organisation", "type": "choice", "title": "Organisatietype", "configKey": "legal_region", "required": true, "dependsOn": "legal_country", "optionsByParent": { "nl": [ { "value": "municipality", "label": "Gemeente" }, { "value": "provincie", "label": "Provincie" }, { "value": "waterschap", "label": "Waterschap" }, { "value": "zzp", "label": "ZZP" }, { "value": "mkb", "label": "MKB" } ], "be": [ { "value": "vzw", "label": "VZW" }, { "value": "bv", "label": "Besloten Vennootschap (BV)" }, { "value": "eenmanszaak", "label": "Eenmanszaak" } ], "de": [ { "value": "gmbh", "label": "GmbH" }, { "value": "verein", "label": "Verein" }, { "value": "einzelunternehmen", "label": "Einzelunternehmen" } ] } },
-			{ "id": "rgs-template", "type": "choice", "title": "Rekeningschema (RGS)", "body": "Een rekeningschema (RGS – Referentie GrootboekSchema) is de gestandaardiseerde indeling van grootboekrekeningen waarop je balans en winst-en-verliesrekening zijn gebaseerd. Op basis van je organisatietype is alvast een passend sjabloon voorgesteld — je kunt dit aanpassen.", "configKey": "rgs_template", "required": true, "suggestFrom": "legal_region", "suggestMap": { "municipality": "bbv", "provincie": "bbv", "waterschap": "bbv", "zzp": "zzp", "mkb": "mkb", "vzw": "mkb", "bv": "mkb", "eenmanszaak": "zzp", "gmbh": "mkb", "verein": "mkb", "einzelunternehmen": "zzp" }, "options": [ { "value": "mkb", "label": "MKB" }, { "value": "zzp", "label": "ZZP" }, { "value": "bbv", "label": "BBV (overheid)" } ] },
-			{ "id": "administration", "type": "run-action", "title": "Administratie aanmaken", "body": "Maak de standaardadministratie aan. Hiermee wordt je organisatie als administratie in OpenRegister geregistreerd, zodat boekingen, facturen en rapportages eraan gekoppeld kunnen worden. Klik op 'Run' om de administratie aan te maken.", "action": "init-administration", "required": true },
-			{ "id": "seed", "type": "run-action", "title": "Rekeningschema en referentiedata laden", "body": "Laad het gekozen rekeningschema (grootboekrekeningen), de BTW-tarieven en — voor overheden — de BBV-taakvelden in de administratie. Dit kan even duren. Klik op 'Run' om te starten.", "action": "seed", "required": false },
-			{ "id": "done", "type": "summary", "title": "Klaar", "body": "Controleer je keuzes hieronder en rond de installatie af.", "healthCheck": true }
+			{ "id": "welcome", "type": "info", "title": "Welcome to Shillinq", "body": "First choose the country (legal region) and organisation type, then the chart-of-accounts template, and create the administration. Finally you can load the chart of accounts and the reference data." },
+			{ "id": "country", "type": "choice", "title": "Legal region (country)", "body": "In which country is this organisation legally established? This determines the available organisation types and standards.", "configKey": "legal_country", "required": true, "options": [ { "value": "nl", "label": "Netherlands" }, { "value": "be", "label": "Belgium" }, { "value": "de", "label": "Germany" } ] },
+			{ "id": "organisation", "type": "choice", "title": "Organisation type", "configKey": "legal_region", "required": true, "dependsOn": "legal_country", "optionsByParent": { "nl": [ { "value": "municipality", "label": "Municipality" }, { "value": "provincie", "label": "Province" }, { "value": "waterschap", "label": "Water authority" }, { "value": "zzp", "label": "ZZP" }, { "value": "mkb", "label": "MKB" } ], "be": [ { "value": "vzw", "label": "VZW" }, { "value": "bv", "label": "Besloten Vennootschap (BV)" }, { "value": "eenmanszaak", "label": "Eenmanszaak" } ], "de": [ { "value": "gmbh", "label": "GmbH" }, { "value": "verein", "label": "Verein" }, { "value": "einzelunternehmen", "label": "Einzelunternehmen" } ] } },
+			{ "id": "rgs-template", "type": "choice", "title": "Chart of accounts (RGS)", "body": "A chart of accounts (RGS – Referentie GrootboekSchema) is the standardised layout of ledger accounts your balance sheet and profit-and-loss statement are based on. Based on your organisation type, a matching template is already suggested — you can adjust it.", "configKey": "rgs_template", "required": true, "suggestFrom": "legal_region", "suggestMap": { "municipality": "bbv", "provincie": "bbv", "waterschap": "bbv", "zzp": "zzp", "mkb": "mkb", "vzw": "mkb", "bv": "mkb", "eenmanszaak": "zzp", "gmbh": "mkb", "verein": "mkb", "einzelunternehmen": "zzp" }, "options": [ { "value": "mkb", "label": "MKB" }, { "value": "zzp", "label": "ZZP" }, { "value": "bbv", "label": "BBV (government)" } ] },
+			{ "id": "administration", "type": "run-action", "title": "Create administration", "body": "Create the default administration. This registers your organisation as an administration in OpenRegister, so bookings, invoices and reports can be linked to it. Click \"Run\" to create the administration.", "action": "init-administration", "required": true },
+			{ "id": "seed", "type": "run-action", "title": "Load chart of accounts and reference data", "body": "Load the chosen chart of accounts (ledger accounts), the VAT rates, and — for government bodies — the BBV task fields into the administration. This may take a while. Click \"Run\" to start.", "action": "seed", "required": false },
+			{ "id": "done", "type": "summary", "title": "Done", "body": "Review your choices below and complete the installation.", "healthCheck": true }
 		]
 	},
 	"walkthrough": {
@@ -198,7 +198,7 @@
 				},
 				{
 					"id": "Aansluitingen",
-					"label": "Aansluitingen",
+					"label": "Tie-outs",
 					"icon": "FileCompare",
 					"route": "Aansluitingen",
 					"order": 29
@@ -7044,7 +7044,7 @@
 			"id": "Bewaartermijnen",
 			"route": "/administratie/bewaartermijnen",
 			"type": "index",
-			"title": "Bewaartermijnen",
+			"title": "Retention periods",
 			"config": {
 				"register": "shillinq",
 				"schema": "RetentionRule",
@@ -7089,7 +7089,7 @@
 			"id": "BewaartermijnenDetail",
 			"route": "/administratie/bewaartermijnen/:id",
 			"type": "detail",
-			"title": "Bewaartermijn",
+			"title": "Retention period",
 			"config": {
 				"register": "shillinq",
 				"_note": "Retention period detail — a records-retention rule (category, retention years, legal basis, selectielijst code, disposition). Audit trail evidences rule changes governing archival and destruction.",
@@ -7185,12 +7185,12 @@
 			"id": "BewaartermijnenDashboard",
 			"route": "/administratie/bewaartermijnen/dashboard",
 			"type": "dashboard",
-			"title": "Bewaartermijnen — Dashboard",
+			"title": "Retention periods — Dashboard",
 			"config": {
 				"widgets": [
 					{
 						"id": "nearing-retention",
-						"title": "Verlopen binnenkort",
+						"title": "Retention periods expiring soon",
 						"type": "stats-block",
 						"iconClass": "icon-calendar",
 						"props": {
@@ -11004,7 +11004,7 @@
 			"id": "Aansluitingen",
 			"route": "/aansluitingen",
 			"type": "index",
-			"title": "Aansluitingen",
+			"title": "Tie-outs",
 			"config": {
 				"register": "shillinq",
 				"_note": "Aansluiting (tie-out) framework definitions — one row per declared tie-out (source A, source B, expected relationship, tolerance). Click through to AansluitingResultaten for the per-period computed instances.",
@@ -11025,7 +11025,7 @@
 			"id": "AansluitingDetail",
 			"route": "/aansluitingen/:id",
 			"type": "detail",
-			"title": "Aansluiting",
+			"title": "Tie-out",
 			"config": {
 				"register": "shillinq",
 				"_note": "Aansluiting definition detail. Computing a new period's result is driven via AansluitingController#compute (POST /api/aansluitingen/{id}/compute?period_id=...); the resulting AansluitingResult rows appear on AansluitingResultaten filtered to this aansluitingId.",
@@ -11069,7 +11069,7 @@
 			"id": "AansluitingResultaten",
 			"route": "/aansluitingen/resultaten",
 			"type": "index",
-			"title": "Aansluiting Resultaten",
+			"title": "Tie-out results",
 			"config": {
 				"register": "shillinq",
 				"_note": "Per-period computed AansluitingResult rows across all Aansluiting definitions. Filter by status=open to see every unresolved tie-out difference across BTW, AR and AP (REQ-AANS-008).",
@@ -11090,7 +11090,7 @@
 			"id": "AansluitingResultDetail",
 			"route": "/aansluitingen/resultaten/:id",
 			"type": "detail",
-			"title": "Aansluiting Resultaat",
+			"title": "Tie-out result",
 			"config": {
 				"register": "shillinq",
 				"_note": "Difference + bucket-level drill-down (lineDeltas) for one computed period. Lifecycle action buttons (explain, resolve, reopen) render per REQ-AANS-006 status via the standard lifecycle-transition action surface, backed by AansluitingController.",
@@ -11249,7 +11249,7 @@
 			"id": "Urenregistratie",
 			"route": "/belastingen/urenregistratie",
 			"type": "index",
-			"title": "Urenregistratie",
+			"title": "Time tracking",
 			"config": {
 				"register": "shillinq",
 				"schema": "UrenRegistratie",
@@ -11701,7 +11701,7 @@
 			"id": "SchatkistPositie",
 			"route": "/overheid/schatkist-positie",
 			"type": "dashboard",
-			"title": "Schatkist-positie",
+			"title": "Treasury position",
 			"config": {
 				"register": "shillinq",
 				"schema": "SchatkistPosition",
@@ -11715,7 +11715,7 @@
 					{
 						"id": "schatkist-position",
 						"type": "line-with-threshold",
-						"title": "Schatkist-positie"
+						"title": "Treasury position"
 					}
 				],
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
@@ -13010,7 +13010,7 @@
 			"id": "OninbareAfschrijvingen",
 			"route": "/bookkeeping/dunning/oninbaar",
 			"type": "index",
-			"title": "Oninbare Afschrijvingen",
+			"title": "Bad-debt write-offs",
 			"config": {
 				"register": "shillinq",
 				"schema": "OninbaarAfschrijving",
@@ -13051,7 +13051,7 @@
 			"id": "OninbareAfschrijvingDetail",
 			"route": "/bookkeeping/dunning/oninbaar/:id",
 			"type": "detail",
-			"title": "Oninbare Afschrijving",
+			"title": "Bad-debt write-off",
 			"config": {
 				"register": "shillinq",
 				"_note": "Bad-debt write-off detail — an uncollectible invoice written off with the art. 29 OB VAT-refund declaration and GL posting. Supporting evidence lives under Files; audit trail evidences the write-off approval.",
@@ -14708,7 +14708,7 @@
 			"id": "TemporaryDifferences",
 			"route": "/belastingen/uitgestelde-belastingen/tijdelijke-verschillen",
 			"type": "index",
-			"title": "Tijdelijke verschillen",
+			"title": "Temporary differences",
 			"config": {
 				"register": "shillinq",
 				"schema": "TemporaryDifference",
@@ -14763,7 +14763,7 @@
 			"id": "TemporaryDifferenceDetail",
 			"route": "/belastingen/uitgestelde-belastingen/tijdelijke-verschillen/:id",
 			"type": "detail",
-			"title": "Tijdelijk verschil",
+			"title": "Temporary difference",
 			"config": {
 				"register": "shillinq",
 				"_note": "Temporary difference detail — a book-vs-tax carrying-amount difference (deductible/taxable) with its reversal pattern and expected reversal year. Feeds the deferred-tax provision. Audit trail evidences the recognition and rate assumptions.",
@@ -15156,7 +15156,7 @@
 			"id": "TaxRateReconciliations",
 			"route": "/belastingen/uitgestelde-belastingen/etr-aansluiting",
 			"type": "index",
-			"title": "ETR-aansluiting",
+			"title": "ETR reconciliation",
 			"config": {
 				"register": "shillinq",
 				"schema": "TaxRateReconciliation",
@@ -15206,7 +15206,7 @@
 			"id": "TaxRateReconciliationDetail",
 			"route": "/belastingen/uitgestelde-belastingen/etr-aansluiting/:id",
 			"type": "detail",
-			"title": "ETR-aansluiting",
+			"title": "ETR reconciliation",
 			"config": {
 				"register": "shillinq",
 				"_note": "Effective-tax-rate reconciliation detail — reconciles statutory to effective tax expense (profit before tax, reconciling items, ETR). Aggregation surfaces the statutory-vs-effective bridge for the Titel-9 tax disclosure. Audit trail evidences the disclosure narrative.",
