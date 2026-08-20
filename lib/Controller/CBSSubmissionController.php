@@ -189,9 +189,9 @@ class CBSSubmissionController extends Controller {
 
 		$filters = $this->buildIndexFilters();
 
-		$requestedAdministrationId = (string)($filters['administrationId'] ?? '');
-		if ($requestedAdministrationId !== '') {
-			$accessError = $this->requireAdministrationAccess($requestedAdministrationId);
+		$reqAdministrationId = (string)($filters['administrationId'] ?? '');
+		if ($reqAdministrationId !== '') {
+			$accessError = $this->requireAdministrationAccess(administrationId: $reqAdministrationId);
 			if ($accessError !== null) {
 				return $accessError;
 			}
@@ -199,9 +199,9 @@ class CBSSubmissionController extends Controller {
 
 		return $this->run(
 			action: 'list CBS submissions',
-			compute: function () use ($filters, $requestedAdministrationId): array {
+			compute: function () use ($filters, $reqAdministrationId): array {
 				$submissions = array_map(
-					fn (mixed $row): array => $this->toArray($row),
+					fn (mixed $row): array => $this->toArray(row: $row),
 					$this->objectService()
 						->setRegister($this->register())
 						->setSchema('CBSSubmission')
@@ -210,7 +210,7 @@ class CBSSubmissionController extends Controller {
 
 				$uid = (string)($this->userSession->getUser()?->getUID() ?? '');
 				$isAdmin = ($uid !== '' && $this->groupManager->isAdmin($uid) === true);
-				if ($requestedAdministrationId === '' && $isAdmin === false) {
+				if ($reqAdministrationId === '' && $isAdmin === false) {
 					// No explicit filter, non-admin caller: scope the list to
 					// the caller's own accessible administrations rather than
 					// returning every tenant's submissions. An admin caller
@@ -265,7 +265,7 @@ class CBSSubmissionController extends Controller {
 
 		try {
 			$existing = $this->toArray(
-				$this->objectService()
+				row: $this->objectService()
 					->setRegister($this->register())
 					->setSchema('CBSSubmission')
 					->find($id)
@@ -277,7 +277,7 @@ class CBSSubmissionController extends Controller {
 			);
 		}
 
-		$accessError = $this->requireAdministrationAccess((string)($existing['administrationId'] ?? ''));
+		$accessError = $this->requireAdministrationAccess(administrationId: (string)($existing['administrationId'] ?? ''));
 		if ($accessError !== null) {
 			return $accessError;
 		}
@@ -325,7 +325,7 @@ class CBSSubmissionController extends Controller {
 			return $error;
 		}
 
-		$accessError = $this->requireAdministrationAccess((string)$body['administrationId']);
+		$accessError = $this->requireAdministrationAccess(administrationId: (string)$body['administrationId']);
 		if ($accessError !== null) {
 			return $accessError;
 		}
@@ -336,7 +336,7 @@ class CBSSubmissionController extends Controller {
 		return $this->run(
 			action: 'create CBS submission',
 			compute: fn (): array => $this->toArray(
-				$this->objectService()->saveObject(
+				row: $this->objectService()->saveObject(
 					object: $body,
 					register: $this->register(),
 					schema: 'CBSSubmission',
@@ -377,7 +377,7 @@ class CBSSubmissionController extends Controller {
 
 		try {
 			$existing = $this->toArray(
-				$this->objectService()
+				row: $this->objectService()
 					->setRegister($this->register())
 					->setSchema('CBSSubmission')
 					->find($id)
@@ -389,7 +389,7 @@ class CBSSubmissionController extends Controller {
 			);
 		}
 
-		$accessError = $this->requireAdministrationAccess((string)($existing['administrationId'] ?? ''));
+		$accessError = $this->requireAdministrationAccess(administrationId: (string)($existing['administrationId'] ?? ''));
 		if ($accessError !== null) {
 			return $accessError;
 		}
@@ -414,7 +414,7 @@ class CBSSubmissionController extends Controller {
 		return $this->run(
 			action: 'update CBS submission',
 			compute: fn (): array => $this->toArray(
-				$this->objectService()->saveObject(
+				row: $this->objectService()->saveObject(
 					object: $body,
 					register: $this->register(),
 					schema: 'CBSSubmission',
@@ -453,7 +453,7 @@ class CBSSubmissionController extends Controller {
 
 		try {
 			$existing = $this->toArray(
-				$this->objectService()
+				row: $this->objectService()
 					->setRegister($this->register())
 					->setSchema('CBSSubmission')
 					->find($id)
@@ -465,7 +465,7 @@ class CBSSubmissionController extends Controller {
 			);
 		}
 
-		$accessError = $this->requireAdministrationAccess((string)($existing['administrationId'] ?? ''));
+		$accessError = $this->requireAdministrationAccess(administrationId: (string)($existing['administrationId'] ?? ''));
 		if ($accessError !== null) {
 			return $accessError;
 		}
@@ -523,7 +523,7 @@ class CBSSubmissionController extends Controller {
 
 		try {
 			$existing = $this->toArray(
-				$this->objectService()
+				row: $this->objectService()
 					->setRegister($this->register())
 					->setSchema('CBSSubmission')
 					->find($id)
@@ -535,7 +535,7 @@ class CBSSubmissionController extends Controller {
 			);
 		}
 
-		$accessError = $this->requireAdministrationAccess((string)($existing['administrationId'] ?? ''));
+		$accessError = $this->requireAdministrationAccess(administrationId: (string)($existing['administrationId'] ?? ''));
 		if ($accessError !== null) {
 			return $accessError;
 		}
@@ -599,14 +599,14 @@ class CBSSubmissionController extends Controller {
 	 */
 	private function buildShowPayload(string $id): array {
 		$submission = $this->toArray(
-			$this->objectService()
+			row: $this->objectService()
 				->setRegister($this->register())
 				->setSchema('CBSSubmission')
 				->find($id)
 		);
 
 		$lines = array_map(
-			fn (mixed $row): array => $this->toArray($row),
+			fn (mixed $row): array => $this->toArray(row: $row),
 			$this->objectService()
 				->setRegister($this->register())
 				->setSchema('CBSLine')

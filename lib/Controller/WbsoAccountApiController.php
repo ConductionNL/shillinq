@@ -193,6 +193,8 @@ class WbsoAccountApiController extends Controller {
 	 * POST /api/v1/accounts (administrator only).
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
 	 */
 	#[NoAdminRequired]
 	public function create(): JSONResponse {
@@ -250,6 +252,8 @@ class WbsoAccountApiController extends Controller {
 	 * @param string $accountNumber Account to update.
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
 	 */
 	#[NoAdminRequired]
 	public function update(string $accountNumber): JSONResponse {

@@ -46,7 +46,8 @@ import { test, expect, type Page, type APIRequestContext } from '@playwright/tes
 
 const APP = '/apps/shillinq'
 const LIST_ROUTE = '/bookkeeping/cbs-submissions'
-const OR_OBJECTS_BASE = '/index.php/apps/openregister/api/objects/shillinq/CBSSubmission'
+const OR_OBJECTS_BASE =
+	'/index.php/apps/openregister/api/objects/shillinq/CBSSubmission'
 const SHILLINQ_API_BASE = '/index.php/apps/shillinq/api/cbs-submissions'
 
 async function dismissWizard(page: Page): Promise<void> {
@@ -71,7 +72,11 @@ function draftPayload(administrationId = 'adm-e2e-cbs') {
 		reportingPeriodEndDate: '2026-03-31',
 		organizationLegalName: 'Shillinq E2E Test BV',
 		kvkNumber: '12345678',
-		taxIdentificationNumber: 'NL123456789B01',
+		// Schema pattern (lib/Settings/register.d/bookkeeping-cbs-bestanden-
+		// extended.json) is `^NL[0-9]{10}B[0-9]{2}$` — 10 digits, not the 9 a
+		// real Dutch BTW-nummer carries. Matching the DEPLOYED pattern here
+		// (not the real-world format) so seeding actually validates.
+		taxIdentificationNumber: 'NL1234567890B01',
 		administrationId,
 		currency: 'EUR',
 	}
@@ -90,20 +95,28 @@ async function seedDraft(
 		headers: { 'OCS-APIRequest': 'true' },
 		data: payload,
 	})
-	expect(created.ok(), `seeding a draft CBSSubmission must succeed, got HTTP ${created.status()}`).toBeTruthy()
+	expect(
+		created.ok(),
+		`seeding a draft CBSSubmission must succeed, got HTTP ${created.status()}`,
+	).toBeTruthy()
 	const body = await created.json()
 	const id = body?.id
 	expect(id, 'the seeded submission must come back with an id').toBeTruthy()
 	return { id, submissionNumber: payload.submissionNumber }
 }
 
-async function cleanupViaOpenRegister(request: APIRequestContext, id: string): Promise<void> {
+async function cleanupViaOpenRegister(
+	request: APIRequestContext,
+	id: string,
+): Promise<void> {
 	const deleted = await request.delete(`${OR_OBJECTS_BASE}/${id}`, {
 		headers: { 'OCS-APIRequest': 'true' },
 	})
 	if (deleted.ok() === false && deleted.status() !== 404) {
 		// eslint-disable-next-line no-console
-		console.warn(`[cbs-submissions] failed to clean up seeded submission ${id}: HTTP ${deleted.status()}`)
+		console.warn(
+			`[cbs-submissions] failed to clean up seeded submission ${id}: HTTP ${deleted.status()}`,
+		)
 	}
 }
 
@@ -117,9 +130,13 @@ test.describe('CBS Submissions — list view', () => {
 	/**
 	 * @e2e security-endpoint-guards/req-001/cbs-submissions-list-view-renders
 	 */
-	test('the CBS Submissions index page mounts and stays on the shillinq route', async ({ page }) => {
+	test('the CBS Submissions index page mounts and stays on the shillinq route', async ({
+		page,
+	}) => {
 		expect(page.url()).toContain('/apps/shillinq')
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 	})
 
 	/**
@@ -129,7 +146,9 @@ test.describe('CBS Submissions — list view', () => {
 	 *
 	 * @e2e security-endpoint-guards/req-001/cbs-submissions-list-view-renders
 	 */
-	test('the submissions list renders through the generic CnDataTable', async ({ page }) => {
+	test('the submissions list renders through the generic CnDataTable', async ({
+		page,
+	}) => {
 		const table = page.getByTestId('cn-object-list-table')
 		const empty = page.getByTestId('cn-object-list-empty')
 		await expect(table.or(empty)).toBeVisible({ timeout: 15_000 })
@@ -142,14 +161,19 @@ test.describe('CBS Submissions — list view', () => {
 	 *
 	 * @e2e security-endpoint-guards/req-001/cbs-submissions-list-view-renders
 	 */
-	test('a seeded draft submission appears in the list', async ({ page, request }) => {
+	test('a seeded draft submission appears in the list', async ({
+		page,
+		request,
+	}) => {
 		const seeded = await seedDraft(request)
 		try {
 			await page.reload()
 			await page.waitForLoadState('domcontentloaded')
 			await dismissWizard(page)
 
-			const row = page.locator(`[data-testid="cn-object-row"][data-testid-row-id="${seeded.id}"]`)
+			const row = page.locator(
+				`[data-testid="cn-object-row"][data-testid-row-id="${seeded.id}"]`,
+			)
 			await expect(row).toBeVisible({ timeout: 15_000 })
 			await expect(row).toContainText(seeded.submissionNumber)
 		} finally {
@@ -168,7 +192,10 @@ test.describe('CBS Submissions — delete-own-draft flow', () => {
 	 *
 	 * @e2e security-endpoint-guards/req-001/cbs-submissions-delete-own-draft
 	 */
-	test('deleting a draft submission through the row-actions menu removes it', async ({ page, request }) => {
+	test('deleting a draft submission through the row-actions menu removes it', async ({
+		page,
+		request,
+	}) => {
 		const seeded = await seedDraft(request)
 		let cleanedUp = false
 
@@ -177,7 +204,9 @@ test.describe('CBS Submissions — delete-own-draft flow', () => {
 			await page.waitForLoadState('domcontentloaded')
 			await dismissWizard(page)
 
-			const row = page.locator(`[data-testid="cn-object-row"][data-testid-row-id="${seeded.id}"]`)
+			const row = page.locator(
+				`[data-testid="cn-object-row"][data-testid-row-id="${seeded.id}"]`,
+			)
 			await expect(row).toBeVisible({ timeout: 15_000 })
 
 			// Open the row's action menu (NcActions trigger wrapped by CnRowActions).
@@ -226,14 +255,19 @@ test.describe('CBS Submissions — app-level guard, exercised over real HTTP (RE
 	 *
 	 * @e2e security-endpoint-guards/req-001/cbs-submissions-delete-own-draft
 	 */
-	test('DELETE /api/cbs-submissions/{id} deletes an admin-reachable draft submission', async ({ request }) => {
+	test('DELETE /api/cbs-submissions/{id} deletes an admin-reachable draft submission', async ({
+		request,
+	}) => {
 		const seeded = await seedDraft(request)
 		let cleanedUp = false
 
 		try {
-			const response = await request.delete(`${SHILLINQ_API_BASE}/${seeded.id}`, {
-				headers: { 'OCS-APIRequest': 'true' },
-			})
+			const response = await request.delete(
+				`${SHILLINQ_API_BASE}/${seeded.id}`,
+				{
+					headers: { 'OCS-APIRequest': 'true' },
+				},
+			)
 			expect(
 				response.status(),
 				`the app-level CBS submission delete endpoint must succeed for an admin caller, got HTTP ${response.status()}`,
@@ -241,9 +275,12 @@ test.describe('CBS Submissions — app-level guard, exercised over real HTTP (RE
 			cleanedUp = true
 
 			// A second delete of the same (now-gone) id must 404, not silently 200.
-			const second = await request.delete(`${SHILLINQ_API_BASE}/${seeded.id}`, {
-				headers: { 'OCS-APIRequest': 'true' },
-			})
+			const second = await request.delete(
+				`${SHILLINQ_API_BASE}/${seeded.id}`,
+				{
+					headers: { 'OCS-APIRequest': 'true' },
+				},
+			)
 			expect(second.status()).toBe(404)
 		} finally {
 			if (cleanedUp === false) {

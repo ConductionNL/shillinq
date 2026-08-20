@@ -130,7 +130,7 @@ class BookingDepthController extends Controller {
 				return new JSONResponse(['error' => 'Appointment not found'], Http::STATUS_NOT_FOUND);
 			}
 
-			// security-endpoint-guards REQ-001: per-object tenant guard checked
+			// Security-endpoint-guards REQ-001: per-object tenant guard checked
 			// against the FETCHED target's own administrationId (never the
 			// caller-supplied appointmentId's implied scope).
 			if ($this->context->canAccess((string)($appointment['administrationId'] ?? '')) === false) {
@@ -210,7 +210,7 @@ class BookingDepthController extends Controller {
 			);
 		}
 
-		// security-endpoint-guards REQ-001: the request-supplied administrationId
+		// Security-endpoint-guards REQ-001: the request-supplied administrationId
 		// is what will be stamped on the new AppointmentSeries/Appointment
 		// objects, so checking canAccess() against it here (before the object
 		// exists to fetch) is the correct create-time guard — matches the
@@ -229,7 +229,7 @@ class BookingDepthController extends Controller {
 				return new JSONResponse(['error' => 'Resource not found'], Http::STATUS_NOT_FOUND);
 			}
 
-			// security-endpoint-guards REQ-001 hardening: canAccess() above only
+			// Security-endpoint-guards REQ-001 hardening: canAccess() above only
 			// proved the caller may act within $administrationId — it does NOT
 			// prove the FETCHED $resource actually belongs to that
 			// administration. Without this check a member of administration A

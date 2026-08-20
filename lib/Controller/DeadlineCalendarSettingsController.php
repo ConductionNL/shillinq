@@ -89,7 +89,7 @@ class DeadlineCalendarSettingsController extends Controller {
 			);
 		}
 
-		// security-endpoint-guards REQ-001 JUSTIFY: $userId is resolved from
+		// Security-endpoint-guards REQ-001 JUSTIFY: $userId is resolved from
 		// the session ONLY (see class docblock) — no user id is ever accepted
 		// from the request, so there is no other tenant's object this
 		// endpoint could be pointed at. Cross-user access is structurally
@@ -130,7 +130,7 @@ class DeadlineCalendarSettingsController extends Controller {
 			);
 		}
 
-		// security-endpoint-guards REQ-001 JUSTIFY: writes ONLY the session
+		// Security-endpoint-guards REQ-001 JUSTIFY: writes ONLY the session
 		// user's own preferences — no user id parameter exists on this
 		// endpoint (see class docblock), so cross-user mutation (IDOR) is
 		// structurally impossible rather than merely guarded.

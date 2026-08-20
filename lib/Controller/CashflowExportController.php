@@ -93,7 +93,7 @@ class CashflowExportController extends Controller {
 			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
 		}
 
-		// security-endpoint-guards REQ-001 JUSTIFY: this endpoint takes NO
+		// Security-endpoint-guards REQ-001 JUSTIFY: this endpoint takes NO
 		// caller-supplied object identifier — buildHorizonExport() resolves
 		// the forecast horizon entirely from the authenticated caller's own
 		// AdministrationMembership set (REQ-MA-001). There is no request-

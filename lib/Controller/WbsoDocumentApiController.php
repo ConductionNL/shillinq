@@ -88,6 +88,8 @@ class WbsoDocumentApiController extends Controller {
 	 * GET /api/v1/documents.
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -195,6 +197,8 @@ class WbsoDocumentApiController extends Controller {
 	 * POST /api/v1/documents (bookkeeper or admin).
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
 	 */
 	#[NoAdminRequired]
 	public function create(): JSONResponse {
@@ -250,6 +254,8 @@ class WbsoDocumentApiController extends Controller {
 	 * @param string $id Document id.
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
 	 */
 	#[NoAdminRequired]
 	public function file(string $id): JSONResponse {
@@ -318,6 +324,8 @@ class WbsoDocumentApiController extends Controller {
 	 * @param string $id Document id.
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
 	 */
 	#[NoAdminRequired]
 	public function archive(string $id): JSONResponse {

@@ -330,56 +330,22 @@ class CalendarController extends Controller {
 		$calendarRow = $this->toArray(object: $calendar);
 		$resourceId = (string)($calendarRow['resource'] ?? '');
 
-		// Per-object guard (security-endpoint-guards REQ-001): `requireAuth()`
-		// above only checks authentication. Any authenticated user could
-		// otherwise book any calendar/resource with no ownership check —
-		// the confirmed finding for this method. A booking is only valid
-		// when the caller has a membership in the calendar's own
-		// administration. A Nextcloud admin bypasses this check, matching
-		// `BookingNotificationController::authorizeBookingAccess()`'s
-		// established pattern.
-		$callerUid = (string)($this->context->currentUserId() ?? '');
-		$callerIsAdmin = ($callerUid !== '' && $this->groupManager->isAdmin($callerUid) === true);
-		$calendarAdministrationId = (string)($calendarRow['administrationId'] ?? '');
-		if ($callerIsAdmin === false && $this->context->canAccess($calendarAdministrationId) === false) {
-			return new JSONResponse(
-				['error' => 'calendar-booking-forbidden', 'message' => 'Not authorized to book this calendar'],
-				Http::STATUS_FORBIDDEN,
-			);
+		$authError = $this->authorizeBookingCreation(calendarRow: $calendarRow);
+		if ($authError !== null) {
+			return $authError;
 		}
 
-		$title = trim((string)$this->request->getParam('title', ''));
-		$startTime = trim((string)$this->request->getParam('startTime', ''));
-		$endTime = trim((string)$this->request->getParam('endTime', ''));
-		$attendee = trim((string)$this->request->getParam('attendee', ''));
-		$status = trim((string)$this->request->getParam('status', 'pending'));
-		$override = filter_var($this->request->getParam('overrideConflict', false), FILTER_VALIDATE_BOOLEAN);
-
-		if ($title === '' || $startTime === '' || $endTime === '' || $attendee === '') {
-			return new JSONResponse(
-				['error' => 'title, startTime, endTime and attendee are required'],
-				Http::STATUS_BAD_REQUEST,
-			);
+		$parsed = $this->parseBookingRequest();
+		if ($parsed instanceof JSONResponse) {
+			return $parsed;
 		}
 
-		if (in_array($status, ['pending', 'confirmed', 'cancelled'], true) === false) {
-			return new JSONResponse(['error' => 'status must be pending, confirmed or cancelled'], Http::STATUS_BAD_REQUEST);
-		}
-
-		try {
-			$start = (new DateTimeImmutable($startTime))->setTimezone(new DateTimeZone('UTC'));
-			$end = (new DateTimeImmutable($endTime))->setTimezone(new DateTimeZone('UTC'));
-		} catch (\Throwable) {
-			return new JSONResponse(['error' => 'startTime and endTime must be ISO 8601 timestamps'], Http::STATUS_BAD_REQUEST);
-		}
-
-		$durationSeconds = ($end->getTimestamp() - $start->getTimestamp());
-		if ($durationSeconds < (ConflictDetectionService::MIN_DURATION_MINUTES * 60)) {
-			return new JSONResponse(
-				['error' => 'Booking duration must be at least ' . ConflictDetectionService::MIN_DURATION_MINUTES . ' minutes'],
-				Http::STATUS_BAD_REQUEST,
-			);
-		}
+		$title = $parsed['title'];
+		$attendee = $parsed['attendee'];
+		$status = $parsed['status'];
+		$override = $parsed['override'];
+		$start = $parsed['start'];
+		$end = $parsed['end'];
 
 		if ($this->settings->isOpenRegisterAvailable() === false) {
 			return new JSONResponse(['error' => 'OpenRegister unavailable'], Http::STATUS_SERVICE_UNAVAILABLE);
@@ -458,6 +424,96 @@ class CalendarController extends Controller {
 		}//end try
 
 	}//end createBooking()
+
+	/**
+	 * Per-object booking-creation guard (security-endpoint-guards REQ-001):
+	 * `requireAuth()` in `createBooking()` only checks authentication — any
+	 * authenticated user could otherwise book any calendar/resource with no
+	 * ownership check, the confirmed finding for this method. A booking is
+	 * only valid when the caller has a membership in the calendar's own
+	 * administration. A Nextcloud admin bypasses this check, matching
+	 * `BookingNotificationController::authorizeBookingAccess()`'s
+	 * established pattern. Extracted out of `createBooking()` (rather than
+	 * inlined there) to keep that method's NPath complexity under this
+	 * app's threshold (issue #506) — the branching moves, the check itself
+	 * does not change.
+	 *
+	 * @param array<string,mixed> $calendarRow The fetched calendar row.
+	 *
+	 * @return JSONResponse|null 403 response when not authorized to book
+	 *                           this calendar, null when the caller may.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function authorizeBookingCreation(array $calendarRow): ?JSONResponse {
+		$callerUid = (string)($this->context->currentUserId() ?? '');
+		$callerIsAdmin = ($callerUid !== '' && $this->groupManager->isAdmin($callerUid) === true);
+		$calendarAdministrationId = (string)($calendarRow['administrationId'] ?? '');
+		if ($callerIsAdmin === false && $this->context->canAccess($calendarAdministrationId) === false) {
+			return new JSONResponse(
+				['error' => 'calendar-booking-forbidden', 'message' => 'Not authorized to book this calendar'],
+				Http::STATUS_FORBIDDEN,
+			);
+		}
+
+		return null;
+	}//end authorizeBookingCreation()
+
+	/**
+	 * Parse and validate the `createBooking()` request body: required
+	 * fields present, `status` in the allowed set, `startTime`/`endTime`
+	 * parseable ISO 8601 timestamps, and the resulting duration at least
+	 * `ConflictDetectionService::MIN_DURATION_MINUTES`. Extracted out of
+	 * `createBooking()` (rather than inlined there) to keep that method's
+	 * NPath complexity under this app's threshold (issue #506) — the
+	 * validation moves, none of the checks change.
+	 *
+	 * @return array{title:string,attendee:string,status:string,override:bool,start:DateTimeImmutable,end:DateTimeImmutable}|JSONResponse
+	 *         The validated fields, or a 400 JSONResponse on validation failure.
+	 */
+	private function parseBookingRequest(): array|JSONResponse {
+		$title = trim((string)$this->request->getParam('title', ''));
+		$startTime = trim((string)$this->request->getParam('startTime', ''));
+		$endTime = trim((string)$this->request->getParam('endTime', ''));
+		$attendee = trim((string)$this->request->getParam('attendee', ''));
+		$status = trim((string)$this->request->getParam('status', 'pending'));
+		$override = filter_var($this->request->getParam('overrideConflict', false), FILTER_VALIDATE_BOOLEAN);
+
+		if ($title === '' || $startTime === '' || $endTime === '' || $attendee === '') {
+			return new JSONResponse(
+				['error' => 'title, startTime, endTime and attendee are required'],
+				Http::STATUS_BAD_REQUEST,
+			);
+		}
+
+		if (in_array($status, ['pending', 'confirmed', 'cancelled'], true) === false) {
+			return new JSONResponse(['error' => 'status must be pending, confirmed or cancelled'], Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$start = (new DateTimeImmutable($startTime))->setTimezone(new DateTimeZone('UTC'));
+			$end = (new DateTimeImmutable($endTime))->setTimezone(new DateTimeZone('UTC'));
+		} catch (\Throwable) {
+			return new JSONResponse(['error' => 'startTime and endTime must be ISO 8601 timestamps'], Http::STATUS_BAD_REQUEST);
+		}
+
+		$durationSeconds = ($end->getTimestamp() - $start->getTimestamp());
+		if ($durationSeconds < (ConflictDetectionService::MIN_DURATION_MINUTES * 60)) {
+			return new JSONResponse(
+				['error' => 'Booking duration must be at least ' . ConflictDetectionService::MIN_DURATION_MINUTES . ' minutes'],
+				Http::STATUS_BAD_REQUEST,
+			);
+		}
+
+		return [
+			'title' => $title,
+			'attendee' => $attendee,
+			'status' => $status,
+			'override' => $override,
+			'start' => $start,
+			'end' => $end,
+		];
+	}//end parseBookingRequest()
 
 	/**
 	 * Require an authenticated user (the controller is #[NoAdminRequired]

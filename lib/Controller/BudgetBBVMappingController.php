@@ -106,7 +106,7 @@ class BudgetBBVMappingController extends Controller {
 			return new JSONResponse(['error' => $this->l10n->t('Not logged in')], Http::STATUS_UNAUTHORIZED);
 		}
 
-		// security-endpoint-guards REQ-001 JUSTIFY: this envelope reads no
+		// Security-endpoint-guards REQ-001 JUSTIFY: this envelope reads no
 		// OpenRegister object — `scope` is derived entirely server-side from
 		// the session user via AdministrationContextService::buildContext()
 		// (never a request-supplied id), and the mapping CRUD itself is
@@ -150,7 +150,7 @@ class BudgetBBVMappingController extends Controller {
 			return new JSONResponse(['error' => $this->l10n->t('Not logged in')], Http::STATUS_UNAUTHORIZED);
 		}
 
-		// security-endpoint-guards REQ-001 JUSTIFY: $id is echoed back
+		// Security-endpoint-guards REQ-001 JUSTIFY: $id is echoed back
 		// unread — no OpenRegister lookup happens in this method (see the
 		// method docblock), so there is no tenant-scoped object here for a
 		// per-object guard to protect. The real BudgetBBVMapping read/write

@@ -68,6 +68,21 @@ use Throwable;
  * @SuppressWarnings(PHPMD.ElseExpression)           Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)   security-endpoint-guards
+ *     REQ-001: this change adds `AdministrationContextService` (the
+ *     per-object tenant guard closing the cross-tenant IDOR on
+ *     ensureAdministrationAccess()) and its `IGroupManager` admin-bypass
+ *     collaborator, pushing coupling from 16 to 19 — one over this app's
+ *     already-raised threshold (13->19, issue #506). Removing either
+ *     collaborator removes the guard, so this is not a rule misfire to
+ *     work around; it is the real, minimal cost of the fix. Seven
+ *     controllers now duplicate the same `groupManager->isAdmin()`
+ *     bypass check (BookingNotificationController, CBSSubmissionController,
+ *     ComplianceExportController, CalendarController, DBAController,
+ *     InventoryMobileScannerController, InventoryScanController);
+ *     centralising it into `AdministrationContextService` would remove
+ *     this collaborator here too, but is a cross-cutting refactor left
+ *     for a dedicated follow-up rather than folded into this security fix.
  */
 class DBAController extends Controller {
 	/**
