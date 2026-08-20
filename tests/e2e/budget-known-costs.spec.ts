@@ -222,11 +222,13 @@ test.describe('budget-known-costs — derivation audit trail (REQ-BKC-009)', () 
 	/**
 	 * @e2e budget-known-costs::derivation-audit-trail-visible
 	 *
-	 * The `Budgets` nav group carries the `Derivations` leaf added by this
-	 * change, alongside `budget-core-schema`'s own three leaves — the
-	 * either-order nav convention (design.md §10).
+	 * The `Derivations` leaf this change adds to the `Budgets` group is
+	 * reachable from the navigation, alongside `budget-core-schema`'s own
+	 * three leaves — the either-order nav convention (design.md §10).
 	 */
-	test('Budgets nav group includes the Derivations leaf', async ({ page }) => {
+	test('Derivations nav leaf is reachable under Banking & Cashflow', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/')
 		await page.waitForLoadState('domcontentloaded')
 		await dismissOverlays(page)
@@ -234,19 +236,28 @@ test.describe('budget-known-costs — derivation audit trail (REQ-BKC-009)', () 
 		const bankingCashflow = page.getByRole('link', {
 			name: /Banking.*Cashflow/i,
 		})
-		const groupVisible = await becomesVisible(bankingCashflow, 5_000)
-		test.skip(
-			!groupVisible,
-			'Banking & Cashflow cluster not present in this nav layout',
-		)
-		await bankingCashflow.first().click()
+		await expect(bankingCashflow.first()).toBeVisible({ timeout: 15_000 })
 
-		const budgetsGroup = page.getByText('Budgets', { exact: true })
-		await expect(budgetsGroup.first()).toBeVisible({ timeout: 10_000 })
+		// `src/menu-layout.json` relocations documents its own semantics:
+		// "groups dissolve into the target, leaves move under it" — the
+		// `Budgets` source group has no surviving group label to assert on
+		// after `"Budgets": "BankingCashflow"` relocates it; only its leaves
+		// are expected to remain reachable, flattened alongside
+		// BankingCashflow's own children. This assertion used to read
+		// `getByText('Budgets', { exact: true })`, which can NEVER match:
+		// the design guarantees that DOM node does not exist. Also: the
+		// top-level LINK navigates to the overview page rather than
+		// expanding children — the dedicated toggle (`CnAppNav` stamps
+		// `cn-nav-entry-<id>`, per chart-of-accounts.spec.ts's own
+		// precedent) is what reveals them.
+		await page
+			.locator('[data-testid="cn-nav-entry-BankingCashflow"]')
+			.getByRole('button', { name: /menu/i })
+			.click()
 
 		await expect(
 			page.getByRole('link', { name: 'Derivations' }).first(),
-			'the "Derivations" nav leaf must be reachable under Budgets',
+			'the "Derivations" nav leaf must be reachable under Banking & Cashflow',
 		).toBeVisible({ timeout: 10_000 })
 	})
 })
