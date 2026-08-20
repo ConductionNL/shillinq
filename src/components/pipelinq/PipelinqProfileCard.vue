@@ -237,7 +237,7 @@ export default {
 .pipelinq-profile-card__value {
 	margin: 0;
 	color: var(--color-main-text);
-	word-break: break-word;
+	overflow-wrap: break-word;
 }
 
 .pipelinq-profile-card__value--emphasis {
