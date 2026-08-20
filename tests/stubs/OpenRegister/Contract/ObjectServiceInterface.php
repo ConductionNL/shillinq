@@ -17,13 +17,18 @@
  * and this stub is simply shadowed (same convention as the sibling stubs
  * registered in tests/bootstrap-unit.php).
  *
- * The full 25-method surface (and every parameter name/type) is reverse
+ * The full 26-method surface (and every parameter name/type) is reverse
  * -derived from `DuckObjectServiceAdapter`'s own `implements
  * ObjectServiceInterface` — that adapter's docblock explicitly documents it
  * as "the published ADR-084 contract" and models every method the real
  * interface declares, throwing for the handful production never calls. This
  * stub's signatures are copied from that adapter verbatim so both it and
  * every duck-typed double it wraps stay assignment-compatible.
+ *
+ * `patchObject()` was added to the published contract in hydra-gates v1.8.1;
+ * keep this stub's method count in step with the real interface, since this
+ * stub — not the real one — is what the local unit suite loads, and a gap
+ * here is invisible until a deployed-Nextcloud CI run fatals at class load.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests
@@ -47,7 +52,7 @@ use OCP\IUser;
 /**
  * Stub for OCA\OpenRegister\Contract\ObjectServiceInterface used by shillinq tests.
  *
- * @SuppressWarnings(PHPMD.TooManyPublicMethods) Mirrors the real 25-method contract.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) Mirrors the real 26-method contract.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
@@ -192,6 +197,35 @@ interface ObjectServiceInterface {
 		array $data,
 		bool $_rbac = true,
 		bool $_multitenancy = true
+	): ObjectEntityInterface;
+
+	/**
+	 * Merge a partial update onto a stored object.
+	 *
+	 * Added to the published contract in hydra-gates v1.8.1 (@contract-shift,
+	 * openregister#2543). Every `implements ObjectServiceInterface` test
+	 * double must declare this method or fatal at class load in a deployed
+	 * Nextcloud tree, where the real OpenRegister interface — not this stub —
+	 * is the one that is actually loaded.
+	 *
+	 * @param string $objectId The object UUID or id.
+	 * @param array $data The partial data to merge. Omitted keys are preserved.
+	 * @param string|int|null $register Register id, UUID or slug.
+	 * @param string|int|null $schema Schema id, UUID or slug.
+	 * @param bool $_rbac Apply register RBAC.
+	 * @param bool $_multitenancy Apply organisation scoping.
+	 * @param ?IUser $currentUser Explicit acting user; null uses the session.
+	 *
+	 * @return ObjectEntityInterface
+	 */
+	public function patchObject(
+		string $objectId,
+		array $data,
+		string|int|null $register = null,
+		string|int|null $schema = null,
+		bool $_rbac = true,
+		bool $_multitenancy = true,
+		?IUser $currentUser = null
 	): ObjectEntityInterface;
 
 	/**
