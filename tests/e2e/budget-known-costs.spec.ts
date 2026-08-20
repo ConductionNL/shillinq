@@ -118,7 +118,9 @@ test.describe('budget-known-costs — recurring cost derives a BudgetLine (REQ-B
 		page,
 	}) => {
 		await gotoRoute(page, BUDGET_LINES_ROUTE)
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		const recurringRow = page.getByRole('row', { name: /recurring/i })
 		const opened = await becomesVisible(recurringRow, 5_000)
@@ -128,8 +130,12 @@ test.describe('budget-known-costs — recurring cost derives a BudgetLine (REQ-B
 		)
 
 		await recurringRow.click()
-		await expect(page.getByTestId('cn-detail-page')).toBeVisible({ timeout: 15_000 })
-		await expect(page.getByText('recurring', { exact: false }).first()).toBeVisible()
+		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
+			timeout: 15_000,
+		})
+		await expect(
+			page.getByText('recurring', { exact: false }).first(),
+		).toBeVisible()
 	})
 })
 
@@ -149,7 +155,9 @@ test.describe('budget-known-costs — contract-linked cost tags source: "contrac
 		page,
 	}) => {
 		await gotoRoute(page, BUDGET_LINES_ROUTE)
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		const contractRow = page.getByRole('row', { name: /contract/i })
 		const opened = await becomesVisible(contractRow, 5_000)
@@ -159,8 +167,12 @@ test.describe('budget-known-costs — contract-linked cost tags source: "contrac
 		)
 
 		await contractRow.click()
-		await expect(page.getByTestId('cn-detail-page')).toBeVisible({ timeout: 15_000 })
-		await expect(page.getByText('contract', { exact: false }).first()).toBeVisible()
+		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
+			timeout: 15_000,
+		})
+		await expect(
+			page.getByText('contract', { exact: false }).first(),
+		).toBeVisible()
 	})
 })
 
@@ -177,11 +189,13 @@ test.describe('budget-known-costs — derivation audit trail (REQ-BKC-009)', () 
 	 * `CashflowRecurring` `recurId`(s) and `lastGeneratedAt` (design.md §11
 	 * scenario 3 / REQ-BKC-009's own scenario).
 	 */
-	test('BudgetLineDerivations index resolves and a row\'s detail page lists its contributing recurring cost(s)', async ({
+	test("BudgetLineDerivations index resolves and a row's detail page lists its contributing recurring cost(s)", async ({
 		page,
 	}) => {
 		await gotoRoute(page, BUDGET_LINE_DERIVATIONS_ROUTE)
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		const row = page.locator('table tbody tr').first()
 		const opened = await becomesVisible(row, 5_000)
@@ -191,7 +205,9 @@ test.describe('budget-known-costs — derivation audit trail (REQ-BKC-009)', () 
 		)
 
 		await row.click()
-		await expect(page.getByTestId('cn-detail-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		await expect(
 			page.getByText(/Contributing recurring costs/i).first(),
@@ -215,9 +231,14 @@ test.describe('budget-known-costs — derivation audit trail (REQ-BKC-009)', () 
 		await page.waitForLoadState('domcontentloaded')
 		await dismissOverlays(page)
 
-		const bankingCashflow = page.getByRole('link', { name: /Banking.*Cashflow/i })
+		const bankingCashflow = page.getByRole('link', {
+			name: /Banking.*Cashflow/i,
+		})
 		const groupVisible = await becomesVisible(bankingCashflow, 5_000)
-		test.skip(!groupVisible, 'Banking & Cashflow cluster not present in this nav layout')
+		test.skip(
+			!groupVisible,
+			'Banking & Cashflow cluster not present in this nav layout',
+		)
 		await bankingCashflow.first().click()
 
 		const budgetsGroup = page.getByText('Budgets', { exact: true })
