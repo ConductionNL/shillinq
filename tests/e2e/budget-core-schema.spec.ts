@@ -313,15 +313,23 @@ test.describe('budget-core-schema — BudgetLine 12 monthly columns (REQ-BCS-007
 
 		const annualBudgetField = page.getByLabel(/annual budget/i)
 		const ledgerGroupField = page.getByLabel(/ledger group/i)
-		const hasAnnualBudgetOption = await annualBudgetField
-			.isVisible()
+
+		// A visible field only means the form renders — it says nothing about
+		// whether the field has any selectable options. AnnualBudget ships
+		// with no seed data (design.md §10), so the field is present but its
+		// option list is empty on a fresh install; open it and check for an
+		// actual option before deciding whether to skip.
+		await annualBudgetField.click()
+		const hasAnnualBudgetOption = await page
+			.getByRole('option')
+			.first()
+			.isVisible({ timeout: 3_000 })
 			.catch(() => false)
 		test.skip(
 			!hasAnnualBudgetOption,
 			'no AnnualBudget option available — this schema ships with no seed data by design (design.md §10)',
 		)
 
-		await annualBudgetField.click()
 		await page.getByRole('option').first().click()
 		await ledgerGroupField.click()
 		await page.getByRole('option').first().click()
