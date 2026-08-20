@@ -2912,7 +2912,17 @@
         "VAT/BTW filing, KOR, income tax, deferred tax, WBSO and R&D grants.": "BTW-aangifte, KOR, inkomstenbelasting, latente belasting, WBSO en R&D-subsidies.",
         "WBSO & R&D": "WBSO & R&D",
         "WBSO Activity Codes": "WBSO-activiteitencodes",
-        "Year-end close checklist": "Checklist jaarafsluiting"
+        "Year-end close checklist": "Checklist jaarafsluiting",
+        "Begroot": "Begroot",
+        "Cannot project yet": "Kan nog niet worden geraamd",
+        "Cumulative": "Cumulatief",
+        "Cumulative equals trend for balance-sheet accounts": "Cumulatief is gelijk aan trend voor balansrekeningen",
+        "Projected": "Geraamd",
+        "Series": "Reeks",
+        "TOTAAL": "TOTAAL",
+        "Trend chart for {name}: actual, projected and budgeted amounts": "Trendgrafiek voor {name}: werkelijke, geraamde en begrote bedragen",
+        "View as table": "Weergeven als tabel",
+        "partial": "gedeeltelijk"
     },
     "plurals": ""
 }

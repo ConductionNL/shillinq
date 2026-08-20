@@ -105,6 +105,15 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // #[NoAdminRequired]; RBAC/multitenancy enforced by OR aggregation.
             ['name' => 'spendAnalytics#spend', 'url' => '/api/analytics/spend', 'verb' => 'GET'],
 
+        // Budget charts (budget-charts, REQ-BCH-003): actual/projected/begroot
+        // trend+cumulative series for every in-scope Account/LedgerGroup in one
+        // administration, composed from budget-core-schema's
+        // BudgetVsActualsReader/Calculator and budget-projection-engine's
+        // BudgetProjectionReader/Calculator. #[NoAdminRequired]; per-administration
+        // membership enforced by AdministrationContextService::canAccess()
+        // (masked 404), mirroring spendAnalytics#spend's own posture.
+            ['name' => 'budgetCharts#series', 'url' => '/api/budget-charts/series', 'verb' => 'GET'],
+
         // Credit control & dunning ladder (Tier 2 — issue #124).
         // Static segments first; the resume route uses a {pauseId} wildcard.
             ['name' => 'dunning#bik', 'url' => '/api/dunning/bik', 'verb' => 'POST'],
