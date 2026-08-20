@@ -3,7 +3,7 @@
   "components": {
     "schemas": {
       "GeneratedReport": {
-        "version": "0.1.0",
+        "version": "0.1.1",
         "slug": "GeneratedReport",
         "title": "Generated Report",
         "type": "object",
@@ -44,7 +44,7 @@
           },
           "format": {
             "type": "string",
-            "description": "File format: pdf | docx | odt | xlsx | csv | xml | xbrl | json.",
+            "description": "File format: pdf | odt | xlsx | csv | xml | xbrl | json (document-kind reports render as pdf/odt via docudesk; docx is not produced).",
             "title": "Format"
           },
           "fileName": {
@@ -89,9 +89,10 @@
             "enum": [
               "generating",
               "ready",
-              "failed"
+              "failed",
+              "unavailable"
             ],
-            "description": "Generation status.",
+            "description": "Generation status. 'unavailable' means the render step could not run because its renderer (docudesk, for document-kind reports) was not installed/reachable -- a visible, retryable outcome, distinct from 'failed' (REQ-RVD-005, ADR-081 rule 7).",
             "title": "Status"
           },
           "tags": {

@@ -33,7 +33,7 @@ namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use DateTimeZone;
 use OCA\Shillinq\Controller\TimelineDeadLetterController;
-use OCA\Shillinq\Cron\PipelinqTimelineRetryJob;
+use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Utility\ITimeFactory;

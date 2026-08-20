@@ -6,14 +6,16 @@ description: Add a contract, define its performance obligations, allocate the tr
 
 # Contracts and performance obligations
 
-A contract in Shillinq is the IFRS 15.9 legal instrument that grants the
-customer enforceable rights to goods or services. Every contract carries one
-or more **performance obligations** — distinct goods or services satisfied at
-a point in time or over time.
+A revenue contract (`RevenueContract`) in Shillinq is the IFRS 15.9 legal
+instrument that grants the customer enforceable rights to goods or services —
+distinct from the generic `Contract` record under **Procurement Contracts**
+used for contract-lifecycle management (purchase, service, lease, …). Every
+revenue contract carries one or more **performance obligations** — distinct
+goods or services satisfied at a point in time or over time.
 
 ## Add a contract
 
-1. Open **Bookkeeping → Revenue Recognition (IFRS 15) → Contracts**.
+1. Open **Bookkeeping → Revenue Recognition (IFRS 15) → Revenue Contracts**.
 2. Click *Add contract* and fill in:
    - `contractNumber` — a unique identifier (e.g. C-2026-001).
    - `customerId` — pick from the Nextcloud contact list. Customer is **not**
@@ -63,7 +65,7 @@ re-estimation; the prior allocation snapshot is preserved on the
 Open the contract → *Add Modification*. Pick the classification:
 
 - **new-contract** — adds distinct scope priced at SSP (IFRS 15.20(a));
-  Shillinq creates a fresh `Contract` row leaving the original untouched.
+  Shillinq creates a fresh `RevenueContract` row leaving the original untouched.
 - **prospective** — price-only change; the allocation re-runs forward.
 - **not-distinct-cumulative** — scope change not distinct from existing POs;
   the prior+new cumulative is recomputed and a catch-up posted.

@@ -76,7 +76,7 @@ returns no stack trace (operator-safe).
 
 ## Contract lifecycle state machine
 
-The `Contract` register declares an `x-openregister-lifecycle` with these
+The `RevenueContract` register declares an `x-openregister-lifecycle` with these
 states and transitions:
 
 ```

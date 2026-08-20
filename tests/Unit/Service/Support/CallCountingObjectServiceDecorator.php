@@ -43,7 +43,7 @@ use OCP\IUser;
 /**
  * Forwarding decorator that counts `findAll()` calls.
  *
- * @SuppressWarnings(PHPMD.TooManyPublicMethods) Mirrors the 25-method contract.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) Mirrors the 26-method contract.
  */
 final class CallCountingObjectServiceDecorator implements ObjectServiceInterface {
 
@@ -227,6 +227,30 @@ final class CallCountingObjectServiceDecorator implements ObjectServiceInterface
 		return $this->inner->updateObject($objectId, $data, $_rbac, $_multitenancy);
 
 	}//end updateObject()
+
+	/**
+	 * @param string          $objectId      Object id, UUID or slug.
+	 * @param array           $data          The partial data to merge.
+	 * @param string|int|null $register      Register id, UUID or slug.
+	 * @param string|int|null $schema        Schema id, UUID or slug.
+	 * @param bool            $_rbac         Apply register RBAC.
+	 * @param bool            $_multitenancy Apply organisation scoping.
+	 * @param ?IUser          $currentUser   Explicit acting user.
+	 *
+	 * @return ObjectEntityInterface
+	 */
+	public function patchObject(
+		string $objectId,
+		array $data,
+		string|int|null $register = null,
+		string|int|null $schema = null,
+		bool $_rbac = true,
+		bool $_multitenancy = true,
+		?IUser $currentUser = null
+	): ObjectEntityInterface {
+		return $this->inner->patchObject($objectId, $data, $register, $schema, $_rbac, $_multitenancy, $currentUser);
+
+	}//end patchObject()
 
 	/**
 	 * @param string $id Object id, UUID or slug.

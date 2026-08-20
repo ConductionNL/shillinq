@@ -14,10 +14,17 @@
  * it. Listing reads those GeneratedReport records back through OpenRegister.
  *
  * Persistence of GeneratedReport records goes through OpenRegister's ObjectService
- * (resolved from the container). Office rendering (PhpWord/PhpSpreadsheet/dompdf) and
- * native data rendering (XMLWriter/fputcsv) live inside the individual generators —
- * this service only moves the rendered bytes to Files and records metadata, so it
- * never `use`s an office/PDF class itself and adds nothing to shillinq's composer.
+ * (resolved from the container). DOCUMENT-kind generators hand off rendering to
+ * docudesk (`OCA\DocuDesk\Service\DocumentService`, resolved by string FQCN inside
+ * the generator — ADR-075); DATA-kind generators render bytes natively (XMLWriter/
+ * fputcsv). Either way this service only moves the rendered bytes to Files and
+ * records metadata — it never `use`s an office/PDF/docudesk class itself and adds
+ * nothing to shillinq's composer.
+ *
+ * A DocudeskUnavailableException from a DOCUMENT generator is handled distinctly
+ * from any other generator failure (REQ-RVD-005, ADR-081 rule 7): the attempt is
+ * still recorded — `status: 'unavailable'` — so a docudesk outage is a visible,
+ * findable state rather than a silent drop.
  *
  * Every external call (container, Files, tags, object persistence) is fail-soft:
  * failures are logged as warnings and degrade gracefully rather than crash the
@@ -138,6 +145,8 @@ class ReportGenerationService {
 	 *
 	 * @return array<string, mixed> The recorded GeneratedReport (incl. fileId + downloadPath),
 	 *                              or an `{ error: ... }` envelope when generation cannot proceed.
+	 *
+	 * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-005
 	 */
 	public function generate(string $reportType, string $period, string $administrationId, string $format): array {
 		$catalogue = ReportCatalogue::byId($reportType);
@@ -168,6 +177,37 @@ class ReportGenerationService {
 
 		try {
 			$rendered = $generator->generate($context, $useFormat);
+		} catch (DocudeskUnavailableException $e) {
+			// ADR-081 rule 7: a source app MUST degrade gracefully when the
+			// receiver is absent -- an unsent allocation is a visible pending
+			// state, never a silent drop. Record the attempt (status:
+			// 'unavailable') before returning, so it is findable via
+			// listGenerated() rather than disappearing with the HTTP response.
+			$this->logger->warning(
+				'ReportGenerationService: docudesk unavailable, report generation deferred',
+				['reportType' => $reportType, 'exception' => $e->getMessage()]
+			);
+
+			$record = $this->saveRecord(
+				[
+					'reportType' => $reportType,
+					'reportLabel' => (string)($catalogue['label'] ?? $reportType),
+					'category' => (string)($catalogue['category'] ?? ''),
+					'period' => $period,
+					'administrationId' => $administrationId,
+					'format' => $useFormat,
+					'status' => 'unavailable',
+					'generatedAt' => gmdate('Y-m-d\TH:i:s\Z'),
+					'generatedBy' => ($this->userSession->getUser()?->getUID() ?? ''),
+				]
+			);
+
+			return [
+				'error' => 'docudesk-unavailable',
+				'reportType' => $reportType,
+				'message' => $e->getMessage(),
+				'record' => $record,
+			];
 		} catch (\Throwable $e) {
 			$this->logger->warning(
 				'ReportGenerationService: generator failed',

@@ -65,6 +65,37 @@ class AdministrationContextService {
 	];
 
 	/**
+	 * Per-request memoisation of {@see membershipsForUser()}, keyed by uid.
+	 *
+	 * {@see canAccess()} / {@see accessibleAdministrationIds()} /
+	 * {@see buildContext()} / {@see canPostJournalEntry()} are all
+	 * independent public entry points that
+	 * (directly or via buildContext()) each used to re-run the
+	 * AdministrationMembership findAll() query on every call. A single
+	 * request commonly calls more than one of them (e.g. a controller
+	 * calling canAccess() as an IDOR guard, then canPostJournalEntry(),
+	 * which itself calls buildContext()) — this service is a plain
+	 * autowired NC service with no factory override (verified: not listed
+	 * in Application.php's register()), so the container hands back the
+	 * SAME instance for the lifetime of one request, making this property
+	 * safe to use as a request-scoped cache. It carries no state across
+	 * requests because a new container — and therefore a new instance — is
+	 * built per request.
+	 *
+	 * @var array<string,array<int,array<string,mixed>>>
+	 */
+	private array $membershipsCache = [];
+
+	/**
+	 * Per-request memoisation of {@see findAdministration()}, keyed by the
+	 * administrationId/administrationCode looked up. See
+	 * {@see $membershipsCache} for why an instance property is safe here.
+	 *
+	 * @var array<string,array<string,mixed>|null>
+	 */
+	private array $administrationCache = [];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
@@ -312,6 +343,10 @@ class AdministrationContextService {
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function membershipsForUser(string $userId): array {
+		if (array_key_exists($userId, $this->membershipsCache) === true) {
+			return $this->membershipsCache[$userId];
+		}
+
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$memberships = $objectService
@@ -334,6 +369,12 @@ class AdministrationContextService {
 				$result[] = $arr;
 			}
 		}
+
+		// Cache the successful result only — a transient query failure above
+		// returns early without populating the cache, so a later call within
+		// the same request is free to retry rather than being poisoned by
+		// one failed attempt for the rest of the request.
+		$this->membershipsCache[$userId] = $result;
 
 		return $result;
 	}//end membershipsForUser()
@@ -365,6 +406,27 @@ class AdministrationContextService {
 	 * @return array<string,mixed>|null
 	 */
 	private function findAdministration(string $administrationId): ?array {
+		// BuildContext() calls this once per membership; a user with several
+		// administrations (or a request that calls buildContext() more than
+		// once — canPostJournalEntry() does) previously re-issued the
+		// find()/findAll() pair for the same administrationId every time.
+		// Memoised per request for the same reason as membershipsForUser()
+		// — see $administrationCache.
+		if (array_key_exists($administrationId, $this->administrationCache) === true) {
+			return $this->administrationCache[$administrationId];
+		}
+
+		return $this->administrationCache[$administrationId] = $this->findAdministrationUncached(administrationId: $administrationId);
+	}//end findAdministration()
+
+	/**
+	 * Uncached implementation of {@see findAdministration()}.
+	 *
+	 * @param string $administrationId The administration uuid or administrationCode.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function findAdministrationUncached(string $administrationId): ?array {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$scoped = $objectService
@@ -423,7 +485,7 @@ class AdministrationContextService {
 		);
 
 		return null;
-	}//end findAdministration()
+	}//end findAdministrationUncached()
 
 	/**
 	 * Normalise an OpenRegister ObjectService row (ObjectEntity or array) to a

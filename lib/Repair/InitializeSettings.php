@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\Shillinq\Service\BbvSeedService;
+use OCA\Shillinq\Service\Migration\RevenueContractRenameMigrator;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\StatementManifestService;
 use OCP\Migration\IOutput;
@@ -54,6 +55,7 @@ class InitializeSettings implements IRepairStep {
 	 * @param LoggerInterface $logger The logger interface
 	 * @param ContainerInterface $container The DI container
 	 * @param BbvSeedService $bbvSeedService The BBV stam-data seed service
+	 * @param RevenueContractRenameMigrator $revenueContractMigrator The Contract → RevenueContract object-migration core
 	 *
 	 * @return void
 	 */
@@ -63,6 +65,7 @@ class InitializeSettings implements IRepairStep {
 		private LoggerInterface $logger,
 		private ContainerInterface $container,
 		private BbvSeedService $bbvSeedService,
+		private RevenueContractRenameMigrator $revenueContractMigrator,
 	) {
 	}//end __construct()
 
@@ -106,6 +109,11 @@ class InitializeSettings implements IRepairStep {
 	 * Phase 13: seeds the default InventoryGLConfig (RGS 3.5 MKB account
 	 * routing for COGS / Inventory Asset / GR-IR / Inventory Adjustment)
 	 * per REQ-CG-001 / Task 11.
+	 * Phase 1b (after default-administration seeding): migrates any live
+	 * IFRS-15-shaped `Contract` objects to `RevenueContract` via
+	 * RevenueContractRenameMigrator, un-colliding the pre-fix merged
+	 * `Contract` slug per contracts-single-home. Idempotent — a second run
+	 * finds zero matching objects and no-ops.
 	 *
 	 * @param IOutput $output The output interface for progress reporting
 	 *
@@ -120,6 +128,7 @@ class InitializeSettings implements IRepairStep {
 	 * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/tasks.md#seed-data
 	 * @spec openspec/changes/inventory-cogs-posting/tasks.md#task-11
 	 * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-14
+	 * @spec openspec/changes/contracts-single-home/specs/contracts-single-home/spec.md
 	 */
 	public function run(IOutput $output): void {
 		$output->info('Initializing Shillinq configuration...');
@@ -176,6 +185,7 @@ class InitializeSettings implements IRepairStep {
 			}
 
 			$this->seedDefaultAdministration(output: $output);
+			$this->migrateRevenueContractObjects(output: $output);
 			$this->seedChartOfAccounts(output: $output);
 			$this->seedProjectData(output: $output);
 			$this->seedConsultancyProjectAccountingTemplates(output: $output);
@@ -248,6 +258,127 @@ class InitializeSettings implements IRepairStep {
 		);
 
 	}//end seedDefaultAdministration()
+
+	/**
+	 * Migrate any live IFRS-15-shaped `Contract` objects to `RevenueContract`
+	 * (contracts-single-home).
+	 *
+	 * Un-collides the pre-fix merged `Contract` slug: before this change, the
+	 * generic contract-lifecycle-management `Contract` and the IFRS-15
+	 * revenue-recognition `Contract` deep-merged into one schema, so both
+	 * kinds of object could be persisted under the same `Contract` slug.
+	 * RevenueContractRenameMigrator's discriminator tells them apart; only
+	 * IFRS-15-shaped objects (customerId / fixedConsideration / lifecycleState
+	 * present, no contractType / status) are moved. A CLM-shaped object is
+	 * left under `Contract` untouched even if it also carries IFRS-15
+	 * leftover fields.
+	 *
+	 * Guarded by RevenueContractRenameMigrator::assertCountsMatch() (via
+	 * migrateBatch): if the migrated batch's count does not match the source
+	 * count, the migration aborts and the source `Contract` objects are left
+	 * intact — nothing is deleted before every move has been confirmed.
+	 * Idempotent: a second run finds zero remaining `Contract`-slugged
+	 * IFRS-15-shaped objects (they are already under `RevenueContract`) and
+	 * no-ops. Failure is reported but never aborts the repair run.
+	 *
+	 * @param IOutput $output The output interface for progress reporting.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/contracts-single-home/specs/contracts-single-home/spec.md
+	 */
+	private function migrateRevenueContractObjects(IOutput $output): void {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$registerSlug = $this->settingsService->getRegisterSlug();
+		} catch (\Throwable $e) {
+			$output->info('Shillinq: ObjectService unavailable, skipping RevenueContract migration');
+			return;
+		}
+
+		$rename = $this->revenueContractMigrator->revenueContractRename();
+
+		try {
+			$sourceObjects = $objectService
+				->setRegister($registerSlug)
+				->setSchema($rename['from'])
+				->findAll(['limit' => 1000]);
+		} catch (\Throwable $e) {
+			$output->info('Shillinq: Contract register not yet present, skipping RevenueContract migration');
+			return;
+		}
+
+		if (empty($sourceObjects) === true) {
+			$output->info('Shillinq: no Contract objects found, RevenueContract migration is a no-op');
+			return;
+		}
+
+		$sourceRows = [];
+		foreach ($sourceObjects as $sourceObject) {
+			$sourceRows[] = $this->asArray(row: $sourceObject);
+		}
+
+		try {
+			$migratedRows = $this->revenueContractMigrator->migrateBatch(
+				sourceObjects: $sourceRows,
+				from: $rename['from'],
+				to: $rename['to']
+			);
+		} catch (\Throwable $e) {
+			// AssertCountsMatch() throws on a count mismatch (no-row-loss guard);
+			// the source Contract objects are left untouched — abort quietly.
+			$output->warning('Shillinq: RevenueContract migration aborted: ' . $e->getMessage());
+			$this->logger->warning(
+				'Shillinq: RevenueContract migration aborted',
+				['exception' => $e->getMessage()]
+			);
+			return;
+		}
+
+		$migrated = 0;
+		$skipped = 0;
+		foreach ($migratedRows as $index => $row) {
+			$newSchema = ($row['@self']['schema'] ?? $rename['from']);
+			if ($newSchema !== $rename['to']) {
+				// CLM-shaped object; the discriminator left it under Contract.
+				$skipped++;
+				continue;
+			}
+
+			$objectId = (string)($sourceRows[$index]['@self']['id'] ?? $sourceRows[$index]['id'] ?? '');
+			if ($objectId === '') {
+				$output->warning('Shillinq: RevenueContract migration skipped a row with no object id');
+				continue;
+			}
+
+			unset($row['@self']);
+
+			try {
+				$objectService->saveObject(
+					object: $row,
+					register: $registerSlug,
+					schema: $rename['to'],
+					uuid: $objectId,
+					// System migration inside a no-session repair step — bypass RBAC.
+					_rbac: false,
+				);
+				$objectService
+					->setRegister($registerSlug)
+					->setSchema($rename['from'])
+					->deleteObject($objectId);
+				$migrated++;
+			} catch (\Throwable $e) {
+				$output->warning(
+					'Shillinq: RevenueContract migration failed for object ' . $objectId . ': ' . $e->getMessage()
+				);
+			}
+		}//end foreach
+
+		$output->info(
+			'Shillinq: RevenueContract migration complete: ' . $migrated . ' migrated, ' . $skipped . ' left as Contract (CLM-shaped).'
+		);
+
+	}//end migrateRevenueContractObjects()
 
 	/**
 	 * Seed project accounting data (RJ-270 stages and rate-card templates), idempotently.
