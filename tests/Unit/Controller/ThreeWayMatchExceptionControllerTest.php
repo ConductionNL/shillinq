@@ -373,6 +373,26 @@ final class ThreeWayMatchExceptionControllerTest extends TestCase {
 	}//end testDisputeRequiresReason()
 
 	/**
+	 * Disputing inside another tenant's administration is masked as 404
+	 * (ADR-005) and the exception-resolution service is never reached —
+	 * proving the guard short-circuits rather than merely matching the
+	 * status code.
+	 *
+	 * @return void
+	 */
+	public function testDisputeForeignAdministrationReturns404(): void {
+		$this->withParams(['administrationId' => 'adm-other', 'matchId' => 'match-3', 'disputeReason' => 'short']);
+		$this->administrationContext->method('canAccess')->willReturn(false);
+		$this->exceptions->expects($this->never())->method('fileDispute');
+
+		$response = $this->controller->dispute();
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame(['error' => 'Administration not found'], $response->getData());
+
+	}//end testDisputeForeignAdministrationReturns404()
+
+	/**
 	 * A "not found" refusal from the service maps to 404, not 400.
 	 *
 	 * @return void
