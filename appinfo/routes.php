@@ -620,6 +620,12 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // last per Symfony route ordering. Every endpoint is #[NoAdminRequired] and
             // authentication + role gating happens in the controller body.
             ['name' => 'wbsoAccountApi#hierarchy', 'url' => '/api/v1/accounts/hierarchy', 'verb' => 'GET'],
+
+            // budget-grid-view REQ-BGV-001/002/003 — the begroting grid's own
+            // single read endpoint. One request returns the whole tree +
+            // column set pre-computed (design.md §1c: expand/collapse must
+            // cost zero further requests).
+            ['name' => 'budgetGrid#index', 'url' => '/api/budget-grid', 'verb' => 'GET'],
             ['name' => 'wbsoAccountApi#index', 'url' => '/api/v1/accounts', 'verb' => 'GET'],
             ['name' => 'wbsoAccountApi#create', 'url' => '/api/v1/accounts', 'verb' => 'POST'],
             ['name' => 'wbsoAccountApi#show', 'url' => '/api/v1/accounts/{accountNumber}', 'verb' => 'GET'],

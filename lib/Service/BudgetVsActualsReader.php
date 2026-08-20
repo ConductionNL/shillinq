@@ -141,11 +141,25 @@ class BudgetVsActualsReader {
 	 * administration, batched to at most 5 `findAll()` calls total
 	 * (4 when `$includeLedgerGroups` is false).
 	 *
+	 * **Amended for `budget-grid-view` (REQ-BGV-004/REQ-BGV-007), additive
+	 * only — no new `findAll()` call:** the raw `accounts` rows fetched by
+	 * call (1) above are now also returned verbatim. This class already
+	 * fetches them (to resolve `LedgerGroup` membership); previously only
+	 * the derived `actualsByAccountMonth`/`ledgerGroupEntries.
+	 * memberAccountNumbers` were exposed, dropping each account's own
+	 * `accountType`/`name`/id. `BudgetGridReader` needs `Account.accountType`
+	 * per resolved member for the deviation sign convention (REQ-BGV-004)
+	 * and each account's id/name to render a grootboek leaf row that links to
+	 * `ChartOfAccountsDetail` (REQ-BGV-007) — without this it would have to
+	 * issue its own separate `Account.findAll()`, breaking the flat query
+	 * bound (REQ-BGV-009) for no reason, since the data was already in hand.
+	 *
 	 * @param string $administrationId The administration to scope every read to.
 	 * @param list<string> $annualBudgetIds The AnnualBudget ids to load BudgetLines for; empty = none loaded.
 	 * @param boolean $includeLedgerGroups Whether to load + resolve LedgerGroup membership (skips call 4 when false).
 	 *
 	 * @return array{
+	 *     accounts: list<array<string,mixed>>,
 	 *     actualsByAccountMonth: array<string,array<string,int>>,
 	 *     ledgerGroupEntries: list<array{id:string,slug:string,parentRef:?string,memberAccountNumbers:list<string>}>,
 	 *     ledgerGroupKeyToIndex: array<string,int>,
@@ -154,6 +168,7 @@ class BudgetVsActualsReader {
 	 * } The assembled context the calculator consumes.
 	 *
 	 * @spec openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md#req-bcs-008
+	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
 	 */
 	public function loadContext(string $administrationId, array $annualBudgetIds, bool $includeLedgerGroups = true): array {
 		$accounts = $this->query(schema: self::SCHEMA_ACCOUNT, filters: ['administrationId' => $administrationId]);
@@ -176,6 +191,7 @@ class BudgetVsActualsReader {
 		}
 
 		return [
+			'accounts' => $accounts,
 			'actualsByAccountMonth' => $actualsByAccountMonth,
 			'ledgerGroupEntries' => $ledgerGroupContext['entries'],
 			'ledgerGroupKeyToIndex' => $ledgerGroupContext['keyToIndex'],
@@ -270,7 +286,11 @@ class BudgetVsActualsReader {
 	 * @param list<array<string,mixed>> $rows The LedgerGroup rows.
 	 * @param list<array<string,mixed>> $accounts The Account rows to resolve membership against.
 	 *
-	 * @return array{entries: list<array{id:string,slug:string,parentRef:?string,memberAccountNumbers:list<string>}>, keyToIndex: array<string,int>, childrenByIndex: array<int,list<int>>}
+	 * @return array{
+	 *     entries: list<array{id:string,slug:string,parentRef:?string,memberAccountNumbers:list<string>}>,
+	 *     keyToIndex: array<string,int>,
+	 *     childrenByIndex: array<int,list<int>>,
+	 * }
 	 */
 	private function buildLedgerGroupIndex(array $rows, array $accounts): array {
 		$entries = [];
@@ -281,10 +301,15 @@ class BudgetVsActualsReader {
 			$slug = (string)($row['@self']['slug'] ?? $row['slug'] ?? '');
 			$index = count($entries);
 
+			$parentRef = null;
+			if (($row['parentLedgerGroupId'] ?? null) !== null) {
+				$parentRef = (string)$row['parentLedgerGroupId'];
+			}
+
 			$entries[] = [
 				'id' => $id,
 				'slug' => $slug,
-				'parentRef' => (($row['parentLedgerGroupId'] ?? null) !== null ? (string)$row['parentLedgerGroupId'] : null),
+				'parentRef' => $parentRef,
 				'memberAccountNumbers' => $this->resolveMembers(ledgerGroup: $row, accounts: $accounts),
 			];
 
@@ -330,14 +355,22 @@ class BudgetVsActualsReader {
 	 * @return list<string> The resolved, deduplicated member account numbers.
 	 */
 	private function resolveMembers(array $ledgerGroup, array $accounts): array {
-		$ranges = (is_array($ledgerGroup['accountRanges'] ?? null) ? $ledgerGroup['accountRanges'] : []);
-		$included = (is_array($ledgerGroup['includedAccountNumbers'] ?? null) ? $ledgerGroup['includedAccountNumbers'] : []);
-		$excluded = array_flip(
-			array_map(
-				'strval',
-				(is_array($ledgerGroup['excludedAccountNumbers'] ?? null) ? $ledgerGroup['excludedAccountNumbers'] : [])
-			)
-		);
+		$ranges = [];
+		if (is_array($ledgerGroup['accountRanges'] ?? null) === true) {
+			$ranges = $ledgerGroup['accountRanges'];
+		}
+
+		$included = [];
+		if (is_array($ledgerGroup['includedAccountNumbers'] ?? null) === true) {
+			$included = $ledgerGroup['includedAccountNumbers'];
+		}
+
+		$excludedNumbers = [];
+		if (is_array($ledgerGroup['excludedAccountNumbers'] ?? null) === true) {
+			$excludedNumbers = $ledgerGroup['excludedAccountNumbers'];
+		}
+
+		$excluded = array_flip(array_map('strval', $excludedNumbers));
 
 		$members = [];
 		foreach ($accounts as $account) {
