@@ -88,6 +88,38 @@ function resolveServerRoot(): string {
 }
 
 /**
+ * Run one `occ` subcommand against the instance under test.
+ *
+ * WHY THIS IS NOT ALWAYS `php <server-root>/occ` DIRECTLY
+ * ---------------------------------------------------------
+ * On this team's docker dev setup the checked-out `server/` tree on the HOST
+ * is source only — the live instance (config.php, DB connection, `installed:
+ * true`) exists solely INSIDE the Nextcloud container. Host `php occ status`
+ * there reads an empty/placeholder `config/config.php` and reports `installed:
+ * false` against a completely different (unconfigured) install, so
+ * `config:app:delete` fails with "Nextcloud is not installed" even though the
+ * real instance the browser drives is healthy. `NC_SERVER_ROOT` alone cannot
+ * fix this — the problem is the EXECUTION CONTEXT (host vs. container), not
+ * the path.
+ *
+ * `NC_CONTAINER` is this fleet's established escape hatch for exactly that
+ * (see `openregister/tests/e2e/base-url.ts::resolveContainer()` and
+ * `openbuild/tests/e2e/global-setup.ts::resolveContainerFor()`): when set,
+ * every `occ` call here runs via `docker exec -u www-data <container> php
+ * occ …` instead of the host binary. Unset (the CI default, where `occ` runs
+ * against a real `php -S`-served install on the runner itself) falls back to
+ * the previous direct-host invocation unchanged.
+ */
+function runOcc(serverRoot: string, occPath: string, args: string[]): void {
+	const container = process.env.NC_CONTAINER
+	const quotedArgs = args.map((a) => JSON.stringify(a)).join(' ')
+	const command = container
+		? `docker exec -u www-data ${JSON.stringify(container)} php occ ${quotedArgs}`
+		: `php ${JSON.stringify(occPath)} ${quotedArgs}`
+	execSync(command, { cwd: serverRoot, stdio: 'pipe' })
+}
+
+/**
  * Delete every setup app-config key server-side, so `SetupController::
  * status()` reports `completed: false` again on the NEXT request — a
  * genuinely first-run instance, not merely a fresh browser context.
@@ -97,23 +129,19 @@ function resolveServerRoot(): string {
 function resetSetupStateServerSide(): void {
 	const serverRoot = resolveServerRoot()
 	const occPath = path.join(serverRoot, 'occ')
-	if (!fs.existsSync(occPath)) {
+	if (!process.env.NC_CONTAINER && !fs.existsSync(occPath)) {
 		throw new Error(
 			`[setup-wizard-english] cannot find occ at ${occPath} (resolved server root: `
-				+ `${serverRoot}). Set NC_SERVER_ROOT to the Nextcloud install directory so this `
-				+ "spec can reset shillinq's setup app-config server-side — a fresh browser context "
-				+ 'alone does not reproduce the wizard, since SetupController::status() gates on '
-				+ 'server-side app-config (design.md "Fresh-context e2e").',
+				+ `${serverRoot}). Set NC_SERVER_ROOT to the Nextcloud install directory, or set `
+				+ 'NC_CONTAINER to the docker container serving the instance under test (see '
+				+ "runOcc() above), so this spec can reset shillinq's setup app-config server-side "
+				+ '— a fresh browser context alone does not reproduce the wizard, since '
+				+ 'SetupController::status() gates on server-side app-config (design.md '
+				+ '"Fresh-context e2e").',
 		)
 	}
 	for (const key of SETUP_CONFIG_KEYS) {
-		execSync(
-			`php ${JSON.stringify(occPath)} config:app:delete shillinq ${JSON.stringify(key)}`,
-			{
-				cwd: serverRoot,
-				stdio: 'pipe',
-			},
-		)
+		runOcc(serverRoot, occPath, ['config:app:delete', 'shillinq', key])
 	}
 }
 
