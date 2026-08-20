@@ -25,13 +25,14 @@ otherwise redesign any schema field.
   `state` lifecycle `open → closing → closed → audit-locked`. This is the
   only code-answerable "is this period past?" signal in the app — there is
   no other period-close flag anywhere in shillinq.
-- `TrialBalanceLine` (`lib/Settings/register.d/bookkeeping-trial-balance.json`,
-  read-only, computed by `TrialBalanceService`): `periodId`, `accountNumber`,
-  `accountType` (`assets|liabilities|equity|revenue|expenses`, inherited
-  from `Account.accountType`), `openingBalance`/`debitMovement`/
-  `creditMovement`/`closingBalance`. This is the actuals source; it carries
-  no date of its own, only a `periodId` string that must be resolved against
-  `FiscalPeriod` for a calendar span.
+- **`GLTransaction`+`GLLine`+`Account` — the actuals source, NOT
+  `TrialBalanceLine`.** `TrialBalanceService.php`'s own docblock states
+  plainly that no `TrialBalanceLine` row is ever persisted ("the rows are
+  materialised on demand"); this change's own earlier draft assumed
+  otherwise and was corrected before implementation (§0's amendment note).
+  `Account.accountType` (`assets|liabilities|equity|revenue|expenses`) is
+  still read directly off `Account`, not inherited via a queryable
+  `TrialBalanceLine` row.
 - `ChartOfAccounts`/`ChartOfAccountsDetail` (`src/manifest.json`, route
   `/chart-of-accounts/:id`, schema `Account`) — the real, already-shipped
   grootboek detail page the task brief asked to verify. It exists at the
@@ -48,13 +49,16 @@ otherwise redesign any schema field.
   `design.md` §4 and §6.
 - `BbvProgrammeBudgetReader::spendByProgramme()`/`postedTransactionMonths()`
   (`lib/Service/BbvProgrammeBudgetReader.php:223-374`) — the fleet's own
-  precedent for joining a schema with no `date`/`administrationId` of its
-  own (there: `GLLine`↔`GLTransaction`; here: `TrialBalanceLine`↔
-  `FiscalPeriod`) via an in-memory index, batched once per query rather than
-  once per row. `BudgetVsActualsReader` (`budget-core-schema` §6b) already
-  follows this same idiom for `BudgetLine`↔`LedgerGroup`↔`TrialBalanceLine` —
-  this change's own reader composes on top of it rather than re-deriving the
-  join.
+  precedent for joining `GLLine`↔`GLTransaction` (`GLLine` carries neither
+  `date` nor `administrationId`; both come from the parent `GLTransaction`,
+  dual-keyed by object id **and** `transactionNumber`) via an in-memory
+  index, batched once per query rather than once per row.
+  `BudgetVsActualsReader` (`budget-core-schema` §6b, amended) computes
+  actuals directly from `GLTransaction`+`GLLine`+`Account` using this exact
+  shape — this change's own reader composes on top of it rather than
+  re-deriving the join or re-reading a non-existent `TrialBalanceLine` row.
+  `budget-projection-engine design.md` §7b independently specifies the same
+  batched shape for its own reader; all three readers now agree.
 - `WbsoChartOfAccountsView.vue`/`WbsoAccountApiController`
   (`src/manifest.d/bookkeeping-wbso-sno-administratie.json:36-39`) — the
   **only** hierarchical expand/collapse tree in this app today, a `type:
@@ -69,26 +73,40 @@ otherwise redesign any schema field.
   `@keyup.enter`. This change's own rows reuse this exact pattern rather than
   inventing a new one.
 
-### A finding this change surfaces, not fixes: the day-one seed data is the wrong statement
+### §0. Two corrections applied to this change and to `budget-core-schema`, recorded together
 
-`budget-core-schema` §3c seeds `LedgerGroup` from `rj270-balance-sheet.json`
-(balance-sheet sections: `VA-IMVA`, `VA-MVA`, …, `KLS-SUS`) — not
-`rj270-pl.json`. The user's begroting is unambiguously a **P&L** budget
-(Omzet, Personeel, Huisvesting, ICT, Bruto Marge, Bedrijfsresultaat), which
-maps onto `rj270-pl.json`'s sections (`LONE` "Lonen en salarissen" ≈
-Personeel, `HUIS` "Huisvestingskosten" ≈ Huisvesting, `NETO` "Netto-omzet" ≈
-Omzet), not the balance-sheet ones `budget-core-schema` actually seeded. On a
-fresh administration with only `budget-core-schema`'s own seed data, this
-change's grid renders a `LedgerGroup` tree that looks nothing like the
-user's spreadsheet — technically correct (it renders whatever `LedgerGroup`
-rows exist) but not the day-one experience implied by the task brief. This
-change does **not** re-seed `LedgerGroup` (that is `budget-core-schema`'s
-own schema/seed, out of bounds to redesign here) — it is recorded as an open
-question (`design.md` §9.1) and a named follow-up task
-(`tasks.md` group 0) to add a P&L-shaped `LedgerGroup` seed batch sourced
-from `rj270-pl.json`, filed against whichever change is still open
-(`budget-core-schema`, if not yet merged) or as its own tiny seed-only
-change otherwise.
+Two defects were found in review after this change's first draft and are
+now fixed in both changes, not just noted:
+
+1. **The seed-data gap — RESOLVED in `budget-core-schema`, not here.**
+   `budget-core-schema` §3c originally seeded `LedgerGroup` from
+   `rj270-balance-sheet.json` (balance-sheet sections) rather than
+   `rj270-pl.json` — a defect, since the user's begroting is unambiguously a
+   **P&L** budget (Omzet, Personeel, Huisvesting, ICT, Bruto Marge,
+   Bedrijfsresultaat). `budget-core-schema`'s own `design.md` §3c/§3d and
+   `specs/budget-core-schema/spec.md` REQ-BCS-005 are now amended to seed
+   19 P&L-shaped `LedgerGroup`s from `rj270-pl.json` (including real parent
+   `LedgerGroup`s for `Omzet`/`Personeel`/`Kostprijs van de omzet`, resolved
+   by simple rollup-sum, §3d) — **this change does not re-seed
+   `LedgerGroup` itself; it now builds on the corrected seed directly, with
+   no follow-up task of its own remaining** (the former `tasks.md` group 0
+   is removed; see `budget-core-schema`'s own change for the seed).
+2. **The actuals source — `GLTransaction`+`GLLine`+`Account`, never
+   `TrialBalanceLine`.** This change's own first draft specified reading
+   actuals from `TrialBalanceLine` (`periodId`-scoped rows). That schema has
+   **no persisted rows** — `TrialBalanceService.php`'s own docblock states
+   "there is NO `TrialBalanceLine` record authored by operators; the rows
+   are materialised on demand." A reader `findAll`-ing that schema expecting
+   real historical data back would silently report near-zero actuals
+   everywhere — the `budget-projection-engine` author caught the identical
+   defect in `budget-core-schema`'s own `BudgetVsActualsReader` design
+   independently. Both `budget-core-schema design.md` §6b and this change's
+   own `design.md` §1c/§2/§5 are corrected to compute actuals directly from
+   `GLTransaction`+`GLLine`+`Account`, batched, following
+   `BbvProgrammeBudgetReader::spendByProgramme()`'s precedent and matching
+   `budget-projection-engine design.md` §7b's own reader shape exactly — all
+   three readers now agree rather than silently disagreeing about where
+   actuals live.
 
 ## What Changes
 
@@ -106,8 +124,10 @@ change otherwise.
   `BudgetVsActualsReader`/`Calculator` — adds period-range column
   generation, the past/future boundary check against `FiscalPeriod`, the
   cumulative-column sums, and the accountType-driven sign convention. Does
-  **not** reimplement the `BudgetLine`↔`LedgerGroup`↔`TrialBalanceLine` join
-  `budget-core-schema` already built. `design.md` §5, §7.
+  **not** reimplement the `BudgetLine`↔`LedgerGroup`↔GL-activity join
+  `budget-core-schema` already built (`BudgetVsActualsReader`, computed
+  from `GLTransaction`+`GLLine`+`Account`, never `TrialBalanceLine` — §0).
+  `design.md` §5, §7.
 - **ADD** (manifest): one new page (`BudgetGrid`, route
   `/begroting/grid`) and one new nav child, nested under the `Budgets`
   top-level group `budget-core-schema` §7b defines (created by whichever of
@@ -126,9 +146,11 @@ change otherwise.
 - **Non-goals, each naming its follow-up change** (`design.md` §11):
   projection math (`budget-projection-engine`), contract/recurring cost
   derivation (`budget-known-costs`), scenarios/modifiers
-  (`budget-scenarios`), charts (`budget-charts`), apportioning actuals
-  across a coarser `FiscalPeriod` cadence than the requested column
-  granularity, and multi-administration consolidated views.
+  (`budget-scenarios`), charts (`budget-charts`), and multi-administration
+  consolidated views. (Apportioning actuals across a coarser `FiscalPeriod`
+  cadence was a non-goal in this document's first draft; §0's second
+  correction resolved the underlying problem directly — see `design.md`
+  §2c — so it is no longer deferred, it is simply not needed.)
 - **Cross-repo, explicitly not this change's own diff**: file an nc-vue
   absorption-candidate note against ADR-072's backlog (this app now has TWO
   hand-rolled expand/collapse trees — `WbsoChartOfAccountsView` and this

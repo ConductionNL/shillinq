@@ -83,13 +83,22 @@
       (REQ-AT-001 — every bookkeeping schema in this repo carries it,
       confirmed via `tests/validate-registers.js`, which will fail the
       build otherwise).
-- [ ] Seed one `LedgerGroup` per `level: 2` section of
-      `lib/Settings/statements/rj270-balance-sheet.json`, using the
-      small-manufacturing variant's `glAccountRange` values from
-      `balans-rubriek-mapping.json` where they align, RJ270's own
-      `accountRange` otherwise. Each seed row: `@self.seedExemption: "anchor"`,
-      plain (non-`example-`) slug `ledger-group-<rj270-code-lowercased>`
-      (`design.md` §3c).
+- [ ] **Amended (2026-08-20): seed from `rj270-pl.json`, not
+      `rj270-balance-sheet.json`** — 16 leaf `LedgerGroup`s, one per
+      `rj270-pl.json` `level: 1` section (`NETO`/`WVPV`/`GEAC`/`OVOP`/
+      `KPVO`/`INKW`/`LONE`/`SOCL`/`AFSC`/`HUIS`/`EXPL`/`VKKO`/`ALGK`/
+      `RBAT`/`RLST`/`VPB`), each with that section's own `accountRange`,
+      plus 3 parent `LedgerGroup`s with empty `accountRanges`/
+      `includedAccountNumbers`/`excludedAccountNumbers` (`Omzet` parenting
+      `NETO`/`WVPV`/`GEAC`/`OVOP`; `Personeel` parenting `LONE`/`SOCL`;
+      `Kostprijs van de omzet` parenting `KPVO`/`INKW`) — 19 `LedgerGroup`
+      rows total, per `design.md` §3c's table. Each seed row:
+      `@self.seedExemption: "anchor"`, plain (non-`example-`) slug
+      `ledger-group-<rj270-code-lowercased>` for leaves,
+      `ledger-group-omzet`/`ledger-group-personeel`/
+      `ledger-group-kostprijs-van-de-omzet` for the three parents. Do
+      **not** seed any `rj270-balance-sheet.json` section by default
+      (`design.md` §3c explains why, explicitly, not silently).
 - [ ] `node tests/validate-registers.js` — PASS, confirm `LedgerGroup`
       carries the audit-trail flag and no slug-case collision is introduced.
 
@@ -121,14 +130,30 @@
       schemas added.
 
 ## 8. Budget-vs-actuals roll-up — PHP primary + hazard positive control (REQ-BCS-008)
-- [ ] Add `lib/Service/BudgetVsActualsReader.php` +
+- [ ] **Amended (2026-08-20): actuals come from `GLTransaction`+`GLLine`+
+      `Account`, not `TrialBalanceLine`** — `TrialBalanceService.php`'s own
+      docblock states no `TrialBalanceLine` row is ever persisted
+      (`design.md` §6b's amendment note; independently caught by the
+      `budget-projection-engine` author). Add
+      `lib/Service/BudgetVsActualsReader.php` +
       `lib/Service/BudgetVsActualsCalculator.php` (reader/calculator split
-      mirroring `BbvProgrammeBudgetReader`/`Calculator`, `design.md` §6b):
-      reader resolves `BudgetLine` → `LedgerGroup` member accounts (ranges +
-      explicit include/exclude, resolved in PHP) → matching
-      `TrialBalanceLine` rows by `accountNumber`+`periodId`; calculator sums
-      budgeted vs. actual per line.
-- [ ] PHPUnit coverage for both classes (no e2e — `design.md` §9).
+      mirroring `BbvProgrammeBudgetReader`/`Calculator`): reader resolves
+      `BudgetLine` → `LedgerGroup` member accounts (ranges + explicit
+      include/exclude, resolved in PHP) → matching GL activity via the
+      4-call batched shape in `design.md` §6b (`Account`, `GLTransaction`
+      unfiltered-by-period + dual-keyed `transactionRefs`, `GLLine`
+      unfiltered, `LedgerGroup`) — the same batching
+      `budget-projection-engine design.md` §7b independently specifies for
+      its own reader; calculator sums budgeted vs. actual per line,
+      applying the parent-rollup rule (`design.md` §3d: a parent
+      `LedgerGroup` with children uses its own `BudgetLine` if one exists,
+      else the recursive sum of its children's resolved values).
+- [ ] PHPUnit coverage for both classes (no e2e — `design.md` §9), including
+      a call-count regression test against a mocked
+      `ObjectServiceInterface` asserting the exact ≤5-call bound from
+      `design.md` §6b (mirroring `budget-projection-engine`'s own §8
+      query-budget regression test) — a future change that reintroduces a
+      per-account or per-month `findAll()` call must fail this test.
 - [ ] Positive-control task, run and record results in this change's PR
       description (not silently skipped): grep `nextcloud.log` for
       `"annotation on schema"` after a fresh register import, and directly

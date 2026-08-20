@@ -222,20 +222,131 @@ No lifecycle — a `LedgerGroup` is configuration, edited directly, not a
 workflow object (consistent with `Account`, `AllocationRule`, and the
 rubriek-mapping precedent, none of which carry `x-openregister-lifecycle`).
 
-### 3c. Seed data (ADR-001 anchor, not editorial example)
+### 3c. Seed data — P&L-shaped, sourced from `rj270-pl.json` (revised)
 
-Seeded from the RJ270 balance-sheet sections
-(`lib/Settings/statements/rj270-balance-sheet.json`) and the small-manufacturing
-variant of `balans-rubriek-mapping.json` — one `LedgerGroup` per non-computed,
-non-total `level: 2` section (`VA-IMVA`, `VA-MVA`, …, `KLS-SUS`; the
-`level: 0`/`level: 1` rollup rows are not seeded as `LedgerGroup`s here — they
-are statement-presentation rollups, not GL groupings an operator budgets
-against directly; a future `budget-projection-engine`/`budget-grid-view`
-change may add parent `LedgerGroup`s for them if the grid wants a rollup
-row). Each seed row carries `@self.seedExemption: "anchor"` per ADR-001 (this
-is canonical BW 2:373 / RJ270 statutory reference data every administration
-needs, not a deletable worked example) and a plain (non-`example-`) slug
-derived from the RJ270 section code (`ledger-group-va-imva`, …).
+**Amendment note (2026-08-20, post-review):** this subsection originally
+seeded `LedgerGroup` from `rj270-balance-sheet.json`'s `level: 2` sections
+(`VA-IMVA`, `VA-MVA`, …, `KLS-SUS`). That was a defect, not a follow-up: a
+begroting is a monthly-phased **flow** plan (revenue/cost per month,
+`BudgetLine.month01Amount..month12Amount`), and the balance sheet models
+**stock** accounts (asset/liability/equity balances) — a fresh
+administration's day-one begroting grid rendered rows that looked nothing
+like a P&L, and nothing like the user's own reference sheet (Omzet →
+Personeel/Huisvesting/ICT/… → Kosten → Bedrijfsresultaat, with % rows). This
+subsection is rewritten to seed from `lib/Settings/statements/rj270-pl.json`
+instead. No other part of §3 changes — `LedgerGroup`'s field shape (§3b) is
+untouched; only which sections get seeded, and how they nest, changes.
+
+**Balance-sheet groups are dropped from the default seed, explicitly, not
+silently.** A begroting does not budget a balance (an asset's month-end
+stock isn't planned the way a month's revenue/cost is), so seeding
+`rj270-balance-sheet.json` rows by default served no begroting use case this
+programme has identified; keeping them alongside the P&L seed would only
+add rows the grid never shows meaningfully. An operator who does want a
+balance-sheet-scoped `LedgerGroup` (e.g. for a future non-begroting use of
+this schema) can still create one directly via the `LedgerGroups` CRUD page
+(§7a) — nothing in the schema forbids it, only the *seed* changes.
+
+**`rj270-pl.json`'s `level: 1` leaf sections become `LedgerGroup`s**, each
+carrying that section's own `accountRange` and RJ270 label, `@self
+.seedExemption: "anchor"` (still canonical BW 2:373/RJ270 statutory
+reference data, same ADR-001 justification as before), and a plain slug
+derived from the RJ270 code (`ledger-group-neto`, …):
+
+| RJ270 code | Label | `accountRange` | Seeded as |
+|---|---|---|---|
+| `NETO` | Netto-omzet | 8000-8099 | child of `Omzet` |
+| `WVPV` | Wijziging voorraden gereed product en onderhanden werk | 8100-8199 | child of `Omzet` |
+| `GEAC` | Geactiveerde productie eigen bedrijf | 8200-8299 | child of `Omzet` |
+| `OVOP` | Overige bedrijfsopbrengsten | 8300-8399 | child of `Omzet` |
+| `KPVO` | Kostprijs van de omzet | 7000-7099 | child of `Kostprijs van de omzet` |
+| `INKW` | Inkoopwaarde van de omzet | 7100-7199 | child of `Kostprijs van de omzet` |
+| `LONE` | Lonen en salarissen | 4000-4099 | child of `Personeel` |
+| `SOCL` | Sociale lasten en pensioenlasten | 4100-4199 | child of `Personeel` |
+| `AFSC` | Afschrijvingen op vaste activa | 4300-4399 | root leaf |
+| `HUIS` | Huisvestingskosten | 4400-4499 | root leaf |
+| `EXPL` | Exploitatie- en machinekosten | 4500-4599 | root leaf |
+| `VKKO` | Verkoopkosten | 4600-4699 | root leaf |
+| `ALGK` | Algemene kosten | 4700-4899 | root leaf |
+| `RBAT` | Rentebaten | 8400-8449 | root leaf |
+| `RLST` | Rentelasten | 8450-8499 | root leaf |
+| `VPB` | Vennootschapsbelasting | 8900-8999 | root leaf |
+
+**Three parent `LedgerGroup`s are seeded alongside these 16 leaves**, each
+with `accountRanges`/`includedAccountNumbers`/`excludedAccountNumbers` all
+empty (no directly-assigned accounts of their own — their value is entirely
+the roll-up of their children, §3d) and `parentLedgerGroupId: null` (root):
+
+- **`Omzet`** — parent of `NETO`/`WVPV`/`GEAC`/`OVOP` (`rj270-pl.json`'s own
+  `group: "opbrengsten"` tag names exactly this set). Matches the user's own
+  "Omzet" row.
+- **`Personeel`** — parent of `LONE`/`SOCL`. Matches the user's own
+  "Personeel" row; `rj270-pl.json` tags both `group: "kosten"` (no
+  personeel-specific sub-tag), so this split is this seed's own choice, not
+  read off a distinct RJ270 tag — justified because the user explicitly
+  named "Personeel" as one row and RJ270 happens to split its underlying
+  bookkeeping into two RGS ranges.
+- **`Kostprijs van de omzet`** — parent of `KPVO`/`INKW`. **This one is an
+  editorial split, stated plainly**: `rj270-pl.json` tags `KPVO`/`INKW`
+  identically to every other cost line (`group: "kosten"` — RJ270's
+  statutory P&L has no separate cost-of-goods-sold bucket distinct from
+  operating expenses). Splitting cost-of-goods (`KPVO`/`INKW`) out from
+  operating costs (`Personeel`, `Huisvestingskosten`, …) is a standard
+  management-accounting distinction (needed for the user's own "Bruto
+  Marge" concept, §6c/`budget-grid-view design.md` §4), not something
+  `rj270-pl.json` itself distinguishes — recorded here so a future reader
+  does not mistake this grouping for a literal RJ270 tag.
+
+`AFSC`/`HUIS`/`EXPL`/`VKKO`/`ALGK`/`RBAT`/`RLST`/`VPB` remain flat root-level
+leaves — RJ270 gives no further natural sub-split for these the way it does
+for Omzet's four revenue lines or Personeel's two cost lines, so this seed
+does not invent one.
+
+**19 `LedgerGroup` rows total** (11 root: `Omzet`, `Kostprijs van de omzet`,
+`Personeel`, `Huisvesting` [`HUIS`], `Afschrijvingen op vaste activa`
+[`AFSC`], `Exploitatie- en machinekosten` [`EXPL`], `Verkoopkosten`
+[`VKKO`], `Algemene kosten` [`ALGK`], `Rentebaten` [`RBAT`], `Rentelasten`
+[`RLST`], `Vennootschapsbelasting` [`VPB`]; 8 children: `NETO`/`WVPV`/
+`GEAC`/`OVOP` under `Omzet`, `KPVO`/`INKW` under `Kostprijs van de omzet`,
+`LONE`/`SOCL` under `Personeel`).
+
+**What this seed does not attempt to represent**, deliberately: the
+"grand total" waterfall rows `rj270-pl.json` itself models as `level: 0`
+`computed` sections (`SOM-OPB`/`SOM-KOS`/`BEDR-RES`/`FIN-RES`/`RES-VBB`/
+`NET-RES`) — matching the user's own Bruto Marge/Kosten/Bedrijfsresultaat/%
+rows — are **not** seeded as `LedgerGroup`s here. `rj270-pl.json` itself
+keeps these `computed` rows in the **statement config**, not in an
+OpenRegister schema; §3d and `budget-grid-view design.md` §4 follow the same
+separation — see §3d for why this needed no `LedgerGroup` field addition.
+
+### 3d. Parent rollup and why this needed no schema change
+
+Three seeded `LedgerGroup`s now have children (`Omzet`, `Personeel`,
+`Kostprijs van de omzet`) — the first time this schema's `parentLedgerGroupId`
+nesting (§3b) is actually exercised by seed data. This requires the
+consuming reader (`BudgetVsActualsReader`, §6b) to resolve a parent's own
+budget/actual value, which this change specifies as: **a parent `LedgerGroup`
+with children uses its own `BudgetLine` if one exists for it; otherwise its
+value is the recursive sum of its children's own resolved values.** An
+operator may budget "Personeel" as one typed-in figure (a `BudgetLine`
+directly against `Personeel`) or budget `Lonen en salarissen`/`Sociale
+lasten` separately (two `BudgetLine`s against the children) — both are
+valid, and the "own `BudgetLine` wins over roll-up" rule prevents double
+counting when both exist. `tasks.md` group 8 and REQ-BCS-008 are updated for
+this.
+
+**This did not force a `kind`/`formula` schema-shape change to `LedgerGroup`.**
+The rollup above (a monetary *sum*, driven entirely by the already-existing
+`parentLedgerGroupId` nesting) is genuinely representable without a new
+field. The five true cross-branch **subtraction/addition** rows
+(`SOM-OPB`↔`SOM-KOS` → Bruto Marge/Bedrijfsresultaat's inputs are siblings,
+not parent-child, so they cannot be expressed as a rollup-sum) are **not**
+`LedgerGroup`s at all — they are `budget-grid-view`'s own page-config
+computed rows (its design.md §4), the same separation `rj270-pl.json` itself
+already draws between flat `accountRange` sections and statement-level
+`computed` overlay rows. If a future change needs a *stored*, cross-branch
+formula (rather than a page-config one), that would be the point to revisit
+this schema — not forced by this change.
 
 ## 4. `AnnualBudget`
 
@@ -381,20 +492,66 @@ Given the hazard, `budget-core-schema`'s own budget-vs-actuals roll-up
 specs a PHP service pair as the primary, tested path —
 `BudgetVsActualsReader`/`BudgetVsActualsCalculator`, mirroring the existing
 `BbvProgrammeBudgetReader`/`Calculator` split (reader does every
-OpenRegister read, calculator does the arithmetic, nothing else). It joins
-`BudgetLine` (by `annualBudgetId`+`ledgerGroupId`) to actuals resolved from
-`TrialBalanceLine` (`periodId`, `accountNumber`, `debitMovement`/
-`creditMovement`, read-only, `bookkeeping-trial-balance.json:11`) filtered
-to the `LedgerGroup`'s resolved member accounts (§3a's range+explicit-adds/
-excludes resolution, done in PHP, not a declarative filter) — the same
-in-memory-join pattern `BbvProgrammeBudgetReader::spendByProgramme()`
-already uses for `GLLine`↔`GLTransaction` (`GLLine` carries neither `date`
-nor `administrationId`; both come from the parent `GLTransaction` via an
-explicit `transactionId` join over two `findAll()` calls, trying both the
-object UUID and `transactionNumber` since different writers populate
-`transactionId` differently — the precedent this new reader follows for the
-same reason: a declarative join across `BudgetLine`→`LedgerGroup`→
-`TrialBalanceLine` would hit the exact filter-validation hazard in §6a).
+OpenRegister read, calculator does the arithmetic, nothing else).
+
+**Amendment note (2026-08-20, post-review): actuals are NOT resolved from
+`TrialBalanceLine`.** This subsection originally described the join target
+as `TrialBalanceLine` (`periodId`, `accountNumber`,
+`debitMovement`/`creditMovement`). That was wrong, caught by the
+`budget-projection-engine` author reading `TrialBalanceService.php`'s own
+docblock, which states in as many words: *"there is NO `TrialBalanceLine`
+record authored by operators; the rows are materialised on demand"* — the
+schema exists for its OpenAPI shape and 5 illustrative seed rows
+(`bookkeeping-trial-balance.json`'s own seed block), not as a queryable
+historical collection. A reader that `findAll(schema: 'TrialBalanceLine')`
+expecting real per-period rows back would get near-nothing and silently
+report actual amounts near zero everywhere — the exact "a check that did
+not run looks exactly like one that passed" failure mode this fleet
+repeatedly gets bitten by. `budget-projection-engine design.md` §7a found
+and recorded the identical defect independently (its own reader has the
+same shape need) and its §7b design is the corrected precedent this
+subsection now follows:
+
+`BudgetVsActualsReader` computes actuals **directly from `GLTransaction` +
+`GLLine` + `Account`**, exactly as `TrialBalanceService::compute()` does
+internally, batched across the whole request instead of called once per
+period (`TrialBalanceService::compute()`'s own per-period call would cost
+one query set per month; this reader needs the whole window at once):
+
+1. `Account.findAll(filters: [administrationId])` — once. Resolves
+   `accountType` per account and, together with (4), `LedgerGroup`
+   membership (§3a's range+explicit-adds/excludes resolution, done in PHP,
+   never a declarative filter).
+2. `GLTransaction.findAll(filters: [administrationId, state: 'posted'])`
+   — once, unfiltered by period/date. Builds an in-memory
+   `transactionRef -> monthKey` index from `postingDate`, keyed by **both**
+   the object id and `transactionNumber` — the `BbvProgrammeBudgetReader
+   ::postedTransactionMonths()`/`transactionRefs()` precedent
+   (`lib/Service/BbvProgrammeBudgetReader.php:340-345`): "keying one
+   silently drops every line written by the other [writer]," verified live
+   in this codebase, not assumed.
+3. `GLLine.findAll(filters: [])` — once, unfiltered by period or account.
+   Each line's month is resolved via (2)'s index (a line whose transaction
+   is not in the index — unposted, or a different administration — is
+   skipped); `debitCents`/`creditCents` are bucketed by
+   `(accountNumber, monthKey)` in memory.
+4. `LedgerGroup.findAll(filters: [administrationId])` — once, when any
+   group-level (not just leaf-account) figure is requested. Resolves each
+   `LedgerGroup`'s membership against (1)'s account list, including the
+   parent-rollup rule (§3d: a parent with no own `BudgetLine` sums its
+   children's already-resolved values, recursively).
+
+**Query count: at most 4 `findAll()` calls for the GL-derived actuals side**
+(3 when no `LedgerGroup`-level figure is requested), **plus 1 for the
+`BudgetLine` batch** (`annualBudgetId => ['in' => [...]]`, the
+`SpendAnalyticsService.php:183` `in`-filter precedent) — **5 calls total,
+independent of the number of `BudgetLine`s, accounts, `LedgerGroup`s, or
+months in scope.** This is the same batched shape
+`budget-projection-engine design.md` §7b independently arrived at for its
+own GL-based reader (that change's own reader targets ≤4 calls for a
+window that can be any length) — the two readers now agree rather than
+silently disagreeing about where actuals come from, per the coordinating
+review that caught this.
 
 A *declarative* `x-openregister-aggregations` entry on `BudgetLine` is
 still declared, as **documentation of the intended shape**, not as the
@@ -545,11 +702,15 @@ Backend-only, `@e2e exclude`:
 
 ## 11. Open questions
 
-1. **`LedgerGroup` rollup rows** (§3c) — should the `level: 0`/`level: 1`
-   RJ270 statement-total/heading rows get their own parent `LedgerGroup`s
-   now, or is that genuinely `budget-grid-view`/`budget-projection-engine`
-   scope? This change seeds only `level: 2` leaves; a follow-up implementer
-   should confirm before assuming the parent rows are needed.
+1. **RESOLVED (2026-08-20)** — ~~`LedgerGroup` rollup rows~~: §3c/§3d now
+   answer this. RJ270's `level: 0` computed rows (Bruto Marge equivalents,
+   Bedrijfsresultaat, etc.) are `budget-grid-view`'s own page-config
+   computed rows, not `LedgerGroup`s; three of RJ270's own leaf groupings
+   (`Omzet`, `Personeel`, `Kostprijs van de omzet`) **are** now seeded as
+   real parent `LedgerGroup`s (§3c), resolved by simple rollup-sum (§3d) —
+   no schema change was needed. Left in place, struck through, so a reader
+   comparing against an earlier read of this document can see the question
+   was answered, not silently deleted.
 2. **§6a's two positive-control findings** — if `CommitmentBudget.outstanding_commitments`
    and/or `committedVsRealisedPerBudgetLine` are confirmed silently
    discarded, who owns filing the openregister-repo fix for

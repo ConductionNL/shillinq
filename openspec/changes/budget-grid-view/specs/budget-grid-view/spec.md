@@ -85,20 +85,25 @@ activity in the Playwright run for group 2's spec, not a dedicated assertion
 ### Requirement: REQ-BGV-003 — A column MUST show actuals + deviation only when its period is closed, never a `today`-relative guess
 
 A column is past — and MUST render its actual amount and deviation from
-budget — only when a `FiscalPeriod` exists for the administration whose
-`startDate`/`endDate` exactly match the column's own calendar span AND
-whose `state` is `closed` or `audit-locked`. A column whose matching
-`FiscalPeriod` is `open` or `closing`, or for which no exact-span
-`FiscalPeriod` exists (including a cadence mismatch, e.g. a quarterly-only
-administration viewed at month granularity), MUST render its budget value
-only, with an explicit indicator when the reason is a cadence mismatch
-rather than a genuinely future period (`design.md` §2c).
+budget — when either (a) a `FiscalPeriod` exists for the administration
+whose `startDate`/`endDate` exactly match the column's own calendar span
+and whose `state` is `closed` or `audit-locked`, or (b) the column's
+calendar span is fully contained within a coarser `FiscalPeriod` (e.g. a
+month within a closed quarterly `FiscalPeriod`) whose `state` is `closed`
+or `audit-locked` (`design.md` §2c, amended). A column whose matching or
+containing `FiscalPeriod` is `open`/`closing`, or for which none exists at
+all, MUST render its budget value only. The actual value for a past column
+MUST be computed from `GLTransaction`/`GLLine` activity for exactly that
+column's own calendar span (never from a coarser period's own figure) —
+apportionment is never needed, so no "actuals unavailable at this
+granularity" fallback exists.
 
 #### Scenario: A closed period shows actuals and deviation
 
-- **GIVEN** a `FiscalPeriod` for January 2026 with `state: "closed"`, and a
-  `TrialBalanceLine` row for the relevant account showing an actual amount
-  different from the `BudgetLine`'s `month01Amount`
+- **GIVEN** a `FiscalPeriod` for January 2026 with `state: "closed"`, and
+  posted `GLTransaction`/`GLLine` activity for the relevant account in
+  January 2026 producing an actual amount different from the `BudgetLine`'s
+  `month01Amount`
 - **WHEN** the January 2026 column renders
 - **THEN** it shows the actual amount (not the budget amount) and a
   text-labelled deviation from budget
@@ -116,17 +121,19 @@ rather than a genuinely future period (`design.md` §2c).
 today's date — covered by `budget-grid-view::past-column-shows-actuals-and-deviation`'s
 own negative case in the same Playwright spec
 
-#### Scenario: A cadence-mismatched column shows budget only, with an explicit indicator
+#### Scenario: A month contained within a closed quarterly `FiscalPeriod` shows actuals for exactly that month, not the quarter
 
 - **GIVEN** an administration whose only `FiscalPeriod` for Q1 2026 is
-  quarterly (`periodId: "2026-Q1"`), and the grid viewed at month
-  granularity
+  quarterly (`periodId: "2026-Q1"`, `state: "closed"`), the grid viewed at
+  month granularity, and posted `GLTransaction`/`GLLine` activity dated in
+  January 2026 only
 - **WHEN** the January 2026 column renders
-- **THEN** it shows the budget amount only, with an indicator that actuals
-  are not available at this granularity — it MUST NOT apportion the
-  quarterly actual across the three months
+- **THEN** it shows the actual amount for exactly January's own GL activity
+  (not one-third of the quarter's total, and not the budget figure) —
+  January counts as past because it is fully contained within the closed
+  Q1 `FiscalPeriod`
 
-@e2e exclude granularity-fallback logic, verified by PHPUnit against
+@e2e exclude granularity-containment logic, verified by PHPUnit against
 `BudgetGridReader::pastColumns()`
 
 ### Requirement: REQ-BGV-004 — The deviation sign convention MUST be derived per account type, never a single fixed sign
@@ -226,21 +233,30 @@ Decision 3).
 ### Requirement: REQ-BGV-008 — Subtotal/derived rows (Bruto Marge, Kosten, Bedrijfsresultaat, %) MUST be a page-config concern, not a schema field
 
 Computed rows MUST be declared in the `BudgetGrid` page's own manifest
-config as `group:<code>`/`row:<code>`/`sum-group:<code>` formula
-references over already-rendered `LedgerGroup` rows and other computed
-rows, modelled on `rj270-pl.json`'s existing `sum-group:<group>`/
-`section:<code> ± section:<code>` convention (`design.md` §4). This
-requirement MUST NOT add any field to the `LedgerGroup`, `AnnualBudget`, or
-`BudgetLine` schemas `budget-core-schema` defines.
+config as `<code> [+|-] <code> …` arithmetic formula references over a
+single flat codespace (root `LedgerGroup` `code`s and other `computedRows`
+`code`s resolve identically), each carrying its own explicit
+`favorableDirection` (`"higher"`|`"lower"`) since a computed row has no
+resolved member accounts to derive one from — modelled on `rj270-pl.json`'s
+existing `sum-group:<group>`/`section:<code> ± section:<code>` convention
+and per-section `sign` tag, adapted to this schema's flat codespace
+(`design.md` §4). This requirement MUST NOT add any field to the
+`LedgerGroup`, `AnnualBudget`, or `BudgetLine` schemas `budget-core-schema`
+defines; three of `rj270-pl.json`'s groupings (`Omzet`, `Personeel`,
+`Kostprijs van de omzet`) are real parent `LedgerGroup`s instead, resolved
+by simple rollup-sum (`budget-core-schema design.md` §3d), not by a
+computed row.
 
 #### Scenario: Bedrijfsresultaat computes as Bruto Marge minus Kosten across every column, including TOTAAL
 
-- **GIVEN** computed rows `BRUTO-MARGE` (`group:Omzet - group:Kostprijs-Omzet`),
-  `KOSTEN` (`sum-group:kosten`), and `BEDRIJFSRESULTAAT`
-  (`row:BRUTO-MARGE - row:KOSTEN`)
+- **GIVEN** computed rows `bruto-marge`
+  (`formula: "omzet - kostprijs-van-de-omzet"`), `kosten`
+  (`formula: "personeel + huisvesting + afschrijvingen-op-vaste-activa +
+  exploitatie-en-machinekosten + verkoopkosten + algemene-kosten"`), and
+  `bedrijfsresultaat` (`formula: "bruto-marge - kosten"`)
 - **WHEN** the grid renders any column, including `TOTAAL`
-- **THEN** the `BEDRIJFSRESULTAAT` row's value in that column equals the
-  `BRUTO-MARGE` row's value minus the `KOSTEN` row's value in the same
+- **THEN** the `bedrijfsresultaat` row's value in that column equals the
+  `bruto-marge` row's value minus the `kosten` row's value in the same
   column
 
 @e2e exclude computed-row formula evaluation — verified by PHPUnit/unit
@@ -248,21 +264,42 @@ test against the formula evaluator (`design.md` §4), not a browser
 assertion of arithmetic correctness; the rows' presence is covered by
 `budget-grid-view::grid-renders-rows-and-columns`
 
-### Requirement: REQ-BGV-009 — Query budget: a grid render MUST cost a bounded, column-scaled number of reads, never one per row
+#### Scenario: The full waterfall from Bruto Marge to Nettoresultaat is representable
 
-Per `design.md` §1c, one grid render MUST issue at most `4 + P` OpenRegister
-`findAll` calls, where `P` is the number of past/closed columns actually
-displayed — never a count that scales with the number of `LedgerGroup`
-rows or with how many rows the operator expands.
+- **GIVEN** the six computed rows in `design.md` §4
+  (`bruto-marge`/`kosten`/`bedrijfsresultaat`/`financieel-resultaat`/
+  `resultaat-voor-belastingen`/`nettoresultaat`), matching
+  `rj270-pl.json`'s own `SOM-OPB → SOM-KOS → BEDR-RES → FIN-RES → RES-VBB →
+  NET-RES` waterfall
+- **WHEN** the grid renders
+- **THEN** `nettoresultaat`'s value in any column equals
+  `bedrijfsresultaat + financieel-resultaat - vennootschapsbelasting` for
+  that same column
 
-#### Scenario: A render with 50 `LedgerGroup` rows and 12 displayed columns costs the same query count as one with 5 rows and 12 columns
+@e2e exclude computed-row formula evaluation — verified by PHPUnit/unit
+test against the formula evaluator
 
-- **GIVEN** two administrations, one with 5 `LedgerGroup`s and one with 50,
-  both viewed over the same 12-column range with the same number of closed
-  periods
+### Requirement: REQ-BGV-009 — Query budget: a grid render MUST cost a bounded, flat number of reads, never one per row or one per column
+
+Per `design.md` §1c, one grid render MUST issue at most 7 OpenRegister
+`findAll` calls total — 3 for `BudgetGridReader`'s own reads
+(`LedgerGroup`, `FiscalPeriod`, `BudgetLine`) plus at most 4 delegated to
+`budget-core-schema`'s `BudgetVsActualsReader` (`Account`, `GLTransaction`,
+`GLLine`, `LedgerGroup`) — a flat constant, never a count that scales with
+the number of `LedgerGroup` rows, the number of rows the operator expands,
+or the number of displayed columns (actuals are fetched once, unfiltered by
+period, and bucketed by calendar month in memory — not once per past
+column).
+
+#### Scenario: A render with 50 `LedgerGroup` rows and 12 displayed columns costs the same query count as one with 5 rows and 3 columns
+
+- **GIVEN** two administrations, one with 5 `LedgerGroup`s viewed over 3
+  columns and one with 50 `LedgerGroup`s viewed over 12 columns, with
+  differing numbers of closed periods in each range
 - **WHEN** each grid renders
-- **THEN** both issue the identical number of `findAll` calls — the row
-  count does not affect the query count
+- **THEN** both issue the identical, flat number of `findAll` calls —
+  neither the row count nor the column count nor the number of past/closed
+  columns affects the query count
 
 @e2e exclude query-count assertion — verified by PHPUnit against
 `BudgetGridReader` with a call-counting mock/spy (`design.md` §1c), per the
@@ -274,21 +311,24 @@ requirement exists to avoid repeating
 This change MUST NOT implement projection math (`budget-projection-engine`),
 contract/recurring cost derivation writing non-`manual` `BudgetLine.source`
 values (`budget-known-costs`), scenario/modifier support
-(`budget-scenarios`), charts (`budget-charts`), apportionment of a
-coarser-cadence `FiscalPeriod`'s actuals into a finer column granularity, or
-a multi-administration consolidated view. It MUST NOT add, rename, or
-redesign any field on `LedgerGroup`, `AnnualBudget`, or `BudgetLine`.
+(`budget-scenarios`), charts (`budget-charts`), or a multi-administration
+consolidated view. It MUST NOT add, rename, or redesign any field on
+`LedgerGroup`, `AnnualBudget`, or `BudgetLine`. (Apportioning a
+coarser-cadence `FiscalPeriod`'s actuals into a finer column granularity
+was an earlier draft's non-goal; `design.md` §2c's amendment resolved the
+underlying problem directly — actuals are always computed from GL activity
+at the column's own exact calendar span — so there is no apportionment
+logic left to avoid building.)
 
-#### Scenario: No projection, contract-derivation, scenario, chart, apportionment, multi-administration, or schema-redesign code appears in this change's diff
+#### Scenario: No projection, contract-derivation, scenario, chart, multi-administration, or schema-redesign code appears in this change's diff
 
 - **GIVEN** this change's implementation diff
 - **WHEN** it is inspected
 - **THEN** no projection-math service, contract/recurring `BudgetLine`
-  writer, scenario-switching logic, chart component, cross-period
-  apportionment logic, multi-administration aggregation, or edit to
-  `budget-core-schema`'s own `register.d` schema fragment is present — only
-  the grid page, its backend reader/calculator, and the manifest/nav
-  additions named in REQ-BGV-006/REQ-BGV-007
+  writer, scenario-switching logic, chart component, multi-administration
+  aggregation, or edit to `budget-core-schema`'s own `register.d` schema
+  fragment is present — only the grid page, its backend reader/calculator,
+  and the manifest/nav additions named in REQ-BGV-006/REQ-BGV-007
 
 @e2e exclude negative/scope-boundary requirement — verified by diff
 inspection

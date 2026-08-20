@@ -132,24 +132,45 @@ and `ChartOfAccountsMapping` precedents. `effectiveFrom`/`effectiveTo`
 
 @e2e budget-core-schema::ledger-group-seeded-on-import
 
-### Requirement: REQ-BCS-005 — `LedgerGroup` MUST ship seeded from the RJ270 statement + rubriek-mapping precedents
+### Requirement: REQ-BCS-005 — `LedgerGroup` MUST ship seeded from `rj270-pl.json`, P&L-shaped
 
-On import, `LedgerGroup` MUST carry one seeded row per non-computed,
-non-total `level: 2` section of
-`lib/Settings/statements/rj270-balance-sheet.json`, with account ranges
-taken from the small-manufacturing variant of `balans-rubriek-mapping.json`
-where they align. Each seeded row MUST carry `@self.seedExemption: "anchor"`
-per ADR-001 — this is canonical BW 2:373 / RJ270 statutory reference data,
-not deletable editorial example data.
+**Amended (2026-08-20)**: on import, `LedgerGroup` MUST carry one seeded
+row per `level: 1` section of `lib/Settings/statements/rj270-pl.json`
+(16 leaves: `NETO`/`WVPV`/`GEAC`/`OVOP`/`KPVO`/`INKW`/`LONE`/`SOCL`/`AFSC`/
+`HUIS`/`EXPL`/`VKKO`/`ALGK`/`RBAT`/`RLST`/`VPB`), each with that section's
+own `accountRange`, plus 3 seeded parent `LedgerGroup`s (`Omzet`,
+`Personeel`, `Kostprijs van de omzet`) nesting the relevant leaves via
+`parentLedgerGroupId`, per `design.md` §3c. `LedgerGroup` MUST NOT ship
+seeded from `lib/Settings/statements/rj270-balance-sheet.json` by default —
+a begroting is a monthly-phased flow plan and a balance-sheet stock account
+is not a begroting use case this programme has identified (`design.md` §3c
+states this explicitly). Each seeded row MUST carry
+`@self.seedExemption: "anchor"` per ADR-001 — this is canonical BW 2:373 /
+RJ270 statutory reference data, not deletable editorial example data.
 
-#### Scenario: A fresh import ships day-one `LedgerGroup` data
+#### Scenario: A fresh import ships day-one, P&L-shaped `LedgerGroup` data
 
 - **GIVEN** a fresh OpenRegister import of this change's register fragment
 - **WHEN** `LedgerGroups` is opened
-- **THEN** the seeded RJ270-derived rows (e.g. "Voorraden", "Liquide
-  middelen") are present, each carrying `@self.seedExemption: "anchor"`
+- **THEN** the seeded RJ270-PL-derived rows (e.g. "Omzet", "Personeel",
+  "Huisvestingskosten") are present, each carrying
+  `@self.seedExemption: "anchor"`, and no `rj270-balance-sheet.json`-derived
+  row (e.g. "Voorraden", "Liquide middelen") is present
 
 @e2e budget-core-schema::ledger-group-seeded-on-import
+
+#### Scenario: A parent `LedgerGroup`'s value rolls up its children when it has no own `BudgetLine`
+
+- **GIVEN** the seeded `Personeel` `LedgerGroup` (parent of `Lonen en
+  salarissen` and `Sociale lasten en pensioenlasten`, no `BudgetLine` of its
+  own) with a `BudgetLine` of `month01Amount` EUR 30,000 against `Lonen en
+  salarissen` and EUR 8,000 against `Sociale lasten en pensioenlasten`
+- **WHEN** `Personeel`'s own budgeted value for that month is resolved
+- **THEN** it resolves to EUR 38,000 (the recursive sum of its children),
+  per `design.md` §3d's rollup rule
+
+@e2e exclude backend rollup-resolution logic, no browser-visible surface —
+verified by PHPUnit against `BudgetVsActualsReader`
 
 ### Requirement: REQ-BCS-006 — `AnnualBudget` MUST carry a lifecycle and enforce exactly one default per administration + fiscal year
 
@@ -211,24 +232,47 @@ Given the platform hazard that `x-openregister-aggregations`/
 properties for cross-schema filters rather than the *target* schema's,
 silently discarding any cross-schema annotation (`design.md` §6a),
 `BudgetVsActualsReader`/`BudgetVsActualsCalculator` MUST be the primary,
-PHPUnit-tested path for joining `BudgetLine` to `TrialBalanceLine` actuals
-via each line's `LedgerGroup`-resolved member accounts. Any declarative
+PHPUnit-tested path for joining `BudgetLine` to actuals via each line's
+`LedgerGroup`-resolved member accounts. **Amended (2026-08-20)**: actuals
+MUST be computed directly from `GLTransaction` + `GLLine` + `Account` (the
+same batched, dual-keyed-`transactionId` shape
+`BbvProgrammeBudgetReader::spendByProgramme()` and
+`budget-projection-engine`'s own reader use), NOT from `TrialBalanceLine` —
+`TrialBalanceService.php`'s own docblock confirms no `TrialBalanceLine` row
+is ever persisted, so a reader expecting queryable historical rows there
+would silently report near-zero actuals everywhere. Any declarative
 `x-openregister-aggregations` entry expressing the same shape MUST be
 documentation-only, explicitly commented as unverified pending a positive
 control, and MUST NOT be the path any page depends on.
 
-#### Scenario: The PHP roll-up returns budgeted vs. actual per budget line
+#### Scenario: The PHP roll-up returns budgeted vs. actual per budget line, computed from GL activity
 
 - **GIVEN** a `BudgetLine` with `month01Amount` EUR 10,000 under a
-  `LedgerGroup` resolving to account `1000`, and a `TrialBalanceLine` row
-  for account `1000` / period `2027-01` with `debitMovement` EUR 8,000
+  `LedgerGroup` resolving to account `1000`, and one or more posted
+  `GLTransaction`/`GLLine` pairs booking EUR 8,000 of debit activity to
+  account `1000` with a `postingDate` in January 2027
 - **WHEN** `BudgetVsActualsReader`/`Calculator` compute the roll-up for that
-  line and period
-- **THEN** the result reports budgeted EUR 10,000, actual EUR 8,000
+  line and month
+- **THEN** the result reports budgeted EUR 10,000, actual EUR 8,000 —
+  resolved from the `GLTransaction`/`GLLine` activity, not from any
+  `TrialBalanceLine` row
 
 @e2e exclude backend roll-up computation, no browser-visible surface —
 verified by PHPUnit against `BudgetVsActualsReader`/`Calculator`, mirroring
 `BbvProgrammeBudgetReader`/`Calculator`'s own treatment
+
+#### Scenario: The reader's query count stays within its bound regardless of window size
+
+- **GIVEN** a request spanning 12 months across every seeded `LedgerGroup`
+- **WHEN** `BudgetVsActualsReader` resolves actuals for the whole request
+- **THEN** it issues at most 4 `findAll()` calls for the GL-derived side
+  (`Account`, `GLTransaction`, `GLLine`, `LedgerGroup`) plus 1 for the
+  `BudgetLine` batch — 5 total, not scaling with the number of months,
+  accounts, or `LedgerGroup`s in scope
+
+@e2e exclude query-count regression — verified by PHPUnit against a
+call-counting mock of `ObjectServiceInterface`, mirroring
+`budget-projection-engine`'s own §8 query-budget regression test
 
 #### Scenario: The declarative aggregation hazard is checked, not assumed
 
