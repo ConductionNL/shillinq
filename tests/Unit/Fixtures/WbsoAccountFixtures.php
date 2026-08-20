@@ -34,71 +34,69 @@ namespace OCA\Shillinq\Tests\Unit\Fixtures;
  *
  * @SuppressWarnings(PHPMD.StaticAccess)
  */
-final class WbsoAccountFixtures
-{
+final class WbsoAccountFixtures {
 
-    public const SAMPLE_ADMINISTRATION = 'adm-consultancy-nl';
+	public const SAMPLE_ADMINISTRATION = 'adm-consultancy-nl';
 
-    /**
-     * Five RGS accounts with parent hierarchy.
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    public static function accounts(): array
-    {
-        return [
-            [
-                'accountNumber'    => '1000',
-                'name'             => 'Kas en bank',
-                'accountType'      => 'assets',
-                'parentAccountNumber' => '1',
-                'status'           => 'active',
-                'currency'         => 'EUR',
-                'administrationId' => self::SAMPLE_ADMINISTRATION,
-                'description'      => 'Cash and bank deposits.',
-                'vatApplicable'    => false,
-            ],
-            [
-                'accountNumber'    => '4100',
-                'name'             => 'Omzet diensten',
-                'accountType'      => 'revenue',
-                'parentAccountNumber' => '4',
-                'status'           => 'active',
-                'currency'         => 'EUR',
-                'administrationId' => self::SAMPLE_ADMINISTRATION,
-                'vatApplicable'    => true,
-            ],
-            [
-                'accountNumber'    => '6000',
-                'name'             => 'Huisvestingskosten',
-                'accountType'      => 'expenses',
-                'parentAccountNumber' => '6',
-                'status'           => 'active',
-                'currency'         => 'EUR',
-                'administrationId' => self::SAMPLE_ADMINISTRATION,
-                'vatApplicable'    => true,
-            ],
-            [
-                'accountNumber'    => '2000',
-                'name'             => 'Eigen vermogen',
-                'accountType'      => 'equity',
-                'parentAccountNumber' => '2',
-                'status'           => 'active',
-                'currency'         => 'EUR',
-                'administrationId' => self::SAMPLE_ADMINISTRATION,
-                'vatApplicable'    => false,
-            ],
-            [
-                'accountNumber'    => '1500',
-                'name'             => 'Crediteuren',
-                'accountType'      => 'liabilities',
-                'parentAccountNumber' => '1',
-                'status'           => 'active',
-                'currency'         => 'EUR',
-                'administrationId' => self::SAMPLE_ADMINISTRATION,
-                'vatApplicable'    => false,
-            ],
-        ];
+	/**
+	 * Five RGS accounts with parent hierarchy.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function accounts(): array {
+		return [
+			[
+				'accountNumber' => '1000',
+				'name' => 'Kas en bank',
+				'accountType' => 'assets',
+				'parentAccountNumber' => '1',
+				'status' => 'active',
+				'currency' => 'EUR',
+				'administrationId' => self::SAMPLE_ADMINISTRATION,
+				'description' => 'Cash and bank deposits.',
+				'vatApplicable' => false,
+			],
+			[
+				'accountNumber' => '4100',
+				'name' => 'Omzet diensten',
+				'accountType' => 'revenue',
+				'parentAccountNumber' => '4',
+				'status' => 'active',
+				'currency' => 'EUR',
+				'administrationId' => self::SAMPLE_ADMINISTRATION,
+				'vatApplicable' => true,
+			],
+			[
+				'accountNumber' => '6000',
+				'name' => 'Huisvestingskosten',
+				'accountType' => 'expenses',
+				'parentAccountNumber' => '6',
+				'status' => 'active',
+				'currency' => 'EUR',
+				'administrationId' => self::SAMPLE_ADMINISTRATION,
+				'vatApplicable' => true,
+			],
+			[
+				'accountNumber' => '2000',
+				'name' => 'Eigen vermogen',
+				'accountType' => 'equity',
+				'parentAccountNumber' => '2',
+				'status' => 'active',
+				'currency' => 'EUR',
+				'administrationId' => self::SAMPLE_ADMINISTRATION,
+				'vatApplicable' => false,
+			],
+			[
+				'accountNumber' => '1500',
+				'name' => 'Crediteuren',
+				'accountType' => 'liabilities',
+				'parentAccountNumber' => '1',
+				'status' => 'active',
+				'currency' => 'EUR',
+				'administrationId' => self::SAMPLE_ADMINISTRATION,
+				'vatApplicable' => false,
+			],
+		];
 
-    }//end accounts()
+	}//end accounts()
 }//end class

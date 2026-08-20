@@ -55,240 +55,227 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-5
  */
-class CashflowRecurringGuard
-{
+class CashflowRecurringGuard {
 
-    /**
-     * Frequencies that require a day-of-month anchor.
-     *
-     * @var array<int,string>
-     */
-    private const MONTHLY_FREQUENCIES = ['MAANDELIJKS'];
+	/**
+	 * Frequencies that require a day-of-month anchor.
+	 *
+	 * @var array<int,string>
+	 */
+	private const MONTHLY_FREQUENCIES = ['MONTHLY'];
 
-    /**
-     * Construct the guard.
-     *
-     * @param LoggerInterface $logger Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the guard.
+	 *
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Save precondition for the CashflowRecurring schema.
-     *
-     * Returns true only when every consistency check passes. Fail-closed:
-     * returns false on any exception (denies the save) per CWE-863.
-     *
-     * @param array<string, mixed> $recurring CashflowRecurring object array supplied by OR.
-     *
-     * @return bool True when the recurring definition may be saved.
-     *
-     * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-5
-     */
-    public function validateOnSave(array $recurring): bool
-    {
-        try {
-            if ($this->hasNonNegativeAmount(recurring: $recurring) === false) {
-                return false;
-            }
+	/**
+	 * Save precondition for the CashflowRecurring schema.
+	 *
+	 * Returns true only when every consistency check passes. Fail-closed:
+	 * returns false on any exception (denies the save) per CWE-863.
+	 *
+	 * @param array<string, mixed> $recurring CashflowRecurring object array supplied by OR.
+	 *
+	 * @return bool True when the recurring definition may be saved.
+	 *
+	 * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-5
+	 */
+	public function validateOnSave(array $recurring): bool {
+		try {
+			if ($this->hasNonNegativeAmount(recurring: $recurring) === false) {
+				return false;
+			}
 
-            if ($this->hasConsistentRecurrenceAnchor(recurring: $recurring) === false) {
-                return false;
-            }
+			if ($this->hasConsistentRecurrenceAnchor(recurring: $recurring) === false) {
+				return false;
+			}
 
-            if ($this->hasValidValidityWindow(recurring: $recurring) === false) {
-                return false;
-            }
+			if ($this->hasValidValidityWindow(recurring: $recurring) === false) {
+				return false;
+			}
 
-            return $this->hasApplicableIndexation(recurring: $recurring);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'CashflowRecurringGuard: validateOnSave failed — denying save (fail-closed)',
-                [
-                    'recurId'   => ($recurring['recurId'] ?? 'unknown'),
-                    'exception' => $e->getMessage(),
-                ]
-            );
-            return false;
-        }//end try
+			return $this->hasApplicableIndexation(recurring: $recurring);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'CashflowRecurringGuard: validateOnSave failed — denying save (fail-closed)',
+				[
+					'recurId' => ($recurring['recurId'] ?? 'unknown'),
+					'exception' => $e->getMessage(),
+				]
+			);
+			return false;
+		}//end try
 
-    }//end validateOnSave()
+	}//end validateOnSave()
 
-    /**
-     * The base amount must be present and non-negative.
-     *
-     * @param array<string, mixed> $recurring Recurring object array.
-     *
-     * @return bool True when standaardBedrag is a non-negative number.
-     */
-    private function hasNonNegativeAmount(array $recurring): bool
-    {
-        if (isset($recurring['standaardBedrag']) === false
-            || is_numeric($recurring['standaardBedrag']) === false
-            || (float) $recurring['standaardBedrag'] < 0.0
-        ) {
-            $this->logger->info(
-                'CashflowRecurringGuard: missing or negative standaardBedrag — denying save',
-                ['recurId' => ($recurring['recurId'] ?? 'unknown')]
-            );
-            return false;
-        }
+	/**
+	 * The base amount must be present and non-negative.
+	 *
+	 * @param array<string, mixed> $recurring Recurring object array.
+	 *
+	 * @return bool True when standaardBedrag is a non-negative number.
+	 */
+	private function hasNonNegativeAmount(array $recurring): bool {
+		if (isset($recurring['standardAmount']) === false
+			|| is_numeric($recurring['standardAmount']) === false
+			|| (float)$recurring['standardAmount'] < 0.0
+		) {
+			$this->logger->info(
+				'CashflowRecurringGuard: missing or negative standaardBedrag — denying save',
+				['recurId' => ($recurring['recurId'] ?? 'unknown')]
+			);
+			return false;
+		}
 
-        return true;
+		return true;
+	}//end hasNonNegativeAmount()
 
-    }//end hasNonNegativeAmount()
+	/**
+	 * The recurrence anchor must match the declared frequency (REQ-CF-005).
+	 *
+	 * Monthly items need a valid dagVanMaand (1-31); annual items need a valid
+	 * maandVanJaar (1-12) and a valid dagVanMaand (1-31) to anchor the occurrence.
+	 *
+	 * @param array<string, mixed> $recurring Recurring object array.
+	 *
+	 * @return bool True when the anchor is consistent with the frequency.
+	 */
+	private function hasConsistentRecurrenceAnchor(array $recurring): bool {
+		$frequency = (string)($recurring['frequency'] ?? '');
 
-    /**
-     * The recurrence anchor must match the declared frequency (REQ-CF-005).
-     *
-     * Monthly items need a valid dagVanMaand (1-31); annual items need a valid
-     * maandVanJaar (1-12) and a valid dagVanMaand (1-31) to anchor the occurrence.
-     *
-     * @param array<string, mixed> $recurring Recurring object array.
-     *
-     * @return bool True when the anchor is consistent with the frequency.
-     */
-    private function hasConsistentRecurrenceAnchor(array $recurring): bool
-    {
-        $frequency = (string) ($recurring['frequentie'] ?? '');
+		if (in_array($frequency, self::MONTHLY_FREQUENCIES, true) === true) {
+			if ($this->isValidDayOfMonth(value: ($recurring['dagFromMonth'] ?? null)) === false) {
+				$this->logger->info(
+					'CashflowRecurringGuard: MAANDELIJKS requires a valid dagVanMaand (1-31) — denying save',
+					['recurId' => ($recurring['recurId'] ?? 'unknown')]
+				);
+				return false;
+			}
+		}
 
-        if (in_array($frequency, self::MONTHLY_FREQUENCIES, true) === true) {
-            if ($this->isValidDayOfMonth(value: ($recurring['dagVanMaand'] ?? null)) === false) {
-                $this->logger->info(
-                    'CashflowRecurringGuard: MAANDELIJKS requires a valid dagVanMaand (1-31) — denying save',
-                    ['recurId' => ($recurring['recurId'] ?? 'unknown')]
-                );
-                return false;
-            }
-        }
+		if ($frequency === 'ANNUALLY') {
+			$month = ($recurring['monthOfYear'] ?? null);
+			if (is_int($month) === false || $month < 1 || $month > 12) {
+				$this->logger->info(
+					'CashflowRecurringGuard: JAARLIJKS requires a valid maandVanJaar (1-12) — denying save',
+					['recurId' => ($recurring['recurId'] ?? 'unknown')]
+				);
+				return false;
+			}
 
-        if ($frequency === 'JAARLIJKS') {
-            $month = ($recurring['maandVanJaar'] ?? null);
-            if (is_int($month) === false || $month < 1 || $month > 12) {
-                $this->logger->info(
-                    'CashflowRecurringGuard: JAARLIJKS requires a valid maandVanJaar (1-12) — denying save',
-                    ['recurId' => ($recurring['recurId'] ?? 'unknown')]
-                );
-                return false;
-            }
+			if ($this->isValidDayOfMonth(value: ($recurring['dagFromMonth'] ?? 1)) === false) {
+				$this->logger->info(
+					'CashflowRecurringGuard: JAARLIJKS requires a valid dagVanMaand (1-31) — denying save',
+					['recurId' => ($recurring['recurId'] ?? 'unknown')]
+				);
+				return false;
+			}
+		}//end if
 
-            if ($this->isValidDayOfMonth(value: ($recurring['dagVanMaand'] ?? 1)) === false) {
-                $this->logger->info(
-                    'CashflowRecurringGuard: JAARLIJKS requires a valid dagVanMaand (1-31) — denying save',
-                    ['recurId' => ($recurring['recurId'] ?? 'unknown')]
-                );
-                return false;
-            }
-        }//end if
+		return true;
+	}//end hasConsistentRecurrenceAnchor()
 
-        return true;
+	/**
+	 * The geldigVan must parse, and geldigTot (if present) must not precede it.
+	 *
+	 * @param array<string, mixed> $recurring Recurring object array.
+	 *
+	 * @return bool True when the validity window is well-formed.
+	 */
+	private function hasValidValidityWindow(array $recurring): bool {
+		$from = $this->parseDate(value: (string)($recurring['validFrom'] ?? ''));
+		if ($from === null) {
+			$this->logger->info(
+				'CashflowRecurringGuard: missing or unparseable geldigVan — denying save',
+				['recurId' => ($recurring['recurId'] ?? 'unknown')]
+			);
+			return false;
+		}
 
-    }//end hasConsistentRecurrenceAnchor()
+		$toRaw = ($recurring['validTo'] ?? null);
+		if ($toRaw === null || $toRaw === '') {
+			// Indefinite window is valid.
+			return true;
+		}
 
-    /**
-     * The geldigVan must parse, and geldigTot (if present) must not precede it.
-     *
-     * @param array<string, mixed> $recurring Recurring object array.
-     *
-     * @return bool True when the validity window is well-formed.
-     */
-    private function hasValidValidityWindow(array $recurring): bool
-    {
-        $van = $this->parseDate(value: (string) ($recurring['geldigVan'] ?? ''));
-        if ($van === null) {
-            $this->logger->info(
-                'CashflowRecurringGuard: missing or unparseable geldigVan — denying save',
-                ['recurId' => ($recurring['recurId'] ?? 'unknown')]
-            );
-            return false;
-        }
+		$tot = $this->parseDate(value: (string)$toRaw);
+		if ($tot === null) {
+			$this->logger->info(
+				'CashflowRecurringGuard: unparseable geldigTot — denying save',
+				['recurId' => ($recurring['recurId'] ?? 'unknown')]
+			);
+			return false;
+		}
 
-        $totRaw = ($recurring['geldigTot'] ?? null);
-        if ($totRaw === null || $totRaw === '') {
-            // Indefinite window is valid.
-            return true;
-        }
+		if ($tot < $from) {
+			$this->logger->info(
+				'CashflowRecurringGuard: geldigTot precedes geldigVan — denying save',
+				['recurId' => ($recurring['recurId'] ?? 'unknown')]
+			);
+			return false;
+		}
 
-        $tot = $this->parseDate(value: (string) $totRaw);
-        if ($tot === null) {
-            $this->logger->info(
-                'CashflowRecurringGuard: unparseable geldigTot — denying save',
-                ['recurId' => ($recurring['recurId'] ?? 'unknown')]
-            );
-            return false;
-        }
+		return true;
+	}//end hasValidValidityWindow()
 
-        if ($tot < $van) {
-            $this->logger->info(
-                'CashflowRecurringGuard: geldigTot precedes geldigVan — denying save',
-                ['recurId' => ($recurring['recurId'] ?? 'unknown')]
-            );
-            return false;
-        }
+	/**
+	 * CPI indexing is only applicable to annual recurrences (REQ-CF-005).
+	 *
+	 * @param array<string, mixed> $recurring Recurring object array.
+	 *
+	 * @return bool True when indexation is FIXED, absent, or annual-applicable.
+	 */
+	private function hasApplicableIndexation(array $recurring): bool {
+		$rule = (string)($recurring['indexationRule'] ?? 'FIXED');
+		if ($rule !== 'CPI_PAST_YEAR') {
+			return true;
+		}
 
-        return true;
+		if ((string)($recurring['frequency'] ?? '') !== 'ANNUALLY') {
+			$this->logger->info(
+				'CashflowRecurringGuard: CPI_AFGELOPEN_JAAR indexing only applies to JAARLIJKS items — denying save',
+				['recurId' => ($recurring['recurId'] ?? 'unknown')]
+			);
+			return false;
+		}
 
-    }//end hasValidValidityWindow()
+		return true;
+	}//end hasApplicableIndexation()
 
-    /**
-     * CPI indexing is only applicable to annual recurrences (REQ-CF-005).
-     *
-     * @param array<string, mixed> $recurring Recurring object array.
-     *
-     * @return bool True when indexation is FIXED, absent, or annual-applicable.
-     */
-    private function hasApplicableIndexation(array $recurring): bool
-    {
-        $rule = (string) ($recurring['indexatieRegel'] ?? 'FIXED');
-        if ($rule !== 'CPI_AFGELOPEN_JAAR') {
-            return true;
-        }
+	/**
+	 * Validate a day-of-month integer in the inclusive range 1-31.
+	 *
+	 * @param mixed $value The candidate day value.
+	 *
+	 * @return bool True when value is an integer in [1,31].
+	 */
+	private function isValidDayOfMonth(mixed $value): bool {
+		return (is_int($value) === true && $value >= 1 && $value <= 31);
+	}//end isValidDayOfMonth()
 
-        if ((string) ($recurring['frequentie'] ?? '') !== 'JAARLIJKS') {
-            $this->logger->info(
-                'CashflowRecurringGuard: CPI_AFGELOPEN_JAAR indexing only applies to JAARLIJKS items — denying save',
-                ['recurId' => ($recurring['recurId'] ?? 'unknown')]
-            );
-            return false;
-        }
+	/**
+	 * Parse an ISO date string into an immutable date, or null on failure.
+	 *
+	 * @param string $value The date string.
+	 *
+	 * @return DateTimeImmutable|null The parsed date, or null when unparseable/empty.
+	 */
+	private function parseDate(string $value): ?DateTimeImmutable {
+		if ($value === '') {
+			return null;
+		}
 
-        return true;
+		try {
+			return new DateTimeImmutable($value);
+		} catch (\Throwable) {
+			return null;
+		}
 
-    }//end hasApplicableIndexation()
-
-    /**
-     * Validate a day-of-month integer in the inclusive range 1-31.
-     *
-     * @param mixed $value The candidate day value.
-     *
-     * @return bool True when value is an integer in [1,31].
-     */
-    private function isValidDayOfMonth(mixed $value): bool
-    {
-        return (is_int($value) === true && $value >= 1 && $value <= 31);
-
-    }//end isValidDayOfMonth()
-
-    /**
-     * Parse an ISO date string into an immutable date, or null on failure.
-     *
-     * @param string $value The date string.
-     *
-     * @return DateTimeImmutable|null The parsed date, or null when unparseable/empty.
-     */
-    private function parseDate(string $value): ?DateTimeImmutable
-    {
-        if ($value === '') {
-            return null;
-        }
-
-        try {
-            return new DateTimeImmutable($value);
-        } catch (\Throwable) {
-            return null;
-        }
-
-    }//end parseDate()
+	}//end parseDate()
 }//end class

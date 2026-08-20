@@ -50,7 +50,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -60,11 +60,11 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Listener;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -74,344 +74,329 @@ use Throwable;
  *
  * @implements IEventListener<Event>
  *
- * @spec openspec/changes/bookkeeping-reconciliation-reports/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-010)
+ * @spec openspec/specs/bookkeeping-reconciliation-reports/spec.md (REQ-REC-010)
  */
-final class ReconciliationMatchToReportListener implements IEventListener
-{
-    /**
-     * Constructor.
-     *
-     * @param ContainerInterface $container DI container — OR ObjectService
-     *                                      pulled lazily.
-     * @param IAppConfig         $appConfig App config for register slug.
-     * @param LoggerInterface    $logger    Logger.
-     *
-     * @return void
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+final class ReconciliationMatchToReportListener implements IEventListener {
+	/**
+	 * Constructor.
+	 *
+	 * @param IAppConfig $appConfig App config for register slug.
+	 * @param LoggerInterface $logger Logger.
+	 * @param ObjectServiceInterface $objectService OpenRegister's published object
+	 *                                              surface (ADR-084), aliased in
+	 *                                              Application.php.
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    /**
-     * Handle the T2 transition event and stamp T4 fields when the
-     * subject is a ReconciliationMatch confirm.
-     *
-     * Fail-soft: any error logs and returns; never bubbles back into the
-     * T2 confirm write path per REQ-REC-010 + ADR-022 "events are
-     * advisory, never blocking".
-     *
-     * @param Event $event The dispatched OR event.
-     *
-     * @return void
-     */
-    public function handle(Event $event): void
-    {
-        try {
-            $payload = $this->extractEventPayload(event: $event);
-            if ($payload === null) {
-                return;
-            }
+	/**
+	 * Handle the T2 transition event and stamp T4 fields when the
+	 * subject is a ReconciliationMatch confirm.
+	 *
+	 * Fail-soft: any error logs and returns; never bubbles back into the
+	 * T2 confirm write path per REQ-REC-010 + ADR-022 "events are
+	 * advisory, never blocking".
+	 *
+	 * @param Event $event The dispatched OR event.
+	 *
+	 * @return void
+	 */
+	public function handle(Event $event): void {
+		try {
+			$payload = $this->extractEventPayload(event: $event);
+			if ($payload === null) {
+				return;
+			}
 
-            if ($this->shouldStamp(payload: $payload) === false) {
-                return;
-            }
+			if ($this->shouldStamp(payload: $payload) === false) {
+				return;
+			}
 
-            $this->stampT4Fields(match: $payload['object']);
-        } catch (Throwable $e) {
-            $this->logger->warning(
-                'ReconciliationMatchToReportListener: stamping failed (fail-soft)',
-                ['exception' => $e->getMessage()]
-            );
-        }
+			$this->stampT4Fields(match: $payload['object']);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'ReconciliationMatchToReportListener: stamping failed (fail-soft)',
+				['exception' => $e->getMessage()]
+			);
+		}
 
-    }//end handle()
+	}//end handle()
 
-    /**
-     * Extract the schema + object payload from an OR event. OR events
-     * expose `getObject()` (post-write snapshot) and the schema slug via
-     * either `getSchema()` or the snapshot's `@self.schema`.
-     *
-     * @param Event $event The dispatched event.
-     *
-     * @return array{schema:string,object:array<string,mixed>}|null
-     */
-    private function extractEventPayload(Event $event): ?array
-    {
-        if (method_exists($event, 'getObject') === false) {
-            return null;
-        }
+	/**
+	 * Extract the schema + object payload from an OR event. OR events
+	 * expose `getObject()` (post-write snapshot) and the schema slug via
+	 * either `getSchema()` or the snapshot's `@self.schema`.
+	 *
+	 * @param Event $event The dispatched event.
+	 *
+	 * @return array{schema:string,object:array<string,mixed>}|null
+	 */
+	private function extractEventPayload(Event $event): ?array {
+		if (method_exists($event, 'getObject') === false) {
+			return null;
+		}
 
-        $object = $event->getObject();
-        if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-            $serialized = $object->jsonSerialize();
-            if (is_array($serialized) === true) {
-                $object = $serialized;
-            }
-        }
+		$object = $event->getObject();
+		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
+			$serialized = $object->jsonSerialize();
+			if (is_array($serialized) === true) {
+				$object = $serialized;
+			}
+		}
 
-        if (is_array($object) === false) {
-            return null;
-        }
+		if (is_array($object) === false) {
+			return null;
+		}
 
-        $schema = '';
-        if (method_exists($event, 'getSchema') === true) {
-            $rawSchema = $event->getSchema();
-            if (is_string($rawSchema) === true) {
-                $schema = $rawSchema;
-            } else if (is_object($rawSchema) === true && method_exists($rawSchema, 'getSlug') === true) {
-                $schema = (string) $rawSchema->getSlug();
-            }
-        }
+		$schema = '';
+		if (method_exists($event, 'getSchema') === true) {
+			$rawSchema = $event->getSchema();
+			if (is_string($rawSchema) === true) {
+				$schema = $rawSchema;
+			} elseif (is_object($rawSchema) === true && method_exists($rawSchema, 'getSlug') === true) {
+				$schema = (string)$rawSchema->getSlug();
+			}
+		}
 
-        if ($schema === '' && isset($object['@self']['schema']) === true) {
-            $schema = (string) $object['@self']['schema'];
-        }
+		if ($schema === '' && isset($object['@self']['schema']) === true) {
+			$schema = (string)$object['@self']['schema'];
+		}
 
-        return ['schema' => $schema, 'object' => $object];
+		return ['schema' => $schema, 'object' => $object];
+	}//end extractEventPayload()
 
-    }//end extractEventPayload()
+	/**
+	 * Decide whether this event should trigger T4-field stamping.
+	 *
+	 * @param array{schema:string,object:array<string,mixed>} $payload Extracted event payload.
+	 *
+	 * @return bool
+	 */
+	private function shouldStamp(array $payload): bool {
+		if (strcasecmp($payload['schema'], 'ReconciliationMatch') !== 0) {
+			return false;
+		}
 
-    /**
-     * Decide whether this event should trigger T4-field stamping.
-     *
-     * @param array{schema:string,object:array<string,mixed>} $payload Extracted event payload.
-     *
-     * @return bool
-     */
-    private function shouldStamp(array $payload): bool
-    {
-        if (strcasecmp($payload['schema'], 'ReconciliationMatch') !== 0) {
-            return false;
-        }
+		$status = (string)($payload['object']['status'] ?? '');
+		if ($status !== 'confirmed') {
+			// Only confirmed matches drive T4 ReconciliationMatch records.
+			return false;
+		}
 
-        $status = (string) ($payload['object']['status'] ?? '');
-        if ($status !== 'confirmed') {
-            // Only confirmed matches drive T4 ReconciliationMatch records.
-            return false;
-        }
+		// Idempotency: don't re-stamp records that already carry the T4
+		// matchAlgorithm field.
+		$algo = (string)($payload['object']['matchAlgorithm'] ?? '');
+		if ($algo !== '') {
+			return false;
+		}
 
-        // Idempotency: don't re-stamp records that already carry the T4
-        // matchAlgorithm field.
-        $algo = (string) ($payload['object']['matchAlgorithm'] ?? '');
-        if ($algo !== '') {
-            return false;
-        }
+		return true;
+	}//end shouldStamp()
 
-        return true;
+	/**
+	 * Update the ReconciliationMatch in-place with T4 fields.
+	 *
+	 * @param array<string,mixed> $match The T2-side match snapshot.
+	 *
+	 * @return void
+	 */
+	private function stampT4Fields(array $match): void {
+		$matchId = (string)($match['id'] ?? $match['matchId'] ?? '');
+		if ($matchId === '') {
+			return;
+		}
 
-    }//end shouldStamp()
+		$reconId = $this->resolveReconId(match: $match);
+		if ($reconId === '') {
+			// No open BankReconciliation session for this account/period yet —
+			// leave reconId empty and let the operator wire it up later. The
+			// ReconciliationMatch is still a valid T2 record.
+			$this->logger->info(
+				'ReconciliationMatchToReportListener: no open BankReconciliation session — match stamped without reconId',
+				['matchId' => $matchId]
+			);
+		}
 
-    /**
-     * Update the ReconciliationMatch in-place with T4 fields.
-     *
-     * @param array<string,mixed> $match The T2-side match snapshot.
-     *
-     * @return void
-     */
-    private function stampT4Fields(array $match): void
-    {
-        $matchId = (string) ($match['id'] ?? $match['matchId'] ?? '');
-        if ($matchId === '') {
-            return;
-        }
+		$updates = [
+			'matchAlgorithm' => $this->algorithmFromConfidence(confidence: (string)($match['confidence'] ?? 'auto')),
+			'matchedAt' => gmdate('Y-m-d\TH:i:s\Z'),
+			'manualOverride' => ((string)($match['confidence'] ?? '') === 'manual'),
+			'confidenceScoreT4' => (float)($match['confidenceScore'] ?? 1.0),
+		];
 
-        $reconId = $this->resolveReconId(match: $match);
-        if ($reconId === '') {
-            // No open BankReconciliation session for this account/period yet —
-            // leave reconId empty and let the operator wire it up later. The
-            // ReconciliationMatch is still a valid T2 record.
-            $this->logger->info(
-                'ReconciliationMatchToReportListener: no open BankReconciliation session — match stamped without reconId',
-                ['matchId' => $matchId]
-            );
-        }
+		if ($reconId !== '') {
+			$updates['reconId'] = $reconId;
+		}
 
-        $updates = [
-            'matchAlgorithm'    => $this->algorithmFromConfidence(confidence: (string) ($match['confidence'] ?? 'auto')),
-            'matchedAt'         => gmdate('Y-m-d\TH:i:s\Z'),
-            'manualOverride'    => ((string) ($match['confidence'] ?? '') === 'manual'),
-            'confidenceScoreT4' => (float) ($match['confidenceScore'] ?? 1.0),
-        ];
+		$matchType = (string)($match['matchType'] ?? '');
+		$matchedObject = (string)($match['matchedObjectId'] ?? '');
+		if ($matchedObject !== '') {
+			switch ($matchType) {
+				case 'ar-invoice':
+					$updates['arInvoiceId'] = $matchedObject;
+					break;
+				case 'ap-invoice':
+					$updates['apTransactionId'] = $matchedObject;
+					break;
+				case 'gl-transaction':
+				case 'journal':
+					$updates['glTransactionId'] = $matchedObject;
+					break;
+				default:
+					// Suspense / unknown — leave as polymorphic matchedObjectId only.
+					break;
+			}
+		}
 
-        if ($reconId !== '') {
-            $updates['reconId'] = $reconId;
-        }
+		$bankLineId = (string)($match['bankStatementLineId'] ?? '');
+		if ($bankLineId !== '') {
+			$updates['bankLineId'] = $bankLineId;
+		}
 
-        $matchType     = (string) ($match['matchType'] ?? '');
-        $matchedObject = (string) ($match['matchedObjectId'] ?? '');
-        if ($matchedObject !== '') {
-            switch ($matchType) {
-                case 'ar-invoice':
-                    $updates['arInvoiceId'] = $matchedObject;
-                    break;
-                case 'ap-invoice':
-                    $updates['apTransactionId'] = $matchedObject;
-                    break;
-                case 'gl-transaction':
-                case 'journal':
-                    $updates['glTransactionId'] = $matchedObject;
-                    break;
-                default:
-                    // Suspense / unknown — leave as polymorphic matchedObjectId only.
-                    break;
-            }
-        }
+		$this->objectService
+			->setRegister($this->getRegisterSlug())
+			->setSchema('ReconciliationMatch')
+			->updateObject($matchId, $updates);
 
-        $bankLineId = (string) ($match['bankStatementLineId'] ?? '');
-        if ($bankLineId !== '') {
-            $updates['bankLineId'] = $bankLineId;
-        }
+		$this->logger->info(
+			'ReconciliationMatchToReportListener: T4 fields stamped',
+			['matchId' => $matchId, 'reconId' => $reconId, 'algo' => $updates['matchAlgorithm']]
+		);
 
-        $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-        $objectService
-            ->setRegister($this->getRegisterSlug())
-            ->setSchema('ReconciliationMatch')
-            ->updateObject($matchId, $updates);
+	}//end stampT4Fields()
 
-        $this->logger->info(
-            'ReconciliationMatchToReportListener: T4 fields stamped',
-            ['matchId' => $matchId, 'reconId' => $reconId, 'algo' => $updates['matchAlgorithm']]
-        );
+	/**
+	 * Convert the T2 `confidence` enum (auto/manual) into the T4
+	 * `matchAlgorithm` enum (exact/manual). REQ-REC-005: T4 supports
+	 * `exact` + `manual` only — `fuzzy` is reserved for T5.
+	 *
+	 * @param string $confidence The T2 confidence value.
+	 *
+	 * @return string The T4 matchAlgorithm value.
+	 */
+	private function algorithmFromConfidence(string $confidence): string {
+		if ($confidence === 'manual') {
+			return 'manual';
+		}
 
-    }//end stampT4Fields()
+		return 'exact';
+	}//end algorithmFromConfidence()
 
-    /**
-     * Convert the T2 `confidence` enum (auto/manual) into the T4
-     * `matchAlgorithm` enum (exact/manual). REQ-REC-005: T4 supports
-     * `exact` + `manual` only — `fuzzy` is reserved for T5.
-     *
-     * @param string $confidence The T2 confidence value.
-     *
-     * @return string The T4 matchAlgorithm value.
-     */
-    private function algorithmFromConfidence(string $confidence): string
-    {
-        if ($confidence === 'manual') {
-            return 'manual';
-        }
+	/**
+	 * Resolve the open BankReconciliation session that owns this match.
+	 * Walks BankStatementLine → BankStatement to find (bankAccountIban,
+	 * periodEnd) and looks up an in-progress reconciliation with the same
+	 * (bankAccountId, statementPeriodEnd).
+	 *
+	 * @param array<string,mixed> $match The T2 match.
+	 *
+	 * @return string The recon id, or '' when no session is open.
+	 */
+	private function resolveReconId(array $match): string {
+		try {
+			$lineId = (string)($match['bankStatementLineId'] ?? '');
+			if ($lineId === '') {
+				return '';
+			}
 
-        return 'exact';
+			$line = $this->objectService
+				->setRegister($this->getRegisterSlug())
+				->setSchema('BankStatementLine')
+				->find($lineId);
+			$line = $this->toArray(result: $line);
+			if ($line === null) {
+				return '';
+			}
 
-    }//end algorithmFromConfidence()
+			$statementId = (string)($line['statementId'] ?? '');
+			if ($statementId === '') {
+				return '';
+			}
 
-    /**
-     * Resolve the open BankReconciliation session that owns this match.
-     * Walks BankStatementLine → BankStatement to find (bankAccountIban,
-     * periodEnd) and looks up an in-progress reconciliation with the same
-     * (bankAccountId, statementPeriodEnd).
-     *
-     * @param array<string,mixed> $match The T2 match.
-     *
-     * @return string The recon id, or '' when no session is open.
-     */
-    private function resolveReconId(array $match): string
-    {
-        try {
-            $lineId = (string) ($match['bankStatementLineId'] ?? '');
-            if ($lineId === '') {
-                return '';
-            }
+			$statement = $this->objectService
+				->setRegister($this->getRegisterSlug())
+				->setSchema('BankStatement')
+				->find($statementId);
+			$statement = $this->toArray(result: $statement);
+			if ($statement === null) {
+				return '';
+			}
 
-            $objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
-            $line          = $objectService
-                ->setRegister($this->getRegisterSlug())
-                ->setSchema('BankStatementLine')
-                ->find($lineId);
-            $line          = $this->toArray(result: $line);
-            if ($line === null) {
-                return '';
-            }
+			$iban = (string)($statement['bankAccountIban'] ?? '');
+			$periodEnd = (string)($statement['periodEnd'] ?? '');
+			if ($iban === '' || $periodEnd === '') {
+				return '';
+			}
 
-            $statementId = (string) ($line['statementId'] ?? '');
-            if ($statementId === '') {
-                return '';
-            }
+			$sessions = $this->objectService
+				->setRegister($this->getRegisterSlug())
+				->setSchema('BankReconciliation')
+				->findAll(
+					[
+						'filters' => [
+							'bankAccountId' => $iban,
+							'statementPeriodEnd' => $periodEnd,
+							'reconciliationStatus' => 'in-progress',
+						],
+						'limit' => 1,
+					]
+				);
+			if ($sessions === [] || isset($sessions[0]) === false) {
+				return '';
+			}
 
-            $statement = $objectService
-                ->setRegister($this->getRegisterSlug())
-                ->setSchema('BankStatement')
-                ->find($statementId);
-            $statement = $this->toArray(result: $statement);
-            if ($statement === null) {
-                return '';
-            }
+			return (string)($sessions[0]['id'] ?? '');
+		} catch (Throwable $e) {
+			$this->logger->info(
+				'ReconciliationMatchToReportListener: reconId lookup failed (continuing without)',
+				['exception' => $e->getMessage()]
+			);
+			return '';
+		}//end try
 
-            $iban      = (string) ($statement['bankAccountIban'] ?? '');
-            $periodEnd = (string) ($statement['periodEnd'] ?? '');
-            if ($iban === '' || $periodEnd === '') {
-                return '';
-            }
+	}//end resolveReconId()
 
-            $sessions = $objectService
-                ->setRegister($this->getRegisterSlug())
-                ->setSchema('BankReconciliation')
-                ->findAll(
-                    [
-                        'filters' => [
-                            'bankAccountId'        => $iban,
-                            'statementPeriodEnd'   => $periodEnd,
-                            'reconciliationStatus' => 'in-progress',
-                        ],
-                        'limit'   => 1,
-                    ]
-                );
-            if ($sessions === [] || isset($sessions[0]) === false) {
-                return '';
-            }
+	/**
+	 * Normalise an OR find result to a plain array.
+	 *
+	 * @param mixed $result OR return value.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function toArray(mixed $result): ?array {
+		if (is_array($result) === true) {
+			return $result;
+		}
 
-            return (string) ($sessions[0]['id'] ?? '');
-        } catch (Throwable $e) {
-            $this->logger->info(
-                'ReconciliationMatchToReportListener: reconId lookup failed (continuing without)',
-                ['exception' => $e->getMessage()]
-            );
-            return '';
-        }//end try
+		if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
+			$serialized = $result->jsonSerialize();
+			if (is_array($serialized) === true) {
+				return $serialized;
+			}
 
-    }//end resolveReconId()
+			return null;
+		}
 
-    /**
-     * Normalise an OR find result to a plain array.
-     *
-     * @param mixed $result OR return value.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function toArray(mixed $result): ?array
-    {
-        if (is_array($result) === true) {
-            return $result;
-        }
+		return null;
+	}//end toArray()
 
-        if (is_object($result) === true && method_exists($result, 'jsonSerialize') === true) {
-            $serialized = $result->jsonSerialize();
-            if (is_array($serialized) === true) {
-                return $serialized;
-            }
+	/**
+	 * Return the configured register slug, falling back to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function getRegisterSlug(): string {
+		$slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($slug === '') {
+			return 'shillinq';
+		}
 
-            return null;
-        }
-
-        return null;
-
-    }//end toArray()
-
-    /**
-     * Return the configured register slug, falling back to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function getRegisterSlug(): string
-    {
-        $slug = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($slug === '') {
-            return 'shillinq';
-        }
-
-        return $slug;
-
-    }//end getRegisterSlug()
+		return $slug;
+	}//end getRegisterSlug()
 }//end class

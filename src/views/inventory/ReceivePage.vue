@@ -31,7 +31,20 @@ export default {
 </script>
 
 <style scoped>
-.receive-page { display: flex; flex-direction: column; gap: var(--default-grid-baseline, 4px); padding: var(--default-grid-baseline, 4px); }
-.receive-page__header { display: flex; justify-content: space-between; align-items: center; }
-.receive-page__back { text-decoration: none; }
+.receive-page {
+	display: flex;
+	flex-direction: column;
+	gap: var(--default-grid-baseline, 4px);
+	padding: var(--default-grid-baseline, 4px);
+}
+
+.receive-page__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.receive-page__back {
+	text-decoration: none;
+}
 </style>

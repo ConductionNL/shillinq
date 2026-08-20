@@ -38,129 +38,122 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
  */
-final class DunningTemplateRegistry
-{
-    /**
-     * Default templateId map per stage, mirroring the docudesk template-library
-     * naming convention (`tpl-stage{N}-{tone}-{lang}`).
-     *
-     * @var array<int,string>
-     */
-    private const DEFAULT_TEMPLATE_IDS = [
-        1 => 'tpl-stage1-vriendelijk-nl',
-        2 => 'tpl-stage2-herinnering-nl',
-        3 => 'tpl-stage3-aanmaning-14d-nl',
-        4 => 'tpl-stage4-ingebrekestelling-nl',
-        5 => 'tpl-stage5-overdracht-incasso-nl',
-    ];
+final class DunningTemplateRegistry {
+	/**
+	 * Default templateId map per stage, mirroring the docudesk template-library
+	 * naming convention (`tpl-stage{N}-{tone}-{lang}`).
+	 *
+	 * @var array<int,string>
+	 */
+	private const DEFAULT_TEMPLATE_IDS = [
+		1 => 'tpl-stage1-vriendelijk-nl',
+		2 => 'tpl-stage2-herinnering-nl',
+		3 => 'tpl-stage3-aanmaning-14d-nl',
+		4 => 'tpl-stage4-ingebrekestelling-nl',
+		5 => 'tpl-stage5-overdracht-incasso-nl',
+	];
 
-    /**
-     * Canonical merge-fields callers can interpolate inside the rendered body.
-     *
-     * @var array<int,string>
-     */
-    private const MERGE_FIELDS = [
-        'klantNaam',
-        'factuurNummer',
-        'factuurDatum',
-        'openstaandBedrag',
-        'vervalDatum',
-        'iban',
-        'betalingstermijn',
-        'incassokosten',
-        'rente',
-    ];
+	/**
+	 * Canonical merge-fields callers can interpolate inside the rendered body.
+	 *
+	 * @var array<int,string>
+	 */
+	private const MERGE_FIELDS = [
+		'klantNaam',
+		'factuurNummer',
+		'invoiceDate',
+		'outstandingAmount',
+		'expiryDate',
+		'iban',
+		'betalingstermijn',
+		'incassokosten',
+		'rente',
+	];
 
-    /**
-     * Per-stage tone label surfaced in the UI ("Toon: vriendelijk → juridisch").
-     *
-     * @var array<int,string>
-     */
-    private const TONE_GRADIENT = [
-        1 => 'vriendelijk',
-        2 => 'zakelijk',
-        3 => 'formeel',
-        4 => 'juridisch',
-        5 => 'juridisch',
-    ];
+	/**
+	 * Per-stage tone label surfaced in the UI ("Toon: vriendelijk → juridisch").
+	 *
+	 * @var array<int,string>
+	 */
+	private const TONE_GRADIENT = [
+		1 => 'vriendelijk',
+		2 => 'zakelijk',
+		3 => 'formeel',
+		4 => 'juridisch',
+		5 => 'juridisch',
+	];
 
-    /**
-     * Construct the registry with the app-config the override-lookup uses.
-     *
-     * @param IAppConfig $appConfig App config for per-stage overrides.
-     */
-    public function __construct(private readonly IAppConfig $appConfig)
-    {
-    }//end __construct()
+	/**
+	 * Construct the registry with the app-config the override-lookup uses.
+	 *
+	 * @param IAppConfig $appConfig App config for per-stage overrides.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+	) {
+	}//end __construct()
 
-    /**
-     * Resolve the templateId for a stage, honouring an app-config override.
-     *
-     * @param int $stageNr Stage number (1..5).
-     *
-     * @return string The templateId.
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
-     */
-    public function templateIdForStage(int $stageNr): string
-    {
-        $default = (self::DEFAULT_TEMPLATE_IDS[$stageNr] ?? '');
-        return $this->appConfig->getValueString(
-            Application::APP_ID,
-            'dunning.template.stage_'.$stageNr,
-            $default
-        );
+	/**
+	 * Resolve the templateId for a stage, honouring an app-config override.
+	 *
+	 * @param int $stageNr Stage number (1..5).
+	 *
+	 * @return string The templateId.
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
+	 */
+	public function templateIdForStage(int $stageNr): string {
+		$default = (self::DEFAULT_TEMPLATE_IDS[$stageNr] ?? '');
+		return $this->appConfig->getValueString(
+			Application::APP_ID,
+			'dunning.template.stage_' . $stageNr,
+			$default
+		);
 
-    }//end templateIdForStage()
+	}//end templateIdForStage()
 
-    /**
-     * Resolve the tone label for a stage.
-     *
-     * @param int $stageNr Stage number.
-     *
-     * @return string
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
-     */
-    public function toneForStage(int $stageNr): string
-    {
-        return (self::TONE_GRADIENT[$stageNr] ?? 'formeel');
+	/**
+	 * Resolve the tone label for a stage.
+	 *
+	 * @param int $stageNr Stage number.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
+	 */
+	public function toneForStage(int $stageNr): string {
+		return (self::TONE_GRADIENT[$stageNr] ?? 'formeel');
+	}//end toneForStage()
 
-    }//end toneForStage()
+	/**
+	 * Canonical merge-fields the docudesk templates MUST interpolate.
+	 *
+	 * @return array<int,string>
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
+	 */
+	public function mergeFields(): array {
+		return self::MERGE_FIELDS;
+	}//end mergeFields()
 
-    /**
-     * Canonical merge-fields the docudesk templates MUST interpolate.
-     *
-     * @return array<int,string>
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
-     */
-    public function mergeFields(): array
-    {
-        return self::MERGE_FIELDS;
+	/**
+	 * Full registry shape for UI consumption (manifest dashboard widget,
+	 * dunning-ladder edit view).
+	 *
+	 * @return array<int,array{stageNr:int,templateId:string,tone:string}>
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
+	 */
+	public function listAll(): array {
+		$rows = [];
+		foreach (array_keys(self::DEFAULT_TEMPLATE_IDS) as $stageNr) {
+			$rows[] = [
+				'stageNr' => $stageNr,
+				'templateId' => $this->templateIdForStage(stageNr: $stageNr),
+				'tone' => $this->toneForStage(stageNr: $stageNr),
+			];
+		}
 
-    }//end mergeFields()
-
-    /**
-     * Full registry shape for UI consumption (manifest dashboard widget,
-     * dunning-ladder edit view).
-     *
-     * @return array<int,array{stageNr:int,templateId:string,tone:string}>
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-28
-     */
-    public function listAll(): array
-    {
-        $rows = [];
-        foreach (array_keys(self::DEFAULT_TEMPLATE_IDS) as $stageNr) {
-            $rows[] = [
-                'stageNr'    => $stageNr,
-                'templateId' => $this->templateIdForStage(stageNr: $stageNr),
-                'tone'       => $this->toneForStage(stageNr: $stageNr),
-            ];
-        }
-
-        return $rows;
-
-    }//end listAll()
+		return $rows;
+	}//end listAll()
 }//end class

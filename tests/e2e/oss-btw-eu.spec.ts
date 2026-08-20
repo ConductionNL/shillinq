@@ -22,7 +22,9 @@ import { test, expect } from '@playwright/test'
 const APP = '/apps/shillinq'
 
 test.describe('shillinq — OSS SPA smoke', () => {
-	test('OSS navigation entries are reachable in the manifest shell', async ({ page }) => {
+	test('OSS navigation entries are reachable in the manifest shell', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/')
 		await page.waitForLoadState('domcontentloaded')
 

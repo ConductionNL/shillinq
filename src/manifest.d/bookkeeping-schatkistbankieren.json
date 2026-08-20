@@ -23,14 +23,14 @@
 				{
 					"id": "BankingRules",
 					"label": "Banking Rules",
-					"icon": "ShieldCheckOutline",
+					"icon": "BankOutline",
 					"route": "BankingRules",
 					"order": 20
 				},
 				{
 					"id": "ComplianceReports",
 					"label": "Compliance Reports",
-					"icon": "FileChartOutline",
+					"icon": "ChartBoxOutline",
 					"route": "ComplianceReports",
 					"order": 30
 				}
@@ -83,7 +83,43 @@
 					{ "key": "lifecycleState", "label": "Lifecycle state", "type": "string" },
 					{ "key": "lastCompliantDate", "label": "Last compliant", "type": "string" }
 				],
-				"indexRoute": "TreasuryAccounts"
+				"_note": "MASTER — a treasury (schatkistbankieren) bank account. Body pairs the account identity (IBAN/BIC/bank) with the compliance state: classification, master-list status, approval workflow and last-compliant date. Its compliance reports are the primary related content on the body; the audit trail sits in the sidebar. A treasury master record does not correspond — no comms leaves.",
+				"indexRoute": "TreasuryAccounts",
+				"relatedObjects": [
+					{
+						"id": "compliance-reports",
+						"label": "Compliance reports",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "ComplianceReport",
+							"filterField": "treasuryAccountId",
+							"columns": ["reportNumber", "reportPeriod", "complianceScore", "status", "generatedAt"],
+							"detailRoute": "ComplianceReportDetail",
+							"defaultSort": "generatedAt"
+						}
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -124,7 +160,28 @@
 					{ "key": "isActive", "label": "Active", "type": "boolean" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
-				"indexRoute": "BankingRules"
+				"_note": "CONFIG — a compliance rule evaluated against treasury accounts. Body shows the rule type, its structured evaluation criteria, severity and active flag; the audit trail (who edited the rule and when) is the sidebar tab. A rule definition has no documents or correspondence — only data + audit.",
+				"indexRoute": "BankingRules",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -167,7 +224,47 @@
 					{ "key": "regulatoryExportFormat", "label": "Export format", "type": "string" },
 					{ "key": "regulatoryExportUri", "label": "Export URI", "type": "string" }
 				],
-				"indexRoute": "ComplianceReports"
+				"_note": "REPORT — a periodic schatkistbankieren compliance report for one treasury account. Body shows the overall compliance score, the per-rule criteria results and the regulatory export format; the generated regulatory export file and the audit trail sit in the sidebar. It is a generated statement, not correspondence — no comms leaves.",
+				"indexRoute": "ComplianceReports",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "export",
+							"label": "Regulatory export",
+							"icon": "FileExportOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"register": "shillinq",
+										"schema": "ComplianceReport",
+										"field": "regulatoryExportUri",
+										"objectId": ":id",
+										"description": "Generated regulatory export file referenced from NC Files."
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		}
 	]

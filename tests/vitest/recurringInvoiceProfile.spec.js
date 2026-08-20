@@ -18,15 +18,21 @@ import {
 describe('recurringInvoiceProfile — defaults + totals', () => {
 	it('seeds a line with qty 1 and 21% VAT', () => {
 		expect(defaultRecurringLine()).toEqual({
-			description: '', quantity: 1, unitPrice: 0, vatCode: 21, revenueAccount: '',
+			description: '',
+			quantity: 1,
+			unitPrice: 0,
+			vatCode: 21,
+			revenueAccount: '',
 		})
 	})
 
 	it('sums per-period net across lines', () => {
-		expect(perPeriodNet([
-			{ quantity: 1, unitPrice: 99 },
-			{ quantity: 2, unitPrice: 10 },
-		])).toBe(119)
+		expect(
+			perPeriodNet([
+				{ quantity: 1, unitPrice: 99 },
+				{ quantity: 2, unitPrice: 10 },
+			]),
+		).toBe(119)
 		expect(perPeriodNet([])).toBe(0)
 	})
 })
@@ -47,13 +53,23 @@ describe('recurringInvoiceProfile — validation', () => {
 	it('flags missing name, customer, line, date and bad invoice day', () => {
 		expect(validateProfile({ ...base(), name: '' }).length).toBe(1)
 		expect(validateProfile({ ...base(), customerReference: '' }).length).toBe(1)
-		expect(validateProfile({ ...base(), lines: [{ description: '', unitPrice: 0 }] }).length).toBe(1)
+		expect(
+			validateProfile({
+				...base(),
+				lines: [{ description: '', unitPrice: 0 }],
+			}).length,
+		).toBe(1)
 		expect(validateProfile({ ...base(), startDate: 'nope' }).length).toBe(1)
 		expect(validateProfile({ ...base(), invoiceDay: 40 }).length).toBe(1)
 	})
 
 	it('requires a priced line, not just a description', () => {
-		expect(validateProfile({ ...base(), lines: [{ description: 'Hosting', unitPrice: 0 }] }).length).toBe(1)
+		expect(
+			validateProfile({
+				...base(),
+				lines: [{ description: 'Hosting', unitPrice: 0 }],
+			}).length,
+		).toBe(1)
 	})
 })
 
@@ -69,7 +85,13 @@ describe('recurringInvoiceProfile — payload', () => {
 			issueMode: 'draft-for-review',
 			paymentTermsDays: 30,
 			lines: [
-				{ description: ' Hosting {month} ', quantity: 1, unitPrice: 99, vatCode: 21, revenueAccount: '8000' },
+				{
+					description: ' Hosting {month} ',
+					quantity: 1,
+					unitPrice: 99,
+					vatCode: 21,
+					revenueAccount: '8000',
+				},
 				{ description: '', unitPrice: 0 }, // dropped
 			],
 		})
@@ -82,7 +104,10 @@ describe('recurringInvoiceProfile — payload', () => {
 
 	it('maps occurrenceCount into endCondition + remainingOccurrences', () => {
 		const payload = buildProfilePayload({
-			name: 'x', customerReference: 'c', startDate: '2027-01-01', invoiceDay: 1,
+			name: 'x',
+			customerReference: 'c',
+			startDate: '2027-01-01',
+			invoiceDay: 1,
 			occurrenceCount: 12,
 			lines: [{ description: 'x', unitPrice: 1, vatCode: 21 }],
 		})
@@ -92,7 +117,10 @@ describe('recurringInvoiceProfile — payload', () => {
 
 	it('maps endDate into endCondition', () => {
 		const payload = buildProfilePayload({
-			name: 'x', customerReference: 'c', startDate: '2027-01-01', invoiceDay: 1,
+			name: 'x',
+			customerReference: 'c',
+			startDate: '2027-01-01',
+			invoiceDay: 1,
 			endDate: '2028-01-01',
 			lines: [{ description: 'x', unitPrice: 1, vatCode: 21 }],
 		})

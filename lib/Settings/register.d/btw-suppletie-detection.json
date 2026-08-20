@@ -1,0 +1,252 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "btw-suppletie-detection",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "REQ-VBTW-009/013/014 — additive extension of the already-landed VatCorrection register with the fields VatSuppletieDetectionService needs to persist a filed/current rubriek snapshot, per-rubriek deltas, the suppletie-threshold decision, the 8-week filing deadline, and a link to the compiled GL correction posting. REQ-VBTW-012 audit coverage is already satisfied for VatCorrection/VatReturn by add-shillinq-audit-trail.json's x-openregister-audit-trail.enabled flag — not touched here. Merged additively onto the monolith per ADR-037 — no existing field, state, or transition is touched."
+  },
+  "components": {
+    "schemas": {
+      "VatCorrection": {
+        "properties": {
+          "filedSnapshot": {
+            "type": "array",
+            "nullable": true,
+            "description": "As-filed per-rubriek totals (audit trail of the original filed figures), captured from the VATDeclaration rows persisted at filing time. Populated by VatSuppletieDetectionService::detect() (REQ-VBTW-013).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["collected", "paid", "reverse-charge"],
+                  "title": "Rubriek Type",
+                  "description": "Which side of the BTW return this bucket belongs to: collected = verschuldigde omzetbelasting (output VAT), paid = voorbelasting (input VAT), reverse-charge = verlegde BTW."
+                },
+                "taxRate": {
+                  "type": "number",
+                  "title": "Tax Rate",
+                  "description": "BTW rate of this bucket as a percentage (21, 9 or 0), not a decimal fraction."
+                },
+                "totalVATAmount": {
+                  "type": "number",
+                  "title": "Total VAT Amount",
+                  "description": "VAT amount filed for this bucket, in EUR."
+                },
+                "totalTaxableAmount": {
+                  "type": "number",
+                  "title": "Total Taxable Amount",
+                  "description": "Taxable base (omzet excluding VAT) filed for this bucket, in EUR."
+                }
+              }
+            },
+            "title": "Filed Snapshot"
+          },
+          "currentSnapshot": {
+            "type": "array",
+            "nullable": true,
+            "description": "Per-rubriek totals recomputed live from GL at detection time, in the same shape as filedSnapshot. Populated by VatSuppletieDetectionService::detect() (REQ-VBTW-013).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["collected", "paid", "reverse-charge"],
+                  "title": "Rubriek Type",
+                  "description": "Which side of the BTW return this bucket belongs to: collected = verschuldigde omzetbelasting (output VAT), paid = voorbelasting (input VAT), reverse-charge = verlegde BTW."
+                },
+                "taxRate": {
+                  "type": "number",
+                  "title": "Tax Rate",
+                  "description": "BTW rate of this bucket as a percentage (21, 9 or 0), not a decimal fraction."
+                },
+                "totalVATAmount": {
+                  "type": "number",
+                  "title": "Total VAT Amount",
+                  "description": "VAT amount for this bucket as recomputed from the general ledger now, in EUR."
+                },
+                "totalTaxableAmount": {
+                  "type": "number",
+                  "title": "Total Taxable Amount",
+                  "description": "Taxable base (omzet excluding VAT) for this bucket as recomputed from the general ledger now, in EUR."
+                }
+              }
+            },
+            "title": "Current Snapshot"
+          },
+          "categoryDeltas": {
+            "type": "array",
+            "nullable": true,
+            "description": "Per-rubriek delta (currentSnapshot minus filedSnapshot) for every bucket with a non-zero difference. Populated by VatSuppletieDetectionService::prepare() (REQ-VBTW-014).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["collected", "paid", "reverse-charge"],
+                  "title": "Rubriek Type",
+                  "description": "Which side of the BTW return this delta belongs to: collected = verschuldigde omzetbelasting (output VAT), paid = voorbelasting (input VAT), reverse-charge = verlegde BTW."
+                },
+                "taxRate": {
+                  "type": "number",
+                  "title": "Tax Rate",
+                  "description": "BTW rate of the bucket this delta applies to, as a percentage (21, 9 or 0)."
+                },
+                "deltaVATAmount": {
+                  "type": "number",
+                  "title": "Delta VAT Amount",
+                  "description": "currentSnapshot minus filedSnapshot for this bucket's VAT amount, in EUR. Positive means additional VAT is owed; negative means a refund is due."
+                },
+                "deltaTaxableAmount": {
+                  "type": "number",
+                  "title": "Delta Taxable Amount",
+                  "description": "currentSnapshot minus filedSnapshot for this bucket's taxable base, in EUR."
+                },
+                "glAccountNumber": {
+                  "type": "string",
+                  "nullable": true,
+                  "title": "GL Account Number",
+                  "description": "Account the original rubriek posted to; reused for the GL correction line."
+                }
+              }
+            },
+            "title": "Rubriek Deltas"
+          },
+          "detectedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp VatSuppletieDetectionService::detect() created this record (the 'detected' sub-state — REQ-VBTW-014).",
+            "title": "Detected At"
+          },
+          "preparedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp VatSuppletieDetectionService::prepare() finished compiling deltas + the GL posting (the 'prepared' sub-state — record is draft but operator-reviewable and ready to file, REQ-VBTW-014).",
+            "title": "Prepared At"
+          },
+          "thresholdExceeded": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when abs(correctionAmount) >= the statutory €1.000 suppletie grens (verified against belastingdienst.nl, REQ-VBTW-014); operator still decides whether to file.",
+            "title": "Threshold Exceeded"
+          },
+          "filingDeadline": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "preparedAt + 8 weeks — the statutory suppletie filing deadline once a threshold-exceeding correction is discovered (REQ-VBTW-014).",
+            "title": "Filing Deadline"
+          },
+          "glCorrectionTransactionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the draft GLTransaction booking this correction's delta, compiled by VatSuppletieDetectionService::prepare() (REQ-VBTW-014). Never auto-posted.",
+            "title": "GL Correction Transaction ID"
+          }
+        }
+      }
+    },
+    "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "VatCorrection",
+        "slug": "vat-corr-q1-2026-std-underreport"
+      },
+      "administrationId": "adm-smb-1",
+      "originalVatReturnId": "vat-ret-q1-2026-std",
+      "originalReturnId": "vat-ret-q1-2026-std",
+      "periodType": "quarter",
+      "periodYear": 2026,
+      "periodQuarter": 1,
+      "correctionAmount": 1450.0,
+      "adjustmentAmount": 1450.0,
+      "reason": "Voorbelasting Q1 2026 onderrapporteerd door invoerfout — na afsluiting alsnog geboekte inkoopfactuur van €500 excl. BTW hoog tarief.",
+      "correctionReason": "underreporting",
+      "currency": "EUR",
+      "state": "draft",
+      "filedSnapshot": [
+        {
+          "type": "collected",
+          "taxRate": 21.0,
+          "totalVATAmount": 3150.0,
+          "totalTaxableAmount": 15000.0
+        }
+      ],
+      "currentSnapshot": [
+        {
+          "type": "collected",
+          "taxRate": 21.0,
+          "totalVATAmount": 4600.0,
+          "totalTaxableAmount": 20000.0
+        }
+      ],
+      "categoryDeltas": [
+        {
+          "type": "collected",
+          "taxRate": 21.0,
+          "deltaVATAmount": 1450.0,
+          "deltaTaxableAmount": 5000.0,
+          "glAccountNumber": "4000"
+        }
+      ],
+      "detectedAt": "2026-07-10T08:00:00Z",
+      "preparedAt": "2026-07-10T08:15:00Z",
+      "thresholdExceeded": true,
+      "filingDeadline": "2026-09-04",
+      "notes": "Above de €1.000-grens — suppletie verplicht binnen 8 weken na ontdekking."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "VatCorrection",
+        "slug": "vat-corr-q2-2026-rc-minor"
+      },
+      "administrationId": "adm-smb-1",
+      "originalVatReturnId": "vat-ret-q2-2026-rc",
+      "originalReturnId": "vat-ret-q2-2026-rc",
+      "periodType": "quarter",
+      "periodYear": 2026,
+      "periodQuarter": 2,
+      "correctionAmount": -320.0,
+      "adjustmentAmount": -320.0,
+      "reason": "Dubbel geboekte creditnota gecorrigeerd na afsluiting.",
+      "correctionReason": "overreporting",
+      "currency": "EUR",
+      "state": "draft",
+      "filedSnapshot": [
+        {
+          "type": "collected",
+          "taxRate": 9.0,
+          "totalVATAmount": 180.0,
+          "totalTaxableAmount": 2000.0
+        }
+      ],
+      "currentSnapshot": [
+        {
+          "type": "collected",
+          "taxRate": 9.0,
+          "totalVATAmount": -140.0,
+          "totalTaxableAmount": -1555.56
+        }
+      ],
+      "categoryDeltas": [
+        {
+          "type": "collected",
+          "taxRate": 9.0,
+          "deltaVATAmount": -320.0,
+          "deltaTaxableAmount": -3555.56,
+          "glAccountNumber": "4010"
+        }
+      ],
+      "detectedAt": "2026-07-11T10:00:00Z",
+      "preparedAt": null,
+      "thresholdExceeded": false,
+      "filingDeadline": null,
+      "notes": "Onder de €1.000-grens — mag worden verwerkt in de eerstvolgende aangifte; nog niet beoordeeld door operator (detected, niet prepared)."
+    }
+    ]
+  }
+}

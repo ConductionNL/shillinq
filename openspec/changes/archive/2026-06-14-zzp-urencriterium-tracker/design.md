@@ -144,7 +144,7 @@ If an entrepreneur adds hours retroactively:
 | S&O-uren tracking | `bookkeeping-wbso-administratie` | Bi-directional sync to avoid duplication; WBSO-uren auto-feed `UrenRegistratie.R_AND_D_WBSO` |
 | AO-status + meewerkende-partner | `hrmq` | Lookups for norm determination + grotendeels-criterium checks |
 | IB-aangifte consumer | `bookkeeping-ib-aangifte-zzp` | Urencriterium result + evidence fileRef passed via API |
-| Multi-year trends | `mydash` | 5-year `UrencriteriumYear` queries + trend viz |
+| Multi-year trends | `launchpad` | 5-year `UrencriteriumYear` queries + trend viz |
 | Automatic tally + prognosis | OR `x-openregister-aggregations` | Daily batch-driven tally; prognosis via formula (not declarative aggregation) |
 | Audit-trail on updates | T2 `bookkeeping-audit-trail` | Automatic on category-changes, evidence-exports, alert-triggers |
 

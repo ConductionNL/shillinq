@@ -23,35 +23,35 @@
           "joinField": "administrationId",
           "columns": [
             {
-              "key": "naam",
+              "key": "name",
               "label": "Kwalificerend activum"
             },
             {
-              "key": "methode",
-              "label": "Methode"
+              "key": "method",
+              "label": "Method"
             },
             {
-              "key": "kwalificerende_winst_voor_nexus",
+              "key": "qualifying_profit_for_nexus",
               "label": "Kwalificerende winst voor nexus (EUR)",
               "type": "currency"
             },
             {
-              "key": "nexusbreuk_toegepast",
+              "key": "nexus_fraction_applied",
               "label": "Nexusbreuk",
               "type": "percentage"
             },
             {
-              "key": "kwalificerende_winst_na_nexus",
+              "key": "qualifying_profit_after_nexus",
               "label": "Kwalificerende winst na nexus (EUR)",
               "type": "currency"
             },
             {
-              "key": "effectief_tarief",
+              "key": "effective_rate",
               "label": "Tarief",
               "type": "percentage"
             },
             {
-              "key": "vpb_op_innovatiedeel",
+              "key": "vpb_on_innovation_share",
               "label": "Vpb-impact (EUR)",
               "type": "currency"
             }
@@ -59,7 +59,7 @@
           "totals": [
             {
               "label": "Totaal — bijdrage Vpb-aangifte regel 23",
-              "field": "vpb_op_innovatiedeel",
+              "field": "vpb_on_innovation_share",
               "operation": "sum"
             }
           ]
@@ -82,7 +82,7 @@
           "joinField": "administrationId",
           "columns": [
             {
-              "key": "naam",
+              "key": "name",
               "label": "Activum"
             },
             {
@@ -106,16 +106,16 @@
               "label": "Activum"
             },
             {
-              "key": "ontstaansboekjaar",
+              "key": "originFinancialYear",
               "label": "Ontstaansjaar"
             },
             {
-              "key": "negatief_kwalificerend_resultaat",
+              "key": "negative_qualifying_result",
               "label": "Verlies (EUR)",
               "type": "currency"
             },
             {
-              "key": "saldo_open",
+              "key": "balance_open",
               "label": "Saldo open (EUR)",
               "type": "currency"
             },
@@ -142,7 +142,7 @@
           "title": "EU Horizon Periodic Report — {{regelingNaam}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "Grant reference",
               "type": "string"
             },
@@ -152,7 +152,7 @@
               "type": "string"
             },
             {
-              "key": "regelingNaam",
+              "key": "schemeName",
               "label": "Programme",
               "type": "string"
             }
@@ -163,7 +163,7 @@
           "title": "Eligible costs per category and period",
           "columns": [
             {
-              "key": "kostencategorie",
+              "key": "expenseCategory",
               "label": "Cost category"
             },
             {
@@ -239,7 +239,7 @@
           "title": "MIT Voortgangsrapport — {{regelingNaam}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "MIT referentienummer",
               "type": "string"
             },
@@ -249,7 +249,7 @@
               "type": "string"
             },
             {
-              "key": "regelingNaam",
+              "key": "schemeName",
               "label": "MIT regeling",
               "type": "string"
             }
@@ -260,8 +260,8 @@
           "title": "Kostenoverzicht per categorie en periode",
           "columns": [
             {
-              "key": "kostencategorie",
-              "label": "Kostencategorie"
+              "key": "expenseCategory",
+              "label": "Cost category"
             },
             {
               "key": "periodId",
@@ -302,7 +302,7 @@
           "title": "EFRO Progress Dossier — {{regelingNaam}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "EFRO projectnummer",
               "type": "string"
             },
@@ -312,7 +312,7 @@
               "type": "string"
             },
             {
-              "key": "regelingNaam",
+              "key": "schemeName",
               "label": "EFRO programma",
               "type": "string"
             }
@@ -323,8 +323,8 @@
           "title": "Kosten per categorie en periode",
           "columns": [
             {
-              "key": "kostencategorie",
-              "label": "Kostencategorie"
+              "key": "expenseCategory",
+              "label": "Cost category"
             },
             {
               "key": "periodId",
@@ -362,12 +362,12 @@
           "title": "EU Horizon Audit Certificate — {{subsidieNumber}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "Grant reference",
               "type": "string"
             },
             {
-              "key": "regelingNaam",
+              "key": "schemeName",
               "label": "Programme",
               "type": "string"
             },
@@ -377,7 +377,7 @@
               "type": "string"
             },
             {
-              "key": "vaststellingDate",
+              "key": "determinationDate",
               "label": "Settlement date",
               "type": "date"
             }
@@ -387,7 +387,7 @@
           "sectionId": "horizon-audit-personnel-timesheets",
           "title": "Personnel costs — timesheet evidence",
           "filter": {
-            "kostencategorie": "personnel"
+            "expenseCategory": "personnel"
           },
           "columns": [
             {
@@ -404,7 +404,7 @@
               "type": "currency"
             },
             {
-              "key": "soUrenStaatUri",
+              "key": "soHoursStatementUri",
               "label": "S&O-uren-staat URI",
               "type": "uri"
             }
@@ -423,8 +423,8 @@
           },
           "columns": [
             {
-              "key": "kostencategorie",
-              "label": "Kostencategorie"
+              "key": "expenseCategory",
+              "label": "Cost category"
             },
             {
               "key": "periodId",
@@ -467,17 +467,17 @@
           "title": "MIT Verklaring — {{subsidieNumber}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "MIT referentienummer",
               "type": "string"
             },
             {
-              "key": "regelingNaam",
+              "key": "schemeName",
               "label": "MIT regeling",
               "type": "string"
             },
             {
-              "key": "vastgesteldBedrag",
+              "key": "determinedAmount",
               "label": "Vastgesteld bedrag (EUR)",
               "type": "currency"
             }
@@ -487,7 +487,7 @@
           "sectionId": "mit-wbso-reference",
           "title": "WBSO/S&O-administratie referentie",
           "filter": {
-            "kostencategorie": "personnel"
+            "expenseCategory": "personnel"
           },
           "columns": [
             {
@@ -528,12 +528,12 @@
           "title": "EFRO Aanbestedingsdossier — {{subsidieNumber}}",
           "fields": [
             {
-              "key": "subsidieNumber",
+              "key": "subsidyNumber",
               "label": "EFRO projectnummer",
               "type": "string"
             },
             {
-              "key": "regelingNaam",
+              "key": "schemeName",
               "label": "EFRO programma",
               "type": "string"
             }
@@ -543,7 +543,7 @@
           "sectionId": "efro-external-services-procurement",
           "title": "Inkoop derden — aanbestedingsdocumentatie",
           "filter": {
-            "kostencategorie": "external-services"
+            "expenseCategory": "external-services"
           },
           "columns": [
             {
@@ -579,9 +579,9 @@
       "mergeFields": [
         "klantNaam",
         "factuurNummer",
-        "factuurDatum",
-        "openstaandBedrag",
-        "vervaldatum",
+        "invoiceDate",
+        "outstandingAmount",
+        "expiryDate",
         "IBAN",
         "betaaltermijn"
       ],
@@ -598,9 +598,9 @@
       "mergeFields": [
         "klantNaam",
         "factuurNummer",
-        "factuurDatum",
-        "openstaandBedrag",
-        "vervaldatum",
+        "invoiceDate",
+        "outstandingAmount",
+        "expiryDate",
         "IBAN",
         "betaaltermijn"
       ],
@@ -617,9 +617,9 @@
       "mergeFields": [
         "klantNaam",
         "factuurNummer",
-        "factuurDatum",
-        "openstaandBedrag",
-        "vervaldatum",
+        "invoiceDate",
+        "outstandingAmount",
+        "expiryDate",
         "IBAN",
         "betaaltermijn",
         "incassokosten",
@@ -638,13 +638,13 @@
       "mergeFields": [
         "klantNaam",
         "factuurNummer",
-        "factuurDatum",
-        "openstaandBedrag",
-        "vervaldatum",
+        "invoiceDate",
+        "outstandingAmount",
+        "expiryDate",
         "IBAN",
         "incassokosten",
         "rente",
-        "totaalVerschuldigd"
+        "totalDue"
       ],
       "tone": "juridisch",
       "subject": "Ingebrekestelling — factuur {{factuurNummer}}",
@@ -659,7 +659,7 @@
       "mergeFields": [
         "klantNaam",
         "factuurNummer",
-        "totaalVerschuldigd",
+        "totalDue",
         "incassobureauNaam"
       ],
       "tone": "juridisch",
@@ -681,7 +681,7 @@
         "transmissionPath": "T4-base bookkeeping-sbr-xbrl-reporting SBR endpoint (Digipoort, eHerkenning EH3+); no new SBR client per ADR-019",
         "fields": [
           { "key": "fiscaalNummer", "source": "Belastingplichtige.fiscaalNummer" },
-          { "key": "boekjaar", "source": "VpbBalansLink.vpbPligtigVanaf -> fiscalYear" },
+          { "key": "financialYear", "source": "VpbBalansLink.vpbPligtigVanaf -> fiscalYear" },
           { "key": "activaTotaal", "source": "vpbBalansFiltered.activaTotal", "type": "currency", "unit": "cents" },
           { "key": "passivaTotaal", "source": "vpbBalansFiltered.passivaTotal", "type": "currency", "unit": "cents" },
           { "key": "resultaatTotaal", "source": "vpbBalansFiltered.resultaatTotal", "type": "currency", "unit": "cents" }
@@ -697,7 +697,7 @@
           "groupBy": "costCenterId",
           "columns": [
             { "key": "costCenterId", "label": "Ondernemingsactiviteit" },
-            { "key": "vpbPligtigVanaf", "label": "Vpb-pligtig vanaf", "type": "date" },
+            { "key": "vpbLiableFrom", "label": "Vpb-pligtig vanaf", "type": "date" },
             { "key": "activaTotal", "label": "Activa (EUR)", "type": "currency", "unit": "cents" },
             { "key": "passivaTotal", "label": "Passiva (EUR)", "type": "currency", "unit": "cents" },
             { "key": "resultaatTotal", "label": "Resultaat (EUR)", "type": "currency", "unit": "cents" },
@@ -759,6 +759,79 @@
           ]
         }
       ]
+    },
+    {
+      "templateId": "shillinq-balans",
+      "title": "Balans",
+      "description": "Balance sheet per peildatum (openspec/changes/reports-via-docudesk REQ-RVD-006). NOT yet a live docudesk Template object -- BalanceSheetReportGenerator::selectTemplate() looks up `namespace: \"shillinq\", category: \"shillinq-balans\"` in docudesk's own `template` register and fails closed with a diagnostic until that Template's Twig/HTML content is authored (hrmq `hrmq-docudesk-documents` precedent: template content authoring is a docudesk-side follow-up, not part of the consumption leaf). This entry documents the ReportSection block tree BalanceSheetReportGenerator hands to `DocumentService::generateDocument()` via `options.adHocData.report`, so a template author knows what to render.",
+      "register": "shillinq",
+      "reportCatalogueId": "balance-sheet",
+      "blockVocabulary": {
+        "cover": "title 'Balans', subtitle, meta line (Periode/Administratie/Gegenereerd)",
+        "heading": "'Activa', 'Passiva', 'Balanscontrole'",
+        "amountTable": "Activa lines+total, Eigen vermogen lines+total, Schulden lines+total, Recapitulatie passiva lines+total -- each {labelHead, amountHead, lines: [{label, amount, bold?}], total: {label, amount}|null, currency}",
+        "text": "'Eigen vermogen' / 'Schulden' subheadings (style: amountBold)",
+        "detailsTable": "Balanscontrole key/value rows (Aantal grootboekrekeningen, Totaal activa, Totaal passiva, Verschil, Balans sluit aan)",
+        "note": "empty-state ('Er zijn geen grootboekrekeningen gevonden...') when no accounts"
+      }
+    },
+    {
+      "templateId": "shillinq-winst-verlies",
+      "title": "Winst- en verliesrekening",
+      "description": "Profit-and-loss account over the period (openspec/changes/reports-via-docudesk REQ-RVD-006). NOT yet a live docudesk Template object -- ProfitLossReportGenerator::selectTemplate() looks up `namespace: \"shillinq\", category: \"shillinq-winst-verlies\"`; see shillinq-balans's description for the fail-closed/follow-up rationale.",
+      "register": "shillinq",
+      "reportCatalogueId": "profit-loss",
+      "blockVocabulary": {
+        "cover": "title 'Winst- en verliesrekening', subtitle, meta line",
+        "heading": "'Opbrengsten', 'Kosten', 'Resultaat'",
+        "amountTable": "Opbrengsten lines+total, Kosten lines+total, Resultaatbepaling (opbrengsten/kosten/resultaat)",
+        "note": "methodology note + empty-state when no revenue/expense accounts"
+      }
+    },
+    {
+      "templateId": "shillinq-jaarrekening",
+      "title": "Jaarrekening",
+      "description": "Titel 9 BW2 jaarrekening -- kerngegevens, balans, W&V, toelichting (openspec/changes/reports-via-docudesk REQ-RVD-006). NOT yet a live docudesk Template object -- AnnualAccountsReportGenerator::selectTemplate() looks up `namespace: \"shillinq\", category: \"shillinq-jaarrekening\"`; see shillinq-balans's description for the fail-closed/follow-up rationale.",
+      "register": "shillinq",
+      "reportCatalogueId": "annual-accounts",
+      "blockVocabulary": {
+        "cover": "title 'Jaarrekening', subtitle 'Titel 9 BW2 -- jaarrekening', meta line",
+        "heading": "'Kerngegevens', 'Balans per <date>', 'Winst- en verliesrekening', 'Toelichting', 'Controle en deponering'",
+        "detailsTable": "Kerngegevens (soort/jurisdictie/stelsel/boekjaar/taal/valuta/grootteklasse/balanstotaal/omzet/personeel), Controle en deponering (gecontroleerd/kwalificatie/data)",
+        "amountTable": "Activa/Passiva (fixed+current assets, equity+provisions+liabilities), Resultatenrekening (omzet/lasten/financieel/resultaat)",
+        "text": "toelichting intro + comparatives/netting/components paragraphs",
+        "note": "balans-sluit-niet-aan warning when activa != passiva"
+      }
+    },
+    {
+      "templateId": "shillinq-management-letter",
+      "title": "Management letter",
+      "description": "Bevindingenrapport from RuleAuditService's compliance audit (openspec/changes/reports-via-docudesk REQ-RVD-006). NOT yet a live docudesk Template object -- ManagementLetterReportGenerator::selectTemplate() looks up `namespace: \"shillinq\", category: \"shillinq-management-letter\"`; see shillinq-balans's description for the fail-closed/follow-up rationale.",
+      "register": "shillinq",
+      "reportCatalogueId": "management-letter",
+      "blockVocabulary": {
+        "cover": "title 'Management letter', subtitle, meta line",
+        "text": "aanhef/introductie paragraphs, closing recommendation",
+        "heading": "'Samenvatting', 'Bevindingen naar ernst', 'Bevindingen per object-type' (conditional), 'Belangrijkste bevindingen' (conditional), 'Aanbeveling'",
+        "detailsTable": "Samenvatting key/value rows (normenkader, dekkingsgraad, objecten gecontroleerd/compliant, compliancegraad)",
+        "amountTable": "Bevindingen naar ernst (mandatory/conditional/recommended counts, currency ''), per object-type counts (conditional), top violated rules (conditional)",
+        "note": "closing note on the audit engine/coverage"
+      }
+    },
+    {
+      "templateId": "shillinq-bbv-jaarstukken",
+      "title": "BBV-jaarstukken",
+      "description": "NL public-sector BBV jaarstukken / programmaverantwoording (openspec/changes/reports-via-docudesk REQ-RVD-006). NOT yet a live docudesk Template object -- BbvJaarstukkenReportGenerator::selectTemplate() looks up `namespace: \"shillinq\", category: \"shillinq-bbv-jaarstukken\"`; see shillinq-balans's description for the fail-closed/follow-up rationale.",
+      "register": "shillinq",
+      "reportCatalogueId": "bbv-jaarstukken",
+      "blockVocabulary": {
+        "cover": "title 'BBV-jaarstukken', documentType+subtitle, meta line",
+        "heading": "'Kerngegevens', 'Programmaplan (art. 8 BBV)', 'Verplichte paragrafen (art. 9 BBV)', 'Overzicht taakvelden', 'Jaarrekening (art. 24 BBV)', 'Vaste activa (art. 59/62 BBV)'",
+        "detailsTable": "Kerngegevens, art. 9 paragraph presence (Aanwezig/Ontbreekt), Jaarrekening component presence (Ja/Nee)",
+        "amountTable": "Programmaplan algemene posten, Vaste activa lines+total",
+        "table": "Programmaplan programme list (code/naam), Taakvelden overview (code/naam/baten/lasten + totaalrij) -- generic {styleKey, rows: [{cells: [{widthCm, cellStyle, text, textStyle, textOptions}]}]} blocks, not amountTable/detailsTable",
+        "note": "empty-state notes for programmes/taakvelden/vaste activa when absent"
+      }
     }
   ]
 }

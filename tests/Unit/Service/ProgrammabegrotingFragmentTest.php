@@ -33,240 +33,228 @@ use ReflectionMethod;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class ProgrammabegrotingFragmentTest extends TestCase
-{
+final class ProgrammabegrotingFragmentTest extends TestCase {
 
-    /**
-     * Absolute path to the change fragment.
-     *
-     * @var string
-     */
-    private string $fragmentPath = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-programmabegroting.json';
+	/**
+	 * Absolute path to the change fragment.
+	 *
+	 * @var string
+	 */
+	private string $fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/bookkeeping-programmabegroting.json';
 
-    /**
-     * Absolute path to the monolith register file.
-     *
-     * @var string
-     */
-    private string $registerPath = __DIR__.'/../../../lib/Settings/shillinq_register.json';
+	/**
+	 * Absolute path to the monolith register file.
+	 *
+	 * @var string
+	 */
+	private string $registerPath = __DIR__ . '/../../../lib/Settings/shillinq_register.json';
 
-    /**
-     * Load the fragment as an array.
-     *
-     * @return array<mixed>
-     */
-    private function fragment(): array
-    {
-        return json_decode((string) file_get_contents($this->fragmentPath), true);
+	/**
+	 * Load the fragment as an array.
+	 *
+	 * @return array<mixed>
+	 */
+	private function fragment(): array {
+		return json_decode((string)file_get_contents($this->fragmentPath), true);
+	}//end fragment()
 
-    }//end fragment()
+	/**
+	 * Invoke the private static SettingsService::deepMergeConfig().
+	 *
+	 * @param array<mixed> $base Base config.
+	 * @param array<mixed> $overlay Fragment.
+	 *
+	 * @return array<mixed> Merged config.
+	 */
+	private function merge(array $base, array $overlay): array {
+		$m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
+		$m->setAccessible(true);
+		return $m->invoke(null, $base, $overlay);
+	}//end merge()
 
-    /**
-     * Invoke the private static SettingsService::deepMergeConfig().
-     *
-     * @param array<mixed> $base    Base config.
-     * @param array<mixed> $overlay Fragment.
-     *
-     * @return array<mixed> Merged config.
-     */
-    private function merge(array $base, array $overlay): array
-    {
-        $m = new ReflectionMethod(SettingsService::class, 'deepMergeConfig');
-        $m->setAccessible(true);
-        return $m->invoke(null, $base, $overlay);
+	/**
+	 * The fragment is present and valid JSON with schemas + objects.
+	 *
+	 * @return void
+	 */
+	public function testFragmentIsValidJson(): void {
+		self::assertFileExists($this->fragmentPath);
+		$data = json_decode((string)file_get_contents($this->fragmentPath), true);
+		self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
+		self::assertArrayHasKey('schemas', $data['components']);
+		self::assertArrayHasKey('objects', $data['components']);
 
-    }//end merge()
+	}//end testFragmentIsValidJson()
 
-    /**
-     * The fragment is present and valid JSON with schemas + objects.
-     *
-     * @return void
-     */
-    public function testFragmentIsValidJson(): void
-    {
-        self::assertFileExists($this->fragmentPath);
-        $data = json_decode((string) file_get_contents($this->fragmentPath), true);
-        self::assertSame(JSON_ERROR_NONE, json_last_error(), json_last_error_msg());
-        self::assertArrayHasKey('schemas', $data['components']);
-        self::assertArrayHasKey('objects', $data['components']);
+	/**
+	 * All ten BBV registers are declared (REQ-001..REQ-009).
+	 *
+	 * @return void
+	 */
+	public function testDeclaresTenRegisters(): void {
+		$schemas = $this->fragment()['components']['schemas'];
+		$expected = [
+			'Programmabegroting',
+			'Programma',
+			'Taakveld',
+			'Indicator',
+			'Investering',
+			'Reserve',
+			'Voorziening',
+			'Paragraaf',
+			'Meerjarenraming',
+			'Begrotingswijziging',
+		];
+		foreach ($expected as $name) {
+			self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
+			self::assertSame($name, $schemas[$name]['slug']);
+		}
 
-    }//end testFragmentIsValidJson()
+	}//end testDeclaresTenRegisters()
 
-    /**
-     * All ten BBV registers are declared (REQ-001..REQ-009).
-     *
-     * @return void
-     */
-    public function testDeclaresTenRegisters(): void
-    {
-        $schemas  = $this->fragment()['components']['schemas'];
-        $expected = [
-            'Programmabegroting',
-            'Programma',
-            'Taakveld',
-            'Indicator',
-            'Investering',
-            'Reserve',
-            'Voorziening',
-            'Paragraaf',
-            'Meerjarenraming',
-            'Begrotingswijziging',
-        ];
-        foreach ($expected as $name) {
-            self::assertArrayHasKey($name, $schemas, "Fragment must declare $name");
-            self::assertSame($name, $schemas[$name]['slug']);
-        }
+	/**
+	 * The Programmabegroting declares the REQ-001 sluitend-flags and lifecycle.
+	 *
+	 * @return void
+	 */
+	public function testProgrammabegrotingHasFlagsAndLifecycle(): void {
+		$schema = $this->fragment()['components']['schemas']['Programmabegroting'];
+		foreach (['structurallyBalanced', 'sluitendReëel', 'supervisionRegime', 'organisationType', 'status'] as $field) {
+			self::assertArrayHasKey($field, $schema['properties'], "Programmabegroting must declare $field");
+		}
 
-    }//end testDeclaresTenRegisters()
+		$lifecycle = $schema['x-openregister-lifecycle'];
+		self::assertSame('status', $lifecycle['field']);
+		self::assertSame('draft', $lifecycle['initialState']);
+		self::assertArrayHasKey('behandelen', $lifecycle['transitions']);
+		self::assertArrayHasKey('vaststellen', $lifecycle['transitions']);
+		self::assertSame(
+			'OCA\\Shillinq\\Lifecycle\\ProgrammabegrotingGuard::canVaststellen',
+			$lifecycle['transitions']['vaststellen']['requires']
+		);
 
-    /**
-     * The Programmabegroting declares the REQ-001 sluitend-flags and lifecycle.
-     *
-     * @return void
-     */
-    public function testProgrammabegrotingHasFlagsAndLifecycle(): void
-    {
-        $schema = $this->fragment()['components']['schemas']['Programmabegroting'];
-        foreach (['sluitendStructureel', 'sluitendReëel', 'toezichtRegime', 'organisationType', 'status'] as $field) {
-            self::assertArrayHasKey($field, $schema['properties'], "Programmabegroting must declare $field");
-        }
+	}//end testProgrammabegrotingHasFlagsAndLifecycle()
 
-        $lifecycle = $schema['x-openregister-lifecycle'];
-        self::assertSame('status', $lifecycle['field']);
-        self::assertSame('draft', $lifecycle['initialState']);
-        self::assertArrayHasKey('behandelen', $lifecycle['transitions']);
-        self::assertArrayHasKey('vaststellen', $lifecycle['transitions']);
-        self::assertSame(
-            'OCA\\Shillinq\\Lifecycle\\ProgrammabegrotingGuard::canVaststellen',
-            $lifecycle['transitions']['vaststellen']['requires']
-        );
+	/**
+	 * The Begrotingswijziging declares the raadsbesluit-gated vaststellen transition.
+	 *
+	 * @return void
+	 */
+	public function testBegrotingswijzigingLifecycleWiredToGuard(): void {
+		$schema = $this->fragment()['components']['schemas']['Begrotingswijziging'];
+		$lifecycle = $schema['x-openregister-lifecycle'];
+		self::assertSame(
+			'OCA\\Shillinq\\Lifecycle\\BegrotingswijzigingGuard::canVaststellen',
+			$lifecycle['transitions']['vaststellen']['requires']
+		);
 
-    }//end testProgrammabegrotingHasFlagsAndLifecycle()
+	}//end testBegrotingswijzigingLifecycleWiredToGuard()
 
-    /**
-     * The Begrotingswijziging declares the raadsbesluit-gated vaststellen transition.
-     *
-     * @return void
-     */
-    public function testBegrotingswijzigingLifecycleWiredToGuard(): void
-    {
-        $schema    = $this->fragment()['components']['schemas']['Begrotingswijziging'];
-        $lifecycle = $schema['x-openregister-lifecycle'];
-        self::assertSame(
-            'OCA\\Shillinq\\Lifecycle\\BegrotingswijzigingGuard::canVaststellen',
-            $lifecycle['transitions']['vaststellen']['requires']
-        );
+	/**
+	 * Merging the fragment adds the registers without dropping the monolith's
+	 * existing schemas (ADR-037 disjoint union).
+	 *
+	 * @return void
+	 */
+	public function testFragmentMergesAdditivelyOntoMonolith(): void {
+		$base = json_decode((string)file_get_contents($this->registerPath), true);
+		$baseSchemaCount = count($base['components']['schemas']);
 
-    }//end testBegrotingswijzigingLifecycleWiredToGuard()
+		$merged = $this->merge($base, $this->fragment());
+		$schemas = $merged['components']['schemas'];
 
-    /**
-     * Merging the fragment adds the registers without dropping the monolith's
-     * existing schemas (ADR-037 disjoint union).
-     *
-     * @return void
-     */
-    public function testFragmentMergesAdditivelyOntoMonolith(): void
-    {
-        $base            = json_decode((string) file_get_contents($this->registerPath), true);
-        $baseSchemaCount = count($base['components']['schemas']);
+		self::assertArrayHasKey('Programmabegroting', $schemas);
+		self::assertArrayHasKey('Taakveld', $schemas);
 
-        $merged  = $this->merge($base, $this->fragment());
-        $schemas = $merged['components']['schemas'];
+		// The merge is additive and non-destructive: every fragment schema is
+		// present in the merged set, no base schema is dropped, and the count
+		// grows by exactly the number of fragment schemas not already in the
+		// base. Some BBV schemas the fragment declares (Taakveld, Reserve,
+		// Voorziening, Programma, Paragraaf, Begrotingswijziging) are now also
+		// shipped by the consolidated monolith, so the net delta is computed
+		// from the fragment rather than hard-coded to ten.
+		$fragSchemaKeys = array_keys($this->fragment()['components']['schemas']);
+		$netNew = count(array_diff($fragSchemaKeys, array_keys($base['components']['schemas'])));
+		self::assertSame($baseSchemaCount + $netNew, count($schemas));
+		foreach ($fragSchemaKeys as $fragName) {
+			self::assertArrayHasKey($fragName, $schemas, "$fragName must be present after the fragment merge");
+		}
+		foreach (array_keys($base['components']['schemas']) as $baseName) {
+			self::assertArrayHasKey($baseName, $schemas, "$baseName must survive the fragment merge");
+		}
 
-        self::assertArrayHasKey('Programmabegroting', $schemas);
-        self::assertArrayHasKey('Taakveld', $schemas);
+	}//end testFragmentMergesAdditivelyOntoMonolith()
 
-        // The merge is additive and non-destructive: every fragment schema is
-        // present in the merged set, no base schema is dropped, and the count
-        // grows by exactly the number of fragment schemas not already in the
-        // base. Some BBV schemas the fragment declares (Taakveld, Reserve,
-        // Voorziening, Programma, Paragraaf, Begrotingswijziging) are now also
-        // shipped by the consolidated monolith, so the net delta is computed
-        // from the fragment rather than hard-coded to ten.
-        $fragSchemaKeys = array_keys($this->fragment()['components']['schemas']);
-        $netNew         = count(array_diff($fragSchemaKeys, array_keys($base['components']['schemas'])));
-        self::assertSame($baseSchemaCount + $netNew, count($schemas));
-        foreach ($fragSchemaKeys as $fragName) {
-            self::assertArrayHasKey($fragName, $schemas, "$fragName must be present after the fragment merge");
-        }
-        foreach (array_keys($base['components']['schemas']) as $baseName) {
-            self::assertArrayHasKey($baseName, $schemas, "$baseName must survive the fragment merge");
-        }
+	/**
+	 * Seed objects target only declared schemas and use the shillinq register.
+	 *
+	 * @return void
+	 */
+	public function testSeedObjectsTargetDeclaredSchemas(): void {
+		$frag = $this->fragment();
+		$schemas = $frag['components']['schemas'];
+		$objects = $frag['components']['objects'];
 
-    }//end testFragmentMergesAdditivelyOntoMonolith()
+		self::assertNotEmpty($objects);
+		foreach ($objects as $object) {
+			self::assertSame('shillinq', $object['@self']['register']);
+			self::assertArrayHasKey($object['@self']['schema'], $schemas);
+		}
 
-    /**
-     * Seed objects target only declared schemas and use the shillinq register.
-     *
-     * @return void
-     */
-    public function testSeedObjectsTargetDeclaredSchemas(): void
-    {
-        $frag    = $this->fragment();
-        $schemas = $frag['components']['schemas'];
-        $objects = $frag['components']['objects'];
+	}//end testSeedObjectsTargetDeclaredSchemas()
 
-        self::assertNotEmpty($objects);
-        foreach ($objects as $object) {
-            self::assertSame('shillinq', $object['@self']['register']);
-            self::assertArrayHasKey($object['@self']['schema'], $schemas);
-        }
+	/**
+	 * Reserve / Voorziening seed eindsaldo arithmetic is internally consistent
+	 * (REQ-006), and the Programma seed equals the sum of its Taakvelden (REQ-002).
+	 *
+	 * @return void
+	 */
+	public function testSeedArithmeticIsConsistent(): void {
+		$objects = $this->fragment()['components']['objects'];
 
-    }//end testSeedObjectsTargetDeclaredSchemas()
+		$taskFieldByProgramma = [];
+		foreach ($objects as $object) {
+			$schema = $object['@self']['schema'];
+			if ($schema === 'Reserve') {
+				$expected = (int)round((($object['openingBalance'] + ($object['toevoegingen'] ?? 0)) - ($object['onttrekkingen'] ?? 0)) * 100);
+				self::assertSame($expected, (int)round($object['closingBalance'] * 100), 'Reserve eindsaldo must balance');
+			}
 
-    /**
-     * Reserve / Voorziening seed eindsaldo arithmetic is internally consistent
-     * (REQ-006), and the Programma seed equals the sum of its Taakvelden (REQ-002).
-     *
-     * @return void
-     */
-    public function testSeedArithmeticIsConsistent(): void
-    {
-        $objects = $this->fragment()['components']['objects'];
+			if ($schema === 'Voorziening') {
+				$movements = (($object['additions'] ?? 0) - ($object['release'] ?? 0) - ($object['utilisations'] ?? 0));
+				$expected = (int)round(($object['openingBalance'] + $movements) * 100);
+				self::assertSame($expected, (int)round($object['closingBalance'] * 100), 'Voorziening eindsaldo must balance');
+			}
 
-        $taakveldByProgramma = [];
-        foreach ($objects as $object) {
-            $schema = $object['@self']['schema'];
-            if ($schema === 'Reserve') {
-                $expected = (int) round((($object['beginsaldo'] + ($object['toevoegingen'] ?? 0)) - ($object['onttrekkingen'] ?? 0)) * 100);
-                self::assertSame($expected, (int) round($object['eindsaldo'] * 100), 'Reserve eindsaldo must balance');
-            }
+			if ($schema === 'Taakveld') {
+				$pid = $object['programmeId'];
+				$taskFieldByProgramma[$pid][] = $object;
+			}
+		}//end foreach
 
-            if ($schema === 'Voorziening') {
-                $mutaties = (($object['dotaties'] ?? 0) - ($object['vrijval'] ?? 0) - ($object['aanwendingen'] ?? 0));
-                $expected = (int) round(($object['beginsaldo'] + $mutaties) * 100);
-                self::assertSame($expected, (int) round($object['eindsaldo'] * 100), 'Voorziening eindsaldo must balance');
-            }
+		// Verify Programma roll-up equals the sum of its child Taakvelden.
+		foreach ($objects as $object) {
+			if ($object['@self']['schema'] !== 'Programma') {
+				continue;
+			}
 
-            if ($schema === 'Taakveld') {
-                $pid = $object['programmaId'];
-                $taakveldByProgramma[$pid][] = $object;
-            }
-        }//end foreach
+			$pid = $object['@self']['slug'];
+			if (isset($taskFieldByProgramma[$pid]) === false) {
+				continue;
+			}
 
-        // Verify Programma roll-up equals the sum of its child Taakvelden.
-        foreach ($objects as $object) {
-            if ($object['@self']['schema'] !== 'Programma') {
-                continue;
-            }
+			$revenueCents = 0;
+			$expensesCents = 0;
+			foreach ($taskFieldByProgramma[$pid] as $tv) {
+				$revenueCents += (int)round($tv['revenue'] * 100);
+				$expensesCents += (int)round($tv['expenses'] * 100);
+			}
 
-            $pid = $object['@self']['slug'];
-            if (isset($taakveldByProgramma[$pid]) === false) {
-                continue;
-            }
+			self::assertSame($revenueCents, (int)round($object['revenueTotal'] * 100), 'Programma batenTotaal must equal Σ Taakveld.baten');
+			self::assertSame($expensesCents, (int)round($object['expensesTotal'] * 100), 'Programma lastenTotaal must equal Σ Taakveld.lasten');
+		}//end foreach
 
-            $batenCents  = 0;
-            $lastenCents = 0;
-            foreach ($taakveldByProgramma[$pid] as $tv) {
-                $batenCents  += (int) round($tv['baten'] * 100);
-                $lastenCents += (int) round($tv['lasten'] * 100);
-            }
+	}//end testSeedArithmeticIsConsistent()
 
-            self::assertSame($batenCents, (int) round($object['batenTotaal'] * 100), 'Programma batenTotaal must equal Σ Taakveld.baten');
-            self::assertSame($lastenCents, (int) round($object['lastenTotaal'] * 100), 'Programma lastenTotaal must equal Σ Taakveld.lasten');
-        }//end foreach
-
-    }//end testSeedArithmeticIsConsistent()
-
-    // phpcs:enable CustomSniffs.Functions.NamedParameters
+	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

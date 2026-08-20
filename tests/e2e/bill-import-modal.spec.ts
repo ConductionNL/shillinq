@@ -46,12 +46,17 @@ async function dismissWizard(page: Page): Promise<void> {
 async function openModal(page: Page): Promise<boolean> {
 	await page.goto(`${APP}${ROUTE_FINANCIAL}`)
 	await dismissWizard(page)
-	const importBill = page.locator('[data-testid="fda-import-bill"]')
+	// ADR-049 Phase-4: the "Import bill" launcher is now a declarative
+	// dashboard `config.headerActions[]` open-modal action (id: import-bill),
+	// rendered by CnActionButtons with the testid `cn-action-<id>`.
+	const importBill = page.locator('[data-testid="cn-action-import-bill"]')
 	if (!(await importBill.isVisible().catch(() => false))) {
 		return false
 	}
 	await importBill.click()
-	await page.locator('[data-testid="bill-import-modal"]').waitFor({ state: 'visible', timeout: 8_000 })
+	await page
+		.locator('[data-testid="bill-import-modal"]')
+		.waitFor({ state: 'visible', timeout: 8_000 })
 	return true
 }
 
@@ -63,11 +68,16 @@ test.describe('shillinq-bill-import-modal', () => {
 	 * @e2e shillinq-bill-import-modal::ubl-file-uploaded-from-the-dashboard
 	 */
 	test('UBL file uploaded from the dashboard', async ({ page }) => {
-		test.skip(!(await openModal(page)), 'Financial dashboard / Import bill action not available for this administration')
+		test.skip(
+			!(await openModal(page)),
+			'Financial dashboard / Import bill action not available for this administration',
+		)
 		await expect(page.locator('[data-testid="bim-upload-step"]')).toBeVisible()
 		await expect(page.locator('[data-testid="bim-dropzone"]')).toBeVisible()
 		// The hidden file input accepts UBL/e-invoice XML (and CSV/PDF).
-		const accept = await page.locator('[data-testid="bim-file-input"]').getAttribute('accept')
+		const accept = await page
+			.locator('[data-testid="bim-file-input"]')
+			.getAttribute('accept')
 		expect(accept).toContain('.xml')
 	})
 

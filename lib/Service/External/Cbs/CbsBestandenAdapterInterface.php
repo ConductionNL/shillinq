@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/tasks.md
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,27 +44,26 @@ namespace OCA\Shillinq\Service\External\Cbs;
  * a synthetic DEFERRED outcome so the surrounding lifecycle can advance
  * into `submitted` without contacting CBS.
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/tasks.md
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  */
-interface CbsBestandenAdapterInterface
-{
-    /**
-     * Submit a CBS Bestanden payload.
-     *
-     * @param array<string,mixed> $payload The CBS submission envelope —
-     *                                     submissionNumber, reportingPeriod{Start,End}Date,
-     *                                     organizationLegalName, kvkNumber, taxIdentificationNumber,
-     *                                     administrationId, lines[] (CBSLine projections),
-     *                                     iv3FileBytes (binary), iv3Checksum.
-     *
-     * @return CbsSubmissionResult The dispatch outcome (status + tracking id).
-     */
-    public function submit(array $payload): CbsSubmissionResult;
+interface CbsBestandenAdapterInterface {
+	/**
+	 * Submit a CBS Bestanden payload.
+	 *
+	 * @param array<string,mixed> $payload The CBS submission envelope —
+	 *                                     submissionNumber, reportingPeriod{Start,End}Date,
+	 *                                     organizationLegalName, kvkNumber, taxIdentificationNumber,
+	 *                                     administrationId, lines[] (CBSLine projections),
+	 *                                     iv3FileBytes (binary), iv3Checksum.
+	 *
+	 * @return CbsSubmissionResult The dispatch outcome (status + tracking id).
+	 */
+	public function submit(array $payload): CbsSubmissionResult;
 
-    /**
-     * Whether the adapter is dormant — i.e. wired but not contacting CBS.
-     *
-     * @return bool TRUE when the adapter is a log-only stub.
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the adapter is dormant — i.e. wired but not contacting CBS.
+	 *
+	 * @return bool TRUE when the adapter is a log-only stub.
+	 */
+	public function isDormant(): bool;
 }//end interface

@@ -22,7 +22,9 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-rule-audit/specs/bookkeeping-rule-engine/spec.md
+ * @spec openspec/specs/bookkeeping-rule-engine/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -33,215 +35,206 @@ use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Standards\RuleCatalogue;
 use OCA\Shillinq\Standards\RuleEngine;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Read-only compliance auditor over the register's bookkeeping objects.
  */
-class RuleAuditService
-{
+class RuleAuditService {
 
-    /**
-     * Max objects loaded per type for the audit.
-     *
-     * @var int
-     */
-    private const LIMIT = 10000;
+	/**
+	 * Max objects loaded per type for the audit.
+	 *
+	 * @var int
+	 */
+	private const LIMIT = 10000;
 
+	/**
+	 * Construct the rule audit service.
+	 *
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
+	) {
 
-    /**
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
+	}//end __construct()
 
-    }//end __construct()
+	/**
+	 * Run the audit and return the structured report.
+	 *
+	 * @param array<string, mixed> $context Evaluation context (e.g. jurisdiction).
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/specs/bookkeeping-rule-engine/spec.md
+	 */
+	public function audit(array $context = []): array {
+		$corpusTotal = RuleCatalogue::count();
+		$machineCheckable = count(RuleCatalogue::machineCheckable());
+		$enforceable = count(RuleEngine::checkedRuleIds());
 
+		$report = [
+			'catalogueVersion' => RuleCatalogue::version(),
+			'corpusTotal' => $corpusTotal,
+			'machineCheckable' => $machineCheckable,
+			'enforceableRules' => $enforceable,
+			'coveragePct' => $machineCheckable > 0 ? round(($enforceable / $machineCheckable) * 100, 1) : 0.0,
+			'types' => [],
+			'objectsChecked' => 0,
+			'objectsCompliant' => 0,
+			'objectsWithViolations' => 0,
+			'violationsBySeverity' => ['mandatory' => 0, 'conditional' => 0, 'recommended' => 0],
+			'topViolatedRules' => [],
+		];
 
-    /**
-     * Run the audit and return the structured report.
-     *
-     * @param array<string, mixed> $context Evaluation context (e.g. jurisdiction).
-     *
-     * @return array<string, mixed>
-     */
-    public function audit(array $context=[]): array
-    {
-        $corpusTotal     = RuleCatalogue::count();
-        $machineCheckable = count(RuleCatalogue::machineCheckable());
-        $enforceable     = count(RuleEngine::checkedRuleIds());
+		$byRule = [];
 
-        $report = [
-            'catalogueVersion'      => RuleCatalogue::version(),
-            'corpusTotal'           => $corpusTotal,
-            'machineCheckable'      => $machineCheckable,
-            'enforceableRules'      => $enforceable,
-            'coveragePct'           => $machineCheckable > 0 ? round(($enforceable / $machineCheckable) * 100, 1) : 0.0,
-            'types'                 => [],
-            'objectsChecked'        => 0,
-            'objectsCompliant'      => 0,
-            'objectsWithViolations' => 0,
-            'violationsBySeverity'  => ['mandatory' => 0, 'conditional' => 0, 'recommended' => 0],
-            'topViolatedRules'      => [],
-        ];
+		foreach (RuleEngine::supportedTypes() as $type) {
+			$objects = $this->loadAll($type);
+			$typeStat = ['checked' => 0, 'compliant' => 0, 'withViolations' => 0, 'violations' => 0];
 
-        $byRule = [];
+			foreach ($objects as $object) {
+				if ($type === 'GLTransaction') {
+					$object['lines'] = $this->loadLines($object);
+				}
 
-        foreach (RuleEngine::supportedTypes() as $type) {
-            $objects = $this->loadAll($type);
-            $typeStat = ['checked' => 0, 'compliant' => 0, 'withViolations' => 0, 'violations' => 0];
+				$violations = RuleEngine::evaluate($type, $object, $context);
+				$typeStat['checked']++;
+				$report['objectsChecked']++;
 
-            foreach ($objects as $object) {
-                if ($type === 'GLTransaction') {
-                    $object['lines'] = $this->loadLines($object);
-                }
+				if (empty($violations) === true) {
+					$typeStat['compliant']++;
+					$report['objectsCompliant']++;
+					continue;
+				}
 
-                $violations = RuleEngine::evaluate($type, $object, $context);
-                $typeStat['checked']++;
-                $report['objectsChecked']++;
+				$typeStat['withViolations']++;
+				$report['objectsWithViolations']++;
+				foreach ($violations as $violation) {
+					$typeStat['violations']++;
+					$report['violationsBySeverity'][$violation->severity] = (($report['violationsBySeverity'][$violation->severity] ?? 0) + 1);
+					$byRule[$violation->ruleId] = (($byRule[$violation->ruleId] ?? 0) + 1);
+				}
+			}//end foreach
 
-                if (empty($violations) === true) {
-                    $typeStat['compliant']++;
-                    $report['objectsCompliant']++;
-                    continue;
-                }
+			$report['types'][$type] = $typeStat;
+		}//end foreach
 
-                $typeStat['withViolations']++;
-                $report['objectsWithViolations']++;
-                foreach ($violations as $violation) {
-                    $typeStat['violations']++;
-                    $report['violationsBySeverity'][$violation->severity] = (($report['violationsBySeverity'][$violation->severity] ?? 0) + 1);
-                    $byRule[$violation->ruleId] = (($byRule[$violation->ruleId] ?? 0) + 1);
-                }
-            }
+		arsort($byRule);
+		foreach (array_slice($byRule, 0, 15, true) as $ruleId => $count) {
+			$report['topViolatedRules'][] = ['ruleId' => $ruleId, 'count' => $count];
+		}
 
-            $report['types'][$type] = $typeStat;
-        }
+		return $report;
+	}//end audit()
 
-        arsort($byRule);
-        foreach (array_slice($byRule, 0, 15, true) as $ruleId => $count) {
-            $report['topViolatedRules'][] = ['ruleId' => $ruleId, 'count' => $count];
-        }
+	/**
+	 * Load all objects of a schema (capped), as plain arrays.
+	 *
+	 * @param string $schema The schema name.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function loadAll(string $schema): array {
+		try {
+			$rows = $this->objectService()
+				->setRegister($this->register())
+				->setSchema($schema)
+				->findAll(['limit' => self::LIMIT]);
+		} catch (\Throwable $e) {
+			$this->logger->warning('RuleAuditService: could not load ' . $schema . ': ' . $e->getMessage());
+			return [];
+		}
 
-        return $report;
+		return $this->normaliseRows($rows);
+	}//end loadAll()
 
-    }//end audit()
+	/**
+	 * Load GLLine rows for a transaction as plain arrays. GLLines reference their
+	 * parent via `transactionId` matching EITHER the transaction's OpenRegister
+	 * id OR its human `transactionNumber` (mirrors the financial-series join), so
+	 * both keys are queried and merged (deduped by line id).
+	 *
+	 * @param array<string, mixed> $transaction The GL transaction.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function loadLines(array $transaction): array {
+		$keys = array_values(
+			array_unique(
+				array_filter(
+					[
+						(string)($transaction['id'] ?? $transaction['@self']['id'] ?? ''),
+						(string)($transaction['transactionNumber'] ?? ''),
+					]
+				)
+			)
+		);
 
+		$lines = [];
+		foreach ($keys as $key) {
+			try {
+				$rows = $this->objectService()
+					->setRegister($this->register())
+					->setSchema('GLLine')
+					->findAll(['filters' => ['transactionId' => $key]]);
+			} catch (\Throwable $e) {
+				continue;
+			}
 
-    /**
-     * Load all objects of a schema (capped), as plain arrays.
-     *
-     * @param string $schema The schema name.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function loadAll(string $schema): array
-    {
-        try {
-            $rows = $this->objectService()
-                ->setRegister($this->register())
-                ->setSchema($schema)
-                ->findAll(['limit' => self::LIMIT]);
-        } catch (\Throwable $e) {
-            $this->logger->warning('RuleAuditService: could not load '.$schema.': '.$e->getMessage());
-            return [];
-        }
+			foreach ($this->normaliseRows($rows) as $line) {
+				$lineId = (string)($line['id'] ?? $line['@self']['id'] ?? spl_object_hash((object)$line));
+				$lines[$lineId] = $line;
+			}
+		}
 
-        return $this->normaliseRows($rows);
+		return array_values($lines);
+	}//end loadLines()
 
-    }//end loadAll()
+	/**
+	 * Normalise a list of ObjectService rows (entities or arrays) to arrays.
+	 *
+	 * @param mixed $rows Raw rows.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function normaliseRows(mixed $rows): array {
+		$out = [];
+		foreach ((is_array($rows) === true ? $rows : []) as $row) {
+			if (is_array($row) === true) {
+				$out[] = $row;
+				continue;
+			}
 
+			if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+				$out[] = (array)$row->jsonSerialize();
+			}
+		}
 
-    /**
-     * Load GLLine rows for a transaction as plain arrays. GLLines reference their
-     * parent via `transactionId` matching EITHER the transaction's OpenRegister
-     * id OR its human `transactionNumber` (mirrors the financial-series join), so
-     * both keys are queried and merged (deduped by line id).
-     *
-     * @param array<string, mixed> $transaction The GL transaction.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function loadLines(array $transaction): array
-    {
-        $keys = array_values(array_unique(array_filter([
-            (string) ($transaction['id'] ?? $transaction['@self']['id'] ?? ''),
-            (string) ($transaction['transactionNumber'] ?? ''),
-        ])));
+		return $out;
+	}//end normaliseRows()
 
-        $lines = [];
-        foreach ($keys as $key) {
-            try {
-                $rows = $this->objectService()
-                    ->setRegister($this->register())
-                    ->setSchema('GLLine')
-                    ->findAll(['filters' => ['transactionId' => $key]]);
-            } catch (\Throwable $e) {
-                continue;
-            }
+	/**
+	 * Resolve the OpenRegister ObjectService from the DI container.
+	 *
+	 * @return mixed The OpenRegister ObjectService.
+	 */
+	private function objectService(): mixed {
+		return $this->objectService;
+	}//end objectService()
 
-            foreach ($this->normaliseRows($rows) as $line) {
-                $lineId = (string) ($line['id'] ?? $line['@self']['id'] ?? spl_object_hash((object) $line));
-                $lines[$lineId] = $line;
-            }
-        }
-
-        return array_values($lines);
-
-    }//end loadLines()
-
-
-    /**
-     * Normalise a list of ObjectService rows (entities or arrays) to arrays.
-     *
-     * @param mixed $rows Raw rows.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function normaliseRows(mixed $rows): array
-    {
-        $out = [];
-        foreach ((is_array($rows) === true ? $rows : []) as $row) {
-            if (is_array($row) === true) {
-                $out[] = $row;
-                continue;
-            }
-
-            if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-                $out[] = (array) $row->jsonSerialize();
-            }
-        }
-
-        return $out;
-
-    }//end normaliseRows()
-
-
-    /**
-     * @return mixed The OpenRegister ObjectService.
-     */
-    private function objectService(): mixed
-    {
-        return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
-    }//end objectService()
-
-
-    /**
-     * @return string The configured register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        return $register === '' ? 'shillinq' : $register;
-
-    }//end register()
-
-
+	/**
+	 * Return the configured OpenRegister register slug.
+	 *
+	 * @return string The configured register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		return $register === '' ? 'shillinq' : $register;
+	}//end register()
 }//end class

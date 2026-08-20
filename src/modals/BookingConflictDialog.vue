@@ -29,7 +29,9 @@
 				</h2>
 			</header>
 			<section class="bk-conflict-dialog__body">
-				<p>{{ label('The proposed booking overlaps existing bookings:') }}</p>
+				<p>
+					{{ label('The proposed booking overlaps existing bookings:') }}
+				</p>
 				<ul class="bk-conflict-dialog__list" data-testid="bk-conflict-list">
 					<li
 						v-for="c in conflicts"
@@ -37,11 +39,18 @@
 						class="bk-conflict-dialog__item"
 						:data-testid="`bk-conflict-${c.bookingId}`">
 						<strong>{{ c.title || c.bookingId }}</strong>
-						<span>{{ formatTime(c.startTime) }} – {{ formatTime(c.endTime) }}</span>
+						<span
+							>{{ formatTime(c.startTime) }} –
+							{{ formatTime(c.endTime) }}</span
+						>
 					</li>
 				</ul>
 				<p class="bk-conflict-dialog__warn">
-					{{ label('Confirm to create the booking anyway, or cancel to adjust the times.') }}
+					{{
+						label(
+							'Confirm to create the booking anyway, or cancel to adjust the times.',
+						)
+					}}
 				</p>
 			</section>
 			<footer class="bk-conflict-dialog__footer">
@@ -83,6 +92,7 @@ export default {
 		conflicts: { type: Array, default: () => [] },
 		timeZone: { type: String, default: 'Europe/Amsterdam' },
 	},
+
 	emits: ['confirm', 'cancel'],
 	methods: {
 		label(key) {
@@ -91,6 +101,7 @@ export default {
 			}
 			return key
 		},
+
 		formatTime(iso) {
 			if (!iso) {
 				return ''
@@ -122,6 +133,7 @@ export default {
 	justify-content: center;
 	z-index: 1000;
 }
+
 .bk-conflict-dialog__panel {
 	background: var(--color-main-background, #fff);
 	max-width: 480px;
@@ -131,22 +143,46 @@ export default {
 	display: flex;
 	flex-direction: column;
 }
+
 .bk-conflict-dialog__header,
 .bk-conflict-dialog__body,
 .bk-conflict-dialog__footer {
 	padding: 12px 16px;
 }
-.bk-conflict-dialog__header { border-bottom: 1px solid var(--color-border, #ddd); }
-.bk-conflict-dialog__footer { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--color-border, #ddd); }
-.bk-conflict-dialog__list { list-style: disc; padding-left: 20px; }
-.bk-conflict-dialog__item { display: flex; flex-direction: column; padding: 4px 0; }
-.bk-conflict-dialog__warn { color: var(--color-error, #c62828); }
+
+.bk-conflict-dialog__header {
+	border-bottom: 1px solid var(--color-border, #ddd);
+}
+
+.bk-conflict-dialog__footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	border-top: 1px solid var(--color-border, #ddd);
+}
+
+.bk-conflict-dialog__list {
+	list-style: disc;
+	padding-left: 20px;
+}
+
+.bk-conflict-dialog__item {
+	display: flex;
+	flex-direction: column;
+	padding: 4px 0;
+}
+
+.bk-conflict-dialog__warn {
+	color: var(--color-error, #c62828);
+}
+
 .bk-conflict-dialog__btn {
 	padding: 6px 14px;
 	border: 1px solid var(--color-border, #ccc);
 	background: transparent;
 	cursor: pointer;
 }
+
 .bk-conflict-dialog__btn--primary {
 	background: var(--color-primary-element, #0082c9);
 	color: var(--color-primary-element-text, #fff);

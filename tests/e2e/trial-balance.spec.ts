@@ -24,7 +24,9 @@ import { test, expect } from '@playwright/test'
 const APP = '/apps/shillinq'
 
 test.describe('shillinq — Trial Balance SPA smoke', () => {
-	test('Trial Balance navigation entries resolve in the manifest shell', async ({ page }) => {
+	test('Trial Balance navigation entries resolve in the manifest shell', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/')
 		await page.waitForLoadState('domcontentloaded')
 

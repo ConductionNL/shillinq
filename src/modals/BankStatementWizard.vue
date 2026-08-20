@@ -22,7 +22,7 @@
  is discoverability only; the real PSD2 connection is owned by the
  bank-connectors capability under Settings.
 
- @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md
+ @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
 -->
 
 <template>
@@ -35,23 +35,30 @@
 		<div class="bsw">
 			<!-- Step 1: format selection + file upload -->
 			<div v-if="step === 1" class="bsw__step" data-testid="bsw-step-1">
-				<p class="bsw__heading">{{ t('shillinq', 'How does your bank export statements?') }}</p>
+				<p class="bsw__heading">
+					{{ t('shillinq', 'How does your bank export statements?') }}
+				</p>
 				<NcSelect
-					:model-value="selectedFormatOption"
+					:modelValue="selectedFormatOption"
 					:options="formatSelectOptions"
-					:input-label="t('shillinq', 'Statement format')"
+					:inputLabel="t('shillinq', 'Statement format')"
 					:clearable="false"
 					label="display"
-					track-by="value"
+					trackBy="value"
 					data-testid="bsw-format"
-					@update:model-value="onFormatSelected" />
+					@update:modelValue="onFormatSelected" />
 
-				<p v-if="form.format" class="bsw__hint" data-testid="bsw-format-hint">
+				<p
+					v-if="form.format"
+					class="bsw__hint"
+					data-testid="bsw-format-hint">
 					{{ formatInstructions }}
 				</p>
 
 				<div v-if="form.format" class="bsw__field">
-					<label class="bsw__label" for="bsw-file">{{ t('shillinq', 'Statement file') }}</label>
+					<label class="bsw__label" for="bsw-file">{{
+						t('shillinq', 'Statement file')
+					}}</label>
 					<input
 						id="bsw-file"
 						ref="file"
@@ -59,12 +66,21 @@
 						:accept="acceptFor(form.format)"
 						class="bsw__input"
 						data-testid="bsw-file"
-						@change="onFileChosen">
+						@change="onFileChosen" />
 				</div>
 
 				<p class="bsw__psd2">
-					{{ t('shillinq', 'Or connect your bank directly and skip manual uploads:') }}
-					<a href="#" class="bsw__link" data-testid="bsw-psd2" @click.prevent="goToBankConnections">
+					{{
+						t(
+							'shillinq',
+							'Or connect your bank directly and skip manual uploads:',
+						)
+					}}
+					<a
+						href="#"
+						class="bsw__link"
+						data-testid="bsw-psd2"
+						@click.prevent="goToBankConnections">
 						{{ t('shillinq', 'Connect via PSD2') }}
 					</a>
 				</p>
@@ -72,10 +88,14 @@
 
 			<!-- Step 2: account mapping -->
 			<div v-else-if="step === 2" class="bsw__step" data-testid="bsw-step-2">
-				<p class="bsw__heading">{{ t('shillinq', 'Map to Shillinq account') }}</p>
+				<p class="bsw__heading">
+					{{ t('shillinq', 'Map to Shillinq account') }}
+				</p>
 				<dl class="bsw__meta">
 					<dt>{{ t('shillinq', 'Statement IBAN') }}</dt>
-					<dd data-testid="bsw-iban">{{ statementIban || t('shillinq', 'Unknown') }}</dd>
+					<dd data-testid="bsw-iban">
+						{{ statementIban || t('shillinq', 'Unknown') }}
+					</dd>
 					<dt>{{ t('shillinq', 'Statement name') }}</dt>
 					<dd>{{ statementName || '—' }}</dd>
 				</dl>
@@ -87,22 +107,34 @@
 			<!-- Step 3: import summary -->
 			<div v-else class="bsw__step" data-testid="bsw-step-3">
 				<p v-if="importing" class="bsw__heading" data-testid="bsw-importing">
-					{{ t('shillinq', 'Importing {count} transactions', { count: result ? result.transactionCount : '…' }) }}
+					{{
+						t('shillinq', 'Importing {count} transactions', {
+							count: result ? result.transactionCount : '…',
+						})
+					}}
 				</p>
 				<template v-else-if="result">
 					<p class="bsw__heading" data-testid="bsw-summary">
-						{{ t('shillinq', 'Importing {count} transactions', { count: result.transactionCount }) }}
+						{{
+							t('shillinq', 'Importing {count} transactions', {
+								count: result.transactionCount,
+							})
+						}}
 					</p>
 					<ul class="bsw__counts">
 						<li data-testid="bsw-matched">
-							{{ result.matchedCount }} {{ t('shillinq', 'automatically matched') }}
+							{{ result.matchedCount }}
+							{{ t('shillinq', 'automatically matched') }}
 						</li>
 						<li data-testid="bsw-unmatched">
-							{{ result.unmatchedCount }} {{ t('shillinq', 'unmatched — require manual review') }}
+							{{ result.unmatchedCount }}
+							{{ t('shillinq', 'unmatched — require manual review') }}
 						</li>
 					</ul>
 				</template>
-				<p v-if="error" class="bsw__error" data-testid="bsw-error">{{ error }}</p>
+				<p v-if="error" class="bsw__error" data-testid="bsw-error">
+					{{ error }}
+				</p>
 			</div>
 		</div>
 
@@ -112,7 +144,7 @@
 			</NcButton>
 			<NcButton
 				v-if="step === 1"
-				type="primary"
+				variant="primary"
 				:disabled="!canLeaveStep1"
 				data-testid="bsw-next-1"
 				@click="advanceFromStep1">
@@ -120,7 +152,7 @@
 			</NcButton>
 			<NcButton
 				v-else-if="step === 2"
-				type="primary"
+				variant="primary"
 				:disabled="!form.glAccountId"
 				data-testid="bsw-next-2"
 				@click="advanceFromStep2">
@@ -128,7 +160,7 @@
 			</NcButton>
 			<NcButton
 				v-else-if="step === 3 && result"
-				type="primary"
+				variant="primary"
 				:disabled="importing"
 				data-testid="bsw-review"
 				@click="reviewMatches">
@@ -139,20 +171,18 @@
 </template>
 
 <script>
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
 import { showError } from '@nextcloud/dialogs'
 import { emit } from '@nextcloud/event-bus'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
 import GlAccountPicker from '../components/BudgetBBVMapping/GlAccountPicker.vue'
 import {
+	buildImportPayload,
 	formatOptions,
 	loadIbanMapping,
 	saveIbanMapping,
-	buildImportPayload,
 	setReturnBreadcrumb,
 } from './bankStatementWizard.js'
 
@@ -165,6 +195,7 @@ export default {
 			default: false,
 		},
 	},
+
 	emits: ['close', 'imported'],
 	data() {
 		return {
@@ -182,8 +213,9 @@ export default {
 			},
 		}
 	},
+
 	computed: {
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		formatSelectOptions() {
 			return [
 				{ value: 'camt053', display: t('shillinq', 'CAMT.053 XML') },
@@ -191,35 +223,57 @@ export default {
 				{ value: 'csv', display: t('shillinq', 'CSV') },
 			]
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		selectedFormatOption() {
-			return this.formatSelectOptions.find((o) => o.value === this.form.format) || null
+			return (
+				this.formatSelectOptions.find((o) => o.value === this.form.format)
+				|| null
+			)
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		formatInstructions() {
 			const map = {
-				camt053: t('shillinq', 'Most Dutch banks (ING, Rabobank, ABN AMRO, SNS). Export from your bank: Downloads → Account overview → Format: CAMT.053 → Date range: last 30 days.'),
-				mt940: t('shillinq', 'Older SWIFT format (Triodos, some ING accounts). Export the MT940 / .STA file from your bank portal.'),
-				csv: t('shillinq', 'Custom export with a header row (valueDate, amount, currency, remittanceInfo, counterpartyName, counterpartyIban).'),
+				camt053: t(
+					'shillinq',
+					'Most Dutch banks (ING, Rabobank, ABN AMRO, SNS). Export from your bank: Downloads → Account overview → Format: CAMT.053 → Date range: last 30 days.',
+				),
+
+				mt940: t(
+					'shillinq',
+					'Older SWIFT format (Triodos, some ING accounts). Export the MT940 / .STA file from your bank portal.',
+				),
+
+				csv: t(
+					'shillinq',
+					'Custom export with a header row (valueDate, amount, currency, remittanceInfo, counterpartyName, counterpartyIban).',
+				),
 			}
 			return map[this.form.format] || ''
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		canLeaveStep1() {
 			return Boolean(this.form.format) && Boolean(this.form.contents)
 		},
 	},
+
 	watch: {
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/**
+		 * @param next
+		 * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
+		 */
 		open(next) {
 			if (next === true) {
 				this.reset()
 			}
 		},
 	},
+
 	methods: {
 		t,
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		reset() {
 			this.step = 1
 			this.importing = false
@@ -229,16 +283,28 @@ export default {
 			this.statementName = ''
 			this.form = { format: '', contents: '', fileName: '', glAccountId: '' }
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/**
+		 * @param format
+		 * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
+		 */
 		acceptFor(format) {
 			const opt = formatOptions().find((o) => o.value === format)
 			return opt ? opt.accept : ''
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/**
+		 * @param option
+		 * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
+		 */
 		onFormatSelected(option) {
 			this.form.format = option ? String(option.value) : ''
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/**
+		 * @param event
+		 * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
+		 */
 		onFileChosen(event) {
 			const file = event?.target?.files?.[0]
 			if (!file) {
@@ -254,14 +320,18 @@ export default {
 			}
 			reader.readAsText(file)
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		extractStatementMeta() {
 			// Lightweight pre-parse: pull the first IBAN-shaped token so the
 			// account-mapping step can show it and consult the IBAN memory.
-			const m = String(this.form.contents).match(/\b([A-Z]{2}\d{2}[A-Z0-9]{10,30})\b/)
+			const m = String(this.form.contents).match(
+				/\b([A-Z]{2}\d{2}[A-Z0-9]{10,30})\b/,
+			)
 			this.statementIban = m ? m[1] : ''
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		advanceFromStep1() {
 			if (!this.canLeaveStep1) return
 			// REQ-BSW-006: skip the mapping step for a remembered IBAN.
@@ -274,13 +344,15 @@ export default {
 			}
 			this.step = 2
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		advanceFromStep2() {
 			if (!this.form.glAccountId) return
 			this.step = 3
 			this.runImport()
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		async runImport() {
 			this.importing = true
 			this.error = ''
@@ -296,7 +368,8 @@ export default {
 				}
 				this.$emit('imported', this.result)
 			} catch (e) {
-				this.error = e?.response?.data?.error
+				this.error =
+					e?.response?.data?.error
 					|| e?.message
 					|| t('shillinq', 'Failed to import the bank statement.')
 				showError(this.error)
@@ -304,7 +377,8 @@ export default {
 				this.importing = false
 			}
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		reviewMatches() {
 			if (!this.result) return
 			// REQ-BSW-005: the only navigation away from the dashboard.
@@ -313,18 +387,21 @@ export default {
 			this.$emit('close')
 			this.$router.push({ name: 'BankReconciliation' })
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		refreshDashboardWidgets() {
 			// REQ-BSW-005: reload the payables + receivables widgets.
 			emit('cn:widget:refresh', { widget: 'widget-open-debtors' })
 			emit('cn:widget:refresh', { widget: 'widget-open-creditors' })
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		goToBankConnections() {
 			this.$emit('close')
 			window.location.href = generateUrl('/settings/admin/shillinq')
 		},
-		/** @spec openspec/changes/shillinq-bank-statement-wizard/specs/shillinq-bank-statement-wizard/spec.md */
+
+		/** @spec openspec/specs/shillinq-bank-statement-wizard/spec.md */
 		onClose() {
 			if (this.importing) return
 			// If an import completed but the user closes instead of reviewing,

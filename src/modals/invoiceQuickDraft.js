@@ -22,7 +22,7 @@ export function defaultDraftLine() {
 		description: '',
 		quantity: 1,
 		unitPrice: 0,
-		btwRate: 21,
+		vatRate: 21,
 	}
 }
 
@@ -39,7 +39,7 @@ function round2(value) {
 
 /**
  * Compute net, VAT and gross totals from the line items. Each line's
- * net is quantity * unitPrice; VAT applies its btwRate percentage.
+ * net is quantity * unitPrice; VAT applies its vatRate percentage.
  *
  * @spec openspec/changes/shillinq-invoice-quick-draft/proposal.md
  * @param {Array<object>} lines The draft lines.
@@ -52,7 +52,7 @@ export function computeTotals(lines) {
 		const qty = Number(line.quantity) || 0
 		const price = Number(line.unitPrice) || 0
 		const lineNet = qty * price
-		const rate = Number(line.btwRate) || 0
+		const rate = Number(line.vatRate) || 0
 		net += lineNet
 		vat += lineNet * (rate / 100)
 	}
@@ -95,6 +95,41 @@ export function dueDateFromTerms(invoiceDate, terms) {
 }
 
 /**
+ * Derive the fiscal-period id (`YYYY-MM`) an invoice date falls in. The
+ * ARInvoice schema requires a periodId; it is stored as a free-text
+ * period key (no FiscalPeriod FK is enforced), so the year-month bucket
+ * of the invoice date is a safe, deterministic default.
+ *
+ * @param {string} invoiceDate ISO date (YYYY-MM-DD).
+ * @return {string} The period id, or '' when invoiceDate is invalid.
+ */
+export function periodIdFromDate(invoiceDate) {
+	const m = String(invoiceDate || '').match(/^(\d{4})-(\d{2})/)
+	return m ? `${m[1]}-${m[2]}` : ''
+}
+
+/**
+ * Provisional invoice number for a quick draft. The backend does not
+ * auto-assign one and the schema requires it, so a draft gets a unique,
+ * clearly-provisional number (`DRAFT-<invoiceDate>-<HHmmss>`). The final
+ * sequential number is assigned when the draft is posted.
+ *
+ * @param {string} invoiceDate ISO date (YYYY-MM-DD).
+ * @param {Date} [now] Injected clock (testability).
+ * @return {string} A unique provisional invoice number.
+ */
+export function provisionalInvoiceNumber(invoiceDate, now = new Date()) {
+	const datePart =
+		String(invoiceDate || '')
+			.slice(0, 10)
+			.replace(/-/g, '') || 'DRAFT'
+	const hh = String(now.getHours()).padStart(2, '0')
+	const mm = String(now.getMinutes()).padStart(2, '0')
+	const ss = String(now.getSeconds()).padStart(2, '0')
+	return `DRAFT-${datePart}-${hh}${mm}${ss}`
+}
+
+/**
  * Build the ARInvoice payload posted to the OpenRegister object API.
  * The invoice is always created in lifecycleState `draft` (REQ-IQD-003).
  *
@@ -105,22 +140,32 @@ export function dueDateFromTerms(invoiceDate, terms) {
  * @param {string} input.dueDate Due date.
  * @param {string} input.reference Optional reference / PO number.
  * @param {string} input.glAccount Default GL account for the lines.
+ * @param {string} input.administrationId Owning administration id (required by schema).
+ * @param {string} [input.invoiceNumber] Explicit invoice number; a provisional one is generated when absent.
+ * @param {string} [input.periodId] Explicit fiscal period; derived from invoiceDate when absent.
  * @param {Array<object>} input.lines Draft lines.
  * @return {object} The ARInvoice payload.
  */
 export function buildInvoicePayload(input) {
 	const totals = computeTotals(input.lines)
 	const lines = (input.lines || [])
-		.filter((l) => (l.description || '').trim().length > 0 || Number(l.unitPrice) > 0)
+		.filter(
+			(l) =>
+				(l.description || '').trim().length > 0 || Number(l.unitPrice) > 0,
+		)
 		.map((l, idx) => ({
 			lineNumber: idx + 1,
 			description: (l.description || '').trim(),
 			quantity: Number(l.quantity) || 0,
 			unitPrice: Number(l.unitPrice) || 0,
-			btwRate: Number(l.btwRate) || 0,
+			vatRate: Number(l.vatRate) || 0,
 			glAccount: input.glAccount || '',
 		}))
 	return {
+		invoiceNumber:
+			input.invoiceNumber || provisionalInvoiceNumber(input.invoiceDate),
+		administrationId: String(input.administrationId || ''),
+		periodId: input.periodId || periodIdFromDate(input.invoiceDate),
 		customerId: String(input.customerId),
 		invoiceDate: input.invoiceDate,
 		dueDate: input.dueDate,

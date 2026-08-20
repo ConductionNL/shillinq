@@ -1,5 +1,5 @@
-import { defineStore } from 'pinia'
 import { generateUrl } from '@nextcloud/router'
+import { defineStore } from 'pinia'
 
 export const useSettingsStore = defineStore('settings', {
 	state: () => ({
@@ -25,9 +25,12 @@ export const useSettingsStore = defineStore('settings', {
 		async fetchSettings() {
 			this.loading = true
 			try {
-				const response = await fetch(generateUrl('/apps/shillinq/api/settings'), {
-					headers: { requesttoken: OC.requestToken },
-				})
+				const response = await fetch(
+					generateUrl('/apps/shillinq/api/settings'),
+					{
+						headers: { requesttoken: OC.requestToken },
+					},
+				)
 				if (response.ok) {
 					const data = await response.json()
 					this.settings = data
@@ -53,14 +56,17 @@ export const useSettingsStore = defineStore('settings', {
 		async saveSettings(settings) {
 			this.loading = true
 			try {
-				const response = await fetch(generateUrl('/apps/shillinq/api/settings'), {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						requesttoken: OC.requestToken,
+				const response = await fetch(
+					generateUrl('/apps/shillinq/api/settings'),
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							requesttoken: OC.requestToken,
+						},
+						body: JSON.stringify(settings),
 					},
-					body: JSON.stringify(settings),
-				})
+				)
 				if (response.ok) {
 					const data = await response.json()
 					this.settings = data

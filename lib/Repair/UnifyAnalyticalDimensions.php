@@ -67,6 +67,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -81,336 +82,330 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/unify-analytical-dimensions/tasks.md#phase-4
  */
-class UnifyAnalyticalDimensions implements IRepairStep
-{
-    /**
-     * Constructor.
-     *
-     * @param SettingsService    $settingsService The settings service (register slug).
-     * @param LoggerInterface    $logger          The logger interface.
-     * @param ContainerInterface $container       The DI container (lazy OR ObjectService resolution).
-     */
-    public function __construct(
-        private SettingsService $settingsService,
-        private LoggerInterface $logger,
-        private ContainerInterface $container,
-    ) {
-    }//end __construct()
+class UnifyAnalyticalDimensions implements IRepairStep {
+	use ReadsSourceRowsInBatches;
 
-    /**
-     * The repair-step display name shown in occ maintenance:repair output.
-     *
-     * @return string The display name.
-     *
-     * @spec openspec/changes/unify-analytical-dimensions/tasks.md#phase-4
-     */
-    public function getName(): string
-    {
-        return 'Shillinq: fold CostCenter + KostenDrager into unified AnalyticalDimension register (dimensionType discriminator)';
+	/**
+	 * Constructor.
+	 *
+	 * @param SettingsService $settingsService The settings service (register slug).
+	 * @param LoggerInterface $logger The logger interface.
+	 * @param ContainerInterface $container The DI container (lazy OR ObjectService resolution).
+	 */
+	public function __construct(
+		private SettingsService $settingsService,
+		private LoggerInterface $logger,
+		private ContainerInterface $container,
+	) {
+	}//end __construct()
 
-    }//end getName()
+	/**
+	 * The repair-step display name shown in occ maintenance:repair output.
+	 *
+	 * @return string The display name.
+	 *
+	 * @spec openspec/changes/unify-analytical-dimensions/tasks.md#phase-4
+	 */
+	public function getName(): string {
+		return 'Shillinq: fold CostCenter + KostenDrager into unified AnalyticalDimension register (dimensionType discriminator)';
+	}//end getName()
 
-    /**
-     * Run the migration. Idempotent — never duplicates records and never
-     * mutates already-migrated state.
-     *
-     * @param IOutput $output The repair-step output (progress + warnings).
-     *
-     * @return void
-     *
-     * @spec openspec/changes/unify-analytical-dimensions/tasks.md#phase-4
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     */
-    public function run(IOutput $output): void
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $registerSlug  = $this->settingsService->getRegisterSlug();
+	/**
+	 * Run the migration. Idempotent — never duplicates records and never
+	 * mutates already-migrated state.
+	 *
+	 * @param IOutput $output The repair-step output (progress + warnings).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/unify-analytical-dimensions/tasks.md#phase-4
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 */
+	public function run(IOutput $output): void {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$registerSlug = $this->settingsService->getRegisterSlug();
 
-            $output->info('Shillinq: UnifyAnalyticalDimensions — migrating CostCenter → cost-center …');
-            $ccResult = $this->migrateCostCenters(
-                objectService: $objectService,
-                registerSlug: $registerSlug,
-                output: $output
-            );
+			$output->info('Shillinq: UnifyAnalyticalDimensions — migrating CostCenter → cost-center …');
+			$ccResult = $this->migrateCostCenters(
+				objectService: $objectService,
+				registerSlug: $registerSlug,
+				output: $output
+			);
 
-            $output->info('Shillinq: UnifyAnalyticalDimensions — migrating KostenDrager → cost-object …');
-            $kdResult = $this->migrateKostenDragers(
-                objectService: $objectService,
-                registerSlug: $registerSlug,
-                output: $output
-            );
+			$output->info('Shillinq: UnifyAnalyticalDimensions — migrating KostenDrager → cost-object …');
+			$kdResult = $this->migrateCostDragers(
+				objectService: $objectService,
+				registerSlug: $registerSlug,
+				output: $output
+			);
 
-            $output->info(
-                'Shillinq: UnifyAnalyticalDimensions complete — '
-                .'CostCenter: '.$ccResult['created'].' created, '.$ccResult['skipped'].' skipped; '
-                .'KostenDrager: '.$kdResult['created'].' created, '.$kdResult['skipped'].' skipped.'
-            );
-        } catch (\Throwable $e) {
-            // Fail-soft: a migration failure must NOT block the NC upgrade.
-            // Log + warn so an operator can re-run via occ maintenance:repair.
-            $output->warning('Shillinq: UnifyAnalyticalDimensions failed: '.$e->getMessage());
-            $this->logger->warning(
-                'Shillinq: UnifyAnalyticalDimensions failed',
-                ['exception' => $e->getMessage(), 'trace' => $e->getTraceAsString()]
-            );
-        }//end try
+			$output->info(
+				'Shillinq: UnifyAnalyticalDimensions complete — '
+				. 'CostCenter: ' . $ccResult['created'] . ' created, ' . $ccResult['skipped'] . ' skipped; '
+				. 'KostenDrager: ' . $kdResult['created'] . ' created, ' . $kdResult['skipped'] . ' skipped.'
+			);
+		} catch (\Throwable $e) {
+			// Fail-soft: a migration failure must NOT block the NC upgrade.
+			// Log + warn so an operator can re-run via occ maintenance:repair.
+			$output->warning('Shillinq: UnifyAnalyticalDimensions failed: ' . $e->getMessage());
+			$this->logger->warning(
+				'Shillinq: UnifyAnalyticalDimensions failed',
+				['exception' => $e->getMessage(), 'trace' => $e->getTraceAsString()]
+			);
+		}//end try
 
-    }//end run()
+	}//end run()
 
-    /**
-     * Migrate all CostCenter objects into AnalyticalDimension with
-     * dimensionType=cost-center.
-     *
-     * @param object  $objectService The OR ObjectService.
-     * @param string  $registerSlug  The shillinq register slug.
-     * @param IOutput $output        The repair output.
-     *
-     * @return array{created: int, skipped: int}
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     */
-    private function migrateCostCenters(object $objectService, string $registerSlug, IOutput $output): array
-    {
-        $created = 0;
-        $skipped = 0;
+	/**
+	 * Migrate all CostCenter objects into AnalyticalDimension with
+	 * dimensionType=cost-center.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $registerSlug The shillinq register slug.
+	 * @param IOutput $output The repair output.
+	 *
+	 * @return array{created: int, skipped: int}
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 */
+	private function migrateCostCenters(object $objectService, string $registerSlug, IOutput $output): array {
+		$created = 0;
+		$skipped = 0;
 
-        $costCenters = $objectService
-            ->setRegister($registerSlug)
-            ->setSchema('CostCenter')
-            ->findAll(['limit' => 0]);
+		$costCenters = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'CostCenter');
 
-        if (is_array($costCenters) === false || $costCenters === []) {
-            $output->info('Shillinq: no CostCenter records found — skipping cost-center migration.');
-            return ['created' => 0, 'skipped' => 0];
-        }
+		if ($costCenters === []) {
+			$output->info('Shillinq: no CostCenter records found — skipping cost-center migration.');
+			return ['created' => 0, 'skipped' => 0];
+		}
 
-        foreach ($costCenters as $costCenter) {
-            $arr  = (array) $costCenter;
-            $code = (string) ($arr['code'] ?? '');
-            $administrationId = (string) ($arr['administrationId'] ?? '');
+		foreach ($costCenters as $costCenter) {
+			$arr = $this->rowPayload(row: $costCenter);
+			$code = (string)($arr['code'] ?? '');
+			$administrationId = (string)($arr['administrationId'] ?? '');
 
-            if ($code === '') {
-                $this->logger->warning('Shillinq: UnifyAnalyticalDimensions — CostCenter record missing code; skipped.', ['record' => $arr]);
-                continue;
-            }
+			if ($code === '') {
+				$this->logger->warning('Shillinq: UnifyAnalyticalDimensions — CostCenter record missing code; skipped.', ['record' => $arr]);
+				continue;
+			}
 
-            try {
-                if ($this->analyticalDimensionExists(
-                    objectService: $objectService,
-                    registerSlug: $registerSlug,
-                    code: $code,
-                    administrationId: $administrationId,
-                    dimensionType: 'cost-center'
-                ) === true
-                ) {
-                    $skipped++;
-                    continue;
-                }
+			try {
+				if ($this->analyticalDimensionExists(
+					objectService: $objectService,
+					registerSlug: $registerSlug,
+					code: $code,
+					administrationId: $administrationId,
+					dimensionType: 'cost-center'
+				) === true
+				) {
+					$skipped++;
+					continue;
+				}
 
-                $record = $this->buildCostCenterRecord(source: $arr);
+				$record = $this->buildCostCenterRecord(source: $arr);
 
-                $objectService->saveObject(
-                    object: $record,
-                    register: $registerSlug,
-                    schema: 'AnalyticalDimension',
-                    _rbac: false,
-                    _multitenancy: false,
-                );
-                $created++;
-            } catch (\Throwable $e) {
-                // Per-record failure is soft — log and continue.
-                $output->warning('Shillinq: failed to migrate CostCenter code='.$code.': '.$e->getMessage());
-                $this->logger->warning(
-                    'Shillinq: UnifyAnalyticalDimensions — CostCenter migration failed for code='.$code,
-                    ['exception' => $e->getMessage()]
-                );
-            }//end try
-        }//end foreach
+				$objectService->saveObject(
+					object: $record,
+					register: $registerSlug,
+					schema: 'AnalyticalDimension',
+					_rbac: false,
+					_multitenancy: false,
+				);
+				$created++;
+			} catch (\Throwable $e) {
+				// Per-record failure is soft — log and continue.
+				$output->warning('Shillinq: failed to migrate CostCenter code=' . $code . ': ' . $e->getMessage());
+				$this->logger->warning(
+					'Shillinq: UnifyAnalyticalDimensions — CostCenter migration failed for code=' . $code,
+					['exception' => $e->getMessage()]
+				);
+			}//end try
+		}//end foreach
 
-        return ['created' => $created, 'skipped' => $skipped];
+		return ['created' => $created, 'skipped' => $skipped];
+	}//end migrateCostCenters()
 
-    }//end migrateCostCenters()
+	/**
+	 * Migrate all KostenDrager objects into AnalyticalDimension with
+	 * dimensionType=cost-object.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $registerSlug The shillinq register slug.
+	 * @param IOutput $output The repair output.
+	 *
+	 * @return array{created: int, skipped: int}
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 */
+	private function migrateCostDragers(object $objectService, string $registerSlug, IOutput $output): array {
+		$created = 0;
+		$skipped = 0;
 
-    /**
-     * Migrate all KostenDrager objects into AnalyticalDimension with
-     * dimensionType=cost-object.
-     *
-     * @param object  $objectService The OR ObjectService.
-     * @param string  $registerSlug  The shillinq register slug.
-     * @param IOutput $output        The repair output.
-     *
-     * @return array{created: int, skipped: int}
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     */
-    private function migrateKostenDragers(object $objectService, string $registerSlug, IOutput $output): array
-    {
-        $created = 0;
-        $skipped = 0;
+		$costDragers = $this->readAllRows(objectService: $objectService, registerSlug: $registerSlug, schema: 'KostenDrager');
 
-        $kostenDragers = $objectService
-            ->setRegister($registerSlug)
-            ->setSchema('KostenDrager')
-            ->findAll(['limit' => 0]);
+		if ($costDragers === []) {
+			$output->info('Shillinq: no KostenDrager records found — skipping cost-object migration.');
+			return ['created' => 0, 'skipped' => 0];
+		}
 
-        if (is_array($kostenDragers) === false || $kostenDragers === []) {
-            $output->info('Shillinq: no KostenDrager records found — skipping cost-object migration.');
-            return ['created' => 0, 'skipped' => 0];
-        }
+		foreach ($costDragers as $costDrager) {
+			$arr = $this->rowPayload(row: $costDrager);
+			$code = (string)($arr['code'] ?? '');
+			$administrationId = (string)($arr['administrationId'] ?? '');
 
-        foreach ($kostenDragers as $kostenDrager) {
-            $arr  = (array) $kostenDrager;
-            $code = (string) ($arr['code'] ?? '');
-            $administrationId = (string) ($arr['administrationId'] ?? '');
+			if ($code === '') {
+				$this->logger->warning('Shillinq: UnifyAnalyticalDimensions — KostenDrager record missing code; skipped.', ['record' => $arr]);
+				continue;
+			}
 
-            if ($code === '') {
-                $this->logger->warning('Shillinq: UnifyAnalyticalDimensions — KostenDrager record missing code; skipped.', ['record' => $arr]);
-                continue;
-            }
+			try {
+				if ($this->analyticalDimensionExists(
+					objectService: $objectService,
+					registerSlug: $registerSlug,
+					code: $code,
+					administrationId: $administrationId,
+					dimensionType: 'cost-object'
+				) === true
+				) {
+					$skipped++;
+					continue;
+				}
 
-            try {
-                if ($this->analyticalDimensionExists(
-                    objectService: $objectService,
-                    registerSlug: $registerSlug,
-                    code: $code,
-                    administrationId: $administrationId,
-                    dimensionType: 'cost-object'
-                ) === true
-                ) {
-                    $skipped++;
-                    continue;
-                }
+				$record = $this->buildCostDragerRecord(source: $arr);
 
-                $record = $this->buildKostenDragerRecord(source: $arr);
+				$objectService->saveObject(
+					object: $record,
+					register: $registerSlug,
+					schema: 'AnalyticalDimension',
+					_rbac: false,
+					_multitenancy: false,
+				);
+				$created++;
+			} catch (\Throwable $e) {
+				$output->warning('Shillinq: failed to migrate KostenDrager code=' . $code . ': ' . $e->getMessage());
+				$this->logger->warning(
+					'Shillinq: UnifyAnalyticalDimensions — KostenDrager migration failed for code=' . $code,
+					['exception' => $e->getMessage()]
+				);
+			}//end try
+		}//end foreach
 
-                $objectService->saveObject(
-                    object: $record,
-                    register: $registerSlug,
-                    schema: 'AnalyticalDimension',
-                    _rbac: false,
-                    _multitenancy: false,
-                );
-                $created++;
-            } catch (\Throwable $e) {
-                $output->warning('Shillinq: failed to migrate KostenDrager code='.$code.': '.$e->getMessage());
-                $this->logger->warning(
-                    'Shillinq: UnifyAnalyticalDimensions — KostenDrager migration failed for code='.$code,
-                    ['exception' => $e->getMessage()]
-                );
-            }//end try
-        }//end foreach
+		return ['created' => $created, 'skipped' => $skipped];
+	}//end migrateKostenDragers()
 
-        return ['created' => $created, 'skipped' => $skipped];
+	/**
+	 * Check whether an AnalyticalDimension record already exists for the
+	 * given (administrationId, code, dimensionType) natural key.
+	 *
+	 * This is the idempotency guard per REQ-ADIM-007.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $registerSlug The shillinq register slug.
+	 * @param string $code The dimension code to look up.
+	 * @param string $administrationId The administration scope.
+	 * @param string $dimensionType The dimension type discriminator.
+	 *
+	 * @return bool True when a matching record already exists; false otherwise.
+	 */
+	private function analyticalDimensionExists(
+		object $objectService,
+		string $registerSlug,
+		string $code,
+		string $administrationId,
+		string $dimensionType,
+	): bool {
+		$existing = $objectService
+			->setRegister($registerSlug)
+			->setSchema('AnalyticalDimension')
+			->findAll(
+				[
+					'limit' => 1,
+					// OpenRegister's key is 'filters' (plural); the old 'filter'
+					// was IGNORED, so this returned unfiltered rows and every
+					// source was reported "already exists" and skipped — 0 created
+					// on any instance that had any AnalyticalDimension row
+					// (#382 live e2e). All three keys are top-level (filterable).
+					'filters' => [
+						'code' => $code,
+						'administrationId' => $administrationId,
+						'dimensionType' => $dimensionType,
+					],
+				]
+			);
 
-    }//end migrateKostenDragers()
+		return is_array($existing) === true && count($existing) > 0;
+	}//end analyticalDimensionExists()
 
-    /**
-     * Check whether an AnalyticalDimension record already exists for the
-     * given (administrationId, code, dimensionType) natural key.
-     *
-     * This is the idempotency guard per REQ-ADIM-007.
-     *
-     * @param object $objectService    The OR ObjectService.
-     * @param string $registerSlug     The shillinq register slug.
-     * @param string $code             The dimension code to look up.
-     * @param string $administrationId The administration scope.
-     * @param string $dimensionType    The dimension type discriminator.
-     *
-     * @return bool True when a matching record already exists; false otherwise.
-     */
-    private function analyticalDimensionExists(
-        object $objectService,
-        string $registerSlug,
-        string $code,
-        string $administrationId,
-        string $dimensionType
-    ): bool {
-        $existing = $objectService
-            ->setRegister($registerSlug)
-            ->setSchema('AnalyticalDimension')
-            ->findAll(
-                    [
-                        'limit'  => 1,
-                        'filter' => [
-                            'code'             => $code,
-                            'administrationId' => $administrationId,
-                            'dimensionType'    => $dimensionType,
-                        ],
-                    ]
-                    );
+	/**
+	 * Build an AnalyticalDimension record from a CostCenter source array.
+	 *
+	 * Copies all cost-center-specific properties verbatim.
+	 * Sets dimensionType = cost-center.
+	 *
+	 * @param array<string,mixed> $source The CostCenter object as an array.
+	 *
+	 * @return array<string,mixed> The AnalyticalDimension record to save.
+	 */
+	private function buildCostCenterRecord(array $source): array {
+		$record = [
+			'dimensionType' => 'cost-center',
+			'code' => (string)($source['code'] ?? ''),
+			'name' => (string)($source['name'] ?? ''),
+			// AnalyticalDimension requires dataType; a folded cost-center is a
+			// categorical code -> 'string'. Omitting it failed every migration
+			// once the step actually read rows (#382 live e2e).
+			'dataType' => 'string',
+			'administrationId' => (string)($source['administrationId'] ?? ''),
+			'lifecycleState' => (string)($source['lifecycleState'] ?? 'active'),
+		];
 
-        return is_array($existing) === true && count($existing) > 0;
+		// Copy optional cost-center-specific fields when present.
+		foreach (['description', 'status', 'organizationId', 'parentCode', 'responsibleUser'] as $field) {
+			if (isset($source[$field]) === true && $source[$field] !== null && $source[$field] !== '') {
+				$record[$field] = $source[$field];
+			}
+		}
 
-    }//end analyticalDimensionExists()
+		if (isset($source['budget']) === true && $source['budget'] !== null) {
+			$record['budget'] = $source['budget'];
+		}
 
-    /**
-     * Build an AnalyticalDimension record from a CostCenter source array.
-     *
-     * Copies all cost-center-specific properties verbatim.
-     * Sets dimensionType = cost-center.
-     *
-     * @param array<string,mixed> $source The CostCenter object as an array.
-     *
-     * @return array<string,mixed> The AnalyticalDimension record to save.
-     */
-    private function buildCostCenterRecord(array $source): array
-    {
-        $record = [
-            'dimensionType'    => 'cost-center',
-            'code'             => (string) ($source['code'] ?? ''),
-            'name'             => (string) ($source['name'] ?? ''),
-            'administrationId' => (string) ($source['administrationId'] ?? ''),
-            'lifecycleState'   => (string) ($source['lifecycleState'] ?? 'active'),
-        ];
+		$record['enterpriseActivity'] = (bool)($source['enterpriseActivity'] ?? false);
 
-        // Copy optional cost-center-specific fields when present.
-        foreach (['description', 'status', 'organizationId', 'parentCode', 'responsibleUser'] as $field) {
-            if (isset($source[$field]) === true && $source[$field] !== null && $source[$field] !== '') {
-                $record[$field] = $source[$field];
-            }
-        }
+		return $record;
+	}//end buildCostCenterRecord()
 
-        if (isset($source['budget']) === true && $source['budget'] !== null) {
-            $record['budget'] = $source['budget'];
-        }
+	/**
+	 * Build an AnalyticalDimension record from a KostenDrager source array.
+	 *
+	 * KostenDrager carries only: code, name, parentCode, responsibleUser,
+	 * lifecycleState, administrationId. Budget and ondernemingsActiviteit
+	 * were never built on KostenDrager and are intentionally omitted.
+	 *
+	 * @param array<string,mixed> $source The KostenDrager object as an array.
+	 *
+	 * @return array<string,mixed> The AnalyticalDimension record to save.
+	 */
+	private function buildCostDragerRecord(array $source): array {
+		$record = [
+			'dimensionType' => 'cost-object',
+			'code' => (string)($source['code'] ?? ''),
+			'name' => (string)($source['name'] ?? ''),
+			// AnalyticalDimension requires dataType (see buildCostCenterRecord).
+			'dataType' => 'string',
+			'administrationId' => (string)($source['administrationId'] ?? ''),
+			'lifecycleState' => (string)($source['lifecycleState'] ?? 'active'),
+		];
 
-        $record['ondernemingsActiviteit'] = (bool) ($source['ondernemingsActiviteit'] ?? false);
+		// Copy optional fields when present.
+		foreach (['description', 'parentCode', 'responsibleUser'] as $field) {
+			if (isset($source[$field]) === true && $source[$field] !== null && $source[$field] !== '') {
+				$record[$field] = $source[$field];
+			}
+		}
 
-        return $record;
-
-    }//end buildCostCenterRecord()
-
-    /**
-     * Build an AnalyticalDimension record from a KostenDrager source array.
-     *
-     * KostenDrager carries only: code, name, parentCode, responsibleUser,
-     * lifecycleState, administrationId. Budget and ondernemingsActiviteit
-     * were never built on KostenDrager and are intentionally omitted.
-     *
-     * @param array<string,mixed> $source The KostenDrager object as an array.
-     *
-     * @return array<string,mixed> The AnalyticalDimension record to save.
-     */
-    private function buildKostenDragerRecord(array $source): array
-    {
-        $record = [
-            'dimensionType'    => 'cost-object',
-            'code'             => (string) ($source['code'] ?? ''),
-            'name'             => (string) ($source['name'] ?? ''),
-            'administrationId' => (string) ($source['administrationId'] ?? ''),
-            'lifecycleState'   => (string) ($source['lifecycleState'] ?? 'active'),
-        ];
-
-        // Copy optional fields when present.
-        foreach (['description', 'parentCode', 'responsibleUser'] as $field) {
-            if (isset($source[$field]) === true && $source[$field] !== null && $source[$field] !== '') {
-                $record[$field] = $source[$field];
-            }
-        }
-
-        return $record;
-
-    }//end buildKostenDragerRecord()
+		return $record;
+	}//end buildKostenDragerRecord()
 }//end class

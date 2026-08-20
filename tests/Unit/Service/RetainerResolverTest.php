@@ -37,251 +37,238 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/invoice-from-time-and-expense/tasks.md
  */
-final class RetainerResolverTest extends TestCase
-{
+final class RetainerResolverTest extends TestCase {
 
-    /**
-     * Mock container.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock container.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock app config.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock app config.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Mock logger.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock logger.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
+	/**
+	 * Set up shared mocks.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->container = $this->createMock(ContainerInterface::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-    /**
-     * Set up shared mocks.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $this->container = $this->createMock(ContainerInterface::class);
-        $this->appConfig = $this->createMock(IAppConfig::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
+	}//end setUp()
 
-    }//end setUp()
+	/**
+	 * Build the subject + wire a fluent fake ObjectService returning $rows
+	 * regardless of the filter argument.
+	 *
+	 * @param array<int, array<string,mixed>> $rows Rows to return.
+	 *
+	 * @return RetainerResolver
+	 */
+	private function svcWithRows(array $rows): RetainerResolver {
+		$fake = new class($rows) {
+			/** @param array<int, array<string,mixed>> $rows */
+			public function __construct(
+				private array $rows,
+			) {
+			}
+			public function setRegister(string $r): self {
+				return $this;
+			}
+			public function setSchema(string $s): self {
+				return $this;
+			}
+			/**
+			 * @param array<string,mixed> $config Find configuration (ignored).
+			 * @return array<int, array<string,mixed>>
+			 */
+			public function findAll(array $config = []): array {
+				return $this->rows;
+			}
+		};
 
+		$this->container->method('get')->willReturn($fake);
 
-    /**
-     * Build the subject + wire a fluent fake ObjectService returning $rows
-     * regardless of the filter argument.
-     *
-     * @param array<int, array<string,mixed>> $rows Rows to return.
-     *
-     * @return RetainerResolver
-     */
-    private function svcWithRows(array $rows): RetainerResolver
-    {
-        $fake = new class($rows) {
-            /** @param array<int, array<string,mixed>> $rows */
-            public function __construct(private array $rows) {}
-            public function setRegister(string $r): self { return $this; }
-            public function setSchema(string $s): self { return $this; }
-            /**
-             * @param array<string,mixed> $filters Filters (ignored).
-             * @return array<int, array<string,mixed>>
-             */
-            public function findAll(array $filters = []): array { return $this->rows; }
-        };
+		return new RetainerResolver($this->container, $this->appConfig, $this->logger);
+	}//end svcWithRows()
 
-        $this->container->method('get')->willReturn($fake);
+	/**
+	 * No matching schedule → warning + zeroed shape.
+	 *
+	 * @return void
+	 */
+	public function testNoScheduleYieldsZeroAmountAndWarning(): void {
+		$this->logger->expects(self::once())->method('warning')
+			->with(self::stringContains('no active schedule'));
 
-        return new RetainerResolver($this->container, $this->appConfig, $this->logger);
+		$svc = $this->svcWithRows([]);
+		$result = $svc->resolveRetainerAmount('sched-1', '2026-03-15');
 
-    }//end svcWithRows()
+		self::assertSame(0, $result['monthlyAmountCents']);
+		self::assertNull($result['overageHoursThreshold']);
+		self::assertNull($result['overageHourlyRateCents']);
+		self::assertSame('Retainer', $result['label']);
 
+	}//end testNoScheduleYieldsZeroAmountAndWarning()
 
-    /**
-     * No matching schedule → warning + zeroed shape.
-     *
-     * @return void
-     */
-    public function testNoScheduleYieldsZeroAmountAndWarning(): void
-    {
-        $this->logger->expects(self::once())->method('warning')
-            ->with(self::stringContains('no active schedule'));
+	/**
+	 * Single active schedule is picked and money is converted to cents.
+	 *
+	 * @return void
+	 */
+	public function testActiveScheduleIsPickedWithMoneyInCents(): void {
+		$rows = [
+			[
+				'scheduleId' => 'sched-1',
+				'effectiveDate' => '2026-01-01',
+				'monthlyAmount' => 1234.56,
+				'overageHoursThreshold' => 40,
+				'overageHourlyRate' => 125.00,
+				'label' => 'Premium Retainer',
+			],
+		];
 
-        $svc    = $this->svcWithRows([]);
-        $result = $svc->resolveRetainerAmount('sched-1', '2026-03-15');
+		$result = $this->svcWithRows($rows)->resolveRetainerAmount('sched-1', '2026-03-15');
 
-        self::assertSame(0, $result['monthlyAmountCents']);
-        self::assertNull($result['overageHoursThreshold']);
-        self::assertNull($result['overageHourlyRateCents']);
-        self::assertSame('Retainer', $result['label']);
+		self::assertSame(123456, $result['monthlyAmountCents']);
+		self::assertSame(40.0, $result['overageHoursThreshold']);
+		self::assertSame(12500, $result['overageHourlyRateCents']);
+		self::assertSame('2026-01-01', $result['effectiveDate']);
+		self::assertSame('Premium Retainer', $result['label']);
 
-    }//end testNoScheduleYieldsZeroAmountAndWarning()
+	}//end testActiveScheduleIsPickedWithMoneyInCents()
 
+	/**
+	 * Latest-effective wins among versions that all bracket the invoice month.
+	 *
+	 * @return void
+	 */
+	public function testLatestEffectiveVersionWins(): void {
+		// Floats are treated as euro decimals (×100); the resolver picks the
+		// latest effective version that brackets the invoice month.
+		$rows = [
+			['scheduleId' => 's', 'effectiveDate' => '2026-01-01', 'monthlyAmount' => 10.00],
+			['scheduleId' => 's', 'effectiveDate' => '2026-02-01', 'monthlyAmount' => 15.00],
+			['scheduleId' => 's', 'effectiveDate' => '2025-12-01', 'monthlyAmount' => 9.00],
+		];
 
-    /**
-     * Single active schedule is picked and money is converted to cents.
-     *
-     * @return void
-     */
-    public function testActiveScheduleIsPickedWithMoneyInCents(): void
-    {
-        $rows = [
-            [
-                'scheduleId'             => 'sched-1',
-                'effectiveDate'          => '2026-01-01',
-                'monthlyAmount'          => 1234.56,
-                'overageHoursThreshold'  => 40,
-                'overageHourlyRate'      => 125.00,
-                'label'                  => 'Premium Retainer',
-            ],
-        ];
+		$result = $this->svcWithRows($rows)->resolveRetainerAmount('s', '2026-03-15');
 
-        $result = $this->svcWithRows($rows)->resolveRetainerAmount('sched-1', '2026-03-15');
+		self::assertSame(1500, $result['monthlyAmountCents']);
+		self::assertSame('2026-02-01', $result['effectiveDate']);
 
-        self::assertSame(123456, $result['monthlyAmountCents']);
-        self::assertSame(40.0, $result['overageHoursThreshold']);
-        self::assertSame(12500, $result['overageHourlyRateCents']);
-        self::assertSame('2026-01-01', $result['effectiveDate']);
-        self::assertSame('Premium Retainer', $result['label']);
+	}//end testLatestEffectiveVersionWins()
 
-    }//end testActiveScheduleIsPickedWithMoneyInCents()
+	/**
+	 * A future effective date is filtered out.
+	 *
+	 * @return void
+	 */
+	public function testFutureEffectiveDateIsSkipped(): void {
+		$rows = [
+			['scheduleId' => 's', 'effectiveDate' => '2026-04-01', 'monthlyAmount' => 9999],
+		];
 
+		$this->logger->expects(self::once())->method('warning');
 
-    /**
-     * Latest-effective wins among versions that all bracket the invoice month.
-     *
-     * @return void
-     */
-    public function testLatestEffectiveVersionWins(): void
-    {
-        // Floats are treated as euro decimals (×100); the resolver picks the
-        // latest effective version that brackets the invoice month.
-        $rows = [
-            ['scheduleId' => 's', 'effectiveDate' => '2026-01-01', 'monthlyAmount' => 10.00],
-            ['scheduleId' => 's', 'effectiveDate' => '2026-02-01', 'monthlyAmount' => 15.00],
-            ['scheduleId' => 's', 'effectiveDate' => '2025-12-01', 'monthlyAmount' => 9.00],
-        ];
+		$result = $this->svcWithRows($rows)->resolveRetainerAmount('s', '2026-03-15');
 
-        $result = $this->svcWithRows($rows)->resolveRetainerAmount('s', '2026-03-15');
+		self::assertSame(0, $result['monthlyAmountCents']);
 
-        self::assertSame(1500, $result['monthlyAmountCents']);
-        self::assertSame('2026-02-01', $result['effectiveDate']);
+	}//end testFutureEffectiveDateIsSkipped()
 
-    }//end testLatestEffectiveVersionWins()
+	/**
+	 * A schedule whose endDate is before the invoice month is filtered out.
+	 *
+	 * @return void
+	 */
+	public function testExpiredEndDateIsSkipped(): void {
+		$rows = [
+			[
+				'scheduleId' => 's',
+				'effectiveDate' => '2026-01-01',
+				'endDate' => '2026-02-28',
+				'monthlyAmount' => 9999,
+			],
+		];
 
+		$this->logger->expects(self::once())->method('warning');
 
-    /**
-     * A future effective date is filtered out.
-     *
-     * @return void
-     */
-    public function testFutureEffectiveDateIsSkipped(): void
-    {
-        $rows = [
-            ['scheduleId' => 's', 'effectiveDate' => '2026-04-01', 'monthlyAmount' => 9999],
-        ];
+		$result = $this->svcWithRows($rows)->resolveRetainerAmount('s', '2026-03-15');
 
-        $this->logger->expects(self::once())->method('warning');
+		self::assertSame(0, $result['monthlyAmountCents']);
 
-        $result = $this->svcWithRows($rows)->resolveRetainerAmount('s', '2026-03-15');
+	}//end testExpiredEndDateIsSkipped()
 
-        self::assertSame(0, $result['monthlyAmountCents']);
+	/**
+	 * Integer monthlyAmount is preserved without ×100 (toCents() short-circuits).
+	 *
+	 * @return void
+	 */
+	public function testIntegerMonthlyAmountIsAlreadyCents(): void {
+		$rows = [
+			['scheduleId' => 's', 'effectiveDate' => '2026-01-01', 'monthlyAmount' => 200000],
+		];
 
-    }//end testFutureEffectiveDateIsSkipped()
+		$result = $this->svcWithRows($rows)->resolveRetainerAmount('s', '2026-03-15');
 
+		self::assertSame(200000, $result['monthlyAmountCents']);
 
-    /**
-     * A schedule whose endDate is before the invoice month is filtered out.
-     *
-     * @return void
-     */
-    public function testExpiredEndDateIsSkipped(): void
-    {
-        $rows = [
-            [
-                'scheduleId'   => 's',
-                'effectiveDate' => '2026-01-01',
-                'endDate'       => '2026-02-28',
-                'monthlyAmount' => 9999,
-            ],
-        ];
+	}//end testIntegerMonthlyAmountIsAlreadyCents()
 
-        $this->logger->expects(self::once())->method('warning');
+	/**
+	 * ObjectService throwing → resolver swallows + logs + returns zero shape.
+	 *
+	 * @return void
+	 */
+	public function testObjectServiceFailureLogsErrorAndReturnsZeroShape(): void {
+		$this->container->method('get')->willThrowException(new \RuntimeException('OR down'));
 
-        $result = $this->svcWithRows($rows)->resolveRetainerAmount('s', '2026-03-15');
+		$this->logger->expects(self::once())->method('error')
+			->with(self::stringContains('RetainerResolver findAll failed'));
+		// The "no active schedule" warning still fires after the empty list.
+		$this->logger->expects(self::once())->method('warning');
 
-        self::assertSame(0, $result['monthlyAmountCents']);
+		$svc = new RetainerResolver($this->container, $this->appConfig, $this->logger);
+		$result = $svc->resolveRetainerAmount('sched-1', '2026-03-15');
 
-    }//end testExpiredEndDateIsSkipped()
+		self::assertSame(0, $result['monthlyAmountCents']);
 
+	}//end testObjectServiceFailureLogsErrorAndReturnsZeroShape()
 
-    /**
-     * Integer monthlyAmount is preserved without ×100 (toCents() short-circuits).
-     *
-     * @return void
-     */
-    public function testIntegerMonthlyAmountIsAlreadyCents(): void
-    {
-        $rows = [
-            ['scheduleId' => 's', 'effectiveDate' => '2026-01-01', 'monthlyAmount' => 200000],
-        ];
+	/**
+	 * Overage fields default to null when absent on the record.
+	 *
+	 * @return void
+	 */
+	public function testMissingOverageFieldsDefaultToNull(): void {
+		$rows = [
+			['scheduleId' => 's', 'effectiveDate' => '2026-01-01', 'monthlyAmount' => 1000],
+		];
 
-        $result = $this->svcWithRows($rows)->resolveRetainerAmount('s', '2026-03-15');
+		$result = $this->svcWithRows($rows)->resolveRetainerAmount('s', '2026-03-15');
 
-        self::assertSame(200000, $result['monthlyAmountCents']);
+		self::assertNull($result['overageHoursThreshold']);
+		self::assertNull($result['overageHourlyRateCents']);
+		self::assertSame('Retainer', $result['label']);
 
-    }//end testIntegerMonthlyAmountIsAlreadyCents()
-
-
-    /**
-     * ObjectService throwing → resolver swallows + logs + returns zero shape.
-     *
-     * @return void
-     */
-    public function testObjectServiceFailureLogsErrorAndReturnsZeroShape(): void
-    {
-        $this->container->method('get')->willThrowException(new \RuntimeException('OR down'));
-
-        $this->logger->expects(self::once())->method('error')
-            ->with(self::stringContains('RetainerResolver findAll failed'));
-        // The "no active schedule" warning still fires after the empty list.
-        $this->logger->expects(self::once())->method('warning');
-
-        $svc    = new RetainerResolver($this->container, $this->appConfig, $this->logger);
-        $result = $svc->resolveRetainerAmount('sched-1', '2026-03-15');
-
-        self::assertSame(0, $result['monthlyAmountCents']);
-
-    }//end testObjectServiceFailureLogsErrorAndReturnsZeroShape()
-
-
-    /**
-     * Overage fields default to null when absent on the record.
-     *
-     * @return void
-     */
-    public function testMissingOverageFieldsDefaultToNull(): void
-    {
-        $rows = [
-            ['scheduleId' => 's', 'effectiveDate' => '2026-01-01', 'monthlyAmount' => 1000],
-        ];
-
-        $result = $this->svcWithRows($rows)->resolveRetainerAmount('s', '2026-03-15');
-
-        self::assertNull($result['overageHoursThreshold']);
-        self::assertNull($result['overageHourlyRateCents']);
-        self::assertSame('Retainer', $result['label']);
-
-    }//end testMissingOverageFieldsDefaultToNull()
+	}//end testMissingOverageFieldsDefaultToNull()
 
 }//end class

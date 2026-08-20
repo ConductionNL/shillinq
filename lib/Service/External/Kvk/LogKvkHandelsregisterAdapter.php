@@ -21,8 +21,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,67 +37,65 @@ use Psr\Log\LoggerInterface;
 /**
  * Dormant log-backed KvK Handelsregister adapter.
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
-class LogKvkHandelsregisterAdapter implements KvkHandelsregisterAdapterInterface
-{
-    /**
-     * Construct the log-backed KvK adapter.
-     *
-     * @param LoggerInterface $logger Structured logger.
-     */
-    public function __construct(private readonly LoggerInterface $logger)
-    {
-    }//end __construct()
+class LogKvkHandelsregisterAdapter implements KvkHandelsregisterAdapterInterface {
+	/**
+	 * Construct the log-backed KvK adapter.
+	 *
+	 * @param LoggerInterface $logger Structured logger.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Log the intent + synthesise a LOOKUP_DEFERRED result.
-     *
-     * The KvK number itself is not PII (it is publicly searchable in the
-     * Handelsregister), but the `context.correlationId` may carry a
-     * tenant-scoped administratie identifier, so it is logged at INFO
-     * for the audit trail.
-     *
-     * @param string              $kvkNumber 8-digit KvK number.
-     * @param array<string,mixed> $context   Lookup context.
-     *
-     * @return KvkLookupResult The dispatch outcome.
-     */
-    public function lookup(string $kvkNumber, array $context=[]): KvkLookupResult
-    {
-        $this->logger->info(
-            'Shillinq KvK Handelsregister lookup deferred (no outbound connector bound)',
-            [
-                'kvkNumber' => $kvkNumber,
-                'context'   => $context,
-            ]
-        );
+	/**
+	 * Log the intent + synthesise a LOOKUP_DEFERRED result.
+	 *
+	 * The KvK number itself is not PII (it is publicly searchable in the
+	 * Handelsregister), but the `context.correlationId` may carry a
+	 * tenant-scoped administratie identifier, so it is logged at INFO
+	 * for the audit trail.
+	 *
+	 * @param string $kvkNumber 8-digit KvK number.
+	 * @param array<string,mixed> $context Lookup context.
+	 *
+	 * @return KvkLookupResult The dispatch outcome.
+	 */
+	public function lookup(string $kvkNumber, array $context = []): KvkLookupResult {
+		$this->logger->info(
+			'Shillinq KvK Handelsregister lookup deferred (no outbound connector bound)',
+			[
+				'kvkNumber' => $kvkNumber,
+				'context' => $context,
+			]
+		);
 
-        return new KvkLookupResult(
-            lookupStatus: 'LOOKUP_DEFERRED',
-            kvkNumber: $kvkNumber,
-            entity: [],
-            dormant: true,
-            extras: [
-                'reason' => 'no-outbound-connector-bound',
-                'note'   => 'Bind openconnector source slug `kvk-handelsregister` (KvK '
-                    .'Handelsregister API v1, per-tenant API key, OAuth2 client-credentials) and '
-                    .'override KvkHandelsregisterAdapterInterface in Application::register() to '
-                    .'enable real lookup.',
-            ],
-        );
-    }//end lookup()
+		return new KvkLookupResult(
+			lookupStatus: 'LOOKUP_DEFERRED',
+			kvkNumber: $kvkNumber,
+			entity: [],
+			dormant: true,
+			extras: [
+				'reason' => 'no-outbound-connector-bound',
+				'note' => 'Bind openconnector source slug `kvk-handelsregister` (KvK '
+					. 'Handelsregister API v1, per-tenant API key, OAuth2 client-credentials) and '
+					. 'override KvkHandelsregisterAdapterInterface in Application::register() to '
+					. 'enable real lookup.',
+			],
+		);
+	}//end lookup()
 
-    /**
-     * Report whether this adapter is dormant.
-     *
-     * @return bool True when no outbound connector is bound.
-     *
-     * @inheritDoc
-     */
-    public function isDormant(): bool
-    {
-        return true;
-    }//end isDormant()
+	/**
+	 * Report whether this adapter is dormant.
+	 *
+	 * @return bool True when no outbound connector is bound.
+	 *
+	 * @inheritDoc
+	 */
+	public function isDormant(): bool {
+		return true;
+	}//end isDormant()
 }//end class

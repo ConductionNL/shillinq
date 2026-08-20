@@ -29,7 +29,11 @@
 				v-if="state === 'ok'"
 				class="pipelinq-profile-card__kind"
 				data-testid="pipelinq-profile-kind">
-				{{ kind === 'organization' ? label('Organization') : label('Individual') }}
+				{{
+					kind === 'organization'
+						? label('Organization')
+						: label('Individual')
+				}}
 			</span>
 		</header>
 
@@ -39,14 +43,17 @@
 			class="pipelinq-profile-card__body"
 			data-testid="pipelinq-profile-body">
 			<dl class="pipelinq-profile-card__fields">
-				<template v-for="field in fields">
-					<dt :key="`l-${field.key}`" class="pipelinq-profile-card__label">
+				<!-- Vue 3 requires the v-for key on the <template> itself. -->
+				<template v-for="field in fields" :key="field.key">
+					<dt class="pipelinq-profile-card__label">
 						{{ label(field.label) }}
 					</dt>
 					<dd
-						:key="`v-${field.key}`"
 						class="pipelinq-profile-card__value"
-						:class="{ 'pipelinq-profile-card__value--emphasis': field.emphasis === true }"
+						:class="{
+							'pipelinq-profile-card__value--emphasis':
+								field.emphasis === true,
+						}"
 						:data-testid="`pipelinq-profile-${field.key}`">
 						<a
 							v-if="field.href"
@@ -106,10 +113,10 @@
 
 <script>
 import {
-	classifyContact,
-	buildProfileFields,
-	selectProfileState,
 	buildPipelinqLink,
+	buildProfileFields,
+	classifyContact,
+	selectProfileState,
 } from '../../composables/usePipelinqProfile.js'
 
 export default {
@@ -123,6 +130,7 @@ export default {
 			type: Object,
 			required: true,
 		},
+
 		/**
 		 * Booking row (slice-05 `booking` field). Used only for the
 		 * "looked up id" hint in the not-found fallback.
@@ -131,6 +139,7 @@ export default {
 			type: Object,
 			default: () => ({}),
 		},
+
 		/**
 		 * Optional pipelinq base URL — when set, the card renders a
 		 * "Open in pipelinq" link (opens in a new tab). Sourced from
@@ -141,26 +150,36 @@ export default {
 			default: '',
 		},
 	},
+
 	computed: {
 		state() {
 			return selectProfileState(this.payload)
 		},
+
 		kind() {
 			return classifyContact(this.payload?.contact)
 		},
+
 		fields() {
 			return buildProfileFields(this.payload?.contact)
 		},
+
 		contactError() {
 			return this.payload?.contactError || ''
 		},
+
 		pipelinqContactId() {
 			return String(this.booking?.pipelinqContactId || '').trim()
 		},
+
 		pipelinqLink() {
-			return buildPipelinqLink(this.pipelinqBaseUrl, this.payload?.contact?.externalId)
+			return buildPipelinqLink(
+				this.pipelinqBaseUrl,
+				this.payload?.contact?.externalId,
+			)
 		},
 	},
+
 	methods: {
 		label(key) {
 			if (typeof t === 'function') {

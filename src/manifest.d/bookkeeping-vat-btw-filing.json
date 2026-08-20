@@ -10,14 +10,14 @@
 		{
 			"id": "VATReturns",
 			"label": "BTW return",
-			"icon": "FileDocumentCheckOutline",
+			"icon": "PercentOutline",
 			"route": "VATReturns",
 			"order": 70
 		},
 		{
 			"id": "VATReports",
 			"label": "BTW report",
-			"icon": "ChartBoxOutline",
+			"icon": "PercentOutline",
 			"route": "VATReports",
 			"order": 71
 		}
@@ -30,7 +30,7 @@
 			"title": "BTW returns",
 			"config": {
 				"register": "shillinq",
-				"schema": "VATReturn",
+				"schema": "BtwAangifte",
 				"columns": [
 					{"key": "returnNumber", "label": "Return number", "sortable": true},
 					{"key": "period", "label": "Period", "sortable": true},
@@ -48,8 +48,7 @@
 					{"key": "statusCode", "label": "Status", "type": "select", "options": ["draft", "submitted", "verified", "filed"]}
 				],
 				"defaultSort": "periodYear",
-				"detailRoute": "VATReturnDetail",
-				"createDialog": "VATReturnCreateDialog"
+				"detailRoute": "VATReturnDetail"
 			}
 		},
 		{
@@ -58,8 +57,14 @@
 			"type": "detail",
 			"title": "BTW return",
 			"config": {
+				"_note": "A BTW return (VATReturn) is a tax-filing TRANSACTION: a period's declarations and VAT lines rolled up into collected BTW, input tax and the balance owed/refundable, driven through a draft → submitted → verified → filed lifecycle. Body leads with the return header data plus three currency KPIs (BTW collected, input tax, balance); the Declarations (rubrieken) and Lines child tables sit below as the auditable breakdown, and the Submit/Verify/File lifecycle buttons are gated on statusCode. Source documents and the immutable audit trail live in the sidebar. No comms — a tax filing, not a conversation.",
 				"register": "shillinq",
-				"schema": "VATReturn",
+				"schema": "BtwAangifte",
+				"aggregations": [
+					{"id": "vatCollected", "title": "BTW collected", "field": "totalVATCollected", "metric": "value", "format": "currency"},
+					{"id": "vatPaid", "title": "Input tax", "field": "totalVATPaid", "metric": "value", "format": "currency"},
+					{"id": "vatBalance", "title": "Balance", "field": "vatBalance", "metric": "value", "format": "currency"}
+				],
 				"fields": [
 					{"key": "returnNumber", "label": "Return number", "type": "string"},
 					{"key": "period", "label": "Period", "type": "string"},
@@ -118,7 +123,18 @@
 					{"id": "rebase", "label": "Reopen", "type": "lifecycle", "transition": "rebase", "enabledWhen": "statusCode === 'submitted'"},
 					{"id": "verify", "label": "Record confirmation", "type": "lifecycle", "transition": "verify", "enabledWhen": "statusCode === 'submitted'"},
 					{"id": "file", "label": "Finalize", "type": "lifecycle", "transition": "file", "enabledWhen": "statusCode === 'verified'"}
-				]
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Source documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "BtwAangifte", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
@@ -128,7 +144,7 @@
 			"title": "BTW report",
 			"config": {
 				"register": "shillinq",
-				"schema": "VATReturn",
+				"schema": "BtwAangifte",
 				"widgets": [
 					{
 						"id": "summary",
@@ -174,25 +190,6 @@
 					{"id": "csv", "label": "Export CSV", "format": "csv"},
 					{"id": "pdf", "label": "Export PDF", "format": "pdf"}
 				]
-			}
-		},
-		{
-			"id": "VATReturnCreateDialog",
-			"route": "/vat-returns/new",
-			"type": "dialog",
-			"title": "New BTW return",
-			"config": {
-				"register": "shillinq",
-				"schema": "VATReturn",
-				"action": {"verb": "POST", "url": "/api/vat-returns"},
-				"fields": [
-					{"key": "administrationId", "label": "Administration", "type": "string", "required": true},
-					{"key": "period", "label": "Period", "type": "select", "required": true, "options": ["quarter", "month", "year"], "default": "quarter"},
-					{"key": "periodYear", "label": "Fiscal year", "type": "number", "required": true, "default": 2026},
-					{"key": "periodNumber", "label": "Period number", "type": "number", "required": true, "default": 1},
-					{"key": "regime", "label": "Regime", "type": "select", "required": true, "options": ["standard", "kor", "reverse-charge"], "default": "standard"}
-				],
-				"onSuccess": "navigate:VATReturnDetail"
 			}
 		}
 	]

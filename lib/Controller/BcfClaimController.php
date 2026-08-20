@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-3-3
+ * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,111 +46,108 @@ use Psr\Log\LoggerInterface;
 /**
  * GET /api/bcf-claims/compensation — quarter-scoped compensable-VAT breakdown.
  *
- * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-3-3
+ * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
  */
-class BcfClaimController extends Controller
-{
-    /**
-     * Constructor for the BcfClaimController.
-     *
-     * @param IRequest                     $request         The request object.
-     * @param BcfClaimService              $bcfClaimService The BCF compensable-VAT computation service.
-     * @param AdministrationContextService $context         Administratie-aware IDOR guard (ADR-005).
-     * @param LoggerInterface              $logger          Logger for diagnostics (no stack traces to client).
-     *
-     * @return void
-     */
-    public function __construct(
-        IRequest $request,
-        private readonly BcfClaimService $bcfClaimService,
-        private readonly AdministrationContextService $context,
-        private readonly LoggerInterface $logger,
-    ) {
-        parent::__construct(appName: Application::APP_ID, request: $request);
+class BcfClaimController extends Controller {
+	/**
+	 * Constructor for the BcfClaimController.
+	 *
+	 * @param IRequest $request The request object.
+	 * @param BcfClaimService $bcfClaimService The BCF compensable-VAT computation service.
+	 * @param AdministrationContextService $context Administratie-aware IDOR guard (ADR-005).
+	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		IRequest $request,
+		private readonly BcfClaimService $bcfClaimService,
+		private readonly AdministrationContextService $context,
+		private readonly LoggerInterface $logger,
+	) {
+		parent::__construct(appName: Application::APP_ID, request: $request);
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Return the compensable-VAT breakdown for an administration + quarter (REQ-BCF-002).
-     *
-     * Query parameters:
-     *  - administration_id (required) administration scope (REQ-BCF-010, REQ-BCF-012).
-     *  - claim_quarter     (required) quarter identifier, e.g. 2026-Q1 (REQ-BCF-001).
-     *
-     * Returns HTTP 200 with { administrationId, claimQuarter, totalCompensableAmount,
-     * breakdown } on success; HTTP 400 on a missing/malformed parameter; HTTP 500
-     * (without a stack trace) on an unexpected GL fetch failure.
-     *
-     * @return JSONResponse
-     *
-     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-3-3
-     */
-    #[NoAdminRequired]
-    public function compensation(): JSONResponse
-    {
-        $administrationId = trim((string) $this->request->getParam('administration_id', ''));
-        $claimQuarter     = trim((string) $this->request->getParam('claim_quarter', ''));
+	/**
+	 * Return the compensable-VAT breakdown for an administration + quarter (REQ-BCF-002).
+	 *
+	 * Query parameters:
+	 *  - administration_id (required) administration scope (REQ-BCF-010, REQ-BCF-012).
+	 *  - claim_quarter     (required) quarter identifier, e.g. 2026-Q1 (REQ-BCF-001).
+	 *
+	 * Returns HTTP 200 with { administrationId, claimQuarter, totalCompensableAmount,
+	 * breakdown } on success; HTTP 400 on a missing/malformed parameter; HTTP 500
+	 * (without a stack trace) on an unexpected GL fetch failure.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
+	 */
+	#[NoAdminRequired]
+	public function compensation(): JSONResponse {
+		$administrationId = trim((string)$this->request->getParam('administration_id', ''));
+		$claimQuarter = trim((string)$this->request->getParam('claim_quarter', ''));
 
-        if ($administrationId === '') {
-            return new JSONResponse(
-                ['error' => 'administration_id is required'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		if ($administrationId === '') {
+			return new JSONResponse(
+				['error' => 'administration_id is required'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        if ($claimQuarter === '') {
-            return new JSONResponse(
-                ['error' => 'claim_quarter is required'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		if ($claimQuarter === '') {
+			return new JSONResponse(
+				['error' => 'claim_quarter is required'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        // Reject obviously malformed identifiers before touching the data layer
-        // (REQ-BCF-010) — administration/quarter identifiers are short slugs.
-        if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
-            return new JSONResponse(
-                ['error' => 'administration_id must be a valid administration identifier'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		// Reject obviously malformed identifiers before touching the data layer
+		// (REQ-BCF-010) — administration/quarter identifiers are short slugs.
+		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $administrationId) !== 1) {
+			return new JSONResponse(
+				['error' => 'administration_id must be a valid administration identifier'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $claimQuarter) !== 1) {
-            return new JSONResponse(
-                ['error' => 'claim_quarter must be a valid quarter identifier'],
-                Http::STATUS_BAD_REQUEST
-            );
-        }
+		if (preg_match('/^[A-Za-z0-9_.\\-]{1,64}$/', $claimQuarter) !== 1) {
+			return new JSONResponse(
+				['error' => 'claim_quarter must be a valid quarter identifier'],
+				Http::STATUS_BAD_REQUEST
+			);
+		}
 
-        // Per-object IDOR guard (ADR-005 Rule 3): 403 when user lacks administration membership.
-        if ($this->context->canAccess(administrationId: $administrationId) === false) {
-            return new JSONResponse(
-                ['error' => 'Access to this administration is not allowed'],
-                Http::STATUS_FORBIDDEN
-            );
-        }
+		// Per-object IDOR guard (ADR-005 Rule 3): 403 when user lacks administration membership.
+		if ($this->context->canAccess(administrationId: $administrationId) === false) {
+			return new JSONResponse(
+				['error' => 'Access to this administration is not allowed'],
+				Http::STATUS_FORBIDDEN
+			);
+		}
 
-        try {
-            $result = $this->bcfClaimService->computeClaim(
-                administrationId: $administrationId,
-                claimQuarter: $claimQuarter
-            );
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'BcfClaimController: failed to compute compensable VAT',
-                [
-                    'administrationId' => $administrationId,
-                    'claimQuarter'     => $claimQuarter,
-                    'exception'        => $e->getMessage(),
-                ]
-            );
+		try {
+			$result = $this->bcfClaimService->computeClaim(
+				administrationId: $administrationId,
+				claimQuarter: $claimQuarter
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'BcfClaimController: failed to compute compensable VAT',
+				[
+					'administrationId' => $administrationId,
+					'claimQuarter' => $claimQuarter,
+					'exception' => $e->getMessage(),
+				]
+			);
 
-            return new JSONResponse(
-                ['error' => 'Failed to compute compensable VAT'],
-                Http::STATUS_INTERNAL_SERVER_ERROR
-            );
-        }//end try
+			return new JSONResponse(
+				['error' => 'Failed to compute compensable VAT'],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}//end try
 
-        return new JSONResponse($result, Http::STATUS_OK);
-
-    }//end compensation()
+		return new JSONResponse($result, Http::STATUS_OK);
+	}//end compensation()
 }//end class

@@ -6,14 +6,19 @@
  the administration's bookkeeping documents in a table with filters for
  type, status, and filing date. Exposes an "Upload Document" action.
 
+ Migrated from a hand-rolled <table> to the shared nc-vue CnDataTable
+ universal-list-widget (columns + :rows + #cell-* slots + empty-label);
+ the type/status/filed-date filters and the upload action are unchanged.
+
  @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md#task-22
+ @spec openspec/specs/list-views-cndatatable/spec.md
 -->
 <template>
 	<NcAppContent>
 		<div class="wbso-documents">
 			<header class="wbso-documents__header">
 				<h2>{{ t('shillinq', 'Documents') }}</h2>
-				<NcButton v-if="canCreate" type="primary" @click="onUpload">
+				<NcButton v-if="canCreate" variant="primary" @click="onUpload">
 					{{ t('shillinq', 'Upload Document') }}
 				</NcButton>
 			</header>
@@ -25,65 +30,73 @@
 						<option value="">{{ t('shillinq', 'All') }}</option>
 						<option value="draft">{{ t('shillinq', 'Draft') }}</option>
 						<option value="filed">{{ t('shillinq', 'Filed') }}</option>
-						<option value="archived">{{ t('shillinq', 'Archived') }}</option>
+						<option value="archived">
+							{{ t('shillinq', 'Archived') }}
+						</option>
 					</select>
 				</label>
 				<label>
 					<span>{{ t('shillinq', 'Type') }}</span>
 					<select v-model="filters.type" @change="load">
 						<option value="">{{ t('shillinq', 'All') }}</option>
-						<option value="invoice">{{ t('shillinq', 'Invoice') }}</option>
-						<option value="receipt">{{ t('shillinq', 'Receipt') }}</option>
-						<option value="contract">{{ t('shillinq', 'Contract') }}</option>
-						<option value="tax-form">{{ t('shillinq', 'Tax Form') }}</option>
-						<option value="bank-statement">{{ t('shillinq', 'Bank Statement') }}</option>
+						<option value="invoice">
+							{{ t('shillinq', 'Invoice') }}
+						</option>
+						<option value="receipt">
+							{{ t('shillinq', 'Receipt') }}
+						</option>
+						<option value="contract">
+							{{ t('shillinq', 'Contract') }}
+						</option>
+						<option value="tax-form">
+							{{ t('shillinq', 'Tax Form') }}
+						</option>
+						<option value="bank-statement">
+							{{ t('shillinq', 'Bank Statement') }}
+						</option>
 						<option value="memo">{{ t('shillinq', 'Memo') }}</option>
 					</select>
 				</label>
 				<label>
 					<span>{{ t('shillinq', 'Filed from') }}</span>
-					<input v-model="filters.filedFrom" type="date" @change="load">
+					<input v-model="filters.filedFrom" type="date" @change="load" />
 				</label>
 			</div>
 
-			<NcEmptyContent v-if="!loading && documents.length === 0"
-				:name="t('shillinq', 'No documents')"
-				:description="t('shillinq', 'Upload the first document to track an invoice, receipt, or contract.')" />
-
-			<table v-else-if="!loading" class="wbso-documents__table">
-				<thead>
-					<tr>
-						<th>{{ t('shillinq', 'Document Number') }}</th>
-						<th>{{ t('shillinq', 'Document Type') }}</th>
-						<th>{{ t('shillinq', 'Document Date') }}</th>
-						<th>{{ t('shillinq', 'Status') }}</th>
-						<th>{{ t('shillinq', 'File Reference') }}</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="row in documents" :key="row.id || row.documentNumber">
-						<td>{{ row.documentNumber }}</td>
-						<td>{{ translateType(row.documentType) }}</td>
-						<td>{{ row.documentDate }}</td>
-						<td>
-							<span :data-status="row.status">{{ translateStatus(row.status) }}</span>
-						</td>
-						<td>
-							<a v-if="row.fileReference"
-								:href="row.fileReference"
-								target="_blank"
-								rel="noopener">
-								{{ row.fileReference }}
-							</a>
-							<span v-else>—</span>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-
-			<div v-else class="wbso-documents__loading">
+			<div v-if="loading" class="wbso-documents__loading">
 				{{ t('shillinq', 'Loading…') }}
 			</div>
+
+			<CnDataTable
+				v-else
+				class="wbso-documents__table"
+				:columns="columns"
+				:rows="documents"
+				:emptyLabel="
+					t(
+						'shillinq',
+						'Upload the first document to track an invoice, receipt, or contract.',
+					)
+				">
+				<template #cell-documentType="{ row }">
+					{{ translateType(row.documentType) }}
+				</template>
+				<template #cell-status="{ row }">
+					<span :data-status="row.status">{{
+						translateStatus(row.status)
+					}}</span>
+				</template>
+				<template #cell-fileReference="{ row }">
+					<a
+						v-if="row.fileReference"
+						:href="row.fileReference"
+						target="_blank"
+						rel="noopener">
+						{{ row.fileReference }}
+					</a>
+					<span v-else>—</span>
+				</template>
+			</CnDataTable>
 
 			<p v-if="errorMessage" class="wbso-documents__error" role="alert">
 				{{ errorMessage }}
@@ -93,17 +106,18 @@
 </template>
 
 <script>
-import { NcAppContent, NcButton, NcEmptyContent } from '@nextcloud/vue'
-import { generateOcsUrl } from '@nextcloud/router'
+import { CnDataTable } from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
+import { generateOcsUrl } from '@nextcloud/router'
+import { NcAppContent, NcButton } from '@nextcloud/vue'
 
 export default {
 	name: 'DocumentsView',
 
 	components: {
+		CnDataTable,
 		NcAppContent,
 		NcButton,
-		NcEmptyContent,
 	},
 
 	data() {
@@ -118,6 +132,40 @@ export default {
 				filedFrom: '',
 			},
 		}
+	},
+
+	computed: {
+		/**
+		 * CnDataTable column definitions for the documents list.
+		 *
+		 * @spec openspec/specs/list-views-cndatatable/spec.md
+		 * @return {Array<object>} ordered column defs
+		 */
+		columns() {
+			return [
+				{
+					key: 'documentNumber',
+					label: t('shillinq', 'Document Number'),
+					sortable: true,
+				},
+				{
+					key: 'documentType',
+					label: t('shillinq', 'Document Type'),
+					sortable: true,
+				},
+				{
+					key: 'documentDate',
+					label: t('shillinq', 'Document Date'),
+					sortable: true,
+				},
+				{ key: 'status', label: t('shillinq', 'Status'), sortable: true },
+				{
+					key: 'fileReference',
+					label: t('shillinq', 'File Reference'),
+					sortable: false,
+				},
+			]
+		},
 	},
 
 	mounted() {
@@ -136,7 +184,8 @@ export default {
 				if (this.filters.filedFrom) params.filedFrom = this.filters.filedFrom
 				const { data } = await axios.get(url, { params })
 				this.documents = data?.ocs?.data?.documents ?? data?.documents ?? []
-				this.canCreate = data?.ocs?.data?.canCreate ?? data?.canCreate ?? false
+				this.canCreate =
+					data?.ocs?.data?.canCreate ?? data?.canCreate ?? false
 			} catch (error) {
 				this.errorMessage = t('shillinq', 'Failed to load documents.')
 			} finally {
@@ -176,39 +225,35 @@ export default {
 .wbso-documents {
 	padding: 1rem;
 }
+
 .wbso-documents__header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 1rem;
 }
+
 .wbso-documents__filters {
 	display: flex;
 	gap: 1rem;
 	flex-wrap: wrap;
 	margin-bottom: 1rem;
 }
+
 .wbso-documents__filters label {
 	display: flex;
 	flex-direction: column;
 	font-size: 0.9rem;
 }
-.wbso-documents__table {
-	width: 100%;
-	border-collapse: collapse;
-}
-.wbso-documents__table th,
-.wbso-documents__table td {
-	padding: 0.5rem;
-	border-bottom: 1px solid var(--color-border);
-	text-align: left;
-}
-[data-status="archived"] {
+
+[data-status='archived'] {
 	color: var(--color-text-maxcontrast);
 }
-[data-status="filed"] {
+
+[data-status='filed'] {
 	font-weight: bold;
 }
+
 .wbso-documents__error {
 	color: var(--color-error);
 }

@@ -45,6 +45,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "AvailabilityRule",
+				"_note": "CONFIG — the availability rule for a bookable resource. Body pairs the rule scope (resource, effective-from/until window, status) with its two child collections rendered inline: the recurring breaks that block time and the booking constraints (notice windows, buffers, cancellation deadline) that shape valid slots. Pure scheduling configuration — no files, KPIs or comms leaves; lifecycle actions drive activate/archive.",
 				"fields": [
 					{ "key": "availabilityRuleId", "label": "Rule ID", "type": "string" },
 					{ "key": "resource", "label": "Resource", "type": "string", "help": "FK to Resource.resourceId (REQ-BAR-006)." },

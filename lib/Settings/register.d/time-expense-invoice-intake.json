@@ -1,0 +1,296 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "time-expense-invoice-intake",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json or other fragments. ADR-031 external-integration imperative exception (ingress adapter).",
+    "description": "Adds the ingress ledger schema TimeIntakeBatch (idempotency key = administrationId+batchId, records the batch → draft-invoice link) and extends the canonical UrenRegistratie schema with three provenance fields (externalId, sourceApp, sourceBatchId) so time entries materialised from an authenticated POST /apps/shillinq/api/billing/time-intake batch (pipelinq's time-billing-handoff-emit) are traceable back to their source. Deliberately does NOT declare a 'required' key on UrenRegistratie's merge fragment — the three provenance fields stay optional so pre-existing, manually-entered UrenRegistratie rows are unaffected (deep-merge concatenates 'required' arrays, so omitting the key here is load-bearing). Also seeds two CustomerMaster rows (cust-5432, cust-7788) beyond design.md's Seed Data section: the orchestrator's binding ruling requires organisationRef to resolve to a real shillinq customer/organisation record (422 otherwise), and no CustomerMaster seed data existed anywhere in the register prior to this change — without these two rows the seeded TimeIntakeBatch/UrenRegistratie demo objects would reference an organisationRef that can never resolve."
+  },
+  "components": {
+    "schemas": {
+      "TimeIntakeBatch": {
+        "slug": "TimeIntakeBatch",
+        "icon": "TrayArrowDown",
+        "version": "0.1.0",
+        "title": "Time Intake Batch",
+        "description": "Idempotency ledger for the billing-intake ingress adapter (ADR-031 external-integration exception). One row per accepted (administrationId, batchId) tuple; records what happened to the batch (received -> invoiced/failed), not a business-object lifecycle. Re-POSTing the same batchId with an identical payload short-circuits to the stored invoiceId (duplicated:true); a different payload under the same batchId is a 409 conflict, detected via payloadHash.",
+        "x-schema-org": "schema:Thing",
+        "x-openregister-purpose": "fact",
+        "x-spec": "openspec/changes/time-expense-invoice-intake/specs/time-expense-invoice-intake/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "batchId",
+          "sourceApp",
+          "organisationRef",
+          "currency",
+          "periodStart",
+          "periodEnd",
+          "entryCount",
+          "status",
+          "receivedAt"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration this batch was ingested into (server-resolved from the session, never client-supplied — ADR-005).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "batchId": {
+            "type": "string",
+            "description": "Idempotency key supplied by the caller. Unique per administration.",
+            "example": "11111111-1111-1111-1111-111111111111",
+            "title": "Batch ID"
+          },
+          "sourceApp": {
+            "type": "string",
+            "default": "pipelinq",
+            "description": "The Conduction app that emitted this batch.",
+            "example": "pipelinq",
+            "title": "Source App"
+          },
+          "organisationRef": {
+            "type": "string",
+            "description": "The shillinq customer/organisation id (FK to CustomerMaster.customerId) this batch is billed against.",
+            "example": "cust-5432",
+            "title": "Organisation Ref"
+          },
+          "projectId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional FK to Project — the batch's projectRef, if supplied.",
+            "example": "proj-widget-api",
+            "title": "Project ID"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "description": "ISO 4217 currency of the batch (EUR only for this slice).",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date",
+            "description": "Start of the covered time-entry period.",
+            "example": "2026-06-01",
+            "title": "Period Start"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date",
+            "description": "End of the covered time-entry period.",
+            "example": "2026-06-30",
+            "title": "Period End"
+          },
+          "entryCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of time entries accepted from this batch (== BillableInvoiceLine rows on the resulting invoice).",
+            "example": 2,
+            "title": "Entry Count"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "received",
+              "invoiced",
+              "failed"
+            ],
+            "default": "received",
+            "description": "Ingress ledger state, not a business-object lifecycle (design.md). 'invoiced' once draftInvoice() has succeeded and this row is persisted.",
+            "example": "invoiced",
+            "title": "Status"
+          },
+          "invoiceId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the draft BillableInvoice materialised from this batch. Null until status=invoiced.",
+            "example": "bil-2026-0042",
+            "title": "Invoice ID"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp the batch was accepted by the intake endpoint.",
+            "example": "2026-07-01T09:00:00Z",
+            "title": "Received At"
+          },
+          "payloadHash": {
+            "type": "string",
+            "nullable": true,
+            "description": "sha256 of the normalised request payload (organisationRef, billingModel, currency, period, entries[]), computed at ingest time. Used to distinguish an identical replay (duplicated:true) from a batchId reused with a materially different payload (409 conflict, REQ per 'Idempotent intake by batch id').",
+            "example": "a3f1c9...",
+            "title": "Payload Hash"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Time Intake Batch is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "UrenRegistratie": {
+        "properties": {
+          "externalId": {
+            "type": "string",
+            "nullable": true,
+            "description": "External id of this hour entry in the source app (e.g. pipelinq's time-entry id). Set only for entries materialised via the billing-intake endpoint; null for manually-entered hours.",
+            "example": "pl-time-1001",
+            "title": "External ID"
+          },
+          "sourceApp": {
+            "type": "string",
+            "nullable": true,
+            "description": "The Conduction app that emitted this hour entry via the billing-intake endpoint. Null for manually-entered hours.",
+            "example": "pipelinq",
+            "title": "Source App"
+          },
+          "sourceBatchId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the TimeIntakeBatch.batchId this hour entry was materialised from. Null for manually-entered hours.",
+            "example": "11111111-1111-1111-1111-111111111111",
+            "title": "Source Batch ID"
+          }
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CustomerMaster",
+          "slug": "cust-5432"
+        },
+        "customerId": "cust-5432",
+        "legalName": "Widget API Klant B.V.",
+        "email": "facturen@widgetapiklant.nl",
+        "administrationId": "adm-1",
+        "lifecycleState": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CustomerMaster",
+          "slug": "cust-7788"
+        },
+        "customerId": "cust-7788",
+        "legalName": "Support Retainer Klant B.V.",
+        "email": "facturen@supportretainerklant.nl",
+        "administrationId": "adm-1",
+        "lifecycleState": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "TimeIntakeBatch",
+          "slug": "intake-batch-june-widgetapi"
+        },
+        "administrationId": "adm-1",
+        "batchId": "11111111-1111-1111-1111-111111111111",
+        "sourceApp": "pipelinq",
+        "organisationRef": "cust-5432",
+        "projectId": "proj-widget-api",
+        "currency": "EUR",
+        "periodStart": "2026-06-01",
+        "periodEnd": "2026-06-30",
+        "entryCount": 2,
+        "status": "invoiced",
+        "invoiceId": "bil-2026-0042",
+        "receivedAt": "2026-07-01T09:00:00Z",
+        "payloadHash": "seed-demo-hash-june-widgetapi"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "TimeIntakeBatch",
+          "slug": "intake-batch-may-support"
+        },
+        "administrationId": "adm-1",
+        "batchId": "22222222-2222-2222-2222-222222222222",
+        "sourceApp": "pipelinq",
+        "organisationRef": "cust-7788",
+        "projectId": "proj-support",
+        "currency": "EUR",
+        "periodStart": "2026-05-01",
+        "periodEnd": "2026-05-31",
+        "entryCount": 3,
+        "status": "invoiced",
+        "invoiceId": "bil-2026-0031",
+        "receivedAt": "2026-06-01T09:00:00Z",
+        "payloadHash": "seed-demo-hash-may-support"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "TimeIntakeBatch",
+          "slug": "intake-batch-replay-demo"
+        },
+        "administrationId": "adm-1",
+        "batchId": "33333333-3333-3333-3333-333333333333",
+        "sourceApp": "pipelinq",
+        "organisationRef": "cust-5432",
+        "projectId": "proj-widget-api",
+        "currency": "EUR",
+        "periodStart": "2026-06-01",
+        "periodEnd": "2026-06-30",
+        "entryCount": 2,
+        "status": "invoiced",
+        "invoiceId": "bil-2026-0042",
+        "receivedAt": "2026-07-02T10:00:00Z",
+        "payloadHash": "seed-demo-hash-june-widgetapi"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "UrenRegistratie",
+          "slug": "uren-intake-pl-time-1001"
+        },
+        "administrationId": "adm-1",
+        "personId": "consultant-1",
+        "date": "2026-06-03",
+        "hours": 2,
+        "description": "API design review (imported from pipelinq)",
+        "projectId": "proj-widget-api",
+        "externalId": "pl-time-1001",
+        "sourceApp": "pipelinq",
+        "sourceBatchId": "11111111-1111-1111-1111-111111111111"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "UrenRegistratie",
+          "slug": "uren-intake-pl-time-1002"
+        },
+        "administrationId": "adm-1",
+        "personId": "consultant-1",
+        "date": "2026-06-05",
+        "hours": 1.5,
+        "description": "Integration spike (imported from pipelinq)",
+        "projectId": "proj-widget-api",
+        "externalId": "pl-time-1002",
+        "sourceApp": "pipelinq",
+        "sourceBatchId": "11111111-1111-1111-1111-111111111111"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "UrenRegistratie",
+          "slug": "uren-intake-pl-time-2001"
+        },
+        "administrationId": "adm-1",
+        "personId": "consultant-2",
+        "date": "2026-05-10",
+        "hours": 3,
+        "description": "Support ticket triage (imported from pipelinq)",
+        "projectId": "proj-support",
+        "externalId": "pl-time-2001",
+        "sourceApp": "pipelinq",
+        "sourceBatchId": "22222222-2222-2222-2222-222222222222"
+      }
+    ]
+  }
+}

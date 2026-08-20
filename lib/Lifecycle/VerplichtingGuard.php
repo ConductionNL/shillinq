@@ -50,133 +50,127 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
  */
-class VerplichtingGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param LoggerInterface $logger Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class VerplichtingGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Precondition for the activeren (concept → active) transition.
-     *
-     * Validates:
-     * 1. kostenplaats (cost centre) is set (design D2).
-     * 2. grootboekrekening (GL account) is set (design D2).
-     * 3. Every planned milestone date falls within looptijdStart..looptijdEind
-     *    when the obligation declares a term (design validation rules).
-     *
-     * Fail-closed: returns false on any exception (denies activation) per CWE-863.
-     *
-     * @param array<string, mixed> $verplichting Verplichting object array supplied by OR.
-     *
-     * @return bool True when the obligation may be activated.
-     *
-     * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
-     */
-    public function canActiveren(array $verplichting): bool
-    {
-        try {
-            if (trim((string) ($verplichting['kostenplaats'] ?? '')) === ''
-                || trim((string) ($verplichting['grootboekrekening'] ?? '')) === ''
-            ) {
-                $this->logger->info(
-                    'VerplichtingGuard: missing kostenplaats or grootboekrekening — denying activation (design D2)',
-                    ['verplichtingNummer' => ($verplichting['verplichtingNummer'] ?? 'unknown')]
-                );
-                return false;
-            }
+	/**
+	 * Precondition for the activeren (concept → active) transition.
+	 *
+	 * Validates:
+	 * 1. kostenplaats (cost centre) is set (design D2).
+	 * 2. grootboekrekening (GL account) is set (design D2).
+	 * 3. Every planned milestone date falls within looptijdStart..looptijdEind
+	 *    when the obligation declares a term (design validation rules).
+	 *
+	 * Fail-closed: returns false on any exception (denies activation) per CWE-863.
+	 *
+	 * @param array<string, mixed> $commitment Verplichting object array supplied by OR.
+	 *
+	 * @return bool True when the obligation may be activated.
+	 *
+	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-8
+	 */
+	public function canActiveren(array $commitment): bool {
+		try {
+			if (trim((string)($commitment['costCentre'] ?? '')) === ''
+				|| trim((string)($commitment['generalLedgerAccount'] ?? '')) === ''
+			) {
+				$this->logger->info(
+					'VerplichtingGuard: missing kostenplaats or grootboekrekening — denying activation (design D2)',
+					['commitmentNumber' => ($commitment['commitmentNumber'] ?? 'unknown')]
+				);
+				return false;
+			}
 
-            if ($this->milestonesWithinTerm(verplichting: $verplichting) === false) {
-                return false;
-            }
+			if ($this->milestonesWithinTerm(commitment: $commitment) === false) {
+				return false;
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'VerplichtingGuard: canActiveren failed — denying activation (fail-closed)',
-                [
-                    'verplichtingNummer' => ($verplichting['verplichtingNummer'] ?? 'unknown'),
-                    'exception'          => $e->getMessage(),
-                ]
-            );
-            return false;
-        }//end try
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'VerplichtingGuard: canActiveren failed — denying activation (fail-closed)',
+				[
+					'commitmentNumber' => ($commitment['commitmentNumber'] ?? 'unknown'),
+					'exception' => $e->getMessage(),
+				]
+			);
+			return false;
+		}//end try
 
-    }//end canActiveren()
+	}//end canActiveren()
 
-    /**
-     * Verify every planned milestone date falls within the obligation term.
-     *
-     * When the obligation declares no looptijdStart/looptijdEind the check is
-     * skipped (no bound to enforce). Milestones whose dates are unparseable are
-     * rejected so a malformed plan cannot slip through.
-     *
-     * @param array<string, mixed> $verplichting Verplichting object array.
-     *
-     * @return bool True when all milestone dates are in range (or no term/plan).
-     */
-    private function milestonesWithinTerm(array $verplichting): bool
-    {
-        $start = $this->parseDate(value: (string) ($verplichting['looptijdStart'] ?? ''));
-        $end   = $this->parseDate(value: (string) ($verplichting['looptijdEind'] ?? ''));
-        if ($start === null || $end === null) {
-            // No declared term — nothing to bound.
-            return true;
-        }
+	/**
+	 * Verify every planned milestone date falls within the obligation term.
+	 *
+	 * When the obligation declares no looptijdStart/looptijdEind the check is
+	 * skipped (no bound to enforce). Milestones whose dates are unparseable are
+	 * rejected so a malformed plan cannot slip through.
+	 *
+	 * @param array<string, mixed> $commitment Verplichting object array.
+	 *
+	 * @return bool True when all milestone dates are in range (or no term/plan).
+	 */
+	private function milestonesWithinTerm(array $commitment): bool {
+		$start = $this->parseDate(value: (string)($commitment['termStart'] ?? ''));
+		$end = $this->parseDate(value: (string)($commitment['termEnd'] ?? ''));
+		if ($start === null || $end === null) {
+			// No declared term — nothing to bound.
+			return true;
+		}
 
-        $mijlpalen = ($verplichting['mijlpalen'] ?? []);
-        if (is_array($mijlpalen) === false) {
-            return true;
-        }
+		$milestones = ($commitment['milestones'] ?? []);
+		if (is_array($milestones) === false) {
+			return true;
+		}
 
-        foreach ($mijlpalen as $mijlpaal) {
-            if (is_array($mijlpaal) === false) {
-                continue;
-            }
+		foreach ($milestones as $milestone) {
+			if (is_array($milestone) === false) {
+				continue;
+			}
 
-            $datum = $this->parseDate(value: (string) ($mijlpaal['datum'] ?? ''));
-            if ($datum === null || $datum < $start || $datum > $end) {
-                $this->logger->info(
-                    'VerplichtingGuard: milestone date out of contract term — denying activation',
-                    [
-                        'verplichtingNummer' => ($verplichting['verplichtingNummer'] ?? 'unknown'),
-                        'mijlpaalId'         => ($mijlpaal['mijlpaalId'] ?? 'unknown'),
-                        'datum'              => ($mijlpaal['datum'] ?? 'unknown'),
-                    ]
-                );
-                return false;
-            }
-        }//end foreach
+			$date = $this->parseDate(value: (string)($milestone['date'] ?? ''));
+			if ($date === null || $date < $start || $date > $end) {
+				$this->logger->info(
+					'VerplichtingGuard: milestone date out of contract term — denying activation',
+					[
+						'commitmentNumber' => ($commitment['commitmentNumber'] ?? 'unknown'),
+						'milestoneId' => ($milestone['milestoneId'] ?? 'unknown'),
+						'date' => ($milestone['date'] ?? 'unknown'),
+					]
+				);
+				return false;
+			}
+		}//end foreach
 
-        return true;
+		return true;
+	}//end milestonesWithinTerm()
 
-    }//end milestonesWithinTerm()
+	/**
+	 * Parse an ISO 8601 date string into a Unix epoch, or null on failure.
+	 *
+	 * @param string $value Date string (e.g. "2026-05-01").
+	 *
+	 * @return int|null Epoch seconds at midnight UTC, or null when unparseable.
+	 */
+	private function parseDate(string $value): ?int {
+		if ($value === '') {
+			return null;
+		}
 
-    /**
-     * Parse an ISO 8601 date string into a Unix epoch, or null on failure.
-     *
-     * @param string $value Date string (e.g. "2026-05-01").
-     *
-     * @return int|null Epoch seconds at midnight UTC, or null when unparseable.
-     */
-    private function parseDate(string $value): ?int
-    {
-        if ($value === '') {
-            return null;
-        }
+		$epoch = strtotime($value);
+		if ($epoch === false) {
+			return null;
+		}
 
-        $epoch = strtotime($value);
-        if ($epoch === false) {
-            return null;
-        }
-
-        return $epoch;
-
-    }//end parseDate()
+		return $epoch;
+	}//end parseDate()
 }//end class

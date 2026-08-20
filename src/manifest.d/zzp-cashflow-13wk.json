@@ -9,7 +9,7 @@
 				{
 					"id": "CashflowDashboard",
 					"label": "Cashflow Dashboard",
-					"icon": "ChartTimelineVariant",
+					"icon": "ViewDashboardOutline",
 					"route": "CashflowDashboard",
 					"order": 10
 				},
@@ -37,7 +37,7 @@
 				{
 					"id": "CashflowCalibration",
 					"label": "Calibration Report",
-					"icon": "ChartBellCurveCumulative",
+					"icon": "ChartBoxOutline",
 					"route": "CashflowCalibration",
 					"order": 50
 				}
@@ -51,28 +51,52 @@
 			"type": "detail",
 			"title": "Cashflow Week",
 			"config": {
+				"_note": "A single week in the 13-week ZZP cashflow forecast: a REPORT row aggregating projected/actual AR inflows, AP + recurring outflows (rent, DGA salary, BTW, IB), the net change and the resulting closing balance against the buffer status. Body leads with opening/closing balances and the inflow/outflow breakdown; four currency KPIs (total inflows, total outflows, net change, closing balance) headline the liquidity picture, and the sibling weeks of the same horizon are listed so the treasurer can walk the runway. No comms — a forecast ledger row; audit trail in a sidebar tab.",
 				"register": "shillinq",
 				"schema": "CashflowWeek",
+				"aggregations": [
+					{"id": "totalInflows", "title": "Total inflows", "field": "inflows_total", "metric": "value", "format": "currency"},
+					{"id": "totalOutflows", "title": "Total outflows", "field": "outflows_total", "metric": "value", "format": "currency"},
+					{"id": "netChange", "title": "Net change", "field": "netMovement", "metric": "value", "format": "currency"},
+					{"id": "closingBalance", "title": "Closing balance", "field": "closingBalance", "metric": "value", "format": "currency"}
+				],
 				"fields": [
 					{ "key": "weeknummer", "label": "Week", "type": "number" },
 					{ "key": "weekStart", "label": "Week start", "type": "string" },
-					{ "key": "weekEind", "label": "Week end", "type": "string" },
-					{ "key": "openingSaldo", "label": "Opening balance", "type": "number" },
+					{ "key": "weekEnd", "label": "Week end", "type": "string" },
+					{ "key": "openingBalance", "label": "Opening balance", "type": "number" },
 					{ "key": "inflows_ar_geprognosticeerd", "label": "AR inflows (projected)", "type": "number" },
 					{ "key": "inflows_pipeline", "label": "Pipeline inflows", "type": "number" },
-					{ "key": "inflows_totaal", "label": "Total inflows", "type": "number" },
+					{ "key": "inflows_total", "label": "Total inflows", "type": "number" },
 					{ "key": "outflows_ap_geprognosticeerd", "label": "AP outflows", "type": "number" },
 					{ "key": "outflows_recurring_huur", "label": "Rent", "type": "number" },
-					{ "key": "outflows_recurring_dga_loon", "label": "DGA salary", "type": "number" },
-					{ "key": "outflows_btw_afdracht", "label": "BTW settlement", "type": "number" },
-					{ "key": "outflows_ib_aanslag", "label": "IB assessment", "type": "number" },
-					{ "key": "outflows_totaal", "label": "Total outflows", "type": "number" },
-					{ "key": "nettoMutatie", "label": "Net change", "type": "number" },
-					{ "key": "eindSaldo", "label": "Closing balance", "type": "number" },
+					{ "key": "outflows_recurring_dga_pay", "label": "DGA salary", "type": "number" },
+					{ "key": "outflows_vat_remittance", "label": "BTW settlement", "type": "number" },
+					{ "key": "outflows_ib_assessment", "label": "IB assessment", "type": "number" },
+					{ "key": "outflows_total", "label": "Total outflows", "type": "number" },
+					{ "key": "netMovement", "label": "Net change", "type": "number" },
+					{ "key": "closingBalance", "label": "Closing balance", "type": "number" },
 					{ "key": "bufferStatus", "label": "Buffer status", "type": "string" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
-				"indexRoute": "CashflowDashboard"
+				"relatedLists": [
+					{"id": "horizonWeeks", "title": "Other weeks in this horizon", "schema": "CashflowWeek", "foreignKey": "horizonId", "join": "horizonId", "columns": [
+						{"key": "weeknummer", "label": "Week"},
+						{"key": "inflows_total", "label": "Inflows"},
+						{"key": "outflows_total", "label": "Outflows"},
+						{"key": "closingBalance", "label": "Closing balance"},
+						{"key": "bufferStatus", "label": "Buffer"}
+					], "detailRoute": "CashflowWeekDetail"}
+				],
+				"auditTrail": true,
+				"indexRoute": "CashflowDashboard",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
@@ -81,23 +105,32 @@
 			"type": "detail",
 			"title": "Recurring Cost",
 			"config": {
+				"_note": "A recurring cashflow line is CONFIG: a template (label, category, direction, frequency, day/month, standard amount, indexation rule, validity window, GL account) that the forecast engine expands into the weekly outflows/inflows. Body is a compact data card of the schedule and amount; no children, no comms. Audit trail in a sidebar tab so amount/schedule changes to the forecast basis are traceable.",
 				"register": "shillinq",
 				"schema": "CashflowRecurring",
 				"fields": [
 					{ "key": "label", "label": "Label", "type": "string" },
-					{ "key": "categorie", "label": "Category", "type": "string" },
-					{ "key": "richting", "label": "Direction", "type": "string" },
-					{ "key": "frequentie", "label": "Frequency", "type": "string" },
-					{ "key": "dagVanMaand", "label": "Day of month", "type": "number" },
-					{ "key": "maandVanJaar", "label": "Month of year", "type": "number" },
-					{ "key": "standaardBedrag", "label": "Amount", "type": "number" },
-					{ "key": "indexatieRegel", "label": "Indexation rule", "type": "string" },
-					{ "key": "geldigVan", "label": "Valid from", "type": "string" },
-					{ "key": "geldigTot", "label": "Valid until", "type": "string" },
+					{ "key": "category", "label": "Category", "type": "string" },
+					{ "key": "direction", "label": "Direction", "type": "string" },
+					{ "key": "frequency", "label": "Frequency", "type": "string" },
+					{ "key": "dagFromMonth", "label": "Day of month", "type": "number" },
+					{ "key": "monthOfYear", "label": "Month of year", "type": "number" },
+					{ "key": "standardAmount", "label": "Amount", "type": "number" },
+					{ "key": "indexationRule", "label": "Indexation rule", "type": "string" },
+					{ "key": "validFrom", "label": "Valid from", "type": "string" },
+					{ "key": "validTo", "label": "Valid until", "type": "string" },
 					{ "key": "accountNumberExpense", "label": "GL account", "type": "string" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
-				"indexRoute": "CashflowRecurring"
+				"auditTrail": true,
+				"indexRoute": "CashflowRecurring",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
@@ -106,8 +139,14 @@
 			"type": "detail",
 			"title": "Buffer Policy",
 			"config": {
+				"_note": "Buffer policy is CONFIG: it defines how the minimum cash buffer is computed (fixed amount, months-of-fixed-costs, or custom formula) and the pre-alert and critical thresholds the weekly forecast checks bufferStatus against. Body is a data card; the calculated buffer and its two alert thresholds are shown as currency KPIs so the ZZP'er sees the guardrails at a glance. No children, no comms; audit trail in a sidebar tab.",
 				"register": "shillinq",
 				"schema": "CashflowBufferPolicy",
+				"aggregations": [
+					{"id": "calculatedBuffer", "title": "Calculated buffer", "field": "berekendeBuffer", "metric": "value", "format": "currency"},
+					{"id": "preAlert", "title": "Pre-alert threshold", "field": "alertPreAlert", "metric": "value", "format": "currency"},
+					{"id": "critical", "title": "Critical threshold", "field": "alertLowerLimit", "metric": "value", "format": "currency"}
+				],
 				"fields": [
 					{ "key": "policy", "label": "Policy", "type": "string" },
 					{ "key": "berekendeBuffer", "label": "Calculated buffer", "type": "number" },
@@ -115,7 +154,15 @@
 					{ "key": "alertOndergrens", "label": "Critical threshold", "type": "number" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
-				"indexRoute": "CashflowBufferPolicy"
+				"auditTrail": true,
+				"indexRoute": "CashflowBufferPolicy",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
@@ -124,15 +171,26 @@
 			"type": "detail",
 			"title": "Scenario",
 			"config": {
+				"_note": "A cashflow scenario is an analysis REPORT: a named what-if over the base horizon carrying a set of aanpassingen (adjustments) and the computed resultaat. Body leads with the name/description and creation date; the adjustments and result object render below via the data widget. No children FK, no comms; audit trail in a sidebar tab so scenario tweaks are traceable.",
 				"register": "shillinq",
 				"schema": "CashflowScenario",
 				"fields": [
-					{ "key": "naam", "label": "Name", "type": "string" },
+					{ "key": "name", "label": "Name", "type": "string" },
 					{ "key": "description", "label": "Description", "type": "string" },
+					{ "key": "aanpassingen", "label": "Adjustments", "type": "array" },
+					{ "key": "result", "label": "Result", "type": "object" },
 					{ "key": "createdAt", "label": "Created", "type": "string" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
-				"indexRoute": "CashflowScenarios"
+				"auditTrail": true,
+				"indexRoute": "CashflowScenarios",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
@@ -160,8 +218,15 @@
 			"type": "detail",
 			"title": "Calibration Report",
 			"config": {
+				"_note": "The calibration report is a forecast-accuracy REPORT: MAPE error rates for AR, AP, recurring and tax predictions over a calibration period, plus the payment-behaviour and pipeline-conversion updates fed back into the model. Body leads with the period/generation stamp and the four MAPE fields; the accuracy metrics are surfaced as KPIs so the analyst sees at a glance where the model drifts. No comms; audit trail in a sidebar tab.",
 				"register": "shillinq",
 				"schema": "CashflowCalibrationReport",
+				"aggregations": [
+					{"id": "arMape", "title": "AR accuracy (MAPE)", "field": "ar_mape", "metric": "value", "format": "percent"},
+					{"id": "apMape", "title": "AP accuracy (MAPE)", "field": "ap_mape", "metric": "value", "format": "percent"},
+					{"id": "recurringMape", "title": "Recurring accuracy", "field": "recurring_mape", "metric": "value", "format": "percent"},
+					{"id": "taxMape", "title": "Tax accuracy", "field": "tax_mape", "metric": "value", "format": "percent"}
+				],
 				"fields": [
 					{ "key": "calibrationPeriod", "label": "Period", "type": "string" },
 					{ "key": "generatedAt", "label": "Generated at", "type": "string" },
@@ -171,7 +236,15 @@
 					{ "key": "tax_mape", "label": "Tax Accuracy", "type": "number" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
-				"indexRoute": "CashflowCalibration"
+				"auditTrail": true,
+				"indexRoute": "CashflowCalibration",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		}
 	]

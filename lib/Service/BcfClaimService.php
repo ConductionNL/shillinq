@@ -26,7 +26,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-1
+ * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Computes a quarter-scoped, per-account BCF compensable-VAT claim from the GL.
@@ -50,210 +50,197 @@ use Psr\Container\ContainerInterface;
  * the claim quarter, restricted to accounts the administration's BbvAccountMapping
  * marks bcfCompensable and weighted by compensablePercentage (REQ-BCF-002).
  *
- * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-1
+ * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
  */
-class BcfClaimService
-{
-    /**
-     * Construct the service with lazy DI of OpenRegister's ObjectService.
-     *
-     * @param ContainerInterface        $container  DI container — OR's ObjectService is fetched
-     *                                              lazily.
-     * @param IAppConfig                $appConfig  App config for the register slug.
-     * @param BcfCompensationCalculator $calculator Pure-logic compensable-VAT helper.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly BcfCompensationCalculator $calculator,
-    ) {
-    }//end __construct()
+class BcfClaimService {
+	/**
+	 * Construct the service with lazy DI of OpenRegister's ObjectService.
+	 *
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param BcfCompensationCalculator $calculator Pure-logic compensable-VAT helper.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly BcfCompensationCalculator $calculator,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    /**
-     * Compute the compensable-VAT claim for one administration + quarter (REQ-BCF-002).
-     *
-     * Returns the quarter total plus a per-account breakdown (accountNumber,
-     * posted amount, compensablePercentage, weighted compensable amount). Only
-     * compensable accounts contribute; non-compensable accounts and accounts
-     * without a mapping are excluded.
-     *
-     * @param string $administrationId Administration scope (server-resolved, REQ-BCF-010).
-     * @param string $claimQuarter     Quarter identifier to claim (e.g. 2026-Q1, REQ-BCF-001).
-     *
-     * @return array{administrationId: string, claimQuarter: string, totalCompensableAmount: float, breakdown: array<int,array<string,mixed>>}
-     *
-     * @spec openspec/changes/bookkeeping-bcf-vat-compensation/tasks.md#task-4-1
-     */
-    public function computeClaim(string $administrationId, string $claimQuarter): array
-    {
-        $amountsByAccount = $this->compensableAmountsByAccount(
-            administrationId: $administrationId,
-            claimQuarter: $claimQuarter
-        );
+	/**
+	 * Compute the compensable-VAT claim for one administration + quarter (REQ-BCF-002).
+	 *
+	 * Returns the quarter total plus a per-account breakdown (accountNumber,
+	 * posted amount, compensablePercentage, weighted compensable amount). Only
+	 * compensable accounts contribute; non-compensable accounts and accounts
+	 * without a mapping are excluded.
+	 *
+	 * @param string $administrationId Administration scope (server-resolved, REQ-BCF-010).
+	 * @param string $claimQuarter Quarter identifier to claim (e.g. 2026-Q1, REQ-BCF-001).
+	 *
+	 * @return array{administrationId: string, claimQuarter: string, totalCompensableAmount: float, breakdown: array<int,array<string,mixed>>}
+	 *
+	 * @spec openspec/specs/bookkeeping-bcf-vat-compensation/spec.md#req-bcf-004
+	 */
+	public function computeClaim(string $administrationId, string $claimQuarter): array {
+		$amountsByAccount = $this->compensableAmountsByAccount(
+			administrationId: $administrationId,
+			claimQuarter: $claimQuarter
+		);
 
-        $mappingsByAccount = $this->mappingsByAccount(administrationId: $administrationId);
+		$mappingsByAccount = $this->mappingsByAccount(administrationId: $administrationId);
 
-        $compensation = $this->calculator->computeCompensation(
-            amountsByAccount: $amountsByAccount,
-            mappingsByAccount: $mappingsByAccount
-        );
+		$compensation = $this->calculator->computeCompensation(
+			amountsByAccount: $amountsByAccount,
+			mappingsByAccount: $mappingsByAccount
+		);
 
-        return [
-            'administrationId'       => $administrationId,
-            'claimQuarter'           => $claimQuarter,
-            'totalCompensableAmount' => $compensation['totalCompensableAmount'],
-            'breakdown'              => $compensation['breakdown'],
-        ];
+		return [
+			'administrationId' => $administrationId,
+			'claimQuarter' => $claimQuarter,
+			'totalCompensableAmount' => $compensation['totalCompensableAmount'],
+			'breakdown' => $compensation['breakdown'],
+		];
 
-    }//end computeClaim()
+	}//end computeClaim()
 
-    /**
-     * Sum VAT amounts per account for an administration + claim quarter.
-     *
-     * Resolves the administration's GLTransactions for the quarter, then sums the
-     * amounts of their non-eliminated GLLine children grouped by accountNumber.
-     * BCF compensates VAT charged on qualifying expenditure; debit-side VAT lines
-     * are the claimable postings, so credit lines and eliminations are excluded.
-     *
-     * Amounts are summed in integer cents to avoid float drift, then returned as
-     * currency-unit floats (the contract BcfCompensationCalculator expects).
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $claimQuarter     Claim quarter (maps to GLLine.periodId).
-     *
-     * @return array<string,float> accountNumber => posted amount in currency units.
-     */
-    private function compensableAmountsByAccount(string $administrationId, string $claimQuarter): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $register      = $this->register();
+	/**
+	 * Sum VAT amounts per account for an administration + claim quarter.
+	 *
+	 * Resolves the administration's GLTransactions for the quarter, then sums the
+	 * amounts of their non-eliminated GLLine children grouped by accountNumber.
+	 * BCF compensates VAT charged on qualifying expenditure; debit-side VAT lines
+	 * are the claimable postings, so credit lines and eliminations are excluded.
+	 *
+	 * Amounts are summed in integer cents to avoid float drift, then returned as
+	 * currency-unit floats (the contract BcfCompensationCalculator expects).
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $claimQuarter Claim quarter (maps to GLLine.periodId).
+	 *
+	 * @return array<string,float> accountNumber => posted amount in currency units.
+	 */
+	private function compensableAmountsByAccount(string $administrationId, string $claimQuarter): array {
+		$register = $this->register();
 
-        // Transactions that belong to this administration + quarter (REQ-BCF-012 scoping).
-        $transactions = $objectService
-            ->setRegister($register)
-            ->setSchema('GLTransaction')
-            ->findAll(
-                ['filters' => ['administrationId' => $administrationId, 'periodId' => $claimQuarter]]
-            );
+		// Transactions that belong to this administration + quarter (REQ-BCF-012 scoping).
+		$transactions = $this->objectService
+			->setRegister($register)
+			->setSchema('GLTransaction')
+			->findAll(
+				['filters' => ['administrationId' => $administrationId, 'periodId' => $claimQuarter]]
+			);
 
-        $transactionIds = [];
-        foreach ($transactions as $transaction) {
-            $id = ($transaction['id'] ?? ($transaction['@self']['id'] ?? null));
-            if ($id !== null) {
-                $transactionIds[(string) $id] = true;
-            }
-        }
+		$transactionIds = [];
+		foreach ($transactions as $transaction) {
+			$id = ($transaction['id'] ?? ($transaction['@self']['id'] ?? null));
+			if ($id !== null) {
+				$transactionIds[(string)$id] = true;
+			}
+		}
 
-        // No transactions for this administration+quarter → no lines can be in scope.
-        // Guard prevents the GLLine query from matching lines from other administrations
-        // when the transactionIds set is empty (CWE-284 / REQ-BCF-012).
-        if ($transactionIds === []) {
-            return [];
-        }
+		// No transactions for this administration+quarter → no lines can be in scope.
+		// Guard prevents the GLLine query from matching lines from other administrations
+		// when the transactionIds set is empty (CWE-284 / REQ-BCF-012).
+		if ($transactionIds === []) {
+			return [];
+		}
 
-        // GLLines for the quarter; cross-check the parent transaction is in scope.
-        $lines = $objectService
-            ->setRegister($register)
-            ->setSchema('GLLine')
-            ->findAll(['filters' => ['periodId' => $claimQuarter]]);
+		// GLLines for the quarter; cross-check the parent transaction is in scope.
+		$lines = $this->objectService
+			->setRegister($register)
+			->setSchema('GLLine')
+			->findAll(['filters' => ['periodId' => $claimQuarter]]);
 
-        $centsByAccount = [];
-        foreach ($lines as $line) {
-            if ($this->lineInScope(line: $line, transactionIds: $transactionIds) === false) {
-                continue;
-            }
+		$centsByAccount = [];
+		foreach ($lines as $line) {
+			if ($this->lineInScope(line: $line, transactionIds: $transactionIds) === false) {
+				continue;
+			}
 
-            $account = (string) ($line['accountNumber'] ?? '');
-            if (isset($centsByAccount[$account]) === false) {
-                $centsByAccount[$account] = 0;
-            }
+			$account = (string)($line['accountNumber'] ?? '');
+			if (isset($centsByAccount[$account]) === false) {
+				$centsByAccount[$account] = 0;
+			}
 
-            $centsByAccount[$account] += $this->calculator->toCents(amount: ($line['amount'] ?? 0));
-        }//end foreach
+			$centsByAccount[$account] += $this->calculator->toCents(amount: ($line['amount'] ?? 0));
+		}//end foreach
 
-        // Return currency-unit floats — the calculator re-converts to cents and
-        // applies the compensablePercentage weighting (REQ-BCF-002).
-        $byAccount = [];
-        foreach ($centsByAccount as $account => $cents) {
-            $byAccount[$account] = $this->calculator->fromCents(cents: $cents);
-        }
+		// Return currency-unit floats — the calculator re-converts to cents and
+		// applies the compensablePercentage weighting (REQ-BCF-002).
+		$byAccount = [];
+		foreach ($centsByAccount as $account => $cents) {
+			$byAccount[$account] = $this->calculator->fromCents(cents: $cents);
+		}
 
-        return $byAccount;
+		return $byAccount;
+	}//end compensableAmountsByAccount()
 
-    }//end compensableAmountsByAccount()
+	/**
+	 * Decide whether a GLLine counts toward the BCF compensable claim.
+	 *
+	 * Excludes eliminated lines, lines whose parent transaction is out of the
+	 * administration/quarter scope (REQ-BCF-012), credit-side lines (BCF claims
+	 * the VAT charged on expenditure, the debit side), and lines without an
+	 * account.
+	 *
+	 * @param array<string,mixed> $line The GLLine record.
+	 * @param array<string,bool> $transactionIds In-scope transaction ids (set membership).
+	 *
+	 * @return bool True when the line should be summed.
+	 */
+	private function lineInScope(array $line, array $transactionIds): bool {
+		if (($line['eliminationFlag'] ?? false) === true) {
+			return false;
+		}
 
-    /**
-     * Decide whether a GLLine counts toward the BCF compensable claim.
-     *
-     * Excludes eliminated lines, lines whose parent transaction is out of the
-     * administration/quarter scope (REQ-BCF-012), credit-side lines (BCF claims
-     * the VAT charged on expenditure, the debit side), and lines without an
-     * account.
-     *
-     * @param array<string,mixed> $line           The GLLine record.
-     * @param array<string,bool>  $transactionIds In-scope transaction ids (set membership).
-     *
-     * @return bool True when the line should be summed.
-     */
-    private function lineInScope(array $line, array $transactionIds): bool
-    {
-        if (($line['eliminationFlag'] ?? false) === true) {
-            return false;
-        }
+		if (($line['side'] ?? '') !== 'debit') {
+			return false;
+		}
 
-        if (($line['side'] ?? '') !== 'debit') {
-            return false;
-        }
+		$transactionId = (string)($line['transactionId'] ?? '');
+		if ($transactionIds !== [] && isset($transactionIds[$transactionId]) === false) {
+			return false;
+		}
 
-        $transactionId = (string) ($line['transactionId'] ?? '');
-        if ($transactionIds !== [] && isset($transactionIds[$transactionId]) === false) {
-            return false;
-        }
+		return ((string)($line['accountNumber'] ?? '') !== '');
+	}//end lineInScope()
 
-        return ((string) ($line['accountNumber'] ?? '') !== '');
+	/**
+	 * Fetch the administration's BBV account mappings keyed by accountNumber (REQ-BCF-004).
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<string,array<string,mixed>> accountNumber => BbvAccountMapping object.
+	 */
+	private function mappingsByAccount(string $administrationId): array {
+		$mappings = $this->objectService
+			->setRegister($this->register())
+			->setSchema('BbvAccountMapping')
+			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
-    }//end lineInScope()
+		$byNumber = [];
+		foreach ($mappings as $mapping) {
+			$number = (string)($mapping['accountNumber'] ?? '');
+			if ($number !== '') {
+				$byNumber[$number] = $mapping;
+			}
+		}
 
-    /**
-     * Fetch the administration's BBV account mappings keyed by accountNumber (REQ-BCF-004).
-     *
-     * @param string $administrationId Administration scope.
-     *
-     * @return array<string,array<string,mixed>> accountNumber => BbvAccountMapping object.
-     */
-    private function mappingsByAccount(string $administrationId): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $mappings      = $objectService
-            ->setRegister($this->register())
-            ->setSchema('BbvAccountMapping')
-            ->findAll(['filters' => ['administrationId' => $administrationId]]);
+		return $byNumber;
+	}//end mappingsByAccount()
 
-        $byNumber = [];
-        foreach ($mappings as $mapping) {
-            $number = (string) ($mapping['accountNumber'] ?? '');
-            if ($number !== '') {
-                $byNumber[$number] = $mapping;
-            }
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $byNumber;
-
-    }//end mappingsByAccount()
-
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

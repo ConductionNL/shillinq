@@ -29,92 +29,81 @@ use PHPUnit\Framework\TestCase;
  * Verifies the fail-closed eligibility gate: inactive channels and opted-out
  * recipients are skipped, with PII-free reasons.
  */
-final class SmsOptOutPolicyTest extends TestCase
-{
+final class SmsOptOutPolicyTest extends TestCase {
 
-    /**
-     * Subject under test.
-     *
-     * @var SmsOptOutPolicy
-     */
-    private SmsOptOutPolicy $policy;
+	/**
+	 * Subject under test.
+	 *
+	 * @var SmsOptOutPolicy
+	 */
+	private SmsOptOutPolicy $policy;
 
+	/**
+	 * Set up the subject.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->policy = new SmsOptOutPolicy();
 
-    /**
-     * Set up the subject.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        $this->policy = new SmsOptOutPolicy();
+	}//end setUp()
 
-    }//end setUp()
+	/**
+	 * An active channel to a non-opted-out recipient is allowed.
+	 *
+	 * @return void
+	 */
+	public function testActiveChannelNonOptedOutIsAllowed(): void {
+		self::assertTrue($this->policy->isSendAllowed(['status' => 'active'], ['smsOptOut' => false]));
+		self::assertNull($this->policy->skipReason(['status' => 'active'], ['smsOptOut' => false]));
 
+	}//end testActiveChannelNonOptedOutIsAllowed()
 
-    /**
-     * An active channel to a non-opted-out recipient is allowed.
-     *
-     * @return void
-     */
-    public function testActiveChannelNonOptedOutIsAllowed(): void
-    {
-        self::assertTrue($this->policy->isSendAllowed(['status' => 'active'], ['smsOptOut' => false]));
-        self::assertNull($this->policy->skipReason(['status' => 'active'], ['smsOptOut' => false]));
+	/**
+	 * A non-active channel is never sent from.
+	 *
+	 * @return void
+	 */
+	public function testInactiveChannelIsSkipped(): void {
+		self::assertFalse($this->policy->isSendAllowed(['status' => 'inactive'], ['smsOptOut' => false]));
+		self::assertSame('channel not active', $this->policy->skipReason(['status' => 'inactive'], []));
+		self::assertFalse($this->policy->isSendAllowed(['status' => 'archived'], []));
 
-    }//end testActiveChannelNonOptedOutIsAllowed()
+	}//end testInactiveChannelIsSkipped()
 
+	/**
+	 * An opted-out recipient is skipped when the channel respects opt-out
+	 * (the default, including when respectOptOut is absent — fail closed).
+	 *
+	 * @return void
+	 */
+	public function testOptedOutRecipientIsSkippedByDefault(): void {
+		self::assertFalse($this->policy->isSendAllowed(['status' => 'active'], ['smsOptOut' => true]));
+		self::assertSame(
+			'recipient opted out of SMS reminders',
+			$this->policy->skipReason(['status' => 'active'], ['smsOptOut' => true])
+		);
 
-    /**
-     * A non-active channel is never sent from.
-     *
-     * @return void
-     */
-    public function testInactiveChannelIsSkipped(): void
-    {
-        self::assertFalse($this->policy->isSendAllowed(['status' => 'inactive'], ['smsOptOut' => false]));
-        self::assertSame('channel not active', $this->policy->skipReason(['status' => 'inactive'], []));
-        self::assertFalse($this->policy->isSendAllowed(['status' => 'archived'], []));
+		// respectOptOut explicitly true.
+		self::assertFalse(
+			$this->policy->isSendAllowed(['status' => 'active', 'respectOptOut' => true], ['smsOptOut' => true])
+		);
 
-    }//end testInactiveChannelIsSkipped()
+	}//end testOptedOutRecipientIsSkippedByDefault()
 
+	/**
+	 * An operator may disable opt-out respect for a transactional channel.
+	 *
+	 * @return void
+	 */
+	public function testOptOutCanBeDisabledForTransactionalChannel(): void {
+		self::assertTrue(
+			$this->policy->isSendAllowed(['status' => 'active', 'respectOptOut' => false], ['smsOptOut' => true])
+		);
+		self::assertNull(
+			$this->policy->skipReason(['status' => 'active', 'respectOptOut' => false], ['smsOptOut' => true])
+		);
 
-    /**
-     * An opted-out recipient is skipped when the channel respects opt-out
-     * (the default, including when respectOptOut is absent — fail closed).
-     *
-     * @return void
-     */
-    public function testOptedOutRecipientIsSkippedByDefault(): void
-    {
-        self::assertFalse($this->policy->isSendAllowed(['status' => 'active'], ['smsOptOut' => true]));
-        self::assertSame(
-            'recipient opted out of SMS reminders',
-            $this->policy->skipReason(['status' => 'active'], ['smsOptOut' => true])
-        );
-
-        // respectOptOut explicitly true.
-        self::assertFalse(
-            $this->policy->isSendAllowed(['status' => 'active', 'respectOptOut' => true], ['smsOptOut' => true])
-        );
-
-    }//end testOptedOutRecipientIsSkippedByDefault()
-
-
-    /**
-     * An operator may disable opt-out respect for a transactional channel.
-     *
-     * @return void
-     */
-    public function testOptOutCanBeDisabledForTransactionalChannel(): void
-    {
-        self::assertTrue(
-            $this->policy->isSendAllowed(['status' => 'active', 'respectOptOut' => false], ['smsOptOut' => true])
-        );
-        self::assertNull(
-            $this->policy->skipReason(['status' => 'active', 'respectOptOut' => false], ['smsOptOut' => true])
-        );
-
-    }//end testOptOutCanBeDisabledForTransactionalChannel()
+	}//end testOptOutCanBeDisabledForTransactionalChannel()
 
 }//end class

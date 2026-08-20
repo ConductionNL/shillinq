@@ -48,29 +48,26 @@ namespace OCA\Shillinq\Service\Pipelinq;
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
  */
-enum TimelinePublishOutcome: string
-{
-    // The publish completed with a 2xx response.
-    case Success = 'success';
+enum TimelinePublishOutcome: string {
+	// The publish completed with a 2xx response.
+	case Success = 'success';
 
-    // The endpoint returned 401 Unauthorized — the configured pipelinq
-    // token is invalid / revoked. The publish MUST NOT be retried; the
-    // adapter logs ERROR, the listener fires an admin notification.
-    case AuthRejected = 'auth_rejected';
+	// The endpoint returned 401 Unauthorized — the configured pipelinq
+	// token is invalid / revoked. The publish MUST NOT be retried; the
+	// adapter logs ERROR, the listener fires an admin notification.
+	case AuthRejected = 'auth_rejected';
 
-    // The publish failed for a transient reason (open breaker, retry
-    // budget exhausted, transport error, non-401 client error). The
-    // listener hands the event off to the async retry queue (slice 09).
-    case Transient = 'transient';
+	// The publish failed for a transient reason (open breaker, retry
+	// budget exhausted, transport error, non-401 client error). The
+	// listener hands the event off to the async retry queue (slice 09).
+	case Transient = 'transient';
 
-    /**
-     * TRUE for the only outcome that should be treated as published.
-     *
-     * @return bool
-     */
-    public function isSuccess(): bool
-    {
-        return $this === self::Success;
-
-    }//end isSuccess()
+	/**
+	 * TRUE for the only outcome that should be treated as published.
+	 *
+	 * @return bool
+	 */
+	public function isSuccess(): bool {
+		return $this === self::Success;
+	}//end isSuccess()
 }//end enum

@@ -1,0 +1,73 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "gl-account-suggestion-consume",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json. ADR-022 consumes docudesk's already-shipped ai-gl-account-suggestion contract over two outbound HTTP requests to docudesk's existing REST endpoints; docudesk never learns a chart of accounts, shillinq supplies its own.",
+    "description": "Adds docudeskExtractionId (the financialExtraction id, learned from the synchronous extraction-request response, REQ-GAC-001) and suggestedGlAccount (the cached last-fetched docudesk suggestion, REQ-GAC-003) to SupplierInvoice and Receipt. Also adds glAccount to Receipt (SupplierInvoice already has it) so a receipt draft can carry a booking-account suggestion/selection like a supplier invoice does."
+  },
+  "info": {
+    "version": "0.1.0-gl-account-suggestion-consume"
+  },
+  "components": {
+    "schemas": {
+      "SupplierInvoice": {
+        "properties": {
+          "docudeskExtractionId": {
+            "type": "string",
+            "description": "The docudesk `financialExtraction` object id, learned from the synchronous response of DocudeskExtractionClient::requestExtraction() (REQ-GAC-001). Absent when the draft's extraction was never (re-)requested through shillinq's own proxy (e.g. seeded before this change) — the GL-account suggestion feature degrades gracefully to plain manual booking when unset (REQ-GAC-006).",
+            "nullable": true,
+            "example": "00000000-0000-0000-0000-000000000099",
+            "title": "Docudesk Extraction Id"
+          },
+          "suggestedGlAccount": {
+            "type": "object",
+            "description": "The last-fetched docudesk GL-account suggestion (REQ-GAC-003): {code, label, confidence, rationale, source}. Cached on the draft so the operator's eventual booking choice can be compared against it without a live round-trip. Never auto-applied to glAccount (REQ-GAC-004) — informational only.",
+            "properties": {
+              "code": { "type": "string", "title": "Account Code", "description": "The suggested grootboekrekening code from the chart of accounts (bookkeeping-chart-of-accounts), e.g. '4300'. Informational only — never written to glAccount without operator confirmation (REQ-GAC-004)." },
+              "label": { "type": "string", "nullable": true, "title": "Account Label", "description": "Human-readable name of the suggested account as docudesk knew it at suggestion time. Cached so the suggestion still reads sensibly if the account is later renamed; null when docudesk returned no name." },
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1, "title": "Confidence", "description": "How strongly docudesk backs this suggestion, from 0 (no confidence) to 1 (certain). A decimal fraction, not a percentage." },
+              "rationale": { "type": "string", "title": "Rationale", "description": "Docudesk's own plain-language explanation of why this account was suggested, shown to the operator so the suggestion can be judged rather than merely accepted." },
+              "source": { "type": "string", "enum": ["history", "keyword-rule", "none"], "title": "Source", "description": "How the suggestion was derived: history = this supplier's past bookings, keyword-rule = a text-matching mapping rule, none = docudesk had no basis to suggest anything." }
+            },
+            "nullable": true,
+            "example": { "code": "4300", "label": "Kantoorkosten", "confidence": 0.8, "rationale": "Booked to 4300 in 8 of the last 10 invoices from this supplier", "source": "history" },
+            "title": "Suggested GL Account"
+          }
+        }
+      },
+      "Receipt": {
+        "properties": {
+          "glAccount": {
+            "type": "string",
+            "description": "The grootboekrekening (GL account) code the operator books this receipt to (mirrors SupplierInvoice.glAccount). Opaque string per the chart of accounts (bookkeeping-chart-of-accounts) — never auto-filled from a suggestion without operator confirmation (REQ-GAC-004).",
+            "nullable": true,
+            "example": "4400",
+            "title": "GL Account"
+          },
+          "docudeskExtractionId": {
+            "type": "string",
+            "description": "The docudesk `financialExtraction` object id, learned from the synchronous response of DocudeskExtractionClient::requestExtraction() (REQ-GAC-001). Absent when the draft's extraction was never (re-)requested through shillinq's own proxy.",
+            "nullable": true,
+            "example": "00000000-0000-0000-0000-000000000098",
+            "title": "Docudesk Extraction Id"
+          },
+          "suggestedGlAccount": {
+            "type": "object",
+            "description": "The last-fetched docudesk GL-account suggestion (REQ-GAC-003): {code, label, confidence, rationale, source}. Never auto-applied to glAccount (REQ-GAC-004).",
+            "properties": {
+              "code": { "type": "string", "title": "Account Code", "description": "The suggested grootboekrekening code from the chart of accounts (bookkeeping-chart-of-accounts), e.g. '4400'. Informational only — never written to glAccount without operator confirmation (REQ-GAC-004)." },
+              "label": { "type": "string", "nullable": true, "title": "Account Label", "description": "Human-readable name of the suggested account as docudesk knew it at suggestion time. Cached so the suggestion still reads sensibly if the account is later renamed; null when docudesk returned no name." },
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1, "title": "Confidence", "description": "How strongly docudesk backs this suggestion, from 0 (no confidence) to 1 (certain). A decimal fraction, not a percentage." },
+              "rationale": { "type": "string", "title": "Rationale", "description": "Docudesk's own plain-language explanation of why this account was suggested, shown to the operator so the suggestion can be judged rather than merely accepted." },
+              "source": { "type": "string", "enum": ["history", "keyword-rule", "none"], "title": "Source", "description": "How the suggestion was derived: history = this supplier's past bookings, keyword-rule = a text-matching mapping rule, none = docudesk had no basis to suggest anything." }
+            },
+            "nullable": true,
+            "example": { "code": "4400", "label": "Representatiekosten", "confidence": 0.4, "rationale": "Keyword 'lunch' matched mapping rule → 4400", "source": "keyword-rule" },
+            "title": "Suggested GL Account"
+          }
+        }
+      }
+    }
+  }
+}

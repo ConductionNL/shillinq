@@ -1289,7 +1289,7 @@ Proposed
 
 ## Context
 
-Conduction apps (OpenCatalogi, Procest, Pipelinq, MyDash, Decidesk, DocuDesk, ZaakAfhandelApp, Larpingapp, Softwarecatalog, OpenRegister itself) all consume the same set of "things linked to an object" — files, notes, tasks, calendar events, mail, contacts, deck cards, talk conversations, and an expanding catalogue of NC-ecosystem and external services.
+Conduction apps (OpenCatalogi, Procest, Pipelinq, LaunchPad, Decidesk, DocuDesk, ZaakAfhandelApp, Larpingapp, Softwarecatalog, OpenRegister itself) all consume the same set of "things linked to an object" — files, notes, tasks, calendar events, mail, contacts, deck cards, talk conversations, and an expanding catalogue of NC-ecosystem and external services.
 
 Until now this was implemented in two rigid places:
 
@@ -1548,7 +1548,7 @@ duplicate-ADR pattern this ADR was written to prevent).
 
 ## Context
 
-Conduction maintains ~13 Nextcloud apps (decidesk, docudesk, pipelinq, procest, opencatalogi, openconnector, mydash, larpingapp, shillinq/budgetq, zaakafhandelapp, nldesign, softwarecatalog, and the in-flight idea apps). Each app needs features that overlap heavily: objects with schemas, role-based access, audit trails, archival/retention policies, mapping/transformation, relation management, sidebar tabs with notes/tasks/files, dashboard widgets, integrations with NC-native and external services.
+Conduction maintains ~13 Nextcloud apps (decidesk, docudesk, pipelinq, procest, opencatalogi, openconnector, launchpad, larpingapp, shillinq/budgetq, zaakafhandelapp, nldesign, softwarecatalog, and the in-flight idea apps). Each app needs features that overlap heavily: objects with schemas, role-based access, audit trails, archival/retention policies, mapping/transformation, relation management, sidebar tabs with notes/tasks/files, dashboard widgets, integrations with NC-native and external services.
 
 OpenRegister has grown into the **foundation** that provides these as shared abstractions: registers, schemas, objects, RBAC, audit-trail-immutable, archival-destruction-workflow, mappings, relations, object-interactions, and — with ADR-019 — a pluggable integration registry.
 
@@ -1923,9 +1923,9 @@ Specifically:
    (2) an explicit Tier choice, (3) a regression test confirming all
    routes still resolve, (4) reviewer sign-off that the manifest does
    not duplicate or contradict the canonical schema.
-10. **Apps that should NOT depend on OpenRegister** — mydash and
+10. **Apps that should NOT depend on OpenRegister** — launchpad and
     nldesign MUST NOT list `openregister` in `manifest.dependencies`.
-    Per `feedback_mydash-no-or-dependency.md`, mydash is a BI surface
+    Per `feedback_launchpad-no-or-dependency.md`, launchpad is a BI surface
     that talks to OR via runtime GraphQL only; nldesign is a theme
     layer. Other apps SHOULD list every cross-app dependency the user
     needs installed for the app to function.
@@ -1940,7 +1940,7 @@ Specifically:
   reflected in `src/manifest.json` is treated as drift. (Pairs with
   ADR-029 route-reachability gate.)
 - Migration order recommendation (cheapest → highest-value):
-  `mydash` → `larpingapp` / `softwarecatalog` → `openregister` →
+  `launchpad` → `larpingapp` / `softwarecatalog` → `openregister` →
   remaining apps. Decidesk is already Tier 4 and serves as the
   reference.
 - App-manifest extensions (e.g. `theme: { primary, accent, logoUrl }`,
@@ -2250,7 +2250,7 @@ checks and by ADR-005's per-attribute pairing.
 2. Wire into `images/builder/entrypoint.sh` post-build, `images/reviewer/`
    pre-flight, `images/security/` pre-flight.
 3. Run a one-shot full-repo audit on `openregister`, `decidesk`, `procest`,
-   `pipelinq`, `opencatalogi`, `larpingapp`, `mydash` to catalog inherited
+   `pipelinq`, `opencatalogi`, `larpingapp`, `launchpad` to catalog inherited
    route-gap and wrong-binding debt. Each app gets a single cleanup PR.
 4. After 30 days from gate landing, flip the Newman warning to a hard fail.
 
@@ -2296,14 +2296,14 @@ Proposed
 
 ## Context
 
-Mydash documentation surfaced a reusable workflow: 15 step-by-step
+LaunchPad documentation surfaced a reusable workflow: 15 step-by-step
 tutorial pages were authored alongside a Playwright spec that drives
 each user journey end-to-end and captures a fresh PNG at every step.
 The result is a Docusaurus site whose screenshots stay in sync with
 the live UI — re-run the capture spec after any UI change and every
 image refreshes automatically.
 
-The workflow has eight reusable artifacts, none of which is mydash-
+The workflow has eight reusable artifacts, none of which is launchpad-
 specific: a `tutorials/{user,admin}/` markdown structure, a
 `docs-screenshots.spec.ts` capture spec, a per-track `_category_.json`
 sidebar config, a Playwright `docs-capture` project flag, a Docusaurus
@@ -2321,7 +2321,7 @@ isolation:
 - Path mistakes (e.g. `docs/screenshots/` instead of
   `docs/static/screenshots/`) silently ship broken images to
   production.
-- Selector brittleness on the capture spec. The mydash first run
+- Selector brittleness on the capture spec. The launchpad first run
   passed only 6/15 stories; pulling stable `data-testid`s into the
   Vue components took 28 testids across 8 components and lifted the
   pass rate to 9/15.
@@ -2465,8 +2465,8 @@ automatically.
 
 ## References
 
-- Mydash PR #132 (initial pattern landing) and PR #134 (path / static
-  fix). Both merged into mydash `development`.
+- LaunchPad PR #132 (initial pattern landing) and PR #134 (path / static
+  fix). Both merged into launchpad `development`.
 - `hydra/templates/journeydoc/` — canonical templates.
 - `hydra/.claude/skills/journeydoc-{init,add-story,instrument}/` —
   the three skills.

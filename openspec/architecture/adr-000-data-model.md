@@ -1196,7 +1196,7 @@ _A financial plan allocating resources for a specific period, organization, and 
 - → BudgetAmendment (one-to-many)
 - → ExpenditureRequest (one-to-many)
 
-**Reconciliation note — `bookkeeping-reconciliation-reports` (T4 envelope, REQ-RR-004):** the shillinq capability `bookkeeping-reconciliation-reports` introduces an **account-period budget shape** alongside the existing programme-level `Budget` documented above. The account-period shape — `(accountNumber, periodId, budgetAmount, currency, administrationId, lifecycleState)` with FK `accountNumber → Account.accountNumber` — is the join target for the variance-vs-actual saved-query that compares aggregated `GLLine` activity to budgeted amounts at the account-per-period grain (REQ-RR-004). Two prior `Budget` declarations already ship in `lib/Settings/register.d/` fragment files — `bookkeeping-verplichtingenadministratie.json` (commitment shape: `geautoriseerd_bedrag` / `gerealiseerd_bedrag` / `openstaande_verplichtingen` / `vrije_ruimte`) and `bookkeeping-provincies-bbv-variant.json` (BBV-programme shape: `budgetName` / `totalAmount` / `programmaStructure` / `fiscalYear`) — neither of which carries the account-per-period fields the variance query needs; the implementing cycle (separate `opsx-apply` against `bookkeeping-reconciliation-reports`) decides whether to add a third Budget fragment owned by the reconciliation-reports capability or to extend one of the existing shapes (Task 5 carries the discovery-deferred decision). The four reconciliation saved queries (sub-ledger ↔ GL control match, intercompany match, variance vs Budget, controller exception report) declared by this capability per REQ-RR-002 / -003 / -004 / -005 are consumed by mydash via runtime GraphQL on OR's schema with no install-time dependency in either direction per ADR-022 and `feedback_mydash-no-or-dependency.md`; cites ADR-031 (saved-query / `x-openregister-aggregations` not a PHP `ReportingService`; severity as calculated field; cross-administration intercompany match and cross-schema budget-variance join carry a conditional single-method PHP guard fallback if engine cannot express declaratively — `lib/Aggregation/IntercompanyMatchGuard.php` and `lib/Aggregation/BudgetVarianceJoinGuard.php`, ADR-031-exception-annotated, ~20 LOC each).
+**Reconciliation note — `bookkeeping-reconciliation-reports` (T4 envelope, REQ-RR-004):** the shillinq capability `bookkeeping-reconciliation-reports` introduces an **account-period budget shape** alongside the existing programme-level `Budget` documented above. The account-period shape — `(accountNumber, periodId, budgetAmount, currency, administrationId, lifecycleState)` with FK `accountNumber → Account.accountNumber` — is the join target for the variance-vs-actual saved-query that compares aggregated `GLLine` activity to budgeted amounts at the account-per-period grain (REQ-RR-004). Two prior `Budget` declarations already ship in `lib/Settings/register.d/` fragment files — `bookkeeping-verplichtingenadministratie.json` (commitment shape: `geautoriseerd_bedrag` / `gerealiseerd_bedrag` / `openstaande_verplichtingen` / `vrije_ruimte`) and `bookkeeping-provincies-bbv-variant.json` (BBV-programme shape: `budgetName` / `totalAmount` / `programmaStructure` / `fiscalYear`) — neither of which carries the account-per-period fields the variance query needs; the implementing cycle (separate `opsx-apply` against `bookkeeping-reconciliation-reports`) decides whether to add a third Budget fragment owned by the reconciliation-reports capability or to extend one of the existing shapes (Task 5 carries the discovery-deferred decision). The four reconciliation saved queries (sub-ledger ↔ GL control match, intercompany match, variance vs Budget, controller exception report) declared by this capability per REQ-RR-002 / -003 / -004 / -005 are consumed by launchpad via runtime GraphQL on OR's schema with no install-time dependency in either direction per ADR-022 and `feedback_launchpad-no-or-dependency.md`; cites ADR-031 (saved-query / `x-openregister-aggregations` not a PHP `ReportingService`; severity as calculated field; cross-administration intercompany match and cross-schema budget-variance join carry a conditional single-method PHP guard fallback if engine cannot express declaratively — `lib/Aggregation/IntercompanyMatchGuard.php` and `lib/Aggregation/BudgetVarianceJoinGuard.php`, ADR-031-exception-annotated, ~20 LOC each).
 
 ### BudgetAllocation
 _A subdivision of budget resources allocated to a specific department, funding source, or purpose_
@@ -3408,7 +3408,9 @@ _Notification record for lots approaching expiry, lots that have crossed expiry,
 - → Person (many-to-one, via recipientId)
 - → Organization (many-to-one, via administrationId)
 
-> **Annotation (inventory-lot-batch-expiry, 2026-06-07):** Alert generation is the responsibility of `OCA\Shillinq\Cron\LotExpiryAlertJob` — a daily TimedJob that raises `approaching_expiry` alerts at 30-day and 7-day thresholds and `expired` alerts past `InventoryLot.expiryDate`. Idempotent via the uniqueness key (lotId, alertType, daysBeforeExpiry). Alert lifecycle is declarative — `pending → acknowledged → resolved` with the `resolve` transition stamping `resolvedDate`. Per ADR-032 the daily sweep is a `kind: code` companion to the `kind: config` schema in this same change because the declarative engine cannot express date-arithmetic thresholds across all lots.
+> **Annotation (inventory-lot-batch-expiry, 2026-06-07):** Alert generation is the responsibility of `OCA\Shillinq\BackgroundJob\LotExpiryAlertJob`
+(moved from `OCA\Shillinq\Cron\LotExpiryAlertJob` by background-job-consolidation,
+ADR-069 D1) — a daily TimedJob that raises `approaching_expiry` alerts at 30-day and 7-day thresholds and `expired` alerts past `InventoryLot.expiryDate`. Idempotent via the uniqueness key (lotId, alertType, daysBeforeExpiry). Alert lifecycle is declarative — `pending → acknowledged → resolved` with the `resolve` transition stamping `resolvedDate`. Per ADR-032 the daily sweep is a `kind: code` companion to the `kind: config` schema in this same change because the declarative engine cannot express date-arithmetic thresholds across all lots.
 
 > **Annotation (inventory-lot-batch-expiry, 2026-06-07):** The existing Product schema (the shillinq catalogue slug for the spec entity 'InventoryItem') gained one additive optional field via this change: `requiresLotTracking: boolean (default: false)`. When `true`, every receipt of that SKU MUST reference an `InventoryLot` — enforced by the `OCA\Shillinq\Lifecycle\LotTrackingReceiptGuard` on `GoodsReceipt` save (REQ-LOT-008). The patch is non-breaking; existing Product objects without the field default to `false` (lot tracking disabled).
 
@@ -7094,16 +7096,17 @@ _A procurement tender imported from TenderNed (Logius central platform). Wraps t
 
 ### Verplichting
 **Schema.org:** `schema:Order`
-_A financial commitment (obligation) tracked in Shillinq with optional TenderNed provenance, mijlpaalplanning, and cross-app budget-impact emission. Declared in this register fragment with bron/bronReferentie/mijlpalen built in (see implementation note in tasks.md); reconciles with the future bookkeeping-obligation-financial-administration T2 entity when that lands._
+_A financial commitment (obligation) tracked in Shillinq with optional TenderNed provenance, mijlpaalplanning, and cross-app budget-impact emission. The schema is OWNED by the `bookkeeping-verplichtingenadministratie` fragment, which is the single place its `required` list is declared; `20-bookkeeping-tenderned-integratie.json` is an additive overlay contributing bron/bronReferentie/mijlpalen and the concept → active enrichment lifecycle. Only one fragment may declare `required`, because ADR-037 CONCATENATES list values on merge._
 **Primary spec:** bookkeeping-tenderned-integratie
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| verplichtingNummer | string | Yes | Unique obligation reference. |
-| omschrijving | string | Yes | Short description (e.g. tender title). |
-| bron | enum | Yes | manual / tenderned / inkooporder (default: manual). |
+| verplichtingsnummer | string | Yes | Unique obligation reference. **A second spelling is live in production**: `verplichtingNummer` is written by `TenderNedAwardDetectedListener` and read by `VerplichtingGuard`, while `verplichtingsnummer` is written by `CommitmentMaterialisationService` and read by `BudgetBlocker::canCommit`, `MandaatEnforcer` and `RequisitionService`. Only the latter is in `required`, so a record written through the TenderNed path does not yet satisfy it. Collapsing the two is a DATA migration (MagicMapper discards undeclared properties) and belongs to the English domain rename (`Verplichting` → `Commitment`), which owns the repair step. |
+| soort | enum | Yes | inkooporder / raamovereenkomst / arbeidscontract / subsidiebeschikking / huurovereenkomst / leasing / overig. |
+| omschrijving | string | No | Short description (e.g. tender title). |
+| bron | enum | No | manual / tenderned / inkooporder (default: manual). |
 | bronReferentie | string | Cond. | Required when bron=tenderned (aanbestedingId FK). |
-| bedrag | number | Yes | Committed amount in the administration's base currency. |
+| bedrag | number | No | Committed amount in the administration's base currency. |
 | kostenplaats | string | No | Cost centre (required for activation). |
 | grootboekrekening | string | No | GL account (required for activation). |
 | looptijdStart | date | No | Contract term start. |
@@ -7119,7 +7122,7 @@ _A financial commitment (obligation) tracked in Shillinq with optional TenderNed
 **Relations:**
 - → TenderNedAanbesteding (many-to-one via bronReferentie when bron=tenderned).
 - → OpdrachtUitvoering (one-to-many on verplichtingId).
-- → mydash budget-impact widget via `shillinq.obligation.activated` CloudEvent (REQ-007).
+- → launchpad budget-impact widget via `shillinq.obligation.activated` CloudEvent (REQ-007).
 
 ### OpdrachtUitvoering
 **Schema.org:** `schema:DeliveryEvent`

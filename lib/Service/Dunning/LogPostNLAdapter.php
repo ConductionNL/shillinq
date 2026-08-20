@@ -34,49 +34,48 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
  */
-class LogPostNLAdapter implements PostNLAdapterInterface
-{
-    /**
-     * Construct the log-backed PostNL adapter.
-     *
-     * @param LoggerInterface $logger Logger.
-     */
-    public function __construct(private readonly LoggerInterface $logger)
-    {
-    }//end __construct()
+class LogPostNLAdapter implements PostNLAdapterInterface {
+	/**
+	 * Construct the log-backed PostNL adapter.
+	 *
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Synthesise a DELIVERED send + log-only dispatch.
-     *
-     * @param array<string,mixed> $payload Letter payload — recipientAdres + letterPdfRef.
-     *
-     * @return DunningChannelSendResult The dispatch outcome.
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
-     */
-    public function sendRegisteredLetter(array $payload): DunningChannelSendResult
-    {
-        $barcode = '3S'.str_pad((string) random_int(1, 9999999999999), 13, '0', STR_PAD_LEFT);
+	/**
+	 * Synthesise a DELIVERED send + log-only dispatch.
+	 *
+	 * @param array<string,mixed> $payload Letter payload — recipientAdres + letterPdfRef.
+	 *
+	 * @return DunningChannelSendResult The dispatch outcome.
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-21
+	 */
+	public function sendRegisteredLetter(array $payload): DunningChannelSendResult {
+		$barcode = '3S' . str_pad((string)random_int(1, 9999999999999), 13, '0', STR_PAD_LEFT);
 
-        $sanitised = $payload;
-        unset($sanitised['letterPdfBytes']);
-        $this->logger->info(
-            'Shillinq PostNL registered-letter send deferred (no outbound connector bound)',
-            [
-                'barcode' => $barcode,
-                'payload' => $sanitised,
-            ]
-        );
+		$sanitised = $payload;
+		unset($sanitised['letterPdfBytes']);
+		$this->logger->info(
+			'Shillinq PostNL registered-letter send deferred (no outbound connector bound)',
+			[
+				'barcode' => $barcode,
+				'payload' => $sanitised,
+			]
+		);
 
-        return new DunningChannelSendResult(
-            kanaal: 'AANGETEKENDE_POST',
-            deliveryStatus: 'DELIVERED',
-            providerMessageId: 'postnl-log-'.bin2hex(random_bytes(8)),
-            extras: [
-                'barcode'     => $barcode,
-                'trackingUrl' => 'https://postnl.nl/tracktrace/'.$barcode,
-            ],
-        );
+		return new DunningChannelSendResult(
+			channel: 'REGISTERED_POST',
+			deliveryStatus: 'DELIVERED',
+			providerMessageId: 'postnl-log-' . bin2hex(random_bytes(8)),
+			extras: [
+				'barcode' => $barcode,
+				'trackingUrl' => 'https://postnl.nl/tracktrace/' . $barcode,
+			],
+		);
 
-    }//end sendRegisteredLetter()
+	}//end sendRegisteredLetter()
 }//end class

@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -44,110 +44,107 @@ use Psr\Log\LoggerInterface;
  * arrays — no ObjectService dependency — so they unit-test directly and the
  * caller (collection creation flow) supplies the queried history.
  *
- * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
+ * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
  */
-class SequenceTypeGuard
-{
+class SequenceTypeGuard {
 
-    /**
-     * Mandate states that block any new collection (REQ-SDD-008).
-     */
-    private const BLOCKING_MANDATE_STATES = [
-        'cancelled',
-        'expired',
-        'suspended',
-        'pending',
-    ];
+	/**
+	 * Mandate states that block any new collection (REQ-SDD-008).
+	 */
+	private const BLOCKING_MANDATE_STATES = [
+		'cancelled',
+		'expired',
+		'suspended',
+		'pending',
+	];
 
-    /**
-     * Collection states that count as a successful prior collection for
-     * RCUR derivation (REQ-SDD-002): any state other than rejected/refunded.
-     */
-    private const NON_FAILED_STATES = [
-        'submitted',
-        'accepted_by_bank',
-        'presented',
-        'succeeded',
-    ];
+	/**
+	 * Collection states that count as a successful prior collection for
+	 * RCUR derivation (REQ-SDD-002): any state other than rejected/refunded.
+	 */
+	private const NON_FAILED_STATES = [
+		'submitted',
+		'accepted_by_bank',
+		'presented',
+		'succeeded',
+	];
 
-    /**
-     * Construct the guard.
-     *
-     * @param LoggerInterface $logger Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the guard.
+	 *
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Derive the sequence type for a new collection against a mandate.
-     *
-     * REQ-SDD-002 rules:
-     *  - One-off mandate → OOFF.
-     *  - Recurring mandate with no prior non-failed collection → FRST.
-     *  - Recurring mandate with at least one prior non-failed collection → RCUR.
-     * FNAL is operator/cancellation-driven and never auto-derived here.
-     *
-     * @param array<string,mixed> $mandate          The SepaMandate object.
-     * @param array<int,mixed>    $priorCollections The mandate's existing collections (may contain non-array rows from the store).
-     *
-     * @return string One of FRST, RCUR, OOFF.
-     *
-     * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
-     */
-    public function deriveSequenceType(array $mandate, array $priorCollections=[]): string
-    {
-        if (($mandate['type'] ?? '') === 'oneoff') {
-            return 'OOFF';
-        }
+	/**
+	 * Derive the sequence type for a new collection against a mandate.
+	 *
+	 * REQ-SDD-002 rules:
+	 *  - One-off mandate → OOFF.
+	 *  - Recurring mandate with no prior non-failed collection → FRST.
+	 *  - Recurring mandate with at least one prior non-failed collection → RCUR.
+	 * FNAL is operator/cancellation-driven and never auto-derived here.
+	 *
+	 * @param array<string,mixed> $mandate The SepaMandate object.
+	 * @param array<int,mixed> $priorCollections The mandate's existing collections (may contain non-array rows from the store).
+	 *
+	 * @return string One of FRST, RCUR, OOFF.
+	 *
+	 * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
+	 */
+	public function deriveSequenceType(array $mandate, array $priorCollections = []): string {
+		if (($mandate['type'] ?? '') === 'oneoff') {
+			return 'OOFF';
+		}
 
-        foreach ($priorCollections as $collection) {
-            if (is_array($collection) === false) {
-                continue;
-            }
+		foreach ($priorCollections as $collection) {
+			if (is_array($collection) === false) {
+				continue;
+			}
 
-            if (in_array(($collection['status'] ?? ''), self::NON_FAILED_STATES, true) === true) {
-                return 'RCUR';
-            }
-        }
+			if (in_array(($collection['status'] ?? ''), self::NON_FAILED_STATES, true) === true) {
+				return 'RCUR';
+			}
+		}
 
-        return 'FRST';
-    }//end deriveSequenceType()
+		return 'FRST';
+	}//end deriveSequenceType()
 
-    /**
-     * True iff a new collection may be scheduled against the mandate.
-     *
-     * REQ-SDD-008: refuse against cancelled/expired/suspended/pending mandates.
-     * REQ-SDD-002: refuse a second collection against a one-off mandate that
-     * already has any collection. Fail-closed on malformed input.
-     *
-     * @param array<string,mixed>            $mandate          The SepaMandate object.
-     * @param array<int,array<string,mixed>> $priorCollections The mandate's existing collections.
-     *
-     * @return bool True when a collection may be scheduled.
-     *
-     * @spec openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md
-     */
-    public function canScheduleCollection(array $mandate, array $priorCollections=[]): bool
-    {
-        try {
-            $status = (string) ($mandate['status'] ?? '');
-            if ($status === '' || in_array($status, self::BLOCKING_MANDATE_STATES, true) === true) {
-                return false;
-            }
+	/**
+	 * True iff a new collection may be scheduled against the mandate.
+	 *
+	 * REQ-SDD-008: refuse against cancelled/expired/suspended/pending mandates.
+	 * REQ-SDD-002: refuse a second collection against a one-off mandate that
+	 * already has any collection. Fail-closed on malformed input.
+	 *
+	 * @param array<string,mixed> $mandate The SepaMandate object.
+	 * @param array<int,array<string,mixed>> $priorCollections The mandate's existing collections.
+	 *
+	 * @return bool True when a collection may be scheduled.
+	 *
+	 * @spec openspec/specs/bookkeeping-sepa-direct-debit/spec.md
+	 */
+	public function canScheduleCollection(array $mandate, array $priorCollections = []): bool {
+		try {
+			$status = (string)($mandate['status'] ?? '');
+			if ($status === '' || in_array($status, self::BLOCKING_MANDATE_STATES, true) === true) {
+				return false;
+			}
 
-            if (($mandate['type'] ?? '') === 'oneoff' && count($priorCollections) > 0) {
-                return false;
-            }
+			if (($mandate['type'] ?? '') === 'oneoff' && count($priorCollections) > 0) {
+				return false;
+			}
 
-            return true;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'SequenceTypeGuard: schedule check failed — denying collection (fail-closed)',
-                ['exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canScheduleCollection()
+			return true;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'SequenceTypeGuard: schedule check failed — denying collection (fail-closed)',
+				['exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canScheduleCollection()
 }//end class

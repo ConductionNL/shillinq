@@ -38,6 +38,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -53,253 +54,239 @@ use Throwable;
  * helper rejects unknown ids so missing data cannot bypass the block.
  *
  * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
-class AdministrationArchivalService
-{
-    /**
-     * Administration lifecycle states that reject all mutations (REQ-MA-007).
-     *
-     * @var array<int,string>
-     */
-    public const READ_ONLY_STATES = ['gearchiveerd', 'opgeheven'];
+class AdministrationArchivalService {
+	/**
+	 * Administration lifecycle states that reject all mutations (REQ-MA-007).
+	 *
+	 * @var array<int,string>
+	 */
+	public const READ_ONLY_STATES = ['gearchiveerd', 'opgeheven'];
 
-    /**
-     * Administration lifecycle states that allow new mutations.
-     *
-     * `in_liquidatie` still allows closing entries per the declared lifecycle —
-     * the consumer of this service (JournalPostingGuard etc.) can apply
-     * stricter checks if needed; the write-block itself only blocks the two
-     * read-only states (REQ-MA-007).
-     *
-     * @var array<int,string>
-     */
-    public const WRITABLE_STATES = ['actief', 'in_liquidatie'];
+	/**
+	 * Administration lifecycle states that allow new mutations.
+	 *
+	 * `in_liquidatie` still allows closing entries per the declared lifecycle —
+	 * a consumer of this service can apply stricter checks if needed; the
+	 * write-block itself only blocks the two read-only states (REQ-MA-007).
+	 *
+	 * ⚠️ This paragraph previously named `JournalPostingGuard` as the consumer.
+	 * That class had zero callers and has been deleted; the live journal
+	 * posting seam is `OCA\Shillinq\Lifecycle\JournalEntryGuard`. Do not read
+	 * a class name in a docblock as evidence of a wiring — in this app a
+	 * stated wiring is a hypothesis until grepped.
+	 *
+	 * @var array<int,string>
+	 */
+	public const WRITABLE_STATES = ['actief', 'in_liquidatie'];
 
-    /**
-     * Allowed Administration.status transitions, mirroring the declared
-     * x-openregister-lifecycle on the Administration schema.
-     *
-     * @var array<string,array<int,string>>
-     */
-    private const TRANSITIONS = [
-        'actief'        => ['gearchiveerd', 'in_liquidatie'],
-        'in_liquidatie' => ['opgeheven', 'gearchiveerd'],
-        'gearchiveerd'  => [],
-        'opgeheven'     => [],
-    ];
+	/**
+	 * Allowed Administration.status transitions, mirroring the declared
+	 * x-openregister-lifecycle on the Administration schema.
+	 *
+	 * @var array<string,array<int,string>>
+	 */
+	private const TRANSITIONS = [
+		'actief' => ['gearchiveerd', 'in_liquidatie'],
+		'in_liquidatie' => ['opgeheven', 'gearchiveerd'],
+		'gearchiveerd' => [],
+		'opgeheven' => [],
+	];
 
-    /**
-     * Constructor.
-     *
-     * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Constructor.
+	 *
+	 * @param ContainerInterface $container DI container — OR's ObjectService is fetched lazily.
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Whether writes are allowed against an administration record (REQ-MA-007).
-     *
-     * Pure rule: a record in `actief` or `in_liquidatie` accepts writes; a
-     * record in `gearchiveerd` or `opgeheven` rejects them. Default-secure for
-     * unknown/empty states (returns false so unrecognised lifecycle slugs
-     * never silently allow writes).
-     *
-     * @param array<string,mixed> $administration The Administration record.
-     *
-     * @return bool
-     *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
-     */
-    public function writesAllowed(array $administration): bool
-    {
-        $status = (string) ($administration['status'] ?? '');
-        return in_array(needle: $status, haystack: self::WRITABLE_STATES, strict: true);
+	/**
+	 * Whether writes are allowed against an administration record (REQ-MA-007).
+	 *
+	 * Pure rule: a record in `actief` or `in_liquidatie` accepts writes; a
+	 * record in `gearchiveerd` or `opgeheven` rejects them. Default-secure for
+	 * unknown/empty states (returns false so unrecognised lifecycle slugs
+	 * never silently allow writes).
+	 *
+	 * @param array<string,mixed> $administration The Administration record.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
+	 */
+	public function writesAllowed(array $administration): bool {
+		$status = (string)($administration['status'] ?? '');
+		return in_array(needle: $status, haystack: self::WRITABLE_STATES, strict: true);
+	}//end writesAllowed()
 
-    }//end writesAllowed()
+	/**
+	 * Raise a runtime exception when an administration's status blocks writes.
+	 *
+	 * The caller catches RuntimeException and translates it to the API-layer
+	 * error response (typically 409 "administratie gearchiveerd"). The message
+	 * is deliberately stable so controllers can match on it.
+	 *
+	 * @param array<string,mixed> $administration The Administration record.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When the administration is in a read-only state.
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
+	 */
+	public function assertWritable(array $administration): void {
+		if ($this->writesAllowed(administration: $administration) === true) {
+			return;
+		}
 
-    /**
-     * Raise a runtime exception when an administration's status blocks writes.
-     *
-     * The caller catches RuntimeException and translates it to the API-layer
-     * error response (typically 409 "administratie gearchiveerd"). The message
-     * is deliberately stable so controllers can match on it.
-     *
-     * @param array<string,mixed> $administration The Administration record.
-     *
-     * @return void
-     *
-     * @throws RuntimeException When the administration is in a read-only state.
-     *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
-     */
-    public function assertWritable(array $administration): void
-    {
-        if ($this->writesAllowed(administration: $administration) === true) {
-            return;
-        }
+		$status = (string)($administration['status'] ?? '');
+		if ($status === '') {
+			$statusLabel = 'onbekend';
+		} else {
+			$statusLabel = $status;
+		}
 
-        $status = (string) ($administration['status'] ?? '');
-        if ($status === '') {
-            $statusLabel = 'onbekend';
-        } else {
-            $statusLabel = $status;
-        }
+		throw new RuntimeException(
+			sprintf('administratie gearchiveerd (status=%s)', $statusLabel)
+		);
 
-        throw new RuntimeException(
-            sprintf('administratie gearchiveerd (status=%s)', $statusLabel)
-        );
+	}//end assertWritable()
 
-    }//end assertWritable()
+	/**
+	 * Storage-backed write-block assertion (REQ-MA-007).
+	 *
+	 * Resolves the administration by id via the real ObjectService API
+	 * (`find` / `findAll`) and rejects when the record is missing or in a
+	 * read-only state. Used by services/controllers that only carry an
+	 * administrationId at the call site.
+	 *
+	 * @param string $administrationId The administration id to check.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When the administration is missing or read-only.
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
+	 */
+	public function assertWritableById(string $administrationId): void {
+		if ($administrationId === '') {
+			throw new RuntimeException('administratie ontbreekt');
+		}
 
-    /**
-     * Storage-backed write-block assertion (REQ-MA-007).
-     *
-     * Resolves the administration by id via the real ObjectService API
-     * (`find` / `findAll`) and rejects when the record is missing or in a
-     * read-only state. Used by services/controllers that only carry an
-     * administrationId at the call site.
-     *
-     * @param string $administrationId The administration id to check.
-     *
-     * @return void
-     *
-     * @throws RuntimeException When the administration is missing or read-only.
-     *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
-     */
-    public function assertWritableById(string $administrationId): void
-    {
-        if ($administrationId === '') {
-            throw new RuntimeException('administratie ontbreekt');
-        }
+		$record = $this->findAdministration(administrationId: $administrationId);
+		if ($record === null) {
+			// Default-secure: an unresolvable administrationId blocks the write.
+			throw new RuntimeException(
+				sprintf('administratie niet gevonden (id=%s)', $administrationId)
+			);
+		}
 
-        $record = $this->findAdministration(administrationId: $administrationId);
-        if ($record === null) {
-            // Default-secure: an unresolvable administrationId blocks the write.
-            throw new RuntimeException(
-                sprintf('administratie niet gevonden (id=%s)', $administrationId)
-            );
-        }
+		$this->assertWritable(administration: $record);
 
-        $this->assertWritable(administration: $record);
+	}//end assertWritableById()
 
-    }//end assertWritableById()
+	/**
+	 * Whether an Administration.status transition is permitted (REQ-MA-007).
+	 *
+	 * Mirrors the x-openregister-lifecycle declared on the Administration
+	 * schema; same-state "transitions" are tolerated as a no-op.
+	 *
+	 * @param string $from Current status.
+	 * @param string $to Requested target status.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
+	 */
+	public function isTransitionAllowed(string $from, string $to): bool {
+		if ($from === $to) {
+			return true;
+		}
 
-    /**
-     * Whether an Administration.status transition is permitted (REQ-MA-007).
-     *
-     * Mirrors the x-openregister-lifecycle declared on the Administration
-     * schema; same-state "transitions" are tolerated as a no-op.
-     *
-     * @param string $from Current status.
-     * @param string $to   Requested target status.
-     *
-     * @return bool
-     *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
-     */
-    public function isTransitionAllowed(string $from, string $to): bool
-    {
-        if ($from === $to) {
-            return true;
-        }
+		return in_array(
+			needle: $to,
+			haystack: (self::TRANSITIONS[$from] ?? []),
+			strict: true
+		);
 
-        return in_array(
-            needle: $to,
-            haystack: (self::TRANSITIONS[$from] ?? []),
-            strict: true
-        );
+	}//end isTransitionAllowed()
 
-    }//end isTransitionAllowed()
+	/**
+	 * Whether moving an administration to a read-only state should start the
+	 * retention clock (REQ-MA-007).
+	 *
+	 * @param string $from Current status.
+	 * @param string $to Target status.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
+	 */
+	public function shouldStartRetentionClock(string $from, string $to): bool {
+		if ($this->isTransitionAllowed(from: $from, to: $to) === false) {
+			return false;
+		}
 
-    /**
-     * Whether moving an administration to a read-only state should start the
-     * retention clock (REQ-MA-007).
-     *
-     * @param string $from Current status.
-     * @param string $to   Target status.
-     *
-     * @return bool
-     *
-     * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-17
-     */
-    public function shouldStartRetentionClock(string $from, string $to): bool
-    {
-        if ($this->isTransitionAllowed(from: $from, to: $to) === false) {
-            return false;
-        }
+		$fromReadOnly = in_array(needle: $from, haystack: self::READ_ONLY_STATES, strict: true);
+		$toReadOnly = in_array(needle: $to, haystack: self::READ_ONLY_STATES, strict: true);
 
-        $fromReadOnly = in_array(needle: $from, haystack: self::READ_ONLY_STATES, strict: true);
-        $toReadOnly   = in_array(needle: $to, haystack: self::READ_ONLY_STATES, strict: true);
+		return $fromReadOnly === false && $toReadOnly === true;
+	}//end shouldStartRetentionClock()
 
-        return $fromReadOnly === false && $toReadOnly === true;
+	/**
+	 * Fetch a single Administration record by id, via the real ObjectService API.
+	 *
+	 * @param string $administrationId The administration id.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	private function findAdministration(string $administrationId): ?array {
+		try {
+			// NOT findAll(['filters' => ['id' => …]]) — that addresses JSON
+			// properties, and the entity's `id` is not one, so it matched
+			// nothing for every value and this method reported every
+			// administration as absent. An administration is addressed by its
+			// administrationCode ('ADM-001') throughout the app, which is why
+			// findOne() needs the fallback.
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			return ObjectIdentifier::findOne(
+				scoped: $objectService
+					->setRegister($this->resolveRegister())
+					->setSchema('Administration'),
+				id: $administrationId,
+				fallbackProperty: 'administrationCode'
+			);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'AdministrationArchivalService: failed to load administration',
+				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
+			return null;
+		}
+	}//end findAdministration()
 
-    }//end shouldStartRetentionClock()
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
+	 *
+	 * @return string
+	 */
+	private function resolveRegister(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    /**
-     * Fetch a single Administration record by id, via the real ObjectService API.
-     *
-     * @param string $administrationId The administration id.
-     *
-     * @return array<string,mixed>|null
-     */
-    private function findAdministration(string $administrationId): ?array
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $matches       = $objectService
-                ->setRegister($this->resolveRegister())
-                ->setSchema('Administration')
-                ->findAll(
-                    [
-                        'filters' => ['id' => $administrationId],
-                        'limit'   => 1,
-                    ]
-                );
-        } catch (Throwable $e) {
-            $this->logger->error(
-                'AdministrationArchivalService: failed to load administration',
-                ['administrationId' => $administrationId, 'exception' => $e->getMessage()]
-            );
-            return null;
-        }
-
-        foreach ($matches as $match) {
-            if (is_array($match) === true) {
-                return $match;
-            }
-
-            if (is_object($match) === true && method_exists($match, 'getObject') === true) {
-                $data = $match->getObject();
-                if (is_array($data) === true) {
-                    return $data;
-                }
-            }
-        }
-
-        return null;
-
-    }//end findAdministration()
-
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-     *
-     * @return string
-     */
-    private function resolveRegister(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end resolveRegister()
+		return $register;
+	}//end resolveRegister()
 }//end class

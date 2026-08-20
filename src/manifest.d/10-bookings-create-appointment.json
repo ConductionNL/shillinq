@@ -63,7 +63,9 @@
 					}
 				],
 				"defaultSort": "startTime",
-				"detailRoute": "AfspraakDetail"
+				"detailRoute": "AfspraakDetail",
+				"_note_rowRoute": "`detailRoute` is inert — the library never reads it. AfspraakDetail is a `type:\"custom\"` page, so CnPageRenderer's register+schema detail lookup finds nothing and rows do not open without `rowRoute`.",
+				"rowRoute": "AfspraakDetail"
 			}
 		},
 		{
@@ -72,6 +74,7 @@
 			"type": "custom",
 			"title": "Appointment",
 			"component": "AfspraakDetail",
+			"_note": "Resolves the appointment, its linked pipelinq Contact and the customer's klantbeeld transaction history in ONE hop through /api/v1/bookings/{id} (BookingDetailController), because the profile card and the history timeline come from a different app across the customer bridge, not from the Appointment object. `type: detail` fetches exactly one OpenRegister object and cannot carry the bridge payload; the timeline additionally needs offset pagination ('Load more') and four distinct fallback states (bridge unavailable, contact unlinked, no history, history hidden) that a declarative field list has no way to render.",
 			"config": {
 				"register": "shillinq",
 				"schema": "Appointment",

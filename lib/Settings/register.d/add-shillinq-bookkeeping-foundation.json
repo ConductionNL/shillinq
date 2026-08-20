@@ -1,371 +1,384 @@
 {
-	"components": {
-		"schemas": {
-			"JournalEntry": {
-				"slug": "JournalEntry",
-				"icon": "BookEditOutline",
-				"version": "0.1.0",
-				"title": "Journal Entry",
-				"description": "A human-authored bookkeeping construct (memoriaalboeking / recurring template / reversing accrual). Posting one materialises exactly one balanced GLTransaction with its GLLine children per REQ-JE-007. Distinct from the GLTransaction it produces (REQ-JE-001).",
-				"x-schema-org": "schema:AccountingTransaction",
-				"x-spec": "openspec/changes/add-shillinq-bookkeeping-foundation/specs/bookkeeping-journal-entries/spec.md",
-				"type": "object",
-				"required": [
-					"journalNumber",
-					"entryDate",
-					"description",
-					"lines",
-					"journalType",
-					"approvalState",
-					"administrationId",
-					"state"
-				],
-				"properties": {
-					"journalNumber": {
-						"type": "string",
-						"description": "Sequential journal number unique per administration + fiscal year (REQ-JE-002).",
-						"example": "M-2026-0001"
-					},
-					"entryDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Operator-authored entry date.",
-						"example": "2026-03-01"
-					},
-					"description": {
-						"type": "string",
-						"description": "Human-readable description of the journal entry.",
-						"example": "Bankkosten Q1"
-					},
-					"lines": {
-						"type": "array",
-						"description": "Embedded line preview. Each row materialises into a GLLine on post (REQ-JE-007). Debit/credit polarity lives in `side`; `amount` is always non-negative, mirroring GLLine (REQ-GL-003).",
-						"minItems": 2,
-						"items": {
-							"type": "object",
-							"required": [
-								"accountNumber",
-								"side",
-								"amount"
-							],
-							"properties": {
-								"accountNumber": {
-									"type": "string",
-									"description": "FK to Account.accountNumber.",
-									"example": "4500"
-								},
-								"side": {
-									"type": "string",
-									"enum": [
-										"debit",
-										"credit"
-									],
-									"description": "Debit or credit polarity; amount is always non-negative."
-								},
-								"amount": {
-									"type": "number",
-									"minimum": 0,
-									"description": "Non-negative line amount in the administration's base currency.",
-									"example": 25.0
-								},
-								"description": {
-									"type": "string",
-									"description": "Optional line-level description.",
-									"nullable": true
-								}
-							}
-						}
-					},
-					"sourceDocumentUri": {
-						"type": "string",
-						"format": "uri",
-						"description": "FK to a docudesk attachment URI (REQ-JE-006). The file content lives in docudesk; no blob is embedded here (ADR-022).",
-						"nullable": true,
-						"example": "docudesk://attachments/0d4e9c7f-1a2b-4c3d-9e8f-aabbccddeeff/factuur-2026-0001.pdf"
-					},
-					"sourceDocumentApp": {
-						"type": "string",
-						"enum": [
-							"docudesk",
-							"external"
-						],
-						"description": "Origin app of the source document URI (REQ-JE-006).",
-						"nullable": true
-					},
-					"journalType": {
-						"type": "string",
-						"enum": [
-							"manual",
-							"recurring",
-							"reversing"
-						],
-						"description": "Closed enum of the three T1 sub-types (REQ-JE-003). manual: one-off memoriaalboeking; recurring: cadence-driven template; reversing: auto-inverting accrual.",
-						"default": "manual",
-						"example": "manual"
-					},
-					"cadence": {
-						"type": "object",
-						"description": "Required when journalType is `recurring`, forbidden otherwise (REQ-JE-005). Consumed by OR's ScheduledWorkflow primitive (ADR-031) to materialise a GLTransaction per tick.",
-						"nullable": true,
-						"properties": {
-							"interval": {
-								"type": "string",
-								"enum": [
-									"daily",
-									"weekly",
-									"monthly",
-									"yearly"
-								],
-								"description": "Recurrence interval."
-							},
-							"anchor": {
-								"type": "string",
-								"format": "date",
-								"description": "First occurrence date."
-							},
-							"endsOn": {
-								"type": "string",
-								"format": "date",
-								"description": "Optional end date; null for open-ended.",
-								"nullable": true
-							},
-							"count": {
-								"type": "integer",
-								"minimum": 1,
-								"description": "Optional bounded number of materialisations; null for unbounded.",
-								"nullable": true
-							}
-						},
-						"required": [
-							"interval",
-							"anchor"
-						]
-					},
-					"reversesOn": {
-						"type": "string",
-						"description": "Required when journalType is `reversing` (REQ-JE-004). Names the periodId whose start triggers the inverse posting.",
-						"nullable": true,
-						"example": "2027-01"
-					},
-					"glTransactionId": {
-						"type": "string",
-						"description": "Back-reference to the materialised GLTransaction once posted (REQ-JE-007).",
-						"nullable": true,
-						"example": "gl-txn-2026-0001"
-					},
-					"approvalState": {
-						"type": "string",
-						"enum": [
-							"not-required",
-							"pending",
-							"approved",
-							"rejected"
-						],
-						"description": "Approval-workflow state, driven by OR's approval-workflow extension (REQ-JE-008). No app-local approval table (ADR-022).",
-						"default": "not-required",
-						"example": "not-required"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this entry.",
-						"example": "adm-consultancy-nl"
-					},
-					"state": {
-						"type": "string",
-						"enum": [
-							"draft",
-							"pending",
-							"posted",
-							"voided"
-						],
-						"description": "Lifecycle state (REQ-JE-008). draft: editable; pending: awaiting approval; posted: materialised GLTransaction exists, immutable; voided: superseded, queryable for audit only.",
-						"default": "draft",
-						"example": "draft"
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "state",
-					"initialState": "draft",
-					"states": {
-						"draft": {
-							"label": "Draft",
-							"description": "Editable. Lines may be added or changed before submission or posting."
-						},
-						"pending": {
-							"label": "Pending approval",
-							"description": "Submitted and awaiting an approver per administration policy. No GLTransaction exists yet."
-						},
-						"posted": {
-							"label": "Posted",
-							"description": "Materialised into a balanced GLTransaction (REQ-JE-007). Immutable."
-						},
-						"voided": {
-							"label": "Voided",
-							"description": "Superseded; its materialised GLTransaction has been reversed. Remains queryable for audit, excluded from default listings (REQ-JE-010)."
-						}
-					},
-					"transitions": {
-						"submit": {
-							"from": "draft",
-							"to": "pending",
-							"label": "Submit for approval",
-							"description": "Submit a draft journal entry for approval when administration policy requires it (REQ-JE-008)."
-						},
-						"post": {
-							"from": "pending",
-							"to": "posted",
-							"label": "Post journal entry",
-							"description": "Approve and post. Gated by OR's approval-workflow extension; on approval, materialises exactly one balanced GLTransaction per REQ-JE-007. No app-local approval logic (ADR-022).",
-							"requires": "OCA\\Shillinq\\Lifecycle\\JournalEntryGuard::canPost",
-							"actions": [
-								{
-									"trigger": "x-openregister-lifecycle-action",
-									"action": "materialise-gl-transaction",
-									"description": "Materialise exactly one balanced GLTransaction (with GLLine children derived 1:1 from `lines`) and set glTransactionId. Declarative outcome per REQ-JE-007 / design D3 — no PHP orchestration.",
-									"actionParameters": {
-										"register": "shillinq",
-										"schema": "GLTransaction",
-										"linesSchema": "GLLine",
-										"keepBalanced": true,
-										"backReferenceField": "journalEntryId",
-										"idempotencyKey": "journalNumber"
-									}
-								}
-							]
-						},
-						"postDirect": {
-							"from": "draft",
-							"to": "posted",
-							"label": "Post without approval",
-							"description": "Post directly when administration policy does not require approval (REQ-JE-008). approvalState must be `not-required`. Materialises one balanced GLTransaction per REQ-JE-007.",
-							"requires": "OCA\\Shillinq\\Lifecycle\\JournalEntryGuard::canPost",
-							"actions": [
-								{
-									"trigger": "x-openregister-lifecycle-action",
-									"action": "materialise-gl-transaction",
-									"description": "Materialise exactly one balanced GLTransaction (with GLLine children derived 1:1 from `lines`) and set glTransactionId per REQ-JE-007.",
-									"actionParameters": {
-										"register": "shillinq",
-										"schema": "GLTransaction",
-										"linesSchema": "GLLine",
-										"keepBalanced": true,
-										"backReferenceField": "journalEntryId",
-										"idempotencyKey": "journalNumber"
-									}
-								}
-							]
-						},
-						"reject": {
-							"from": "pending",
-							"to": "draft",
-							"label": "Reject",
-							"description": "Approver rejection returns the entry to draft and sets approvalState to `rejected` (REQ-JE-008)."
-						},
-						"void": {
-							"from": "posted",
-							"to": "voided",
-							"label": "Void",
-							"description": "Void a posted journal. Requires the materialised GLTransaction to already be reversed per REQ-GL-004 / REQ-JE-010.",
-							"requires": "OCA\\Shillinq\\Lifecycle\\JournalEntryGuard::canVoid"
-						}
-					}
-				},
-				"x-openregister-relations": {
-					"glTransaction": {
-						"localField": "glTransactionId",
-						"relatedSchema": "GLTransaction",
-						"relatedField": "id",
-						"cardinality": "one-to-one",
-						"description": "The GLTransaction materialised when this journal entry was posted (REQ-JE-007)."
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"bookkeeper": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"bookkeeping-approver": {
-							"permissions": [
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				}
-			}
-		}
-	},
-	"objects": [
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "JournalEntry",
-				"slug": "je-2026-sample-bankkosten"
-			},
-			"journalNumber": "M-2026-0001",
-			"entryDate": "2026-03-01",
-			"description": "Bankkosten maart (memoriaalboeking)",
-			"lines": [
-				{
-					"accountNumber": "4500",
-					"side": "debit",
-					"amount": 25.0,
-					"description": "Bankkosten"
-				},
-				{
-					"accountNumber": "1000",
-					"side": "credit",
-					"amount": 25.0,
-					"description": "Afboeking kas/bank"
-				}
-			],
-			"journalType": "manual",
-			"approvalState": "not-required",
-			"administrationId": "adm-consultancy-nl",
-			"state": "draft"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "JournalEntry",
-				"slug": "je-2026-sample-abonnement-recurring"
-			},
-			"journalNumber": "R-2026-0001",
-			"entryDate": "2026-01-01",
-			"description": "Maandelijks software-abonnement (terugkerend)",
-			"lines": [
-				{
-					"accountNumber": "4500",
-					"side": "debit",
-					"amount": 99.0,
-					"description": "Abonnementskosten"
-				},
-				{
-					"accountNumber": "1000",
-					"side": "credit",
-					"amount": 99.0,
-					"description": "Bankbetaling"
-				}
-			],
-			"journalType": "recurring",
-			"cadence": {
-				"interval": "monthly",
-				"anchor": "2026-01-01",
-				"endsOn": null,
-				"count": null
-			},
-			"approvalState": "not-required",
-			"administrationId": "adm-consultancy-nl",
-			"state": "draft"
-		}
-	]
+  "components": {
+    "schemas": {
+      "JournalEntry": {
+        "slug": "JournalEntry",
+        "icon": "BookEditOutline",
+        "version": "0.1.0",
+        "title": "Journal Entry",
+        "description": "A human-authored bookkeeping construct (memoriaalboeking / recurring template / reversing accrual). Posting one materialises exactly one balanced GLTransaction with its GLLine children per REQ-JE-007. Distinct from the GLTransaction it produces (REQ-JE-001).",
+        "x-schema-org": "schema:AccountingTransaction",
+        "x-spec": "openspec/changes/add-shillinq-bookkeeping-foundation/specs/bookkeeping-journal-entries/spec.md",
+        "type": "object",
+        "required": [
+          "journalNumber",
+          "entryDate",
+          "description",
+          "lines",
+          "journalType",
+          "approvalState",
+          "administrationId",
+          "state"
+        ],
+        "properties": {
+          "journalNumber": {
+            "type": "string",
+            "description": "Sequential journal number unique per administration + fiscal year (REQ-JE-002).",
+            "example": "M-2026-0001",
+            "title": "Journal Number"
+          },
+          "entryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Operator-authored entry date.",
+            "example": "2026-03-01",
+            "title": "Entry Date"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the journal entry.",
+            "example": "Bankkosten Q1",
+            "title": "Description"
+          },
+          "lines": {
+            "type": "array",
+            "description": "Embedded line preview. Each row materialises into a GLLine on post (REQ-JE-007). Debit/credit polarity lives in `side`; `amount` is always non-negative, mirroring GLLine (REQ-GL-003).",
+            "minItems": 2,
+            "items": {
+              "type": "object",
+              "required": [
+                "accountNumber",
+                "side",
+                "amount"
+              ],
+              "properties": {
+                "accountNumber": {
+                  "type": "string",
+                  "description": "FK to Account.accountNumber.",
+                  "example": "4500",
+                  "title": "Account Number"
+                },
+                "side": {
+                  "type": "string",
+                  "enum": [
+                    "debit",
+                    "credit"
+                  ],
+                  "description": "Debit or credit polarity; amount is always non-negative.",
+                  "title": "Side"
+                },
+                "amount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Non-negative line amount in the administration's base currency.",
+                  "example": 25.0,
+                  "title": "Amount"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Optional line-level description.",
+                  "nullable": true,
+                  "title": "Description"
+                }
+              }
+            },
+            "title": "Lines"
+          },
+          "sourceDocumentUri": {
+            "type": "string",
+            "format": "uri",
+            "description": "FK to a docudesk attachment URI (REQ-JE-006). The file content lives in docudesk; no blob is embedded here (ADR-022).",
+            "nullable": true,
+            "example": "docudesk://attachments/0d4e9c7f-1a2b-4c3d-9e8f-aabbccddeeff/factuur-2026-0001.pdf",
+            "title": "Source Document URI"
+          },
+          "sourceDocumentApp": {
+            "type": "string",
+            "enum": [
+              "docudesk",
+              "external"
+            ],
+            "description": "Origin app of the source document URI (REQ-JE-006).",
+            "nullable": true,
+            "title": "Source Document App"
+          },
+          "journalType": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "recurring",
+              "reversing"
+            ],
+            "description": "Closed enum of the three T1 sub-types (REQ-JE-003). manual: one-off memoriaalboeking; recurring: cadence-driven template; reversing: auto-inverting accrual.",
+            "default": "manual",
+            "example": "manual",
+            "title": "Journal Type"
+          },
+          "cadence": {
+            "type": "object",
+            "description": "Required when journalType is `recurring`, forbidden otherwise (REQ-JE-005). Consumed by OR's ScheduledWorkflow primitive (ADR-031) to materialise a GLTransaction per tick.",
+            "nullable": true,
+            "properties": {
+              "interval": {
+                "type": "string",
+                "enum": [
+                  "daily",
+                  "weekly",
+                  "monthly",
+                  "yearly"
+                ],
+                "description": "Recurrence interval.",
+                "title": "Interval"
+              },
+              "anchor": {
+                "type": "string",
+                "format": "date",
+                "description": "First occurrence date.",
+                "title": "Anchor"
+              },
+              "endsOn": {
+                "type": "string",
+                "format": "date",
+                "description": "Optional end date; null for open-ended.",
+                "nullable": true,
+                "title": "Ends On"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Optional bounded number of materialisations; null for unbounded.",
+                "nullable": true,
+                "title": "Count"
+              }
+            },
+            "required": [
+              "interval",
+              "anchor"
+            ],
+            "title": "Cadence"
+          },
+          "reversesOn": {
+            "type": "string",
+            "description": "Required when journalType is `reversing` (REQ-JE-004). Names the periodId whose start triggers the inverse posting.",
+            "nullable": true,
+            "example": "2027-01",
+            "title": "Reverses On"
+          },
+          "glTransactionId": {
+            "type": "string",
+            "description": "Back-reference to the materialised GLTransaction once posted (REQ-JE-007).",
+            "nullable": true,
+            "example": "gl-txn-2026-0001",
+            "title": "GL Transaction ID",
+            "$ref": "GLTransaction"
+          },
+          "approvalState": {
+            "type": "string",
+            "enum": [
+              "not-required",
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "description": "Approval-workflow state, driven by OR's approval-workflow extension (REQ-JE-008). No app-local approval table (ADR-022).",
+            "default": "not-required",
+            "example": "not-required",
+            "title": "Approval State"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this entry.",
+            "example": "adm-consultancy-nl",
+            "title": "Administration ID"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "pending",
+              "posted",
+              "voided"
+            ],
+            "description": "Lifecycle state (REQ-JE-008). draft: editable; pending: awaiting approval; posted: materialised GLTransaction exists, immutable; voided: superseded, queryable for audit only.",
+            "default": "draft",
+            "example": "draft",
+            "title": "State"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Editable. Lines may be added or changed before submission or posting."
+            },
+            "pending": {
+              "label": "Pending approval",
+              "description": "Submitted and awaiting an approver per administration policy. No GLTransaction exists yet."
+            },
+            "posted": {
+              "label": "Posted",
+              "description": "Materialised into a balanced GLTransaction (REQ-JE-007). Immutable."
+            },
+            "voided": {
+              "label": "Voided",
+              "description": "Superseded; its materialised GLTransaction has been reversed. Remains queryable for audit, excluded from default listings (REQ-JE-010)."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "pending",
+              "label": "Submit for approval",
+              "description": "Submit a draft journal entry for approval when administration policy requires it (REQ-JE-008)."
+            },
+            "post": {
+              "from": "pending",
+              "to": "posted",
+              "label": "Post journal entry",
+              "description": "Approve and post. Gated by OR's approval-workflow extension; on approval, materialises exactly one balanced GLTransaction per REQ-JE-007. No app-local approval logic (ADR-022).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\JournalEntryGuard::canPost",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "materialise-gl-transaction",
+                  "description": "Materialise exactly one balanced GLTransaction (with GLLine children derived 1:1 from `lines`) and set glTransactionId. Declarative outcome per REQ-JE-007 / design D3 — no PHP orchestration.",
+                  "actionParameters": {
+                    "register": "shillinq",
+                    "schema": "GLTransaction",
+                    "linesSchema": "GLLine",
+                    "keepBalanced": true,
+                    "backReferenceField": "journalEntryId",
+                    "idempotencyKey": "journalNumber"
+                  }
+                }
+              ]
+            },
+            "postDirect": {
+              "from": "draft",
+              "to": "posted",
+              "label": "Post without approval",
+              "description": "Post directly when administration policy does not require approval (REQ-JE-008). approvalState must be `not-required`. Materialises one balanced GLTransaction per REQ-JE-007.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\JournalEntryGuard::canPost",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "materialise-gl-transaction",
+                  "description": "Materialise exactly one balanced GLTransaction (with GLLine children derived 1:1 from `lines`) and set glTransactionId per REQ-JE-007.",
+                  "actionParameters": {
+                    "register": "shillinq",
+                    "schema": "GLTransaction",
+                    "linesSchema": "GLLine",
+                    "keepBalanced": true,
+                    "backReferenceField": "journalEntryId",
+                    "idempotencyKey": "journalNumber"
+                  }
+                }
+              ]
+            },
+            "reject": {
+              "from": "pending",
+              "to": "draft",
+              "label": "Reject",
+              "description": "Approver rejection returns the entry to draft and sets approvalState to `rejected` (REQ-JE-008)."
+            },
+            "void": {
+              "from": "posted",
+              "to": "voided",
+              "label": "Void",
+              "description": "Void a posted journal. Requires the materialised GLTransaction to already be reversed per REQ-GL-004 / REQ-JE-010.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\JournalEntryGuard::canVoid"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeping-approver": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "JournalEntry",
+        "slug": "je-2026-sample-bankkosten"
+      },
+      "journalNumber": "M-2026-0001",
+      "entryDate": "2026-03-01",
+      "description": "Bankkosten maart (memoriaalboeking)",
+      "lines": [
+        {
+          "accountNumber": "4500",
+          "side": "debit",
+          "amount": 25.0,
+          "description": "Bankkosten"
+        },
+        {
+          "accountNumber": "1000",
+          "side": "credit",
+          "amount": 25.0,
+          "description": "Afboeking kas/bank"
+        }
+      ],
+      "journalType": "manual",
+      "approvalState": "not-required",
+      "administrationId": "adm-consultancy-nl",
+      "state": "draft"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "JournalEntry",
+        "slug": "je-2026-sample-abonnement-recurring"
+      },
+      "journalNumber": "R-2026-0001",
+      "entryDate": "2026-01-01",
+      "description": "Maandelijks software-abonnement (terugkerend)",
+      "lines": [
+        {
+          "accountNumber": "4500",
+          "side": "debit",
+          "amount": 99.0,
+          "description": "Abonnementskosten"
+        },
+        {
+          "accountNumber": "1000",
+          "side": "credit",
+          "amount": 99.0,
+          "description": "Bankbetaling"
+        }
+      ],
+      "journalType": "recurring",
+      "cadence": {
+        "interval": "monthly",
+        "anchor": "2026-01-01",
+        "endsOn": null,
+        "count": null
+      },
+      "approvalState": "not-required",
+      "administrationId": "adm-consultancy-nl",
+      "state": "draft"
+    }
+  ]
 }

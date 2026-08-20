@@ -28,7 +28,20 @@ export default {
 </script>
 
 <style scoped>
-.pick-page { display: flex; flex-direction: column; gap: var(--default-grid-baseline, 4px); padding: var(--default-grid-baseline, 4px); }
-.pick-page__header { display: flex; justify-content: space-between; align-items: center; }
-.pick-page__back { text-decoration: none; }
+.pick-page {
+	display: flex;
+	flex-direction: column;
+	gap: var(--default-grid-baseline, 4px);
+	padding: var(--default-grid-baseline, 4px);
+}
+
+.pick-page__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.pick-page__back {
+	text-decoration: none;
+}
 </style>

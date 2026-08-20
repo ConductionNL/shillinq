@@ -16,7 +16,7 @@
 		{
 			"id": "DepreciationExpense",
 			"label": "Depreciation Expense",
-			"icon": "ChartBoxOutline",
+			"icon": "ReceiptOutline",
 			"route": "DepreciationExpense",
 			"order": 40
 		}
@@ -77,7 +77,43 @@
 					{ "key": "glTransactionRef", "label": "GL Transaction", "type": "string" },
 					{ "key": "calculationFloatPrecision", "label": "Float Precision", "type": "number" }
 				],
-				"indexRoute": "DepreciationSchedules"
+				"_note": "FINANCIAL LEDGER row — one period's depreciation for a fixed asset. Body shows the method/rate, the period depreciation vs accumulated depreciation and running book value, plus the GL transaction that posts it. The full depreciation history for the same asset is listed on the body so the roll-forward is legible; the audit trail sits in the sidebar. A ledger posting has no correspondence — no comms leaves.",
+				"indexRoute": "DepreciationSchedules",
+				"relatedObjects": [
+					{
+						"id": "asset-schedule",
+						"label": "Depreciation history (same asset)",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "DepreciationSchedule",
+							"filterField": "assetRef",
+							"columns": ["fiscalYear", "periodStartDate", "periodEndDate", "depreciationAmount", "accumulatedDepreciation", "bookValue"],
+							"detailRoute": "DepreciationScheduleDetail",
+							"defaultSort": "periodStartDate"
+						}
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{

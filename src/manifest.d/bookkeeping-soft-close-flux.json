@@ -3,7 +3,7 @@
 		{
 			"id": "Bookkeeping",
 			"label": "Bookkeeping",
-			"icon": "icon-category-organization",
+			"icon": "NotebookOutline",
 			"order": 20,
 			"children": [
 				{
@@ -61,23 +61,29 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "PeriodStatus",
-				"sections": [
-					{"id": "identity", "label": "Identity", "fields": ["administrationId", "periodYear", "periodMonth"]},
-					{"id": "stage", "label": "Stage", "fields": ["stage", "softClosedAt", "hardClosedAt", "auditedAt", "lockedAt"]},
-					{"id": "history", "label": "Stage history", "fields": ["stageChangeHistory"]},
-					{"id": "restrictions", "label": "Posting restrictions", "fields": ["postingRestrictionsPerStage", "ownerPerStage"]}
+				"_note": "REPORT/STATUS archetype — a period-status record tracks a fiscal period's progress through the soft→hard→audited→locked close stages. Native shillinq detail contract: config.fields[] renders the identity, stage timestamps and posting-restriction data an accountant acts on; the 'Run soft-close now' action is a native config.actions[] endpoint (role-gated, gated on stage=open); and the immutable audit trail lives in the sidebar tab — the change log of the close. NO comms/files/aggregation — a close-status row is process state, not correspondence and carries no financial totals.",
+				"fields": [
+					{"key": "administrationId", "label": "Administration", "type": "string"},
+					{"key": "periodYear", "label": "Year", "type": "number"},
+					{"key": "periodMonth", "label": "Month", "type": "number"},
+					{"key": "stage", "label": "Stage", "type": "string"},
+					{"key": "softClosedAt", "label": "Soft-closed at", "type": "date"},
+					{"key": "hardClosedAt", "label": "Hard-closed at", "type": "date"},
+					{"key": "auditedAt", "label": "Audited at", "type": "date"},
+					{"key": "lockedAt", "label": "Locked at", "type": "date"},
+					{"key": "stageChangeHistory", "label": "Stage history", "type": "array"},
+					{"key": "ownerPerStage", "label": "Owner per stage", "type": "object"},
+					{"key": "postingRestrictionsPerStage", "label": "Posting restrictions", "type": "object"}
 				],
-				"lifecycle": {
-					"field": "stage",
-					"transitions": [
-						{
-							"action": "executeNow",
-							"label": "Run soft-close now",
-							"endpoint": "/api/v2/soft-close/:administrationId/execute-now",
-							"method": "POST",
-							"visibleWhen": {"stage": "open"},
-							"requiresRole": "soft-close-operator"
-						}
+				"actions": [
+					{"id": "executeNow", "label": "Run soft-close now", "endpoint": "/api/v2/soft-close/:administrationId/execute-now", "method": "POST", "visibleWhen": {"stage": "open"}, "requiresRole": "soft-close-operator"}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
 					]
 				},
 				"indexRoute": "ContinuousClose"
@@ -113,12 +119,36 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "AutoAccrualRule",
-				"sections": [
-					{"id": "identity", "label": "Identity", "fields": ["ruleName", "administrationId", "lifecycleState"]},
-					{"id": "gl", "label": "GL accounts", "fields": ["targetGLAccount", "contraGLAccount"]},
-					{"id": "calculation", "label": "Calculation", "fields": ["calculationMethod", "calculationParameters"]},
-					{"id": "reversal", "label": "Reversal & cadence", "fields": ["reversalPattern", "frequency", "ruleVersion"]}
+				"_note": "CONFIG archetype — an auto-accrual rule defines how a period-end accrual is calculated and reversed against a target/contra GL. Native shillinq detail contract: config.fields[] renders the rule definition (GL accounts, calculation method/parameters, reversal cadence); a native relatedLists[] shows the postings this rule generated (AutoAccrualPosting, FK ruleId=@self.id) so an accountant sees its real activity; and the immutable audit trail lives in the sidebar. NO comms/files/aggregation — a calculation rule carries no documents or financial totals of its own.",
+				"fields": [
+					{"key": "ruleName", "label": "Rule", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"},
+					{"key": "lifecycleState", "label": "State", "type": "string"},
+					{"key": "targetGLAccount", "label": "Target GL", "type": "string"},
+					{"key": "contraGLAccount", "label": "Contra GL", "type": "string"},
+					{"key": "calculationMethod", "label": "Method", "type": "string"},
+					{"key": "calculationParameters", "label": "Parameters", "type": "object"},
+					{"key": "reversalPattern", "label": "Reversal", "type": "string"},
+					{"key": "frequency", "label": "Frequency", "type": "string"},
+					{"key": "ruleVersion", "label": "Version", "type": "number"}
 				],
+				"relatedLists": [
+					{"id": "generated-postings", "title": "Generated postings", "schema": "AutoAccrualPosting", "filter": {"ruleId": "@self.id"}, "columns": [
+						{"key": "periodId", "label": "Period"},
+						{"key": "amountCents", "label": "Amount (cents)"},
+						{"key": "journalEntryId", "label": "Journal entry"},
+						{"key": "reversalState", "label": "Reversal"},
+						{"key": "postedAt", "label": "Posted at"}
+					]}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
 				"indexRoute": "AccrualRules"
 			}
 		},
@@ -150,11 +180,38 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "FluxRun",
-				"sections": [
-					{"id": "identity", "label": "Identity", "fields": ["administrationId", "periodId", "scope", "scopeFilter"]},
-					{"id": "basis", "label": "Comparison & materiality", "fields": ["comparisonBasis", "materialityAbsoluteCents", "materialityPercentage"]},
-					{"id": "result", "label": "Result", "fields": ["status", "runTimestamp", "resultSummary"]}
+				"_note": "REPORT/ANALYSIS archetype — a flux run compares budget vs actual per GL account and ranks the material variances. Native shillinq detail contract: config.fields[] renders the run parameters (scope, comparison basis, materiality thresholds, result summary); a native relatedLists[] shows the ranked variance items (FluxItem, FK fluxRunId=@self.id) — the substance of the run; the immutable audit trail lives in the sidebar; and the three narrative export links (Markdown/PDF/JSON) are preserved verbatim as config.links[]. NO comms/files/aggregation — a flux run is derived analysis, not correspondence.",
+				"fields": [
+					{"key": "administrationId", "label": "Administration", "type": "string"},
+					{"key": "periodId", "label": "Period", "type": "string"},
+					{"key": "scope", "label": "Scope", "type": "string"},
+					{"key": "scopeFilter", "label": "Scope filter", "type": "string"},
+					{"key": "comparisonBasis", "label": "Basis", "type": "string"},
+					{"key": "materialityAbsoluteCents", "label": "Materiality (cents)", "type": "number"},
+					{"key": "materialityPercentage", "label": "Materiality %", "type": "number"},
+					{"key": "runTimestamp", "label": "Run at", "type": "date"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "resultSummary", "label": "Result summary", "type": "object"}
 				],
+				"relatedLists": [
+					{"id": "variance-items", "title": "Variance items", "schema": "FluxItem", "filter": {"fluxRunId": "@self.id"}, "columns": [
+						{"key": "glAccountNumber", "label": "GL account"},
+						{"key": "budgetCents", "label": "Budget (cents)"},
+						{"key": "actualCents", "label": "Actual (cents)"},
+						{"key": "varianceCents", "label": "Variance (cents)"},
+						{"key": "percentageVariance", "label": "Variance %"},
+						{"key": "materialityClassification", "label": "Materiality"},
+						{"key": "status", "label": "Status"}
+					]}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
 				"links": [
 					{
 						"id": "narrative-md",

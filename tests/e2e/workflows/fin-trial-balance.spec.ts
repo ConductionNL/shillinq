@@ -27,6 +27,16 @@
  * scaffolding is seeded so the IDOR-guarded endpoint resolves real data.
  *
  * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-4-1
+ *
+ * The `@spec` above is KNOWINGLY DANGLING and must stay that way until
+ * shillinq#500 is answered. `#task-4-1` cannot resolve (the task list is
+ * written `- [x] Task 4.1:`, so the checker reads `Task` as the item id), but
+ * neither canonical target is honest either: REQ-TB-001 forbids the
+ * `TrialBalanceService` this test exercises, and the archived change's
+ * REQ-TB-009 is change-local, not canon. A tag that resolves to a requirement
+ * the code violates is worse than one that resolves to nothing.
+ *
+ * @e2e openspec/specs/bookkeeping-trial-balance/spec.md#balanced-trial-balance-returns-no-invariant-error
  */
 
 import { test, expect, request as pwRequest } from '@playwright/test'
@@ -48,7 +58,10 @@ test.describe('shillinq finance — trial balance balances (debits == credits)',
 	let api: import('@playwright/test').APIRequestContext
 
 	test.beforeAll(async ({ baseURL }) => {
-		api = await pwRequest.newContext({ baseURL, storageState: 'tests/e2e/.auth/admin.json' })
+		api = await pwRequest.newContext({
+			baseURL,
+			storageState: 'tests/e2e/.auth/admin.json',
+		})
 		fx = new OrFixtures(api)
 	})
 
@@ -62,7 +75,10 @@ test.describe('shillinq finance — trial balance balances (debits == credits)',
 		// AdministrationMembership schemas MUST be imported; the prior import
 		// blocker is fixed, so a missing schema is now a real regression.
 		const missing = await fx.missingSchema(NEEDED)
-		expect(missing, `shillinq register/schema not imported (missing: ${missing})`).toBeNull()
+		expect(
+			missing,
+			`shillinq register/schema not imported (missing: ${missing})`,
+		).toBeNull()
 
 		// Membership so the admin user passes the per-administration IDOR guard.
 		await fx.create('AdministrationMembership', {
@@ -75,8 +91,22 @@ test.describe('shillinq finance — trial balance balances (debits == credits)',
 		})
 
 		// Chart of accounts (names for the trial-balance rows).
-		await fx.create('Account', { administrationId: ADMIN_ID, accountNumber: '1000', name: 'Cash', accountType: 'assets', status: 'active', currency: 'EUR' })
-		await fx.create('Account', { administrationId: ADMIN_ID, accountNumber: '8000', name: 'Revenue', accountType: 'revenue', status: 'active', currency: 'EUR' })
+		await fx.create('Account', {
+			administrationId: ADMIN_ID,
+			accountNumber: '1000',
+			name: 'Cash',
+			accountType: 'assets',
+			status: 'active',
+			currency: 'EUR',
+		})
+		await fx.create('Account', {
+			administrationId: ADMIN_ID,
+			accountNumber: '8000',
+			name: 'Revenue',
+			accountType: 'revenue',
+			status: 'active',
+			currency: 'EUR',
+		})
 
 		// The balanced journal entry.
 		const { id: txId } = await fx.create('GLTransaction', {
@@ -112,7 +142,10 @@ test.describe('shillinq finance — trial balance balances (debits == credits)',
 			`/index.php${APP}/api/trial-balance?administration_id=${ADMIN_ID}&period_id=${PERIOD_ID}`,
 			{ headers: { 'OCS-APIRequest': 'true' } },
 		)
-		expect(res.ok(), `trial-balance endpoint HTTP ${res.status()}: ${await res.text()}`).toBeTruthy()
+		expect(
+			res.ok(),
+			`trial-balance endpoint HTTP ${res.status()}: ${await res.text()}`,
+		).toBeTruthy()
 		const body = await res.json()
 
 		// The invariant: debits foot to credits.
@@ -133,7 +166,10 @@ test.describe('shillinq finance — trial balance balances (debits == credits)',
 
 	test('an UNBALANCED journal posting is reported as not balanced', async () => {
 		const missing = await fx.missingSchema(NEEDED)
-		expect(missing, `shillinq register/schema not imported (missing: ${missing})`).toBeNull()
+		expect(
+			missing,
+			`shillinq register/schema not imported (missing: ${missing})`,
+		).toBeNull()
 
 		const period = `${PERIOD_ID}-unb`
 
@@ -155,8 +191,24 @@ test.describe('shillinq finance — trial balance balances (debits == credits)',
 			description: `${UNIQUE_PREFIX} unbalanced posting`,
 		})
 		// Debit 500, credit only 300 — deliberately NOT balanced.
-		await fx.create('GLLine', { transactionId: txId, periodId: period, lineNumber: 1, accountNumber: '1000', side: 'debit', amount: 500.0, currency: 'EUR' })
-		await fx.create('GLLine', { transactionId: txId, periodId: period, lineNumber: 2, accountNumber: '8000', side: 'credit', amount: 300.0, currency: 'EUR' })
+		await fx.create('GLLine', {
+			transactionId: txId,
+			periodId: period,
+			lineNumber: 1,
+			accountNumber: '1000',
+			side: 'debit',
+			amount: 500.0,
+			currency: 'EUR',
+		})
+		await fx.create('GLLine', {
+			transactionId: txId,
+			periodId: period,
+			lineNumber: 2,
+			accountNumber: '8000',
+			side: 'credit',
+			amount: 300.0,
+			currency: 'EUR',
+		})
 
 		const res = await api.get(
 			`/index.php${APP}/api/trial-balance?administration_id=${ADMIN_ID}&period_id=${period}`,

@@ -29,6 +29,7 @@ use OCA\Shillinq\Controller\WbsoDocumentApiController;
 use OCA\Shillinq\Service\WbsoDocumentService;
 use OCA\Shillinq\Service\WbsoRbacResolver;
 use OCP\AppFramework\Http;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -42,166 +43,170 @@ use RuntimeException;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class WbsoDocumentApiControllerTest extends TestCase
-{
+final class WbsoDocumentApiControllerTest extends TestCase {
 
-    /**
-     * Request.
-     *
-     * @var IRequest&MockObject
-     */
-    private IRequest&MockObject $request;
+	/**
+	 * Request.
+	 *
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /**
-     * Service.
-     *
-     * @var WbsoDocumentService&MockObject
-     */
-    private WbsoDocumentService&MockObject $documents;
+	/**
+	 * Service.
+	 *
+	 * @var WbsoDocumentService&MockObject
+	 */
+	private WbsoDocumentService&MockObject $documents;
 
-    /**
-     * Rbac.
-     *
-     * @var WbsoRbacResolver&MockObject
-     */
-    private WbsoRbacResolver&MockObject $rbac;
+	/**
+	 * Rbac.
+	 *
+	 * @var WbsoRbacResolver&MockObject
+	 */
+	private WbsoRbacResolver&MockObject $rbac;
 
-    /**
-     * Session.
-     *
-     * @var IUserSession&MockObject
-     */
-    private IUserSession&MockObject $session;
+	/**
+	 * Session.
+	 *
+	 * @var IUserSession&MockObject
+	 */
+	private IUserSession&MockObject $session;
 
-    /**
-     * Logger.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Logger.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * Controller.
-     *
-     * @var WbsoDocumentApiController
-     */
-    private WbsoDocumentApiController $controller;
+	/**
+	 * Mock IL10N.
+	 *
+	 * @var IL10N&MockObject
+	 */
+	private IL10N&MockObject $l10n;
 
-    /**
-     * Set up.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->request   = $this->createMock(IRequest::class);
-        $this->documents = $this->createMock(WbsoDocumentService::class);
-        $this->rbac      = $this->createMock(WbsoRbacResolver::class);
-        $this->session   = $this->createMock(IUserSession::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
+	/**
+	 * Controller.
+	 *
+	 * @var WbsoDocumentApiController
+	 */
+	private WbsoDocumentApiController $controller;
 
-        $user = $this->createMock(IUser::class);
-        $user->method('getUID')->willReturn('admin');
-        $this->session->method('getUser')->willReturn($user);
+	/**
+	 * Set up.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->request = $this->createMock(IRequest::class);
+		$this->documents = $this->createMock(WbsoDocumentService::class);
+		$this->rbac = $this->createMock(WbsoRbacResolver::class);
+		$this->session = $this->createMock(IUserSession::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->l10n = $this->createMock(IL10N::class);
+		$this->l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
 
-        $this->controller = new WbsoDocumentApiController(
-            request: $this->request,
-            documents: $this->documents,
-            rbac: $this->rbac,
-            userSession: $this->session,
-            logger: $this->logger,
-        );
-    }//end setUp()
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('admin');
+		$this->session->method('getUser')->willReturn($user);
 
-    /**
-     * Index returns rows.
-     *
-     * @return void
-     */
-    public function testIndexReturnsRows(): void
-    {
-        // Only `administration_id` resolves to adm-1; type / status / filedFrom
-        // must fall back to their default empty strings so the controller takes
-        // the unfiltered `getDocumentsByAdministration` path.
-        $this->request->method('getParam')->willReturnCallback(
-            static function (string $key, mixed $default = null): mixed {
-                if ($key === 'administration_id') {
-                    return 'adm-1';
-                }
+		$this->controller = new WbsoDocumentApiController(
+			request: $this->request,
+			documents: $this->documents,
+			rbac: $this->rbac,
+			userSession: $this->session,
+			logger: $this->logger,
+			l10n: $this->l10n,
+		);
+	}//end setUp()
 
-                return $default;
-            }
-        );
-        $this->rbac->method('hasAny')->willReturn(true);
-        $this->documents->method('getDocumentsByAdministration')->willReturn([
-            ['documentNumber' => 'DOC-1', 'status' => 'draft', 'administrationId' => 'adm-1'],
-        ]);
+	/**
+	 * Index returns rows.
+	 *
+	 * @return void
+	 */
+	public function testIndexReturnsRows(): void {
+		// Only `administration_id` resolves to adm-1; type / status / filedFrom
+		// must fall back to their default empty strings so the controller takes
+		// the unfiltered `getDocumentsByAdministration` path.
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null): mixed {
+				if ($key === 'administration_id') {
+					return 'adm-1';
+				}
 
-        $response = $this->controller->index();
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
-        $data = $response->getData();
-        self::assertCount(1, $data['documents']);
+				return $default;
+			}
+		);
+		$this->rbac->method('hasAny')->willReturn(true);
+		$this->documents->method('getDocumentsByAdministration')->willReturn([
+			['documentNumber' => 'DOC-1', 'status' => 'draft', 'administrationId' => 'adm-1'],
+		]);
 
-    }//end testIndexReturnsRows()
+		$response = $this->controller->index();
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		self::assertCount(1, $data['documents']);
 
-    /**
-     * File transitions return 200.
-     *
-     * @return void
-     */
-    public function testFileHappyPath(): void
-    {
-        $this->request->method('getParam')->willReturn('adm-1');
-        $this->rbac->method('hasAny')->willReturn(true);
-        $this->documents->method('fileDocument')->willReturn([
-            'id'      => 'd-1',
-            'status'  => 'filed',
-            'filedAt' => '2026-01-15T10:00:00+00:00',
-        ]);
+	}//end testIndexReturnsRows()
 
-        $response = $this->controller->file(id: 'd-1');
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
+	/**
+	 * File transitions return 200.
+	 *
+	 * @return void
+	 */
+	public function testFileHappyPath(): void {
+		$this->request->method('getParam')->willReturn('adm-1');
+		$this->rbac->method('hasAny')->willReturn(true);
+		$this->documents->method('fileDocument')->willReturn([
+			'id' => 'd-1',
+			'status' => 'filed',
+			'filedAt' => '2026-01-15T10:00:00+00:00',
+		]);
 
-    }//end testFileHappyPath()
+		$response = $this->controller->file(id: 'd-1');
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
 
-    /**
-     * Archive without retention boundary returns 409.
-     *
-     * @return void
-     */
-    public function testArchiveConflictReturns409(): void
-    {
-        $this->request->method('getParam')->willReturnCallback(
-            static function (string $key, mixed $default=null): mixed {
-                return match ($key) {
-                    'administration_id' => 'adm-1',
-                    'reason'            => 'audit signed',
-                    'allowEarly'        => false,
-                    default             => $default,
-                };
-            }
-        );
-        $this->rbac->method('hasAny')->willReturn(true);
-        $this->documents->method('archiveDocument')->willThrowException(new RuntimeException('Retention not elapsed'));
+	}//end testFileHappyPath()
 
-        $response = $this->controller->archive(id: 'd-1');
-        self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+	/**
+	 * Archive without retention boundary returns 409.
+	 *
+	 * @return void
+	 */
+	public function testArchiveConflictReturns409(): void {
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null): mixed {
+				return match ($key) {
+					'administration_id' => 'adm-1',
+					'reason' => 'audit signed',
+					'allowEarly' => false,
+					default => $default,
+				};
+			}
+		);
+		$this->rbac->method('hasAny')->willReturn(true);
+		$this->documents->method('archiveDocument')->willThrowException(new RuntimeException('Retention not elapsed'));
 
-    }//end testArchiveConflictReturns409()
+		$response = $this->controller->archive(id: 'd-1');
+		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
 
-    /**
-     * Only authorised roles can archive.
-     *
-     * @return void
-     */
-    public function testArchiveRequiresAuditorOrAdmin(): void
-    {
-        $this->request->method('getParam')->willReturn('adm-1');
-        $this->rbac->method('hasAny')->willReturn(false);
+	}//end testArchiveConflictReturns409()
 
-        $response = $this->controller->archive(id: 'd-1');
-        self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+	/**
+	 * Only authorised roles can archive.
+	 *
+	 * @return void
+	 */
+	public function testArchiveRequiresAuditorOrAdmin(): void {
+		$this->request->method('getParam')->willReturn('adm-1');
+		$this->rbac->method('hasAny')->willReturn(false);
 
-    }//end testArchiveRequiresAuditorOrAdmin()
+		$response = $this->controller->archive(id: 'd-1');
+		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+
+	}//end testArchiveRequiresAuditorOrAdmin()
 }//end class

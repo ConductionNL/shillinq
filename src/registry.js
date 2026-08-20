@@ -21,140 +21,31 @@
 //   registered as a `kind:"page"` custom component so the manifest router
 //   still owns the URL → component mapping.
 
-import MobileScannerHome from './views/inventory/MobileScannerHome.vue'
-import ReceivePage from './views/inventory/ReceivePage.vue'
-import TransferPage from './views/inventory/TransferPage.vue'
-import StandardsPolicyEditor from './views/settings/StandardsPolicyEditor.vue'
-import PickPage from './views/inventory/PickPage.vue'
-import CountPage from './views/inventory/CountPage.vue'
-// bookings-resource-calendar exception (#117, per design.md):
-//   The booking month/week/day grid and the conflict-aware booking form are
-//   imperative Vue components — they own a custom calendar shell, modal
-//   isolation for the conflict dialog, and an inline POST → 409 retry path
-//   that does not fit any built-in index/detail/dashboard/settings page
-//   type. Registered here as a kind:"page" custom component so the
-//   manifest router still owns the URL → component mapping.
-import BookingsCalendarPage from './views/bookings/CalendarPage.vue'
-
-// bookings-confirm-flow (REQ-BCF-007): the customer-facing confirmation
-// portal at /confirm/:appointmentId is an imperative Vue component — it
-// owns its own URL-parameter parsing (token + appointmentId), runs a
-// dry-run validation request on mount, switches between loading /
-// error / form / success states, and renders the appointment time in
-// the customer's local timezone via Intl.DateTimeFormat. None of those
-// concerns fit any built-in index/detail/dashboard/settings page type,
-// so the portal is registered as a kind:"page" custom component.
-import BookingsConfirmationPortal from './views/bookings/ConfirmationPortal.vue'
-
-// bookings-pipelinq-customer-bridge slice 06 (profile-card-ui): the
-// AfspraakDetail page fans out to /api/v1/bookings/{id} which returns
-// the Appointment AND the linked pipelinq Contact + klantbeeld history
-// in one hop (slice 05). The page then composes a read-only profile
-// card (PipelinqProfileCard) and a paginated transaction-history
-// timeline (KlantbeeldTimeline) around the standard appointment
-// summary. Neither concern fits the built-in `detail` page type
-// (single-object fetch from OR), so the page is registered as a
-// kind:"page" custom component with the same id (`AfspraakDetail`)
-// the manifest fragment now points at.
-import AfspraakDetail from './views/bookings/AfspraakDetail.vue'
-
-// invoice-from-time-and-expense (issue #111): drafting form + admin list
-// + detail page are imperative because the generator combines multi-source
-// dynamic look-ups (time entries + expenses + rate card + retainer) into
-// a single editable preview, which does not fit `index` / `detail`.
-import InvoiceGenerator from './components/invoice/InvoiceGenerator.vue'
-import AdminInvoiceList from './views/invoice/AdminInvoiceList.vue'
-import AdminInvoiceDetail from './views/invoice/AdminInvoiceDetail.vue'
-
-// bookkeeping-purchase-order-3way slice 02 (REQ-PO3W-001): the create form
-// previews the server-determined approval chain as the line total changes
-// and POSTs the normalised payload to /api/purchase-orders; the detail
-// view renders the materialised approval chain with per-approver
-// signature timestamps and gates the 'Send to supplier' action on the
-// server-authoritative blockSendUntilApproved guard. Neither view fits a
-// built-in `index` / `detail` page type, so both are kind:"page" custom
-// components.
-import PurchaseOrderForm from './components/purchase-order/PurchaseOrderForm.vue'
-import PurchaseOrderDetail from './components/purchase-order/PurchaseOrderDetail.vue'
-
-// bookkeeping-purchase-order-3way slice 04 (REQ-GRN-001 / REQ-PO3W-003):
-// the GRN capture form is a mobile-optimised multi-PO line-by-line receipt
-// flow with rejection-reason picker + delivery-photo upload, and the detail
-// view drives the quality-check + accept transitions (accept posts a
-// StockMove credit per accepted line and updates the originating PO(s)
-// lifecycle via the server-authoritative GoodsReceiptNoteService). Neither
-// fits a built-in `index` / `detail` page type, so both are kind:"page"
-// custom components.
-import GoodsReceiptNoteForm from './components/goods-receipt-note/GoodsReceiptNoteForm.vue'
-import GoodsReceiptNoteDetail from './components/goods-receipt-note/GoodsReceiptNoteDetail.vue'
-
-// bookkeeping-purchase-order-3way slice 05 (REQ-PO3W-004 / REQ-PO3W-007):
-// the supplier-invoice detail view renders the OCR-confidence indicator,
-// the Peppol/UBL provenance block and the link to the related
-// ThreeWayMatch. None of those concerns fit a built-in `detail` page
-// type (the OCR meter is a conditional bespoke block), so the view is
-// registered as a kind:"page" custom component.
-import SupplierInvoiceDetail from './components/supplier-invoice/SupplierInvoiceDetail.vue'
-
-// payment-run-sepa-export: the actions component injected into the PaymentRun
-// detail page's #actions slot (wired as the page's actionsComponent in the
-// manifest). It renders the "Export to bank" button (approved runs) + the
-// "Reconcile / import statement" launcher (exported runs). Registered as
-// kind:"widget" so the manifest actionsComponent field resolves to this entry.
-import PaymentRunDetailActions from './components/payment-run/PaymentRunDetailActions.vue'
-
-// bookkeeping-purchase-order-3way slice 06 (REQ-PO3W-004 / REQ-PO3W-006):
-// the three-way-match index renders per-row match-status pills and a
-// "Re-evaluate" quick-action button that calls back into the matching
-// engine endpoint. The bespoke status pill + retrigger button do not
-// fit the built-in `index` page type, so the view is registered as a
-// kind:"page" custom component.
-import ThreeWayMatchIndex from './components/three-way-match/ThreeWayMatchIndex.vue'
-
-// bookkeeping-purchase-order-3way slice 08 (REQ-PO3W-005): the
-// ThreeWayMatchExceptionPanel renders the side-by-side PO ↔ GRN ↔
-// Invoice comparison, the human-readable divergence breakdown and the
-// three resolution dispositions (accept-with-motivation / file-dispute /
-// reject-and-block-payment). Neither the comparison block nor the
-// inline resolution form fits the built-in `detail` page type, so the
-// panel is registered as a kind:"page" custom component overlaid onto
-// the ThreeWayMatchDetail manifest page slice 01 declares.
-import ThreeWayMatchExceptionPanel from './components/three-way-match/ThreeWayMatchExceptionPanel.vue'
-
-// bookkeeping-purchase-order-3way slice 10 (REQ-PO3W-008 / REQ-VP-001 /
-// REQ-VP-005): the VendorPerformance index + detail render the monthly
-// scorecard with basis-point rate pills, the weighted overall score, the
-// period-over-period trend pill and the auto-review eligibility badge.
-// Neither view fits a built-in `index` or `detail` page type because the
-// rate pills, score colour band and trend indicator are bespoke, so both
-// are registered as kind:"page" custom components.
-import VendorPerformanceIndex from './components/vendor-performance/VendorPerformanceIndex.vue'
-import VendorPerformanceDetail from './components/vendor-performance/VendorPerformanceDetail.vue'
-
-// bookkeeping-waterschappen-bbv-variant slice 05 (REQ-BBVW-003 /
-// REQ-BBVW-005): the BBV Compliance Dashboard composes four bespoke
-// widgets — KPI counts, a four-bucket compliance pie, a YTD cumulative
-// spend line chart and a per-programme utilization table with emoji
-// status badges and a drill-through to the mapping detail page. The
-// built-in `dashboard` page type can author static stats-block grids
-// but cannot host the YTD timeline transform, the at-risk tooltip
-// vocabulary or the emoji status badge palette, so the page is
-// registered as a kind:"page" custom component. Slice 04 registers the
-// route + manifest entry pointing at this component id.
-import BBVComplianceDashboard from './components/Dashboard/BBVComplianceDashboard.vue'
-
-// bookkeeping-waterschappen-bbv-variant slice 06 (REQ-BBVW-004): the
-// Budget Mapping index page wraps CnIndexPage with bespoke filter
-// chrome (search by GL account or programme code, fiscal-year +
-// allocation-range + effective-date-range filters) and a custom
-// allocation/status cell renderer. The built-in `index` page type
-// cannot author the four-facet filter row or the percentage / status
-// pill renderers, so the page is registered as a kind:"page" custom
-// component. Slice 04's manifest fragment is updated in lock-step to
-// switch the BudgetBBVMappings page from type=index to
-// type=custom + component=BudgetBBVMappingIndex.
-import BudgetBBVMappingIndex from './components/BudgetBBVMapping/BudgetBBVMappingIndex.vue'
-
+// add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007): the Send
+// e-invoice action + delivery-status indicator on the manifest-driven
+// ARInvoiceDetail page. Resolved as the page's `actionsComponent` (ADR-036 —
+// any registry kind is eligible for slot/actions resolution, only page
+// dispatch itself requires kind:"page"), mounted into CnDetailPage's actions
+// header slot with `{ object, objectId, schema, objectType, store }`.
+import AREInvoiceActions from './components/ar-invoice/AREInvoiceActions.vue'
+import BankingCashflowOverview from './components/banking-cashflow/BankingCashflowOverview.vue'
+// bookkeeping-provincies-bbv-variant (#866/#862, REQ-BBL-001): the
+// Budget-to-Programme Linker's three declared filter facets. The page stays a
+// built-in `type:"index"` — this is a SLOT component, mounted into
+// CnIndexPage's `below-header` slot via the page's `slots` map, not a
+// replacement page. It exists because CnIndexPage has no `filters` prop at
+// all: the manifest's `config.filters[]` rendered nowhere, so the index
+// fetched the right rows and offered no way to narrow them. It writes the
+// selection into `$route.query`, which CnIndexPage's own self-fetch merges
+// into `fixedFilters` and re-fetches on — so the list stays the library's.
+import BbvLinkerFilterBar from './components/bbv-provincie/BbvLinkerFilterBar.vue'
+// nav-six-clusters: ADR-097 Decision-4 cluster landing pages, one per
+// top-level cluster (design.md §3). Each is a thin wrapper around the shared
+// ClusterOverview card grid (src/components/cluster-overview/
+// ClusterOverview.vue) — kind:"page" custom components, same mechanism
+// ReportingComplianceOverview above already uses; Reporting & Compliance
+// itself reuses that existing page rather than getting a new one.
+import BookkeepingOverview from './components/bookkeeping/BookkeepingOverview.vue'
 // bookkeeping-waterschappen-bbv-variant slice 07 (REQ-BBVW-004): the
 // Budget Mapping detail page composes two bespoke autocomplete pickers
 // (Chart of Accounts + BBVProgramme), a live per-account allocation
@@ -168,42 +59,88 @@ import BudgetBBVMappingIndex from './components/BudgetBBVMapping/BudgetBBVMappin
 // the slice-05 BBVProgrammeTable row drill-through continues to
 // resolve.
 import BudgetBBVMappingDetail from './components/BudgetBBVMapping/BudgetBBVMappingDetail.vue'
-
-// bookkeeping-multi-administratie (Task 13): the in-session administration
-// switcher is a custom page hosting the AdministratieSwitcher dropdown. It is
-// genuinely custom (NOT a declarative index/detail over a register) because it
-// reads `/api/administrations/context`, posts to `/api/administrations/switch`
-// and triggers a session-level reload — none of which is expressible in a
-// built-in page type. See AdministratieSwitcher docblock for the kind-page
-// justification per ADR-024 / ADR-036.
-import AdministrationSwitcherPage from './views/AdministrationSwitcherPage.vue'
-
-// bookings-resource-calendar (#117, REQ-006/REQ-007): the legacy multi-resource
-// CalendarView + BookingForm pages live under src/views/bookings/. They target
-// the /api/v2/calendars REST surface (Resource / Calendar / Booking schemas in
-// the shillinq register) — distinct from the customer-confirmation
-// BookingsCalendarPage above. Both are justified per ADR-024 (imperative time
-// grid + inline conflict dialog).
-import CalendarView from './views/bookings/CalendarView.vue'
-import BookingForm from './views/bookings/BookingForm.vue'
-
-// bookkeeping-wbso-sno-administratie (REQ-WBSO-006/002/003): the three
-// bookkeeping foundation views are imperative — the Chart of Accounts is a
-// hierarchical RGS tree (no built-in tree page type), and the Transactions /
-// Documents tables fan out to dedicated REST surfaces that filter by status,
-// type, and date range. Registered as kind:"page" custom components per
-// ADR-024 / ADR-036.
-import WbsoChartOfAccountsView from './views/bookkeeping/ChartOfAccountsView.vue'
-import WbsoTransactionsView from './views/bookkeeping/TransactionsView.vue'
-import WbsoDocumentsView from './views/bookkeeping/DocumentsView.vue'
-
-// bookings-self-service-widget (REQ-WSW-009): per-business widget API-key
-// admin view. The page is wired through src/manifest.d/30-bookings-self-service-widget.json
-// and gated by #[AuthorizedAdminSetting] on the WidgetSettingsController
-// — it cannot be exposed publicly via the in-app router unless the
-// server-side attribute is dropped. ADR-004 compliant.
-import BookingWidgetKeys from './views/BookingWidgetKeys.vue'
-
+// bookkeeping-waterschappen-bbv-variant slice 06 (REQ-BBVW-004): the
+// Budget Mapping index page wraps CnIndexPage with bespoke filter
+// chrome (search by GL account or programme code, fiscal-year +
+// allocation-range + effective-date-range filters) and a custom
+// allocation/status cell renderer. The built-in `index` page type
+// cannot author the four-facet filter row or the percentage / status
+// pill renderers, so the page is registered as a kind:"page" custom
+// component. Slice 04's manifest fragment is updated in lock-step to
+// switch the BudgetBBVMappings page from type=index to
+// type=custom + component=BudgetBBVMappingIndex.
+import BudgetBBVMappingIndex from './components/BudgetBBVMapping/BudgetBBVMappingIndex.vue'
+// bookkeeping-waterschappen-bbv-variant slice 05 (REQ-BBVW-003 /
+// REQ-BBVW-005): the BBV Compliance Dashboard composes four bespoke
+// widgets — KPI counts, a four-bucket compliance pie, a YTD cumulative
+// spend line chart and a per-programme utilization table with emoji
+// status badges and a drill-through to the mapping detail page. The
+// built-in `dashboard` page type can author static stats-block grids
+// but cannot host the YTD timeline transform, the at-risk tooltip
+// vocabulary or the emoji status badge palette, so the page is
+// registered as a kind:"page" custom component. Slice 04 registers the
+// route + manifest entry pointing at this component id.
+import BBVComplianceDashboard from './components/Dashboard/BBVComplianceDashboard.vue'
+// financial-dashboard-graphs (ADR-049 Phase-4 dissolution): the Financial
+// overview KPI strip, the turnover / margin / billable charts and the two
+// open-invoice tables are now DECLARATIVE built-in dashboard widgets —
+// `stat` (endpointSource /api/dashboard/financial-summary), `chart`
+// (endpointSource /api/dashboard/financial-series + a €/% resp. hours/%
+// `views[]` switcher) and `object-table` (OpenRegister source). The
+// dashboard / payment-run action ribbons are now `config.headerActions[]`
+// (open-modal / api-call). See src/manifest.json Dashboard page +
+// src/manifest.d/bookkeeping-accounts-payable-core.json PaymentRunDetail.
+//
+// CashflowChartWidget stays a custom kind:"widget": it merges TWO sources
+// (realized GL lines + the 13-week CashflowWeek forecast) into one chart
+// with dimmed projection columns — a genuinely custom two-source transform
+// (nextcloud-vue#91 Wave-4) that no single declarative endpoint expresses.
+import CashflowChartWidget from './components/dashboard/financial/CashflowChartWidget.vue'
+import GoodsReceiptNoteDetail from './components/goods-receipt-note/GoodsReceiptNoteDetail.vue'
+// bookkeeping-purchase-order-3way slice 04 (REQ-GRN-001 / REQ-PO3W-003):
+// the GRN capture form is a mobile-optimised multi-PO line-by-line receipt
+// flow with rejection-reason picker + delivery-photo upload, and the detail
+// view drives the quality-check + accept transitions (accept posts a
+// StockMove credit per accepted line and updates the originating PO(s)
+// lifecycle via the server-authoritative GoodsReceiptNoteService). Neither
+// fits a built-in `index` / `detail` page type, so both are kind:"page"
+// custom components.
+import GoodsReceiptNoteForm from './components/goods-receipt-note/GoodsReceiptNoteForm.vue'
+// inventory-product-catalog (#860, REQ-IPC-004 / REQ-IPC-008 +
+// shillinq-product-vendor-to-pipelinq REQ-SPVP-004): the two read-only
+// catalog surfaces. A declarative `type: "index"` page binds to ONE
+// OpenRegister register + schema, and the product master these two pages
+// show is not in shillinq's register at all — REQ-SPVP-004 deleted the local
+// `Product` register and moved ownership to pipelinq. Binding an index page
+// to `register: "pipelinq"` instead would render an empty table on every
+// install without pipelinq while satisfying every "the page mounted"
+// assertion; these components call shillinq's own catalog endpoint, which
+// resolves the master first and falls back to the local denormalised cache
+// the ADR-019 contract declares, and renders WHICH OF THE TWO answered.
+// Neither page can write: no create affordance and no write route exists,
+// per REQ-SPVP-004.
+import ProductAttributeCatalogIndex from './components/inventory/ProductAttributeCatalogIndex.vue'
+import ProductCatalogIndex from './components/inventory/ProductCatalogIndex.vue'
+// invoice-from-time-and-expense (issue #111): drafting form + admin list
+// + detail page are imperative because the generator combines multi-source
+// dynamic look-ups (time entries + expenses + rate card + retainer) into
+// a single editable preview, which does not fit `index` / `detail`.
+import InvoiceGenerator from './components/invoice/InvoiceGenerator.vue'
+// recurring-invoicing (REQ-RIN-008, Task 15): the create/edit modal for a
+// RecurringInvoiceProfile is a bespoke multi-line form with period-token
+// preview and an inline next-invoice projection — none of which the
+// generic schema-driven create form can author. Modal-isolated under
+// src/modals/ (hydra gate-13) and registered below as a kind:"modal".
+//
+// Its LAUNCHER sits next to it. The index page's `config.headerActions[]`
+// entry could never open the modal: CnIndexPage renders a manifest header
+// action inside the collapsed ⋯ overflow, and its click only `$emit`s
+// `header-action`, which CnPageRenderer does not listen for (the gap the
+// fragment's own `_note_open_modal_gap` recorded). The launcher is
+// kind:"widget" so the page can declare it in CnPageRenderer's
+// `header-actions` widget slot, which CnWidgetGrid resolves against THIS
+// registry before its built-in widget table.
+import RecurringInvoiceProfileLauncher from './components/invoice/RecurringInvoiceProfileLauncher.vue'
 // bookkeeping-period-close (REQ-PC-005, REQ-PC-006, REQ-PC-007 / Task 9 + 10):
 // the PeriodCloseDetail page composes the FiscalPeriod metadata header, the
 // close-task checklist (AP / AR / bank / expense claims) with inline
@@ -216,71 +153,18 @@ import BookingWidgetKeys from './views/BookingWidgetKeys.vue'
 // declarative `detail` page type — so the page is registered as a
 // kind:"page" custom component per ADR-024 / ADR-036.
 import PeriodCloseDetail from './components/period-close/PeriodCloseDetail.vue'
-
-// add-shillinq-multi-currency Task 14: the FxRatesAdmin page wraps the
-// declarative FxRate index grid with a cron-status overlay (last-run
-// timestamp + TreasuryRateAdapter dormancy flag) read from
-// /api/admin/fx-rate-import-status. The header strip + dormancy hint do
-// not fit any built-in `index` / `detail` / `dashboard` page type, so the
-// page is registered as a kind:"page" custom component per ADR-024.
-// Admin-only — the controller is gated by
-// #[AuthorizedAdminSetting(Application::class)].
-import FxRatesAdmin from './views/bookkeeping/multi-currency/FxRatesAdmin.vue'
-
-// bookkeeping-cost-centers-dimensions Task 14 (W6): the SegmentPnLDashboard
-// composes server-side aggregations declared on GLLine
-// (byCostCenter / byCostCenterHierarchy / byProject /
-// byAnalyticalDimension) into one operator-facing P&L drill-down. The
-// dashboard owns segment selection, hierarchical roll-up rendering, and a
-// CSV export — none of which fit any built-in declarative page type, so
-// the page is registered as a kind:"page" custom component per ADR-024.
-import SegmentPnLDashboard from './views/bookkeeping/dimensions/SegmentPnLDashboard.vue'
-
-// Shillinq W8 (external-adapters admin UIs): the External Connections
-// section renders an operator roll-up + per-adapter activation panel
-// for the 14 dormant external-API adapter ports (Digipoort/SBR,
-// Salarisbureau, RvO, IB47, CBS Bestanden, CBS Iv3, BZK SiSa,
-// Mollie, Bunq, KvK, UWV, Treasury Rates, CCM Rule Engine,
-// CSRD ESRS XBRL, DepositPayment). Each page reads
-// /api/admin/external-adapters and surfaces the dormancy badge +
-// activation steps (config keys, openconnector source slug, feature
-// flag). Neither view fits a built-in `index` / `detail` page type:
-// the data is not an OR register (it's an in-controller registry of
-// adapter metadata), and the detail page renders an ordered
-// activation checklist + per-row code blocks. Both are kind:"page"
-// custom components per ADR-024 / ADR-036. The detail page is
-// reused for all 14 families by passing a slug via the manifest
-// page entry's `props.adapterId`.
-import ExternalAdaptersStatus from './views/external-adapters/ExternalAdaptersStatus.vue'
-import ExternalAdapterDetail from './views/external-adapters/ExternalAdapterDetail.vue'
-
-// financial-dashboard-graphs: the Financial overview widgets are
-// imperative — the KPI strip, the four charts and the two
-// open-invoice tables all derive their series client-side from a
-// shared fetch-once data layer (GL classification by accountType,
-// month bucketing, CashflowWeek roll-up), and margin / billable
-// carry a €/% resp. total/% view toggle. None of that fits the
-// declarative `stats-block` / `chart` / `table` widget types, so
-// they are registered as kind:"widget" components and wired into
-// the Dashboard page through its `slots` map (ADR-024 / ADR-036).
-import FinanceKpiCardWidget from './components/dashboard/financial/FinanceKpiCardWidget.vue'
-import TurnoverChartWidget from './components/dashboard/financial/TurnoverChartWidget.vue'
-import MarginChartWidget from './components/dashboard/financial/MarginChartWidget.vue'
-import CashflowChartWidget from './components/dashboard/financial/CashflowChartWidget.vue'
-import BillableHoursChartWidget from './components/dashboard/financial/BillableHoursChartWidget.vue'
-import OpenInvoicesTableWidget from './components/dashboard/financial/OpenInvoicesTableWidget.vue'
-import FinancialDashboardActions from './components/dashboard/financial/FinancialDashboardActions.vue'
-
-// recurring-invoicing (REQ-RIN-008, Task 15): the create/edit modal for a
-// RecurringInvoiceProfile is a bespoke multi-line form with period-token
-// preview and an inline next-invoice projection — none of which the
-// generic schema-driven create form can author. It is launched from the
-// Recurring Invoices index page's "New recurring profile" action
-// (src/manifest.d/recurring-invoicing.json, type:"modal") so it must be
-// resolvable by component id; registered here as a kind:"modal" and
-// modal-isolated under src/modals/ (hydra gate-13).
-import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
-
+import PurchaseOrderDetail from './components/purchase-order/PurchaseOrderDetail.vue'
+// bookkeeping-purchase-order-3way slice 02 (REQ-PO3W-001): the create form
+// previews the server-determined approval chain as the line total changes
+// and POSTs the normalised payload to /api/purchase-orders; the detail
+// view renders the materialised approval chain with per-approver
+// signature timestamps and gates the 'Send to supplier' action on the
+// server-authoritative blockSendUntilApproved guard. Neither view fits a
+// built-in `index` / `detail` page type, so both are kind:"page" custom
+// components.
+import PurchaseOrderForm from './components/purchase-order/PurchaseOrderForm.vue'
+import PurchasingOverview from './components/purchasing/PurchasingOverview.vue'
+import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.vue'
 // reporting-compliance-consolidation: the Reporting & Compliance section is
 // two custom pages. The overview renders the static ReportCatalogue
 // (lib/Reporting/ReportCatalogue.php) as category-grouped cards with a
@@ -292,16 +176,200 @@ import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.
 // kind:"page" custom components per ADR-024 / ADR-036; the manifest
 // fragment src/manifest.d/reporting-compliance.json declares the routes.
 import ReportingComplianceOverview from './components/reporting/ReportingComplianceOverview.vue'
-import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.vue'
-
+import SalesOverview from './components/sales/SalesOverview.vue'
 // Import bank statements lives under the Configuratie (settings) group as a
 // page that hosts BankStatementWizard — moved off the Financial overview
 // dashboard so it sits with the other one-time setup tasks. manifest fragment
 // src/manifest.d/bank-import-settings.json declares the route + menu entry.
 import BankImportPage from './components/settings/BankImportPage.vue'
+// bookkeeping-purchase-order-3way slice 05 (REQ-PO3W-004 / REQ-PO3W-007):
+// the supplier-invoice detail view renders the OCR-confidence indicator,
+// the Peppol/UBL provenance block and the link to the related
+// ThreeWayMatch. None of those concerns fit a built-in `detail` page
+// type (the OCR meter is a conditional bespoke block), so the view is
+// registered as a kind:"page" custom component.
+import SupplierInvoiceDetail from './components/supplier-invoice/SupplierInvoiceDetail.vue'
+import TaxesOverview from './components/taxes/TaxesOverview.vue'
+// bookkeeping-purchase-order-3way slice 08 (REQ-PO3W-005): the
+// ThreeWayMatchExceptionPanel renders the side-by-side PO ↔ GRN ↔
+// Invoice comparison, the human-readable divergence breakdown and the
+// three resolution dispositions (accept-with-motivation / file-dispute /
+// reject-and-block-payment). Neither the comparison block nor the
+// inline resolution form fits the built-in `detail` page type, so the
+// panel is registered as a kind:"page" custom component overlaid onto
+// the ThreeWayMatchDetail manifest page slice 01 declares.
+import ThreeWayMatchExceptionPanel from './components/three-way-match/ThreeWayMatchExceptionPanel.vue'
+// bookkeeping-purchase-order-3way slice 06 (REQ-PO3W-004 / REQ-PO3W-006):
+// the three-way-match index renders per-row match-status pills and a
+// "Re-evaluate" quick-action button that calls back into the matching
+// engine endpoint. The bespoke status pill + retrigger button do not
+// fit the built-in `index` page type, so the view is registered as a
+// kind:"page" custom component.
+import ThreeWayMatchIndex from './components/three-way-match/ThreeWayMatchIndex.vue'
+import VendorPerformanceDetail from './components/vendor-performance/VendorPerformanceDetail.vue'
+// bookkeeping-purchase-order-3way slice 10 (REQ-PO3W-008 / REQ-VP-001 /
+// REQ-VP-005): the VendorPerformance index + detail render the monthly
+// scorecard with basis-point rate pills, the weighted overall score, the
+// period-over-period trend pill and the auto-review eligibility badge.
+// Neither view fits a built-in `index` or `detail` page type because the
+// rate pills, score colour band and trend indicator are bespoke, so both
+// are registered as kind:"page" custom components.
+import VendorPerformanceIndex from './components/vendor-performance/VendorPerformanceIndex.vue'
+import BillImportModal from './modals/BillImportModal.vue'
+// ADR-049 Phase-4 dissolution: modals formerly launched by the imperative
+// FinancialDashboardActions / PaymentRunDetailActions widgets. Those action
+// ribbons are now declarative `config.headerActions[]` (type:"open-modal");
+// each modal is registered here as a kind:"modal" so the manifest action's
+// `target` resolves it. Modal-isolated under src/modals/ (hydra gate-13).
+import InvoiceQuickDraftModal from './modals/InvoiceQuickDraftModal.vue'
+import PaymentRunReconcileModal from './modals/PaymentRunReconcileModal.vue'
+import RecurringInvoiceProfileModal from './modals/RecurringInvoiceProfileModal.vue'
+// accountant-portal: the multi-client dashboard composes a per-card status
+// (period-close state, BTW filing + deadline, missing documents, open items
+// from PeriodCloseAssistantService) plus a per-card "Download handover pack"
+// action. The built-in `dashboard` page type's widgets (summary/table/chart)
+// bind to a single register+schema; this page aggregates four signals across
+// AccountantDashboardService and triggers a file download per card, neither
+// of which fits that vocabulary (mirrors the reporting-compliance-consolidation
+// precedent above). kind:"page" custom component per ADR-024 / ADR-036; the
+// manifest fragment src/manifest.d/accountant-portal.json declares the route.
+import AccountantPortalDashboard from './views/AccountantPortalDashboard.vue'
+// bookkeeping-multi-administratie (Task 13): the in-session administration
+// switcher is a custom page hosting the AdministratieSwitcher dropdown. It is
+// genuinely custom (NOT a declarative index/detail over a register) because it
+// reads `/api/administrations/context`, posts to `/api/administrations/switch`
+// and triggers a session-level reload — none of which is expressible in a
+// built-in page type. See AdministratieSwitcher docblock for the kind-page
+// justification per ADR-024 / ADR-036.
+import AdministrationSwitcherPage from './views/AdministrationSwitcherPage.vue'
+// bookings-pipelinq-customer-bridge slice 06 (profile-card-ui): the
+// AfspraakDetail page fans out to /api/v1/bookings/{id} which returns
+// the Appointment AND the linked pipelinq Contact + klantbeeld history
+// in one hop (slice 05). The page then composes a read-only profile
+// card (PipelinqProfileCard) and a paginated transaction-history
+// timeline (KlantbeeldTimeline) around the standard appointment
+// summary. Neither concern fits the built-in `detail` page type
+// (single-object fetch from OR), so the page is registered as a
+// kind:"page" custom component with the same id (`AfspraakDetail`)
+// the manifest fragment now points at.
+import AfspraakDetail from './views/bookings/AfspraakDetail.vue'
+import BookingForm from './views/bookings/BookingForm.vue'
+// bookings-resource-calendar (#117, REQ-006/REQ-007): the multi-resource
+// CalendarView + BookingForm pages live under src/views/bookings/. They target
+// the /api/v2/calendars REST surface (Resource / Calendar / Booking schemas in
+// the shillinq register). Justified per ADR-024 (imperative time grid +
+// inline conflict dialog). The older single-dropdown "Verkoop → Bookings
+// calendar" shortcut page (CalendarPage.vue, manifest.d/
+// bookings-resource-calendar.json) that wrapped this same CalendarView was
+// removed as dead-weight duplicate navigation — see
+// shillinq-manifest-boot-payload-reduction (REQ-MBP-002).
+// `CalendarPage` is the HOST: CalendarView is a presentation grid that only
+// EMITS slot:clicked / booking:selected, so pointing the BookingsCalendar page
+// straight at it (as REQ-MBP-002 left it when it deleted the old host) made
+// REQ-007 — click a free slot, fill the form, resolve a 409 conflict —
+// unreachable in the shipped app. The host restores that wiring without
+// restoring the removed `/verkoop/boekingen-kalender` nav entry.
+import CalendarPage from './views/bookings/CalendarPage.vue'
+// bookings-confirm-flow (REQ-BCF-007): the customer-facing confirmation
+// portal at /confirm/:appointmentId is an imperative Vue component — it
+// owns its own URL-parameter parsing (token + appointmentId), runs a
+// dry-run validation request on mount, switches between loading /
+// error / form / success states, and renders the appointment time in
+// the customer's local timezone via Intl.DateTimeFormat. None of those
+// concerns fit any built-in index/detail/dashboard/settings page type,
+// so the portal is registered as a kind:"page" custom component.
+import BookingsConfirmationPortal from './views/bookings/ConfirmationPortal.vue'
+// bookings-self-service-widget (REQ-WSW-009): per-business widget API-key
+// admin view. The page is wired through src/manifest.d/30-bookings-self-service-widget.json
+// and gated by #[AuthorizedAdminSetting] on the WidgetSettingsController
+// — it cannot be exposed publicly via the in-app router unless the
+// server-side attribute is dropped. ADR-004 compliant.
+import BookingWidgetKeys from './views/BookingWidgetKeys.vue'
+// bookkeeping-wbso-sno-administratie (REQ-WBSO-006/002/003): the three
+// bookkeeping foundation views are imperative — the Chart of Accounts is a
+// hierarchical RGS tree (no built-in tree page type), and the Transactions /
+// Documents tables fan out to dedicated REST surfaces that filter by status,
+// type, and date range. Registered as kind:"page" custom components per
+// ADR-024 / ADR-036.
+import WbsoChartOfAccountsView from './views/bookkeeping/ChartOfAccountsView.vue'
+// bookkeeping-cost-centers-dimensions Task 14 (W6): the SegmentPnLDashboard
+// composes server-side aggregations declared on GLLine
+// (byCostCenter / byCostCenterHierarchy / byProject /
+// byAnalyticalDimension) into one operator-facing P&L drill-down. The
+// dashboard owns segment selection, hierarchical roll-up rendering, and a
+// CSV export — none of which fit any built-in declarative page type, so
+// the page is registered as a kind:"page" custom component per ADR-024.
+import SegmentPnLDashboard from './views/bookkeeping/dimensions/SegmentPnLDashboard.vue'
+import WbsoDocumentsView from './views/bookkeeping/DocumentsView.vue'
+// add-shillinq-multi-currency Task 14: the FxRatesAdmin page wraps the
+// declarative FxRate index grid with a cron-status overlay (last-run
+// timestamp + TreasuryRateAdapter dormancy flag) read from
+// /api/admin/fx-rate-import-status. The header strip + dormancy hint do
+// not fit any built-in `index` / `detail` / `dashboard` page type, so the
+// page is registered as a kind:"page" custom component per ADR-024.
+// Admin-only — the controller is gated by
+// #[AuthorizedAdminSetting(Application::class)].
+import FxRatesAdmin from './views/bookkeeping/multi-currency/FxRatesAdmin.vue'
+import WbsoTransactionsView from './views/bookkeeping/TransactionsView.vue'
+// verplichtingen-commitment-accounting Task 4 (REQ-VPL-011): the
+// BudgetLineCommitments drilldown composes the declarative
+// committedVsRealisedPerBudgetLine aggregation declared on
+// Verplichtingsregel into a per-budget-line report with a commitment
+// drilldown. Registered as a kind:"page" custom component per ADR-024
+// (same pattern as SegmentPnLDashboard).
+import BudgetLineCommitments from './views/BudgetLineCommitments.vue'
+// compliance-deadline-calendar (REQ-CDC-006): per-user category toggles
+// + reminder lead times for the compliance deadline calendar. Talks to
+// the strictly current-user-scoped /api/deadline-calendar/settings
+// endpoints; registered as a kind:"page" custom component per ADR-024.
+import DeadlineCalendarSettings from './views/DeadlineCalendarSettings.vue'
+// integration-config-to-openconnector (formerly Shillinq W8): the
+// External Connections page renders one roster row per external-API
+// adapter family (15 — Digipoort/SBR, Salarisbureau, RvO, IB47, CBS
+// Bestanden, CBS Iv3, BZK SiSa, Mollie, Bunq, KvK, UWV, Treasury
+// Rates, CCM Rule Engine, CSRD ESRS XBRL, DepositPayment), sourced
+// from /api/admin/external-adapters: dormancy badge + declared
+// sourceSlug + live openconnector-provisioning status + a deep link
+// to openconnector's Source admin. The per-family detail page +
+// route this file used to also register are gone — integration
+// configuration (credentials, endpoints, protocol mapping) lives in
+// openconnector per ADR-067/ADR-091/ADR-022; this app holds only the
+// slug reference, so there is nothing left for a per-adapter page to
+// render. Does not fit a built-in `index` / `detail` page type: the
+// data is not an OR register, it's an in-controller registry of
+// adapter metadata plus a live per-row provisioning lookup. kind:
+// "page" custom component per ADR-024 / ADR-036.
+import ExternalAdaptersStatus from './views/external-adapters/ExternalAdaptersStatus.vue'
+import CountPage from './views/inventory/CountPage.vue'
+import MobileScannerHome from './views/inventory/MobileScannerHome.vue'
+import PickPage from './views/inventory/PickPage.vue'
+import ReceivePage from './views/inventory/ReceivePage.vue'
+import TransferPage from './views/inventory/TransferPage.vue'
+import AdminInvoiceDetail from './views/invoice/AdminInvoiceDetail.vue'
+import AdminInvoiceList from './views/invoice/AdminInvoiceList.vue'
+// receipt-extraction-consume (REQ-RXC-003) — custom detail page for a single
+// Receipt record: prefills from a docudesk extraction draft with per-field
+// confidence + correction + re-request, none of which fits the built-in
+// `detail` page type. Registered kind:"page" for
+// src/manifest.d/receipt-extraction-consume.json's `type: "custom"` entry.
+import ReceiptCapture from './views/ReceiptCapture.vue'
+import StandardsPolicyEditor from './views/settings/StandardsPolicyEditor.vue'
 
 export default {
-	RecurringInvoiceProfileModal: { kind: 'modal', component: RecurringInvoiceProfileModal },
+	RecurringInvoiceProfileModal: {
+		kind: 'modal',
+		component: RecurringInvoiceProfileModal,
+	},
+	RecurringInvoiceProfileLauncher: {
+		kind: 'widget',
+		component: RecurringInvoiceProfileLauncher,
+		_note: 'Not a data widget: it is the create affordance for RecurringInvoiceProfileModal. CnIndexPage has no declarative way to open a registry modal (its headerActions[] click is emit-only and CnPageRenderer does not listen), so the button and the modal live together in one header-actions slot widget.',
+	},
+
+	// ADR-049 Phase-4: modals launched by declarative headerActions (open-modal).
+	InvoiceQuickDraftModal: { kind: 'modal', component: InvoiceQuickDraftModal },
+	BillImportModal: { kind: 'modal', component: BillImportModal },
+	PaymentRunReconcileModal: { kind: 'modal', component: PaymentRunReconcileModal },
 
 	StandardsPolicyEditor: { kind: 'page', component: StandardsPolicyEditor },
 	MobileScannerHome: { kind: 'page', component: MobileScannerHome },
@@ -314,9 +382,12 @@ export default {
 	AdminInvoiceList: { kind: 'page', component: AdminInvoiceList },
 	AdminInvoiceDetail: { kind: 'page', component: AdminInvoiceDetail },
 
-	BookingsCalendarPage: { kind: 'page', component: BookingsCalendarPage },
-	BookingsConfirmationPortal: { kind: 'page', component: BookingsConfirmationPortal },
+	BookingsConfirmationPortal: {
+		kind: 'page',
+		component: BookingsConfirmationPortal,
+	},
 	AfspraakDetail: { kind: 'page', component: AfspraakDetail },
+	ReceiptCapture: { kind: 'page', component: ReceiptCapture },
 
 	PurchaseOrderForm: { kind: 'page', component: PurchaseOrderForm },
 	PurchaseOrderDetail: { kind: 'page', component: PurchaseOrderDetail },
@@ -328,7 +399,10 @@ export default {
 
 	ThreeWayMatchIndex: { kind: 'page', component: ThreeWayMatchIndex },
 
-	ThreeWayMatchExceptionPanel: { kind: 'page', component: ThreeWayMatchExceptionPanel },
+	ThreeWayMatchExceptionPanel: {
+		kind: 'page',
+		component: ThreeWayMatchExceptionPanel,
+	},
 
 	VendorPerformanceIndex: { kind: 'page', component: VendorPerformanceIndex },
 	VendorPerformanceDetail: { kind: 'page', component: VendorPerformanceDetail },
@@ -339,10 +413,20 @@ export default {
 
 	BudgetBBVMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
 	BudgetMappingDetail: { kind: 'page', component: BudgetBBVMappingDetail },
-	AdministrationSwitcherPage: { kind: 'page', component: AdministrationSwitcherPage },
+
+	// bookkeeping-provincies-bbv-variant (#866/#862, REQ-BBL-001).
+	BbvLinkerFilterBar: {
+		kind: 'widget',
+		component: BbvLinkerFilterBar,
+		_note: "Slot component for CnIndexPage's `below-header` slot, not a page: the Linker index stays a built-in type:\"index\" so its self-fetch, paging and empty state remain the library's. CnIndexPage has no `filters` prop, so the page's declared config.filters[] had no renderer; this one writes the selection into $route.query, which the self-fetch merges into fixedFilters.",
+	},
+	AdministrationSwitcherPage: {
+		kind: 'page',
+		component: AdministrationSwitcherPage,
+	},
 
 	// bookings-resource-calendar custom pages (REQ-006/REQ-007).
-	BookingsCalendar: { kind: 'page', component: CalendarView },
+	BookingsCalendar: { kind: 'page', component: CalendarPage },
 	BookingsForm: { kind: 'page', component: BookingForm },
 
 	// bookkeeping-wbso-sno-administratie foundation views.
@@ -361,30 +445,58 @@ export default {
 
 	// bookkeeping-cost-centers-dimensions Task 14: segment P&L drill-down.
 	SegmentPnLDashboard: { kind: 'page', component: SegmentPnLDashboard },
+	BudgetLineCommitments: { kind: 'page', component: BudgetLineCommitments },
 
-	// Shillinq W8: External Connections admin pages (index + per-adapter detail).
+	// compliance-deadline-calendar (REQ-CDC-006): deadline calendar settings.
+	DeadlineCalendarSettings: { kind: 'page', component: DeadlineCalendarSettings },
+
+	// integration-config-to-openconnector: External Connections roster page.
 	ExternalAdaptersStatus: { kind: 'page', component: ExternalAdaptersStatus },
-	ExternalAdapterDetail: { kind: 'page', component: ExternalAdapterDetail },
 
-	// financial-dashboard-graphs: Financial overview dashboard widgets.
-	FinanceKpiCardWidget: { kind: 'widget', component: FinanceKpiCardWidget },
-	TurnoverChartWidget: { kind: 'widget', component: TurnoverChartWidget },
-	MarginChartWidget: { kind: 'widget', component: MarginChartWidget },
-	CashflowChartWidget: { kind: 'widget', component: CashflowChartWidget },
-	BillableHoursChartWidget: { kind: 'widget', component: BillableHoursChartWidget },
-	OpenInvoicesTableWidget: { kind: 'widget', component: OpenInvoicesTableWidget },
+	// financial-dashboard-graphs (ADR-049 Phase-4): the only surviving custom
+	// financial widget. Cashflow merges realized GL lines with the 13-week
+	// forecast (two sources) into one chart — see the import docblock above.
+	// The KPIs / turnover / margin / billable charts / open-invoice tables are
+	// now declarative built-in stat / chart / object-table dashboard widgets.
+	CashflowChartWidget: {
+		kind: 'widget',
+		component: CashflowChartWidget,
+		_note: 'Merges realized GL lines with the 13-week forecast (two data sources) into one chart — no built-in chart widget joins two sources (ADR-049 Phase-4 survivor).',
+	},
 
-	// financial-dashboard-actions: quick-access header buttons (Import bill /
-	// Create invoice / Import bank) registered as kind:"widget" so the manifest
-	// actionsComponent field resolves to this entry via CnPageRenderer.
-	FinancialDashboardActions: { kind: 'widget', component: FinancialDashboardActions },
-
-	// payment-run-sepa-export: PaymentRun detail-page actions (Export to bank /
-	// Reconcile). kind:"widget" so the manifest actionsComponent field resolves.
-	PaymentRunDetailActions: { kind: 'widget', component: PaymentRunDetailActions },
+	// add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007).
+	AREInvoiceActions: {
+		kind: 'widget',
+		component: AREInvoiceActions,
+		_note: 'Header actionsComponent, not a data widget: pairs a stateful Send e-invoice action (POST + optimistic status update + inline validation errors) with the delivery-status chip — no built-in widget performs writes.',
+	},
 
 	// reporting-compliance-consolidation: Reporting & Compliance pages.
-	ReportingComplianceOverview: { kind: 'page', component: ReportingComplianceOverview },
+	ReportingComplianceOverview: {
+		kind: 'page',
+		component: ReportingComplianceOverview,
+	},
+
+	// nav-six-clusters: the 5 new cluster landing pages (design.md §3).
+	BookkeepingOverview: { kind: 'page', component: BookkeepingOverview },
+	SalesOverview: { kind: 'page', component: SalesOverview },
+	PurchasingOverview: { kind: 'page', component: PurchasingOverview },
+	BankingCashflowOverview: { kind: 'page', component: BankingCashflowOverview },
+	TaxesOverview: { kind: 'page', component: TaxesOverview },
 	GeneratedReportsIndex: { kind: 'page', component: GeneratedReportsIndex },
 	BankImportPage: { kind: 'page', component: BankImportPage },
+
+	// accountant-portal: scoped multi-client dashboard + handover-pack export.
+	AccountantPortalDashboard: {
+		kind: 'page',
+		component: AccountantPortalDashboard,
+	},
+
+	// inventory-product-catalog (#860). See the import docblock above for why
+	// these are custom pages rather than declarative `type: "index"` ones.
+	ProductCatalogIndex: { kind: 'page', component: ProductCatalogIndex },
+	ProductAttributeCatalogIndex: {
+		kind: 'page',
+		component: ProductAttributeCatalogIndex,
+	},
 }

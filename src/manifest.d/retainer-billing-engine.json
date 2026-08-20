@@ -61,8 +61,7 @@
 					{"key": "periodStart", "label": "Period", "type": "date"}
 				],
 				"defaultSort": "periodStart",
-				"detailRoute": "RetainerPoolDetail",
-				"createDialog": "RetainerPoolCreateDialog"
+				"detailRoute": "RetainerPoolDetail"
 			}
 		},
 		{
@@ -73,6 +72,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "RetainerPool",
+				"_note": "FINANCIAL / MASTER archetype (native CnDetailPage). A retainer pool is a prepaid-hours account with three consumption/reconciliation ledgers hanging off it: drawdowns (RetainerDrawdown.poolId), true-ups (RetainerTrueUp.poolId) and rollovers (RetainerRollover.sourcePeriodPoolId) — surfaced as native relatedLists so the operator can drill from the pool into its full trail (REQ-RETN-010). Deliberately NO comms leaves and NO file-references tab — a pool declares no email/calendar linkedType and no source-document field on the schema; it is an accounting balance, not a conversation or a filing. The lifecycle action toolbar (activate/close/archive + manual true-up trigger) stays on `actions`; audit-trail lives in a sidebar tab as the correct home for a financial balance's immutable change log.",
 				"fields": [
 					{"key": "poolId", "label": "Pool ID", "type": "string"},
 					{"key": "clientId", "label": "Client", "type": "string"},
@@ -91,91 +91,54 @@
 					{"key": "sourcePoolId", "label": "Source pool", "type": "string"},
 					{"key": "description", "label": "Description", "type": "string"}
 				],
-				"sections": [
+				"lifecycleActions": true,
+				"relatedLists": [
 					{
-						"id": "Drawdowns",
-						"label": "Drawdowns",
-						"type": "table",
-						"register": "shillinq",
+						"id": "drawdowns",
+						"title": "Drawdowns",
 						"schema": "RetainerDrawdown",
-						"filter": {"poolId": "@self.poolId"},
+						"foreignKey": "poolId",
 						"columns": [
-							{"key": "drawdownDate", "label": "Date", "sortable": true},
-							{"key": "timeEntryId", "label": "Time entry", "sortable": true},
-							{"key": "hoursOrAmount", "label": "Hours", "sortable": true},
-							{"key": "drawdownRate", "label": "Rate", "sortable": true, "type": "money"},
-							{"key": "drawdownAmount", "label": "Amount", "sortable": true, "type": "money"},
-							{"key": "status", "label": "Status", "sortable": true}
-						]
+							{"key": "drawdownDate", "label": "Date"},
+							{"key": "timeEntryId", "label": "Time entry"},
+							{"key": "hoursOrAmount", "label": "Hours"},
+							{"key": "drawdownAmount", "label": "Amount"},
+							{"key": "status", "label": "Status"}
+						],
+						"detailRoute": "RetainerDrawdownDetail"
 					},
 					{
-						"id": "TrueUps",
-						"label": "True-Ups",
-						"type": "table",
-						"register": "shillinq",
+						"id": "trueups",
+						"title": "True-Ups",
 						"schema": "RetainerTrueUp",
-						"filter": {"poolId": "@self.poolId"},
+						"foreignKey": "poolId",
 						"columns": [
-							{"key": "trueUpId", "label": "True-Up", "sortable": true},
-							{"key": "generatedAt", "label": "Generated at", "sortable": true},
-							{"key": "actualDrawdown", "label": "Actual drawdown", "sortable": true, "type": "money"},
-							{"key": "overageAmount", "label": "Overage", "sortable": true, "type": "money"},
-							{"key": "overageInvoiceAmount", "label": "Invoice amount", "sortable": true, "type": "money"},
-							{"key": "status", "label": "Status", "sortable": true}
-						]
+							{"key": "trueUpId", "label": "True-Up"},
+							{"key": "generatedAt", "label": "Generated at"},
+							{"key": "overageAmount", "label": "Overage"},
+							{"key": "status", "label": "Status"}
+						],
+						"detailRoute": "RetainerTrueUpDetail"
 					},
 					{
-						"id": "Rollovers",
-						"label": "Rollovers",
-						"type": "table",
-						"register": "shillinq",
+						"id": "rollovers",
+						"title": "Rollovers",
 						"schema": "RetainerRollover",
-						"filter": {"sourcePeriodPoolId": "@self.poolId"},
+						"foreignKey": "sourcePeriodPoolId",
 						"columns": [
-							{"key": "rolloverId", "label": "Rollover", "sortable": true},
-							{"key": "targetPeriodPoolId", "label": "Target pool", "sortable": true},
-							{"key": "carryoverAmount", "label": "Carryover", "sortable": true, "type": "money"},
-							{"key": "carryoverHours", "label": "Carryover hours", "sortable": true},
-							{"key": "carryoverCapApplied", "label": "Cap applied", "sortable": true},
-							{"key": "resetBalance", "label": "Reset balance", "sortable": true},
-							{"key": "status", "label": "Status", "sortable": true}
-						]
+							{"key": "rolloverId", "label": "Rollover"},
+							{"key": "targetPeriodPoolId", "label": "Target pool"},
+							{"key": "carryoverAmount", "label": "Carryover"},
+							{"key": "status", "label": "Status"}
+						],
+						"detailRoute": "RetainerRolloverDetail"
 					}
 				],
-				"actions": [
-					{"id": "activate", "label": "Activate", "type": "lifecycle", "transition": "activate", "enabledWhen": "status === 'draft'"},
-					{"id": "close", "label": "Close period", "type": "lifecycle", "transition": "close", "enabledWhen": "status === 'active'"},
-					{"id": "archive", "label": "Archive", "type": "lifecycle", "transition": "archive", "enabledWhen": "status === 'closed'"},
-					{"id": "manualTrueUp", "label": "Trigger true-up manually", "type": "callback", "callback": "retainer.triggerManualTrueUp", "enabledWhen": "status === 'active' || status === 'closed'", "confirm": "This will create a new RetainerTrueUp record for the pool period. Continue?"}
-				]
-			}
-		},
-		{
-			"id": "RetainerPoolCreateDialog",
-			"route": "/retainer-pools/new",
-			"type": "dialog",
-			"title": "New retainer pool",
-			"config": {
-				"register": "shillinq",
-				"schema": "RetainerPool",
-				"action": {"verb": "POST", "url": "/api/retainer-pools"},
-				"fields": [
-					{"key": "administrationId", "label": "Administration", "type": "string", "required": true},
-					{"key": "clientId", "label": "Client", "type": "string", "required": true},
-					{"key": "projectId", "label": "Project (optional)", "type": "string"},
-					{"key": "periodStart", "label": "Period start", "type": "date", "required": true},
-					{"key": "periodEnd", "label": "Period end", "type": "date", "required": true},
-					{"key": "poolAmount", "label": "Pool amount", "type": "number", "required": true, "default": 3000.0},
-					{"key": "currency", "label": "Currency", "type": "select", "options": ["EUR", "USD", "GBP"], "default": "EUR", "required": true},
-					{"key": "retainerRate", "label": "Retainer rate", "type": "number", "required": true, "default": 75.0},
-					{"key": "retainerRateUnit", "label": "Rate unit", "type": "select", "options": ["hour", "day", "fixed"], "default": "hour", "required": true},
-					{"key": "rolloverPolicy.resetBalance", "label": "Reset balance at period-end", "type": "boolean", "default": false},
-					{"key": "rolloverPolicy.carryoverMaxAmount", "label": "Carryover cap (amount)", "type": "number"},
-					{"key": "rolloverPolicy.carryoverMaxHours", "label": "Carryover cap (hours)", "type": "number", "default": 50.0},
-					{"key": "rolloverPolicy.carryoverCapUnit", "label": "Cap unit", "type": "select", "options": ["amount", "hours"], "default": "hours"},
-					{"key": "description", "label": "Description", "type": "string"}
-				],
-				"onSuccess": "navigate:RetainerPoolDetail"
+				"indexRoute": "RetainerPools",
+				"sidebarProps": { "tabs": [
+					{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90,
+						"widgets": [ { "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } } ] }
+				] }
 			}
 		},
 		{
@@ -213,6 +176,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "RetainerDrawdown",
+				"_note": "FINANCIAL / TRANSACTION archetype (native CnDetailPage). A drawdown is a single immutable consumption posting against a retainer pool (created by the TimeEntry lifecycle hook) — a ledger line, not a conversation, so NO comms leaves and no relatedLists (it has no children; it IS a child of RetainerPool). No lifecycleActions — the schema declares only a status enum (pending/materialized/reversed/adjusted), not an x-openregister-lifecycle transition set; corrections happen via a new linked record (reversalOfDrawdownId), not a state-machine action. Audit-trail sidebar tab holds the immutable posting history.",
 				"fields": [
 					{"key": "drawdownId", "label": "Drawdown ID", "type": "string"},
 					{"key": "poolId", "label": "Pool", "type": "string"},
@@ -225,7 +189,12 @@
 					{"key": "reversalOfDrawdownId", "label": "Reverses drawdown", "type": "string"},
 					{"key": "reversalReason", "label": "Reversal reason", "type": "string"},
 					{"key": "description", "label": "Description", "type": "string"}
-				]
+				],
+				"indexRoute": "RetainerDrawdowns",
+				"sidebarProps": { "tabs": [
+					{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90,
+						"widgets": [ { "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } } ] }
+				] }
 			}
 		},
 		{
@@ -262,6 +231,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "RetainerRollover",
+				"_note": "FINANCIAL / TRANSACTION archetype (native CnDetailPage). A rollover carries an unused balance from one period pool to the next — a reconciliation posting between two pools (RetainerPool records, not children of this record), so NO comms leaves and no relatedLists. No lifecycleActions — the schema declares only a status enum (planned/executed/adjusted/archived), not an x-openregister-lifecycle transition set; corrections happen via a new linked record (adjustsRolloverId). Audit-trail sidebar tab holds the immutable history.",
 				"fields": [
 					{"key": "rolloverId", "label": "Rollover ID", "type": "string"},
 					{"key": "sourcePeriodPoolId", "label": "Source pool", "type": "string"},
@@ -274,7 +244,12 @@
 					{"key": "status", "label": "Status", "type": "string"},
 					{"key": "adjustsRolloverId", "label": "Adjusts rollover", "type": "string"},
 					{"key": "adjustmentReason", "label": "Adjustment reason", "type": "string"}
-				]
+				],
+				"indexRoute": "RetainerRollovers",
+				"sidebarProps": { "tabs": [
+					{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90,
+						"widgets": [ { "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } } ] }
+				] }
 			}
 		},
 		{
@@ -311,6 +286,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "RetainerTrueUp",
+				"_note": "FINANCIAL / REPORT-FILING archetype (native CnDetailPage). A true-up is a period-end reconciliation that settles overage (invoice) or under-utilisation (credit) via a full operator-driven lifecycle (generated → pending-approval → approved → invoiced → settled, plus reverse). No relatedLists — a true-up has no child records, it links UP to its pool (poolId) and sideways to a generated invoice (invoiceId), both scalar FKs shown as fields. No file-references tab — the schema carries invoiceId as a reference string, not an attachment/document field, so there is no genuine source document to surface here. Audit-trail sidebar tab holds the settlement's immutable record.",
 				"fields": [
 					{"key": "trueUpId", "label": "True-Up ID", "type": "string"},
 					{"key": "poolId", "label": "Pool", "type": "string"},
@@ -329,13 +305,12 @@
 					{"key": "reversalOfTrueUpId", "label": "Reverses true-up", "type": "string"},
 					{"key": "manualTriggerReason", "label": "Manual trigger reason", "type": "string"}
 				],
-				"actions": [
-					{"id": "submit", "label": "Submit for approval", "type": "lifecycle", "transition": "submit", "enabledWhen": "status === 'generated'"},
-					{"id": "approve", "label": "Approve", "type": "lifecycle", "transition": "approve", "enabledWhen": "status === 'pending-approval'", "permission": "retainer:approve-true-up"},
-					{"id": "invoice", "label": "Generate invoice", "type": "lifecycle", "transition": "invoice", "enabledWhen": "status === 'approved' && overageAmount > 0"},
-					{"id": "settle", "label": "Mark settled", "type": "lifecycle", "transition": "settle", "enabledWhen": "status === 'invoiced'"},
-					{"id": "reverse", "label": "Reverse", "type": "lifecycle", "transition": "reverse", "enabledWhen": "status === 'approved' || status === 'invoiced'", "permission": "retainer:approve-true-up", "confirm": "This will reverse the true-up and create a new one for re-calculation. Continue?"}
-				]
+				"lifecycleActions": true,
+				"indexRoute": "RetainerTrueUps",
+				"sidebarProps": { "tabs": [
+					{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90,
+						"widgets": [ { "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } } ] }
+				] }
 			}
 		}
 	]

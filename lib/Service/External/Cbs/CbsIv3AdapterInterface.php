@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/tasks.md
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -35,26 +35,25 @@ namespace OCA\Shillinq\Service\External\Cbs;
 /**
  * CBS Iv3 quarterly/annual submission port.
  *
- * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/tasks.md
+ * @spec openspec/specs/bookkeeping-cbs-bestanden-extended/spec.md
  */
-interface CbsIv3AdapterInterface
-{
-    /**
-     * Submit an Iv3 quarterly or annual report.
-     *
-     * @param array<string,mixed> $payload The Iv3 envelope — periodType
-     *                                     (KWARTAAL|JAAR), periodValue,
-     *                                     organizationCode, lines[] (functie + categorie + bedrag),
-     *                                     reportingXmlBytes, checksum.
-     *
-     * @return CbsSubmissionResult The dispatch outcome.
-     */
-    public function submit(array $payload): CbsSubmissionResult;
+interface CbsIv3AdapterInterface {
+	/**
+	 * Submit an Iv3 quarterly or annual report.
+	 *
+	 * @param array<string,mixed> $payload The Iv3 envelope — periodType
+	 *                                     (KWARTAAL|JAAR), periodValue,
+	 *                                     organizationCode, lines[] (functie + categorie + bedrag),
+	 *                                     reportingXmlBytes, checksum.
+	 *
+	 * @return CbsSubmissionResult The dispatch outcome.
+	 */
+	public function submit(array $payload): CbsSubmissionResult;
 
-    /**
-     * Whether the adapter is dormant.
-     *
-     * @return bool TRUE when the adapter is a log-only stub.
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the adapter is dormant.
+	 *
+	 * @return bool TRUE when the adapter is a log-only stub.
+	 */
+	public function isDormant(): bool;
 }//end interface

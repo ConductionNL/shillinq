@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-vpb-mkb",
     "spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
-    "description": "ADR-037 register fragment declaring the reguliere Vennootschapsbelasting (Vpb) aangifte data model for BV/NV (T3, regulatory + compliance): Belastingplichtige, VpbAangifte, FiscaleCorrectie, Innovatiebox, Deelneming, FiscaleEenheid, Voorvoegingsverlies, InvesteringsAftrek, VoorlopigeAanslag, DefinitieveAanslag, BezwaarBeroep plus the VpbTariefcatalogus parameterisation table. Per ADR-031 all fiscal logic is declarative metadata: x-openregister-lifecycle state machines, x-openregister-calculations formulas (schijftarief, voorvoegingsverlies-verjaring, facility eligibility), x-openregister-unique constraints, x-openregister-relations and x-openregister-rbac. Cross-schema preconditions that the declarative DSL cannot yet express are delegated to OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard and OCA\\Shillinq\\Lifecycle\\BezwaarTermijnGuard (ADR-031 exception path). No PHP tax-calculation service is authored (ADR-022/ADR-031). Schijftarieven and facility percentages are stored as data (VpbTariefcatalogus) so wetswijzigingen are reproducible per belastingjaar.",
+    "description": "ADR-037 register fragment declaring the reguliere Vennootschapsbelasting (Vpb) aangifte data model for BV/NV (T3, regulatory + compliance): Belastingplichtige, VpbAangifte, FiscaleCorrectie, Innovatiebox, Deelneming, FiscaleEenheid, Voorvoegingsverlies, InvesteringsAftrek, VoorlopigeAanslag, DefinitieveAanslag, BezwaarBeroep plus the VpbTariefcatalogus parameterisation table. Per ADR-031 all fiscal logic is declarative metadata: x-openregister-lifecycle state machines, x-openregister-calculations formulas (schijftarief, voorvoegingsverlies-verjaring, facility eligibility), x-openregister-unique constraints, x-openregister-relations and x-openregister-rbac. Cross-schema preconditions that the declarative DSL cannot yet express are delegated to OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard and OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard (ADR-031 exception path). No PHP tax-calculation service is authored (ADR-022/ADR-031). Schijftarieven and facility percentages are stored as data (VpbTariefcatalogus) so wetswijzigingen are reproducible per belastingjaar.",
     "imported": "2026-06-05T00:00:00Z"
   },
   "components": {
@@ -19,81 +19,138 @@
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
         "x-openregister-unique": [
-          ["administrationId", "rsin"]
+          [
+            "administrationId",
+            "rsin"
+          ]
         ],
-        "required": ["administrationId", "rsin", "kvkNummer", "rechtsvorm", "boekjaarStart", "boekjaarEind", "eHerkenningsNiveau", "status"],
+        "required": [
+          "administrationId",
+          "rsin",
+          "chamberOfCommerceNumber",
+          "legalForm",
+          "financialYearStart",
+          "financialYearEnd",
+          "eRecognitionLevel",
+          "status"
+        ],
         "properties": {
           "administrationId": {
             "type": "string",
             "description": "FK to the Administration (tenant) owning this belastingplichtige. IDOR scope key.",
-            "example": "adm-001"
+            "example": "adm-001",
+            "title": "Administration ID"
           },
-          "naam": {
+          "name": {
             "type": "string",
             "description": "Statutaire naam van de belastingplichtige.",
-            "example": "ACME BV"
+            "example": "ACME BV",
+            "title": "Naam"
           },
           "rsin": {
             "type": "string",
             "description": "Rechtspersonen Samenwerkingsverbanden Informatie Nummer (fiscaal nummer) van de onderneming.",
-            "example": "001234567"
+            "example": "001234567",
+            "title": "Rsin"
           },
-          "kvkNummer": {
+          "chamberOfCommerceNumber": {
             "type": "string",
             "description": "KvK-inschrijvingsnummer (8 cijfers).",
-            "example": "12345678"
+            "example": "12345678",
+            "title": "KvK Nummer"
           },
-          "rechtsvorm": {
+          "legalForm": {
             "type": "string",
-            "enum": ["BV", "NV", "cooperatie", "onderlinge"],
+            "enum": [
+              "BV",
+              "NV",
+              "cooperatie",
+              "onderlinge"
+            ],
             "description": "Rechtsvorm; bepaalt Vpb-plicht en aangiftevorm.",
-            "example": "BV"
+            "example": "BV",
+            "title": "Rechtsvorm"
           },
-          "boekjaarStart": {
+          "financialYearStart": {
             "type": "string",
             "format": "date",
             "description": "Eerste dag van het reguliere boekjaar.",
-            "example": "2026-01-01"
+            "example": "2026-01-01",
+            "title": "Boekjaar Start"
           },
-          "boekjaarEind": {
+          "financialYearEnd": {
             "type": "string",
             "format": "date",
             "description": "Laatste dag (balansdatum) van het reguliere boekjaar; stuurt de aangifte- en aanslagtermijnen.",
-            "example": "2026-12-31"
+            "example": "2026-12-31",
+            "title": "Boekjaar Eind"
           },
-          "fiscaalAdviseur": {
+          "fiscalAdvisor": {
             "type": "string",
             "nullable": true,
             "description": "FK naar de contact/persoon-resource van de verantwoordelijke fiscalist (Nextcloud-entiteit; geen aparte persoonsschema). Mag een SGA-intermediair zijn die namens de entiteit ondertekent.",
-            "example": "contact-fiscalist-001"
+            "example": "contact-fiscalist-001",
+            "title": "Fiscaal Adviseur"
           },
-          "digipoortCertificaat": {
+          "digipoortCertificate": {
             "type": "string",
             "nullable": true,
             "description": "FK naar de credential vault waar het PKIO-Digipoort-certificaat is opgeslagen. Bevat NOOIT het secret zelf (ADR-005). Verplicht aanwezig en geldig voordat een aangifte ingediend kan worden.",
-            "example": "vault://digipoort/acme-bv"
+            "example": "vault://digipoort/acme-bv",
+            "title": "Digipoort Certificaat"
           },
-          "eHerkenningsNiveau": {
+          "eRecognitionLevel": {
             "type": "string",
-            "enum": ["EH3", "EH4"],
+            "enum": [
+              "EH3",
+              "EH4"
+            ],
             "description": "eHerkenning-betrouwbaarheidsniveau. EH3 is Logius-minimum voor Vpb-aangifte; EH2 wordt geweigerd (REQ-VPB-009).",
-            "example": "EH3"
+            "example": "EH3",
+            "title": "E Herkennings Niveau"
           },
           "status": {
             "type": "string",
-            "enum": ["actief", "gearchiveerd"],
+            "enum": [
+              "actief",
+              "gearchiveerd"
+            ],
             "default": "actief",
             "description": "Levenscyclus van de belastingplichtige-registratie.",
-            "example": "actief"
+            "example": "actief",
+            "title": "Status"
           }
         },
         "x-openregister-rbac": {
           "roles": {
-            "fiscalist": { "permissions": ["create", "read", "update"] },
-            "bestuur": { "permissions": ["read", "update"] },
-            "viewer": { "permissions": ["read"] },
-            "auditor": { "permissions": ["read"] }
+            "fiscalist": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bestuur": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "viewer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Belastingplichtige is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "VpbTariefcatalogus": {
@@ -106,44 +163,58 @@
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
         "x-openregister-unique": [
-          ["belastingjaar"]
+          [
+            "taxYear"
+          ]
         ],
-        "required": ["belastingjaar", "tarief1", "tarief2", "belastbaarBedragGrens"],
+        "required": [
+          "taxYear",
+          "tarief1",
+          "tarief2",
+          "taxableAmountThreshold"
+        ],
         "properties": {
-          "belastingjaar": {
+          "taxYear": {
             "type": "integer",
             "description": "Het belastingjaar waarvoor deze tarieven gelden.",
-            "example": 2026
+            "example": 2026,
+            "title": "Belastingjaar"
           },
           "tarief1": {
             "type": "number",
             "description": "Schijf 1 Vpb-tarief (fractie). 2026: 0.19 over de eerste belastbaarBedragGrens.",
-            "example": 0.19
+            "example": 0.19,
+            "title": "Tarief1"
           },
           "tarief2": {
             "type": "number",
             "description": "Schijf 2 Vpb-tarief (fractie). 2026: 0.258 over het meerdere.",
-            "example": 0.258
+            "example": 0.258,
+            "title": "Tarief2"
           },
-          "belastbaarBedragGrens": {
+          "taxableAmountThreshold": {
             "type": "number",
             "description": "Grensbedrag tussen schijf 1 en schijf 2 (EUR). 2026: 245000.",
-            "example": 245000
+            "example": 245000,
+            "title": "Belastbaar Bedrag Grens"
           },
-          "innovatieboxTarief": {
+          "innovationBoxRate": {
             "type": "number",
             "description": "Effectief Vpb-tarief op innovatieboxwinst (fractie). 2026: 0.09.",
-            "example": 0.09
+            "example": 0.09,
+            "title": "Innovatiebox Tarief"
           },
-          "innovatieboxForfaitDrempel": {
+          "innovationBoxFlatRateThreshold": {
             "type": "number",
             "description": "Maximaal forfaitair innovatiebox-voordeel per jaar (EUR). 2026: 25000.",
-            "example": 25000
+            "example": 25000,
+            "title": "Innovatiebox Forfait Drempel"
           },
-          "verliesverrekening50PctDrempel": {
+          "lossOffset50PctThreshold": {
             "type": "number",
             "description": "Winstgrens waarboven de 50%-beperking op voorvoegingsverlies-verrekening geldt (post-2022 regime, EUR). 2026: 1000000.",
-            "example": 1000000
+            "example": 1000000,
+            "title": "Verliesverrekening50Pct Drempel"
           },
           "facilityPercents": {
             "type": "object",
@@ -152,23 +223,43 @@
             "example": {
               "deelnemingsvrijstelling": 1.0,
               "kiaPercentageBasis": 0.28,
-              "eiaPercentage": 0.40,
+              "eiaPercentage": 0.4,
               "miaPercentageHoog": 0.45
-            }
+            },
+            "title": "Facility Percents"
           },
           "effectiveDate": {
             "type": "string",
             "format": "date",
             "description": "Ingangsdatum van deze tariefset.",
-            "example": "2026-01-01"
+            "example": "2026-01-01",
+            "title": "Effective Date"
           }
         },
         "x-openregister-rbac": {
           "roles": {
-            "fiscalist": { "permissions": ["read"] },
-            "beheerder": { "permissions": ["create", "read", "update"] },
-            "viewer": { "permissions": ["read"] }
+            "fiscalist": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "beheerder": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "viewer": {
+              "permissions": [
+                "read"
+              ]
+            }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Vpb-tariefcatalogus is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "VpbAangifte": {
@@ -181,152 +272,209 @@
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
         "x-openregister-unique": [
-          ["belastingplichtige", "belastingjaar"]
+          [
+            "taxpayer",
+            "taxYear"
+          ]
         ],
-        "required": ["administrationId", "belastingplichtige", "belastingjaar", "boekjaarVan", "boekjaarTot", "status"],
+        "required": [
+          "administrationId",
+          "taxpayer",
+          "taxYear",
+          "financialYearFrom",
+          "financialYearUntil",
+          "status"
+        ],
         "properties": {
           "administrationId": {
             "type": "string",
             "description": "FK to the Administration (tenant). IDOR scope key.",
-            "example": "adm-001"
+            "example": "adm-001",
+            "title": "Administration ID"
           },
-          "belastingplichtige": {
+          "taxpayer": {
             "type": "string",
-            "description": "FK naar de Belastingplichtige.",
-            "example": "belastingplichtige-acme-bv"
+            "format": "uuid",
+            "$ref": "Belastingplichtige",
+            "description": "Reference to the Belastingplichtige (taxable entity) this record belongs to.",
+            "example": "belastingplichtige-acme-bv",
+            "title": "Belastingplichtige"
           },
-          "belastingjaar": {
+          "taxYear": {
             "type": "integer",
             "description": "Het belastingjaar van deze aangifte (= boekjaar waarop de aangifte ziet).",
-            "example": 2026
+            "example": 2026,
+            "title": "Belastingjaar"
           },
-          "boekjaarVan": {
+          "financialYearFrom": {
             "type": "string",
             "format": "date",
             "description": "Eerste dag van het boekjaar dat wordt aangegeven.",
-            "example": "2026-01-01"
+            "example": "2026-01-01",
+            "title": "Boekjaar Van"
           },
-          "boekjaarTot": {
+          "financialYearUntil": {
             "type": "string",
             "format": "date",
             "description": "Laatste dag van het boekjaar; stuurt de wettelijke aangiftetermijn (5 maanden, verlenging tot 11).",
-            "example": "2026-12-31"
+            "example": "2026-12-31",
+            "title": "Boekjaar Tot"
           },
           "status": {
             "type": "string",
-            "enum": ["concept", "ingediend", "aanslag-ontvangen", "bezwaar", "beroep", "onherroepelijk"],
-            "default": "concept",
+            "enum": [
+              "draft",
+              "submitted",
+              "aanslag-ontvangen",
+              "bezwaar",
+              "beroep",
+              "onherroepelijk"
+            ],
+            "default": "draft",
             "description": "Levenscyclusstatus van de aangifte (REQ-VPB-001, REQ-VPB-010).",
-            "example": "concept"
+            "example": "draft",
+            "title": "Status"
           },
-          "commercieleWinst": {
+          "commercialProfit": {
             "type": "string",
             "nullable": true,
             "description": "FK naar de vastgestelde jaarrekening-version (AnnualReport, bookkeeping-financial-statements). De commerciële winst hieruit is het uitgangspunt voor de fiscale correcties (REQ-VPB-002).",
-            "example": "annual-report-adm-001-2026"
+            "example": "annual-report-adm-001-2026",
+            "title": "Commerciele Winst"
           },
-          "commercieleWinstBedrag": {
+          "commercialProfitAmount": {
             "type": "number",
             "nullable": true,
             "description": "Commerciële winst (EUR) zoals op de vastgestelde jaarrekening; uitgangspunt voor de aansluittabel.",
-            "example": 420000
+            "example": 420000,
+            "title": "Commerciele Winst Bedrag"
           },
-          "fiscaleWinstVoorVerliezen": {
+          "fiscalProfitForLosses": {
             "type": "number",
             "nullable": true,
             "description": "Berekende fiscale winst vóór verliesverrekening = commerciële winst + som van de fiscale correcties (REQ-VPB-002). Declaratief berekend.",
-            "example": 450000
+            "example": 450000,
+            "title": "Fiscale Winst Voor Verliezen"
           },
-          "voorvoegingsverliesToegepast": {
+          "preConsolidationLossApplied": {
             "type": "number",
             "default": 0,
             "description": "Bedrag aan toegepaste voorvoegingsverliezen dit jaar (EUR), onderworpen aan het regime van het verliesjaar (REQ-VPB-006).",
-            "example": 0
+            "example": 0,
+            "title": "Voorvoegingsverlies Toegepast"
           },
-          "fiscaleWinstBelastbaar": {
+          "fiscalProfitTaxable": {
             "type": "number",
             "nullable": true,
             "description": "Belastbare fiscale winst = fiscaleWinstVoorVerliezen − voorvoegingsverliesToegepast − innovatiebox-aftrek. Declaratief berekend.",
-            "example": 450000
+            "example": 450000,
+            "title": "Fiscale Winst Belastbaar"
           },
-          "verschuldigdeVpb": {
+          "dueVpb": {
             "type": "number",
             "nullable": true,
             "description": "Verschuldigde vennootschapsbelasting tegen de schijftarieven van VpbTariefcatalogus[belastingjaar] (REQ-VPB-003). Declaratief berekend.",
-            "example": 99440
+            "example": 99440,
+            "title": "Verschuldigde VpB"
           },
-          "voorheffingen": {
+          "withholdings": {
             "type": "number",
             "default": 0,
             "description": "Verrekenbare voorheffingen (dividendbelasting, buitenlandse bronbelasting) in EUR.",
-            "example": 0
+            "example": 0,
+            "title": "Voorheffingen"
           },
-          "teBetalen": {
+          "tePay": {
             "type": "number",
             "nullable": true,
             "description": "Te betalen Vpb = verschuldigdeVpb − voorheffingen. Declaratief berekend.",
-            "example": 99440
+            "example": 99440,
+            "title": "Te Betalen"
           },
-          "ingediendOp": {
+          "submittedOn": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
             "description": "Tijdstip van indiening via Digipoort.",
-            "example": null
+            "example": null,
+            "title": "Ingediend Op"
           },
           "digipoortReceiptId": {
             "type": "string",
             "nullable": true,
             "description": "Digipoort-ontvangstbevestiging-ID, persistent bewijs van indiening (REQ-VPB-009).",
-            "example": null
+            "example": null,
+            "title": "Digipoort Receipt ID"
           },
-          "aansluittabel": {
+          "reconciliationTable": {
             "type": "array",
             "description": "Reconciliatieregels commerciële winst → fiscale winst (een per FiscaleCorrectie), voor controle door de accountant.",
-            "items": { "type": "object", "additionalProperties": true },
-            "default": []
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "default": [],
+            "title": "Aansluittabel"
           }
         },
         "x-openregister-calculations": {
-          "fiscaleWinstVoorVerliezen": {
+          "fiscalProfitForLosses": {
             "description": "Commerciële winst plus de som van alle correctieBedragen van de gekoppelde FiscaleCorrectie-records (REQ-VPB-002).",
             "expr": "(@self.commercieleWinstBedrag ?? 0) + sum(FiscaleCorrectie.correctieBedrag where aangifte == @self.id)"
           },
-          "fiscaleWinstBelastbaar": {
+          "fiscalProfitTaxable": {
             "description": "Fiscale winst vóór verliezen minus toegepaste voorvoegingsverliezen minus innovatiebox-aftrek (REQ-VPB-003..006).",
             "expr": "max(0, (@self.fiscaleWinstVoorVerliezen ?? 0) - (@self.voorvoegingsverliesToegepast ?? 0) - sum(Innovatiebox.innovatieboxWinst where aangifte == @self.id))"
           },
-          "verschuldigdeVpb": {
+          "dueVpb": {
             "description": "Schijftarief-toepassing tegen VpbTariefcatalogus van het belastingjaar: tarief1 over min(belastbaar, grens) + tarief2 over het meerdere (REQ-VPB-003). ADR-031 exception: VpbBerekeningGuard::berekenVerschuldigdeVpb levert de fallback wanneer OR de tariefcatalogus-lookup niet kan uitvoeren.",
             "expr": "lookup(VpbTariefcatalogus, belastingjaar == @self.belastingjaar).tarief1 * min(@self.fiscaleWinstBelastbaar, lookup(VpbTariefcatalogus, belastingjaar == @self.belastingjaar).belastbaarBedragGrens) + lookup(VpbTariefcatalogus, belastingjaar == @self.belastingjaar).tarief2 * max(0, @self.fiscaleWinstBelastbaar - lookup(VpbTariefcatalogus, belastingjaar == @self.belastingjaar).belastbaarBedragGrens)",
             "guard": "OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::berekenVerschuldigdeVpb"
           },
-          "teBetalen": {
+          "tePay": {
             "description": "Verschuldigde Vpb minus verrekenbare voorheffingen (REQ-VPB-003).",
             "expr": "(@self.verschuldigdeVpb ?? 0) - (@self.voorheffingen ?? 0)"
           }
         },
         "x-openregister-lifecycle": {
           "field": "status",
-          "initialState": "concept",
+          "initialState": "draft",
           "states": {
-            "concept": { "label": "Concept", "description": "Aangifte in opbouw; correcties en faciliteiten worden ingevoerd; bedragen herrekenen mee (REQ-VPB-001)." },
-            "ingediend": { "label": "Ingediend", "description": "Via Digipoort ingediend met eHerkenning EH3; Digipoort-receipt vastgelegd (REQ-VPB-009)." },
-            "aanslag-ontvangen": { "label": "Aanslag ontvangen", "description": "Definitieve aanslag van de inspecteur ontvangen; bezwaartermijn van 6 weken loopt (REQ-VPB-010)." },
-            "bezwaar": { "label": "Bezwaar", "description": "Bezwaar ingediend tegen de aanslag; uitspraaktermijn inspecteur loopt (REQ-VPB-010)." },
-            "beroep": { "label": "Beroep", "description": "Beroep/hoger beroep/cassatie aanhangig na uitspraak inspecteur (REQ-VPB-010)." },
-            "onherroepelijk": { "label": "Onherroepelijk", "description": "Aanslag staat onherroepelijk vast; geen rechtsmiddel meer open." }
+            "draft": {
+              "label": "Concept",
+              "description": "Aangifte in opbouw; correcties en faciliteiten worden ingevoerd; bedragen herrekenen mee (REQ-VPB-001)."
+            },
+            "submitted": {
+              "label": "Ingediend",
+              "description": "Via Digipoort ingediend met eHerkenning EH3; Digipoort-receipt vastgelegd (REQ-VPB-009)."
+            },
+            "aanslag-ontvangen": {
+              "label": "Aanslag ontvangen",
+              "description": "Definitieve aanslag van de inspecteur ontvangen; bezwaartermijn van 6 weken loopt (REQ-VPB-010)."
+            },
+            "bezwaar": {
+              "label": "Bezwaar",
+              "description": "Bezwaar ingediend tegen de aanslag; uitspraaktermijn inspecteur loopt (REQ-VPB-010)."
+            },
+            "beroep": {
+              "label": "Beroep",
+              "description": "Beroep/hoger beroep/cassatie aanhangig na uitspraak inspecteur (REQ-VPB-010)."
+            },
+            "onherroepelijk": {
+              "label": "Onherroepelijk",
+              "description": "Aanslag staat onherroepelijk vast; geen rechtsmiddel meer open."
+            }
           },
           "transitions": {
             "indienen": {
-              "from": "concept",
-              "to": "ingediend",
+              "from": "draft",
+              "to": "submitted",
               "label": "Aangifte indienen via Digipoort",
               "description": "Indienen mag alleen wanneer de gekoppelde jaarrekening vastgesteld is, de S&O-verklaring bij een innovatiebox-claim aanwezig is, de Belastingplichtige eHerkenning EH3+ en een geldig Digipoort-certificaat heeft, en de faciliteit-eligibility slaagt (REQ-VPB-002, REQ-VPB-004, REQ-VPB-009). Cross-schema check: VpbAangifteGuard::canIndienen.",
               "requires": "OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard::canIndienen"
             },
             "aanslagOntvangen": {
-              "from": "ingediend",
+              "from": "submitted",
               "to": "aanslag-ontvangen",
               "label": "Definitieve aanslag ontvangen",
               "description": "Registratie van de ontvangen DefinitieveAanslag; start van de 6-weken-bezwaartermijn (REQ-VPB-010)."
@@ -335,8 +483,8 @@
               "from": "aanslag-ontvangen",
               "to": "bezwaar",
               "label": "Bezwaar maken",
-              "description": "Bezwaar mag alleen binnen de wettelijke termijn van 6 weken na de dagtekening van de aanslag (REQ-VPB-010). Cross-schema termijn-check: BezwaarTermijnGuard::canBezwaarMaken.",
-              "requires": "OCA\\Shillinq\\Lifecycle\\BezwaarTermijnGuard::canBezwaarMaken"
+              "description": "Bezwaar mag alleen binnen de wettelijke termijn van 6 weken na de dagtekening van de aanslag (REQ-VPB-010). Cross-schema termijn-check: ObjectionPeriodGuard::canFileObjection.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileObjection"
             },
             "beroepInstellen": {
               "from": "bezwaar",
@@ -358,20 +506,35 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "belastingplichtigeRef": { "localField": "belastingplichtige", "relatedSchema": "Belastingplichtige", "relatedField": "id", "cardinality": "many-to-one", "description": "De belastingplichtige van deze aangifte." },
-          "correcties": { "localField": "id", "relatedSchema": "FiscaleCorrectie", "relatedField": "aangifte", "cardinality": "one-to-many", "description": "Fiscale correcties commercieel → fiscaal (REQ-VPB-002)." },
-          "innovatieboxClaims": { "localField": "id", "relatedSchema": "Innovatiebox", "relatedField": "aangifte", "cardinality": "one-to-many", "description": "Innovatiebox-claims (REQ-VPB-004)." },
-          "investeringsAftrekken": { "localField": "id", "relatedSchema": "InvesteringsAftrek", "relatedField": "aangifte", "cardinality": "one-to-many", "description": "KIA/EIA/MIA/Vamil-claims (REQ-VPB-008)." },
-          "definitieveAanslag": { "localField": "id", "relatedSchema": "DefinitieveAanslag", "relatedField": "aangifte", "cardinality": "one-to-one", "description": "De definitieve aanslag (REQ-VPB-010)." }
-        },
         "x-openregister-rbac": {
           "roles": {
-            "fiscalist": { "permissions": ["create", "read", "update"] },
-            "bestuur": { "permissions": ["read"] },
-            "viewer": { "permissions": ["read"] },
-            "auditor": { "permissions": ["read"] }
+            "fiscalist": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bestuur": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "viewer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Vpb-aangifte is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "FiscaleCorrectie": {
@@ -383,32 +546,99 @@
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
-        "required": ["administrationId", "aangifte", "code", "commercieelBedrag", "fiscaalBedrag"],
+        "required": [
+          "administrationId",
+          "taxReturn",
+          "code",
+          "commercialAmount",
+          "fiscalAmount"
+        ],
         "properties": {
-          "administrationId": { "type": "string", "description": "FK to the Administration (tenant). IDOR scope key.", "example": "adm-001" },
-          "aangifte": { "type": "string", "description": "FK naar de VpbAangifte.", "example": "vpb-aangifte-acme-2026" },
-          "code": { "type": "string", "description": "NTP/NT-taxonomie-elementcode van de correctie.", "example": "niet-aftrekbare-kosten-art-3-14" },
-          "omschrijving": { "type": "string", "nullable": true, "description": "Korte omschrijving van de correctie.", "example": "Niet-aftrekbare boetes en geldelijke sancties" },
-          "commercieelBedrag": { "type": "number", "description": "Bedrag in de commerciële jaarrekening (EUR).", "example": 0 },
-          "fiscaalBedrag": { "type": "number", "description": "Fiscaal toegestane bedrag (EUR).", "example": 30000 },
-          "correctieBedrag": { "type": "number", "nullable": true, "description": "Delta = fiscaalBedrag − commercieelBedrag (declaratief berekend).", "example": 30000 },
-          "toelichting": { "type": "string", "nullable": true, "description": "Onderbouwing met Wet Vpb-artikelverwijzing.", "example": "Art. 3.14 Wet IB jo. Wet Vpb: boetes niet aftrekbaar." }
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration (tenant). IDOR scope key.",
+            "example": "adm-001",
+            "title": "Administration ID"
+          },
+          "taxReturn": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "VpbAangifte",
+            "description": "Reference to the VpbAangifte (corporate income tax return) this record belongs to.",
+            "example": "vpb-aangifte-acme-2026",
+            "title": "Aangifte"
+          },
+          "code": {
+            "type": "string",
+            "description": "NTP/NT-taxonomie-elementcode van de correctie.",
+            "example": "niet-aftrekbare-kosten-art-3-14",
+            "title": "Code"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Korte omschrijving van de correctie.",
+            "example": "Niet-aftrekbare boetes en geldelijke sancties",
+            "title": "Omschrijving"
+          },
+          "commercialAmount": {
+            "type": "number",
+            "description": "Bedrag in de commerciële jaarrekening (EUR).",
+            "example": 0,
+            "title": "Commercieel Bedrag"
+          },
+          "fiscalAmount": {
+            "type": "number",
+            "description": "Fiscaal toegestane bedrag (EUR).",
+            "example": 30000,
+            "title": "Fiscaal Bedrag"
+          },
+          "correctionAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Delta = fiscaalBedrag − commercieelBedrag (declaratief berekend).",
+            "example": 30000,
+            "title": "Correctie Bedrag"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Onderbouwing met Wet Vpb-artikelverwijzing.",
+            "example": "Art. 3.14 Wet IB jo. Wet Vpb: boetes niet aftrekbaar.",
+            "title": "Toelichting"
+          }
         },
         "x-openregister-calculations": {
-          "correctieBedrag": {
+          "correctionAmount": {
             "description": "Fiscaal bedrag minus commercieel bedrag (REQ-VPB-002).",
             "expr": "(@self.fiscaalBedrag ?? 0) - (@self.commercieelBedrag ?? 0)"
           }
         },
-        "x-openregister-relations": {
-          "aangifteRef": { "localField": "aangifte", "relatedSchema": "VpbAangifte", "relatedField": "id", "cardinality": "many-to-one", "description": "De aangifte waartoe deze correctie behoort." }
-        },
         "x-openregister-rbac": {
           "roles": {
-            "fiscalist": { "permissions": ["create", "read", "update", "delete"] },
-            "viewer": { "permissions": ["read"] },
-            "auditor": { "permissions": ["read"] }
+            "fiscalist": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "viewer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Fiscale correctie is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Innovatiebox": {
@@ -420,43 +650,138 @@
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
-        "required": ["administrationId", "aangifte", "methodType", "soVerklaringReferentie"],
+        "required": [
+          "administrationId",
+          "taxReturn",
+          "methodType",
+          "soDeclarationReference"
+        ],
         "properties": {
-          "administrationId": { "type": "string", "description": "FK to the Administration (tenant). IDOR scope key.", "example": "adm-001" },
-          "aangifte": { "type": "string", "description": "FK naar de VpbAangifte.", "example": "vpb-aangifte-acme-2026" },
-          "methodType": { "type": "string", "enum": ["forfaitair", "werkelijke-winst"], "description": "Berekeningsmethode van de innovatiebox.", "example": "werkelijke-winst" },
-          "kwalificerendeActiva": { "type": "array", "description": "Kwalificerende immateriële activa (S&O/octrooi).", "items": { "type": "object", "additionalProperties": true }, "default": [] },
-          "forfaitaireGeldigheidTot": { "type": "string", "format": "date", "nullable": true, "description": "Einddatum van het 3-jaars forfaitair-venster (S&O-afgiftedatum + 3 jaar).", "example": null },
-          "nexusFactor": { "type": "number", "nullable": true, "minimum": 0, "maximum": 1, "description": "Nexus-factor (eigen R&D / totale R&D), begrensd op 1, voor werkelijke-winst-methode.", "example": 0.85 },
-          "innovatieboxWinst": { "type": "number", "nullable": true, "description": "Winst die onder de innovatiebox valt (EUR); bij forfaitair gemaximeerd op de catalogusdrempel.", "example": 680000 },
-          "effectiefTarief": { "type": "number", "nullable": true, "description": "Effectief Vpb-tarief op innovatieboxwinst (uit VpbTariefcatalogus.innovatieboxTarief).", "example": 0.09 },
-          "soVerklaringReferentie": { "type": "string", "description": "RVO-uitgegeven S&O-verklaring-referentie (WBSO); verplicht (REQ-VPB-004).", "example": "SO-2026-0001234" },
-          "innovatieboxBedrag": { "type": "number", "nullable": true, "description": "Belastingvoordeel uit de innovatiebox (EUR).", "example": 0 }
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration (tenant). IDOR scope key.",
+            "example": "adm-001",
+            "title": "Administration ID"
+          },
+          "taxReturn": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "VpbAangifte",
+            "description": "Reference to the VpbAangifte (corporate income tax return) this record belongs to.",
+            "example": "vpb-aangifte-acme-2026",
+            "title": "Aangifte"
+          },
+          "methodType": {
+            "type": "string",
+            "enum": [
+              "flatRate",
+              "actual-profit"
+            ],
+            "description": "Berekeningsmethode van de innovatiebox.",
+            "example": "actual-profit",
+            "title": "Method Type"
+          },
+          "qualifyingAssets": {
+            "type": "array",
+            "description": "Kwalificerende immateriële activa (S&O/octrooi).",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "default": [],
+            "title": "Kwalificerende Activa"
+          },
+          "flatRateValidityTo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Einddatum van het 3-jaars forfaitair-venster (S&O-afgiftedatum + 3 jaar).",
+            "example": null,
+            "title": "Forfaitaire Geldigheid Tot"
+          },
+          "nexusFactor": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Nexus-factor (eigen R&D / totale R&D), begrensd op 1, voor werkelijke-winst-methode.",
+            "example": 0.85,
+            "title": "Nexus Factor"
+          },
+          "innovationBoxProfit": {
+            "type": "number",
+            "nullable": true,
+            "description": "Winst die onder de innovatiebox valt (EUR); bij forfaitair gemaximeerd op de catalogusdrempel.",
+            "example": 680000,
+            "title": "Innovatiebox Winst"
+          },
+          "effectiveRate": {
+            "type": "number",
+            "nullable": true,
+            "description": "Effectief Vpb-tarief op innovatieboxwinst (uit VpbTariefcatalogus.innovatieboxTarief).",
+            "example": 0.09,
+            "title": "Effectief Tarief"
+          },
+          "soDeclarationReference": {
+            "type": "string",
+            "description": "RVO-uitgegeven S&O-verklaring-referentie (WBSO); verplicht (REQ-VPB-004).",
+            "example": "SO-2026-0001234",
+            "title": "So Verklaring Referentie"
+          },
+          "innovationBoxAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Belastingvoordeel uit de innovatiebox (EUR).",
+            "example": 0,
+            "title": "Innovatiebox Bedrag"
+          }
         },
         "x-openregister-calculations": {
-          "innovatieboxBedrag": {
+          "innovationBoxAmount": {
             "description": "Innovatieboxwinst maal het tariefverschil tussen het reguliere schijf-2-tarief en het innovatiebox-tarief (REQ-VPB-004).",
             "expr": "(@self.innovatieboxWinst ?? 0) * (lookup(VpbTariefcatalogus, belastingjaar == VpbAangifte[@self.aangifte].belastingjaar).tarief2 - (@self.effectiefTarief ?? 0.09))"
           }
         },
         "x-openregister-lifecycle": {
           "field": "methodType",
-          "initialState": "werkelijke-winst",
+          "initialState": "actual-profit",
           "states": {
-            "forfaitair": { "label": "Forfaitair", "description": "Forfaitaire benadering; gemaximeerd op de catalogusdrempel en beperkt tot de eerste 3 jaar na S&O-afgifte (REQ-VPB-004)." },
-            "werkelijke-winst": { "label": "Werkelijke winst", "description": "Werkelijke-winst-methode met nexus-factor; ongemaximeerd (REQ-VPB-004)." }
+            "flatRate": {
+              "label": "Forfaitair",
+              "description": "Forfaitaire benadering; gemaximeerd op de catalogusdrempel en beperkt tot de eerste 3 jaar na S&O-afgifte (REQ-VPB-004)."
+            },
+            "actual-profit": {
+              "label": "Werkelijke winst",
+              "description": "Werkelijke-winst-methode met nexus-factor; ongemaximeerd (REQ-VPB-004)."
+            }
           },
           "transitions": {}
         },
-        "x-openregister-relations": {
-          "aangifteRef": { "localField": "aangifte", "relatedSchema": "VpbAangifte", "relatedField": "id", "cardinality": "many-to-one", "description": "De aangifte waartoe deze claim behoort." }
-        },
         "x-openregister-rbac": {
           "roles": {
-            "fiscalist": { "permissions": ["create", "read", "update", "delete"] },
-            "viewer": { "permissions": ["read"] },
-            "auditor": { "permissions": ["read"] }
+            "fiscalist": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "viewer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Innovatiebox-claim is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Deelneming": {
@@ -468,37 +793,136 @@
         "x-schema-org": "schema:OwnershipInfo",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
-        "required": ["administrationId", "belastingplichtige", "naam", "aandeelhouderschapPercentage"],
+        "required": [
+          "administrationId",
+          "taxpayer",
+          "name",
+          "shareholdingPercentage"
+        ],
         "properties": {
-          "administrationId": { "type": "string", "description": "FK to the Administration (tenant). IDOR scope key.", "example": "adm-001" },
-          "belastingplichtige": { "type": "string", "description": "FK naar de Belastingplichtige (houdstermaatschappij).", "example": "belastingplichtige-acme-bv" },
-          "naam": { "type": "string", "description": "Naam van de deelneming.", "example": "ACME Sub BV" },
-          "rsin": { "type": "string", "nullable": true, "description": "RSIN/fiscaal nummer van de deelneming.", "example": "009876543" },
-          "aandeelhouderschapPercentage": { "type": "number", "minimum": 0, "maximum": 100, "description": "Belang in nominaal gestort kapitaal (%).", "example": 100 },
-          "kwalificerendeDeelneming": { "type": "boolean", "nullable": true, "description": "True bij >=5% nominaal gestort kapitaal (declaratief berekend).", "example": true },
-          "oogmerktoets": { "type": "string", "nullable": true, "description": "Motivatie oogmerktoets (substantieel economisch oogmerk, geen belastingontwijking).", "example": "Strategische operationele dochter." },
-          "onderworpenheidstoets": { "type": "string", "nullable": true, "description": "Motivatie onderworpenheidstoets (deelneming naar Nederlandse maatstaven redelijk belast).", "example": "NL-gevestigd, regulier Vpb-plichtig." },
-          "bezittingentoets": { "type": "string", "nullable": true, "description": "Motivatie bezittingentoets (geen vrije-beleggingsdeelneming).", "example": "Materiele onderneming, <50% vrije beleggingen." },
-          "deelnemingsvrijstellingVanToepassing": { "type": "boolean", "default": false, "description": "Of de deelnemingsvrijstelling wordt geclaimd (REQ-VPB-005).", "example": true },
-          "lowTaxedPortfolioVlag": { "type": "boolean", "default": false, "description": "Systeemvlag voor mogelijke laagbelaste beleggingsdeelneming; fiscalist beslist met motivatie.", "example": false },
-          "dividenden": { "type": "number", "default": 0, "description": "Ontvangen dividenden (EUR).", "example": 0 },
-          "vervreemdingsResultaat": { "type": "number", "default": 0, "description": "Vervreemdingsresultaat (EUR).", "example": 0 }
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration (tenant). IDOR scope key.",
+            "example": "adm-001",
+            "title": "Administration ID"
+          },
+          "taxpayer": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "Belastingplichtige",
+            "description": "Reference to the holding Belastingplichtige (houdstermaatschappij) that owns this participation.",
+            "example": "belastingplichtige-acme-bv",
+            "title": "Belastingplichtige"
+          },
+          "name": {
+            "type": "string",
+            "description": "Naam van de deelneming.",
+            "example": "ACME Sub BV",
+            "title": "Naam"
+          },
+          "rsin": {
+            "type": "string",
+            "nullable": true,
+            "description": "RSIN/fiscaal nummer van de deelneming.",
+            "example": "009876543",
+            "title": "Rsin"
+          },
+          "shareholdingPercentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Belang in nominaal gestort kapitaal (%).",
+            "example": 100,
+            "title": "Aandeelhouderschap Percentage"
+          },
+          "qualifyingParticipation": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True bij >=5% nominaal gestort kapitaal (declaratief berekend).",
+            "example": true,
+            "title": "Kwalificerende Deelneming"
+          },
+          "intentionTest": {
+            "type": "string",
+            "nullable": true,
+            "description": "Motivatie oogmerktoets (substantieel economisch oogmerk, geen belastingontwijking).",
+            "example": "Strategische operationele dochter.",
+            "title": "Oogmerktoets"
+          },
+          "subjectToTaxTest": {
+            "type": "string",
+            "nullable": true,
+            "description": "Motivatie onderworpenheidstoets (deelneming naar Nederlandse maatstaven redelijk belast).",
+            "example": "NL-gevestigd, regulier Vpb-plichtig.",
+            "title": "Onderworpenheidstoets"
+          },
+          "bezittingentoets": {
+            "type": "string",
+            "nullable": true,
+            "description": "Motivatie bezittingentoets (geen vrije-beleggingsdeelneming).",
+            "example": "Materiele onderneming, <50% vrije beleggingen.",
+            "title": "Bezittingentoets"
+          },
+          "participationExemptionFromApplication": {
+            "type": "boolean",
+            "default": false,
+            "description": "Of de deelnemingsvrijstelling wordt geclaimd (REQ-VPB-005).",
+            "example": true,
+            "title": "Deelnemingsvrijstelling Van Toepassing"
+          },
+          "lowTaxedPortfolioFlag": {
+            "type": "boolean",
+            "default": false,
+            "description": "Systeemvlag voor mogelijke laagbelaste beleggingsdeelneming; fiscalist beslist met motivatie.",
+            "example": false,
+            "title": "Low Taxed Portfolio Vlag"
+          },
+          "dividenden": {
+            "type": "number",
+            "default": 0,
+            "description": "Ontvangen dividenden (EUR).",
+            "example": 0,
+            "title": "Dividenden"
+          },
+          "disposalResult": {
+            "type": "number",
+            "default": 0,
+            "description": "Vervreemdingsresultaat (EUR).",
+            "example": 0,
+            "title": "Vervreemdings Resultaat"
+          }
         },
         "x-openregister-calculations": {
-          "kwalificerendeDeelneming": {
+          "qualifyingParticipation": {
             "description": "True wanneer het belang ten minste 5% bedraagt (REQ-VPB-005).",
             "expr": "(@self.aandeelhouderschapPercentage ?? 0) >= 5"
           }
         },
-        "x-openregister-relations": {
-          "belastingplichtigeRef": { "localField": "belastingplichtige", "relatedSchema": "Belastingplichtige", "relatedField": "id", "cardinality": "many-to-one", "description": "De houdster-belastingplichtige." }
-        },
         "x-openregister-rbac": {
           "roles": {
-            "fiscalist": { "permissions": ["create", "read", "update", "delete"] },
-            "viewer": { "permissions": ["read"] },
-            "auditor": { "permissions": ["read"] }
+            "fiscalist": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "viewer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Deelneming is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "FiscaleEenheid": {
@@ -510,27 +934,109 @@
         "x-schema-org": "schema:Organization",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
-        "required": ["administrationId", "moedermaatschappij", "voegingsdatum"],
+        "required": [
+          "administrationId",
+          "parentCompany",
+          "consolidationDate"
+        ],
         "properties": {
-          "administrationId": { "type": "string", "description": "FK to the Administration (tenant). IDOR scope key.", "example": "adm-001" },
-          "moedermaatschappij": { "type": "string", "description": "FK naar de Belastingplichtige-moedermaatschappij.", "example": "belastingplichtige-acme-bv" },
-          "dochters": { "type": "array", "description": "FK-array naar de gevoegde dochter-Belastingplichtigen.", "items": { "type": "string" }, "default": [] },
-          "voegingsdatum": { "type": "string", "format": "date", "description": "Datum van voeging.", "example": "2026-01-01" },
-          "ontvoegingsdatum": { "type": "string", "format": "date", "nullable": true, "description": "Datum van ontvoeging (indien van toepassing).", "example": null },
-          "bezitPercentage": { "type": "number", "minimum": 0, "maximum": 100, "default": 100, "description": "Bezitspercentage moeder in dochter; moet >=95 voor voeging (REQ-VPB-007).", "example": 100 },
-          "gelijkeBoekjaren": { "type": "boolean", "default": true, "description": "Of moeder en dochters gelijke boekjaren hebben (voorwaarde art. 15).", "example": true },
-          "vestigingNederland": { "type": "boolean", "default": true, "description": "Of alle partijen in NL gevestigd zijn (voorwaarde art. 15).", "example": true },
-          "voorvoegingsverliezenPerDochter": { "type": "array", "description": "Per-dochter FK-array naar Voorvoegingsverlies-records.", "items": { "type": "object", "additionalProperties": true }, "default": [] }
-        },
-        "x-openregister-relations": {
-          "moederRef": { "localField": "moedermaatschappij", "relatedSchema": "Belastingplichtige", "relatedField": "id", "cardinality": "many-to-one", "description": "De moedermaatschappij." }
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration (tenant). IDOR scope key.",
+            "example": "adm-001",
+            "title": "Administration ID"
+          },
+          "parentCompany": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "Belastingplichtige",
+            "description": "Reference to the parent Belastingplichtige (moedermaatschappij) at the head of this fiscale eenheid.",
+            "example": "belastingplichtige-acme-bv",
+            "title": "Moedermaatschappij"
+          },
+          "dochters": {
+            "type": "array",
+            "description": "FK-array naar de gevoegde dochter-Belastingplichtigen.",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "title": "Dochters"
+          },
+          "consolidationDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Datum van voeging.",
+            "example": "2026-01-01",
+            "title": "Voegingsdatum"
+          },
+          "deconsolidationDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Datum van ontvoeging (indien van toepassing).",
+            "example": null,
+            "title": "Ontvoegingsdatum"
+          },
+          "holdingPercentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 100,
+            "description": "Bezitspercentage moeder in dochter; moet >=95 voor voeging (REQ-VPB-007).",
+            "example": 100,
+            "title": "Bezit Percentage"
+          },
+          "equalFinancialYears": {
+            "type": "boolean",
+            "default": true,
+            "description": "Of moeder en dochters gelijke boekjaren hebben (voorwaarde art. 15).",
+            "example": true,
+            "title": "Gelijke Boekjaren"
+          },
+          "establishmentNetherlands": {
+            "type": "boolean",
+            "default": true,
+            "description": "Of alle partijen in NL gevestigd zijn (voorwaarde art. 15).",
+            "example": true,
+            "title": "Vestiging Nederland"
+          },
+          "preConsolidationLossesPerSubsidiary": {
+            "type": "array",
+            "description": "Per-dochter FK-array naar Voorvoegingsverlies-records.",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "default": [],
+            "title": "Voorvoegingsverliezen Per Dochter"
+          }
         },
         "x-openregister-rbac": {
           "roles": {
-            "fiscalist": { "permissions": ["create", "read", "update", "delete"] },
-            "viewer": { "permissions": ["read"] },
-            "auditor": { "permissions": ["read"] }
+            "fiscalist": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "viewer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Fiscale eenheid is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "Voorvoegingsverlies": {
@@ -542,20 +1048,83 @@
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
-        "required": ["administrationId", "belastingplichtige", "verliesjaar", "oorspronkelijkBedrag"],
+        "required": [
+          "administrationId",
+          "taxpayer",
+          "lossYear",
+          "originalAmount"
+        ],
         "properties": {
-          "administrationId": { "type": "string", "description": "FK to the Administration (tenant). IDOR scope key.", "example": "adm-001" },
-          "belastingplichtige": { "type": "string", "description": "FK naar de Belastingplichtige.", "example": "belastingplichtige-acme-bv" },
-          "verliesjaar": { "type": "integer", "description": "Het jaar waarin het verlies is geleden; bepaalt het regime.", "example": 2023 },
-          "oorspronkelijkBedrag": { "type": "number", "description": "Oorspronkelijk vastgesteld verlies (EUR).", "example": 50000 },
-          "reedsVerrekend": { "type": "number", "default": 0, "description": "Cumulatief reeds verrekend bedrag (EUR).", "example": 10000 },
-          "restant": { "type": "number", "nullable": true, "description": "Onverrekend restant = oorspronkelijkBedrag − reedsVerrekend (declaratief berekend).", "example": 40000 },
-          "regime": { "type": "string", "enum": ["9jr", "6jr", "onbeperkt-50pct"], "nullable": true, "description": "Verrekeningsregime, automatisch bepaald door verliesjaar (declaratief berekend).", "example": "6jr" },
-          "verjaartIn": { "type": "string", "format": "date", "nullable": true, "description": "Verjaringsdatum (declaratief berekend per regime); null bij het onbeperkte regime.", "example": "2029-12-31" },
-          "beschikking": { "type": "string", "nullable": true, "description": "FK naar de verliesvaststellingsbeschikking van de inspecteur.", "example": null }
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration (tenant). IDOR scope key.",
+            "example": "adm-001",
+            "title": "Administration ID"
+          },
+          "taxpayer": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "Belastingplichtige",
+            "description": "Reference to the Belastingplichtige (taxable entity) this record belongs to.",
+            "example": "belastingplichtige-acme-bv",
+            "title": "Belastingplichtige"
+          },
+          "lossYear": {
+            "type": "integer",
+            "description": "Het jaar waarin het verlies is geleden; bepaalt het regime.",
+            "example": 2023,
+            "title": "Verliesjaar"
+          },
+          "originalAmount": {
+            "type": "number",
+            "description": "Oorspronkelijk vastgesteld verlies (EUR).",
+            "example": 50000,
+            "title": "Oorspronkelijk Bedrag"
+          },
+          "reedsVerrekend": {
+            "type": "number",
+            "default": 0,
+            "description": "Cumulatief reeds verrekend bedrag (EUR).",
+            "example": 10000,
+            "title": "Reeds Verrekend"
+          },
+          "remainder": {
+            "type": "number",
+            "nullable": true,
+            "description": "Onverrekend restant = oorspronkelijkBedrag − reedsVerrekend (declaratief berekend).",
+            "example": 40000,
+            "title": "Restant"
+          },
+          "regime": {
+            "type": "string",
+            "enum": [
+              "9jr",
+              "6jr",
+              "onbeperkt-50pct"
+            ],
+            "nullable": true,
+            "description": "Verrekeningsregime, automatisch bepaald door verliesjaar (declaratief berekend).",
+            "example": "6jr",
+            "title": "Regime"
+          },
+          "expiresIn": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Verjaringsdatum (declaratief berekend per regime); null bij het onbeperkte regime.",
+            "example": "2029-12-31",
+            "title": "Verjaart In"
+          },
+          "decision": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK naar de verliesvaststellingsbeschikking van de inspecteur.",
+            "example": null,
+            "title": "Beschikking"
+          }
         },
         "x-openregister-calculations": {
-          "restant": {
+          "remainder": {
             "description": "Oorspronkelijk bedrag minus reeds verrekend (REQ-VPB-006).",
             "expr": "(@self.oorspronkelijkBedrag ?? 0) - (@self.reedsVerrekend ?? 0)"
           },
@@ -564,21 +1133,37 @@
             "expr": "@self.verliesjaar <= 2018 ? '9jr' : (@self.verliesjaar <= 2021 ? '6jr' : 'onbeperkt-50pct')",
             "guard": "OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::bepaalVerliesRegime"
           },
-          "verjaartIn": {
+          "expiresIn": {
             "description": "Verjaringsdatum: 31-12 van (verliesjaar + 9) voor het 9jr-regime, (verliesjaar + 6) voor het 6jr-regime, null bij onbeperkt (REQ-VPB-006). ADR-031 exception: VpbBerekeningGuard::bepaalVerjaardatum levert de fallback.",
             "expr": "@self.verliesjaar <= 2018 ? date((@self.verliesjaar + 9) + '-12-31') : (@self.verliesjaar <= 2021 ? date((@self.verliesjaar + 6) + '-12-31') : null)",
             "guard": "OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::bepaalVerjaardatum"
           }
         },
-        "x-openregister-relations": {
-          "belastingplichtigeRef": { "localField": "belastingplichtige", "relatedSchema": "Belastingplichtige", "relatedField": "id", "cardinality": "many-to-one", "description": "De belastingplichtige die het verlies droeg." }
-        },
         "x-openregister-rbac": {
           "roles": {
-            "fiscalist": { "permissions": ["create", "read", "update", "delete"] },
-            "viewer": { "permissions": ["read"] },
-            "auditor": { "permissions": ["read"] }
+            "fiscalist": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "viewer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Voorvoegingsverlies is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "InvesteringsAftrek": {
@@ -590,38 +1175,131 @@
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
-        "required": ["administrationId", "aangifte", "type", "investeringsbedrag"],
+        "required": [
+          "administrationId",
+          "taxReturn",
+          "type",
+          "investmentAmount"
+        ],
         "properties": {
-          "administrationId": { "type": "string", "description": "FK to the Administration (tenant). IDOR scope key.", "example": "adm-001" },
-          "aangifte": { "type": "string", "description": "FK naar de VpbAangifte.", "example": "vpb-aangifte-acme-2026" },
-          "type": { "type": "string", "enum": ["KIA", "EIA", "MIA", "Vamil"], "description": "Soort investeringsaftrek.", "example": "EIA" },
-          "investering": { "type": "string", "nullable": true, "description": "FK naar het onderliggende investerings-/activumrecord.", "example": null },
-          "investeringsbedrag": { "type": "number", "description": "Investeringsbedrag (EUR).", "example": 100000 },
-          "aftrekPercentage": { "type": "number", "nullable": true, "description": "Aftrekpercentage van het belastingjaar (uit VpbTariefcatalogus).", "example": 0.40 },
-          "aftrekBedrag": { "type": "number", "nullable": true, "description": "Aftrekbedrag = investeringsbedrag × aftrekPercentage (declaratief berekend).", "example": 40000 },
-          "gecombineerdMet": { "type": "array", "description": "Andere aftrektypes op dezelfde investering (voor cumulatiecontrole).", "items": { "type": "string", "enum": ["KIA", "EIA", "MIA", "Vamil"] }, "default": [] },
-          "cumulatieConflict": { "type": "boolean", "nullable": true, "description": "True wanneer EIA en MIA op dezelfde investering gestapeld zijn (verboden, declaratief berekend).", "example": false },
-          "rvoMelding": { "type": "string", "nullable": true, "description": "RVO-meldingsreferentie (verplicht voor EIA/MIA/Vamil).", "example": null }
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration (tenant). IDOR scope key.",
+            "example": "adm-001",
+            "title": "Administration ID"
+          },
+          "taxReturn": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "VpbAangifte",
+            "description": "Reference to the VpbAangifte (corporate income tax return) this record belongs to.",
+            "example": "vpb-aangifte-acme-2026",
+            "title": "Aangifte"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "KIA",
+              "EIA",
+              "MIA",
+              "Vamil"
+            ],
+            "description": "Soort investeringsaftrek.",
+            "example": "EIA",
+            "title": "Type"
+          },
+          "investment": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK naar het onderliggende investerings-/activumrecord.",
+            "example": null,
+            "title": "Investering"
+          },
+          "investmentAmount": {
+            "type": "number",
+            "description": "Investeringsbedrag (EUR).",
+            "example": 100000,
+            "title": "Investeringsbedrag"
+          },
+          "deductionPercentage": {
+            "type": "number",
+            "nullable": true,
+            "description": "Aftrekpercentage van het belastingjaar (uit VpbTariefcatalogus).",
+            "example": 0.4,
+            "title": "Aftrek Percentage"
+          },
+          "deductionAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Aftrekbedrag = investeringsbedrag × aftrekPercentage (declaratief berekend).",
+            "example": 40000,
+            "title": "Aftrek Bedrag"
+          },
+          "combinedWith": {
+            "type": "array",
+            "description": "Andere aftrektypes op dezelfde investering (voor cumulatiecontrole).",
+            "items": {
+              "type": "string",
+              "enum": [
+                "KIA",
+                "EIA",
+                "MIA",
+                "Vamil"
+              ]
+            },
+            "default": [],
+            "title": "Gecombineerd Met"
+          },
+          "cumulationConflict": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True wanneer EIA en MIA op dezelfde investering gestapeld zijn (verboden, declaratief berekend).",
+            "example": false,
+            "title": "Cumulatie Conflict"
+          },
+          "rvoReport": {
+            "type": "string",
+            "nullable": true,
+            "description": "RVO-meldingsreferentie (verplicht voor EIA/MIA/Vamil).",
+            "example": null,
+            "title": "Rvo Melding"
+          }
         },
         "x-openregister-calculations": {
-          "aftrekBedrag": {
+          "deductionAmount": {
             "description": "Investeringsbedrag maal aftrekpercentage (REQ-VPB-008).",
             "expr": "(@self.investeringsbedrag ?? 0) * (@self.aftrekPercentage ?? 0)"
           },
-          "cumulatieConflict": {
+          "cumulationConflict": {
             "description": "Verboden stapeling EIA+MIA op dezelfde investering (REQ-VPB-008).",
             "expr": "(@self.type == 'EIA' and contains(@self.gecombineerdMet, 'MIA')) or (@self.type == 'MIA' and contains(@self.gecombineerdMet, 'EIA'))"
           }
         },
-        "x-openregister-relations": {
-          "aangifteRef": { "localField": "aangifte", "relatedSchema": "VpbAangifte", "relatedField": "id", "cardinality": "many-to-one", "description": "De aangifte waartoe deze aftrek behoort." }
-        },
         "x-openregister-rbac": {
           "roles": {
-            "fiscalist": { "permissions": ["create", "read", "update", "delete"] },
-            "viewer": { "permissions": ["read"] },
-            "auditor": { "permissions": ["read"] }
+            "fiscalist": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "viewer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Investeringsaftrek is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "VoorlopigeAanslag": {
@@ -633,28 +1311,116 @@
         "x-schema-org": "schema:Invoice",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
-        "required": ["administrationId", "belastingplichtige", "belastingjaar", "dagtekening", "voorlopigVerschuldigd"],
+        "required": [
+          "administrationId",
+          "taxpayer",
+          "taxYear",
+          "issueDate",
+          "provisionalDue"
+        ],
         "properties": {
-          "administrationId": { "type": "string", "description": "FK to the Administration (tenant). IDOR scope key.", "example": "adm-001" },
-          "belastingplichtige": { "type": "string", "description": "FK naar de Belastingplichtige.", "example": "belastingplichtige-acme-bv" },
-          "belastingjaar": { "type": "integer", "description": "Belastingjaar van de voorlopige aanslag.", "example": 2026 },
-          "aanslagnummer": { "type": "string", "nullable": true, "description": "Aanslagnummer van de inspecteur.", "example": "Vpb.0012.V.66.0112" },
-          "dagtekening": { "type": "string", "format": "date", "description": "Dagtekening van de voorlopige aanslag.", "example": "2026-02-15" },
-          "geschatBelastbaarBedrag": { "type": "number", "nullable": true, "description": "Door de inspecteur geschat belastbaar bedrag (EUR).", "example": 400000 },
-          "voorlopigVerschuldigd": { "type": "number", "description": "Voorlopig verschuldigde Vpb (EUR).", "example": 95000 },
-          "betalingsregeling": { "type": "string", "enum": ["maandelijks", "eenmalig"], "default": "maandelijks", "description": "Betaalwijze van de voorlopige aanslag.", "example": "maandelijks" },
-          "herzieningsverzoekIngesteld": { "type": "boolean", "default": false, "description": "Of een herzieningsverzoek is ingediend.", "example": false },
-          "herzieningsuitslag": { "type": "string", "enum": ["geaccepteerd", "gedeeltelijk", "afgewezen"], "nullable": true, "description": "Uitslag van het herzieningsverzoek.", "example": null }
-        },
-        "x-openregister-relations": {
-          "belastingplichtigeRef": { "localField": "belastingplichtige", "relatedSchema": "Belastingplichtige", "relatedField": "id", "cardinality": "many-to-one", "description": "De belastingplichtige." }
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration (tenant). IDOR scope key.",
+            "example": "adm-001",
+            "title": "Administration ID"
+          },
+          "taxpayer": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "Belastingplichtige",
+            "description": "Reference to the Belastingplichtige (taxable entity) this record belongs to.",
+            "example": "belastingplichtige-acme-bv",
+            "title": "Belastingplichtige"
+          },
+          "taxYear": {
+            "type": "integer",
+            "description": "Belastingjaar van de voorlopige aanslag.",
+            "example": 2026,
+            "title": "Belastingjaar"
+          },
+          "assessmentNumber": {
+            "type": "string",
+            "nullable": true,
+            "description": "Aanslagnummer van de inspecteur.",
+            "example": "Vpb.0012.V.66.0112",
+            "title": "Aanslagnummer"
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Dagtekening van de voorlopige aanslag.",
+            "example": "2026-02-15",
+            "title": "Dagtekening"
+          },
+          "estimatedTaxableAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Door de inspecteur geschat belastbaar bedrag (EUR).",
+            "example": 400000,
+            "title": "Geschat Belastbaar Bedrag"
+          },
+          "provisionalDue": {
+            "type": "number",
+            "description": "Voorlopig verschuldigde Vpb (EUR).",
+            "example": 95000,
+            "title": "Voorlopig Verschuldigd"
+          },
+          "paymentArrangement": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "oneOff"
+            ],
+            "default": "monthly",
+            "description": "Betaalwijze van de voorlopige aanslag.",
+            "example": "monthly",
+            "title": "Betalingsregeling"
+          },
+          "revisionRequestConfigured": {
+            "type": "boolean",
+            "default": false,
+            "description": "Of een herzieningsverzoek is ingediend.",
+            "example": false,
+            "title": "Herzieningsverzoek Ingesteld"
+          },
+          "revisionOutcome": {
+            "type": "string",
+            "enum": [
+              "geaccepteerd",
+              "gedeeltelijk",
+              "afgewezen"
+            ],
+            "nullable": true,
+            "description": "Uitslag van het herzieningsverzoek.",
+            "example": null,
+            "title": "Herzieningsuitslag"
+          }
         },
         "x-openregister-rbac": {
           "roles": {
-            "fiscalist": { "permissions": ["create", "read", "update"] },
-            "viewer": { "permissions": ["read"] },
-            "auditor": { "permissions": ["read"] }
+            "fiscalist": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "viewer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Voorlopige aanslag is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "DefinitieveAanslag": {
@@ -666,45 +1432,133 @@
         "x-schema-org": "schema:Invoice",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
-        "required": ["administrationId", "aangifte", "dagtekening", "vastgesteldVerschuldigd", "status"],
+        "required": [
+          "administrationId",
+          "taxReturn",
+          "issueDate",
+          "determinedDue",
+          "status"
+        ],
         "properties": {
-          "administrationId": { "type": "string", "description": "FK to the Administration (tenant). IDOR scope key.", "example": "adm-001" },
-          "aangifte": { "type": "string", "description": "FK naar de VpbAangifte.", "example": "vpb-aangifte-acme-2026" },
-          "aanslagnummer": { "type": "string", "nullable": true, "description": "Aanslagnummer van de inspecteur.", "example": "Vpb.0012.D.66.0112" },
-          "dagtekening": { "type": "string", "format": "date", "description": "Dagtekening; startpunt van de 6-weken-bezwaartermijn.", "example": "2027-09-01" },
-          "vastgesteldBelastbaarBedrag": { "type": "number", "nullable": true, "description": "Door de inspecteur vastgesteld belastbaar bedrag (EUR).", "example": 450000 },
-          "vastgesteldVerschuldigd": { "type": "number", "description": "Vastgesteld verschuldigde Vpb (EUR).", "example": 99440 },
-          "verrekendeVoorheffingen": { "type": "number", "default": 0, "description": "Verrekende voorheffingen (EUR).", "example": 0 },
-          "verrekendeVoorlopigeAanslagen": { "type": "number", "default": 0, "description": "Verrekende voorlopige aanslagen (EUR).", "example": 95000 },
-          "tePunten": { "type": "number", "nullable": true, "description": "Te betalen/ontvangen = vastgesteldVerschuldigd − voorheffingen − voorlopige aanslagen (declaratief berekend).", "example": 4440 },
-          "bezwaartermijnEinde": { "type": "string", "format": "date", "nullable": true, "description": "Einde bezwaartermijn = dagtekening + 6 weken (declaratief berekend).", "example": "2027-10-13" },
-          "bezwaarTermijnVerstreken": { "type": "boolean", "nullable": true, "description": "True wanneer vandaag voorbij bezwaartermijnEinde ligt (declaratief berekend).", "example": false },
-          "status": { "type": "string", "enum": ["concept", "ontvangen"], "default": "concept", "description": "Levenscyclus van de aanslagregistratie.", "example": "ontvangen" }
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration (tenant). IDOR scope key.",
+            "example": "adm-001",
+            "title": "Administration ID"
+          },
+          "taxReturn": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "VpbAangifte",
+            "description": "Reference to the VpbAangifte (corporate income tax return) this record belongs to.",
+            "example": "vpb-aangifte-acme-2026",
+            "title": "Aangifte"
+          },
+          "assessmentNumber": {
+            "type": "string",
+            "nullable": true,
+            "description": "Aanslagnummer van de inspecteur.",
+            "example": "Vpb.0012.D.66.0112",
+            "title": "Aanslagnummer"
+          },
+          "issueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Dagtekening; startpunt van de 6-weken-bezwaartermijn.",
+            "example": "2027-09-01",
+            "title": "Dagtekening"
+          },
+          "determinedTaxableAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Door de inspecteur vastgesteld belastbaar bedrag (EUR).",
+            "example": 450000,
+            "title": "Vastgesteld Belastbaar Bedrag"
+          },
+          "determinedDue": {
+            "type": "number",
+            "description": "Vastgesteld verschuldigde Vpb (EUR).",
+            "example": 99440,
+            "title": "Vastgesteld Verschuldigd"
+          },
+          "offsetWithholdings": {
+            "type": "number",
+            "default": 0,
+            "description": "Verrekende voorheffingen (EUR).",
+            "example": 0,
+            "title": "Verrekende Voorheffingen"
+          },
+          "offsetProvisionalAssessments": {
+            "type": "number",
+            "default": 0,
+            "description": "Verrekende voorlopige aanslagen (EUR).",
+            "example": 95000,
+            "title": "Verrekende Voorlopige Aanslagen"
+          },
+          "tePoints": {
+            "type": "number",
+            "nullable": true,
+            "description": "Te betalen/ontvangen = vastgesteldVerschuldigd − voorheffingen − voorlopige aanslagen (declaratief berekend).",
+            "example": 4440,
+            "title": "Te Punten"
+          },
+          "objectionPeriodEnd": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Einde bezwaartermijn = dagtekening + 6 weken (declaratief berekend).",
+            "example": "2027-10-13",
+            "title": "Bezwaartermijn Einde"
+          },
+          "objectionTermElapsed": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True wanneer vandaag voorbij bezwaartermijnEinde ligt (declaratief berekend).",
+            "example": false,
+            "title": "Bezwaar Termijn Verstreken"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "ontvangen"
+            ],
+            "default": "draft",
+            "description": "Levenscyclus van de aanslagregistratie.",
+            "example": "ontvangen",
+            "title": "Status"
+          }
         },
         "x-openregister-calculations": {
-          "tePunten": {
+          "tePoints": {
             "description": "Vastgesteld verschuldigd minus verrekende voorheffingen en voorlopige aanslagen (REQ-VPB-010).",
             "expr": "(@self.vastgesteldVerschuldigd ?? 0) - (@self.verrekendeVoorheffingen ?? 0) - (@self.verrekendeVoorlopigeAanslagen ?? 0)"
           },
-          "bezwaartermijnEinde": {
+          "objectionPeriodEnd": {
             "description": "Dagtekening plus 6 weken (REQ-VPB-010).",
             "expr": "dateAdd(@self.dagtekening, '6 weeks')"
           },
-          "bezwaarTermijnVerstreken": {
+          "objectionTermElapsed": {
             "description": "Of de bezwaartermijn verstreken is (REQ-VPB-010).",
             "expr": "today() > @self.bezwaartermijnEinde"
           }
         },
         "x-openregister-lifecycle": {
           "field": "status",
-          "initialState": "concept",
+          "initialState": "draft",
           "states": {
-            "concept": { "label": "Concept", "description": "Aanslag geregistreerd maar nog niet bevestigd ontvangen." },
-            "ontvangen": { "label": "Ontvangen", "description": "Aanslag bevestigd ontvangen; bezwaartermijn loopt (REQ-VPB-010)." }
+            "draft": {
+              "label": "Concept",
+              "description": "Aanslag geregistreerd maar nog niet bevestigd ontvangen."
+            },
+            "ontvangen": {
+              "label": "Ontvangen",
+              "description": "Aanslag bevestigd ontvangen; bezwaartermijn loopt (REQ-VPB-010)."
+            }
           },
           "transitions": {
             "ontvangen": {
-              "from": "concept",
+              "from": "draft",
               "to": "ontvangen",
               "label": "Aanslag ontvangen bevestigen",
               "description": "Bevestig de ontvangst; de gekoppelde VpbAangifte moet in de status ingediend staan (REQ-VPB-010). Cross-schema check: VpbAangifteGuard::canAanslagOntvangen.",
@@ -712,108 +1566,336 @@
             }
           }
         },
-        "x-openregister-relations": {
-          "aangifteRef": { "localField": "aangifte", "relatedSchema": "VpbAangifte", "relatedField": "id", "cardinality": "one-to-one", "description": "De aangifte waarop deze aanslag ziet." },
-          "bezwaren": { "localField": "id", "relatedSchema": "BezwaarBeroep", "relatedField": "aanslag", "cardinality": "one-to-many", "description": "Bezwaar/beroep-procedures tegen deze aanslag (REQ-VPB-010)." }
-        },
         "x-openregister-rbac": {
           "roles": {
-            "fiscalist": { "permissions": ["create", "read", "update"] },
-            "viewer": { "permissions": ["read"] },
-            "auditor": { "permissions": ["read"] }
+            "fiscalist": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "viewer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Definitieve aanslag is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "BezwaarBeroep": {
         "slug": "BezwaarBeroep",
-        "icon": "GavelOutline",
+        "icon": "Gavel",
         "version": "0.1.0",
         "title": "Bezwaar / Beroep",
         "description": "Geschilprocedure tegen een aanslag (REQ-VPB-010): bezwaar -> uitspraak inspecteur -> beroep -> hoger beroep -> cassatie, met wettelijke termijnen per Awb (6 weken bezwaar; 6 weken uitspraak inspecteur, verlengbaar tot 12; 6 weken beroep). termijnEinde wordt per type berekend; termijnVerstreken markeert overschrijding. Escalatie-alerts op T-7d/T-3d/op-de-dag worden door de termijn-bewaking gegenereerd.",
         "x-schema-org": "schema:LegalForceStatus",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
-        "required": ["administrationId", "aanslag", "type", "ingediendOp", "status"],
+        "required": [
+          "administrationId",
+          "assessment",
+          "type",
+          "submittedOn",
+          "status"
+        ],
         "properties": {
-          "administrationId": { "type": "string", "description": "FK to the Administration (tenant). IDOR scope key.", "example": "adm-001" },
-          "aanslag": { "type": "string", "description": "FK naar de DefinitieveAanslag.", "example": "definitieve-aanslag-acme-2026" },
-          "type": { "type": "string", "enum": ["bezwaar", "beroep", "hoger-beroep", "cassatie"], "description": "Type rechtsmiddel.", "example": "bezwaar" },
-          "ingediendOp": { "type": "string", "format": "date", "description": "Indieningsdatum van het rechtsmiddel.", "example": "2027-09-10" },
-          "motivering": { "type": "string", "nullable": true, "description": "Motivering van het bezwaar/beroep.", "example": "Afschrijving bedrijfspand ten onrechte niet erkend." },
-          "ontvangstbevestiging": { "type": "string", "nullable": true, "description": "URL/FK naar de ontvangstbevestiging (docudesk).", "example": null },
-          "uitspraak": { "type": "string", "nullable": true, "description": "Uitspraaktekst.", "example": null },
-          "uitspraakDatum": { "type": "string", "format": "date", "nullable": true, "description": "Datum van de uitspraak.", "example": null },
-          "vervolgInstantie": { "type": "string", "enum": ["Rechtbank", "Hof", "HogeRaad"], "nullable": true, "description": "Vervolginstantie bij doorzetting.", "example": null },
-          "processtukken": { "type": "array", "description": "FK-array naar processtukken (docudesk).", "items": { "type": "string" }, "default": [] },
-          "termijnEinde": { "type": "string", "format": "date", "nullable": true, "description": "Einde van de toepasselijke termijn (declaratief berekend per type).", "example": "2027-10-13" },
-          "termijnVerstreken": { "type": "boolean", "nullable": true, "description": "True wanneer de termijn is verstreken (declaratief berekend).", "example": false },
-          "status": { "type": "string", "enum": ["ingediend", "uitspraak-inspecteur-pending", "uitspraak-inspecteur-ontvangen", "beroep-pending", "beroep-uitspraak", "hoger-beroep-pending", "hoger-beroep-uitspraak", "cassatie-pending", "cassatie-uitspraak", "afgerond"], "default": "ingediend", "description": "Procedurestatus (REQ-VPB-010).", "example": "ingediend" }
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration (tenant). IDOR scope key.",
+            "example": "adm-001",
+            "title": "Administration ID"
+          },
+          "assessment": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "DefinitieveAanslag",
+            "description": "Reference to the DefinitieveAanslag (final assessment) this objection or appeal contests.",
+            "example": "definitieve-aanslag-acme-2026",
+            "title": "Aanslag"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "objection",
+              "appeal",
+              "higher-appeal",
+              "cassation"
+            ],
+            "description": "Type rechtsmiddel.",
+            "example": "objection",
+            "title": "Type"
+          },
+          "submittedOn": {
+            "type": "string",
+            "format": "date",
+            "description": "Indieningsdatum van het rechtsmiddel.",
+            "example": "2027-09-10",
+            "title": "Ingediend Op"
+          },
+          "rationale": {
+            "type": "string",
+            "nullable": true,
+            "description": "Motivering van het bezwaar/beroep.",
+            "example": "Afschrijving bedrijfspand ten onrechte niet erkend.",
+            "title": "Motivering"
+          },
+          "acknowledgementOfReceipt": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL/FK naar de ontvangstbevestiging (docudesk).",
+            "example": null,
+            "title": "Ontvangstbevestiging"
+          },
+          "ruling": {
+            "type": "string",
+            "nullable": true,
+            "description": "Uitspraaktekst.",
+            "example": null,
+            "title": "Uitspraak"
+          },
+          "rulingDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Datum van de uitspraak.",
+            "example": null,
+            "title": "Uitspraak Datum"
+          },
+          "followUpAuthority": {
+            "type": "string",
+            "enum": [
+              "DistrictCourt",
+              "Court",
+              "HighCouncil"
+            ],
+            "nullable": true,
+            "description": "Vervolginstantie bij doorzetting.",
+            "example": null,
+            "title": "Vervolg Instantie"
+          },
+          "processtukken": {
+            "type": "array",
+            "description": "FK-array naar processtukken (docudesk).",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "title": "Processtukken"
+          },
+          "termEnd": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Einde van de toepasselijke termijn (declaratief berekend per type).",
+            "example": "2027-10-13",
+            "title": "Termijn Einde"
+          },
+          "termElapsed": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True wanneer de termijn is verstreken (declaratief berekend).",
+            "example": false,
+            "title": "Termijn Verstreken"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "submitted",
+              "uitspraak-inspecteur-pending",
+              "uitspraak-inspecteur-ontvangen",
+              "beroep-pending",
+              "beroep-uitspraak",
+              "hoger-beroep-pending",
+              "hoger-beroep-uitspraak",
+              "cassatie-pending",
+              "cassatie-uitspraak",
+              "afgerond"
+            ],
+            "default": "submitted",
+            "description": "Procedurestatus (REQ-VPB-010).",
+            "example": "submitted",
+            "title": "Status"
+          }
         },
         "x-openregister-calculations": {
-          "termijnEinde": {
+          "termEnd": {
             "description": "Indieningsdatum plus 6 weken; de wettelijke standaardtermijn voor bezwaar en beroep (REQ-VPB-010).",
             "expr": "dateAdd(@self.ingediendOp, '6 weeks')"
           },
-          "termijnVerstreken": {
+          "termElapsed": {
             "description": "Of de termijn is verstreken (REQ-VPB-010).",
             "expr": "today() > @self.termijnEinde"
           }
         },
         "x-openregister-lifecycle": {
           "field": "status",
-          "initialState": "ingediend",
+          "initialState": "submitted",
           "states": {
-            "ingediend": { "label": "Ingediend", "description": "Bezwaar ingediend; uitspraaktermijn inspecteur loopt." },
-            "uitspraak-inspecteur-pending": { "label": "Uitspraak inspecteur in afwachting", "description": "Inspecteur heeft 6 weken (verlengbaar tot 12) om uitspraak te doen." },
-            "uitspraak-inspecteur-ontvangen": { "label": "Uitspraak inspecteur ontvangen", "description": "Uitspraak op het bezwaar ontvangen." },
-            "beroep-pending": { "label": "Beroep in afwachting", "description": "Beroep ingesteld bij de rechtbank." },
-            "beroep-uitspraak": { "label": "Beroep-uitspraak", "description": "Uitspraak rechtbank ontvangen." },
-            "hoger-beroep-pending": { "label": "Hoger beroep in afwachting", "description": "Hoger beroep ingesteld bij het Hof." },
-            "hoger-beroep-uitspraak": { "label": "Hoger-beroep-uitspraak", "description": "Uitspraak Hof ontvangen." },
-            "cassatie-pending": { "label": "Cassatie in afwachting", "description": "Cassatie ingesteld bij de Hoge Raad." },
-            "cassatie-uitspraak": { "label": "Cassatie-uitspraak", "description": "Arrest Hoge Raad ontvangen." },
-            "afgerond": { "label": "Afgerond", "description": "Procedure afgerond; geen rechtsmiddel meer open." }
+            "submitted": {
+              "label": "Ingediend",
+              "description": "Bezwaar ingediend; uitspraaktermijn inspecteur loopt."
+            },
+            "uitspraak-inspecteur-pending": {
+              "label": "Uitspraak inspecteur in afwachting",
+              "description": "Inspecteur heeft 6 weken (verlengbaar tot 12) om uitspraak te doen."
+            },
+            "uitspraak-inspecteur-ontvangen": {
+              "label": "Uitspraak inspecteur ontvangen",
+              "description": "Uitspraak op het bezwaar ontvangen."
+            },
+            "beroep-pending": {
+              "label": "Beroep in afwachting",
+              "description": "Beroep ingesteld bij de rechtbank."
+            },
+            "beroep-uitspraak": {
+              "label": "Beroep-uitspraak",
+              "description": "Uitspraak rechtbank ontvangen."
+            },
+            "hoger-beroep-pending": {
+              "label": "Hoger beroep in afwachting",
+              "description": "Hoger beroep ingesteld bij het Hof."
+            },
+            "hoger-beroep-uitspraak": {
+              "label": "Hoger-beroep-uitspraak",
+              "description": "Uitspraak Hof ontvangen."
+            },
+            "cassatie-pending": {
+              "label": "Cassatie in afwachting",
+              "description": "Cassatie ingesteld bij de Hoge Raad."
+            },
+            "cassatie-uitspraak": {
+              "label": "Cassatie-uitspraak",
+              "description": "Arrest Hoge Raad ontvangen."
+            },
+            "afgerond": {
+              "label": "Afgerond",
+              "description": "Procedure afgerond; geen rechtsmiddel meer open."
+            }
           },
           "transitions": {
-            "naarUitspraakPending": { "from": "ingediend", "to": "uitspraak-inspecteur-pending", "label": "Wachten op uitspraak inspecteur", "description": "Bezwaar in behandeling bij de inspecteur." },
-            "uitspraakOntvangen": { "from": "uitspraak-inspecteur-pending", "to": "uitspraak-inspecteur-ontvangen", "label": "Uitspraak inspecteur ontvangen", "description": "Registreer de uitspraak op het bezwaar." },
-            "beroepInstellen": { "from": "uitspraak-inspecteur-ontvangen", "to": "beroep-pending", "label": "Beroep instellen", "description": "Beroep bij de rechtbank binnen 6 weken na uitspraak (REQ-VPB-010). Termijn-check: BezwaarTermijnGuard::canBeroepInstellen.", "requires": "OCA\\Shillinq\\Lifecycle\\BezwaarTermijnGuard::canBeroepInstellen" },
-            "beroepUitspraak": { "from": "beroep-pending", "to": "beroep-uitspraak", "label": "Beroep-uitspraak", "description": "Registreer de uitspraak van de rechtbank." },
-            "hogerBeroep": { "from": "beroep-uitspraak", "to": "hoger-beroep-pending", "label": "Hoger beroep", "description": "Hoger beroep bij het Hof." },
-            "hogerBeroepUitspraak": { "from": "hoger-beroep-pending", "to": "hoger-beroep-uitspraak", "label": "Hoger-beroep-uitspraak", "description": "Registreer de uitspraak van het Hof." },
-            "cassatie": { "from": "hoger-beroep-uitspraak", "to": "cassatie-pending", "label": "Cassatie", "description": "Cassatie bij de Hoge Raad." },
-            "cassatieUitspraak": { "from": "cassatie-pending", "to": "cassatie-uitspraak", "label": "Cassatie-uitspraak", "description": "Registreer het arrest van de Hoge Raad." },
-            "afronden": { "from": "cassatie-uitspraak", "to": "afgerond", "label": "Afronden", "description": "Procedure afgerond." },
-            "afrondenBezwaar": { "from": "uitspraak-inspecteur-ontvangen", "to": "afgerond", "label": "Afronden (berusten)", "description": "Berusten in de uitspraak; procedure afgerond." }
+            "naarUitspraakPending": {
+              "from": "submitted",
+              "to": "uitspraak-inspecteur-pending",
+              "label": "Wachten op uitspraak inspecteur",
+              "description": "Bezwaar in behandeling bij de inspecteur."
+            },
+            "uitspraakOntvangen": {
+              "from": "uitspraak-inspecteur-pending",
+              "to": "uitspraak-inspecteur-ontvangen",
+              "label": "Uitspraak inspecteur ontvangen",
+              "description": "Registreer de uitspraak op het bezwaar."
+            },
+            "beroepInstellen": {
+              "from": "uitspraak-inspecteur-ontvangen",
+              "to": "beroep-pending",
+              "label": "Beroep instellen",
+              "description": "Beroep bij de rechtbank binnen 6 weken na uitspraak (REQ-VPB-010). Termijn-check: ObjectionPeriodGuard::canFileAppeal.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileAppeal"
+            },
+            "beroepUitspraak": {
+              "from": "beroep-pending",
+              "to": "beroep-uitspraak",
+              "label": "Beroep-uitspraak",
+              "description": "Registreer de uitspraak van de rechtbank."
+            },
+            "hogerBeroep": {
+              "from": "beroep-uitspraak",
+              "to": "hoger-beroep-pending",
+              "label": "Hoger beroep",
+              "description": "Hoger beroep bij het Hof."
+            },
+            "hogerBeroepUitspraak": {
+              "from": "hoger-beroep-pending",
+              "to": "hoger-beroep-uitspraak",
+              "label": "Hoger-beroep-uitspraak",
+              "description": "Registreer de uitspraak van het Hof."
+            },
+            "cassatie": {
+              "from": "hoger-beroep-uitspraak",
+              "to": "cassatie-pending",
+              "label": "Cassatie",
+              "description": "Cassatie bij de Hoge Raad."
+            },
+            "cassatieUitspraak": {
+              "from": "cassatie-pending",
+              "to": "cassatie-uitspraak",
+              "label": "Cassatie-uitspraak",
+              "description": "Registreer het arrest van de Hoge Raad."
+            },
+            "afronden": {
+              "from": "cassatie-uitspraak",
+              "to": "afgerond",
+              "label": "Afronden",
+              "description": "Procedure afgerond."
+            },
+            "afrondenBezwaar": {
+              "from": "uitspraak-inspecteur-ontvangen",
+              "to": "afgerond",
+              "label": "Afronden (berusten)",
+              "description": "Berusten in de uitspraak; procedure afgerond."
+            }
           }
-        },
-        "x-openregister-relations": {
-          "aanslagRef": { "localField": "aanslag", "relatedSchema": "DefinitieveAanslag", "relatedField": "id", "cardinality": "many-to-one", "description": "De bestreden aanslag." }
         },
         "x-openregister-rbac": {
           "roles": {
-            "fiscalist": { "permissions": ["create", "read", "update"] },
-            "bestuur": { "permissions": ["read"] },
-            "viewer": { "permissions": ["read"] },
-            "auditor": { "permissions": ["read"] }
+            "fiscalist": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bestuur": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "viewer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Bezwaar / Beroep is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       }
     },
     "objects": [
       {
-        "@self": { "register": "shillinq", "schema": "VpbTariefcatalogus", "slug": "vpb-tarief-2026" },
-        "belastingjaar": 2026,
+        "@self": {
+          "register": "shillinq",
+          "schema": "VpbTariefcatalogus",
+          "slug": "vpb-tarief-2026"
+        },
+        "taxYear": 2026,
         "tarief1": 0.19,
         "tarief2": 0.258,
-        "belastbaarBedragGrens": 245000,
-        "innovatieboxTarief": 0.09,
-        "innovatieboxForfaitDrempel": 25000,
-        "verliesverrekening50PctDrempel": 1000000,
+        "taxableAmountThreshold": 245000,
+        "innovationBoxRate": 0.09,
+        "innovationBoxFlatRateThreshold": 25000,
+        "lossOffset50PctThreshold": 1000000,
         "facilityPercents": {
           "deelnemingsvrijstelling": 1.0,
           "kiaPercentageBasis": 0.28,
-          "eiaPercentage": 0.40,
+          "eiaPercentage": 0.4,
           "miaPercentageHoog": 0.45,
           "miaPercentageMidden": 0.36,
           "miaPercentageLaag": 0.27
@@ -821,30 +1903,38 @@
         "effectiveDate": "2026-01-01"
       },
       {
-        "@self": { "register": "shillinq", "schema": "Belastingplichtige", "slug": "belastingplichtige-acme-bv" },
+        "@self": {
+          "register": "shillinq",
+          "schema": "Belastingplichtige",
+          "slug": "belastingplichtige-acme-bv"
+        },
         "administrationId": "adm-001",
-        "naam": "ACME BV",
+        "name": "ACME BV",
         "rsin": "001234567",
-        "kvkNummer": "12345678",
-        "rechtsvorm": "BV",
-        "boekjaarStart": "2026-01-01",
-        "boekjaarEind": "2026-12-31",
-        "fiscaalAdviseur": null,
-        "digipoortCertificaat": null,
-        "eHerkenningsNiveau": "EH3",
+        "chamberOfCommerceNumber": "12345678",
+        "legalForm": "BV",
+        "financialYearStart": "2026-01-01",
+        "financialYearEnd": "2026-12-31",
+        "fiscalAdvisor": null,
+        "digipoortCertificate": null,
+        "eRecognitionLevel": "EH3",
         "status": "actief"
       },
       {
-        "@self": { "register": "shillinq", "schema": "Voorvoegingsverlies", "slug": "voorvoegingsverlies-acme-2023" },
+        "@self": {
+          "register": "shillinq",
+          "schema": "Voorvoegingsverlies",
+          "slug": "voorvoegingsverlies-acme-2023"
+        },
         "administrationId": "adm-001",
-        "belastingplichtige": "belastingplichtige-acme-bv",
-        "verliesjaar": 2023,
-        "oorspronkelijkBedrag": 50000,
+        "taxpayer": "belastingplichtige-acme-bv",
+        "lossYear": 2023,
+        "originalAmount": 50000,
         "reedsVerrekend": 10000,
-        "restant": 40000,
+        "remainder": 40000,
         "regime": "6jr",
-        "verjaartIn": "2029-12-31",
-        "beschikking": null
+        "expiresIn": "2029-12-31",
+        "decision": null
       }
     ]
   }

@@ -38,8 +38,8 @@ use DateTimeInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use OCP\Notification\IManager;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Dispatches Vpb deadline reminders (REQ-VPB-013).
@@ -51,170 +51,159 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-37
  */
-class TaxNotificationService
-{
-    /**
-     * Reminder windows in days before the deadline (REQ-VPB-013).
-     *
-     * @var array<int,int>
-     */
-    private const REMINDER_DAYS = [7, 1];
+class TaxNotificationService {
+	/**
+	 * Reminder windows in days before the deadline (REQ-VPB-013).
+	 *
+	 * @var array<int,int>
+	 */
+	private const REMINDER_DAYS = [7, 1];
 
-    /**
-     * Construct the service.
-     *
-     * @param ContainerInterface $container       DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig         $appConfig       App config for the register slug.
-     * @param IManager           $notificationMgr Nextcloud notification manager.
-     * @param LoggerInterface    $logger          Logger for diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly IManager $notificationMgr,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the service.
+	 *
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param IManager $notificationMgr Nextcloud notification manager.
+	 * @param LoggerInterface $logger Logger for diagnostics.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly IManager $notificationMgr,
+		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    /**
-     * Dispatch reminders for all deadlines falling inside a reminder window.
-     *
-     * @param DateTimeInterface|null $now Reference "today" (defaults to now); injectable for tests.
-     *
-     * @return int The number of reminders dispatched.
-     *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-37
-     */
-    public function dispatchDueReminders(?DateTimeInterface $now=null): int
-    {
-        $today     = ($now ?? new DateTimeImmutable('today'));
-        $deadlines = $this->fetchPendingDeadlines();
+	/**
+	 * Dispatch reminders for all deadlines falling inside a reminder window.
+	 *
+	 * @param DateTimeInterface|null $now Reference "today" (defaults to now); injectable for tests.
+	 *
+	 * @return int The number of reminders dispatched.
+	 *
+	 * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-37
+	 */
+	public function dispatchDueReminders(?DateTimeInterface $now = null): int {
+		$today = ($now ?? new DateTimeImmutable('today'));
+		$deadlines = $this->fetchPendingDeadlines();
 
-        $dispatched = 0;
-        foreach ($deadlines as $deadline) {
-            $window = $this->reminderWindow(deadline: $deadline, today: $today);
-            if ($window === null) {
-                continue;
-            }
+		$dispatched = 0;
+		foreach ($deadlines as $deadline) {
+			$window = $this->reminderWindow(deadline: $deadline, today: $today);
+			if ($window === null) {
+				continue;
+			}
 
-            $this->dispatch(deadline: $deadline, daysBefore: $window);
-            $dispatched++;
-        }
+			$this->dispatch(deadline: $deadline, daysBefore: $window);
+			$dispatched++;
+		}
 
-        return $dispatched;
+		return $dispatched;
+	}//end dispatchDueReminders()
 
-    }//end dispatchDueReminders()
+	/**
+	 * Determine the reminder window (7 or 1) a deadline falls into today, or null.
+	 *
+	 * @param array<string,mixed> $deadline The TaxDeadline record.
+	 * @param DateTimeInterface $today Reference date.
+	 *
+	 * @return int|null The matching window in days, or null when no window matches.
+	 *
+	 * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-37
+	 */
+	public function reminderWindow(array $deadline, DateTimeInterface $today): ?int {
+		$deadlineDate = (string)($deadline['deadlineDate'] ?? '');
+		if ($deadlineDate === '') {
+			return null;
+		}
 
-    /**
-     * Determine the reminder window (7 or 1) a deadline falls into today, or null.
-     *
-     * @param array<string,mixed> $deadline The TaxDeadline record.
-     * @param DateTimeInterface   $today    Reference date.
-     *
-     * @return int|null The matching window in days, or null when no window matches.
-     *
-     * @spec openspec/changes/bookkeeping-vpb-corporate-tax/tasks.md#task-37
-     */
-    public function reminderWindow(array $deadline, DateTimeInterface $today): ?int
-    {
-        $deadlineDate = (string) ($deadline['deadlineDate'] ?? '');
-        if ($deadlineDate === '') {
-            return null;
-        }
+		$due = strtotime($deadlineDate);
+		if ($due === false) {
+			return null;
+		}
 
-        $due = strtotime($deadlineDate);
-        if ($due === false) {
-            return null;
-        }
+		$dueDay = (new DateTimeImmutable('@' . $due))->setTime(0, 0);
+		$todayDay = DateTimeImmutable::createFromInterface($today)->setTime(0, 0);
+		$diffDays = (int)$todayDay->diff($dueDay)->format('%r%a');
 
-        $dueDay   = (new DateTimeImmutable('@'.$due))->setTime(0, 0);
-        $todayDay = DateTimeImmutable::createFromInterface($today)->setTime(0, 0);
-        $diffDays = (int) $todayDay->diff($dueDay)->format('%r%a');
+		if (in_array($diffDays, self::REMINDER_DAYS, true) === true) {
+			return $diffDays;
+		}
 
-        if (in_array($diffDays, self::REMINDER_DAYS, true) === true) {
-            return $diffDays;
-        }
+		return null;
+	}//end reminderWindow()
 
-        return null;
+	/**
+	 * Emit a notification for one deadline + window via the NC notification manager.
+	 *
+	 * @param array<string,mixed> $deadline The TaxDeadline record.
+	 * @param int $daysBefore The reminder window in days.
+	 *
+	 * @return void
+	 */
+	private function dispatch(array $deadline, int $daysBefore): void {
+		$objectId = (string)($deadline['@self']['slug'] ?? ($deadline['id'] ?? ''));
+		if ($objectId === '') {
+			return;
+		}
 
-    }//end reminderWindow()
+		try {
+			$notification = $this->notificationMgr->createNotification();
+			$notification->setApp(Application::APP_ID)
+				->setObject('tax-deadline', $objectId)
+				->setSubject(
+					'vpb_deadline_reminder',
+					[
+						'deadlineType' => (string)($deadline['deadlineType'] ?? ''),
+						'daysBefore' => $daysBefore,
+						'deadlineDate' => (string)($deadline['deadlineDate'] ?? ''),
+					]
+				)
+				->setDateTime(new DateTime());
+			$this->notificationMgr->notify($notification);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'TaxNotificationService: failed to dispatch deadline reminder',
+				['objectId' => $objectId, 'exception' => $e->getMessage()]
+			);
+		}//end try
 
-    /**
-     * Emit a notification for one deadline + window via the NC notification manager.
-     *
-     * @param array<string,mixed> $deadline   The TaxDeadline record.
-     * @param int                 $daysBefore The reminder window in days.
-     *
-     * @return void
-     */
-    private function dispatch(array $deadline, int $daysBefore): void
-    {
-        $objectId = (string) ($deadline['@self']['slug'] ?? ($deadline['id'] ?? ''));
-        if ($objectId === '') {
-            return;
-        }
+	}//end dispatch()
 
-        try {
-            $notification = $this->notificationMgr->createNotification();
-            $notification->setApp(Application::APP_ID)
-                ->setObject('tax-deadline', $objectId)
-                ->setSubject(
-                    'vpb_deadline_reminder',
-                    [
-                        'deadlineType' => (string) ($deadline['deadlineType'] ?? ''),
-                        'daysBefore'   => $daysBefore,
-                        'deadlineDate' => (string) ($deadline['deadlineDate'] ?? ''),
-                    ]
-                )
-                ->setDateTime(new DateTime());
-            $this->notificationMgr->notify($notification);
-        } catch (\Throwable $e) {
-            $this->logger->warning(
-                'TaxNotificationService: failed to dispatch deadline reminder',
-                ['objectId' => $objectId, 'exception' => $e->getMessage()]
-            );
-        }//end try
+	/**
+	 * Fetch deadlines that are still open (pending or submitted).
+	 *
+	 * @return array<int,array<string,mixed>> Open TaxDeadline records.
+	 */
+	private function fetchPendingDeadlines(): array {
+		$deadlines = $this->objectService
+			->setRegister($this->register())
+			->setSchema('TaxDeadline')
+			->findAll([]);
 
-    }//end dispatch()
+		$open = [];
+		foreach ($deadlines as $deadline) {
+			$status = (string)($deadline['status'] ?? 'pending');
+			if ($status === 'pending' || $status === 'submitted') {
+				$open[] = $deadline;
+			}
+		}
 
-    /**
-     * Fetch deadlines that are still open (pending or submitted).
-     *
-     * @return array<int,array<string,mixed>> Open TaxDeadline records.
-     */
-    private function fetchPendingDeadlines(): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $deadlines     = $objectService
-            ->setRegister($this->register())
-            ->setSchema('TaxDeadline')
-            ->findAll([]);
+		return $open;
+	}//end fetchPendingDeadlines()
 
-        $open = [];
-        foreach ($deadlines as $deadline) {
-            $status = (string) ($deadline['status'] ?? 'pending');
-            if ($status === 'pending' || $status === 'submitted') {
-                $open[] = $deadline;
-            }
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $open;
-
-    }//end fetchPendingDeadlines()
-
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

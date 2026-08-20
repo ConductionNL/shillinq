@@ -9,7 +9,7 @@
 /**
  * A fresh, empty recurring line. quantity 1, 21% VAT.
  *
- * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+ * @spec openspec/specs/recurring-invoicing/spec.md
  * @return {object} A new line.
  */
 export function defaultRecurringLine() {
@@ -25,7 +25,7 @@ export function defaultRecurringLine() {
 /**
  * Per-period net total of the lines (sum of quantity * unitPrice).
  *
- * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+ * @spec openspec/specs/recurring-invoicing/spec.md
  * @param {Array<object>} lines The recurring lines.
  * @return {number} Net total (2 decimals).
  */
@@ -41,7 +41,7 @@ export function perPeriodNet(lines) {
  * Validate a profile draft. Returns an array of human-readable error
  * strings; empty array means valid enough to save as a draft.
  *
- * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+ * @spec openspec/specs/recurring-invoicing/spec.md
  * @param {object} form The form state.
  * @return {Array<string>} Validation errors.
  */
@@ -54,8 +54,9 @@ export function validateProfile(form) {
 		errors.push('A customer is required.')
 	}
 	const lines = form.lines || []
-	const hasPricedLine = lines.some((l) =>
-		(l.description || '').trim().length > 0 && Number(l.unitPrice) > 0)
+	const hasPricedLine = lines.some(
+		(l) => (l.description || '').trim().length > 0 && Number(l.unitPrice) > 0,
+	)
 	if (!hasPricedLine) {
 		errors.push('At least one line with a description and a price is required.')
 	}
@@ -73,13 +74,16 @@ export function validateProfile(form) {
  * Build the RecurringInvoiceProfile payload from the form state. New
  * profiles are created in status `draft`.
  *
- * @spec openspec/changes/recurring-invoicing/specs/recurring-invoicing/spec.md
+ * @spec openspec/specs/recurring-invoicing/spec.md
  * @param {object} form The form state.
  * @return {object} The profile payload.
  */
 export function buildProfilePayload(form) {
 	const lines = (form.lines || [])
-		.filter((l) => (l.description || '').trim().length > 0 || Number(l.unitPrice) > 0)
+		.filter(
+			(l) =>
+				(l.description || '').trim().length > 0 || Number(l.unitPrice) > 0,
+		)
 		.map((l) => ({
 			description: (l.description || '').trim(),
 			quantity: Number(l.quantity) || 1,
@@ -103,7 +107,11 @@ export function buildProfilePayload(form) {
 		status: form.status || 'draft',
 	}
 
-	if (form.indexationPercent !== undefined && form.indexationPercent !== null && form.indexationPercent !== '') {
+	if (
+		form.indexationPercent !== undefined
+		&& form.indexationPercent !== null
+		&& form.indexationPercent !== ''
+	) {
 		payload.indexationPercent = Number(form.indexationPercent)
 	}
 	if (form.endDate) {

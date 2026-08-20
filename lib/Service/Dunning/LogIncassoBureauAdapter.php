@@ -35,46 +35,45 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
  */
-class LogIncassoBureauAdapter implements IncassoBureauAdapterInterface
-{
-    /**
-     * Construct the log-backed incasso-bureau adapter.
-     *
-     * @param LoggerInterface $logger Logger.
-     */
-    public function __construct(private readonly LoggerInterface $logger)
-    {
-    }//end __construct()
+class LogIncassoBureauAdapter implements IncassoBureauAdapterInterface {
+	/**
+	 * Construct the log-backed incasso-bureau adapter.
+	 *
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Synthesise a DELIVERED dossier transfer + log-only dispatch.
-     *
-     * @param string              $administrationId Administration scope.
-     * @param string              $factuurId        Invoice FK.
-     * @param array<string,mixed> $dossier          Composed dossier bundle.
-     *
-     * @return DunningChannelSendResult The dispatch outcome.
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
-     */
-    public function transfer(string $administrationId, string $factuurId, array $dossier): DunningChannelSendResult
-    {
-        $this->logger->info(
-            'Shillinq incasso-bureau transfer deferred (no outbound connector bound)',
-            [
-                'administrationId' => $administrationId,
-                'factuurId'        => $factuurId,
-                'dunningRuns'      => count((array) ($dossier['inhoud']['dunningRuns'] ?? [])),
-                'evidenceRefs'     => count((array) ($dossier['inhoud']['evidenceRefs'] ?? [])),
-            ]
-        );
+	/**
+	 * Synthesise a DELIVERED dossier transfer + log-only dispatch.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $invoiceId Invoice FK.
+	 * @param array<string,mixed> $dossier Composed dossier bundle.
+	 *
+	 * @return DunningChannelSendResult The dispatch outcome.
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-20
+	 */
+	public function transfer(string $administrationId, string $invoiceId, array $dossier): DunningChannelSendResult {
+		$this->logger->info(
+			'Shillinq incasso-bureau transfer deferred (no outbound connector bound)',
+			[
+				'administrationId' => $administrationId,
+				'invoiceId' => $invoiceId,
+				'dunningRuns' => count((array)($dossier['content']['dunningRuns'] ?? [])),
+				'evidenceRefs' => count((array)($dossier['content']['evidenceRefs'] ?? [])),
+			]
+		);
 
-        return new DunningChannelSendResult(
-            kanaal: 'INCASSOBUREAU_API',
-            deliveryStatus: 'DELIVERED',
-            providerMessageId: 'incasso-log-'.bin2hex(random_bytes(8)),
-            extras: ['dossierId' => 'dossier-stub-'.bin2hex(random_bytes(6))],
-        );
+		return new DunningChannelSendResult(
+			channel: 'COLLECTION_AGENCY_API',
+			deliveryStatus: 'DELIVERED',
+			providerMessageId: 'incasso-log-' . bin2hex(random_bytes(8)),
+			extras: ['dossierId' => 'dossier-stub-' . bin2hex(random_bytes(6))],
+		);
 
-    }//end transfer()
+	}//end transfer()
 }//end class

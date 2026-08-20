@@ -151,8 +151,8 @@
     `Depends on: bookkeeping-general-ledger (T1), bookkeeping-accounts-payable-core (T2), bookkeeping-accounts-receivable-core (T2)`.
   - GIVEN the spec WHEN scanned THEN it forbids a PHP report
     engine (REQ-RR-001), declares all reports as saved-query
-    objects consumed by mydash via runtime GraphQL (REQ-RR-007),
-    and cites `feedback_mydash-no-or-dependency.md` for the mydash
+    objects consumed by launchpad via runtime GraphQL (REQ-RR-007),
+    and cites `feedback_launchpad-no-or-dependency.md` for the launchpad
     no-install-time-dep rule.
 - [x] Implement
 - [x] Test (delta present; conduction `### REQ-*` format matches all 39 sibling changes — vanilla `openspec validate` `### Requirement:` mismatch is pre-existing repo-wide)
@@ -333,16 +333,16 @@
   - GIVEN the four saved queries (sub-ledger ↔ GL, intercompany,
     variance, controller exception) WHEN inspected THEN they are
     declared as `x-openregister-aggregations` records consumed by
-    both the manifest pages and mydash via runtime GraphQL.
+    both the manifest pages and launchpad via runtime GraphQL.
   - GIVEN the implementing PR WHEN reviewed THEN no `lib/Service/`
     class names match `*Report*` / `*Reconciliation*` / `*Variance*`
     (REQ-RR-001 scenario).
 - [x] Implement (HANDOFF verified — sibling on dev)
-  - **Handoff**: lands in the sibling implementing change `add-shillinq-reconciliation-reports` (spec on dev: `openspec/specs/bookkeeping-reconciliation-reports/spec.md` REQ-RR-001..REQ-RR-007). `Budget` schema + four saved-query records go into `lib/Settings/register.d/bookkeeping-reconciliation-reports.json` per ADR-037; mydash consumes via runtime GraphQL with no install-time dep (per ADR-022 / `feedback_mydash-no-or-dependency.md`).
+  - **Handoff**: lands in the sibling implementing change `add-shillinq-reconciliation-reports` (spec on dev: `openspec/specs/bookkeeping-reconciliation-reports/spec.md` REQ-RR-001..REQ-RR-007). `Budget` schema + four saved-query records go into `lib/Settings/register.d/bookkeeping-reconciliation-reports.json` per ADR-037; launchpad consumes via runtime GraphQL with no install-time dep (per ADR-022 / `feedback_launchpad-no-or-dependency.md`).
 - [x] Test (PHPUnit: matched reconciliation reports zero variance; (HANDOFF verified — sibling on dev)
   mismatched surfaces as exception; intercompany match for grouped
   administrations; within-threshold variance does not flag;
-  exception report sorted by severity; mydash GraphQL discovery)
+  exception report sorted by severity; launchpad GraphQL discovery)
   - **Handoff**: PHPUnit tests land in the implementing cycle.
 
 ## 3. Seed data — `lib/Settings/seeds/`
@@ -506,9 +506,9 @@
     index/detail pair.
 - [x] Implement (HANDOFF verified — sibling on dev)
   - **Handoff**: lands in `add-shillinq-reconciliation-reports` as `src/manifest.d/30-bookkeeping-reconciliation-reports.json` per ADR-037 covering the saved-query catalog + the Budget register's index+detail pages.
-- [x] Test (same as 4.1; mydash widget end-to-end confirming (HANDOFF verified — sibling on dev)
-  runtime-GraphQL consumption with no shillinq dep on mydash)
-  - **Handoff**: validate-manifest + browser smoke + mydash GraphQL end-to-end land in the implementing cycle (no shillinq dep on mydash per ADR-022 and `feedback_mydash-no-or-dependency.md`).
+- [x] Test (same as 4.1; launchpad widget end-to-end confirming (HANDOFF verified — sibling on dev)
+  runtime-GraphQL consumption with no shillinq dep on launchpad)
+  - **Handoff**: validate-manifest + browser smoke + launchpad GraphQL end-to-end land in the implementing cycle (no shillinq dep on launchpad per ADR-022 and `feedback_launchpad-no-or-dependency.md`).
 
 ## 5. ADR-000 reconciliation notes
 
@@ -591,7 +591,7 @@
       compliance across all seven specs (no app-local audit; no
       app-local RBAC; no app-local approval; no service-class state
       machines / aggregations / calculations / notifications; no
-      embedded HTTP clients for Digipoort or PSD2; mydash carries no
+      embedded HTTP clients for Digipoort or PSD2; launchpad carries no
       shillinq dep; manifest carries the navigation; no per-app
       TimedJobs for scheduled work)
   - **Handoff**: architecture reviewer signs off per per-capability implementing PR.

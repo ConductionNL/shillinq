@@ -19,19 +19,19 @@
 		<table class="invoice-line-review__table">
 			<thead>
 				<tr>
-					<th>#</th>
-					<th>{{ t('shillinq', 'Source') }}</th>
-					<th>{{ t('shillinq', 'Description') }}</th>
-					<th class="num">
+					<th scope="col">#</th>
+					<th scope="col">{{ t('shillinq', 'Source') }}</th>
+					<th scope="col">{{ t('shillinq', 'Description') }}</th>
+					<th scope="col" class="num">
 						{{ t('shillinq', 'Units') }}
 					</th>
-					<th class="num">
+					<th scope="col" class="num">
 						{{ t('shillinq', 'Rate') }}
 					</th>
-					<th class="num">
+					<th scope="col" class="num">
 						{{ t('shillinq', 'Cost') }}
 					</th>
-					<th class="num">
+					<th scope="col" class="num">
 						{{ t('shillinq', 'VAT') }}
 					</th>
 				</tr>
@@ -47,20 +47,24 @@
 					<td class="num">
 						{{ formatRate(line.rateApplied) }}
 					</td>
-					<td class="num">
-						€ {{ formatMoney(line.costAmount) }}
-					</td>
-					<td class="num">
-						{{ line.vatRate }}%
-					</td>
+					<td class="num">€ {{ formatMoney(line.costAmount) }}</td>
+					<td class="num">{{ line.vatRate }}%</td>
 				</tr>
 			</tbody>
 		</table>
 
 		<footer class="invoice-line-review__totals">
 			<p>{{ t('shillinq', 'Net') }}: € {{ formatMoney(summary.netAmount) }}</p>
-			<p>{{ t('shillinq', 'VAT/BTW') }}: € {{ formatMoney(summary.vatAmount) }}</p>
-			<p><strong>{{ t('shillinq', 'Gross') }}: € {{ formatMoney(summary.grossAmount) }}</strong></p>
+			<p>
+				{{ t('shillinq', 'VAT/BTW') }}: €
+				{{ formatMoney(summary.vatAmount) }}
+			</p>
+			<p>
+				<strong
+					>{{ t('shillinq', 'Gross') }}: €
+					{{ formatMoney(summary.grossAmount) }}</strong
+				>
+			</p>
 		</footer>
 	</section>
 </template>
@@ -76,6 +80,7 @@ export default {
 			type: Array,
 			default: () => [],
 		},
+
 		summary: {
 			type: Object,
 			default: () => ({ netAmount: 0, vatAmount: 0, grossAmount: 0 }),
@@ -94,14 +99,20 @@ export default {
 			}
 			return map[sourceType] || sourceType
 		},
+
 		formatMoney(value) {
 			const n = Number(value || 0)
-			return n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+			return n.toLocaleString('nl-NL', {
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 2,
+			})
 		},
+
 		formatUnits(value) {
 			if (value === null || value === undefined) return ''
 			return Number(value).toLocaleString('nl-NL')
 		},
+
 		formatRate(rateApplied) {
 			if (!rateApplied || rateApplied.rateCents === undefined) return ''
 			return `€ ${(rateApplied.rateCents / 100).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -116,15 +127,18 @@ export default {
 	border-collapse: collapse;
 	margin: 12px 0;
 }
+
 .invoice-line-review__table th,
 .invoice-line-review__table td {
 	padding: 6px 8px;
 	border-bottom: 1px solid var(--color-border, #ddd);
 	text-align: left;
 }
+
 .num {
 	text-align: right;
 }
+
 .invoice-line-review__totals {
 	margin-top: 12px;
 	text-align: right;

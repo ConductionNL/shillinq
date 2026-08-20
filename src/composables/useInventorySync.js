@@ -18,12 +18,17 @@
  * handling come for free. All retries are bounded; failures keep the
  * pendingOp un-synced so the next cycle retries from a clean slate.
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  */
 
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import { mergeServerDelta, markOpSynced, deletePendingOp, readUnsyncedOps } from './useInventoryDb.js'
+import {
+	deletePendingOp,
+	markOpSynced,
+	mergeServerDelta,
+	readUnsyncedOps,
+} from './useInventoryDb.js'
 
 const URL_SYNC = '/apps/shillinq/api/v1/inventory/sync'
 const URL_LOCATIONS = '/apps/shillinq/api/v1/inventory/locations'
@@ -123,11 +128,23 @@ export async function syncUpload(db) {
 			continue
 		}
 		if (ack.status === 'accepted') {
-			await markOpSynced(db, op.id, ack.serverAckedAt || data.serverTimestamp || new Date().toISOString())
+			await markOpSynced(
+				db,
+				op.id,
+				ack.serverAckedAt
+					|| data.serverTimestamp
+					|| new Date().toISOString(),
+			)
 			await deletePendingOp(db, op.id)
 			accepted += 1
 		} else if (ack.status === 'duplicate') {
-			await markOpSynced(db, op.id, ack.serverAckedAt || data.serverTimestamp || new Date().toISOString())
+			await markOpSynced(
+				db,
+				op.id,
+				ack.serverAckedAt
+					|| data.serverTimestamp
+					|| new Date().toISOString(),
+			)
 			await deletePendingOp(db, op.id)
 			duplicates += 1
 		} else {
@@ -167,16 +184,24 @@ export async function fetchLocations() {
 export function createSyncScheduler(db, opts = {}) {
 	const intervalMs = opts.intervalMs || DEFAULT_INTERVAL_MS
 	const onStatus = typeof opts.onStatus === 'function' ? opts.onStatus : () => {}
-	const getCursor = typeof opts.getLastSyncedAt === 'function' ? opts.getLastSyncedAt : () => null
-	const setCursor = typeof opts.setLastSyncedAt === 'function' ? opts.setLastSyncedAt : () => {}
+	const getCursor =
+		typeof opts.getLastSyncedAt === 'function'
+			? opts.getLastSyncedAt
+			: () => null
+	const setCursor =
+		typeof opts.setLastSyncedAt === 'function' ? opts.setLastSyncedAt : () => {}
 
 	let timerId = null
 	let stopped = true
 	let inFlight = false
 	let backoffIndex = 0
 
-	const isOnline = () => typeof navigator === 'undefined' || navigator.onLine !== false
+	const isOnline = () =>
+		typeof navigator === 'undefined' || navigator.onLine !== false
 
+	/**
+	 *
+	 */
 	async function runOnce() {
 		if (inFlight) {
 			return
@@ -184,7 +209,11 @@ export function createSyncScheduler(db, opts = {}) {
 		inFlight = true
 		try {
 			if (!isOnline()) {
-				onStatus({ state: 'offline', lastSyncedAt: getCursor(), error: null })
+				onStatus({
+					state: 'offline',
+					lastSyncedAt: getCursor(),
+					error: null,
+				})
 				return
 			}
 			onStatus({ state: 'syncing', lastSyncedAt: getCursor(), error: null })
@@ -195,18 +224,33 @@ export function createSyncScheduler(db, opts = {}) {
 			onStatus({
 				state: 'synced',
 				lastSyncedAt: dl.serverTimestamp,
-				summary: { applied: dl.applied, kept: dl.kept, accepted: up.accepted, duplicates: up.duplicates, rejected: up.rejected },
+				summary: {
+					applied: dl.applied,
+					kept: dl.kept,
+					accepted: up.accepted,
+					duplicates: up.duplicates,
+					rejected: up.rejected,
+				},
 				error: null,
 			})
 		} catch (e) {
-			const delay = BACKOFF_STEPS_MS[Math.min(backoffIndex, BACKOFF_STEPS_MS.length - 1)]
+			const delay =
+				BACKOFF_STEPS_MS[Math.min(backoffIndex, BACKOFF_STEPS_MS.length - 1)]
 			backoffIndex = Math.min(backoffIndex + 1, BACKOFF_STEPS_MS.length - 1)
-			onStatus({ state: 'failed', lastSyncedAt: getCursor(), error: e && e.message ? e.message : String(e), retryInMs: delay })
+			onStatus({
+				state: 'failed',
+				lastSyncedAt: getCursor(),
+				error: e && e.message ? e.message : String(e),
+				retryInMs: delay,
+			})
 		} finally {
 			inFlight = false
 		}
 	}
 
+	/**
+	 *
+	 */
 	function schedule() {
 		if (stopped) {
 			return
@@ -256,9 +300,9 @@ export function newTransactionId() {
 		} else if (i === 14) {
 			out += '4'
 		} else if (i === 19) {
-			out += hex[(Math.random() * 4 | 0) + 8]
+			out += hex[((Math.random() * 4) | 0) + 8]
 		} else {
-			out += hex[Math.random() * 16 | 0]
+			out += hex[(Math.random() * 16) | 0]
 		}
 	}
 	return out

@@ -9,7 +9,7 @@
 		{
 			"id": "BookkeepingMultiCurrency",
 			"label": "Multi-currency",
-			"icon": "LedgerOutline",
+			"icon": "CurrencyEur",
 			"order": 11,
 			"children": [
 				{
@@ -64,6 +64,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "FxRate",
+				"_note": "REFERENCE-DATA record (one FX rate observation: a currency pair on an effective date). The body is the full provenance of the rate — pair, effective date, source, rate and inverse rate, plus any manual-override reason and the ingestion timestamp — because in multi-currency accounting every conversion must be defensible against a specific, dated, sourced rate. A leaf with no children and no comms. The audit trail sidebar is decisive for a manually overridden rate: it records who changed a number that revalues balances.",
 				"fields": [
 					{ "key": "transactionCurrency", "label": "Transaction currency", "type": "string" },
 					{ "key": "baseCurrency", "label": "Base currency", "type": "string" },
@@ -74,7 +75,28 @@
 					{ "key": "manualOverrideReason", "label": "Manual override reason", "type": "text" },
 					{ "key": "ingestedAt", "label": "Ingested at", "type": "date-time" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
-				]
+				],
+				"indexRoute": "FXRates",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -82,7 +104,8 @@
 			"route": "/bookkeeping/multi-currency/fx-rates/admin",
 			"type": "custom",
 			"title": "FX Rates (Admin)",
-			"component": "FxRatesAdmin"
+			"component": "FxRatesAdmin",
+			"_note": "Operator overlay on top of the declarative FxRate grid: an import-status strip that reads /api/admin/fx-rate-import-status for the last FxRateImportJob run timestamp and the TreasuryRateAdapter dormancy flag. Those two values come from job/adapter state, not from any FxRate object, so `type: index` — whose whole surface is rows of one register/schema — has nowhere to put them. The rate list itself stays declarative on the FxRates page; this page exists only for the cron-health header."
 		}
 	]
 }

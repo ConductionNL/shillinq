@@ -33,39 +33,35 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
  */
-class PeriodCloseException extends \RuntimeException
-{
+class PeriodCloseException extends \RuntimeException {
 
-    /**
-     * Stable status sentinel (PeriodCloseService::ERR_*).
-     *
-     * @var string
-     */
-    private string $status;
+	/**
+	 * Stable status sentinel (PeriodCloseService::ERR_*).
+	 *
+	 * @var string
+	 */
+	private string $status;
 
-    /**
-     * Construct the exception with a client-safe message and status sentinel.
-     *
-     * @param string $message Client-safe message (no stack trace, no internals).
-     * @param string $status  Status sentinel from PeriodCloseService::ERR_*.
-     */
-    public function __construct(string $message, string $status)
-    {
-        parent::__construct(message: $message);
-        $this->status = $status;
+	/**
+	 * Construct the exception with a client-safe message and status sentinel.
+	 *
+	 * @param string $message Client-safe message (no stack trace, no internals).
+	 * @param string $status Status sentinel from PeriodCloseService::ERR_*.
+	 */
+	public function __construct(string $message, string $status) {
+		parent::__construct(message: $message);
+		$this->status = $status;
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Return the status sentinel for HTTP mapping.
-     *
-     * @return string The status sentinel.
-     *
-     * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
-     */
-    public function getStatus(): string
-    {
-        return $this->status;
-
-    }//end getStatus()
+	/**
+	 * Return the status sentinel for HTTP mapping.
+	 *
+	 * @return string The status sentinel.
+	 *
+	 * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-7
+	 */
+	public function getStatus(): string {
+		return $this->status;
+	}//end getStatus()
 }//end class

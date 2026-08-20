@@ -26,7 +26,25 @@
  `index` page type (ADR-024 / ADR-036). The manifest fragment
  src/manifest.d/reporting-compliance.json declares the route.
 
- @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ @spec exclude The reporting capability has no canonical spec. This tag pointed at
+       openspec/changes/reporting-compliance-consolidation (a change directory that
+       exists neither under changes nor under changes/archive), and no canonical
+       reporting capability exists under openspec/specs either. Tracked in #525.
+       Deliberately NOT resolved by writing that spec — authoring the requirement
+       a tag is checked against turns the gate green over an unspecified capability.
+
+ KNOWINGLY DANGLING — do not repoint this tag at a spec (gate-46, shillinq#499).
+ The change directory it named was never committed, and the `reporting`
+ capability has NO canonical spec. One was drafted during gate remediation and
+ withdrawn: a spec written to fit the code, by the process whose job is to
+ check the code against a spec, is not a specification anyone agreed to.
+ Authoring it is the capability owner's decision, not a gate fix.
+
+ The dangling path is replaced by the reason-bearing `@spec exclude` above —
+ the same declaration lib/Controller/ReportingController.php already carries for
+ the same capability. The prose note alone did not say this to gate-46, which
+ reads the tag and not the paragraph under it, so the two halves of the same
+ decision disagreed and only the PHP half was legible.
 -->
 <template>
 	<div class="generated-reports" data-testid="generated-reports">
@@ -36,7 +54,12 @@
 					{{ t('shillinq', 'Generated reports') }}
 				</h2>
 				<p class="generated-reports__hint">
-					{{ t('shillinq', 'Every report generated from the Reporting & Compliance overview is archived here with a download link to the stored file.') }}
+					{{
+						t(
+							'shillinq',
+							'Every report generated from the Reporting & Compliance overview is archived here with a download link to the stored file.',
+						)
+					}}
 				</p>
 			</div>
 			<router-link
@@ -47,9 +70,13 @@
 			</router-link>
 		</header>
 
-		<div class="generated-reports__filters" data-testid="generated-reports-filters">
+		<div
+			class="generated-reports__filters"
+			data-testid="generated-reports-filters">
 			<div class="generated-reports__filter">
-				<label class="generated-reports__filter-label" for="generated-category-filter">
+				<label
+					class="generated-reports__filter-label"
+					for="generated-category-filter">
 					{{ t('shillinq', 'Category') }}
 				</label>
 				<select
@@ -68,7 +95,9 @@
 				</select>
 			</div>
 			<div class="generated-reports__filter">
-				<label class="generated-reports__filter-label" for="generated-period-filter">
+				<label
+					class="generated-reports__filter-label"
+					for="generated-period-filter">
 					{{ t('shillinq', 'Period') }}
 				</label>
 				<select
@@ -87,7 +116,9 @@
 				</select>
 			</div>
 			<div class="generated-reports__filter">
-				<label class="generated-reports__filter-label" for="generated-administration-filter">
+				<label
+					class="generated-reports__filter-label"
+					for="generated-administration-filter">
 					{{ t('shillinq', 'Administration') }}
 				</label>
 				<select
@@ -107,11 +138,17 @@
 			</div>
 		</div>
 
-		<div v-if="loading" class="generated-reports__loading" data-testid="generated-reports-loading">
+		<div
+			v-if="loading"
+			class="generated-reports__loading"
+			data-testid="generated-reports-loading">
 			{{ t('shillinq', 'Loading generated reports…') }}
 		</div>
 
-		<div v-else-if="error" class="generated-reports__error" data-testid="generated-reports-error">
+		<div
+			v-else-if="error"
+			class="generated-reports__error"
+			data-testid="generated-reports-error">
 			{{ error }}
 		</div>
 
@@ -120,7 +157,9 @@
 			data-testid="generated-reports-table"
 			:columns="columns"
 			:rows="filteredRows"
-			:empty-label="t('shillinq', 'No generated reports match the current filters.')">
+			:emptyLabel="
+				t('shillinq', 'No generated reports match the current filters.')
+			">
 			<template #cell-reportType="{ row }">
 				{{ reportLabel(row) }}
 			</template>
@@ -131,7 +170,9 @@
 				{{ formatDate(row.generatedAt) }}
 			</template>
 			<template #cell-format="{ row }">
-				<span class="generated-reports__format">{{ (row.format || '').toUpperCase() }}</span>
+				<span class="generated-reports__format">{{
+					(row.format || '').toUpperCase()
+				}}</span>
 			</template>
 			<template #cell-administrationId="{ row }">
 				{{ administrationLabel(row.administrationId) }}
@@ -152,15 +193,16 @@
 
 <script>
 import { CnDataTable } from '@conduction/nextcloud-vue'
-import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'GeneratedReportsIndex',
 	components: {
 		CnDataTable,
 	},
+
 	data() {
 		return {
 			rows: [],
@@ -173,28 +215,70 @@ export default {
 			administrationFilter: '',
 		}
 	},
+
 	computed: {
 		columns() {
 			return [
-				{ key: 'reportType', label: this.t('shillinq', 'Report'), sortable: true },
-				{ key: 'category', label: this.t('shillinq', 'Category'), sortable: true },
-				{ key: 'period', label: this.t('shillinq', 'Period'), sortable: true },
-				{ key: 'administrationId', label: this.t('shillinq', 'Administration'), sortable: true },
-				{ key: 'format', label: this.t('shillinq', 'Format'), sortable: true },
-				{ key: 'generatedAt', label: this.t('shillinq', 'Generated at'), sortable: true },
-				{ key: 'download', label: this.t('shillinq', 'File'), sortable: false },
+				{
+					key: 'reportType',
+					label: this.t('shillinq', 'Report'),
+					sortable: true,
+				},
+				{
+					key: 'category',
+					label: this.t('shillinq', 'Category'),
+					sortable: true,
+				},
+				{
+					key: 'period',
+					label: this.t('shillinq', 'Period'),
+					sortable: true,
+				},
+				{
+					key: 'administrationId',
+					label: this.t('shillinq', 'Administration'),
+					sortable: true,
+				},
+				{
+					key: 'format',
+					label: this.t('shillinq', 'Format'),
+					sortable: true,
+				},
+				{
+					key: 'generatedAt',
+					label: this.t('shillinq', 'Generated at'),
+					sortable: true,
+				},
+				{
+					key: 'download',
+					label: this.t('shillinq', 'File'),
+					sortable: false,
+				},
 			]
 		},
+
 		categoryOptions() {
-			const present = [...new Set(this.rows.map(r => r.category).filter(Boolean))]
-			return present.map(key => ({ value: key, label: this.categories[key] || key }))
+			const present = [
+				...new Set(this.rows.map((r) => r.category).filter(Boolean)),
+			]
+			return present.map((key) => ({
+				value: key,
+				label: this.categories[key] || key,
+			}))
 		},
+
 		periodOptions() {
-			return [...new Set(this.rows.map(r => r.period).filter(Boolean))].sort().reverse()
+			return [...new Set(this.rows.map((r) => r.period).filter(Boolean))]
+				.sort()
+				.reverse()
 		},
+
 		administrationOptions() {
-			return [...new Set(this.rows.map(r => r.administrationId).filter(Boolean))]
+			return [
+				...new Set(this.rows.map((r) => r.administrationId).filter(Boolean)),
+			]
 		},
+
 		filteredRows() {
 			return this.rows.filter((row) => {
 				if (this.categoryFilter && row.category !== this.categoryFilter) {
@@ -203,37 +287,50 @@ export default {
 				if (this.periodFilter && row.period !== this.periodFilter) {
 					return false
 				}
-				if (this.administrationFilter && row.administrationId !== this.administrationFilter) {
+				if (
+					this.administrationFilter
+					&& row.administrationId !== this.administrationFilter
+				) {
 					return false
 				}
 				return true
 			})
 		},
 	},
+
 	async created() {
 		await this.loadAdministrationContext()
 		await this.loadGenerated()
 	},
+
 	methods: {
 		t,
 		async loadGenerated() {
 			this.loading = true
 			this.error = ''
 			try {
-				const response = await axios.get(generateUrl('/apps/shillinq/api/reporting/generated'))
+				const response = await axios.get(
+					generateUrl('/apps/shillinq/api/reporting/generated'),
+				)
 				const data = response.data || {}
 				const rows = Array.isArray(data.generated)
 					? data.generated
-					: (Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []))
+					: Array.isArray(data.results)
+						? data.results
+						: Array.isArray(data)
+							? data
+							: []
 				this.rows = rows
 				this.categories = data.categories || {}
 			} catch (e) {
-				this.error = e?.response?.data?.error
+				this.error =
+					e?.response?.data?.error
 					|| this.t('shillinq', 'Failed to load generated reports')
 			} finally {
 				this.loading = false
 			}
 		},
+
 		/**
 		 * Best-effort administration names so the administration column +
 		 * filter read names instead of raw ids. A failure is non-fatal: the
@@ -241,32 +338,40 @@ export default {
 		 */
 		async loadAdministrationContext() {
 			try {
-				const response = await axios.get(generateUrl('/apps/shillinq/api/administrations/context'))
+				const response = await axios.get(
+					generateUrl('/apps/shillinq/api/administrations/context'),
+				)
 				const admins = response.data?.administrations || []
 				const names = {}
 				for (const a of admins) {
-					names[a.administrationId] = a.name || a.administrationCode || a.administrationId
+					names[a.administrationId] =
+						a.name || a.administrationCode || a.administrationId
 				}
 				this.administrationNames = names
 			} catch (e) {
 				this.administrationNames = {}
 			}
 		},
+
 		downloadUrl(row) {
 			return generateUrl(`/apps/shillinq/api/reporting/download/${row.id}`)
 		},
+
 		reportLabel(row) {
 			return row.reportLabel || row.reportType || '—'
 		},
+
 		categoryLabel(category) {
 			return this.categories[category] || category || '—'
 		},
+
 		administrationLabel(administrationId) {
 			if (!administrationId) {
 				return '—'
 			}
 			return this.administrationNames[administrationId] || administrationId
 		},
+
 		formatDate(iso) {
 			if (!iso) {
 				return '—'

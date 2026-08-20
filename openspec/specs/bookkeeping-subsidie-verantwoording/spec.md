@@ -12,11 +12,9 @@ status: done
 ## Purpose
 
 This specification defines the requirements for bookkeeping subsidie verantwoording in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
-
 ## Requirements
 
 @e2e exclude pure backend/compliance: subsidie verantwoording — not browser-testable
-
 
 ### REQ-SUB-001: The system SHALL administer grants/subsidies as an OpenRegister-managed `Subsidie` register
 
@@ -270,3 +268,124 @@ service.
 - **WHEN** the notification fires
 - **THEN** that user MUST receive an NC notification of the form
   "Uw subsidie-aanvraag is verleend (€15.000)".
+
+### Requirement: SubsidieVerantwoording notification rules SHALL use the canonical `x-openregister-notifications` dialect
+
+The `SubsidieVerantwoording` and `AuditorStatement` schemas' notification rules MUST declare `trigger` as a structured object
+(`{"type": "transition", "action": "<name>"}`, matching
+`OCA\OpenRegister\Service\Notification\AnnotationNotificationDispatcher`'s
+`matches(array $triggerSpec, ...)` contract) — NOT a bare lifecycle string
+(`"lifecycle.submit"`). Every rule MUST declare `recipients` as a non-empty
+array of `{kind: ...}` objects — NOT a singular `recipient` object. A rule
+resolving recipients through a role name (`finance-officer`,
+`subsidie-coordinator`, `administration-treasurer`) MUST use
+`{"kind": "expression", "resolver": "OCA\\Shillinq\\Notification\\RoleFallbackResolver::<role>"}`,
+where `RoleFallbackResolver` implements the original resolver-then-fallback
+NC-group semantics in PHP.
+
+@e2e exclude declarative notification config: JSON register fragment + PHP resolver class, asserted via unit test + JSON-schema validation, not UI
+
+#### Scenario: SubsidieVerantwoording notification rules pass OpenRegister's annotation validator
+
+- **GIVEN** the `SubsidieVerantwoording` and `AuditorStatement` schemas in `lib/Settings/register.d/bookkeeping-subsidie-verantwoording.json`
+- **WHEN** `OCA\OpenRegister\Service\Notification\NotificationAnnotationValidator` validates every `x-openregister-notifications` rule on both schemas
+- **THEN** validation MUST pass with zero `notification-no-recipients` / `notification-recipient-malformed` / `notification-bad-recipient-kind` errors
+
+#### Scenario: Finance officer is notified when a report is submitted
+
+- **GIVEN** a `SubsidieVerantwoording` object in state `draft`
+- **WHEN** an operator transitions it to `submitted` (the `submit` lifecycle action)
+- **THEN** `AnnotationNotificationDispatcher` MUST resolve at least one recipient via `RoleFallbackResolver::finance-officer` (falling back to the configured fallback NC group when the primary group has zero members) and dispatch the declared notification — replacing the current silent no-op caused by the missing `recipients` key
+
+<!--
+  OUT OF SCOPE (deferred to follow-up): the declarative `isOverdue` calculated
+  field + `onOverdue` scheduled rule are NOT part of this narrowed change —
+  they need either a new `awardDate` schema field or a string-split calc
+  operator OpenRegister does not have (see tasks 3.1/3.2). ⚠️ FOLLOW-UP GAP:
+  the bespoke `OverdueVerantwoordingJob` was already deleted on development, so
+  overdue-report notification currently has NO implementation (neither the job
+  nor the declarative replacement). This must be restored by the follow-up
+  change.
+-->
+
+### Requirement: SubsidieVerantwoording SHALL declare a real awardDate field and a declarative isOverdue calculation
+
+`SubsidieVerantwoording` MUST declare a nullable `awardDate` (`string`,
+`format: date`) property — a grant-award-date snapshot copied from the
+`Subsidie` grant, following the same pattern as `awardedAmount`. The schema
+MUST declare `x-openregister-calculations.daysSinceAward` (materialised,
+integer, `{"diffDays": [{"now": []}, {"prop": "awardDate"}]}`) and
+`x-openregister-calculations.isOverdue` (materialised, boolean,
+`{"and": [{"ne": [status, "final"]}, {"gt": [daysSinceAward, 90]}]}`),
+restoring the 90-day accountability deadline rule (REQ-SUBV-010) the
+retired `OverdueVerantwoordingJob::isOverdue()` implemented imperatively.
+Every operator used MUST be present in
+`OCA\OpenRegister\Service\Calculation\CalculationAnnotationValidator::VALID_OPS`.
+A null or unparseable `awardDate` MUST resolve `isOverdue` to `false`
+(never overdue) — no reportingPeriod-string-split fallback is implemented.
+`x-openregister-lifecycle.final` MUST declare `["final"]` so
+`TemporalCalculationSweepJob`'s hourly re-evaluation (required to keep the
+`now`-dependent `isOverdue` live without an object write) excludes
+already-finalised records.
+
+@e2e exclude declarative schema + calc config: JSON register fragment, asserted via unit test (schema-shape assertions + a functional mirror-evaluator against the retired job's original test matrix), not UI
+
+#### Scenario: A non-final report more than 90 days past award is flagged overdue
+
+- **GIVEN** a `SubsidieVerantwoording` object with `status: draft` (or `submitted`/`approved`) and `awardDate` more than 90 days before the evaluation instant
+- **WHEN** `x-openregister-calculations.daysSinceAward` and `.isOverdue` are evaluated (at save time by `CalculationOnSaveListener`, or by `TemporalCalculationSweepJob`'s hourly sweep for an untouched object)
+- **THEN** `isOverdue` MUST materialise to `true`
+
+#### Scenario: A final report is never overdue regardless of age
+
+- **GIVEN** a `SubsidieVerantwoording` object with `status: final` and any `awardDate`, however old
+- **WHEN** `isOverdue` is evaluated
+- **THEN** `isOverdue` MUST materialise to `false`
+
+#### Scenario: A record with no awardDate is never overdue
+
+- **GIVEN** a `SubsidieVerantwoording` object with `awardDate` null or absent (e.g. a pre-existing record created before this field existed)
+- **WHEN** `isOverdue` is evaluated
+- **THEN** `daysSinceAward` MUST resolve to `null` and `isOverdue` MUST materialise to `false`, with no attempt to derive a reference date from `reportingPeriod`
+
+### Requirement: SubsidieVerantwoording SHALL fire a daily overdue reminder to the assigned approver
+
+The schema MUST declare `x-openregister-notifications.onOverdue` with
+`trigger: {type: scheduled, intervalSec: 86400, filter: {isOverdue: true}}`
+and `recipients: [{kind: field, field: approverUserId}]`, restoring the
+retired `OverdueVerantwoordingJob`'s daily (24h) re-check cadence and
+recipient resolution declaratively (ADR-031). A record with no assigned
+`approverUserId` MUST resolve to zero recipients (matching the job's
+original fail-closed behaviour), not an error.
+
+@e2e exclude declarative notification config: JSON register fragment, asserted via unit test (schema-shape assertions against NotificationAnnotationValidator's documented shape rules), not UI
+
+#### Scenario: The assigned approver is reminded daily while a report remains overdue
+
+- **GIVEN** a `SubsidieVerantwoording` object with `isOverdue: true` and a non-empty `approverUserId`
+- **WHEN** `ScheduledNotificationJob` evaluates the `onOverdue` rule's `filter` against the object's stored data
+- **THEN** `AnnotationNotificationDispatcher` MUST dispatch the notification to the `approverUserId` user, re-firing again after each subsequent `intervalSec` while the object still matches the filter
+
+#### Scenario: An overdue record with no assigned approver receives no notification
+
+- **GIVEN** a `SubsidieVerantwoording` object with `isOverdue: true` and an empty/absent `approverUserId`
+- **WHEN** `ScheduledNotificationJob` evaluates the `onOverdue` rule
+- **THEN** zero recipients are resolved and no notification is dispatched for that object
+
+### Requirement: SubsidieVerantwoording and AuditorStatement notification rules SHALL declare only validator-recognised channels
+
+Every `x-openregister-notifications` rule on both schemas in this fragment MUST declare `channels` using
+only values in `NotificationAnnotationValidator::VALID_CHANNELS` (`nc-notification, email,
+activity, webhook, talk, web-push`). The literal `"in-app"` MUST NOT
+appear as a channel value anywhere in this fragment — it is not recognised
+by `NotificationAnnotationValidator` or `AnnotationNotificationDispatcher`,
+so a rule declaring it never renders an in-app Nextcloud notification.
+
+@e2e exclude declarative notification config: JSON register fragment, asserted via unit test (regression lock grepping the raw fragment + validating every declared channel), not UI
+
+#### Scenario: No notification rule in this fragment uses the invalid "in-app" channel string
+
+- **GIVEN** every `x-openregister-notifications` rule declared on `SubsidieVerantwoording` and `AuditorStatement` in `lib/Settings/register.d/bookkeeping-subsidie-verantwoording.json`
+- **WHEN** each rule's `channels` array is checked against `VALID_CHANNELS`
+- **THEN** every declared channel MUST be one of `nc-notification`, `email`, `activity`, `webhook`, `talk`, `web-push`, and none MUST be the string `"in-app"`
+

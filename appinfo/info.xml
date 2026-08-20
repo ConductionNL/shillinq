@@ -5,7 +5,7 @@
     <name lang="en">Shillinq</name>
     <name lang="nl">Shillinq</name>
     <summary lang="en">Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations.</summary>
-    <summary lang="nl">Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations.</summary>
+    <summary lang="nl">Complete open-source bedrijfsadministratie voor zzp'ers, eenmanszaken, mkb en grotere ondernemingen.</summary>
     <description lang="en"><![CDATA[Complete open-source business administration suite for freelancers, sole proprietors, SMBs, and corporations. Combines bookkeeping, invoicing, procurement, and contract management into one self-hosted.
 
 **Key Features**
@@ -26,92 +26,94 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.9.7</version>
-    <licence>agpl</licence>
+    <version>0.2.1-unstable.20260820123547</version>
+    <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
     <documentation>
-        <user>https://github.com/ConductionNL/shillinq</user>
-        <admin>https://github.com/ConductionNL/shillinq</admin>
-        <developer>https://github.com/ConductionNL/shillinq</developer>
+        <user>https://codeberg.org/Conduction/shillinq</user>
+        <admin>https://codeberg.org/Conduction/shillinq</admin>
+        <developer>https://codeberg.org/Conduction/shillinq</developer>
     </documentation>
     <category>organization</category>
-    <website>https://github.com/ConductionNL/shillinq</website>
-    <discussion>https://github.com/ConductionNL/shillinq/discussions</discussion>
-    <bugs>https://github.com/ConductionNL/shillinq/issues</bugs>
-    <repository>https://github.com/ConductionNL/shillinq</repository>
+    <website>https://codeberg.org/Conduction/shillinq</website>
+    <bugs>https://codeberg.org/Conduction/shillinq/issues</bugs>
+    <repository>https://codeberg.org/Conduction/shillinq</repository>
 
-    <screenshot>https://raw.githubusercontent.com/ConductionNL/shillinq/main/img/app-store.svg</screenshot>
+    <screenshot>https://codeberg.org/Conduction/shillinq/raw/branch/main/img/app-store.svg</screenshot>
 
     <dependencies>
-        <nextcloud min-version="28" max-version="34"/>
         <php min-version="8.3"/>
+        <!--
+        App dependency (not expressible in app-info.xsd): OpenRegister — every
+        Shillinq entity is an OpenRegister object, and src/manifest.json lists
+        "openregister" as a required dependency.
+
+        min-version is therefore 32, NOT 31. Two independent reasons, both measured:
+
+        1. PHP 8.3. This app declares <php min-version="8.3"/> above. Nextcloud 31
+           still supports PHP 8.1/8.2, so a 31 install can present a PHP this app
+           has already declared it does not support. 32 is the first server line
+           that matches the PHP floor already declared here.
+
+        2. The CI matrix does not test 31. .github/workflows/code-quality.yml sets
+           nextcloud-test-refs: '["stable32", "stable33"]'. Declaring 31 advertised
+           an App Store range that NO job in this repo has ever exercised.
+
+        Note the hard dependency on OpenRegister is REAL but UNDECLARED: appinfo/
+        routes.php line 39 returns \OCA\OpenRegister\AppHost\Routes::standard(...)
+        at file scope, so with openregister absent this app's entire route table
+        fatals — not one endpoint degrades, all of them die. It cannot be declared
+        as <app>openregister</app> here without also pinning that app's own floor;
+        tracked separately. The rule from openconnector#1172/#1173 is that
+        min-version must be >= the max of every <app> dependency's floor, so this
+        value must be revisited if that dependency is ever declared: openregister
+        itself currently declares min-version="28" (measured on its
+        origin/development today), and is moving to 32 concurrently.
+
+        max-version stays 34, which is the fleet-wide value everywhere except
+        openconnector, which declares 35.
+        -->
+        <nextcloud min-version="32" max-version="34"/>
     </dependencies>
 
-    <navigations>
-        <navigation>
-            <id>shillinq</id>
-            <name>Shillinq</name>
-            <route>shillinq.dashboard.page</route>
-            <icon>app.svg</icon>
-        </navigation>
-    </navigations>
-
-    <settings>
-        <admin>OCA\Shillinq\Settings\AdminSettings</admin>
-        <admin-section>OCA\Shillinq\Sections\SettingsSection</admin-section>
-    </settings>
-
-    <repair-steps>
-        <post-migration>
-            <step>OCA\Shillinq\Repair\InitializeSettings</step>
-            <step>OCA\Shillinq\Repair\InitializeBbvAdministration</step>
-            <step>OCA\Shillinq\Repair\UnifyAnalyticalDimensions</step>
-            <step>OCA\Shillinq\Repair\RetireCostProjectStep</step>
-            <step>OCA\Shillinq\Repair\BackfillFiscalPeriods</step>
-            <step>OCA\Shillinq\Repair\PeriodCloseBackfill</step>
-            <step>OCA\Shillinq\Repair\Load_CBS_Seeds_Step</step>
-            <step>OCA\Shillinq\Repair\Load_SBR_XBRL_Seeds_Step</step>
-            <step>OCA\Shillinq\Repair\Load_DBA_Seeds_Step</step>
-            <step>OCA\Shillinq\Repair\MigrateProductVendorMasterToPipelinq</step>
-            <step>OCA\Shillinq\Repair\DelegateSigningMigrationRepair</step>
-            <step>OCA\Shillinq\Repair\SetOrderExtensionComposition</step>
-            <step>OCA\Shillinq\Repair\FoldIntoOrder</step>
-            <step>OCA\Shillinq\Repair\FoldDunningWriteoffIntoArInvoice</step>
-            <step>OCA\Shillinq\Repair\StampJournalTypeOnGlTransactions</step>
-            <step>OCA\Shillinq\Repair\FoldExpensesAndHoursIntoProject</step>
-            <step>OCA\Shillinq\Repair\RetireSubsidieSchema</step>
-        </post-migration>
-    </repair-steps>
-
     <background-jobs>
+        <!-- Cashflow 13wk REQ-CF-000: weekly horizon roll (Monday 02:00 UTC).
+             Single registration — the former OCA\Shillinq\Cron\HorizonRollingJob
+             duplicate was removed (double-execution risk); lib/BackgroundJob/
+             is the canonical job directory per ADR-069. -->
         <job>OCA\Shillinq\BackgroundJob\HorizonRollingJob</job>
-        <job>OCA\Shillinq\BackgroundJob\CancelUnconfirmedAppointments</job>
-        <job>OCA\Shillinq\Job\MandateDormancyExpiryJob</job>
-        <job>OCA\Shillinq\BackgroundJob\OverdueVerantwoordingJob</job>
-        <job>OCA\Shillinq\BackgroundJob\DBAFlagGenerationJob</job>
-        <job>OCA\Shillinq\BackgroundJob\DBAPortfolioAggregationJob</job>
-        <!-- Cashflow 13wk: weekly horizon roll (Monday 02:00 UTC), daily bankfeed pull,
-             daily crisis-mode refresh, monthly calibration. REQ-CF-000/010/012/013. -->
-        <job>OCA\Shillinq\Cron\HorizonRollingJob</job>
-        <job>OCA\Shillinq\Cron\BankfeedReconciliationJob</job>
-        <job>OCA\Shillinq\Cron\CrisisModeRefreshJob</job>
-        <job>OCA\Shillinq\Cron\CalibrationBatchJob</job>
         <!-- bookings-confirm-flow REQ-BCF-005: daily sweep that moves
              pending_confirmation appointments past their confirmationDeadline
-             to cancelled with reason "Confirmation deadline passed". -->
-        <job>OCA\Shillinq\Cron\CancelUnconfirmedAppointmentsJob</job>
+             to cancelled with reason "Confirmation deadline passed". Single
+             registration — the former OCA\Shillinq\Cron\CancelUnconfirmedAppointmentsJob
+             duplicate was removed (double-execution risk). -->
+        <job>OCA\Shillinq\BackgroundJob\CancelUnconfirmedAppointments</job>
+        <!-- background-job-consolidation (ADR-069 D1): moved from
+             lib/Job/MandateDormancyExpiryJob.php — lib/Job/ was the
+             third, non-canonical job directory shillinq shipped. -->
+        <job>OCA\Shillinq\BackgroundJob\MandateDormancyExpiryJob</job>
+        <job>OCA\Shillinq\BackgroundJob\DBAFlagGenerationJob</job>
+        <job>OCA\Shillinq\BackgroundJob\DBAPortfolioAggregationJob</job>
+        <!-- Cashflow 13wk: daily bankfeed pull, daily crisis-mode refresh,
+             monthly calibration. REQ-CF-010/012/013. Moved from lib/Cron/
+             by background-job-consolidation (ADR-069 D1). -->
+        <job>OCA\Shillinq\BackgroundJob\BankfeedReconciliationJob</job>
+        <job>OCA\Shillinq\BackgroundJob\CrisisModeRefreshJob</job>
+        <job>OCA\Shillinq\BackgroundJob\CalibrationBatchJob</job>
         <!-- inventory-lot-batch-expiry REQ-LOT-007: daily sweep raising
              approaching-expiry (30/7 day thresholds) and expired alerts
              for InventoryLot records. Idempotent via the ExpiryAlert
-             uniqueness key. -->
-        <job>OCA\Shillinq\Cron\LotExpiryAlertJob</job>
+             uniqueness key. Moved from lib/Cron/ by
+             background-job-consolidation (ADR-069 D1). -->
+        <job>OCA\Shillinq\BackgroundJob\LotExpiryAlertJob</job>
         <!-- bookings-pipelinq-customer-bridge slice 09: async retry drain
              for failed timeline publishes. Per-event QueuedJob — one
              argument (entryId) per queued event. PersistentTimelineRetryQueue
              adds runtime ticks; this declaration only registers the class
-             with the job runner. -->
-        <job>OCA\Shillinq\Cron\PipelinqTimelineRetryJob</job>
+             with the job runner. Moved from lib/Cron/ by
+             background-job-consolidation (ADR-069 D1). -->
+        <job>OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob</job>
         <!-- bookkeeping-purchase-order-3way slice 10 (REQ-PO3W-008 /
              REQ-VP-001 / REQ-VP-005): monthly vendor-performance scoring
              that aggregates GoodsReceiptNote + ThreeWayMatch +
@@ -120,8 +122,9 @@ Vrij en open source onder de EUPL-1.2-licentie.
              10% invoice), sets automatedReviewEligible=TRUE once the
              supplier crosses 96% (after the 90-day bootstrap window) and
              optionally relaxes their ToleranceProfile. Idempotent per
-             (supplierId, period, administrationId) tuple. -->
-        <job>OCA\Shillinq\Cron\VendorPerformanceAggregationJob</job>
+             (supplierId, period, administrationId) tuple. Moved from
+             lib/Cron/ by background-job-consolidation (ADR-069 D1). -->
+        <job>OCA\Shillinq\BackgroundJob\VendorPerformanceAggregationJob</job>
         <!-- bookkeeping-multi-administratie Task 15: per-administration
              backup scheduler. Evaluates each Administration record's
              backupSchedule (dagelijks/wekelijks/aanvragen) independently
@@ -139,15 +142,17 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <!-- bookkeeping-wbso-sno-administratie REQ-WBSO-009: nightly sweep
              that archives Document records past the seven-year Archiefwet
              retention boundary. Fail-soft per record; idempotent via the
-             schema's filed → archived lifecycle gate. -->
-        <job>OCA\Shillinq\Cron\DocumentArchiveCron</job>
+             schema's filed → archived lifecycle gate. Moved from
+             lib/Cron/ by background-job-consolidation (ADR-069 D1). -->
+        <job>OCA\Shillinq\BackgroundJob\DocumentArchiveCron</job>
         <!-- bookkeeping-soft-close-flux Task 22: nightly continuous-close
              orchestrator. Daily-interval TimedJob; for every active
              Administration record, invokes SoftCloseExecutor::execute() for
              the current yyyy-mm period (REQ-CLS-002). Targets 07:00 local
              CET completion; on-demand testing route lives at POST
-             /api/v2/soft-close/{administrationId}/execute-now. -->
-        <job>OCA\Shillinq\Cron\SoftCloseJob</job>
+             /api/v2/soft-close/{administrationId}/execute-now. Moved
+             from lib/Cron/ by background-job-consolidation (ADR-069 D1). -->
+        <job>OCA\Shillinq\BackgroundJob\SoftCloseJob</job>
         <!-- add-shillinq-multi-currency REQ-MC-003 / Task 11: daily ECB FX-rate
              import. Delegates the rate fetch to TreasuryRateAdapterInterface
              (openconnector source slug `treasury-rates`) and upserts FxRate
@@ -157,7 +162,92 @@ Vrij en open source onder de EUPL-1.2-licentie.
              Application::register()); manual operator FxRate entries via the
              admin UI keep working regardless. -->
         <job>OCA\Shillinq\BackgroundJob\FxRateImportJob</job>
+        <!-- compliance-deadline-calendar REQ-CDC-001/007: daily TimedJob
+             that publishes the open BTW/ICP/VPB filing, payment-run,
+             (opt-in) AR due-date and contract deadlines as VEVENTs into
+             each seen user's deadline calendar honouring the per-user
+             category toggles, and raises one NC Notification per upcoming
+             deadline per user within the configured lead time. Fail-soft:
+             a calendar-less instance logs and degrades; cron never
+             crashes. -->
+        <job>OCA\Shillinq\BackgroundJob\DeadlineReminderJob</job>
     </background-jobs>
+
+    <repair-steps>
+        <post-migration>
+            <step>OCA\Shillinq\Repair\InitializeSettings</step>
+            <step>OCA\Shillinq\Repair\InitializeBbvAdministration</step>
+            <step>OCA\Shillinq\Repair\UnifyAnalyticalDimensions</step>
+            <step>OCA\Shillinq\Repair\RetireCostProjectStep</step>
+            <step>OCA\Shillinq\Repair\BackfillFiscalPeriods</step>
+            <step>OCA\Shillinq\Repair\PeriodCloseBackfill</step>
+            <step>OCA\Shillinq\Repair\LoadCbsSeedsStep</step>
+            <step>OCA\Shillinq\Repair\LoadSbrXbrlSeedsStep</step>
+            <step>OCA\Shillinq\Repair\LoadDbaSeedsStep</step>
+            <step>OCA\Shillinq\Repair\MigrateProductVendorMasterToPipelinq</step>
+            <step>OCA\Shillinq\Repair\DelegateSigningMigrationRepair</step>
+            <!-- FoldIntoOrder RE-ENABLED (issue #503, 2026-07-25): live-verified end to end on 8080 against real
+                 created rows for ALL THREE source types (Subsidie / PurchaseOrder / DBAOpdracht). Each folds into a
+                 correctly-mapped OrderPrimitive (purchase cent->EUR conversion confirmed: 121000 -> 1210.00); a re-run
+                 skips every already-folded row (idempotent - exactly one OrderPrimitive per source, no duplicates);
+                 source rows and decidesk's `order` schema (1585) are untouched. Live-running the held step also
+                 surfaced and fixed five defects the mocked unit suite could not see (limit=>0 read zero rows,
+                 (array)$row destroyed ObjectEntity payloads, explicit nulls failed typed validation, date vs date-time
+                 format, and a non-idempotent existence check) - see PR #381. Non destructive, idempotent, fail soft.
+                 InitializeSettings (above) imports OrderPrimitive before this step runs; this step precedes any retire. -->
+            <step>OCA\Shillinq\Repair\FoldIntoOrder</step>
+            <step>OCA\Shillinq\Repair\FoldDunningWriteoffIntoArInvoice</step>
+            <step>OCA\Shillinq\Repair\StampJournalTypeOnGlTransactions</step>
+            <step>OCA\Shillinq\Repair\FoldExpensesAndHoursIntoProject</step>
+            <!-- OCA\Shillinq\Repair\RetireSubsidieSchema STILL HELD (issue #503): DELETES folded Subsidie objects, so it
+                 stays held even though the fold itself is now live-verified and re-enabled above, and even though its own
+                 read/idempotency bugs are now FIXED (issue #382: the limit=>0 dead-read and the dot-path orderExists()
+                 delete-gate that never matched — both resolved). It remains held for ONE reason now: deleting real source
+                 rows is irreversible and MUST lag the fold by at least one release, so a folded instance keeps a rollback
+                 window before its Subsidie source data is removed. Re-enable only after the fold has run on a real instance
+                 and been confirmed for at least one release, and the delete has itself been live-verified on real data. -->
+            <step>OCA\Shillinq\Repair\RematerialiseConvertedCalculations</step>
+            <!--
+                Must run AFTER the register sync that adds the English columns,
+                so it can tell the rename case from the back-fill case. Covers every
+                renamed property together — a register-scoped step
+                cannot rename a column for one owner and not the rest without
+                the others silently reading null. Idempotent, non-destructive,
+                and it refuses ambiguous renames rather than merging them.
+            -->
+            <step>OCA\Shillinq\Repair\RenameDutchColumns</step>
+            <!--
+                Must run AFTER RenameDutchColumns: that step moves the COLUMNS,
+                this one moves what is IN them. Both are needed. Once the schema
+                declares `ACTIVE`, a row still holding `ACTIEF` does not error —
+                a filter on the new value returns null and the caller reads that
+                as "nothing to do", so the loss is silent.
+            -->
+            <step>OCA\Shillinq\Repair\RenameDutchValues</step>
+        </post-migration>
+
+        <!-- FRESH INSTALL. Nextcloud does NOT run `post-migration` on a first
+             install: `Installer::installAppLastSteps()` guards both the
+             pre-migration and post-migration blocks with
+             `if ($previousVersion !== '')`, and only `repair-steps/install`
+             runs unconditionally afterwards. Until this block existed, a
+             brand-new shillinq install ran NONE of the steps above, so
+             InitializeSettings never fired and the `shillinq` REGISTER was
+             never imported. Every controller that resolves the register then
+             threw `Did expect one result but found none ... FROM
+             oc_openregister_registers`, which surfaces as HTTP 500 on
+             /api/vat-returns and /api/period-close/* and HTTP 503 on
+             /api/v2/calendars — on a clean install, for the admin, on every
+             request. Measured in run 30903201789 (job 91972751340).
+
+             Only InitializeSettings belongs here. Every other step above is a
+             migration or backfill over data that a fresh install does not yet
+             have; they stay upgrade-only so a first install does not pay for
+             folds and rematerialisations that can have nothing to fold. -->
+        <install>
+            <step>OCA\Shillinq\Repair\InitializeSettings</step>
+        </install>
+    </repair-steps>
 
     <commands>
         <!-- Audit the register's bookkeeping objects against the machine-checkable
@@ -166,5 +256,22 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <!-- Idempotently backfill local TEST data to satisfy the enforced rules
              (sourceReference + balanced lines on every GL transaction). Test/dev. -->
         <command>OCA\Shillinq\Command\RulesSeedTestDataCommand</command>
+        <!-- Count-equality audit for the Subsidie/PurchaseOrder/DBAOpdracht -> Order
+             fold (abstract-order-primitive, REQ-ORD-003). Read-only. -->
+        <command>OCA\Shillinq\Command\OrdersAuditCommand</command>
     </commands>
+
+    <settings>
+        <admin>OCA\Shillinq\Settings\AdminSettings</admin>
+        <admin-section>OCA\Shillinq\Sections\SettingsSection</admin-section>
+    </settings>
+
+    <navigations>
+        <navigation>
+            <id>shillinq</id>
+            <name>Shillinq</name>
+            <route>shillinq.dashboard.page</route>
+            <icon>app.svg</icon>
+        </navigation>
+    </navigations>
 </info>

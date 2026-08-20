@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-rule-engine/specs/bookkeeping-rule-engine/spec.md
+ * @spec openspec/specs/bookkeeping-rule-engine/spec.md
  */
 
 declare(strict_types=1);
@@ -27,14 +27,13 @@ namespace OCA\Shillinq\Standards\Checks;
 /**
  * Optional capability: supply compliant sample objects for new object types.
  */
-interface SeedsObjects
-{
-    /**
-     * Compliant sample objects to create when the object type is empty, keyed by
-     * object type. Each entry is a list of objects (assoc arrays) that SATISFY this
-     * provider's checks. Return [] when no object creation is needed.
-     *
-     * @return array<string, array<int, array<string, mixed>>>
-     */
-    public static function seedObjects(): array;
+interface SeedsObjects {
+	/**
+	 * Compliant sample objects to create when the object type is empty, keyed by
+	 * object type. Each entry is a list of objects (assoc arrays) that SATISFY this
+	 * provider's checks. Return [] when no object creation is needed.
+	 *
+	 * @return array<string, array<int, array<string, mixed>>>
+	 */
+	public static function seedObjects(): array;
 }//end interface

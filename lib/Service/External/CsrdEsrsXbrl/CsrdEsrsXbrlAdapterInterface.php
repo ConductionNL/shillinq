@@ -88,65 +88,64 @@ namespace OCA\Shillinq\Service\External\CsrdEsrsXbrl;
  *
  * @spec openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md
  */
-interface CsrdEsrsXbrlAdapterInterface
-{
-    /**
-     * Map a list of esrs-data-point IDs to EFRAG ESRS XBRL fact
-     * concepts.
-     *
-     * @param string            $taxonomyVersion EFRAG ESRS taxonomy
-     *                                           version (e.g.
-     *                                           `efrag-esrs-2024`).
-     * @param array<int,string> $dataPointIds    EsrsDataPoint.esrsDataPointId
-     *                                           values to map.
-     *
-     * @return CsrdEsrsXbrlResult The mapping outcome (status MAPPED on
-     *                            success; extras carries the fact-concept
-     *                            dictionary).
-     */
-    public function mapTaxonomy(string $taxonomyVersion, array $dataPointIds): CsrdEsrsXbrlResult;
+interface CsrdEsrsXbrlAdapterInterface {
+	/**
+	 * Map a list of esrs-data-point IDs to EFRAG ESRS XBRL fact
+	 * concepts.
+	 *
+	 * @param string $taxonomyVersion EFRAG ESRS taxonomy
+	 *                                version (e.g.
+	 *                                `efrag-esrs-2024`).
+	 * @param array<int,string> $dataPointIds EsrsDataPoint.esrsDataPointId
+	 *                                        values to map.
+	 *
+	 * @return CsrdEsrsXbrlResult The mapping outcome (status MAPPED on
+	 *                            success; extras carries the fact-concept
+	 *                            dictionary).
+	 */
+	public function mapTaxonomy(string $taxonomyVersion, array $dataPointIds): CsrdEsrsXbrlResult;
 
-    /**
-     * Validate that every mandatory EFRAG IG-3 data point is present
-     * and assured for the reporting period.
-     *
-     * Dormant implementations MUST return `VALIDATION_BLOCKED` with a
-     * non-empty `missingMandatory` list — never a clean validation —
-     * so a deferred adapter cannot accidentally publish an
-     * unvalidated report.
-     *
-     * @param string $reportingPeriod ISO reporting period (e.g. `2025`
-     *                                or `2025-FY`).
-     *
-     * @return CsrdEsrsXbrlResult The validation outcome.
-     */
-    public function validateMandatoryDataPoints(string $reportingPeriod): CsrdEsrsXbrlResult;
+	/**
+	 * Validate that every mandatory EFRAG IG-3 data point is present
+	 * and assured for the reporting period.
+	 *
+	 * Dormant implementations MUST return `VALIDATION_BLOCKED` with a
+	 * non-empty `missingMandatory` list — never a clean validation —
+	 * so a deferred adapter cannot accidentally publish an
+	 * unvalidated report.
+	 *
+	 * @param string $reportingPeriod ISO reporting period (e.g. `2025`
+	 *                                or `2025-FY`).
+	 *
+	 * @return CsrdEsrsXbrlResult The validation outcome.
+	 */
+	public function validateMandatoryDataPoints(string $reportingPeriod): CsrdEsrsXbrlResult;
 
-    /**
-     * Build an iXBRL instance document (Inline XBRL PDF + embedded
-     * fact markup) for the reporting period.
-     *
-     * @param string              $reportingPeriod ISO reporting period.
-     * @param array<string,mixed> $payload         Build envelope —
-     *                                             materialityMatrixSnapshot,
-     *                                             ghgInventorySummary,
-     *                                             policyActionTargetExtract,
-     *                                             assuranceOpinion,
-     *                                             dataQualityNotes,
-     *                                             originalAnnualReportRef.
-     *
-     * @return CsrdEsrsXbrlResult The build outcome (status
-     *                            INSTANCE_BUILT on success; payloadRef
-     *                            carries the docudesk / openconnector
-     *                            artefact handle).
-     */
-    public function buildInstance(string $reportingPeriod, array $payload): CsrdEsrsXbrlResult;
+	/**
+	 * Build an iXBRL instance document (Inline XBRL PDF + embedded
+	 * fact markup) for the reporting period.
+	 *
+	 * @param string $reportingPeriod ISO reporting period.
+	 * @param array<string,mixed> $payload Build envelope —
+	 *                                     materialityMatrixSnapshot,
+	 *                                     ghgInventorySummary,
+	 *                                     policyActionTargetExtract,
+	 *                                     assuranceOpinion,
+	 *                                     dataQualityNotes,
+	 *                                     originalAnnualReportRef.
+	 *
+	 * @return CsrdEsrsXbrlResult The build outcome (status
+	 *                            INSTANCE_BUILT on success; payloadRef
+	 *                            carries the docudesk / openconnector
+	 *                            artefact handle).
+	 */
+	public function buildInstance(string $reportingPeriod, array $payload): CsrdEsrsXbrlResult;
 
-    /**
-     * Whether the adapter is dormant — i.e. wired but not contacting
-     * the cross-app XBRL pipeline.
-     *
-     * @return bool TRUE when the adapter is a log-only stub.
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the adapter is dormant — i.e. wired but not contacting
+	 * the cross-app XBRL pipeline.
+	 *
+	 * @return bool TRUE when the adapter is a log-only stub.
+	 */
+	public function isDormant(): bool;
 }//end interface

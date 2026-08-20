@@ -35,6 +35,7 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\Shillinq\Service\Booking\ConfirmationTokenService;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -48,92 +49,90 @@ use Throwable;
  *
  * @spec openspec/changes/bookings-confirm-flow/tasks.md#task-11
  */
-class AppointmentCreatedListener implements IEventListener
-{
-    /**
-     * Construct the listener with DI dependencies.
-     *
-     * @param ConfirmationTokenService $tokens Token + email dispatcher.
-     * @param LoggerInterface          $logger Logger for fail-soft.
-     */
-    public function __construct(
-        private readonly ConfirmationTokenService $tokens,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class AppointmentCreatedListener implements IEventListener {
+	/**
+	 * Construct the listener with DI dependencies.
+	 *
+	 * @param ConfirmationTokenService $tokens Token + email dispatcher.
+	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema id to its slug.
+	 * @param LoggerInterface $logger Logger for fail-soft.
+	 */
+	public function __construct(
+		private readonly ConfirmationTokenService $tokens,
+		private readonly ListenerSchemaResolver $schemaResolver,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Handle an ObjectCreatedEvent.
-     *
-     * @param Event $event Event from OpenRegister.
-     *
-     * @return void
-     */
-    public function handle(Event $event): void
-    {
-        if ($event instanceof ObjectCreatedEvent === false) {
-            return;
-        }
+	/**
+	 * Handle an ObjectCreatedEvent.
+	 *
+	 * @param Event $event Event from OpenRegister.
+	 *
+	 * @return void
+	 */
+	public function handle(Event $event): void {
+		if ($event instanceof ObjectCreatedEvent === false) {
+			return;
+		}
 
-        try {
-            $entity = $event->getObject();
-            if ($entity === null || $entity->getSchema() === null) {
-                return;
-            }
+		try {
+			$entity = $event->getObject();
+			if ($entity === null || $entity->getSchema() === null) {
+				return;
+			}
 
-            $schema = (string) $entity->getSchema();
-            if ($this->isAppointmentSchema(schema: $schema) === false) {
-                return;
-            }
+			$schema = $this->schemaResolver->schemaSlug(entity: $entity);
+			if ($this->isAppointmentSchema(schema: $schema) === false) {
+				return;
+			}
 
-            $appointment = $entity->getObject();
-            if (is_array($appointment) === false) {
-                return;
-            }
+			$appointment = $entity->getObject();
+			if (is_array($appointment) === false) {
+				return;
+			}
 
-            if ((string) ($appointment['status'] ?? '') !== 'pending_confirmation') {
-                // Admin-created bookings start as `confirmed` and skip the
-                // confirmation flow per REQ-BCF-010.
-                return;
-            }
+			if ((string)($appointment['status'] ?? '') !== 'pending_confirmation') {
+				// Admin-created bookings start as `confirmed` and skip the
+				// confirmation flow per REQ-BCF-010.
+				return;
+			}
 
-            $appointmentId = (string) ($appointment['appointmentId'] ?? '');
-            if ($appointmentId === '') {
-                return;
-            }
+			$appointmentId = (string)($appointment['appointmentId'] ?? '');
+			if ($appointmentId === '') {
+				return;
+			}
 
-            $customer = [
-                'id'     => (string) ($appointment['customerId'] ?? ''),
-                'userId' => (string) ($appointment['customerUserId'] ?? ''),
-                'name'   => (string) ($appointment['customerName'] ?? ''),
-                'email'  => (string) ($appointment['customerEmail'] ?? ''),
-            ];
+			$customer = [
+				'id' => (string)($appointment['customerId'] ?? ''),
+				'userId' => (string)($appointment['customerUserId'] ?? ''),
+				'name' => (string)($appointment['customerName'] ?? ''),
+				'email' => (string)($appointment['customerEmail'] ?? ''),
+			];
 
-            $this->tokens->issueAndSend($appointment, $customer);
-        } catch (Throwable $e) {
-            // Never fail an appointment create because of a downstream
-            // email/token failure — log + continue. Operators can resend.
-            $this->logger->error(
-                'AppointmentCreatedListener: token issuance failed',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+			$this->tokens->issueAndSend($appointment, $customer);
+		} catch (Throwable $e) {
+			// Never fail an appointment create because of a downstream
+			// email/token failure — log + continue. Operators can resend.
+			$this->logger->error(
+				'AppointmentCreatedListener: token issuance failed',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-    }//end handle()
+	}//end handle()
 
-    /**
-     * Whether the supplied schema string identifies the Appointment schema
-     * — schema strings may be plain slugs or numeric IDs depending on OR
-     * config.
-     *
-     * @param string $schema Schema identifier from the entity.
-     *
-     * @return bool TRUE when the schema is "Appointment".
-     */
-    private function isAppointmentSchema(string $schema): bool
-    {
-        $normalised = strtolower(trim($schema));
-        return ($normalised === 'appointment' || str_ends_with($normalised, '/appointment'));
-
-    }//end isAppointmentSchema()
+	/**
+	 * Whether the supplied schema string identifies the Appointment schema
+	 * — schema strings may be plain slugs or numeric IDs depending on OR
+	 * config.
+	 *
+	 * @param string $schema Schema identifier from the entity.
+	 *
+	 * @return bool TRUE when the schema is "Appointment".
+	 */
+	private function isAppointmentSchema(string $schema): bool {
+		$normalised = strtolower(trim($schema));
+		return ($normalised === 'appointment' || str_ends_with($normalised, '/appointment'));
+	}//end isAppointmentSchema()
 }//end class

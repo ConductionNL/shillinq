@@ -24,7 +24,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+ * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -42,341 +42,322 @@ namespace OCA\Shillinq\Service;
  * LeaseRecognitionService wire this helper to live lease-contract data fetched
  * from the OpenRegister ObjectService.
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
+ * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
  */
-class LeaseAmortizationCalculator
-{
-    /**
-     * Number of payment periods in a year, keyed by payment frequency.
-     *
-     * @var array<string,int>
-     */
-    private const PERIODS_PER_YEAR = [
-        'monthly'   => 12,
-        'quarterly' => 4,
-        'annual'    => 1,
-    ];
+class LeaseAmortizationCalculator {
+	/**
+	 * Number of payment periods in a year, keyed by payment frequency.
+	 *
+	 * @var array<string,int>
+	 */
+	private const PERIODS_PER_YEAR = [
+		'monthly' => 12,
+		'quarterly' => 4,
+		'annual' => 1,
+	];
 
-    /**
-     * Convert a money amount to integer cents.
-     *
-     * @param mixed $amount Money amount (float|int|numeric-string|null).
-     *
-     * @return int Amount in whole cents.
-     *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
-     */
-    public function toCents(mixed $amount): int
-    {
-        return (int) round((float) ($amount ?? 0) * 100);
+	/**
+	 * Convert a money amount to integer cents.
+	 *
+	 * @param mixed $amount Money amount (float|int|numeric-string|null).
+	 *
+	 * @return int Amount in whole cents.
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
+	 */
+	public function toCents(mixed $amount): int {
+		return (int)round((float)($amount ?? 0) * 100);
+	}//end toCents()
 
-    }//end toCents()
+	/**
+	 * Convert integer cents back to a float money amount.
+	 *
+	 * @param int $cents Whole cents.
+	 *
+	 * @return float Money amount (two decimals).
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
+	 */
+	public function fromCents(int $cents): float {
+		return round($cents / 100, 2);
+	}//end fromCents()
 
-    /**
-     * Convert integer cents back to a float money amount.
-     *
-     * @param int $cents Whole cents.
-     *
-     * @return float Money amount (two decimals).
-     *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
-     */
-    public function fromCents(int $cents): float
-    {
-        return round($cents / 100, 2);
+	/**
+	 * Resolve the number of payment periods per year for a frequency.
+	 *
+	 * Falls back to monthly (12) for irregular / unknown frequencies so the
+	 * caller always gets a deterministic per-period rate (REQ-LA-002).
+	 *
+	 * @param string $paymentFrequency monthly|quarterly|annual|irregular.
+	 *
+	 * @return int Periods per year (1, 4 or 12).
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
+	 */
+	public function periodsPerYear(string $paymentFrequency): int {
+		return (self::PERIODS_PER_YEAR[$paymentFrequency] ?? 12);
+	}//end periodsPerYear()
 
-    }//end fromCents()
+	/**
+	 * The periodic IBR derived from the annual IBR and the payment frequency.
+	 *
+	 * IFRS 16 uses the rate implicit in the lease or the lessee's incremental
+	 * borrowing rate; the spec (REQ-LA-002) prescribes a simple per-period
+	 * proration (annual / periods-per-year), matching the worked example.
+	 *
+	 * @param float $annualIbrPercent Annual IBR as a percentage (e.g. 4.0).
+	 * @param string $paymentFrequency monthly|quarterly|annual|irregular.
+	 *
+	 * @return float Periodic rate as a fraction (e.g. 0.003333 for 4% monthly).
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
+	 */
+	public function periodicRate(float $annualIbrPercent, string $paymentFrequency): float {
+		$periods = $this->periodsPerYear(paymentFrequency: $paymentFrequency);
+		if ($periods <= 0) {
+			return 0.0;
+		}
 
-    /**
-     * Resolve the number of payment periods per year for a frequency.
-     *
-     * Falls back to monthly (12) for irregular / unknown frequencies so the
-     * caller always gets a deterministic per-period rate (REQ-LA-002).
-     *
-     * @param string $paymentFrequency monthly|quarterly|annual|irregular.
-     *
-     * @return int Periods per year (1, 4 or 12).
-     *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
-     */
-    public function periodsPerYear(string $paymentFrequency): int
-    {
-        return (self::PERIODS_PER_YEAR[$paymentFrequency] ?? 12);
+		return ($annualIbrPercent / 100.0) / $periods;
+	}//end periodicRate()
 
-    }//end periodsPerYear()
+	/**
+	 * Present value of an ordinary annuity (payments in arrears).
+	 *
+	 * PV = pmt × (1 − (1 + r)^-n) / r, with the r → 0 limit being pmt × n.
+	 * For payments in advance (annuity-due) the result is multiplied by (1 + r).
+	 *
+	 * @param float $paymentAmount Contractual payment per period.
+	 * @param int $periods Number of payment periods (n).
+	 * @param float $periodicRate Periodic discount rate as a fraction (r).
+	 * @param string $paymentTiming in-advance|in-arrears (REQ-LC-002).
+	 *
+	 * @return float Present value of the payment stream.
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
+	 */
+	public function presentValue(
+		float $paymentAmount,
+		int $periods,
+		float $periodicRate,
+		string $paymentTiming = 'in-arrears',
+	): float {
+		if ($periods <= 0 || $paymentAmount === 0.0) {
+			return 0.0;
+		}
 
-    /**
-     * The periodic IBR derived from the annual IBR and the payment frequency.
-     *
-     * IFRS 16 uses the rate implicit in the lease or the lessee's incremental
-     * borrowing rate; the spec (REQ-LA-002) prescribes a simple per-period
-     * proration (annual / periods-per-year), matching the worked example.
-     *
-     * @param float  $annualIbrPercent Annual IBR as a percentage (e.g. 4.0).
-     * @param string $paymentFrequency monthly|quarterly|annual|irregular.
-     *
-     * @return float Periodic rate as a fraction (e.g. 0.003333 for 4% monthly).
-     *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
-     */
-    public function periodicRate(float $annualIbrPercent, string $paymentFrequency): float
-    {
-        $periods = $this->periodsPerYear(paymentFrequency: $paymentFrequency);
-        if ($periods <= 0) {
-            return 0.0;
-        }
+		$presentValue = $paymentAmount * $periods;
+		if ($periodicRate !== 0.0) {
+			$presentValue = $paymentAmount * ((1 - ((1 + $periodicRate) ** (-1 * $periods))) / $periodicRate);
+		}
 
-        return ($annualIbrPercent / 100.0) / $periods;
+		if ($paymentTiming === 'in-advance') {
+			$presentValue *= (1 + $periodicRate);
+		}
 
-    }//end periodicRate()
+		return round($presentValue, 2);
+	}//end presentValue()
 
-    /**
-     * Present value of an ordinary annuity (payments in arrears).
-     *
-     * PV = pmt × (1 − (1 + r)^-n) / r, with the r → 0 limit being pmt × n.
-     * For payments in advance (annuity-due) the result is multiplied by (1 + r).
-     *
-     * @param float  $paymentAmount Contractual payment per period.
-     * @param int    $periods       Number of payment periods (n).
-     * @param float  $periodicRate  Periodic discount rate as a fraction (r).
-     * @param string $paymentTiming in-advance|in-arrears (REQ-LC-002).
-     *
-     * @return float Present value of the payment stream.
-     *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
-     */
-    public function presentValue(
-        float $paymentAmount,
-        int $periods,
-        float $periodicRate,
-        string $paymentTiming='in-arrears'
-    ): float {
-        if ($periods <= 0 || $paymentAmount === 0.0) {
-            return 0.0;
-        }
+	/**
+	 * Present value of a single future amount (used for restoration obligations).
+	 *
+	 * PV = amount / (1 + annual-rate)^years (REQ-LA-005).
+	 *
+	 * @param float $amount Future (undiscounted) amount.
+	 * @param float $annualRate Annual discount rate as a fraction (e.g. 0.045).
+	 * @param float $years Number of years until the obligation falls due.
+	 *
+	 * @return float Present value of the obligation.
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
+	 */
+	public function discountToPresent(float $amount, float $annualRate, float $years): float {
+		if ($amount === 0.0) {
+			return 0.0;
+		}
 
-        $presentValue = $paymentAmount * $periods;
-        if ($periodicRate !== 0.0) {
-            $presentValue = $paymentAmount * ((1 - ((1 + $periodicRate) ** (-1 * $periods))) / $periodicRate);
-        }
+		if ($annualRate <= 0.0 || $years <= 0.0) {
+			return round($amount, 2);
+		}
 
-        if ($paymentTiming === 'in-advance') {
-            $presentValue *= (1 + $periodicRate);
-        }
+		return round($amount / ((1 + $annualRate) ** $years), 2);
+	}//end discountToPresent()
 
-        return round($presentValue, 2);
+	/**
+	 * Compute the opening lease liability and RoU asset at commencement (REQ-LA-001).
+	 *
+	 * Opening Lease Liability = PV of unavoidable payments.
+	 * Opening RoU Asset       = PV + initial-direct-costs + restoration-obligation-PV
+	 *                            − lease-incentives-received − prepaid-rent + accrued-rent
+	 * (REQ-LA-001, REQ-LA-005, REQ-LA-006).
+	 *
+	 * @param array<string,mixed> $lease A lease-contract array (decimal money fields).
+	 *
+	 * @return array{liability:float, rouAsset:float, restorationPv:float, periods:int}
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
+	 */
+	public function openingBalances(array $lease): array {
+		$periods = $this->scheduleLength(lease: $lease);
+		$rate = $this->periodicRate(
+			annualIbrPercent: (float)($lease['ibrPercent'] ?? 0),
+			paymentFrequency: (string)($lease['paymentFrequency'] ?? 'monthly')
+		);
 
-    }//end presentValue()
+		$liability = $this->presentValue(
+			paymentAmount: (float)($lease['basePaymentAmount'] ?? 0),
+			periods: $periods,
+			periodicRate: $rate,
+			paymentTiming: (string)($lease['paymentTiming'] ?? 'in-arrears')
+		);
 
-    /**
-     * Present value of a single future amount (used for restoration obligations).
-     *
-     * PV = amount / (1 + annual-rate)^years (REQ-LA-005).
-     *
-     * @param float $amount     Future (undiscounted) amount.
-     * @param float $annualRate Annual discount rate as a fraction (e.g. 0.045).
-     * @param float $years      Number of years until the obligation falls due.
-     *
-     * @return float Present value of the obligation.
-     *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
-     */
-    public function discountToPresent(float $amount, float $annualRate, float $years): float
-    {
-        if ($amount === 0.0) {
-            return 0.0;
-        }
+		$restorationPv = 0.0;
+		$restoration = ($lease['restorationObligation'] ?? null);
+		if (is_array($restoration) === true) {
+			$restorationPv = $this->discountToPresent(
+				amount: (float)($restoration['estimatedCost'] ?? 0),
+				annualRate: (float)($restoration['discountRate'] ?? 0),
+				years: ($periods / (float)$this->periodsPerYear(paymentFrequency: (string)($lease['paymentFrequency'] ?? 'monthly')))
+			);
+		}
 
-        if ($annualRate <= 0.0 || $years <= 0.0) {
-            return round($amount, 2);
-        }
+		$rouCents = $this->toCents(amount: $liability);
+		$rouCents += $this->toCents(amount: ($lease['initialDirectCosts'] ?? 0));
+		$rouCents += $this->toCents(amount: $restorationPv);
+		$rouCents -= $this->toCents(amount: ($lease['leaseIncentivesReceived'] ?? 0));
+		$rouCents -= $this->toCents(amount: ($lease['prepaidRentBalance'] ?? 0));
+		$rouCents += $this->toCents(amount: ($lease['accruedRentBalance'] ?? 0));
 
-        return round($amount / ((1 + $annualRate) ** $years), 2);
+		return [
+			'liability' => $liability,
+			'rouAsset' => $this->fromCents(cents: $rouCents),
+			'restorationPv' => $restorationPv,
+			'periods' => $periods,
+		];
 
-    }//end discountToPresent()
+	}//end openingBalances()
 
-    /**
-     * Compute the opening lease liability and RoU asset at commencement (REQ-LA-001).
-     *
-     * Opening Lease Liability = PV of unavoidable payments.
-     * Opening RoU Asset       = PV + initial-direct-costs + restoration-obligation-PV
-     *                            − lease-incentives-received − prepaid-rent + accrued-rent
-     * (REQ-LA-001, REQ-LA-005, REQ-LA-006).
-     *
-     * @param array<string,mixed> $lease A lease-contract array (decimal money fields).
-     *
-     * @return array{liability:float, rouAsset:float, restorationPv:float, periods:int}
-     *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
-     */
-    public function openingBalances(array $lease): array
-    {
-        $periods = $this->scheduleLength(lease: $lease);
-        $rate    = $this->periodicRate(
-            annualIbrPercent: (float) ($lease['ibrPercent'] ?? 0),
-            paymentFrequency: (string) ($lease['paymentFrequency'] ?? 'monthly')
-        );
+	/**
+	 * Number of payment periods in the schedule, derived from the non-cancellable
+	 * term plus any extension marked "reasonably certain" (REQ-LA-002, REQ-LC-002).
+	 *
+	 * @param array<string,mixed> $lease A lease-contract array.
+	 *
+	 * @return int Count of payment periods.
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
+	 */
+	public function scheduleLength(array $lease): int {
+		$months = (int)($lease['nonCancellableTermMonths'] ?? 0);
+		$frequency = (string)($lease['paymentFrequency'] ?? 'monthly');
 
-        $liability = $this->presentValue(
-            paymentAmount: (float) ($lease['basePaymentAmount'] ?? 0),
-            periods: $periods,
-            periodicRate: $rate,
-            paymentTiming: (string) ($lease['paymentTiming'] ?? 'in-arrears')
-        );
+		foreach (($lease['extensionOptions'] ?? []) as $option) {
+			if (($option['exerciseLikelihood'] ?? '') === 'reasonably-certain') {
+				$months += (int)($option['months'] ?? 0);
+			}
+		}
 
-        $restorationPv = 0.0;
-        $restoration   = ($lease['restorationObligation'] ?? null);
-        if (is_array($restoration) === true) {
-            $restorationPv = $this->discountToPresent(
-                amount: (float) ($restoration['estimatedCost'] ?? 0),
-                annualRate: (float) ($restoration['discountRate'] ?? 0),
-                years: ($periods / (float) $this->periodsPerYear(paymentFrequency: (string) ($lease['paymentFrequency'] ?? 'monthly')))
-            );
-        }
+		if ($months <= 0) {
+			return 0;
+		}
 
-        $rouCents  = $this->toCents(amount: $liability);
-        $rouCents += $this->toCents(amount: ($lease['initialDirectCosts'] ?? 0));
-        $rouCents += $this->toCents(amount: $restorationPv);
-        $rouCents -= $this->toCents(amount: ($lease['leaseIncentivesReceived'] ?? 0));
-        $rouCents -= $this->toCents(amount: ($lease['prepaidRentBalance'] ?? 0));
-        $rouCents += $this->toCents(amount: ($lease['accruedRentBalance'] ?? 0));
+		return (int)ceil($months / (12 / $this->periodsPerYear(paymentFrequency: $frequency)));
+	}//end scheduleLength()
 
-        return [
-            'liability'     => $liability,
-            'rouAsset'      => $this->fromCents(cents: $rouCents),
-            'restorationPv' => $restorationPv,
-            'periods'       => $periods,
-        ];
+	/**
+	 * Build the full amortization schedule for a lease (REQ-LA-002).
+	 *
+	 * Produces one row per payment period carrying the opening/closing liability,
+	 * the interest accrual, the principal portion of the payment, and the
+	 * straight-line depreciation of the RoU asset. All intermediate arithmetic is
+	 * in cents; the final amounts are returned as two-decimal floats. The closing
+	 * liability of the final period is forced to exactly zero to absorb rounding.
+	 *
+	 * @param array<string,mixed> $lease A lease-contract array.
+	 *
+	 * @return array<int,array<string,float|int>> Amortization rows (period-sequence 1..N).
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
+	 */
+	public function buildSchedule(array $lease): array {
+		$opening = $this->openingBalances(lease: $lease);
+		$periods = $opening['periods'];
+		if ($periods <= 0) {
+			return [];
+		}
 
-    }//end openingBalances()
+		$rate = $this->periodicRate(
+			annualIbrPercent: (float)($lease['ibrPercent'] ?? 0),
+			paymentFrequency: (string)($lease['paymentFrequency'] ?? 'monthly')
+		);
+		$paymentCents = $this->toCents(amount: ($lease['basePaymentAmount'] ?? 0));
+		$liabilityCents = $this->toCents(amount: $opening['liability']);
+		$rouCents = $this->toCents(amount: $opening['rouAsset']);
+		$depreciationPer = $this->straightLinePerPeriodCents(totalCents: $rouCents, periods: $periods);
 
-    /**
-     * Number of payment periods in the schedule, derived from the non-cancellable
-     * term plus any extension marked "reasonably certain" (REQ-LA-002, REQ-LC-002).
-     *
-     * @param array<string,mixed> $lease A lease-contract array.
-     *
-     * @return int Count of payment periods.
-     *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
-     */
-    public function scheduleLength(array $lease): int
-    {
-        $months    = (int) ($lease['nonCancellableTermMonths'] ?? 0);
-        $frequency = (string) ($lease['paymentFrequency'] ?? 'monthly');
+		$rows = [];
+		for ($sequence = 1; $sequence <= $periods; $sequence++) {
+			$openingLiability = $liabilityCents;
+			$interestCents = (int)round($openingLiability * $rate);
 
-        foreach (($lease['extensionOptions'] ?? []) as $option) {
-            if (($option['exerciseLikelihood'] ?? '') === 'reasonably-certain') {
-                $months += (int) ($option['months'] ?? 0);
-            }
-        }
+			// The non-final periods apply the level payment; the final payment fully
+			// extinguishes the liability (absorbing accumulated rounding).
+			$paymentTotal = $paymentCents;
+			$principalCents = ($paymentTotal - $interestCents);
+			if ($sequence === $periods) {
+				$principalCents = $openingLiability;
+				$paymentTotal = ($interestCents + $principalCents);
+			}
 
-        if ($months <= 0) {
-            return 0;
-        }
+			// Closing liability = opening − principal repaid. The interest accrual
+			// is funded by the payment (payment = interest + principal), so it does
+			// not increase the closing balance; only the principal reduces it.
+			$closingLiability = ($openingLiability - $principalCents);
 
-        return (int) ceil($months / (12 / $this->periodsPerYear(paymentFrequency: $frequency)));
+			$openingRou = $rouCents;
+			$depreciationCents = $depreciationPer;
+			// The final period absorbs RoU rounding to land exactly on zero.
+			if ($sequence === $periods || $depreciationCents > $openingRou) {
+				$depreciationCents = $openingRou;
+			}
 
-    }//end scheduleLength()
+			$closingRou = ($openingRou - $depreciationCents);
 
-    /**
-     * Build the full amortization schedule for a lease (REQ-LA-002).
-     *
-     * Produces one row per payment period carrying the opening/closing liability,
-     * the interest accrual, the principal portion of the payment, and the
-     * straight-line depreciation of the RoU asset. All intermediate arithmetic is
-     * in cents; the final amounts are returned as two-decimal floats. The closing
-     * liability of the final period is forced to exactly zero to absorb rounding.
-     *
-     * @param array<string,mixed> $lease A lease-contract array.
-     *
-     * @return array<int,array<string,float|int>> Amortization rows (period-sequence 1..N).
-     *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
-     */
-    public function buildSchedule(array $lease): array
-    {
-        $opening = $this->openingBalances(lease: $lease);
-        $periods = $opening['periods'];
-        if ($periods <= 0) {
-            return [];
-        }
+			$rows[] = [
+				'periodSequence' => $sequence,
+				'openingLeaseLiability' => $this->fromCents(cents: $openingLiability),
+				'interestAccrued' => $this->fromCents(cents: $interestCents),
+				'paymentAppliedTotal' => $this->fromCents(cents: $paymentTotal),
+				'paymentInterestPortion' => $this->fromCents(cents: $interestCents),
+				'paymentPrincipalPortion' => $this->fromCents(cents: $principalCents),
+				'closingLeaseLiability' => $this->fromCents(cents: $closingLiability),
+				'openingRouAsset' => $this->fromCents(cents: $openingRou),
+				'depreciationCharge' => $this->fromCents(cents: $depreciationCents),
+				'closingRouAsset' => $this->fromCents(cents: $closingRou),
+			];
 
-        $rate            = $this->periodicRate(
-            annualIbrPercent: (float) ($lease['ibrPercent'] ?? 0),
-            paymentFrequency: (string) ($lease['paymentFrequency'] ?? 'monthly')
-        );
-        $paymentCents    = $this->toCents(amount: ($lease['basePaymentAmount'] ?? 0));
-        $liabilityCents  = $this->toCents(amount: $opening['liability']);
-        $rouCents        = $this->toCents(amount: $opening['rouAsset']);
-        $depreciationPer = $this->straightLinePerPeriodCents(totalCents: $rouCents, periods: $periods);
+			$liabilityCents = $closingLiability;
+			$rouCents = $closingRou;
+		}//end for
 
-        $rows = [];
-        for ($sequence = 1; $sequence <= $periods; $sequence++) {
-            $openingLiability = $liabilityCents;
-            $interestCents    = (int) round($openingLiability * $rate);
+		return $rows;
+	}//end buildSchedule()
 
-            // The non-final periods apply the level payment; the final payment fully
-            // extinguishes the liability (absorbing accumulated rounding).
-            $paymentTotal   = $paymentCents;
-            $principalCents = ($paymentTotal - $interestCents);
-            if ($sequence === $periods) {
-                $principalCents = $openingLiability;
-                $paymentTotal   = ($interestCents + $principalCents);
-            }
+	/**
+	 * Straight-line per-period charge in cents (REQ-LA-002 depreciation column).
+	 *
+	 * @param int $totalCents Amount to spread (RoU asset opening value).
+	 * @param int $periods Number of periods to spread it over.
+	 *
+	 * @return int Per-period charge in cents (floored; the final period absorbs the remainder).
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-accounting/spec.md
+	 */
+	public function straightLinePerPeriodCents(int $totalCents, int $periods): int {
+		if ($periods <= 0) {
+			return 0;
+		}
 
-            // Closing liability = opening − principal repaid. The interest accrual
-            // is funded by the payment (payment = interest + principal), so it does
-            // not increase the closing balance; only the principal reduces it.
-            $closingLiability = ($openingLiability - $principalCents);
-
-            $openingRou        = $rouCents;
-            $depreciationCents = $depreciationPer;
-            // The final period absorbs RoU rounding to land exactly on zero.
-            if ($sequence === $periods || $depreciationCents > $openingRou) {
-                $depreciationCents = $openingRou;
-            }
-
-            $closingRou = ($openingRou - $depreciationCents);
-
-            $rows[] = [
-                'periodSequence'          => $sequence,
-                'openingLeaseLiability'   => $this->fromCents(cents: $openingLiability),
-                'interestAccrued'         => $this->fromCents(cents: $interestCents),
-                'paymentAppliedTotal'     => $this->fromCents(cents: $paymentTotal),
-                'paymentInterestPortion'  => $this->fromCents(cents: $interestCents),
-                'paymentPrincipalPortion' => $this->fromCents(cents: $principalCents),
-                'closingLeaseLiability'   => $this->fromCents(cents: $closingLiability),
-                'openingRouAsset'         => $this->fromCents(cents: $openingRou),
-                'depreciationCharge'      => $this->fromCents(cents: $depreciationCents),
-                'closingRouAsset'         => $this->fromCents(cents: $closingRou),
-            ];
-
-            $liabilityCents = $closingLiability;
-            $rouCents       = $closingRou;
-        }//end for
-
-        return $rows;
-
-    }//end buildSchedule()
-
-    /**
-     * Straight-line per-period charge in cents (REQ-LA-002 depreciation column).
-     *
-     * @param int $totalCents Amount to spread (RoU asset opening value).
-     * @param int $periods    Number of periods to spread it over.
-     *
-     * @return int Per-period charge in cents (floored; the final period absorbs the remainder).
-     *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
-     */
-    public function straightLinePerPeriodCents(int $totalCents, int $periods): int
-    {
-        if ($periods <= 0) {
-            return 0;
-        }
-
-        return intdiv($totalCents, $periods);
-
-    }//end straightLinePerPeriodCents()
+		return intdiv($totalCents, $periods);
+	}//end straightLinePerPeriodCents()
 }//end class

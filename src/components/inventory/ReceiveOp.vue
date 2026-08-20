@@ -15,9 +15,17 @@
 		<form class="receive-op__form" @submit.prevent="handleConfirm">
 			<label>
 				<span>{{ t('shillinq', 'Location') }}</span>
-				<select v-model="location" required :aria-label="t('shillinq', 'Receiving location')">
-					<option value="">{{ t('shillinq', 'Select a location') }}</option>
-					<option v-for="loc in store.locations" :key="loc.code" :value="loc.code">
+				<select
+					v-model="location"
+					required
+					:aria-label="t('shillinq', 'Receiving location')">
+					<option value="">
+						{{ t('shillinq', 'Select a location') }}
+					</option>
+					<option
+						v-for="loc in store.locations"
+						:key="loc.code"
+						:value="loc.code">
 						{{ loc.name }} ({{ loc.code }})
 					</option>
 				</select>
@@ -31,7 +39,7 @@
 						type="text"
 						required
 						:placeholder="t('shillinq', 'Tap scan or type SKU')"
-						:aria-label="t('shillinq', 'Stock keeping unit')">
+						:aria-label="t('shillinq', 'Stock keeping unit')" />
 					<button type="button" @click="scanning = true">
 						{{ t('shillinq', 'Scan') }}
 					</button>
@@ -46,7 +54,7 @@
 					min="0.01"
 					step="0.01"
 					required
-					:aria-label="t('shillinq', 'Quantity received')">
+					:aria-label="t('shillinq', 'Quantity received')" />
 			</label>
 
 			<div v-if="error" class="receive-op__error" role="alert">
@@ -89,29 +97,43 @@ export default {
 			lastSubmittedAt: 0,
 		}
 	},
+
 	computed: {
 		store() {
 			return useInventoryMobileScannerStore()
 		},
 	},
+
 	methods: {
 		handleScan(value) {
 			this.sku = value
 			this.scanning = false
 		},
+
 		async handleConfirm() {
 			this.error = null
 			this.successMessage = null
 
-			if (!this.location || !this.sku || !this.quantity || this.quantity <= 0) {
-				this.error = this.t('shillinq', 'Location, SKU and a positive quantity are required.')
+			if (
+				!this.location
+				|| !this.sku
+				|| !this.quantity
+				|| this.quantity <= 0
+			) {
+				this.error = this.t(
+					'shillinq',
+					'Location, SKU and a positive quantity are required.',
+				)
 				return
 			}
 
 			// REQ-SYNC-002 idempotency guard — reject duplicate confirms within 5s.
 			const now = Date.now()
 			if (now - this.lastSubmittedAt < 5000) {
-				this.error = this.t('shillinq', 'Already submitted; waiting for server ACK.')
+				this.error = this.t(
+					'shillinq',
+					'Already submitted; waiting for server ACK.',
+				)
 				return
 			}
 			this.lastSubmittedAt = now
@@ -133,7 +155,10 @@ export default {
 				this.quantity = null
 				this.lastTransactionId = result.transactionId
 			} catch (e) {
-				this.error = e && e.message ? e.message : this.t('shillinq', 'Could not record receipt.')
+				this.error =
+					e && e.message
+						? e.message
+						: this.t('shillinq', 'Could not record receipt.')
 			} finally {
 				this.submitting = false
 			}
@@ -143,11 +168,38 @@ export default {
 </script>
 
 <style scoped>
-.receive-op { display: flex; flex-direction: column; gap: var(--default-grid-baseline, 4px); padding: var(--default-grid-baseline, 4px); }
-.receive-op__form label { display: flex; flex-direction: column; margin-bottom: var(--default-grid-baseline, 4px); }
-.receive-op__sku-row { display: flex; gap: var(--default-grid-baseline, 4px); }
-.receive-op__sku-row input { flex: 1; }
-.receive-op__error { color: var(--color-error); }
-.receive-op__success { color: var(--color-success); }
-.receive-op__actions { display: flex; justify-content: flex-end; }
+.receive-op {
+	display: flex;
+	flex-direction: column;
+	gap: var(--default-grid-baseline, 4px);
+	padding: var(--default-grid-baseline, 4px);
+}
+
+.receive-op__form label {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: var(--default-grid-baseline, 4px);
+}
+
+.receive-op__sku-row {
+	display: flex;
+	gap: var(--default-grid-baseline, 4px);
+}
+
+.receive-op__sku-row input {
+	flex: 1;
+}
+
+.receive-op__error {
+	color: var(--color-error);
+}
+
+.receive-op__success {
+	color: var(--color-success);
+}
+
+.receive-op__actions {
+	display: flex;
+	justify-content: flex-end;
+}
 </style>

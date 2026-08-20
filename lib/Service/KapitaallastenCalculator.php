@@ -34,48 +34,45 @@ namespace OCA\Shillinq\Service;
  *
  * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-25
  */
-class KapitaallastenCalculator
-{
-    /**
-     * Compute a per-year straight-line depreciation schedule.
-     *
-     * Each year receives floor(bruto / termijn) cents; the final year absorbs
-     * the rounding remainder so Σ(schedule) === bruto exactly (integer-cent
-     * arithmetic avoids IEEE-754 drift).
-     *
-     * @param float $bruto                   The gross investment amount.
-     * @param int   $eersteAfschrijvingsjaar The first depreciation year.
-     * @param int   $afschrijvingstermijn    The depreciation period in years (> 0).
-     *
-     * @return array<string,float> A {year: amount} schedule keyed by year string.
-     *
-     * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-25
-     *
-     * @SuppressWarnings(PHPMD.LongVariable) BBV domain field names (eersteAfschrijvingsjaar).
-     */
-    public function schedule(float $bruto, int $eersteAfschrijvingsjaar, int $afschrijvingstermijn): array
-    {
-        if ($afschrijvingstermijn < 1) {
-            return [];
-        }
+class KapitaallastenCalculator {
+	/**
+	 * Compute a per-year straight-line depreciation schedule.
+	 *
+	 * Each year receives floor(bruto / termijn) cents; the final year absorbs
+	 * the rounding remainder so Σ(schedule) === bruto exactly (integer-cent
+	 * arithmetic avoids IEEE-754 drift).
+	 *
+	 * @param float $gross The gross investment amount.
+	 * @param int $firstDepreciationYear The first depreciation year.
+	 * @param int $depreciationTerm The depreciation period in years (> 0).
+	 *
+	 * @return array<string,float> A {year: amount} schedule keyed by year string.
+	 *
+	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-25
+	 *
+	 * @SuppressWarnings(PHPMD.LongVariable) BBV domain field names (eersteAfschrijvingsjaar).
+	 */
+	public function schedule(float $gross, int $firstDepreciationYear, int $depreciationTerm): array {
+		if ($depreciationTerm < 1) {
+			return [];
+		}
 
-        $brutoCents   = (int) round($bruto * 100);
-        $perYearCents = intdiv($brutoCents, $afschrijvingstermijn);
-        $remainder    = ($brutoCents - ($perYearCents * $afschrijvingstermijn));
+		$grossCents = (int)round($gross * 100);
+		$perYearCents = intdiv($grossCents, $depreciationTerm);
+		$remainder = ($grossCents - ($perYearCents * $depreciationTerm));
 
-        $schedule = [];
-        for ($i = 0; $i < $afschrijvingstermijn; $i++) {
-            $year  = (string) ($eersteAfschrijvingsjaar + $i);
-            $cents = $perYearCents;
-            if ($i === ($afschrijvingstermijn - 1)) {
-                // Final year absorbs the rounding remainder.
-                $cents += $remainder;
-            }
+		$schedule = [];
+		for ($i = 0; $i < $depreciationTerm; $i++) {
+			$year = (string)($firstDepreciationYear + $i);
+			$cents = $perYearCents;
+			if ($i === ($depreciationTerm - 1)) {
+				// Final year absorbs the rounding remainder.
+				$cents += $remainder;
+			}
 
-            $schedule[$year] = (float) ($cents / 100);
-        }
+			$schedule[$year] = (float)($cents / 100);
+		}
 
-        return $schedule;
-
-    }//end schedule()
+		return $schedule;
+	}//end schedule()
 }//end class

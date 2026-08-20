@@ -39,365 +39,360 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/abstract-arinvoice-types/tasks.md
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md#req-ccd-010
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
 
 namespace OCA\Shillinq\Repair;
 
+use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Repair step that folds DunningRun + OninbaarAfschrijving onto ARInvoice.
  *
- * @spec openspec/changes/abstract-arinvoice-types/tasks.md
+ * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md#req-ccd-010
  */
-class FoldDunningWriteoffIntoArInvoice implements IRepairStep
-{
-    /**
-     * Constructor.
-     *
-     * @param SettingsService    $settingsService The settings service (register slug).
-     * @param IGroupManager      $groupManager    The group manager (admin IUser resolution).
-     * @param LoggerInterface    $logger          The logger interface.
-     * @param ContainerInterface $container       The DI container (lazy OR ObjectService resolution).
-     */
-    public function __construct(
-        private SettingsService $settingsService,
-        private IGroupManager $groupManager,
-        private LoggerInterface $logger,
-        private ContainerInterface $container,
-    ) {
-    }//end __construct()
+class FoldDunningWriteoffIntoArInvoice implements IRepairStep {
+	use ReadsSourceRowsInBatches;
 
-    /**
-     * The repair-step display name.
-     *
-     * @return string The display name.
-     */
-    public function getName(): string
-    {
-        return 'Shillinq: fold DunningRun + OninbaarAfschrijving onto ARInvoice (dunning / writeOff groups)';
+	/**
+	 * Constructor.
+	 *
+	 * @param SettingsService $settingsService The settings service (register slug).
+	 * @param IGroupManager $groupManager The group manager (admin IUser resolution).
+	 * @param LoggerInterface $logger The logger interface.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 */
+	public function __construct(
+		private SettingsService $settingsService,
+		private IGroupManager $groupManager,
+		private LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    }//end getName()
+	/**
+	 * The repair-step display name.
+	 *
+	 * @return string The display name.
+	 */
+	public function getName(): string {
+		return 'Shillinq: fold DunningRun + OninbaarAfschrijving onto ARInvoice (dunning / writeOff groups)';
+	}//end getName()
 
-    /**
-     * Run the fold. Idempotent — never re-applies a write-off already folded.
-     *
-     * @param IOutput $output The repair-step output (progress + warnings).
-     *
-     * @return void
-     */
-    public function run(IOutput $output): void
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $registerSlug  = $this->settingsService->getRegisterSlug();
-            $actingUser    = $this->resolveAdminUser();
+	/**
+	 * Run the fold. Idempotent — never re-applies a write-off already folded.
+	 *
+	 * @param IOutput $output The repair-step output (progress + warnings).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-credit-control-dunning/spec.md#req-ccd-010
+	 */
+	public function run(IOutput $output): void {
+		try {
+			$registerSlug = $this->settingsService->getRegisterSlug();
+			$actingUser = $this->resolveAdminUser();
 
-            // Stream every OninbaarAfschrijving write-off row. RBAC +
-            // multi-tenancy are bypassed: the repair runs in the
-            // installer/upgrade context with no authenticated session.
-            $writeOffs = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema('OninbaarAfschrijving')
-                ->findAll(['limit' => 0], _rbac: false, _multitenancy: false);
+			// Stream every OninbaarAfschrijving write-off row. RBAC +
+			// multi-tenancy are bypassed: the repair runs in the
+			// installer/upgrade context with no authenticated session.
+			$writeOffs = $this->readAllRows(objectService: $this->objectService, registerSlug: $registerSlug, schema: 'OninbaarAfschrijving');
 
-            if (is_array($writeOffs) === false || $writeOffs === []) {
-                $output->info('Shillinq: no OninbaarAfschrijving rows — ARInvoice writeOff/dunning fold skipped.');
-                return;
-            }
+			if ($writeOffs === []) {
+				$output->info('Shillinq: no OninbaarAfschrijving rows — ARInvoice writeOff/dunning fold skipped.');
+				return;
+			}
 
-            $folded  = 0;
-            $skipped = 0;
-            $missing = 0;
-            foreach ($writeOffs as $writeOff) {
-                $row       = (array) $writeOff;
-                $factuurId = (string) ($row['factuurId'] ?? '');
-                if ($factuurId === '') {
-                    $skipped++;
-                    continue;
-                }
+			$folded = 0;
+			$skipped = 0;
+			$missing = 0;
+			foreach ($writeOffs as $writeOff) {
+				$row = $this->rowPayload(row: $writeOff);
+				$invoiceId = (string)($row['invoiceId'] ?? '');
+				if ($invoiceId === '') {
+					$skipped++;
+					continue;
+				}
 
-                // Load the linked ARInvoice. factuurId is the ARInvoice UUID.
-                $invoice = null;
-                try {
-                    $invoice = $objectService->find(
-                        id: $factuurId,
-                        register: $registerSlug,
-                        schema: 'ARInvoice',
-                        _rbac: false,
-                        _multitenancy: false,
-                    );
-                } catch (\Throwable $e) {
-                    $invoice = null;
-                }
+				// Load the linked ARInvoice. factuurId is the ARInvoice UUID.
+				$invoice = null;
+				try {
+					$invoice = $this->objectService->find(
+						id: $invoiceId,
+						register: $registerSlug,
+						schema: 'ARInvoice',
+						_rbac: false,
+						_multitenancy: false,
+					);
+				} catch (\Throwable $e) {
+					$invoice = null;
+				}
 
-                if ($invoice === null) {
-                    $output->warning(
-                        'Shillinq: ARInvoice '.$factuurId.' for OninbaarAfschrijving not found — fold skipped for this row.'
-                    );
-                    $missing++;
-                    continue;
-                }
+				if ($invoice === null) {
+					$output->warning(
+						'Shillinq: ARInvoice ' . $invoiceId . ' for OninbaarAfschrijving not found — fold skipped for this row.'
+					);
+					$missing++;
+					continue;
+				}
 
-                $invoiceArr = $invoice->jsonSerialize();
+				$invoiceArr = $invoice->jsonSerialize();
 
-                // IDEMPOTENT: detect an already-folded write-off by the
-                // stable GLTransaction booking key carried on writeOff.
-                $boekingId = (string) ($row['boekingId'] ?? '');
-                $existing  = (array) ($invoiceArr['writeOff'] ?? []);
-                if (($existing['isWrittenOff'] ?? false) === true
-                    && $boekingId !== ''
-                    && (string) ($existing['writtenOffGLTransactionId'] ?? '') === $boekingId
-                ) {
-                    $skipped++;
-                    continue;
-                }
+				// IDEMPOTENT: detect an already-folded write-off by the
+				// stable GLTransaction booking key carried on writeOff.
+				$entryId = (string)($row['entryId'] ?? '');
+				$existing = (array)($invoiceArr['writeOff'] ?? []);
+				if (($existing['isWrittenOff'] ?? false) === true
+					&& $entryId !== ''
+					&& (string)($existing['writtenOffGLTransactionId'] ?? '') === $entryId
+				) {
+					$skipped++;
+					continue;
+				}
 
-                // Map the FULL OninbaarAfschrijving field set onto writeOff.
-                $declaration = (string) ($row['art29OBVerklaring'] ?? '');
-                $invoiceArr['writeOff'] = [
-                    'isWrittenOff'              => true,
-                    'writtenOffReason'         => $this->deriveWriteOffReason(declaration: $declaration),
-                    'art29OBVerklaring'        => $declaration,
-                    'hoofdsomAfgeschreven'     => $this->numOrNull($row['hoofdsomAfgeschreven'] ?? null),
-                    'btwBedrag'                => $this->numOrNull($row['btwBedrag'] ?? null),
-                    'evidenceRef'              => $this->strOrNull($row['evidenceRef'] ?? null),
-                    'writtenOffGLTransactionId' => ($boekingId !== '' ? $boekingId : null),
-                    'btwTeruggaafPeriode'      => $this->strOrNull($row['btwAangiftePeriode'] ?? null),
-                    'administrationId'         => $this->strOrNull($row['administrationId'] ?? null),
-                ];
+				// Map the FULL OninbaarAfschrijving field set onto writeOff.
+				// Optional source fields are absent on many real rows (only
+				// factuurId/hoofdsomAfgeschreven/art29OBVerklaring/administrationId
+				// are required on OninbaarAfschrijving), so a null must NOT be
+				// written for a typed target field (e.g. writeOff.btwBedrag is a
+				// number) — an absent optional property is valid, a null is not.
+				// Prune null-valued keys before saving (#382 live e2e).
+				$declaration = (string)($row['art29OBDeclaration'] ?? '');
+				$writeOff = [
+					'isWrittenOff' => true,
+					'writtenOffReason' => $this->deriveWriteOffReason(declaration: $declaration),
+					'art29OBDeclaration' => $declaration,
+					'principalDepreciated' => $this->numOrNull($row['principalDepreciated'] ?? null),
+					'vatAmount' => $this->numOrNull($row['vatAmount'] ?? null),
+					'evidenceRef' => $this->strOrNull($row['evidenceRef'] ?? null),
+					'writtenOffGLTransactionId' => ($entryId !== '' ? $entryId : null),
+					'vatRefundPeriod' => $this->strOrNull($row['vatTaxReturnPeriod'] ?? null),
+					'administrationId' => $this->strOrNull($row['administrationId'] ?? null),
+				];
+				$invoiceArr['writeOff'] = array_filter($writeOff, static fn ($v) => $v !== null);
 
-                // Mirror the lifecycle onto the discriminator-adjacent flag
-                // only when the invoice has no explicit invoiceType yet:
-                // a written-off invoice is still a 'standard' document, so
-                // leave invoiceType untouched here (fold is write-off only).
+				// Mirror the lifecycle onto the discriminator-adjacent flag
+				// only when the invoice has no explicit invoiceType yet:
+				// a written-off invoice is still a 'standard' document, so
+				// leave invoiceType untouched here (fold is write-off only).
+				// Derive the dunning summary from the latest DunningRun for
+				// this factuurId. Absent any run, dunning is left null.
+				$dunning = $this->deriveDunningSummary(
+					objectService: $this->objectService,
+					registerSlug: $registerSlug,
+					invoiceId: $invoiceId
+				);
+				if ($dunning !== null) {
+					$invoiceArr['dunning'] = $dunning;
+				}
 
-                // Derive the dunning summary from the latest DunningRun for
-                // this factuurId. Absent any run, dunning is left null.
-                $dunning = $this->deriveDunningSummary(
-                    objectService: $objectService,
-                    registerSlug: $registerSlug,
-                    factuurId: $factuurId
-                );
-                if ($dunning !== null) {
-                    $invoiceArr['dunning'] = $dunning;
-                }
+				$this->objectService->saveObject(
+					object: $invoiceArr,
+					register: $registerSlug,
+					schema: 'ARInvoice',
+					_rbac: false,
+					_multitenancy: false,
+					currentUser: $actingUser,
+				);
+				$folded++;
+			}//end foreach
 
-                $objectService->saveObject(
-                    object: $invoiceArr,
-                    register: $registerSlug,
-                    schema: 'ARInvoice',
-                    _rbac: false,
-                    _multitenancy: false,
-                    currentUser: $actingUser,
-                );
-                $folded++;
-            }//end foreach
+			$output->info(
+				'Shillinq: ARInvoice writeOff/dunning fold complete — ' . $folded . ' folded, ' . $skipped
+				. ' skipped (already folded / no link), ' . $missing . ' invoices missing.'
+			);
+		} catch (\Throwable $e) {
+			// Fold is best-effort: failing it must NOT block the app upgrade.
+			$output->warning('Shillinq: ARInvoice writeOff/dunning fold failed: ' . $e->getMessage());
+			$this->logger->warning(
+				'Shillinq: ARInvoice writeOff/dunning fold failed',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
 
-            $output->info(
-                'Shillinq: ARInvoice writeOff/dunning fold complete — '.$folded.' folded, '.$skipped
-                .' skipped (already folded / no link), '.$missing.' invoices missing.'
-            );
-        } catch (\Throwable $e) {
-            // Fold is best-effort: failing it must NOT block the app upgrade.
-            $output->warning('Shillinq: ARInvoice writeOff/dunning fold failed: '.$e->getMessage());
-            $this->logger->warning(
-                'Shillinq: ARInvoice writeOff/dunning fold failed',
-                ['exception' => $e->getMessage()]
-            );
-        }//end try
+	}//end run()
 
-    }//end run()
+	/**
+	 * Resolve an admin user as an IUser object (NEVER a string). The
+	 * repair runs without a session, so OR's `@self.folder` access checks
+	 * need an explicit acting user. Falls back to null when no admin can
+	 * be resolved (OR then uses its own resolution).
+	 *
+	 * @return IUser|null The first admin IUser, or null.
+	 */
+	private function resolveAdminUser(): ?IUser {
+		try {
+			$adminGroup = $this->groupManager->get('admin');
+			if ($adminGroup === null) {
+				return null;
+			}
 
-    /**
-     * Resolve an admin user as an IUser object (NEVER a string). The
-     * repair runs without a session, so OR's `@self.folder` access checks
-     * need an explicit acting user. Falls back to null when no admin can
-     * be resolved (OR then uses its own resolution).
-     *
-     * @return IUser|null The first admin IUser, or null.
-     */
-    private function resolveAdminUser(): ?IUser
-    {
-        try {
-            $adminGroup = $this->groupManager->get('admin');
-            if ($adminGroup === null) {
-                return null;
-            }
+			$users = $adminGroup->getUsers();
+			foreach ($users as $user) {
+				if ($user instanceof IUser) {
+					return $user;
+				}
+			}
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Shillinq: could not resolve admin IUser for ARInvoice fold',
+				['exception' => $e->getMessage()]
+			);
+		}
 
-            $users = $adminGroup->getUsers();
-            foreach ($users as $user) {
-                if ($user instanceof IUser) {
-                    return $user;
-                }
-            }
-        } catch (\Throwable $e) {
-            $this->logger->warning(
-                'Shillinq: could not resolve admin IUser for ARInvoice fold',
-                ['exception' => $e->getMessage()]
-            );
-        }
+		return null;
+	}//end resolveAdminUser()
 
-        return null;
+	/**
+	 * Derive the latest-DunningRun summary for an invoice, mapped onto the
+	 * ARInvoice.dunning group. Picks the run with the highest stageNr
+	 * (ties broken by the most recent uitgevoerdOp). Returns null when no
+	 * DunningRun targets this factuurId.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $registerSlug The register slug.
+	 * @param string $invoiceId The ARInvoice UUID the runs target.
+	 *
+	 * @return array<string,mixed>|null The dunning summary group, or null.
+	 */
+	private function deriveDunningSummary(
+		object $objectService,
+		string $registerSlug,
+		string $invoiceId,
+	): ?array {
+		try {
+			$runs = $this->readAllRows(
+				objectService: $objectService,
+				registerSlug: $registerSlug,
+				schema: 'DunningRun',
+				filters: ['invoiceId' => $invoiceId]
+			);
+		} catch (\Throwable $e) {
+			return null;
+		}
 
-    }//end resolveAdminUser()
+		if ($runs === []) {
+			return null;
+		}
 
-    /**
-     * Derive the latest-DunningRun summary for an invoice, mapped onto the
-     * ARInvoice.dunning group. Picks the run with the highest stageNr
-     * (ties broken by the most recent uitgevoerdOp). Returns null when no
-     * DunningRun targets this factuurId.
-     *
-     * @param object $objectService The OR ObjectService.
-     * @param string $registerSlug  The register slug.
-     * @param string $factuurId     The ARInvoice UUID the runs target.
-     *
-     * @return array<string,mixed>|null The dunning summary group, or null.
-     */
-    private function deriveDunningSummary(
-        object $objectService,
-        string $registerSlug,
-        string $factuurId
-    ): ?array {
-        try {
-            $runs = $objectService
-                ->setRegister($registerSlug)
-                ->setSchema('DunningRun')
-                ->findAll(
-                    ['filters' => ['factuurId' => $factuurId], 'limit' => 0],
-                    _rbac: false,
-                    _multitenancy: false
-                );
-        } catch (\Throwable $e) {
-            return null;
-        }
+		$latest = null;
+		$latestStage = -1;
+		$latestExec = '';
+		foreach ($runs as $run) {
+			$runArr = $this->rowPayload(row: $run);
+			$stage = (int)($runArr['stageNr'] ?? 0);
+			$exec = (string)($runArr['executedOn'] ?? '');
 
-        if (is_array($runs) === false || $runs === []) {
-            return null;
-        }
+			$isNewer = false;
+			if ($stage > $latestStage) {
+				$isNewer = true;
+			} elseif ($stage === $latestStage && $exec > $latestExec) {
+				$isNewer = true;
+			}
 
-        $latest      = null;
-        $latestStage = -1;
-        $latestExec  = '';
-        foreach ($runs as $run) {
-            $runArr = (array) $run;
-            $stage  = (int) ($runArr['stageNr'] ?? 0);
-            $exec   = (string) ($runArr['uitgevoerdOp'] ?? '');
+			if ($isNewer === true) {
+				$latest = $runArr;
+				$latestStage = $stage;
+				$latestExec = $exec;
+			}
+		}//end foreach
 
-            $isNewer = false;
-            if ($stage > $latestStage) {
-                $isNewer = true;
-            } else if ($stage === $latestStage && $exec > $latestExec) {
-                $isNewer = true;
-            }
+		if ($latest === null) {
+			return null;
+		}
 
-            if ($isNewer === true) {
-                $latest      = $runArr;
-                $latestStage = $stage;
-                $latestExec  = $exec;
-            }
-        }//end foreach
+		return [
+			'currentStage' => (int)($latest['stageNr'] ?? 0),
+			'nextDunningDate' => null,
+			'collectionCostAmount' => $this->numOrNull($latest['collectionCostAmount'] ?? null),
+			'interestAmount' => $this->numOrNull($latest['interestAmount'] ?? null),
+			'activeLadderId' => $this->strOrNull($latest['ladderId'] ?? null),
+		];
 
-        if ($latest === null) {
-            return null;
-        }
+	}//end deriveDunningSummary()
 
-        return [
-            'currentStage'        => (int) ($latest['stageNr'] ?? 0),
-            'nextDunningDate'     => null,
-            'incassokostenBedrag' => $this->numOrNull($latest['incassokostenBedrag'] ?? null),
-            'renteBedrag'         => $this->numOrNull($latest['renteBedrag'] ?? null),
-            'activeLadderId'      => $this->strOrNull($latest['ladderId'] ?? null),
-        ];
+	/**
+	 * Derive the categorised writeOff.writtenOffReason enum value from the
+	 * free-text art. 29 OB declaration.
+	 *
+	 * @param string $declaration The art29OBVerklaring text.
+	 *
+	 * @return string The enum value (Faillissement | Schuldsanering | 1jaar-onbetaald | overig).
+	 */
+	private function deriveWriteOffReason(string $declaration): string {
+		$haystack = mb_strtolower($declaration);
 
-    }//end deriveDunningSummary()
+		if (str_contains($haystack, 'faillissement') === true) {
+			return 'Faillissement';
+		}
 
-    /**
-     * Derive the categorised writeOff.writtenOffReason enum value from the
-     * free-text art. 29 OB declaration.
-     *
-     * @param string $declaration The art29OBVerklaring text.
-     *
-     * @return string The enum value (Faillissement | Schuldsanering | 1jaar-onbetaald | overig).
-     */
-    private function deriveWriteOffReason(string $declaration): string
-    {
-        $haystack = mb_strtolower($declaration);
+		if (str_contains($haystack, 'schuldsanering') === true
+			|| str_contains($haystack, 'wsnp') === true
+		) {
+			return 'Schuldsanering';
+		}
 
-        if (str_contains($haystack, 'faillissement') === true) {
-            return 'Faillissement';
-        }
+		if (str_contains($haystack, '1jaar') === true
+			|| str_contains($haystack, '1 jaar') === true
+			|| str_contains($haystack, 'jaar onbetaald') === true
+			|| str_contains($haystack, 'een jaar') === true
+		) {
+			return '1jaar-onbetaald';
+		}
 
-        if (str_contains($haystack, 'schuldsanering') === true
-            || str_contains($haystack, 'wsnp') === true
-        ) {
-            return 'Schuldsanering';
-        }
+		return 'other';
+	}//end deriveWriteOffReason()
 
-        if (str_contains($haystack, '1jaar') === true
-            || str_contains($haystack, '1 jaar') === true
-            || str_contains($haystack, 'jaar onbetaald') === true
-            || str_contains($haystack, 'een jaar') === true
-        ) {
-            return '1jaar-onbetaald';
-        }
+	/**
+	 * Coerce a value to a float, or null when not numeric.
+	 *
+	 * @param mixed $value The source value.
+	 *
+	 * @return float|null The float, or null.
+	 */
+	private function numOrNull(mixed $value): ?float {
+		if ($value === null || $value === '') {
+			return null;
+		}
 
-        return 'overig';
+		if (is_numeric($value) === true) {
+			return (float)$value;
+		}
 
-    }//end deriveWriteOffReason()
+		return null;
+	}//end numOrNull()
 
-    /**
-     * Coerce a value to a float, or null when not numeric.
-     *
-     * @param mixed $value The source value.
-     *
-     * @return float|null The float, or null.
-     */
-    private function numOrNull(mixed $value): ?float
-    {
-        if ($value === null || $value === '') {
-            return null;
-        }
+	/**
+	 * Coerce a value to a non-empty string, or null.
+	 *
+	 * @param mixed $value The source value.
+	 *
+	 * @return string|null The string, or null.
+	 */
+	private function strOrNull(mixed $value): ?string {
+		if ($value === null) {
+			return null;
+		}
 
-        if (is_numeric($value) === true) {
-            return (float) $value;
-        }
+		$string = (string)$value;
+		if ($string === '') {
+			return null;
+		}
 
-        return null;
-
-    }//end numOrNull()
-
-    /**
-     * Coerce a value to a non-empty string, or null.
-     *
-     * @param mixed $value The source value.
-     *
-     * @return string|null The string, or null.
-     */
-    private function strOrNull(mixed $value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        $string = (string) $value;
-        if ($string === '') {
-            return null;
-        }
-
-        return $string;
-
-    }//end strOrNull()
+		return $string;
+	}//end strOrNull()
 }//end class

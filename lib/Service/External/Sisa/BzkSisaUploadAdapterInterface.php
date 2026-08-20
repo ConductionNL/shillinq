@@ -25,7 +25,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md
+ * @spec openspec/specs/bookkeeping-sisa-reporting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,28 +38,27 @@ namespace OCA\Shillinq\Service\External\Sisa;
 /**
  * BZK SiSa upload port.
  *
- * @spec openspec/changes/bookkeeping-sisa-reporting/tasks.md
+ * @spec openspec/specs/bookkeeping-sisa-reporting/spec.md
  */
-interface BzkSisaUploadAdapterInterface
-{
-    /**
-     * Upload a SiSa annual report envelope to BZK.
-     *
-     * @param array<string,mixed> $payload The SiSa envelope — reportNumber,
-     *                                     fiscalYear, administrationId,
-     *                                     onTimeSettlementPercent, findings[],
-     *                                     auditOpinion, managementLetterId,
-     *                                     reportXmlBytes, signedPdfBytes,
-     *                                     checksum.
-     *
-     * @return BzkSisaUploadResult The dispatch outcome.
-     */
-    public function upload(array $payload): BzkSisaUploadResult;
+interface BzkSisaUploadAdapterInterface {
+	/**
+	 * Upload a SiSa annual report envelope to BZK.
+	 *
+	 * @param array<string,mixed> $payload The SiSa envelope — reportNumber,
+	 *                                     fiscalYear, administrationId,
+	 *                                     onTimeSettlementPercent, findings[],
+	 *                                     auditOpinion, managementLetterId,
+	 *                                     reportXmlBytes, signedPdfBytes,
+	 *                                     checksum.
+	 *
+	 * @return BzkSisaUploadResult The dispatch outcome.
+	 */
+	public function upload(array $payload): BzkSisaUploadResult;
 
-    /**
-     * Whether the adapter is dormant.
-     *
-     * @return bool TRUE when the adapter is a log-only stub.
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the adapter is dormant.
+	 *
+	 * @return bool TRUE when the adapter is a log-only stub.
+	 */
+	public function isDormant(): bool;
 }//end interface

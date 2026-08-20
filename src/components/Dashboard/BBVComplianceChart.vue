@@ -18,7 +18,7 @@
    non-compliant → error-red    (🔴)
    unconfigured → neutral-grey  (⚪)
 
- @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-05-dashboard-widgets/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+ @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
 -->
 <template>
 	<div class="bbv-compliance-chart" data-testid="bbv-compliance-chart">
@@ -29,7 +29,7 @@
 			:colors="colors"
 			:height="300"
 			:legend="true"
-			:unavailable-label="t('shillinq', 'Chart library not available')" />
+			:unavailableLabel="t('shillinq', 'Chart library not available')" />
 	</div>
 </template>
 
@@ -46,6 +46,7 @@ export default {
 			default: () => [],
 		},
 	},
+
 	computed: {
 		buckets() {
 			const counts = {
@@ -62,6 +63,7 @@ export default {
 			}
 			return counts
 		},
+
 		series() {
 			return [
 				this.buckets['on-track'],
@@ -70,6 +72,7 @@ export default {
 				this.buckets.unconfigured,
 			]
 		},
+
 		labels() {
 			return [
 				this.t('shillinq', 'On-track'),
@@ -78,11 +81,13 @@ export default {
 				this.t('shillinq', 'Unconfigured'),
 			]
 		},
+
 		colors() {
 			// Match the status badge palette declared in design.md.
 			return ['#46ba61', '#e9a300', '#e9322d', '#8f8f8f']
 		},
 	},
+
 	methods: { t },
 }
 </script>
