@@ -44,6 +44,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -70,6 +71,7 @@ class WbsoAccountApiController extends Controller {
 	 * @param WbsoRbacResolver $rbac Role resolver.
 	 * @param IUserSession $userSession Session.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
+	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -77,6 +79,7 @@ class WbsoAccountApiController extends Controller {
 		private readonly WbsoRbacResolver $rbac,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly IL10N $l10n,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -190,6 +193,8 @@ class WbsoAccountApiController extends Controller {
 	 * POST /api/v1/accounts (administrator only).
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
 	 */
 	#[NoAdminRequired]
 	public function create(): JSONResponse {
@@ -223,7 +228,17 @@ class WbsoAccountApiController extends Controller {
 		try {
 			$row = $this->accounts->createAccount(administrationId: $administrationId, payload: $payload);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+			$this->logger->error(
+				'WbsoAccountApiController: account creation payload rejected',
+				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Unable to create account: the submitted details are invalid'),
+					'error' => 'wbso-account-create-failed',
+				],
+				Http::STATUS_BAD_REQUEST,
+			);
 		} catch (\Throwable $e) {
 			return $this->fail(message: 'Failed to create account', context: ['exception' => $e->getMessage()]);
 		}
@@ -237,6 +252,8 @@ class WbsoAccountApiController extends Controller {
 	 * @param string $accountNumber Account to update.
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
 	 */
 	#[NoAdminRequired]
 	public function update(string $accountNumber): JSONResponse {
@@ -281,7 +298,17 @@ class WbsoAccountApiController extends Controller {
 				return new JSONResponse(['error' => 'Account not found'], Http::STATUS_NOT_FOUND);
 			}
 
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+			$this->logger->error(
+				'WbsoAccountApiController: account update payload rejected',
+				['administrationId' => $administrationId, 'accountNumber' => $accountNumber, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Unable to update account: the submitted details are invalid'),
+					'error' => 'wbso-account-update-failed',
+				],
+				Http::STATUS_BAD_REQUEST,
+			);
 		} catch (\Throwable $e) {
 			return $this->fail(message: 'Failed to update account', context: ['exception' => $e->getMessage()]);
 		}

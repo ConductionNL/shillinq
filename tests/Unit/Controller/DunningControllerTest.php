@@ -28,8 +28,11 @@ use OCA\Shillinq\Service\BIKStaffelCalculator;
 use OCA\Shillinq\Service\Dunning\DunningChannelSendResult;
 use OCA\Shillinq\Service\Dunning\IncassoDossierComposer;
 use OCA\Shillinq\Service\DunningRunService;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IAppConfig;
+use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -97,11 +100,37 @@ final class DunningControllerTest extends TestCase {
 	private ?string $userId = 'alice';
 
 	/**
-	 * Whether the context grants access to the requested administration.
+	 * Whether the context grants access to the requested administration —
+	 * the default answer when an administration id has no entry in
+	 * {@see $canAccessMap}.
 	 *
 	 * @var boolean
 	 */
 	private bool $canAccess = true;
+
+	/**
+	 * Per-administration-id overrides for canAccess(), so a single test can
+	 * grant access to the caller's own administration while denying access
+	 * to a DIFFERENT administration a target object actually belongs to
+	 * (the resumePause() cross-tenant guard, security-endpoint-guards).
+	 * Falls back to {@see $canAccess} for any id not listed here.
+	 *
+	 * @var array<string,bool>
+	 */
+	private array $canAccessMap = [];
+
+	/**
+	 * In-memory DunningPauseDispute rows, keyed by id, consulted by the
+	 * fake ObjectService's find().
+	 *
+	 * Public: read directly by the anonymous ObjectService stub class
+	 * below, which is a distinct class from this TestCase and so cannot
+	 * see a private property (mirrors the pattern already used by
+	 * ExtractionRequestControllerTest::$stubRows).
+	 *
+	 * @var array<string,array<string,mixed>>
+	 */
+	public array $pauseRecords = [];
 
 	/**
 	 * The controller under test.
@@ -130,24 +159,128 @@ final class DunningControllerTest extends TestCase {
 			}
 		);
 		$this->context->method('canAccess')->willReturnCallback(
-			function (): bool {
-				return $this->canAccess;
+			function (string $administrationId): bool {
+				return ($this->canAccessMap[$administrationId] ?? $this->canAccess);
 			}
 		);
 
 		// The 14-day B2C grace gate is open unless a test closes it.
 		$this->bik->method('isCalculationPermitted')->willReturn(true);
 
-		$this->controller = new DunningController(
+		$this->controller = $this->buildController();
+
+	}//end setUp()
+
+	/**
+	 * Build a controller wired to the shared mocks, with an ObjectService
+	 * double backed by {@see $pauseRecords} (security-endpoint-guards —
+	 * resumePause() fetches the target DunningPauseDispute directly).
+	 *
+	 * @param BIKStaffelCalculator|null $bikOverride Substitute BIK calculator, when a test needs one.
+	 *
+	 * @return DunningController
+	 */
+	private function buildController(?BIKStaffelCalculator $bikOverride = null): DunningController {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+
+		return new DunningController(
 			request: $this->request,
-			bik: $this->bik,
+			bik: ($bikOverride ?? $this->bik),
 			runs: $this->runs,
 			dossier: $this->dossier,
 			context: $this->context,
 			logger: $this->logger,
+			appConfig: $appConfig,
+			objectService: new DuckObjectServiceAdapter($this->makePauseObjectServiceStub()),
+			l10n: $this->makeL10n(),
 		);
 
-	}//end setUp()
+	}//end buildController()
+
+	/**
+	 * Build a duck-typed in-memory ObjectService double for
+	 * `DunningPauseDispute`, wrapped in {@see DuckObjectServiceAdapter} so
+	 * it satisfies the ADR-084 `ObjectServiceInterface` the controller is
+	 * now constructed against.
+	 *
+	 * @return object
+	 */
+	private function makePauseObjectServiceStub(): object {
+		$test = $this;
+		return new class($test) {
+			/**
+			 * Back-reference to the test case.
+			 *
+			 * @var DunningControllerTest
+			 */
+			private $test;
+
+			/**
+			 * Constructor.
+			 *
+			 * @param DunningControllerTest $test Test case.
+			 */
+			public function __construct($test) {
+				$this->test = $test;
+			}//end __construct()
+
+			/**
+			 * No-op fluent register selector.
+			 *
+			 * @param string $r Register slug.
+			 *
+			 * @return self
+			 */
+			public function setRegister(string $r): self {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * No-op fluent schema selector (the stub is single-schema).
+			 *
+			 * @param string $s Schema slug.
+			 *
+			 * @return self
+			 */
+			public function setSchema(string $s): self {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Single-object lookup by id. THROWS on a miss, matching the real
+			 * ObjectService contract.
+			 *
+			 * @param string $id Object id.
+			 *
+			 * @return array<string,mixed>
+			 *
+			 * @throws \RuntimeException When no record matches.
+			 */
+			public function find(string $id): array {
+				if (isset($this->test->pauseRecords[$id]) === true) {
+					return $this->test->pauseRecords[$id];
+				}
+
+				throw new \RuntimeException(sprintf("Object with identifier '%s' not found", $id));
+			}//end find()
+		};
+
+	}//end makePauseObjectServiceStub()
+
+	/**
+	 * Build a minimal IL10N stub that echoes the string handed to t().
+	 *
+	 * @return IL10N&MockObject
+	 */
+	private function makeL10n(): IL10N&MockObject {
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnCallback(
+			static fn (string $text, $params = []): string => $text
+		);
+		return $l10n;
+
+	}//end makeL10n()
 
 	/**
 	 * Configure request params (getParam and getParams) from one map.
@@ -276,14 +409,7 @@ final class DunningControllerTest extends TestCase {
 		$bik = $this->createMock(BIKStaffelCalculator::class);
 		$bik->method('isCalculationPermitted')->willReturn(false);
 		$bik->expects($this->never())->method('compose');
-		$controller = new DunningController(
-			request: $this->request,
-			bik: $bik,
-			runs: $this->runs,
-			dossier: $this->dossier,
-			context: $this->context,
-			logger: $this->logger,
-		);
+		$controller = $this->buildController(bikOverride: $bik);
 		$this->withParams(
 			[
 				'administration_id' => 'adm-1',
@@ -466,9 +592,126 @@ final class DunningControllerTest extends TestCase {
 		$response = $this->controller->executeRun();
 
 		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
-		self::assertStringContainsString('active dunning pause', (string)$response->getData()['error']);
+		// ADR-050: the response carries a stable slug, never the raw
+		// exception text (security-endpoint-guards REQ-003).
+		self::assertSame('dunning-run-execution-failed', $response->getData()['error']);
+		self::assertStringNotContainsString('inv-7', (string)$response->getData()['message']);
 
 	}//end testExecuteRunPausedInvoiceReturns409()
+
+	/**
+	 * An anonymous caller cannot resume a dunning pause.
+	 *
+	 * @return void
+	 */
+	public function testResumePauseAnonymousReturns401(): void {
+		$this->userId = null;
+		$this->withParams(['administration_id' => 'adm-1']);
+		$this->runs->expects($this->never())->method('resumePause');
+
+		$response = $this->controller->resumePause('pause-1');
+
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+
+	}//end testResumePauseAnonymousReturns401()
+
+	/**
+	 * A caller who is not a member of the request-supplied
+	 * administration_id at all sees a masked HTTP 404.
+	 *
+	 * @return void
+	 */
+	public function testResumePauseForeignAdministrationParamReturns404(): void {
+		$this->canAccess = false;
+		$this->withParams(['administration_id' => 'adm-other']);
+		$this->runs->expects($this->never())->method('resumePause');
+
+		$response = $this->controller->resumePause('pause-1');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testResumePauseForeignAdministrationParamReturns404()
+
+	/**
+	 * NEGATIVE CONTROL / IDOR (security-endpoint-guards REQ-001): the
+	 * caller IS a genuine member of the request-supplied administration_id
+	 * (adm-1, so the first canAccess() check passes) but the
+	 * DunningPauseDispute named by $pauseId actually belongs to a
+	 * DIFFERENT administration (adm-OTHER, which the caller cannot
+	 * access). Before this change's guard was added,
+	 * DunningRunService::resumePause() never read its own
+	 * $administrationId parameter, so this call would have resumed and
+	 * returned another organisation's pause. It must now be rejected with
+	 * a masked 404, and the service must never be called.
+	 *
+	 * @return void
+	 */
+	public function testResumePauseCrossTenantPauseIsRejected(): void {
+		$this->canAccessMap = ['adm-1' => true, 'adm-OTHER' => false];
+		$this->pauseRecords['pause-1'] = [
+			'id' => 'pause-1',
+			'administrationId' => 'adm-OTHER',
+			'invoiceId' => 'inv-secret',
+			'reason' => 'DISPUTED',
+		];
+		$this->withParams(['administration_id' => 'adm-1']);
+		$this->runs->expects($this->never())->method('resumePause');
+
+		$response = $this->controller->resumePause('pause-1');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testResumePauseCrossTenantPauseIsRejected()
+
+	/**
+	 * POSITIVE CONTROL: a member of the pause's OWN administration can
+	 * still resume it exactly as before (no regression).
+	 *
+	 * @return void
+	 */
+	public function testResumePauseOwnAdministrationSucceeds(): void {
+		$this->canAccessMap = ['adm-1' => true];
+		$this->pauseRecords['pause-1'] = [
+			'id' => 'pause-1',
+			'administrationId' => 'adm-1',
+			'invoiceId' => 'inv-7',
+			'reason' => 'DISPUTED',
+		];
+		$this->withParams(['administration_id' => 'adm-1', 'resolution' => 'resolve']);
+		$updated = ['id' => 'pause-1', 'administrationId' => 'adm-1', 'lifecycleState' => 'resolved'];
+		$this->runs->expects($this->once())
+			->method('resumePause')
+			->with('adm-1', 'pause-1', 'resolve', null)
+			->willReturn($updated);
+
+		$response = $this->controller->resumePause('pause-1');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame($updated, $response->getData());
+
+	}//end testResumePauseOwnAdministrationSucceeds()
+
+	/**
+	 * A resume failure (e.g. the pause is already resolved) is reported as
+	 * a stable slug, never the raw exception text (REQ-003).
+	 *
+	 * @return void
+	 */
+	public function testResumePauseServiceFailureReturnsSlug(): void {
+		$this->canAccessMap = ['adm-1' => true];
+		$this->pauseRecords['pause-1'] = ['id' => 'pause-1', 'administrationId' => 'adm-1'];
+		$this->withParams(['administration_id' => 'adm-1']);
+		$this->runs->method('resumePause')->willThrowException(
+			new \RuntimeException('DunningPauseDispute pause-1 not found.')
+		);
+
+		$response = $this->controller->resumePause('pause-1');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame('dunning-pause-not-found', $response->getData()['error']);
+		self::assertStringNotContainsString('pause-1', (string)$response->getData()['message']);
+
+	}//end testResumePauseServiceFailureReturnsSlug()
 
 	/**
 	 * An anonymous caller cannot dispatch a dossier to a collection agency.

@@ -6,6 +6,11 @@
  * (project overview, rates, utilisation). Deep-links each manifest page,
  * asserts a genuine index surface, no shillinq-origin 5xx / page error.
  * Data-independent.
+ *
+ * nav-six-clusters deleted the standalone /projecten (ProjectenOverzicht)
+ * page per REQ-NAVIA-002 — it was a duplicate of the pre-existing "Projects"
+ * page at /bookkeeping/dimensions/projects, which the Bookkeeping cluster
+ * landing page now links to directly.
  */
 
 import { test } from '@playwright/test'
@@ -17,7 +22,11 @@ import {
 } from './_helpers'
 
 const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
-	{ route: '/projecten', title: 'Projecten', titleRe: /Project/i },
+	{
+		route: '/bookkeeping/dimensions/projects',
+		title: 'Projects',
+		titleRe: /Project/i,
+	},
 	{ route: '/tarieven', title: 'Tarieven' },
 	{ route: '/utilisatie', title: 'Utilisatie' },
 ]

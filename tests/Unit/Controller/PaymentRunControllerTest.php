@@ -82,6 +82,11 @@ class PaymentRunControllerTest extends TestCase {
 	 * @param bool $canAccess canAccess() return value.
 	 * @param PaymentRunExportService $export Export service (mock).
 	 * @param PaymentRunReconciliationService $reconcile Reconciliation service (mock).
+	 * @param IRequest|null $request Optional request stub (default: an
+	 *                               unconfigured mock, params/uploads all
+	 *                               empty) — pass a stubbed one when a test
+	 *                               needs a request param, e.g. reconcile()'s
+	 *                               `contents` fallback.
 	 *
 	 * @return PaymentRunController
 	 */
@@ -90,6 +95,7 @@ class PaymentRunControllerTest extends TestCase {
 		bool $canAccess,
 		PaymentRunExportService $export,
 		PaymentRunReconciliationService $reconcile,
+		?IRequest $request = null,
 	): PaymentRunController {
 		$objects   = $this->objectServiceReturning($run);
 		$container = $this->createMock(ContainerInterface::class);
@@ -104,7 +110,7 @@ class PaymentRunControllerTest extends TestCase {
 		$session->method('getUser')->willReturn($user);
 
 		return new PaymentRunController(
-			$this->createMock(IRequest::class),
+			($request ?? $this->createMock(IRequest::class)),
 			$export,
 			$reconcile,
 			$adminContext,
@@ -204,4 +210,39 @@ class PaymentRunControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 	}//end testUnauthorisedReconcileRejected()
+
+	/**
+	 * HAPPY: an authorised reconcile (positive control for the
+	 * security-endpoint-guards ADR-005 guard — REQ-004) still delegates to the
+	 * service and returns 200 exactly as before the guard existed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-004
+	 */
+	public function testAuthorisedReconcileSucceeds(): void {
+		$request = $this->createMock(IRequest::class);
+		$request->method('getUploadedFile')->willReturn(null);
+		$request->method('getParam')->willReturnCallback(
+			static fn (string $key, mixed $default = null): mixed => ($key === 'contents' ? '<Document/>' : $default)
+		);
+
+		$reconcile = $this->createMock(PaymentRunReconciliationService::class);
+		$reconcile->expects(self::once())->method('reconcile')->willReturn(
+			['reconciledAt' => 'now', 'lifecycleState' => 'reconciled', 'matchedCount' => 1, 'unmatched' => []]
+		);
+
+		$controller = $this->controller(
+			['id' => 'pr-1', 'administrationId' => 'adm-1', 'lifecycleState' => 'exported'],
+			true,
+			$this->createMock(PaymentRunExportService::class),
+			$reconcile,
+			$request,
+		);
+
+		$response = $controller->reconcile('pr-1');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame('reconciled', $response->getData()['lifecycleState']);
+	}//end testAuthorisedReconcileSucceeds()
 }//end class

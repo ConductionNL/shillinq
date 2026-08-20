@@ -15,7 +15,7 @@
 			"children": [
 				{
 					"id": "Contracts",
-					"label": "Contracts",
+					"label": "Procurement Contracts",
 					"icon": "FileSign",
 					"route": "Contracts",
 					"order": 10
@@ -42,7 +42,7 @@
 			"id": "Contracts",
 			"route": "/contracts",
 			"type": "index",
-			"title": "Contracts",
+			"title": "Procurement Contracts",
 			"config": {
 				"register": "shillinq",
 				"schema": "Contract",

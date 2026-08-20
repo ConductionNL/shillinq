@@ -68,7 +68,14 @@ const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 		title: 'Trial Balance',
 		titleRe: /Trial Balance/i,
 	},
-	{ route: '/financial-statements/consolidations', title: 'Consolidations' },
+	// nav-six-clusters removed the combined /financial-statements/consolidations
+	// overview page (one of the 35 duplicate/dead pages consolidated by that
+	// change) — it is replaced by three dedicated pages, all already declared
+	// in src/manifest.d/bookkeeping-consolidation-commercial.json and now
+	// reachable from the Bookkeeping cluster landing page.
+	{ route: '/consolidation/groups', title: 'Consolidation Groups' },
+	{ route: '/consolidation/periods', title: 'Consolidation Periods' },
+	{ route: '/consolidation/reports', title: 'Consolidated Reports' },
 	{
 		route: '/financial-statements/consolidated-report',
 		title: 'Consolidated Report',

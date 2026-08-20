@@ -185,6 +185,100 @@ final class ReportingControllerTest extends TestCase {
 	}//end testTypesRejectsAnonymousCaller()
 
 	/**
+	 * Generating a report succeeds for a member of the target administration
+	 * (positive direction — security-endpoint-guards re-verification, verdict
+	 * ALREADY-GUARDED: the controller already checked canAccess() before this
+	 * change).
+	 *
+	 * @return void
+	 */
+	public function testGenerateByMemberOfTargetAdministrationSucceeds(): void {
+		$this->withParams(
+			[
+				'reportType' => 'vat-return',
+				'period' => '2026-Q2',
+				'administrationId' => 'adm-1',
+				'format' => 'pdf',
+			]
+		);
+		$this->context->method('canAccess')->willReturn(true);
+		$this->service->expects($this->once())
+			->method('generate')
+			->with('vat-return', '2026-Q2', 'adm-1', 'pdf')
+			->willReturn(['id' => 'gen-1', 'administrationId' => 'adm-1', 'reportType' => 'vat-return']);
+
+		$response = $this->controller->generate();
+
+		self::assertSame(Http::STATUS_CREATED, $response->getStatus());
+		self::assertSame('gen-1', $response->getData()['id']);
+
+	}//end testGenerateByMemberOfTargetAdministrationSucceeds()
+
+	/**
+	 * NEGATIVE CONTROL: generating a report against an administration the
+	 * caller is not a member of is masked as 404, and the service is never
+	 * called (security-endpoint-guards, REQ-001).
+	 *
+	 * @return void
+	 */
+	public function testGenerateForForeignAdministrationIsForbidden(): void {
+		$this->withParams(
+			[
+				'reportType' => 'vat-return',
+				'period' => '2026-Q2',
+				'administrationId' => 'adm-other',
+				'format' => 'pdf',
+			]
+		);
+		$this->context->method('canAccess')->willReturn(false);
+		$this->service->expects($this->never())->method('generate');
+
+		$response = $this->controller->generate();
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame(['error' => 'not-found'], $response->getData());
+
+	}//end testGenerateForForeignAdministrationIsForbidden()
+
+	/**
+	 * The generate endpoint refuses an anonymous caller with HTTP 401 before
+	 * any administration check runs.
+	 *
+	 * @return void
+	 */
+	public function testGenerateRejectsAnonymousCaller(): void {
+		$this->currentUser = null;
+		$this->service->expects($this->never())->method('generate');
+
+		$response = $this->controller->generate();
+
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+
+	}//end testGenerateRejectsAnonymousCaller()
+
+	/**
+	 * Generating with no administrationId at all is left to the service (a
+	 * caller-scoped report, e.g. stored under the caller's own Files home) —
+	 * it is not a bypass since no OTHER tenant's scope is ever named or
+	 * checked against.
+	 *
+	 * @return void
+	 */
+	public function testGenerateWithNoAdministrationIdSkipsTheGuardAndReachesTheService(): void {
+		$this->withParams(['reportType' => 'vat-return', 'period' => '2026-Q2', 'format' => 'pdf']);
+		$this->context->expects($this->never())->method('canAccess');
+		$this->service->expects($this->once())
+			->method('generate')
+			->with('vat-return', '2026-Q2', '', 'pdf')
+			->willReturn(['id' => 'gen-2']);
+
+		$response = $this->controller->generate();
+
+		self::assertSame(Http::STATUS_CREATED, $response->getStatus());
+
+	}//end testGenerateWithNoAdministrationIdSkipsTheGuardAndReachesTheService()
+
+	/**
 	 * Without an explicit administrationId the listing is scoped to the caller's
 	 * memberships — one service query per accessible administration, never a
 	 * whole-instance listing (ADR-005 / REQ-MA-001).

@@ -7,7 +7,13 @@ const { VueLoaderPlugin } = require('vue-loader')
 
 const buildMode = process.env.NODE_ENV
 const isDev = buildMode === 'development'
-webpackConfig.devtool = isDev ? 'cheap-source-map' : 'source-map'
+// frontend-bundle-hygiene REQ-FBH-001 / ADR-061 decision 3: production builds
+// MUST NOT ship `devtool: 'source-map'` — pipelinq and openregister are the
+// named reference (`webpackConfig.devtool = isDev ? 'cheap-source-map' :
+// false`). Before this change: 30 `.map` files, ~69 MB combined in `js/`,
+// mostly the 29 MB `shillinq-main.js.map` alone. `false` in production keeps
+// dev's cheap, fast line-level maps unaffected.
+webpackConfig.devtool = isDev ? 'cheap-source-map' : false
 
 webpackConfig.stats = {
 	colors: true,
@@ -206,6 +212,80 @@ webpackConfig.output = {
 webpackConfig.optimization = {
 	...(webpackConfig.optimization || {}),
 	minimizer: [new TerserPlugin({ parallel: 2 })],
+	// frontend-bundle-hygiene REQ-FBH-002 / ADR-061: the base
+	// `@nextcloud/webpack-vue-config` only sets
+	// `splitChunks.automaticNameDelimiter` — webpack 5's own default
+	// `splitChunks.chunks: 'async'` means NONE of this app's three *initial*
+	// entries (`main`, `adminSettings`, `widget`) share code today; each
+	// independently bundles its own full copy of Vue, @nextcloud/vue,
+	// @conduction/nextcloud-vue and Pinia. Pull the shared framework code
+	// used by `main`/`adminSettings` into two cached chunks, following
+	// pipelinq's `ncVue`/`vendor` cacheGroup split
+	// (pipelinq/webpack.config.js:259-295).
+	splitChunks: {
+		...(webpackConfig.optimization?.splitChunks || {}),
+		// `widget` (src/components/widget/WidgetEmbed.js, REQ-WSW-004) is a
+		// UMD bundle partner sites embed via ONE `<script src=".../widget.js">`
+		// tag. It MUST stay fully self-contained — splitting its framework
+		// code into a second chunk would require a third-party page to load a
+		// script tag it was never told about. Excluded by name, mirroring
+		// openregister's `integrationGlobal` exclusion for the identical
+		// reason (openregister/webpack.config.js:60).
+		chunks: (chunk) => chunk.name !== 'widget',
+		cacheGroups: {
+			default: false,
+			defaultVendors: false,
+			ncVue: {
+				name: appId + '-shared-nc-vue',
+				// 'initial' ONLY — not 'all'. The outer `chunks` filter above
+				// still lets webpack consider async (dynamically-imported)
+				// modules for this cacheGroup if it were 'all', which would
+				// hoist nc-vue's OWN lazily-loaded chunks (the RVO icon set,
+				// the @mdi/js icon-browser bundle behind
+				// CnIconBrowserPanel.vue's `import(/* webpackChunkName:
+				// "cn-icons-mdi" */ '@mdi/js')`) into this eager chunk,
+				// loaded on every page instead of only when their feature is
+				// opened — exactly the regression pipelinq's own comment
+				// documents hitting with the RVO set and fixing the same way.
+				chunks: 'initial',
+				// Matches both the npm dist AND the monorepo-dev alias
+				// (`../nextcloud-vue/src/...`, resolved outside node_modules
+				// when USE_LOCAL_LIB=true aliases @conduction/nextcloud-vue
+				// to the sibling source tree above).
+				test: /[\\/]node_modules[\\/](@nextcloud[\\/]vue|@conduction[\\/]nextcloud-vue)[\\/]|[\\/]nextcloud-vue[\\/]src[\\/]/,
+				priority: 30,
+				// minChunks: 2 (NOT the cacheGroup default of 1) — measured, not
+				// assumed. `main` (595 pages, most of the nc-vue barrel) and
+				// `adminSettings` (a handful of settings screens, a small slice
+				// of the barrel) use very different-sized subsets of nc-vue. At
+				// minChunks:1 (the first version of this change), the cacheGroup
+				// extracted the UNION of both entries' nc-vue usage into one
+				// chunk — 6.28 MB — that BOTH entries then had to load in full.
+				// Measured effect: adminSettings's own entrypoint total went
+				// from 3.34 MiB to 8.44 MiB, a regression, not a win — the exact
+				// "moving bytes into a second chunk the same page also loads"
+				// trap. minChunks:2 restricts extraction to modules actually
+				// reachable from BOTH entries, leaving each entry's own
+				// exclusively-used modules where they were. See design.md §6/
+				// tasks.md Validation for the corrected before/after numbers.
+				minChunks: 2,
+				reuseExistingChunk: true,
+				enforce: true,
+				filename: appId + '-shared-nc-vue.js',
+			},
+			vendor: {
+				name: appId + '-shared-vendor',
+				chunks: 'initial',
+				test: /[\\/]node_modules[\\/](vue|vue-router|pinia|vue-material-design-icons|@vueuse)[\\/]/,
+				priority: 20,
+				// Same minChunks:2 correction as the ncVue group above.
+				minChunks: 2,
+				reuseExistingChunk: true,
+				enforce: true,
+				filename: appId + '-shared-vendor.js',
+			},
+		},
+	},
 }
 
 module.exports = webpackConfig

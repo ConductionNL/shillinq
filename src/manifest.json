@@ -93,8 +93,8 @@
 			"children": []
 		},
 		{
-			"id": "BankingTreasury",
-			"label": "Banking & Treasury",
+			"id": "BankingCashflow",
+			"label": "Banking & Cashflow",
 			"icon": "BankOutline",
 			"order": 25,
 			"children": []
@@ -104,14 +104,36 @@
 			"label": "Sales",
 			"icon": "CartOutline",
 			"order": 30,
-			"children": []
-		},
-		{
-			"id": "Payroll",
-			"label": "People & Projects",
-			"icon": "AccountMultipleOutline",
-			"order": 55,
-			"children": []
+			"children": [
+				{
+					"id": "RateCards",
+					"label": "Rate Cards",
+					"icon": "CardTextOutline",
+					"route": "RateCards",
+					"order": 27
+				},
+				{
+					"id": "RateSchedules",
+					"label": "Rate Schedules",
+					"icon": "CalendarClockOutline",
+					"route": "RateSchedules",
+					"order": 27
+				},
+				{
+					"id": "RateAuditTrail",
+					"label": "Rate Audit Trail",
+					"icon": "History",
+					"route": "RateAuditTrail",
+					"order": 27
+				},
+				{
+					"id": "Deposits",
+					"label": "Deposits",
+					"icon": "CashLock",
+					"route": "Deposits",
+					"order": 27
+				}
+			]
 		},
 		{
 			"id": "PublicSector",
@@ -133,6 +155,13 @@
 			"icon": "NotebookOutline",
 			"order": 20,
 			"children": [
+				{
+					"id": "AccountingStandardsPolicy",
+					"label": "Standards policy",
+					"icon": "CogOutline",
+					"route": "AccountingStandardsPolicy",
+					"order": 21
+				},
 				{
 					"id": "ChartOfAccounts",
 					"label": "Chart of Accounts",
@@ -201,6 +230,13 @@
 					"label": "Tie-outs",
 					"icon": "FileCompare",
 					"route": "Aansluitingen",
+					"order": 29
+				},
+				{
+					"id": "AansluitingResultaten",
+					"label": "Tie-out results",
+					"icon": "FileCheckOutline",
+					"route": "AansluitingResultaten",
 					"order": 29
 				},
 				{
@@ -344,13 +380,6 @@
 					"order": 81
 				},
 				{
-					"id": "Consolidations",
-					"label": "Consolidations",
-					"icon": "AccountMultipleOutline",
-					"route": "Consolidations",
-					"order": 82
-				},
-				{
 					"id": "ConsolidatedReport",
 					"label": "Consolidated Report",
 					"icon": "ChartBoxOutline",
@@ -438,14 +467,16 @@
 					"id": "CostCenters",
 					"label": "Cost centers",
 					"icon": "OfficeBuilding",
-					"route": "CostCenters",
+					"route": "AnalyticalDimensions",
+					"query": { "dimensionType": "cost-center" },
 					"order": 90
 				},
 				{
 					"id": "KostenDragers",
 					"label": "Cost objects",
 					"icon": "CubeOutline",
-					"route": "KostenDragers",
+					"route": "AnalyticalDimensions",
+					"query": { "dimensionType": "cost-object" },
 					"order": 91
 				},
 				{
@@ -607,13 +638,14 @@
 					"id": "InventoryPostingHistory",
 					"label": "Posting history",
 					"icon": "BookOpenVariantOutline",
-					"route": "InventoryPostingHistory",
+					"route": "GeneralLedger",
+					"query": { "subLedgerType": "inventory" },
 					"order": 96
 				}
 			]
 		},
 		{
-			"id": "Belastingen",
+			"id": "Taxes",
 			"label": "Taxes",
 			"icon": "PercentOutline",
 			"order": 50,
@@ -729,6 +761,20 @@
 					"icon": "ChartBar",
 					"route": "TaxRateReconciliations",
 					"order": 114
+				},
+				{
+					"id": "WBSOActivityCodes",
+					"label": "WBSO Activity Codes",
+					"icon": "FlaskOutline",
+					"route": "WBSOActivityCodes",
+					"order": 120
+				},
+				{
+					"id": "InnovatieboxElections",
+					"label": "Innovation box",
+					"icon": "LightbulbOnOutline",
+					"route": "InnovatieboxElections",
+					"order": 121
 				}
 			]
 		},
@@ -744,6 +790,13 @@
 					"icon": "CalendarRemoveOutline",
 					"route": "Bewaartermijnen",
 					"order": 10
+				},
+				{
+					"id": "BewaartermijnenDashboard",
+					"label": "Retention periods — Dashboard",
+					"icon": "ViewDashboardOutline",
+					"route": "BewaartermijnenDashboard",
+					"order": 20
 				}
 			]
 		},
@@ -807,20 +860,28 @@
 					"id": "SubsidiesVerleend",
 					"label": "Granted grants",
 					"icon": "CheckDecagramOutline",
-					"route": "SubsidiesVerleend",
+					"route": "SubsidiesOverzicht",
+					"query": { "state": "granted" },
 					"order": 20
 				},
 				{
 					"id": "SubsidiesTeruggevorderd",
 					"label": "Reclaims",
 					"icon": "CashRefund",
-					"route": "SubsidiesTeruggevorderd",
+					"route": "SubsidieTerugvorderingen",
 					"order": 30
+				},
+				{
+					"id": "SubsidieAanvragen",
+					"label": "Grant applications",
+					"icon": "FileDocumentEditOutline",
+					"route": "SubsidieAanvragen",
+					"order": 40
 				}
 			]
 		},
 		{
-			"id": "Compliance",
+			"id": "ReportingCompliance",
 			"label": "Reporting & Compliance",
 			"icon": "ChartBoxOutline",
 			"order": 70,
@@ -943,13 +1004,6 @@
 			"order": 45,
 			"children": [
 				{
-					"id": "ProjectenOverzicht",
-					"label": "Overview",
-					"icon": "ViewDashboardOutline",
-					"route": "ProjectenOverzicht",
-					"order": 10
-				},
-				{
 					"id": "Tarieven",
 					"label": "Rates",
 					"icon": "CurrencyEur",
@@ -967,7 +1021,7 @@
 		},
 		{
 			"id": "Purchasing",
-			"label": "Purchasing & Inventory",
+			"label": "Purchasing",
 			"icon": "CartArrowDown",
 			"order": 35,
 			"children": [
@@ -1010,7 +1064,7 @@
 					"id": "ThreeWayMatchExceptions",
 					"label": "Match Exceptions",
 					"icon": "AlertOctagonOutline",
-					"route": "ThreeWayMatchExceptions",
+					"route": "ThreeWayMatches",
 					"order": 9
 				},
 				{
@@ -1560,98 +1614,6 @@
 			}
 		},
 		{
-			"id": "InventoryValuationDetail",
-			"route": "/inventory/valuation/:id",
-			"type": "detail",
-			"title": "Inventory Valuation",
-			"config": {
-				"register": "shillinq",
-				"_note": "Inventory Valuation detail — a stock valuation snapshot (method, quantity, unit cost, total value, pending COGS) for a product/warehouse. Aggregation surfaces total valued stock; audit trail evidences revaluation.",
-				"aggregation": "inventoryValueTotals",
-				"auditTrail": true,
-				"schema": "InventoryValuation",
-				"fields": [
-					{
-						"key": "productId",
-						"label": "Product",
-						"type": "string"
-					},
-					{
-						"key": "warehouse",
-						"label": "Warehouse",
-						"type": "string"
-					},
-					{
-						"key": "quantity",
-						"label": "Quantity",
-						"type": "number"
-					},
-					{
-						"key": "unitCost",
-						"label": "Unit Cost",
-						"type": "number"
-					},
-					{
-						"key": "totalValue",
-						"label": "Total Value",
-						"type": "number"
-					},
-					{
-						"key": "valuationMethod",
-						"label": "Valuation Method",
-						"type": "string"
-					},
-					{
-						"key": "date",
-						"label": "Date",
-						"type": "string"
-					},
-					{
-						"key": "status",
-						"label": "Status",
-						"type": "string"
-					},
-					{
-						"key": "costCenterId",
-						"label": "Cost Center",
-						"type": "string"
-					},
-					{
-						"key": "pendingCogs",
-						"label": "Pending COGS",
-						"type": "boolean"
-					},
-					{
-						"key": "administrationId",
-						"label": "Administration",
-						"type": "string"
-					}
-				],
-				"indexRoute": "InventoryValuation",
-				"sidebarProps": {
-					"tabs": [
-						{
-							"id": "audit",
-							"label": "Audit Trail",
-							"icon": "History",
-							"order": 90,
-							"widgets": [
-								{
-									"type": "data",
-									"componentName": "openregister-audit-trail",
-									"props": {
-										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
-										"collapsed": true
-									}
-								}
-							]
-						}
-					]
-				},
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
-			}
-		},
-		{
 			"id": "StockLevels",
 			"route": "/inventory/stock",
 			"type": "index",
@@ -1961,49 +1923,6 @@
 			}
 		},
 		{
-			"id": "CostCenters",
-			"route": "/bookkeeping/dimensions/cost-centers",
-			"type": "index",
-			"title": "Cost centers",
-			"config": {
-				"register": "shillinq",
-				"schema": "AnalyticalDimension",
-				"filters": {
-					"dimensionType": "cost-center"
-				},
-				"columns": [
-					{
-						"key": "code",
-						"label": "Code",
-						"sortable": true
-					},
-					{
-						"key": "name",
-						"label": "Name",
-						"sortable": true
-					},
-					{
-						"key": "parentCode",
-						"label": "Parent",
-						"sortable": true
-					},
-					{
-						"key": "budget",
-						"label": "Budget",
-						"sortable": true
-					},
-					{
-						"key": "lifecycleState",
-						"label": "Status",
-						"sortable": true
-					}
-				],
-				"defaultSort": "code",
-				"detailRoute": "CostCenterDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
-			}
-		},
-		{
 			"id": "CostCenterDetail",
 			"route": "/bookkeeping/dimensions/cost-centers/:id",
 			"type": "detail",
@@ -2121,44 +2040,6 @@
 						}
 					]
 				},
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
-			}
-		},
-		{
-			"id": "KostenDragers",
-			"route": "/bookkeeping/dimensions/kostendragers",
-			"type": "index",
-			"title": "Cost objects",
-			"config": {
-				"register": "shillinq",
-				"schema": "AnalyticalDimension",
-				"filters": {
-					"dimensionType": "cost-object"
-				},
-				"columns": [
-					{
-						"key": "code",
-						"label": "Code",
-						"sortable": true
-					},
-					{
-						"key": "name",
-						"label": "Name",
-						"sortable": true
-					},
-					{
-						"key": "parentCode",
-						"label": "Parent",
-						"sortable": true
-					},
-					{
-						"key": "lifecycleState",
-						"label": "Status",
-						"sortable": true
-					}
-				],
-				"defaultSort": "code",
-				"detailRoute": "KostenDragerDetail",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
 			}
 		},
@@ -5868,36 +5749,6 @@
 			}
 		},
 		{
-			"id": "Consolidations",
-			"route": "/financial-statements/consolidations",
-			"type": "index",
-			"title": "Consolidations",
-			"config": {
-				"register": "shillinq",
-				"schema": "ConsolidationGroup",
-				"columns": [
-					{
-						"key": "name",
-						"label": "Name",
-						"sortable": true
-					},
-					{
-						"key": "consolidationMethod",
-						"label": "Method",
-						"sortable": true
-					},
-					{
-						"key": "status",
-						"label": "Status",
-						"sortable": true
-					}
-				],
-				"defaultSort": "name",
-				"detailRoute": "ConsolidationsDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/reporting/xbrl-sbr"
-			}
-		},
-		{
 			"id": "ConsolidationsDetail",
 			"route": "/financial-statements/consolidations/:id",
 			"type": "detail",
@@ -8313,51 +8164,6 @@
 					]
 				},
 				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices"
-			}
-		},
-		{
-			"id": "ProjectenOverzicht",
-			"route": "/projecten",
-			"type": "index",
-			"title": "Projects — Overview",
-			"config": {
-				"register": "shillinq",
-				"schema": "Project",
-				"columns": [
-					{
-						"key": "projectNumber",
-						"label": "Project number",
-						"sortable": true
-					},
-					{
-						"key": "name",
-						"label": "Name",
-						"sortable": true
-					},
-					{
-						"key": "state",
-						"label": "Status",
-						"sortable": true
-					},
-					{
-						"key": "recognitionStage",
-						"label": "Phase",
-						"sortable": true
-					},
-					{
-						"key": "recognisedRevenue",
-						"label": "Recognised revenue",
-						"sortable": true
-					},
-					{
-						"key": "wipBalance",
-						"label": "WIP balance",
-						"sortable": true
-					}
-				],
-				"defaultSort": "projectNumber",
-				"detailRoute": "ProjectDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
 			}
 		},
 		{
@@ -11757,72 +11563,6 @@
 			}
 		},
 		{
-			"id": "SubsidiesVerleend",
-			"route": "/subsidies/verleend",
-			"type": "index",
-			"title": "Awarded grants",
-			"config": {
-				"register": "shillinq",
-				"schema": "Subsidie",
-				"filter": {
-					"state": "granted"
-				},
-				"columns": [
-					{
-						"key": "subsidyNumber",
-						"label": "Number",
-						"sortable": true
-					},
-					{
-						"key": "subsidyName",
-						"label": "Name",
-						"sortable": true
-					},
-					{
-						"key": "awardAmount",
-						"label": "Amount",
-						"sortable": true
-					}
-				],
-				"defaultSort": "subsidyNumber",
-				"detailRoute": "SubsidieDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
-			}
-		},
-		{
-			"id": "SubsidiesTeruggevorderd",
-			"route": "/subsidies/teruggevorderd",
-			"type": "index",
-			"title": "Terugvorderingen",
-			"config": {
-				"register": "shillinq",
-				"schema": "Subsidie",
-				"filter": {
-					"state": "reclaimed"
-				},
-				"columns": [
-					{
-						"key": "subsidyNumber",
-						"label": "Number",
-						"sortable": true
-					},
-					{
-						"key": "subsidyName",
-						"label": "Name",
-						"sortable": true
-					},
-					{
-						"key": "awardAmount",
-						"label": "Amount",
-						"sortable": true
-					}
-				],
-				"defaultSort": "subsidyNumber",
-				"detailRoute": "SubsidieDetail",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/public-sector/overview"
-			}
-		},
-		{
 			"id": "ReorderRules",
 			"route": "/inventory/reorder-rules",
 			"type": "index",
@@ -14173,61 +13913,6 @@
 			}
 		},
 		{
-			"id": "ThreeWayMatchExceptions",
-			"route": "/inkoop/3way-matches/exceptions",
-			"type": "index",
-			"title": "Match Exceptions",
-			"config": {
-				"register": "shillinq",
-				"schema": "ThreeWayMatch",
-				"_note_rowRoute": "Same cause as the ThreeWayMatches index above: rows do not open without this key.",
-				"rowRoute": "ThreeWayMatchDetail",
-				"filter": {
-					"matchStatus": {
-						"in": [
-							"exception_price",
-							"exception_quantity",
-							"exception_missing_grn",
-							"exception_missing_po",
-							"fraud_alert"
-						]
-					}
-				},
-				"columns": [
-					{
-						"key": "invoiceId",
-						"label": "Invoice",
-						"sortable": true
-					},
-					{
-						"key": "matchStatus",
-						"label": "Exception",
-						"sortable": true
-					},
-					{
-						"key": "createdAt",
-						"label": "Created",
-						"sortable": true
-					},
-					{
-						"key": "resolvedBy",
-						"label": "Resolved By",
-						"sortable": true
-					},
-					{
-						"key": "resolutionAction",
-						"label": "Action",
-						"sortable": true
-					}
-				],
-				"defaultSort": "createdAt",
-				"detailRoute": "ThreeWayMatchDetail",
-				"_note_rowRoute_overlay": "See the Receipts index — ThreeWayMatchDetail is `type:\"custom\"`, so without `rowRoute` these rows are dead on click.",
-				"description": "Filtered view of 3-way matches that need operator action (price/quantity/missing-GRN/missing-PO/fraud-alert exceptions). Member 08 owns the exception workflow.",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
-			}
-		},
-		{
 			"id": "BookkeepingAuditTrail",
 			"route": "/bookkeeping/audit-trail",
 			"type": "logs",
@@ -15397,53 +15082,6 @@
 						}
 					]
 				},
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
-			}
-		},
-		{
-			"id": "InventoryPostingHistory",
-			"route": "/inventory/posting-history",
-			"type": "index",
-			"title": "Posting Historie",
-			"config": {
-				"register": "shillinq",
-				"schema": "GLTransaction",
-				"filters": {
-					"subLedgerType": "inventory"
-				},
-				"columns": [
-					{
-						"key": "entryNumber",
-						"label": "Entry #",
-						"sortable": true
-					},
-					{
-						"key": "description",
-						"label": "Description",
-						"sortable": true
-					},
-					{
-						"key": "debitAmount",
-						"label": "Debit",
-						"sortable": true
-					},
-					{
-						"key": "creditAmount",
-						"label": "Credit",
-						"sortable": true
-					},
-					{
-						"key": "entryDate",
-						"label": "Date",
-						"sortable": true
-					},
-					{
-						"key": "subLedgerRef",
-						"label": "Inventory Valuation",
-						"sortable": true
-					}
-				],
-				"defaultSort": "entryDate",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/inventory/overview"
 			}
 		},

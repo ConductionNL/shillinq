@@ -37,6 +37,8 @@ use OCA\Shillinq\Service\Booking\TransactionalGuard;
 use OCA\Shillinq\Service\ConflictDetectionService;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Http;
+use OCP\IGroupManager;
+use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -128,6 +130,12 @@ class CalendarControllerTest extends TestCase {
 			'administrations' => [['administrationId' => 'adm-1']],
 			'activeAdministrationId' => 'adm-1',
 		]);
+		// Default: alice is a member of adm-1 (the seeded calendars'
+		// administration) — the positive-direction case for the
+		// per-object booking guard (security-endpoint-guards REQ-001).
+		$this->context->method('canAccess')->willReturnCallback(
+			static fn (string $administrationId): bool => $administrationId === 'adm-1'
+		);
 
 		$this->request->method('getParam')->willReturnCallback(
 			function (string $key, mixed $default = null): mixed {
@@ -172,8 +180,34 @@ class CalendarControllerTest extends TestCase {
 			$this->context,
 			$this->guard,
 			$this->createMock(LoggerInterface::class),
+			$this->buildL10n(),
+			$this->buildGroupManager(false),
 		);
 	}//end buildController()
+
+	/**
+	 * Build an IL10N stub that echoes its input (no real translation catalog in unit tests).
+	 *
+	 * @return IL10N&MockObject
+	 */
+	private function buildL10n(): IL10N&MockObject {
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnCallback(static fn (string $text, $params = []): string => $text);
+		return $l10n;
+	}//end buildL10n()
+
+	/**
+	 * Build an IGroupManager stub whose isAdmin() is fixed to $isAdmin.
+	 *
+	 * @param bool $isAdmin Whether every uid should be treated as an admin.
+	 *
+	 * @return IGroupManager&MockObject
+	 */
+	private function buildGroupManager(bool $isAdmin): IGroupManager&MockObject {
+		$groupManager = $this->createMock(IGroupManager::class);
+		$groupManager->method('isAdmin')->willReturn($isAdmin);
+		return $groupManager;
+	}//end buildGroupManager()
 
 	/**
 	 * Fake ObjectService that mimics the OR query-builder fluent API.
@@ -501,6 +535,8 @@ class CalendarControllerTest extends TestCase {
 			$context,
 			$this->guard,
 			$this->createMock(LoggerInterface::class),
+			$this->buildL10n(),
+			$this->buildGroupManager(false),
 		);
 
 		$this->assertSame(Http::STATUS_UNAUTHORIZED, $controller->index()->getStatus());
@@ -508,5 +544,121 @@ class CalendarControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_UNAUTHORIZED, $controller->listBookings('cal-001')->getStatus());
 		$this->assertSame(Http::STATUS_UNAUTHORIZED, $controller->createBooking('cal-001')->getStatus());
 	}//end testUnauthenticatedCallsReturn401()
+
+	/**
+	 * POST /bookings rejects a caller with no membership in the calendar's
+	 * administration — the confirmed missing-guard finding for
+	 * `createBooking()` (security-endpoint-guards REQ-001, negative
+	 * direction). Before this change's guard was added, this exact call
+	 * returned 201 and created the booking; see
+	 * testCreateBookingReturns201OnSuccess() for the positive-direction
+	 * counterpart proving the guard does not just deny everyone.
+	 *
+	 * @return void
+	 */
+	public function testCreateBookingRejectsNonMemberCaller(): void {
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('currentUserId')->willReturn('mallory');
+		$context->method('buildContext')->willReturn([
+			'userId' => 'mallory',
+			'administrations' => [['administrationId' => 'adm-2']],
+			'activeAdministrationId' => 'adm-2',
+		]);
+		// Mallory is only a member of adm-2; cal-001 belongs to adm-1.
+		$context->method('canAccess')->willReturnCallback(
+			static fn (string $administrationId): bool => $administrationId === 'adm-2'
+		);
+
+		$this->params = [
+			'title' => 'Klant: Mallory',
+			'startTime' => '2026-05-21T14:00:00Z',
+			'endTime' => '2026-05-21T14:30:00Z',
+			'attendee' => 'Mallory',
+			'status' => 'pending',
+		];
+
+		$controller = new CalendarController(
+			$this->request,
+			$this->container,
+			$this->settings,
+			$this->conflicts,
+			$context,
+			$this->guard,
+			$this->createMock(LoggerInterface::class),
+			$this->buildL10n(),
+			$this->buildGroupManager(false),
+		);
+
+		$response = $controller->createBooking('cal-001');
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame('calendar-booking-forbidden', $response->getData()['error']);
+		$this->assertCount(0, $this->fakeObjectService->savedObjects, 'No booking is created for a non-member caller');
+	}//end testCreateBookingRejectsNonMemberCaller()
+
+	/**
+	 * A Nextcloud admin bypasses the per-administration booking guard —
+	 * matching `BookingNotificationController::authorizeBookingAccess()`'s
+	 * established pattern. Without this, the Nextcloud admin account (which
+	 * carries no `AdministrationMembership` of its own by default — see
+	 * tests/e2e/ci-seed.sh) would be locked out of booking on every
+	 * calendar.
+	 *
+	 * @return void
+	 */
+	public function testCreateBookingByAdminBypassesMembershipCheck(): void {
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('currentUserId')->willReturn('admin');
+		$context->method('buildContext')->willReturn([
+			'userId' => 'admin',
+			'administrations' => [],
+			'activeAdministrationId' => null,
+		]);
+		// No memberships at all — canAccess() would deny every administration.
+		$context->method('canAccess')->willReturn(false);
+
+		$this->params = [
+			'title' => 'Klant: Admin',
+			'startTime' => '2026-05-21T14:00:00Z',
+			'endTime' => '2026-05-21T14:30:00Z',
+			'attendee' => 'Admin',
+			'status' => 'pending',
+		];
+		$this->conflicts->method('checkConflicts')->willReturn([]);
+		$this->conflicts->method('lockResource')->willReturn(true);
+
+		$controller = new CalendarController(
+			$this->request,
+			$this->container,
+			$this->settings,
+			$this->conflicts,
+			$context,
+			$this->guard,
+			$this->createMock(LoggerInterface::class),
+			$this->buildL10n(),
+			$this->buildGroupManager(true),
+		);
+
+		$response = $controller->createBooking('cal-001');
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+	}//end testCreateBookingByAdminBypassesMembershipCheck()
+
+	/**
+	 * GET /bookings with an invalid (inverted) range returns a static
+	 * slug/message, not the raw exception text (security-endpoint-guards
+	 * REQ-003).
+	 *
+	 * @return void
+	 */
+	public function testListBookingsInvalidRangeDoesNotLeakExceptionText(): void {
+		$this->params['start'] = '2026-05-22';
+		$this->params['end'] = '2026-05-21';
+		$controller = $this->buildController();
+		$response = $controller->listBookings('cal-001');
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame('calendar-invalid-range', $data['error']);
+		$this->assertArrayHasKey('message', $data);
+		$this->assertStringNotContainsString('end must be after start', (string)($data['error'] ?? '') . (string)($data['message'] ?? ''));
+	}//end testListBookingsInvalidRangeDoesNotLeakExceptionText()
 
 }//end class

@@ -82,7 +82,15 @@ class InvoiceApiController extends Controller {
 	/**
 	 * Draft a BillableInvoice (POST /api/v1/invoices/generate).
 	 *
+	 * Authorization: the administration scope is resolved server-side from the
+	 * caller's own session (never accepted from the request body), so the drafted
+	 * invoice is always scoped to an administration the caller is a member of
+	 * (ADR-005 Rule 3 — session-derived, IDOR-safe by construction).
+	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function generate(): JSONResponse {
@@ -99,15 +107,29 @@ class InvoiceApiController extends Controller {
 
 			return new JSONResponse($invoice, Http::STATUS_OK);
 		} catch (\InvalidArgumentException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_UNPROCESSABLE_ENTITY);
+			$this->logger->error('InvoiceApiController.generate: invalid request: ' . $e->getMessage());
+			return new JSONResponse(
+				['message' => 'The invoice generation request is invalid.', 'error' => 'invoice-generate-invalid'],
+				Http::STATUS_UNPROCESSABLE_ENTITY
+			);
 		} catch (\RuntimeException $e) {
 			$message = $e->getMessage();
-			$status = Http::STATUS_BAD_REQUEST;
+			$this->logger->error('InvoiceApiController.generate: request could not be completed: ' . $message);
+
 			if (str_contains($message, 'Conflict') === true) {
-				$status = Http::STATUS_CONFLICT;
+				return new JSONResponse(
+					[
+						'message' => 'One or more time entries or expenses are already invoiced.',
+						'error' => 'invoice-generate-conflict',
+					],
+					Http::STATUS_CONFLICT
+				);
 			}
 
-			return new JSONResponse(['error' => $message], $status);
+			return new JSONResponse(
+				['message' => 'Unable to generate the invoice.', 'error' => 'invoice-generate-failed'],
+				Http::STATUS_BAD_REQUEST
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error('InvoiceApiController.generate failed: ' . $e->getMessage());
 			return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
@@ -118,7 +140,16 @@ class InvoiceApiController extends Controller {
 	/**
 	 * List invoices for the current administration (GET /api/v1/invoices).
 	 *
+	 * Authorization: the administration scope is resolved server-side from the
+	 * caller's own session and applied as a hard filter — the endpoint accepts
+	 * no client-supplied administrationId, so there is no parameter to guess or
+	 * enumerate against another tenant (ADR-005 Rule 3 — session-derived,
+	 * IDOR-safe by construction).
+	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -163,7 +194,15 @@ class InvoiceApiController extends Controller {
 	 *
 	 * @param string $invoiceId BillableInvoice id.
 	 *
+	 * Authorization: the fetched invoice's own `administrationId` is compared
+	 * against the caller's server-resolved administration; a mismatch (or an
+	 * orphan record with no administrationId) is refused with 403 before any
+	 * line data is read (ADR-005 Rule 3).
+	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function show(string $invoiceId): JSONResponse {
@@ -221,7 +260,15 @@ class InvoiceApiController extends Controller {
 	 *
 	 * @param string $invoiceId Id.
 	 *
+	 * Authorization: the fetched invoice's own `administrationId` is compared
+	 * against the caller's server-resolved administration; a mismatch (or an
+	 * orphan record with no administrationId) is refused with 403 before any
+	 * posting side-effect runs (ADR-005 Rule 3).
+	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function post(string $invoiceId): JSONResponse {
@@ -250,12 +297,19 @@ class InvoiceApiController extends Controller {
 			return new JSONResponse($updated, Http::STATUS_OK);
 		} catch (\RuntimeException $e) {
 			$message = $e->getMessage();
-			$status = Http::STATUS_BAD_REQUEST;
+			$this->logger->error('InvoiceApiController.post: request could not be completed: ' . $message);
+
 			if (str_contains($message, 'already posted') === true) {
-				$status = Http::STATUS_CONFLICT;
+				return new JSONResponse(
+					['message' => 'The invoice is already posted.', 'error' => 'invoice-post-conflict'],
+					Http::STATUS_CONFLICT
+				);
 			}
 
-			return new JSONResponse(['error' => $message], $status);
+			return new JSONResponse(
+				['message' => 'Unable to post the invoice.', 'error' => 'invoice-post-failed'],
+				Http::STATUS_BAD_REQUEST
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error('InvoiceApiController.post failed: ' . $e->getMessage());
 			return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
@@ -268,7 +322,15 @@ class InvoiceApiController extends Controller {
 	 *
 	 * @param string $invoiceId Id.
 	 *
+	 * Authorization: the fetched invoice's own `administrationId` is compared
+	 * against the caller's server-resolved administration; a mismatch (or an
+	 * orphan record with no administrationId) is refused with 403 before the
+	 * PDF is rendered (ADR-005 Rule 3).
+	 *
 	 * @return DataDisplayResponse|JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function pdf(string $invoiceId): DataDisplayResponse|JSONResponse {

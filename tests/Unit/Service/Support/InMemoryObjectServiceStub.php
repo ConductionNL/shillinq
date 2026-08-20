@@ -569,6 +569,52 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	}//end updateObject()
 
 	/**
+	 * Merge a partial update onto a stored object.
+	 *
+	 * Added to the published contract in hydra-gates v1.8.1. v1.8.0 declared the
+	 * interface without it, so this stub satisfied the contract by accident;
+	 * taking v1.8.1 turns the omission into a load-time fatal that kills the
+	 * whole suite before a test runs.
+	 *
+	 * ⚠️ The REAL `updateObject()` REPLACES — the merge above is this stub's own
+	 * behaviour, not the service's, and a test that relies on it is asserting
+	 * something production does not do. Left as it is here deliberately: fixing
+	 * it is a behaviour change to existing tests and does not belong in a
+	 * dependency bump. `patchObject()` is the method that genuinely merges, so
+	 * it is modelled with the same read-merge-write this file already performs.
+	 *
+	 * @param string          $objectId      The object UUID or id.
+	 * @param array           $data          The fields to merge.
+	 * @param string|int|null $register      Register id, UUID or slug (ignored).
+	 * @param string|int|null $schema        Schema id, UUID or slug (ignored).
+	 * @param bool            $_rbac         Apply register RBAC (ignored).
+	 * @param bool            $_multitenancy Apply organisation scoping (ignored).
+	 * @param ?IUser          $currentUser   Acting user (ignored).
+	 *
+	 * @return ObjectEntityInterface
+	 */
+	public function patchObject(
+		string $objectId,
+		array $data,
+		string|int|null $register = null,
+		string|int|null $schema = null,
+		bool $_rbac = true,
+		bool $_multitenancy = true,
+		?IUser $currentUser = null
+	): ObjectEntityInterface {
+		$existing = $this->find(id: $objectId);
+		$merged   = $data;
+		if ($existing !== null) {
+			$merged = array_merge($existing->getObject(), $data);
+		}
+
+		$merged['id'] = $objectId;
+
+		return $this->saveObject(object: $merged);
+
+	}//end patchObject()
+
+	/**
 	 * Not modelled.
 	 *
 	 * @param string $objectId      The object UUID.

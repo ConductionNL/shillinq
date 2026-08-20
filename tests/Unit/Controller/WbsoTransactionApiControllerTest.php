@@ -29,6 +29,7 @@ use OCA\Shillinq\Controller\WbsoTransactionApiController;
 use OCA\Shillinq\Service\WbsoRbacResolver;
 use OCA\Shillinq\Service\WbsoTransactionService;
 use OCP\AppFramework\Http;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -80,6 +81,13 @@ final class WbsoTransactionApiControllerTest extends TestCase {
 	private LoggerInterface&MockObject $logger;
 
 	/**
+	 * Mock IL10N — client-facing error messages (ADR-050).
+	 *
+	 * @var IL10N&MockObject
+	 */
+	private IL10N&MockObject $l10n;
+
+	/**
 	 * Controller.
 	 *
 	 * @var WbsoTransactionApiController
@@ -98,6 +106,8 @@ final class WbsoTransactionApiControllerTest extends TestCase {
 		$this->rbac = $this->createMock(WbsoRbacResolver::class);
 		$this->session = $this->createMock(IUserSession::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->l10n = $this->createMock(IL10N::class);
+		$this->l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
 
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('alice');
@@ -109,6 +119,7 @@ final class WbsoTransactionApiControllerTest extends TestCase {
 			rbac: $this->rbac,
 			userSession: $this->session,
 			logger: $this->logger,
+			l10n: $this->l10n,
 		);
 	}//end setUp()
 
@@ -170,6 +181,121 @@ final class WbsoTransactionApiControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
 
 	}//end testReverseConflictReturns409()
+
+	/**
+	 * ADR-050 (REQ-003): a caught RuntimeException on reverse() must not leak
+	 * `$e->getMessage()` into the response body — the body carries a stable
+	 * slug + localized message, and the real exception text is logged only.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
+	 */
+	public function testReverseConflictBodyDoesNotLeakExceptionText(): void {
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null): mixed {
+				return match ($key) {
+					'administration_id' => 'adm-1',
+					'reason' => 'oops',
+					default => $default,
+				};
+			}
+		);
+		$this->rbac->method('hasAny')->willReturn(true);
+		$this->transactions->method('reverseTransaction')
+			->willThrowException(new RuntimeException('boom at /var/www/secret.php:99'));
+
+		$response = $this->controller->reverse(id: 'tx-1');
+		$body = $response->getData();
+
+		self::assertSame('wbso-transaction-conflict', $body['error']);
+		self::assertStringNotContainsString('secret.php', (string)($body['message'] ?? ''));
+		self::assertStringNotContainsString('boom', (string)($body['message'] ?? ''));
+
+	}//end testReverseConflictBodyDoesNotLeakExceptionText()
+
+	/**
+	 * ADR-050 (REQ-003): reverse() naming a missing transaction is masked as
+	 * 404 with a slug, not the raw InvalidArgumentException message.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
+	 */
+	public function testReverseNotFoundReturnsSlugNotRawMessage(): void {
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null): mixed {
+				return match ($key) {
+					'administration_id' => 'adm-1',
+					'reason' => 'oops',
+					default => $default,
+				};
+			}
+		);
+		$this->rbac->method('hasAny')->willReturn(true);
+		$this->transactions->method('reverseTransaction')
+			->willThrowException(new \InvalidArgumentException('Transaction not found'));
+
+		$response = $this->controller->reverse(id: 'tx-missing');
+		$body = $response->getData();
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame('wbso-transaction-not-found', $body['error']);
+
+	}//end testReverseNotFoundReturnsSlugNotRawMessage()
+
+	/**
+	 * ADR-050 (REQ-003): post() naming a missing transaction is masked as 404
+	 * with a slug, not the raw InvalidArgumentException message.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
+	 */
+	public function testPostNotFoundReturnsSlugNotRawMessage(): void {
+		$this->request->method('getParam')->willReturn('adm-1');
+		$this->rbac->method('hasAny')->willReturn(true);
+		$this->transactions->method('postTransaction')
+			->willThrowException(new \InvalidArgumentException('Transaction with id secret-internal-id not found'));
+
+		$response = $this->controller->post(id: 'tx-missing');
+		$body = $response->getData();
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame('wbso-transaction-not-found', $body['error']);
+		self::assertStringNotContainsString('secret-internal-id', (string)($body['message'] ?? ''));
+
+	}//end testPostNotFoundReturnsSlugNotRawMessage()
+
+	/**
+	 * ADR-050 (REQ-003): create() with an invalid payload returns a slug, not
+	 * the raw InvalidArgumentException message.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
+	 */
+	public function testCreateInvalidInputReturnsSlugNotRawMessage(): void {
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null): mixed {
+				return match ($key) {
+					'administration_id' => 'adm-1',
+					default => $default,
+				};
+			}
+		);
+		$this->rbac->method('hasAny')->willReturn(true);
+		$this->transactions->method('createTransaction')
+			->willThrowException(new \InvalidArgumentException('amount must be a positive decimal, got -100.5'));
+
+		$response = $this->controller->create();
+		$body = $response->getData();
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame('wbso-transaction-invalid-input', $body['error']);
+		self::assertStringNotContainsString('-100.5', (string)($body['message'] ?? ''));
+
+	}//end testCreateInvalidInputReturnsSlugNotRawMessage()
 
 	/**
 	 * Post happy path returns 200.

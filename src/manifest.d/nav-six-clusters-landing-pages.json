@@ -1,0 +1,78 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "nav-six-clusters",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json directly for a new feature; this file adds the routes ON TOP of the 5 cluster ids (Bookkeeping/Sales/Purchasing/BankingCashflow/Taxes) that this same change already defines/renames in src/manifest.json's own base menu — mirrors the pattern reporting-compliance.json already uses for the pre-existing Compliance/ReportingCompliance group.",
+		"description": "ADR-097 Decision-4 landing pages for the 5 clusters that don't already have one (Reporting & Compliance reuses the pre-existing ReportingComplianceOverview as-is, design.md §3). Each cluster's top-level menu[].route is set HERE (not in src/manifest.json) for the same reason reporting-compliance.json's own _menu_note gives: main.js mergeMenuItems only fills a base group's MISSING 'route' field from a fragment, and the base-manifest consistency validator only resolves routes against base-declared pages — these landing pages are fragment-declared. `type: 'custom'`, one Vue component each under src/components/<cluster-slug>/, all thin wrappers around the shared src/components/cluster-overview/ClusterOverview.vue card grid (design.md §3)."
+	},
+	"menu": [
+		{ "id": "Bookkeeping", "route": "BookkeepingOverview" },
+		{ "id": "Sales", "route": "SalesOverview" },
+		{ "id": "Purchasing", "route": "PurchasingOverview" },
+		{ "id": "BankingCashflow", "route": "BankingCashflowOverview" },
+		{ "id": "Taxes", "route": "TaxesOverview" }
+	],
+	"pages": [
+		{
+			"id": "BookkeepingOverview",
+			"route": "/bookkeeping/overview",
+			"type": "custom",
+			"title": "Bookkeeping",
+			"component": "BookkeepingOverview",
+			"_note": "ADR-097 Decision-4 cluster landing page — a static category-grouped card grid over the cluster's own children (design.md §3), same type:\"custom\" mechanism ReportingComplianceOverview already uses in production. Grouping into 'Bookkeeping' comes from the menu, not from the page.",
+			"config": {
+				"register": "shillinq",
+				"icon": "NotebookOutline"
+			}
+		},
+		{
+			"id": "SalesOverview",
+			"route": "/sales/overview",
+			"type": "custom",
+			"title": "Sales",
+			"component": "SalesOverview",
+			"_note": "ADR-097 Decision-4 cluster landing page (design.md §3) — see BookkeepingOverview's note for the shared pattern.",
+			"config": {
+				"register": "shillinq",
+				"icon": "CartOutline"
+			}
+		},
+		{
+			"id": "PurchasingOverview",
+			"route": "/purchasing/overview",
+			"type": "custom",
+			"title": "Purchasing",
+			"component": "PurchasingOverview",
+			"_note": "ADR-097 Decision-4 cluster landing page (design.md §3) — see BookkeepingOverview's note for the shared pattern.",
+			"config": {
+				"register": "shillinq",
+				"icon": "CartArrowDown"
+			}
+		},
+		{
+			"id": "BankingCashflowOverview",
+			"route": "/banking-cashflow/overview",
+			"type": "custom",
+			"title": "Banking & Cashflow",
+			"component": "BankingCashflowOverview",
+			"_note": "ADR-097 Decision-4 cluster landing page (design.md §3) — see BookkeepingOverview's note for the shared pattern. Fronts the newly-created BankingCashflow cluster id (design.md §5 — neither the former 'BankingTreasury' nor 'Cashflow' id survives, REQ-NAVC-001 scenario 2).",
+			"config": {
+				"register": "shillinq",
+				"icon": "BankOutline"
+			}
+		},
+		{
+			"id": "TaxesOverview",
+			"route": "/taxes/overview",
+			"type": "custom",
+			"title": "Taxes",
+			"component": "TaxesOverview",
+			"_note": "ADR-097 Decision-4 cluster landing page (design.md §3) — see BookkeepingOverview's note for the shared pattern. Fronts the renamed Taxes cluster id (formerly Belastingen, REQ-NAVC-001 scenario 2).",
+			"config": {
+				"register": "shillinq",
+				"icon": "PercentOutline"
+			}
+		}
+	]
+}
