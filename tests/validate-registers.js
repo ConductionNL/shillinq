@@ -261,10 +261,10 @@ function collectSchemas() {
 // legitimate pattern used by fragments like semantic-invoice-consume.json).
 function isFullSchemaDefinition(def) {
 	return (
-		def !== null &&
-		typeof def === 'object' &&
-		Object.prototype.hasOwnProperty.call(def, 'type') &&
-		Object.prototype.hasOwnProperty.call(def, 'required')
+		def !== null
+		&& typeof def === 'object'
+		&& Object.prototype.hasOwnProperty.call(def, 'type')
+		&& Object.prototype.hasOwnProperty.call(def, 'required')
 	)
 }
 
@@ -376,7 +376,11 @@ function checkSameSlugFullDefinitionCollisions(registry) {
 				preExistingSkipped.push(key)
 				continue
 			}
-			collisions.push({ key, slug: entry.slug, files: entry.fullDefinitionFiles })
+			collisions.push({
+				key,
+				slug: entry.slug,
+				files: entry.fullDefinitionFiles,
+			})
 		}
 	}
 
@@ -397,7 +401,9 @@ function checkSameSlugFullDefinitionCollisions(registry) {
 		'[validate-registers] FAIL — components.schemas keys declared as a FULL definition (both `type` and `required`) by 2+ source files:',
 	)
 	for (const { key, slug, files } of collisions) {
-		console.error(`  - "${key}" (slug "${slug}") is fully declared by ${files.length} files:`)
+		console.error(
+			`  - "${key}" (slug "${slug}") is fully declared by ${files.length} files:`,
+		)
 		for (const f of files) {
 			console.error(`      ${path.relative(REPO_ROOT, f)}`)
 		}

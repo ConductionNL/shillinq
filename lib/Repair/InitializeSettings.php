@@ -55,7 +55,7 @@ class InitializeSettings implements IRepairStep {
 	 * @param LoggerInterface $logger The logger interface
 	 * @param ContainerInterface $container The DI container
 	 * @param BbvSeedService $bbvSeedService The BBV stam-data seed service
-	 * @param RevenueContractRenameMigrator $revenueContractRenameMigrator The Contract → RevenueContract object-migration core
+	 * @param RevenueContractRenameMigrator $revenueContractMigrator The Contract → RevenueContract object-migration core
 	 *
 	 * @return void
 	 */
@@ -65,7 +65,7 @@ class InitializeSettings implements IRepairStep {
 		private LoggerInterface $logger,
 		private ContainerInterface $container,
 		private BbvSeedService $bbvSeedService,
-		private RevenueContractRenameMigrator $revenueContractRenameMigrator,
+		private RevenueContractRenameMigrator $revenueContractMigrator,
 	) {
 	}//end __construct()
 
@@ -296,7 +296,7 @@ class InitializeSettings implements IRepairStep {
 			return;
 		}
 
-		$rename = $this->revenueContractRenameMigrator->revenueContractRename();
+		$rename = $this->revenueContractMigrator->revenueContractRename();
 
 		try {
 			$sourceObjects = $objectService
@@ -319,13 +319,13 @@ class InitializeSettings implements IRepairStep {
 		}
 
 		try {
-			$migratedRows = $this->revenueContractRenameMigrator->migrateBatch(
+			$migratedRows = $this->revenueContractMigrator->migrateBatch(
 				sourceObjects: $sourceRows,
 				from: $rename['from'],
 				to: $rename['to']
 			);
 		} catch (\Throwable $e) {
-			// assertCountsMatch() throws on a count mismatch (no-row-loss guard);
+			// AssertCountsMatch() throws on a count mismatch (no-row-loss guard);
 			// the source Contract objects are left untouched — abort quietly.
 			$output->warning('Shillinq: RevenueContract migration aborted: ' . $e->getMessage());
 			$this->logger->warning(

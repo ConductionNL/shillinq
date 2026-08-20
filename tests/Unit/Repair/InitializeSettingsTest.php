@@ -112,7 +112,7 @@ class InitializeSettingsTest extends TestCase {
 			// Pure, dependency-free migration core — a real instance is used
 			// rather than a mock (mirrors RevenueRecognitionCalculator usage
 			// elsewhere: nothing to stub, it is deterministic logic).
-			revenueContractRenameMigrator: new RevenueContractRenameMigrator(),
+			revenueContractMigrator: new RevenueContractRenameMigrator(),
 		);
 
 	}//end setUp()
@@ -457,4 +457,312 @@ class InitializeSettingsTest extends TestCase {
 		self::assertSame([], $method->invoke($this->repairStep, null));
 
 	}//end testAsArrayNormalisesRowsOfEveryShape()
+
+	/**
+	 * migrateRevenueContractObjects() must skip quietly (info, not warning)
+	 * when the OpenRegister ObjectService cannot be resolved from the
+	 * container — this runs unconditionally in run(), including on installs
+	 * where OpenRegister is not yet wired up.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/contracts-single-home/specs/contracts-single-home/spec.md
+	 */
+	public function testMigrateRevenueContractObjectsSkipsWhenObjectServiceUnavailable(): void {
+		$this->container->method('get')
+			->with('OCA\OpenRegister\Service\ObjectService')
+			->willThrowException(new \RuntimeException('Not available in test'));
+
+		$this->output->expects($this->once())
+			->method('info')
+			->with($this->stringContains('ObjectService unavailable'));
+
+		$this->output->expects($this->never())
+			->method('warning');
+
+		$method = new ReflectionMethod(InitializeSettings::class, 'migrateRevenueContractObjects');
+		$method->setAccessible(true);
+		$method->invoke($this->repairStep, $this->output);
+
+	}//end testMigrateRevenueContractObjectsSkipsWhenObjectServiceUnavailable()
+
+	/**
+	 * migrateRevenueContractObjects() must skip quietly when the Contract
+	 * register/schema is not yet present (fresh install, before the register
+	 * import has run) — findAll() throwing must not abort the repair step.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/contracts-single-home/specs/contracts-single-home/spec.md
+	 */
+	public function testMigrateRevenueContractObjectsSkipsWhenRegisterNotYetPresent(): void {
+		$objectService = new class {
+			public function setRegister(string $register): static {
+				return $this;
+			}
+
+			public function setSchema(string $schema): static {
+				return $this;
+			}
+
+			/**
+			 * @param array<string,mixed> $params
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('Contract register missing');
+			}
+		};
+
+		$this->container->method('get')
+			->with('OCA\OpenRegister\Service\ObjectService')
+			->willReturn($objectService);
+		$this->settingsService->method('getRegisterSlug')->willReturn('shillinq');
+
+		$this->output->expects($this->once())
+			->method('info')
+			->with($this->stringContains('Contract register not yet present'));
+
+		$method = new ReflectionMethod(InitializeSettings::class, 'migrateRevenueContractObjects');
+		$method->setAccessible(true);
+		$method->invoke($this->repairStep, $this->output);
+
+	}//end testMigrateRevenueContractObjectsSkipsWhenRegisterNotYetPresent()
+
+	/**
+	 * migrateRevenueContractObjects() is a no-op (idempotent) when no
+	 * `Contract`-slugged objects remain — the steady state after the
+	 * migration has already run once.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/contracts-single-home/specs/contracts-single-home/spec.md
+	 */
+	public function testMigrateRevenueContractObjectsNoOpWhenNoContractObjectsFound(): void {
+		$objectService = new class {
+			public function setRegister(string $register): static {
+				return $this;
+			}
+
+			public function setSchema(string $schema): static {
+				return $this;
+			}
+
+			/**
+			 * @param array<string,mixed> $params
+			 */
+			public function findAll(array $params = []): array {
+				return [];
+			}
+		};
+
+		$this->container->method('get')
+			->with('OCA\OpenRegister\Service\ObjectService')
+			->willReturn($objectService);
+		$this->settingsService->method('getRegisterSlug')->willReturn('shillinq');
+
+		$this->output->expects($this->once())
+			->method('info')
+			->with($this->stringContains('no Contract objects found'));
+
+		$method = new ReflectionMethod(InitializeSettings::class, 'migrateRevenueContractObjects');
+		$method->setAccessible(true);
+		$method->invoke($this->repairStep, $this->output);
+
+	}//end testMigrateRevenueContractObjectsNoOpWhenNoContractObjectsFound()
+
+	/**
+	 * migrateRevenueContractObjects() moves an IFRS-15-shaped `Contract` to
+	 * `RevenueContract` (save-then-delete), leaves a CLM-shaped `Contract`
+	 * untouched (the discriminator's job, per the class docblock), and warns
+	 * — without saving or deleting — on a migrated row that has no resolvable
+	 * object id, rather than calling saveObject()/deleteObject() with an
+	 * empty uuid.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/contracts-single-home/specs/contracts-single-home/spec.md
+	 */
+	public function testMigrateRevenueContractObjectsMigratesIfrs15ShapedAndSkipsClmShaped(): void {
+		$sourceObjects = [
+			[
+				'@self' => ['schema' => 'Contract', 'id' => 'obj-1'],
+				'customerId' => 'cust-1',
+				'fixedConsideration' => 1000,
+			],
+			[
+				'@self' => ['schema' => 'Contract', 'id' => 'obj-2'],
+				'contractType' => 'service',
+				'status' => 'active',
+			],
+			[
+				// IFRS-15-shaped (migrates), but no id anywhere on the row.
+				'@self' => ['schema' => 'Contract'],
+				'customerId' => 'cust-3',
+			],
+		];
+
+		$objectService = new class ($sourceObjects) {
+			/**
+			 * @var array<int,string>
+			 */
+			public array $saved = [];
+
+			/**
+			 * @var array<int,string>
+			 */
+			public array $deleted = [];
+
+			/**
+			 * @param array<int,array<string,mixed>> $sourceObjects Rows returned by findAll().
+			 */
+			public function __construct(private array $sourceObjects) {
+			}
+
+			public function setRegister(string $register): static {
+				return $this;
+			}
+
+			public function setSchema(string $schema): static {
+				return $this;
+			}
+
+			/**
+			 * @param array<string,mixed> $params
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				return $this->sourceObjects;
+			}
+
+			/**
+			 * @param array<string,mixed> $object
+			 * @return array<string,mixed>
+			 */
+			public function saveObject(array $object, string $register, string $schema, string $uuid, bool $_rbac = true): array {
+				$this->saved[] = $uuid;
+				return $object;
+			}
+
+			public function deleteObject(string $uuid): bool {
+				$this->deleted[] = $uuid;
+				return true;
+			}
+		};
+
+		$this->container->method('get')
+			->with('OCA\OpenRegister\Service\ObjectService')
+			->willReturn($objectService);
+		$this->settingsService->method('getRegisterSlug')->willReturn('shillinq');
+
+		$this->output->expects($this->once())
+			->method('warning')
+			->with($this->stringContains('skipped a row with no object id'));
+
+		$this->output->expects($this->once())
+			->method('info')
+			->with($this->stringContains('1 migrated, 1 left as Contract (CLM-shaped)'));
+
+		$method = new ReflectionMethod(InitializeSettings::class, 'migrateRevenueContractObjects');
+		$method->setAccessible(true);
+		$method->invoke($this->repairStep, $this->output);
+
+		self::assertSame(['obj-1'], $objectService->saved);
+		self::assertSame(['obj-1'], $objectService->deleted);
+
+	}//end testMigrateRevenueContractObjectsMigratesIfrs15ShapedAndSkipsClmShaped()
+
+	/**
+	 * A saveObject() failure for one row must warn and move on to the next
+	 * row rather than aborting the whole migration — per the class docblock,
+	 * "Failure is reported but never aborts the repair run."
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/contracts-single-home/specs/contracts-single-home/spec.md
+	 */
+	public function testMigrateRevenueContractObjectsWarnsAndContinuesWhenSaveObjectFails(): void {
+		$sourceObjects = [
+			[
+				'@self' => ['schema' => 'Contract', 'id' => 'obj-fail'],
+				'customerId' => 'cust-1',
+			],
+			[
+				'@self' => ['schema' => 'Contract', 'id' => 'obj-ok'],
+				'customerId' => 'cust-2',
+			],
+		];
+
+		$objectService = new class ($sourceObjects) {
+			/**
+			 * @var array<int,string>
+			 */
+			public array $saved = [];
+
+			/**
+			 * @var array<int,string>
+			 */
+			public array $deleted = [];
+
+			/**
+			 * @param array<int,array<string,mixed>> $sourceObjects Rows returned by findAll().
+			 */
+			public function __construct(private array $sourceObjects) {
+			}
+
+			public function setRegister(string $register): static {
+				return $this;
+			}
+
+			public function setSchema(string $schema): static {
+				return $this;
+			}
+
+			/**
+			 * @param array<string,mixed> $params
+			 * @return array<int,array<string,mixed>>
+			 */
+			public function findAll(array $params = []): array {
+				return $this->sourceObjects;
+			}
+
+			/**
+			 * @param array<string,mixed> $object
+			 * @return array<string,mixed>
+			 */
+			public function saveObject(array $object, string $register, string $schema, string $uuid, bool $_rbac = true): array {
+				if ($uuid === 'obj-fail') {
+					throw new \RuntimeException('save failed');
+				}
+
+				$this->saved[] = $uuid;
+				return $object;
+			}
+
+			public function deleteObject(string $uuid): bool {
+				$this->deleted[] = $uuid;
+				return true;
+			}
+		};
+
+		$this->container->method('get')
+			->with('OCA\OpenRegister\Service\ObjectService')
+			->willReturn($objectService);
+		$this->settingsService->method('getRegisterSlug')->willReturn('shillinq');
+
+		$this->output->expects($this->once())
+			->method('warning')
+			->with($this->stringContains('migration failed for object obj-fail'));
+
+		$this->output->expects($this->once())
+			->method('info')
+			->with($this->stringContains('1 migrated, 0 left as Contract'));
+
+		$method = new ReflectionMethod(InitializeSettings::class, 'migrateRevenueContractObjects');
+		$method->setAccessible(true);
+		$method->invoke($this->repairStep, $this->output);
+
+		self::assertSame(['obj-ok'], $objectService->saved);
+		self::assertSame(['obj-ok'], $objectService->deleted);
+
+	}//end testMigrateRevenueContractObjectsWarnsAndContinuesWhenSaveObjectFails()
 }//end class
