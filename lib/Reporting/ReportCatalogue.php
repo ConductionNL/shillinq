@@ -10,10 +10,13 @@
  * IA — the consolidation target that replaces the reports scattered across the
  * Belastingen / Bookkeeping / PublicSector / Purchasing menus.
  *
- * `kind` is 'data' (rendered natively as XML/CSV/XBRL) or 'document' (rendered via
- * the PHPOffice libraries bundled in OpenRegister — PhpWord/PhpSpreadsheet + dompdf
- * — into editable DOCX/ODT + PDF from a default template; users who want to
- * customise the templates do so in docudesk).
+ * `kind` is 'data' (rendered natively as XML/CSV/XBRL) or 'document' (assembled by
+ * shillinq as structured content and rendered by docudesk into editable ODT
+ * ('odf' in docudesk's own vocabulary) + PDF from a `namespace: "shillinq"`
+ * template — see openspec/changes/reports-via-docudesk. `ib-aangifte` and
+ * `vpb-aangifte` are declared 'document' but currently have no implementing
+ * generator (`ReportGenerationService::generate()` returns `no-generator` for
+ * them) — out of this catalogue entry's control, tracked separately).
  *
  * @category Reporting
  * @package  OCA\Shillinq\Reporting
@@ -83,9 +86,9 @@ final class ReportCatalogue {
 			['id' => 'vpb-aangifte', 'label' => 'Vpb-aangifte', 'category' => 'tax', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-vpb-aangifte', 'description' => 'Vennootschapsbelasting aangifte met fiscale balans.'],
 
 			// --- Statutory statements ---
-			['id' => 'annual-accounts', 'label' => 'Jaarrekening', 'category' => 'statements', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-jaarrekening', 'description' => 'Titel 9 BW2 jaarrekening (balans, W&V, toelichting).'],
-			['id' => 'balance-sheet', 'label' => 'Balans', 'category' => 'statements', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-balans', 'description' => 'Balans per peildatum.'],
-			['id' => 'profit-loss', 'label' => 'Winst- en verliesrekening', 'category' => 'statements', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-winst-verlies', 'description' => 'Resultatenrekening over de periode.'],
+			['id' => 'annual-accounts', 'label' => 'Jaarrekening', 'category' => 'statements', 'kind' => 'document', 'formats' => ['odt', 'pdf'], 'templateId' => 'shillinq-jaarrekening', 'description' => 'Titel 9 BW2 jaarrekening (balans, W&V, toelichting).'],
+			['id' => 'balance-sheet', 'label' => 'Balans', 'category' => 'statements', 'kind' => 'document', 'formats' => ['odt', 'pdf'], 'templateId' => 'shillinq-balans', 'description' => 'Balans per peildatum.'],
+			['id' => 'profit-loss', 'label' => 'Winst- en verliesrekening', 'category' => 'statements', 'kind' => 'document', 'formats' => ['odt', 'pdf'], 'templateId' => 'shillinq-winst-verlies', 'description' => 'Resultatenrekening over de periode.'],
 			['id' => 'sbr-xbrl', 'label' => 'SBR/XBRL-deponering', 'category' => 'statements', 'kind' => 'data', 'formats' => ['xbrl'], 'templateId' => null, 'description' => 'SBR-jaarrekening in XBRL (KvK/Belastingdienst).'],
 
 			// --- Ledger / balances ---
@@ -98,12 +101,12 @@ final class ReportCatalogue {
 
 			// --- Public sector ---
 			['id' => 'iv3', 'label' => 'IV3-rapportage', 'category' => 'public-sector', 'kind' => 'data', 'formats' => ['xml', 'csv'], 'templateId' => null, 'description' => 'Informatie voor derden (CBS).'],
-			['id' => 'bbv-jaarstukken', 'label' => 'BBV-jaarstukken', 'category' => 'public-sector', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-bbv-jaarstukken', 'description' => 'BBV programmaverantwoording & jaarstukken.'],
+			['id' => 'bbv-jaarstukken', 'label' => 'BBV-jaarstukken', 'category' => 'public-sector', 'kind' => 'document', 'formats' => ['odt', 'pdf'], 'templateId' => 'shillinq-bbv-jaarstukken', 'description' => 'BBV programmaverantwoording & jaarstukken.'],
 
 			// --- Compliance / audit trail ---
 			['id' => 'rule-audit', 'label' => 'Compliance-auditrapport', 'category' => 'compliance', 'kind' => 'data', 'formats' => ['csv', 'pdf'], 'templateId' => null, 'description' => 'Resultaat van de regelmotor (shillinq:rules:audit): afdwingbare regels, overtredingen, dekking.'],
 			['id' => 'audit-trail', 'label' => 'Audit trail', 'category' => 'compliance', 'kind' => 'data', 'formats' => ['csv'], 'templateId' => null, 'description' => 'Onveranderlijke mutatie-audittrail over de periode.'],
-			['id' => 'management-letter', 'label' => 'Management letter', 'category' => 'compliance', 'kind' => 'document', 'formats' => ['docx', 'odt', 'pdf'], 'templateId' => 'shillinq-management-letter', 'description' => 'Management letter / bevindingenrapport.'],
+			['id' => 'management-letter', 'label' => 'Management letter', 'category' => 'compliance', 'kind' => 'document', 'formats' => ['odt', 'pdf'], 'templateId' => 'shillinq-management-letter', 'description' => 'Management letter / bevindingenrapport.'],
 		];
 
 	}//end all()

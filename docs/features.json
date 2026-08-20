@@ -197,5 +197,14 @@
     "docsUrl": "openspec/specs/psd2-bank-feeds/spec.md",
     "title_nl": "PSD2-bankkoppeling",
     "summary_nl": "Je haalt straks banktransacties live op zonder bestand."
+  },
+  {
+    "slug": "external-connections-integration-config",
+    "title": "External regulatory, bank and payment connections",
+    "summary": "You activate a real connection per integration once its source is provisioned in OpenConnector — until then each family ships dormant and only logs, instead of calling out.",
+    "status": "soon",
+    "docsUrl": "openspec/specs/bookkeeping-bank-connectors/spec.md",
+    "title_nl": "Externe koppelingen met overheid, bank en betaalprovider",
+    "summary_nl": "Je activeert per koppeling een echte verbinding zodra de bron is ingericht in OpenConnector — tot die tijd is elke koppeling inactief en wordt er alleen gelogd, in plaats van extern aangeroepen."
   }
 ]

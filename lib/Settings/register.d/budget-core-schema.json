@@ -50,7 +50,8 @@
             "nullable": true,
             "description": "Self-FK (the parent LedgerGroup's @self.slug), enabling nesting — mirrors Account.parentAccountNumber. Null for a root group. A parent with children uses its OWN BudgetLine if one exists; otherwise its value is the recursive sum of its children's resolved values (design.md §3d) — no double counting when both exist.",
             "example": null,
-            "title": "Parent Ledger Group ID"
+            "title": "Parent Ledger Group ID",
+            "$ref": "LedgerGroup"
           },
           "accountRanges": {
             "type": "array",
@@ -62,12 +63,14 @@
                 "from": {
                   "type": "string",
                   "description": "Inclusive range start (accountNumber).",
-                  "example": "1000"
+                  "example": "1000",
+                  "title": "Range Start Account Number"
                 },
                 "to": {
                   "type": "string",
                   "description": "Inclusive range end (accountNumber).",
-                  "example": "1099"
+                  "example": "1099",
+                  "title": "Range End Account Number"
                 }
               }
             },
@@ -281,13 +284,15 @@
             "type": "string",
             "format": "uuid",
             "description": "FK to the owning AnnualBudget.",
-            "title": "Annual Budget ID"
+            "title": "Annual Budget ID",
+            "$ref": "AnnualBudget"
           },
           "ledgerGroupId": {
             "type": "string",
             "format": "uuid",
             "description": "FK to the LedgerGroup this line phases amounts against.",
-            "title": "Ledger Group ID"
+            "title": "Ledger Group ID",
+            "$ref": "LedgerGroup"
           },
           "source": {
             "type": "string",

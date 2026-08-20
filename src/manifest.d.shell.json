@@ -142,17 +142,13 @@
 							"order": 10
 						},
 						{
-							"id": "Verplichtingen",
-							"label": "Commitments",
-							"icon": "FileSign",
-							"route": "Verplichtingen",
-							"order": 20
-						},
-						{
 							"id": "MijnContracten",
-							"label": "My contracts",
+							"label": "TenderNed-sourced commitments",
 							"icon": "FileSign",
-							"route": "MijnContracten",
+							"route": "Verplichtingenregister",
+							"query": {
+								"source": "tenderned"
+							},
 							"order": 30
 						}
 					]
@@ -175,24 +171,10 @@
 				},
 				{
 					"_fragment": "20-tenderned-integratie",
-					"id": "Verplichtingen",
-					"route": "/inkoop/verplichtingen",
-					"type": "index",
-					"title": "Commitments"
-				},
-				{
-					"_fragment": "20-tenderned-integratie",
 					"id": "VerplichtingDetail",
 					"route": "/inkoop/verplichtingen/:id",
 					"type": "detail",
 					"title": "Commitment"
-				},
-				{
-					"_fragment": "20-tenderned-integratie",
-					"id": "MijnContracten",
-					"route": "/inkoop/mijn-contracten",
-					"type": "index",
-					"title": "My contracts"
 				}
 			]
 		},
@@ -317,13 +299,16 @@
 		{
 			"menu": [
 				{
-					"id": "Belastingen",
+					"id": "Taxes",
 					"children": [
 						{
 							"id": "KorAanmelding",
 							"label": "KOR registration",
 							"icon": "ShieldPlusOutline",
-							"route": "KorAanmelding",
+							"route": "KorDashboard",
+							"query": {
+								"status": "draft"
+							},
 							"order": 11
 						},
 						{
@@ -337,20 +322,16 @@
 							"id": "KorOpzegging",
 							"label": "KOR cancellation",
 							"icon": "ShieldRemoveOutline",
-							"route": "KorOpzegging",
+							"route": "KorDashboard",
+							"query": {
+								"status": "ACTIEF"
+							},
 							"order": 14
 						}
 					]
 				}
 			],
 			"pages": [
-				{
-					"_fragment": "30-bookkeeping-kor-kleine-ondernemersregeling",
-					"id": "KorAanmelding",
-					"route": "/belastingen/kor-aanmelding",
-					"type": "index",
-					"title": "KOR registration"
-				},
 				{
 					"_fragment": "30-bookkeeping-kor-kleine-ondernemersregeling",
 					"id": "KorDashboard",
@@ -364,13 +345,6 @@
 					"route": "/belastingen/kor-drempel/:id",
 					"type": "detail",
 					"title": "Threshold monitor"
-				},
-				{
-					"_fragment": "30-bookkeeping-kor-kleine-ondernemersregeling",
-					"id": "KorOpzegging",
-					"route": "/belastingen/kor-opzegging",
-					"type": "index",
-					"title": "KOR cancellation"
 				}
 			]
 		},
@@ -2187,7 +2161,7 @@
 					"children": [
 						{
 							"id": "RevenueContracts",
-							"label": "Contracts",
+							"label": "Revenue Contracts",
 							"icon": "FileSign",
 							"route": "RevenueContracts",
 							"order": 10
@@ -2236,7 +2210,7 @@
 					"id": "RevenueContracts",
 					"route": "/ifrs-15/contracts",
 					"type": "index",
-					"title": "Contracts"
+					"title": "Revenue Contracts"
 				},
 				{
 					"_fragment": "bookkeeping-ifrs15-revenue",
@@ -2936,8 +2910,8 @@
 		{
 			"menu": [
 				{
-					"id": "PurchaseOrders",
-					"label": "Purchase Orders",
+					"id": "POMatching",
+					"label": "PO Matching",
 					"icon": "ClipboardListOutline",
 					"order": 90,
 					"children": [
@@ -2976,8 +2950,8 @@
 		{
 			"menu": [
 				{
-					"id": "PurchaseOrders",
-					"label": "Purchase Orders",
+					"id": "POMatching",
+					"label": "PO Matching",
 					"icon": "ClipboardListOutline",
 					"order": 90,
 					"children": [
@@ -3354,13 +3328,6 @@
 					"route": "/vat-reports",
 					"type": "dashboard",
 					"title": "BTW report"
-				},
-				{
-					"_fragment": "bookkeeping-vat-btw-filing",
-					"id": "VATReturnCreateDialog",
-					"route": "/vat-returns/new",
-					"type": "form",
-					"title": "New BTW return"
 				}
 			]
 		},
@@ -3923,41 +3890,32 @@
 		{
 			"menu": [
 				{
-					"id": "Bookkeeping",
+					"id": "Purchasing",
 					"children": [
 						{
 							"id": "SupplierInvoicesMissingDocument",
 							"label": "Missing Supplier Documents",
 							"icon": "FileDocumentMultipleOutline",
-							"route": "SupplierInvoicesMissingDocument",
+							"route": "SupplierInvoices",
+							"query": {
+								"sourceDocumentUri_isnull": "true"
+							},
 							"order": 29
 						},
 						{
 							"id": "ReceiptsMissingDocument",
 							"label": "Missing Receipt Photos",
 							"icon": "FileAlertOutline",
-							"route": "ReceiptsMissingDocument",
+							"route": "Receipts",
+							"query": {
+								"sourceDocumentUri_isnull": "true"
+							},
 							"order": 29
 						}
 					]
 				}
 			],
-			"pages": [
-				{
-					"_fragment": "consume-platform-abstractions-missing-document-worklist",
-					"id": "SupplierInvoicesMissingDocument",
-					"route": "/bookkeeping/supplier-invoices-missing-document",
-					"type": "index",
-					"title": "Supplier Invoices — Missing Document"
-				},
-				{
-					"_fragment": "consume-platform-abstractions-missing-document-worklist",
-					"id": "ReceiptsMissingDocument",
-					"route": "/bookkeeping/receipts-missing-document",
-					"type": "index",
-					"title": "Receipts — Missing Document"
-				}
-			]
+			"pages": []
 		},
 		{
 			"menu": [
@@ -3969,7 +3927,7 @@
 					"children": [
 						{
 							"id": "Contracts",
-							"label": "Contracts",
+							"label": "Procurement Contracts",
 							"icon": "FileSign",
 							"route": "Contracts",
 							"order": 10
@@ -3997,7 +3955,7 @@
 					"id": "Contracts",
 					"route": "/contracts",
 					"type": "index",
-					"title": "Contracts"
+					"title": "Procurement Contracts"
 				},
 				{
 					"_fragment": "contract-lifecycle-management",
@@ -4038,39 +3996,11 @@
 					"order": 55,
 					"children": [
 						{
-							"id": "DBAOpdrachten",
-							"label": "DBA assignments",
-							"icon": "BriefcaseAccountOutline",
-							"route": "DBAOpdrachten",
-							"order": 10
-						},
-						{
 							"id": "DBAIntakes",
 							"label": "DBA Intake Wizard",
 							"icon": "ClipboardListOutline",
 							"route": "DBAIntakes",
 							"order": 20
-						},
-						{
-							"id": "DBAModelovereenkomsten",
-							"label": "Model agreement register",
-							"icon": "DatabaseOutline",
-							"route": "DBAModelovereenkomsten",
-							"order": 30
-						},
-						{
-							"id": "DBAPortfolioRisicos",
-							"label": "DBA Portfolio Dashboard",
-							"icon": "ViewDashboardOutline",
-							"route": "DBAPortfolioRisicos",
-							"order": 40
-						},
-						{
-							"id": "DBAEvidenceDossiers",
-							"label": "Evidence Browser",
-							"icon": "FolderZipOutline",
-							"route": "DBAEvidenceDossiers",
-							"order": 50
 						},
 						{
 							"id": "DBARisicoflags",
@@ -4085,20 +4015,6 @@
 			"pages": [
 				{
 					"_fragment": "dba-compliance-marker",
-					"id": "DBAOpdrachten",
-					"route": "/dba/opdrachten",
-					"type": "index",
-					"title": "DBA assignments"
-				},
-				{
-					"_fragment": "dba-compliance-marker",
-					"id": "DBAOpdrachtDetail",
-					"route": "/dba/opdrachten/:id",
-					"type": "detail",
-					"title": "DBA assignment"
-				},
-				{
-					"_fragment": "dba-compliance-marker",
 					"id": "DBAIntakes",
 					"route": "/dba/intakes",
 					"type": "index",
@@ -4110,48 +4026,6 @@
 					"route": "/dba/intakes/:id",
 					"type": "detail",
 					"title": "DBA Intake"
-				},
-				{
-					"_fragment": "dba-compliance-marker",
-					"id": "DBAModelovereenkomsten",
-					"route": "/dba/modelovereenkomsten",
-					"type": "index",
-					"title": "Model agreement register"
-				},
-				{
-					"_fragment": "dba-compliance-marker",
-					"id": "DBAModelovereenkomstDetail",
-					"route": "/dba/modelovereenkomsten/:id",
-					"type": "detail",
-					"title": "Model agreement"
-				},
-				{
-					"_fragment": "dba-compliance-marker",
-					"id": "DBAPortfolioRisicos",
-					"route": "/dba/portfolio",
-					"type": "index",
-					"title": "DBA Portfolio Dashboard"
-				},
-				{
-					"_fragment": "dba-compliance-marker",
-					"id": "DBAPortfolioRisicoDetail",
-					"route": "/dba/portfolio/:id",
-					"type": "detail",
-					"title": "DBA Portfolio Risk"
-				},
-				{
-					"_fragment": "dba-compliance-marker",
-					"id": "DBAEvidenceDossiers",
-					"route": "/dba/evidence",
-					"type": "index",
-					"title": "Evidence Browser"
-				},
-				{
-					"_fragment": "dba-compliance-marker",
-					"id": "DBAEvidenceDossierDetail",
-					"route": "/dba/evidence/:id",
-					"type": "detail",
-					"title": "Evidence Dossier"
 				},
 				{
 					"_fragment": "dba-compliance-marker",
@@ -4225,13 +4099,6 @@
 				},
 				{
 					"_fragment": "expense-reimbursement-or-passthrough",
-					"id": "ReimbursementPolicyCreateDialog",
-					"route": "/reimbursement-policies/new",
-					"type": "form",
-					"title": "New Reimbursement Policy"
-				},
-				{
-					"_fragment": "expense-reimbursement-or-passthrough",
 					"id": "PassThroughMarkupRules",
 					"route": "/passthrough-markup-rules",
 					"type": "index",
@@ -4243,13 +4110,6 @@
 					"route": "/passthrough-markup-rules/:id",
 					"type": "detail",
 					"title": "Pass-through Markup Rule"
-				},
-				{
-					"_fragment": "expense-reimbursement-or-passthrough",
-					"id": "PassThroughMarkupRuleCreateDialog",
-					"route": "/passthrough-markup-rules/new",
-					"type": "form",
-					"title": "New Pass-through Markup Rule"
 				}
 			]
 		},
@@ -4259,121 +4119,8 @@
 					"id": "ExternalConnections",
 					"label": "External Connections",
 					"icon": "TransitConnectionVariant",
-					"order": 46,
-					"children": [
-						{
-							"id": "ExternalAdaptersStatus",
-							"label": "Adapter Status",
-							"icon": "Pulse",
-							"route": "ExternalAdaptersStatus",
-							"order": 5
-						},
-						{
-							"id": "ExternalAdapterDigipoort",
-							"label": "Digipoort / SBR",
-							"icon": "FileDocumentOutline",
-							"route": "ExternalAdapterDigipoort",
-							"order": 10
-						},
-						{
-							"id": "ExternalAdapterSalarisbureau",
-							"label": "Payroll bureau",
-							"icon": "CashSync",
-							"route": "ExternalAdapterSalarisbureau",
-							"order": 15
-						},
-						{
-							"id": "ExternalAdapterRvO",
-							"label": "RvO",
-							"icon": "OfficeBuildingOutline",
-							"route": "ExternalAdapterRvO",
-							"order": 20
-						},
-						{
-							"id": "ExternalAdapterIb47",
-							"label": "IB47",
-							"icon": "FileDocumentOutline",
-							"route": "ExternalAdapterIb47",
-							"order": 25
-						},
-						{
-							"id": "ExternalAdapterCbsBestanden",
-							"label": "CBS files",
-							"icon": "TableLarge",
-							"route": "ExternalAdapterCbsBestanden",
-							"order": 30
-						},
-						{
-							"id": "ExternalAdapterCbsIv3",
-							"label": "CBS Iv3",
-							"icon": "TableLarge",
-							"route": "ExternalAdapterCbsIv3",
-							"order": 32
-						},
-						{
-							"id": "ExternalAdapterSisa",
-							"label": "BZK SiSa",
-							"icon": "ClipboardCheckOutline",
-							"route": "ExternalAdapterSisa",
-							"order": 35
-						},
-						{
-							"id": "ExternalAdapterMollie",
-							"label": "Mollie Payments",
-							"icon": "CreditCardOutline",
-							"route": "ExternalAdapterMollie",
-							"order": 40
-						},
-						{
-							"id": "ExternalAdapterBunq",
-							"label": "Bunq Bank",
-							"icon": "BankOutline",
-							"route": "ExternalAdapterBunq",
-							"order": 45
-						},
-						{
-							"id": "ExternalAdapterKvk",
-							"label": "KvK Trade Register",
-							"icon": "DatabaseOutline",
-							"route": "ExternalAdapterKvk",
-							"order": 50
-						},
-						{
-							"id": "ExternalAdapterUwv",
-							"label": "UWV payroll filing",
-							"icon": "CashSync",
-							"route": "ExternalAdapterUwv",
-							"order": 55
-						},
-						{
-							"id": "ExternalAdapterTreasuryRates",
-							"label": "Treasury Rates",
-							"icon": "BankOutline",
-							"route": "ExternalAdapterTreasuryRates",
-							"order": 60
-						},
-						{
-							"id": "ExternalAdapterCcm",
-							"label": "CCM Rule Engine",
-							"icon": "Cog",
-							"route": "ExternalAdapterCcm",
-							"order": 65
-						},
-						{
-							"id": "ExternalAdapterCsrd",
-							"label": "CSRD ESRS XBRL",
-							"icon": "Leaf",
-							"route": "ExternalAdapterCsrd",
-							"order": 70
-						},
-						{
-							"id": "ExternalAdapterDepositPayment",
-							"label": "Deposit Payment",
-							"icon": "CreditCardOutline",
-							"route": "ExternalAdapterDepositPayment",
-							"order": 75
-						}
-					]
+					"route": "ExternalAdaptersStatus",
+					"order": 46
 				}
 			],
 			"pages": [
@@ -4382,112 +4129,7 @@
 					"id": "ExternalAdaptersStatus",
 					"route": "/external-adapters",
 					"type": "custom",
-					"title": "External Adapter Status"
-				},
-				{
-					"_fragment": "external-adapters-w8",
-					"id": "ExternalAdapterDigipoort",
-					"route": "/external-adapters/digipoort-sbr",
-					"type": "custom",
-					"title": "Digipoort / SBR"
-				},
-				{
-					"_fragment": "external-adapters-w8",
-					"id": "ExternalAdapterSalarisbureau",
-					"route": "/external-adapters/salarisbureau",
-					"type": "custom",
-					"title": "Payroll bureau"
-				},
-				{
-					"_fragment": "external-adapters-w8",
-					"id": "ExternalAdapterRvO",
-					"route": "/external-adapters/rvo",
-					"type": "custom",
-					"title": "RvO"
-				},
-				{
-					"_fragment": "external-adapters-w8",
-					"id": "ExternalAdapterIb47",
-					"route": "/external-adapters/ib47",
-					"type": "custom",
-					"title": "Belastingdienst IB47"
-				},
-				{
-					"_fragment": "external-adapters-w8",
-					"id": "ExternalAdapterCbsBestanden",
-					"route": "/external-adapters/cbs-bestanden",
-					"type": "custom",
-					"title": "CBS files"
-				},
-				{
-					"_fragment": "external-adapters-w8",
-					"id": "ExternalAdapterCbsIv3",
-					"route": "/external-adapters/cbs-iv3",
-					"type": "custom",
-					"title": "CBS Iv3"
-				},
-				{
-					"_fragment": "external-adapters-w8",
-					"id": "ExternalAdapterSisa",
-					"route": "/external-adapters/bzk-sisa",
-					"type": "custom",
-					"title": "BZK SiSa"
-				},
-				{
-					"_fragment": "external-adapters-w8",
-					"id": "ExternalAdapterMollie",
-					"route": "/external-adapters/mollie",
-					"type": "custom",
-					"title": "Mollie Payments"
-				},
-				{
-					"_fragment": "external-adapters-w8",
-					"id": "ExternalAdapterBunq",
-					"route": "/external-adapters/bunq",
-					"type": "custom",
-					"title": "Bunq Bank Connector"
-				},
-				{
-					"_fragment": "external-adapters-w8",
-					"id": "ExternalAdapterKvk",
-					"route": "/external-adapters/kvk",
-					"type": "custom",
-					"title": "KvK Trade Register"
-				},
-				{
-					"_fragment": "external-adapters-w8",
-					"id": "ExternalAdapterUwv",
-					"route": "/external-adapters/uwv",
-					"type": "custom",
-					"title": "UWV payroll filing"
-				},
-				{
-					"_fragment": "external-adapters-w8",
-					"id": "ExternalAdapterTreasuryRates",
-					"route": "/external-adapters/treasury-rates",
-					"type": "custom",
-					"title": "Treasury Rates"
-				},
-				{
-					"_fragment": "external-adapters-w8",
-					"id": "ExternalAdapterCcm",
-					"route": "/external-adapters/ccm-rule-engine",
-					"type": "custom",
-					"title": "CCM Rule Engine"
-				},
-				{
-					"_fragment": "external-adapters-w8",
-					"id": "ExternalAdapterCsrd",
-					"route": "/external-adapters/csrd-esrs-xbrl",
-					"type": "custom",
-					"title": "CSRD ESRS XBRL"
-				},
-				{
-					"_fragment": "external-adapters-w8",
-					"id": "ExternalAdapterDepositPayment",
-					"route": "/external-adapters/deposit-payment",
-					"type": "custom",
-					"title": "Deposit Payment lifecycle"
+					"title": "External Connections"
 				}
 			]
 		},
@@ -4673,9 +4315,12 @@
 						},
 						{
 							"id": "ReservedStock",
-							"label": "Reserved Stock",
+							"label": "Stock reservations (movements)",
 							"icon": "LockOutline",
-							"route": "ReservedStock",
+							"route": "StockMovements",
+							"query": {
+								"lifecycleState": "draft"
+							},
 							"order": 47
 						}
 					]
@@ -4702,39 +4347,12 @@
 					"route": "/inventory/stock-ledger",
 					"type": "index",
 					"title": "Stock Ledger"
-				},
-				{
-					"_fragment": "inventory-stock-movement-ledger",
-					"id": "ReservedStock",
-					"route": "/inventory/reserved-stock",
-					"type": "index",
-					"title": "Reserved Stock"
 				}
 			]
 		},
 		{
-			"menu": [
-				{
-					"id": "Inventory",
-					"children": [
-						{
-							"id": "InventoryValuations",
-							"label": "Valuations",
-							"icon": "Calculator",
-							"route": "InventoryValuations",
-							"order": 30
-						}
-					]
-				}
-			],
+			"menu": [],
 			"pages": [
-				{
-					"_fragment": "inventory-valuation-fifo-avg",
-					"id": "InventoryValuations",
-					"route": "/inventory/valuations",
-					"type": "index",
-					"title": "Inventory Valuations"
-				},
 				{
 					"_fragment": "inventory-valuation-fifo-avg",
 					"id": "InventoryValuationDetail",
@@ -4790,6 +4408,67 @@
 					"route": "/invoice/:invoiceId",
 					"type": "custom",
 					"title": "Invoice"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"route": "BookkeepingOverview"
+				},
+				{
+					"id": "Sales",
+					"route": "SalesOverview"
+				},
+				{
+					"id": "Purchasing",
+					"route": "PurchasingOverview"
+				},
+				{
+					"id": "BankingCashflow",
+					"route": "BankingCashflowOverview"
+				},
+				{
+					"id": "Taxes",
+					"route": "TaxesOverview"
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "nav-six-clusters-landing-pages",
+					"id": "BookkeepingOverview",
+					"route": "/bookkeeping/overview",
+					"type": "custom",
+					"title": "Bookkeeping"
+				},
+				{
+					"_fragment": "nav-six-clusters-landing-pages",
+					"id": "SalesOverview",
+					"route": "/sales/overview",
+					"type": "custom",
+					"title": "Sales"
+				},
+				{
+					"_fragment": "nav-six-clusters-landing-pages",
+					"id": "PurchasingOverview",
+					"route": "/purchasing/overview",
+					"type": "custom",
+					"title": "Purchasing"
+				},
+				{
+					"_fragment": "nav-six-clusters-landing-pages",
+					"id": "BankingCashflowOverview",
+					"route": "/banking-cashflow/overview",
+					"type": "custom",
+					"title": "Banking & Cashflow"
+				},
+				{
+					"_fragment": "nav-six-clusters-landing-pages",
+					"id": "TaxesOverview",
+					"route": "/taxes/overview",
+					"type": "custom",
+					"title": "Taxes"
 				}
 			]
 		},
@@ -4862,7 +4541,7 @@
 		{
 			"menu": [
 				{
-					"id": "Compliance",
+					"id": "ReportingCompliance",
 					"route": "ReportingComplianceOverview"
 				}
 			],
@@ -4928,13 +4607,6 @@
 					"route": "/retainer-pools/:id",
 					"type": "detail",
 					"title": "Retainer Pool"
-				},
-				{
-					"_fragment": "retainer-billing-engine",
-					"id": "RetainerPoolCreateDialog",
-					"route": "/retainer-pools/new",
-					"type": "form",
-					"title": "New retainer pool"
 				},
 				{
 					"_fragment": "retainer-billing-engine",

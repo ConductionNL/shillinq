@@ -43,7 +43,7 @@ namespace OCA\Shillinq\Controller;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Cron\PipelinqTimelineRetryJob;
+use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;

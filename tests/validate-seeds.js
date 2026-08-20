@@ -67,7 +67,19 @@ const FRAGMENT_DIR = path.join(REPO_ROOT, 'lib', 'Settings', 'register.d')
 // 10-bookings-create-appointment.json and 30-bookings-self-service-widget.json
 // now carry the full merged-schema `required` set (code, prepareTime,
 // bufferBefore, bufferAfter, basePrice, dynamicPricing, serviceCategory).
-const BASELINE = 71
+// Lowered 71 -> 61 by contracts-single-home (measured before/after the
+// rename): un-merging `Contract` fixed 7 previously-failing seed objects
+// that had been checked against the pre-fix merged `Contract` schema's
+// concatenated `required` list spanning both domains — 3 CLM demo seeds
+// (contract-cleaning-2026 etc., missing the IFRS-15-only customerId /
+// signedAt / fixedConsideration / lifecycleState) and 4 IFRS-15 demo seeds
+// (missing the CLM-only title / contractType / status). Post-fix, the 3 CLM
+// seeds check cleanly against CLM's own `Contract.required` and the 4
+// IFRS-15 seeds (now `"schema": "RevenueContract"`) check cleanly against
+// `RevenueContract`'s own `required`; the `contract-handoff-demo-2026` seed
+// already satisfied both required lists before and after, so is not part of
+// this delta.
+const BASELINE = 61
 
 const asArray = (value) => (Array.isArray(value) ? value : [])
 

@@ -45,8 +45,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
-use PhpOffice\PhpWord\Element\Section;
-use PhpOffice\PhpWord\PhpWord;
+use OCA\Shillinq\Reporting\ReportSection;
 
 /**
  * Renders BBV jaarstukken / programmaverantwoording from a BbvStatement object.
@@ -77,19 +76,18 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	/**
 	 * Build the BBV jaarstukken body from the BbvStatement object.
 	 *
-	 * @param PhpWord $phpWord The styled document.
+	 * @param ReportSection $section The block accumulator to fill.
 	 * @param array<string, mixed> $context `{ reportType, period, administrationId }`.
 	 *
 	 * @return void
 	 */
-	protected function build(PhpWord $phpWord, array $context): void {
+	protected function build(ReportSection $section, array $context): void {
 		$statement = $this->resolveStatement($context);
 		$currency = $this->str($statement, 'currency');
 		if ($currency === '') {
 			$currency = 'EUR';
 		}
 
-		$section = $this->addSection($phpWord);
 		$this->addCover(
 			$section,
 			'BBV-jaarstukken',
@@ -138,13 +136,13 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	 * Build the programmaplan section: the programmes plus the general cover
 	 * funds, overhead, VPB charge and onvoorzien.
 	 *
-	 * @param Section $section The section.
+	 * @param ReportSection $section The block accumulator.
 	 * @param array<string, mixed> $statement The BbvStatement object.
 	 * @param string $currency The presentation currency.
 	 *
 	 * @return void
 	 */
-	private function buildProgrammaplan(Section $section, array $statement, string $currency): void {
+	private function buildProgrammaplan(ReportSection $section, array $statement, string $currency): void {
 		$this->addHeading($section, 'Programmaplan (art. 8 BBV)');
 
 		$plan = $statement['programmePlan'] ?? [];
@@ -156,10 +154,10 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 		if (is_array($programmes) === true && $programmes !== []) {
 			$table = $section->addTable('reportTable');
 			$table->addRow();
-			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4), ['bgColor' => self::ACCENT_COLOUR])
-				->addText('Code', ['name' => 'DejaVu Sans', 'size' => 10, 'bold' => true, 'color' => 'FFFFFF']);
-			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(12), ['bgColor' => self::ACCENT_COLOUR])
-				->addText('Programma', ['name' => 'DejaVu Sans', 'size' => 10, 'bold' => true, 'color' => 'FFFFFF']);
+			$table->addCell(4, ['bgColor' => self::ACCENT_COLOUR])
+				->addText('Code', 'tableHeader');
+			$table->addCell(12, ['bgColor' => self::ACCENT_COLOUR])
+				->addText('Programma', 'tableHeader');
 
 			foreach ($programmes as $programme) {
 				if (is_array($programme) === false) {
@@ -167,8 +165,8 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 				}
 
 				$table->addRow();
-				$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->str($programme, 'code'), 'value');
-				$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(12))->addText($this->str($programme, 'name'), 'value');
+				$table->addCell(4)->addText($this->str($programme, 'code'), 'value');
+				$table->addCell(12)->addText($this->str($programme, 'name'), 'value');
 			}
 		} else {
 			$this->addNote($section, 'Geen programma\'s opgenomen in het programmaplan.');
@@ -195,12 +193,12 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	 * List the mandatory BBV paragraphs (art. 9), flagging which of the seven
 	 * required paragraphs are present.
 	 *
-	 * @param Section $section The section.
+	 * @param ReportSection $section The block accumulator.
 	 * @param array<string, mixed> $statement The BbvStatement object.
 	 *
 	 * @return void
 	 */
-	private function buildParagraphs(Section $section, array $statement): void {
+	private function buildParagraphs(ReportSection $section, array $statement): void {
 		$required = [
 			'lokaleHeffingen' => 'Lokale heffingen',
 			'weerstandsvermogen' => 'Weerstandsvermogen en risicobeheersing',
@@ -229,13 +227,13 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	/**
 	 * Build the taakvelden overview: estimated revenue and expense per taakveld.
 	 *
-	 * @param Section $section The section.
+	 * @param ReportSection $section The block accumulator.
 	 * @param array<string, mixed> $statement The BbvStatement object.
 	 * @param string $currency The presentation currency.
 	 *
 	 * @return void
 	 */
-	private function buildTaskFields(Section $section, array $statement, string $currency): void {
+	private function buildTaskFields(ReportSection $section, array $statement, string $currency): void {
 		$this->addHeading($section, 'Overzicht taakvelden');
 
 		$taskFields = $statement['taskFields'] ?? [];
@@ -247,8 +245,8 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 		$table = $section->addTable('reportTable');
 		$table->addRow();
 		foreach (['Code', 'Taakveld', 'Baten', 'Lasten'] as $head) {
-			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4), ['bgColor' => self::ACCENT_COLOUR])
-				->addText($head, ['name' => 'DejaVu Sans', 'size' => 10, 'bold' => true, 'color' => 'FFFFFF']);
+			$table->addCell(4, ['bgColor' => self::ACCENT_COLOUR])
+				->addText($head, 'tableHeader');
 		}
 
 		$totalRevenue = 0.0;
@@ -264,28 +262,28 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 			$totalExpense += $expense;
 
 			$table->addRow();
-			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->str($taskField, 'code'), 'value');
-			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->str($taskField, 'name'), 'value');
-			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->money($revenue, $currency), 'amount', ['alignment' => 'end']);
-			$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4))->addText($this->money($expense, $currency), 'amount', ['alignment' => 'end']);
+			$table->addCell(4)->addText($this->str($taskField, 'code'), 'value');
+			$table->addCell(4)->addText($this->str($taskField, 'name'), 'value');
+			$table->addCell(4)->addText($this->money($revenue, $currency), 'amount', ['alignment' => 'end']);
+			$table->addCell(4)->addText($this->money($expense, $currency), 'amount', ['alignment' => 'end']);
 		}
 
 		$table->addRow();
-		$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(8), ['bgColor' => 'EEF2FF', 'gridSpan' => 2])->addText('Totaal', 'amountBold');
-		$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4), ['bgColor' => 'EEF2FF'])->addText($this->money($totalRevenue, $currency), 'amountBold', ['alignment' => 'end']);
-		$table->addCell(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(4), ['bgColor' => 'EEF2FF'])->addText($this->money($totalExpense, $currency), 'amountBold', ['alignment' => 'end']);
+		$table->addCell(8, ['bgColor' => 'EEF2FF', 'gridSpan' => 2])->addText('Totaal', 'amountBold');
+		$table->addCell(4, ['bgColor' => 'EEF2FF'])->addText($this->money($totalRevenue, $currency), 'amountBold', ['alignment' => 'end']);
+		$table->addCell(4, ['bgColor' => 'EEF2FF'])->addText($this->money($totalExpense, $currency), 'amountBold', ['alignment' => 'end']);
 
 	}//end buildTaakvelden()
 
 	/**
 	 * Build the jaarrekening composition (art. 24): which components are present.
 	 *
-	 * @param Section $section The section.
+	 * @param ReportSection $section The block accumulator.
 	 * @param array<string, mixed> $statement The BbvStatement object.
 	 *
 	 * @return void
 	 */
-	private function buildAnnualAccounts(Section $section, array $statement): void {
+	private function buildAnnualAccounts(ReportSection $section, array $statement): void {
 		$this->addHeading($section, 'Jaarrekening (art. 24 BBV)');
 
 		$annualAccounts = $statement['annualAccounts'] ?? [];
@@ -308,13 +306,13 @@ final class BbvJaarstukkenReportGenerator extends AbstractDocumentReportGenerato
 	/**
 	 * Build the fixed-assets overview (arts. 59/62): capitalisation + valuation.
 	 *
-	 * @param Section $section The section.
+	 * @param ReportSection $section The block accumulator.
 	 * @param array<string, mixed> $statement The BbvStatement object.
 	 * @param string $currency The presentation currency.
 	 *
 	 * @return void
 	 */
-	private function buildFixedAssets(Section $section, array $statement, string $currency): void {
+	private function buildFixedAssets(ReportSection $section, array $statement, string $currency): void {
 		$this->addHeading($section, 'Vaste activa (art. 59/62 BBV)');
 
 		$assets = $statement['fixedAssets'] ?? [];

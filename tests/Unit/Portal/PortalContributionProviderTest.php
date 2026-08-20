@@ -214,7 +214,7 @@ class PortalContributionProviderTest extends TestCase {
 			'projectInvoices' => ['BillableInvoice', 'customerId', 'customerId'],
 			'quotes' => ['Quote', 'customerReference', 'customerId'],
 			'salesOrders' => ['SalesOrder', 'customerReference', 'customerId'],
-			'contracts' => ['Contract', 'customerId', 'customerId'],
+			'contracts' => ['RevenueContract', 'customerId', 'customerId'],
 			'salesInvoices' => ['ARInvoice', 'customerId', 'customerMasterId'],
 			'paymentRequests' => ['PaymentRequest', 'invoiceReference', 'customerMasterId'],
 		];
