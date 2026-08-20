@@ -24,6 +24,7 @@ namespace OCA\Shillinq\Tests\Unit\Repair;
 
 use OCA\Shillinq\Repair\InitializeSettings;
 use OCA\Shillinq\Service\BbvSeedService;
+use OCA\Shillinq\Service\Migration\RevenueContractRenameMigrator;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\StatementManifestService;
 use OCP\Migration\IOutput;
@@ -108,6 +109,10 @@ class InitializeSettingsTest extends TestCase {
 			logger: $this->logger,
 			container: $this->container,
 			bbvSeedService: $this->bbvSeedService,
+			// Pure, dependency-free migration core — a real instance is used
+			// rather than a mock (mirrors RevenueRecognitionCalculator usage
+			// elsewhere: nothing to stub, it is deterministic logic).
+			revenueContractRenameMigrator: new RevenueContractRenameMigrator(),
 		);
 
 	}//end setUp()
