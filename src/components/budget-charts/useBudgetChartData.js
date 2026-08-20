@@ -94,7 +94,12 @@ export function useBudgetChartData(administrationId, range, annualBudgetId = nul
 		if (!inflight) {
 			loading.value = true
 			error.value = null
-			inflight = fetchSeries(administrationId, range?.from, range?.to, annualBudgetId)
+			inflight = fetchSeries(
+				administrationId,
+				range?.from,
+				range?.to,
+				annualBudgetId,
+			)
 				.then((result) => {
 					data.value = result
 				})

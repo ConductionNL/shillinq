@@ -156,12 +156,17 @@ class BudgetChartsController extends Controller {
 			return new JSONResponse(['error' => 'annualBudgetId must be a valid identifier'], Http::STATUS_BAD_REQUEST);
 		}
 
+		$resolvedAnnualBudgetId = null;
+		if ($annualBudgetId !== '') {
+			$resolvedAnnualBudgetId = $annualBudgetId;
+		}
+
 		try {
 			$result = $this->service->resolveSeries(
 				administrationId: $administrationId,
 				from: $from,
 				to: $to,
-				annualBudgetId: ($annualBudgetId !== '') ? $annualBudgetId : null
+				annualBudgetId: $resolvedAnnualBudgetId
 			);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);

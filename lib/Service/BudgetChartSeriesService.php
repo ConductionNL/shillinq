@@ -616,7 +616,12 @@ class BudgetChartSeriesService {
 				}
 
 				$slug = (string)($entry['slug'] ?? '');
-				return ($slug !== '') ? $slug : null;
+				$slugKey = null;
+				if ($slug !== '') {
+					$slugKey = $slug;
+				}
+
+				return $slugKey;
 			}
 		}
 
@@ -647,7 +652,11 @@ class BudgetChartSeriesService {
 		array $annualBudgetIdsByYear,
 		array $envelopesByAccount
 	): array {
-		$ledgerGroupKey = ((string)($entry['id'] ?? '') !== '') ? (string)$entry['id'] : (string)($entry['slug'] ?? '');
+		$ledgerGroupKey = (string)($entry['slug'] ?? '');
+		$ledgerGroupId = (string)($entry['id'] ?? '');
+		if ($ledgerGroupId !== '') {
+			$ledgerGroupKey = $ledgerGroupId;
+		}
 		$memberAccountNumbers = ($entry['memberAccountNumbers'] ?? []);
 
 		$memberEnvelopes = [];
@@ -674,7 +683,7 @@ class BudgetChartSeriesService {
 
 			$grouped = $this->projectionCalculator->groupProjected(members: $membersForMonth);
 
-			// groupProjected() itself only ever returns `unprojectable` or
+			// The groupProjected() method itself only ever returns `unprojectable` or
 			// `projected` — it deliberately does not distinguish a month
 			// where EVERY member's own kind was `actual` (real GL data)
 			// from one where members are a mix, or all `projected`

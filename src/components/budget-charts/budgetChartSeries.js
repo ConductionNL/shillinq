@@ -119,7 +119,11 @@ export function cellText(t, trendEntry, flatValue) {
 		}
 		return formatEurCents(trendEntry.amount)
 	}
-	return formatEurCents(flatValue === null || flatValue === undefined ? null : Math.round(flatValue * 100))
+	return formatEurCents(
+		flatValue === null || flatValue === undefined
+			? null
+			: Math.round(flatValue * 100),
+	)
 }
 
 /**
@@ -131,7 +135,10 @@ export function cellText(t, trendEntry, flatValue) {
  */
 export function formatEurCents(cents) {
 	if (cents === null || cents === undefined) return '—'
-	return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(cents / 100)
+	return new Intl.NumberFormat('nl-NL', {
+		style: 'currency',
+		currency: 'EUR',
+	}).format(cents / 100)
 }
 
 /**
@@ -146,6 +153,7 @@ export function formatEurCents(cents) {
 export function defaultRange(now = new Date()) {
 	const toDate = new Date(now.getFullYear(), now.getMonth() + 3, 1)
 	const fromDate = new Date(now.getFullYear(), now.getMonth() - 11, 1)
-	const format = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+	const format = (d) =>
+		`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 	return { from: format(fromDate), to: format(toDate) }
 }

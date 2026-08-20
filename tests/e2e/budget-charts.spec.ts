@@ -96,7 +96,9 @@ async function gotoRoute(page: Page, route: string): Promise<void> {
  */
 async function gotoRouteOrSkip(page: Page, route: string): Promise<boolean> {
 	const target = APP + route
-	await page.goto(target, { waitUntil: 'domcontentloaded', timeout: 25_000 }).catch(() => {})
+	await page
+		.goto(target, { waitUntil: 'domcontentloaded', timeout: 25_000 })
+		.catch(() => {})
 	await page.waitForSelector('#content-vue', { timeout: 15_000 }).catch(() => {})
 	await dismissOverlays(page)
 	return normalisePath(page.url()) === normalisePath(target)
@@ -119,7 +121,10 @@ async function openFirstAccountDetail(page: Page): Promise<boolean> {
 /** Open the account detail page's "Trend" sidebar tab and reveal the data table. */
 async function openTrendTableOnAccountDetail(page: Page): Promise<boolean> {
 	const opened = await openFirstAccountDetail(page)
-	test.skip(!opened, 'no Account seeded — Chart of Accounts index is empty in this administration')
+	test.skip(
+		!opened,
+		'no Account seeded — Chart of Accounts index is empty in this administration',
+	)
 
 	const tab = page.getByTestId('cn-object-sidebar-tab-trend')
 	const tabVisible = await becomesVisible(tab)
@@ -148,7 +153,10 @@ test.describe('budget-charts — actual/projected/begroot trend+cumulative chart
 		page,
 	}) => {
 		const shown = await openTrendTableOnAccountDetail(page)
-		test.skip(!shown, 'chart did not render for this account (see the two prior skip reasons)')
+		test.skip(
+			!shown,
+			'chart did not render for this account (see the two prior skip reasons)',
+		)
 
 		// Text-labelled rows, not colour-only — the accessible primary path
 		// (design.md §9), not a courtesy add-on.
@@ -174,11 +182,18 @@ test.describe('budget-charts — actual/projected/begroot trend+cumulative chart
 		// (MIN_VALID_STEPS, budget-projection-engine REQ-BPE-004) — not
 		// something this spec controls. Skip honestly rather than assert a
 		// specific fixture shape.
-		const hasUnprojectable = texts.some((text) => text.includes('Cannot project yet'))
-		test.skip(!hasUnprojectable, 'no unprojectable month in this account\'s seeded history')
+		const hasUnprojectable = texts.some((text) =>
+			text.includes('Cannot project yet'),
+		)
+		test.skip(
+			!hasUnprojectable,
+			"no unprojectable month in this account's seeded history",
+		)
 
 		expect(texts.some((text) => text.trim() === '')).toBe(false)
-		expect(texts.some((text) => /€\s*0,00/.test(text) && text.includes('Cannot'))).toBe(false)
+		expect(
+			texts.some((text) => /€\s*0,00/.test(text) && text.includes('Cannot')),
+		).toBe(false)
 	})
 
 	/**
@@ -190,13 +205,22 @@ test.describe('budget-charts — actual/projected/begroot trend+cumulative chart
 		const shown = await openTrendTableOnAccountDetail(page)
 		test.skip(!shown, 'chart did not render for this account')
 
-		const cumulativeButton = page.getByTestId('budget-trend-chart-toggle-cumulative')
+		const cumulativeButton = page.getByTestId(
+			'budget-trend-chart-toggle-cumulative',
+		)
 		const disabled = await cumulativeButton.isDisabled().catch(() => true)
-		test.skip(disabled, 'Cumulative is disabled for this account (all-stock account type, REQ-BCH-005)')
+		test.skip(
+			disabled,
+			'Cumulative is disabled for this account (all-stock account type, REQ-BCH-005)',
+		)
 
-		const before = await page.getByTestId('budget-trend-chart-table-cell').allTextContents()
+		const before = await page
+			.getByTestId('budget-trend-chart-table-cell')
+			.allTextContents()
 		await cumulativeButton.click()
-		const after = await page.getByTestId('budget-trend-chart-table-cell').allTextContents()
+		const after = await page
+			.getByTestId('budget-trend-chart-table-cell')
+			.allTextContents()
 
 		expect(before).not.toEqual(after)
 		await expect(cumulativeButton).toHaveAttribute('aria-pressed', 'true')
@@ -217,7 +241,10 @@ test.describe('budget-charts — actual/projected/begroot trend+cumulative chart
 		page,
 	}) => {
 		const resolved = await gotoRouteOrSkip(page, BUDGET_GRID_ROUTE)
-		test.skip(!resolved, 'budget-grid-view has not landed in this worktree — BudgetGrid page does not exist yet')
+		test.skip(
+			!resolved,
+			'budget-grid-view has not landed in this worktree — BudgetGrid page does not exist yet',
+		)
 
 		const toggles = page.getByTestId('budget-grid-view-trend-toggle')
 		const firstToggle = toggles.first()
@@ -230,7 +257,10 @@ test.describe('budget-charts — actual/projected/begroot trend+cumulative chart
 
 		const secondToggle = toggles.nth(1)
 		const hasSecondRow = await secondToggle.isVisible().catch(() => false)
-		test.skip(!hasSecondRow, 'only one row available — cannot prove the "closes the first" half')
+		test.skip(
+			!hasSecondRow,
+			'only one row available — cannot prove the "closes the first" half',
+		)
 
 		await secondToggle.click()
 		// At most one chart open at a time, grid-wide (design.md §1a).

@@ -46,6 +46,20 @@ import BbvLinkerFilterBar from './components/bbv-provincie/BbvLinkerFilterBar.vu
 // ReportingComplianceOverview above already uses; Reporting & Compliance
 // itself reuses that existing page rather than getting a new one.
 import BookkeepingOverview from './components/bookkeeping/BookkeepingOverview.vue'
+// budget-charts (REQ-BCH-007): the shared actual/projected/begroot
+// trend+cumulative chart, registered ONCE and consumed from TWO placements —
+// BudgetGrid's per-row inline chart (a direct .vue import, no registry
+// lookup needed there) and ChartOfAccountsDetail's sidebar tab, which DOES
+// need a registry lookup: CnObjectSidebar's `tabs[].widgets[].type`
+// resolves any non-built-in type against the flat customComponents map
+// main.js derives from EVERY entry here (regardless of `kind`), so this one
+// `kind:"widget"` entry — matching CashflowChartWidget's own kind exactly,
+// per design.md §6 — is sufficient for both placements; no separate
+// `kind:"sidebarTab"` entry is needed (verified by reading
+// CnObjectSidebar.vue's `resolveWidgetComponent()`/`resolveTabComponent()`
+// and main.js's `customComponentsProp` derivation — the budget-charts
+// design.md §1b spike's own finding, recorded there in full).
+import BudgetTrendChart from './components/budget-charts/BudgetTrendChart.vue'
 // bookkeeping-waterschappen-bbv-variant slice 07 (REQ-BBVW-004): the
 // Budget Mapping detail page composes two bespoke autocomplete pickers
 // (Chart of Accounts + BBVProgramme), a live per-account allocation
@@ -96,20 +110,6 @@ import BBVComplianceDashboard from './components/Dashboard/BBVComplianceDashboar
 // with dimmed projection columns — a genuinely custom two-source transform
 // (nextcloud-vue#91 Wave-4) that no single declarative endpoint expresses.
 import CashflowChartWidget from './components/dashboard/financial/CashflowChartWidget.vue'
-// budget-charts (REQ-BCH-007): the shared actual/projected/begroot
-// trend+cumulative chart, registered ONCE and consumed from TWO placements —
-// BudgetGrid's per-row inline chart (a direct .vue import, no registry
-// lookup needed there) and ChartOfAccountsDetail's sidebar tab, which DOES
-// need a registry lookup: CnObjectSidebar's `tabs[].widgets[].type`
-// resolves any non-built-in type against the flat customComponents map
-// main.js derives from EVERY entry here (regardless of `kind`), so this one
-// `kind:"widget"` entry — matching CashflowChartWidget's own kind exactly,
-// per design.md §6 — is sufficient for both placements; no separate
-// `kind:"sidebarTab"` entry is needed (verified by reading
-// CnObjectSidebar.vue's `resolveWidgetComponent()`/`resolveTabComponent()`
-// and main.js's `customComponentsProp` derivation — the budget-charts
-// design.md §1b spike's own finding, recorded there in full).
-import BudgetTrendChart from './components/budget-charts/BudgetTrendChart.vue'
 import GoodsReceiptNoteDetail from './components/goods-receipt-note/GoodsReceiptNoteDetail.vue'
 // bookkeeping-purchase-order-3way slice 04 (REQ-GRN-001 / REQ-PO3W-003):
 // the GRN capture form is a mobile-optimised multi-PO line-by-line receipt

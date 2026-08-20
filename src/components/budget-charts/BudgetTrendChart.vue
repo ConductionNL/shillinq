@@ -45,7 +45,14 @@
 					data-testid="budget-trend-chart-toggle-cumulative"
 					:aria-pressed="mode === 'cumulative'"
 					:disabled="cumulativeDisabled"
-					:title="cumulativeDisabled ? t('shillinq', 'Cumulative equals trend for balance-sheet accounts') : null"
+					:title="
+						cumulativeDisabled
+							? t(
+									'shillinq',
+									'Cumulative equals trend for balance-sheet accounts',
+								)
+							: null
+					"
 					@click="setMode('cumulative')">
 					{{ t('shillinq', 'Cumulative') }}
 				</button>
@@ -60,7 +67,10 @@
 			</button>
 		</div>
 
-		<NcLoadingIcon v-if="loading" :size="32" class="budget-trend-chart__loading" />
+		<NcLoadingIcon
+			v-if="loading"
+			:size="32"
+			class="budget-trend-chart__loading" />
 
 		<CnChartWidget
 			v-show="!loading && !showTable"
@@ -72,28 +82,40 @@
 
 		<table v-if="showTable" class="budget-trend-chart__table">
 			<caption>
-				{{ accessibleLabel }}
+				{{
+					accessibleLabel
+				}}
 			</caption>
 			<thead>
 				<tr>
 					<th scope="col">{{ t('shillinq', 'Series') }}</th>
-					<th v-for="month in months" :key="month" scope="col">{{ month }}</th>
+					<th v-for="month in months" :key="month" scope="col">
+						{{ month }}
+					</th>
 					<th scope="col">{{ t('shillinq', 'TOTAAL') }}</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr>
 					<th scope="row">{{ t('shillinq', 'Actual') }}</th>
-					<td v-for="month in months" :key="month" data-testid="budget-trend-chart-table-cell">
+					<td
+						v-for="month in months"
+						:key="month"
+						data-testid="budget-trend-chart-table-cell">
 						{{ actualCellText(month) }}
 					</td>
 					<td>{{ formatTotal(actualTotal) }}</td>
 				</tr>
 				<tr>
 					<th scope="row">{{ t('shillinq', 'Projected') }}</th>
-					<td v-for="month in months" :key="month" data-testid="budget-trend-chart-table-cell">
+					<td
+						v-for="month in months"
+						:key="month"
+						data-testid="budget-trend-chart-table-cell">
 						{{ projectedCellText(month) }}
-						<span v-if="isPartialMonth(month)" class="budget-trend-chart__partial-badge">
+						<span
+							v-if="isPartialMonth(month)"
+							class="budget-trend-chart__partial-badge">
 							{{ t('shillinq', 'partial') }}
 						</span>
 					</td>
@@ -101,7 +123,10 @@
 				</tr>
 				<tr>
 					<th scope="row">{{ t('shillinq', 'Begroot') }}</th>
-					<td v-for="month in months" :key="month" data-testid="budget-trend-chart-table-cell">
+					<td
+						v-for="month in months"
+						:key="month"
+						data-testid="budget-trend-chart-table-cell">
 						{{ budgetedCellText(month) }}
 					</td>
 					<td>{{ formatTotal(budgetedTotal) }}</td>
@@ -179,22 +204,39 @@ export default {
 	},
 
 	computed: {
-		/** @return {string|null} The effective entity id — the `id` prop, falling back to `objectData.accountNumber` (the sidebar-tab placement, §1b). */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-007
+		 * @return {string|null} The effective entity id — the `id` prop, falling back to `objectData.accountNumber` (the sidebar-tab placement, §1b).
+		 */
 		effectiveId() {
 			return this.id || this.objectData?.accountNumber || null
 		},
 
-		/** @return {string} The effective accessible-name source — `name`, falling back to `objectData.name`/`accountNumber`. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-007
+		 * @return {string} The effective accessible-name source — `name`, falling back to `objectData.name`/`accountNumber`.
+		 */
 		effectiveName() {
-			return this.name || this.objectData?.name || this.objectData?.accountNumber || ''
+			return (
+				this.name
+				|| this.objectData?.name
+				|| this.objectData?.accountNumber
+				|| ''
+			)
 		},
 
-		/** @return {string|null} The effective administration id — `administrationId`, falling back to `objectData.administrationId`. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-007
+		 * @return {string|null} The effective administration id — `administrationId`, falling back to `objectData.administrationId`.
+		 */
 		effectiveAdministrationId() {
 			return this.administrationId || this.objectData?.administrationId || null
 		},
 
-		/** @return {{from: string, to: string}} The effective period range — `range`, falling back to a trailing-12-months + 3-months default (no page-level range exists on the sidebar-tab placement). */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-007
+		 * @return {{from: string, to: string}} The effective period range — `range`, falling back to a trailing-12-months + 3-months default (no page-level range exists on the sidebar-tab placement).
+		 */
 		effectiveRange() {
 			return this.range || defaultRange()
 		},
@@ -204,58 +246,106 @@ export default {
 			return Boolean(this.effectiveId && this.effectiveAdministrationId)
 		},
 
-		/** @return {boolean} Whether the shared fetch-once request is in flight. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
+		 * @return {boolean} Whether the shared fetch-once request is in flight.
+		 */
 		loading() {
 			if (!this.isReady) return false
-			return useBudgetChartData(this.effectiveAdministrationId, this.effectiveRange, this.annualBudgetId).loading.value
+			return useBudgetChartData(
+				this.effectiveAdministrationId,
+				this.effectiveRange,
+				this.annualBudgetId,
+			).loading.value
 		},
 
-		/** @return {object|null} The shared `{ months, accounts, ledgerGroups }` payload. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
+		 * @return {object|null} The shared `{ months, accounts, ledgerGroups }` payload.
+		 */
 		chartData() {
 			if (!this.isReady) return null
-			return useBudgetChartData(this.effectiveAdministrationId, this.effectiveRange, this.annualBudgetId).data.value
+			return useBudgetChartData(
+				this.effectiveAdministrationId,
+				this.effectiveRange,
+				this.annualBudgetId,
+			).data.value
 		},
 
-		/** @return {string[]} The requested months, chronological. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
+		 * @return {string[]} The requested months, chronological.
+		 */
 		months() {
 			return this.chartData?.months ?? []
 		},
 
-		/** @return {object|null} This chart's own entry (account or LedgerGroup) from the shared payload. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
+		 * @return {object|null} This chart's own entry (account or LedgerGroup) from the shared payload.
+		 */
 		entry() {
 			if (!this.chartData) return null
-			const collection = this.scope === 'account' ? this.chartData.accounts : this.chartData.ledgerGroups
+			const collection =
+				this.scope === 'account'
+					? this.chartData.accounts
+					: this.chartData.ledgerGroups
 			const key = this.scope === 'account' ? 'accountNumber' : 'ledgerGroupKey'
-			return (collection || []).find((row) => row[key] === this.effectiveId) || null
+			return (
+				(collection || []).find((row) => row[key] === this.effectiveId)
+				|| null
+			)
 		},
 
-		/** @return {string[]} The account type(s) in scope (one for an account, the resolved set for a LedgerGroup). */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-005
+		 * @return {string[]} The account type(s) in scope (one for an account, the resolved set for a LedgerGroup).
+		 */
 		accountTypes() {
 			if (!this.entry) return []
-			return this.scope === 'account' ? [this.entry.accountType] : this.entry.accountTypes || []
+			return this.scope === 'account'
+				? [this.entry.accountType]
+				: this.entry.accountTypes || []
 		},
 
-		/** @return {boolean} REQ-BCH-005: disable the Cumulative toggle when every in-scope account type is stock-typed. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-005
+		 * @return {boolean} REQ-BCH-005: disable the Cumulative toggle when every in-scope account type is stock-typed.
+		 */
 		cumulativeDisabled() {
 			return isAllStock(this.accountTypes)
 		},
 
-		/** @return {string} The effective mode, falling back to trend when cumulative is disabled. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-005
+		 * @return {string} The effective mode, falling back to trend when cumulative is disabled.
+		 */
 		effectiveMode() {
-			return this.mode === 'cumulative' && this.cumulativeDisabled ? 'trend' : this.mode
+			return this.mode === 'cumulative' && this.cumulativeDisabled
+				? 'trend'
+				: this.mode
 		},
 
-		/** @return {{[month: string]: object}} Month => typed trend result (REQ-BPE-006's combined actual/projected/unprojectable series). */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+		 * @return {{[month: string]: object}} Month => typed trend result (REQ-BPE-006's combined actual/projected/unprojectable series).
+		 */
 		trend() {
 			return this.entry?.trend ?? {}
 		},
 
-		/** @return {{actual: (number|null)[], projected: (number|null)[]}} The Actual/Projected gap-series pair for the TREND view. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-006
+		 * @return {{actual: (number|null)[], projected: (number|null)[]}} The Actual/Projected gap-series pair for the TREND view.
+		 */
 		trendSplit() {
 			return splitActualProjected(this.months, this.trend)
 		},
 
-		/** @return {{actual: (number|null)[], projected: (number|null)[]}} The Actual/Projected gap-series pair for the CUMULATIVE view — same seam, cumulative amounts. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-006
+		 * @return {{actual: (number|null)[], projected: (number|null)[]}} The Actual/Projected gap-series pair for the CUMULATIVE view — same seam, cumulative amounts.
+		 */
 		cumulativeSplit() {
 			// The cumulative series carries no `kind` of its own — it is
 			// keyed by the SAME months as `trend`, so the seam (which
@@ -273,50 +363,98 @@ export default {
 			return { actual, projected }
 		},
 
-		/** @return {(number|null)[]} The Begroot series for the active mode. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-003
+		 * @return {(number|null)[]} The Begroot series for the active mode.
+		 */
 		budgetedPoints() {
-			const source = this.effectiveMode === 'cumulative' ? this.entry?.budgetedCumulative : this.entry?.budgeted
+			const source =
+				this.effectiveMode === 'cumulative'
+					? this.entry?.budgetedCumulative
+					: this.entry?.budgeted
 			return flatSeries(this.months, source ?? {})
 		},
 
-		/** @return {(number|null)[]} The Actual series for the active mode. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-006
+		 * @return {(number|null)[]} The Actual series for the active mode.
+		 */
 		actualPoints() {
-			return (this.effectiveMode === 'cumulative' ? this.cumulativeSplit : this.trendSplit).actual
+			return (
+				this.effectiveMode === 'cumulative'
+					? this.cumulativeSplit
+					: this.trendSplit
+			).actual
 		},
 
-		/** @return {(number|null)[]} The Projected series for the active mode. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-006
+		 * @return {(number|null)[]} The Projected series for the active mode.
+		 */
 		projectedPoints() {
-			return (this.effectiveMode === 'cumulative' ? this.cumulativeSplit : this.trendSplit).projected
+			return (
+				this.effectiveMode === 'cumulative'
+					? this.cumulativeSplit
+					: this.trendSplit
+			).projected
 		},
 
-		/** @return {string[]} Months whose typed result is `unprojectable` — REQ-BCH-004's marker+tooltip months. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-004
+		 * @return {string[]} Months whose typed result is `unprojectable` — REQ-BCH-004's marker+tooltip months.
+		 */
 		unprojectableMonthsList() {
 			return unprojectableMonths(this.months, this.trend)
 		},
 
-		/** @return {string[]} Months carrying a `partial` group roll-up tag (REQ-BPE-007). */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-004
+		 * @return {string[]} Months carrying a `partial` group roll-up tag (REQ-BPE-007).
+		 */
 		partialMonthsList() {
 			return partialMonths(this.months, this.trend)
 		},
 
-		/** @return {string[]} Localised month labels for the chart x-axis and table header. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
+		 * @return {string[]} Localised month labels for the chart x-axis and table header.
+		 */
 		categories() {
 			return this.months
 		},
 
-		/** @return {Array<object>} The three named ApexCharts series for the active mode (REQ-BCH-006). */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-006
+		 * @return {Array<object>} The three named ApexCharts series for the active mode (REQ-BCH-006).
+		 */
 		series() {
 			return [
-				{ name: t('shillinq', 'Actual'), type: 'line', data: this.actualPoints },
-				{ name: t('shillinq', 'Projected'), type: 'line', data: this.projectedPoints },
-				{ name: t('shillinq', 'Begroot'), type: 'line', data: this.budgetedPoints },
+				{
+					name: t('shillinq', 'Actual'),
+					type: 'line',
+					data: this.actualPoints,
+				},
+				{
+					name: t('shillinq', 'Projected'),
+					type: 'line',
+					data: this.projectedPoints,
+				},
+				{
+					name: t('shillinq', 'Begroot'),
+					type: 'line',
+					data: this.budgetedPoints,
+				},
 			]
 		},
 
-		/** @return {object} ApexCharts options: colors (ADR-053 `var(--token, fallback)`), dashed Projected stroke, unprojectable-aware tooltip + annotations. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-006
+		 * @return {object} ApexCharts options: colors (ADR-053 `var(--token, fallback)`), dashed Projected stroke, unprojectable-aware tooltip + annotations.
+		 */
 		chartOptions() {
 			const actualColor = 'var(--color-success, #46ba61)'
-			const projectedColor = 'color-mix(in srgb, var(--color-success, #46ba61) 55%, transparent)'
+			const projectedColor =
+				'color-mix(in srgb, var(--color-success, #46ba61) 55%, transparent)'
 			const budgetedColor = 'var(--color-primary-element, #0082c9)'
 			const unprojectable = this.unprojectableMonthsList
 			const months = this.months
@@ -331,7 +469,15 @@ export default {
 				},
 
 				markers: { size: 3 },
-				yaxis: { labels: { formatter: (value) => formatEurCents(value === null ? null : Math.round(value * 100)) } },
+				yaxis: {
+					labels: {
+						formatter: (value) =>
+							formatEurCents(
+								value === null ? null : Math.round(value * 100),
+							),
+					},
+				},
+
 				tooltip: {
 					y: {
 						formatter: (value, opts) => {
@@ -340,7 +486,9 @@ export default {
 							if (isProjectedSeries && unprojectable.includes(month)) {
 								return t('shillinq', 'Cannot project yet')
 							}
-							return value === null ? '—' : formatEurCents(Math.round(value * 100))
+							return value === null
+								? '—'
+								: formatEurCents(Math.round(value * 100))
 						},
 					},
 				},
@@ -353,14 +501,20 @@ export default {
 						label: {
 							text: '—',
 							borderWidth: 0,
-							style: { color: 'var(--color-text-maxcontrast)', background: 'transparent' },
+							style: {
+								color: 'var(--color-text-maxcontrast)',
+								background: 'transparent',
+							},
 						},
 					})),
 				},
 			}
 		},
 
-		/** @return {string} The chart's accessible group name (REQ-BCH-009). */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
+		 * @return {string} The chart's accessible group name (REQ-BCH-009).
+		 */
 		accessibleLabel() {
 			return t(
 				'shillinq',
@@ -369,17 +523,36 @@ export default {
 			)
 		},
 
-		/** @return {number} Sum of the plotted Actual series, in EUR cents, for the TOTAAL column. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
+		 * @return {number} Sum of the plotted Actual series, in EUR cents, for the TOTAAL column.
+		 */
 		actualTotal() {
-			return this.sumCents(this.months.map((m) => (this.trend[m]?.kind === 'actual' ? this.trend[m].amount : null)))
+			return this.sumCents(
+				this.months.map((m) =>
+					this.trend[m]?.kind === 'actual' ? this.trend[m].amount : null,
+				),
+			)
 		},
 
-		/** @return {number} Sum of the plotted Projected series, in EUR cents (unprojectable months contribute nothing, never a fabricated amount). */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
+		 * @return {number} Sum of the plotted Projected series, in EUR cents (unprojectable months contribute nothing, never a fabricated amount).
+		 */
 		projectedTotal() {
-			return this.sumCents(this.months.map((m) => (this.trend[m]?.kind === 'projected' ? this.trend[m].amount : null)))
+			return this.sumCents(
+				this.months.map((m) =>
+					this.trend[m]?.kind === 'projected'
+						? this.trend[m].amount
+						: null,
+				),
+			)
 		},
 
-		/** @return {number} Sum of the Begroot series, in EUR cents. */
+		/**
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
+		 * @return {number} Sum of the Begroot series, in EUR cents.
+		 */
 		budgetedTotal() {
 			const budgeted = this.entry?.budgeted ?? {}
 			return this.sumCents(this.months.map((m) => budgeted[m] ?? null))
@@ -408,17 +581,23 @@ export default {
 		 * Trigger the shared fetch-once load (no-op if already cached for
 		 * this key, and a no-op entirely until `isReady`).
 		 *
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-008
 		 * @return {Promise<object>|undefined}
 		 */
 		load() {
 			if (!this.isReady) return undefined
-			return useBudgetChartData(this.effectiveAdministrationId, this.effectiveRange, this.annualBudgetId).load()
+			return useBudgetChartData(
+				this.effectiveAdministrationId,
+				this.effectiveRange,
+				this.annualBudgetId,
+			).load()
 		},
 
 		/**
 		 * Set the Trend/Cumulative mode, ignoring an attempt to switch to
 		 * Cumulative when it is disabled (REQ-BCH-005).
 		 *
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-005
 		 * @param {string} next The requested mode.
 		 * @return {void}
 		 */
@@ -430,6 +609,7 @@ export default {
 		/**
 		 * Accessible data-table cell text for the Actual row.
 		 *
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
 		 * @param {string} month The `YYYY-MM` month.
 		 * @return {string}
 		 */
@@ -444,6 +624,7 @@ export default {
 		 * `unprojectable` renders the literal localised "Cannot project
 		 * yet" text, never a blank cell and never "€0" (REQ-BCH-004).
 		 *
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-004
 		 * @param {string} month The `YYYY-MM` month.
 		 * @return {string}
 		 */
@@ -458,6 +639,7 @@ export default {
 		/**
 		 * Accessible data-table cell text for the Begroot row.
 		 *
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
 		 * @param {string} month The `YYYY-MM` month.
 		 * @return {string}
 		 */

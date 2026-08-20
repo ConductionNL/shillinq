@@ -66,8 +66,16 @@ describe('splitActualProjected — the Actual/Projected gap-series pair', () => 
 	it('renders an unprojectable month as a GAP (null) on BOTH series — never a zero (REQ-BCH-004)', () => {
 		const trend = {
 			'2027-01': { kind: 'actual', amount: 10000 },
-			'2027-02': { kind: 'unprojectable', reason: 'insufficient-data', validSteps: 1 },
-			'2027-03': { kind: 'unprojectable', reason: 'insufficient-data', validSteps: 1 },
+			'2027-02': {
+				kind: 'unprojectable',
+				reason: 'insufficient-data',
+				validSteps: 1,
+			},
+			'2027-03': {
+				kind: 'unprojectable',
+				reason: 'insufficient-data',
+				validSteps: 1,
+			},
 			'2027-04': { kind: 'projected', amount: 13000 },
 		}
 
@@ -163,7 +171,11 @@ describe('cellText — the accessible data-table fallback (REQ-BCH-004/REQ-BCH-0
 	const t = (app, key) => key
 
 	it('renders the literal "Cannot project yet" text for an unprojectable month — never blank, never "€0"', () => {
-		const text = cellText(t, { kind: 'unprojectable', reason: 'insufficient-data' }, null)
+		const text = cellText(
+			t,
+			{ kind: 'unprojectable', reason: 'insufficient-data' },
+			null,
+		)
 
 		expect(text).toBe('Cannot project yet')
 		expect(text).not.toBe('')
@@ -171,7 +183,9 @@ describe('cellText — the accessible data-table fallback (REQ-BCH-004/REQ-BCH-0
 	})
 
 	it('renders a real formatted amount for an actual/projected month', () => {
-		expect(cellText(t, { kind: 'actual', amount: 123456 }, null)).toContain('1.234,56')
+		expect(cellText(t, { kind: 'actual', amount: 123456 }, null)).toContain(
+			'1.234,56',
+		)
 	})
 })
 

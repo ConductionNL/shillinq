@@ -28,12 +28,25 @@ const FIXTURE = {
 			accountType: 'revenue',
 			trend: {
 				'2027-01': { kind: 'actual', amount: 10000 },
-				'2027-02': { kind: 'unprojectable', reason: 'insufficient-data', validSteps: 1 },
-				'2027-03': { kind: 'projected', amount: 12000, rate: 0.1, validSteps: 3 },
+				'2027-02': {
+					kind: 'unprojectable',
+					reason: 'insufficient-data',
+					validSteps: 1,
+				},
+				'2027-03': {
+					kind: 'projected',
+					amount: 12000,
+					rate: 0.1,
+					validSteps: 3,
+				},
 			},
 			cumulative: { '2027-01': 10000, '2027-02': 10000, '2027-03': 22000 },
 			budgeted: { '2027-01': 9000, '2027-02': 9000, '2027-03': 9000 },
-			budgetedCumulative: { '2027-01': 9000, '2027-02': 18000, '2027-03': 27000 },
+			budgetedCumulative: {
+				'2027-01': 9000,
+				'2027-02': 18000,
+				'2027-03': 27000,
+			},
 		},
 		{
 			accountNumber: '2000',
@@ -61,7 +74,11 @@ const FIXTURE = {
 			},
 			cumulative: { '2027-01': 10000, '2027-02': 10000, '2027-03': 22000 },
 			budgeted: { '2027-01': 9000, '2027-02': 9000, '2027-03': 9000 },
-			budgetedCumulative: { '2027-01': 9000, '2027-02': 18000, '2027-03': 27000 },
+			budgetedCumulative: {
+				'2027-01': 9000,
+				'2027-02': 18000,
+				'2027-03': 27000,
+			},
 		},
 	],
 }
@@ -74,7 +91,8 @@ vi.mock('../../src/components/budget-charts/useBudgetChartData.js', () => ({
 	}),
 }))
 
-const { default: BudgetTrendChart } = await import('../../src/components/budget-charts/BudgetTrendChart.vue')
+const { default: BudgetTrendChart } =
+	await import('../../src/components/budget-charts/BudgetTrendChart.vue')
 
 /**
  * Build a fake `this` bound with every computed property BudgetTrendChart
@@ -126,7 +144,11 @@ describe('BudgetTrendChart — effective-prop resolution (§1b sidebar-tab place
 			id: null,
 			name: null,
 			administrationId: null,
-			objectData: { accountNumber: '1000', name: 'Kas', administrationId: 'adm-2' },
+			objectData: {
+				accountNumber: '1000',
+				name: 'Kas',
+				administrationId: 'adm-2',
+			},
 		})
 
 		expect(ctx.effectiveId).toBe('1000')
@@ -136,7 +158,12 @@ describe('BudgetTrendChart — effective-prop resolution (§1b sidebar-tab place
 	})
 
 	it('is not ready while objectData has not loaded yet — no premature fetch', () => {
-		const ctx = context({ id: null, name: null, administrationId: null, objectData: null })
+		const ctx = context({
+			id: null,
+			name: null,
+			administrationId: null,
+			objectData: null,
+		})
 
 		expect(ctx.isReady).toBe(false)
 		expect(ctx.chartData).toBeNull()
