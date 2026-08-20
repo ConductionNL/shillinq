@@ -287,6 +287,37 @@ jobs:
       #                          declaring the same names in a different order,
       #                          which merge fine. The baseline is a hard
       #                          ceiling that may only be lowered.
+      #   check:manifest-shell   NEW. `src/manifest.d.shell.json` is GENERATED
+      #                          by `scripts/generate-manifest-shell.js` and yet
+      #                          COMMITTED, and every local consumer regenerates
+      #                          it first (`prebuild`, `predev`, `prewatch`,
+      #                          `pretest:unit`), so the committed copy could
+      #                          drift arbitrarily far from `src/manifest.d/*`
+      #                          with NOTHING going red. The regeneration that
+      #                          keeps the build correct is exactly what made
+      #                          the drift invisible. Observed twice on
+      #                          2026-08-20: `feat/budget-known-costs` shipped a
+      #                          shell with ZERO occurrences of
+      #                          `BudgetLineDerivations`/`AnnualBudgets` while
+      #                          both fragments were on the branch, and
+      #                          `development` itself was stale by +77 lines — a
+      #                          whole `Budgets` menu group plus 6
+      #                          `budget-core-schema` pages. It is load-bearing:
+      #                          `src/main.js` builds the vue-router table AND
+      #                          the sidebar from `manifestShell.fragments`, and
+      #                          the lazy `require.context` only backfills each
+      #                          page's `config` — it never adds a page or a
+      #                          menu entry. The check runs the REAL generator
+      #                          CLI in a throwaway sandbox (never the working
+      #                          tree) and compares byte-for-byte; it FAILS
+      #                          rather than passes if the regenerated document
+      #                          is empty or covers fewer fragments than
+      #                          `src/manifest.d/` holds, so a generator that
+      #                          stopped seeing its subject cannot report
+      #                          success. Measured on this branch: FAILS on the
+      #                          inherited `development` shell, PASSES after
+      #                          regenerating it (the +77 lines are in this
+      #                          commit).
       #
       # `format` (prettier --check) is listed because the shared workflow has NO
       # prettier job of its own — `quality.yml` runs eslint and stylelint and
@@ -299,7 +330,7 @@ jobs:
       # Measured on this tree before enabling: PASSES, 216 of 222 tracked
       # frontend files in scope (docs/ excluded via .prettierignore; build
       # output via .gitignore, which prettier 3 also reads).
-      frontend-checks: '["check:manifest", "check:manifest-budget", "check:markers", "check:registers", "check:seeds", "check:fragment-required", "check:nav-reachability", "test:l10n", "format"]'
+      frontend-checks: '["check:manifest", "check:manifest-shell", "check:manifest-budget", "check:markers", "check:registers", "check:seeds", "check:fragment-required", "check:nav-reachability", "test:l10n", "format"]'
 
       # ── Coverage ratchet ─────────────────────────────────────────────────
       # `enable-coverage-guard` defaults to FALSE, which is why both
