@@ -67,19 +67,20 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // #[AuthorizedAdminSetting(Application::class)].
             ['name' => 'fxRateAdmin#status', 'url' => '/api/admin/fx-rate-import-status', 'verb' => 'GET'],
 
-        // Shillinq W8 (external-adapters admin UIs): read-only admin
-        // roll-up + per-adapter detail over the 14 dormant external-API
-        // adapter ports (Digipoort/SBR, Salarisbureau, RvO, IB47, CBS x2,
-        // BZK SiSa, Mollie, Bunq, KvK, UWV, Treasury Rates, CCM Rule
-        // Engine, CSRD ESRS XBRL, DepositPayment). Drives
-        // ExternalAdaptersStatus.vue (index) +
-        // ExternalAdapterDetail.vue (per-adapter activation panel).
-        // Both endpoints gated by
+        // integration-config-to-openconnector (formerly Shillinq W8):
+        // read-only admin roster over the 15 dormant external-API
+        // adapter families (Digipoort/SBR, Salarisbureau, RvO, IB47,
+        // CBS x2, BZK SiSa, Mollie, Bunq, KvK, UWV, Treasury Rates,
+        // CCM Rule Engine, CSRD ESRS XBRL, DepositPayment). Drives the
+        // single ExternalAdaptersStatus.vue roster page — the 15
+        // per-adapter detail pages (and their #show deep-link target)
+        // are gone, so #show was removed as dead code (no browser
+        // caller left; ORCHESTRATOR RULING: dead surface once the
+        // per-adapter pages go). Gated by
         // #[AuthorizedAdminSetting(Application::class)] — the
-        // activation steps reveal configuration keys which are
-        // admin-only data.
+        // per-row activation recipe reveals configuration keys which
+        // are admin-only data.
             ['name' => 'externalAdaptersAdmin#index', 'url' => '/api/admin/external-adapters', 'verb' => 'GET'],
-            ['name' => 'externalAdaptersAdmin#show', 'url' => '/api/admin/external-adapters/{id}', 'verb' => 'GET'],
 
         // Booking notification trigger configuration (organizer, per booking).
             ['name' => 'bookingNotification#getBookingTriggers',    'url' => '/api/bookings/{id}/notification-triggers', 'verb' => 'GET'],
