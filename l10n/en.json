@@ -2832,7 +2832,14 @@
         "Welcome to Shillinq": "Welcome to Shillinq",
         "Analytical dimensions": "Analytical dimensions",
         "Sales": "Sales",
-        "Valuation": "Valuation"
+        "Valuation": "Valuation",
+        "Declared, provision in OpenConnector": "Declared, provision in OpenConnector",
+        "Hide activation recipe": "Hide activation recipe",
+        "Operator roster over every external-API adapter family the app ships. Each family is dormant by default (log-only) so regulatory-filing and bank-sync lifecycles advance without contacting a third party. Credentials and protocol mapping are configured in OpenConnector — expand a row for the activation recipe.": "Operator roster over every external-API adapter family the app ships. Each family is dormant by default (log-only) so regulatory-filing and bank-sync lifecycles advance without contacting a third party. Credentials and protocol mapping are configured in OpenConnector — expand a row for the activation recipe.",
+        "Provision in OpenConnector": "Provision in OpenConnector",
+        "Provisioned in OpenConnector": "Provisioned in OpenConnector",
+        "Provisioning status unknown": "Provisioning status unknown",
+        "Show activation recipe": "Show activation recipe"
     },
     "plurals": ""
 }

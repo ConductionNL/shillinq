@@ -193,5 +193,32 @@
     "summary": "You will pull bank transactions live without a file.",
     "summary_nl": "Je haalt straks banktransacties live op zonder bestand.",
     "status": "soon"
+  },
+  {
+    "slug": "external-connections-integration-config",
+    "title": "External regulatory, bank and payment connections",
+    "title_nl": "Externe koppelingen met overheid, bank en betaalprovider",
+    "summary": "You activate a real connection per integration once its source is provisioned in OpenConnector — until then each family ships dormant and only logs, instead of calling out.",
+    "summary_nl": "Je activeert per koppeling een echte verbinding zodra de bron is ingericht in OpenConnector — tot die tijd is elke koppeling inactief en wordt er alleen gelogd, in plaats van extern aangeroepen.",
+    "status": "soon",
+    "docsUrl": "openspec/specs/bookkeeping-bank-connectors/spec.md",
+    "_note": "ADR-067 rule 2 declaration (openspec/changes/integration-config-to-openconnector, REQ-ICO-005) — see docs/features.json for the full note. integrations[] enumerates all 15 dormant adapter families from ExternalAdaptersAdminController::ADAPTERS by sourceSlug.",
+    "integrations": [
+      { "sourceSlug": "digipoort-sbr", "title": "Digipoort / SBR", "status": "unimplemented" },
+      { "sourceSlug": "salarisbureau", "title": "Salarisbureau (payroll)", "status": "unimplemented" },
+      { "sourceSlug": "rvo-aanvraag", "title": "RvO (subsidy / WBSO)", "status": "unimplemented" },
+      { "sourceSlug": "ib47", "title": "Belastingdienst IB47", "status": "unimplemented" },
+      { "sourceSlug": "cbs-bestanden", "title": "CBS Bestanden", "status": "unimplemented" },
+      { "sourceSlug": "cbs-iv3", "title": "CBS Iv3", "status": "unimplemented" },
+      { "sourceSlug": "bzk-sisa", "title": "BZK SiSa", "status": "unimplemented" },
+      { "sourceSlug": "mollie-payments", "title": "Mollie Payments", "status": "unimplemented" },
+      { "sourceSlug": "bunq-bank", "title": "Bunq Bank Connector", "status": "unimplemented" },
+      { "sourceSlug": "kvk-handelsregister", "title": "KvK Handelsregister", "status": "unimplemented" },
+      { "sourceSlug": "uwv-loonaangifte", "title": "UWV Loonaangifte", "status": "unimplemented" },
+      { "sourceSlug": "treasury-rates", "title": "Treasury Rates (ECB / SDMX)", "status": "unimplemented" },
+      { "sourceSlug": "ccm-rule-engine", "title": "CCM Rule Engine", "status": "unimplemented" },
+      { "sourceSlug": "csrd-esrs-xbrl", "title": "CSRD / ESRS XBRL", "status": "unimplemented" },
+      { "sourceSlug": "deposit-payment", "title": "Deposit Payment lifecycle", "status": "unimplemented" }
+    ]
   }
 ]

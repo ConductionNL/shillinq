@@ -271,3 +271,115 @@ and one page/one menu-leaf shape shown in §3 — not a percentage estimate.
 The implementer's actual final fragment will differ slightly by comment
 wording and page `_note` length; the order of magnitude (roughly 90%
 reduction, ~9–10 KB freed on this one fragment file) will hold regardless.
+
+The implementer's actual final fragment is 1,514 bytes (`wc -c` against
+`src/manifest.d/external-adapters-w8.json` post-implementation) — a net
+reduction of 9,408 bytes (~86.1%) on this fragment, close to but slightly
+above the 1,002-byte draft estimate (a richer `$comment` + page `_note`
+than the drafted shape), exactly as this section predicted. Fleet-wide
+`check-manifest-budget` totals: 1,123,373B before → 1,113,965B after
+(budget 1,126,300B) — this change alone moved the app from 2,927B of
+budget headroom to 12,335B.
+
+## 8. Resolution evidence (apply phase, live-verified 2026-08-20)
+
+### 8.1 §6.1 — the `bzk-sisa` / `bzk-sisa-upload-2026` slug mismatch
+
+Per the orchestrator's binding ruling, the live openconnector instance on
+the shared dev box (`http://localhost:8080`, admin:admin) was queried via
+OpenRegister's generic object API — the same abstraction REQ-ICO-003 uses
+at runtime — for every source object in `register: openconnector, schema:
+source`:
+
+```
+GET /apps/openregister/api/objects/openconnector/source?_limit=100&_page={1,2,3}
+```
+
+Result: **262 source objects total** (`total: 262`, confirmed via
+`_limit=1`), all 262 slugs collected across three pages. Neither `bzk-sisa`
+nor `bzk-sisa-upload-2026` appears anywhere in that set (`grep`-equivalent
+match over every `results[].@self.slug` — zero hits for either string, and
+zero hits for `"sisa"`/`"bzk"` as a substring of any slug or `name`). None
+of the other 14 families' declared `sourceSlug` values
+(`digipoort-sbr`, `salarisbureau`, `rvo-aanvraag`, `ib47`, `cbs-bestanden`,
+`cbs-iv3`, `mollie-payments`, `bunq-bank`, `kvk-handelsregister`,
+`uwv-loonaangifte`, `treasury-rates`, `ccm-rule-engine`, `csrd-esrs-xbrl`,
+`deposit-payment`) are provisioned either — the only near-miss is a
+pre-existing, unrelated `kvk` slug (not `kvk-handelsregister`).
+
+Per the ruling ("if neither exists, the JSON's existing
+`bzk-sisa-upload-2026` wins"): `lib/Settings/openconnector-sources.json`
+keeps its pre-existing `bzk-sisa-upload-2026` entry slug UNCHANGED —
+neither renamed to match the controller's `bzk-sisa` nor otherwise
+touched — and the entry's `description` now states this mismatch and its
+evidence inline (grep `design.md §6.1` in that file). The controller's
+`ExternalAdaptersAdminController::ADAPTERS['bzk-sisa']['sourceSlug']` is
+similarly left as `'bzk-sisa'`, unrenamed, per REQ-ICO-001's explicit
+"MUST NOT be silently renamed... without the verification §6.1 describes"
+clause — the verification has now been performed and documents a
+still-open mismatch, not a resolution in either direction. `docs/
+features.json`'s ADR-067 declaration (§8.2) enumerates this family by the
+controller's `bzk-sisa` value, per REQ-ICO-005's scenario wording ("all 15
+`sourceSlug` values from `ExternalAdaptersAdminController::ADAPTERS`"),
+which is a distinct, deliberately-not-reconciled use of the two
+spellings — see §5.2 for the still-open cross-repo resolution task.
+
+A live-browser consequence: with 0/15 families provisioned today, the
+`provisioned` REQ-ICO-003 scenario has no real fixture on this box. The
+e2e coverage for that scenario (`tests/e2e/workflows/
+external-adapters-admin.spec.ts`) therefore drives all three
+`resolveProvisioning()` states via a mocked `GET /api/admin/
+external-adapters` response rather than live data — the frontend contract
+under test is identical either way; only the origin of the JSON differs.
+
+### 8.2 §6.2 — the ADR-067 rule 2 declaration mechanism
+
+Per the orchestrator's binding ruling: `tests/schemas/
+app-manifest-v2.schema.json` was checked for an `optionalIntegrations`-
+style key. The root schema declares `"additionalProperties": false` (line
+21) and its full enumerated property list (`$schema`, `version`,
+`openbuildEditable`, `dependencies`, `setup`, `walkthrough`, `nav`,
+`runtime`, `menu`, `pages`, `adminSettings`, `credentials`, `schedules`,
+`observability`, `deepLinks`, `pageTemplates`, `pageInstances`, `sets`,
+`mcp`) contains no `optionalIntegrations` key and no narrower app-local
+equivalent — inventing one would fail `node tests/validate-manifest.js`'s
+Ajv pass exactly as the ruling anticipated.
+
+Per the ruling's fallback, the ADR-018 features/roadmap declaration
+(`docs/features.json`, surfaced by the existing `FeaturesRoadmap` manifest
+page — `src/manifest.json` id `FeaturesRoadmap`, route `/features-roadmap`)
+is the mechanism. Rather than adding 15 separate customer-facing roadmap
+cards (poor product-page hygiene for what is internal integration
+plumbing, not a marketable feature), one consolidated entry — slug
+`external-connections-integration-config`, `status: "soon"` — carries a
+new `integrations[]` array enumerating all 15 families by their
+controller-declared `sourceSlug`, each with its own `status:
+"unimplemented"`. This satisfies REQ-ICO-005's scenario ("all 15
+`sourceSlug` values ... appear, each marked as an unimplemented/roadmap
+integration") without a schema change: `docs/features.json` carries no
+`additionalProperties: false` constraint anywhere in this repo (no
+`features.schema.json` was found), so the new `integrations[]` field and
+the entry's own `_note` are additive. `openspec/features.overlay.json`
+(pre-existing near-duplicate content of `docs/features.json`, no
+generation script binds them so both are hand-maintained) was updated
+identically to avoid the two files drifting.
+
+### 8.3 §6.3 — whether `ExternalAdaptersAdminController#show` should be removed
+
+Resolved by the orchestrator's binding ruling, not left to implementer
+judgment: **removed**. `appinfo/routes.php`'s `externalAdaptersAdmin#show`
+route entry and the controller's `show()` method are both deleted — with
+no page deep-linking to a single family any more, it was dead code with no
+browser caller (confirmed: no remaining `/api/admin/external-adapters/
+{id}` caller anywhere in `src/`).
+
+### 8.4 §6.4 — whether `deposit-payment` needs its own roster row
+
+Resolved by the orchestrator's binding ruling: **yes, unchanged** —
+`deposit-payment` keeps its own roster row (family #15 in §1's table),
+annotated as delegating to Mollie under the hood (both the controller's
+existing `description`/`steps` text and this change's new
+`lib/Settings/openconnector-sources.json` `deposit-payment` entry state
+this explicitly). §5.4's cross-repo question (should openconnector model
+it as an alias of `mollie-payments` instead) remains open and unresolved
+by this change, as originally scoped.
