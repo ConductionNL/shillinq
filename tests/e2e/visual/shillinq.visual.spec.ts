@@ -31,11 +31,15 @@ test.describe('Shillinq — visual baselines', () => {
 		)
 	})
 
-	test('external adapter detail', async ({ page }) => {
-		await shootSurface(
-			page,
-			`${APP}/external-adapters/digipoort-sbr`,
-			'external-adapter-detail.png',
-		)
-	})
+	// NO per-adapter detail shot.
+	//
+	// `integration-config-to-openconnector` deleted the
+	// `/external-adapters/<family-id>` routes; none is declared in
+	// src/manifest*.json any more, so this shot pointed at a URL that now
+	// falls through vue-router's catch-all to the Dashboard — it would have
+	// silently re-baselined the wrong page.
+	//
+	// `external-adapters.spec.ts`'s "no test file references a removed
+	// per-adapter route" guard walks the whole e2e tree for exactly this
+	// literal and was failing on this file.
 })
