@@ -65,6 +65,7 @@ use OCA\Shillinq\Reporting\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportCatalogue;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use OCA\Shillinq\Reporting\ReportSection;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -154,7 +155,7 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	 * @return GeneratedFile
 	 *
 	 * @throws DocudeskUnavailableException When docudesk is not installed or unreachable.
-	 * @throws \RuntimeException When template selection or docudesk rendering fails.
+	 * @throws RuntimeException When template selection or docudesk rendering fails.
 	 */
 	public function generate(array $context, string $format): GeneratedFile {
 		$useFormat = in_array($format, self::FORMATS, true) === true ? $format : self::FORMATS[0];
@@ -168,7 +169,7 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 
 		$selected = $this->selectTemplate();
 		if ($selected['templateId'] === null) {
-			throw new \RuntimeException((string)$selected['error']);
+			throw new RuntimeException((string)$selected['error']);
 		}
 
 		$section = new ReportSection();
@@ -181,7 +182,7 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 		];
 
 		$options = [
-			'format' => self::DOCUDESK_FORMATS[$useFormat] ?? 'pdf',
+			'format' => self::DOCUDESK_FORMATS[$useFormat],
 			'userId' => $this->str($context, 'userId') !== '' ? $this->str($context, 'userId') : 'system',
 			'adHocData' => [
 				'report' => $reportBody,
@@ -197,12 +198,12 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 		try {
 			$rendered = $this->documentService()->generateDocument($selected['templateId'], [], $options);
 		} catch (Throwable $e) {
-			throw new \RuntimeException('Docudesk rendering failed: ' . $e->getMessage(), 0, $e);
+			throw new RuntimeException('Docudesk rendering failed: ' . $e->getMessage(), 0, $e);
 		}
 
 		$content = (string)($rendered['content'] ?? '');
 		if ($content === '') {
-			throw new \RuntimeException('Docudesk returned no document content for "' . static::reportType() . '".');
+			throw new RuntimeException('Docudesk returned no document content for "' . static::reportType() . '".');
 		}
 
 		return new GeneratedFile(
@@ -451,7 +452,8 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 			return [
 				'templateId' => null,
 				'error' => sprintf(
-					'Multiple docudesk templates (%s) for "%s" in namespace "%s"; generation is refused (never guess between templates that produce official documents).',
+					'Multiple docudesk templates (%s) for "%s" in namespace "%s"; generation is refused '
+					. '(never guess between templates that produce official documents).',
 					implode(', ', $ids),
 					$reportType,
 					self::TEMPLATE_NAMESPACE

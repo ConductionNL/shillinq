@@ -107,7 +107,13 @@ final class ReportTable {
 
 		$this->rows[$rowIndex][$cellIndex]['text'] = $text;
 		$this->rows[$rowIndex][$cellIndex]['textStyle'] = $style;
-		$this->rows[$rowIndex][$cellIndex]['textOptions'] = is_array($options) === true ? $options : ['style' => $options];
+
+		$textOptions = ['style' => $options];
+		if (is_array($options) === true) {
+			$textOptions = $options;
+		}
+
+		$this->rows[$rowIndex][$cellIndex]['textOptions'] = $textOptions;
 
 	}//end fillCell()
 

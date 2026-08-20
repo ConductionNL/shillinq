@@ -207,9 +207,10 @@ class ReportingController extends Controller {
 		);
 
 		if (isset($result['error']) === true) {
-			$status = $result['error'] === 'docudesk-unavailable'
-				? Http::STATUS_SERVICE_UNAVAILABLE
-				: Http::STATUS_UNPROCESSABLE_ENTITY;
+			$status = Http::STATUS_UNPROCESSABLE_ENTITY;
+			if ($result['error'] === 'docudesk-unavailable') {
+				$status = Http::STATUS_SERVICE_UNAVAILABLE;
+			}
 
 			return new JSONResponse($result, $status);
 		}

@@ -184,7 +184,12 @@ final class ReportSection {
 	public function toArray(): array {
 		$out = [];
 		foreach ($this->blocks as $block) {
-			$out[] = $block instanceof ReportTable ? $block->toArray() : $block;
+			$item = $block;
+			if ($block instanceof ReportTable) {
+				$item = $block->toArray();
+			}
+
+			$out[] = $item;
 		}
 
 		return $out;
