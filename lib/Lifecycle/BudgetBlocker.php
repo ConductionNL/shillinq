@@ -192,7 +192,7 @@ class BudgetBlocker {
 	 */
 	private function regelFitsBudget(array $rule, string $administrationId): bool {
 		$budget = $this->findOne(
-			schema: 'Budget',
+			schema: 'CommitmentBudget',
 			filters: [
 				'administrationId' => $administrationId,
 				'programmeCode' => (string)($rule['programme'] ?? ''),

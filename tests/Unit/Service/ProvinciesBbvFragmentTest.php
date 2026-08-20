@@ -24,7 +24,7 @@ use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
 /**
- * Verifies the provincies-BBV fragment is valid JSON, declares the Budget schema,
+ * Verifies the provincies-BBV fragment is valid JSON, declares the BbvProgrammeBudget schema,
  * additively overlays GLLine with the programmaStructure / programmaAssignedAt
  * fields plus the programmeBudgetVsActuals aggregation, seeds the seven canonical
  * provincie programmes, and merges onto the monolith without dropping anything
@@ -103,7 +103,7 @@ final class ProvinciesBbvFragmentTest extends TestCase {
 	}//end testFragmentIsValidJson()
 
 	/**
-	 * The fragment declares the Budget schema with the seven-programme enum and a
+	 * The fragment declares the BbvProgrammeBudget schema with the seven-programme enum and a
 	 * GLLine overlay that adds the programme assignment fields.
 	 *
 	 * @return void
@@ -111,8 +111,8 @@ final class ProvinciesBbvFragmentTest extends TestCase {
 	public function testFragmentDeclaresBudgetAndGlLineOverlay(): void {
 		$schemas = $this->fragment()['components']['schemas'];
 
-		self::assertArrayHasKey('Budget', $schemas);
-		$budget = $schemas['Budget'];
+		self::assertArrayHasKey('BbvProgrammeBudget', $schemas);
+		$budget = $schemas['BbvProgrammeBudget'];
 		self::assertContains('totalAmount', $budget['required']);
 		self::assertContains('programmeStructure', $budget['required']);
 		self::assertSame($this->canonical, $budget['properties']['programmeStructure']['enum']);
@@ -176,14 +176,14 @@ final class ProvinciesBbvFragmentTest extends TestCase {
 	}//end testFragmentSeedsSevenProvincieProgrammes()
 
 	/**
-	 * Every seeded Budget references a canonical programme and a positive amount.
+	 * Every seeded BbvProgrammeBudget references a canonical programme and a positive amount.
 	 *
 	 * @return void
 	 */
 	public function testSeededBudgetsAreCanonical(): void {
 		$budgets = array_filter(
 			$this->fragment()['objects'],
-			static fn (array $o): bool => ($o['@self']['schema'] ?? '') === 'Budget'
+			static fn (array $o): bool => ($o['@self']['schema'] ?? '') === 'BbvProgrammeBudget'
 		);
 
 		self::assertNotEmpty($budgets);
@@ -196,7 +196,7 @@ final class ProvinciesBbvFragmentTest extends TestCase {
 	}//end testSeededBudgetsAreCanonical()
 
 	/**
-	 * Merging the fragment onto the monolith adds Budget, preserves every existing
+	 * Merging the fragment onto the monolith adds BbvProgrammeBudget, preserves every existing
 	 * GLLine property, and appends seed objects without dropping any (ADR-037).
 	 *
 	 * @return void
@@ -212,12 +212,12 @@ final class ProvinciesBbvFragmentTest extends TestCase {
 		$merged = $this->merge($base, $frag);
 		$schemas = $merged['components']['schemas'];
 
-		// Budget added; GLLine still present.
-		self::assertArrayHasKey('Budget', $schemas);
+		// BbvProgrammeBudget added; GLLine still present.
+		self::assertArrayHasKey('BbvProgrammeBudget', $schemas);
 		self::assertArrayHasKey('GLLine', $schemas);
 
-		// Only Budget is a NEW schema (GLLine is an overlay), so +1.
-		self::assertCount($schemaCountBefore + 1, $schemas, 'Exactly one new schema (Budget) must be added');
+		// Only BbvProgrammeBudget is a NEW schema (GLLine is an overlay), so +1.
+		self::assertCount($schemaCountBefore + 1, $schemas, 'Exactly one new schema (BbvProgrammeBudget) must be added');
 
 		// No pre-existing schema dropped.
 		foreach (array_keys($base['components']['schemas']) as $name) {

@@ -378,7 +378,7 @@ final class RequisitionServiceTest extends TestCase {
 					'total_amount_excl_vat' => 500000,
 				],
 			],
-			'Budget' => [
+			'CommitmentBudget' => [
 				[
 					'administrationId' => 'adm-1',
 					'programmeCode' => '5.1',
@@ -422,7 +422,7 @@ final class RequisitionServiceTest extends TestCase {
 					'total_amount_excl_vat' => 2000000,
 				],
 			],
-			'Budget' => [
+			'CommitmentBudget' => [
 				[
 					'administrationId' => 'adm-1',
 					'programmeCode' => '5.1',

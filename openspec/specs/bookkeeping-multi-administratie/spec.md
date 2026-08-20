@@ -417,9 +417,13 @@ The following are explicitly **not** in scope of this spec:
 
 - All Administratie-family schemas are declared in `lib/Settings/shillinq_register.json`
   per ADR-024.
-- All financial schemas (Journaalpost, Factuur, GrootboekRekening, Budget,
-  Verplichting, VastActief, etc.) have `administratie: "uuid|ref:Administratie"`
-  as a required field per ADR-031.
+- All financial schemas (Journaalpost, Factuur, GrootboekRekening,
+  CommitmentBudget, Verplichting, VastActief, etc. — renamed 2026-08-20 by
+  `budget-core-schema`: `Budget` collided with an unrelated `Budget`
+  declared by `bookkeeping-provincies-bbv-variant` and was split into
+  `BbvProgrammeBudget`/`CommitmentBudget`, see `design.md` §1) have
+  `administratie: "uuid|ref:Administratie"` as a required field per
+  ADR-031.
 - All queries filter by active `administratie` context per ADR-018 data-isolation
   pattern.
 - RBAC context tracks `sessionActiveAdministratie` and user's roles per administratie.

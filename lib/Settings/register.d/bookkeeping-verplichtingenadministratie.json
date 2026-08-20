@@ -520,7 +520,7 @@
         },
         "x-openregister-aggregations": {
           "committedVsRealisedPerBudgetLine": {
-            "description": "REQ-VPL-011: per-budget-line committed-vs-realised rollup, grouped by budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Excludes afgesloten regels. verplicht = sum(restant_verplicht); gerealiseerd = sum(gefactureerd_bedrag); geautoriseerd is joined from the matching Budget (administrationId + programmaCode = programma + boekjaar); vrij = geautoriseerd - verplicht - gerealiseerd is computed by the drilldown view (BudgetLineCommitments.vue) from these three declared figures — no parallel PHP reporting service (ADR-031).",
+            "description": "REQ-VPL-011: per-budget-line committed-vs-realised rollup, grouped by budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Excludes afgesloten regels. verplicht = sum(restant_verplicht); gerealiseerd = sum(gefactureerd_bedrag); geautoriseerd is joined from the matching CommitmentBudget (administrationId + programmaCode = programma + boekjaar); vrij = geautoriseerd - verplicht - gerealiseerd is computed by the drilldown view (BudgetLineCommitments.vue) from these three declared figures — no parallel PHP reporting service (ADR-031).",
             "source": "Verplichtingsregel",
             "groupBy": [
               "programme",
@@ -533,12 +533,12 @@
               "afgesloten": false
             },
             "join": {
-              "through": "Budget",
-              "on": "Budget.programmaCode",
+              "through": "CommitmentBudget",
+              "on": "CommitmentBudget.programmaCode",
               "filter": {},
               "select": [
-                "Budget.geautoriseerd_bedrag",
-                "Budget.gerealiseerd_bedrag"
+                "CommitmentBudget.geautoriseerd_bedrag",
+                "CommitmentBudget.gerealiseerd_bedrag"
               ]
             },
             "sum": [
@@ -919,11 +919,11 @@
           "description": "Every create, update and delete of a Goedkeuringsstap is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
-      "Budget": {
-        "slug": "Budget",
+      "CommitmentBudget": {
+        "slug": "CommitmentBudget",
         "icon": "Wallet",
         "version": "0.1.0",
-        "title": "Budget",
+        "title": "Commitment Budget",
         "description": "Per-programma / per-boekjaar budget bucket. Verplichtingenadministratie introduces this register (no prior Budget schema exists in shillinq) so budget can be blocked at commitment-time. vrije_ruimte = geautoriseerd_bedrag - gerealiseerd_bedrag - openstaande_verplichtingen, evaluated on-demand (D4/D9, REQ-VPL-001).",
         "x-openregister-purpose": "dimension",
         "type": "object",
@@ -1052,6 +1052,10 @@
               ]
             }
           }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a CommitmentBudget is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001). Pre-existing gap fixed while renaming this schema in the same edit (budget-core-schema) — the flag was missing under the retired 'Budget' slug too."
         }
       }
     }
@@ -1129,8 +1133,8 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Budget",
-        "slug": "vpl-budget-5-1-fac2026-2026"
+        "schema": "CommitmentBudget",
+        "slug": "example-vpl-budget-5-1-fac2026-2026"
       },
       "administrationId": "adm-demo",
       "programmeCode": "5.1",
@@ -1143,8 +1147,8 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Budget",
-        "slug": "vpl-budget-5-1-fac2027-2027"
+        "schema": "CommitmentBudget",
+        "slug": "example-vpl-budget-5-1-fac2027-2027"
       },
       "administrationId": "adm-demo",
       "programmeCode": "5.1",

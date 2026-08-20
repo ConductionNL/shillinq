@@ -108,7 +108,7 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase {
 		);
 		self::assertContains('remaining_committed', $agg['sum']);
 		self::assertContains('invoiced_amount', $agg['sum']);
-		self::assertSame('Budget', $agg['join']['through']);
+		self::assertSame('CommitmentBudget', $agg['join']['through']);
 
 	}//end testVerplichtingsregelDeclaresCommittedVsRealisedAggregation()
 
@@ -152,7 +152,7 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase {
 	 */
 	public function testFragmentSchemasStillPresent(): void {
 		$schemas = $this->fragment()['components']['schemas'];
-		foreach (['Verplichting', 'Verplichtingsregel', 'Verplichtingsmutatie', 'Mandaat', 'Goedkeuringsstap', 'Budget'] as $name) {
+		foreach (['Verplichting', 'Verplichtingsregel', 'Verplichtingsmutatie', 'Mandaat', 'Goedkeuringsstap', 'CommitmentBudget'] as $name) {
 			self::assertArrayHasKey($name, $schemas, "Fragment must still declare $name");
 		}
 
@@ -172,7 +172,7 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase {
 
 		$verplichtingen = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'Verplichting'));
 		$rules = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'Verplichtingsregel'));
-		$budgets = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'Budget'));
+		$budgets = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'CommitmentBudget'));
 
 		self::assertGreaterThanOrEqual(3, count($verplichtingen));
 		self::assertGreaterThanOrEqual(1, count($budgets));

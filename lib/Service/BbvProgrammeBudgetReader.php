@@ -61,7 +61,7 @@ class BbvProgrammeBudgetReader {
 	 *
 	 * @var string
 	 */
-	public const SCHEMA_BUDGET = 'Budget';
+	public const SCHEMA_BUDGET = 'BbvProgrammeBudget';
 
 	/**
 	 * GL transaction (header) schema slug.
@@ -97,15 +97,11 @@ class BbvProgrammeBudgetReader {
 	 * @param IAppConfig $appConfig App config (OpenRegister register slug).
 	 * @param LoggerInterface $logger Logger — never receives a record body.
 	 * @param ObjectServiceInterface $objectService OpenRegister object service (ADR-083/084).
-	 * @param BbvBudgetVocabulary $vocabulary Reads a Budget under EITHER of the two
-	 *                                        colliding `Budget` schemas — see that
-	 *                                        class for why there are two.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
-		private readonly BbvBudgetVocabulary $vocabulary = new BbvBudgetVocabulary(),
 	) {
 
 	}//end __construct()
@@ -146,34 +142,22 @@ class BbvProgrammeBudgetReader {
 	}//end budgetsFor()
 
 	/**
-	 * Read a Budget's fiscal year across BOTH vocabularies the schema carries.
+	 * Read a `BbvProgrammeBudget`'s fiscal year.
 	 *
-	 * ⚠️ `Budget` is declared TWICE in `lib/Settings/register.d/`, by two
-	 * different changes, and the two declarations share no field names:
+	 * Since `budget-core-schema` split the once-colliding `Budget` schema into
+	 * `BbvProgrammeBudget` and `CommitmentBudget` (two distinct, non-colliding
+	 * schemas — see `openspec/changes/budget-core-schema/design.md` §1), every
+	 * record this reader queries is BBV-shaped by construction; there is no
+	 * second vocabulary left to adapt for.
 	 *
-	 *   bookkeeping-provincies-bbv-variant     fiscalYear, totalAmount,
-	 *                                          programmeStructure, status
-	 *   bookkeeping-verplichtingenadministratie financialYear, authorised_amount,
-	 *                                          programmeCode
+	 * @param array<string,mixed> $budget The `BbvProgrammeBudget` record.
 	 *
-	 * The fragments DEEP-MERGE and the later file's `required` wins, so the
-	 * deployed schema demands `financialYear` + `authorised_amount` — measured
-	 * on a live instance, where creating a BBV-shaped Budget is refused with
-	 * "The required properties (financialYear, authorised_amount) are missing".
-	 * A reader that knew only the BBV half would therefore report ZERO for a
-	 * province whose budgets exist, which is indistinguishable from a province
-	 * with no budget.
+	 * @return integer The fiscal year, or 0 when the field is absent.
 	 *
-	 * Adapting on READ is the narrow fix. Renaming either fragment's properties
-	 * is a DATA MIGRATION and neither vocabulary belongs to this change; the
-	 * collision itself is reported rather than papered over.
-	 *
-	 * @param array<string,mixed> $budget The Budget record.
-	 *
-	 * @return integer The fiscal year, or 0 when neither field carries one.
+	 * @spec openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md#req-bcs-002
 	 */
 	private function budgetYear(array $budget): int {
-		return $this->vocabulary->year(budget: $budget);
+		return (int)($budget['fiscalYear'] ?? 0);
 
 	}//end budgetYear()
 
@@ -189,16 +173,12 @@ class BbvProgrammeBudgetReader {
 	public function budgetByProgramme(array $budgets): array {
 		$totals = [];
 		foreach ($budgets as $budget) {
-			// Both vocabularies again — see budgetYear(). `programmeCode` and
-			// `authorised_amount` are the verplichtingenadministratie half of
-			// the same colliding schema, and a budget written through that
-			// half is still this province's budget.
-			$programme = $this->vocabulary->programme(budget: $budget);
+			$programme = (string)($budget['programmeStructure'] ?? '');
 			if ($programme === '') {
 				continue;
 			}
 
-			$amount = $this->vocabulary->amount(budget: $budget);
+			$amount = (float)($budget['totalAmount'] ?? 0);
 			$totals[$programme] = (($totals[$programme] ?? 0.0) + $amount);
 		}
 
