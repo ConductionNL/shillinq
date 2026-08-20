@@ -249,10 +249,28 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 			"shillinq's own ADR-042 setup dialog must gate the shell on a reset instance",
 		).toBeVisible({ timeout: 15_000 })
 
+		/**
+		 * Assert a step's OWN heading.
+		 *
+		 * The wizard renders a progress TABLIST whose labels are the step
+		 * titles, so every title now appears TWICE in the dialog — once as
+		 * `.cn-wizard-dialog__progress-label` in the tablist, once as the
+		 * step's `.notecard__heading`. `dialog.getByText(<title>)` therefore
+		 * resolves to 2 elements and Playwright strict mode fails before it
+		 * compares anything:
+		 *
+		 *   strict mode violation: … resolved to 2 elements
+		 *
+		 * All seven step titles collide this way; the run only reported the
+		 * first because the assertion throws. Target the notecard heading —
+		 * the step BODY is what this spec is about, and a tablist label is
+		 * present for every step whether or not that step is showing.
+		 */
+		const stepHeading = (title: string) =>
+			dialog.locator('.notecard__heading', { hasText: title }).first()
+
 		// ── Step 0: welcome ──────────────────────────────────────────────
-		await expect(
-			dialog.getByText('Welcome to Shillinq', { exact: false }),
-		).toBeVisible()
+		await expect(stepHeading('Welcome to Shillinq')).toBeVisible()
 		await expect(
 			dialog.getByText(
 				'First choose the country (legal region) and organisation type, then the chart-of-accounts template',
@@ -263,9 +281,7 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await clickContinue(dialog)
 
 		// ── Step 1: country ──────────────────────────────────────────────
-		await expect(
-			dialog.getByText('Legal region (country)', { exact: false }),
-		).toBeVisible()
+		await expect(stepHeading('Legal region (country)')).toBeVisible()
 		await expect(
 			dialog.getByText(
 				'In which country is this organisation legally established?',
@@ -280,9 +296,7 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await clickContinue(dialog)
 
 		// ── Step 2: organisation ─────────────────────────────────────────
-		await expect(
-			dialog.getByText('Organisation type', { exact: false }),
-		).toBeVisible()
+		await expect(stepHeading('Organisation type')).toBeVisible()
 		await expect(dialog.getByText('Municipality', { exact: true })).toBeVisible()
 		await expect(dialog.getByText('Province', { exact: true })).toBeVisible()
 		await expect(
@@ -297,9 +311,7 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await clickContinue(dialog)
 
 		// ── Step 3: rgs-template ─────────────────────────────────────────
-		await expect(
-			dialog.getByText('Chart of accounts (RGS)', { exact: false }),
-		).toBeVisible()
+		await expect(stepHeading('Chart of accounts (RGS)')).toBeVisible()
 		await expect(
 			dialog.getByText(
 				'the standardised layout of ledger accounts your balance sheet',
@@ -314,9 +326,7 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await clickContinue(dialog)
 
 		// ── Step 4: administration (run-action) ──────────────────────────
-		await expect(
-			dialog.getByText('Create administration', { exact: false }),
-		).toBeVisible()
+		await expect(stepHeading('Create administration')).toBeVisible()
 		await expect(
 			dialog.getByText(
 				'This registers your organisation as an administration in OpenRegister',
@@ -330,9 +340,7 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 
 		// ── Step 5: seed (run-action) ─────────────────────────────────────
 		await expect(
-			dialog.getByText('Load chart of accounts and reference data', {
-				exact: false,
-			}),
+			stepHeading('Load chart of accounts and reference data'),
 		).toBeVisible()
 		await expect(
 			dialog.getByText(
@@ -346,7 +354,7 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await clickContinue(dialog)
 
 		// ── Step 6: done (summary) ────────────────────────────────────────
-		await expect(dialog.getByText('Done', { exact: true })).toBeVisible()
+		await expect(stepHeading('Done')).toBeVisible()
 		await expect(
 			dialog.getByText(
 				'Review your choices below and complete the installation.',
