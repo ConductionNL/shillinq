@@ -107,31 +107,41 @@
 									class="external-adapters__badge"
 									:class="
 										provisioningBadgeClass(
-											entry.provisioning &&
-												entry.provisioning.status,
+											entry.provisioning
+												&& entry.provisioning.status,
 										)
 									"
 									:data-provisioning-status="
-										entry.provisioning && entry.provisioning.status
+										entry.provisioning
+										&& entry.provisioning.status
 									">
 									{{
 										provisioningLabel(
-											entry.provisioning &&
-												entry.provisioning.status,
+											entry.provisioning
+												&& entry.provisioning.status,
 										)
 									}}
 								</span>
 								<NcButton
-									v-if="entry.provisioning && entry.provisioning.status !== 'provisioned'"
+									v-if="
+										entry.provisioning
+										&& entry.provisioning.status
+											!== 'provisioned'
+									"
 									variant="secondary"
-									:href="entry.provisioning && entry.provisioning.deepLink"
+									:href="
+										entry.provisioning
+										&& entry.provisioning.deepLink
+									"
 									target="_blank"
 									rel="noopener noreferrer">
 									{{ t('shillinq', 'Provision in OpenConnector') }}
 								</NcButton>
 								<NcButton
 									variant="tertiary"
-									:aria-expanded="isExpanded(entry.id) ? 'true' : 'false'"
+									:aria-expanded="
+										isExpanded(entry.id) ? 'true' : 'false'
+									"
 									@click="toggleExpanded(entry.id)">
 									{{
 										isExpanded(entry.id)
@@ -158,7 +168,9 @@
 									t('shillinq', 'App-config keys')
 								}}</span>
 								<ul class="external-adapters__keys">
-									<li v-for="key in entry.configKeys || []" :key="key">
+									<li
+										v-for="key in entry.configKeys || []"
+										:key="key">
 										<code>{{ key }}</code>
 									</li>
 								</ul>

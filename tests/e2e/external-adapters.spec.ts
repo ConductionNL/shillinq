@@ -190,8 +190,8 @@ test.describe('Shillinq — External Connections roster', () => {
 			// deep link exists yet, so every row's fallback link is the generic
 			// Sources admin page).
 			expect(
-				/^https?:\/\//.test(href as string) ||
-					/\/apps\/openconnector\/sources/.test(href as string),
+				/^https?:\/\//.test(href as string)
+					|| /\/apps\/openconnector\/sources/.test(href as string),
 				`href "${href}" is not a well-formed openconnector deep link`,
 			).toBeTruthy()
 		}

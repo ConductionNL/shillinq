@@ -364,6 +364,28 @@ the entry's own `_note` are additive. `openspec/features.overlay.json`
 generation script binds them so both are hand-maintained) was updated
 identically to avoid the two files drifting.
 
+**Correction (post-merge CI failure, `quality / Features Check`):** the
+"no generation script binds them" premise above was wrong.
+`ConductionNL/.github`'s shared `quality.yml` runs `.conduction-shared/
+scripts/extract-features.py --app-root . --check` on every PR, which
+regenerates `docs/features.json` from `openspec/features.overlay.json`
+and hard-fails if the committed file differs byte-for-byte from that
+output. The generator's `normalize_overlay_entry()` only carries a fixed
+field set through (`slug`, `title`, `summary`, `status`, `docsUrl`,
+`providedBy`, `title_nl`, `summary_nl`) — it silently drops any unknown
+key, including this entry's `_note` and `integrations[]`. Committing
+those two fields into `docs/features.json` (a generated artifact) made it
+permanently stale against its own generator. Fix: `docs/features.json`'s
+`external-connections-integration-config` entry had `_note` and
+`integrations[]` removed so it matches `extract-features.py`'s real
+output; `openspec/features.overlay.json` keeps both fields unchanged,
+since it is the hand-authored *source* the generator reads (extra keys
+there are harmlessly ignored, not diffed). The overlay file remains the
+machine-readable declaration that satisfies REQ-ICO-005 (all 15
+`sourceSlug` values, each marked `unimplemented`) — the generated public
+`docs/features.json` just no longer tries to carry that engineering
+metadata past the generator.
+
 ### 8.3 §6.3 — whether `ExternalAdaptersAdminController#show` should be removed
 
 Resolved by the orchestrator's binding ruling, not left to implementer

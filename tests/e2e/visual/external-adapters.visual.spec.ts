@@ -90,9 +90,12 @@ test.describe('Shillinq — External Connections roster visual baselines', () =>
 			page.locator('[data-adapter-id="mollie"] .external-adapters__recipe'),
 		).toBeVisible({ timeout: 10_000 })
 		await freezePage(page)
-		await expect(page).toHaveScreenshot('external-adapters-roster-expanded.png', {
-			...SHOT_OPTIONS,
-			mask: dynamicMasks(page),
-		})
+		await expect(page).toHaveScreenshot(
+			'external-adapters-roster-expanded.png',
+			{
+				...SHOT_OPTIONS,
+				mask: dynamicMasks(page),
+			},
+		)
 	})
 })

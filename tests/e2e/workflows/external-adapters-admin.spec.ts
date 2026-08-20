@@ -87,7 +87,9 @@ function collectAppErrors(page: Page): string[] {
 	page.on('console', (msg: ConsoleMessage) => {
 		if (msg.type() !== 'error') return
 		const text = msg.text()
-		if (/Failed to load resource|net::ERR_|favicon|404 \(Not Found\)/i.test(text)) {
+		if (
+			/Failed to load resource|net::ERR_|favicon|404 \(Not Found\)/i.test(text)
+		) {
 			return
 		}
 		errors.push(text)
@@ -115,10 +117,14 @@ test.describe('Shillinq — External Connections roster, provisioning states', (
 		await page.goto(STATUS_ROUTE, { waitUntil: 'domcontentloaded' })
 		await dismissOverlays(page)
 
-		const row = page.locator('.external-adapters__item[data-adapter-id="mollie"]')
+		const row = page.locator(
+			'.external-adapters__item[data-adapter-id="mollie"]',
+		)
 		await expect(row).toBeVisible({ timeout: 10_000 })
 		await expect(
-			row.locator('.external-adapters__badge[data-provisioning-status="provisioned"]'),
+			row.locator(
+				'.external-adapters__badge[data-provisioning-status="provisioned"]',
+			),
 		).toBeVisible()
 		// A provisioned row does not need the "provision me" call to action.
 		await expect(
@@ -148,7 +154,9 @@ test.describe('Shillinq — External Connections roster, provisioning states', (
 		await page.goto(STATUS_ROUTE, { waitUntil: 'domcontentloaded' })
 		await dismissOverlays(page)
 
-		const row = page.locator('.external-adapters__item[data-adapter-id="mollie"]')
+		const row = page.locator(
+			'.external-adapters__item[data-adapter-id="mollie"]',
+		)
 		await expect(row).toBeVisible({ timeout: 10_000 })
 		await expect(
 			row.locator(
@@ -177,7 +185,10 @@ test.describe('Shillinq — External Connections roster, provisioning states', (
 		await mockAdapters(
 			page,
 			makeAdapter({
-				provisioning: { status: 'unknown', deepLink: '/apps/openconnector/sources' },
+				provisioning: {
+					status: 'unknown',
+					deepLink: '/apps/openconnector/sources',
+				},
 			}),
 		)
 
@@ -188,16 +199,22 @@ test.describe('Shillinq — External Connections roster, provisioning states', (
 		await expect(page.locator('.external-adapters__summary')).toBeVisible({
 			timeout: 10_000,
 		})
-		const row = page.locator('.external-adapters__item[data-adapter-id="mollie"]')
+		const row = page.locator(
+			'.external-adapters__item[data-adapter-id="mollie"]',
+		)
 		await expect(row).toBeVisible()
 		await expect(
-			row.locator('.external-adapters__badge[data-provisioning-status="unknown"]'),
+			row.locator(
+				'.external-adapters__badge[data-provisioning-status="unknown"]',
+			),
 		).toBeVisible()
 		// An "unknown" row still degrades gracefully to the same fallback deep
 		// link an operator needs — it is not visually indistinguishable from
 		// "provisioned".
 		await expect(
-			row.locator('.external-adapters__badge--live[data-provisioning-status="unknown"]'),
+			row.locator(
+				'.external-adapters__badge--live[data-provisioning-status="unknown"]',
+			),
 		).toHaveCount(0)
 
 		expect(errors, `app console errors: ${errors.join(' | ')}`).toEqual([])
