@@ -89,25 +89,31 @@ Vrij en open source onder de EUPL-1.2-licentie.
              registration — the former OCA\Shillinq\Cron\CancelUnconfirmedAppointmentsJob
              duplicate was removed (double-execution risk). -->
         <job>OCA\Shillinq\BackgroundJob\CancelUnconfirmedAppointments</job>
-        <job>OCA\Shillinq\Job\MandateDormancyExpiryJob</job>
+        <!-- background-job-consolidation (ADR-069 D1): moved from
+             lib/Job/MandateDormancyExpiryJob.php — lib/Job/ was the
+             third, non-canonical job directory shillinq shipped. -->
+        <job>OCA\Shillinq\BackgroundJob\MandateDormancyExpiryJob</job>
         <job>OCA\Shillinq\BackgroundJob\DBAFlagGenerationJob</job>
         <job>OCA\Shillinq\BackgroundJob\DBAPortfolioAggregationJob</job>
         <!-- Cashflow 13wk: daily bankfeed pull, daily crisis-mode refresh,
-             monthly calibration. REQ-CF-010/012/013. -->
-        <job>OCA\Shillinq\Cron\BankfeedReconciliationJob</job>
-        <job>OCA\Shillinq\Cron\CrisisModeRefreshJob</job>
-        <job>OCA\Shillinq\Cron\CalibrationBatchJob</job>
+             monthly calibration. REQ-CF-010/012/013. Moved from lib/Cron/
+             by background-job-consolidation (ADR-069 D1). -->
+        <job>OCA\Shillinq\BackgroundJob\BankfeedReconciliationJob</job>
+        <job>OCA\Shillinq\BackgroundJob\CrisisModeRefreshJob</job>
+        <job>OCA\Shillinq\BackgroundJob\CalibrationBatchJob</job>
         <!-- inventory-lot-batch-expiry REQ-LOT-007: daily sweep raising
              approaching-expiry (30/7 day thresholds) and expired alerts
              for InventoryLot records. Idempotent via the ExpiryAlert
-             uniqueness key. -->
-        <job>OCA\Shillinq\Cron\LotExpiryAlertJob</job>
+             uniqueness key. Moved from lib/Cron/ by
+             background-job-consolidation (ADR-069 D1). -->
+        <job>OCA\Shillinq\BackgroundJob\LotExpiryAlertJob</job>
         <!-- bookings-pipelinq-customer-bridge slice 09: async retry drain
              for failed timeline publishes. Per-event QueuedJob — one
              argument (entryId) per queued event. PersistentTimelineRetryQueue
              adds runtime ticks; this declaration only registers the class
-             with the job runner. -->
-        <job>OCA\Shillinq\Cron\PipelinqTimelineRetryJob</job>
+             with the job runner. Moved from lib/Cron/ by
+             background-job-consolidation (ADR-069 D1). -->
+        <job>OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob</job>
         <!-- bookkeeping-purchase-order-3way slice 10 (REQ-PO3W-008 /
              REQ-VP-001 / REQ-VP-005): monthly vendor-performance scoring
              that aggregates GoodsReceiptNote + ThreeWayMatch +
@@ -116,8 +122,9 @@ Vrij en open source onder de EUPL-1.2-licentie.
              10% invoice), sets automatedReviewEligible=TRUE once the
              supplier crosses 96% (after the 90-day bootstrap window) and
              optionally relaxes their ToleranceProfile. Idempotent per
-             (supplierId, period, administrationId) tuple. -->
-        <job>OCA\Shillinq\Cron\VendorPerformanceAggregationJob</job>
+             (supplierId, period, administrationId) tuple. Moved from
+             lib/Cron/ by background-job-consolidation (ADR-069 D1). -->
+        <job>OCA\Shillinq\BackgroundJob\VendorPerformanceAggregationJob</job>
         <!-- bookkeeping-multi-administratie Task 15: per-administration
              backup scheduler. Evaluates each Administration record's
              backupSchedule (dagelijks/wekelijks/aanvragen) independently
@@ -135,15 +142,17 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <!-- bookkeeping-wbso-sno-administratie REQ-WBSO-009: nightly sweep
              that archives Document records past the seven-year Archiefwet
              retention boundary. Fail-soft per record; idempotent via the
-             schema's filed → archived lifecycle gate. -->
-        <job>OCA\Shillinq\Cron\DocumentArchiveCron</job>
+             schema's filed → archived lifecycle gate. Moved from
+             lib/Cron/ by background-job-consolidation (ADR-069 D1). -->
+        <job>OCA\Shillinq\BackgroundJob\DocumentArchiveCron</job>
         <!-- bookkeeping-soft-close-flux Task 22: nightly continuous-close
              orchestrator. Daily-interval TimedJob; for every active
              Administration record, invokes SoftCloseExecutor::execute() for
              the current yyyy-mm period (REQ-CLS-002). Targets 07:00 local
              CET completion; on-demand testing route lives at POST
-             /api/v2/soft-close/{administrationId}/execute-now. -->
-        <job>OCA\Shillinq\Cron\SoftCloseJob</job>
+             /api/v2/soft-close/{administrationId}/execute-now. Moved
+             from lib/Cron/ by background-job-consolidation (ADR-069 D1). -->
+        <job>OCA\Shillinq\BackgroundJob\SoftCloseJob</job>
         <!-- add-shillinq-multi-currency REQ-MC-003 / Task 11: daily ECB FX-rate
              import. Delegates the rate fetch to TreasuryRateAdapterInterface
              (openconnector source slug `treasury-rates`) and upserts FxRate

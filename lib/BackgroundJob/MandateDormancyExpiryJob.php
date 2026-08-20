@@ -15,7 +15,7 @@
  * file.
  *
  * @category Job
- * @package  OCA\Shillinq\Job
+ * @package  OCA\Shillinq\BackgroundJob
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -31,7 +31,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Job;
+namespace OCA\Shillinq\BackgroundJob;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Lifecycle\MandateGuard;
