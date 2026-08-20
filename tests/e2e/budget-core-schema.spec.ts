@@ -125,15 +125,25 @@ test.describe('budget-core-schema — Budgets nav group + index pages (REQ-BCS-0
 			name: /Banking.*Cashflow/i,
 		})
 		await expect(bankingCashflow.first()).toBeVisible({ timeout: 15_000 })
-		await bankingCashflow.first().click()
 
-		const budgetsGroup = page.getByText('Budgets', { exact: true })
-		await expect(budgetsGroup.first()).toBeVisible({ timeout: 10_000 })
+		// `src/menu-layout.json` relocations documents its own semantics:
+		// "groups dissolve into the target, leaves move under it" — the
+		// `Budgets` source group has no surviving group label to assert on
+		// after `"Budgets": "BankingCashflow"` relocates it; only its three
+		// leaves are expected to remain reachable, flattened alongside
+		// BankingCashflow's own children. Also: the top-level LINK navigates
+		// to the overview page rather than expanding children — the
+		// dedicated toggle (`CnAppNav` stamps `cn-nav-entry-<id>`, per
+		// chart-of-accounts.spec.ts's own precedent) is what reveals them.
+		await page
+			.locator('[data-testid="cn-nav-entry-BankingCashflow"]')
+			.getByRole('button', { name: /menu/i })
+			.click()
 
 		for (const label of ['Annual Budgets', 'Ledger Groups', 'Budget Lines']) {
 			await expect(
 				page.getByRole('link', { name: label }).first(),
-				`nav leaf "${label}" must be reachable under Budgets`,
+				`nav leaf "${label}" must be reachable under Banking & Cashflow`,
 			).toBeVisible({ timeout: 10_000 })
 		}
 	})
@@ -313,15 +323,23 @@ test.describe('budget-core-schema — BudgetLine 12 monthly columns (REQ-BCS-007
 
 		const annualBudgetField = page.getByLabel(/annual budget/i)
 		const ledgerGroupField = page.getByLabel(/ledger group/i)
-		const hasAnnualBudgetOption = await annualBudgetField
-			.isVisible()
+
+		// A visible field only means the form renders — it says nothing about
+		// whether the field has any selectable options. AnnualBudget ships
+		// with no seed data (design.md §10), so the field is present but its
+		// option list is empty on a fresh install; open it and check for an
+		// actual option before deciding whether to skip.
+		await annualBudgetField.click()
+		const hasAnnualBudgetOption = await page
+			.getByRole('option')
+			.first()
+			.isVisible({ timeout: 3_000 })
 			.catch(() => false)
 		test.skip(
 			!hasAnnualBudgetOption,
 			'no AnnualBudget option available — this schema ships with no seed data by design (design.md §10)',
 		)
 
-		await annualBudgetField.click()
 		await page.getByRole('option').first().click()
 		await ledgerGroupField.click()
 		await page.getByRole('option').first().click()
