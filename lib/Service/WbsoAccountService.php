@@ -122,7 +122,8 @@ class WbsoAccountService {
 			$byNumber[$parent]['children'][] = &$byNumber[$number];
 		}
 
-		return array_values($roots);
+		// `$roots` is only ever appended to with `[]=`, so it is already a list.
+		return $roots;
 	}//end buildHierarchy()
 
 	/**
@@ -311,7 +312,11 @@ class WbsoAccountService {
 		$cursor = $parent;
 		$depth = 1;
 		$seen = [$accountNumber => true];
-		while ($cursor !== '') {
+		// `$cursor` starts non-empty and is only ever reassigned from a `$next`
+		// the loop has already refused to accept when empty, so the
+		// `$cursor !== ''` condition this replaces could never end the loop —
+		// the `break` below is the only exit besides the throws.
+		while (true) {
 			if (isset($seen[$cursor]) === true) {
 				throw new InvalidArgumentException('Circular parent reference detected');
 			}

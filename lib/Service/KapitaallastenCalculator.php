@@ -46,7 +46,12 @@ class KapitaallastenCalculator {
 	 * @param int $firstDepreciationYear The first depreciation year.
 	 * @param int $depreciationTerm The depreciation period in years (> 0).
 	 *
-	 * @return array<string,float> A {year: amount} schedule keyed by year string.
+	 * @return array<int,float> A {year: amount} schedule keyed by year.
+	 *                          Keyed by INT, not string: PHP coerces a numeric
+	 *                          string array key back to an integer, so a
+	 *                          `(string)` cast on the year cannot survive being
+	 *                          used as a key. Callers indexing with `'2027'`
+	 *                          still work — the lookup is coerced the same way.
 	 *
 	 * @spec openspec/changes/bookkeeping-programmabegroting/tasks.md#task-25
 	 *
@@ -63,7 +68,7 @@ class KapitaallastenCalculator {
 
 		$schedule = [];
 		for ($i = 0; $i < $depreciationTerm; $i++) {
-			$year = (string)($firstDepreciationYear + $i);
+			$year = ($firstDepreciationYear + $i);
 			$cents = $perYearCents;
 			if ($i === ($depreciationTerm - 1)) {
 				// Final year absorbs the rounding remainder.

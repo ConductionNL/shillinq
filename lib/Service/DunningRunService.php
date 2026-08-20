@@ -1265,11 +1265,7 @@ class DunningRunService {
 				->setRegister($this->register())
 				->setSchema($schema)
 				->findAll(['filters' => $filters]);
-			if (is_array($rows) === true) {
-				return $rows;
-			}
-
-			return [];
+			return $rows;
 		} catch (\Throwable $e) {
 			$this->logger->warning('Shillinq: dunning findAll(' . $schema . ') failed: ' . $e->getMessage());
 			return [];

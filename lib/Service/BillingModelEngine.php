@@ -78,7 +78,9 @@ class BillingModelEngine {
 			$lines[] = [
 				'lineNumber' => ($line++),
 				'sourceType' => 'time_entry',
-				'sourceId' => $group['sourceIds'][0] ?? null,
+				// `sourceIds` is a non-empty list of strings here, so offset 0
+				// always exists — the `?? null` this replaces was unreachable.
+				'sourceId' => $group['sourceIds'][0],
 				'description' => sprintf(
 					'%s — %s hours @ €%.2f/hr',
 					ucwords(str_replace('_', ' ', $group['resourceType'])),
@@ -309,7 +311,7 @@ class BillingModelEngine {
 		$line = 1;
 
 		foreach ($ratedReadings as $reading) {
-			if (isset($reading['unitPriceCents']) === true && $reading['unitPriceCents'] !== null) {
+			if (isset($reading['unitPriceCents']) === true) {
 				$unitPriceCents = (int)$reading['unitPriceCents'];
 			} else {
 				$unitPriceCents = null;

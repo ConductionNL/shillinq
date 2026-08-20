@@ -76,7 +76,13 @@ class BankRulePreviewService {
 	 * @param list<array<string,mixed>> $candidateLines Unmatched BankStatementLine rows.
 	 * @param string|null $anchorDate Optional Y-m-d anchor for date-window predicates.
 	 *
-	 * @return array{matchedLineIds:list<string>,matchedCount:int,totalEvaluated:int,sample:list<array<string,mixed>>,predicateBreakdown:array<string,int>}
+	 * `predicateBreakdown` is keyed by the predicate's INDEX, not by a name, and
+	 * that index is an int: `evaluatePredicates()` returns `breakdown` as
+	 * `array<int,bool>`, and PHP coerces a numeric string array key back to an
+	 * integer, so the `(string)` cast this used to carry could not have made the
+	 * keys strings.
+	 *
+	 * @return array{matchedLineIds:list<string>,matchedCount:int,totalEvaluated:int,sample:list<array<string,mixed>>,predicateBreakdown:array<int,int>}
 	 *
 	 * @spec openspec/specs/bookkeeping-bank-reconciliation/spec.md (REQ-BR-011)
 	 */
@@ -99,13 +105,12 @@ class BankRulePreviewService {
 
 			// Tally per-op pass counts so the operator sees which predicate narrows the window.
 			foreach ($result['breakdown'] as $op => $passed) {
-				$key = (string)$op;
-				if (isset($breakdown[$key]) === false) {
-					$breakdown[$key] = 0;
+				if (isset($breakdown[$op]) === false) {
+					$breakdown[$op] = 0;
 				}
 
 				if ($passed === true) {
-					$breakdown[$key]++;
+					$breakdown[$op]++;
 				}
 			}
 
