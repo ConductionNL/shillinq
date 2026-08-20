@@ -253,7 +253,10 @@ test.describe('budget-core-schema — LedgerGroup seeded data (REQ-BCS-005)', ()
 	 * REQ-BCS-004 scenario: a nested LedgerGroup is reachable from its
 	 * parent's detail page — `Personeel` (parent) lists `Lonen en
 	 * salarissen`/`Sociale lasten en pensioenlasten` (children) via the
-	 * `children` relatedList (`parentLedgerGroupId`).
+	 * `children` relatedCollection (`parentLedgerGroupId`). The manifest key
+	 * is `relatedCollections` — `relatedLists` is not a prop on any Cn page
+	 * component, so it lands in `$attrs` and renders nothing while every
+	 * gate stays green.
 	 */
 	test("Personeel's detail page lists its two seeded children", async ({
 		page,
@@ -265,6 +268,17 @@ test.describe('budget-core-schema — LedgerGroup seeded data (REQ-BCS-005)', ()
 
 		const body = page.locator('#app-content-vue, main').first()
 		const personeelRow = body.getByText('Personeel', { exact: true }).first()
+		// `isVisible()` is a POINT-IN-TIME probe with no auto-wait, and
+		// `cn-index-page` mounts BEFORE its rows arrive. Probing straight
+		// after the mount therefore races the row load, and the defensive
+		// skip below fires on a page that would have rendered the row a
+		// moment later — observed self-skipping 3 of 4 runs. A skip and a
+		// pass are indistinguishable in the summary line, so this raced
+		// itself into looking green. Wait for the row explicitly first; the
+		// skip then means what it says (genuinely absent seed data).
+		await personeelRow
+			.waitFor({ state: 'visible', timeout: 15_000 })
+			.catch(() => {})
 		const found = await personeelRow.isVisible().catch(() => false)
 		test.skip(
 			!found,
