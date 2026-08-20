@@ -333,7 +333,7 @@
             "source": "NexusCalculation",
             "groupBy": [
               "NexusCalculation.qualifying_asset_id",
-              "NexusCalculation.boekjaar"
+              "NexusCalculation.financialYear"
             ],
             "operations": {
               "nexus_fraction_applied": {
@@ -526,7 +526,7 @@
               "through": "QualifyingAsset",
               "on": "QualifyingAsset.id",
               "select": [
-                "QualifyingAsset.naam",
+                "QualifyingAsset.name",
                 "QualifyingAsset.status"
               ]
             },
