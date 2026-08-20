@@ -154,6 +154,11 @@ class BudgetVsActualsReader {
 	 * } The assembled context the calculator consumes.
 	 *
 	 * @spec openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md#req-bcs-008
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The flag is REQ-BCS-008's own
+	 * call-budget toggle (5 calls with LedgerGroups, 4 without) — splitting it
+	 * into two public methods would duplicate the shared account/actuals/
+	 * BudgetLine reads and fork the ≤5-call bound this method is tested against.
 	 */
 	public function loadContext(string $administrationId, array $annualBudgetIds, bool $includeLedgerGroups = true): array {
 		$accounts = $this->query(schema: self::SCHEMA_ACCOUNT, filters: ['administrationId' => $administrationId]);
@@ -270,7 +275,8 @@ class BudgetVsActualsReader {
 	 * @param list<array<string,mixed>> $rows The LedgerGroup rows.
 	 * @param list<array<string,mixed>> $accounts The Account rows to resolve membership against.
 	 *
-	 * @return array{entries: list<array{id:string,slug:string,parentRef:?string,memberAccountNumbers:list<string>}>, keyToIndex: array<string,int>, childrenByIndex: array<int,list<int>>}
+	 * @return array{entries: list<array{id:string,slug:string,parentRef:?string,memberAccountNumbers:list<string>}>,
+	 *         keyToIndex: array<string,int>, childrenByIndex: array<int,list<int>>}
 	 */
 	private function buildLedgerGroupIndex(array $rows, array $accounts): array {
 		$entries = [];
@@ -281,10 +287,15 @@ class BudgetVsActualsReader {
 			$slug = (string)($row['@self']['slug'] ?? $row['slug'] ?? '');
 			$index = count($entries);
 
+			$parentRef = null;
+			if (($row['parentLedgerGroupId'] ?? null) !== null) {
+				$parentRef = (string)$row['parentLedgerGroupId'];
+			}
+
 			$entries[] = [
 				'id' => $id,
 				'slug' => $slug,
-				'parentRef' => (($row['parentLedgerGroupId'] ?? null) !== null ? (string)$row['parentLedgerGroupId'] : null),
+				'parentRef' => $parentRef,
 				'memberAccountNumbers' => $this->resolveMembers(ledgerGroup: $row, accounts: $accounts),
 			];
 
@@ -330,14 +341,22 @@ class BudgetVsActualsReader {
 	 * @return list<string> The resolved, deduplicated member account numbers.
 	 */
 	private function resolveMembers(array $ledgerGroup, array $accounts): array {
-		$ranges = (is_array($ledgerGroup['accountRanges'] ?? null) ? $ledgerGroup['accountRanges'] : []);
-		$included = (is_array($ledgerGroup['includedAccountNumbers'] ?? null) ? $ledgerGroup['includedAccountNumbers'] : []);
-		$excluded = array_flip(
-			array_map(
-				'strval',
-				(is_array($ledgerGroup['excludedAccountNumbers'] ?? null) ? $ledgerGroup['excludedAccountNumbers'] : [])
-			)
-		);
+		$ranges = [];
+		if (is_array($ledgerGroup['accountRanges'] ?? null) === true) {
+			$ranges = $ledgerGroup['accountRanges'];
+		}
+
+		$included = [];
+		if (is_array($ledgerGroup['includedAccountNumbers'] ?? null) === true) {
+			$included = $ledgerGroup['includedAccountNumbers'];
+		}
+
+		$excludedAccountNumbers = [];
+		if (is_array($ledgerGroup['excludedAccountNumbers'] ?? null) === true) {
+			$excludedAccountNumbers = $ledgerGroup['excludedAccountNumbers'];
+		}
+
+		$excluded = array_flip(array_map('strval', $excludedAccountNumbers));
 
 		$members = [];
 		foreach ($accounts as $account) {
