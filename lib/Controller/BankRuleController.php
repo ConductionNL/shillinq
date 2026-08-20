@@ -385,7 +385,22 @@ class BankRuleController extends Controller {
 	/**
 	 * Resolve the current administration id server-side (IDOR-safe).
 	 *
+	 * Verified for security-endpoint-guards (Open Question, REQ-001): this
+	 * reads `AdministrationContextService::buildContext()['activeAdministrationId']`,
+	 * which is derived purely from `currentUserId()` (the authenticated
+	 * session uid) via the caller's own `AdministrationMembership` records
+	 * — see `buildContext()` in AdministrationContextService. No request
+	 * parameter, header, or client-supplied value reaches this path; the
+	 * only client-influenceable output is the choice of the FIRST
+	 * accessible administration (a business-logic detail, not an IDOR
+	 * vector, since it is always one the caller is actually a member of).
+	 * `acceptSuggestion()` and every other method in this controller that
+	 * calls this method are therefore already IDOR-safe; no additional
+	 * membership check was added.
+	 *
 	 * @return string
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	private function resolveAdministrationId(): string {
 		try {

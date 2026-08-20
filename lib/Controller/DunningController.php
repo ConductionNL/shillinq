@@ -43,15 +43,19 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\BIKStaffelCalculator;
 use OCA\Shillinq\Service\Dunning\IncassoDossierComposer;
 use OCA\Shillinq\Service\DunningRunService;
+use OCA\Shillinq\Util\ObjectIdentifier;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IAppConfig;
+use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Log\LoggerInterface;
 
@@ -76,6 +80,12 @@ class DunningController extends Controller {
 	 * @param IncassoDossierComposer $dossier Stage-5 dossier composer.
 	 * @param AdministrationContextService $context Admin-scope context.
 	 * @param LoggerInterface $logger Logger.
+	 * @param IAppConfig $appConfig App config for the register slug (security-endpoint-guards).
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per
+	 *                                              ADR-084 — used to fetch a DunningPauseDispute
+	 *                                              by id so its OWN administrationId can be
+	 *                                              checked (security-endpoint-guards REQ-001).
+	 * @param IL10N $l10n Localized error messages (ADR-050).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -84,6 +94,9 @@ class DunningController extends Controller {
 		private readonly IncassoDossierComposer $dossier,
 		private readonly AdministrationContextService $context,
 		private readonly LoggerInterface $logger,
+		private readonly IAppConfig $appConfig,
+		private readonly ObjectServiceInterface $objectService,
+		private readonly IL10N $l10n,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -199,6 +212,10 @@ class DunningController extends Controller {
 	 *                      409 when the invoice is paused or admin-error detected.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-16
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
+	 *
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function executeRun(): JSONResponse {
@@ -234,8 +251,14 @@ class DunningController extends Controller {
 		try {
 			$persisted = $this->runs->executeStage(administrationId: $administrationId, params: $params);
 		} catch (\Throwable $e) {
-			$this->logger->info('Shillinq: executeRun rejected: ' . $e->getMessage());
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
+			$this->logger->error('DunningController.executeRun failed', ['exception' => $e]);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Unable to execute the dunning run'),
+					'error' => 'dunning-run-execution-failed',
+				],
+				Http::STATUS_CONFLICT,
+			);
 		}
 
 		return new JSONResponse($persisted, Http::STATUS_CREATED);
@@ -314,6 +337,10 @@ class DunningController extends Controller {
 	 * @return JSONResponse 200 with the updated pause; 404 when not found.
 	 *
 	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-17
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
+	 *
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function resumePause(string $pauseId): JSONResponse {
@@ -341,6 +368,25 @@ class DunningController extends Controller {
 			return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 		}
 
+		// GUARD (ownership/tenant) — security-endpoint-guards REQ-001. The
+		// check above only confirms the CALLER belongs to the request-
+		// supplied administration_id; it never confirms the
+		// DunningPauseDispute named by $pauseId actually belongs to that
+		// administration. DunningRunService::resumePause() fetches the
+		// pause purely by id and never reads its own $administrationId
+		// parameter (see that method's own
+		// @SuppressWarnings(PHPMD.UnusedFormalParameter) note) — without
+		// this check, a member of ANY administration could resume/expire
+		// another organisation's dunning pause, and read its details
+		// (reason, evidenceRefs), by guessing/enumerating its id.
+		$existingPause = $this->fetchDunningPauseDispute(pauseId: $pauseId);
+		$pauseAdministrationId = (string)($existingPause['administrationId'] ?? '');
+		if ($existingPause === null || $this->context->canAccess(administrationId: $pauseAdministrationId) === false) {
+			// Masked 404 — matches the sibling not-found response above so
+			// the existence of another tenant's pause is never disclosed.
+			return new JSONResponse(['error' => 'Dunning pause not found'], Http::STATUS_NOT_FOUND);
+		}
+
 		$resolution = (string)$this->request->getParam('resolution', 'resolve');
 		$partial = $this->request->getParam('partialSettlement');
 		if (in_array($resolution, ['resolve', 'expire'], true) === false) {
@@ -360,8 +406,14 @@ class DunningController extends Controller {
 				partialSettlement: $partialSettlement,
 			);
 		} catch (\Throwable $e) {
-			$this->logger->info('Shillinq: resumePause failed: ' . $e->getMessage());
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+			$this->logger->error('DunningController.resumePause failed', ['exception' => $e]);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Unable to resume the dunning pause'),
+					'error' => 'dunning-pause-not-found',
+				],
+				Http::STATUS_NOT_FOUND,
+			);
 		}
 
 		return new JSONResponse($persisted, Http::STATUS_OK);
@@ -566,4 +618,45 @@ class DunningController extends Controller {
 			Http::STATUS_OK
 		);
 	}//end transfer()
+
+	/**
+	 * Fetch a DunningPauseDispute by id via the real ObjectService API, so
+	 * its OWN administrationId can be checked before resumePause() mutates
+	 * it (security-endpoint-guards REQ-001 — see resumePause() above).
+	 *
+	 * @param string $pauseId The pause record id.
+	 *
+	 * @return array<string,mixed>|null The record, or null when genuinely absent.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function fetchDunningPauseDispute(string $pauseId): ?array {
+		try {
+			$scoped = $this->objectService
+				->setRegister($this->register())
+				->setSchema('DunningPauseDispute');
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'DunningController.resumePause: failed to scope ObjectService for DunningPauseDispute',
+				['exception' => $e]
+			);
+			return null;
+		}
+
+		return ObjectIdentifier::findOne(scoped: $scoped, id: $pauseId);
+	}//end fetchDunningPauseDispute()
+
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
+
+		return $register;
+	}//end register()
 }//end class

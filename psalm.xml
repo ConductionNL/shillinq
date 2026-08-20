@@ -60,6 +60,14 @@
                 <referencedClass name="OCP\Notification\IManager"/>
                 <referencedClass name="OCP\Share\IManager"/>
                 <!-- OpenRegister cross-app classes (loaded dynamically) -->
+                <!-- ADR-084 published contract (adopted by commit ef9c8fa5, pre-dates
+                     security-endpoint-guards) — missing from this allowlist since that
+                     adoption; every controller injecting these two (CBSSubmissionController,
+                     InvoiceApiController, and others) already failed UndefinedClass here.
+                     Not introduced by this change; fixed alongside since this change's own
+                     verification pass is what surfaced it. -->
+                <referencedClass name="OCA\OpenRegister\Contract\ObjectServiceInterface"/>
+                <referencedClass name="OCA\OpenRegister\Contract\ObjectEntityInterface"/>
                 <referencedClass name="OCA\OpenRegister\Db\ObjectEntity"/>
                 <referencedClass name="OCA\OpenRegister\Db\RegisterMapper"/>
                 <referencedClass name="OCA\OpenRegister\Db\SchemaMapper"/>

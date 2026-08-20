@@ -32,6 +32,7 @@ use OCA\Shillinq\Controller\WbsoAccountApiController;
 use OCA\Shillinq\Service\WbsoAccountService;
 use OCA\Shillinq\Service\WbsoRbacResolver;
 use OCP\AppFramework\Http;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -82,6 +83,13 @@ final class WbsoAccountApiControllerTest extends TestCase {
 	private LoggerInterface&MockObject $logger;
 
 	/**
+	 * Mock IL10N.
+	 *
+	 * @var IL10N&MockObject
+	 */
+	private IL10N&MockObject $l10n;
+
+	/**
 	 * Controller under test.
 	 *
 	 * @var WbsoAccountApiController
@@ -100,6 +108,8 @@ final class WbsoAccountApiControllerTest extends TestCase {
 		$this->rbac = $this->createMock(WbsoRbacResolver::class);
 		$this->session = $this->createMock(IUserSession::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->l10n = $this->createMock(IL10N::class);
+		$this->l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
 
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('alice');
@@ -111,6 +121,7 @@ final class WbsoAccountApiControllerTest extends TestCase {
 			rbac: $this->rbac,
 			userSession: $this->session,
 			logger: $this->logger,
+			l10n: $this->l10n,
 		);
 	}//end setUp()
 
@@ -152,6 +163,7 @@ final class WbsoAccountApiControllerTest extends TestCase {
 			rbac: $this->rbac,
 			userSession: $session,
 			logger: $this->logger,
+			l10n: $this->l10n,
 		);
 
 		$response = $controller->index();

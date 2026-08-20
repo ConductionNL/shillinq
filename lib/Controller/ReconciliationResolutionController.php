@@ -43,6 +43,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCS\OCSForbiddenException;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -73,6 +74,9 @@ class ReconciliationResolutionController extends Controller {
 	 * @param LoggerInterface $logger Logger for
 	 *                                fail-closed
 	 *                                diagnostics.
+	 * @param IL10N $l10n Localized strings for
+	 *                    client-facing error
+	 *                    messages (ADR-050).
 	 *
 	 * @return void
 	 */
@@ -81,6 +85,7 @@ class ReconciliationResolutionController extends Controller {
 		private readonly ReconciliationResolutionService $service,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly IL10N $l10n,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -141,9 +146,29 @@ class ReconciliationResolutionController extends Controller {
 				actor: $actor,
 			);
 		} catch (\OutOfBoundsException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+			$this->logger->error(
+				'ReconciliationResolutionController: resolve target not found',
+				['reconId' => $reconId, 'matchId' => $matchId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Unable to find the reconciliation match'),
+					'error' => 'reconciliation-match-not-found',
+				],
+				Http::STATUS_NOT_FOUND,
+			);
 		} catch (\DomainException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
+			$this->logger->error(
+				'ReconciliationResolutionController: resolve rejected by domain rule',
+				['reconId' => $reconId, 'matchId' => $matchId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Unable to resolve a match on a locked reconciliation'),
+					'error' => 'reconciliation-match-locked',
+				],
+				Http::STATUS_CONFLICT,
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ReconciliationResolutionController: resolve failed',

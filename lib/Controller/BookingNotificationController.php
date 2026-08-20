@@ -269,6 +269,25 @@ class BookingNotificationController extends Controller {
 	 * @throws OCSForbiddenException When not authorised.
 	 *
 	 * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-11
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 *
+	 * RE-VERIFIED for security-endpoint-guards (Open Question / Risk 3):
+	 * re-read against HEAD before any change. This guard is genuine and
+	 * enforcing — admin bypass, then `AdministrationContextService::canAccess()`
+	 * against the booking's own `administrationId`, throwing on both a
+	 * missing booking and a non-member caller. Its docblock's own history
+	 * note documents a PRIOR bug (`findObject()` — a method that does not
+	 * exist on OpenRegister's ObjectService — silently turning every
+	 * non-admin call into a 403 via the catch-all `\Throwable` arm) that
+	 * was already fixed before this change started; that fix is what the
+	 * audit's "confirmed" note was most likely trailing. No code change
+	 * was needed here — verdict: ALREADY-GUARDED. The `#[NoAdminRequired]`
+	 * (`getBookingTriggers`/`updateBookingTriggers`, both per-object,
+	 * guarded by this method) vs `#[AuthorizedAdminSetting]`
+	 * (`getNotificationMonitor`/`disableAllTriggers`, both instance-wide
+	 * admin CRUD across every administration's data) split on this
+	 * controller was also re-checked and is correct for what each method
+	 * actually does — not a finding.
 	 */
 	private function authorizeBookingAccess(string $bookingId): void {
 		$user = $this->userSession->getUser();

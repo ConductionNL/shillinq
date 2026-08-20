@@ -94,7 +94,17 @@ class GoodsReceiptNoteController extends Controller {
 	 *                      401 anonymous; 404 on cross-tenant; 500 without
 	 *                      stack trace.
 	 *
+	 * Re-verified for security-endpoint-guards (REQ-001): the
+	 * `AdministrationContextService::canAccess()` masked-404 guard below was
+	 * already present and enforcing before this change — a mechanical
+	 * `hydra-gate-no-admin-idor` false positive (the scan only recognises
+	 * guard calls named `authorize*`/`require*`/`ensure*` and does not match
+	 * `canAccess(`). `GoodsReceiptNoteService::createGRN()` also re-checks
+	 * access. No guard change needed.
+	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function create(): JSONResponse {
@@ -155,7 +165,18 @@ class GoodsReceiptNoteController extends Controller {
 	 *                      401 anonymous; 404 cross-tenant or missing GRN/PO
 	 *                      line.
 	 *
+	 * Re-verified for security-endpoint-guards (REQ-001): the
+	 * `AdministrationContextService::canAccess()` masked-404 guard below was
+	 * already present and enforcing before this change — a mechanical
+	 * `hydra-gate-no-admin-idor` false positive. `GoodsReceiptNoteService::
+	 * addGRNLine()` additionally scopes the GRN lookup by `id` AND
+	 * `administrationId` together, so a caller cannot reach another
+	 * administration's GRN even by supplying an id they guessed. No guard
+	 * change needed.
+	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function addLine(string $id): JSONResponse {
@@ -216,7 +237,17 @@ class GoodsReceiptNoteController extends Controller {
 	 *                      anonymous; 404 cross-tenant or missing GRN; 409 on
 	 *                      lifecycle conflict.
 	 *
+	 * Re-verified for security-endpoint-guards (REQ-001): the
+	 * `AdministrationContextService::canAccess()` masked-404 guard below was
+	 * already present and enforcing before this change — a mechanical
+	 * `hydra-gate-no-admin-idor` false positive.
+	 * `GoodsReceiptNoteService::qualityCheckPass()` additionally scopes the
+	 * GRN lookup by `id` AND `administrationId` together. No guard change
+	 * needed.
+	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function qualityCheck(string $id): JSONResponse {
@@ -267,7 +298,16 @@ class GoodsReceiptNoteController extends Controller {
 	 *                      anonymous; 404 cross-tenant or missing GRN; 409 on
 	 *                      terminal-state conflict.
 	 *
+	 * Re-verified for security-endpoint-guards (REQ-001): the
+	 * `AdministrationContextService::canAccess()` masked-404 guard below was
+	 * already present and enforcing before this change — a mechanical
+	 * `hydra-gate-no-admin-idor` false positive. `GoodsReceiptNoteService::
+	 * acceptGRN()` additionally scopes the GRN lookup by `id` AND
+	 * `administrationId` together. No guard change needed.
+	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function accept(string $id): JSONResponse {
@@ -317,7 +357,18 @@ class GoodsReceiptNoteController extends Controller {
 	 * @return JSONResponse 200 with the updated GRN; 400 on validation; 401
 	 *                      anonymous; 404 cross-tenant or missing GRN.
 	 *
+	 * Re-verified for security-endpoint-guards (REQ-001): the
+	 * `AdministrationContextService::canAccess()` masked-404 guard below was
+	 * already present and enforcing before this change — a mechanical
+	 * `hydra-gate-no-admin-idor` false positive. `GoodsReceiptNoteService::
+	 * uploadPhotos()` additionally scopes the GRN lookup by `id` AND
+	 * `administrationId` together. No guard change needed (REQ-004 test
+	 * coverage for both directions was previously missing and is added by
+	 * this change).
+	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function uploadPhotos(string $id): JSONResponse {
