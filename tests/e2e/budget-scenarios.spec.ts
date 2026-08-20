@@ -119,7 +119,7 @@ test.describe('budget-scenarios — Budgets nav group leaves (REQ-BSC-008)', () 
 	 * `budget-core-schema.json`'s own `_meta_note`) gains three new leaves
 	 * this change adds: Scenarios, Scenario Modifiers, Scenario Comparison.
 	 */
-	test('Budgets nav group lists the three new budget-scenarios leaves', async ({
+	test('the three new budget-scenarios leaves are reachable under Banking & Cashflow', async ({
 		page,
 	}) => {
 		await page.goto(APP + '/')
@@ -130,19 +130,40 @@ test.describe('budget-scenarios — Budgets nav group leaves (REQ-BSC-008)', () 
 			name: /Banking.*Cashflow/i,
 		})
 		await expect(bankingCashflow.first()).toBeVisible({ timeout: 15_000 })
-		await bankingCashflow.first().click()
 
-		const budgetsGroup = page.getByText('Budgets', { exact: true })
-		await expect(budgetsGroup.first()).toBeVisible({ timeout: 10_000 })
+		// `src/menu-layout.json` relocations documents its own semantics:
+		// "groups dissolve into the target, leaves move under it" — the
+		// `Budgets` source group has no surviving group label to assert on
+		// after `"Budgets": "BankingCashflow"` relocates it; only its leaves
+		// are expected to remain reachable, flattened alongside
+		// BankingCashflow's own children. This assertion used to read
+		// `getByText('Budgets', { exact: true })`, which can NEVER match:
+		// the design guarantees that DOM node does not exist. Also: the
+		// top-level LINK navigates to the overview page rather than
+		// expanding children — the dedicated toggle (`CnAppNav` stamps
+		// `cn-nav-entry-<id>`, per chart-of-accounts.spec.ts's own
+		// precedent) is what reveals them.
+		await page
+			.locator('[data-testid="cn-nav-entry-BankingCashflow"]')
+			.getByRole('button', { name: /menu/i })
+			.click()
 
-		for (const label of [
-			'Scenarios',
-			'Scenario Modifiers',
-			'Scenario Comparison',
+		// Assert each leaf by the id `CnAppNav` stamps onto it
+		// (`cn-nav-entry-<child id>`, CnAppNav.vue) rather than by its label.
+		// `getByRole('link', { name: 'Scenarios' })` is AMBIGUOUS in this very
+		// subtree: cashflow-13wk already ships a `Scenarios` leaf pointing at
+		// `/apps/shillinq/cashflow/scenarios`, so a label-only locator matches
+		// that page and reports PASS without this change's own
+		// `/begroting/scenarios` leaf existing at all. The manifest id is
+		// unique per leaf, so it cannot false-pass.
+		for (const [id, label] of [
+			['BudgetScenarios', 'Scenarios'],
+			['BudgetScenarioModifiers', 'Scenario Modifiers'],
+			['BudgetScenarioComparison', 'Scenario Comparison'],
 		]) {
 			await expect(
-				page.getByRole('link', { name: label }).first(),
-				`nav leaf "${label}" must be reachable under Budgets`,
+				page.locator(`[data-testid="cn-nav-entry-${id}"]`),
+				`nav leaf "${label}" (${id}) must be reachable under Banking & Cashflow`,
 			).toBeVisible({ timeout: 10_000 })
 		}
 	})
