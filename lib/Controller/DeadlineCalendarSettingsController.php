@@ -76,6 +76,8 @@ class DeadlineCalendarSettingsController extends Controller {
 	 * @return JSONResponse `{categories: {filing: {enabled, leadDays}, …}}`.
 	 *
 	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -87,6 +89,11 @@ class DeadlineCalendarSettingsController extends Controller {
 			);
 		}
 
+		// Security-endpoint-guards REQ-001 JUSTIFY: $userId is resolved from
+		// the session ONLY (see class docblock) — no user id is ever accepted
+		// from the request, so there is no other tenant's object this
+		// endpoint could be pointed at. Cross-user access is structurally
+		// impossible, not merely checked.
 		$userId = $user->getUID();
 		$categories = [];
 		foreach (ComplianceDeadlineCalendarService::CATEGORIES as $category) {
@@ -110,6 +117,8 @@ class DeadlineCalendarSettingsController extends Controller {
 	 * @return JSONResponse The saved settings (same shape as index()).
 	 *
 	 * @spec openspec/specs/compliance-deadline-calendar/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function update(): JSONResponse {
@@ -121,6 +130,10 @@ class DeadlineCalendarSettingsController extends Controller {
 			);
 		}
 
+		// Security-endpoint-guards REQ-001 JUSTIFY: writes ONLY the session
+		// user's own preferences — no user id parameter exists on this
+		// endpoint (see class docblock), so cross-user mutation (IDOR) is
+		// structurally impossible rather than merely guarded.
 		$userId = $user->getUID();
 		$categories = $this->request->getParam('categories');
 		if (is_array($categories) === false) {

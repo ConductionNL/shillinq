@@ -37,6 +37,7 @@ use OCA\Shillinq\Tests\Unit\Service\InMemoryObjectService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -138,12 +139,16 @@ class GRIRReconciliationControllerTest extends TestCase {
 
 		$userSession->method('getUser')->willReturn($user);
 
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
+
 		return new GRIRReconciliationController(
 			request: $request,
 			grirClearingService: $service,
 			administrationContext: $administrationContext,
 			userSession: $userSession,
 			logger: $this->createMock(LoggerInterface::class),
+			l10n: $l10n,
 		);
 
 	}//end controller()
@@ -221,4 +226,60 @@ class GRIRReconciliationControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_BAD_REQUEST, $controller->saldo()->getStatus());
 
 	}//end testMissingPeriodIdIsABadRequest()
+
+	/**
+	 * A non-"not found" `\RuntimeException` from the service no longer
+	 * reaches the client as raw exception text (ADR-050 / security-endpoint-
+	 * guards REQ-003) — it is mapped to a stable slug + localized message,
+	 * and the real exception is logged server-side only.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
+	 */
+	public function testInvalidRuntimeExceptionDoesNotLeakRawExceptionText(): void {
+		$administrationContext = $this->createMock(AdministrationContextService::class);
+		$administrationContext->method('canAccess')->willReturn(true);
+
+		$service = $this->createMock(GRIRClearingService::class);
+		$service->method('reconcileGRIRSaldoForPeriod')->willThrowException(
+			new \RuntimeException('SQLSTATE[42S02]: internal detail the client must never see')
+		);
+
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParam')->willReturnCallback(
+			static function (string $name, $default = '') {
+				$params = ['administrationId' => 'adm-1', 'periodId' => '2026-Q2'];
+				return ($params[$name] ?? $default);
+			}
+		);
+
+		$userSession = $this->createMock(IUserSession::class);
+		$userSession->method('getUser')->willReturn($this->createMock(IUser::class));
+
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())->method('error');
+
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
+
+		$controller = new GRIRReconciliationController(
+			request: $request,
+			grirClearingService: $service,
+			administrationContext: $administrationContext,
+			userSession: $userSession,
+			logger: $logger,
+			l10n: $l10n,
+		);
+
+		$response = $controller->saldo();
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame('grir-saldo-invalid-request', $response->getData()['error']);
+		self::assertStringNotContainsStringIgnoringCase(
+			'SQLSTATE',
+			(string)json_encode($response->getData())
+		);
+
+	}//end testInvalidRuntimeExceptionDoesNotLeakRawExceptionText()
 }//end class

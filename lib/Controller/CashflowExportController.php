@@ -84,6 +84,8 @@ class CashflowExportController extends Controller {
 	 * @return DataDownloadResponse|JSONResponse The PDF download, or a JSON error envelope.
 	 *
 	 * @spec openspec/specs/bookkeeping-cashflow-13wk/spec.md#req-cf-016
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function exportPdf(): DataDownloadResponse|JSONResponse {
@@ -91,6 +93,12 @@ class CashflowExportController extends Controller {
 			return new JSONResponse(['error' => 'Authentication required'], Http::STATUS_UNAUTHORIZED);
 		}
 
+		// Security-endpoint-guards REQ-001 JUSTIFY: this endpoint takes NO
+		// caller-supplied object identifier — buildHorizonExport() resolves
+		// the forecast horizon entirely from the authenticated caller's own
+		// AdministrationMembership set (REQ-MA-001). There is no request-
+		// supplied id to check against another tenant's data, so no
+		// per-object guard applies beyond the authentication check above.
 		try {
 			$export = $this->exportService->buildHorizonExport();
 		} catch (Throwable $e) {

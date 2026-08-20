@@ -191,6 +191,7 @@ final class MeteredInvoiceGenerationTest extends TestCase {
 			'UsageRatePlan' => [
 				[
 					'id' => 'urp-api-standard',
+					'administrationId' => 'adm-holding-nl',
 					'name' => 'API Calls — Standard',
 					'resourceType' => 'api_calls',
 					'unit' => 'calls',

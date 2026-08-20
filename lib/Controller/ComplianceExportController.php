@@ -55,6 +55,7 @@ use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IGroupManager;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
@@ -92,6 +93,7 @@ class ComplianceExportController extends Controller {
 	 *                                      REQ-RAP-005 scenario 3
 	 *                                      export-of-export logging.
 	 * @param LoggerInterface $logger Logger (no PII).
+	 * @param IL10N $l10n Translation service for ADR-050 error-response messages.
 	 *
 	 * @return void
 	 */
@@ -102,6 +104,7 @@ class ComplianceExportController extends Controller {
 		private readonly IGroupManager $groupManager,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
+		private readonly IL10N $l10n,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -116,6 +119,8 @@ class ComplianceExportController extends Controller {
 	 *                  403 non-auditor; 500 without stack trace.
 	 *
 	 * @spec openspec/specs/bookkeeping-rekenkamer-audit-pack/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function export(): Response {
@@ -154,7 +159,14 @@ class ComplianceExportController extends Controller {
 				actorFilter: $actorFilter,
 			);
 		} catch (RuntimeException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+			$this->logger->error('ComplianceExportController.export failed', ['exception' => $e]);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Unable to generate the compliance export'),
+					'error' => 'compliance-export-invalid-request',
+				],
+				Http::STATUS_BAD_REQUEST,
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'ComplianceExportController: failed to generate export',

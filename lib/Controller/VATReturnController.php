@@ -58,6 +58,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
@@ -84,6 +85,7 @@ class VATReturnController extends Controller {
 	 * @param IUserSession $session User session (for actor identity).
 	 * @param AdministrationContextService $context RBAC guard — resolves the user's administration memberships.
 	 * @param LoggerInterface $logger Logger.
+	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -92,6 +94,7 @@ class VATReturnController extends Controller {
 		private readonly IUserSession $session,
 		private readonly AdministrationContextService $context,
 		private readonly LoggerInterface $logger,
+		private readonly IL10N $l10n,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -342,6 +345,8 @@ class VATReturnController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function submit(string $returnId): JSONResponse {
@@ -365,7 +370,15 @@ class VATReturnController extends Controller {
 
 			$vatReturn = $this->service->submitReturn(returnId: $returnId, userId: $userId);
 		} catch (\RuntimeException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
+			$this->logger->error(
+				'VATReturnController.submit failed',
+				['returnId' => $returnId, 'exception' => $e]
+			);
+
+			return new JSONResponse(
+				['message' => $this->l10n->t('Unable to submit VAT return'), 'error' => 'vat-return-submit-failed'],
+				Http::STATUS_CONFLICT,
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'VATReturnController: failed to submit VAT return',
@@ -386,6 +399,8 @@ class VATReturnController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function rebase(string $returnId): JSONResponse {
@@ -408,7 +423,15 @@ class VATReturnController extends Controller {
 
 			$vatReturn = $this->service->rebaseReturn(returnId: $returnId, userId: $userId);
 		} catch (\RuntimeException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
+			$this->logger->error(
+				'VATReturnController.rebase failed',
+				['returnId' => $returnId, 'exception' => $e]
+			);
+
+			return new JSONResponse(
+				['message' => $this->l10n->t('Unable to rebase VAT return'), 'error' => 'vat-return-rebase-failed'],
+				Http::STATUS_CONFLICT,
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'VATReturnController: failed to rebase VAT return',

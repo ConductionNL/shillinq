@@ -89,6 +89,7 @@ import CalendarWeekOutline from 'vue-material-design-icons/CalendarWeekOutline.v
 import CallSplit from 'vue-material-design-icons/CallSplit.vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import CardAccountDetailsOutline from 'vue-material-design-icons/CardAccountDetailsOutline.vue'
+import CardTextOutline from 'vue-material-design-icons/CardTextOutline.vue'
 import CarOutline from 'vue-material-design-icons/CarOutline.vue'
 import CartArrowDown from 'vue-material-design-icons/CartArrowDown.vue'
 import CartOutline from 'vue-material-design-icons/CartOutline.vue'
@@ -403,6 +404,7 @@ export default {
 	Cancel,
 	CarOutline,
 	CardAccountDetailsOutline,
+	CardTextOutline,
 	CartArrowDown,
 	CartOutline,
 	Cash,

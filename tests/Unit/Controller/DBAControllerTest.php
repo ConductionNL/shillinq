@@ -26,11 +26,14 @@ use OCA\Shillinq\Controller\DBAController;
 use OCA\Shillinq\Enums\DBAConstants;
 use OCA\Shillinq\Guard\DBAOpdrachtGuard;
 use OCA\Shillinq\Guard\DBAScoreCalculator;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\DBAVbarMonitorService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\OCS\OCSForbiddenException;
 use OCP\IAppConfig;
+use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -415,6 +418,27 @@ final class DBAControllerTest extends TestCase {
 	private FakeDBAObjectService $objectService;
 
 	/**
+	 * Administration-membership seam (security-endpoint-guards REQ-001).
+	 * Defaults in setUp() to granting 'adm-1' — every seeded fixture in
+	 * this file uses that administration id — so the pre-existing
+	 * positive-path tests keep passing once `ensureAdministrationAccess()`
+	 * actually enforces membership instead of unconditionally logging.
+	 *
+	 * @var AdministrationContextService&MockObject
+	 */
+	private AdministrationContextService&MockObject $administrationContext;
+
+	/**
+	 * Group manager stub — non-admin by default in setUp() so the
+	 * membership check is genuinely exercised by the pre-existing tests;
+	 * see testSetTussenkomstModeByAdminBypassesMembershipCheck() for the
+	 * admin-bypass positive control.
+	 *
+	 * @var IGroupManager&MockObject
+	 */
+	private IGroupManager&MockObject $groupManager;
+
+	/**
 	 * Whether the container should fail to resolve the ObjectService.
 	 *
 	 * @var bool
@@ -452,6 +476,12 @@ final class DBAControllerTest extends TestCase {
 		$this->vbarMonitor     = $this->createMock(DBAVbarMonitorService::class);
 		$this->logger          = $this->createMock(LoggerInterface::class);
 		$this->objectService   = new FakeDBAObjectService();
+		$this->administrationContext = $this->createMock(AdministrationContextService::class);
+		$this->administrationContext->method('canAccess')->willReturnCallback(
+			static fn (string $administrationId): bool => $administrationId === 'adm-1'
+		);
+		$this->groupManager = $this->createMock(IGroupManager::class);
+		$this->groupManager->method('isAdmin')->willReturn(false);
 
 		$this->request->method('getHeader')->willReturnCallback(
 			function (string $name): string {
@@ -486,6 +516,8 @@ final class DBAControllerTest extends TestCase {
 			assignmentGuard: $this->assignmentGuard,
 			vbarMonitor: $this->vbarMonitor,
 			logger: $this->logger,
+			administrationContext: $this->administrationContext,
+			groupManager: $this->groupManager,
 		);
 
 	}//end setUp()
@@ -1108,6 +1140,103 @@ final class DBAControllerTest extends TestCase {
 	}//end testSetTussenkomstModePersistsBooleanFlag()
 
 	/**
+	 * NEGATIVE CONTROL (security-endpoint-guards REQ-001): a caller with no
+	 * membership in the assignment's administration is rejected —
+	 * `ensureAdministrationAccess()` was a documented stub that logged and
+	 * unconditionally permitted every caller (STUB verdict); before this
+	 * change's fix this exact call would have persisted the write. Fixed
+	 * via `AdministrationContextService::canAccess()`, throwing
+	 * `OCSForbiddenException` instead. See
+	 * testSetTussenkomstModePersistsBooleanFlag() above for the
+	 * positive-direction counterpart (an 'adm-1' member still succeeds).
+	 *
+	 * @return void
+	 */
+	public function testSetTussenkomstModeRejectsNonMemberCaller(): void {
+		$this->seed(['DBAOpdracht' => [$this->assignmentRow()]]);
+		$this->administrationContext = $this->createMock(AdministrationContextService::class);
+		$this->administrationContext->method('canAccess')->willReturnCallback(
+			static fn (string $administrationId): bool => $administrationId === 'adm-2'
+		);
+		$controller = new DBAController(
+			request: $this->request,
+			container: $this->container,
+			appConfig: $this->appConfig,
+			userSession: $this->userSession,
+			scoreCalc: $this->scoreCalc,
+			assignmentGuard: $this->assignmentGuard,
+			vbarMonitor: $this->vbarMonitor,
+			logger: $this->logger,
+			administrationContext: $this->administrationContext,
+			groupManager: $this->groupManager,
+		);
+
+		$this->expectException(OCSForbiddenException::class);
+		$this->withBody(
+			['assignmentId' => 'opd-1', 'intermediaryMode' => true],
+			fn (): JSONResponse => $controller->setTussenkomstMode()
+		);
+
+		self::assertCount(0, $this->objectService->savedFor('DBAOpdracht'), 'No write for a non-member caller');
+
+	}//end testSetTussenkomstModeRejectsNonMemberCaller()
+
+	/**
+	 * A Nextcloud admin bypasses the per-administration membership check —
+	 * matching `BookingNotificationController::authorizeBookingAccess()`'s
+	 * established pattern. Without this, the admin account (which carries
+	 * no `AdministrationMembership` of its own by default — see
+	 * tests/e2e/ci-seed.sh) would be locked out of managing any
+	 * administration's DBA records.
+	 *
+	 * @return void
+	 */
+	public function testSetTussenkomstModeByAdminBypassesMembershipCheck(): void {
+		$this->seed(['DBAOpdracht' => [$this->assignmentRow()]]);
+		$administrationContext = $this->createMock(AdministrationContextService::class);
+		$administrationContext->method('canAccess')->willReturn(false);
+		$groupManager = $this->createMock(IGroupManager::class);
+		$groupManager->method('isAdmin')->willReturn(true);
+
+		$controller = new DBAController(
+			request: $this->request,
+			container: $this->container,
+			appConfig: $this->appConfig,
+			userSession: $this->userSession,
+			scoreCalc: $this->scoreCalc,
+			assignmentGuard: $this->assignmentGuard,
+			vbarMonitor: $this->vbarMonitor,
+			logger: $this->logger,
+			administrationContext: $administrationContext,
+			groupManager: $groupManager,
+		);
+
+		$response = $this->withBody(
+			['assignmentId' => 'opd-1', 'intermediaryMode' => true],
+			fn (): JSONResponse => $controller->setTussenkomstMode()
+		);
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+
+	}//end testSetTussenkomstModeByAdminBypassesMembershipCheck()
+
+	/**
+	 * An anonymous caller is rejected before any membership check runs.
+	 *
+	 * @return void
+	 */
+	public function testSetTussenkomstModeRejectsAnonymousCaller(): void {
+		$this->seed(['DBAOpdracht' => [$this->assignmentRow()]]);
+
+		$this->expectException(OCSForbiddenException::class);
+		$this->withBody(
+			['assignmentId' => 'opd-1', 'intermediaryMode' => true],
+			fn (): JSONResponse => $this->anonymousController()->setTussenkomstMode()
+		);
+
+	}//end testSetTussenkomstModeRejectsAnonymousCaller()
+
+	/**
 	 * A failing write surfaces as HTTP 500, not a false success.
 	 *
 	 * @return void
@@ -1416,6 +1545,8 @@ final class DBAControllerTest extends TestCase {
 			assignmentGuard: $this->assignmentGuard,
 			vbarMonitor: $this->vbarMonitor,
 			logger: $this->logger,
+			administrationContext: $this->administrationContext,
+			groupManager: $this->groupManager,
 		);
 
 	}//end anonymousController()

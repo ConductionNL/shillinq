@@ -154,8 +154,7 @@
 					{"key": "administrationId", "label": "Administration", "type": "string"}
 				],
 				"defaultSort": "policyId",
-				"detailRoute": "ReimbursementPolicyDetail",
-				"createDialog": "ReimbursementPolicyCreateDialog"
+				"detailRoute": "ReimbursementPolicyDetail"
 			}
 		},
 		{
@@ -202,27 +201,6 @@
 			}
 		},
 		{
-			"id": "ReimbursementPolicyCreateDialog",
-			"route": "/reimbursement-policies/new",
-			"type": "form",
-			"title": "New Reimbursement Policy",
-			"config": {
-				"register": "shillinq",
-				"schema": "ReimbursementPolicy",
-				"action": {"verb": "POST", "url": "/api/reimbursement-policies"},
-				"fields": [
-					{"key": "policyId", "label": "Policy ID", "type": "string", "required": true},
-					{"key": "name", "label": "Name", "type": "string", "required": true},
-					{"key": "administrationId", "label": "Administration", "type": "string", "required": true},
-					{"key": "autoApproveThreshold", "label": "Auto-approve Threshold", "type": "number"},
-					{"key": "requiresMarkupApprovalThreshold", "label": "Markup Approval Threshold", "type": "number"},
-					{"key": "passthroughDebitAccountCode", "label": "Pass-through Debit Account", "type": "string"},
-					{"key": "employeeBankAccountMapping", "label": "Employee Bank Account Mapping", "type": "string", "default": "standard"}
-				],
-				"onSuccess": "navigate:ReimbursementPolicyDetail"
-			}
-		},
-		{
 			"id": "PassThroughMarkupRules",
 			"route": "/passthrough-markup-rules",
 			"type": "index",
@@ -248,8 +226,7 @@
 					{"key": "effectiveFromYear", "label": "From Year", "type": "number"}
 				],
 				"defaultSort": "priority",
-				"detailRoute": "PassThroughMarkupRuleDetail",
-				"createDialog": "PassThroughMarkupRuleCreateDialog"
+				"detailRoute": "PassThroughMarkupRuleDetail"
 			}
 		},
 		{
@@ -295,30 +272,6 @@
 						}
 					]
 				}
-			}
-		},
-		{
-			"id": "PassThroughMarkupRuleCreateDialog",
-			"route": "/passthrough-markup-rules/new",
-			"type": "form",
-			"title": "New Pass-through Markup Rule",
-			"config": {
-				"register": "shillinq",
-				"schema": "PassThroughMarkupRule",
-				"action": {"verb": "POST", "url": "/api/passthrough-markup-rules"},
-				"fields": [
-					{"key": "ruleId", "label": "Rule ID", "type": "string", "required": true},
-					{"key": "administrationId", "label": "Administration", "type": "string", "required": true},
-					{"key": "targetCustomerId", "label": "Target Customer", "type": "string"},
-					{"key": "targetCategory", "label": "Target Category", "type": "select", "options": ["travel", "meals", "supplies", "accommodation"]},
-					{"key": "markupType", "label": "Markup Type", "type": "select", "required": true, "options": ["percentage", "fixedAmount"], "default": "percentage"},
-					{"key": "markupValue", "label": "Markup Value", "type": "number", "required": true},
-					{"key": "currency", "label": "Currency", "type": "string", "required": true, "default": "EUR"},
-					{"key": "effectiveFromYear", "label": "Effective From Year", "type": "number", "required": true, "default": 2026},
-					{"key": "effectiveToYear", "label": "Effective To Year", "type": "number"},
-					{"key": "priority", "label": "Priority", "type": "number"}
-				],
-				"onSuccess": "navigate:PassThroughMarkupRuleDetail"
 			}
 		}
 	]

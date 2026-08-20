@@ -28,6 +28,7 @@
 // dispatch itself requires kind:"page"), mounted into CnDetailPage's actions
 // header slot with `{ object, objectId, schema, objectType, store }`.
 import AREInvoiceActions from './components/ar-invoice/AREInvoiceActions.vue'
+import BankingCashflowOverview from './components/banking-cashflow/BankingCashflowOverview.vue'
 // bookkeeping-provincies-bbv-variant (#866/#862, REQ-BBL-001): the
 // Budget-to-Programme Linker's three declared filter facets. The page stays a
 // built-in `type:"index"` — this is a SLOT component, mounted into
@@ -38,6 +39,13 @@ import AREInvoiceActions from './components/ar-invoice/AREInvoiceActions.vue'
 // selection into `$route.query`, which CnIndexPage's own self-fetch merges
 // into `fixedFilters` and re-fetches on — so the list stays the library's.
 import BbvLinkerFilterBar from './components/bbv-provincie/BbvLinkerFilterBar.vue'
+// nav-six-clusters: ADR-097 Decision-4 cluster landing pages, one per
+// top-level cluster (design.md §3). Each is a thin wrapper around the shared
+// ClusterOverview card grid (src/components/cluster-overview/
+// ClusterOverview.vue) — kind:"page" custom components, same mechanism
+// ReportingComplianceOverview above already uses; Reporting & Compliance
+// itself reuses that existing page rather than getting a new one.
+import BookkeepingOverview from './components/bookkeeping/BookkeepingOverview.vue'
 // bookkeeping-waterschappen-bbv-variant slice 07 (REQ-BBVW-004): the
 // Budget Mapping detail page composes two bespoke autocomplete pickers
 // (Chart of Accounts + BBVProgramme), a live per-account allocation
@@ -155,6 +163,7 @@ import PurchaseOrderDetail from './components/purchase-order/PurchaseOrderDetail
 // built-in `index` / `detail` page type, so both are kind:"page" custom
 // components.
 import PurchaseOrderForm from './components/purchase-order/PurchaseOrderForm.vue'
+import PurchasingOverview from './components/purchasing/PurchasingOverview.vue'
 import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.vue'
 // reporting-compliance-consolidation: the Reporting & Compliance section is
 // two custom pages. The overview renders the static ReportCatalogue
@@ -167,6 +176,7 @@ import GeneratedReportsIndex from './components/reporting/GeneratedReportsIndex.
 // kind:"page" custom components per ADR-024 / ADR-036; the manifest
 // fragment src/manifest.d/reporting-compliance.json declares the routes.
 import ReportingComplianceOverview from './components/reporting/ReportingComplianceOverview.vue'
+import SalesOverview from './components/sales/SalesOverview.vue'
 // Import bank statements lives under the Configuratie (settings) group as a
 // page that hosts BankStatementWizard — moved off the Financial overview
 // dashboard so it sits with the other one-time setup tasks. manifest fragment
@@ -179,6 +189,7 @@ import BankImportPage from './components/settings/BankImportPage.vue'
 // type (the OCR meter is a conditional bespoke block), so the view is
 // registered as a kind:"page" custom component.
 import SupplierInvoiceDetail from './components/supplier-invoice/SupplierInvoiceDetail.vue'
+import TaxesOverview from './components/taxes/TaxesOverview.vue'
 // bookkeeping-purchase-order-3way slice 08 (REQ-PO3W-005): the
 // ThreeWayMatchExceptionPanel renders the side-by-side PO ↔ GRN ↔
 // Invoice comparison, the human-readable divergence breakdown and the
@@ -465,6 +476,13 @@ export default {
 		kind: 'page',
 		component: ReportingComplianceOverview,
 	},
+
+	// nav-six-clusters: the 5 new cluster landing pages (design.md §3).
+	BookkeepingOverview: { kind: 'page', component: BookkeepingOverview },
+	SalesOverview: { kind: 'page', component: SalesOverview },
+	PurchasingOverview: { kind: 'page', component: PurchasingOverview },
+	BankingCashflowOverview: { kind: 'page', component: BankingCashflowOverview },
+	TaxesOverview: { kind: 'page', component: TaxesOverview },
 	GeneratedReportsIndex: { kind: 'page', component: GeneratedReportsIndex },
 	BankImportPage: { kind: 'page', component: BankImportPage },
 

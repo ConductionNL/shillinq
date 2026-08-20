@@ -31,6 +31,7 @@ use OCA\Shillinq\Controller\VATReturnController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\VATReturnService;
 use OCP\AppFramework\Http;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -80,6 +81,13 @@ final class VATReturnControllerTest extends TestCase {
 	 * @var LoggerInterface&MockObject
 	 */
 	private LoggerInterface&MockObject $logger;
+
+	/**
+	 * Mock IL10N — client-facing error messages (ADR-050).
+	 *
+	 * @var IL10N&MockObject
+	 */
+	private IL10N&MockObject $l10n;
 
 	/**
 	 * Mock AdministrationContextService — the ADR-005 membership guard.
@@ -137,6 +145,8 @@ final class VATReturnControllerTest extends TestCase {
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->session = $this->createMock(IUserSession::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->l10n = $this->createMock(IL10N::class);
+		$this->l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
 		$this->context = $this->createMock(AdministrationContextService::class);
 
 		$this->canAccess = true;
@@ -153,6 +163,7 @@ final class VATReturnControllerTest extends TestCase {
 			session: $this->session,
 			context: $this->context,
 			logger: $this->logger,
+			l10n: $this->l10n,
 		);
 
 		// Bind the session once to a mutable reference; tests can override the

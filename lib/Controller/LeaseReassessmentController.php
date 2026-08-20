@@ -98,9 +98,16 @@ class LeaseReassessmentController extends Controller {
 	 * Body: lease_id, administration_id, new_payment_amount,
 	 *       trigger_description?, approver?
 	 *
+	 * Authorization: {@see resolveScope()} checks `administrationContext->canAccess()`
+	 * against the request's `administration_id` and {@see LeaseReassessmentService::fetchLease()}
+	 * re-scopes the lease lookup itself to that same administration — a non-member
+	 * or a lease from another tenant is masked as 404 (ADR-005 Rule 3).
+	 *
 	 * @return JSONResponse 201 with the persisted event; 400/401/404/500.
 	 *
 	 * @spec openspec/changes/revive-lease-capabilities/specs/revive-lease-capabilities/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function indexation(): JSONResponse {
@@ -138,9 +145,16 @@ class LeaseReassessmentController extends Controller {
 	 * Body: lease_id, administration_id, extension_options[],
 	 *       trigger_description?, approver?
 	 *
+	 * Authorization: {@see resolveScope()} checks `administrationContext->canAccess()`
+	 * against the request's `administration_id` and {@see LeaseReassessmentService::fetchLease()}
+	 * re-scopes the lease lookup itself to that same administration — a non-member
+	 * or a lease from another tenant is masked as 404 (ADR-005 Rule 3).
+	 *
 	 * @return JSONResponse 201 with the persisted event; 400/401/404/500.
 	 *
 	 * @spec openspec/changes/revive-lease-capabilities/specs/revive-lease-capabilities/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function extensionOption(): JSONResponse {
@@ -178,9 +192,16 @@ class LeaseReassessmentController extends Controller {
 	 * Body: lease_id, administration_id, new_terms{}, approach?,
 	 *       trigger_description?, approver?
 	 *
+	 * Authorization: {@see resolveScope()} checks `administrationContext->canAccess()`
+	 * against the request's `administration_id` and {@see LeaseReassessmentService::fetchLease()}
+	 * re-scopes the lease lookup itself to that same administration — a non-member
+	 * or a lease from another tenant is masked as 404 (ADR-005 Rule 3).
+	 *
 	 * @return JSONResponse 201 with the persisted event; 400/401/404/500.
 	 *
 	 * @spec openspec/changes/revive-lease-capabilities/specs/revive-lease-capabilities/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function modification(): JSONResponse {
@@ -224,9 +245,16 @@ class LeaseReassessmentController extends Controller {
 	 * Body: lease_id, administration_id, recoverable_value,
 	 *       trigger_description?, approver?
 	 *
+	 * Authorization: {@see resolveScope()} checks `administrationContext->canAccess()`
+	 * against the request's `administration_id` and {@see LeaseReassessmentService::fetchLease()}
+	 * re-scopes the lease lookup itself to that same administration — a non-member
+	 * or a lease from another tenant is masked as 404 (ADR-005 Rule 3).
+	 *
 	 * @return JSONResponse 201 with the persisted event; 400/401/404/500.
 	 *
 	 * @spec openspec/changes/revive-lease-capabilities/specs/revive-lease-capabilities/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function impairment(): JSONResponse {

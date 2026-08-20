@@ -101,11 +101,22 @@ class MultiPoConsolidationController extends Controller {
 	 * POST /api/three-way-match/consolidate
 	 * Body: administrationId, invoiceId.
 	 *
+	 * Re-verified during security-endpoint-guards (REQ-001): ALREADY-GUARDED —
+	 * `$this->administrationContext->canAccess($administrationId)` below is an
+	 * enforced per-administration membership check (masked 404 on denial), not
+	 * a syntactic no-op. The mechanical `hydra-gate-no-admin-idor` scan flagged
+	 * this method only because `canAccess(` is not shaped like
+	 * `authorize*`/`require*`/`ensure*` — a documented false positive, not a
+	 * missing guard. No code change needed; recorded in the change's verdict
+	 * table for traceability.
+	 *
 	 * @return JSONResponse 200 with per-line results; 400 on validation;
 	 *                      401 anonymous; 404 cross-tenant or missing
 	 *                      invoice; 500 without stack trace.
 	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function consolidate(): JSONResponse {
@@ -155,11 +166,17 @@ class MultiPoConsolidationController extends Controller {
 	 *
 	 * GET /api/three-way-match/candidates?administrationId=...&invoiceId=...&invoiceLineNumber=...
 	 *
+	 * Re-verified during security-endpoint-guards (REQ-001): ALREADY-GUARDED —
+	 * same enforced `canAccess()` membership check as {@see consolidate()};
+	 * a false positive of the mechanical scan, not a missing guard.
+	 *
 	 * @return JSONResponse 200 with the ordered candidate list; 400 on
 	 *                      validation; 401 anonymous; 404 on cross-tenant
 	 *                      or missing invoice / line.
 	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function candidates(): JSONResponse {
@@ -241,12 +258,22 @@ class MultiPoConsolidationController extends Controller {
 	 * Body: administrationId, invoiceId, invoiceLineNumber,
 	 *       chosenPoLineId, chosenGrnLineId (optional).
 	 *
+	 * Re-verified during security-endpoint-guards (REQ-001): ALREADY-GUARDED —
+	 * same enforced `canAccess()` membership check as {@see consolidate()};
+	 * a false positive of the mechanical scan, not a missing guard. The
+	 * chosen tuple is additionally re-enumerated server-side by
+	 * `MultiPoConsolidationService` before persistence (class docblock), so a
+	 * forged `chosenPoLineId`/`chosenGrnLineId` cannot smuggle a cross-tenant
+	 * line id past this administration-level guard.
+	 *
 	 * @return JSONResponse 201 with the persisted ThreeWayMatch; 400 on
 	 *                      validation or chosen tuple not in candidate
 	 *                      set; 401 anonymous; 404 cross-tenant or
 	 *                      missing invoice / line.
 	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-07-multi-po-consolidation/tasks.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function disambiguate(): JSONResponse {

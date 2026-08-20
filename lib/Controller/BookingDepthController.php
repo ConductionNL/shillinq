@@ -51,6 +51,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -75,6 +76,7 @@ class BookingDepthController extends Controller {
 	 * @param NoShowFeeCaptureService $noShowFee No-show fee capture seam.
 	 * @param RecurringSeriesService $series Recurring series expander/planner.
 	 * @param LoggerInterface $logger Logger.
+	 * @param IL10N $l10n Translation service for ADR-050 error-response messages.
 	 */
 	public function __construct(
 		\OCP\IRequest $request,
@@ -84,6 +86,7 @@ class BookingDepthController extends Controller {
 		private readonly NoShowFeeCaptureService $noShowFee,
 		private readonly RecurringSeriesService $series,
 		private readonly LoggerInterface $logger,
+		private readonly IL10N $l10n,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -103,6 +106,8 @@ class BookingDepthController extends Controller {
 	 *                      404 missing; 503 when OpenRegister is unavailable.
 	 *
 	 * @spec openspec/specs/bookings-cancellation-rules/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function captureNoShow(string $appointmentId = ''): JSONResponse {
@@ -125,6 +130,9 @@ class BookingDepthController extends Controller {
 				return new JSONResponse(['error' => 'Appointment not found'], Http::STATUS_NOT_FOUND);
 			}
 
+			// Security-endpoint-guards REQ-001: per-object tenant guard checked
+			// against the FETCHED target's own administrationId (never the
+			// caller-supplied appointmentId's implied scope).
 			if ($this->context->canAccess((string)($appointment['administrationId'] ?? '')) === false) {
 				return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
 			}
@@ -175,6 +183,8 @@ class BookingDepthController extends Controller {
 	 *                      missing; 503 when OpenRegister is unavailable.
 	 *
 	 * @spec openspec/specs/bookings-recurring-series/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function createSeries(): JSONResponse {
@@ -200,6 +210,11 @@ class BookingDepthController extends Controller {
 			);
 		}
 
+		// Security-endpoint-guards REQ-001: the request-supplied administrationId
+		// is what will be stamped on the new AppointmentSeries/Appointment
+		// objects, so checking canAccess() against it here (before the object
+		// exists to fetch) is the correct create-time guard — matches the
+		// convention CBSSubmissionController::create() established.
 		if ($this->context->canAccess($administrationId) === false) {
 			return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
 		}
@@ -212,6 +227,19 @@ class BookingDepthController extends Controller {
 			$resource = $this->loadResource(resourceId: $resourceId);
 			if ($resource === null) {
 				return new JSONResponse(['error' => 'Resource not found'], Http::STATUS_NOT_FOUND);
+			}
+
+			// Security-endpoint-guards REQ-001 hardening: canAccess() above only
+			// proved the caller may act within $administrationId — it does NOT
+			// prove the FETCHED $resource actually belongs to that
+			// administration. Without this check a member of administration A
+			// could pass administrationId=A (their own, so canAccess() passes)
+			// together with a resourceId belonging to administration B and book
+			// appointments against B's resource under A's label — a cross-
+			// tenant IDOR on the Resource object itself.
+			$resourceAdministrationId = (string)($resource['administrationId'] ?? '');
+			if ($resourceAdministrationId !== $administrationId) {
+				return new JSONResponse(['error' => 'Forbidden'], Http::STATUS_FORBIDDEN);
 			}
 
 			$plan = $this->series->planSeries(
@@ -279,7 +307,14 @@ class BookingDepthController extends Controller {
 				Http::STATUS_OK,
 			);
 		} catch (\InvalidArgumentException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+			$this->logger->error('BookingDepthController.createSeries failed', ['exception' => $e]);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Unable to create the appointment series'),
+					'error' => 'appointment-series-create-failed',
+				],
+				Http::STATUS_BAD_REQUEST,
+			);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'BookingDepthController: series creation failed',

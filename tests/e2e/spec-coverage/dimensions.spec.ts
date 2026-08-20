@@ -6,6 +6,14 @@
  * (cost centres, kostendragers, projects, allocation rules). Deep-links each
  * manifest page, asserts a genuine index surface, no shillinq-origin 5xx /
  * page error. Data-independent.
+ *
+ * nav-six-clusters (REQ-ADIM-103, already in place before this change) folded
+ * the dedicated /bookkeeping/dimensions/cost-centers and .../kostendragers
+ * index pages into one shared /bookkeeping/dimensions/analytical-dimensions
+ * page, selected via a `dimensionType` query filter (cost-center /
+ * cost-object) rather than a distinct route+title. Both nav items (Cost
+ * centers, Cost objects) now resolve here; the rendered title is the shared
+ * page's own "Analytical dimensions", not the old per-route titles.
  */
 
 import { test, expect } from '@playwright/test'
@@ -17,8 +25,14 @@ import {
 } from './_helpers'
 
 const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
-	{ route: '/bookkeeping/dimensions/cost-centers', title: 'Cost Centers' },
-	{ route: '/bookkeeping/dimensions/kostendragers', title: 'Kostendragers' },
+	{
+		route: '/bookkeeping/dimensions/analytical-dimensions?dimensionType=cost-center',
+		title: 'Analytical dimensions',
+	},
+	{
+		route: '/bookkeeping/dimensions/analytical-dimensions?dimensionType=cost-object',
+		title: 'Analytical dimensions',
+	},
 	{ route: '/bookkeeping/dimensions/projects', title: 'Projects' },
 	{ route: '/bookkeeping/dimensions/allocation-rules', title: 'Allocation Rules' },
 ]
@@ -42,7 +56,10 @@ test.describe('shillinq spec-coverage — Dimensions', () => {
 		page,
 	}) => {
 		const rec = recordShillinqErrors(page)
-		await gotoPage(page, '/bookkeeping/dimensions/cost-centers')
+		await gotoPage(
+			page,
+			'/bookkeeping/dimensions/analytical-dimensions?dimensionType=cost-center',
+		)
 		const addBtn = page
 			.locator(
 				'#content-vue button:has-text("Add"), #content-vue button:has-text("Nieuw"), #content-vue button:has-text("Toevoegen")',
@@ -61,6 +78,9 @@ test.describe('shillinq spec-coverage — Dimensions', () => {
 			).toBeVisible({ timeout: 8_000 })
 			await page.keyboard.press('Escape').catch(() => {})
 		}
-		assertNoShillinqFailures(rec, '/bookkeeping/dimensions/cost-centers add')
+		assertNoShillinqFailures(
+			rec,
+			'/bookkeeping/dimensions/analytical-dimensions add',
+		)
 	})
 })

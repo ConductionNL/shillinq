@@ -78,9 +78,16 @@ class KorController extends Controller {
 	 * missing/malformed parameter; HTTP 500 (without a stack trace) on an unexpected
 	 * AR-ledger fetch failure.
 	 *
+	 * Authorization: `AdministrationContextService::canAccess()` is checked
+	 * against the requested `administration_id` before the KOR service is ever
+	 * called; a non-member is masked as 404, never a disclosing 403 (ADR-005
+	 * Rule 3 — {@see \OCA\Shillinq\Service\AdministrationContextService::canAccess()}).
+	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function monitor(): JSONResponse {
