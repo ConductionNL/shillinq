@@ -32,14 +32,18 @@
 					{{ t('shillinq', 'Scenario comparison') }}
 				</h2>
 				<p class="budget-scenario-comparison__description">
-					{{ t('shillinq', 'Compare a what-if scenario side-by-side against the real budget. The real AnnualBudget and BudgetLine data is never changed by this page.') }}
+					{{
+						t(
+							'shillinq',
+							'Compare a what-if scenario side-by-side against the real budget. The real AnnualBudget and BudgetLine data is never changed by this page.',
+						)
+					}}
 				</p>
 			</header>
 
 			<div class="budget-scenario-comparison__controls">
 				<div class="budget-scenario-comparison__field">
-					<label
-						for="budget-scenario-comparison-administration">
+					<label for="budget-scenario-comparison-administration">
 						{{ t('shillinq', 'Administration') }}
 					</label>
 					<select
@@ -57,8 +61,7 @@
 				</div>
 
 				<div class="budget-scenario-comparison__field">
-					<label
-						for="budget-scenario-comparison-fiscal-year">
+					<label for="budget-scenario-comparison-fiscal-year">
 						{{ t('shillinq', 'Fiscal year') }}
 					</label>
 					<input
@@ -66,12 +69,11 @@
 						v-model.number="fiscalYear"
 						type="number"
 						data-testid="budget-scenario-comparison-fiscal-year"
-						@change="onFiscalYearChange">
+						@change="onFiscalYearChange" />
 				</div>
 
 				<div class="budget-scenario-comparison__field">
-					<label
-						for="budget-scenario-comparison-scenario">
+					<label for="budget-scenario-comparison-scenario">
 						{{ t('shillinq', 'Scenario') }}
 					</label>
 					<select
@@ -99,7 +101,12 @@
 			<NcEmptyContent
 				v-else-if="!scenarios.length"
 				:name="t('shillinq', 'No scenarios yet')"
-				:description="t('shillinq', 'Create a BudgetScenario and at least one BudgetScenarioModifier to see a comparison here.')" />
+				:description="
+					t(
+						'shillinq',
+						'Create a BudgetScenario and at least one BudgetScenarioModifier to see a comparison here.',
+					)
+				" />
 			<NcEmptyContent
 				v-else-if="!scenarioId"
 				:name="t('shillinq', 'Select a scenario to compare')" />
@@ -109,14 +116,17 @@
 				role="alert">
 				{{ errorMessage }}
 			</p>
-			<div
-				v-else
-				class="budget-scenario-comparison__table-wrap">
+			<div v-else class="budget-scenario-comparison__table-wrap">
 				<table
 					class="budget-scenario-comparison__table"
 					data-testid="budget-scenario-comparison-table">
 					<caption class="budget-scenario-comparison__caption">
-						{{ t('shillinq', 'Base vs. scenario vs. delta, per ledger group and month (EUR).') }}
+						{{
+							t(
+								'shillinq',
+								'Base vs. scenario vs. delta, per ledger group and month (EUR).',
+							)
+						}}
 					</caption>
 					<thead>
 						<tr>
@@ -142,7 +152,8 @@
 								v-for="rowKind in ['base', 'scenario', 'delta']"
 								:key="group.ledgerGroupId + '-' + rowKind"
 								:class="{
-									'budget-scenario-comparison__row--delta': rowKind === 'delta',
+									'budget-scenario-comparison__row--delta':
+										rowKind === 'delta',
 								}">
 								<th
 									v-if="rowKind === 'base'"
@@ -204,6 +215,8 @@ export default {
 		 * Month header labels, "Jan".."Dec".
 		 *
 		 * @return {Array<string>}
+		 *
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		monthLabels() {
 			return [
@@ -228,6 +241,8 @@ export default {
 		 * base/scenario/delta arrays in calendar order.
 		 *
 		 * @return {Array<object>}
+		 *
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		groupedRows() {
 			const byGroup = new Map()
@@ -235,7 +250,9 @@ export default {
 				if (!byGroup.has(cell.ledgerGroupId)) {
 					byGroup.set(cell.ledgerGroupId, {
 						ledgerGroupId: cell.ledgerGroupId,
-						name: this.ledgerGroupNames[cell.ledgerGroupId] || cell.ledgerGroupId,
+						name:
+							this.ledgerGroupNames[cell.ledgerGroupId]
+							|| cell.ledgerGroupId,
 						base: new Array(12).fill(0),
 						scenario: new Array(12).fill(0),
 						delta: new Array(12).fill(0),
@@ -249,7 +266,9 @@ export default {
 					row.delta[monthIndex] = cell.delta
 				}
 			}
-			return Array.from(byGroup.values()).sort((a, b) => a.name.localeCompare(b.name))
+			return Array.from(byGroup.values()).sort((a, b) =>
+				a.name.localeCompare(b.name),
+			)
 		},
 	},
 
@@ -264,6 +283,8 @@ export default {
 		 * BBVComplianceDashboard already establishes.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		async loadAdministrationContext() {
 			this.loading = true
@@ -276,15 +297,22 @@ export default {
 					value: a.administrationId,
 					label: a.name || a.administrationCode || a.administrationId,
 				}))
-				this.administrationId = response.data?.activeAdministrationId
+				this.administrationId =
+					response.data?.activeAdministrationId
 					|| this.administrationOptions[0]?.value
 					|| ''
 			} catch {
-				this.errorMessage = this.t('shillinq', 'Failed to load administration context')
+				this.errorMessage = this.t(
+					'shillinq',
+					'Failed to load administration context',
+				)
 			}
 
 			if (this.administrationId) {
-				await Promise.all([this.loadScenarios(), this.loadLedgerGroupNames()])
+				await Promise.all([
+					this.loadScenarios(),
+					this.loadLedgerGroupNames(),
+				])
 			}
 			this.loading = false
 		},
@@ -294,6 +322,8 @@ export default {
 		 * administration, and reset the scenario/comparison selection.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		async onAdministrationChange() {
 			this.scenarioId = ''
@@ -307,6 +337,8 @@ export default {
 		 * Re-evaluate the current scenario for the newly-picked fiscal year.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		onFiscalYearChange() {
 			if (this.scenarioId) {
@@ -320,16 +352,31 @@ export default {
 		 * (REQ-BSC-002) when one exists.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 		 */
 		async loadScenarios() {
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/BudgetScenario`),
-					{ params: { administrationId: this.administrationId, limit: 500 } },
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/BudgetScenario`,
+					),
+					{
+						params: {
+							administrationId: this.administrationId,
+							limit: 500,
+						},
+					},
 				)
-				const rows = response.data?.results ?? response.data?.objects ?? response.data ?? []
+				const rows =
+					response.data?.results
+					?? response.data?.objects
+					?? response.data
+					?? []
 				this.scenarios = Array.isArray(rows) ? rows : []
-				const defaultScenario = this.scenarios.find((s) => s.isDefault === true)
+				const defaultScenario = this.scenarios.find(
+					(s) => s.isDefault === true,
+				)
 				this.scenarioId = defaultScenario?.id || ''
 				if (this.scenarioId) {
 					await this.loadComparison()
@@ -345,14 +392,27 @@ export default {
 		 * render human-readable row headers.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-009
 		 */
 		async loadLedgerGroupNames() {
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/LedgerGroup`),
-					{ params: { administrationId: this.administrationId, limit: 500 } },
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/LedgerGroup`,
+					),
+					{
+						params: {
+							administrationId: this.administrationId,
+							limit: 500,
+						},
+					},
 				)
-				const rows = response.data?.results ?? response.data?.objects ?? response.data ?? []
+				const rows =
+					response.data?.results
+					?? response.data?.objects
+					?? response.data
+					?? []
 				const names = {}
 				for (const row of Array.isArray(rows) ? rows : []) {
 					const id = row.id || row['@self']?.id
@@ -372,6 +432,8 @@ export default {
 		 * delegates to `BudgetScenarioReader` + `BudgetScenarioEvaluator`).
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-005
 		 */
 		async loadComparison() {
 			if (!this.scenarioId) {
@@ -383,7 +445,9 @@ export default {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/shillinq/api/v1/budget-scenarios/${this.scenarioId}/evaluate`),
+					generateUrl(
+						`/apps/shillinq/api/v1/budget-scenarios/${this.scenarioId}/evaluate`,
+					),
 					{
 						params: {
 							administration_id: this.administrationId,
@@ -394,7 +458,10 @@ export default {
 				this.cells = response.data?.data?.cells || []
 			} catch {
 				this.cells = []
-				this.errorMessage = this.t('shillinq', 'Failed to evaluate this scenario')
+				this.errorMessage = this.t(
+					'shillinq',
+					'Failed to evaluate this scenario',
+				)
 			}
 			this.loading = false
 		},
@@ -404,10 +471,14 @@ export default {
 		 *
 		 * @param {object} scenario - The BudgetScenario row.
 		 * @return {string}
+		 *
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
 		 */
 		scenarioLabel(scenario) {
 			if (scenario.isDefault) {
-				return this.t('shillinq', '{name} (default)', { name: scenario.name })
+				return this.t('shillinq', '{name} (default)', {
+					name: scenario.name,
+				})
 			}
 			return scenario.name || scenario.id
 		},
@@ -417,6 +488,8 @@ export default {
 		 *
 		 * @param {string} rowKind - One of 'base' | 'scenario' | 'delta'.
 		 * @return {string}
+		 *
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		rowLabel(rowKind) {
 			if (rowKind === 'base') {
@@ -433,6 +506,8 @@ export default {
 		 *
 		 * @param {number} cents - The signed amount in EUR cents.
 		 * @return {string}
+		 *
+		 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-008
 		 */
 		formatCents(cents) {
 			return ((Number(cents) || 0) / 100).toLocaleString(undefined, {
@@ -479,8 +554,8 @@ export default {
 	white-space: nowrap;
 }
 
-.budget-scenario-comparison__table th[scope="col"],
-.budget-scenario-comparison__table th[scope="rowgroup"] {
+.budget-scenario-comparison__table th[scope='col'],
+.budget-scenario-comparison__table th[scope='rowgroup'] {
 	text-align: start;
 }
 

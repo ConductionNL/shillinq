@@ -283,6 +283,32 @@ final class RacingDefaultObjectServiceDecorator implements ObjectServiceInterfac
 	}//end updateObject()
 
 	/**
+	 * @param string $objectId Object id, UUID or slug.
+	 * @param array $data The partial data to merge.
+	 * @param string|int|null $register Register id, UUID or slug.
+	 * @param string|int|null $schema Schema id, UUID or slug.
+	 * @param bool $rbac Apply register RBAC.
+	 * @param bool $multitenancy Apply organisation scoping.
+	 * @param ?IUser $currentUser Explicit acting user.
+	 *
+	 * @return ObjectEntityInterface
+	 *
+	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+	 */
+	public function patchObject(
+		string $objectId,
+		array $data,
+		string|int|null $register = null,
+		string|int|null $schema = null,
+		bool $rbac = true,
+		bool $multitenancy = true,
+		?IUser $currentUser = null
+	): ObjectEntityInterface {
+		return $this->inner->patchObject($objectId, $data, $register, $schema, $rbac, $multitenancy, $currentUser);
+
+	}//end patchObject()
+
+	/**
 	 * @param string $id Object id, UUID or slug.
 	 * @param ?array $extend Relations to expand.
 	 * @param bool $files Include file metadata.

@@ -119,19 +119,27 @@ test.describe('budget-scenarios — Budgets nav group leaves (REQ-BSC-008)', () 
 	 * `budget-core-schema.json`'s own `_meta_note`) gains three new leaves
 	 * this change adds: Scenarios, Scenario Modifiers, Scenario Comparison.
 	 */
-	test('Budgets nav group lists the three new budget-scenarios leaves', async ({ page }) => {
+	test('Budgets nav group lists the three new budget-scenarios leaves', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/')
 		await page.waitForLoadState('domcontentloaded')
 		await dismissOverlays(page)
 
-		const bankingCashflow = page.getByRole('link', { name: /Banking.*Cashflow/i })
+		const bankingCashflow = page.getByRole('link', {
+			name: /Banking.*Cashflow/i,
+		})
 		await expect(bankingCashflow.first()).toBeVisible({ timeout: 15_000 })
 		await bankingCashflow.first().click()
 
 		const budgetsGroup = page.getByText('Budgets', { exact: true })
 		await expect(budgetsGroup.first()).toBeVisible({ timeout: 10_000 })
 
-		for (const label of ['Scenarios', 'Scenario Modifiers', 'Scenario Comparison']) {
+		for (const label of [
+			'Scenarios',
+			'Scenario Modifiers',
+			'Scenario Comparison',
+		]) {
 			await expect(
 				page.getByRole('link', { name: label }).first(),
 				`nav leaf "${label}" must be reachable under Budgets`,
@@ -150,7 +158,9 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 	 */
 	test('BudgetScenarios index resolves', async ({ page }) => {
 		await gotoRoute(page, SCENARIOS_ROUTE)
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 	})
 
 	/**
@@ -158,7 +168,9 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 	 */
 	test('BudgetScenarioModifiers index resolves', async ({ page }) => {
 		await gotoRoute(page, SCENARIO_MODIFIERS_ROUTE)
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 	})
 
 	/**
@@ -178,29 +190,54 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 		page,
 	}) => {
 		await gotoRoute(page, SCENARIOS_ROUTE)
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		if ((await hasAnyRow(page)) === false) {
-			const createScenarioBtn = page.getByRole('button', { name: /create|add|new/i })
-			const hasCreate = await createScenarioBtn.first().isVisible().catch(() => false)
-			test.skip(!hasCreate, 'no create affordance found on the BudgetScenarios index')
+			const createScenarioBtn = page.getByRole('button', {
+				name: /create|add|new/i,
+			})
+			const hasCreate = await createScenarioBtn
+				.first()
+				.isVisible()
+				.catch(() => false)
+			test.skip(
+				!hasCreate,
+				'no create affordance found on the BudgetScenarios index',
+			)
 			await createScenarioBtn.first().click()
 			await page.getByLabel(/^name$/i).fill('E2E fixture scenario')
 			await page.getByRole('button', { name: /save/i }).click()
-			await expect(page.getByTestId('cn-detail-page')).toBeVisible({ timeout: 15_000 })
+			await expect(page.getByTestId('cn-detail-page')).toBeVisible({
+				timeout: 15_000,
+			})
 		}
 
 		await gotoRoute(page, SCENARIO_MODIFIERS_ROUTE)
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 
-		const createModifierBtn = page.getByRole('button', { name: /create|add|new/i })
-		const hasCreate = await createModifierBtn.first().isVisible().catch(() => false)
-		test.skip(!hasCreate, 'no create affordance found on the BudgetScenarioModifiers index')
+		const createModifierBtn = page.getByRole('button', {
+			name: /create|add|new/i,
+		})
+		const hasCreate = await createModifierBtn
+			.first()
+			.isVisible()
+			.catch(() => false)
+		test.skip(
+			!hasCreate,
+			'no create affordance found on the BudgetScenarioModifiers index',
+		)
 		await createModifierBtn.first().click()
 
 		const scenarioField = page.getByLabel(/scenario/i).first()
 		const hasScenarioOption = await scenarioField.isVisible().catch(() => false)
-		test.skip(!hasScenarioOption, 'no scenario option available to attach the modifier to')
+		test.skip(
+			!hasScenarioOption,
+			'no scenario option available to attach the modifier to',
+		)
 		await scenarioField.click()
 		await page.getByRole('option').first().click()
 
@@ -210,8 +247,12 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 
 		const ledgerGroupField = page.getByLabel(/target ledger group/i)
 		await ledgerGroupField.click()
-		const liquideMiddelenOption = page.getByRole('option', { name: /liquide middelen/i })
-		const hasSeededOption = await liquideMiddelenOption.isVisible().catch(() => false)
+		const liquideMiddelenOption = page.getByRole('option', {
+			name: /liquide middelen/i,
+		})
+		const hasSeededOption = await liquideMiddelenOption
+			.isVisible()
+			.catch(() => false)
 		test.skip(
 			!hasSeededOption,
 			'the seeded "Liquide middelen" LedgerGroup (RULING 1) was not found as a selectable option',
@@ -222,11 +263,13 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 		await page.getByLabel(/amount delta/i).fill('-500000')
 
 		await page.getByRole('button', { name: /save/i }).click()
-		await expect(page.getByTestId('cn-detail-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		await expect(
 			page.getByText('LEDGER_AMOUNT_DELTA', { exact: false }).first(),
-			'the saved modifier\'s type must render on its own detail page',
+			"the saved modifier's type must render on its own detail page",
 		).toBeVisible({ timeout: 10_000 })
 	})
 })
@@ -246,57 +289,94 @@ test.describe('budget-scenarios — promote to default demotes the previous one 
 	 * proving, then promotes the non-default one and asserts the previously
 	 * default one's own `isDefault` chip flips to false in the same UI flow.
 	 */
-	test('promoting scenario B to default demotes scenario A in the same action', async ({ page }) => {
+	test('promoting scenario B to default demotes scenario A in the same action', async ({
+		page,
+	}) => {
 		await gotoRoute(page, SCENARIOS_ROUTE)
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		const rows = page.locator('table tbody tr')
 		let rowCount = await rows.count()
 
 		const createBtn = page.getByRole('button', { name: /create|add|new/i })
-		const hasCreate = await createBtn.first().isVisible().catch(() => false)
+		const hasCreate = await createBtn
+			.first()
+			.isVisible()
+			.catch(() => false)
 
 		for (let i = rowCount; i < 2; i++) {
-			test.skip(!hasCreate, 'no create affordance found on the BudgetScenarios index')
+			test.skip(
+				!hasCreate,
+				'no create affordance found on the BudgetScenarios index',
+			)
 			await createBtn.first().click()
 			await page.getByLabel(/^name$/i).fill(`E2E fixture scenario ${i + 1}`)
 			await page.getByRole('button', { name: /save/i }).click()
-			await expect(page.getByTestId('cn-detail-page')).toBeVisible({ timeout: 15_000 })
+			await expect(page.getByTestId('cn-detail-page')).toBeVisible({
+				timeout: 15_000,
+			})
 			await gotoRoute(page, SCENARIOS_ROUTE)
-			await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+			await expect(page.getByTestId('cn-index-page')).toBeVisible({
+				timeout: 15_000,
+			})
 		}
 
 		rowCount = await rows.count()
-		test.skip(rowCount < 2, 'fewer than two BudgetScenario rows available to demonstrate demotion')
+		test.skip(
+			rowCount < 2,
+			'fewer than two BudgetScenario rows available to demonstrate demotion',
+		)
 
 		// Open the first row (scenario A) and promote it to default first, so
 		// there is a genuine "previous default" to demote.
 		await rows.nth(0).click()
-		await expect(page.getByTestId('cn-detail-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
+			timeout: 15_000,
+		})
 		const promoteA = page.getByRole('button', { name: /promote to default/i })
-		const hasPromoteA = await promoteA.first().isVisible().catch(() => false)
-		test.skip(!hasPromoteA, 'scenario A is already default, or the promote action is not visible')
+		const hasPromoteA = await promoteA
+			.first()
+			.isVisible()
+			.catch(() => false)
+		test.skip(
+			!hasPromoteA,
+			'scenario A is already default, or the promote action is not visible',
+		)
 		await promoteA.first().click()
-		await expect(page.getByText(/promoted to default/i).first()).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByText(/promoted to default/i).first()).toBeVisible({
+			timeout: 10_000,
+		})
 
 		// Now open scenario B and promote IT — scenario A must flip to
 		// non-default in the same action.
 		await gotoRoute(page, SCENARIOS_ROUTE)
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 		await rows.nth(1).click()
-		await expect(page.getByTestId('cn-detail-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
+			timeout: 15_000,
+		})
 		const promoteB = page.getByRole('button', { name: /promote to default/i })
 		await promoteB.first().click()
-		await expect(page.getByText(/promoted to default/i).first()).toBeVisible({ timeout: 10_000 })
+		await expect(page.getByText(/promoted to default/i).first()).toBeVisible({
+			timeout: 10_000,
+		})
 
 		// Scenario A's own detail page no longer offers "Promote to default"
 		// as a NO-OP-hiding action being absent would suggest it is ALREADY
 		// non-default again — i.e. the action re-appears, proving isDefault
 		// flipped to false.
 		await gotoRoute(page, SCENARIOS_ROUTE)
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 		await rows.nth(0).click()
-		await expect(page.getByTestId('cn-detail-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
+			timeout: 15_000,
+		})
 		await expect(
 			page.getByRole('button', { name: /promote to default/i }).first(),
 			'scenario A must show "Promote to default" again once demoted (visibleWhen isDefault=false)',
@@ -347,20 +427,36 @@ test.describe('budget-scenarios — scenario comparison page (REQ-BSC-005, REQ-B
 	}) => {
 		await gotoRoute(page, SCENARIO_COMPARISON_ROUTE)
 
-		const scenarioSelect = page.getByTestId('budget-scenario-comparison-scenario')
+		const scenarioSelect = page.getByTestId(
+			'budget-scenario-comparison-scenario',
+		)
 		await expect(scenarioSelect).toBeVisible({ timeout: 15_000 })
 
 		const optionCount = await scenarioSelect.locator('option').count()
-		test.skip(optionCount <= 1, 'no BudgetScenario available to select (only the placeholder option present)')
+		test.skip(
+			optionCount <= 1,
+			'no BudgetScenario available to select (only the placeholder option present)',
+		)
 
 		await scenarioSelect.selectOption({ index: 1 })
 
 		const table = page.getByTestId('budget-scenario-comparison-table')
-		const tableVisible = await table.isVisible({ timeout: 10_000 }).catch(() => false)
-		test.skip(!tableVisible, 'selected scenario has no evaluable LedgerGroup data to render a table for')
+		const tableVisible = await table
+			.isVisible({ timeout: 10_000 })
+			.catch(() => false)
+		test.skip(
+			!tableVisible,
+			'selected scenario has no evaluable LedgerGroup data to render a table for',
+		)
 
-		await expect(table.getByText('Base', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
-		await expect(table.getByText('Scenario', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
-		await expect(table.getByText('Delta', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
+		await expect(table.getByText('Base', { exact: true }).first()).toBeVisible({
+			timeout: 10_000,
+		})
+		await expect(
+			table.getByText('Scenario', { exact: true }).first(),
+		).toBeVisible({ timeout: 10_000 })
+		await expect(table.getByText('Delta', { exact: true }).first()).toBeVisible({
+			timeout: 10_000,
+		})
 	})
 })
