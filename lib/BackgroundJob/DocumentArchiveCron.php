@@ -20,7 +20,7 @@
  * matter is then surfaced to the auditor through the workflow inbox.
  *
  * @category Cron
- * @package  OCA\Shillinq\Cron
+ * @package  OCA\Shillinq\BackgroundJob
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -36,7 +36,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Cron;
+namespace OCA\Shillinq\BackgroundJob;
 
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Service\WbsoDocumentService;

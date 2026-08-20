@@ -9,7 +9,7 @@
  * day across the whole sweep.
  *
  * @category Test
- * @package  OCA\Shillinq\Tests\Unit\Cron
+ * @package  OCA\Shillinq\Tests\Unit\BackgroundJob
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -22,9 +22,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Tests\Unit\Cron;
+namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 
-use OCA\Shillinq\Cron\LotExpiryAlertJob;
+use OCA\Shillinq\BackgroundJob\LotExpiryAlertJob;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\TestCase;

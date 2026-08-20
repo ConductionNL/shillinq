@@ -13,7 +13,7 @@
  * AR/AP invoices run via the OpenRegister engine.
  *
  * @category Cron
- * @package  OCA\Shillinq\Cron
+ * @package  OCA\Shillinq\BackgroundJob
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -29,7 +29,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Cron;
+namespace OCA\Shillinq\BackgroundJob;
 
 use OCA\Shillinq\Service\BankfeedMatcher;
 use OCA\Shillinq\Service\SettingsService;

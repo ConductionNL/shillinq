@@ -14,7 +14,7 @@
  *   - the BACKOFF_SECONDS constant pins exactly the documented schedule.
  *
  * @category Test
- * @package  OCA\Shillinq\Tests\Unit\Cron
+ * @package  OCA\Shillinq\Tests\Unit\BackgroundJob
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -30,10 +30,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Tests\Unit\Cron;
+namespace OCA\Shillinq\Tests\Unit\BackgroundJob;
 
 use DateTimeZone;
-use OCA\Shillinq\Cron\PipelinqTimelineRetryJob;
+use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\Pipelinq\PipelinqContactAdapter;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
 use OCA\Shillinq\Service\SettingsService;

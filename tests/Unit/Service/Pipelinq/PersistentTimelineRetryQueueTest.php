@@ -35,7 +35,7 @@ namespace OCA\Shillinq\Tests\Unit\Service\Pipelinq;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\Shillinq\Cron\PipelinqTimelineRetryJob;
+use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\Pipelinq\PersistentTimelineRetryQueue;
 use OCA\Shillinq\Service\Pipelinq\TimelineEventDto;
 use OCA\Shillinq\Service\SettingsService;

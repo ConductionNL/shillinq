@@ -47,7 +47,7 @@ namespace OCA\Shillinq\Service\Pipelinq;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Cron\PipelinqTimelineRetryJob;
+use OCA\Shillinq\BackgroundJob\PipelinqTimelineRetryJob;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
