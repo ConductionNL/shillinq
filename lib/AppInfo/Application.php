@@ -1106,7 +1106,7 @@ class Application extends App implements IBootstrap {
 			}
 		);
 
-		// budget-core-schema REQ-BCS-006 — the AnnualBudget.activate
+		// Budget-core-schema REQ-BCS-006 — the AnnualBudget.activate
 		// transition's `requires` tag
 		// (OCA\Shillinq\Lifecycle\AnnualBudgetDefaultGuard::isUniqueDefault)
 		// is a `Class::method`-shaped string, which per shillinq#425/#433

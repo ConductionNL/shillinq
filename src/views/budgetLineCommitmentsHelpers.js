@@ -35,7 +35,9 @@ export function normaliseBudgetLineRows(payload) {
 
 	return buckets.map((bucket) => {
 		const geautoriseerd = Number(
-			bucket?.['CommitmentBudget.authorised_amount'] ?? bucket?.geautoriseerd ?? 0,
+			bucket?.['CommitmentBudget.authorised_amount']
+				?? bucket?.geautoriseerd
+				?? 0,
 		)
 		const mandatory = Number(
 			bucket?.remaining_committed ?? bucket?.verplicht ?? 0,

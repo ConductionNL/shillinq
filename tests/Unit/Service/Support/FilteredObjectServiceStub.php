@@ -48,7 +48,7 @@ use OCP\IUser;
 /**
  * Minimal in-memory store supporting equality and `{in: [...]}` filters.
  *
- * @SuppressWarnings(PHPMD.TooManyPublicMethods) Mirrors the 25-method contract.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) Mirrors the 26-method contract.
  */
 final class FilteredObjectServiceStub implements ObjectServiceInterface {
 
@@ -269,6 +269,32 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 		$this->unsupported('updateObject');
 
 	}//end updateObject()
+
+	/**
+	 * Not modelled.
+	 *
+	 * @param string $objectId Object id, UUID or slug.
+	 * @param array $data The partial data to merge.
+	 * @param string|int|null $register Register id, UUID or slug.
+	 * @param string|int|null $schema Schema id, UUID or slug.
+	 * @param bool $_rbac Apply register RBAC.
+	 * @param bool $_multitenancy Apply organisation scoping.
+	 * @param ?IUser $currentUser Explicit acting user.
+	 *
+	 * @return ObjectEntityInterface
+	 */
+	public function patchObject(
+		string $objectId,
+		array $data,
+		string|int|null $register = null,
+		string|int|null $schema = null,
+		bool $_rbac = true,
+		bool $_multitenancy = true,
+		?IUser $currentUser = null
+	): ObjectEntityInterface {
+		$this->unsupported('patchObject');
+
+	}//end patchObject()
 
 	/**
 	 * Not modelled.
