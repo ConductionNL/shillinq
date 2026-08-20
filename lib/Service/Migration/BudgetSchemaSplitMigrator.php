@@ -165,7 +165,8 @@ final class BudgetSchemaSplitMigrator {
 	 *
 	 * @param array<int, array<string, mixed>> $sourceObjects The objects under `SOURCE_SCHEMA`.
 	 *
-	 * @return array{BbvProgrammeBudget: array<int, array<string, mixed>>, CommitmentBudget: array<int, array<string, mixed>>} The migrated objects, split by target schema.
+	 * @return array{BbvProgrammeBudget: array<int, array<string, mixed>>, CommitmentBudget: array<int, array<string, mixed>>}
+	 *         The migrated objects, split by target schema.
 	 *
 	 * @throws RuntimeException When any object is unclassifiable or the migrated count does not match the source count.
 	 *

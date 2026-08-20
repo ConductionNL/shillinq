@@ -121,7 +121,9 @@ test.describe('budget-core-schema — Budgets nav group + index pages (REQ-BCS-0
 		await page.waitForLoadState('domcontentloaded')
 		await dismissOverlays(page)
 
-		const bankingCashflow = page.getByRole('link', { name: /Banking.*Cashflow/i })
+		const bankingCashflow = page.getByRole('link', {
+			name: /Banking.*Cashflow/i,
+		})
 		await expect(bankingCashflow.first()).toBeVisible({ timeout: 15_000 })
 		await bankingCashflow.first().click()
 
@@ -143,14 +145,21 @@ test.describe('budget-core-schema — Budgets nav group + index pages (REQ-BCS-0
 		page,
 	}) => {
 		await gotoRoute(page, ANNUAL_BUDGETS_ROUTE)
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		const row = page.locator('table tbody tr').first()
 		const hasRows = await row.isVisible().catch(() => false)
-		test.skip(!hasRows, 'no AnnualBudget seeded — this schema carries no seed data by design (design.md §10)')
+		test.skip(
+			!hasRows,
+			'no AnnualBudget seeded — this schema carries no seed data by design (design.md §10)',
+		)
 
 		await row.click()
-		await expect(page.getByTestId('cn-detail-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
+			timeout: 15_000,
+		})
 	})
 
 	/**
@@ -160,15 +169,22 @@ test.describe('budget-core-schema — Budgets nav group + index pages (REQ-BCS-0
 		page,
 	}) => {
 		await gotoRoute(page, LEDGER_GROUPS_ROUTE)
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		const row = page.locator('table tbody tr').first()
-		await expect(row, 'the 19 seeded LedgerGroup rows must render (design.md §3c)').toBeVisible({
+		await expect(
+			row,
+			'the 19 seeded LedgerGroup rows must render (design.md §3c)',
+		).toBeVisible({
 			timeout: 15_000,
 		})
 
 		await row.click()
-		await expect(page.getByTestId('cn-detail-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
+			timeout: 15_000,
+		})
 	})
 
 	/**
@@ -176,7 +192,9 @@ test.describe('budget-core-schema — Budgets nav group + index pages (REQ-BCS-0
 	 */
 	test('BudgetLines index resolves', async ({ page }) => {
 		await gotoRoute(page, BUDGET_LINES_ROUTE)
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 	})
 })
 
@@ -197,7 +215,9 @@ test.describe('budget-core-schema — LedgerGroup seeded data (REQ-BCS-005)', ()
 		page,
 	}) => {
 		await gotoRoute(page, LEDGER_GROUPS_ROUTE)
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		const body = page.locator('#app-content-vue, main').first()
 		for (const label of ['Omzet', 'Personeel', 'Huisvestingskosten']) {
@@ -225,20 +245,32 @@ test.describe('budget-core-schema — LedgerGroup seeded data (REQ-BCS-005)', ()
 	 * salarissen`/`Sociale lasten en pensioenlasten` (children) via the
 	 * `children` relatedList (`parentLedgerGroupId`).
 	 */
-	test("Personeel's detail page lists its two seeded children", async ({ page }) => {
+	test("Personeel's detail page lists its two seeded children", async ({
+		page,
+	}) => {
 		await gotoRoute(page, LEDGER_GROUPS_ROUTE)
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		const body = page.locator('#app-content-vue, main').first()
 		const personeelRow = body.getByText('Personeel', { exact: true }).first()
 		const found = await personeelRow.isVisible().catch(() => false)
-		test.skip(!found, 'seeded "Personeel" LedgerGroup row not found on this index')
+		test.skip(
+			!found,
+			'seeded "Personeel" LedgerGroup row not found on this index',
+		)
 
 		await personeelRow.click()
-		await expect(page.getByTestId('cn-detail-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		const detailBody = page.locator('#app-content-vue, main').first()
-		for (const child of ['Lonen en salarissen', 'Sociale lasten en pensioenlasten']) {
+		for (const child of [
+			'Lonen en salarissen',
+			'Sociale lasten en pensioenlasten',
+		]) {
 			await expect(
 				detailBody.getByText(child, { exact: false }).first(),
 				`child LedgerGroup "${child}" must be listed on Personeel's detail page`,
@@ -267,10 +299,15 @@ test.describe('budget-core-schema — BudgetLine 12 monthly columns (REQ-BCS-007
 		page,
 	}) => {
 		await gotoRoute(page, BUDGET_LINES_ROUTE)
-		await expect(page.getByTestId('cn-index-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		const createBtn = page.getByRole('button', { name: /create|add|new/i })
-		const hasCreate = await createBtn.first().isVisible().catch(() => false)
+		const hasCreate = await createBtn
+			.first()
+			.isVisible()
+			.catch(() => false)
 		test.skip(!hasCreate, 'no create affordance found on the BudgetLines index')
 		await createBtn.first().click()
 
@@ -308,11 +345,15 @@ test.describe('budget-core-schema — BudgetLine 12 monthly columns (REQ-BCS-007
 		}
 
 		await page.getByRole('button', { name: /save/i }).click()
-		await expect(page.getByTestId('cn-detail-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		await page.reload()
 		await page.waitForLoadState('domcontentloaded')
-		await expect(page.getByTestId('cn-detail-page')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
+			timeout: 15_000,
+		})
 
 		for (const [label, value] of Object.entries(monthValues)) {
 			await expect(

@@ -41,7 +41,7 @@
 </template>
 
 <script>
-import { formatAmount, favorableState } from '../views/budgetGridHelpers.js'
+import { favorableState, formatAmount } from '../views/budgetGridHelpers.js'
 
 export default {
 	name: 'BudgetGridCell',
@@ -56,6 +56,7 @@ export default {
 			type: Object,
 			default: null,
 		},
+
 		/**
 		 * Whether this cell belongs to an Account leaf row (actual-only,
 		 * REQ-BGV-007) rather than a LedgerGroup/computed row.

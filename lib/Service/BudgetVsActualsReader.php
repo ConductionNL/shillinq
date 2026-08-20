@@ -169,6 +169,11 @@ class BudgetVsActualsReader {
 	 *
 	 * @spec openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md#req-bcs-008
 	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The flag is REQ-BCS-008's own
+	 * call-budget toggle (5 calls with LedgerGroups, 4 without) — splitting it
+	 * into two public methods would duplicate the shared account/actuals/
+	 * BudgetLine reads and fork the ≤5-call bound this method is tested against.
 	 */
 	public function loadContext(string $administrationId, array $annualBudgetIds, bool $includeLedgerGroups = true): array {
 		$accounts = $this->query(schema: self::SCHEMA_ACCOUNT, filters: ['administrationId' => $administrationId]);
@@ -286,11 +291,8 @@ class BudgetVsActualsReader {
 	 * @param list<array<string,mixed>> $rows The LedgerGroup rows.
 	 * @param list<array<string,mixed>> $accounts The Account rows to resolve membership against.
 	 *
-	 * @return array{
-	 *     entries: list<array{id:string,slug:string,parentRef:?string,memberAccountNumbers:list<string>}>,
-	 *     keyToIndex: array<string,int>,
-	 *     childrenByIndex: array<int,list<int>>,
-	 * }
+	 * @return array{entries: list<array{id:string,slug:string,parentRef:?string,memberAccountNumbers:list<string>}>,
+	 *         keyToIndex: array<string,int>, childrenByIndex: array<int,list<int>>}
 	 */
 	private function buildLedgerGroupIndex(array $rows, array $accounts): array {
 		$entries = [];
