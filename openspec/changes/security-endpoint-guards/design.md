@@ -110,6 +110,7 @@ Resolved against HEAD during implementation (code read, not guessed):
 | `BankRuleController::acceptSuggestion()` | — | **ALREADY-GUARDED (session-derived, IDOR-safe) — Open Question resolved, no code change** | Read `AdministrationContextService::buildContext()` (`lib/Service/AdministrationContextService.php:113-162`): `activeAdministrationId` is `$administrations[0]['administrationId']`, derived from `membershipsForUser($this->currentUserId())` — i.e. purely from the authenticated session uid via the caller's own `AdministrationMembership` records. No request parameter, header, or client-supplied value reaches `buildContext()` anywhere in its call graph. The only client-observable effect is that a multi-administration user always lands on their FIRST accessible administration (a business-logic limitation — they cannot choose which — not an IDOR vector, since it is always an administration they are a genuine member of). Verdict: confirmed already IDOR-safe by construction. Documented in the method's docblock (`resolveAdministrationId()`) rather than adding a redundant membership check. |
 | `CalendarController::createBooking()` | — | **GUARD (ownership/tenant) — fixed** | Added a check after `loadCalendar()`: `$this->context->canAccess($calendarRow['administrationId'])`, returning 403 (`calendar-booking-forbidden`) before the transactional conflict-check/write runs. `$this->context` (`AdministrationContextService`) was already injected for `resolveAdministrationId()`'s read-side filtering — reused, no new dependency. |
 | `BookingNotificationController::getBookingTriggers/updateBookingTriggers` | — | **ALREADY-GUARDED — Open Question resolved, no code change** | Re-read `authorizeBookingAccess()` (`:273-323`) against HEAD before touching the file, per Risk 3's mitigation. The guard is genuine: admin bypass via `IGroupManager::isAdmin()`, then `AdministrationContextService::canAccess($booking['administrationId'])`, throwing `OCSForbiddenException` on both a missing booking and a non-member caller. The docblock's own history note (the `findObject()` vs `find()` bug) documents a PRIOR defect that was already fixed before this change started — that fix, not a still-open gap, is what the audit's "confirmed" note most likely trailed. The `#[NoAdminRequired]` (per-object: `getBookingTriggers`/`updateBookingTriggers`) vs `#[AuthorizedAdminSetting]` (instance-wide: `getNotificationMonitor`/`disableAllTriggers`) annotation split was also re-checked and is correct for what each method does — not a finding. Verdict recorded in the method's docblock. |
+| `lib/Service/InvoiceGenerationService.php::draftInvoice()` | `loadTimeEntries`/`loadExpenses`/`loadMeterReadings`/`loadMilestone` | **GUARD (ownership/tenant) — fixed** | Second-order IDOR found during Wave-2 triage of `InvoiceApiController` (recorded below as an Incomplete Item, now closed for this half). Each of the four private loaders resolved its client-supplied id (`timeEntryIds`/`expenseIds`/`meterReadingIds`/`milestoneId` on `InvoiceGenerationRequest`) via `ObjectService::find($id)` alone — no `administrationId` check — so a member of administration A could reference administration B's `UrenRegistratie`/`ExpenseClaimEntry`/`MeterReading`/`Milestone` records and have B's hours/expense amounts/metered usage/milestone name+budget billed onto A's invoice. Fixed by adding `findScoped()` — a compound `id`+`administrationId` equality filter via `findAll()` (mirrors `GoodsReceiptNoteService::findOne()`'s scoping-the-lookup pattern rather than fetch-then-check) — and threading `$request->administrationId` through all four loaders plus the `UsageRatePlan` lookup inside `loadMeterReadings()` (a `MeterReading`'s own `ratePlanId`, or the request's `usageRatePlanId`, could also point at another tenant's price book). A cross-tenant id is now indistinguishable from an unknown one: silently excluded (time entry/expense/meter reading) or falls back to the existing generic stub (milestone) — matching this file's own pre-existing convention for an unresolvable reference, not a new error path. 6 new tests in `tests/Unit/Service/InvoiceGenerationServiceIdorTest.php` cover all four id types + the nested UsageRatePlan reference, both directions (cross-tenant excluded, own-tenant still drafts); verified with a temporary negative control (guard reverted to the pre-fix `find()` call) showing the cross-tenant time-entry test fail red (`1300.0` leaked vs `500.0` expected) before restoring green. `RateCardResolver`/`RetainerResolver` (the `rateCardId`/`retainerScheduleId` half of the original finding) remain open — see Incomplete Items. |
 
 ### Wave 2 — full 105-candidate triage (complete)
 
@@ -346,14 +347,19 @@ batch triage converges near 64 or a different number.
   redundant defense-in-depth, not currently exploitable, but worth wiring for
   defense-in-depth in a follow-up (`lib/Service/DunningRunService.php` was outside
   this change's assigned file list).
-- **`InvoiceGenerationService::draftInvoice()`** (discovered during Wave-2 triage of
-  `InvoiceApiController`, not fixed — outside the assigned file list) — loads
-  `timeEntryIds`/`expenseIds`/`meterReadingIds`/`milestoneId`/`rateCardId`/
-  `retainerScheduleId` purely by client-supplied id, with no check that each
-  referenced record's own `administrationId` matches the caller's server-resolved
-  administration. A second-order IDOR distinct from the guard candidates this change
-  was scoped to (`InvoiceApiController`'s own methods are all correctly guarded).
-  **Recommended as a follow-up finding**, not part of this change's fix set.
+- **`InvoiceGenerationService::draftInvoice()` — `rateCardId`/`retainerScheduleId`
+  half only, still open** (discovered during Wave-2 triage of
+  `InvoiceApiController`; the `timeEntryIds`/`expenseIds`/`meterReadingIds`/
+  `milestoneId` half of this finding is now **GUARD-fixed**, see the Apply-phase
+  table above). `RateCardResolver::resolveRate()` and
+  `RetainerResolver::resolveRetainerAmount()` (both `lib/Service/`, both outside
+  this change's assigned file list) still resolve `rateCardId`/`retainerScheduleId`
+  purely by client-supplied id with no `administrationId` filter at all — a caller
+  can reference another administration's `RateCard`/`RateRecord`/`RetainerSchedule`
+  and have its negotiated rate applied to their own invoice. A second-order IDOR of
+  the same shape, requiring a signature change across two service classes and their
+  ~13 existing unit-test call sites — **recommended as a focused follow-up change**,
+  not silently left looking "done."
 - **Two ADR-050 leak variants outside the literal grep's exact-line match, found but
   not fixed** (both explicitly out of the assigned per-file leak-fix scope):
   `GoodsReceiptNoteController::mapRuntimeException()` (`lib/Controller/GoodsReceiptNoteController.php:390-404`)
