@@ -72,11 +72,18 @@ class InvoiceGenerationService {
 	 * Draft an invoice from a generation request — saves BillableInvoice +
 	 * BillableInvoiceLine rows in draft status.
 	 *
+	 * Every id the request references (timeEntryIds/expenseIds/
+	 * meterReadingIds/milestoneId) is resolved through a lookup scoped to
+	 * $request->administrationId — a cross-tenant id can never resolve
+	 * (REQ-001; see loadTimeEntries()/loadExpenses()/loadMeterReadings()/
+	 * loadMilestone()/findScoped()).
+	 *
 	 * @param InvoiceGenerationRequest $request Validated request.
 	 *
 	 * @return array<string,mixed> Persisted BillableInvoice (with id).
 	 *
 	 * @spec openspec/specs/usage-metered-billing/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	public function draftInvoice(InvoiceGenerationRequest $request): array {
 		// 1. Deduplicate source IDs.
@@ -94,9 +101,15 @@ class InvoiceGenerationService {
 			);
 		}
 
-		// 2. Resolve time entries → BillingModelEngine input shape.
-		$timeEntries = $this->loadTimeEntries(ids: $request->timeEntryIds, rateCardId: $request->rateCardId);
-		$expenses = $this->loadExpenses(ids: $request->expenseIds);
+		// 2. Resolve time entries → BillingModelEngine input shape. Every
+		// referenced id below (timeEntryIds/expenseIds/meterReadingIds/
+		// milestoneId) is client-supplied on the request — loadTimeEntries()/
+		// loadExpenses() (and, via driveModel(), loadMeterReadings()/
+		// loadMilestone()) each scope their lookup to
+		// $request->administrationId so a cross-tenant id can never resolve
+		// (REQ-001).
+		$timeEntries = $this->loadTimeEntries(ids: $request->timeEntryIds, rateCardId: $request->rateCardId, administrationId: $request->administrationId);
+		$expenses = $this->loadExpenses(ids: $request->expenseIds, administrationId: $request->administrationId);
 		$hoursLogged = array_sum(array_column($timeEntries, 'hours'));
 
 		// 3. Drive the model.
@@ -419,7 +432,7 @@ class InvoiceGenerationService {
 
 			case 'milestone':
 				return $this->billingEngine->calculateMilestone(
-					milestone: $this->loadMilestone(milestoneId: (string)$request->milestoneId),
+					milestone: $this->loadMilestone(milestoneId: (string)$request->milestoneId, administrationId: $request->administrationId),
 					expenses: $expenses
 				);
 
@@ -438,7 +451,8 @@ class InvoiceGenerationService {
 				return $this->billingEngine->calculateUsage(
 					ratedReadings: $this->loadMeterReadings(
 						ids: $request->meterReadingIds,
-						defaultRatePlanId: $request->usageRatePlanId
+						defaultRatePlanId: $request->usageRatePlanId,
+						administrationId: $request->administrationId
 					),
 					expenses: $expenses
 				);
@@ -470,19 +484,28 @@ class InvoiceGenerationService {
 	/**
 	 * Load time entries and attach rate snapshots.
 	 *
+	 * Each id is client-supplied on the request; the lookup itself is scoped
+	 * to $administrationId (compound id+administrationId filter, matching
+	 * GoodsReceiptNoteService's findOne() pattern) so a cross-tenant
+	 * timeEntryId can never resolve — it is silently skipped, the same as an
+	 * unknown id (REQ-001).
+	 *
 	 * @param array<int,string> $ids UrenRegistratie ids.
 	 * @param string|null $rateCardId Rate card to resolve against.
+	 * @param string $administrationId Caller's server-resolved administration scope.
 	 *
 	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
-	private function loadTimeEntries(array $ids, ?string $rateCardId): array {
+	private function loadTimeEntries(array $ids, ?string $rateCardId, string $administrationId): array {
 		if (count($ids) === 0) {
 			return [];
 		}
 
 		$entries = [];
 		foreach ($ids as $id) {
-			$loaded = $this->find(schema: 'UrenRegistratie', id: $id);
+			$loaded = $this->findScoped(schema: 'UrenRegistratie', id: $id, administrationId: $administrationId);
 			if ($loaded === null) {
 				continue;
 			}
@@ -521,18 +544,26 @@ class InvoiceGenerationService {
 	/**
 	 * Load expense records into engine input shape.
 	 *
+	 * Each id is client-supplied on the request; the lookup itself is scoped
+	 * to $administrationId (compound id+administrationId filter) so a
+	 * cross-tenant expenseId can never resolve — it is silently skipped, the
+	 * same as an unknown id (REQ-001).
+	 *
 	 * @param array<int,string> $ids ExpenseClaimEntry ids.
+	 * @param string $administrationId Caller's server-resolved administration scope.
 	 *
 	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
-	private function loadExpenses(array $ids): array {
+	private function loadExpenses(array $ids, string $administrationId): array {
 		if (count($ids) === 0) {
 			return [];
 		}
 
 		$rows = [];
 		foreach ($ids as $id) {
-			$loaded = $this->find(schema: 'ExpenseClaimEntry', id: $id);
+			$loaded = $this->findScoped(schema: 'ExpenseClaimEntry', id: $id, administrationId: $administrationId);
 			if ($loaded === null) {
 				continue;
 			}
@@ -555,21 +586,30 @@ class InvoiceGenerationService {
 	 * the request-level default. Readings whose plan cannot be resolved are
 	 * skipped (never billed at a zero rate).
 	 *
+	 * Both lookups are client-reachable ids (`ids` from the request's
+	 * meterReadingIds, and `defaultRatePlanId` from the request's own
+	 * usageRatePlanId) — both are scoped to $administrationId (compound
+	 * id+administrationId filter) so a cross-tenant MeterReading or
+	 * UsageRatePlan can never resolve; it is silently skipped, the same as an
+	 * unknown id (REQ-001).
+	 *
 	 * @param array<int,string> $ids MeterReading ids.
 	 * @param string|null $defaultRatePlanId Fallback UsageRatePlan id.
+	 * @param string $administrationId Caller's server-resolved administration scope.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
 	 * @spec openspec/specs/usage-metered-billing/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
-	private function loadMeterReadings(array $ids, ?string $defaultRatePlanId): array {
+	private function loadMeterReadings(array $ids, ?string $defaultRatePlanId, string $administrationId): array {
 		if (count($ids) === 0) {
 			return [];
 		}
 
 		$rated = [];
 		foreach ($ids as $id) {
-			$reading = $this->find(schema: 'MeterReading', id: $id);
+			$reading = $this->findScoped(schema: 'MeterReading', id: $id, administrationId: $administrationId);
 			if ($reading === null) {
 				continue;
 			}
@@ -580,7 +620,7 @@ class InvoiceGenerationService {
 				continue;
 			}
 
-			$plan = $this->find(schema: 'UsageRatePlan', id: $planId);
+			$plan = $this->findScoped(schema: 'UsageRatePlan', id: $planId, administrationId: $administrationId);
 			if ($plan === null) {
 				$this->logger->warning(sprintf('UsageRatePlan %s not found for MeterReading %s; skipping.', $planId, $id));
 				continue;
@@ -622,12 +662,21 @@ class InvoiceGenerationService {
 	/**
 	 * Load milestone metadata or return a stub on lookup failure.
 	 *
+	 * $milestoneId is client-supplied on the request; the lookup itself is
+	 * scoped to $administrationId (compound id+administrationId filter) so a
+	 * cross-tenant milestoneId can never resolve — it falls back to the same
+	 * generic stub as an unknown id, never a cross-tenant milestone's own
+	 * name/budget (REQ-001).
+	 *
 	 * @param string $milestoneId Milestone id.
+	 * @param string $administrationId Caller's server-resolved administration scope.
 	 *
 	 * @return array{milestoneId:string,milestoneName:string,milestoneCompletedAt:string,milestoneBudgetCents:int}
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
-	private function loadMilestone(string $milestoneId): array {
-		$loaded = $this->find(schema: 'Milestone', id: $milestoneId);
+	private function loadMilestone(string $milestoneId, string $administrationId): array {
+		$loaded = $this->findScoped(schema: 'Milestone', id: $milestoneId, administrationId: $administrationId);
 		if ($loaded === null) {
 			return [
 				'milestoneId' => $milestoneId,
@@ -772,6 +821,58 @@ class InvoiceGenerationService {
 		}
 
 	}//end find()
+
+	/**
+	 * Find a single record scoped to the caller's administrationId — the id
+	 * AND administrationId are compounded into the query itself (an equality
+	 * filter pair on findAll()) so a cross-tenant id can never resolve, rather
+	 * than being fetched by id alone and then checked. Mirrors
+	 * GoodsReceiptNoteService::findOne()'s pattern (REQ-001).
+	 *
+	 * Used for every id draftInvoice() resolves that originates on the
+	 * client-supplied request (timeEntryIds/expenseIds/meterReadingIds/
+	 * milestoneId, and the UsageRatePlan a MeterReading or the request's
+	 * usageRatePlanId points at) — an unresolvable id (unknown OR
+	 * cross-tenant) is indistinguishable to the caller, matching this file's
+	 * existing "skip / fall back to stub" convention for a missing id.
+	 *
+	 * @param string $schema Schema slug.
+	 * @param string $id Record id.
+	 * @param string $administrationId Caller's server-resolved administration scope.
+	 *
+	 * @return array<string,mixed>|null
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function findScoped(string $schema, string $id, string $administrationId): ?array {
+		try {
+			$rows = $this->objectService
+				->setRegister($this->register())
+				->setSchema($schema)
+				->findAll(
+					[
+						'filters' => [
+							'id' => $id,
+							'administrationId' => $administrationId,
+						],
+					]
+				);
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+		if (is_array($rows) === false) {
+			return null;
+		}
+
+		foreach ($rows as $row) {
+			if (is_array($row) === true) {
+				return $row;
+			}
+		}
+
+		return null;
+	}//end findScoped()
 
 	/**
 	 * Save (create or update) via the real OR ObjectService API.

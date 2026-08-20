@@ -28,6 +28,7 @@ use OCA\Shillinq\Service\RequisitionConversionService;
 use OCA\Shillinq\Service\RequisitionService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -91,6 +92,13 @@ final class RequisitionControllerTest extends TestCase {
 	private LoggerInterface&MockObject $logger;
 
 	/**
+	 * Mock IL10N (ADR-050 localized error messages).
+	 *
+	 * @var IL10N&MockObject
+	 */
+	private IL10N&MockObject $l10n;
+
+	/**
 	 * The user the session reports; null models an anonymous caller.
 	 *
 	 * @var IUser|null
@@ -117,6 +125,10 @@ final class RequisitionControllerTest extends TestCase {
 		$this->administrationContext = $this->createMock(AdministrationContextService::class);
 		$this->userSession = $this->createMock(IUserSession::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->l10n = $this->createMock(IL10N::class);
+		$this->l10n->method('t')->willReturnCallback(
+			static fn (string $text, $params = []): string => $text
+		);
 
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('alice');
@@ -135,6 +147,7 @@ final class RequisitionControllerTest extends TestCase {
 			administrationContext: $this->administrationContext,
 			userSession: $this->userSession,
 			logger: $this->logger,
+			l10n: $this->l10n,
 		);
 
 	}//end setUp()
@@ -254,8 +267,10 @@ final class RequisitionControllerTest extends TestCase {
 	}//end testApproveForeignAdministrationReturns404()
 
 	/**
-	 * A budget refusal from BudgetBlocker surfaces as 409 Conflict with the
-	 * service's own message — the transition is denied server-side.
+	 * A budget refusal from BudgetBlocker surfaces as 409 Conflict. Per ADR-050 /
+	 * REQ-003 the service's own exception text is NEVER placed in the response
+	 * body — the client gets a stable slug + generic localized message, and the
+	 * real reason is only visible server-side via the logger.
 	 *
 	 * @return void
 	 */
@@ -268,7 +283,11 @@ final class RequisitionControllerTest extends TestCase {
 		$response = $this->controller->approve('req-7');
 
 		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
-		self::assertSame(['error' => 'Budget exceeded for programme P1'], $response->getData());
+		self::assertSame('requisition-invalid-state', $response->getData()['error']);
+		self::assertStringNotContainsStringIgnoringCase(
+			'Budget exceeded for programme P1',
+			(string)json_encode($response->getData())
+		);
 
 	}//end testApproveBudgetRefusalReturns409()
 
@@ -402,6 +421,165 @@ final class RequisitionControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
 	}//end testRejectRejectsMalformedIdWith400()
+
+	/**
+	 * Creating a requisition succeeds for a member of the target administration
+	 * (positive direction — security-endpoint-guards re-verification, verdict
+	 * ALREADY-GUARDED: the controller already checked canAccess() before this
+	 * change).
+	 *
+	 * @return void
+	 */
+	public function testCreateByMemberOfTargetAdministrationSucceeds(): void {
+		$this->withParams(
+			[
+				'administrationId' => 'adm-1',
+				'programme' => 'P1',
+				'financialYear' => 2026,
+				'neededByDate' => '2026-09-01',
+				'justification' => 'Replace laptops',
+				'kind' => 'goods',
+				'lines' => [
+					['description' => 'Laptop', 'quantity' => 1, 'unitPrice' => 1000, 'glAccountSuggestion' => '4000'],
+				],
+			]
+		);
+		$this->administrationContext->method('canAccess')->willReturn(true);
+		$this->requisitionService->expects($this->once())
+			->method('createRequisition')
+			->with('adm-1', $this->anything())
+			->willReturn(['id' => 'req-1', 'administrationId' => 'adm-1', 'statusCode' => 'draft']);
+
+		$response = $this->controller->create();
+
+		self::assertSame(Http::STATUS_CREATED, $response->getStatus());
+		self::assertSame('req-1', $response->getData()['id']);
+
+	}//end testCreateByMemberOfTargetAdministrationSucceeds()
+
+	/**
+	 * NEGATIVE CONTROL: creating a requisition against an administration the
+	 * caller is not a member of is masked as 404, and the service is never
+	 * called (security-endpoint-guards, REQ-001).
+	 *
+	 * @return void
+	 */
+	public function testCreateForForeignAdministrationIsForbidden(): void {
+		$this->withParams(['administrationId' => 'adm-other']);
+		$this->administrationContext->method('canAccess')->willReturn(false);
+		$this->requisitionService->expects($this->never())->method('createRequisition');
+
+		$response = $this->controller->create();
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testCreateForForeignAdministrationIsForbidden()
+
+	/**
+	 * A validation refusal from the service layer (missing/invalid field) never
+	 * places the exception's own text in the response body (ADR-050 / REQ-003).
+	 *
+	 * @return void
+	 */
+	public function testCreateValidationFailureDoesNotLeakExceptionText(): void {
+		$this->withParams(['administrationId' => 'adm-1']);
+		$this->administrationContext->method('canAccess')->willReturn(true);
+		$this->requisitionService->method('createRequisition')
+			->willThrowException(new \RuntimeException('programma is required'));
+
+		$response = $this->controller->create();
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame('requisition-create-invalid', $response->getData()['error']);
+		self::assertStringNotContainsStringIgnoringCase(
+			'programma is required',
+			(string)json_encode($response->getData())
+		);
+
+	}//end testCreateValidationFailureDoesNotLeakExceptionText()
+
+	/**
+	 * Submitting a draft requisition succeeds for a member of its administration
+	 * (positive direction — security-endpoint-guards re-verification).
+	 *
+	 * @return void
+	 */
+	public function testSubmitByOwnAdministrationMemberSucceeds(): void {
+		$this->withParams(['administrationId' => 'adm-1']);
+		$this->administrationContext->method('canAccess')->willReturn(true);
+		$this->requisitionService->expects($this->once())
+			->method('submitRequisition')
+			->with('adm-1', 'req-1')
+			->willReturn(['id' => 'req-1', 'statusCode' => 'submitted']);
+
+		$response = $this->controller->submit('req-1');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame('submitted', $response->getData()['statusCode']);
+
+	}//end testSubmitByOwnAdministrationMemberSucceeds()
+
+	/**
+	 * NEGATIVE CONTROL: submitting inside another tenant's administration is
+	 * masked as 404 and never reaches the service (security-endpoint-guards).
+	 *
+	 * @return void
+	 */
+	public function testSubmitForForeignAdministrationIsForbidden(): void {
+		$this->withParams(['administrationId' => 'adm-other']);
+		$this->administrationContext->method('canAccess')->willReturn(false);
+		$this->requisitionService->expects($this->never())->method('submitRequisition');
+
+		$response = $this->controller->submit('req-1');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testSubmitForForeignAdministrationIsForbidden()
+
+	/**
+	 * Converting an approved requisition succeeds for a member of its
+	 * administration (positive direction — security-endpoint-guards
+	 * re-verification).
+	 *
+	 * @return void
+	 */
+	public function testConvertByOwnAdministrationMemberSucceeds(): void {
+		$this->withParams(['administrationId' => 'adm-1']);
+		$this->administrationContext->method('canAccess')->willReturn(true);
+		$this->conversionService->expects($this->once())
+			->method('convertToPurchaseOrder')
+			->with('adm-1', 'req-1')
+			->willReturn(
+				[
+					'requisition' => ['id' => 'req-1', 'statusCode' => 'converted'],
+					'purchaseOrder' => ['id' => 'po-1'],
+				]
+			);
+
+		$response = $this->controller->convert('req-1');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame('po-1', $response->getData()['purchaseOrder']['id']);
+
+	}//end testConvertByOwnAdministrationMemberSucceeds()
+
+	/**
+	 * NEGATIVE CONTROL: converting inside another tenant's administration is
+	 * masked as 404 and never reaches the conversion service
+	 * (security-endpoint-guards).
+	 *
+	 * @return void
+	 */
+	public function testConvertForForeignAdministrationIsForbidden(): void {
+		$this->withParams(['administrationId' => 'adm-other']);
+		$this->administrationContext->method('canAccess')->willReturn(false);
+		$this->conversionService->expects($this->never())->method('convertToPurchaseOrder');
+
+		$response = $this->controller->convert('req-1');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testConvertForForeignAdministrationIsForbidden()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

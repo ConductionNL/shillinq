@@ -27,6 +27,7 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PayrollService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -80,6 +81,13 @@ final class PayrollControllerTest extends TestCase {
 	private AdministrationContextService&MockObject $context;
 
 	/**
+	 * Mock IL10N.
+	 *
+	 * @var IL10N&MockObject
+	 */
+	private IL10N&MockObject $l10n;
+
+	/**
 	 * What canAccess() answers. Flipped by the REQ-MA-001 refusal tests.
 	 *
 	 * @var bool
@@ -116,12 +124,16 @@ final class PayrollControllerTest extends TestCase {
 		$this->context = $this->createMock(AdministrationContextService::class);
 		$this->context->method('canAccess')->willReturnCallback(fn (): bool => $this->canAccess);
 
+		$this->l10n = $this->createMock(IL10N::class);
+		$this->l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
+
 		$this->controller = new PayrollController(
 			request: $this->request,
 			payrollService: $this->service,
 			userSession: $this->userSession,
 			context: $this->context,
 			logger: $this->logger,
+			l10n: $this->l10n,
 		);
 
 	}//end setUp()

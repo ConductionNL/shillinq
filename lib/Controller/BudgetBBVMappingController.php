@@ -97,6 +97,8 @@ class BudgetBBVMappingController extends Controller {
 	 * @return JSONResponse {register: string, schema: string, detailRoute: string}
 	 *
 	 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -104,6 +106,13 @@ class BudgetBBVMappingController extends Controller {
 			return new JSONResponse(['error' => $this->l10n->t('Not logged in')], Http::STATUS_UNAUTHORIZED);
 		}
 
+		// security-endpoint-guards REQ-001 JUSTIFY: this envelope reads no
+		// OpenRegister object — `scope` is derived entirely server-side from
+		// the session user via AdministrationContextService::buildContext()
+		// (never a request-supplied id), and the mapping CRUD itself is
+		// mediated by OpenRegister's own admin-write register permissions
+		// (slice 01), not by this controller. No per-object tenant guard
+		// applies because no tenant-scoped object is read here.
 		return new JSONResponse(
 			[
 				'register' => 'shillinq',
@@ -132,6 +141,8 @@ class BudgetBBVMappingController extends Controller {
 	 * @return JSONResponse {id: string, register: string, schema: string, indexRoute: string}
 	 *
 	 * @spec openspec/specs/bookkeeping-waterschappen-bbv-variant/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function show(string $id): JSONResponse {
@@ -139,6 +150,12 @@ class BudgetBBVMappingController extends Controller {
 			return new JSONResponse(['error' => $this->l10n->t('Not logged in')], Http::STATUS_UNAUTHORIZED);
 		}
 
+		// security-endpoint-guards REQ-001 JUSTIFY: $id is echoed back
+		// unread — no OpenRegister lookup happens in this method (see the
+		// method docblock), so there is no tenant-scoped object here for a
+		// per-object guard to protect. The real BudgetBBVMapping read/write
+		// happens through OpenRegister's own object endpoints (slice 07),
+		// which apply register-level RBAC independently of this route.
 		return new JSONResponse(
 			[
 				'id' => $id,

@@ -99,9 +99,99 @@ document (not guessed):
 | `lib/Controller/CalendarController.php:302` | `createBooking` | **GUARD (ownership/tenant)** | `requireAuth()` (`:438-444`) checks only `$this->context->currentUserId() !== null`. No check that the caller is entitled to book the resolved `$resourceId`. |
 | `lib/Controller/BookingNotificationController.php:91,123` | `getBookingTriggers`, `updateBookingTriggers` | **ALREADY-GUARDED (re-verify)** | `authorizeBookingAccess()` (`:272-`) does check admin-or-`AdministrationContextService`-membership against the booking's `administrationId`, and its docblock documents a prior `findObject()`/`find()` bug that made the guard fail-open-as-403-to-everyone (already fixed — it now calls the real `find()`). This may be a resolved finding; the audit's "confirmed" note may predate the fix, or point at the annotation split (`:164`/`:220` use `#[AuthorizedAdminSetting]` on the same resource type) as the actual concern rather than a missing guard. **Do not blindly re-add a guard here — re-read the method first.** |
 
-The remaining ~100 candidates (105 minus the 5 above) are enumerated in
-`tasks.md` Wave 2 as a batch triage-and-fix task, working file-by-file through the
-mechanical scan's output, applying the same five-verdict process.
+### Apply-phase resolution of the five named findings
+
+Resolved against HEAD during implementation (code read, not guessed):
+
+| File:line | Method | Final Verdict | Resolution |
+|---|---|---|---|
+| `CBSSubmissionController` `create/update/destroy/generate` | — | **GUARD (ownership/tenant) — fixed** | Injected `AdministrationContextService`; added `requireAdministrationAccess(administrationId)` (403 on non-member, matching this change's spec scenario) called after fetching the existing object (`update`/`destroy`/`generate`) or against the request-body `administrationId` (`create`, before the object is persisted). **Also found and fixed during the same code read, beyond the audit's named 4**: `index()` and `show()` had the identical missing-guard shape (`requireUser()` is auth-only) — any authenticated user could list or read another organization's filing. `index()` now scopes an unfiltered list to the caller's own accessible administrations and 403s an explicit out-of-scope `administrationId` filter; `show()` 403s on a non-member. Fixed for consistency since REQ-001 applies to every `#[NoAdminRequired]` method on the file, not only the four the audit enumerated. |
+| `DBAController::ensureAdministrationAccess()` | `setTussenkomstMode` + 6 other call sites | **STUB — fixed** | Injected `AdministrationContextService`; the stub now calls `canAccess($administrationId)` and throws `OCSForbiddenException` on denial (anonymous, empty administrationId, or non-member) instead of logging-and-returning unconditionally. All 7 call sites (`saveIntake`, `computeScore`-adjacent flows, `uploadWba`, `setTussenkomstMode`, `evidenceConsent`, and 2 more) inherit the fix with no per-call-site change needed, since they all funnel through this one helper. |
+| `BankRuleController::acceptSuggestion()` | — | **ALREADY-GUARDED (session-derived, IDOR-safe) — Open Question resolved, no code change** | Read `AdministrationContextService::buildContext()` (`lib/Service/AdministrationContextService.php:113-162`): `activeAdministrationId` is `$administrations[0]['administrationId']`, derived from `membershipsForUser($this->currentUserId())` — i.e. purely from the authenticated session uid via the caller's own `AdministrationMembership` records. No request parameter, header, or client-supplied value reaches `buildContext()` anywhere in its call graph. The only client-observable effect is that a multi-administration user always lands on their FIRST accessible administration (a business-logic limitation — they cannot choose which — not an IDOR vector, since it is always an administration they are a genuine member of). Verdict: confirmed already IDOR-safe by construction. Documented in the method's docblock (`resolveAdministrationId()`) rather than adding a redundant membership check. |
+| `CalendarController::createBooking()` | — | **GUARD (ownership/tenant) — fixed** | Added a check after `loadCalendar()`: `$this->context->canAccess($calendarRow['administrationId'])`, returning 403 (`calendar-booking-forbidden`) before the transactional conflict-check/write runs. `$this->context` (`AdministrationContextService`) was already injected for `resolveAdministrationId()`'s read-side filtering — reused, no new dependency. |
+| `BookingNotificationController::getBookingTriggers/updateBookingTriggers` | — | **ALREADY-GUARDED — Open Question resolved, no code change** | Re-read `authorizeBookingAccess()` (`:273-323`) against HEAD before touching the file, per Risk 3's mitigation. The guard is genuine: admin bypass via `IGroupManager::isAdmin()`, then `AdministrationContextService::canAccess($booking['administrationId'])`, throwing `OCSForbiddenException` on both a missing booking and a non-member caller. The docblock's own history note (the `findObject()` vs `find()` bug) documents a PRIOR defect that was already fixed before this change started — that fix, not a still-open gap, is what the audit's "confirmed" note most likely trailed. The `#[NoAdminRequired]` (per-object: `getBookingTriggers`/`updateBookingTriggers`) vs `#[AuthorizedAdminSetting]` (instance-wide: `getNotificationMonitor`/`disableAllTriggers`) annotation split was also re-checked and is correct for what each method does — not a finding. Verdict recorded in the method's docblock. |
+
+### Wave 2 — full 105-candidate triage (complete)
+
+All 105 mechanical-scan candidates were triaged file-by-file, read (method body +
+any guard helper), and classified. Work was split three ways by file (Group A: 34
+candidates across 17 files; Group B: 36 candidates across 14 files; Group C: 35
+candidates across 18 files — 105 total, reconciling exactly with the Step-1 scan
+count). Full per-candidate verdict tables with evidence live in the scratch
+reports the triage passes produced; the counts below are the authoritative
+roll-up.
+
+**Verdict counts (Wave 2, 105/105 candidates)**:
+
+| Verdict | Count | Notes |
+|---|---|---|
+| GUARD (ownership/tenant) — fixed/hardened | 5 | `FinancialDashboardController::series/summary` (partial — see note below), `DunningController::resumePause`, `BookingDepthController::createSeries`, `WbsoAdministratieController::realisatie` |
+| GUARD (admin) | 0 | No candidate was genuinely instance-wide admin CRUD mis-annotated as `#[NoAdminRequired]` |
+| JUSTIFY | 14 | Methods with no caller-reachable cross-tenant object (session-only scope, global reference data, or no OpenRegister read at all) — inline comment + `@spec`/`@e2e` tags added, no behavior change |
+| ALREADY-GUARDED (false positive) | 86 | A real, enforcing guard already existed under a shape the mechanical regex doesn't recognize — see below |
+| STUB | 0 | The only STUB in the whole change was `DBAController::ensureAdministrationAccess()`, found and fixed as one of the five named findings (not part of the 105) |
+| **Total** | **105** | |
+
+**Why 86 of 105 were false positives — the dominant, systemic cause**: the
+mechanical scan's regex (`.claude/skills/hydra-gate-no-admin-idor`, and this
+change's Step 1 reproduction) recognizes a guard only when it is shaped
+`authorize*(`/`require*(`/`ensure*(`/`isAdmin(`/`OCSForbiddenException`/
+`#[PublicPage]`. This app's actual canonical per-object/tenant guard call is
+**`AdministrationContextService::canAccess(administrationId: …)`**, called
+either inline in the controller method or one hop away in a service/helper
+(`resolveScope()`, `mayAccessReturn()`, `guardDraftAccess()`, or a service-layer
+`accessibleAdministrationIds()`/double-filtered `findOne(['id' => …,
+'administrationId' => …])` lookup). None of those shapes match the regex's verb
+list. **Every one of the 86 ALREADY-GUARDED verdicts was independently verified
+by reading the guard's actual implementation** (not inferred from its presence)
+— `AdministrationContextService::canAccess()` performs a real
+`AdministrationMembership` lookup and returns `false` for a non-member, and
+several batches additionally ran a live negative-control (temporarily disabling
+the guard and re-running the existing test) to confirm it denies under the
+removal, not just exists. **Recommendation**: extend
+`hydra-gate-no-admin-idor`'s regex to also match `->canAccess(` (and, ideally,
+delegated-service scoping shapes like `accessibleAdministrationIds()`) so this
+false-positive class does not recur on the next non-diff-scoped re-run — flagged
+here as a follow-up gate-fix, not implemented as part of this change (out of
+scope: this change fixes findings, it does not modify the gate scripts).
+
+**The 5 real GUARD fixes, briefly** (full evidence in the per-batch scratch
+reports):
+- `FinancialDashboardController::series()`/`summary()` — the underlying
+  `FinancialDashboardService::fetchSchema()` reads several schemas via an
+  unfiltered `findAll([])`; **partially fixed** within this task's file scope
+  (`respond()` now 403s a caller with zero accessible administrations), but a
+  full per-row scope fix needs `GLLine` (which carries no `administrationId`
+  property at all — a documented, already-pinned gap) and touches
+  `lib/Service/FinancialDashboardService.php`, outside this task's assigned
+  file list. **Flagged as an incomplete item, not silently closed** — see
+  Incomplete Items below.
+- `DunningController::resumePause()` — the controller's own `canAccess()` guard
+  checked the *request-supplied* `administration_id`, but the target
+  `DunningPauseDispute` (addressed by a separate `pauseId` path param) was never
+  re-checked against its *own* `administrationId` — `DunningRunService::resumePause()`
+  fetches by id alone and never reads its `$administrationId` parameter
+  (flagged by its own pre-existing `@SuppressWarnings(PHPMD.UnusedFormalParameter)`
+  note). A member of administration A supplying `administration_id=A` (passes)
+  and a guessed/enumerated `pauseId` from administration B could resume/read B's
+  dunning pause. Fixed entirely at the controller layer: fetch the pause first,
+  then check `canAccess()` against its real `administrationId`.
+- `BookingDepthController::createSeries()` — the request-supplied
+  `administrationId` was correctly checked, but the caller-supplied `resourceId`
+  was never checked to actually belong to that administration — a member of A
+  could pass `administrationId=A` (their own) with a `resourceId` from B and
+  book against B's resource. Fixed with an explicit
+  `$resource['administrationId'] !== $administrationId` check before persistence.
+- `WbsoAdministratieController::realisatie()` — no guard at all; the method's own
+  `@no-admin-idor-exempt` docblock claimed "OpenRegister's ObjectService RBAC
+  layer" validates the scope, which is false (no schema in this app declares an
+  `authorization` block — the same false-claim pattern this change's Motivation
+  section already documented for `CBSSubmissionController`). Fixed with a new
+  `canAccess()` check, masked 404 on denial.
+
+Full per-candidate evidence (105 rows) is preserved in the triage passes' scratch
+output; summarized here to keep this file navigable. Ask the orchestrator for the
+raw per-batch tables if a specific candidate's reasoning needs re-verification.
 
 ### Step 3 — Convergence with the audit's "64"
 
@@ -215,3 +305,82 @@ See proposal.md's Open Questions section — carried here for reference:
 `AdministrationContextService`'s input surface (BankRuleController), whether the
 `BookingNotificationController` finding is already resolved, and whether the Wave-2
 batch triage converges near 64 or a different number.
+
+**All three resolved during implementation:**
+- `AdministrationContextService`'s input surface (BankRuleController) — session-derived,
+  confirmed IDOR-safe by construction (no code change). See the five-named-findings
+  table above.
+- `BookingNotificationController` — already resolved before this change started
+  (ALREADY-GUARDED, no code change). See the five-named-findings table above.
+- The Wave-2 batch triage converged on **105 candidates, 5 real guard fixes (+ 1 more
+  in the CBS index/show bonus find), 0 admin-mis-annotations, 14 JUSTIFY, 86
+  false-positive ALREADY-GUARDED**, materially different from the audit's original
+  "64 confirmed" figure. This is not a discrepancy to explain away — the audit's 64
+  was itself an estimate ahead of the per-method code read this change's methodology
+  section calls for, and the true number (per-method evidence, not a target) is 5
+  fixes out of 105 mechanically-flagged candidates. The dominant reason the audit's
+  64 overshot: `AdministrationContextService::canAccess()` is this app's canonical
+  guard and was already wired into the overwhelming majority of flagged methods, just
+  under a call shape (`canAccess(`, not `authorize*`/`require*`/`ensure*`) neither the
+  audit's manual read nor the mechanical scan's regex fully accounted for ahead of time.
+
+## Incomplete Items (honest ledger, not silently closed)
+
+- **`FinancialDashboardController::series()`/`summary()`** — only partially fixed.
+  A caller with zero accessible administrations is now rejected (403), but a caller
+  who belongs to administration A still receives dashboard aggregates computed across
+  **every** administration's `Account`/`GLTransaction`/`GLLine`/`UrenRegistratie`/
+  `ARInvoice`/`APTransaction` data, because `FinancialDashboardService::fetchSchema()`
+  reads via an unfiltered `findAll([])`. A full fix needs per-row administration
+  scoping in `lib/Service/FinancialDashboardService.php` — outside this change's
+  assigned file list (the Wave-2 batch that found this was scoped to
+  `lib/Controller/FinancialDashboardController.php` only) — and, for `GLLine`
+  specifically, that schema carries no `administrationId` property at all (a
+  documented, already-pinned gap per `SpendAnalyticsServiceTest`), so closing this
+  fully may need a schema/data migration, not just a code change. **Recommended as a
+  focused follow-up change**, not silently left looking "done."
+- **`DunningRunService::resumePause()`'s dead `$administrationId` parameter** — the
+  `resumePause()` IDOR was fixed entirely at the controller layer (fetch-then-check
+  before calling the service); the service method's own unread `$administrationId`
+  parameter (and its `@SuppressWarnings(PHPMD.UnusedFormalParameter)` note) is now
+  redundant defense-in-depth, not currently exploitable, but worth wiring for
+  defense-in-depth in a follow-up (`lib/Service/DunningRunService.php` was outside
+  this change's assigned file list).
+- **`InvoiceGenerationService::draftInvoice()`** (discovered during Wave-2 triage of
+  `InvoiceApiController`, not fixed — outside the assigned file list) — loads
+  `timeEntryIds`/`expenseIds`/`meterReadingIds`/`milestoneId`/`rateCardId`/
+  `retainerScheduleId` purely by client-supplied id, with no check that each
+  referenced record's own `administrationId` matches the caller's server-resolved
+  administration. A second-order IDOR distinct from the guard candidates this change
+  was scoped to (`InvoiceApiController`'s own methods are all correctly guarded).
+  **Recommended as a follow-up finding**, not part of this change's fix set.
+- **Two ADR-050 leak variants outside the literal grep's exact-line match, found but
+  not fixed** (both explicitly out of the assigned per-file leak-fix scope):
+  `GoodsReceiptNoteController::mapRuntimeException()` (`lib/Controller/GoodsReceiptNoteController.php:390-404`)
+  returns `['error' => $exception->getMessage()]` on 3 status branches via a
+  `$message` intermediate variable — not literally
+  `JSONResponse(['error' => $e->getMessage()]`, so the exact grep this change's
+  acceptance criteria specifies does not catch it, but it is the same defect class.
+  `ReconciliationResolutionController::bulkResolve()` similarly returns
+  `$failed[$matchId] = $e->getMessage()` in a per-item partial-failure map inside a
+  200 response — a batch-operation variant of the same pattern, also outside the
+  literal grep and this change's explicit per-file leak-fix assignment list.
+- **Missing PHPUnit coverage for two files with no test file at all**:
+  `ThreeWayMatchController` and `ThreeWayMatchAuditController` have zero existing
+  PHPUnit coverage (`tests/Unit/Controller/ThreeWayMatchControllerTest.php` /
+  `ThreeWayMatchAuditControllerTest.php` do not exist). Their guards are real and
+  already enforce (ALREADY-GUARDED, confirmed by code read), so REQ-004 does not
+  require new tests here (no posture was added/changed), but the fleet-wide absence
+  of a test file for either controller is worth a dedicated follow-up.
+- **Two real UI surfaces with zero e2e coverage, neither touched by this change's
+  guard fixes**: Requisitions (`/inkoop/requisitions`) and the Reporting & Compliance
+  overview (`ReportingComplianceOverview.vue`) both have live manifest routes and no
+  Playwright spec. This change's own e2e scope (per proposal.md) is limited to the
+  CBS Submissions surface (Task 8); authoring new coverage for these two is a
+  separate, larger task.
+- **Mechanical scan false-positive rate (systemic, for a follow-up gate-fix)**: 86 of
+  105 Wave-2 candidates (82%) were false positives because
+  `hydra-gate-no-admin-idor`'s regex does not recognize `->canAccess(` as a guard
+  shape. Recommend extending the regex (see the Wave-2 section above) — not
+  implemented here, since this change's scope is fixing findings, not modifying gate
+  scripts.

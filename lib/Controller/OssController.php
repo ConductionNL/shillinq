@@ -97,6 +97,8 @@ class OssController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function resolveRate(): JSONResponse {
@@ -104,6 +106,14 @@ class OssController extends Controller {
 			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
 		}
 
+		// JUSTIFY (security-endpoint-guards REQ-001): intentionally reachable by
+		// any authenticated user with no per-object/administration check. This
+		// endpoint resolves a VAT rate from the TEDB reference table by
+		// (country, category, date) only — there is no `administrationId` param
+		// (see class docblock) and OssRateResolver::resolve() takes no tenant
+		// argument anywhere in its signature. The published EU VAT rate for a
+		// given country/category/date is the same fact for every caller; there
+		// is no per-tenant object here for an IDOR to target.
 		$country = strtoupper(trim((string)$this->request->getParam('country', '')));
 		$category = trim((string)$this->request->getParam('category', 'standard'));
 		$date = trim((string)$this->request->getParam('date', ''));
@@ -143,9 +153,18 @@ class OssController extends Controller {
 	 * Query params: administration_id, period_year (YYYY), period_quarter (Q1..Q4),
 	 * registration_id. Returns 200 with the draft return payload or 400 on bad input.
 	 *
+	 * Re-verified during security-endpoint-guards (REQ-001): ALREADY-GUARDED —
+	 * `$this->context->canAccess($administrationId)` below (added for #520,
+	 * see class docblock) is an enforced per-administration membership check,
+	 * not a syntactic no-op; a non-member gets a masked 404 before the draft
+	 * is generated. No code change needed here; recorded in the change's
+	 * verdict table for traceability.
+	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function generateReturn(): JSONResponse {

@@ -79,10 +79,20 @@ class AdministrationController extends Controller {
 	/**
 	 * Return the authenticated user's administration context (REQ-MA-003).
 	 *
+	 * JUSTIFY (security-endpoint-guards REQ-001): this method takes no
+	 * request-supplied administration id — `AdministrationContextService::
+	 * buildContext()` is derived purely from the authenticated session uid's
+	 * own `AdministrationMembership` records. There is no client-supplied
+	 * identifier a caller could substitute to reach another tenant's
+	 * context, so no additional per-object guard applies beyond the
+	 * authentication check below.
+	 *
 	 * @return JSONResponse 200 with { userId, administrations[], activeAdministrationId };
 	 *                      401 when no user is authenticated.
 	 *
 	 * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md#task-11
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function context(): JSONResponse {

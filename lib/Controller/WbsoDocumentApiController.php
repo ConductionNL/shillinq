@@ -39,6 +39,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -70,6 +71,7 @@ class WbsoDocumentApiController extends Controller {
 	 * @param WbsoRbacResolver $rbac Role resolver.
 	 * @param IUserSession $userSession Session.
 	 * @param LoggerInterface $logger Logger.
+	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -77,6 +79,7 @@ class WbsoDocumentApiController extends Controller {
 		private readonly WbsoRbacResolver $rbac,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly IL10N $l10n,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -108,7 +111,17 @@ class WbsoDocumentApiController extends Controller {
 				$rows = $this->documents->getDocumentsByAdministration(administrationId: $administrationId);
 			}
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+			$this->logger->error(
+				'WbsoDocumentApiController: document list filter rejected',
+				['administrationId' => $administrationId, 'type' => $type, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Unable to load documents: the filter is invalid'),
+					'error' => 'wbso-document-list-failed',
+				],
+				Http::STATUS_BAD_REQUEST,
+			);
 		} catch (\Throwable $e) {
 			return $this->fail(message: 'Failed to load documents', context: ['exception' => $e->getMessage()]);
 		}
@@ -213,7 +226,17 @@ class WbsoDocumentApiController extends Controller {
 		try {
 			$row = $this->documents->createDocument(administrationId: $administrationId, payload: $payload);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+			$this->logger->error(
+				'WbsoDocumentApiController: document creation payload rejected',
+				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Unable to create document: the submitted details are invalid'),
+					'error' => 'wbso-document-create-failed',
+				],
+				Http::STATUS_BAD_REQUEST,
+			);
 		} catch (\Throwable $e) {
 			return $this->fail(message: 'Failed to create document', context: ['exception' => $e->getMessage()]);
 		}
@@ -262,9 +285,26 @@ class WbsoDocumentApiController extends Controller {
 				approver: $approver,
 			);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+			$this->logger->error(
+				'WbsoDocumentApiController: document to file not found',
+				['administrationId' => $administrationId, 'documentId' => $id, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(
+				['message' => $this->l10n->t('Document not found'), 'error' => 'wbso-document-not-found'],
+				Http::STATUS_NOT_FOUND,
+			);
 		} catch (RuntimeException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
+			$this->logger->error(
+				'WbsoDocumentApiController: document file transition rejected',
+				['administrationId' => $administrationId, 'documentId' => $id, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Unable to file this document in its current state'),
+					'error' => 'wbso-document-file-conflict',
+				],
+				Http::STATUS_CONFLICT,
+			);
 		} catch (\Throwable $e) {
 			return $this->fail(message: 'Failed to file document', context: ['exception' => $e->getMessage()]);
 		}
@@ -315,9 +355,26 @@ class WbsoDocumentApiController extends Controller {
 				allowEarly: $allowEarly,
 			);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+			$this->logger->error(
+				'WbsoDocumentApiController: document to archive not found',
+				['administrationId' => $administrationId, 'documentId' => $id, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(
+				['message' => $this->l10n->t('Document not found'), 'error' => 'wbso-document-not-found'],
+				Http::STATUS_NOT_FOUND,
+			);
 		} catch (RuntimeException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_CONFLICT);
+			$this->logger->error(
+				'WbsoDocumentApiController: document archive transition rejected',
+				['administrationId' => $administrationId, 'documentId' => $id, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Unable to archive this document in its current state'),
+					'error' => 'wbso-document-archive-conflict',
+				],
+				Http::STATUS_CONFLICT,
+			);
 		} catch (\Throwable $e) {
 			return $this->fail(message: 'Failed to archive document', context: ['exception' => $e->getMessage()]);
 		}

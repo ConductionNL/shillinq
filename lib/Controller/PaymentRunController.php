@@ -96,11 +96,22 @@ class PaymentRunController extends Controller {
 	 * Export an approved PaymentRun to a SEPA bank file
 	 * (POST /api/v1/payment-runs/{id}/export).
 	 *
+	 * Re-verified during security-endpoint-guards (REQ-001): ALREADY-GUARDED —
+	 * `$this->administrationContext->canAccess()` below is an enforced
+	 * per-administration membership check (masked 404 on denial), not a
+	 * syntactic no-op. The mechanical `hydra-gate-no-admin-idor` scan flagged
+	 * this method only because `canAccess(` is not shaped like
+	 * `authorize*`/`require*`/`ensure*` — a documented false positive, not a
+	 * missing guard. No code change needed; recorded in the change's verdict
+	 * table for traceability.
+	 *
 	 * @param string $id The PaymentRun id / uuid.
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/payment-run-sepa-export/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function export(string $id): JSONResponse {
@@ -145,11 +156,17 @@ class PaymentRunController extends Controller {
 	 * Reconcile an exported PaymentRun against a CAMT.053 statement
 	 * (POST /api/v1/payment-runs/{id}/reconcile).
 	 *
+	 * Re-verified during security-endpoint-guards (REQ-001): ALREADY-GUARDED —
+	 * same enforced `canAccess()` membership check as {@see export()}; a
+	 * false positive of the mechanical scan, not a missing guard.
+	 *
 	 * @param string $id The PaymentRun id / uuid.
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/payment-run-sepa-export/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function reconcile(string $id): JSONResponse {

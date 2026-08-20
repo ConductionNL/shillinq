@@ -27,6 +27,7 @@ use OCA\Shillinq\Controller\BillingIntakeController;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\TimeIntakeService;
 use OCP\AppFramework\Http;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -69,6 +70,11 @@ final class BillingIntakeControllerTest extends TestCase {
 	private LoggerInterface&MockObject $logger;
 
 	/**
+	 * @var IL10N&MockObject
+	 */
+	private IL10N&MockObject $l10n;
+
+	/**
 	 * @var BillingIntakeController
 	 */
 	private BillingIntakeController $controller;
@@ -80,6 +86,8 @@ final class BillingIntakeControllerTest extends TestCase {
 		$this->administrationContext = $this->createMock(AdministrationContextService::class);
 		$this->session = $this->createMock(IUserSession::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->l10n = $this->createMock(IL10N::class);
+		$this->l10n->method('t')->willReturnCallback(static fn (string $text, $params = []): string => $text);
 
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('alice');
@@ -97,6 +105,7 @@ final class BillingIntakeControllerTest extends TestCase {
 			administrationContext: $this->administrationContext,
 			session: $this->session,
 			logger: $this->logger,
+			l10n: $this->l10n,
 		);
 
 	}//end setUp()
@@ -116,6 +125,7 @@ final class BillingIntakeControllerTest extends TestCase {
 			administrationContext: $this->administrationContext,
 			session: $session,
 			logger: $this->logger,
+			l10n: $this->l10n,
 		);
 
 		$this->service->expects(self::never())->method('ingest');
@@ -192,7 +202,8 @@ final class BillingIntakeControllerTest extends TestCase {
 
 	/**
 	 * An unexpected Throwable maps to HTTP 500 with a generic message (no
-	 * internal detail leakage).
+	 * internal detail leakage) — ADR-050: a stable kebab-case slug and a
+	 * localized message, never the raw exception text ('boom').
 	 *
 	 * @return void
 	 */
@@ -201,7 +212,8 @@ final class BillingIntakeControllerTest extends TestCase {
 
 		$response = $this->controller->timeIntake();
 		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
-		self::assertSame('Internal error', $response->getData()['error']);
+		self::assertSame('billing-time-intake-failed', $response->getData()['error']);
+		self::assertStringNotContainsString('boom', (string)$response->getData()['message']);
 
 	}//end testUnexpectedThrowableMapsTo500()
 

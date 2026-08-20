@@ -38,6 +38,7 @@ use OCA\Shillinq\Service\SlotService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\ICacheFactory;
+use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -128,9 +129,25 @@ final class BookingDepthControllerTest extends TestCase {
 			),
 			series: new RecurringSeriesService(slotService: $slotService, logger: $logger),
 			logger: $logger,
+			l10n: $this->makeL10n(),
 		);
 
 	}//end makeController()
+
+	/**
+	 * Build a translation-service stub that echoes its input back, so
+	 * assertions can match on the source string.
+	 *
+	 * @return IL10N&MockObject
+	 */
+	private function makeL10n(): IL10N&MockObject {
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnCallback(
+			static fn (string $text, $parameters = []): string => $text
+		);
+		return $l10n;
+
+	}//end makeL10n()
 
 	/**
 	 * A schema-aware fake ObjectService: findAll returns the canned records for
@@ -311,7 +328,14 @@ final class BookingDepthControllerTest extends TestCase {
 
 		$objectService = $this->makeObjectService(
 			[
-				'Resource' => [['resourceId' => 'res-a', 'openingTime' => '09:00', 'closingTime' => '17:00']],
+				'Resource' => [
+					[
+						'resourceId' => 'res-a',
+						'administrationId' => 'admin-1',
+						'openingTime' => '09:00',
+						'closingTime' => '17:00',
+					],
+				],
 				'Appointment' => [],
 			]
 		);
@@ -343,4 +367,115 @@ final class BookingDepthControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 
 	}//end testCreateSeriesRejectsAnonymous()
+
+	/**
+	 * NEGATIVE CONTROL / security-endpoint-guards REQ-001 hardening: a
+	 * caller who has access to their OWN administration (canAccess() ===
+	 * true) is still rejected when the named resourceId belongs to a
+	 * DIFFERENT administration — the create-time canAccess($administrationId)
+	 * check alone does not prove the fetched Resource is in scope. Before
+	 * this fix, this exact call would have booked appointments against
+	 * another tenant's resource under the caller's own administrationId.
+	 *
+	 * @return void
+	 */
+	public function testCreateSeriesRejectsResourceFromAnotherAdministration(): void {
+		$this->context->method('currentUserId')->willReturn('user-1');
+		$this->context->method('canAccess')->willReturnCallback(
+			static fn (string $administrationId): bool => $administrationId === 'admin-1'
+		);
+
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null) {
+				$params = [
+					'administrationId' => 'admin-1',
+					'seriesId' => 'series-1',
+					'serviceId' => 'svc-yoga',
+					'resourceId' => 'res-b',
+					'startTime' => '2030-01-07T09:00:00Z',
+					'durationMinutes' => 60,
+					'recurrenceRule' => 'FREQ=WEEKLY;BYDAY=MO;COUNT=4',
+					'customerId' => 'cust-1',
+				];
+				return ($params[$key] ?? $default);
+			}
+		);
+
+		$objectService = $this->makeObjectService(
+			[
+				// res-b belongs to a DIFFERENT administration than the
+				// caller-supplied/authorized administrationId (admin-1).
+				'Resource' => [
+					[
+						'resourceId' => 'res-b',
+						'administrationId' => 'admin-2',
+						'openingTime' => '09:00',
+						'closingTime' => '17:00',
+					],
+				],
+				'Appointment' => [],
+			]
+		);
+		$this->container->method('get')->willReturn($objectService);
+
+		$response = $this->makeController()->createSeries();
+		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		self::assertSame([], $objectService->saved, 'No AppointmentSeries/Appointment must be persisted');
+
+	}//end testCreateSeriesRejectsResourceFromAnotherAdministration()
+
+	/**
+	 * A validation failure from RecurringSeriesService::planSeries()
+	 * (security-endpoint-guards REQ-003) returns a stable slug and a
+	 * localized message — never the raw exception text.
+	 *
+	 * @return void
+	 */
+	public function testCreateSeriesValidationFailureDoesNotLeakExceptionText(): void {
+		$this->context->method('currentUserId')->willReturn('user-1');
+		$this->context->method('canAccess')->willReturn(true);
+
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null) {
+				$params = [
+					'administrationId' => 'admin-1',
+					'seriesId' => 'series-1',
+					'serviceId' => 'svc-yoga',
+					'resourceId' => 'res-a',
+					'startTime' => '2030-01-07T09:00:00Z',
+					'durationMinutes' => 60,
+					// Unsupported FREQ -> RecurringSeriesService throws
+					// InvalidArgumentException.
+					'recurrenceRule' => 'FREQ=YEARLY',
+					'customerId' => 'cust-1',
+				];
+				return ($params[$key] ?? $default);
+			}
+		);
+
+		$objectService = $this->makeObjectService(
+			[
+				'Resource' => [
+					[
+						'resourceId' => 'res-a',
+						'administrationId' => 'admin-1',
+						'openingTime' => '09:00',
+						'closingTime' => '17:00',
+					],
+				],
+				'Appointment' => [],
+			]
+		);
+		$this->container->method('get')->willReturn($objectService);
+
+		$response = $this->makeController()->createSeries();
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+
+		$data = $response->getData();
+		self::assertSame('appointment-series-create-failed', $data['error']);
+		self::assertArrayHasKey('message', $data);
+		self::assertStringNotContainsString('FREQ', $data['message']);
+		self::assertStringNotContainsString('RRULE', json_encode($data));
+
+	}//end testCreateSeriesValidationFailureDoesNotLeakExceptionText()
 }//end class

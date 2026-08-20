@@ -27,6 +27,7 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\PurchaseOrderService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -83,6 +84,13 @@ final class PurchaseOrderControllerTest extends TestCase {
 	private LoggerInterface&MockObject $logger;
 
 	/**
+	 * Mock IL10N.
+	 *
+	 * @var IL10N&MockObject
+	 */
+	private IL10N&MockObject $l10n;
+
+	/**
 	 * Set up shared fixtures — authenticated with an accessible
 	 * administration by default.
 	 *
@@ -95,6 +103,8 @@ final class PurchaseOrderControllerTest extends TestCase {
 		$this->administrationContext = $this->createMock(AdministrationContextService::class);
 		$this->userSession = $this->createMock(IUserSession::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->l10n = $this->createMock(IL10N::class);
+		$this->l10n->method('t')->willReturnCallback(static fn (string $text, $params = []): string => $text);
 
 		$this->administrationContext->method('canAccess')->willReturn(true);
 
@@ -143,9 +153,183 @@ final class PurchaseOrderControllerTest extends TestCase {
 			$this->administrationContext,
 			$this->userSession,
 			$this->logger,
+			$this->l10n,
 		);
 
 	}//end controller()
+
+	/**
+	 * create() persists the purchase order and returns it with HTTP 201, for
+	 * the legitimate caller (REQ-001 positive direction).
+	 *
+	 * @return void
+	 */
+	public function testCreateReturns201WithPersistedOrder(): void {
+		$this->withParams(
+			[
+				'administrationId' => 'adm-1',
+				'supplierId' => 'sup-1',
+				'costCenter' => 'cc-1',
+				'lines' => [['productCode' => 'p1', 'quantity' => 2, 'unitPrice' => 10.0, 'vatRate' => 21, 'glAccount' => 'gl-1']],
+			]
+		);
+		$po = ['id' => 'po-1', 'administrationId' => 'adm-1', 'status' => 'draft'];
+		$this->purchaseOrderService->expects($this->once())
+			->method('createPurchaseOrder')
+			->willReturnCallback(
+				static function (string $administrationId, array $payload) use ($po): array {
+					self::assertSame('adm-1', $administrationId);
+					self::assertSame('sup-1', $payload['supplierId']);
+					return $po;
+				}
+			);
+
+		$response = $this->controller()->create();
+
+		self::assertSame(Http::STATUS_CREATED, $response->getStatus());
+		self::assertSame($po, $response->getData());
+
+	}//end testCreateReturns201WithPersistedOrder()
+
+	/**
+	 * create() rejects an anonymous caller with HTTP 401 (REQ-001 negative
+	 * direction — no session at all).
+	 *
+	 * @return void
+	 */
+	public function testCreateAnonymousReturns401(): void {
+		$this->anonymous();
+		$this->withParams(['administrationId' => 'adm-1']);
+		$this->purchaseOrderService->expects($this->never())->method('createPurchaseOrder');
+
+		$response = $this->controller()->create();
+
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+
+	}//end testCreateAnonymousReturns401()
+
+	/**
+	 * create() masks a cross-tenant administrationId as HTTP 404 rather than
+	 * creating the order (REQ-001 negative direction — authenticated but not a
+	 * member of the named administration).
+	 *
+	 * @return void
+	 */
+	public function testCreateCrossTenantReturns404(): void {
+		$this->administrationContext = $this->createMock(AdministrationContextService::class);
+		$this->administrationContext->method('canAccess')->willReturn(false);
+		$this->withParams(['administrationId' => 'adm-other', 'supplierId' => 'sup-1', 'costCenter' => 'cc-1']);
+		$this->purchaseOrderService->expects($this->never())->method('createPurchaseOrder');
+
+		$response = $this->controller()->create();
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testCreateCrossTenantReturns404()
+
+	/**
+	 * A validation failure from the service (RuntimeException) answers a
+	 * static localized message and a kebab-case slug — never the raw
+	 * exception text (REQ-003 / ADR-050).
+	 *
+	 * @return void
+	 */
+	public function testCreateValidationFailureReturns400WithoutLeakingException(): void {
+		$this->withParams(['administrationId' => 'adm-1', 'supplierId' => '', 'costCenter' => 'cc-1']);
+		$this->purchaseOrderService->method('createPurchaseOrder')
+			->willThrowException(new \RuntimeException('supplierId is required'));
+
+		$response = $this->controller()->create();
+
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame('purchase-order-create-invalid', $response->getData()['error']);
+		self::assertArrayHasKey('message', $response->getData());
+		self::assertStringNotContainsString('supplierId is required', (string)json_encode($response->getData()));
+
+	}//end testCreateValidationFailureReturns400WithoutLeakingException()
+
+	/**
+	 * An unexpected failure yields HTTP 500 with a static slug and leaks no
+	 * exception text (REQ-003 / ADR-050).
+	 *
+	 * @return void
+	 */
+	public function testCreateUnexpectedFailureReturns500WithoutStackTrace(): void {
+		$this->withParams(['administrationId' => 'adm-1', 'supplierId' => 'sup-1', 'costCenter' => 'cc-1']);
+		$this->purchaseOrderService->method('createPurchaseOrder')
+			->willThrowException(new \LogicException('SQLSTATE[08006] connection refused'));
+		$this->logger->expects($this->once())->method('error');
+
+		$response = $this->controller()->create();
+
+		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		self::assertSame('purchase-order-create-failed', $response->getData()['error']);
+		self::assertStringNotContainsStringIgnoringCase(
+			'SQLSTATE',
+			(string)json_encode($response->getData())
+		);
+
+	}//end testCreateUnexpectedFailureReturns500WithoutStackTrace()
+
+	/**
+	 * send() advances the order and returns it with HTTP 200, for the
+	 * legitimate caller (REQ-001 positive direction).
+	 *
+	 * @return void
+	 */
+	public function testSendReturns200WithUpdatedOrder(): void {
+		$this->withParams(['administrationId' => 'adm-1']);
+		$po = ['id' => 'po-1', 'status' => 'sent'];
+		$this->purchaseOrderService->expects($this->once())
+			->method('blockSendUntilApproved')
+			->willReturnCallback(
+				static function (string $administrationId, string $purchaseOrderId) use ($po): array {
+					self::assertSame('adm-1', $administrationId);
+					self::assertSame('po-1', $purchaseOrderId);
+					return $po;
+				}
+			);
+
+		$response = $this->controller()->send('po-1');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame($po, $response->getData());
+
+	}//end testSendReturns200WithUpdatedOrder()
+
+	/**
+	 * send() masks a cross-tenant administrationId as HTTP 404 rather than
+	 * advancing the order (REQ-001 negative direction).
+	 *
+	 * @return void
+	 */
+	public function testSendCrossTenantReturns404(): void {
+		$this->administrationContext = $this->createMock(AdministrationContextService::class);
+		$this->administrationContext->method('canAccess')->willReturn(false);
+		$this->withParams(['administrationId' => 'adm-other']);
+		$this->purchaseOrderService->expects($this->never())->method('blockSendUntilApproved');
+
+		$response = $this->controller()->send('po-1');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testSendCrossTenantReturns404()
+
+	/**
+	 * send() rejects an anonymous caller with HTTP 401.
+	 *
+	 * @return void
+	 */
+	public function testSendAnonymousReturns401(): void {
+		$this->anonymous();
+		$this->withParams(['administrationId' => 'adm-1']);
+		$this->purchaseOrderService->expects($this->never())->method('blockSendUntilApproved');
+
+		$response = $this->controller()->send('po-1');
+
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+
+	}//end testSendAnonymousReturns401()
 
 	/**
 	 * previewApprovalChain() returns the server-determined chain for the

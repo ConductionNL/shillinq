@@ -44,6 +44,8 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IGroupManager;
+use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -77,6 +79,8 @@ class CalendarController extends Controller {
 	 * @param AdministrationContextService $context Per-administration IDOR guard (ADR-005).
 	 * @param TransactionalGuard $guard Transaction + row-lock facade (production-wired with IDBConnection).
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 * @param IL10N $l10n Localized user-facing error messages (ADR-050).
+	 * @param IGroupManager $groupManager Nextcloud admin bypass for the booking guard.
 	 */
 	public function __construct(
 		IRequest $request,
@@ -86,6 +90,8 @@ class CalendarController extends Controller {
 		private readonly AdministrationContextService $context,
 		private readonly TransactionalGuard $guard,
 		private readonly LoggerInterface $logger,
+		private readonly IL10N $l10n,
+		private readonly IGroupManager $groupManager,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -223,7 +229,11 @@ class CalendarController extends Controller {
 				end: (string)$this->request->getParam('end', ''),
 			);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+			$this->logger->warning('Shillinq: invalid booking range', ['exception' => $e->getMessage()]);
+			return new JSONResponse(
+				['message' => $this->l10n->t('Invalid start/end range.'), 'error' => 'calendar-invalid-range'],
+				Http::STATUS_BAD_REQUEST,
+			);
 		}
 
 		try {
@@ -293,10 +303,12 @@ class CalendarController extends Controller {
 	 * @param string $calendarId Logical calendar identifier.
 	 *
 	 * @return JSONResponse 201 with the booking; 400 on validation;
-	 *                      404 when calendar missing; 409 on conflict;
-	 *                      503 when OR unavailable.
+	 *                      403 when the caller has no booking rights on the
+	 *                      calendar's administration; 404 when calendar
+	 *                      missing; 409 on conflict; 503 when OR unavailable.
 	 *
 	 * @spec openspec/changes/bookings-resource-calendar/tasks.md#task-3
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	#[NoAdminRequired]
 	public function createBooking(string $calendarId = ''): JSONResponse {
@@ -317,6 +329,24 @@ class CalendarController extends Controller {
 
 		$calendarRow = $this->toArray(object: $calendar);
 		$resourceId = (string)($calendarRow['resource'] ?? '');
+
+		// Per-object guard (security-endpoint-guards REQ-001): `requireAuth()`
+		// above only checks authentication. Any authenticated user could
+		// otherwise book any calendar/resource with no ownership check —
+		// the confirmed finding for this method. A booking is only valid
+		// when the caller has a membership in the calendar's own
+		// administration. A Nextcloud admin bypasses this check, matching
+		// `BookingNotificationController::authorizeBookingAccess()`'s
+		// established pattern.
+		$callerUid = (string)($this->context->currentUserId() ?? '');
+		$callerIsAdmin = ($callerUid !== '' && $this->groupManager->isAdmin($callerUid) === true);
+		$calendarAdministrationId = (string)($calendarRow['administrationId'] ?? '');
+		if ($callerIsAdmin === false && $this->context->canAccess($calendarAdministrationId) === false) {
+			return new JSONResponse(
+				['error' => 'calendar-booking-forbidden', 'message' => 'Not authorized to book this calendar'],
+				Http::STATUS_FORBIDDEN,
+			);
+		}
 
 		$title = trim((string)$this->request->getParam('title', ''));
 		$startTime = trim((string)$this->request->getParam('startTime', ''));

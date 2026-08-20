@@ -44,6 +44,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -62,6 +63,7 @@ class BillingIntakeController extends Controller {
 	 * @param AdministrationContextService $administrationContext Server-resolved tenant scope (ADR-005).
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
+	 * @param IL10N $l10n Translation service for error-response messages (ADR-050).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -69,6 +71,7 @@ class BillingIntakeController extends Controller {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
+		private readonly IL10N $l10n,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -80,12 +83,17 @@ class BillingIntakeController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/time-expense-invoice-intake/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function timeIntake(): JSONResponse {
 		$user = $this->session->getUser();
 		if ($user === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+			return new JSONResponse(
+				['message' => $this->l10n->t('Not logged in'), 'error' => 'billing-time-intake-unauthenticated'],
+				Http::STATUS_UNAUTHORIZED
+			);
 		}
 
 		try {
@@ -97,17 +105,33 @@ class BillingIntakeController extends Controller {
 
 			return new JSONResponse($result, Http::STATUS_OK);
 		} catch (\InvalidArgumentException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+			$this->logger->error('BillingIntakeController.timeIntake failed', ['exception' => $e]);
+			return new JSONResponse(
+				['message' => $this->l10n->t('Invalid time-intake batch'), 'error' => 'billing-time-intake-invalid-input'],
+				Http::STATUS_BAD_REQUEST
+			);
 		} catch (\RuntimeException $e) {
-			$message = $e->getMessage();
-			if (str_starts_with($message, 'Conflict:') === true) {
-				return new JSONResponse(['error' => $message], Http::STATUS_CONFLICT);
+			$this->logger->error('BillingIntakeController.timeIntake failed', ['exception' => $e]);
+			if (str_starts_with($e->getMessage(), 'Conflict:') === true) {
+				return new JSONResponse(
+					['message' => $this->l10n->t('This batch has already been processed'), 'error' => 'billing-time-intake-conflict'],
+					Http::STATUS_CONFLICT
+				);
 			}
 
-			return new JSONResponse(['error' => $message], Http::STATUS_UNPROCESSABLE_ENTITY);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Time-intake batch could not be processed'),
+					'error' => 'billing-time-intake-unprocessable',
+				],
+				Http::STATUS_UNPROCESSABLE_ENTITY
+			);
 		} catch (\Throwable $e) {
-			$this->logger->error('BillingIntakeController.timeIntake failed: ' . $e->getMessage());
-			return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			$this->logger->error('BillingIntakeController.timeIntake failed', ['exception' => $e]);
+			return new JSONResponse(
+				['message' => $this->l10n->t('Unable to process time-intake batch'), 'error' => 'billing-time-intake-failed'],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
 		}//end try
 
 	}//end timeIntake()
