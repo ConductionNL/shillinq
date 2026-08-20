@@ -169,11 +169,13 @@ class ReportingController extends Controller {
 	 *
 	 * Reads `reportType`, `period`, `administrationId` and `format` from the request,
 	 * delegates to the service and returns the recorded GeneratedReport (incl. fileId
-	 * + downloadPath). A service-level `{ error: ... }` envelope is surfaced as 422.
+	 * + downloadPath). A service-level `{ error: 'docudesk-unavailable' }` envelope
+	 * (docudesk not installed/reachable — REQ-RVD-005, ADR-081 rule 7) is surfaced as
+	 * 503; any other `{ error: ... }` envelope is surfaced as 422.
 	 *
 	 * @return JSONResponse The GeneratedReport record, or an error envelope.
 	 *
-	 * @spec exclude No canonical requirement exists for the reporting capability — see #525.
+	 * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-005
 	 */
 	#[NoAdminRequired]
 	public function generate(): JSONResponse {
@@ -205,7 +207,11 @@ class ReportingController extends Controller {
 		);
 
 		if (isset($result['error']) === true) {
-			return new JSONResponse($result, Http::STATUS_UNPROCESSABLE_ENTITY);
+			$status = $result['error'] === 'docudesk-unavailable'
+				? Http::STATUS_SERVICE_UNAVAILABLE
+				: Http::STATUS_UNPROCESSABLE_ENTITY;
+
+			return new JSONResponse($result, $status);
 		}
 
 		return new JSONResponse($result, Http::STATUS_CREATED);
