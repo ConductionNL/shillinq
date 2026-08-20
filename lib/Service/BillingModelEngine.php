@@ -47,6 +47,8 @@ class BillingModelEngine {
 	 * @param float $markupPercent Markup percentage.
 	 *
 	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-billing-model-logic-tm-fixed-fee-milestone-retainer-mixed
 	 */
 	public function calculateTAndM(array $timeEntries, array $expenses, float $markupPercent = 0.0): array {
 		$grouped = [];

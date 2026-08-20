@@ -98,6 +98,8 @@ class WbsoAccountService {
 	 * @param array<int,array<string,mixed>> $accounts Flat account list.
 	 *
 	 * @return array<int,array<string,mixed>> Root nodes with nested children.
+	 *
+	 * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md#req-coa-003-the-account-schema-shall-declare-a-self-relation-for-hierarchy-via-x-openregister-relations
 	 */
 	public function buildHierarchy(array $accounts): array {
 		$byNumber = [];
@@ -281,6 +283,8 @@ class WbsoAccountService {
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException When validation fails.
+	 *
+	 * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md#req-coa-003-the-account-schema-shall-declare-a-self-relation-for-hierarchy-via-x-openregister-relations
 	 */
 	public function assertHierarchy(string $administrationId, string $accountNumber, string $parent): void {
 		if ($parent === '') {
