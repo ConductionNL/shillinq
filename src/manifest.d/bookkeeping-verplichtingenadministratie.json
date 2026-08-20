@@ -51,6 +51,7 @@
 					{"key": "kind", "label": "Kind", "sortable": true},
 					{"key": "status", "label": "Status", "sortable": true},
 					{"key": "total_amount_excl_vat", "label": "Amount (excl. BTW)", "sortable": true},
+					{"key": "costCentre", "label": "Cost center", "sortable": true},
 					{"key": "commencementDate", "label": "Start date", "sortable": true},
 					{"key": "mandate_applied", "label": "Mandate", "sortable": true}
 				],

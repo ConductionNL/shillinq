@@ -8,8 +8,8 @@
 	},
 	"menu": [
 		{
-			"id": "PurchaseOrders",
-			"label": "Purchase Orders",
+			"id": "POMatching",
+			"label": "PO Matching",
 			"icon": "ClipboardListOutline",
 			"order": 90,
 			"children": [

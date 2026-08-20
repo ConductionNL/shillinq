@@ -45,10 +45,13 @@ const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 		title: 'Posting',
 		titleRe: /Posting|Configurat/i,
 	},
+	// nav-six-clusters removed the standalone /inventory/posting-history page
+	// (one of the 35 duplicate/dead pages consolidated by that change) — the
+	// "Posting history" nav item now routes to the pre-existing General Ledger
+	// page filtered by `subLedgerType: inventory`, not a distinct route+title.
 	{
-		route: '/inventory/posting-history',
-		title: 'Posting',
-		titleRe: /Posting|Histor/i,
+		route: '/general-ledger?subLedgerType=inventory',
+		title: 'General Ledger',
 	},
 ]
 

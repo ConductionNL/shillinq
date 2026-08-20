@@ -24,7 +24,8 @@
 					{ "label": "Subsidie", "filter": { "orderType": "subsidy" } },
 					{ "label": "Engagement", "filter": { "orderType": "engagement" } }
 				],
-				"columns": ["orderNumber", "orderType", "counterpartyName", "totalAmount", "orderDate", "state"]
+				"columns": ["orderNumber", "orderType", "counterpartyName", "totalAmount", "orderDate", "state"],
+				"detailRoute": "OrderDetail"
 			}
 		},
 		{

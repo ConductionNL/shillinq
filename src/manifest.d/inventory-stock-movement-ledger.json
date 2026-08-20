@@ -22,9 +22,10 @@
 				},
 				{
 					"id": "ReservedStock",
-					"label": "Reserved Stock",
+					"label": "Stock reservations (movements)",
 					"icon": "LockOutline",
-					"route": "ReservedStock",
+					"route": "StockMovements",
+					"query": { "lifecycleState": "draft" },
 					"order": 47
 				}
 			]
@@ -141,44 +142,6 @@
 				"defaultSortDirection": "desc",
 				"x-drilldown-deferred": "The per-row drill-down to the stock-ledger trace (REQ-SM-005) is NOT WIRED — tracked in ConductionNL/shillinq#508, which carries the full contract analysis. Its page declaration was withdrawn because the manifest was naming a page whose component exists nowhere (registered in neither src/registry.js nor a customComponents.js, which this app does not have), and the route contract does not match stockLedger#trace either: the route supplied an InventoryStock UUID while the endpoint requires administration_id + location_id + sku. The BACKEND HALF IS COMPLETE and untouched (StockLedgerController + StockLedgerService); only the Vue view was never written. Restoring the `StockLedgerTrace` page entry (and a `rowRoute` here, which is the key CnIndexPage actually reads — `detailRoute` is read by nothing) is part of building the view, so the declaration cannot return before the surface does.",
 				"description": "Per REQ-SM-005 — every InventoryStock row drills down to the chronological run of posted, non-cancelled StockMoves that comprise its current balance, with cumulative running totals matching `quantity` exactly."
-			}
-		},
-		{
-			"id": "ReservedStock",
-			"route": "/inventory/reserved-stock",
-			"type": "index",
-			"title": "Reserved Stock",
-			"config": {
-				"register": "shillinq",
-				"schema": "StockMove",
-				"filterPreset": {
-					"lifecycleState": "draft"
-				},
-				"columns": [
-					{ "key": "movementNumber", "label": "Movement #", "sortable": true },
-					{ "key": "sourceLocationId", "label": "Source Location", "sortable": true },
-					{ "key": "itemId", "label": "Item", "sortable": true },
-					{ "key": "quantity", "label": "Reserved Qty", "sortable": true },
-					{ "key": "draftedAt", "label": "Reserved Since", "sortable": true },
-					{ "key": "movementType", "label": "Intended Type", "sortable": true }
-				],
-				"filters": [
-					{ "key": "sourceLocationId", "label": "Source Location", "type": "string" },
-					{ "key": "itemId", "label": "Item", "type": "string" }
-				],
-				"groupBy": "sourceLocationId",
-				"defaultSort": "draftedAt",
-				"defaultSortDirection": "asc",
-				"detailRoute": "StockMovementDetail",
-				"alerts": [
-					{
-						"id": "highReservationRatio",
-						"condition": "reservedRatioForLocation > 0.5",
-						"label": "Alert: High reservation ratio",
-						"description": "Per REQ-SM-009 — when the SUM of draft-move reservations exceeds 50% of the InventoryStock.quantity for a location, the row is flagged so the operator knows future allocations are at risk."
-					}
-				],
-				"description": "All draft StockMoves currently holding reservations against source InventoryStock per REQ-SM-008 + REQ-SM-009. Grouped by source location; age (time in draft) + operator name visible from the row."
 			}
 		}
 	]

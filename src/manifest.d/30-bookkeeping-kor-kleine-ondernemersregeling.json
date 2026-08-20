@@ -8,13 +8,14 @@
 	},
 	"menu": [
 		{
-			"id": "Belastingen",
+			"id": "Taxes",
 			"children": [
 				{
 					"id": "KorAanmelding",
 					"label": "KOR registration",
 					"icon": "ShieldPlusOutline",
-					"route": "KorAanmelding",
+					"route": "KorDashboard",
+					"query": { "status": "draft" },
 					"order": 11
 				},
 				{
@@ -28,63 +29,14 @@
 					"id": "KorOpzegging",
 					"label": "KOR cancellation",
 					"icon": "ShieldRemoveOutline",
-					"route": "KorOpzegging",
+					"route": "KorDashboard",
+					"query": { "status": "ACTIEF" },
 					"order": 14
 				}
 			]
 		}
 	],
 	"pages": [
-		{
-			"id": "KorAanmelding",
-			"route": "/belastingen/kor-aanmelding",
-			"type": "index",
-			"title": "KOR registration",
-			"config": {
-				"register": "shillinq",
-				"schema": "KORRegistration",
-				"visibility": {
-					"field": "administrationType",
-					"in": [
-						"mkb",
-						"zzp"
-					]
-				},
-				"filters": [
-					{
-						"key": "status",
-						"label": "Status",
-						"type": "enum",
-						"defaultValue": "draft",
-						"options": [
-							{ "value": "draft", "label": "Draft" },
-							{ "value": "ACTIEF", "label": "Active" }
-						]
-					},
-					{
-						"key": "regime",
-						"label": "Regime",
-						"type": "enum",
-						"options": [
-							{ "value": "KOR_NL", "label": "NL-KOR (art. 25 OB)" },
-							{ "value": "KOR_EU", "label": "KOR-EU (art. 25a-25d OB)" }
-						]
-					}
-				],
-				"columns": [
-					{ "key": "enterpriseId", "label": "Business", "sortable": true },
-					{ "key": "regime", "label": "Regime", "sortable": true },
-					{ "key": "status", "label": "Status", "sortable": true },
-					{ "key": "registrationDate", "label": "Registration date", "sortable": true },
-					{ "key": "effectiveDate", "label": "Start date", "sortable": true },
-					{ "key": "lockInEndDate", "label": "Lock-in end", "sortable": true },
-					{ "key": "taxAuthorityReference", "label": "BD reference" }
-				],
-				"defaultSort": "-aanmeldDatum",
-				"lifecycleActions": true,
-				"helpText": "Start a new KOR registration. A registration is a three-year commitment (lock-in). Confirm the scenario analysis, the historical turnover, the forecast and the threshold block before you submit to mijnbelastingdienst.nl/zakelijk."
-			}
-		},
 		{
 			"id": "KorDashboard",
 			"route": "/belastingen/kor-dashboard",
@@ -189,44 +141,6 @@
 						}
 					]
 				}
-			}
-		},
-		{
-			"id": "KorOpzegging",
-			"route": "/belastingen/kor-opzegging",
-			"type": "index",
-			"title": "KOR cancellation",
-			"config": {
-				"register": "shillinq",
-				"schema": "KORRegistration",
-				"visibility": {
-					"field": "administrationType",
-					"in": [
-						"mkb",
-						"zzp"
-					]
-				},
-				"filters": [
-					{
-						"key": "status",
-						"label": "Status",
-						"type": "enum",
-						"defaultValue": "ACTIEF",
-						"options": [
-							{ "value": "ACTIEF", "label": "Active" }
-						]
-					}
-				],
-				"columns": [
-					{ "key": "enterpriseId", "label": "Business", "sortable": true },
-					{ "key": "regime", "label": "Regime" },
-					{ "key": "effectiveDate", "label": "Start date", "sortable": true },
-					{ "key": "lockInEndDate", "label": "Lock-in end", "sortable": true },
-					{ "key": "earliestTerminationDate", "label": "Earliest cancellation date", "sortable": true }
-				],
-				"defaultSort": "earliestTerminationDate",
-				"lifecycleActions": true,
-				"helpText": "Voluntary cancellation of an ACTIVE KOR registration. Cancellation is blocked until lockInEindDatum (REQ-KOR-007); the earliest cancellation date is three months before the end of the lock-in. The effective end date is 1 January of the next calendar year. On approval a KORRevocation with type=VRIJWILLIG_NA_LOCKOUT is created automatically."
 			}
 		}
 	]
