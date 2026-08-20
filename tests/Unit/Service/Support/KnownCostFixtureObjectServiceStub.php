@@ -55,7 +55,7 @@ use RuntimeException;
  * Minimal in-memory store supporting equality + `{in: [...]}` reads AND
  * replace-semantics writes.
  *
- * @SuppressWarnings(PHPMD.TooManyPublicMethods) Mirrors the 25-method contract.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) Mirrors the 26-method contract.
  */
 final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface {
 
@@ -319,6 +319,100 @@ final class KnownCostFixtureObjectServiceStub implements ObjectServiceInterface 
 		return new ObjectEntityStub(payload: $data, schema: $this->schema);
 
 	}//end updateObject()
+
+	/**
+	 * MERGE `$data` onto the stored object at `$objectId`, preserving every
+	 * field `$data` omits — the real contract's PATCH counterpart to
+	 * {@see updateObject()}'s REPLACE semantics (see class docblock).
+	 *
+	 * Follows the RFC-7386-shaped merge rules the real
+	 * `ObjectServiceInterface::patchObject()` documents: a key present with a
+	 * non-null value overwrites the stored value; a key ABSENT from `$data`
+	 * leaves the stored value untouched; a key present with an explicit
+	 * `null` clears the stored value; nested associative arrays merge
+	 * recursively; lists (JSON arrays) are replaced wholesale.
+	 *
+	 * @param string $objectId The object UUID or id.
+	 * @param array $data The partial data to merge. Omitted keys are preserved.
+	 * @param string|int|null $register Register override (ignored).
+	 * @param string|int|null $schema Schema override, when given.
+	 * @param bool $_rbac Apply register RBAC (ignored).
+	 * @param bool $_multitenancy Apply organisation scoping (ignored).
+	 * @param ?IUser $currentUser Explicit acting user (ignored).
+	 *
+	 * @return ObjectEntityInterface
+	 */
+	public function patchObject(
+		string $objectId,
+		array $data,
+		string|int|null $register = null,
+		string|int|null $schema = null,
+		bool $_rbac = true,
+		bool $_multitenancy = true,
+		?IUser $currentUser = null
+	): ObjectEntityInterface {
+		$target = $this->schema;
+		if ($schema !== null) {
+			$target = (string)$schema;
+		}
+
+		$existing = [];
+		foreach (($this->data[$target] ?? []) as $row) {
+			if ((string)($row['id'] ?? '') === $objectId) {
+				$existing = $row;
+				break;
+			}
+		}
+
+		$merged = self::mergeRecursive(base: $existing, patch: $data);
+		$merged['id'] = $objectId;
+
+		foreach (($this->data[$target] ?? []) as $index => $row) {
+			if ((string)($row['id'] ?? '') === $objectId) {
+				$this->data[$target][$index] = $merged;
+
+				return new ObjectEntityStub(payload: $merged, schema: $target);
+			}
+		}
+
+		$this->data[$target][] = $merged;
+
+		return new ObjectEntityStub(payload: $merged, schema: $target);
+
+	}//end patchObject()
+
+	/**
+	 * RFC-7386-shaped recursive merge used by {@see patchObject()}: a key
+	 * absent from `$patch` is preserved; a key present with an explicit
+	 * `null` clears the stored value; nested associative arrays merge
+	 * recursively; lists (JSON arrays) are replaced wholesale rather than
+	 * element-merged.
+	 *
+	 * @param array<string,mixed> $base The stored row.
+	 * @param array<string,mixed> $patch The partial payload to merge on top.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function mergeRecursive(array $base, array $patch): array {
+		foreach ($patch as $key => $value) {
+			if ($value === null) {
+				unset($base[$key]);
+				continue;
+			}
+
+			if (is_array($value) === true && array_is_list($value) === false
+				&& isset($base[$key]) === true && is_array($base[$key]) === true && array_is_list($base[$key]) === false
+			) {
+				$base[$key] = self::mergeRecursive(base: $base[$key], patch: $value);
+				continue;
+			}
+
+			$base[$key] = $value;
+		}
+
+		return $base;
+
+	}//end mergeRecursive()
 
 	/**
 	 * Count rows on the active schema, applying the same filter semantics as `findAll()`.
