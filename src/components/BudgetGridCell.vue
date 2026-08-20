@@ -20,21 +20,37 @@
 			{{ formatAmount(cell.actual) }}
 		</template>
 		<template v-else>
-			<div class="budget-grid-cell__budget">{{ formatAmount(cell.budget) }}</div>
-			<div v-if="cell.actual !== null && cell.actual !== undefined" class="budget-grid-cell__actual">
-				{{ t('shillinq', 'Actual: {amount}', { amount: formatAmount(cell.actual) }) }}
+			<div class="budget-grid-cell__budget">
+				{{ formatAmount(cell.budget) }}
+			</div>
+			<div
+				v-if="cell.actual !== null && cell.actual !== undefined"
+				class="budget-grid-cell__actual">
+				{{
+					t('shillinq', 'Actual: {amount}', {
+						amount: formatAmount(cell.actual),
+					})
+				}}
 			</div>
 			<div
 				v-if="deviationState !== null"
 				class="budget-grid-cell__deviation"
 				:class="{
-					'budget-grid-cell__deviation--favorable': deviationState === true,
-					'budget-grid-cell__deviation--unfavorable': deviationState === false,
+					'budget-grid-cell__deviation--favorable':
+						deviationState === true,
+					'budget-grid-cell__deviation--unfavorable':
+						deviationState === false,
 				}">
 				{{ deviationLabel }} {{ formatAmount(cell.deviation) }}
 			</div>
-			<div v-else-if="cell.deviation !== null && cell.deviation !== undefined" class="budget-grid-cell__deviation">
-				{{ t('shillinq', 'Difference: {amount}', { amount: formatAmount(cell.deviation) }) }}
+			<div
+				v-else-if="cell.deviation !== null && cell.deviation !== undefined"
+				class="budget-grid-cell__deviation">
+				{{
+					t('shillinq', 'Difference: {amount}', {
+						amount: formatAmount(cell.deviation),
+					})
+				}}
 			</div>
 		</template>
 	</span>

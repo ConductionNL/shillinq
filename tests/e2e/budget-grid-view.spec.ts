@@ -34,7 +34,9 @@
  * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md
  */
 
-import { test, expect, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
 import { becomesVisible } from './becomes-visible.js'
 
 const APP = '/apps/shillinq'
@@ -82,7 +84,10 @@ test.describe('budget-grid-view — the year-basis begroting grid', () => {
 
 		const toggle = page.getByTestId('budget-grid-expand-toggle').first()
 		const hasToggle = await becomesVisible(toggle)
-		test.skip(!hasToggle, 'no expandable LedgerGroup row seeded for this administration')
+		test.skip(
+			!hasToggle,
+			'no expandable LedgerGroup row seeded for this administration',
+		)
 
 		const rowsBefore = await page.getByTestId('budget-grid-row').count()
 		await toggle.click()
@@ -103,7 +108,10 @@ test.describe('budget-grid-view — the year-basis begroting grid', () => {
 
 		const toggle = page.getByTestId('budget-grid-expand-toggle').first()
 		const hasToggle = await becomesVisible(toggle)
-		test.skip(!hasToggle, 'no expandable LedgerGroup row seeded for this administration')
+		test.skip(
+			!hasToggle,
+			'no expandable LedgerGroup row seeded for this administration',
+		)
 
 		await toggle.focus()
 		await expect(toggle).toHaveAttribute('aria-expanded', 'false')
@@ -130,12 +138,18 @@ test.describe('budget-grid-view — the year-basis begroting grid', () => {
 		const toggles = page.getByTestId('budget-grid-expand-toggle')
 		const toggleCount = await toggles.count()
 		for (let i = 0; i < toggleCount; i++) {
-			await toggles.nth(i).click().catch(() => {})
+			await toggles
+				.nth(i)
+				.click()
+				.catch(() => {})
 		}
 
 		const accountLink = page.getByTestId('budget-grid-account-link').first()
 		const hasAccountLink = await becomesVisible(accountLink)
-		test.skip(!hasAccountLink, 'no leaf LedgerGroup with resolved Account members seeded for this administration')
+		test.skip(
+			!hasAccountLink,
+			'no leaf LedgerGroup with resolved Account members seeded for this administration',
+		)
 
 		await accountLink.click()
 		await expect(page).toHaveURL(/\/chart-of-accounts\//)

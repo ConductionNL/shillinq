@@ -62,7 +62,7 @@ export function formatAmount(cents) {
 			minimumFractionDigits: 2,
 			maximumFractionDigits: 2,
 		}).format(value)
-	} catch (e) {
+	} catch {
 		return value.toFixed(2)
 	}
 }

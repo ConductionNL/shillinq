@@ -41,25 +41,31 @@
 
 				<div class="budget-grid__controls">
 					<div class="budget-grid__control">
-						<label for="budget-grid-start-period">{{ t('shillinq', 'Start period') }}</label>
+						<label for="budget-grid-start-period">{{
+							t('shillinq', 'Start period')
+						}}</label>
 						<input
 							id="budget-grid-start-period"
 							v-model="startPeriod"
 							type="month"
 							data-testid="budget-grid-start-period"
-							@change="loadGrid">
+							@change="loadGrid" />
 					</div>
 					<div class="budget-grid__control">
-						<label for="budget-grid-end-period">{{ t('shillinq', 'End period') }}</label>
+						<label for="budget-grid-end-period">{{
+							t('shillinq', 'End period')
+						}}</label>
 						<input
 							id="budget-grid-end-period"
 							v-model="endPeriod"
 							type="month"
 							data-testid="budget-grid-end-period"
-							@change="loadGrid">
+							@change="loadGrid" />
 					</div>
 					<div class="budget-grid__control">
-						<label for="budget-grid-granularity">{{ t('shillinq', 'Granularity') }}</label>
+						<label for="budget-grid-granularity">{{
+							t('shillinq', 'Granularity')
+						}}</label>
 						<select
 							id="budget-grid-granularity"
 							v-model="granularity"
@@ -108,7 +114,11 @@
 									:class="{
 										'budget-grid__total-col': column.isTotal,
 									}"
-									:data-testid-total="column.isTotal ? 'budget-grid-total-column' : null">
+									:data-testid-total="
+										column.isTotal
+											? 'budget-grid-total-column'
+											: null
+									">
 									{{ column.label }}
 								</th>
 							</tr>
@@ -123,9 +133,15 @@
 								<th
 									scope="row"
 									class="budget-grid__row-header"
-									:style="{ paddingInlineStart: (row.depth * 20 + 8) + 'px' }">
+									:style="{
+										paddingInlineStart:
+											row.depth * 20 + 8 + 'px',
+									}">
 									<button
-										v-if="row.kind === 'ledgerGroup' && row.hasChildren"
+										v-if="
+											row.kind === 'ledgerGroup'
+											&& row.hasChildren
+										"
 										type="button"
 										class="budget-grid__toggle"
 										data-testid="budget-grid-expand-toggle"
@@ -133,7 +149,9 @@
 										@click="toggleRow(row.id)"
 										@keyup.enter="toggleRow(row.id)"
 										@keyup.space="toggleRow(row.id)">
-										<ChevronDown v-if="expandedIds.has(row.id)" :size="16" />
+										<ChevronDown
+											v-if="expandedIds.has(row.id)"
+											:size="16" />
 										<ChevronRight v-else :size="16" />
 										{{ row.label }}
 									</button>
@@ -150,8 +168,12 @@
 									v-for="column in columns"
 									:key="column.key"
 									class="budget-grid__cell"
-									:class="{ 'budget-grid__total-col': column.isTotal }">
-									<budget-grid-cell :cell="row.cells[column.key]" :is-account="row.kind === 'account'" />
+									:class="{
+										'budget-grid__total-col': column.isTotal,
+									}">
+									<BudgetGridCell
+										:cell="row.cells[column.key]"
+										:isAccount="row.kind === 'account'" />
 								</td>
 							</tr>
 						</tbody>
@@ -167,8 +189,12 @@
 									v-for="column in columns"
 									:key="column.key"
 									class="budget-grid__cell"
-									:class="{ 'budget-grid__total-col': column.isTotal }">
-									<budget-grid-cell :cell="row.cells[column.key]" :is-account="false" />
+									:class="{
+										'budget-grid__total-col': column.isTotal,
+									}">
+									<BudgetGridCell
+										:cell="row.cells[column.key]"
+										:isAccount="false" />
 								</td>
 							</tr>
 						</tfoot>
@@ -188,9 +214,9 @@ import { generateUrl } from '@nextcloud/router'
 import { NcAppContent, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue'
-import { fetchAdministrationContext } from '../api/administrationApi.js'
-import { flattenVisibleRows, defaultRange } from './budgetGridHelpers.js'
 import BudgetGridCell from '../components/BudgetGridCell.vue'
+import { fetchAdministrationContext } from '../api/administrationApi.js'
+import { defaultRange, flattenVisibleRows } from './budgetGridHelpers.js'
 
 export default {
 	name: 'BudgetGrid',
@@ -234,6 +260,9 @@ export default {
 		},
 	},
 
+	/**
+	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
+	 */
 	async mounted() {
 		await this.resolveAdministration()
 		await this.loadGrid()
@@ -253,7 +282,7 @@ export default {
 			try {
 				const context = await fetchAdministrationContext()
 				this.administrationId = context?.activeAdministrationId || null
-			} catch (error) {
+			} catch {
 				this.administrationId = null
 			}
 		},
@@ -269,7 +298,10 @@ export default {
 		async loadGrid() {
 			if (!this.administrationId) {
 				this.loading = false
-				this.errorMessage = this.t('shillinq', 'No accessible administration.')
+				this.errorMessage = this.t(
+					'shillinq',
+					'No accessible administration.',
+				)
 				return
 			}
 
@@ -288,16 +320,24 @@ export default {
 				})
 				this.columns = Array.isArray(data?.columns) ? data.columns : []
 				this.rows = Array.isArray(data?.rows) ? data.rows : []
-				this.computedRows = Array.isArray(data?.computedRows) ? data.computedRows : []
+				this.computedRows = Array.isArray(data?.computedRows)
+					? data.computedRows
+					: []
 				this.expandedIds = new Set()
 			} catch (error) {
 				const status = error?.response?.status
 				if (status === 404) {
-					this.errorMessage = this.t('shillinq', 'Administration not found.')
+					this.errorMessage = this.t(
+						'shillinq',
+						'Administration not found.',
+					)
 				} else if (status === 401) {
 					this.errorMessage = this.t('shillinq', 'Not logged in.')
 				} else {
-					this.errorMessage = this.t('shillinq', 'Failed to load the budget grid.')
+					this.errorMessage = this.t(
+						'shillinq',
+						'Failed to load the budget grid.',
+					)
 				}
 				this.columns = []
 				this.rows = []

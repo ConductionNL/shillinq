@@ -11,12 +11,12 @@
  * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-002
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
-	flattenVisibleRows,
-	formatAmount,
 	defaultRange,
 	favorableState,
+	flattenVisibleRows,
+	formatAmount,
 } from '../../src/views/budgetGridHelpers.js'
 
 describe('budgetGridHelpers — flattenVisibleRows', () => {
@@ -26,15 +26,17 @@ describe('budgetGridHelpers — flattenVisibleRows', () => {
 			label: 'Omzet',
 			children: [
 				{ id: 'neto', label: 'Netto-omzet', children: [] },
-				{ id: 'overige-opbrengsten', label: 'Overige opbrengsten', children: [] },
+				{
+					id: 'overige-opbrengsten',
+					label: 'Overige opbrengsten',
+					children: [],
+				},
 			],
 		},
 		{
 			id: 'personeel',
 			label: 'Personeel',
-			children: [
-				{ id: 'lonen', label: 'Lonen en salarissen', children: [] },
-			],
+			children: [{ id: 'lonen', label: 'Lonen en salarissen', children: [] }],
 		},
 	]
 
@@ -44,13 +46,18 @@ describe('budgetGridHelpers — flattenVisibleRows', () => {
 		expect(visible[0].depth).toBe(0)
 	})
 
-	it('reveals a row\'s children when its id is in expandedIds, at depth+1', () => {
+	it("reveals a row's children when its id is in expandedIds, at depth+1", () => {
 		const visible = flattenVisibleRows(tree, new Set(['omzet']))
-		expect(visible.map((r) => r.id)).toEqual(['omzet', 'neto', 'overige-opbrengsten', 'personeel'])
+		expect(visible.map((r) => r.id)).toEqual([
+			'omzet',
+			'neto',
+			'overige-opbrengsten',
+			'personeel',
+		])
 		expect(visible.find((r) => r.id === 'neto').depth).toBe(1)
 	})
 
-	it('expanding and collapsing ten rows is a pure function of the already-fetched tree — no network call is possible from this function\'s signature', () => {
+	it("expanding and collapsing ten rows is a pure function of the already-fetched tree — no network call is possible from this function's signature", () => {
 		// The function takes only (rows, expandedIds, depth) — there is no
 		// way for it to issue a request. Exercising it 10 times with
 		// different expandedIds sets proves the SAME already-fetched tree is
@@ -65,7 +72,12 @@ describe('budgetGridHelpers — flattenVisibleRows', () => {
 
 	it('leaves a leaf row (empty children) uninvolved even if listed in expandedIds', () => {
 		const visible = flattenVisibleRows(tree, new Set(['omzet', 'neto']))
-		expect(visible.map((r) => r.id)).toEqual(['omzet', 'neto', 'overige-opbrengsten', 'personeel'])
+		expect(visible.map((r) => r.id)).toEqual([
+			'omzet',
+			'neto',
+			'overige-opbrengsten',
+			'personeel',
+		])
 	})
 })
 
@@ -90,7 +102,11 @@ describe('budgetGridHelpers — formatAmount', () => {
 describe('budgetGridHelpers — defaultRange', () => {
 	it('defaults to January-December of the current year at month granularity', () => {
 		const range = defaultRange(new Date('2026-08-20T00:00:00Z'))
-		expect(range).toEqual({ startPeriod: '2026-01', endPeriod: '2026-12', granularity: 'month' })
+		expect(range).toEqual({
+			startPeriod: '2026-01',
+			endPeriod: '2026-12',
+			granularity: 'month',
+		})
 	})
 })
 
