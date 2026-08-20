@@ -46,6 +46,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -72,6 +73,7 @@ class GRIRReconciliationController extends Controller {
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope (ADR-005).
 	 * @param IUserSession $userSession User-session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to the client).
+	 * @param IL10N $l10n Localized user-facing error messages (ADR-050).
 	 *
 	 * @return void
 	 *
@@ -84,6 +86,7 @@ class GRIRReconciliationController extends Controller {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly IL10N $l10n,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -103,7 +106,17 @@ class GRIRReconciliationController extends Controller {
 	 *                      validation; 401 anonymous; 404 cross-tenant; 500
 	 *                      without a stack trace.
 	 *
+	 * Re-verified for security-endpoint-guards (REQ-001): the
+	 * `AdministrationContextService::canAccess()` masked-404 guard below was
+	 * already present and enforcing before this change — a false positive of
+	 * the mechanical `hydra-gate-no-admin-idor` scan, which only recognises
+	 * guard calls named `authorize*`/`require*`/`ensure*` and does not match
+	 * `canAccess(`. No guard change was needed; the fix in this change is the
+	 * ADR-050 error-message leak below (REQ-003).
+	 *
 	 * @spec openspec/specs/revive-gl-tax-capabilities/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function saldo(): JSONResponse {
@@ -135,7 +148,25 @@ class GRIRReconciliationController extends Controller {
 				return new JSONResponse(['error' => 'Administration not found'], Http::STATUS_NOT_FOUND);
 			}
 
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+			// ADR-050 (security-endpoint-guards REQ-003): the raw exception
+			// message used to reach the client directly here; it now goes only
+			// to the server-side log, and the client gets a stable slug + a
+			// localized message.
+			$this->logger->error(
+				'GRIRReconciliationController: invalid request for the GR/IR saldo',
+				[
+					'administrationId' => $administrationId,
+					'periodId' => $periodId,
+					'exception' => $e->getMessage(),
+				]
+			);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Invalid request for the GR/IR saldo.'),
+					'error' => 'grir-saldo-invalid-request',
+				],
+				Http::STATUS_BAD_REQUEST
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'GRIRReconciliationController: failed to compute the GR/IR saldo',

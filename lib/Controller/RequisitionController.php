@@ -40,6 +40,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -66,6 +67,7 @@ class RequisitionController extends Controller {
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
 	 * @param IUserSession $userSession User session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
+	 * @param IL10N $l10n Localized user-facing error messages (ADR-050).
 	 *
 	 * @return void
 	 */
@@ -76,6 +78,7 @@ class RequisitionController extends Controller {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly IL10N $l10n,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -93,6 +96,7 @@ class RequisitionController extends Controller {
 	 *                      401 anonymous; 404 on cross-tenant; 500 without stack trace.
 	 *
 	 * @spec openspec/specs/purchase-requisition/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
 	 */
 	#[NoAdminRequired]
 	public function create(): JSONResponse {
@@ -125,7 +129,21 @@ class RequisitionController extends Controller {
 				payload: $payload
 			);
 		} catch (\RuntimeException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+			// Validation refusal from the service (missing/invalid field, no
+			// lines, non-positive total) — the exception's own text is never
+			// placed in the response body (ADR-050 / REQ-003); it is logged
+			// server-side and the client gets a stable slug + localized text.
+			$this->logger->error(
+				'RequisitionController.create rejected',
+				['administrationId' => $administrationId, 'exception' => $e]
+			);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Requisition could not be created; check the required fields'),
+					'error' => 'requisition-create-invalid',
+				],
+				Http::STATUS_BAD_REQUEST,
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'RequisitionController: failed to create requisition',
@@ -150,6 +168,7 @@ class RequisitionController extends Controller {
 	 *                      invalid state; 500 without stack trace.
 	 *
 	 * @spec openspec/specs/purchase-requisition/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
 	 */
 	#[NoAdminRequired]
 	public function submit(string $id): JSONResponse {
@@ -203,6 +222,7 @@ class RequisitionController extends Controller {
 	 *                      not submitted or budget insufficient; 500 without stack trace.
 	 *
 	 * @spec openspec/specs/purchase-requisition/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
 	 */
 	#[NoAdminRequired]
 	public function approve(string $id): JSONResponse {
@@ -256,6 +276,7 @@ class RequisitionController extends Controller {
 	 *                      invalid state; 500 without stack trace.
 	 *
 	 * @spec openspec/specs/purchase-requisition/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
 	 */
 	#[NoAdminRequired]
 	public function reject(string $id): JSONResponse {
@@ -315,6 +336,7 @@ class RequisitionController extends Controller {
 	 *                      500 without stack trace.
 	 *
 	 * @spec openspec/specs/purchase-requisition/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
 	 */
 	#[NoAdminRequired]
 	public function convert(string $id): JSONResponse {
@@ -358,17 +380,35 @@ class RequisitionController extends Controller {
 	 * status: "not found" messages -> 404, everything else (invalid state,
 	 * budget exceeded, missing supplier/lines) -> 409 Conflict.
 	 *
+	 * The exception's own message text is used only to pick the status code
+	 * (a closed set of curated strings this app's own service layer throws)
+	 * — it is never placed in the response body itself (ADR-050 / REQ-003).
+	 * The real message is logged server-side; the client gets a stable slug
+	 * plus a localized, generic message.
+	 *
 	 * @param \RuntimeException $e The exception to map.
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
 	 */
 	private function mapRuntimeError(\RuntimeException $e): JSONResponse {
-		$message = $e->getMessage();
-		if (str_contains($message, 'not found') === true) {
-			return new JSONResponse(['error' => $message], Http::STATUS_NOT_FOUND);
+		$this->logger->error('RequisitionController: requisition action rejected', ['exception' => $e]);
+
+		if (str_contains($e->getMessage(), 'not found') === true) {
+			return new JSONResponse(
+				['message' => $this->l10n->t('Requisition not found'), 'error' => 'requisition-not-found'],
+				Http::STATUS_NOT_FOUND,
+			);
 		}
 
-		return new JSONResponse(['error' => $message], Http::STATUS_CONFLICT);
+		return new JSONResponse(
+			[
+				'message' => $this->l10n->t('Requisition is not in a state that allows this action'),
+				'error' => 'requisition-invalid-state',
+			],
+			Http::STATUS_CONFLICT,
+		);
 	}//end mapRuntimeError()
 
 	/**

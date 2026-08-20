@@ -39,13 +39,16 @@ use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Enums\DBAConstants;
 use OCA\Shillinq\Guard\DBAOpdrachtGuard;
 use OCA\Shillinq\Guard\DBAScoreCalculator;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\DBAVbarMonitorService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\OCS\OCSForbiddenException;
 use OCP\IAppConfig;
+use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
@@ -65,6 +68,21 @@ use Throwable;
  * @SuppressWarnings(PHPMD.ElseExpression)           Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)   security-endpoint-guards
+ *     REQ-001: this change adds `AdministrationContextService` (the
+ *     per-object tenant guard closing the cross-tenant IDOR on
+ *     ensureAdministrationAccess()) and its `IGroupManager` admin-bypass
+ *     collaborator, pushing coupling from 16 to 19 — one over this app's
+ *     already-raised threshold (13->19, issue #506). Removing either
+ *     collaborator removes the guard, so this is not a rule misfire to
+ *     work around; it is the real, minimal cost of the fix. Seven
+ *     controllers now duplicate the same `groupManager->isAdmin()`
+ *     bypass check (BookingNotificationController, CBSSubmissionController,
+ *     ComplianceExportController, CalendarController, DBAController,
+ *     InventoryMobileScannerController, InventoryScanController);
+ *     centralising it into `AdministrationContextService` would remove
+ *     this collaborator here too, but is a cross-cutting refactor left
+ *     for a dedicated follow-up rather than folded into this security fix.
  */
 class DBAController extends Controller {
 	/**
@@ -78,6 +96,8 @@ class DBAController extends Controller {
 	 * @param DBAOpdrachtGuard $assignmentGuard Save-precondition guard.
 	 * @param DBAVbarMonitorService $vbarMonitor VBAR monitor service.
 	 * @param LoggerInterface $logger Logger.
+	 * @param AdministrationContextService $administrationContext Per-administration IDOR guard (ADR-005 Rule 3).
+	 * @param IGroupManager $groupManager Nextcloud admin bypass for the administration guard.
 	 */
 	public function __construct(
 		IRequest $request,
@@ -88,6 +108,8 @@ class DBAController extends Controller {
 		private readonly DBAOpdrachtGuard $assignmentGuard,
 		private readonly DBAVbarMonitorService $vbarMonitor,
 		private readonly LoggerInterface $logger,
+		private readonly AdministrationContextService $administrationContext,
+		private readonly IGroupManager $groupManager,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -352,6 +374,7 @@ class DBAController extends Controller {
 	 * @return JSONResponse The updated opdracht.
 	 *
 	 * @spec openspec/specs/dba-compliance-marker/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	#[NoAdminRequired]
 	public function setTussenkomstMode(): JSONResponse {
@@ -686,28 +709,61 @@ class DBAController extends Controller {
 
 	/**
 	 * Guard per-object authorization. The currently active user MUST belong to the
-	 * object's administrationId — IDOR-protection per ADR-005.
+	 * object's administrationId — IDOR-protection per ADR-005 Rule 3.
 	 *
-	 * Stub: when no administration-membership service is wired (yet), we log and
-	 * permit; the production implementation calls an `AdministrationMembership`
-	 * service.
+	 * Previously a documented stub that logged and unconditionally permitted
+	 * every caller regardless of membership (security-endpoint-guards,
+	 * STUB verdict — flagged because a mechanical scan for a
+	 * `ensure*`/`authorize*`/`require*`-shaped call cannot tell a real
+	 * guard from one that never denies). Now enforces via
+	 * `AdministrationContextService::canAccess()`, the same membership seam
+	 * `BookingNotificationController::authorizeBookingAccess()` already
+	 * uses, and throws on denial instead of merely logging.
 	 *
 	 * @param array<string,mixed> $assignment The fetched object.
 	 *
 	 * @return void
+	 *
+	 * @throws OCSForbiddenException When unauthenticated or not a member of
+	 *                               the object's administration.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	private function ensureAdministrationAccess(array $assignment): void {
 		$administrationId = (string)($assignment['administrationId'] ?? '');
 		$user = $this->userSession->getUser();
 		if ($user === null) {
 			$this->logger->warning('DBA controller: anonymous request rejected');
+			throw new OCSForbiddenException('Authentication required.');
+		}
+
+		// A Nextcloud admin bypasses the membership check, matching the
+		// established pattern in
+		// `BookingNotificationController::authorizeBookingAccess()` — the
+		// admin account carries no `AdministrationMembership` of its own by
+		// default (tests/e2e/ci-seed.sh), so without this bypass an admin
+		// could not manage any administration's DBA records.
+		if ($this->groupManager->isAdmin($user->getUID()) === true) {
 			return;
 		}
 
-		// Real check would call AdministrationMembership::isMember($user, $administrationId).
-		// Until the implementation cycle wires it, we log the guarded access.
+		// An absent/empty administrationId must DENY, never skip the check
+		// — canAccess('') already returns false, but the explicit check
+		// keeps that invariant visible at the call site rather than
+		// relying on a side-effect of the service's own input validation.
+		if ($administrationId === '' || $this->administrationContext->canAccess($administrationId) === false) {
+			$this->logger->warning(
+				'DBA controller: administration access denied',
+				[
+					'user' => $user->getUID(),
+					'administrationId' => $administrationId,
+				]
+			);
+			throw new OCSForbiddenException('Not authorized to access this administration.');
+		}
+
 		$this->logger->debug(
-			'DBA controller: administration access',
+			'DBA controller: administration access granted',
 			[
 				'user' => $user->getUID(),
 				'administrationId' => $administrationId,

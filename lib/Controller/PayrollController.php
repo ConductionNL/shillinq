@@ -38,6 +38,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -77,6 +78,7 @@ class PayrollController extends Controller {
 	 * @param IUserSession $userSession User session for authentication guard.
 	 * @param AdministrationContextService $context Membership guard (REQ-MA-001).
 	 * @param LoggerInterface $logger Logger (no stack traces to client, no raw BSN).
+	 * @param IL10N $l10n Localized strings for client-facing error messages (ADR-050).
 	 *
 	 * @return void
 	 */
@@ -86,6 +88,7 @@ class PayrollController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly AdministrationContextService $context,
 		private readonly LoggerInterface $logger,
+		private readonly IL10N $l10n,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -133,7 +136,17 @@ class PayrollController extends Controller {
 				periodId: $periodId
 			);
 		} catch (\RuntimeException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_NOT_FOUND);
+			$this->logger->error(
+				'PayrollController: loonstrook not found',
+				['administrationId' => $administrationId, 'periodId' => $periodId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Payslip not found for the given employee and period'),
+					'error' => 'payroll-loonstrook-not-found',
+				],
+				Http::STATUS_NOT_FOUND,
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'PayrollController: failed to compute loonstrook',

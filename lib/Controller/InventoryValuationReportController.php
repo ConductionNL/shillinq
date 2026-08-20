@@ -89,7 +89,16 @@ class InventoryValuationReportController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
+	 * Re-verified for security-endpoint-guards (REQ-001): the
+	 * `AdministrationContextService::canAccess()` masked-404 guard below was
+	 * already present and enforcing before this change — a mechanical
+	 * `hydra-gate-no-admin-idor` false positive. `InventoryValuationReportService`'s
+	 * `valuationAsOf()`/`ageing()` also filter every read by the
+	 * caller-verified `administrationId`. No guard change needed.
+	 *
 	 * @spec openspec/specs/inventory-accounting-correctness/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function report(): JSONResponse {

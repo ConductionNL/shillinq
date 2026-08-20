@@ -48,8 +48,7 @@
 					{"key": "statusCode", "label": "Status", "type": "select", "options": ["draft", "submitted", "verified", "filed"]}
 				],
 				"defaultSort": "periodYear",
-				"detailRoute": "VATReturnDetail",
-				"createDialog": "VATReturnCreateDialog"
+				"detailRoute": "VATReturnDetail"
 			}
 		},
 		{
@@ -191,25 +190,6 @@
 					{"id": "csv", "label": "Export CSV", "format": "csv"},
 					{"id": "pdf", "label": "Export PDF", "format": "pdf"}
 				]
-			}
-		},
-		{
-			"id": "VATReturnCreateDialog",
-			"route": "/vat-returns/new",
-			"type": "form",
-			"title": "New BTW return",
-			"config": {
-				"register": "shillinq",
-				"schema": "BtwAangifte",
-				"action": {"verb": "POST", "url": "/api/vat-returns"},
-				"fields": [
-					{"key": "administrationId", "label": "Administration", "type": "string", "required": true},
-					{"key": "period", "label": "Period", "type": "select", "required": true, "options": ["quarter", "month", "year"], "default": "quarter"},
-					{"key": "periodYear", "label": "Fiscal year", "type": "number", "required": true, "default": 2026},
-					{"key": "periodNumber", "label": "Period number", "type": "number", "required": true, "default": 1},
-					{"key": "regime", "label": "Regime", "type": "select", "required": true, "options": ["standard", "kor", "reverse-charge"], "default": "standard"}
-				],
-				"onSuccess": "navigate:VATReturnDetail"
 			}
 		}
 	]

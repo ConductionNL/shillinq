@@ -27,6 +27,7 @@ use OCA\Shillinq\Service\ReconciliationResolutionService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCS\OCSForbiddenException;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -75,6 +76,13 @@ final class ReconciliationResolutionControllerTest extends TestCase {
 	private LoggerInterface&MockObject $logger;
 
 	/**
+	 * Mock IL10N.
+	 *
+	 * @var IL10N&MockObject
+	 */
+	private IL10N&MockObject $l10n;
+
+	/**
 	 * Set up shared fixtures — authenticated as `alice` by default.
 	 *
 	 * @return void
@@ -85,6 +93,8 @@ final class ReconciliationResolutionControllerTest extends TestCase {
 		$this->service = $this->createMock(ReconciliationResolutionService::class);
 		$this->userSession = $this->createMock(IUserSession::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->l10n = $this->createMock(IL10N::class);
+		$this->l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
 
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('alice');
@@ -119,6 +129,7 @@ final class ReconciliationResolutionControllerTest extends TestCase {
 			$this->service,
 			$this->userSession,
 			$this->logger,
+			$this->l10n,
 		);
 
 	}//end controller()

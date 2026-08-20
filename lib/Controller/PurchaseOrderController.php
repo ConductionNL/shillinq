@@ -40,6 +40,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -65,6 +66,7 @@ class PurchaseOrderController extends Controller {
 	 * @param AdministrationContextService $administrationContext IDOR + tenant scope.
 	 * @param IUserSession $userSession User session guard.
 	 * @param LoggerInterface $logger Logger (no stack traces to client).
+	 * @param IL10N $l10n Translation service for error-response messages (ADR-050).
 	 *
 	 * @return void
 	 */
@@ -74,6 +76,7 @@ class PurchaseOrderController extends Controller {
 		private readonly AdministrationContextService $administrationContext,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly IL10N $l10n,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -91,6 +94,8 @@ class PurchaseOrderController extends Controller {
 	 *                      401 anonymous; 404 on cross-tenant; 500 without stack trace.
 	 *
 	 * @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function create(): JSONResponse {
@@ -123,13 +128,29 @@ class PurchaseOrderController extends Controller {
 				payload: $payload
 			);
 		} catch (\RuntimeException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+			$this->logger->error(
+				'PurchaseOrderController: purchase order creation rejected',
+				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
+			);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Unable to create purchase order — check the required fields'),
+					'error' => 'purchase-order-create-invalid',
+				],
+				Http::STATUS_BAD_REQUEST
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'PurchaseOrderController: failed to create purchase order',
 				['administrationId' => $administrationId, 'exception' => $e->getMessage()]
 			);
-			return new JSONResponse(['error' => 'Could not create purchase order'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Unable to create purchase order'),
+					'error' => 'purchase-order-create-failed',
+				],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
 		}
 
 		return new JSONResponse($po, Http::STATUS_CREATED);

@@ -46,6 +46,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -85,6 +86,7 @@ class BankStatementImportController extends Controller {
 	 * @param IUserSession $session User session.
 	 * @param LoggerInterface $logger Logger.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param IL10N $l10n Translation service for error-response messages (ADR-050).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -93,6 +95,7 @@ class BankStatementImportController extends Controller {
 		private readonly IUserSession $session,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly IL10N $l10n,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -110,11 +113,16 @@ class BankStatementImportController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/shillinq-bank-statement-wizard/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-003
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function import(): JSONResponse {
 		if ($this->session->getUser() === null) {
-			return new JSONResponse(['error' => 'Not logged in'], Http::STATUS_UNAUTHORIZED);
+			return new JSONResponse(
+				['message' => $this->l10n->t('Not logged in'), 'error' => 'bank-statement-import-unauthenticated'],
+				Http::STATUS_UNAUTHORIZED
+			);
 		}
 
 		try {
@@ -194,10 +202,20 @@ class BankStatementImportController extends Controller {
 				Http::STATUS_OK
 			);
 		} catch (\InvalidArgumentException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
+			$this->logger->error('BankStatementImportController.import failed', ['exception' => $e]);
+			return new JSONResponse(
+				[
+					'message' => $this->l10n->t('Invalid bank statement import request'),
+					'error' => 'bank-statement-import-invalid-input',
+				],
+				Http::STATUS_BAD_REQUEST
+			);
 		} catch (\Throwable $e) {
-			$this->logger->error('BankStatementImportController.import failed: ' . $e->getMessage());
-			return new JSONResponse(['error' => 'Internal error'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			$this->logger->error('BankStatementImportController.import failed', ['exception' => $e]);
+			return new JSONResponse(
+				['message' => $this->l10n->t('Unable to import bank statement'), 'error' => 'bank-statement-import-failed'],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
 		}//end try
 
 	}//end import()
@@ -253,7 +271,10 @@ class BankStatementImportController extends Controller {
 
 		// 1) Multipart file upload.
 		$uploaded = $this->request->getUploadedFile('file');
-		if (is_array($uploaded) === true && isset($uploaded['tmp_name']) === true && is_uploaded_file((string)$uploaded['tmp_name']) === true) {
+		if (is_array($uploaded) === true
+			&& isset($uploaded['tmp_name']) === true
+			&& is_uploaded_file((string)$uploaded['tmp_name']) === true
+		) {
 			$raw = file_get_contents((string)$uploaded['tmp_name']);
 			if ($raw !== false) {
 				$rawContents = $raw;

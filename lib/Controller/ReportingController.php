@@ -119,7 +119,21 @@ class ReportingController extends Controller {
 	 * so the overview can render one section per ReportCatalogue::CATEGORIES with its
 	 * report cards, in catalogue order.
 	 *
+	 * JUSTIFY (security-endpoint-guards, REQ-001b): `ReportCatalogue::CATEGORIES`
+	 * and `ReportCatalogue::all()` are a compile-time constant list of report
+	 * definitions (id, label, category, supported formats) baked into
+	 * `ReportCatalogue.php` — the method names no administration, tenant, or
+	 * object and reads no per-tenant data, so there is nothing here to scope
+	 * per-object. Any authenticated user may read the catalogue; only
+	 * `generate()`/`generated()`/`download()` touch actual report data and
+	 * those already check `AdministrationContextService::canAccess()`.
+	 *
 	 * @return JSONResponse The grouped catalogue.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude Consumed by ReportingComplianceOverview.vue (a real UI surface),
+	 *      but this change adds no code here beyond a justification comment — no
+	 *      guard/behaviour change requires new e2e coverage (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function types(): JSONResponse {

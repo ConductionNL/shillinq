@@ -158,6 +158,69 @@ final class GoodsReceiptNoteControllerTest extends TestCase {
 	}//end withParams()
 
 	/**
+	 * An anonymous caller cannot create a GRN (HTTP 401).
+	 *
+	 * Guard coverage for security-endpoint-guards (REQ-004): `create()` was a
+	 * mechanically-flagged candidate with no prior test exercising its
+	 * `AdministrationContextService::canAccess()` guard in either direction —
+	 * added here alongside the sibling methods' existing coverage.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-004
+	 */
+	public function testCreateAnonymousReturns401(): void {
+		$this->user = null;
+		$this->withParams(['administrationId' => 'adm-1']);
+		$this->grnService->expects($this->never())->method('createGRN');
+
+		$response = $this->controller->create();
+
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+
+	}//end testCreateAnonymousReturns401()
+
+	/**
+	 * A non-member sees a masked HTTP 404 on create (ADR-005, no IDOR) — the
+	 * negative direction of REQ-004's guard proof for `create()`.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-004
+	 */
+	public function testCreateForeignAdministrationReturns404(): void {
+		$this->canAccess = false;
+		$this->withParams(['administrationId' => 'adm-other']);
+		$this->grnService->expects($this->never())->method('createGRN');
+
+		$response = $this->controller->create();
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testCreateForeignAdministrationReturns404()
+
+	/**
+	 * A member of the target administration can create a GRN (HTTP 201) — the
+	 * positive direction of REQ-004's guard proof for `create()`.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-004
+	 */
+	public function testCreateValidReturns201(): void {
+		$this->withParams(['administrationId' => 'adm-1', 'poIds' => ['po-1']]);
+		$this->grnService->expects($this->once())->method('createGRN')->willReturn(
+			['grnId' => 'grn-9', 'administrationId' => 'adm-1', 'statusCode' => 'received']
+		);
+
+		$response = $this->controller->create();
+
+		self::assertSame(Http::STATUS_CREATED, $response->getStatus());
+		self::assertSame('grn-9', $response->getData()['grnId']);
+
+	}//end testCreateValidReturns201()
+
+	/**
 	 * An anonymous caller cannot append a GRN line (HTTP 401).
 	 *
 	 * @return void
@@ -442,6 +505,68 @@ final class GoodsReceiptNoteControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
 	}//end testAcceptMalformedIdReturns400()
+
+	/**
+	 * An anonymous caller cannot attach photos to a GRN (HTTP 401).
+	 *
+	 * Guard coverage for security-endpoint-guards (REQ-004): `uploadPhotos()`
+	 * was a mechanically-flagged candidate with no prior test exercising its
+	 * `AdministrationContextService::canAccess()` guard in either direction.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-004
+	 */
+	public function testUploadPhotosAnonymousReturns401(): void {
+		$this->user = null;
+		$this->withParams(['administrationId' => 'adm-1', 'photos' => ['file-1']]);
+		$this->grnService->expects($this->never())->method('uploadPhotos');
+
+		$response = $this->controller->uploadPhotos('grn-1');
+
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+
+	}//end testUploadPhotosAnonymousReturns401()
+
+	/**
+	 * A non-member sees a masked HTTP 404 on photo upload (ADR-005, no IDOR)
+	 * — the negative direction of REQ-004's guard proof for `uploadPhotos()`.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-004
+	 */
+	public function testUploadPhotosForeignAdministrationReturns404(): void {
+		$this->canAccess = false;
+		$this->withParams(['administrationId' => 'adm-other', 'photos' => ['file-1']]);
+		$this->grnService->expects($this->never())->method('uploadPhotos');
+
+		$response = $this->controller->uploadPhotos('grn-1');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testUploadPhotosForeignAdministrationReturns404()
+
+	/**
+	 * A member of the target administration can attach photos (HTTP 200) —
+	 * the positive direction of REQ-004's guard proof for `uploadPhotos()`.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-004
+	 */
+	public function testUploadPhotosValidReturns200(): void {
+		$this->withParams(['administrationId' => 'adm-1', 'photos' => ['file-1', 'file-2']]);
+		$this->grnService->expects($this->once())->method('uploadPhotos')->willReturn(
+			['grnId' => 'grn-1', 'photos' => ['file-1', 'file-2']]
+		);
+
+		$response = $this->controller->uploadPhotos('grn-1');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertCount(2, $response->getData()['photos']);
+
+	}//end testUploadPhotosValidReturns200()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

@@ -91,8 +91,12 @@ final class FinancialDashboardControllerTest extends TestCase {
 		$this->context = $this->createMock(AdministrationContextService::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 
-		// Default: an authenticated user.
+		// Default: an authenticated user who is a member of at least one
+		// administration (security-endpoint-guards REQ-001 guard — see
+		// testSeriesRejectsCallerWithNoAccessibleAdministration for the
+		// negative direction).
 		$this->context->method('currentUserId')->willReturn('alice');
+		$this->context->method('accessibleAdministrationIds')->willReturn(['adm-1']);
 
 		$this->controller = new FinancialDashboardController(
 			request: $this->request,
@@ -150,6 +154,62 @@ final class FinancialDashboardControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 
 	}//end testSeriesRejectsUnauthenticatedRequests()
+
+	/**
+	 * NEGATIVE CONTROL (security-endpoint-guards REQ-001): an authenticated
+	 * user with zero AdministrationMembership records is rejected with 403
+	 * before the unscoped FinancialDashboardService read runs. Before this
+	 * guard, such a caller received the platform-wide aggregate of every
+	 * tenant's turnover/margin/cashflow — see the guard's docblock in
+	 * FinancialDashboardController::respond() for the full evidence.
+	 *
+	 * @return void
+	 */
+	public function testSeriesRejectsCallerWithNoAccessibleAdministration(): void {
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('currentUserId')->willReturn('mallory');
+		$context->method('accessibleAdministrationIds')->willReturn([]);
+
+		$controller = new FinancialDashboardController(
+			request: $this->request,
+			dashboard: $this->service,
+			context: $context,
+			logger: $this->logger,
+		);
+
+		$this->service->expects($this->never())->method('series');
+
+		$response = $controller->series();
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+
+	}//end testSeriesRejectsCallerWithNoAccessibleAdministration()
+
+	/**
+	 * Same negative direction for summary() — both endpoints share the
+	 * respond() guard.
+	 *
+	 * @return void
+	 */
+	public function testSummaryRejectsCallerWithNoAccessibleAdministration(): void {
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('currentUserId')->willReturn('mallory');
+		$context->method('accessibleAdministrationIds')->willReturn([]);
+
+		$controller = new FinancialDashboardController(
+			request: $this->request,
+			dashboard: $this->service,
+			context: $context,
+			logger: $this->logger,
+		);
+
+		$this->service->expects($this->never())->method('summary');
+
+		$response = $controller->summary();
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+
+	}//end testSummaryRejectsCallerWithNoAccessibleAdministration()
 
 	/**
 	 * Providing only one of from/to is a 400.

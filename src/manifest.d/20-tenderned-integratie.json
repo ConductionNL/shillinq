@@ -1,4 +1,5 @@
 {
+	"_meta_nav_six_clusters_note": "nav-six-clusters (2026-08-20, design.md §4 row 5): the duplicate `Verplichtingen` index page (schema Verplichting) here was confirmed a thinner duplicate of the canonical `Verplichtingenregister` (bookkeeping-verplichtingenadministratie.json) — deleted; its unique `costCentre` column was ported onto the canonical page (ADR-044 spirit, orchestrator ruling). `MijnContracten`'s \"My contracts\" label was misleading (its filter is `source=tenderned`, a data-source scope, not a caller-identity/RBAC scope) — relabelled \"TenderNed-sourced commitments\" and converted to a menu[].query preset on the canonical page; its own page deleted (both pages already shared the `VerplichtingDetail` detail route, so no reachability loss).",
 	"menu": [
 		{
 			"id": "Purchasing",
@@ -14,17 +15,11 @@
 					"order": 10
 				},
 				{
-					"id": "Verplichtingen",
-					"label": "Commitments",
-					"icon": "FileSign",
-					"route": "Verplichtingen",
-					"order": 20
-				},
-				{
 					"id": "MijnContracten",
-					"label": "My contracts",
+					"label": "TenderNed-sourced commitments",
 					"icon": "FileSign",
-					"route": "MijnContracten",
+					"route": "Verplichtingenregister",
+					"query": { "source": "tenderned" },
 					"order": 30
 				}
 			]
@@ -110,26 +105,6 @@
 			}
 		},
 		{
-			"id": "Verplichtingen",
-			"route": "/inkoop/verplichtingen",
-			"type": "index",
-			"title": "Commitments",
-			"config": {
-				"register": "shillinq",
-				"schema": "Verplichting",
-				"columns": [
-					{ "key": "commitmentNumber", "label": "Number", "sortable": true },
-					{ "key": "description", "label": "Description", "sortable": true },
-					{ "key": "source", "label": "Source", "sortable": true },
-					{ "key": "amount", "label": "Amount", "sortable": true },
-					{ "key": "costCentre", "label": "Cost center", "sortable": true },
-					{ "key": "status", "label": "Status", "sortable": true }
-				],
-				"defaultSort": "commitmentNumber",
-				"detailRoute": "VerplichtingDetail"
-			}
-		},
-		{
 			"id": "VerplichtingDetail",
 			"route": "/inkoop/verplichtingen/:id",
 			"type": "detail",
@@ -208,29 +183,6 @@
 						{ "id": "audit", "label": "History", "icon": "History", "widgets": [ { "type": "audit" } ] }
 					]
 				}
-			}
-		},
-		{
-			"id": "MijnContracten",
-			"route": "/inkoop/mijn-contracten",
-			"type": "index",
-			"title": "My contracts",
-			"config": {
-				"register": "shillinq",
-				"schema": "Verplichting",
-				"filters": {
-					"source": "tenderned"
-				},
-				"columns": [
-					{ "key": "commitmentNumber", "label": "Number", "sortable": true },
-					{ "key": "description", "label": "Description", "sortable": true },
-					{ "key": "amount", "label": "Contract value", "sortable": true },
-					{ "key": "termStart", "label": "Term start", "sortable": true },
-					{ "key": "termEnd", "label": "Term end", "sortable": true },
-					{ "key": "status", "label": "Status", "sortable": true }
-				],
-				"defaultSort": "termStart",
-				"detailRoute": "VerplichtingDetail"
 			}
 		}
 	]

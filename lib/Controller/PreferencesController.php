@@ -57,11 +57,24 @@ class PreferencesController extends Controller {
 	/**
 	 * Read a per-user preference value.
 	 *
+	 * JUSTIFY (security-endpoint-guards REQ-001): intentionally reachable by
+	 * any authenticated user with no per-object/administration check. This
+	 * endpoint is keyed ENTIRELY by `$user->getUID()` — the authenticated
+	 * caller's own uid, resolved server-side from the session — for both the
+	 * read (`getUserValue()`) and the write (`setUserValue()`/
+	 * `deleteUserValue()`) below. The request supplies only a free-text
+	 * preference `key`, never a target user id or object id, and
+	 * `sanitizeKey()` restricts that key to `[a-z0-9-]{1,64}`. There is no
+	 * cross-user or cross-administration object here for an IDOR to reach —
+	 * a caller can only ever read/write their own IConfig values.
+	 *
 	 * @param string $key The preference key (kebab/alphanumeric).
 	 *
 	 * @return JSONResponse `{value: string|null}`.
 	 *
 	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-mechanical-boilerplate-served-by-apphost-generics
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 *
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
@@ -97,12 +110,21 @@ class PreferencesController extends Controller {
 	/**
 	 * Write a per-user preference value. An empty value clears it.
 	 *
+	 * JUSTIFY (security-endpoint-guards REQ-001): same reasoning as
+	 * {@see getPreference()} — `setUserValue()`/`deleteUserValue()` below are
+	 * keyed exclusively by `$user->getUID()` (the authenticated caller's own
+	 * uid). No request parameter names a target user or object; a caller can
+	 * only ever write their own preference value. No per-object/
+	 * administration check applies.
+	 *
 	 * @param string $key The preference key (kebab/alphanumeric).
 	 * @param string $value The value to store (empty string clears it).
 	 *
 	 * @return JSONResponse `{value: string|null}`.
 	 *
 	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-mechanical-boilerplate-served-by-apphost-generics
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 *
 	 * @NoAdminRequired
 	 */

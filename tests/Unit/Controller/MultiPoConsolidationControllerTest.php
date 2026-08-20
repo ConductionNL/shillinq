@@ -500,6 +500,27 @@ final class MultiPoConsolidationControllerTest extends TestCase {
 	}//end testCandidatesAnonymousReturns401()
 
 	/**
+	 * candidates() masks a cross-tenant administration as HTTP 404 (ADR-005 /
+	 * security-endpoint-guards REQ-001) — a non-member of the requested
+	 * administration is rejected before the invoice lookup runs.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	public function testCandidatesCrossTenantReturns404(): void {
+		$this->administrationContext = $this->createMock(AdministrationContextService::class);
+		$this->administrationContext->method('canAccess')->willReturn(false);
+		$this->withParams(['administrationId' => 'adm-other', 'invoiceId' => 'inv-9', 'invoiceLineNumber' => 1]);
+
+		$response = $this->controller()->candidates();
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame('Administration not found', $response->getData()['error']);
+
+	}//end testCandidatesCrossTenantReturns404()
+
+	/**
 	 * disambiguate() persists the chosen tuple and answers HTTP 201 with the
 	 * ThreeWayMatch.
 	 *
@@ -591,6 +612,35 @@ final class MultiPoConsolidationControllerTest extends TestCase {
 		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 
 	}//end testDisambiguateAnonymousReturns401()
+
+	/**
+	 * disambiguate() masks a cross-tenant administration as HTTP 404 (ADR-005 /
+	 * security-endpoint-guards REQ-001) — a non-member of the requested
+	 * administration is rejected before the chosen tuple is persisted.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	public function testDisambiguateCrossTenantReturns404(): void {
+		$this->administrationContext = $this->createMock(AdministrationContextService::class);
+		$this->administrationContext->method('canAccess')->willReturn(false);
+		$this->withParams(
+			[
+				'administrationId' => 'adm-other',
+				'invoiceId' => 'inv-9',
+				'invoiceLineNumber' => 1,
+				'chosenPoLineId' => 'pol-7',
+			]
+		);
+		$this->consolidation->expects($this->never())->method('disambiguateAmbiguousMatches');
+
+		$response = $this->controller()->disambiguate();
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame('Administration not found', $response->getData()['error']);
+
+	}//end testDisambiguateCrossTenantReturns404()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

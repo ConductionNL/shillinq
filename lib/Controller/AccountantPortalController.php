@@ -105,9 +105,22 @@ class AccountantPortalController extends Controller {
 	/**
 	 * Return the authenticated user's accountant dashboard (REQ-ACP-001, REQ-ACP-002).
 	 *
+	 * JUSTIFY (security-endpoint-guards REQ-001): this method takes no
+	 * request-supplied administration id — `AccountantDashboardService::
+	 * buildDashboard()` builds one card per entry of
+	 * `AdministrationContextService::buildContext()['administrations']`,
+	 * which is derived purely from the authenticated session uid's own
+	 * `AdministrationMembership` records (verified by reading
+	 * `AdministrationContextService::buildContext()`). There is no
+	 * client-supplied identifier a caller could substitute to reach another
+	 * tenant's dashboard card, so no additional per-object guard applies
+	 * beyond the authentication check below.
+	 *
 	 * @return JSONResponse 200 with the dashboard; 401 when no user is authenticated.
 	 *
 	 * @spec openspec/specs/accountant-portal/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function dashboard(): JSONResponse {

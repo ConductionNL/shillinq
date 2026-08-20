@@ -30,6 +30,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-cbs-bestanden-extended/specs.md
+ * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,12 +42,14 @@ namespace OCA\Shillinq\Controller;
 
 use DateTimeImmutable;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\CBSExportService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
+use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -74,6 +77,8 @@ class CBSSubmissionController extends Controller {
 	 * @param IUserSession $userSession The session for the acting user id (auth body-guard).
 	 * @param LoggerInterface $logger Logger for diagnostics (no stack traces to client).
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 * @param AdministrationContextService $administrationContext Per-administration IDOR guard (ADR-005 Rule 3).
+	 * @param IGroupManager $groupManager Nextcloud admin bypass for the administration guard.
 	 *
 	 * @return void
 	 */
@@ -84,6 +89,8 @@ class CBSSubmissionController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly ObjectServiceInterface $objectService,
+		private readonly AdministrationContextService $administrationContext,
+		private readonly IGroupManager $groupManager,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 
@@ -91,12 +98,16 @@ class CBSSubmissionController extends Controller {
 
 	/**
 	 * Authorization guard — every endpoint requires an authenticated
-	 * Nextcloud user (REQ-CBS-001 / ADR-005). The administration scope is
-	 * validated by the IDOR-safe service layer. This helper is the
-	 * in-body counterpart to #[NoAdminRequired] so gate-7 no-admin-idor /
-	 * gate-9 semantic-auth see the explicit auth posture.
+	 * Nextcloud user (REQ-CBS-001 / ADR-005). This is only the
+	 * authentication half of the guard; per-object administration
+	 * membership is separately enforced by
+	 * {@see requireAdministrationAccess()} on every method that reads or
+	 * mutates a specific CBSSubmission, per ADR-005 Rule 3 / OWASP A01:2021
+	 * (security-endpoint-guards, REQ-001).
 	 *
 	 * @return JSONResponse|null A 401 response when unauthenticated, null when ok.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	private function requireUser(): ?JSONResponse {
 		if ($this->userSession->getUser() === null) {
@@ -110,11 +121,64 @@ class CBSSubmissionController extends Controller {
 	}//end requireUser()
 
 	/**
+	 * Per-object administration-membership guard (REQ-001 / ADR-005 Rule 3).
+	 *
+	 * A `CBSSubmission` belongs to exactly one administration
+	 * (`administrationId`); the caller must have a valid
+	 * `AdministrationMembership` for that administration before reading
+	 * beyond existence-check or mutating the record. Unlike the read-side
+	 * masking convention elsewhere in this app, CBS filings return an
+	 * explicit 403 on denial per this change's spec scenario ("A user
+	 * cannot delete another organization's CBS submission" — REQ-001) since
+	 * the endpoint already discloses the submission's existence via its
+	 * own id in the URL.
+	 *
+	 * A Nextcloud admin bypasses the per-administration check, matching the
+	 * established pattern in `BookingNotificationController::authorizeBookingAccess()`
+	 * — back-office admins legitimately manage every administration's
+	 * filings, and requiring an `AdministrationMembership` for them as well
+	 * would make the admin surface unusable.
+	 *
+	 * @param string $administrationId The administration id the target object belongs to.
+	 *
+	 * @return JSONResponse|null A 403 response when the caller is not a member, null when ok.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 */
+	private function requireAdministrationAccess(string $administrationId): ?JSONResponse {
+		$uid = (string)($this->userSession->getUser()?->getUID() ?? '');
+		if ($uid !== '' && $this->groupManager->isAdmin($uid) === true) {
+			return null;
+		}
+
+		if ($this->administrationContext->canAccess($administrationId) === false) {
+			return new JSONResponse(
+				['error' => 'cbs-submission-forbidden', 'message' => 'Not authorized to access this CBS submission'],
+				Http::STATUS_FORBIDDEN,
+			);
+		}
+
+		return null;
+	}//end requireAdministrationAccess()
+
+	/**
 	 * GET /api/cbs-submissions — list CBS submissions, optionally filtered.
 	 *
 	 * Query params: `status`, `administrationId`, `periodStart`, `periodEnd`.
 	 *
-	 * @return JSONResponse 200 with `{ submissions: [...] }`.
+	 * Found during this change's per-method code read (beyond the audit's
+	 * originally-named create/update/destroy/generate): this endpoint had
+	 * no per-object scoping either — `requireUser()` only checks
+	 * authentication, so any authenticated caller could list every
+	 * administration's submissions. Fixed here alongside the four named
+	 * findings since REQ-001 applies uniformly to every
+	 * `#[NoAdminRequired]` method, not only the ones the audit enumerated.
+	 *
+	 * @return JSONResponse 200 with `{ submissions: [...] }`; 403 when an
+	 *                      explicit `administrationId` filter names an
+	 *                      administration the caller is not a member of.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -125,14 +189,46 @@ class CBSSubmissionController extends Controller {
 
 		$filters = $this->buildIndexFilters();
 
+		$reqAdministrationId = (string)($filters['administrationId'] ?? '');
+		if ($reqAdministrationId !== '') {
+			$accessError = $this->requireAdministrationAccess(administrationId: $reqAdministrationId);
+			if ($accessError !== null) {
+				return $accessError;
+			}
+		}
+
 		return $this->run(
 			action: 'list CBS submissions',
-			compute: fn (): array => [
-				'submissions' => $this->objectService()
-					->setRegister($this->register())
-					->setSchema('CBSSubmission')
-					->findAll(['filters' => $filters]),
-			],
+			compute: function () use ($filters, $reqAdministrationId): array {
+				$submissions = array_map(
+					fn (mixed $row): array => $this->toArray(row: $row),
+					$this->objectService()
+						->setRegister($this->register())
+						->setSchema('CBSSubmission')
+						->findAll(['filters' => $filters])
+				);
+
+				$uid = (string)($this->userSession->getUser()?->getUID() ?? '');
+				$isAdmin = ($uid !== '' && $this->groupManager->isAdmin($uid) === true);
+				if ($reqAdministrationId === '' && $isAdmin === false) {
+					// No explicit filter, non-admin caller: scope the list to
+					// the caller's own accessible administrations rather than
+					// returning every tenant's submissions. An admin caller
+					// (or an explicit, already-vetted administrationId
+					// filter) sees the unfiltered set — matching
+					// requireAdministrationAccess()'s admin bypass above.
+					$submissions = array_values(
+						array_filter(
+							$submissions,
+							fn (array $row): bool => $this->administrationContext->canAccess(
+								(string)($row['administrationId'] ?? '')
+							)
+						)
+					);
+				}
+
+				return ['submissions' => $submissions];
+			},
 			context: $filters,
 		);
 
@@ -141,9 +237,19 @@ class CBSSubmissionController extends Controller {
 	/**
 	 * GET /api/cbs-submissions/{id} — retrieve a single submission + its lines.
 	 *
+	 * Found during this change's per-method code read (beyond the audit's
+	 * originally-named create/update/destroy/generate): `show()` had the
+	 * same missing-guard shape — any authenticated caller could read
+	 * another organization's statutory filing by id. Fixed alongside the
+	 * four named findings for the same reason as `index()` above.
+	 *
 	 * @param string $id The CBSSubmission id.
 	 *
-	 * @return JSONResponse 200 with `{ submission, lines }`; 400 on bad id; 404 when missing.
+	 * @return JSONResponse 200 with `{ submission, lines }`; 400 on bad id;
+	 *                      403 when the caller is not a member of the
+	 *                      submission's administration; 404 when missing.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	#[NoAdminRequired]
 	public function show(string $id): JSONResponse {
@@ -155,6 +261,25 @@ class CBSSubmissionController extends Controller {
 		$error = $this->validateId(value: $id, label: 'id');
 		if ($error !== null) {
 			return $error;
+		}
+
+		try {
+			$existing = $this->toArray(
+				row: $this->objectService()
+					->setRegister($this->register())
+					->setSchema('CBSSubmission')
+					->find($id)
+			);
+		} catch (\Throwable $e) {
+			return new JSONResponse(
+				['error' => 'cbs-submission-not-found', 'message' => 'CBS submission not found'],
+				Http::STATUS_NOT_FOUND
+			);
+		}
+
+		$accessError = $this->requireAdministrationAccess(administrationId: (string)($existing['administrationId'] ?? ''));
+		if ($accessError !== null) {
+			return $accessError;
 		}
 
 		return $this->run(
@@ -174,6 +299,8 @@ class CBSSubmissionController extends Controller {
 	 * administrationId, description (optional).
 	 *
 	 * @return JSONResponse 201 on success; 400 on missing required field.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	#[NoAdminRequired]
 	public function create(): JSONResponse {
@@ -198,15 +325,22 @@ class CBSSubmissionController extends Controller {
 			return $error;
 		}
 
+		$accessError = $this->requireAdministrationAccess(administrationId: (string)$body['administrationId']);
+		if ($accessError !== null) {
+			return $accessError;
+		}
+
 		$body['status'] = 'draft';
 		$body['currency'] = ($body['currency'] ?? 'EUR');
 
 		return $this->run(
 			action: 'create CBS submission',
-			compute: fn (): array => (array)$this->objectService()->saveObject(
-				object: $body,
-				register: $this->register(),
-				schema: 'CBSSubmission',
+			compute: fn (): array => $this->toArray(
+				row: $this->objectService()->saveObject(
+					object: $body,
+					register: $this->register(),
+					schema: 'CBSSubmission',
+				)
 			),
 			context: ['administrationId' => (string)$body['administrationId']],
 			status: Http::STATUS_CREATED,
@@ -223,7 +357,11 @@ class CBSSubmissionController extends Controller {
 	 *
 	 * @param string $id The CBSSubmission id.
 	 *
-	 * @return JSONResponse 200 on update; 400 on bad id; 422 on validation failure.
+	 * @return JSONResponse 200 on update; 400 on bad id; 403 when not a
+	 *                      member of the submission's administration; 422
+	 *                      on validation failure.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	#[NoAdminRequired]
 	public function update(string $id): JSONResponse {
@@ -235,6 +373,25 @@ class CBSSubmissionController extends Controller {
 		$error = $this->validateId(value: $id, label: 'id');
 		if ($error !== null) {
 			return $error;
+		}
+
+		try {
+			$existing = $this->toArray(
+				row: $this->objectService()
+					->setRegister($this->register())
+					->setSchema('CBSSubmission')
+					->find($id)
+			);
+		} catch (\Throwable $e) {
+			return new JSONResponse(
+				['error' => 'cbs-submission-not-found', 'message' => 'CBS submission not found'],
+				Http::STATUS_NOT_FOUND
+			);
+		}
+
+		$accessError = $this->requireAdministrationAccess(administrationId: (string)($existing['administrationId'] ?? ''));
+		if ($accessError !== null) {
+			return $accessError;
 		}
 
 		$body = $this->jsonBody();
@@ -256,10 +413,12 @@ class CBSSubmissionController extends Controller {
 
 		return $this->run(
 			action: 'update CBS submission',
-			compute: fn (): array => (array)$this->objectService()->saveObject(
-				object: $body,
-				register: $this->register(),
-				schema: 'CBSSubmission',
+			compute: fn (): array => $this->toArray(
+				row: $this->objectService()->saveObject(
+					object: $body,
+					register: $this->register(),
+					schema: 'CBSSubmission',
+				)
 			),
 			context: ['id' => $id],
 		);
@@ -274,7 +433,11 @@ class CBSSubmissionController extends Controller {
 	 *
 	 * @param string $id The CBSSubmission id.
 	 *
-	 * @return JSONResponse 204 on success; 409 when not in draft state.
+	 * @return JSONResponse 204 on success; 403 when not a member of the
+	 *                      submission's administration; 409 when not in
+	 *                      draft state.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	#[NoAdminRequired]
 	public function destroy(string $id): JSONResponse {
@@ -289,15 +452,22 @@ class CBSSubmissionController extends Controller {
 		}
 
 		try {
-			$existing = $this->objectService()
-				->setRegister($this->register())
-				->setSchema('CBSSubmission')
-				->find($id);
+			$existing = $this->toArray(
+				row: $this->objectService()
+					->setRegister($this->register())
+					->setSchema('CBSSubmission')
+					->find($id)
+			);
 		} catch (\Throwable $e) {
 			return new JSONResponse(
-				['error' => 'not found', 'message' => 'CBS submission not found'],
+				['error' => 'cbs-submission-not-found', 'message' => 'CBS submission not found'],
 				Http::STATUS_NOT_FOUND
 			);
+		}
+
+		$accessError = $this->requireAdministrationAccess(administrationId: (string)($existing['administrationId'] ?? ''));
+		if ($accessError !== null) {
+			return $accessError;
 		}
 
 		$status = (string)($existing['status'] ?? '');
@@ -335,7 +505,9 @@ class CBSSubmissionController extends Controller {
 	 *
 	 * @param string $id The CBSSubmission id.
 	 *
-	 * @return JSONResponse 200 with the regenerated submission; 400/404/409.
+	 * @return JSONResponse 200 with the regenerated submission; 400/403/404/409.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	#[NoAdminRequired]
 	public function generate(string $id): JSONResponse {
@@ -350,15 +522,22 @@ class CBSSubmissionController extends Controller {
 		}
 
 		try {
-			$existing = $this->objectService()
-				->setRegister($this->register())
-				->setSchema('CBSSubmission')
-				->find($id);
+			$existing = $this->toArray(
+				row: $this->objectService()
+					->setRegister($this->register())
+					->setSchema('CBSSubmission')
+					->find($id)
+			);
 		} catch (\Throwable $e) {
 			return new JSONResponse(
-				['error' => 'not found', 'message' => 'CBS submission not found'],
+				['error' => 'cbs-submission-not-found', 'message' => 'CBS submission not found'],
 				Http::STATUS_NOT_FOUND
 			);
+		}
+
+		$accessError = $this->requireAdministrationAccess(administrationId: (string)($existing['administrationId'] ?? ''));
+		if ($accessError !== null) {
+			return $accessError;
 		}
 
 		if ((string)($existing['status'] ?? 'draft') !== 'draft') {
@@ -419,15 +598,20 @@ class CBSSubmissionController extends Controller {
 	 * @return array<string,mixed>
 	 */
 	private function buildShowPayload(string $id): array {
-		$submission = $this->objectService()
-			->setRegister($this->register())
-			->setSchema('CBSSubmission')
-			->find($id);
+		$submission = $this->toArray(
+			row: $this->objectService()
+				->setRegister($this->register())
+				->setSchema('CBSSubmission')
+				->find($id)
+		);
 
-		$lines = $this->objectService()
-			->setRegister($this->register())
-			->setSchema('CBSLine')
-			->findAll(['filters' => ['cbsSubmissionId' => $id]]);
+		$lines = array_map(
+			fn (mixed $row): array => $this->toArray(row: $row),
+			$this->objectService()
+				->setRegister($this->register())
+				->setSchema('CBSLine')
+				->findAll(['filters' => ['cbsSubmissionId' => $id]])
+		);
 
 		return [
 			'submission' => $submission,
@@ -435,6 +619,45 @@ class CBSSubmissionController extends Controller {
 		];
 
 	}//end buildShowPayload()
+
+	/**
+	 * Normalise an OpenRegister ObjectService row (ObjectEntityInterface or
+	 * array) to a plain array<string,mixed>. Every method in this
+	 * controller does array-bracket access on find()/findAll() results
+	 * (`$existing['administrationId']` etc.); the real ADR-084
+	 * `ObjectServiceInterface::find()` contract returns
+	 * `?ObjectEntityInterface` (an object, per
+	 * `OCA\Shillinq\Tests\Unit\Service\Support\ObjectEntityStub` /
+	 * `DuckObjectServiceAdapter`), so a raw object must be unwrapped via
+	 * `jsonSerialize()`/`getObject()` before array access is safe — mirrors
+	 * the same normalisation `CalendarController::toArray()` and
+	 * `BankRuleController::toArray()` already perform.
+	 *
+	 * @param mixed $row Raw row from ObjectService::find()/findAll()/saveObject().
+	 *
+	 * @return array<string,mixed> The row as a plain array (empty array when unusable/null).
+	 */
+	private function toArray(mixed $row): array {
+		if (is_array($row) === true) {
+			return $row;
+		}
+
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			$serialized = $row->jsonSerialize();
+			if (is_array($serialized) === true) {
+				return $serialized;
+			}
+		}
+
+		if (is_object($row) === true && method_exists($row, 'getObject') === true) {
+			$inner = $row->getObject();
+			if (is_array($inner) === true) {
+				return $inner;
+			}
+		}
+
+		return [];
+	}//end toArray()
 
 	/**
 	 * Decode the JSON request body into an associative array.
