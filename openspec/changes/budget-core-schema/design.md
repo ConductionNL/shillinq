@@ -711,13 +711,34 @@ Backend-only, `@e2e exclude`:
    no schema change was needed. Left in place, struck through, so a reader
    comparing against an earlier read of this document can see the question
    was answered, not silently deleted.
-2. **§6a's two positive-control findings** — if `CommitmentBudget.outstanding_commitments`
-   and/or `committedVsRealisedPerBudgetLine` are confirmed silently
-   discarded, who owns filing the openregister-repo fix for
-   `AggregationAnnotationValidator`, and who owns the `verplichtingen-
-   commitment-accounting`-side spec correction (REQ-VPL-011's "no bespoke
-   reporting service" mandate is unsatisfiable if the declarative path is
-   dead)? Handed to the orchestrator, not resolved here.
+2. **§6a's two positive-control findings — ANSWERED 2026-08-20, with a
+   caveat.** A live dynamic measurement (fresh import + `nextcloud.log` grep
+   + direct aggregation-endpoint query) could not be completed on the shared
+   dev instance: it runs shillinq `0.2.1-unstable.20260818220149`, which
+   predates this change (`CommitmentBudget` → "Schema not found") and has no
+   working aggregation-proxy route for `Verplichtingsregel`/`Budget` today;
+   deploying this in-progress branch there to force a fresh import was
+   judged out of scope (shared instance, other engineers' work). The
+   platform hazard itself IS confirmed live on this instance today — 40
+   `"annotation on schema"` warnings from `decidesk`'s schemas, dated
+   2026-08-20, discarding aggregations for exactly the documented reason.
+   Standing in for the shillinq-specific dynamic check, STATIC analysis
+   against the actual declared property lists found: (1)
+   `CommitmentBudget.outstanding_commitments` filters on `programme`/
+   `afgesloten`, neither declared on `CommitmentBudget` — CONFIRMS the
+   declaring-schema hazard, independent of this rename; (2)
+   `committedVsRealisedPerBudgetLine`'s `groupBy`/`filter` fields ARE
+   genuinely declared on the declaring schema (`Verplichtingsregel`), but its
+   `join.select` references `CommitmentBudget.geautoriseerd_bedrag`/
+   `.gerealiseerd_bedrag` — names that do not exist on `CommitmentBudget`
+   under ANY spelling (real fields: `authorised_amount`/`realised_amount`) —
+   a genuine, independent join-field-name defect not one of this design's
+   original two findings. Full detail:
+   `openspec/specs/bookkeeping-verplichtingenadministratie/spec.md`'s
+   REQ-VPL-011 delta. Who owns the `AggregationAnnotationValidator`
+   foundation-repo fix, the `committedVsRealisedPerBudgetLine` field-name
+   fix, and the outstanding LIVE re-check once a deployable instance exists:
+   handed to the orchestrator, not resolved here.
 3. **`Budgets` top-level nav group's icon/order** (§7b) — no icon/order
    convention was specified by the task brief; `tasks.md` picks a
    provisional value (an unused `Wallet`-adjacent icon, order placed near

@@ -32,7 +32,7 @@
 			"_note": "#866/#862. This body was declared under `config.dashboard.{kpis,charts,exceptions,filters}` against a named OpenRegister aggregation, `programmeBudgetVsActuals`. NEITHER EXISTED — CnDashboardPage has no `dashboard` prop and OpenRegister has no named-aggregation registry — so the page mounted an EMPTY dashboard for every visitor while the manifest validated, `pages[].config` being additionalProperties:true. It is now `widgets` + `layout` + `pageFilters`, the vocabulary CnDashboardPage reads, over `\\OCA\\Shillinq\\Service\\BbvProgrammeBudgetService`. NOT CLOSED: REQ-BBC-002 wants MULTI-select Programme and Budget status; `pageFilters` is single-select and nc-vue 2.3.0 has no multi-select page filter anywhere. Fiscal years are static here though the endpoint returns `fiscalYears[]`. REQ-BBC-004 is untouched.",
 			"config": {
 				"register": "shillinq",
-				"schema": "Budget",
+				"schema": "BbvProgrammeBudget",
 				"description": "Budget health per BBV programme for the active fiscal year.",
 				"pageFilters": [
 					{

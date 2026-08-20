@@ -39,6 +39,7 @@ use OCA\Shillinq\Guard\RateScheduleOverlapGuard;
 use OCA\Shillinq\Guard\SubsidieRepaymentGuard;
 use OCA\Shillinq\Guard\VatSubmissionGuard;
 use OCA\Shillinq\Lifecycle\APGuard;
+use OCA\Shillinq\Lifecycle\AnnualBudgetDefaultGuard;
 use OCA\Shillinq\Lifecycle\FiscalYearGuard;
 use OCA\Shillinq\Lifecycle\FourEyesPaymentRunGuard;
 use OCA\Shillinq\Lifecycle\GLReversalGuard;
@@ -1100,6 +1101,27 @@ class Application extends App implements IBootstrap {
 				return new PaymentRunDuplicateGuard(
 					container: $c->get(ContainerInterface::class),
 					appConfig: $c->get(IAppConfig::class),
+					logger: $c->get(LoggerInterface::class),
+				);
+			}
+		);
+
+		// budget-core-schema REQ-BCS-006 — the AnnualBudget.activate
+		// transition's `requires` tag
+		// (OCA\Shillinq\Lifecycle\AnnualBudgetDefaultGuard::isUniqueDefault)
+		// is a `Class::method`-shaped string, which per shillinq#425/#433
+		// never autowires through Nextcloud's container without an explicit
+		// alias. Registered under the exact literal tag the register.d
+		// fragment names, mapped through the shared
+		// RegisterRequiresGuardAdapter, matching the convention every guard
+		// registered since #425 follows.
+		$context->registerService(
+			'OCA\Shillinq\Lifecycle\AnnualBudgetDefaultGuard::isUniqueDefault',
+			static function ($c): RegisterRequiresGuardAdapter {
+				return new RegisterRequiresGuardAdapter(
+					guard: $c->get(AnnualBudgetDefaultGuard::class),
+					method: 'isUniqueDefault',
+					denyMessage: 'Another AnnualBudget already claims isDefault for this administration and fiscal year.',
 					logger: $c->get(LoggerInterface::class),
 				);
 			}

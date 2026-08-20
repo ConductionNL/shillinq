@@ -50,14 +50,19 @@ object, and MUST NOT approve when that call returns `false` or throws.
 `submitRequisition()` MUST always route to `submitted` regardless of mandate
 sufficiency — a `Requisition` never auto-skips to `approved`.
 
-#### Scenario: A requisition within the matching Budget's free room is approved
+**Renamed 2026-08-20 by `budget-core-schema`:** the matched schema was
+`Budget`, colliding with an unrelated `Budget` declared by
+`bookkeeping-provincies-bbv-variant`; renamed to `CommitmentBudget`
+(`design.md` §1). This requirement's substance is unchanged.
+
+#### Scenario: A requisition within the matching CommitmentBudget's free room is approved
 - **GIVEN** a submitted Requisition with `programma=5.1`, `boekjaar=2026`, `totaalbedrag_excl_btw=500000`
-- **AND** a Budget for `programma=5.1`/`boekjaar=2026` with sufficient free room
+- **AND** a CommitmentBudget for `programma=5.1`/`boekjaar=2026` with sufficient free room
 - **WHEN** `approveRequisition()` runs
 - **THEN** it returns the Requisition with `statusCode='approved'`, `approvedBy` and `approvedAt` set
 
-#### Scenario: A requisition exceeding the matching Budget's free room is blocked
-- **GIVEN** a submitted Requisition requesting more than the matching Budget's free room
+#### Scenario: A requisition exceeding the matching CommitmentBudget's free room is blocked
+- **GIVEN** a submitted Requisition requesting more than the matching CommitmentBudget's free room
 - **WHEN** `approveRequisition()` runs
 - **THEN** it throws "Requisition exceeds available budget"
 - **AND** the Requisition's `statusCode` remains `submitted` (never silently approved)

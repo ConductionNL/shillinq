@@ -235,7 +235,7 @@ class VerplichtingWorkflowTest extends TestCase {
 		$this->withObjectService(
 			$this->buildObjectServiceStub(
 				[
-					'Budget' => [$budget],
+					'CommitmentBudget' => [$budget],
 					'Mandaat' => [$mandate],
 				]
 			)
@@ -275,7 +275,7 @@ class VerplichtingWorkflowTest extends TestCase {
 		$this->withObjectService(
 			$this->buildObjectServiceStub(
 				[
-					'Budget' => [$budget],
+					'CommitmentBudget' => [$budget],
 					'Mandaat' => [$mandate],
 				]
 			)
@@ -313,7 +313,7 @@ class VerplichtingWorkflowTest extends TestCase {
 		$this->withObjectService(
 			$this->buildObjectServiceStub(
 				[
-					'Budget' => [$budget2026, $budget2027],
+					'CommitmentBudget' => [$budget2026, $budget2027],
 					'Mandaat' => [],
 				]
 			)
@@ -363,7 +363,7 @@ class VerplichtingWorkflowTest extends TestCase {
 		$this->withObjectService(
 			$this->buildObjectServiceStub(
 				[
-					'Budget' => [$budget],
+					'CommitmentBudget' => [$budget],
 					'Mandaat' => [$override],
 				]
 			)
@@ -394,7 +394,7 @@ class VerplichtingWorkflowTest extends TestCase {
 		$this->withObjectService(
 			$this->buildObjectServiceStub(
 				[
-					'Budget' => [$this->makeBudget()],
+					'CommitmentBudget' => [$this->makeBudget()],
 					'Mandaat' => [$mandate],
 				]
 			)

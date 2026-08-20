@@ -306,7 +306,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 			[
 				'Verplichting' => [],
 				'Verplichtingsregel' => [],
-				'Budget' => [$this->budget()],
+				'CommitmentBudget' => [$this->budget()],
 				'Mandaat' => [
 					[
 						'administrationId' => 'adm-1',
@@ -356,7 +356,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		$service = $this->buildService(
 			[
 				'Verplichting' => [$existing],
-				'Budget' => [$this->budget()],
+				'CommitmentBudget' => [$this->budget()],
 				'Mandaat' => [],
 				'PurchaseOrderLine' => [$this->purchaseOrderLine()],
 			]
@@ -384,7 +384,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		$service = $this->buildService(
 			[
 				'Verplichting' => [],
-				'Budget' => [$tightBudget],
+				'CommitmentBudget' => [$tightBudget],
 				'Mandaat' => [
 					[
 						'administrationId' => 'adm-1',
@@ -431,7 +431,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 				'Verplichting' => [],
 				'Verplichtingsregel' => [],
 				'Rechtmatigheidsbevinding' => [],
-				'Budget' => [$tightBudget],
+				'CommitmentBudget' => [$tightBudget],
 				'Mandaat' => [
 					[
 						'administrationId' => 'adm-1',
@@ -473,7 +473,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 			[
 				'Verplichting' => [],
 				'Verplichtingsregel' => [],
-				'Budget' => [],
+				'CommitmentBudget' => [],
 				'Mandaat' => [],
 				'PurchaseOrderLine' => [$this->purchaseOrderLine()],
 			]
@@ -510,7 +510,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 			[
 				'Verplichting' => [],
 				'Verplichtingsregel' => [],
-				'Budget' => [$budget2026, $budget2027],
+				'CommitmentBudget' => [$budget2026, $budget2027],
 				'Mandaat' => [$mandate],
 				'PurchaseOrderLine' => [
 					$this->purchaseOrderLine(['lineNumber' => 1, 'expectedDeliveryDate' => '2026-03-01', 'lineTotal' => 10000000]),
@@ -544,7 +544,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		$service = $this->buildService(
 			[
 				'Verplichting' => [],
-				'Budget' => [$tightBudget],
+				'CommitmentBudget' => [$tightBudget],
 				'Mandaat' => [
 					[
 						'administrationId' => 'adm-1',
@@ -603,7 +603,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 			[
 				'Verplichting' => [],
 				'Verplichtingsregel' => [],
-				'Budget' => [$budget2026, $budget2027],
+				'CommitmentBudget' => [$budget2026, $budget2027],
 				'Mandaat' => [$mandate],
 			]
 		);

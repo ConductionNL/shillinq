@@ -84,10 +84,30 @@ requirement's pre-existing scenario, unaffected by the rename itself)
   fresh register import, and the aggregation endpoint is queried directly
   for non-empty rows against seeded `VerplichtingRegel`/`CommitmentBudget`
   data
-- **THEN** the measured outcome is recorded here, replacing this sentence:
-  `budget-core-schema` tasks.md group 8 records **[outcome pending —
-  implementer fills in: MATERIALISES with N rows returned, or DISCARDED per
-  the "annotation on schema" log line]** before this change ships
+- **THEN** the measured outcome, recorded 2026-08-20 (full detail in
+  `openspec/specs/bookkeeping-verplichtingenadministratie/spec.md`'s
+  REQ-VPL-011 delta): the platform hazard is CONFIRMED live on the shared
+  dev instance (40 `"annotation on schema"` warnings from `decidesk`'s
+  schemas, dated 2026-08-20). A shillinq-specific DYNAMIC measurement could
+  not be completed — the shared instance runs a pre-rename shillinq build
+  with no working aggregation-proxy route, and deploying this in-progress
+  branch there to force it was out of scope. STATIC analysis against the
+  actual declared property lists stands in: `outstanding_commitments`'s
+  `where` filters on `programme`/`afgesloten`, neither declared on
+  `CommitmentBudget` — CONFIRMS the declaring-schema hazard independent of
+  this rename. `committedVsRealisedPerBudgetLine`'s `groupBy`/`filter`
+  fields ARE all declared on the declaring schema `Verplichtingsregel`, but
+  its `join.select` references `CommitmentBudget.geautoriseerd_bedrag`/
+  `.gerealiseerd_bedrag` — field names that do not exist on
+  `CommitmentBudget` under any name (the real fields are
+  `authorised_amount`/`realised_amount`) — a genuine, independent
+  join-field-name defect, newly found here, not one of design.md's original
+  two. **Net: both aggregations are very likely non-functional today**, one
+  confirmed by the documented hazard, one by an unrelated field-name bug —
+  but neither is confirmed by a live materialised-vs-discarded measurement.
+  Not fixed here (REQ-BCS-011 non-goal); handed to whichever change next
+  touches `committedVsRealisedPerBudgetLine` or gets this branch onto a
+  deployable instance for the outstanding live re-check.
 
 @e2e exclude platform-diagnostic verification, not a repeatable browser
 assertion — see `budget-core-schema` design.md §6a/§11.2 and tasks.md group
