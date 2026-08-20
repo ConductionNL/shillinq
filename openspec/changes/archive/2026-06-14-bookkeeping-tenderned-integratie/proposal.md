@@ -8,7 +8,7 @@ Introduce TenderNed (Dutch central procurement platform) integration into Shilli
 
 The integration consumes OpenConnector's TenderNed source definition and polling job (5-minute cadence), extends the Verplichting schema with `bron` and `bronReferentie` fields, and materialises a new OpdrachtUitvoering schema for milestone-based delivery tracking. Full audit-trail linkage to the original TenderNed dossier is preserved for ENSIA/BIO compliance.
 
-This change conforms to the shared [`nextcloud-app`](../../specs/nextcloud-app/spec.md) spec for app structure, consumes OpenRegister's audit and file-attachment abstractions per ADR-022, and publishes budget-impact events via mydash integration per ADR-024.
+This change conforms to the shared [`nextcloud-app`](../../specs/nextcloud-app/spec.md) spec for app structure, consumes OpenRegister's audit and file-attachment abstractions per ADR-022, and publishes budget-impact events via launchpad integration per ADR-024.
 
 ## Motivation
 
@@ -23,7 +23,7 @@ The integration is necessarily two-way because the aanbestedende dienst (the ent
 - [x] Project: shillinq — extends `Verplichting` schema, declares new `OpdrachtUitvoering` register, adds workflow routes in `src/manifest.json`, ships milestone-generation templates in `lib/Settings/seeds/`, integrates with openconnector's TenderNed source polling
 - [x] Project: openconnector — *already shipped as of 2026-05-22*; TenderNed source and polling job exist and are stable. This change consumes them as-is.
 - [x] Project: openregister — file-attachment and audit-trail abstractions consumed per ADR-022; no source changes required
-- [x] Project: mydash — consumes budget-impact events via event stream for real-time widget updates (REQ-007); integration points documented in design.md
+- [x] Project: launchpad — consumes budget-impact events via event stream for real-time widget updates (REQ-007); integration points documented in design.md
 - [x] Project: docudesk — no source changes; OpdrachtUitvoering bewijsstukken reference docudesk attachments by foreign-key URI per ADR-022
 - [ ] Project: opencatalogi — future integration (post-implementation) to expose TenderNed as external catalogue
 

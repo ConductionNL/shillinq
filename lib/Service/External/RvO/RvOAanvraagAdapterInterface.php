@@ -34,8 +34,8 @@
  * @link https://www.rvo.nl/subsidies-financiering/wbso
  * @link https://www.rvo.nl/subsidies-financiering/investeringsregelingen
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/tasks.md
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -65,41 +65,40 @@ namespace OCA\Shillinq\Service\External\RvO;
  *     `Application::register()` to the openconnector-backed
  *     implementation.
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/tasks.md
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  */
-interface RvOAanvraagAdapterInterface
-{
-    /**
-     * Submit an RvO aanvraag (application, progress report, or
-     * mededeling werkelijk gerealiseerde uren / investeringen).
-     *
-     * @param array<string,mixed> $payload The RvO aanvraag envelope —
-     *                                     scheme (`wbso`/`sno`/`kia`/
-     *                                     `eia`/`mia`/`vamil`),
-     *                                     aanvraagType (`aanvraag`/
-     *                                     `voortgangsmelding`/
-     *                                     `mededeling`),
-     *                                     periodYear, periodMonth,
-     *                                     organizationLegalName,
-     *                                     kvkNumber, rsinNumber,
-     *                                     eHerkenningOin (intermediair),
-     *                                     projectsOrInvestments[]
-     *                                     (per-project hours /
-     *                                     per-investment bedragen),
-     *                                     attachmentBytes (binary),
-     *                                     attachmentChecksum,
-     *                                     correlationId.
-     *
-     * @return RvORequestResult The dispatch outcome (status + RvO
-     *                          aanvraagnummer).
-     */
-    public function submit(array $payload): RvORequestResult;
+interface RvOAanvraagAdapterInterface {
+	/**
+	 * Submit an RvO aanvraag (application, progress report, or
+	 * mededeling werkelijk gerealiseerde uren / investeringen).
+	 *
+	 * @param array<string,mixed> $payload The RvO aanvraag envelope —
+	 *                                     scheme (`wbso`/`sno`/`kia`/
+	 *                                     `eia`/`mia`/`vamil`),
+	 *                                     aanvraagType (`aanvraag`/
+	 *                                     `voortgangsmelding`/
+	 *                                     `mededeling`),
+	 *                                     periodYear, periodMonth,
+	 *                                     organizationLegalName,
+	 *                                     kvkNumber, rsinNumber,
+	 *                                     eHerkenningOin (intermediair),
+	 *                                     projectsOrInvestments[]
+	 *                                     (per-project hours /
+	 *                                     per-investment bedragen),
+	 *                                     attachmentBytes (binary),
+	 *                                     attachmentChecksum,
+	 *                                     correlationId.
+	 *
+	 * @return RvORequestResult The dispatch outcome (status + RvO
+	 *                          aanvraagnummer).
+	 */
+	public function submit(array $payload): RvORequestResult;
 
-    /**
-     * Whether the adapter is dormant — i.e. wired but not contacting RvO.
-     *
-     * @return bool TRUE when the adapter is a log-only stub.
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the adapter is dormant — i.e. wired but not contacting RvO.
+	 *
+	 * @return bool TRUE when the adapter is a log-only stub.
+	 */
+	public function isDormant(): bool;
 }//end interface

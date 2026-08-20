@@ -35,67 +35,58 @@ use OCA\Shillinq\Service\Import\ImportProfileInterface;
  *
  * @spec openspec/changes/administration-import-migration/tasks.md#task-7
  */
-class XafGenericProfile implements ImportProfileInterface
-{
-    /**
-     * {@inheritDoc}
-     *
-     * @return string
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function sourceSystem(): string
-    {
-        return 'xaf-generic';
+class XafGenericProfile implements ImportProfileInterface {
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function sourceSystem(): string {
+		return 'xaf-generic';
+	}//end sourceSystem()
 
-    }//end sourceSystem()
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @param array<string,mixed> $parsed Parser output.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function normalizeLedgerAccounts(array $parsed): array {
+		return ($parsed['ledgerAccounts'] ?? []);
+	}//end normalizeLedgerAccounts()
 
-    /**
-     * {@inheritDoc}
-     *
-     * @param array<string,mixed> $parsed Parser output.
-     *
-     * @return array<int,array<string,mixed>>
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function normalizeLedgerAccounts(array $parsed): array
-    {
-        return ($parsed['ledgerAccounts'] ?? []);
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Standard XAF carries opening balances and relation details inline, so no
+	 * companion CSV is needed — the map is intentionally empty.
+	 *
+	 * @param string $artifact Artifact kind.
+	 *
+	 * @return array<string,string>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function mapCsvColumns(string $artifact): array {
+		unset($artifact);
+		return [];
+	}//end mapCsvColumns()
 
-    }//end normalizeLedgerAccounts()
-
-    /**
-     * {@inheritDoc}
-     *
-     * Standard XAF carries opening balances and relation details inline, so no
-     * companion CSV is needed — the map is intentionally empty.
-     *
-     * @param string $artifact Artifact kind.
-     *
-     * @return array<string,string>
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function mapCsvColumns(string $artifact): array
-    {
-        unset($artifact);
-        return [];
-
-    }//end mapCsvColumns()
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param array<string,mixed> $parsed Parser output.
-     *
-     * @return array<string,mixed>
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function applyDialectQuirks(array $parsed): array
-    {
-        return $parsed;
-
-    }//end applyDialectQuirks()
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @param array<string,mixed> $parsed Parser output.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function applyDialectQuirks(array $parsed): array {
+		return $parsed;
+	}//end applyDialectQuirks()
 }//end class

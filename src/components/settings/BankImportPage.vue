@@ -13,11 +13,19 @@
 		<header class="bank-import-page__header">
 			<h2>{{ t('shillinq', 'Import bank statements') }}</h2>
 			<p class="bank-import-page__hint">
-				{{ t('shillinq', 'Upload a bank statement (CAMT.053 / MT940 / CSV) to import its transactions and reconcile them against your invoices and bills.') }}
+				{{
+					t(
+						'shillinq',
+						'Upload a bank statement (CAMT.053 / MT940 / CSV) to import its transactions and reconcile them against your invoices and bills.',
+					)
+				}}
 			</p>
 		</header>
 
-		<NcButton type="primary" data-testid="bank-import-launch" @click="showBankStatementWizard = true">
+		<NcButton
+			variant="primary"
+			data-testid="bank-import-launch"
+			@click="showBankStatementWizard = true">
 			<template #icon>
 				<BankTransferIn :size="20" />
 			</template>
@@ -31,8 +39,8 @@
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
 import { translate as t } from '@nextcloud/l10n'
+import { NcButton } from '@nextcloud/vue'
 import BankTransferIn from 'vue-material-design-icons/BankTransferIn.vue'
 import BankStatementWizard from '../../modals/BankStatementWizard.vue'
 
@@ -43,11 +51,13 @@ export default {
 		BankTransferIn,
 		BankStatementWizard,
 	},
+
 	data() {
 		return {
 			showBankStatementWizard: false,
 		}
 	},
+
 	methods: { t },
 }
 </script>

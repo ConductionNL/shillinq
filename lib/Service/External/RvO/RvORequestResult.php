@@ -12,8 +12,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/tasks.md
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -31,26 +31,25 @@ namespace OCA\Shillinq\Service\External\RvO;
  * synthesises one so callers can persist a non-null reference even
  * when no outbound call took place.
  *
- * @spec openspec/changes/bookkeeping-investeringsaftrek/tasks.md
- * @spec openspec/changes/bookkeeping-wbso-sno-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-investeringsaftrek/spec.md
+ * @spec openspec/specs/bookkeeping-wbso-sno-administratie/spec.md
  */
-final class RvORequestResult
-{
-    /**
-     * Construct the result value-object.
-     *
-     * @param string              $deliveryStatus ACCEPTED / REJECTED / DEFERRED.
-     * @param string              $aanvraagnummer RvO-side application id.
-     * @param bool                $dormant        TRUE when the adapter was dormant.
-     * @param array<string,mixed> $extras         Provider-specific extras
-     *                                            (e.g. behandeltermijn,
-     *                                            rejectieReden, mijnRvoUrl).
-     */
-    public function __construct(
-        public readonly string $deliveryStatus,
-        public readonly string $aanvraagnummer,
-        public readonly bool $dormant,
-        public readonly array $extras=[],
-    ) {
-    }//end __construct()
+final class RvORequestResult {
+	/**
+	 * Construct the result value-object.
+	 *
+	 * @param string $deliveryStatus ACCEPTED / REJECTED / DEFERRED.
+	 * @param string $aanvraagnummer RvO-side application id.
+	 * @param bool $dormant TRUE when the adapter was dormant.
+	 * @param array<string,mixed> $extras Provider-specific extras
+	 *                                    (e.g. behandeltermijn,
+	 *                                    rejectieReden, mijnRvoUrl).
+	 */
+	public function __construct(
+		public readonly string $deliveryStatus,
+		public readonly string $aanvraagnummer,
+		public readonly bool $dormant,
+		public readonly array $extras = [],
+	) {
+	}//end __construct()
 }//end class

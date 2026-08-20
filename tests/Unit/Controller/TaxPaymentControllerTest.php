@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\TaxPaymentController;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\TaxPaymentReconciliationService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -39,161 +40,198 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class TaxPaymentControllerTest extends TestCase
-{
+final class TaxPaymentControllerTest extends TestCase {
 
-    /**
-     * Mock IRequest.
-     *
-     * @var IRequest&MockObject
-     */
-    private IRequest&MockObject $request;
+	/**
+	 * Mock IRequest.
+	 *
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /**
-     * Mock TaxPaymentReconciliationService.
-     *
-     * @var TaxPaymentReconciliationService&MockObject
-     */
-    private TaxPaymentReconciliationService&MockObject $service;
+	/**
+	 * Mock TaxPaymentReconciliationService.
+	 *
+	 * @var TaxPaymentReconciliationService&MockObject
+	 */
+	private TaxPaymentReconciliationService&MockObject $service;
 
-    /**
-     * Mock IUserSession.
-     *
-     * @var IUserSession&MockObject
-     */
-    private IUserSession&MockObject $userSession;
+	/**
+	 * Mock IUserSession.
+	 *
+	 * @var IUserSession&MockObject
+	 */
+	private IUserSession&MockObject $userSession;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The controller under test.
-     *
-     * @var TaxPaymentController
-     */
-    private TaxPaymentController $controller;
+	/**
+	 * Mock AdministrationContextService — the ADR-005 membership guard.
+	 *
+	 * @var AdministrationContextService&MockObject
+	 */
+	private AdministrationContextService&MockObject $context;
 
-    /**
-     * Set up fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->request     = $this->createMock(IRequest::class);
-        $this->service     = $this->createMock(TaxPaymentReconciliationService::class);
-        $this->userSession = $this->createMock(IUserSession::class);
-        $this->logger      = $this->createMock(LoggerInterface::class);
+	/**
+	 * What canAccess() answers. Flipped by the ADR-005 refusal test.
+	 *
+	 * Read through a callback rather than re-stubbed per test: a second
+	 * `->method('canAccess')` APPENDS a matcher instead of replacing the first.
+	 *
+	 * @var bool
+	 */
+	private bool $canAccess = true;
 
-        $user = $this->createMock(IUser::class);
-        $user->method('getUID')->willReturn('alice');
-        $this->userSession->method('getUser')->willReturn($user);
+	/**
+	 * The controller under test.
+	 *
+	 * @var TaxPaymentController
+	 */
+	private TaxPaymentController $controller;
 
-        $this->controller = new TaxPaymentController(
-            request: $this->request,
-            reconciliation: $this->service,
-            userSession: $this->userSession,
-            logger: $this->logger,
-        );
+	/**
+	 * Set up fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->request = $this->createMock(IRequest::class);
+		$this->service = $this->createMock(TaxPaymentReconciliationService::class);
+		$this->userSession = $this->createMock(IUserSession::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->context = $this->createMock(AdministrationContextService::class);
 
-    }//end setUp()
+		$this->canAccess = true;
+		$this->context->method('canAccess')->willReturnCallback(fn (): bool => $this->canAccess);
 
-    /**
-     * Set the administration_id request param.
-     *
-     * @param string $admin The administration id.
-     *
-     * @return void
-     */
-    private function withAdmin(string $admin): void
-    {
-        $this->request->method('getParam')->willReturnCallback(
-            static function (string $key, mixed $default=null) use ($admin): mixed {
-                if ($key === 'administration_id') {
-                    return $admin;
-                }
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$this->userSession->method('getUser')->willReturn($user);
 
-                return $default;
-            }
-        );
+		$this->controller = new TaxPaymentController(
+			request: $this->request,
+			reconciliation: $this->service,
+			userSession: $this->userSession,
+			context: $this->context,
+			logger: $this->logger,
+		);
 
-    }//end withAdmin()
+	}//end setUp()
 
-    /**
-     * A missing administration_id yields HTTP 400 (REQ-VPB-003).
-     *
-     * @return void
-     */
-    public function testReconcileMissingAdministrationReturns400(): void
-    {
-        $this->withAdmin('');
-        $response = $this->controller->reconcile('pay-1');
+	/**
+	 * Set the administration_id request param.
+	 *
+	 * @param string $admin The administration id.
+	 *
+	 * @return void
+	 */
+	private function withAdmin(string $admin): void {
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null) use ($admin): mixed {
+				if ($key === 'administration_id') {
+					return $admin;
+				}
 
-        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+				return $default;
+			}
+		);
 
-    }//end testReconcileMissingAdministrationReturns400()
+	}//end withAdmin()
 
-    /**
-     * A malformed payment id yields HTTP 400.
-     *
-     * @return void
-     */
-    public function testReconcileMalformedIdReturns400(): void
-    {
-        $this->withAdmin('adm-1');
-        $response = $this->controller->reconcile('../../etc/passwd');
+	/**
+	 * A missing administration_id yields HTTP 400 (REQ-VPB-003).
+	 *
+	 * @return void
+	 */
+	public function testReconcileMissingAdministrationReturns400(): void {
+		$this->withAdmin('');
+		$response = $this->controller->reconcile('pay-1');
 
-        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
-    }//end testReconcileMalformedIdReturns400()
+	}//end testReconcileMissingAdministrationReturns400()
 
-    /**
-     * A valid reconcile returns HTTP 200 with the service payload (REQ-VPB-008).
-     *
-     * @return void
-     */
-    public function testReconcileValidReturns200(): void
-    {
-        $this->withAdmin('adm-1');
-        $payload = [
-            'matched'       => true,
-            'paymentAmount' => 15000.0,
-            'glAmount'      => 15000.0,
-            'variance'      => 0.0,
-            'glLineCount'   => 1,
-        ];
-        $this->service->expects($this->once())
-            ->method('reconcile')
-            ->with('adm-1', 'pay-1')
-            ->willReturn($payload);
+	/**
+	 * A malformed payment id yields HTTP 400.
+	 *
+	 * @return void
+	 */
+	public function testReconcileMalformedIdReturns400(): void {
+		$this->withAdmin('adm-1');
+		$response = $this->controller->reconcile('../../etc/passwd');
 
-        $response = $this->controller->reconcile('pay-1');
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
-        self::assertSame($payload, $response->getData());
+	}//end testReconcileMalformedIdReturns400()
 
-    }//end testReconcileValidReturns200()
+	/**
+	 * A valid reconcile returns HTTP 200 with the service payload (REQ-VPB-008).
+	 *
+	 * @return void
+	 */
+	public function testReconcileValidReturns200(): void {
+		$this->withAdmin('adm-1');
+		$payload = [
+			'matched' => true,
+			'paymentAmount' => 15000.0,
+			'glAmount' => 15000.0,
+			'variance' => 0.0,
+			'glLineCount' => 1,
+		];
+		$this->service->expects($this->once())
+			->method('reconcile')
+			->with('adm-1', 'pay-1')
+			->willReturn($payload);
 
-    /**
-     * A service exception yields HTTP 500 with no stack trace (ADR-005).
-     *
-     * @return void
-     */
-    public function testReconcileServiceFailureReturns500(): void
-    {
-        $this->withAdmin('adm-1');
-        $this->service->method('reconcile')->willThrowException(new \RuntimeException('boom'));
-        $this->logger->expects($this->once())->method('error');
+		$response = $this->controller->reconcile('pay-1');
 
-        $response = $this->controller->reconcile('pay-1');
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame($payload, $response->getData());
 
-        self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
-        self::assertSame(['error' => 'Failed to reconcile payment'], $response->getData());
+	}//end testReconcileValidReturns200()
 
-    }//end testReconcileServiceFailureReturns500()
+	/**
+	 * A service exception yields HTTP 500 with no stack trace (ADR-005).
+	 *
+	 * @return void
+	 */
+	public function testReconcileServiceFailureReturns500(): void {
+		$this->withAdmin('adm-1');
+		$this->service->method('reconcile')->willThrowException(new \RuntimeException('boom'));
+		$this->logger->expects($this->once())->method('error');
+
+		$response = $this->controller->reconcile('pay-1');
+
+		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		self::assertSame(['error' => 'Failed to reconcile payment'], $response->getData());
+
+	}//end testReconcileServiceFailureReturns500()
+
+	/**
+	 * A well-formed administration_id the caller has NO membership for yields 404 (ADR-005 / #518).
+	 *
+	 * reconcile() WRITES against the administration named on the wire, and both
+	 * of the old checks were character-class tests. The service must never be
+	 * reached.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-vpb-corporate-tax/spec.md
+	 */
+	public function testForeignAdministrationReturns404AndNeverReachesTheService(): void {
+		$this->canAccess = false;
+		$this->withAdmin('adm-not-mine');
+		$this->service->expects($this->never())->method('reconcile');
+
+		$response = $this->controller->reconcile('tp-001');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testForeignAdministrationReturns404AndNeverReachesTheService()
 }//end class

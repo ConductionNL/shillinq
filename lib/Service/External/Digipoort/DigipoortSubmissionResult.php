@@ -12,8 +12,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
- * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md
+ * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+ * @spec openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,26 +32,25 @@ namespace OCA\Shillinq\Service\External\Digipoort;
  * callers can persist a non-null reference even when no outbound
  * call took place.
  *
- * @spec openspec/changes/bookkeeping-vat-btw-filing/tasks.md
- * @spec openspec/changes/bookkeeping-sbr-xbrl-reporting/tasks.md
+ * @spec openspec/specs/bookkeeping-vat-btw-filing/spec.md
+ * @spec openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md
  */
-final class DigipoortSubmissionResult
-{
-    /**
-     * Construct the result value-object.
-     *
-     * @param string              $deliveryStatus ACCEPTED / REJECTED / DEFERRED.
-     * @param string              $kenmerk        Digipoort-side submission id.
-     * @param bool                $dormant        TRUE when the adapter was dormant.
-     * @param array<string,mixed> $extras         Provider-specific extras
-     *                                            (e.g. statusInformation URL,
-     *                                            rejection reason codes).
-     */
-    public function __construct(
-        public readonly string $deliveryStatus,
-        public readonly string $kenmerk,
-        public readonly bool $dormant,
-        public readonly array $extras=[],
-    ) {
-    }//end __construct()
+final class DigipoortSubmissionResult {
+	/**
+	 * Construct the result value-object.
+	 *
+	 * @param string $deliveryStatus ACCEPTED / REJECTED / DEFERRED.
+	 * @param string $reference Digipoort-side submission id.
+	 * @param bool $dormant TRUE when the adapter was dormant.
+	 * @param array<string,mixed> $extras Provider-specific extras
+	 *                                    (e.g. statusInformation URL,
+	 *                                    rejection reason codes).
+	 */
+	public function __construct(
+		public readonly string $deliveryStatus,
+		public readonly string $reference,
+		public readonly bool $dormant,
+		public readonly array $extras = [],
+	) {
+	}//end __construct()
 }//end class

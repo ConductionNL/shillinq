@@ -19,7 +19,7 @@
  * The helpers exposed here keep the camera-lifecycle / decoding logic
  * out of the Vue component so they are unit-testable.
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  */
 
 const DEFAULT_FORMATS = ['qr_code', 'ean_13', 'code_128', 'code_39', 'code_93']
@@ -32,7 +32,10 @@ const DEFAULT_FORMATS = ['qr_code', 'ean_13', 'code_128', 'code_39', 'code_93']
  * @return {Promise<boolean>} True when a native decoder is available.
  */
 export async function nativeDetectorAvailable(formats = DEFAULT_FORMATS) {
-	if (typeof window === 'undefined' || typeof window.BarcodeDetector !== 'function') {
+	if (
+		typeof window === 'undefined'
+		|| typeof window.BarcodeDetector !== 'function'
+	) {
 		return false
 	}
 	try {
@@ -54,7 +57,11 @@ export async function nativeDetectorAvailable(formats = DEFAULT_FORMATS) {
  * @return {Promise<MediaStream>} The live camera stream.
  */
 export async function requestCameraStream() {
-	if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+	if (
+		typeof navigator === 'undefined'
+		|| !navigator.mediaDevices
+		|| !navigator.mediaDevices.getUserMedia
+	) {
 		throw new Error('Camera not supported by this browser')
 	}
 	return navigator.mediaDevices.getUserMedia({
@@ -89,14 +96,20 @@ export function releaseStream(stream) {
  * @return {Promise<{rawValue:string, format:string}|null>} Decoded result.
  */
 export async function decodeFrame(source, formats = DEFAULT_FORMATS) {
-	if (typeof window === 'undefined' || typeof window.BarcodeDetector !== 'function') {
+	if (
+		typeof window === 'undefined'
+		|| typeof window.BarcodeDetector !== 'function'
+	) {
 		return null
 	}
 	try {
 		const detector = new window.BarcodeDetector({ formats })
 		const codes = await detector.detect(source)
 		if (Array.isArray(codes) && codes.length > 0) {
-			return { rawValue: codes[0].rawValue, format: codes[0].format || 'unknown' }
+			return {
+				rawValue: codes[0].rawValue,
+				format: codes[0].format || 'unknown',
+			}
 		}
 	} catch (e) {
 		// Returning null lets the caller try the next frame / format / fallback.
@@ -116,9 +129,13 @@ export async function decodeWithJsQrFallback(imageData) {
 		return null
 	}
 	try {
-		// eslint-disable-next-line import/no-unresolved
+		// No `eslint-disable` for `import/no-unresolved` here: the flat config
+		// does not register that rule, so the disable comment was itself the
+		// error ("Definition for rule 'import/no-unresolved' was not found").
+		// `webpackIgnore` keeps this a real runtime import rather than a bundled
+		// one, which is why the specifier is not resolvable at lint time.
 		const mod = await import(/* webpackIgnore: true */ 'jsqr')
-		const jsQR = (mod && mod.default) ? mod.default : mod
+		const jsQR = mod && mod.default ? mod.default : mod
 		if (typeof jsQR !== 'function') {
 			return null
 		}

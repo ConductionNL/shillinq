@@ -25,7 +25,9 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/expand-standards-eu-us/specs/accounting-standards-policy/spec.md
+ * @spec openspec/specs/accounting-standards-policy/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, Squiz.Operators.ComparisonOperatorUsage, Squiz.PHP.DisallowInlineIf
  */
 
 declare(strict_types=1);
@@ -34,241 +36,213 @@ namespace OCA\Shillinq\Standards;
 
 /**
  * Read-only accessor over the per-domain rule JSON files.
+ *
+ * @SuppressWarnings(PHPMD.ShortVariable) Pre-existing debt (issue #506):
+ *     not in the project's curated idiomatic-abbreviation allowlist;
+ *     deferred pending a dedicated rename pass.
  */
-final class RuleCatalogue
-{
+final class RuleCatalogue {
 
-    /**
-     * Catalogue version — bump on any change to the rule files.
-     *
-     * @var string
-     */
-    public const VERSION = '2026-06b';
+	/**
+	 * Catalogue version — bump on any change to the rule files.
+	 *
+	 * @var string
+	 */
+	public const VERSION = '2026-06b';
 
-    /**
-     * Required keys on every rule.
-     *
-     * @var string[]
-     */
-    private const REQUIRED_KEYS = [
-        'id',
-        'domain',
-        'jurisdiction',
-        'framework',
-        'source',
-        'statement',
-        'severity',
-    ];
+	/**
+	 * Required keys on every rule.
+	 *
+	 * @var string[]
+	 */
+	private const REQUIRED_KEYS = [
+		'id',
+		'domain',
+		'jurisdiction',
+		'framework',
+		'source',
+		'statement',
+		'severity',
+	];
 
-    /**
-     * Loaded + merged rules, memoised.
-     *
-     * @var array<int, array<string, mixed>>|null
-     */
-    private static ?array $cache = null;
+	/**
+	 * Loaded + merged rules, memoised.
+	 *
+	 * @var array<int, array<string, mixed>>|null
+	 */
+	private static ?array $cache = null;
 
+	/**
+	 * All rules from every `rules/*.json` file, merged. Malformed entries
+	 * (missing a required key) are skipped defensively.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function all(): array {
+		if (self::$cache !== null) {
+			return self::$cache;
+		}
 
-    /**
-     * All rules from every `rules/*.json` file, merged. Malformed entries
-     * (missing a required key) are skipped defensively.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    public static function all(): array
-    {
-        if (self::$cache !== null) {
-            return self::$cache;
-        }
+		$rules = [];
+		foreach (glob(__DIR__ . '/rules/*.json') ?: [] as $file) {
+			$decoded = json_decode((string)file_get_contents($file), true);
+			if (is_array($decoded) === false || isset($decoded['rules']) === false || is_array($decoded['rules']) === false) {
+				continue;
+			}
 
-        $rules = [];
-        foreach (glob(__DIR__.'/rules/*.json') ?: [] as $file) {
-            $decoded = json_decode((string) file_get_contents($file), true);
-            if (is_array($decoded) === false || isset($decoded['rules']) === false || is_array($decoded['rules']) === false) {
-                continue;
-            }
+			foreach ($decoded['rules'] as $rule) {
+				if (self::isWellFormed($rule) === true) {
+					$rules[] = $rule;
+				}
+			}
+		}
 
-            foreach ($decoded['rules'] as $rule) {
-                if (self::isWellFormed($rule) === true) {
-                    $rules[] = $rule;
-                }
-            }
-        }
+		self::$cache = $rules;
+		return $rules;
+	}//end all()
 
-        self::$cache = $rules;
-        return $rules;
+	/**
+	 * Rules in a given domain (invoicing, vat, retention, ...).
+	 *
+	 * @param string $domain Domain key.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function byDomain(string $domain): array {
+		return self::where('domain', $domain);
+	}//end byDomain()
 
-    }//end all()
+	/**
+	 * Rules attributed to a given framework/law (en-16931, ifrs-15, gobd, ...).
+	 *
+	 * @param string $framework Framework key.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function byFramework(string $framework): array {
+		return self::where('framework', $framework);
+	}//end byFramework()
 
+	/**
+	 * Rules for a jurisdiction, including `EU`-wide and `global` rules.
+	 *
+	 * @param string $jurisdiction ISO alpha-2, or 'EU' / 'US' / 'global'.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function byJurisdiction(string $jurisdiction): array {
+		$code = strtoupper($jurisdiction);
+		return array_values(
+			array_filter(
+				self::all(),
+				static function (array $rule) use ($code): bool {
+					$j = strtoupper((string)$rule['jurisdiction']);
+					return $j === $code || $j === 'GLOBAL' || ($code !== 'US' && $j === 'EU');
+				}
+			)
+		);
 
-    /**
-     * Rules in a given domain (invoicing, vat, retention, ...).
-     *
-     * @param string $domain Domain key.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    public static function byDomain(string $domain): array
-    {
-        return self::where('domain', $domain);
+	}//end byJurisdiction()
 
-    }//end byDomain()
+	/**
+	 * Only the machine-checkable rules (enforceable by the bookkeeping engine).
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function machineCheckable(): array {
+		return array_values(
+			array_filter(
+				self::all(),
+				static function (array $rule): bool {
+					return ($rule['machineCheckable'] ?? false) === true;
+				}
+			)
+		);
 
+	}//end machineCheckable()
 
-    /**
-     * Rules attributed to a given framework/law (en-16931, ifrs-15, gobd, ...).
-     *
-     * @param string $framework Framework key.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    public static function byFramework(string $framework): array
-    {
-        return self::where('framework', $framework);
+	/**
+	 * Total rule count.
+	 *
+	 * @return int
+	 */
+	public static function count(): int {
+		return count(self::all());
+	}//end count()
 
-    }//end byFramework()
+	/**
+	 * Per-domain rule counts, keyed by domain.
+	 *
+	 * @return array<string, int>
+	 */
+	public static function countByDomain(): array {
+		$counts = [];
+		foreach (self::all() as $rule) {
+			$domain = (string)$rule['domain'];
+			$counts[$domain] = (($counts[$domain] ?? 0) + 1);
+		}
 
+		ksort($counts);
+		return $counts;
+	}//end countByDomain()
 
-    /**
-     * Rules for a jurisdiction, including `EU`-wide and `global` rules.
-     *
-     * @param string $jurisdiction ISO alpha-2, or 'EU' / 'US' / 'global'.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    public static function byJurisdiction(string $jurisdiction): array
-    {
-        $code = strtoupper($jurisdiction);
-        return array_values(
-            array_filter(
-                self::all(),
-                static function (array $rule) use ($code): bool {
-                    $j = strtoupper((string) $rule['jurisdiction']);
-                    return $j === $code || $j === 'GLOBAL' || ($code !== 'US' && $j === 'EU');
-                }
-            )
-        );
+	/**
+	 * The catalogue version string.
+	 *
+	 * @return string
+	 */
+	public static function version(): string {
+		return self::VERSION;
+	}//end version()
 
-    }//end byJurisdiction()
+	/**
+	 * Reset the memoised cache (test hook).
+	 *
+	 * @return void
+	 */
+	public static function reset(): void {
+		self::$cache = null;
 
+	}//end reset()
 
-    /**
-     * Only the machine-checkable rules (enforceable by the bookkeeping engine).
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    public static function machineCheckable(): array
-    {
-        return array_values(
-            array_filter(
-                self::all(),
-                static function (array $rule): bool {
-                    return ($rule['machineCheckable'] ?? false) === true;
-                }
-            )
-        );
+	/**
+	 * Filter all rules where $key === $value.
+	 *
+	 * @param string $key Rule key.
+	 * @param string $value Expected value.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function where(string $key, string $value): array {
+		return array_values(
+			array_filter(
+				self::all(),
+				static function (array $rule) use ($key, $value): bool {
+					return ($rule[$key] ?? null) === $value;
+				}
+			)
+		);
 
-    }//end machineCheckable()
+	}//end where()
 
+	/**
+	 * Whether a decoded rule has all required keys.
+	 *
+	 * @param mixed $rule Decoded rule.
+	 *
+	 * @return bool
+	 */
+	private static function isWellFormed(mixed $rule): bool {
+		if (is_array($rule) === false) {
+			return false;
+		}
 
-    /**
-     * Total rule count.
-     *
-     * @return int
-     */
-    public static function count(): int
-    {
-        return count(self::all());
+		foreach (self::REQUIRED_KEYS as $key) {
+			if (isset($rule[$key]) === false || $rule[$key] === '') {
+				return false;
+			}
+		}
 
-    }//end count()
-
-
-    /**
-     * Per-domain rule counts, keyed by domain.
-     *
-     * @return array<string, int>
-     */
-    public static function countByDomain(): array
-    {
-        $counts = [];
-        foreach (self::all() as $rule) {
-            $domain           = (string) $rule['domain'];
-            $counts[$domain]  = (($counts[$domain] ?? 0) + 1);
-        }
-
-        ksort($counts);
-        return $counts;
-
-    }//end countByDomain()
-
-
-    /**
-     * The catalogue version string.
-     *
-     * @return string
-     */
-    public static function version(): string
-    {
-        return self::VERSION;
-
-    }//end version()
-
-
-    /**
-     * Reset the memoised cache (test hook).
-     *
-     * @return void
-     */
-    public static function reset(): void
-    {
-        self::$cache = null;
-
-    }//end reset()
-
-
-    /**
-     * Filter all rules where $key === $value.
-     *
-     * @param string $key   Rule key.
-     * @param string $value Expected value.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private static function where(string $key, string $value): array
-    {
-        return array_values(
-            array_filter(
-                self::all(),
-                static function (array $rule) use ($key, $value): bool {
-                    return ($rule[$key] ?? null) === $value;
-                }
-            )
-        );
-
-    }//end where()
-
-
-    /**
-     * Whether a decoded rule has all required keys.
-     *
-     * @param mixed $rule Decoded rule.
-     *
-     * @return bool
-     */
-    private static function isWellFormed(mixed $rule): bool
-    {
-        if (is_array($rule) === false) {
-            return false;
-        }
-
-        foreach (self::REQUIRED_KEYS as $key) {
-            if (isset($rule[$key]) === false || $rule[$key] === '') {
-                return false;
-            }
-        }
-
-        return true;
-
-    }//end isWellFormed()
-
-
+		return true;
+	}//end isWellFormed()
 }//end class

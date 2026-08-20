@@ -15,27 +15,37 @@
 		<div class="wbso-chart-of-accounts">
 			<header class="wbso-chart-of-accounts__header">
 				<h2>{{ t('shillinq', 'Chart of Accounts') }}</h2>
-				<NcButton v-if="canCreate" type="primary" @click="onAddAccount">
+				<NcButton v-if="canCreate" variant="primary" @click="onAddAccount">
 					{{ t('shillinq', 'Add Account') }}
 				</NcButton>
 			</header>
 
-			<NcEmptyContent v-if="!loading && roots.length === 0"
+			<NcEmptyContent
+				v-if="!loading && roots.length === 0"
 				:name="t('shillinq', 'No accounts yet')"
-				:description="t('shillinq', 'Create the first account in the chart-of-accounts to start bookkeeping.')" />
+				:description="
+					t(
+						'shillinq',
+						'Create the first account in the chart-of-accounts to start bookkeeping.',
+					)
+				" />
 
 			<div v-else-if="loading" class="wbso-chart-of-accounts__loading">
 				{{ t('shillinq', 'Loading…') }}
 			</div>
 
 			<ul v-else class="wbso-chart-of-accounts__tree" role="tree">
-				<AccountNode v-for="account in roots"
+				<AccountNode
+					v-for="account in roots"
 					:key="account.accountNumber"
 					:account="account"
 					:depth="0" />
 			</ul>
 
-			<p v-if="errorMessage" class="wbso-chart-of-accounts__error" role="alert">
+			<p
+				v-if="errorMessage"
+				class="wbso-chart-of-accounts__error"
+				role="alert">
 				{{ errorMessage }}
 			</p>
 		</div>
@@ -43,9 +53,9 @@
 </template>
 
 <script>
-import { NcAppContent, NcButton, NcEmptyContent } from '@nextcloud/vue'
-import { generateOcsUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateOcsUrl } from '@nextcloud/router'
+import { NcAppContent, NcButton, NcEmptyContent } from '@nextcloud/vue'
 import AccountNode from '../../components/wbso/AccountNode.vue'
 
 export default {
@@ -84,9 +94,13 @@ export default {
 				const url = generateOcsUrl('apps/shillinq/api/v1/accounts/hierarchy')
 				const { data } = await axios.get(url)
 				this.roots = data?.ocs?.data?.tree ?? data?.tree ?? []
-				this.canCreate = data?.ocs?.data?.canCreate ?? data?.canCreate ?? false
+				this.canCreate =
+					data?.ocs?.data?.canCreate ?? data?.canCreate ?? false
 			} catch (error) {
-				this.errorMessage = t('shillinq', 'Failed to load Chart of Accounts.')
+				this.errorMessage = t(
+					'shillinq',
+					'Failed to load Chart of Accounts.',
+				)
 			} finally {
 				this.loading = false
 			}
@@ -111,20 +125,24 @@ export default {
 .wbso-chart-of-accounts {
 	padding: 1rem;
 }
+
 .wbso-chart-of-accounts__header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 1rem;
 }
+
 .wbso-chart-of-accounts__tree {
 	list-style: none;
 	padding-left: 0;
 }
+
 .wbso-chart-of-accounts__loading,
 .wbso-chart-of-accounts__error {
 	padding: 0.5rem 0;
 }
+
 .wbso-chart-of-accounts__error {
 	color: var(--color-error);
 }

@@ -33,8 +33,12 @@ function fakeStorage() {
 	const store = {}
 	return {
 		getItem: (k) => (k in store ? store[k] : null),
-		setItem: (k, v) => { store[k] = String(v) },
-		removeItem: (k) => { delete store[k] },
+		setItem: (k, v) => {
+			store[k] = String(v)
+		},
+		removeItem: (k) => {
+			delete store[k]
+		},
 	}
 }
 
@@ -90,7 +94,7 @@ describe('bankStatementWizard — IBAN → account memory (REQ-BSW-006)', () => 
 	it('expires mappings older than one year', () => {
 		saveIbanMapping('NL91ABNA0417164300', '10100')
 		const raw = JSON.parse(globalThis.localStorage.getItem(IBAN_MAP_KEY))
-		raw.savedAt = Date.now() - (366 * 24 * 60 * 60 * 1000)
+		raw.savedAt = Date.now() - 366 * 24 * 60 * 60 * 1000
 		globalThis.localStorage.setItem(IBAN_MAP_KEY, JSON.stringify(raw))
 		expect(loadIbanMapping('NL91ABNA0417164300')).toBeNull()
 	})
@@ -104,7 +108,11 @@ describe('bankStatementWizard — IBAN → account memory (REQ-BSW-006)', () => 
 
 describe('bankStatementWizard — import payload (REQ-BSW-004)', () => {
 	it('builds the JSON body posted to the import endpoint', () => {
-		const payload = buildImportPayload({ format: 'camt053', contents: '<Document/>', glAccountId: '10100' })
+		const payload = buildImportPayload({
+			format: 'camt053',
+			contents: '<Document/>',
+			glAccountId: '10100',
+		})
 		expect(payload).toEqual({
 			format: 'camt053',
 			contents: '<Document/>',

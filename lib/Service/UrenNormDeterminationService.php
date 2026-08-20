@@ -41,72 +41,69 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
  */
-final class UrenNormDeterminationService
-{
-    /**
-     * Construct the service.
-     *
-     * @param UrencriteriumYearGuard $guard  The deterministic norm/grondslag policy.
-     * @param LoggerInterface        $logger Logger for diagnostics.
-     */
-    public function __construct(
-        private readonly UrencriteriumYearGuard $guard,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+final class UrenNormDeterminationService {
+	/**
+	 * Construct the service.
+	 *
+	 * @param UrencriteriumYearGuard $guard The deterministic norm/grondslag policy.
+	 * @param LoggerInterface $logger Logger for diagnostics.
+	 */
+	public function __construct(
+		private readonly UrencriteriumYearGuard $guard,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Build a fully-populated UrencriteriumYear seed for a new tracker.
-     *
-     * Profile shape (REQ-URC-000):
-     *  - 'administrationId' string   — tenant-isolation FK.
-     *  - 'ondernemingId'    string   — onderneming FK.
-     *  - 'kalenderjaar'     int      — year.
-     *  - 'arbeidsongeschikt'  bool   — UWV AO-status (drives 800 norm).
-     *  - 'meewerkendePartner' bool   — drives 525 norm.
-     *  - 'ondernemingsUrenJTD' float — onderneming hours year-to-date (>0 → grotendeels test).
-     *  - 'loondienstUrenJTD'  float  — paid-employment hours year-to-date.
-     *
-     * Returns a record that — by construction — passes
-     * UrencriteriumYearGuard::validateOnSave.
-     *
-     * @param array<string, mixed> $profiel Entrepreneur profile.
-     *
-     * @return array<string, mixed> UrencriteriumYear seed shape.
-     *
-     * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
-     */
-    public function bouwSeedRecord(array $profiel): array
-    {
-        $norm        = $this->guard->bepaalDoelNorm(profiel: $profiel);
-        $grondslag   = $this->guard->bepaalNormGrondslag(doelNorm: $norm);
-        $grotendeels = $this->guard->bepaalGrotendeelsCriterium(
-            ondernemingsUren: (float) ($profiel['ondernemingsUrenJTD'] ?? 0.0),
-            loondienstUren: (float) ($profiel['loondienstUrenJTD'] ?? 0.0)
-        );
+	/**
+	 * Build a fully-populated UrencriteriumYear seed for a new tracker.
+	 *
+	 * Profile shape (REQ-URC-000):
+	 *  - 'administrationId' string   — tenant-isolation FK.
+	 *  - 'enterpriseId'    string   — onderneming FK.
+	 *  - 'calendarYear'     int      — year.
+	 *  - 'arbeidsongeschikt'  bool   — UWV AO-status (drives 800 norm).
+	 *  - 'meewerkendePartner' bool   — drives 525 norm.
+	 *  - 'ondernemingsUrenJTD' float — onderneming hours year-to-date (>0 → grotendeels test).
+	 *  - 'loondienstUrenJTD'  float  — paid-employment hours year-to-date.
+	 *
+	 * Returns a record that — by construction — passes
+	 * UrencriteriumYearGuard::validateOnSave.
+	 *
+	 * @param array<string, mixed> $profiel Entrepreneur profile.
+	 *
+	 * @return array<string, mixed> UrencriteriumYear seed shape.
+	 *
+	 * @spec openspec/changes/zzp-urencriterium-tracker/tasks.md#task-14
+	 */
+	public function bouwSeedRecord(array $profiel): array {
+		$norm = $this->guard->bepaalDoelNorm(profiel: $profiel);
+		$basis = $this->guard->bepaalNormGrondslag(purposeNorm: $norm);
+		$grotendeels = $this->guard->bepaalGrotendeelsCriterium(
+			enterpriseHours: (float)($profiel['ondernemingsUrenJTD'] ?? 0.0),
+			employmentHours: (float)($profiel['loondienstUrenJTD'] ?? 0.0)
+		);
 
-        $seed = [
-            'administrationId'     => (string) ($profiel['administrationId'] ?? ''),
-            'ondernemingId'        => (string) ($profiel['ondernemingId'] ?? ''),
-            'kalenderjaar'         => (int) ($profiel['kalenderjaar'] ?? (int) gmdate('Y')),
-            'doelNorm'             => $norm,
-            'normGrondslag'        => $grondslag,
-            'lopendeUren'          => 0.0,
-            'drempelStatus'        => 'OP_KOERS',
-            'grotendeelsCriterium' => $grotendeels,
-        ];
+		$seed = [
+			'administrationId' => (string)($profiel['administrationId'] ?? ''),
+			'enterpriseId' => (string)($profiel['enterpriseId'] ?? ''),
+			'calendarYear' => (int)($profiel['calendarYear'] ?? (int)gmdate('Y')),
+			'purposeNorm' => $norm,
+			'normBasis' => $basis,
+			'currentHours' => 0.0,
+			'thresholdStatus' => 'ON_RATE',
+			'largelyCriterium' => $grotendeels,
+		];
 
-        $this->logger->info(
-            'UrenNormDeterminationService: built seed for new urencriterium-jaar',
-            [
-                'ondernemingId' => $seed['ondernemingId'],
-                'kalenderjaar'  => $seed['kalenderjaar'],
-                'doelNorm'      => $norm,
-                'grotendeels'   => $grotendeels,
-            ]
-        );
+		$this->logger->info(
+			'UrenNormDeterminationService: built seed for new urencriterium-jaar',
+			[
+				'enterpriseId' => $seed['enterpriseId'],
+				'calendarYear' => $seed['calendarYear'],
+				'purposeNorm' => $norm,
+				'grotendeels' => $grotendeels,
+			]
+		);
 
-        return $seed;
-
-    }//end bouwSeedRecord()
+		return $seed;
+	}//end bouwSeedRecord()
 }//end class

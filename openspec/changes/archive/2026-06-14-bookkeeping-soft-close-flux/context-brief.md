@@ -67,7 +67,7 @@ The result: fewer surprises at month-end, faster reporting cadence, audit-defens
 - **bookkeeping-consultancy-project-accounting**: project-level percentage-of-completion is one input to revenue accrual and to cost-of-goods-sold flux explanation.
 - **bookkeeping-accounts-payable** + **bookkeeping-accounts-receivable**: ageing reports feed the AP/AR cut-off checklist tasks; unposted received-not-invoiced (GR/IR) drives auto-accrual for goods receipts.
 - **bookkeeping-budgeting-forecasting** (future): provides the budget and rolling forecast that flux analysis compares against.
-- **mydash**: tiles for close countdown, flux heatmap, time-to-close trend, top-10 unexplained variances.
+- **launchpad**: tiles for close countdown, flux heatmap, time-to-close trend, top-10 unexplained variances.
 - **n8n**: orchestrates the nightly soft-close pipeline, sequencing the modules, handling retries, and routing alerts.
 - **docudesk**: archives the period-end flux narrative, the close-checklist evidence, and the signed-off board pack.
 

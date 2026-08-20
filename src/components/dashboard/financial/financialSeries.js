@@ -15,7 +15,7 @@ export const OPEN_AP_STATES = ['received', 'issued', 'partially-paid', 'overdue'
  * Month bucket key (`YYYY-MM`) for a date-ish string, or null when
  * the value does not start with a parsable year-month.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {string|null|undefined} dateStr Date string (ISO or `YYYY-MM-DD hh:mm:ss`).
  * @return {string|null}
  */
@@ -28,7 +28,7 @@ export function monthKey(dateStr) {
 /**
  * Trailing `count` month keys ending at `now`, ascending.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {number} count Number of months.
  * @param {Date} now Reference date.
  * @return {string[]}
@@ -37,7 +37,9 @@ export function lastMonths(count, now = new Date()) {
 	const months = []
 	for (let i = count - 1; i >= 0; i--) {
 		const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-		months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+		months.push(
+			`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+		)
 	}
 	return months
 }
@@ -58,7 +60,9 @@ export function monthsInRange(from, to) {
 	const months = []
 	let d = new Date(start.getFullYear(), start.getMonth(), 1)
 	while (d <= end && months.length < 60) {
-		months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+		months.push(
+			`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+		)
 		d = new Date(d.getFullYear(), d.getMonth() + 1, 1)
 	}
 	return months
@@ -68,13 +72,16 @@ export function monthsInRange(from, to) {
  * Human label for a `YYYY-MM` key (e.g. `Jan ’26`), localised via
  * Intl in the browser's language.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {string} key Month key.
  * @return {string}
  */
 export function monthLabel(key) {
 	const [y, m] = key.split('-').map(Number)
-	return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
+	return new Date(y, m - 1, 1).toLocaleDateString(undefined, {
+		month: 'short',
+		year: '2-digit',
+	})
 }
 
 /**
@@ -83,7 +90,7 @@ export function monthLabel(key) {
  * RGS-style account numbers starting with `10`, or a bank/kas/cash
  * name.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object[]} accounts Account objects from the register.
  * @return {{ revenue: Set<string>, expenses: Set<string>, liquid: Set<string> }}
  */
@@ -96,8 +103,11 @@ export function classifyAccounts(accounts) {
 		if (!number) continue
 		if (account.accountType === 'revenue') revenue.add(number)
 		else if (account.accountType === 'expenses') expenses.add(number)
-		else if (account.accountType === 'assets'
-			&& (/^10/.test(number) || /\b(bank|kas|cash)\b/i.test(String(account.name ?? '')))) {
+		else if (
+			account.accountType === 'assets'
+			&& (/^10/.test(number)
+				|| /\b(bank|kas|cash)\b/i.test(String(account.name ?? '')))
+		) {
 			liquid.add(number)
 		}
 	}
@@ -110,7 +120,7 @@ export function classifyAccounts(accounts) {
  * the human `transactionNumber`; only `state: "posted"` parents
  * contribute, and the parent's `postingDate` decides the bucket.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object[]} transactions GLTransaction objects.
  * @param {object[]} lines GLLine objects.
  * @return {Map<string, object[]>} month key → lines posted in that month.
@@ -140,7 +150,7 @@ export function postedLinesByMonth(transactions, lines) {
  * grows on credit; expenses grow on debit; liquid assets grow on
  * debit (money in).
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object} line GLLine object.
  * @param {'revenue'|'expenses'|'liquid'} kind Account class.
  * @return {number}
@@ -155,7 +165,7 @@ export function signedAmount(line, kind) {
  * Monthly turnover / cost / margin / cashflow series over `months`,
  * from posted GL lines classified by the chart of accounts.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object} input `{ accounts, transactions, lines, months }`.
  * @param input.accounts
  * @param input.transactions
@@ -178,11 +188,15 @@ export function monthlyFinancialSeries({ accounts, transactions, lines, months }
 		cashNet: [],
 	}
 	for (const key of months) {
-		let revenue = 0; let costs = 0; let cashIn = 0; let cashOut = 0
+		let revenue = 0
+		let costs = 0
+		let cashIn = 0
+		let cashOut = 0
 		for (const line of buckets.get(key) || []) {
 			const number = String(line.accountNumber ?? '')
 			if (classes.revenue.has(number)) revenue += signedAmount(line, 'revenue')
-			else if (classes.expenses.has(number)) costs += signedAmount(line, 'expenses')
+			else if (classes.expenses.has(number))
+				costs += signedAmount(line, 'expenses')
 			if (classes.liquid.has(number)) {
 				const movement = signedAmount(line, 'liquid')
 				if (movement >= 0) cashIn += movement
@@ -205,7 +219,7 @@ export function monthlyFinancialSeries({ accounts, transactions, lines, months }
  * Monthly billable vs non-billable hours from UrenRegistratie.
  * Billable = `recognisedRate` greater than zero.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object[]} entries UrenRegistratie objects.
  * @param {string[]} months Month keys to bucket into.
  * @return {{ billable: number[], nonBillable: number[], pct: (number|null)[] }}
@@ -240,7 +254,7 @@ export function billableSeries(entries, months) {
  * `afterMonth`, so the cashflow chart can append dimmed projection
  * columns. Months overlapping realized data are dropped.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object[]} weeks CashflowWeek objects.
  * @param {string} afterMonth Last realized month key (`YYYY-MM`).
  * @return {{ months: string[], cashIn: number[], cashOut: number[], cashNet: number[] }}
@@ -251,8 +265,8 @@ export function forecastByMonth(weeks, afterMonth) {
 		const key = monthKey(week.weekStart)
 		if (!key || key <= afterMonth) continue
 		const bucket = byMonth.get(key) || { cashIn: 0, cashOut: 0 }
-		bucket.cashIn += Number(week.inflows_totaal) || 0
-		bucket.cashOut += Number(week.outflows_totaal) || 0
+		bucket.cashIn += Number(week.inflows_total) || 0
+		bucket.cashOut += Number(week.outflows_total) || 0
 		byMonth.set(key, bucket)
 	}
 	const months = [...byMonth.keys()].sort()
@@ -260,7 +274,9 @@ export function forecastByMonth(weeks, afterMonth) {
 		months,
 		cashIn: months.map((key) => round2(byMonth.get(key).cashIn)),
 		cashOut: months.map((key) => round2(byMonth.get(key).cashOut)),
-		cashNet: months.map((key) => round2(byMonth.get(key).cashIn - byMonth.get(key).cashOut)),
+		cashNet: months.map((key) =>
+			round2(byMonth.get(key).cashIn - byMonth.get(key).cashOut),
+		),
 	}
 }
 
@@ -269,14 +285,19 @@ export function forecastByMonth(weeks, afterMonth) {
  * date ascending. `overdue` is set when the state says so or the
  * due date has passed.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object[]} invoices ARInvoice objects.
  * @param {object[]} customers CustomerMaster objects (name lookup).
  * @param {Date} now Reference date for the overdue flag.
  * @return {object[]}
  */
 export function openArRows(invoices, customers, now = new Date()) {
-	const names = new Map((customers || []).map((c) => [String(c.customerId ?? c['@self']?.id ?? ''), c.legalName || c.tradeName || '']))
+	const names = new Map(
+		(customers || []).map((c) => [
+			String(c.customerId ?? c['@self']?.id ?? ''),
+			c.legalName || c.tradeName || '',
+		]),
+	)
 	return (invoices || [])
 		.filter((inv) => OPEN_AR_STATES.includes(inv.lifecycleState))
 		.map((inv) => ({
@@ -296,14 +317,19 @@ export function openArRows(invoices, customers, now = new Date()) {
  * Open-payables table rows from APTransaction objects, sorted by
  * due date ascending.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object[]} transactions APTransaction objects.
  * @param {object[]} vendors Payee objects (name lookup).
  * @param {Date} now Reference date for the overdue flag.
  * @return {object[]}
  */
 export function openApRows(transactions, vendors, now = new Date()) {
-	const names = new Map((vendors || []).map((v) => [String(v.vendorNumber ?? v['@self']?.id ?? ''), v.name || v.tradingName || '']))
+	const names = new Map(
+		(vendors || []).map((v) => [
+			String(v.vendorNumber ?? v['@self']?.id ?? ''),
+			v.name || v.tradingName || '',
+		]),
+	)
 	return (transactions || [])
 		.filter((tx) => OPEN_AP_STATES.includes(tx.state))
 		.map((tx) => ({
@@ -322,7 +348,7 @@ export function openApRows(transactions, vendors, now = new Date()) {
 /**
  * The six KPI-strip metrics.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object} input `{ accounts, transactions, lines, arInvoices, apTransactions, hourEntries }`.
  * @param input.accounts
  * @param input.transactions
@@ -333,13 +359,21 @@ export function openApRows(transactions, vendors, now = new Date()) {
  * @param {Date} now Reference date (YTD window + current month).
  * @return {object}
  */
-export function computeKpis({ accounts, transactions, lines, arInvoices, apTransactions, hourEntries }, now = new Date()) {
+export function computeKpis(
+	{ accounts, transactions, lines, arInvoices, apTransactions, hourEntries },
+	now = new Date(),
+) {
 	const year = now.getFullYear()
 	const ytdMonths = []
 	for (let m = 0; m <= now.getMonth(); m++) {
 		ytdMonths.push(`${year}-${String(m + 1).padStart(2, '0')}`)
 	}
-	const series = monthlyFinancialSeries({ accounts, transactions, lines, months: ytdMonths })
+	const series = monthlyFinancialSeries({
+		accounts,
+		transactions,
+		lines,
+		months: ytdMonths,
+	})
 	const turnoverYtd = round2(sum(series.revenue))
 	const marginYtd = round2(sum(series.margin))
 
@@ -364,7 +398,8 @@ export function computeKpis({ accounts, transactions, lines, arInvoices, apTrans
 	return {
 		turnoverYtd,
 		marginYtd,
-		marginPctYtd: turnoverYtd > 0 ? round2((marginYtd / turnoverYtd) * 100) : null,
+		marginPctYtd:
+			turnoverYtd > 0 ? round2((marginYtd / turnoverYtd) * 100) : null,
 		openArAmount: round2(sum(openAr.map((r) => r.amount))),
 		openArCount: openAr.length,
 		openApAmount: round2(sum(openAp.map((r) => r.amount))),
@@ -378,14 +413,19 @@ export function computeKpis({ accounts, transactions, lines, arInvoices, apTrans
 /**
  * EUR formatter for KPI tiles, charts and tables.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {number|null|undefined} value Amount in euros.
  * @param {number} maximumFractionDigits Decimals to keep (default 0).
  * @return {string}
  */
 export function formatEur(value, maximumFractionDigits = 0) {
-	if (value === null || value === undefined || Number.isNaN(Number(value))) return '—'
-	return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR', maximumFractionDigits }).format(Number(value))
+	if (value === null || value === undefined || Number.isNaN(Number(value)))
+		return '—'
+	return new Intl.NumberFormat(undefined, {
+		style: 'currency',
+		currency: 'EUR',
+		maximumFractionDigits,
+	}).format(Number(value))
 }
 
 /**
@@ -415,7 +455,7 @@ function round2(value) {
  * point-in-time metrics (open debtors/creditors, cash balance) do
  * not vary by range and stay in `computeKpis`.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {object} input `{ accounts, transactions, lines, hourEntries }`.
  * @param input.accounts
  * @param input.transactions
@@ -425,7 +465,10 @@ function round2(value) {
  * @return {{ turnover: number, margin: number, marginPct: (number|null),
  *   billableHours: number, billablePct: (number|null) }}
  */
-export function computeRangeKpis({ accounts, transactions, lines, hourEntries }, months) {
+export function computeRangeKpis(
+	{ accounts, transactions, lines, hourEntries },
+	months,
+) {
 	const series = monthlyFinancialSeries({ accounts, transactions, lines, months })
 	const turnover = round2(sum(series.revenue))
 	const margin = round2(sum(series.margin))
@@ -439,6 +482,7 @@ export function computeRangeKpis({ accounts, transactions, lines, hourEntries },
 		margin,
 		marginPct: turnover > 0 ? round2((margin / turnover) * 100) : null,
 		billableHours: round2(billableHours),
-		billablePct: totalHours > 0 ? round2((billableHours / totalHours) * 100) : null,
+		billablePct:
+			totalHours > 0 ? round2((billableHours / totalHours) * 100) : null,
 	}
 }

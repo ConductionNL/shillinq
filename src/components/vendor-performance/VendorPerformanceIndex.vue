@@ -26,7 +26,12 @@
 				{{ t('shillinq', 'Vendor performance') }}
 			</h2>
 			<p class="vp-index__hint">
-				{{ t('shillinq', 'Latest monthly scorecard per supplier. Suppliers above 96 % are flagged for auto-review once the 90-day bootstrap window has passed.') }}
+				{{
+					t(
+						'shillinq',
+						'Latest monthly scorecard per supplier. Suppliers above 96 % are flagged for auto-review once the 90-day bootstrap window has passed.',
+					)
+				}}
 			</p>
 		</header>
 
@@ -51,83 +56,84 @@
 		</div>
 
 		<div v-if="loading" class="vp-index__loading" data-testid="vp-index-loading">
-			{{ t('shillinq', 'Loading scorecards...') }}
+			{{ t('shillinq', 'Loading scorecards…') }}
 		</div>
 
 		<div v-else-if="error" class="vp-index__error" data-testid="vp-index-error">
 			{{ error }}
 		</div>
 
-		<table v-else-if="filteredRows.length > 0" class="vp-index__table">
-			<thead>
-				<tr>
-					<th>{{ t('shillinq', 'Supplier') }}</th>
-					<th>{{ t('shillinq', 'Period') }}</th>
-					<th>{{ t('shillinq', 'Overall score') }}</th>
-					<th>{{ t('shillinq', 'Trend') }}</th>
-					<th>{{ t('shillinq', 'Disputes') }}</th>
-					<th>{{ t('shillinq', 'Auto-review eligible') }}</th>
-					<th />
-				</tr>
-			</thead>
-			<tbody>
-				<tr
-					v-for="row in filteredRows"
-					:key="row.id"
-					:data-testid="`vp-row-${row.id}`">
-					<td>{{ row.supplierId || '—' }}</td>
-					<td>{{ row.period || '—' }}</td>
-					<td>
-						<span
-							class="vp-index__score"
-							:class="scoreClass(row.overallScore)"
-							:data-testid="`vp-score-${row.id}`">
-							{{ formatBp(row.overallScore) }}
-						</span>
-					</td>
-					<td>
-						<span
-							class="vp-index__pill"
-							:class="`vp-index__pill--${row.scoreTrend || 'stable'}`"
-							:data-testid="`vp-trend-${row.id}`">
-							{{ trendLabel(row.scoreTrend) }}
-						</span>
-					</td>
-					<td>{{ row.disputeCount || 0 }}</td>
-					<td>
-						<span
-							class="vp-index__pill"
-							:class="row.automatedReviewEligible ? 'vp-index__pill--eligible' : 'vp-index__pill--ineligible'"
-							:data-testid="`vp-eligible-${row.id}`">
-							{{ row.automatedReviewEligible
-								? t('shillinq', 'Yes')
-								: t('shillinq', 'No') }}
-						</span>
-					</td>
-					<td>
-						<router-link
-							:to="{ name: 'VendorPerformanceDetail', params: { id: row.id } }"
-							class="vp-index__link"
-							:data-testid="`vp-open-${row.id}`">
-							{{ t('shillinq', 'Open') }}
-						</router-link>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-
-		<p v-else class="vp-index__empty" data-testid="vp-index-empty">
-			{{ t('shillinq', 'No scorecards recorded yet.') }}
-		</p>
+		<CnDataTable
+			v-else
+			class="vp-index__table"
+			data-testid="vp-index-table"
+			:columns="columns"
+			:rows="filteredRows"
+			:emptyLabel="t('shillinq', 'No scorecards recorded yet.')">
+			<template #cell-supplierId="{ row }">
+				{{ row.supplierId || '—' }}
+			</template>
+			<template #cell-period="{ row }">
+				{{ row.period || '—' }}
+			</template>
+			<template #cell-overallScore="{ row }">
+				<span
+					class="vp-index__score"
+					:class="scoreClass(row.overallScore)"
+					:data-testid="`vp-score-${row.id}`">
+					{{ formatBp(row.overallScore) }}
+				</span>
+			</template>
+			<template #cell-scoreTrend="{ row }">
+				<span
+					class="vp-index__pill"
+					:class="`vp-index__pill--${row.scoreTrend || 'stable'}`"
+					:data-testid="`vp-trend-${row.id}`">
+					{{ trendLabel(row.scoreTrend) }}
+				</span>
+			</template>
+			<template #cell-disputeCount="{ row }">
+				{{ row.disputeCount || 0 }}
+			</template>
+			<template #cell-automatedReviewEligible="{ row }">
+				<span
+					class="vp-index__pill"
+					:class="
+						row.automatedReviewEligible
+							? 'vp-index__pill--eligible'
+							: 'vp-index__pill--ineligible'
+					"
+					:data-testid="`vp-eligible-${row.id}`">
+					{{
+						row.automatedReviewEligible
+							? t('shillinq', 'Yes')
+							: t('shillinq', 'No')
+					}}
+				</span>
+			</template>
+			<template #cell-actions="{ row }">
+				<router-link
+					:to="{ name: 'VendorPerformanceDetail', params: { id: row.id } }"
+					class="vp-index__link"
+					:data-testid="`vp-open-${row.id}`">
+					{{ t('shillinq', 'Open') }}
+				</router-link>
+			</template>
+		</CnDataTable>
 	</div>
 </template>
 
 <script>
-import { generateUrl } from '@nextcloud/router'
+import { CnDataTable } from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'VendorPerformanceIndex',
+	components: {
+		CnDataTable,
+	},
+
 	data() {
 		return {
 			rows: [],
@@ -136,7 +142,50 @@ export default {
 			eligibilityFilter: '',
 		}
 	},
+
 	computed: {
+		/**
+		 * CnDataTable column definitions for the vendor-performance list.
+		 *
+		 * @spec openspec/specs/list-views-cndatatable/spec.md
+		 * @return {Array<object>} ordered column defs
+		 */
+		columns() {
+			return [
+				{
+					key: 'supplierId',
+					label: this.t('shillinq', 'Supplier'),
+					sortable: true,
+				},
+				{
+					key: 'period',
+					label: this.t('shillinq', 'Period'),
+					sortable: true,
+				},
+				{
+					key: 'overallScore',
+					label: this.t('shillinq', 'Overall score'),
+					sortable: true,
+				},
+				{
+					key: 'scoreTrend',
+					label: this.t('shillinq', 'Trend'),
+					sortable: true,
+				},
+				{
+					key: 'disputeCount',
+					label: this.t('shillinq', 'Disputes'),
+					sortable: true,
+				},
+				{
+					key: 'automatedReviewEligible',
+					label: this.t('shillinq', 'Auto-review eligible'),
+					sortable: true,
+				},
+				{ key: 'actions', label: '', sortable: false },
+			]
+		},
+
 		latestPerSupplier() {
 			const map = new Map()
 			for (const row of this.rows) {
@@ -153,38 +202,52 @@ export default {
 				}
 			}
 			const list = [...map.values()]
-			list.sort((a, b) => Number(b.overallScore || 0) - Number(a.overallScore || 0))
+			list.sort(
+				(a, b) => Number(b.overallScore || 0) - Number(a.overallScore || 0),
+			)
 			return list
 		},
+
 		filteredRows() {
 			if (this.eligibilityFilter === 'eligible') {
-				return this.latestPerSupplier.filter(r => r.automatedReviewEligible === true)
+				return this.latestPerSupplier.filter(
+					(r) => r.automatedReviewEligible === true,
+				)
 			}
 			if (this.eligibilityFilter === 'ineligible') {
-				return this.latestPerSupplier.filter(r => r.automatedReviewEligible !== true)
+				return this.latestPerSupplier.filter(
+					(r) => r.automatedReviewEligible !== true,
+				)
 			}
 			return this.latestPerSupplier
 		},
 	},
+
 	async created() {
 		await this.loadRows()
 	},
+
 	methods: {
 		async loadRows() {
 			this.loading = true
 			this.error = ''
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/openregister/objects/VendorPerformance'),
+					generateUrl(
+						'/apps/shillinq/api/openregister/objects/VendorPerformance',
+					),
 				)
 				const rows = response.data?.results || response.data || []
 				this.rows = Array.isArray(rows) ? rows : []
 			} catch (e) {
-				this.error = e?.response?.data?.error || this.t('shillinq', 'Failed to load vendor scorecards')
+				this.error =
+					e?.response?.data?.error
+					|| this.t('shillinq', 'Failed to load vendor scorecards')
 			} finally {
 				this.loading = false
 			}
 		},
+
 		formatBp(bp) {
 			if (bp === null || bp === undefined) {
 				return '—'
@@ -195,6 +258,7 @@ export default {
 			}
 			return `${(value / 100).toFixed(2)} %`
 		},
+
 		scoreClass(bp) {
 			const value = Number(bp || 0)
 			if (value >= 9600) {
@@ -205,6 +269,7 @@ export default {
 			}
 			return 'vp-index__score--low'
 		},
+
 		trendLabel(trend) {
 			const labels = {
 				improving: this.t('shillinq', 'Improving'),
@@ -221,22 +286,27 @@ export default {
 .vp-index {
 	padding: 1rem;
 }
+
 .vp-index__header h2 {
 	margin: 0 0 0.25rem 0;
 }
+
 .vp-index__hint {
 	color: var(--color-text-maxcontrast);
 	margin: 0 0 1rem 0;
 }
+
 .vp-index__filters {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
 	margin-bottom: 1rem;
 }
+
 .vp-index__filter-label {
 	font-weight: 600;
 }
+
 .vp-index__loading,
 .vp-index__error,
 .vp-index__empty {
@@ -244,37 +314,45 @@ export default {
 	border-radius: var(--border-radius-large);
 	background: var(--color-background-hover);
 }
+
 .vp-index__error {
 	color: var(--color-error);
 }
+
 .vp-index__table {
 	width: 100%;
 	border-collapse: collapse;
 }
+
 .vp-index__table th,
 .vp-index__table td {
 	padding: 0.5rem 0.75rem;
 	border-bottom: 1px solid var(--color-border);
 	text-align: left;
 }
+
 .vp-index__score {
 	display: inline-block;
 	padding: 0.125rem 0.5rem;
 	border-radius: var(--border-radius);
 	font-weight: 700;
 }
+
 .vp-index__score--high {
 	background: var(--color-success);
 	color: var(--color-primary-text);
 }
+
 .vp-index__score--mid {
 	background: var(--color-warning);
 	color: var(--color-primary-text);
 }
+
 .vp-index__score--low {
 	background: var(--color-error);
 	color: var(--color-primary-text);
 }
+
 .vp-index__pill {
 	display: inline-block;
 	padding: 0.125rem 0.5rem;
@@ -282,21 +360,26 @@ export default {
 	font-size: 0.875rem;
 	background: var(--color-background-hover);
 }
+
 .vp-index__pill--improving,
 .vp-index__pill--eligible {
 	background: var(--color-success);
 	color: var(--color-primary-text);
 }
+
 .vp-index__pill--stable {
 	background: var(--color-background-darker);
 }
+
 .vp-index__pill--declining {
 	background: var(--color-error);
 	color: var(--color-primary-text);
 }
+
 .vp-index__pill--ineligible {
 	background: var(--color-background-darker);
 }
+
 .vp-index__link {
 	color: var(--color-primary);
 }

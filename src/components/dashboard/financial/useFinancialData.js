@@ -6,9 +6,9 @@
 // dashboard page load issues exactly one request per schema no
 // matter how many widgets mount.
 
-import { ref } from 'vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { ref } from 'vue'
 
 const REGISTER_SLUG = 'shillinq'
 const PAGE_LIMIT = 2000
@@ -36,7 +36,7 @@ let inflight = null
  * A failing schema resolves to an empty list (and records the
  * error) so one missing schema cannot blank the whole dashboard.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @param {string} schema Schema slug.
  * @return {Promise<object[]>}
  */
@@ -52,14 +52,16 @@ async function fetchSchema(schema) {
 /** @return {Promise<object>} */
 async function fetchAll() {
 	const entries = Object.entries(SCHEMAS)
-	const settled = await Promise.all(entries.map(async ([key, schema]) => {
-		try {
-			return [key, await fetchSchema(schema)]
-		} catch (e) {
-			error.value = e
-			return [key, []]
-		}
-	}))
+	const settled = await Promise.all(
+		entries.map(async ([key, schema]) => {
+			try {
+				return [key, await fetchSchema(schema)]
+			} catch (e) {
+				error.value = e
+				return [key, []]
+			}
+		}),
+	)
 	return Object.fromEntries(settled)
 }
 
@@ -69,22 +71,32 @@ async function fetchAll() {
  * `reload()` drops the cache and refetches into the same refs, so
  * every mounted widget updates.
  *
- * @spec openspec/changes/financial-dashboard-graphs/specs/financial-dashboard-graphs/spec.md
+ * @spec openspec/specs/financial-dashboard-graphs/spec.md
  * @return {{ loading: import('vue').Ref<boolean>, error: import('vue').Ref<Error|null>,
  *   data: import('vue').Ref<object|null>, load: Function, reload: Function }}
  */
 export function useFinancialData() {
+	/**
+	 *
+	 */
 	function load() {
 		if (!inflight) {
 			loading.value = true
 			error.value = null
 			inflight = fetchAll()
-				.then((result) => { data.value = result })
-				.finally(() => { loading.value = false })
+				.then((result) => {
+					data.value = result
+				})
+				.finally(() => {
+					loading.value = false
+				})
 		}
 		return inflight
 	}
 
+	/**
+	 *
+	 */
 	function reload() {
 		inflight = null
 		return load()

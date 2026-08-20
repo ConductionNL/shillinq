@@ -37,90 +37,81 @@ use OCA\Shillinq\Service\Import\ImportProfileInterface;
  *
  * @spec openspec/changes/administration-import-migration/tasks.md#task-7
  */
-class EBoekhoudenProfile implements ImportProfileInterface
-{
-    /**
-     * {@inheritDoc}
-     *
-     * @return string
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function sourceSystem(): string
-    {
-        return 'e-boekhouden';
+class EBoekhoudenProfile implements ImportProfileInterface {
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function sourceSystem(): string {
+		return 'e-boekhouden';
+	}//end sourceSystem()
 
-    }//end sourceSystem()
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @param array<string,mixed> $parsed Parser output.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function normalizeLedgerAccounts(array $parsed): array {
+		return ($parsed['ledgerAccounts'] ?? []);
+	}//end normalizeLedgerAccounts()
 
-    /**
-     * {@inheritDoc}
-     *
-     * @param array<string,mixed> $parsed Parser output.
-     *
-     * @return array<int,array<string,mixed>>
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function normalizeLedgerAccounts(array $parsed): array
-    {
-        return ($parsed['ledgerAccounts'] ?? []);
+	/**
+	 * {@inheritDoc}
+	 *
+	 * The e-Boekhouden "Openstaande posten" CSV header (semicolon-delimited):
+	 *   Relatiecode;Relatie;Factuurnummer;Factuurdatum;Vervaldatum;Bedrag;Openstaand;Soort
+	 *
+	 * @param string $artifact Artifact kind.
+	 *
+	 * @return array<string,string>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function mapCsvColumns(string $artifact): array {
+		if ($artifact === 'open-items') {
+			return [
+				'relationCode' => 'Relatiecode',
+				'relationName' => 'Relatie',
+				'invoiceNumber' => 'Factuurnummer',
+				'invoiceDate' => 'Factuurdatum',
+				'dueDate' => 'Vervaldatum',
+				'totalAmount' => 'Bedrag',
+				'outstandingAmount' => 'Openstaand',
+				'type' => 'Soort',
+			];
+		}
 
-    }//end normalizeLedgerAccounts()
+		if ($artifact === 'relations') {
+			return [
+				'code' => 'Code',
+				'name' => 'Bedrijf',
+				'kvk' => 'KvK-nummer',
+				'vat' => 'BTW-nummer',
+				'email' => 'E-mail',
+				'phone' => 'Telefoon',
+			];
+		}
 
-    /**
-     * {@inheritDoc}
-     *
-     * The e-Boekhouden "Openstaande posten" CSV header (semicolon-delimited):
-     *   Relatiecode;Relatie;Factuurnummer;Factuurdatum;Vervaldatum;Bedrag;Openstaand;Soort
-     *
-     * @param string $artifact Artifact kind.
-     *
-     * @return array<string,string>
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function mapCsvColumns(string $artifact): array
-    {
-        if ($artifact === 'open-items') {
-            return [
-                'relationCode'      => 'Relatiecode',
-                'relationName'      => 'Relatie',
-                'invoiceNumber'     => 'Factuurnummer',
-                'invoiceDate'       => 'Factuurdatum',
-                'dueDate'           => 'Vervaldatum',
-                'totalAmount'       => 'Bedrag',
-                'outstandingAmount' => 'Openstaand',
-                'type'              => 'Soort',
-            ];
-        }
+		return [];
+	}//end mapCsvColumns()
 
-        if ($artifact === 'relations') {
-            return [
-                'code'  => 'Code',
-                'name'  => 'Bedrijf',
-                'kvk'   => 'KvK-nummer',
-                'btw'   => 'BTW-nummer',
-                'email' => 'E-mail',
-                'phone' => 'Telefoon',
-            ];
-        }
-
-        return [];
-
-    }//end mapCsvColumns()
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param array<string,mixed> $parsed Parser output.
-     *
-     * @return array<string,mixed>
-     *
-     * @spec openspec/changes/administration-import-migration/tasks.md#task-7
-     */
-    public function applyDialectQuirks(array $parsed): array
-    {
-        return $parsed;
-
-    }//end applyDialectQuirks()
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @param array<string,mixed> $parsed Parser output.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/administration-import-migration/tasks.md#task-7
+	 */
+	public function applyDialectQuirks(array $parsed): array {
+		return $parsed;
+	}//end applyDialectQuirks()
 }//end class

@@ -10,21 +10,32 @@
  */
 
 import { test } from '@playwright/test'
-import { gotoPage, assertIndexSurface, assertNoShillinqFailures, recordShillinqErrors } from './_helpers'
+import {
+	gotoPage,
+	assertIndexSurface,
+	assertNoShillinqFailures,
+	recordShillinqErrors,
+} from './_helpers'
 
-const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
+const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 	{ route: '/inkoop/purchase-orders', title: 'Purchase Orders' },
 	{ route: '/inkoop/goods-receipts', title: 'Goods Receipts' },
 	{ route: '/inkoop/supplier-invoices', title: 'Supplier Invoices' },
 	{ route: '/inkoop/3way-matches', title: '3-way Matches', titleRe: /3-?way/i },
-	{ route: '/inkoop/3way-matches/exceptions', title: 'Match Exceptions', titleRe: /Exception/i },
+	{
+		route: '/inkoop/3way-matches/exceptions',
+		title: 'Match Exceptions',
+		titleRe: /Exception/i,
+	},
 	{ route: '/inkoop/receipts', title: 'Receipts' },
 	{ route: '/inkoop/expense-claims', title: 'Expense Claims' },
 	{ route: '/inkoop/mileage-log', title: 'Mileage Log' },
 ]
 
 test.describe('shillinq spec-coverage — Inkoop', () => {
-	test.describe.configure({ mode: 'serial' })
+	// No `mode: 'serial'` — see the header of ./_helpers.ts. These page
+	// smokes share no state, and serial mode only ever turned one failure
+	// into a block of tests that never ran.
 	for (const p of PAGES) {
 		test(`Inkoop › ${p.title} (${p.route})`, async ({ page }) => {
 			const rec = recordShillinqErrors(page)

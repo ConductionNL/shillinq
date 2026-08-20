@@ -14,8 +14,8 @@
 </template>
 
 <script>
-import TransferOp from '../../components/inventory/TransferOp.vue'
 import SyncStatusBadge from '../../components/inventory/SyncStatusBadge.vue'
+import TransferOp from '../../components/inventory/TransferOp.vue'
 import { useInventoryMobileScannerStore } from '../../store/modules/inventoryMobileScanner.js'
 
 export default {
@@ -28,7 +28,20 @@ export default {
 </script>
 
 <style scoped>
-.transfer-page { display: flex; flex-direction: column; gap: var(--default-grid-baseline, 4px); padding: var(--default-grid-baseline, 4px); }
-.transfer-page__header { display: flex; justify-content: space-between; align-items: center; }
-.transfer-page__back { text-decoration: none; }
+.transfer-page {
+	display: flex;
+	flex-direction: column;
+	gap: var(--default-grid-baseline, 4px);
+	padding: var(--default-grid-baseline, 4px);
+}
+
+.transfer-page__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.transfer-page__back {
+	text-decoration: none;
+}
 </style>

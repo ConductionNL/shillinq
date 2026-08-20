@@ -20,7 +20,25 @@
  fileName) so the parent can toast a download link; on failure it surfaces
  the error inline and stays open.
 
- @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ @spec exclude The reporting capability has no canonical spec. This tag pointed at
+       openspec/changes/reporting-compliance-consolidation (a change directory that
+       exists neither under changes nor under changes/archive), and no canonical
+       reporting capability exists under openspec/specs either. Tracked in #525.
+       Deliberately NOT resolved by writing that spec — authoring the requirement
+       a tag is checked against turns the gate green over an unspecified capability.
+
+ KNOWINGLY DANGLING — do not repoint this tag at a spec (gate-46, shillinq#499).
+ The change directory it named was never committed, and the `reporting`
+ capability has NO canonical spec. One was drafted during gate remediation and
+ withdrawn: a spec written to fit the code, by the process whose job is to
+ check the code against a spec, is not a specification anyone agreed to.
+ Authoring it is the capability owner's decision, not a gate fix.
+
+ The dangling path is replaced by the reason-bearing `@spec exclude` above —
+ the same declaration lib/Controller/ReportingController.php already carries for
+ the same capability. The prose note alone did not say this to gate-46, which
+ reads the tag and not the paragraph under it, so the two halves of the same
+ decision disagreed and only the PHP half was legible.
 -->
 
 <template>
@@ -42,8 +60,11 @@
 
 			<section class="generate-report-dialog__body">
 				<div class="generate-report-dialog__field">
-					<label class="generate-report-dialog__label" for="generate-report-administration">
-						{{ t('shillinq', 'Administration') }} <span class="generate-report-dialog__required">*</span>
+					<label
+						class="generate-report-dialog__label"
+						for="generate-report-administration">
+						{{ t('shillinq', 'Administration') }}
+						<span class="generate-report-dialog__required">*</span>
 					</label>
 					<select
 						v-if="administrationOptions.length > 0"
@@ -70,12 +91,14 @@
 						class="generate-report-dialog__control"
 						:disabled="submitting"
 						data-testid="generate-report-administration"
-						:placeholder="t('shillinq', 'Administration id')">
+						:placeholder="t('shillinq', 'Administration id')" />
 				</div>
 
 				<div class="generate-report-dialog__row">
 					<div class="generate-report-dialog__field">
-						<label class="generate-report-dialog__label" for="generate-report-period-type">
+						<label
+							class="generate-report-dialog__label"
+							for="generate-report-period-type">
 							{{ t('shillinq', 'Period type') }}
 						</label>
 						<select
@@ -97,8 +120,11 @@
 					</div>
 
 					<div class="generate-report-dialog__field">
-						<label class="generate-report-dialog__label" for="generate-report-year">
-							{{ t('shillinq', 'Fiscal year') }} <span class="generate-report-dialog__required">*</span>
+						<label
+							class="generate-report-dialog__label"
+							for="generate-report-year">
+							{{ t('shillinq', 'Fiscal year') }}
+							<span class="generate-report-dialog__required">*</span>
 						</label>
 						<input
 							id="generate-report-year"
@@ -106,14 +132,17 @@
 							type="number"
 							class="generate-report-dialog__control"
 							:disabled="submitting"
-							data-testid="generate-report-year">
+							data-testid="generate-report-year" />
 					</div>
 
 					<div
 						v-if="form.periodType !== 'year'"
 						class="generate-report-dialog__field">
-						<label class="generate-report-dialog__label" for="generate-report-period-number">
-							{{ periodNumberLabel }} <span class="generate-report-dialog__required">*</span>
+						<label
+							class="generate-report-dialog__label"
+							for="generate-report-period-number">
+							{{ periodNumberLabel }}
+							<span class="generate-report-dialog__required">*</span>
 						</label>
 						<select
 							id="generate-report-period-number"
@@ -132,8 +161,11 @@
 				</div>
 
 				<div class="generate-report-dialog__field">
-					<label class="generate-report-dialog__label" for="generate-report-format">
-						{{ t('shillinq', 'Format') }} <span class="generate-report-dialog__required">*</span>
+					<label
+						class="generate-report-dialog__label"
+						for="generate-report-format">
+						{{ t('shillinq', 'Format') }}
+						<span class="generate-report-dialog__required">*</span>
 					</label>
 					<select
 						id="generate-report-format"
@@ -142,7 +174,7 @@
 						:disabled="submitting"
 						data-testid="generate-report-format">
 						<option
-							v-for="fmt in (report.formats || [])"
+							v-for="fmt in report.formats || []"
 							:key="fmt"
 							:value="fmt">
 							{{ fmt.toUpperCase() }}
@@ -173,7 +205,11 @@
 					:disabled="!canSubmit"
 					data-testid="generate-report-dialog-submit"
 					@click="onSubmit">
-					{{ submitting ? t('shillinq', 'Generating…') : t('shillinq', 'Generate') }}
+					{{
+						submitting
+							? t('shillinq', 'Generating…')
+							: t('shillinq', 'Generate')
+					}}
 				</button>
 			</footer>
 		</div>
@@ -181,9 +217,9 @@
 </template>
 
 <script>
-import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'GenerateReportDialog',
@@ -196,6 +232,7 @@ export default {
 			type: Object,
 			required: true,
 		},
+
 		/**
 		 * The format pre-selected on the card's format picker; the dialog
 		 * seeds its own picker from this so the choice carries over.
@@ -204,15 +241,18 @@ export default {
 			type: String,
 			default: '',
 		},
+
 		administrationOptions: {
 			type: Array,
 			default: () => [],
 		},
+
 		defaultAdministrationId: {
 			type: String,
 			default: '',
 		},
 	},
+
 	emits: ['close', 'generated'],
 	data() {
 		return {
@@ -223,20 +263,26 @@ export default {
 				periodType: 'year',
 				periodYear: new Date().getFullYear(),
 				periodNumber: 1,
-				format: this.format || (this.report.formats && this.report.formats[0]) || '',
+				format:
+					this.format
+					|| (this.report.formats && this.report.formats[0])
+					|| '',
 			},
 		}
 	},
+
 	computed: {
 		periodNumberLabel() {
 			return this.form.periodType === 'month'
 				? this.t('shillinq', 'Month')
 				: this.t('shillinq', 'Quarter')
 		},
+
 		periodNumberOptions() {
 			const max = this.form.periodType === 'month' ? 12 : 4
 			return Array.from({ length: max }, (_, i) => i + 1)
 		},
+
 		canSubmit() {
 			if (this.submitting) {
 				return false
@@ -256,6 +302,7 @@ export default {
 			return true
 		},
 	},
+
 	methods: {
 		t,
 		onCancel() {
@@ -264,6 +311,7 @@ export default {
 			}
 			this.$emit('close')
 		},
+
 		/**
 		 * Assemble the generation context and POST it. The period is sent
 		 * both as its structured parts (periodType/periodYear/periodNumber)
@@ -286,18 +334,23 @@ export default {
 						format: this.form.format,
 						periodType: this.form.periodType,
 						periodYear: this.form.periodYear,
-						periodNumber: this.form.periodType === 'year' ? null : this.form.periodNumber,
+						periodNumber:
+							this.form.periodType === 'year'
+								? null
+								: this.form.periodNumber,
 						period: this.periodLabel(),
 					},
 				)
 				this.$emit('generated', response.data || {})
 			} catch (e) {
-				this.error = e?.response?.data?.error
+				this.error =
+					e?.response?.data?.error
 					|| this.t('shillinq', 'Report generation failed')
 			} finally {
 				this.submitting = false
 			}
 		},
+
 		/**
 		 * Human-readable period label matching the structured parts.
 		 *

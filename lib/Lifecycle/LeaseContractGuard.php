@@ -29,7 +29,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-contracts/spec.md
+ * @spec openspec/specs/bookkeeping-lease-contracts/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -48,157 +48,149 @@ use Psr\Log\LoggerInterface;
  * x-openregister-lifecycle transitions.{draft→active}.guard as
  * OCA\Shillinq\Lifecycle\LeaseContractGuard::guardActivation.
  *
- * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-contracts/spec.md
+ * @spec openspec/specs/bookkeeping-lease-contracts/spec.md
  */
-class LeaseContractGuard
-{
-    /**
-     * Valid IFRS 16 classifications (REQ-LC-002, REQ-LC-003).
-     *
-     * @var array<int,string>
-     */
-    private const VALID_CLASSIFICATIONS = [
-        'IFRS16-capitalised',
-        'short-term-exempt',
-        'low-value-exempt',
-        'operating-pre-IFRS16',
-    ];
+class LeaseContractGuard {
+	/**
+	 * Valid IFRS 16 classifications (REQ-LC-002, REQ-LC-003).
+	 *
+	 * @var array<int,string>
+	 */
+	private const VALID_CLASSIFICATIONS = [
+		'IFRS16-capitalised',
+		'short-term-exempt',
+		'low-value-exempt',
+		'operating-pre-IFRS16',
+	];
 
-    /**
-     * Economic fields required before a lease may activate (REQ-LC-004).
-     *
-     * @var array<int,string>
-     */
-    private const REQUIRED_FIELDS = [
-        'leaseNumber',
-        'commencementDate',
-        'endDate',
-        'nonCancellableTermMonths',
-        'paymentFrequency',
-        'paymentTiming',
-        'basePaymentAmount',
-        'paymentCurrency',
-        'ibrPercent',
-    ];
+	/**
+	 * Economic fields required before a lease may activate (REQ-LC-004).
+	 *
+	 * @var array<int,string>
+	 */
+	private const REQUIRED_FIELDS = [
+		'leaseNumber',
+		'commencementDate',
+		'endDate',
+		'nonCancellableTermMonths',
+		'paymentFrequency',
+		'paymentTiming',
+		'basePaymentAmount',
+		'paymentCurrency',
+		'ibrPercent',
+	];
 
-    /**
-     * Construct the guard.
-     *
-     * @param LoggerInterface $logger Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+	/**
+	 * Construct the guard.
+	 *
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Returns true iff the lease may transition draft→active (REQ-LC-004).
-     *
-     * The classification must be one of the four IFRS 16 enum values and every
-     * economic field needed to build the amortization schedule must be present
-     * and non-empty. Fail-closed on any malformed input.
-     *
-     * @param string                   $leaseContractId The LeaseContract.id (present for
-     *                                                  lifecycle-engine call signature parity).
-     * @param array<string,mixed>|null $object          The LeaseContract object being transitioned.
-     *
-     * @return bool True when the lease may activate.
-     *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-contracts/spec.md
-     */
-    public function guardActivation(string $leaseContractId, ?array $object=null): bool
-    {
-        try {
-            return $this->passesActivationChecks(object: $object);
-        } catch (\Throwable $e) {
-            $this->logger->warning(
-                'LeaseContractGuard: activation guard failed closed',
-                ['leaseContractId' => $leaseContractId, 'exception' => $e->getMessage()]
-            );
+	/**
+	 * Returns true iff the lease may transition draft→active (REQ-LC-004).
+	 *
+	 * The classification must be one of the four IFRS 16 enum values and every
+	 * economic field needed to build the amortization schedule must be present
+	 * and non-empty. Fail-closed on any malformed input.
+	 *
+	 * @param string $leaseContractId The LeaseContract.id (present for
+	 *                                lifecycle-engine call signature parity).
+	 * @param array<string,mixed>|null $object The LeaseContract object being transitioned.
+	 *
+	 * @return bool True when the lease may activate.
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-contracts/spec.md
+	 */
+	public function guardActivation(string $leaseContractId, ?array $object = null): bool {
+		try {
+			return $this->passesActivationChecks(object: $object);
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'LeaseContractGuard: activation guard failed closed',
+				['leaseContractId' => $leaseContractId, 'exception' => $e->getMessage()]
+			);
 
-            return false;
-        }//end try
+			return false;
+		}//end try
 
-    }//end guardActivation()
+	}//end guardActivation()
 
-    /**
-     * The pure activation predicate (REQ-LC-004), free of fail-closed plumbing.
-     *
-     * Validates the classification enum, the presence of every schedule-building
-     * field, and — for capitalised leases only — the positive economics. Exempt
-     * leases may legitimately carry a zero IBR (REQ-LC-003, REQ-LE-002).
-     *
-     * @param array<string,mixed>|null $object The LeaseContract object being transitioned.
-     *
-     * @return bool True when the lease satisfies every activation precondition.
-     *
-     * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-contracts/spec.md
-     */
-    private function passesActivationChecks(?array $object): bool
-    {
-        if (is_array($object) === false) {
-            return false;
-        }
+	/**
+	 * The pure activation predicate (REQ-LC-004), free of fail-closed plumbing.
+	 *
+	 * Validates the classification enum, the presence of every schedule-building
+	 * field, and — for capitalised leases only — the positive economics. Exempt
+	 * leases may legitimately carry a zero IBR (REQ-LC-003, REQ-LE-002).
+	 *
+	 * @param array<string,mixed>|null $object The LeaseContract object being transitioned.
+	 *
+	 * @return bool True when the lease satisfies every activation precondition.
+	 *
+	 * @spec openspec/specs/bookkeeping-lease-contracts/spec.md
+	 */
+	private function passesActivationChecks(?array $object): bool {
+		if (is_array($object) === false) {
+			return false;
+		}
 
-        $classification = (string) ($object['classification'] ?? '');
-        if (in_array($classification, self::VALID_CLASSIFICATIONS, true) === false) {
-            return false;
-        }
+		$classification = (string)($object['classification'] ?? '');
+		if (in_array($classification, self::VALID_CLASSIFICATIONS, true) === false) {
+			return false;
+		}
 
-        if ($this->hasRequiredFields(object: $object) === false) {
-            return false;
-        }
+		if ($this->hasRequiredFields(object: $object) === false) {
+			return false;
+		}
 
-        if ($classification === 'IFRS16-capitalised'
-            && $this->hasValidCapitalisedEconomics(object: $object) === false
-        ) {
-            return false;
-        }
+		if ($classification === 'IFRS16-capitalised'
+			&& $this->hasValidCapitalisedEconomics(object: $object) === false
+		) {
+			return false;
+		}
 
-        return true;
+		return true;
+	}//end passesActivationChecks()
 
-    }//end passesActivationChecks()
+	/**
+	 * Every field required to build the amortization schedule must be present and
+	 * non-empty (REQ-LC-004). Fails closed on the first missing/blank field.
+	 *
+	 * @param array<string,mixed> $object The LeaseContract object.
+	 *
+	 * @return bool True when all required fields carry a value.
+	 */
+	private function hasRequiredFields(array $object): bool {
+		foreach (self::REQUIRED_FIELDS as $field) {
+			if (isset($object[$field]) === false) {
+				return false;
+			}
 
-    /**
-     * Every field required to build the amortization schedule must be present and
-     * non-empty (REQ-LC-004). Fails closed on the first missing/blank field.
-     *
-     * @param array<string,mixed> $object The LeaseContract object.
-     *
-     * @return bool True when all required fields carry a value.
-     */
-    private function hasRequiredFields(array $object): bool
-    {
-        foreach (self::REQUIRED_FIELDS as $field) {
-            if (isset($object[$field]) === false) {
-                return false;
-            }
+			// The isset() above already guarantees the value is non-null.
+			if ($object[$field] === '') {
+				return false;
+			}
+		}
 
-            // The isset() above already guarantees the value is non-null.
-            if ($object[$field] === '') {
-                return false;
-            }
-        }
+		return true;
+	}//end hasRequiredFields()
 
-        return true;
+	/**
+	 * A capitalised lease must carry a positive base payment and a positive
+	 * non-cancellable term (REQ-LC-003).
+	 *
+	 * @param array<string,mixed> $object The LeaseContract object.
+	 *
+	 * @return bool True when the capitalised economics are valid.
+	 */
+	private function hasValidCapitalisedEconomics(array $object): bool {
+		if ((float)($object['basePaymentAmount'] ?? 0) <= 0.0) {
+			return false;
+		}
 
-    }//end hasRequiredFields()
-
-    /**
-     * A capitalised lease must carry a positive base payment and a positive
-     * non-cancellable term (REQ-LC-003).
-     *
-     * @param array<string,mixed> $object The LeaseContract object.
-     *
-     * @return bool True when the capitalised economics are valid.
-     */
-    private function hasValidCapitalisedEconomics(array $object): bool
-    {
-        if ((float) ($object['basePaymentAmount'] ?? 0) <= 0.0) {
-            return false;
-        }
-
-        return (int) ($object['nonCancellableTermMonths'] ?? 0) > 0;
-
-    }//end hasValidCapitalisedEconomics()
+		return (int)($object['nonCancellableTermMonths'] ?? 0) > 0;
+	}//end hasValidCapitalisedEconomics()
 }//end class

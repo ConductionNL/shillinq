@@ -28,143 +28,131 @@ use PHPUnit\Framework\TestCase;
 /**
  * Tests REQ-ENSIA-005 — Bevinding auto-generation from low maturity scores.
  */
-class ENSIABevindingGeneratorTest extends TestCase
-{
+class ENSIABevindingGeneratorTest extends TestCase {
 
-    private ENSIABevindingGenerator $generator;
+	private ENSIABevindingGenerator $generator;
 
+	protected function setUp(): void {
+		parent::setUp();
+		$this->generator = new ENSIABevindingGenerator();
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->generator = new ENSIABevindingGenerator();
+	}//end setUp()
 
-    }//end setUp()
+	/**
+	 * REQ-ENSIA-005: score below normniveau on akkoord question → finding.
+	 *
+	 * @return void
+	 */
+	public function testGeneratesFindingForBelowNormScore(): void {
+		$cyclus = ['id' => 'cyc-2026', 'administrationId' => 'adm-1'];
+		$vragen = [
+			[
+				'id' => 'q1',
+				'questionCode' => 'BIO-9.1.1',
+				'questionText' => 'Logische toegangsbeveiliging',
+				'peerReviewStatus' => 'akkoord',
+				'maturityScore' => 2,
+				'normniveau' => 3,
+			],
+		];
 
+		$findings = $this->generator->generate($cyclus, $vragen);
 
-    /**
-     * REQ-ENSIA-005: score below normniveau on akkoord question → finding.
-     *
-     * @return void
-     */
-    public function testGeneratesFindingForBelowNormScore(): void
-    {
-        $cyclus = ['id' => 'cyc-2026', 'administrationId' => 'adm-1'];
-        $vragen = [
-            [
-                'id'                  => 'q1',
-                'vraagCode'           => 'BIO-9.1.1',
-                'vraagtekst'          => 'Logische toegangsbeveiliging',
-                'peerReviewStatus'    => 'akkoord',
-                'volwassenheidsScore' => 2,
-                'normniveau'          => 3,
-            ],
-        ];
+		$this->assertCount(1, $findings);
+		$this->assertSame('cyc-2026', $findings[0]['cyclusId']);
+		$this->assertSame('adm-1', $findings[0]['administrationId']);
+		$this->assertSame('q1', $findings[0]['questionId']);
+		$this->assertSame('tekortkoming', $findings[0]['type']);
+		$this->assertSame('open', $findings[0]['status']);
+		$this->assertStringContainsString('BIO-9.1.1', $findings[0]['description']);
+		$this->assertStringContainsString('2', $findings[0]['description']);
+		$this->assertStringContainsString('3', $findings[0]['description']);
 
-        $findings = $this->generator->generate($cyclus, $vragen);
+	}//end testGeneratesFindingForBelowNormScore()
 
-        $this->assertCount(1, $findings);
-        $this->assertSame('cyc-2026', $findings[0]['cyclusId']);
-        $this->assertSame('adm-1', $findings[0]['administrationId']);
-        $this->assertSame('q1', $findings[0]['vraagId']);
-        $this->assertSame('tekortkoming', $findings[0]['type']);
-        $this->assertSame('open', $findings[0]['status']);
-        $this->assertStringContainsString('BIO-9.1.1', $findings[0]['beschrijving']);
-        $this->assertStringContainsString('2', $findings[0]['beschrijving']);
-        $this->assertStringContainsString('3', $findings[0]['beschrijving']);
+	/**
+	 * REQ-ENSIA-005: score at-or-above normniveau yields NO finding.
+	 *
+	 * @return void
+	 */
+	public function testNoFindingWhenScoreMeetsNorm(): void {
+		$cyclus = ['id' => 'cyc-2026', 'administrationId' => 'adm-1'];
+		$vragen = [
+			[
+				'id' => 'q1',
+				'questionCode' => 'BIO-9.1.1',
+				'peerReviewStatus' => 'akkoord',
+				'maturityScore' => 3,
+				'normniveau' => 3,
+			],
+			[
+				'id' => 'q2',
+				'questionCode' => 'BIO-9.2.1',
+				'peerReviewStatus' => 'akkoord',
+				'maturityScore' => 5,
+				'normniveau' => 3,
+			],
+		];
 
-    }//end testGeneratesFindingForBelowNormScore()
+		$this->assertSame([], $this->generator->generate($cyclus, $vragen));
 
+	}//end testNoFindingWhenScoreMeetsNorm()
 
-    /**
-     * REQ-ENSIA-005: score at-or-above normniveau yields NO finding.
-     *
-     * @return void
-     */
-    public function testNoFindingWhenScoreMeetsNorm(): void
-    {
-        $cyclus = ['id' => 'cyc-2026', 'administrationId' => 'adm-1'];
-        $vragen = [
-            [
-                'id'                  => 'q1',
-                'vraagCode'           => 'BIO-9.1.1',
-                'peerReviewStatus'    => 'akkoord',
-                'volwassenheidsScore' => 3,
-                'normniveau'          => 3,
-            ],
-            [
-                'id'                  => 'q2',
-                'vraagCode'           => 'BIO-9.2.1',
-                'peerReviewStatus'    => 'akkoord',
-                'volwassenheidsScore' => 5,
-                'normniveau'          => 3,
-            ],
-        ];
+	/**
+	 * REQ-ENSIA-005: questions still in wijziging-gevraagd are SKIPPED —
+	 * their answer is expected to change before a finding is generated.
+	 *
+	 * @return void
+	 */
+	public function testSkipsQuestionsAwaitingChange(): void {
+		$cyclus = ['id' => 'cyc-2026', 'administrationId' => 'adm-1'];
+		$vragen = [
+			[
+				'id' => 'q1',
+				'questionCode' => 'BIO-9.1.1',
+				'peerReviewStatus' => 'wijziging-gevraagd',
+				'maturityScore' => 2,
+				'normniveau' => 3,
+			],
+			[
+				'id' => 'q2',
+				'questionCode' => 'BIO-9.2.1',
+				'peerReviewStatus' => 'nog-niet-beoordeeld',
+				'maturityScore' => 1,
+				'normniveau' => 3,
+			],
+		];
 
-        $this->assertSame([], $this->generator->generate($cyclus, $vragen));
+		$this->assertSame([], $this->generator->generate($cyclus, $vragen));
 
-    }//end testNoFindingWhenScoreMeetsNorm()
+	}//end testSkipsQuestionsAwaitingChange()
 
+	/**
+	 * REQ-ENSIA-005: questions without normniveau or score are skipped.
+	 *
+	 * @return void
+	 */
+	public function testSkipsQuestionsWithoutScoreOrNorm(): void {
+		$cyclus = ['id' => 'cyc-2026', 'administrationId' => 'adm-1'];
+		$vragen = [
+			[
+				'id' => 'q1',
+				'questionCode' => 'BIO-9.1.1',
+				'peerReviewStatus' => 'akkoord',
+				'maturityScore' => null,
+				'normniveau' => 3,
+			],
+			[
+				'id' => 'q2',
+				'questionCode' => 'BIO-9.2.1',
+				'peerReviewStatus' => 'akkoord',
+				'maturityScore' => 2,
+				'normniveau' => null,
+			],
+		];
 
-    /**
-     * REQ-ENSIA-005: questions still in wijziging-gevraagd are SKIPPED —
-     * their answer is expected to change before a finding is generated.
-     *
-     * @return void
-     */
-    public function testSkipsQuestionsAwaitingChange(): void
-    {
-        $cyclus = ['id' => 'cyc-2026', 'administrationId' => 'adm-1'];
-        $vragen = [
-            [
-                'id'                  => 'q1',
-                'vraagCode'           => 'BIO-9.1.1',
-                'peerReviewStatus'    => 'wijziging-gevraagd',
-                'volwassenheidsScore' => 2,
-                'normniveau'          => 3,
-            ],
-            [
-                'id'                  => 'q2',
-                'vraagCode'           => 'BIO-9.2.1',
-                'peerReviewStatus'    => 'nog-niet-beoordeeld',
-                'volwassenheidsScore' => 1,
-                'normniveau'          => 3,
-            ],
-        ];
+		$this->assertSame([], $this->generator->generate($cyclus, $vragen));
 
-        $this->assertSame([], $this->generator->generate($cyclus, $vragen));
-
-    }//end testSkipsQuestionsAwaitingChange()
-
-
-    /**
-     * REQ-ENSIA-005: questions without normniveau or score are skipped.
-     *
-     * @return void
-     */
-    public function testSkipsQuestionsWithoutScoreOrNorm(): void
-    {
-        $cyclus = ['id' => 'cyc-2026', 'administrationId' => 'adm-1'];
-        $vragen = [
-            [
-                'id'                  => 'q1',
-                'vraagCode'           => 'BIO-9.1.1',
-                'peerReviewStatus'    => 'akkoord',
-                'volwassenheidsScore' => null,
-                'normniveau'          => 3,
-            ],
-            [
-                'id'                  => 'q2',
-                'vraagCode'           => 'BIO-9.2.1',
-                'peerReviewStatus'    => 'akkoord',
-                'volwassenheidsScore' => 2,
-                'normniveau'          => null,
-            ],
-        ];
-
-        $this->assertSame([], $this->generator->generate($cyclus, $vragen));
-
-    }//end testSkipsQuestionsWithoutScoreOrNorm()
-
+	}//end testSkipsQuestionsWithoutScoreOrNorm()
 
 }//end class

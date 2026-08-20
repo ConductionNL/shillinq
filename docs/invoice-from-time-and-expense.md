@@ -104,6 +104,37 @@ Returns the invoice as a Dutch-formatted HTML document
 browser print) converts to PDF; the filename is
 `invoice-{invoiceNumber}.pdf`.
 
+## Cross-app billing intake (pipelinq handoff)
+
+`POST /apps/shillinq/api/billing/time-intake` is a separate, authenticated
+ingress endpoint (unversioned, `time-expense-invoice-intake`) that another
+Conduction app — pipelinq, via its `time-billing-handoff-emit` change — POSTs
+a batch of externally-approved time entries to. It materialises each entry
+as a `UrenRegistratie` row (stamped `externalId`/`sourceApp: "pipelinq"`/
+`sourceBatchId`) and delegates to the same `InvoiceGenerationService` above
+to draft **one T&M invoice per batch**. It is idempotent — replaying the same
+`batchId` returns the existing invoice with `duplicated: true`; a `batchId`
+reused with a different payload is `409`; a time entry already billed under
+another batch is `422`.
+
+```json
+{
+  "batchId": "11111111-1111-1111-1111-111111111111",
+  "organisationRef": "cust-5432",
+  "billingModel": "t_and_m",
+  "period": { "start": "2026-06-01", "end": "2026-06-30" },
+  "entries": [
+    { "externalId": "pl-time-1001", "date": "2026-06-03", "minutes": 120,
+      "description": "API design review", "hourlyRate": 150.0 }
+  ]
+}
+```
+
+Returns `{invoiceId, invoiceNumber, status: "draft", lines, duplicated}`.
+See `openspec/specs/time-expense-invoice-intake/spec.md` and the archived
+change's `contract.md` for the full request/response contract and error
+codes (`400`/`401`/`409`/`422`).
+
 ## Examples
 
 ```bash

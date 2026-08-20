@@ -3,33 +3,29 @@
 		{
 			"id": "VennootschapsbelastingBalans",
 			"label": "Corporate income tax (Vpb)",
-			"icon": "BankCheck",
+			"icon": "PercentOutline",
 			"order": 36,
-			"featureFlag": "mkb-vpb",
 			"children": [
 				{
 					"id": "VpbPligtigeAccounts",
 					"label": "Vpb-liable accounts",
 					"icon": "BookmarkCheckOutline",
 					"route": "VpbPligtigeAccounts",
-					"order": 10,
-					"featureFlag": "mkb-vpb"
+					"order": 10
 				},
 				{
 					"id": "VpbBalansLinks",
 					"label": "Business activities (Vpb balance link)",
 					"icon": "LinkVariant",
 					"route": "VpbBalansLinks",
-					"order": 20,
-					"featureFlag": "mkb-vpb"
+					"order": 20
 				},
 				{
 					"id": "VpbBalansAangifte",
 					"label": "Vpb balance + return preparation",
 					"icon": "FileDocumentMultipleOutline",
 					"route": "VpbBalansAangifte",
-					"order": 30,
-					"featureFlag": "mkb-vpb"
+					"order": 30
 				}
 			]
 		}
@@ -39,9 +35,7 @@
 			"id": "VpbPligtigeAccounts",
 			"route": "/bookkeeping/vpb-balans/accounts",
 			"type": "index",
-			"title": "Vpb-liable accounts",
-			"featureFlag": "mkb-vpb",
-			"config": {
+			"title": "Vpb-liable accounts",			"config": {
 				"register": "shillinq",
 				"schema": "Account",
 				"filter": {
@@ -71,19 +65,17 @@
 			"id": "VpbBalansLinks",
 			"route": "/bookkeeping/vpb-balans/links",
 			"type": "index",
-			"title": "Business activities (Vpb balance link)",
-			"featureFlag": "mkb-vpb",
-			"config": {
+			"title": "Business activities (Vpb balance link)",			"config": {
 				"register": "shillinq",
 				"schema": "VpbBalansLink",
 				"columns": [
 					{ "key": "costCenterId", "label": "Business activity", "sortable": true },
-					{ "key": "vpbPligtigVanaf", "label": "Vpb-liable from", "sortable": true },
-					{ "key": "vpbPligtigTotEnMet", "label": "Vpb-liable until", "sortable": true },
+					{ "key": "vpbLiableFrom", "label": "Vpb-liable from", "sortable": true },
+					{ "key": "vpbLiableToAndWith", "label": "Vpb-liable until", "sortable": true },
 					{ "key": "accountNumbers", "label": "Number of accounts", "sortable": false }
 				],
 				"search": true,
-				"defaultSort": "vpbPligtigVanaf",
+				"defaultSort": "vpbLiableFrom",
 				"detailRoute": "VpbBalansLinkDetail"
 			}
 		},
@@ -91,30 +83,48 @@
 			"id": "VpbBalansLinkDetail",
 			"route": "/bookkeeping/vpb-balans/links/:id",
 			"type": "detail",
-			"title": "Vpb balance link",
-			"featureFlag": "mkb-vpb",
-			"config": {
+			"title": "Vpb balance link",			"config": {
 				"register": "shillinq",
 				"schema": "VpbBalansLink",
+				"_note": "CONFIG record (declares which business activity/cost-center is Vpb-liable, over which window, and exactly which GL accounts fall inside that liability). The body is that scoping definition — the liability period, the list of Vpb-liable account numbers and the explanation that substantiates the boundary — since this record IS the mapping that the Vpb balance report reads. No transactions of its own, no comms. The audit trail sidebar matters because moving an account in or out of the Vpb scope directly changes the taxable balance.",
 				"fields": [
 					{ "key": "costCenterId", "label": "Business activity (cost-center)", "type": "string" },
-					{ "key": "vpbPligtigVanaf", "label": "Vpb-liable from", "type": "date" },
-					{ "key": "vpbPligtigTotEnMet", "label": "Vpb-liable until", "type": "date" },
+					{ "key": "vpbLiableFrom", "label": "Vpb-liable from", "type": "date" },
+					{ "key": "vpbLiableToAndWith", "label": "Vpb-liable until", "type": "date" },
 					{ "key": "accountNumbers", "label": "Vpb-liable accounts", "type": "array" },
-					{ "key": "toelichting", "label": "Explanation", "type": "string" }
+					{ "key": "notes", "label": "Explanation", "type": "string" }
 				],
-				"indexRoute": "VpbBalansLinks"
+				"indexRoute": "VpbBalansLinks",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
 			"id": "VpbBalansAangifte",
 			"route": "/bookkeeping/vpb-balans/aangifte",
 			"type": "detail",
-			"title": "Vpb balance + return preparation",
-			"featureFlag": "mkb-vpb",
-			"config": {
+			"title": "Vpb balance + return preparation",			"config": {
 				"register": "shillinq",
 				"schema": "VpbBalansLink",
+				"_note": "REPORT (not a single-object detail): a computed Vpb balance grouped by business activity that prepares the corporate-tax return. It intentionally keeps its aggregation (vpbBalansFiltered), groupBy, currency columns, balance-reconciliation warnings and the generate-return docudesk/SBR action — that report machinery IS the page, so it is preserved rather than replaced with a data/relatedObjects layout. No comms leaves.",
 				"aggregation": "vpbBalansFiltered",
 				"docudeskTemplate": "vpb-aangifte-voorbereiding",
 				"groupBy": "costCenterId",

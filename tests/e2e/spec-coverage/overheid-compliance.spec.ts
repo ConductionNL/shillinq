@@ -9,29 +9,60 @@
  */
 
 import { test } from '@playwright/test'
-import { gotoPage, assertIndexSurface, assertNoShillinqFailures, recordShillinqErrors } from './_helpers'
+import {
+	gotoPage,
+	assertIndexSurface,
+	assertNoShillinqFailures,
+	recordShillinqErrors,
+} from './_helpers'
 
-const PAGES: Array<{ route: string, title: string, titleRe?: RegExp }> = [
+const PAGES: Array<{ route: string; title: string; titleRe?: RegExp }> = [
 	// Overheid
 	{ route: '/iv3-rapportages', title: 'IV3-rapportages', titleRe: /IV3/i },
 	{ route: '/overheid/bbv-mapping', title: 'BBV-mapping', titleRe: /BBV/i },
 	{ route: '/overheid/bcf-claims', title: 'BCF-claims', titleRe: /BCF/i },
-	{ route: '/overheid/schatkist-positie', title: 'Schatkist-positie', titleRe: /Schatkist/i },
+	{
+		route: '/overheid/schatkist-positie',
+		title: 'Schatkist-positie',
+		titleRe: /Schatkist/i,
+	},
 	// Subsidies
 	{ route: '/subsidies/overzicht', title: 'Subsidies', titleRe: /Subsid/i },
-	{ route: '/subsidies/verleend', title: 'Verleende subsidies', titleRe: /Verleend/i },
-	{ route: '/subsidies/teruggevorderd', title: 'Terugvorderingen', titleRe: /Terugvorder/i },
+	{
+		route: '/subsidies/verleend',
+		title: 'Verleende subsidies',
+		titleRe: /Verleend/i,
+	},
+	{
+		route: '/subsidies/teruggevorderd',
+		title: 'Terugvorderingen',
+		titleRe: /Terugvorder/i,
+	},
 	// Compliance
 	{ route: '/sisa-rapportages', title: 'SiSa-rapportages', titleRe: /SiSa/i },
-	{ route: '/compliance-audit', title: 'Compliance audittrail', titleRe: /Compliance|audittrail/i },
-	{ route: '/management-letter', title: 'Management letters', titleRe: /Management letter/i },
-	{ route: '/audit-documents', title: 'Auditdocumenten', titleRe: /Auditdocument|Audit/i },
+	{
+		route: '/compliance-audit',
+		title: 'Compliance audittrail',
+		titleRe: /Compliance|audittrail/i,
+	},
+	{
+		route: '/management-letter',
+		title: 'Management letters',
+		titleRe: /Management letter/i,
+	},
+	{
+		route: '/audit-documents',
+		title: 'Auditdocumenten',
+		titleRe: /Auditdocument|Audit/i,
+	},
 	// Administratie
 	{ route: '/administratie/bewaartermijnen', title: 'Bewaartermijnen' },
 ]
 
 test.describe('shillinq spec-coverage — Overheid / Subsidies / Compliance', () => {
-	test.describe.configure({ mode: 'serial' })
+	// No `mode: 'serial'` — see the header of ./_helpers.ts. These page
+	// smokes share no state, and serial mode only ever turned one failure
+	// into a block of tests that never ran.
 	for (const p of PAGES) {
 		test(`${p.title} (${p.route})`, async ({ page }) => {
 			const rec = recordShillinqErrors(page)

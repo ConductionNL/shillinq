@@ -38,141 +38,133 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class EliminationBalanceGuardTest extends TestCase
-{
+final class EliminationBalanceGuardTest extends TestCase {
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The guard under test.
-     *
-     * @var EliminationBalanceGuard
-     */
-    private EliminationBalanceGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var EliminationBalanceGuard
+	 */
+	private EliminationBalanceGuard $guard;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->guard  = new EliminationBalanceGuard($this->logger);
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->guard = new EliminationBalanceGuard($this->logger);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * A balanced two-line journal is accepted.
-     *
-     * @return void
-     */
-    public function testBalancedJournalAccepted(): void
-    {
-        $journal = [
-            'eliminationId' => 'elim-1',
-            'lines'         => [
-                ['glAccount' => '8200', 'debitAmount' => 100000.0, 'creditAmount' => 0.0],
-                ['glAccount' => '4400', 'debitAmount' => 0.0, 'creditAmount' => 100000.0],
-            ],
-            'totalDebit'    => 100000.0,
-            'totalCredit'   => 100000.0,
-        ];
-        self::assertTrue($this->guard->isBalanced($journal));
+	/**
+	 * A balanced two-line journal is accepted.
+	 *
+	 * @return void
+	 */
+	public function testBalancedJournalAccepted(): void {
+		$journal = [
+			'eliminationId' => 'elim-1',
+			'lines' => [
+				['glAccount' => '8200', 'debitAmount' => 100000.0, 'creditAmount' => 0.0],
+				['glAccount' => '4400', 'debitAmount' => 0.0, 'creditAmount' => 100000.0],
+			],
+			'totalDebit' => 100000.0,
+			'totalCredit' => 100000.0,
+		];
+		self::assertTrue($this->guard->isBalanced($journal));
 
-    }//end testBalancedJournalAccepted()
+	}//end testBalancedJournalAccepted()
 
-    /**
-     * An unbalanced journal is rejected.
-     *
-     * @return void
-     */
-    public function testUnbalancedJournalRejected(): void
-    {
-        $journal = [
-            'eliminationId' => 'elim-2',
-            'lines'         => [
-                ['glAccount' => '8200', 'debitAmount' => 100000.0, 'creditAmount' => 0.0],
-                ['glAccount' => '4400', 'debitAmount' => 0.0, 'creditAmount' => 90000.0],
-            ],
-        ];
-        self::assertFalse($this->guard->isBalanced($journal));
+	/**
+	 * An unbalanced journal is rejected.
+	 *
+	 * @return void
+	 */
+	public function testUnbalancedJournalRejected(): void {
+		$journal = [
+			'eliminationId' => 'elim-2',
+			'lines' => [
+				['glAccount' => '8200', 'debitAmount' => 100000.0, 'creditAmount' => 0.0],
+				['glAccount' => '4400', 'debitAmount' => 0.0, 'creditAmount' => 90000.0],
+			],
+		];
+		self::assertFalse($this->guard->isBalanced($journal));
 
-    }//end testUnbalancedJournalRejected()
+	}//end testUnbalancedJournalRejected()
 
-    /**
-     * Float-rounding fragments still balance via integer-cent arithmetic.
-     *
-     * @return void
-     */
-    public function testFloatRoundingBalances(): void
-    {
-        $journal = [
-            'eliminationId' => 'elim-3',
-            'lines'         => [
-                ['glAccount' => 'a', 'debitAmount' => 0.1, 'creditAmount' => 0.0],
-                ['glAccount' => 'b', 'debitAmount' => 0.2, 'creditAmount' => 0.0],
-                ['glAccount' => 'c', 'debitAmount' => 0.0, 'creditAmount' => 0.3],
-            ],
-        ];
-        self::assertTrue($this->guard->isBalanced($journal));
+	/**
+	 * Float-rounding fragments still balance via integer-cent arithmetic.
+	 *
+	 * @return void
+	 */
+	public function testFloatRoundingBalances(): void {
+		$journal = [
+			'eliminationId' => 'elim-3',
+			'lines' => [
+				['glAccount' => 'a', 'debitAmount' => 0.1, 'creditAmount' => 0.0],
+				['glAccount' => 'b', 'debitAmount' => 0.2, 'creditAmount' => 0.0],
+				['glAccount' => 'c', 'debitAmount' => 0.0, 'creditAmount' => 0.3],
+			],
+		];
+		self::assertTrue($this->guard->isBalanced($journal));
 
-    }//end testFloatRoundingBalances()
+	}//end testFloatRoundingBalances()
 
-    /**
-     * A journal with no lines is rejected (fail-closed).
-     *
-     * @return void
-     */
-    public function testEmptyLinesRejected(): void
-    {
-        self::assertFalse($this->guard->isBalanced(['eliminationId' => 'elim-4', 'lines' => []]));
-        self::assertFalse($this->guard->isBalanced(['eliminationId' => 'elim-5']));
+	/**
+	 * A journal with no lines is rejected (fail-closed).
+	 *
+	 * @return void
+	 */
+	public function testEmptyLinesRejected(): void {
+		self::assertFalse($this->guard->isBalanced(['eliminationId' => 'elim-4', 'lines' => []]));
+		self::assertFalse($this->guard->isBalanced(['eliminationId' => 'elim-5']));
 
-    }//end testEmptyLinesRejected()
+	}//end testEmptyLinesRejected()
 
-    /**
-     * Supplied totalDebit that disagrees with the line sum is rejected.
-     *
-     * @return void
-     */
-    public function testInconsistentTotalDebitRejected(): void
-    {
-        $journal = [
-            'eliminationId' => 'elim-6',
-            'lines'         => [
-                ['glAccount' => '8200', 'debitAmount' => 100000.0, 'creditAmount' => 0.0],
-                ['glAccount' => '4400', 'debitAmount' => 0.0, 'creditAmount' => 100000.0],
-            ],
-            'totalDebit'    => 99000.0,
-            'totalCredit'   => 100000.0,
-        ];
-        self::assertFalse($this->guard->isBalanced($journal));
+	/**
+	 * Supplied totalDebit that disagrees with the line sum is rejected.
+	 *
+	 * @return void
+	 */
+	public function testInconsistentTotalDebitRejected(): void {
+		$journal = [
+			'eliminationId' => 'elim-6',
+			'lines' => [
+				['glAccount' => '8200', 'debitAmount' => 100000.0, 'creditAmount' => 0.0],
+				['glAccount' => '4400', 'debitAmount' => 0.0, 'creditAmount' => 100000.0],
+			],
+			'totalDebit' => 99000.0,
+			'totalCredit' => 100000.0,
+		];
+		self::assertFalse($this->guard->isBalanced($journal));
 
-    }//end testInconsistentTotalDebitRejected()
+	}//end testInconsistentTotalDebitRejected()
 
-    /**
-     * Non-array lines entries are skipped without throwing.
-     *
-     * @return void
-     */
-    public function testNonArrayLineSkipped(): void
-    {
-        $journal = [
-            'eliminationId' => 'elim-7',
-            'lines'         => [
-                ['glAccount' => '8200', 'debitAmount' => 50.0, 'creditAmount' => 0.0],
-                'not-an-array',
-                ['glAccount' => '4400', 'debitAmount' => 0.0, 'creditAmount' => 50.0],
-            ],
-        ];
-        self::assertTrue($this->guard->isBalanced($journal));
+	/**
+	 * Non-array lines entries are skipped without throwing.
+	 *
+	 * @return void
+	 */
+	public function testNonArrayLineSkipped(): void {
+		$journal = [
+			'eliminationId' => 'elim-7',
+			'lines' => [
+				['glAccount' => '8200', 'debitAmount' => 50.0, 'creditAmount' => 0.0],
+				'not-an-array',
+				['glAccount' => '4400', 'debitAmount' => 0.0, 'creditAmount' => 50.0],
+			],
+		];
+		self::assertTrue($this->guard->isBalanced($journal));
 
-    }//end testNonArrayLineSkipped()
+	}//end testNonArrayLineSkipped()
 }//end class

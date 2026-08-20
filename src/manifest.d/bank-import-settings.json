@@ -10,7 +10,7 @@
 		{
 			"id": "BankImportPage",
 			"label": "Import bank statements",
-			"icon": "BankTransferIn",
+			"icon": "DatabaseImportOutline",
 			"route": "BankImportPage",
 			"order": 40
 		}
@@ -21,11 +21,11 @@
 			"route": "/configuratie/bank-import",
 			"type": "custom",
 			"title": "Import bank statements",
-			"icon": "BankTransferIn",
 			"component": "BankImportPage",
-			"group": "Configuratie",
+			"_note": "Launcher for the multi-step BankStatementWizard modal (upload CAMT.053 / MT940 / CSV, then parse, preview and reconcile against invoices and bills). The wizard writes transactions but the page itself edits no object: `type: form` renders one flat field set against one schema and has no notion of an upload-parse-preview-commit sequence, and `type: index` would LIST statements rather than import them. Grouping into 'Configuratie' comes from the menu leaf above, not from the page.",
 			"config": {
-				"register": "shillinq"
+				"register": "shillinq",
+				"icon": "BankTransferIn"
 			}
 		}
 	]

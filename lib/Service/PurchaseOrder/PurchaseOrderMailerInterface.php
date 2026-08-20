@@ -35,23 +35,22 @@ namespace OCA\Shillinq\Service\PurchaseOrder;
  *
  * @spec openspec/changes/bookkeeping-purchase-order-3way-03-peppol-transmission/tasks.md
  */
-interface PurchaseOrderMailerInterface
-{
-    /**
-     * Send a PO to a supplier as PDF + email.
-     *
-     * Implementations are expected to render the PO into a PDF representation
-     * (or attach a UBL document as a fallback) and dispatch it to the supplier
-     * contact resolved server-side. The method MUST throw on failure — the
-     * orchestration layer treats a successful return as proof of dispatch and
-     * records the lifecycle transition.
-     *
-     * @param string              $administrationId Administration scope.
-     * @param array<string,mixed> $purchaseOrder    The persisted PurchaseOrder record.
-     *
-     * @return void
-     *
-     * @throws \RuntimeException When the mailer cannot dispatch.
-     */
-    public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): void;
+interface PurchaseOrderMailerInterface {
+	/**
+	 * Send a PO to a supplier as PDF + email.
+	 *
+	 * Implementations are expected to render the PO into a PDF representation
+	 * (or attach a UBL document as a fallback) and dispatch it to the supplier
+	 * contact resolved server-side. The method MUST throw on failure — the
+	 * orchestration layer treats a successful return as proof of dispatch and
+	 * records the lifecycle transition.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param array<string,mixed> $purchaseOrder The persisted PurchaseOrder record.
+	 *
+	 * @return void
+	 *
+	 * @throws \RuntimeException When the mailer cannot dispatch.
+	 */
+	public function sendPurchaseOrderEmail(string $administrationId, array $purchaseOrder): void;
 }//end interface

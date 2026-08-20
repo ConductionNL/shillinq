@@ -45,66 +45,61 @@ use Psr\Log\LogLevel;
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-08-lifecycle-events/tasks.md
  */
-final class LoggingPipelinqAdminNotifierTest extends TestCase
-{
-    /**
-     * Build a recording logger.
-     *
-     * @return AbstractLogger
-     */
-    private function recordingLogger(): AbstractLogger
-    {
-        return new class extends AbstractLogger {
+final class LoggingPipelinqAdminNotifierTest extends TestCase {
+	/**
+	 * Build a recording logger.
+	 *
+	 * @return AbstractLogger
+	 */
+	private function recordingLogger(): AbstractLogger {
+		return new class extends AbstractLogger {
+			/**
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $records = [];
 
-            /**
-             * @var array<int, array<string, mixed>>
-             */
-            public array $records = [];
+			/**
+			 * @param mixed $level Level.
+			 * @param string|\Stringable $message Message.
+			 * @param array<string, mixed> $context Context.
+			 *
+			 * @return void
+			 */
+			public function log($level, string|\Stringable $message, array $context = []): void {
+				$this->records[] = ['level' => $level, 'message' => (string)$message, 'context' => $context];
+			}//end log()
+		};
 
-            /**
-             * @param mixed                $level   Level.
-             * @param string|\Stringable   $message Message.
-             * @param array<string, mixed> $context Context.
-             *
-             * @return void
-             */
-            public function log($level, string|\Stringable $message, array $context=[]): void
-            {
-                $this->records[] = ['level' => $level, 'message' => (string) $message, 'context' => $context];
-            }//end log()
-        };
+	}//end recordingLogger()
 
-    }//end recordingLogger()
+	/**
+	 * notifyAuthFailure() emits one ERROR-level entry referencing the
+	 * config-key location of the bad token.
+	 *
+	 * @return void
+	 */
+	public function testNotifyAuthFailureEmitsErrorWithConfigKey(): void {
+		$logger = $this->recordingLogger();
+		$notifier = new LoggingPipelinqAdminNotifier(logger: $logger);
 
-    /**
-     * notifyAuthFailure() emits one ERROR-level entry referencing the
-     * config-key location of the bad token.
-     *
-     * @return void
-     */
-    public function testNotifyAuthFailureEmitsErrorWithConfigKey(): void
-    {
-        $logger = $this->recordingLogger();
-        $notifier = new LoggingPipelinqAdminNotifier(logger: $logger);
+		$dto = new TimelineEventDto(
+			type: TimelineEventDto::TYPE_BOOKING_CONFIRMED,
+			externalId: 'booking-z-1',
+			timestamp: new DateTimeImmutable('2026-06-07T08:00:00Z', new DateTimeZone('UTC')),
+			contactId: 'pl-contact-7'
+		);
 
-        $dto = new TimelineEventDto(
-            type: TimelineEventDto::TYPE_BOOKING_CONFIRMED,
-            externalId: 'booking-z-1',
-            timestamp: new DateTimeImmutable('2026-06-07T08:00:00Z', new DateTimeZone('UTC')),
-            contactId: 'pl-contact-7'
-        );
+		$notifier->notifyAuthFailure(event: $dto);
 
-        $notifier->notifyAuthFailure(event: $dto);
+		self::assertCount(1, $logger->records);
+		self::assertSame(LogLevel::ERROR, $logger->records[0]['level']);
+		self::assertStringContainsString('Invalid pipelinq API token', $logger->records[0]['message']);
+		self::assertSame(
+			PipelinqContactAdapter::CONFIG_KEY_TOKEN,
+			$logger->records[0]['context']['configKey']
+		);
+		self::assertSame('booking-z-1', $logger->records[0]['context']['externalId']);
 
-        self::assertCount(1, $logger->records);
-        self::assertSame(LogLevel::ERROR, $logger->records[0]['level']);
-        self::assertStringContainsString('Invalid pipelinq API token', $logger->records[0]['message']);
-        self::assertSame(
-            PipelinqContactAdapter::CONFIG_KEY_TOKEN,
-            $logger->records[0]['context']['configKey']
-        );
-        self::assertSame('booking-z-1', $logger->records[0]['context']['externalId']);
-
-    }//end testNotifyAuthFailureEmitsErrorWithConfigKey()
+	}//end testNotifyAuthFailureEmitsErrorWithConfigKey()
 
 }//end class

@@ -27,7 +27,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-2
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-001
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -40,159 +40,151 @@ namespace OCA\Shillinq\Service;
 /**
  * Side-effect-free toegangsticket validator for QualifyingAsset (REQ-IBA-001).
  *
- * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-2
+ * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-001
  */
-class QualifyingAssetValidator
-{
-    /**
-     * RVO S&O-verklaring number format: S{4-digit-year}/{6-digit-sequence}.
-     *
-     * @var string
-     */
-    private const SO_VERKLARING_PATTERN = '/^S\d{4}\/\d{6}$/';
+class QualifyingAssetValidator {
+	/**
+	 * RVO S&O-verklaring number format: S{4-digit-year}/{6-digit-sequence}.
+	 *
+	 * @var string
+	 */
+	private const SO_VERKLARING_PATTERN = '/^S\d{4}\/\d{6}$/';
 
-    /**
-     * Validate the access ticket and return the derived status (REQ-IBA-001).
-     *
-     * @param array<string,mixed> $asset         The QualifyingAsset record.
-     * @param string              $referenceDate Date (Y-m-d) to test S&O validity against;
-     *                                           defaults to today.
-     *
-     * @return array{status: string, valid: bool, errors: array<int,string>}
-     *
-     * @spec openspec/changes/bookkeeping-innovatiebox-administratie/tasks.md#task-4-2
-     */
-    public function validateAccessTicket(array $asset, string $referenceDate=''): array
-    {
-        if ($referenceDate === '') {
-            $referenceDate = date('Y-m-d');
-        }
+	/**
+	 * Validate the access ticket and return the derived status (REQ-IBA-001).
+	 *
+	 * @param array<string,mixed> $asset The QualifyingAsset record.
+	 * @param string $referenceDate Date (Y-m-d) to test S&O validity against;
+	 *                              defaults to today.
+	 *
+	 * @return array{status: string, valid: bool, errors: array<int,string>}
+	 *
+	 * @spec openspec/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-001
+	 */
+	public function validateAccessTicket(array $asset, string $referenceDate = ''): array {
+		if ($referenceDate === '') {
+			$referenceDate = date('Y-m-d');
+		}
 
-        $type   = (string) ($asset['type'] ?? '');
-        $ticket = (array) ($asset['toegangsticket'] ?? []);
+		$type = (string)($asset['type'] ?? '');
+		$ticket = (array)($asset['accessTicket'] ?? []);
 
-        $errors = $this->validateSingleRoute(ticket: $ticket, referenceDate: $referenceDate);
-        if ($type === 'combinatie') {
-            $errors = $this->validateCombinatie(ticket: $ticket, referenceDate: $referenceDate);
-        }
+		$errors = $this->validateSingleRoute(ticket: $ticket, referenceDate: $referenceDate);
+		if ($type === 'combinatie') {
+			$errors = $this->validateCombinatie(ticket: $ticket, referenceDate: $referenceDate);
+		}
 
-        if ($errors !== []) {
-            // Distinguish a purely-expired S&O cert from a malformed/missing one.
-            $status = 'invalid_access_ticket';
-            if (in_array('so_verklaring_expired', $errors, true) === true) {
-                $status = 'expired';
-            }
+		if ($errors !== []) {
+			// Distinguish a purely-expired S&O cert from a malformed/missing one.
+			$status = 'invalid_access_ticket';
+			if (in_array('so_verklaring_expired', $errors, true) === true) {
+				$status = 'expired';
+			}
 
-            return [
-                'status' => $status,
-                'valid'  => false,
-                'errors' => $errors,
-            ];
-        }
+			return [
+				'status' => $status,
+				'valid' => false,
+				'errors' => $errors,
+			];
+		}
 
-        return [
-            'status' => 'valid',
-            'valid'  => true,
-            'errors' => [],
-        ];
+		return [
+			'status' => 'valid',
+			'valid' => true,
+			'errors' => [],
+		];
 
-    }//end validateAccessTicket()
+	}//end validateAccessTicket()
 
-    /**
-     * Validate the combinatie-route: S&O-verklaring AND (octrooi OR kwekersrecht).
-     *
-     * @param array<string,mixed> $ticket        The toegangsticket sub-object.
-     * @param string              $referenceDate Reference date for S&O expiry.
-     *
-     * @return array<int,string> Validation error codes (empty when valid).
-     */
-    private function validateCombinatie(array $ticket, string $referenceDate): array
-    {
-        $errors  = $this->validateSoVerklaring(ticket: $ticket, referenceDate: $referenceDate, required: true);
-        $octrooi = (string) ($ticket['octrooi_nummer'] ?? '');
-        $kweker  = (string) ($ticket['kwekersrecht_nummer'] ?? '');
+	/**
+	 * Validate the combinatie-route: S&O-verklaring AND (octrooi OR kwekersrecht).
+	 *
+	 * @param array<string,mixed> $ticket The toegangsticket sub-object.
+	 * @param string $referenceDate Reference date for S&O expiry.
+	 *
+	 * @return array<int,string> Validation error codes (empty when valid).
+	 */
+	private function validateCombinatie(array $ticket, string $referenceDate): array {
+		$errors = $this->validateSoDeclaration(ticket: $ticket, referenceDate: $referenceDate, required: true);
+		$patent = (string)($ticket['patent_number'] ?? '');
+		$kweker = (string)($ticket['plantBreedersRight_number'] ?? '');
 
-        if ($octrooi === '' && $kweker === '') {
-            $errors[] = 'combinatie_requires_octrooi_or_kwekersrecht';
-        }
+		if ($patent === '' && $kweker === '') {
+			$errors[] = 'combinatie_requires_octrooi_or_kwekersrecht';
+		}
 
-        return $errors;
+		return $errors;
+	}//end validateCombinatie()
 
-    }//end validateCombinatie()
+	/**
+	 * Validate a single-route ticket based on its declared soort.
+	 *
+	 * @param array<string,mixed> $ticket The toegangsticket sub-object.
+	 * @param string $referenceDate Reference date for S&O expiry.
+	 *
+	 * @return array<int,string> Validation error codes (empty when valid).
+	 */
+	private function validateSingleRoute(array $ticket, string $referenceDate): array {
+		$kind = (string)($ticket['kind'] ?? '');
 
-    /**
-     * Validate a single-route ticket based on its declared soort.
-     *
-     * @param array<string,mixed> $ticket        The toegangsticket sub-object.
-     * @param string              $referenceDate Reference date for S&O expiry.
-     *
-     * @return array<int,string> Validation error codes (empty when valid).
-     */
-    private function validateSingleRoute(array $ticket, string $referenceDate): array
-    {
-        $soort = (string) ($ticket['soort'] ?? '');
+		if ($kind === 'so_declaration') {
+			return $this->validateSoDeclaration(ticket: $ticket, referenceDate: $referenceDate, required: true);
+		}
 
-        if ($soort === 'so_verklaring') {
-            return $this->validateSoVerklaring(ticket: $ticket, referenceDate: $referenceDate, required: true);
-        }
+		if ($kind === 'octrooi') {
+			if ((string)($ticket['patent_number'] ?? '') === '') {
+				return ['octrooi_nummer_required'];
+			}
 
-        if ($soort === 'octrooi') {
-            if ((string) ($ticket['octrooi_nummer'] ?? '') === '') {
-                return ['octrooi_nummer_required'];
-            }
+			return [];
+		}
 
-            return [];
-        }
+		if ($kind === 'kwekersrecht') {
+			if ((string)($ticket['plantBreedersRight_number'] ?? '') === '') {
+				return ['kwekersrecht_nummer_required'];
+			}
 
-        if ($soort === 'kwekersrecht') {
-            if ((string) ($ticket['kwekersrecht_nummer'] ?? '') === '') {
-                return ['kwekersrecht_nummer_required'];
-            }
+			return [];
+		}
 
-            return [];
-        }
+		if ($kind === '') {
+			return ['toegangsticket_soort_required'];
+		}
 
-        if ($soort === '') {
-            return ['toegangsticket_soort_required'];
-        }
+		// Weesgeneesmiddel / gebruiksmodel / abc: presence of a soort is enough
+		// for the declarative spec; deeper jurisdiction checks are out of scope.
+		return [];
+	}//end validateSingleRoute()
 
-        // Weesgeneesmiddel / gebruiksmodel / abc: presence of a soort is enough
-        // for the declarative spec; deeper jurisdiction checks are out of scope.
-        return [];
+	/**
+	 * Validate an S&O-verklaring number format + expiry (REQ-IBA-001).
+	 *
+	 * @param array<string,mixed> $ticket The toegangsticket sub-object.
+	 * @param string $referenceDate Reference date for expiry.
+	 * @param bool $required Whether the S&O number must be present.
+	 *
+	 * @return array<int,string> Validation error codes (empty when valid).
+	 */
+	private function validateSoDeclaration(array $ticket, string $referenceDate, bool $required): array {
+		$number = (string)($ticket['rnd_declaration_number'] ?? '');
 
-    }//end validateSingleRoute()
+		if ($number === '') {
+			if ($required === true) {
+				return ['so_verklaring_nummer_required'];
+			}
 
-    /**
-     * Validate an S&O-verklaring number format + expiry (REQ-IBA-001).
-     *
-     * @param array<string,mixed> $ticket        The toegangsticket sub-object.
-     * @param string              $referenceDate Reference date for expiry.
-     * @param bool                $required      Whether the S&O number must be present.
-     *
-     * @return array<int,string> Validation error codes (empty when valid).
-     */
-    private function validateSoVerklaring(array $ticket, string $referenceDate, bool $required): array
-    {
-        $number = (string) ($ticket['so_verklaring_nummer'] ?? '');
+			return [];
+		}
 
-        if ($number === '') {
-            if ($required === true) {
-                return ['so_verklaring_nummer_required'];
-            }
+		if (preg_match(self::SO_VERKLARING_PATTERN, $number) !== 1) {
+			return ['so_verklaring_format_invalid'];
+		}
 
-            return [];
-        }
+		$tot = (string)(($ticket['so_declaration_period']['tot'] ?? ''));
+		if ($tot !== '' && $tot < $referenceDate) {
+			return ['so_verklaring_expired'];
+		}
 
-        if (preg_match(self::SO_VERKLARING_PATTERN, $number) !== 1) {
-            return ['so_verklaring_format_invalid'];
-        }
-
-        $tot = (string) (($ticket['so_verklaring_periode']['tot'] ?? ''));
-        if ($tot !== '' && $tot < $referenceDate) {
-            return ['so_verklaring_expired'];
-        }
-
-        return [];
-
-    }//end validateSoVerklaring()
+		return [];
+	}//end validateSoVerklaring()
 }//end class

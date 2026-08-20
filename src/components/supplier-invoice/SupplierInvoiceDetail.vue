@@ -21,11 +21,17 @@
 -->
 <template>
 	<div class="si-detail">
-		<div v-if="loading" class="si-detail__loading" data-testid="si-detail-loading">
-			{{ t('shillinq', 'Loading supplier invoice...') }}
+		<div
+			v-if="loading"
+			class="si-detail__loading"
+			data-testid="si-detail-loading">
+			{{ t('shillinq', 'Loading supplier invoice…') }}
 		</div>
 
-		<div v-else-if="error" class="si-detail__error" data-testid="si-detail-error">
+		<div
+			v-else-if="error"
+			class="si-detail__error"
+			data-testid="si-detail-error">
 			{{ error }}
 		</div>
 
@@ -33,12 +39,18 @@
 			<header class="si-detail__header" data-testid="si-detail-header">
 				<h2>{{ invoice.invoiceNumber }}</h2>
 				<p>
-					<span class="si-detail__pill" :class="`si-detail__pill--${invoice.statusCode}`">
+					<span
+						class="si-detail__pill"
+						:class="`si-detail__pill--${invoice.statusCode}`">
 						{{ statusLabel(invoice.statusCode) }}
 					</span>
-					<span>{{ t('shillinq', 'Supplier') }}: {{ invoice.supplierId }}</span>
+					<span
+						>{{ t('shillinq', 'Supplier') }}:
+						{{ invoice.supplierId }}</span
+					>
 					<span v-if="invoice.invoiceDate">
-						{{ t('shillinq', 'Invoice date') }}: {{ formatDate(invoice.invoiceDate) }}
+						{{ t('shillinq', 'Invoice date') }}:
+						{{ formatDate(invoice.invoiceDate) }}
 					</span>
 					<span v-if="invoice.dueDate">
 						{{ t('shillinq', 'Due') }}: {{ formatDate(invoice.dueDate) }}
@@ -47,9 +59,15 @@
 				<p>
 					{{ t('shillinq', 'Total (incl. VAT)') }}:
 					<strong>{{ formatMoney(invoice.totalInclVat) }}</strong>
-					<span v-if="invoice.totalExclVat !== null && invoice.totalExclVat !== undefined">
-						({{ t('shillinq', 'excl.') }} {{ formatMoney(invoice.totalExclVat) }} ·
-						{{ t('shillinq', 'VAT') }} {{ formatMoney(invoice.totalVat) }})
+					<span
+						v-if="
+							invoice.totalExclVat !== null
+							&& invoice.totalExclVat !== undefined
+						">
+						({{ t('shillinq', 'excl.') }}
+						{{ formatMoney(invoice.totalExclVat) }} ·
+						{{ t('shillinq', 'VAT') }}
+						{{ formatMoney(invoice.totalVat) }})
 					</span>
 				</p>
 			</header>
@@ -67,10 +85,20 @@
 							:style="{ width: ocrPercent }" />
 					</div>
 					<span class="si-detail__ocr-value">{{ ocrPercent }}</span>
-					<span class="si-detail__ocr-tier">{{ ocrConfidenceTierLabel }}</span>
+					<span class="si-detail__ocr-tier">{{
+						ocrConfidenceTierLabel
+					}}</span>
 				</div>
-				<p v-if="isLowConfidence" class="si-detail__ocr-hint" data-testid="si-detail-ocr-low">
-					{{ t('shillinq', 'Low OCR confidence — lines will route to manual confirmation downstream.') }}
+				<p
+					v-if="isLowConfidence"
+					class="si-detail__ocr-hint"
+					data-testid="si-detail-ocr-low">
+					{{
+						t(
+							'shillinq',
+							'Low OCR confidence — lines will route to manual confirmation downstream.',
+						)
+					}}
 				</p>
 			</section>
 
@@ -81,7 +109,9 @@
 				<h3>{{ t('shillinq', 'Peppol / UBL provenance') }}</h3>
 				<dl>
 					<dt>{{ t('shillinq', 'UBL source') }}</dt>
-					<dd>{{ invoice.ublSourceUri || t('shillinq', '(not recorded)') }}</dd>
+					<dd>
+						{{ invoice.ublSourceUri || t('shillinq', '(not recorded)') }}
+					</dd>
 					<dt>{{ t('shillinq', 'Received via Peppol') }}</dt>
 					<dd>{{ formatTimestamp(invoice.peppolReceivedAt) }}</dd>
 				</dl>
@@ -92,13 +122,13 @@
 				<table v-if="(invoice.lines || []).length > 0">
 					<thead>
 						<tr>
-							<th>#</th>
-							<th>{{ t('shillinq', 'Product code') }}</th>
-							<th>{{ t('shillinq', 'Description') }}</th>
-							<th>{{ t('shillinq', 'Quantity') }}</th>
-							<th>{{ t('shillinq', 'Unit price') }}</th>
-							<th>{{ t('shillinq', 'VAT rate') }}</th>
-							<th>{{ t('shillinq', 'Line total') }}</th>
+							<th scope="col">#</th>
+							<th scope="col">{{ t('shillinq', 'Product code') }}</th>
+							<th scope="col">{{ t('shillinq', 'Description') }}</th>
+							<th scope="col">{{ t('shillinq', 'Quantity') }}</th>
+							<th scope="col">{{ t('shillinq', 'Unit price') }}</th>
+							<th scope="col">{{ t('shillinq', 'VAT rate') }}</th>
+							<th scope="col">{{ t('shillinq', 'Line total') }}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -125,14 +155,22 @@
 				<h3>{{ t('shillinq', '3-way match status') }}</h3>
 				<ul v-if="matches.length > 0">
 					<li v-for="match in matches" :key="match.id">
-						<router-link :to="{ name: 'ThreeWayMatchDetail', params: { id: match.id } }">
+						<router-link
+							:to="{
+								name: 'ThreeWayMatchDetail',
+								params: { id: match.id },
+							}">
 							{{ match.matchReference || match.id }}
 						</router-link>
-						<span class="si-detail__match-status">{{ match.matchStatus || '—' }}</span>
+						<span class="si-detail__match-status">{{
+							match.matchStatus || '—'
+						}}</span>
 					</li>
 				</ul>
 				<p v-else class="si-detail__matches-empty">
-					{{ t('shillinq', 'No match yet — awaiting the matching engine.') }}
+					{{
+						t('shillinq', 'No match yet — awaiting the matching engine.')
+					}}
 				</p>
 			</section>
 		</div>
@@ -140,8 +178,8 @@
 </template>
 
 <script>
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 
 export default {
 	name: 'SupplierInvoiceDetail',
@@ -154,6 +192,7 @@ export default {
 			required: true,
 		},
 	},
+
 	data() {
 		return {
 			invoice: null,
@@ -162,6 +201,7 @@ export default {
 			error: '',
 		}
 	},
+
 	computed: {
 		isPdfIngestion() {
 			if (!this.invoice) {
@@ -172,8 +212,12 @@ export default {
 			}
 			// Defensive: a non-null ocrConfidenceScore implies the PDF/OCR path
 			// even when sourceFormat is absent (older ingestion runs).
-			return this.invoice.ocrConfidenceScore !== null && this.invoice.ocrConfidenceScore !== undefined
+			return (
+				this.invoice.ocrConfidenceScore !== null
+				&& this.invoice.ocrConfidenceScore !== undefined
+			)
 		},
+
 		isUblIngestion() {
 			if (!this.invoice) {
 				return false
@@ -183,10 +227,12 @@ export default {
 			}
 			return !!this.invoice.ublSourceUri || !!this.invoice.peppolReceivedAt
 		},
+
 		ocrPercent() {
 			const score = Number(this.invoice?.ocrConfidenceScore || 0)
 			return `${Math.round(score * 100)}%`
 		},
+
 		ocrConfidenceTier() {
 			const score = Number(this.invoice?.ocrConfidenceScore || 0)
 			if (score >= 0.9) {
@@ -197,6 +243,7 @@ export default {
 			}
 			return 'low'
 		},
+
 		ocrConfidenceTierLabel() {
 			const map = {
 				high: this.t('shillinq', 'High'),
@@ -205,36 +252,46 @@ export default {
 			}
 			return map[this.ocrConfidenceTier]
 		},
+
 		isLowConfidence() {
 			return this.ocrConfidenceTier === 'low'
 		},
 	},
+
 	async created() {
 		await this.loadInvoice()
 	},
+
 	methods: {
 		async loadInvoice() {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/shillinq/api/openregister/objects/SupplierInvoice/${this.id}`),
+					generateUrl(
+						`/apps/shillinq/api/openregister/objects/SupplierInvoice/${this.id}`,
+					),
 				)
 				this.invoice = response.data || null
 				if (this.invoice) {
 					await this.loadMatches()
 				}
 			} catch (e) {
-				this.error = e?.response?.data?.error || this.t('shillinq', 'Failed to load supplier invoice')
+				this.error =
+					e?.response?.data?.error
+					|| this.t('shillinq', 'Failed to load supplier invoice')
 			} finally {
 				this.loading = false
 			}
 		},
+
 		async loadMatches() {
 			// ThreeWayMatch records are populated by slice 06; gracefully fall
 			// through to the empty state when the lookup isn't available yet.
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/shillinq/api/openregister/objects/ThreeWayMatch'),
+					generateUrl(
+						'/apps/shillinq/api/openregister/objects/ThreeWayMatch',
+					),
 					{ params: { filter: { invoiceId: this.id } } },
 				)
 				this.matches = response.data?.results || response.data || []
@@ -242,18 +299,20 @@ export default {
 				this.matches = []
 			}
 		},
+
 		statusLabel(statusCode) {
 			const labels = {
-				received: this.t('shillinq', 'Ontvangen'),
-				matching: this.t('shillinq', 'In afstemming'),
-				matched: this.t('shillinq', 'Gematched'),
-				exception: this.t('shillinq', 'Uitzondering'),
-				approved: this.t('shillinq', 'Goedgekeurd'),
-				paid: this.t('shillinq', 'Betaald'),
-				rejected: this.t('shillinq', 'Afgewezen'),
+				received: this.t('shillinq', 'Received'),
+				matching: this.t('shillinq', 'Matching'),
+				matched: this.t('shillinq', 'Matched'),
+				exception: this.t('shillinq', 'Exception'),
+				approved: this.t('shillinq', 'Approved'),
+				paid: this.t('shillinq', 'Paid'),
+				rejected: this.t('shillinq', 'Rejected'),
 			}
 			return labels[statusCode] || statusCode || '—'
 		},
+
 		formatMoney(cents) {
 			if (cents === null || cents === undefined) {
 				return '—'
@@ -261,9 +320,11 @@ export default {
 			const currency = this.invoice?.currency || 'EUR'
 			return `${currency} ${(Number(cents) / 100).toFixed(2)}`
 		},
+
 		formatPct(rate) {
 			return `${(Number(rate || 0) * 100).toFixed(2)}%`
 		},
+
 		formatDate(iso) {
 			if (!iso) {
 				return '—'
@@ -274,6 +335,7 @@ export default {
 				return iso
 			}
 		},
+
 		formatTimestamp(iso) {
 			if (!iso) {
 				return '—'

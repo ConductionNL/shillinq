@@ -5,8 +5,9 @@
  InvoiceQuickDraftModal — shillinq-invoice-quick-draft.
 
  A compact single-screen NcDialog launched from the Financial overview
- dashboard's "Create invoice" action (FinancialDashboardActions.vue). It
- covers the common case — a one-or-few-line draft invoice for a known
+ dashboard's "Create invoice" action — a declarative `config.headerActions[]`
+ open-modal action (ADR-049 Phase-4) targeting this component's registry id.
+ It covers the common case — a one-or-few-line draft invoice for a known
  customer — without sending the user to the full AR index + multi-step
  form. On save it creates an ARInvoice in state `draft` directly through
  the OpenRegister object API (ADR-022: invoices are OR objects; no
@@ -14,10 +15,9 @@
  dashboard receivables widget reloads.
 
  Modal isolation (hydra gate-13): this dialog lives in its own .vue file
- under src/modals/ and is imported by FinancialDashboardActions.vue. It
- must never be inlined into the parent. The parent owns nothing but the
- open flag and the launch button; this component owns its own form state,
- customer/GL lookups, the POST and the toast.
+ under src/modals/ and is registered as a kind:"modal" so the dashboard
+ headerAction's open-modal `target` resolves it. This component owns its
+ own form state, customer/GL lookups, the POST and the toast.
 
  @spec openspec/changes/shillinq-invoice-quick-draft/proposal.md
 -->
@@ -33,17 +33,17 @@
 			<!-- Customer -->
 			<div class="iqd__field">
 				<NcSelect
-					:model-value="selectedCustomer"
+					:modelValue="selectedCustomer"
 					:options="customerOptions"
 					:loading="loadingCustomers"
-					:input-label="t('shillinq', 'Customer')"
+					:inputLabel="t('shillinq', 'Customer')"
 					:placeholder="t('shillinq', 'Search customer by name…')"
 					:filterable="true"
 					label="display"
-					track-by="value"
+					trackBy="value"
 					data-testid="iqd-customer"
 					@option:selected="onCustomerSelected"
-					@update:model-value="onCustomerSelected" />
+					@update:modelValue="onCustomerSelected" />
 			</div>
 
 			<!-- Dates -->
@@ -58,7 +58,7 @@
 						type="date"
 						class="iqd__input"
 						data-testid="iqd-invoice-date"
-						@change="recomputeDueDate">
+						@change="recomputeDueDate" />
 				</div>
 				<div class="iqd__field">
 					<label class="iqd__label" for="iqd-due-date">
@@ -69,7 +69,7 @@
 						v-model="form.dueDate"
 						type="date"
 						class="iqd__input"
-						data-testid="iqd-due-date">
+						data-testid="iqd-due-date" />
 				</div>
 			</div>
 
@@ -84,7 +84,7 @@
 					type="text"
 					class="iqd__input"
 					data-testid="iqd-reference"
-					:placeholder="t('shillinq', 'Optional')">
+					:placeholder="t('shillinq', 'Optional')" />
 			</div>
 
 			<!-- Line items -->
@@ -101,34 +101,37 @@
 						v-model="line.description"
 						type="text"
 						class="iqd__input iqd__input--desc"
+						:aria-label="t('shillinq', 'Line description')"
 						:placeholder="t('shillinq', 'Description')"
-						data-testid="iqd-line-description">
+						data-testid="iqd-line-description" />
 					<input
 						v-model.number="line.quantity"
 						type="number"
 						min="0"
 						step="0.01"
 						class="iqd__input iqd__input--qty"
+						:aria-label="t('shillinq', 'Line quantity')"
 						:placeholder="t('shillinq', 'Qty')"
-						data-testid="iqd-line-quantity">
+						data-testid="iqd-line-quantity" />
 					<input
 						v-model.number="line.unitPrice"
 						type="number"
 						min="0"
 						step="0.01"
 						class="iqd__input iqd__input--price"
+						:aria-label="t('shillinq', 'Line unit price')"
 						:placeholder="t('shillinq', 'Unit price')"
-						data-testid="iqd-line-unit-price">
+						data-testid="iqd-line-unit-price" />
 					<NcSelect
-						:model-value="vatOptionFor(line)"
+						:modelValue="vatOptionFor(line)"
 						:options="vatOptions"
-						:input-label="t('shillinq', 'VAT')"
+						:inputLabel="t('shillinq', 'VAT')"
 						:clearable="false"
 						label="display"
-						track-by="value"
+						trackBy="value"
 						class="iqd__input--vat"
 						data-testid="iqd-line-vat"
-						@update:model-value="(o) => onVatSelected(line, o)" />
+						@update:modelValue="(o) => onVatSelected(line, o)" />
 					<button
 						type="button"
 						class="iqd__line-remove"
@@ -159,7 +162,10 @@
 			<div class="iqd__totals" data-testid="iqd-totals">
 				<span>{{ t('shillinq', 'Net') }}: {{ formatEuro(netAmount) }}</span>
 				<span>{{ t('shillinq', 'VAT') }}: {{ formatEuro(vatAmount) }}</span>
-				<strong>{{ t('shillinq', 'Total') }}: {{ formatEuro(grossAmount) }}</strong>
+				<strong
+					>{{ t('shillinq', 'Total') }}:
+					{{ formatEuro(grossAmount) }}</strong
+				>
 			</div>
 
 			<p v-if="error" class="iqd__error" data-testid="iqd-error">
@@ -168,14 +174,11 @@
 		</div>
 
 		<template #actions>
-			<NcButton
-				:disabled="saving"
-				data-testid="iqd-cancel"
-				@click="onClose">
+			<NcButton :disabled="saving" data-testid="iqd-cancel" @click="onClose">
 				{{ t('shillinq', 'Cancel') }}
 			</NcButton>
 			<NcButton
-				type="primary"
+				variant="primary"
 				:disabled="!canSave"
 				data-testid="iqd-save"
 				@click="onSave">
@@ -186,19 +189,17 @@
 </template>
 
 <script>
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
-import { showSuccess, showError } from '@nextcloud/dialogs'
+import { showError, showSuccess } from '@nextcloud/dialogs'
 import { emit } from '@nextcloud/event-bus'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
 import GlAccountPicker from '../components/BudgetBBVMapping/GlAccountPicker.vue'
 import {
-	defaultDraftLine,
 	buildInvoicePayload,
 	computeTotals,
+	defaultDraftLine,
 	dueDateFromTerms,
 	loadQuickDraftPrefs,
 	saveQuickDraftPrefs,
@@ -217,12 +218,14 @@ export default {
 			default: false,
 		},
 	},
+
 	emits: ['close', 'created'],
 	data() {
 		return {
 			loadingCustomers: false,
 			customers: [],
 			selectedCustomer: null,
+			administrationId: '',
 			saving: false,
 			error: '',
 			vatOptions: [
@@ -230,6 +233,7 @@ export default {
 				{ value: 9, display: '9%' },
 				{ value: 0, display: '0%' },
 			],
+
 			form: {
 				invoiceDate: this.today(),
 				dueDate: '',
@@ -239,8 +243,9 @@ export default {
 			},
 		}
 	},
+
 	computed: {
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		customerOptions() {
 			return this.customers.map((c) => ({
 				value: String(c.customerId ?? c.id ?? ''),
@@ -248,55 +253,80 @@ export default {
 				customer: c,
 			}))
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		netAmount() {
 			return computeTotals(this.form.lines).net
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		vatAmount() {
 			return computeTotals(this.form.lines).vat
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		grossAmount() {
 			return computeTotals(this.form.lines).gross
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		canSave() {
 			if (this.saving) return false
 			if (!this.selectedCustomer || !this.selectedCustomer.value) return false
-			return this.form.lines.some((l) =>
-				(l.description || '').trim().length > 0
-				&& Number(l.unitPrice) > 0)
+			return this.form.lines.some(
+				(l) =>
+					(l.description || '').trim().length > 0
+					&& Number(l.unitPrice) > 0,
+			)
 		},
 	},
+
 	watch: {
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
-		open(next) {
-			if (next === true) {
-				this.reset()
-				this.fetchCustomers()
-			}
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
+		open: {
+			// `immediate` so the customer list also loads when the modal is
+			// mounted with `open` already true (the manifest open-modal action
+			// passes props.open=true, so a false→true transition never fires).
+			immediate: true,
+			handler(next) {
+				if (next === true) {
+					this.reset()
+					this.fetchCustomers()
+				}
+			},
 		},
 	},
+
 	methods: {
 		t,
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		today() {
 			return new Date().toISOString().slice(0, 10)
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/**
+		 * @param amount
+		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
+		 */
 		formatEuro(amount) {
 			return new Intl.NumberFormat('nl-NL', {
 				style: 'currency',
 				currency: 'EUR',
 			}).format(Number(amount) || 0)
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/**
+		 * @param line
+		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
+		 */
 		vatOptionFor(line) {
-			return this.vatOptions.find((o) => o.value === Number(line.btwRate))
+			return (
+				this.vatOptions.find((o) => o.value === Number(line.vatRate))
 				|| this.vatOptions[0]
+			)
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		reset() {
 			this.error = ''
 			this.selectedCustomer = null
@@ -308,23 +338,55 @@ export default {
 				lines: [defaultDraftLine()],
 			}
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		async fetchCustomers() {
 			this.loadingCustomers = true
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${CUSTOMER_SCHEMA}`),
-					{ params: { limit: 500 } },
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/${CUSTOMER_SCHEMA}`,
+					),
+					{ params: { _limit: 500 } },
 				)
-				const rows = response.data?.results ?? response.data?.objects ?? response.data ?? []
+				const rows =
+					response.data?.results
+					?? response.data?.objects
+					?? response.data
+					?? []
 				this.customers = Array.isArray(rows) ? rows : []
 			} catch (e) {
 				this.customers = []
 			} finally {
 				this.loadingCustomers = false
 			}
+			this.fetchAdministrationId()
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/**
+		 * Load the configured administration id. The ARInvoice schema
+		 * requires administrationId, so the quick draft sources it from the
+		 * app settings rather than asking the operator for it.
+		 *
+		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
+		 * @return {Promise<void>}
+		 */
+		async fetchAdministrationId() {
+			try {
+				const { data } = await axios.get(
+					generateUrl('/apps/shillinq/api/settings'),
+				)
+				this.administrationId =
+					data?.administration_id ?? data?.administrationId ?? ''
+			} catch (e) {
+				this.administrationId = ''
+			}
+		},
+
+		/**
+		 * @param option
+		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
+		 */
 		onCustomerSelected(option) {
 			this.selectedCustomer = option || null
 			const customer = option?.customer
@@ -339,40 +401,60 @@ export default {
 				if (prefs.glAccount) this.form.glAccount = String(prefs.glAccount)
 				const line = this.form.lines[0]
 				if (line) {
-					if (prefs.description && !line.description) line.description = prefs.description
-					if (prefs.unitPrice && !line.unitPrice) line.unitPrice = prefs.unitPrice
-					if (prefs.vatCode !== undefined && prefs.vatCode !== null) line.btwRate = prefs.vatCode
+					if (prefs.description && !line.description)
+						line.description = prefs.description
+					if (prefs.unitPrice && !line.unitPrice)
+						line.unitPrice = prefs.unitPrice
+					if (prefs.vatCode !== undefined && prefs.vatCode !== null)
+						line.vatRate = prefs.vatCode
 				}
 			}
 			this.recomputeDueDate(customer)
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/**
+		 * @param customerOrEvent
+		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
+		 */
 		recomputeDueDate(customerOrEvent) {
-			const customer = customerOrEvent && customerOrEvent.customerId
-				? customerOrEvent
-				: this.selectedCustomer?.customer
+			const customer =
+				customerOrEvent && customerOrEvent.customerId
+					? customerOrEvent
+					: this.selectedCustomer?.customer
 			const terms = customer?.paymentTerms || 'net30'
 			this.form.dueDate = dueDateFromTerms(this.form.invoiceDate, terms)
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/**
+		 * @param line
+		 * @param option
+		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
+		 */
 		onVatSelected(line, option) {
-			line.btwRate = option ? Number(option.value) : 21
+			line.vatRate = option ? Number(option.value) : 21
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		addLine() {
 			this.form.lines.push(defaultDraftLine())
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/**
+		 * @param idx
+		 * @spec openspec/specs/shillinq-invoice-quick-draft/spec.md
+		 */
 		removeLine(idx) {
 			if (this.form.lines.length <= 1) return
 			this.form.lines.splice(idx, 1)
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		onClose() {
 			if (this.saving) return
 			this.$emit('close')
 		},
-		/** @spec openspec/changes/shillinq-invoice-quick-draft/specs/shillinq-invoice-quick-draft/spec.md */
+
+		/** @spec openspec/specs/shillinq-invoice-quick-draft/spec.md */
 		async onSave() {
 			if (!this.canSave) return
 			this.saving = true
@@ -384,34 +466,41 @@ export default {
 					dueDate: this.form.dueDate,
 					reference: this.form.reference,
 					glAccount: this.form.glAccount,
+					administrationId: this.administrationId,
 					lines: this.form.lines,
 				})
 				const response = await axios.post(
-					generateUrl(`/apps/openregister/api/objects/${REGISTER_SLUG}/${AR_SCHEMA}`),
+					generateUrl(
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/${AR_SCHEMA}`,
+					),
 					payload,
 				)
 				const created = response.data?.object ?? response.data ?? {}
 				const invoiceId = created.id ?? created.uuid ?? ''
-				const invoiceNumber = created.invoiceNumber || payload.invoiceNumber || ''
+				const invoiceNumber =
+					created.invoiceNumber || payload.invoiceNumber || ''
 
 				// Persist per-customer preferences for next time (REQ-IQD-004).
 				const firstLine = this.form.lines[0] || {}
 				saveQuickDraftPrefs(this.selectedCustomer.value, {
 					glAccount: this.form.glAccount,
-					vatCode: Number(firstLine.btwRate),
+					vatCode: Number(firstLine.vatRate),
 					description: firstLine.description,
 					unitPrice: Number(firstLine.unitPrice),
 				})
 
 				showSuccess(
-					t('shillinq', 'Draft invoice {number} created.', { number: invoiceNumber || invoiceId }),
+					t('shillinq', 'Draft invoice {number} created.', {
+						number: invoiceNumber || invoiceId,
+					}),
 				)
 				// REQ-IQD-005: refresh the receivables widget without navigation.
 				emit('cn:widget:refresh', { widget: 'widget-open-debtors' })
 				this.$emit('created', { id: invoiceId, invoiceNumber })
 				this.$emit('close')
 			} catch (e) {
-				this.error = e?.response?.data?.error
+				this.error =
+					e?.response?.data?.error
 					|| e?.response?.data?.message
 					|| e?.message
 					|| t('shillinq', 'Failed to create draft invoice.')

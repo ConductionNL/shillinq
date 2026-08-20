@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/retrofit-2026-05-26-preferences-api/tasks.md
+ * @spec openspec/specs/apphost-adoption/spec.md#requirement-mechanical-boilerplate-served-by-apphost-generics
  */
 
 declare(strict_types=1);
@@ -34,192 +34,183 @@ use PHPUnit\Framework\TestCase;
  * Verifies the per-user key/value prefs API (get/set/clear) and the
  * key-sanitization behaviour. setPreference must NOT carry @NoCSRFRequired (H1).
  */
-class PrefsControllerTest extends TestCase
-{
+class PrefsControllerTest extends TestCase {
 
-    /**
-     * Mock IRequest.
-     *
-     * @var IRequest&MockObject
-     */
-    private IRequest&MockObject $request;
+	/**
+	 * Mock IRequest.
+	 *
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /**
-     * Mock IConfig.
-     *
-     * @var IConfig&MockObject
-     */
-    private IConfig&MockObject $config;
+	/**
+	 * Mock IConfig.
+	 *
+	 * @var IConfig&MockObject
+	 */
+	private IConfig&MockObject $config;
 
-    /**
-     * Mock IUserSession.
-     *
-     * @var IUserSession&MockObject
-     */
-    private IUserSession&MockObject $userSession;
+	/**
+	 * Mock IUserSession.
+	 *
+	 * @var IUserSession&MockObject
+	 */
+	private IUserSession&MockObject $userSession;
 
-    /**
-     * The controller under test.
-     *
-     * @var PreferencesController
-     */
-    private PreferencesController $controller;
+	/**
+	 * The controller under test.
+	 *
+	 * @var PreferencesController
+	 */
+	private PreferencesController $controller;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $this->request     = $this->createMock(IRequest::class);
-        $this->config      = $this->createMock(IConfig::class);
-        $this->userSession = $this->createMock(IUserSession::class);
+		$this->request = $this->createMock(IRequest::class);
+		$this->config = $this->createMock(IConfig::class);
+		$this->userSession = $this->createMock(IUserSession::class);
 
-        $this->controller = new PreferencesController(
-            request: $this->request,
-            config: $this->config,
-            userSession: $this->userSession,
-        );
+		$this->controller = new PreferencesController(
+			request: $this->request,
+			config: $this->config,
+			userSession: $this->userSession,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * setPreference must NOT have @NoCSRFRequired annotation (H1, per user policy).
-     *
-     * @return void
-     */
-    public function testSetPreferenceHasNoCSRFRequiredRemoved(): void
-    {
-        $reflection = new \ReflectionMethod(PreferencesController::class, 'setPreference');
-        $docComment = ($reflection->getDocComment() ?: '');
+	/**
+	 * setPreference must NOT have @NoCSRFRequired annotation (H1, per user policy).
+	 *
+	 * @return void
+	 */
+	public function testSetPreferenceHasNoCSRFRequiredRemoved(): void {
+		$reflection = new \ReflectionMethod(PreferencesController::class, 'setPreference');
+		$docComment = ($reflection->getDocComment() ?: '');
 
-        self::assertStringNotContainsString(
-            '@NoCSRFRequired',
-            $docComment,
-            'H1: setPreference must not bypass CSRF protection'
-        );
+		self::assertStringNotContainsString(
+			'@NoCSRFRequired',
+			$docComment,
+			'H1: setPreference must not bypass CSRF protection'
+		);
 
-    }//end testSetPreferenceHasNoCSRFRequiredRemoved()
+	}//end testSetPreferenceHasNoCSRFRequiredRemoved()
 
-    /**
-     * getPreference returns 401 when the user is not logged in.
-     *
-     * @return void
-     */
-    public function testGetPreferenceReturns401WhenUnauthenticated(): void
-    {
-        $this->userSession->method('getUser')->willReturn(null);
+	/**
+	 * getPreference returns 401 when the user is not logged in.
+	 *
+	 * @return void
+	 */
+	public function testGetPreferenceReturns401WhenUnauthenticated(): void {
+		$this->userSession->method('getUser')->willReturn(null);
 
-        $response = $this->controller->getPreference(key: 'some-key');
+		$response = $this->controller->getPreference(key: 'some-key');
 
-        self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 
-    }//end testGetPreferenceReturns401WhenUnauthenticated()
+	}//end testGetPreferenceReturns401WhenUnauthenticated()
 
-    /**
-     * getPreference returns the stored value for a valid key.
-     *
-     * @return void
-     */
-    public function testGetPreferenceReturnsStoredValue(): void
-    {
-        $user = $this->createMock(IUser::class);
-        $user->method('getUID')->willReturn('alice');
-        $this->userSession->method('getUser')->willReturn($user);
+	/**
+	 * getPreference returns the stored value for a valid key.
+	 *
+	 * @return void
+	 */
+	public function testGetPreferenceReturnsStoredValue(): void {
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$this->userSession->method('getUser')->willReturn($user);
 
-        $this->config->method('getUserValue')->willReturn('true');
+		$this->config->method('getUserValue')->willReturn('true');
 
-        $response = $this->controller->getPreference(key: 'support-seen');
-        $data     = $response->getData();
+		$response = $this->controller->getPreference(key: 'support-seen');
+		$data = $response->getData();
 
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
-        self::assertSame('support-seen', $data['key']);
-        self::assertSame('true', $data['value']);
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame('support-seen', $data['key']);
+		self::assertSame('true', $data['value']);
 
-    }//end testGetPreferenceReturnsStoredValue()
+	}//end testGetPreferenceReturnsStoredValue()
 
-    /**
-     * getPreference returns null value when the key has no stored value.
-     *
-     * @return void
-     */
-    public function testGetPreferenceReturnsNullWhenKeyNotSet(): void
-    {
-        $user = $this->createMock(IUser::class);
-        $user->method('getUID')->willReturn('alice');
-        $this->userSession->method('getUser')->willReturn($user);
+	/**
+	 * getPreference returns null value when the key has no stored value.
+	 *
+	 * @return void
+	 */
+	public function testGetPreferenceReturnsNullWhenKeyNotSet(): void {
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$this->userSession->method('getUser')->willReturn($user);
 
-        $this->config->method('getUserValue')->willReturn('');
+		$this->config->method('getUserValue')->willReturn('');
 
-        $response = $this->controller->getPreference(key: 'unset-key');
-        $data     = $response->getData();
+		$response = $this->controller->getPreference(key: 'unset-key');
+		$data = $response->getData();
 
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
-        self::assertNull($data['value']);
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertNull($data['value']);
 
-    }//end testGetPreferenceReturnsNullWhenKeyNotSet()
+	}//end testGetPreferenceReturnsNullWhenKeyNotSet()
 
-    /**
-     * setPreference stores the value and returns 200 with the key+value.
-     *
-     * @return void
-     */
-    public function testSetPreferenceStoresValue(): void
-    {
-        $user = $this->createMock(IUser::class);
-        $user->method('getUID')->willReturn('alice');
-        $this->userSession->method('getUser')->willReturn($user);
+	/**
+	 * setPreference stores the value and returns 200 with the key+value.
+	 *
+	 * @return void
+	 */
+	public function testSetPreferenceStoresValue(): void {
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$this->userSession->method('getUser')->willReturn($user);
 
-        $this->config->expects($this->once())->method('setUserValue');
+		$this->config->expects($this->once())->method('setUserValue');
 
-        $response = $this->controller->setPreference(key: 'support-seen', value: 'true');
-        $data     = $response->getData();
+		$response = $this->controller->setPreference(key: 'support-seen', value: 'true');
+		$data = $response->getData();
 
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
-        self::assertSame('true', $data['value']);
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame('true', $data['value']);
 
-    }//end testSetPreferenceStoresValue()
+	}//end testSetPreferenceStoresValue()
 
-    /**
-     * setPreference with empty value deletes the key and returns null.
-     *
-     * @return void
-     */
-    public function testSetPreferenceDeletesWhenValueIsEmpty(): void
-    {
-        $user = $this->createMock(IUser::class);
-        $user->method('getUID')->willReturn('alice');
-        $this->userSession->method('getUser')->willReturn($user);
+	/**
+	 * setPreference with empty value deletes the key and returns null.
+	 *
+	 * @return void
+	 */
+	public function testSetPreferenceDeletesWhenValueIsEmpty(): void {
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$this->userSession->method('getUser')->willReturn($user);
 
-        $this->config->expects($this->once())->method('deleteUserValue');
+		$this->config->expects($this->once())->method('deleteUserValue');
 
-        $response = $this->controller->setPreference(key: 'support-seen', value: '');
-        $data     = $response->getData();
+		$response = $this->controller->setPreference(key: 'support-seen', value: '');
+		$data = $response->getData();
 
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
-        self::assertNull($data['value']);
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertNull($data['value']);
 
-    }//end testSetPreferenceDeletesWhenValueIsEmpty()
+	}//end testSetPreferenceDeletesWhenValueIsEmpty()
 
-    /**
-     * getPreference returns 400 for an invalid key (non-alphanumeric).
-     *
-     * @return void
-     */
-    public function testGetPreferenceReturns400ForInvalidKey(): void
-    {
-        $user = $this->createMock(IUser::class);
-        $user->method('getUID')->willReturn('alice');
-        $this->userSession->method('getUser')->willReturn($user);
+	/**
+	 * getPreference returns 400 for an invalid key (non-alphanumeric).
+	 *
+	 * @return void
+	 */
+	public function testGetPreferenceReturns400ForInvalidKey(): void {
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$this->userSession->method('getUser')->willReturn($user);
 
-        // A key that contains only non-alphanumeric chars (e.g. '!!!') is invalid.
-        $response = $this->controller->getPreference(key: '!!!');
+		// A key that contains only non-alphanumeric chars (e.g. '!!!') is invalid.
+		$response = $this->controller->getPreference(key: '!!!');
 
-        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
-    }//end testGetPreferenceReturns400ForInvalidKey()
+	}//end testGetPreferenceReturns400ForInvalidKey()
 
 }//end class

@@ -25,12 +25,18 @@
 					{{ t('shillinq', 'FX Rates') }}
 				</h2>
 				<p class="fx-rates-admin__description">
-					{{ t('shillinq', 'Daily exchange-rate snapshots used by the GL posting engine and IAS 21 consolidation. ECB rates are imported daily by the FxRateImportJob; manual rates require a written reason and override the ECB value for the affected date.') }}
+					{{
+						t(
+							'shillinq',
+							'Daily exchange-rate snapshots used by the GL posting engine and IAS 21 consolidation. ECB rates are imported daily by the FxRateImportJob; manual rates require a written reason and override the ECB value for the affected date.',
+						)
+					}}
 				</p>
 			</header>
 
 			<section class="fx-rates-admin__status" aria-live="polite">
-				<NcLoadingIcon v-if="loading"
+				<NcLoadingIcon
+					v-if="loading"
 					:size="20"
 					:name="t('shillinq', 'Loading import status')" />
 				<template v-else>
@@ -38,7 +44,8 @@
 						<span class="fx-rates-admin__status-label">
 							{{ t('shillinq', 'Import status') }}:
 						</span>
-						<span class="fx-rates-admin__status-badge"
+						<span
+							class="fx-rates-admin__status-badge"
 							:class="badgeClass"
 							:data-status="status.status">
 							{{ badgeLabel }}
@@ -53,12 +60,23 @@
 						</span>
 					</div>
 					<div v-else class="fx-rates-admin__status-row">
-						<span class="fx-rates-admin__status-value fx-rates-admin__status-value--muted">
-							{{ t('shillinq', 'The cron has not produced a successful run yet.') }}
+						<span
+							class="fx-rates-admin__status-value fx-rates-admin__status-value--muted">
+							{{
+								t(
+									'shillinq',
+									'The cron has not produced a successful run yet.',
+								)
+							}}
 						</span>
 					</div>
 					<p v-if="status.adapterDormant" class="fx-rates-admin__hint">
-						{{ t('shillinq', 'The Treasury rate adapter is currently dormant. Bind the openconnector source "treasury-rates" (ECB SDMX) and override TreasuryRateAdapterInterface in Application::register() to start ingesting real rates. Manual rate entries are unaffected.') }}
+						{{
+							t(
+								'shillinq',
+								'The Treasury rate adapter is currently dormant. Bind the openconnector source "treasury-rates" (ECB SDMX) and override TreasuryRateAdapterInterface in Application::register() to start ingesting real rates. Manual rate entries are unaffected.',
+							)
+						}}
 					</p>
 				</template>
 				<p v-if="errorMessage" class="fx-rates-admin__error" role="alert">
@@ -68,9 +86,14 @@
 
 			<section class="fx-rates-admin__index">
 				<p class="fx-rates-admin__index-help">
-					{{ t('shillinq', 'The grid below is the declarative FxRate index. Use the filters to narrow by currency pair or source.') }}
+					{{
+						t(
+							'shillinq',
+							'The grid below is the declarative FxRate index. Use the filters to narrow by currency pair or source.',
+						)
+					}}
 				</p>
-				<NcButton type="secondary" @click="navigateToIndex">
+				<NcButton variant="secondary" @click="navigateToIndex">
 					{{ t('shillinq', 'Open FX Rates index') }}
 				</NcButton>
 			</section>
@@ -79,9 +102,9 @@
 </template>
 
 <script>
-import { NcAppContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+import { NcAppContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
 
 export default {
 	name: 'FxRatesAdmin',
@@ -117,11 +140,15 @@ export default {
 			}
 			return this.t('shillinq', 'OK')
 		},
+
 		badgeClass() {
 			return {
 				'fx-rates-admin__status-badge--ok': this.status.status === 'ok',
-				'fx-rates-admin__status-badge--dormant': this.status.status === 'dormant',
-				'fx-rates-admin__status-badge--warn': this.status.status === 'never-ran',
+				'fx-rates-admin__status-badge--dormant':
+					this.status.status === 'dormant',
+
+				'fx-rates-admin__status-badge--warn':
+					this.status.status === 'never-ran',
 			}
 		},
 	},
@@ -135,7 +162,9 @@ export default {
 			this.loading = true
 			this.errorMessage = ''
 			try {
-				const url = generateUrl('/apps/shillinq/api/admin/fx-rate-import-status')
+				const url = generateUrl(
+					'/apps/shillinq/api/admin/fx-rate-import-status',
+				)
 				const { data } = await axios.get(url)
 				this.status = {
 					jobClass: data?.jobClass ?? this.status.jobClass,
@@ -148,14 +177,21 @@ export default {
 			} catch (error) {
 				const status = error?.response?.status
 				if (status === 401 || status === 403) {
-					this.errorMessage = this.t('shillinq', 'Admin permission required to read FX import status.')
+					this.errorMessage = this.t(
+						'shillinq',
+						'Admin permission required to read FX import status.',
+					)
 				} else {
-					this.errorMessage = this.t('shillinq', 'Failed to load FX import status.')
+					this.errorMessage = this.t(
+						'shillinq',
+						'Failed to load FX import status.',
+					)
 				}
 			} finally {
 				this.loading = false
 			}
 		},
+
 		formatTimestamp(iso) {
 			try {
 				const d = new Date(iso)
@@ -164,6 +200,7 @@ export default {
 				return iso
 			}
 		},
+
 		navigateToIndex() {
 			// Delegate to the declarative FXRates manifest index page.
 			this.$router?.push?.('/bookkeeping/multi-currency/fx-rates')

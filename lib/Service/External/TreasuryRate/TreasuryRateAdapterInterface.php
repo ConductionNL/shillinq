@@ -41,7 +41,7 @@
  * @link https://conduction.nl
  * @link https://data.ecb.europa.eu/help/api/overview
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -74,40 +74,39 @@ namespace OCA\Shillinq\Service\External\TreasuryRate;
  *     `Application::register()` to the openconnector-backed
  *     implementation.
  *
- * @spec openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md
+ * @spec openspec/specs/bookkeeping-treasury-ihb/spec.md
  */
-interface TreasuryRateAdapterInterface
-{
-    /**
-     * Fetch the floating reference-rate snapshot for a given date.
-     *
-     * @param string $rateCode Reference-rate code — `EURIBOR-3M`,
-     *                         `EURIBOR-6M`, `SOFR`, `SARON`, `ESTR`.
-     * @param string $asOf     ISO-8601 date the snapshot should be
-     *                         taken against (`YYYY-MM-DD`).
-     *
-     * @return TreasuryRateResult The snapshot outcome (status +
-     *                            opaque rate id + decimal value).
-     */
-    public function fetchReferenceRate(string $rateCode, string $asOf): TreasuryRateResult;
+interface TreasuryRateAdapterInterface {
+	/**
+	 * Fetch the floating reference-rate snapshot for a given date.
+	 *
+	 * @param string $rateCode Reference-rate code — `EURIBOR-3M`,
+	 *                         `EURIBOR-6M`, `SOFR`, `SARON`, `ESTR`.
+	 * @param string $asOf ISO-8601 date the snapshot should be
+	 *                     taken against (`YYYY-MM-DD`).
+	 *
+	 * @return TreasuryRateResult The snapshot outcome (status +
+	 *                            opaque rate id + decimal value).
+	 */
+	public function fetchReferenceRate(string $rateCode, string $asOf): TreasuryRateResult;
 
-    /**
-     * Fetch the FX spot rate for a currency pair on a given date.
-     *
-     * @param string $baseCurrency  ISO 4217 base currency, e.g. `EUR`.
-     * @param string $quoteCurrency ISO 4217 quote currency, e.g. `USD`.
-     * @param string $asOf          ISO-8601 date.
-     *
-     * @return TreasuryRateResult The snapshot outcome (status +
-     *                            decimal cross-rate value).
-     */
-    public function fetchFxSpot(string $baseCurrency, string $quoteCurrency, string $asOf): TreasuryRateResult;
+	/**
+	 * Fetch the FX spot rate for a currency pair on a given date.
+	 *
+	 * @param string $baseCurrency ISO 4217 base currency, e.g. `EUR`.
+	 * @param string $quoteCurrency ISO 4217 quote currency, e.g. `USD`.
+	 * @param string $asOf ISO-8601 date.
+	 *
+	 * @return TreasuryRateResult The snapshot outcome (status +
+	 *                            decimal cross-rate value).
+	 */
+	public function fetchFxSpot(string $baseCurrency, string $quoteCurrency, string $asOf): TreasuryRateResult;
 
-    /**
-     * Whether the adapter is dormant — i.e. wired but not contacting
-     * a rate provider.
-     *
-     * @return bool TRUE when the adapter is a log-only stub.
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the adapter is dormant — i.e. wired but not contacting
+	 * a rate provider.
+	 *
+	 * @return bool TRUE when the adapter is a log-only stub.
+	 */
+	public function isDormant(): bool;
 }//end interface

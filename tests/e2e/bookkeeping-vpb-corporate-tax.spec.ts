@@ -40,7 +40,9 @@ import { test, expect } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 
-const dismissWizard = async (page: import('@playwright/test').Page): Promise<void> => {
+const dismissWizard = async (
+	page: import('@playwright/test').Page,
+): Promise<void> => {
 	const wizard = page.locator('#firstrunwizard')
 	if (await wizard.isVisible().catch(() => false)) {
 		await page.keyboard.press('Escape').catch(() => {})
@@ -53,7 +55,9 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax deadline + payment SPA
 		page.setViewportSize({ width: 1280, height: 800 })
 	})
 
-	test('Tax deadlines index — mounts on /bookkeeping/vpb/deadlines (REQ-VPB-005)', async ({ page }) => {
+	test('Tax deadlines index — mounts on /bookkeeping/vpb/deadlines (REQ-VPB-005)', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/bookkeeping/vpb/deadlines')
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
@@ -64,7 +68,9 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax deadline + payment SPA
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('Tax deadline detail — mounts on /bookkeeping/vpb/deadlines/:id (REQ-VPB-006)', async ({ page }) => {
+	test('Tax deadline detail — mounts on /bookkeeping/vpb/deadlines/:id (REQ-VPB-006)', async ({
+		page,
+	}) => {
 		// With no seed object the detail page renders the empty/not-found
 		// state but the SPA route resolves; the bounce-out guard is the
 		// behaviour under test for Gate-19.
@@ -75,7 +81,9 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax deadline + payment SPA
 		expect(page.url()).toContain('/apps/shillinq')
 	})
 
-	test('Tax payments index — mounts on /bookkeeping/vpb/payments (REQ-VPB-007)', async ({ page }) => {
+	test('Tax payments index — mounts on /bookkeeping/vpb/payments (REQ-VPB-007)', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/bookkeeping/vpb/payments')
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
@@ -84,7 +92,9 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax deadline + payment SPA
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('Tax payment detail — mounts on /bookkeeping/vpb/payments/:id (REQ-VPB-008)', async ({ page }) => {
+	test('Tax payment detail — mounts on /bookkeeping/vpb/payments/:id (REQ-VPB-008)', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/bookkeeping/vpb/payments/none')
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
@@ -92,7 +102,9 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax deadline + payment SPA
 		expect(page.url()).toContain('/apps/shillinq')
 	})
 
-	test('Vpb navigation cluster is reachable from the shillinq shell (REQ-VPB-016)', async ({ page }) => {
+	test('Vpb navigation cluster is reachable from the shillinq shell (REQ-VPB-016)', async ({
+		page,
+	}) => {
 		await page.goto(APP + '/')
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
@@ -102,15 +114,17 @@ test.describe('shillinq — bookkeeping-vpb-corporate-tax deadline + payment SPA
 		// as a sidebar group, an expandable chevron item, or a topbar
 		// dropdown — accept any link that targets one of the new routes.
 		const vpbLink = page
-			.locator([
-				'a[href*="/bookkeeping/vpb/deadlines"]',
-				'a[href*="/bookkeeping/vpb/payments"]',
-				'a[href*="/bookkeeping/vpb/reports"]',
-				'a[href*="/bookkeeping/vpb/settings"]',
-				'a:has-text("Corporate tax")',
-				'a:has-text("Vpb")',
-				'a:has-text("Tax deadlines")',
-			].join(', '))
+			.locator(
+				[
+					'a[href*="/bookkeeping/vpb/deadlines"]',
+					'a[href*="/bookkeeping/vpb/payments"]',
+					'a[href*="/bookkeeping/vpb/reports"]',
+					'a[href*="/bookkeeping/vpb/settings"]',
+					'a:has-text("Corporate tax")',
+					'a:has-text("Vpb")',
+					'a:has-text("Tax deadlines")',
+				].join(', '),
+			)
 			.first()
 
 		await vpbLink.waitFor({ state: 'attached', timeout: 5_000 }).catch(() => {})

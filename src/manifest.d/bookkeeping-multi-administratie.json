@@ -16,21 +16,21 @@
 				{
 					"id": "AdministrationSwitcher",
 					"label": "Switch administration",
-					"icon": "SwapHorizontal",
+					"icon": "ShieldAccountOutline",
 					"route": "AdministrationSwitcher",
 					"order": 1
 				},
 				{
 					"id": "Administraties",
 					"label": "Administrations",
-					"icon": "OfficeBuilding",
+					"icon": "OfficeBuildingOutline",
 					"route": "Administraties",
 					"order": 5
 				},
 				{
 					"id": "AdministratieLidmaatschappen",
 					"label": "Access & roles",
-					"icon": "AccountMultipleOutline",
+					"icon": "AccountKeyOutline",
 					"route": "AdministratieLidmaatschappen",
 					"order": 6
 				},
@@ -44,14 +44,14 @@
 				{
 					"id": "ConsolidatieMappings",
 					"label": "Consolidation mapping",
-					"icon": "Sitemap",
+					"icon": "SwapHorizontal",
 					"route": "ConsolidatieMappings",
 					"order": 8
 				},
 				{
 					"id": "AdministratieMigraties",
 					"label": "Asset transfer",
-					"icon": "TransferRight",
+					"icon": "DesktopTowerMonitor",
 					"route": "AdministratieMigraties",
 					"order": 9
 				}
@@ -63,9 +63,9 @@
 			"id": "AdministrationSwitcher",
 			"route": "/administratie/wisselen",
 			"type": "custom",
-			"kind": "page",
 			"component": "AdministrationSwitcherPage",
-			"title": "Switch administration"
+			"title": "Switch administration",
+			"_note": "Session-scope switcher, not a record view. The page's whole job is to CHANGE the active administration for the session and reload the shell (AdministratieSwitcher, reload-after-switch); a single-membership user gets an explainer instead of a dropdown (REQ-MA-003). The Administrations themselves already have index/detail pages — this page writes session state rather than reading or editing an object, which no standard page type does. See src/views/AdministrationSwitcherPage.vue."
 		},
 		{
 			"id": "Administraties",
@@ -96,6 +96,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Administration",
+				"_note": "MASTER record (the legal entity/administration that scopes every other object via administrationId). The body pairs the fiscal identity + consolidation settings with the two child registers most tied to this entity: who has access (AdministrationMembership) and the intercompany entries it participates in. This is the setup + governance view for one administration. No comms leaves (a company file is not a correspondent). Audit trail sidebar records fiscal-year/consolidation config changes.",
 				"fields": [
 					{ "key": "administrationCode", "label": "Administration code", "type": "string" },
 					{ "key": "name", "label": "Name", "type": "string" },
@@ -120,7 +121,51 @@
 					{ "key": "dataRetentionYears", "label": "Data retention (years)", "type": "number" },
 					{ "key": "defaultLanguage", "label": "Default language", "type": "string" }
 				],
-				"indexRoute": "Administraties"
+				"relatedObjects": [
+					{
+						"id": "memberships",
+						"label": "Access & roles",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "AdministrationMembership",
+							"filterField": "administrationId",
+							"columns": ["userId", "role", "mayPostJournalEntries", "mayCloseFiscalYear", "validUntil"]
+						}
+					},
+					{
+						"id": "intercompany",
+						"label": "Intercompany entries (as source)",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "IntercompanyJournalEntry",
+							"filterField": "sourceAdministrationId",
+							"columns": ["intercompanyNumber", "date", "kind", "destinationAdministrationId", "amount", "status"]
+						}
+					}
+				],
+				"indexRoute": "Administraties",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -150,6 +195,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "AdministrationMembership",
+				"_note": "ACCESS CONFIG row (who may do what in one administration). A pure authorization record — the body is the grant itself (user, role, ledger restriction, post/close rights, validity window). No children, no comms. Audit trail sidebar is essential here: a change to who may post journal entries or close a fiscal year is a segregation-of-duties event that must be traceable.",
 				"fields": [
 					{ "key": "userId", "label": "User", "type": "string" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" },
@@ -160,7 +206,27 @@
 					{ "key": "validFrom", "label": "Valid from", "type": "string" },
 					{ "key": "validUntil", "label": "Valid until", "type": "string" }
 				],
-				"indexRoute": "AdministratieLidmaatschappen"
+				"indexRoute": "AdministratieLidmaatschappen",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -192,6 +258,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "IntercompanyJournalEntry",
+				"_note": "TRANSACTION (a mirrored booking between two administrations). The body carries both legs — source/target administration and their journal-entry references — plus amount, BTW treatment and the elimination settings that drive consolidation. The variance field is the reconciliation check. It links to journal entries by id rather than owning child lines, so no object-list. No comms. Audit trail sidebar is the immutable posting record.",
 				"fields": [
 					{ "key": "intercompanyNumber", "label": "IC number", "type": "string" },
 					{ "key": "date", "label": "Date", "type": "string" },
@@ -208,7 +275,27 @@
 					{ "key": "status", "label": "Status", "type": "string" },
 					{ "key": "varianceAmount", "label": "Variance", "type": "number" }
 				],
-				"indexRoute": "IntercompanyBoekingen"
+				"indexRoute": "IntercompanyBoekingen",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -237,6 +324,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "ConsolidationMapping",
+				"_note": "CONFIG record (the ruleset that maps a subsidiary's accounts into the parent when consolidating). The body is the mapping definition — source/target administration, the rules array, the intercompany elimination account and the currency-translation method that governs FX on consolidation. No transactions of its own, no comms. Audit trail sidebar matters because a mapping change silently alters every future consolidation.",
 				"fields": [
 					{ "key": "name", "label": "Name", "type": "string" },
 					{ "key": "sourceAdministrationId", "label": "Source administration", "type": "string" },
@@ -246,7 +334,27 @@
 					{ "key": "currencyTranslationMethod", "label": "Currency translation method", "type": "string" },
 					{ "key": "validFrom", "label": "Valid from", "type": "string" }
 				],
-				"indexRoute": "ConsolidatieMappings"
+				"indexRoute": "ConsolidatieMappings",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -277,6 +385,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "AdministrationMigration",
+				"_note": "TRANSACTION with a paper trail (an asset transfer between administrations). The body shows both legs, the book/market values transferred, the result impact and the fiscal/legal basis that justifies the transfer. A Documents tab surfaces the underlying agreements/valuations (documentIds file references) because an asset transfer must be substantiated, and the audit trail sidebar records the posting. No comms leaves.",
 				"fields": [
 					{ "key": "migrationNumber", "label": "Number", "type": "string" },
 					{ "key": "date", "label": "Date", "type": "string" },
@@ -293,7 +402,46 @@
 					{ "key": "destinationJournalEntryId", "label": "Target journal entry", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
-				"indexRoute": "AdministratieMigraties"
+				"indexRoute": "AdministratieMigraties",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "documents",
+							"label": "Documents",
+							"icon": "FileDocumentMultipleOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"register": "shillinq",
+										"schema": "AdministrationMigration",
+										"field": "documentIds",
+										"objectId": ":id",
+										"description": "Transfer agreements and valuation reports (NC Files references; link, don't store)."
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		}
 	]

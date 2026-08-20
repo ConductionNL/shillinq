@@ -99,7 +99,9 @@ export class OrFixtures {
 	 *         absent (the OR ImportHandler blocker).
 	 */
 	async missingSchema(schemaSlugs: string[]): Promise<string | null> {
-		const regs = await this.api.get(`${OR}/registers`, { headers: { 'OCS-APIRequest': 'true' } })
+		const regs = await this.api.get(`${OR}/registers`, {
+			headers: { 'OCS-APIRequest': 'true' },
+		})
 		if (!regs.ok()) {
 			return 'shillinq-register'
 		}
@@ -109,7 +111,9 @@ export class OrFixtures {
 		if (!hasRegister) {
 			return 'shillinq-register'
 		}
-		const schemas = await this.api.get(`${OR}/schemas?_limit=1000`, { headers: { 'OCS-APIRequest': 'true' } })
+		const schemas = await this.api.get(`${OR}/schemas?_limit=1000`, {
+			headers: { 'OCS-APIRequest': 'true' },
+		})
 		const sBody = await schemas.json().catch(() => ({}))
 		const sList: Array<{ slug?: string }> = sBody.results ?? sBody ?? []
 		const present = new Set(sList.map((s) => s.slug))
@@ -124,13 +128,24 @@ export class OrFixtures {
 	/**
 	 * Create one object in (register, schema). Tracks it for cleanup and
 	 * returns its OpenRegister id.
+	 * @param schemaSlug
+	 * @param data
 	 */
-	async create(schemaSlug: string, data: Record<string, unknown>): Promise<{ id: string; self: Record<string, unknown> }> {
-		const res = await this.api.post(`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}`, {
-			headers: await this.headers(),
-			data,
-		})
-		expect(res.ok(), `create ${schemaSlug} failed: HTTP ${res.status()} ${await res.text()}`).toBeTruthy()
+	async create(
+		schemaSlug: string,
+		data: Record<string, unknown>,
+	): Promise<{ id: string; self: Record<string, unknown> }> {
+		const res = await this.api.post(
+			`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}`,
+			{
+				headers: await this.headers(),
+				data,
+			},
+		)
+		expect(
+			res.ok(),
+			`create ${schemaSlug} failed: HTTP ${res.status()} ${await res.text()}`,
+		).toBeTruthy()
 		const body = await res.json()
 		// OR returns either the object directly or { '@self': {...}, ... }.
 		const self = (body['@self'] ?? body) as Record<string, unknown>
@@ -140,32 +155,85 @@ export class OrFixtures {
 		return { id, self }
 	}
 
-	/** Read one object by id. */
+	/**
+	 * Read one object by id.
+	 * @param schemaSlug
+	 * @param id
+	 */
 	async get(schemaSlug: string, id: string): Promise<Record<string, unknown>> {
-		const res = await this.api.get(`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}/${id}`, {
-			headers: { 'OCS-APIRequest': 'true' },
-		})
-		expect(res.ok(), `get ${schemaSlug}/${id} failed: HTTP ${res.status()}`).toBeTruthy()
+		const res = await this.api.get(
+			`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}/${id}`,
+			{
+				headers: { 'OCS-APIRequest': 'true' },
+			},
+		)
+		expect(
+			res.ok(),
+			`get ${schemaSlug}/${id} failed: HTTP ${res.status()}`,
+		).toBeTruthy()
 		const body = await res.json()
 		return (body['@self'] ? body : body) as Record<string, unknown>
 	}
 
-	/** Update one object by id (PUT). */
-	async update(schemaSlug: string, id: string, data: Record<string, unknown>): Promise<Record<string, unknown>> {
-		const res = await this.api.put(`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}/${id}`, {
-			headers: await this.headers(),
-			data,
-		})
-		expect(res.ok(), `update ${schemaSlug}/${id} failed: HTTP ${res.status()} ${await res.text()}`).toBeTruthy()
+	/**
+	 * Update one object by id (PUT).
+	 * @param schemaSlug
+	 * @param id
+	 * @param data
+	 */
+	async update(
+		schemaSlug: string,
+		id: string,
+		data: Record<string, unknown>,
+	): Promise<Record<string, unknown>> {
+		const res = await this.api.put(
+			`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}/${id}`,
+			{
+				headers: await this.headers(),
+				data,
+			},
+		)
+		expect(
+			res.ok(),
+			`update ${schemaSlug}/${id} failed: HTTP ${res.status()} ${await res.text()}`,
+		).toBeTruthy()
 		return res.json()
 	}
 
-	/** Delete one object by id and stop tracking it. */
+	/**
+	 * Fire an OpenRegister lifecycle transition on an object.
+	 *
+	 * POSTs to /api/objects/{id}/transition {action}. Returns the raw response
+	 * so callers can assert on both success (200) and refusal (422/4xx) — the
+	 * latter is what proves an orderType-gated transition is rejected.
+	 *
+	 * @param id     The object id (uuid).
+	 * @param action The lifecycle action name (e.g. 'verleen', 'approve').
+	 */
+	async transition(
+		id: string,
+		action: string,
+	): Promise<import('@playwright/test').APIResponse> {
+		return this.api.post(`${OR}/objects/${id}/transition`, {
+			headers: await this.headers(),
+			data: { action },
+		})
+	}
+
+	/**
+	 * Delete one object by id and stop tracking it.
+	 * @param schemaSlug
+	 * @param id
+	 */
 	async remove(schemaSlug: string, id: string): Promise<void> {
 		await this.api
-			.delete(`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}/${id}`, { headers: await this.headers() })
+			.delete(`${OR}/objects/${REGISTER_SLUG}/${schemaSlug}/${id}`, {
+				headers: await this.headers(),
+			})
 			.catch(() => undefined)
-		this.created = this.created.filter((c) => !(c.schemaSlug === schemaSlug && c.id === id))
+		this.created = this.created.filter(
+			(c) => !(c.schemaSlug === schemaSlug && c.id === id),
+		)
 	}
 
 	/** Delete every object created this run (afterAll). Best-effort. */
@@ -173,7 +241,10 @@ export class OrFixtures {
 		const headers = await this.headers()
 		for (const ref of [...this.created].reverse()) {
 			await this.api
-				.delete(`${OR}/objects/${ref.registerSlug}/${ref.schemaSlug}/${ref.id}`, { headers })
+				.delete(
+					`${OR}/objects/${ref.registerSlug}/${ref.schemaSlug}/${ref.id}`,
+					{ headers },
+				)
 				.catch(() => undefined)
 		}
 		this.created = []
@@ -182,6 +253,7 @@ export class OrFixtures {
 
 /**
  * Round a money number to 2 decimals for tolerant float comparison.
+ * @param n
  */
 export function money(n: number): number {
 	return Math.round(n * 100) / 100

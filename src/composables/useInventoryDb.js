@@ -25,7 +25,7 @@
  * Vue store (inventoryMobileScanner.js) and sync scheduler can layer
  * higher-level semantics on top.
  *
- * @spec openspec/changes/inventory-mobile-scanner/tasks.md
+ * @spec openspec/specs/inventory-mobile-scanner/spec.md
  */
 
 const DB_NAME = 'shillinq-inventory-mobile-scanner'
@@ -69,7 +69,9 @@ export function initDB() {
 		req.onupgradeneeded = (event) => {
 			const db = event.target.result
 			if (!db.objectStoreNames.contains(STORE_STOCK)) {
-				const stock = db.createObjectStore(STORE_STOCK, { keyPath: 'skuLocation' })
+				const stock = db.createObjectStore(STORE_STOCK, {
+					keyPath: 'skuLocation',
+				})
 				stock.createIndex('sku', 'sku', { unique: false })
 				stock.createIndex('location', 'location', { unique: false })
 				stock.createIndex('lastModified', 'lastModified', { unique: false })
@@ -82,14 +84,19 @@ export function initDB() {
 				db.createObjectStore(STORE_LOCATION, { keyPath: 'code' })
 			}
 			if (!db.objectStoreNames.contains(STORE_PENDING)) {
-				const pending = db.createObjectStore(STORE_PENDING, { keyPath: 'id' })
+				const pending = db.createObjectStore(STORE_PENDING, {
+					keyPath: 'id',
+				})
 				pending.createIndex('synced', 'synced', { unique: false })
-				pending.createIndex('transactionId', 'transactionId', { unique: true })
+				pending.createIndex('transactionId', 'transactionId', {
+					unique: true,
+				})
 			}
 		}
 
 		req.onsuccess = () => resolve(req.result)
-		req.onerror = () => reject(req.error || new Error('Failed to open IndexedDB'))
+		req.onerror = () =>
+			reject(req.error || new Error('Failed to open IndexedDB'))
 	})
 }
 
@@ -319,7 +326,10 @@ export async function mergeServerDelta(db, row) {
 	const existing = await promisify(store.get(key))
 
 	let decision = 'applied-server'
-	if (existing && isStrictlyLater(existing.lastModified, row.lastModified) === true) {
+	if (
+		existing
+		&& isStrictlyLater(existing.lastModified, row.lastModified) === true
+	) {
 		decision = 'kept-local'
 	} else {
 		store.put({

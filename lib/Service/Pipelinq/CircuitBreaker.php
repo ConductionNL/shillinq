@@ -43,197 +43,183 @@ namespace OCA\Shillinq\Service\Pipelinq;
  *
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
  */
-final class CircuitBreaker
-{
-    public const STATE_CLOSED    = 'closed';
-    public const STATE_OPEN      = 'open';
-    public const STATE_HALF_OPEN = 'half_open';
+final class CircuitBreaker {
+	public const STATE_CLOSED = 'closed';
+	public const STATE_OPEN = 'open';
+	public const STATE_HALF_OPEN = 'half_open';
 
-    /**
-     * Current breaker state.
-     *
-     * @var string
-     */
-    private string $state = self::STATE_CLOSED;
+	/**
+	 * Current breaker state.
+	 *
+	 * @var string
+	 */
+	private string $state = self::STATE_CLOSED;
 
-    /**
-     * Count of consecutive failures since the last success.
-     *
-     * @var integer
-     */
-    private int $consecutiveFailures = 0;
+	/**
+	 * Count of consecutive failures since the last success.
+	 *
+	 * @var integer
+	 */
+	private int $consecutiveFailures = 0;
 
-    /**
-     * Unix timestamp of the failure that opened the breaker.
-     *
-     * @var integer|null
-     */
-    private ?int $openedAt = null;
+	/**
+	 * Unix timestamp of the failure that opened the breaker.
+	 *
+	 * @var integer|null
+	 */
+	private ?int $openedAt = null;
 
-    /**
-     * Constructor.
-     *
-     * @param int           $failureThreshold Consecutive failures that trip the breaker.
-     * @param int           $cooldownSeconds  Seconds OPEN before moving to HALF_OPEN (default 300 = 5 minutes).
-     * @param \Closure|null $clock            Callable returning the current unix timestamp; defaults to time().
-     * @param \Closure|null $onTransition     Callback (string $from, string $to, string $reason) for WARNING logging.
-     */
-    public function __construct(
-        private readonly int $failureThreshold=5,
-        private readonly int $cooldownSeconds=300,
-        private readonly ?\Closure $clock=null,
-        private readonly ?\Closure $onTransition=null
-    ) {
+	/**
+	 * Constructor.
+	 *
+	 * @param int $failureThreshold Consecutive failures that trip the breaker.
+	 * @param int $cooldownSeconds Seconds OPEN before moving to HALF_OPEN (default 300 = 5 minutes).
+	 * @param \Closure|null $clock Callable returning the current unix timestamp; defaults to time().
+	 * @param \Closure|null $onTransition Callback (string $from, string $to, string $reason) for WARNING logging.
+	 */
+	public function __construct(
+		private readonly int $failureThreshold = 5,
+		private readonly int $cooldownSeconds = 300,
+		private readonly ?\Closure $clock = null,
+		private readonly ?\Closure $onTransition = null,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Return the current breaker state.
-     *
-     * Side effect: if the breaker is OPEN and the cooldown has elapsed it is
-     * transitioned to HALF_OPEN before the state is returned, so a single
-     * probe call may run.
-     *
-     * @return string One of STATE_CLOSED, STATE_OPEN, STATE_HALF_OPEN.
-     *
-     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
-     */
-    public function state(): string
-    {
-        if ($this->state === self::STATE_OPEN && $this->cooldownElapsed() === true) {
-            $this->transitionTo(to: self::STATE_HALF_OPEN, reason: 'cooldown elapsed');
-        }
+	/**
+	 * Return the current breaker state.
+	 *
+	 * Side effect: if the breaker is OPEN and the cooldown has elapsed it is
+	 * transitioned to HALF_OPEN before the state is returned, so a single
+	 * probe call may run.
+	 *
+	 * @return string One of STATE_CLOSED, STATE_OPEN, STATE_HALF_OPEN.
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
+	 */
+	public function state(): string {
+		if ($this->state === self::STATE_OPEN && $this->cooldownElapsed() === true) {
+			$this->transitionTo(to: self::STATE_HALF_OPEN, reason: 'cooldown elapsed');
+		}
 
-        return $this->state;
+		return $this->state;
+	}//end state()
 
-    }//end state()
+	/**
+	 * Decide whether a request may proceed.
+	 *
+	 * @return bool TRUE when the breaker is CLOSED or HALF_OPEN; FALSE when OPEN (fail fast).
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
+	 */
+	public function allowRequest(): bool {
+		return $this->state() !== self::STATE_OPEN;
+	}//end allowRequest()
 
-    /**
-     * Decide whether a request may proceed.
-     *
-     * @return bool TRUE when the breaker is CLOSED or HALF_OPEN; FALSE when OPEN (fail fast).
-     *
-     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
-     */
-    public function allowRequest(): bool
-    {
-        return $this->state() !== self::STATE_OPEN;
+	/**
+	 * Record a successful call.
+	 *
+	 * Closes a HALF_OPEN breaker and resets the failure counter.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
+	 */
+	public function recordSuccess(): void {
+		$this->consecutiveFailures = 0;
+		if ($this->state !== self::STATE_CLOSED) {
+			$this->transitionTo(to: self::STATE_CLOSED, reason: 'success');
+			$this->openedAt = null;
+		}
 
-    }//end allowRequest()
+	}//end recordSuccess()
 
-    /**
-     * Record a successful call.
-     *
-     * Closes a HALF_OPEN breaker and resets the failure counter.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
-     */
-    public function recordSuccess(): void
-    {
-        $this->consecutiveFailures = 0;
-        if ($this->state !== self::STATE_CLOSED) {
-            $this->transitionTo(to: self::STATE_CLOSED, reason: 'success');
-            $this->openedAt = null;
-        }
+	/**
+	 * Record a failed call.
+	 *
+	 * Trips the breaker once `failureThreshold` consecutive failures have
+	 * been observed, and re-opens a HALF_OPEN breaker on a single failed
+	 * probe.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
+	 */
+	public function recordFailure(): void {
+		$this->consecutiveFailures += 1;
 
-    }//end recordSuccess()
+		if ($this->state === self::STATE_HALF_OPEN) {
+			$this->openedAt = $this->now();
+			$this->transitionTo(to: self::STATE_OPEN, reason: 'half-open probe failed');
+			return;
+		}
 
-    /**
-     * Record a failed call.
-     *
-     * Trips the breaker once `failureThreshold` consecutive failures have
-     * been observed, and re-opens a HALF_OPEN breaker on a single failed
-     * probe.
-     *
-     * @return void
-     *
-     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
-     */
-    public function recordFailure(): void
-    {
-        $this->consecutiveFailures += 1;
+		if ($this->state === self::STATE_CLOSED && $this->consecutiveFailures >= $this->failureThreshold) {
+			$this->openedAt = $this->now();
+			$this->transitionTo(
+				to: self::STATE_OPEN,
+				reason: sprintf('%d consecutive failures', $this->consecutiveFailures)
+			);
+		}
 
-        if ($this->state === self::STATE_HALF_OPEN) {
-            $this->openedAt = $this->now();
-            $this->transitionTo(to: self::STATE_OPEN, reason: 'half-open probe failed');
-            return;
-        }
+	}//end recordFailure()
 
-        if ($this->state === self::STATE_CLOSED && $this->consecutiveFailures >= $this->failureThreshold) {
-            $this->openedAt = $this->now();
-            $this->transitionTo(
-                to: self::STATE_OPEN,
-                reason: sprintf('%d consecutive failures', $this->consecutiveFailures)
-            );
-        }
+	/**
+	 * Current consecutive-failure counter (exposed for tests / observability).
+	 *
+	 * @return int
+	 *
+	 * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
+	 */
+	public function consecutiveFailures(): int {
+		return $this->consecutiveFailures;
+	}//end consecutiveFailures()
 
-    }//end recordFailure()
+	/**
+	 * Return the current unix timestamp via the injected clock or PHP time().
+	 *
+	 * @return int
+	 */
+	private function now(): int {
+		if ($this->clock !== null) {
+			return (int)($this->clock)();
+		}
 
-    /**
-     * Current consecutive-failure counter (exposed for tests / observability).
-     *
-     * @return int
-     *
-     * @spec openspec/changes/bookings-pipelinq-customer-bridge-02-http-adapter-core/tasks.md
-     */
-    public function consecutiveFailures(): int
-    {
-        return $this->consecutiveFailures;
+		return time();
+	}//end now()
 
-    }//end consecutiveFailures()
+	/**
+	 * Has the cooldown window elapsed since the breaker opened?
+	 *
+	 * @return bool
+	 */
+	private function cooldownElapsed(): bool {
+		if ($this->openedAt === null) {
+			return false;
+		}
 
-    /**
-     * Return the current unix timestamp via the injected clock or PHP time().
-     *
-     * @return int
-     */
-    private function now(): int
-    {
-        if ($this->clock !== null) {
-            return (int) ($this->clock)();
-        }
+		return ($this->now() - $this->openedAt) >= $this->cooldownSeconds;
+	}//end cooldownElapsed()
 
-        return time();
+	/**
+	 * Apply a state transition and notify the optional callback.
+	 *
+	 * @param string $to New state.
+	 * @param string $reason Short human-readable cause (for the WARNING log).
+	 *
+	 * @return void
+	 */
+	private function transitionTo(string $to, string $reason): void {
+		if ($this->state === $to) {
+			return;
+		}
 
-    }//end now()
+		$from = $this->state;
+		$this->state = $to;
 
-    /**
-     * Has the cooldown window elapsed since the breaker opened?
-     *
-     * @return bool
-     */
-    private function cooldownElapsed(): bool
-    {
-        if ($this->openedAt === null) {
-            return false;
-        }
+		if ($this->onTransition !== null) {
+			($this->onTransition)($from, $to, $reason);
+		}
 
-        return ($this->now() - $this->openedAt) >= $this->cooldownSeconds;
-
-    }//end cooldownElapsed()
-
-    /**
-     * Apply a state transition and notify the optional callback.
-     *
-     * @param string $to     New state.
-     * @param string $reason Short human-readable cause (for the WARNING log).
-     *
-     * @return void
-     */
-    private function transitionTo(string $to, string $reason): void
-    {
-        if ($this->state === $to) {
-            return;
-        }
-
-        $from        = $this->state;
-        $this->state = $to;
-
-        if ($this->onTransition !== null) {
-            ($this->onTransition)($from, $to, $reason);
-        }
-
-    }//end transitionTo()
+	}//end transitionTo()
 }//end class

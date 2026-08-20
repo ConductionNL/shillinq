@@ -40,8 +40,8 @@
  * @link https://conduction.nl
  * @link https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/programmas_en_formulieren/opgaaf_uitbetaalde_bedragen_aan_derden
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-btw-oss-eu/tasks.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -73,35 +73,34 @@ namespace OCA\Shillinq\Service\External\Ib47;
  *     `Application::register()` to the openconnector-backed
  *     implementation.
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-btw-oss-eu/tasks.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md
  */
-interface Ib47AdapterInterface
-{
-    /**
-     * Submit an IB47 / UBD opgaaf to the Belastingdienst.
-     *
-     * @param array<string,mixed> $payload The IB47 submission envelope —
-     *                                     reportingYear, organizationLegalName,
-     *                                     kvkNumber, fiscalNumber,
-     *                                     beconNumber (optional intermediair),
-     *                                     recipients[] (BSN OR rsin, name,
-     *                                     addressLine, postalCode, city,
-     *                                     country, birthDate (natural persons),
-     *                                     paidAmount, paymentDate, natureCode),
-     *                                     totalRecipients,
-     *                                     totalPaidAmount,
-     *                                     correlationId.
-     *
-     * @return Ib47SubmissionResult The dispatch outcome (status + kenmerk).
-     */
-    public function submit(array $payload): Ib47SubmissionResult;
+interface Ib47AdapterInterface {
+	/**
+	 * Submit an IB47 / UBD opgaaf to the Belastingdienst.
+	 *
+	 * @param array<string,mixed> $payload The IB47 submission envelope —
+	 *                                     reportingYear, organizationLegalName,
+	 *                                     kvkNumber, fiscalNumber,
+	 *                                     beconNumber (optional intermediair),
+	 *                                     recipients[] (BSN OR rsin, name,
+	 *                                     addressLine, postalCode, city,
+	 *                                     country, birthDate (natural persons),
+	 *                                     paidAmount, paymentDate, natureCode),
+	 *                                     totalRecipients,
+	 *                                     totalPaidAmount,
+	 *                                     correlationId.
+	 *
+	 * @return Ib47SubmissionResult The dispatch outcome (status + kenmerk).
+	 */
+	public function submit(array $payload): Ib47SubmissionResult;
 
-    /**
-     * Whether the adapter is dormant — i.e. wired but not contacting
-     * the Belastingdienst.
-     *
-     * @return bool TRUE when the adapter is a log-only stub.
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the adapter is dormant — i.e. wired but not contacting
+	 * the Belastingdienst.
+	 *
+	 * @return bool TRUE when the adapter is a log-only stub.
+	 */
+	public function isDormant(): bool;
 }//end interface

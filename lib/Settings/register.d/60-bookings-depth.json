@@ -1,0 +1,177 @@
+{
+    "components": {
+        "schemas": {
+            "AppointmentSeries": {
+                "slug": "AppointmentSeries",
+                "icon": "CalendarSync",
+                "version": "1.0.0",
+                "title": "Appointment Series",
+                "description": "A recurring appointment series (bookings-depth, recurring-appointment-series). Holds the RRULE-style recurrence definition and the base occurrence template (service, resource, first start, duration). The RecurringSeriesService expands the rule into individual Appointment records, each carrying seriesId + recurrenceIndex, skipping occurrences that violate the existing availability/conflict rules (SlotService). Per bookings/spec.md this realises the Tier-2 recurring-bookings enhancement deferred by the foundation change.",
+                "x-schema-org": "schema:Schedule",
+                "type": "object",
+                "required": [
+                    "administrationId",
+                    "seriesId",
+                    "serviceId",
+                    "resourceId",
+                    "startTime",
+                    "durationMinutes",
+                    "recurrenceRule"
+                ],
+                "properties": {
+                    "administrationId": {
+                        "type": "string",
+                        "description": "FK to Administration for tenant isolation (ADR-005).",
+                        "title": "Administration"
+                    },
+                    "seriesId": {
+                        "type": "string",
+                        "description": "Operator-assigned unique series identifier within the administration.",
+                        "title": "Series Id"
+                    },
+                    "serviceId": {
+                        "type": "string",
+                        "$ref": "Service",
+                        "description": "FK to Service.serviceId — the booked service for every occurrence.",
+                        "title": "Service"
+                    },
+                    "resourceId": {
+                        "type": "string",
+                        "$ref": "Resource",
+                        "description": "FK to Resource.resourceId — the resource every occurrence is booked against.",
+                        "title": "Resource"
+                    },
+                    "customerId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "FK to the customer the series is booked for (optional).",
+                        "title": "Customer"
+                    },
+                    "startTime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "First occurrence start in ISO 8601 UTC. Subsequent occurrences are derived by applying recurrenceRule.",
+                        "title": "Start Time"
+                    },
+                    "durationMinutes": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Duration in minutes applied to every generated occurrence (occurrence endTime = startTime + durationMinutes).",
+                        "title": "Duration (minutes)"
+                    },
+                    "recurrenceRule": {
+                        "type": "string",
+                        "description": "RRULE-style recurrence string (RFC 5545 subset): FREQ=DAILY|WEEKLY|MONTHLY;INTERVAL=n;COUNT=n|UNTIL=YYYYMMDD;BYDAY=MO,TU,... Expanded by RecurringSeriesService.",
+                        "title": "Recurrence Rule"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "cancelled"
+                        ],
+                        "default": "active",
+                        "description": "Series lifecycle state. Cancelling a series does not retroactively cancel already-generated appointments.",
+                        "title": "Status"
+                    },
+                    "generatedCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "Number of individual appointments successfully generated from this series.",
+                        "title": "Generated Count"
+                    },
+                    "skippedCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "Number of occurrences skipped because they violated the availability/conflict rules.",
+                        "title": "Skipped Count"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "field": "status",
+                    "initialState": "active",
+                    "transitions": {
+                        "cancel": {
+                            "from": "active",
+                            "to": "cancelled"
+                        }
+                    }
+                }
+            },
+            "Appointment": {
+                "slug": "Appointment",
+                "description": "Partial overlay (ADR-037 additive merge) onto the Appointment register owned by the bookings-create-appointment fragment (10-bookings-create-appointment.json). Adds the bookings-depth fields: recurrence linkage (seriesId + recurrenceIndex, set when an appointment is generated from an AppointmentSeries) and no-show-fee capture bookkeeping (noShowFeeAmount / noShowFeeStatus / noShowFeePaymentIntentId / noShowFeeCapturedAt, set by NoShowFeeCaptureService when a no-show fee is charged via the payment-provider rails). All fields are optional so they are deliberately NOT added to the base schema's required list.",
+                "properties": {
+                    "seriesId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "FK to AppointmentSeries.seriesId when this appointment was generated from a recurring series; null for a standalone booking.",
+                        "title": "Series"
+                    },
+                    "recurrenceIndex": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "Zero-based ordinal of this occurrence within its series (0 = first occurrence).",
+                        "title": "Recurrence Index"
+                    },
+                    "noShowFeeAmount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "No-show fee charged in integer cents = round(appointmentCost * appliedPolicy.noShowFee / 100). Set by NoShowFeeCaptureService when a no-show is recorded and a fee is defined.",
+                        "title": "No-Show Fee Amount"
+                    },
+                    "noShowFeeStatus": {
+                        "type": "string",
+                        "enum": [
+                            "none",
+                            "pending",
+                            "captured",
+                            "failed",
+                            "waived"
+                        ],
+                        "nullable": true,
+                        "description": "Lifecycle of the no-show-fee charge. `none` = no fee defined; `captured` = charged via the provider; `failed` = the capture call failed; `waived` = operator waived it.",
+                        "title": "No-Show Fee Status"
+                    },
+                    "noShowFeePaymentIntentId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Gateway-side payment intent id for the no-show-fee capture (from the DepositPayment adapter result).",
+                        "title": "No-Show Fee Payment Intent"
+                    },
+                    "noShowFeeCapturedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "Timestamp (ISO 8601 UTC) when the no-show fee was captured.",
+                        "title": "No-Show Fee Captured At"
+                    }
+                }
+            }
+        }
+    },
+    "objects": [
+        {
+            "@self": {
+                "register": "shillinq",
+                "schema": "AppointmentSeries",
+                "slug": "series-yoga-weekly-demo"
+            },
+            "administrationId": "demo-admin",
+            "seriesId": "series-yoga-weekly-demo",
+            "serviceId": "svc-yoga",
+            "resourceId": "res-studio-a",
+            "customerId": "cust-demo-001",
+            "startTime": "2030-01-07T09:00:00Z",
+            "durationMinutes": 60,
+            "recurrenceRule": "FREQ=WEEKLY;BYDAY=MO;COUNT=4",
+            "status": "active",
+            "generatedCount": 4,
+            "skippedCount": 0
+        }
+    ]
+}

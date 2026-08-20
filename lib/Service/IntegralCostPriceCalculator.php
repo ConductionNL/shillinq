@@ -5,9 +5,9 @@
  *
  * Pure-logic calculator for the integrale-kostprijs (IKP) per commercial
  * activity per period (REQ-WMO-002). The calculator sums the 6 component
- * groups — directeLoonkosten, directeMaterialen, directeAfschrijvingen,
- * indirecteOverhead (via BBV taakveld 0.4 sleutel), vermogenskosten (WACC),
- * winstopslag — and computes compliance against the gehanteerd tarief
+ * groups — directPayrollCost, directeMaterialen, directDepreciations,
+ * indirecteOverhead (via BBV task_field 0.4 sleutel), capital_cost (WACC),
+ * winstopslag — and computes compliance against the gehanteerd rate
  * (Art. 25i Mededingingswet integrale-kostprijs check).
  *
  * All money arithmetic uses integer cents to avoid IEEE-754 drift, mirroring
@@ -35,348 +35,340 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use DateTimeImmutable;
+use DateTimeZone;
+
 /**
  * Side-effect-free Integral Cost Price arithmetic helper (REQ-WMO-002).
  *
  * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-5
  */
-class IntegralCostPriceCalculator
-{
-    /**
-     * Default WACC vermogenskosten rate (4.5%, configurable per administration).
-     *
-     * @var float
-     */
-    public const DEFAULT_WACC = 0.045;
+class IntegralCostPriceCalculator {
+	/**
+	 * Default WACC capital_cost rate (4.5%, configurable per administration).
+	 *
+	 * @var float
+	 */
+	public const DEFAULT_WACC = 0.045;
 
-    /**
-     * Default winstopslag rate (3%, configurable per activity per period).
-     *
-     * @var float
-     */
-    public const DEFAULT_WINSTOPSLAG = 0.03;
+	/**
+	 * Default profit mark-up rate (3%, configurable per activity per period).
+	 *
+	 * @var float
+	 */
+	public const DEFAULT_PROFIT_MARKUP = 0.03;
 
-    /**
-     * Convert a money amount to integer cents (REQ-WMO-002 precision).
-     *
-     * @param mixed $amount Money amount (float|int|numeric-string|null).
-     *
-     * @return int Amount in whole cents (half-even rounding).
-     *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-5
-     */
-    public function toCents(mixed $amount): int
-    {
-        return (int) round((float) ($amount ?? 0) * 100, 0, PHP_ROUND_HALF_EVEN);
+	/**
+	 * Convert a money amount to integer cents (REQ-WMO-002 precision).
+	 *
+	 * @param mixed $amount Money amount (float|int|numeric-string|null).
+	 *
+	 * @return int Amount in whole cents (half-even rounding).
+	 *
+	 * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-5
+	 */
+	public function toCents(mixed $amount): int {
+		return (int)round((float)($amount ?? 0) * 100, 0, PHP_ROUND_HALF_EVEN);
+	}//end toCents()
 
-    }//end toCents()
+	/**
+	 * Convert integer cents back to a float money amount.
+	 *
+	 * @param int $cents Amount in whole cents.
+	 *
+	 * @return float Money amount in EUR.
+	 *
+	 * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-5
+	 */
+	public function fromCents(int $cents): float {
+		return ($cents / 100);
+	}//end fromCents()
 
-    /**
-     * Convert integer cents back to a float money amount.
-     *
-     * @param int $cents Amount in whole cents.
-     *
-     * @return float Money amount in EUR.
-     *
-     * @spec openspec/changes/bookkeeping-market-government-separation/tasks.md#p1-5
-     */
-    public function fromCents(int $cents): float
-    {
-        return ($cents / 100);
+	/**
+	 * Sum direct GL lines matching the activity's cost_centre/cost_object (REQ-WMO-002).
+	 *
+	 * @param array<int,array<string,mixed>> $glLines GL lines to scan.
+	 * @param string $costCentre Kostenplaats code to match.
+	 * @param string $costObject Kostendrager code to match.
+	 * @param string $accountKind One of `payroll_cost`, `materialen`, `depreciations`.
+	 *
+	 * @return int Sum of matching GL lines in cents.
+	 *
+	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md#req-wmo-002
+	 */
+	public function sumDirectCosts(array $glLines, string $costCentre, string $costObject, string $accountKind): int {
+		$totalCents = 0;
 
-    }//end fromCents()
+		foreach ($glLines as $line) {
+			if (is_array($line) === false) {
+				continue;
+			}
 
-    /**
-     * Sum direct GL lines matching the activity's kostenplaats/kostendrager (REQ-WMO-002).
-     *
-     * @param array<int,array<string,mixed>> $glLines      GL lines to scan.
-     * @param string                         $kostenplaats Kostenplaats code to match.
-     * @param string                         $kostendrager Kostendrager code to match.
-     * @param string                         $accountKind  One of `loonkosten`, `materialen`, `afschrijvingen`.
-     *
-     * @return int Sum of matching GL lines in cents.
-     */
-    public function sumDirectCosts(array $glLines, string $kostenplaats, string $kostendrager, string $accountKind): int
-    {
-        $totalCents = 0;
+			$kp = (string)($line['costCentre'] ?? $line['costCentreCode'] ?? '');
+			$kd = (string)($line['costObject'] ?? $line['costObjectCode'] ?? '');
+			$kind = (string)($line['accountKind'] ?? $line['kind'] ?? '');
 
-        foreach ($glLines as $line) {
-            if (is_array($line) === false) {
-                continue;
-            }
+			if ($kp !== $costCentre || $kd !== $costObject) {
+				continue;
+			}
 
-            $kp   = (string) ($line['kostenplaats'] ?? $line['kostenplaatsCode'] ?? '');
-            $kd   = (string) ($line['kostendrager'] ?? $line['kostendragerCode'] ?? '');
-            $kind = (string) ($line['accountKind'] ?? $line['kind'] ?? '');
+			if ($kind !== $accountKind) {
+				continue;
+			}
 
-            if ($kp !== $kostenplaats || $kd !== $kostendrager) {
-                continue;
-            }
+			$amount = (float)($line['amount'] ?? 0);
+			if ($amount < 0) {
+				// Credit notes / reversals are subtracted (sign-preserved).
+				$totalCents += $this->toCents(amount: $amount);
+				continue;
+			}
 
-            if ($kind !== $accountKind) {
-                continue;
-            }
+			$totalCents += $this->toCents(amount: $amount);
+		}//end foreach
 
-            $amount = (float) ($line['amount'] ?? $line['bedrag'] ?? 0);
-            if ($amount < 0) {
-                // Credit notes / reversals are subtracted (sign-preserved).
-                $totalCents += $this->toCents(amount: $amount);
-                continue;
-            }
+		return $totalCents;
+	}//end sumDirectCosts()
 
-            $totalCents += $this->toCents(amount: $amount);
-        }//end foreach
+	/**
+	 * Apply the geldende OverheadDistributionRule to the corporate overhead pool (REQ-WMO-002).
+	 *
+	 * Implements the BBV-sleutel inheritance: the rule.bronTaakvelden / rule.basis
+	 * carry the BBV task_field 0.4 overhead, the rule's per-bucket ratios distribute
+	 * it to the activity's overhead components.
+	 *
+	 * @param int $corporateOverheadCents Corporate overhead pool in cents.
+	 * @param array<string,mixed> $rule The OverheadDistributionRule.
+	 * @param string $costObject Kostendrager code (filter ratios to this drager).
+	 *
+	 * @return array<string,int> Per-bucket overhead in cents (huisvesting, ict, directieEnStaf, facilitair, custom).
+	 *
+	 * @spec openspec/specs/bookkeeping-market-government-separation/spec.md#req-wmo-003
+	 */
+	public function distributeOverhead(int $corporateOverheadCents, array $rule, string $costObject): array {
+		$buckets = [];
 
-        return $totalCents;
+		$ratios = $rule['ratios'] ?? $rule['verdeelsleutel'] ?? [];
+		if (is_array($ratios) === false) {
+			return $buckets;
+		}
 
-    }//end sumDirectCosts()
+		foreach ($ratios as $entry) {
+			if (is_array($entry) === false) {
+				continue;
+			}
 
-    /**
-     * Apply the geldende OverheadDistributionRule to the corporate overhead pool (REQ-WMO-002).
-     *
-     * Implements the BBV-sleutel inheritance: the rule.bronTaakvelden / rule.basis
-     * carry the BBV taakveld 0.4 overhead, the rule's per-bucket ratios distribute
-     * it to the activity's overhead components.
-     *
-     * @param int                 $corporateOverheadCents Corporate overhead pool in cents.
-     * @param array<string,mixed> $rule                   The OverheadDistributionRule.
-     * @param string              $kostendrager           Kostendrager code (filter ratios to this drager).
-     *
-     * @return array<string,int> Per-bucket overhead in cents (huisvesting, ict, directieEnStaf, facilitair, custom).
-     */
-    public function distributeOverhead(int $corporateOverheadCents, array $rule, string $kostendrager): array
-    {
-        $buckets = [];
+			$entryDrager = (string)($entry['costObject'] ?? $entry['costObjectCode'] ?? '');
+			if ($entryDrager !== '' && $entryDrager !== $costObject) {
+				continue;
+			}
 
-        $ratios = $rule['ratios'] ?? $rule['verdeelsleutel'] ?? [];
-        if (is_array($ratios) === false) {
-            return $buckets;
-        }
+			$bucket = (string)($entry['bucket'] ?? $entry['category'] ?? 'other');
+			$ratio = (float)($entry['ratio'] ?? 0);
 
-        foreach ($ratios as $entry) {
-            if (is_array($entry) === false) {
-                continue;
-            }
+			if ($ratio < 0.0) {
+				$ratio = 0.0;
+			}
 
-            $entryDrager = (string) ($entry['kostendrager'] ?? $entry['kostendragerCode'] ?? '');
-            if ($entryDrager !== '' && $entryDrager !== $kostendrager) {
-                continue;
-            }
+			if ($ratio > 1.0) {
+				$ratio = 1.0;
+			}
 
-            $bucket = (string) ($entry['bucket'] ?? $entry['categorie'] ?? 'overig');
-            $ratio  = (float) ($entry['ratio'] ?? 0);
+			$bucketCents = (int)round($corporateOverheadCents * $ratio, 0, PHP_ROUND_HALF_EVEN);
+			$buckets[$bucket] = ($buckets[$bucket] ?? 0) + $bucketCents;
+		}//end foreach
 
-            if ($ratio < 0.0) {
-                $ratio = 0.0;
-            }
+		return $buckets;
+	}//end distributeOverhead()
 
-            if ($ratio > 1.0) {
-                $ratio = 1.0;
-            }
+	/**
+	 * Calculate capital_cost via WACC on invested book value (REQ-WMO-002).
+	 *
+	 * Vermogenskosten = invested book value × WACC × period-fraction. Period-fraction
+	 * defaults to 1.0 (annual); pass 0.25 for a quarter, ~0.0833 for a month.
+	 *
+	 * @param int $investedBookValueCents Invested book value (asset base) in cents.
+	 * @param float $waccRate Annual WACC rate (e.g. 0.045 for 4.5%).
+	 * @param float $periodFraction Fraction of a year covered (default 1.0).
+	 *
+	 * @return int Vermogenskosten in cents.
+	 */
+	public function calculateVermogenskosten(int $investedBookValueCents, float $waccRate, float $periodFraction = 1.0): int {
+		if ($waccRate < 0.0) {
+			$waccRate = 0.0;
+		}
 
-            $bucketCents      = (int) round($corporateOverheadCents * $ratio, 0, PHP_ROUND_HALF_EVEN);
-            $buckets[$bucket] = ($buckets[$bucket] ?? 0) + $bucketCents;
-        }//end foreach
+		if ($periodFraction < 0.0) {
+			$periodFraction = 0.0;
+		}
 
-        return $buckets;
+		return (int)round($investedBookValueCents * $waccRate * $periodFraction, 0, PHP_ROUND_HALF_EVEN);
+	}//end calculateVermogenskosten()
 
-    }//end distributeOverhead()
+	/**
+	 * Calculate the profit mark-up on the sum of all other components (REQ-WMO-002).
+	 *
+	 * @param int $baseCents Sum of direct + indirect + capital_cost in cents.
+	 * @param float $rate Profit mark-up rate (default 0.03 = 3%).
+	 *
+	 * @return int Profit mark-up in cents.
+	 */
+	public function calculateProfitMarkup(int $baseCents, float $rate = self::DEFAULT_PROFIT_MARKUP): int {
+		if ($rate < 0.0) {
+			$rate = 0.0;
+		}
 
-    /**
-     * Calculate vermogenskosten via WACC on invested book value (REQ-WMO-002).
-     *
-     * Vermogenskosten = invested book value × WACC × period-fraction. Period-fraction
-     * defaults to 1.0 (annual); pass 0.25 for a quarter, ~0.0833 for a month.
-     *
-     * @param int   $investedBookValueCents Invested book value (asset base) in cents.
-     * @param float $waccRate               Annual WACC rate (e.g. 0.045 for 4.5%).
-     * @param float $periodFraction         Fraction of a year covered (default 1.0).
-     *
-     * @return int Vermogenskosten in cents.
-     */
-    public function calculateVermogenskosten(int $investedBookValueCents, float $waccRate, float $periodFraction=1.0): int
-    {
-        if ($waccRate < 0.0) {
-            $waccRate = 0.0;
-        }
+		return (int)round($baseCents * $rate, 0, PHP_ROUND_HALF_EVEN);
+	}//end calculateProfitMarkup()
 
-        if ($periodFraction < 0.0) {
-            $periodFraction = 0.0;
-        }
+	/**
+	 * Calculate kostprijs per unit (REQ-WMO-002).
+	 *
+	 * @param int $totaleCostCents Total cost in cents.
+	 * @param float $soldUnits Units sold (must be > 0).
+	 *
+	 * @return float|null Cost per unit in EUR, or null if eenheden is 0.
+	 */
+	public function calculateKostprijsPerEenheid(int $totaleCostCents, float $soldUnits): ?float {
+		if ($soldUnits <= 0.0) {
+			return null;
+		}
 
-        return (int) round($investedBookValueCents * $waccRate * $periodFraction, 0, PHP_ROUND_HALF_EVEN);
+		return round(($totaleCostCents / 100) / $soldUnits, 4);
+	}//end calculateKostprijsPerEenheid()
 
-    }//end calculateVermogenskosten()
+	/**
+	 * Determine compliance status: appliedRate >= costPricePerUnit (REQ-WMO-004 / Art. 25i).
+	 *
+	 * @param float|null $appliedRate Actual price charged per unit (EUR).
+	 * @param float|null $costPricePerUnit IKP per unit (EUR).
+	 * @param int $totaleCostCents Total cost in cents (fallback when no eenheden).
+	 * @param float|null $revenueEur Omzet in EUR (fallback when no eenheden).
+	 *
+	 * @return bool True when compliant (Art. 25i integrale-kostprijs rule).
+	 */
+	public function isCompliant(?float $appliedRate, ?float $costPricePerUnit, int $totaleCostCents, ?float $revenueEur = null): bool {
+		if ($appliedRate !== null && $costPricePerUnit !== null) {
+			return $appliedRate >= $costPricePerUnit;
+		}
 
-    /**
-     * Calculate winstopslag as a markup on the sum of all other components (REQ-WMO-002).
-     *
-     * @param int   $baseCents Sum of direct + indirect + vermogenskosten in cents.
-     * @param float $rate      Winstopslag rate (default 0.03 = 3%).
-     *
-     * @return int Winstopslag in cents.
-     */
-    public function calculateWinstopslag(int $baseCents, float $rate=self::DEFAULT_WINSTOPSLAG): int
-    {
-        if ($rate < 0.0) {
-            $rate = 0.0;
-        }
+		if ($revenueEur !== null) {
+			$revenueCents = $this->toCents(amount: $revenueEur);
+			return $revenueCents >= $totaleCostCents;
+		}
 
-        return (int) round($baseCents * $rate, 0, PHP_ROUND_HALF_EVEN);
+		// Insufficient data — default to non-compliant so the operator sees the gap.
+		return false;
+	}//end isCompliant()
 
-    }//end calculateWinstopslag()
+	/**
+	 * Compose a full IntegralCostPrice record (REQ-WMO-002).
+	 *
+	 * @param array<string,mixed> $input Calculation inputs (commercialActivityId,
+	 *                                   period, administrationId, cost_centre,
+	 *                                   cost_object, glLines, corporateOverheadCents,
+	 *                                   overheadRule, investedBookValueCents, waccRate,
+	 *                                   profitMarkupRate, periodFraction, soldUnits,
+	 *                                   unitLabel, appliedRate, omzetEur, status).
+	 *
+	 * @return array<string,mixed> IKP record matching the schema.
+	 */
+	public function compose(array $input): array {
+		$glLines = (array)($input['glLines'] ?? []);
+		$kp = (string)$input['costCentre'];
+		$kd = (string)$input['costObject'];
 
-    /**
-     * Calculate kostprijs per eenheid (REQ-WMO-002).
-     *
-     * @param int   $totaleKostenCents Total cost in cents.
-     * @param float $verkochteEenheden Units sold (must be > 0).
-     *
-     * @return float|null Cost per unit in EUR, or null if eenheden is 0.
-     */
-    public function calculateKostprijsPerEenheid(int $totaleKostenCents, float $verkochteEenheden): ?float
-    {
-        if ($verkochteEenheden <= 0.0) {
-            return null;
-        }
+		$payrollCostCents = $this->sumDirectCosts(glLines: $glLines, costCentre: $kp, costObject: $kd, accountKind: 'payrollCost');
+		$materialenCents = $this->sumDirectCosts(glLines: $glLines, costCentre: $kp, costObject: $kd, accountKind: 'materialen');
+		$depreciationsCents = $this->sumDirectCosts(glLines: $glLines, costCentre: $kp, costObject: $kd, accountKind: 'depreciations');
 
-        return round(($totaleKostenCents / 100) / $verkochteEenheden, 4);
+		$overheadBuckets = $this->distributeOverhead(
+			corporateOverheadCents: (int)($input['corporateOverheadCents'] ?? 0),
+			rule: (array)($input['overheadRule'] ?? []),
+			costObject: $kd
+		);
 
-    }//end calculateKostprijsPerEenheid()
+		$overheadTotalCents = 0;
+		foreach ($overheadBuckets as $cents) {
+			$overheadTotalCents += $cents;
+		}
 
-    /**
-     * Determine compliance status: gehanteerdTarief >= kostprijsPerEenheid (REQ-WMO-004 / Art. 25i).
-     *
-     * @param float|null $gehanteerdTarief    Actual price charged per unit (EUR).
-     * @param float|null $kostprijsPerEenheid IKP per unit (EUR).
-     * @param int        $totaleKostenCents   Total cost in cents (fallback when no eenheden).
-     * @param float|null $omzetEur            Omzet in EUR (fallback when no eenheden).
-     *
-     * @return bool True when compliant (Art. 25i integrale-kostprijs rule).
-     */
-    public function isCompliant(?float $gehanteerdTarief, ?float $kostprijsPerEenheid, int $totaleKostenCents, ?float $omzetEur=null): bool
-    {
-        if ($gehanteerdTarief !== null && $kostprijsPerEenheid !== null) {
-            return $gehanteerdTarief >= $kostprijsPerEenheid;
-        }
+		$vermogensCents = $this->calculateVermogenskosten(
+			investedBookValueCents: (int)($input['investedBookValueCents'] ?? 0),
+			waccRate: (float)($input['waccRate'] ?? self::DEFAULT_WACC),
+			periodFraction: (float)($input['periodFraction'] ?? 1.0)
+		);
 
-        if ($omzetEur !== null) {
-            $omzetCents = $this->toCents(amount: $omzetEur);
-            return $omzetCents >= $totaleKostenCents;
-        }
+		$baseBeforeMarkup = ($payrollCostCents + $materialenCents + $depreciationsCents + $overheadTotalCents + $vermogensCents);
+		// The old spelling is still read: a caller that has not been updated would
+		// otherwise fall through to the DEFAULT rate, which is not an error but a
+		// silently different price.
+		$profitMarkupCents = $this->calculateProfitMarkup(
+			baseCents: $baseBeforeMarkup,
+			rate: (float)($input['profitMarkupRate'] ?? $input['winstopslagRate'] ?? self::DEFAULT_PROFIT_MARKUP)
+		);
 
-        // Insufficient data — default to non-compliant so the operator sees the gap.
-        return false;
+		$totaleCostCents = ($baseBeforeMarkup + $profitMarkupCents);
 
-    }//end isCompliant()
+		$soldUnits = (float)($input['soldUnits'] ?? 0);
+		$costPricePerUnit = $this->calculateKostprijsPerEenheid(totaleCostCents: $totaleCostCents, soldUnits: $soldUnits);
 
-    /**
-     * Compose a full IntegralCostPrice record (REQ-WMO-002).
-     *
-     * @param array<string,mixed> $input Calculation inputs (commercialActivityId,
-     *                                   periode, administrationId, kostenplaats,
-     *                                   kostendrager, glLines, corporateOverheadCents,
-     *                                   overheadRule, investedBookValueCents, waccRate,
-     *                                   winstopslagRate, periodFraction, verkochteEenheden,
-     *                                   eenheidLabel, gehanteerdTarief, omzetEur, status).
-     *
-     * @return array<string,mixed> IKP record matching the schema.
-     */
-    public function compose(array $input): array
-    {
-        $glLines = (array) ($input['glLines'] ?? []);
-        $kp      = (string) $input['kostenplaats'];
-        $kd      = (string) $input['kostendrager'];
+		$appliedRate = null;
+		if (isset($input['appliedRate']) === true) {
+			$appliedRate = (float)$input['appliedRate'];
+		}
 
-        $loonkostenCents     = $this->sumDirectCosts(glLines: $glLines, kostenplaats: $kp, kostendrager: $kd, accountKind: 'loonkosten');
-        $materialenCents     = $this->sumDirectCosts(glLines: $glLines, kostenplaats: $kp, kostendrager: $kd, accountKind: 'materialen');
-        $afschrijvingenCents = $this->sumDirectCosts(glLines: $glLines, kostenplaats: $kp, kostendrager: $kd, accountKind: 'afschrijvingen');
+		$marge = null;
+		$margePercentage = null;
+		if ($appliedRate !== null && $costPricePerUnit !== null) {
+			$marge = round(($appliedRate - $costPricePerUnit), 4);
+			$base = 1.0;
+			if ($costPricePerUnit > 0.0) {
+				$base = $costPricePerUnit;
+			}
 
-        $overheadBuckets = $this->distributeOverhead(
-            corporateOverheadCents: (int) ($input['corporateOverheadCents'] ?? 0),
-            rule: (array) ($input['overheadRule'] ?? []),
-            kostendrager: $kd
-        );
+			$margePercentage = round((($marge / $base) * 100), 4);
+		}
 
-        $overheadTotalCents = 0;
-        foreach ($overheadBuckets as $cents) {
-            $overheadTotalCents += $cents;
-        }
+		$revenueEur = null;
+		if (isset($input['omzetEur']) === true) {
+			$revenueEur = (float)$input['omzetEur'];
+		}
 
-        $vermogensCents = $this->calculateVermogenskosten(
-            investedBookValueCents: (int) ($input['investedBookValueCents'] ?? 0),
-            waccRate: (float) ($input['waccRate'] ?? self::DEFAULT_WACC),
-            periodFraction: (float) ($input['periodFraction'] ?? 1.0)
-        );
+		$compliant = $this->isCompliant(
+			appliedRate: $appliedRate,
+			costPricePerUnit: $costPricePerUnit,
+			totaleCostCents: $totaleCostCents,
+			revenueEur: $revenueEur
+		);
 
-        $baseBeforeMarkup = ($loonkostenCents + $materialenCents + $afschrijvingenCents + $overheadTotalCents + $vermogensCents);
-        $winstopslagCents = $this->calculateWinstopslag(
-            baseCents: $baseBeforeMarkup,
-            rate: (float) ($input['winstopslagRate'] ?? self::DEFAULT_WINSTOPSLAG)
-        );
+		$verkochteUnitsOut = null;
+		if ($soldUnits > 0.0) {
+			$verkochteUnitsOut = $soldUnits;
+		}
 
-        $totaleKostenCents = ($baseBeforeMarkup + $winstopslagCents);
+		return [
+			'commercialActivityId' => (string)$input['commercialActivityId'],
+			'period' => (string)$input['period'],
+			'calculatedOn' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
+			'status' => (string)($input['status'] ?? 'voorlopig'),
+			'componenten' => [
+				'directPayrollCost' => $this->fromCents(cents: $payrollCostCents),
+				'directMaterials' => $this->fromCents(cents: $materialenCents),
+				'directDepreciations' => $this->fromCents(cents: $depreciationsCents),
+				'indirecteOverhead' => array_map(fn (int $c): float => $this->fromCents(cents: $c), $overheadBuckets),
+				'capitalCost' => $this->fromCents(cents: $vermogensCents),
+				'profitMarkup' => $this->fromCents(cents: $profitMarkupCents),
+			],
+			'totalCost' => $this->fromCents(cents: $totaleCostCents),
+			'soldUnits' => $verkochteUnitsOut,
+			'unitLabel' => ($input['unitLabel'] ?? null),
+			'costPricePerUnit' => $costPricePerUnit,
+			'appliedRate' => $appliedRate,
+			'marge' => $marge,
+			'margePercentage' => $margePercentage,
+			'compliant' => $compliant,
+			'administrationId' => (string)$input['administrationId'],
+		];
 
-        $verkochteEenheden   = (float) ($input['verkochteEenheden'] ?? 0);
-        $kostprijsPerEenheid = $this->calculateKostprijsPerEenheid(totaleKostenCents: $totaleKostenCents, verkochteEenheden: $verkochteEenheden);
-
-        $gehanteerdTarief = null;
-        if (isset($input['gehanteerdTarief']) === true) {
-            $gehanteerdTarief = (float) $input['gehanteerdTarief'];
-        }
-
-        $marge           = null;
-        $margePercentage = null;
-        if ($gehanteerdTarief !== null && $kostprijsPerEenheid !== null) {
-            $marge = round(($gehanteerdTarief - $kostprijsPerEenheid), 4);
-            $base  = 1.0;
-            if ($kostprijsPerEenheid > 0.0) {
-                $base = $kostprijsPerEenheid;
-            }
-
-            $margePercentage = round((($marge / $base) * 100), 4);
-        }
-
-        $omzetEur = null;
-        if (isset($input['omzetEur']) === true) {
-            $omzetEur = (float) $input['omzetEur'];
-        }
-
-        $compliant = $this->isCompliant(
-            gehanteerdTarief: $gehanteerdTarief,
-            kostprijsPerEenheid: $kostprijsPerEenheid,
-            totaleKostenCents: $totaleKostenCents,
-            omzetEur: $omzetEur
-        );
-
-        $verkochteEenhedenOut = null;
-        if ($verkochteEenheden > 0.0) {
-            $verkochteEenhedenOut = $verkochteEenheden;
-        }
-
-        return [
-            'commercialActivityId' => (string) $input['commercialActivityId'],
-            'periode'              => (string) $input['periode'],
-            'berekendOp'           => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeImmutable::ATOM),
-            'status'               => (string) ($input['status'] ?? 'voorlopig'),
-            'componenten'          => [
-                'directeLoonkosten'     => $this->fromCents(cents: $loonkostenCents),
-                'directeMaterialen'     => $this->fromCents(cents: $materialenCents),
-                'directeAfschrijvingen' => $this->fromCents(cents: $afschrijvingenCents),
-                'indirecteOverhead'     => array_map(fn (int $c): float => $this->fromCents(cents: $c), $overheadBuckets),
-                'vermogenskosten'       => $this->fromCents(cents: $vermogensCents),
-                'winstopslag'           => $this->fromCents(cents: $winstopslagCents),
-            ],
-            'totaleKosten'         => $this->fromCents(cents: $totaleKostenCents),
-            'verkochteEenheden'    => $verkochteEenhedenOut,
-            'eenheidLabel'         => ($input['eenheidLabel'] ?? null),
-            'kostprijsPerEenheid'  => $kostprijsPerEenheid,
-            'gehanteerdTarief'     => $gehanteerdTarief,
-            'marge'                => $marge,
-            'margePercentage'      => $margePercentage,
-            'compliant'            => $compliant,
-            'administrationId'     => (string) $input['administrationId'],
-        ];
-
-    }//end compose()
+	}//end compose()
 }//end class

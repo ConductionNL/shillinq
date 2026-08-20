@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md
+ * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -41,50 +41,47 @@ namespace OCA\Shillinq\Sort;
  * is not enforced at the API query layer; the spec stays shape-neutral
  * per design.md D2.
  *
- * @spec openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md
+ * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
  */
-class FefoSort
-{
-    /**
-     * Sort a list of InventoryLot records by FEFO order (expiryDate ASC NULLS LAST).
-     *
-     * Stable for equal-expiry lots: original input order is preserved per
-     * PHP's usort guarantee for tied comparisons. Records without an
-     * `expiryDate` (null or empty string) sort after all dated records per
-     * REQ-LOT-005 NULL-last semantics.
-     *
-     * @param array<int,array<string,mixed>> $lots Raw InventoryLot rows.
-     *
-     * @return array<int,array<string,mixed>> The same rows reordered FEFO.
-     *
-     * @spec openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md#REQ-LOT-005
-     */
-    public function sortLots(array $lots): array
-    {
-        usort(
-            $lots,
-            static function (array $left, array $right): int {
-                $leftExpiry   = ($left['expiryDate'] ?? null);
-                $rightExpiry  = ($right['expiryDate'] ?? null);
-                $leftMissing  = ($leftExpiry === null || $leftExpiry === '');
-                $rightMissing = ($rightExpiry === null || $rightExpiry === '');
-                if ($leftMissing === true && $rightMissing === true) {
-                    return 0;
-                }
+class FefoSort {
+	/**
+	 * Sort a list of InventoryLot records by FEFO order (expiryDate ASC NULLS LAST).
+	 *
+	 * Stable for equal-expiry lots: original input order is preserved per
+	 * PHP's usort guarantee for tied comparisons. Records without an
+	 * `expiryDate` (null or empty string) sort after all dated records per
+	 * REQ-LOT-005 NULL-last semantics.
+	 *
+	 * @param array<int,array<string,mixed>> $lots Raw InventoryLot rows.
+	 *
+	 * @return array<int,array<string,mixed>> The same rows reordered FEFO.
+	 *
+	 * @spec openspec/specs/inventory-lot-batch-expiry/spec.md
+	 */
+	public function sortLots(array $lots): array {
+		usort(
+			$lots,
+			static function (array $left, array $right): int {
+				$leftExpiry = ($left['expiryDate'] ?? null);
+				$rightExpiry = ($right['expiryDate'] ?? null);
+				$leftMissing = ($leftExpiry === null || $leftExpiry === '');
+				$rightMissing = ($rightExpiry === null || $rightExpiry === '');
+				if ($leftMissing === true && $rightMissing === true) {
+					return 0;
+				}
 
-                if ($leftMissing === true) {
-                    return 1;
-                }
+				if ($leftMissing === true) {
+					return 1;
+				}
 
-                if ($rightMissing === true) {
-                    return -1;
-                }
+				if ($rightMissing === true) {
+					return -1;
+				}
 
-                return strcmp((string) $leftExpiry, (string) $rightExpiry);
-            }
-        );
+				return strcmp((string)$leftExpiry, (string)$rightExpiry);
+			}
+		);
 
-        return $lots;
-
-    }//end sortLots()
+		return $lots;
+	}//end sortLots()
 }//end class

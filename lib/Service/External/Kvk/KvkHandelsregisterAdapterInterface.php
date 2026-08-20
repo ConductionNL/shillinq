@@ -41,8 +41,8 @@
  * @link https://conduction.nl
  * @link https://developers.kvk.nl/apis/handelsregister
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  * @spec openspec/changes/bookkeeping-consolidation-commercial/proposal.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -71,33 +71,32 @@ namespace OCA\Shillinq\Service\External\Kvk;
  *     `Application::register()` to the openconnector-backed
  *     implementation.
  *
- * @spec openspec/changes/bookkeeping-multi-administratie/tasks.md
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/specs/bookkeeping-multi-administratie/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
-interface KvkHandelsregisterAdapterInterface
-{
-    /**
-     * Look up a legal entity by KvK number.
-     *
-     * @param string              $kvkNumber 8-digit KvK number — leading zeros
-     *                                       preserved.
-     * @param array<string,mixed> $context   Optional context — administrationId,
-     *                                       lookupReason (`onboarding` |
-     *                                       `ar-enrichment` |
-     *                                       `ap-enrichment` |
-     *                                       `consolidation-graph`),
-     *                                       correlationId.
-     *
-     * @return KvkLookupResult The lookup outcome (status + entity envelope
-     *                         + optional vestiging list).
-     */
-    public function lookup(string $kvkNumber, array $context=[]): KvkLookupResult;
+interface KvkHandelsregisterAdapterInterface {
+	/**
+	 * Look up a legal entity by KvK number.
+	 *
+	 * @param string $kvkNumber 8-digit KvK number — leading zeros
+	 *                          preserved.
+	 * @param array<string,mixed> $context Optional context — administrationId,
+	 *                                     lookupReason (`onboarding` |
+	 *                                     `ar-enrichment` |
+	 *                                     `ap-enrichment` |
+	 *                                     `consolidation-graph`),
+	 *                                     correlationId.
+	 *
+	 * @return KvkLookupResult The lookup outcome (status + entity envelope
+	 *                         + optional vestiging list).
+	 */
+	public function lookup(string $kvkNumber, array $context = []): KvkLookupResult;
 
-    /**
-     * Whether the adapter is dormant — i.e. wired but not contacting
-     * the KvK Handelsregister.
-     *
-     * @return bool TRUE when the adapter is a log-only stub.
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the adapter is dormant — i.e. wired but not contacting
+	 * the KvK Handelsregister.
+	 *
+	 * @return bool TRUE when the adapter is a log-only stub.
+	 */
+	public function isDormant(): bool;
 }//end interface

@@ -44,7 +44,7 @@
 				{
 					"id": "PaymentRuns",
 					"label": "Payment Runs",
-					"icon": "BankTransferOutline",
+					"icon": "CreditCardOutline",
 					"route": "PaymentRuns",
 					"order": 50
 				}
@@ -80,12 +80,13 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Payee",
+				"_note": "MASTER vendor record. Body leads with identity, banking and credit terms (what a clerk needs to pay this vendor), then a live list of the payee's own AP invoices as the primary related content — a payee is only meaningful through the invoices booked against it. Open-AP-balance KPI and full audit trail sit in the sidebar; no email/calendar on a financial master record.",
 				"fields": [
 					{"key": "vendorNumber", "label": "Vendor #", "type": "string"},
 					{"key": "name", "label": "Legal Name", "type": "string"},
 					{"key": "tradingName", "label": "Trading Name", "type": "string"},
 					{"key": "kvkNumber", "label": "KvK Number", "type": "string"},
-					{"key": "btwNumber", "label": "BTW Number", "type": "string"},
+					{"key": "vatNumber", "label": "BTW Number", "type": "string"},
 					{"key": "payeeType", "label": "Payee Type", "type": "string"},
 					{"key": "bankAccount.iban", "label": "IBAN", "type": "string"},
 					{"key": "bankAccount.bic", "label": "BIC / SWIFT", "type": "string"},
@@ -102,12 +103,27 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "Payees",
+				"relatedObjects": [
+					{
+						"id": "ap-invoices",
+						"label": "AP invoices",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "APTransaction",
+							"filterField": "vendorId",
+							"columns": ["invoiceNumber", "invoiceDate", "dueDate", "totalAmount", "state"],
+							"detailRoute": "APTransactionDetail",
+							"defaultSort": "dueDate"
+						}
+					}
+				],
 				"sidebarProps": {
 					"tabs": [
 						{
 							"id": "openApBalance",
 							"label": "Open AP Balance",
-							"icon": "CashCheckOutline",
+							"icon": "CashCheck",
 							"order": 10,
 							"widgets": [
 								{
@@ -125,7 +141,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -170,6 +186,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "APTransaction",
+				"_note": "TRANSACTION (supplier invoice). Body shows header + the embedded invoice lines array + amounts + the GL/period linkage that makes it auditable; the source-document PDF and dunning timeline are one click away in the sidebar so the body stays a clean payable summary. Financial record — no email/calendar/meetings; correspondence lives on the dunning notices.",
 				"fields": [
 					{"key": "invoiceNumber", "label": "Invoice #", "type": "string"},
 					{"key": "vendorId", "label": "Vendor", "type": "string"},
@@ -192,6 +209,25 @@
 				"sidebarProps": {
 					"tabs": [
 						{
+							"id": "sourceDoc",
+							"label": "Source Document",
+							"icon": "FileDocumentOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"register": "shillinq",
+										"schema": "APTransaction",
+										"field": "sourceDocumentUri",
+										"objectId": ":id",
+										"description": "Scanned/original supplier invoice referenced from NC Files; opens in the NC Files viewer."
+									}
+								}
+							]
+						},
+						{
 							"id": "dunning",
 							"label": "Dunning Timeline",
 							"icon": "EmailAlertOutline",
@@ -211,7 +247,7 @@
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -231,7 +267,7 @@
 		{
 			"id": "APAgingT2",
 			"route": "/bookkeeping/ap-aging-t2",
-			"type": "aggregate",
+			"type": "index",
 			"title": "AP Aging",
 			"config": {
 				"register": "shillinq",
@@ -313,6 +349,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "DunningNotice",
+				"_note": "Correspondence artifact — a reminder dispatched against one AP invoice. Body carries the reminder level, template, dispatch/acknowledge timestamps and the invoice it references; the related AP invoice is one hop away and the audit trail proves when and by whom it was sent. It is a record of a sent letter, not a live mailbox, so no email leaf is placed on the body.",
 				"fields": [
 					{"key": "invoiceRef", "label": "AP Invoice", "type": "string"},
 					{"key": "reminderLevel", "label": "Reminder Level", "type": "string"},
@@ -323,12 +360,26 @@
 					{"key": "administrationId", "label": "Administration", "type": "string"}
 				],
 				"indexRoute": "DunningNotices",
+				"relatedObjects": [
+					{
+						"id": "dunned-invoice",
+						"label": "Dunned AP invoice",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "APTransaction",
+							"filterField": "invoiceNumber",
+							"columns": ["invoiceNumber", "invoiceDate", "dueDate", "totalAmount", "state"],
+							"detailRoute": "APTransactionDetail"
+						}
+					}
+				],
 				"sidebarProps": {
 					"tabs": [
 						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{
@@ -370,10 +421,33 @@
 			"route": "/bookkeeping/payment-runs/:id",
 			"type": "detail",
 			"title": "Payment Run",
-			"actionsComponent": "PaymentRunDetailActions",
 			"config": {
 				"register": "shillinq",
 				"schema": "PaymentRun",
+				"_note": "BATCH transaction — a SEPA payment run. Body shows the run header, debtor IBAN, the embedded paymentLines array and the total being disbursed, plus the export/reconciliation timestamps that track its lifecycle. The generated SEPA file lives in the Export File sidebar tab; audit trail proves who released it. No comms leaves — a payment run does not correspond with anyone.",
+				"headerActions": [
+					{
+						"id": "export-to-bank",
+						"label": "Export to bank",
+						"type": "api-call",
+						"url": "/apps/shillinq/api/v1/payment-runs/@objectId/export",
+						"method": "POST",
+						"icon": "BankOutline",
+						"variant": "primary",
+						"successMessage": "Payment run exported to bank file.",
+						"errorMessage": "Could not export the payment run.",
+						"visibleWhen": { "field": "lifecycleState", "op": "eq", "value": "approved" }
+					},
+					{
+						"id": "reconcile-statement",
+						"label": "Reconcile / import statement",
+						"type": "open-modal",
+						"target": "PaymentRunReconcileModal",
+						"icon": "BankCheck",
+						"props": { "open": true },
+						"visibleWhen": { "field": "lifecycleState", "op": "eq", "value": "exported" }
+					}
+				],
 				"fields": [
 					{"key": "runNumber", "label": "Run #", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"},
@@ -393,9 +467,28 @@
 				"sidebarProps": {
 					"tabs": [
 						{
+							"id": "exportFile",
+							"label": "Export File",
+							"icon": "FileExportOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"register": "shillinq",
+										"schema": "PaymentRun",
+										"field": "exportedFileRef",
+										"objectId": ":id",
+										"description": "Generated SEPA pain.001 file referenced from NC Files."
+									}
+								}
+							]
+						},
+						{
 							"id": "audit",
 							"label": "Audit Trail",
-							"icon": "HistoryIcon",
+							"icon": "History",
 							"order": 90,
 							"widgets": [
 								{

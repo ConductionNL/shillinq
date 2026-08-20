@@ -3,20 +3,20 @@
 		{
 			"id": "Vpb",
 			"label": "Corporate tax (Vpb)",
-			"icon": "BankOutline",
+			"icon": "PercentOutline",
 			"order": 35,
 			"children": [
 				{
 					"id": "VpbDeadlines",
 					"label": "Tax deadlines",
-					"icon": "CalendarClock",
+					"icon": "ClockAlertOutline",
 					"route": "VpbDeadlines",
 					"order": 10
 				},
 				{
 					"id": "VpbPayments",
 					"label": "Tax payments",
-					"icon": "CashMultiple",
+					"icon": "CreditCardOutline",
 					"route": "VpbPayments",
 					"order": 20
 				},
@@ -71,6 +71,7 @@
 			"type": "detail",
 			"title": "Tax deadline",
 			"config": {
+				"_note": "A Vpb tax deadline is a compliance calendar record: a dated filing/payment obligation for a fiscal year and quarter with its status. Body leads with the deadline data; the payments booked against this deadline (TaxPaymentTracking.relatedDeadlineId) are listed as related so a controller sees whether the obligation is met, and the audit trail sits in a sidebar tab. No comms — a compliance record.",
 				"register": "shillinq",
 				"schema": "TaxDeadline",
 				"fields": [
@@ -83,7 +84,23 @@
 					{ "key": "relatedPeriodId", "label": "Related period", "type": "string" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
-				"indexRoute": "VpbDeadlines"
+				"relatedLists": [
+					{"id": "payments", "title": "Payments for this deadline", "schema": "TaxPaymentTracking", "foreignKey": "relatedDeadlineId", "columns": [
+						{"key": "paymentDate", "label": "Paid"},
+						{"key": "paymentType", "label": "Type"},
+						{"key": "amount", "label": "Amount"},
+						{"key": "status", "label": "Status"}
+					], "detailRoute": "VpbPaymentDetail"}
+				],
+				"auditTrail": true,
+				"indexRoute": "VpbDeadlines",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
@@ -116,8 +133,12 @@
 			"type": "detail",
 			"title": "Tax payment",
 			"config": {
+				"_note": "A Vpb tax payment is a financial TRANSACTION: an amount paid to (or refunded from) the Belastingdienst, posted to a GL account and linked to the deadline it settles. Body leads with the payment data and an amount KPI; the deadline it settles is listed as related for traceability, and the payment proof + audit trail sit in a sidebar tab. No comms — a payment ledger record.",
 				"register": "shillinq",
 				"schema": "TaxPaymentTracking",
+				"aggregations": [
+					{"id": "amount", "title": "Payment amount", "field": "amount", "metric": "value", "format": "currency"}
+				],
 				"fields": [
 					{ "key": "paymentDate", "label": "Payment date", "type": "string" },
 					{ "key": "paymentType", "label": "Payment type", "type": "string" },
@@ -129,7 +150,25 @@
 					{ "key": "description", "label": "Description", "type": "string" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
-				"indexRoute": "VpbPayments"
+				"relatedLists": [
+					{"id": "deadline", "title": "Settled deadline", "schema": "TaxDeadline", "foreignKey": "id", "join": "relatedDeadlineId", "columns": [
+						{"key": "deadlineDate", "label": "Deadline"},
+						{"key": "deadlineType", "label": "Type"},
+						{"key": "status", "label": "Status"}
+					], "detailRoute": "VpbDeadlineDetail"}
+				],
+				"auditTrail": true,
+				"indexRoute": "VpbPayments",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Payment proof", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "TaxPaymentTracking", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{

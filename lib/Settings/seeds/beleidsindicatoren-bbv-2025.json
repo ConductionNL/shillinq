@@ -9,19 +9,19 @@
     "url": "https://www.waarstaatjegemeente.nl"
   },
   "beleidsindicatoren": [
-    {"code": "BBV-0.1", "naam": "Formatie", "eenheid": "fte per 1.000 inwoners", "bron": "Eigen begroting"},
-    {"code": "BBV-0.2", "naam": "Bezetting", "eenheid": "fte per 1.000 inwoners", "bron": "Eigen begroting"},
-    {"code": "BBV-0.3", "naam": "Apparaatskosten", "eenheid": "kosten per inwoner", "bron": "Eigen begroting"},
-    {"code": "BBV-1.1", "naam": "Verwijzingen Halt", "eenheid": "per 1.000 inwoners 12-17 jaar", "bron": "Bureau Halt"},
-    {"code": "BBV-1.2", "naam": "Winkeldiefstallen", "eenheid": "per 1.000 inwoners", "bron": "CBS"},
-    {"code": "BBV-2.1", "naam": "Banen", "eenheid": "per 1.000 inwoners 15-64 jaar", "bron": "LISA"},
-    {"code": "BBV-4.1", "naam": "Absoluut verzuim", "eenheid": "per 1.000 leerlingen", "bron": "DUO"},
-    {"code": "BBV-4.2", "naam": "Relatief verzuim", "eenheid": "per 1.000 leerlingen", "bron": "DUO"},
-    {"code": "BBV-5.1", "naam": "Niet-sporters", "eenheid": "%", "bron": "RIVM"},
-    {"code": "BBV-6.1", "naam": "Banen (sociaal domein)", "eenheid": "per 1.000 inwoners 15-64 jaar", "bron": "CBS"},
-    {"code": "BBV-7.1", "naam": "Omvang huishoudelijk restafval", "eenheid": "kg per inwoner", "bron": "CBS"},
-    {"code": "BBV-7.2", "naam": "Hernieuwbare elektriciteit", "eenheid": "%", "bron": "RWS"},
-    {"code": "BBV-8.1", "naam": "Gemiddelde WOZ-waarde", "eenheid": "EUR x 1.000", "bron": "CBS"},
-    {"code": "BBV-8.2", "naam": "Nieuw gebouwde woningen", "eenheid": "per 1.000 woningen", "bron": "ABF Systeem Woningvoorraad"}
+    {"code": "BBV-0.1", "name": "Formatie", "unit": "fte per 1.000 inwoners", "source": "Eigen begroting"},
+    {"code": "BBV-0.2", "name": "Bezetting", "unit": "fte per 1.000 inwoners", "source": "Eigen begroting"},
+    {"code": "BBV-0.3", "name": "Apparaatskosten", "unit": "kosten per inwoner", "source": "Eigen begroting"},
+    {"code": "BBV-1.1", "name": "Verwijzingen Halt", "unit": "per 1.000 inwoners 12-17 jaar", "source": "Bureau Halt"},
+    {"code": "BBV-1.2", "name": "Winkeldiefstallen", "unit": "per 1.000 inwoners", "source": "CBS"},
+    {"code": "BBV-2.1", "name": "Banen", "unit": "per 1.000 inwoners 15-64 jaar", "source": "LISA"},
+    {"code": "BBV-4.1", "name": "Absoluut verzuim", "unit": "per 1.000 leerlingen", "source": "DUO"},
+    {"code": "BBV-4.2", "name": "Relatief verzuim", "unit": "per 1.000 leerlingen", "source": "DUO"},
+    {"code": "BBV-5.1", "name": "Niet-sporters", "unit": "%", "source": "RIVM"},
+    {"code": "BBV-6.1", "name": "Banen (sociaal domein)", "unit": "per 1.000 inwoners 15-64 jaar", "source": "CBS"},
+    {"code": "BBV-7.1", "name": "Omvang huishoudelijk restafval", "unit": "kg per inwoner", "source": "CBS"},
+    {"code": "BBV-7.2", "name": "Hernieuwbare elektriciteit", "unit": "%", "source": "RWS"},
+    {"code": "BBV-8.1", "name": "Gemiddelde WOZ-waarde", "unit": "EUR x 1.000", "source": "CBS"},
+    {"code": "BBV-8.2", "name": "Nieuw gebouwde woningen", "unit": "per 1.000 woningen", "source": "ABF Systeem Woningvoorraad"}
   ]
 }

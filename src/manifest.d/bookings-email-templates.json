@@ -3,27 +3,27 @@
 		{
 			"id": "Communicatie",
 			"label": "Communication",
-			"icon": "icon-comment",
+			"icon": "CommentOutline",
 			"order": 36,
 			"children": [
 				{
 					"id": "ConfirmationTemplates",
 					"label": "Confirmation Templates",
-					"icon": "EmailCheckOutline",
+					"icon": "FileReplaceOutline",
 					"route": "ConfirmationTemplates",
 					"order": 20
 				},
 				{
 					"id": "ReminderTemplates",
 					"label": "Reminder Templates",
-					"icon": "EmailClockOutline",
+					"icon": "FileReplaceOutline",
 					"route": "ReminderTemplates",
 					"order": 30
 				},
 				{
 					"id": "CancellationTemplates",
 					"label": "Cancellation Templates",
-					"icon": "EmailRemoveOutline",
+					"icon": "FileReplaceOutline",
 					"route": "CancellationTemplates",
 					"order": 40
 				}
@@ -56,6 +56,7 @@
 			"type": "detail",
 			"title": "Confirmation Template",
 			"config": {
+				"_note": "A booking confirmation template is a CONFIG record — the reusable subject/HTML/plain-text layout the notification engine renders when a booking is confirmed, with branding (logo, accent, footer, sender) and computed validation previews (rendered subject/body, length + size + whitelist checks). Body leads with the editable template fields and their live previews; there is NO email leaf because this is template configuration, not a live mailbox. Notification triggers that select this template are listed as related, and the audit trail sits in a sidebar tab to evidence who changed customer-facing copy.",
 				"register": "shillinq",
 				"schema": "BookingConfirmationTemplate",
 				"fields": [
@@ -93,7 +94,22 @@
 					{ "key": "activatedAt", "label": "First activated", "type": "date-time" }
 				],
 				"lifecycleActions": true,
-				"indexRoute": "ConfirmationTemplates"
+				"relatedLists": [
+					{"id": "triggers", "title": "Triggers using this template", "schema": "BookingNotificationTrigger", "foreignKey": "templateOverrideSlug", "join": "templateOverrideSlug", "columns": [
+						{"key": "name", "label": "Trigger"},
+						{"key": "triggerType", "label": "Type"},
+						{"key": "status", "label": "Status"}
+					], "detailRoute": "NotificationTriggerDetail"}
+				],
+				"auditTrail": true,
+				"indexRoute": "ConfirmationTemplates",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
@@ -121,6 +137,7 @@
 			"type": "detail",
 			"title": "Reminder Template",
 			"config": {
+				"_note": "A booking reminder template is a CONFIG record: the reusable email layout the engine renders N hours before a booking (hoursBeforeBooking 1–720), with branding and computed validation previews. Body leads with the timing + template fields and their live previews; NO email leaf — this is template configuration, not a mailbox. Triggers that select this template are listed as related; audit trail in a sidebar tab.",
 				"register": "shillinq",
 				"schema": "BookingReminderTemplate",
 				"fields": [
@@ -149,7 +166,22 @@
 					{ "key": "activatedAt", "label": "First activated", "type": "date-time" }
 				],
 				"lifecycleActions": true,
-				"indexRoute": "ReminderTemplates"
+				"relatedLists": [
+					{"id": "triggers", "title": "Triggers using this template", "schema": "BookingNotificationTrigger", "foreignKey": "templateOverrideSlug", "join": "templateOverrideSlug", "columns": [
+						{"key": "name", "label": "Trigger"},
+						{"key": "triggerType", "label": "Type"},
+						{"key": "status", "label": "Status"}
+					], "detailRoute": "NotificationTriggerDetail"}
+				],
+				"auditTrail": true,
+				"indexRoute": "ReminderTemplates",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
@@ -177,6 +209,7 @@
 			"type": "detail",
 			"title": "Cancellation Template",
 			"config": {
+				"_note": "A booking cancellation template is a CONFIG record: the reusable email layout rendered when a booking is cancelled, optionally injecting {{cancellationReason}} when reason capture is required. Body leads with the template fields and live validation previews; NO email leaf — this is template configuration, not a mailbox. Triggers that select this template are listed as related; audit trail in a sidebar tab.",
 				"register": "shillinq",
 				"schema": "BookingCancellationTemplate",
 				"fields": [
@@ -205,7 +238,22 @@
 					{ "key": "activatedAt", "label": "First activated", "type": "date-time" }
 				],
 				"lifecycleActions": true,
-				"indexRoute": "CancellationTemplates"
+				"relatedLists": [
+					{"id": "triggers", "title": "Triggers using this template", "schema": "BookingNotificationTrigger", "foreignKey": "templateOverrideSlug", "join": "templateOverrideSlug", "columns": [
+						{"key": "name", "label": "Trigger"},
+						{"key": "triggerType", "label": "Type"},
+						{"key": "status", "label": "Status"}
+					], "detailRoute": "NotificationTriggerDetail"}
+				],
+				"auditTrail": true,
+				"indexRoute": "CancellationTemplates",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		}
 	]

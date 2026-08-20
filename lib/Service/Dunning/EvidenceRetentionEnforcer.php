@@ -42,121 +42,117 @@ use InvalidArgumentException;
  *
  * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-25
  */
-final class EvidenceRetentionEnforcer
-{
-    /**
-     * Mandatory retention window for credit-control evidence (art. 6:96 BW + Wki/Wsnp).
-     */
-    public const RETENTION_YEARS = 7;
+final class EvidenceRetentionEnforcer {
+	/**
+	 * Mandatory retention window for credit-control evidence (art. 6:96 BW + Wki/Wsnp).
+	 */
+	public const RETENTION_YEARS = 7;
 
-    /**
-     * Allowed scheme prefixes for an evidenceRef URI, per the shared
-     * `bookkeeping-document-attachment-integration` contract.
-     *
-     * @var array<int,string>
-     */
-    private const ALLOWED_SCHEMES = [
-        'docudesk:',
-        'openregister:',
-        'postnl:',
-        'dunning-run:',
-    ];
+	/**
+	 * Allowed scheme prefixes for an evidenceRef URI, per the shared
+	 * `bookkeeping-document-attachment-integration` contract.
+	 *
+	 * @var array<int,string>
+	 */
+	private const ALLOWED_SCHEMES = [
+		'docudesk:',
+		'openregister:',
+		'postnl:',
+		'dunning-run:',
+	];
 
-    /**
-     * Validate a single evidence URI; throws on malformed input (fail-closed).
-     *
-     * @param string $uri Candidate URI.
-     *
-     * @return void
-     *
-     * @throws InvalidArgumentException When the URI does not match an allowed scheme.
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-25
-     */
-    public function assertEvidenceUri(string $uri): void
-    {
-        $trimmed = trim($uri);
-        if ($trimmed === '') {
-            throw new InvalidArgumentException('Evidence URI must not be empty.');
-        }
+	/**
+	 * Validate a single evidence URI; throws on malformed input (fail-closed).
+	 *
+	 * @param string $uri Candidate URI.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the URI does not match an allowed scheme.
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-25
+	 */
+	public function assertEvidenceUri(string $uri): void {
+		$trimmed = trim($uri);
+		if ($trimmed === '') {
+			throw new InvalidArgumentException('Evidence URI must not be empty.');
+		}
 
-        foreach (self::ALLOWED_SCHEMES as $scheme) {
-            if (str_starts_with($trimmed, $scheme) === true) {
-                $remainder = substr($trimmed, strlen($scheme));
-                if ($remainder === '') {
-                    throw new InvalidArgumentException(
-                        sprintf('Evidence URI %s missing locator after scheme.', $trimmed)
-                    );
-                }
+		foreach (self::ALLOWED_SCHEMES as $scheme) {
+			if (str_starts_with($trimmed, $scheme) === true) {
+				$remainder = substr($trimmed, strlen($scheme));
+				if ($remainder === '') {
+					throw new InvalidArgumentException(
+						sprintf('Evidence URI %s missing locator after scheme.', $trimmed)
+					);
+				}
 
-                return;
-            }
-        }
+				return;
+			}
+		}
 
-        throw new InvalidArgumentException(
-            sprintf(
-                'Evidence URI %s does not match any allowed scheme (%s).',
-                $trimmed,
-                implode(', ', self::ALLOWED_SCHEMES)
-            )
-        );
+		throw new InvalidArgumentException(
+			sprintf(
+				'Evidence URI %s does not match any allowed scheme (%s).',
+				$trimmed,
+				implode(', ', self::ALLOWED_SCHEMES)
+			)
+		);
 
-    }//end assertEvidenceUri()
+	}//end assertEvidenceUri()
 
-    /**
-     * Validate an entire evidenceRefs array; collects all violations.
-     *
-     * @param array<int,mixed> $uris Candidate URIs.
-     *
-     * @return void
-     *
-     * @throws InvalidArgumentException When any URI is malformed (message lists all).
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-25
-     */
-    public function validateEvidenceRefs(array $uris): void
-    {
-        $errors = [];
-        foreach ($uris as $idx => $uri) {
-            if (is_string($uri) === false) {
-                $errors[] = sprintf('evidenceRefs[%d] is not a string.', (int) $idx);
-                continue;
-            }
+	/**
+	 * Validate an entire evidenceRefs array; collects all violations.
+	 *
+	 * @param array<int,mixed> $uris Candidate URIs.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When any URI is malformed (message lists all).
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-25
+	 */
+	public function validateEvidenceRefs(array $uris): void {
+		$errors = [];
+		foreach ($uris as $idx => $uri) {
+			if (is_string($uri) === false) {
+				$errors[] = sprintf('evidenceRefs[%d] is not a string.', (int)$idx);
+				continue;
+			}
 
-            try {
-                $this->assertEvidenceUri(uri: $uri);
-            } catch (InvalidArgumentException $e) {
-                $errors[] = sprintf('evidenceRefs[%d]: %s', (int) $idx, $e->getMessage());
-            }
-        }
+			try {
+				$this->assertEvidenceUri(uri: $uri);
+			} catch (InvalidArgumentException $e) {
+				$errors[] = sprintf('evidenceRefs[%d]: %s', (int)$idx, $e->getMessage());
+			}
+		}
 
-        if ($errors !== []) {
-            throw new InvalidArgumentException(implode(' | ', $errors));
-        }
+		if ($errors !== []) {
+			throw new InvalidArgumentException(implode(' | ', $errors));
+		}
 
-    }//end validateEvidenceRefs()
+	}//end validateEvidenceRefs()
 
-    /**
-     * Return the canonical retention policy envelope for a given evidence URI.
-     *
-     * @param string                 $uri      The evidence URI (already validated).
-     * @param DateTimeImmutable|null $issuedAt The date the evidence was archived (defaults to now).
-     *
-     * @return array{retentionYears:int,deletionDate:string,sourceUri:string}
-     *
-     * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-25
-     */
-    public function retentionPolicy(string $uri, ?DateTimeImmutable $issuedAt=null): array
-    {
-        $this->assertEvidenceUri(uri: $uri);
-        $issuedAt = ($issuedAt ?? new DateTimeImmutable());
-        $deletion = $issuedAt->modify('+'.self::RETENTION_YEARS.' years');
+	/**
+	 * Return the canonical retention policy envelope for a given evidence URI.
+	 *
+	 * @param string $uri The evidence URI (already validated).
+	 * @param DateTimeImmutable|null $issuedAt The date the evidence was archived (defaults to now).
+	 *
+	 * @return array{retentionYears:int,deletionDate:string,sourceUri:string}
+	 *
+	 * @spec openspec/changes/bookkeeping-credit-control-dunning/tasks.md#task-25
+	 */
+	public function retentionPolicy(string $uri, ?DateTimeImmutable $issuedAt = null): array {
+		$this->assertEvidenceUri(uri: $uri);
+		$issuedAt = ($issuedAt ?? new DateTimeImmutable());
+		$deletion = $issuedAt->modify('+' . self::RETENTION_YEARS . ' years');
 
-        return [
-            'retentionYears' => self::RETENTION_YEARS,
-            'deletionDate'   => $deletion->format('Y-m-d'),
-            'sourceUri'      => $uri,
-        ];
+		return [
+			'retentionYears' => self::RETENTION_YEARS,
+			'deletionDate' => $deletion->format('Y-m-d'),
+			'sourceUri' => $uri,
+		];
 
-    }//end retentionPolicy()
+	}//end retentionPolicy()
 }//end class

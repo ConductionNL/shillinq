@@ -1,39 +1,7 @@
 {
-	"menu": [
-		{
-			"id": "Inventory",
-			"children": [
-				{
-					"id": "InventoryValuations",
-					"label": "Valuations",
-					"icon": "CalculatorOutline",
-					"route": "InventoryValuations",
-					"order": 30
-				}
-			]
-		}
-	],
+	"_meta_nav_six_clusters_note": "nav-six-clusters (2026-08-20, design.md §4 row 7): InventoryValuations was a near-identical duplicate INDEX of the base manifest's InventoryValuation (same schema, no distinguishing filter) — deleted along with its menu leaf; InventoryValuation is canonical. InventoryValuationDetail is KEPT here unchanged: it already shadows/wins over a dead duplicate declaration of the same id in the base manifest (removed separately) — the effective detail route stays /inventory/valuations/:id exactly as served today, per REQ-NAVC-010 (no route renames).",
+	"menu": [],
 	"pages": [
-		{
-			"id": "InventoryValuations",
-			"route": "/inventory/valuations",
-			"type": "index",
-			"title": "Inventory Valuations",
-			"config": {
-				"register": "shillinq",
-				"schema": "InventoryValuation",
-				"columns": [
-					{"key": "warehouse", "label": "Warehouse", "sortable": true},
-					{"key": "quantity", "label": "Quantity", "sortable": true},
-					{"key": "unitCost", "label": "Unit Cost", "sortable": true},
-					{"key": "totalValue", "label": "Total Value", "sortable": true},
-					{"key": "valuationMethod", "label": "Method", "sortable": true},
-					{"key": "status", "label": "Status", "sortable": true}
-				],
-				"defaultSort": "date",
-				"detailRoute": "InventoryValuationDetail"
-			}
-		},
 		{
 			"id": "InventoryValuationDetail",
 			"route": "/inventory/valuations/:id",
@@ -42,6 +10,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "InventoryValuation",
+				"_note": "VALUATION snapshot (the FIFO/AVG value of a product's stock at a warehouse on a date — the number that lands on the balance sheet and feeds COGS). The body foregrounds the valuation maths: quantity × unit cost = total value, the method that produced it, the date, warehouse, product and cost-center it books to, and the pending-COGS flag. A leaf snapshot with no child lines; no comms. The audit trail sidebar is the recalculation/method-change record, essential when a valuation is restated.",
 				"fields": [
 					{"key": "name", "label": "Name", "type": "string"},
 					{"key": "quantity", "label": "Quantity", "type": "number"},
@@ -56,7 +25,27 @@
 					{"key": "pendingCogs", "label": "Pending COGS", "type": "boolean"},
 					{"key": "administrationId", "label": "Administration", "type": "string"}
 				],
-				"indexRoute": "InventoryValuations"
+				"indexRoute": "InventoryValuations",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		}
 	]

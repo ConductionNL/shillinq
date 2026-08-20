@@ -3,20 +3,20 @@
 		{
 			"id": "Communicatie",
 			"label": "Communication",
-			"icon": "icon-comment",
+			"icon": "CommentOutline",
 			"order": 36,
 			"children": [
 				{
 					"id": "NotificationTriggers",
 					"label": "Notification Triggers",
-					"icon": "BellRingOutline",
+					"icon": "BellOutline",
 					"route": "NotificationTriggers",
 					"order": 10
 				},
 				{
 					"id": "NotificationMonitor",
 					"label": "Notification Monitor",
-					"icon": "ChartLine",
+					"icon": "BellOutline",
 					"route": "NotificationMonitor",
 					"order": 50
 				}
@@ -51,6 +51,7 @@
 			"type": "detail",
 			"title": "Notification Trigger",
 			"config": {
+				"_note": "A notification trigger is a CONFIG rule: it binds a booking lifecycle event to an ordered channel-fallback list, recipient rules, rate limits, a dedupe window, opt-out policy and an optional template override. Body leads with the rule fields and their computed summaries; there is NO email leaf — this configures dispatch, it is not a mailbox. The deliveries this rule produced and the template it overrides are listed as related for verification, and the audit trail sits in a sidebar tab (rule changes to customer messaging must be evidenced under AVG).",
 				"register": "shillinq",
 				"schema": "BookingNotificationTrigger",
 				"fields": [
@@ -79,7 +80,28 @@
 					{ "key": "activatedAt", "label": "First enabled", "type": "date-time" }
 				],
 				"lifecycleActions": true,
-				"indexRoute": "NotificationTriggers"
+				"relatedLists": [
+					{"id": "deliveries", "title": "Recent deliveries", "schema": "NotificationDelivery", "foreignKey": "triggerName", "join": "name", "columns": [
+						{"key": "sentAt", "label": "Sent"},
+						{"key": "channel", "label": "Channel"},
+						{"key": "status", "label": "Status"},
+						{"key": "skipReason", "label": "Reason"}
+					], "detailRoute": "NotificationDeliveryDetail"},
+					{"id": "template", "title": "Overridden template", "schema": "BookingConfirmationTemplate", "foreignKey": "name", "join": "templateOverrideSlug", "columns": [
+						{"key": "name", "label": "Template"},
+						{"key": "locale", "label": "Locale"},
+						{"key": "status", "label": "Status"}
+					]}
+				],
+				"auditTrail": true,
+				"indexRoute": "NotificationTriggers",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
@@ -128,6 +150,7 @@
 			"type": "detail",
 			"title": "Notification Delivery",
 			"config": {
+				"_note": "A notification delivery is an immutable LOG record: one dispatch attempt for one recipient on one channel, with its status, skip/failure reason, retry count and dispatch-group id linking fallback attempts. Body leads with the delivery outcome; the other attempts in the same dispatch group are listed as related so an operator can follow a fallback chain. NO email leaf — this is a delivery log, not a mailbox; the audit trail sidebar tab evidences the immutable record.",
 				"register": "shillinq",
 				"schema": "NotificationDelivery",
 				"fields": [
@@ -147,7 +170,23 @@
 					{ "key": "sentAt", "label": "Sent at", "type": "date-time" }
 				],
 				"lifecycleActions": false,
-				"indexRoute": "NotificationMonitor"
+				"relatedLists": [
+					{"id": "groupAttempts", "title": "Attempts in this dispatch group", "schema": "NotificationDelivery", "foreignKey": "dispatchGroupId", "join": "dispatchGroupId", "columns": [
+						{"key": "channel", "label": "Channel"},
+						{"key": "status", "label": "Status"},
+						{"key": "retryCount", "label": "Retries"},
+						{"key": "sentAt", "label": "Sent"}
+					], "detailRoute": "NotificationDeliveryDetail"}
+				],
+				"auditTrail": true,
+				"indexRoute": "NotificationMonitor",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		}
 	],
@@ -155,7 +194,7 @@
 		{
 			"id": "configure-notifications",
 			"label": "Notifications",
-			"icon": "BellRingOutline",
+			"icon": "BellOutline",
 			"modal": "BookingNotificationConfigModal",
 			"description": "Open per-booking notification configuration. Loads triggers whose triggerType matches one of the booking lifecycle events plus any triggers scoped to this booking; lets the organiser toggle each on/off and pick its channels (REQ-BNT-007)."
 		}

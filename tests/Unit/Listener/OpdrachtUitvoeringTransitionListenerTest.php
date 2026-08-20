@@ -37,6 +37,7 @@ use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Integration\TenderNedStatusSync;
 use OCA\Shillinq\Listener\OpdrachtUitvoeringTransitionListener;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
+use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -49,308 +50,318 @@ use Psr\Log\NullLogger;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class OpdrachtUitvoeringTransitionListenerTest extends TestCase
-{
+final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 
-    /**
-     * Build a recording IEventDispatcher.
-     *
-     * @return IEventDispatcher
-     */
-    private function recordingDispatcher(): IEventDispatcher
-    {
-        return new class implements IEventDispatcher {
+	/**
+	 * Build a recording IEventDispatcher.
+	 *
+	 * @return IEventDispatcher
+	 */
+	private function recordingDispatcher(): IEventDispatcher {
+		return new class implements IEventDispatcher {
+			/**
+			 * @var array<int, array{name: string, event: Event}>
+			 */
+			public array $events = [];
 
-            /**
-             * @var array<int, array{name: string, event: Event}>
-             */
-            public array $events = [];
+			public function dispatch(string $eventName, Event $event): void {
+				$this->events[] = ['name' => $eventName, 'event' => $event];
 
-            public function dispatch(string $eventName, Event $event): void
-            {
-                $this->events[] = ['name' => $eventName, 'event' => $event];
+			}//end dispatch()
 
-            }//end dispatch()
+			public function dispatchTyped(Event $event): void {
+				// No-op.
 
-            public function dispatchTyped(Event $event): void
-            {
-                // No-op.
+			}//end dispatchTyped()
 
-            }//end dispatchTyped()
+			public function addListener(string $eventName, callable $listener, int $priority = 0): void {
+				// No-op.
 
-            public function addListener(string $eventName, callable $listener, int $priority=0): void
-            {
-                // No-op.
+			}//end addListener()
 
-            }//end addListener()
+			public function addServiceListener(string $eventName, string $className, int $priority = 0): void {
+				// No-op.
 
-            public function addServiceListener(string $eventName, string $className, int $priority=0): void
-            {
-                // No-op.
+			}//end addServiceListener()
 
-            }//end addServiceListener()
+			public function hasListeners(string $eventName): bool {
+				return false;
+			}//end hasListeners()
 
-            public function hasListeners(string $eventName): bool
-            {
-                return false;
+			public function removeListener(string $eventName, callable $listener): void {
+				// No-op.
 
-            }//end hasListeners()
+			}//end removeListener()
+		};
 
-            public function removeListener(string $eventName, callable $listener): void
-            {
-                // No-op.
+	}//end recordingDispatcher()
 
-            }//end removeListener()
-        };
+	/**
+	 * Build a spying TenderNedStatusSync that records syncCompletion calls.
+	 *
+	 * @return TenderNedStatusSync
+	 */
+	private function spyingSync(): TenderNedStatusSync {
+		return new class($this->emptyContainer(), $this->emptyAppConfig(), new NullLogger()) extends TenderNedStatusSync {
+			/**
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $syncCalls = [];
 
-    }//end recordingDispatcher()
+			public function syncCompletion(array $oplevering): bool {
+				$this->syncCalls[] = $oplevering;
+				return true;
+			}//end syncCompletion()
+		};
 
-    /**
-     * Build a spying TenderNedStatusSync that records syncCompletion calls.
-     *
-     * @return TenderNedStatusSync
-     */
-    private function spyingSync(): TenderNedStatusSync
-    {
-        return new class(
-            $this->emptyContainer(),
-            $this->emptyAppConfig(),
-            new NullLogger()
-        ) extends TenderNedStatusSync {
+	}//end spyingSync()
 
-            /**
-             * @var array<int, array<string, mixed>>
-             */
-            public array $syncCalls = [];
+	/**
+	 * Build a container that never resolves anything.
+	 *
+	 * @return ContainerInterface
+	 */
+	private function emptyContainer(): ContainerInterface {
+		return new class implements ContainerInterface {
+			public function get(string $id): mixed {
+				throw new class('not bound') extends \Exception implements \Psr\Container\NotFoundExceptionInterface {
+				};
 
-            public function syncCompletion(array $oplevering): bool
-            {
-                $this->syncCalls[] = $oplevering;
-                return true;
+			}//end get()
 
-            }//end syncCompletion()
-        };
+			public function has(string $id): bool {
+				return false;
+			}//end has()
+		};
 
-    }//end spyingSync()
+	}//end emptyContainer()
 
-    /**
-     * Build a container that never resolves anything.
-     *
-     * @return ContainerInterface
-     */
-    private function emptyContainer(): ContainerInterface
-    {
-        return new class implements ContainerInterface {
+	/**
+	 * Build an IAppConfig returning configured defaults.
+	 *
+	 * @return IAppConfig
+	 */
+	private function emptyAppConfig(): IAppConfig {
+		return $this->createMock(IAppConfig::class);
+	}//end emptyAppConfig()
 
-            public function get(string $id): mixed
-            {
-                throw new class('not bound') extends \Exception implements \Psr\Container\NotFoundExceptionInterface {
-                };
+	/**
+	 * Build an ObjectEntity carrying a numeric schema **id**, exactly as
+	 * OpenRegister stamps it (`setSchema((string) $schema->getId())`).
+	 *
+	 * A hand-built entity carrying the slug is a shape production never
+	 * produces; the slug arrives through {@see ListenerSchemaResolver}.
+	 *
+	 * @param string $schemaId Numeric schema id as OR stamps it.
+	 * @param array<string,mixed> $payload Payload.
+	 *
+	 * @return ObjectEntity
+	 */
+	private function entity(string $schemaId, array $payload): ObjectEntity {
+		$entity = new ObjectEntity();
+		$entity->setSchema($schemaId);
+		$entity->setObject($payload);
+		return $entity;
+	}//end entity()
 
-            }//end get()
+	/**
+	 * Build a ListenerSchemaResolver stub that reports a given schema slug.
+	 *
+	 * @param string $slug Slug the resolver resolves the entity's id to.
+	 *
+	 * @return ListenerSchemaResolver
+	 */
+	private function resolver(string $slug): ListenerSchemaResolver {
+		$resolver = $this->createMock(ListenerSchemaResolver::class);
+		$resolver->method('schemaSlug')->willReturn($slug);
+		return $resolver;
+	}//end resolver()
 
-            public function has(string $id): bool
-            {
-                return false;
+	/**
+	 * A completed regular milestone emits but does NOT sync.
+	 *
+	 * @return void
+	 */
+	public function testCompletedMilestoneEmitsButDoesNotSync(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
+		$sync = $this->spyingSync();
+		$listener = new OpdrachtUitvoeringTransitionListener(
+			$emitter,
+			$sync,
+			$this->resolver('OpdrachtUitvoering'),
+			new NullLogger()
+		);
 
-            }//end has()
-        };
+		$event = new ObjectTransitionedEvent(
+			$this->entity('1201', [
+				'commitmentId' => 'TN-2026-0001',
+				'milestoneId' => 'M-Q1',
+				'deliveryType' => 'tussenoplevering',
+				'approved' => true,
+				'supportingDocuments' => [['documentId' => 'doc-1']],
+			]),
+			'voltooien',
+			'in-progress',
+			'completed',
+			'admin',
+			'shillinq',
+			'OpdrachtUitvoering'
+		);
 
-    }//end emptyContainer()
+		$listener->handle($event);
 
-    /**
-     * Build an IAppConfig returning configured defaults.
-     *
-     * @return IAppConfig
-     */
-    private function emptyAppConfig(): IAppConfig
-    {
-        return $this->createMock(IAppConfig::class);
+		$this->assertCount(1, $dispatcher->events);
+		$this->assertSame(BudgetImpactEmitter::EVENT_MILESTONE_COMPLETED, $dispatcher->events[0]['name']);
+		$this->assertCount(0, $sync->syncCalls);
 
-    }//end emptyAppConfig()
+	}//end testCompletedMilestoneEmitsButDoesNotSync()
 
-    /**
-     * Build an ObjectEntity with schema + payload.
-     *
-     * @param string              $schema  Schema slug.
-     * @param array<string,mixed> $payload Payload.
-     *
-     * @return ObjectEntity
-     */
-    private function entity(string $schema, array $payload): ObjectEntity
-    {
-        $entity = new ObjectEntity();
-        $entity->setSchema($schema);
-        $entity->setObject($payload);
-        return $entity;
+	/**
+	 * A completed approved eindoplevering triggers the outbound sync.
+	 *
+	 * @return void
+	 */
+	public function testApprovedEindopleveringTriggersSync(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
+		$sync = $this->spyingSync();
+		$listener = new OpdrachtUitvoeringTransitionListener(
+			$emitter,
+			$sync,
+			$this->resolver('OpdrachtUitvoering'),
+			new NullLogger()
+		);
 
-    }//end entity()
+		$event = new ObjectTransitionedEvent(
+			$this->entity('1201', [
+				'commitmentId' => 'TN-2026-0001',
+				'milestoneId' => 'M-EIND',
+				'deliveryType' => 'eindoplevering',
+				'approved' => true,
+				'supportingDocuments' => [['documentId' => 'doc-1']],
+			]),
+			'voltooien',
+			'in-progress',
+			'completed',
+			'admin',
+			'shillinq',
+			'OpdrachtUitvoering'
+		);
 
-    /**
-     * A completed regular milestone emits but does NOT sync.
-     *
-     * @return void
-     */
-    public function testCompletedMilestoneEmitsButDoesNotSync(): void
-    {
-        $dispatcher = $this->recordingDispatcher();
-        $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $sync       = $this->spyingSync();
-        $listener   = new OpdrachtUitvoeringTransitionListener($emitter, $sync, new NullLogger());
+		$listener->handle($event);
 
-        $event = new ObjectTransitionedEvent(
-            $this->entity('OpdrachtUitvoering', [
-                'verplichtingId'  => 'TN-2026-0001',
-                'mijlpaalId'      => 'M-Q1',
-                'opleveringsType' => 'tussenoplevering',
-                'goedgekeurd'     => true,
-                'bewijsstukken'   => [['documentId' => 'doc-1']],
-            ]),
-            'voltooien',
-            'in-progress',
-            'completed',
-            'admin',
-            'shillinq',
-            'OpdrachtUitvoering'
-        );
+		$this->assertCount(1, $sync->syncCalls);
+		$this->assertSame('M-EIND', $sync->syncCalls[0]['milestoneId']);
 
-        $listener->handle($event);
+	}//end testApprovedEindopleveringTriggersSync()
 
-        $this->assertCount(1, $dispatcher->events);
-        $this->assertSame(BudgetImpactEmitter::EVENT_MILESTONE_COMPLETED, $dispatcher->events[0]['name']);
-        $this->assertCount(0, $sync->syncCalls);
+	/**
+	 * An unapproved eindoplevering does NOT trigger sync.
+	 *
+	 * @return void
+	 */
+	public function testUnapprovedEindopleveringDoesNotTriggerSync(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
+		$sync = $this->spyingSync();
+		$listener = new OpdrachtUitvoeringTransitionListener(
+			$emitter,
+			$sync,
+			$this->resolver('OpdrachtUitvoering'),
+			new NullLogger()
+		);
 
-    }//end testCompletedMilestoneEmitsButDoesNotSync()
+		$event = new ObjectTransitionedEvent(
+			$this->entity('1201', [
+				'commitmentId' => 'TN-2026-0001',
+				'milestoneId' => 'M-EIND',
+				'deliveryType' => 'eindoplevering',
+				'approved' => false,
+				'supportingDocuments' => [['documentId' => 'doc-1']],
+			]),
+			'voltooien',
+			'in-progress',
+			'completed',
+			'admin',
+			'shillinq',
+			'OpdrachtUitvoering'
+		);
 
-    /**
-     * A completed approved eindoplevering triggers the outbound sync.
-     *
-     * @return void
-     */
-    public function testApprovedEindopleveringTriggersSync(): void
-    {
-        $dispatcher = $this->recordingDispatcher();
-        $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $sync       = $this->spyingSync();
-        $listener   = new OpdrachtUitvoeringTransitionListener($emitter, $sync, new NullLogger());
+		$listener->handle($event);
 
-        $event = new ObjectTransitionedEvent(
-            $this->entity('OpdrachtUitvoering', [
-                'verplichtingId'  => 'TN-2026-0001',
-                'mijlpaalId'      => 'M-EIND',
-                'opleveringsType' => 'eindoplevering',
-                'goedgekeurd'     => true,
-                'bewijsstukken'   => [['documentId' => 'doc-1']],
-            ]),
-            'voltooien',
-            'in-progress',
-            'completed',
-            'admin',
-            'shillinq',
-            'OpdrachtUitvoering'
-        );
+		$this->assertCount(0, $sync->syncCalls);
 
-        $listener->handle($event);
+	}//end testUnapprovedEindopleveringDoesNotTriggerSync()
 
-        $this->assertCount(1, $sync->syncCalls);
-        $this->assertSame('M-EIND', $sync->syncCalls[0]['mijlpaalId']);
+	/**
+	 * A non-completed transition is ignored entirely.
+	 *
+	 * @return void
+	 */
+	public function testNonCompletedTransitionIsIgnored(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
+		$sync = $this->spyingSync();
+		$listener = new OpdrachtUitvoeringTransitionListener(
+			$emitter,
+			$sync,
+			$this->resolver('OpdrachtUitvoering'),
+			new NullLogger()
+		);
 
-    }//end testApprovedEindopleveringTriggersSync()
+		$event = new ObjectTransitionedEvent(
+			$this->entity('1201', [
+				'commitmentId' => 'TN-2026-0001',
+				'milestoneId' => 'M-EIND',
+				'deliveryType' => 'eindoplevering',
+				'approved' => true,
+			]),
+			'starten',
+			'planned',
+			'in-progress',
+			'admin',
+			'shillinq',
+			'OpdrachtUitvoering'
+		);
 
-    /**
-     * An unapproved eindoplevering does NOT trigger sync.
-     *
-     * @return void
-     */
-    public function testUnapprovedEindopleveringDoesNotTriggerSync(): void
-    {
-        $dispatcher = $this->recordingDispatcher();
-        $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $sync       = $this->spyingSync();
-        $listener   = new OpdrachtUitvoeringTransitionListener($emitter, $sync, new NullLogger());
+		$listener->handle($event);
 
-        $event = new ObjectTransitionedEvent(
-            $this->entity('OpdrachtUitvoering', [
-                'verplichtingId'  => 'TN-2026-0001',
-                'mijlpaalId'      => 'M-EIND',
-                'opleveringsType' => 'eindoplevering',
-                'goedgekeurd'     => false,
-                'bewijsstukken'   => [['documentId' => 'doc-1']],
-            ]),
-            'voltooien',
-            'in-progress',
-            'completed',
-            'admin',
-            'shillinq',
-            'OpdrachtUitvoering'
-        );
+		$this->assertCount(0, $dispatcher->events);
+		$this->assertCount(0, $sync->syncCalls);
 
-        $listener->handle($event);
+	}//end testNonCompletedTransitionIsIgnored()
 
-        $this->assertCount(0, $sync->syncCalls);
+	/**
+	 * A non-OpdrachtUitvoering schema is ignored.
+	 *
+	 * @return void
+	 */
+	public function testNonOpdrachtUitvoeringSchemaIsIgnored(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
+		$sync = $this->spyingSync();
+		$listener = new OpdrachtUitvoeringTransitionListener(
+			$emitter,
+			$sync,
+			$this->resolver('Verplichting'),
+			new NullLogger()
+		);
 
-    }//end testUnapprovedEindopleveringDoesNotTriggerSync()
+		$event = new ObjectTransitionedEvent(
+			$this->entity('1089', ['status' => 'active']),
+			'activeren',
+			'draft',
+			'completed',
+			'admin',
+			'shillinq',
+			'Verplichting'
+		);
 
-    /**
-     * A non-completed transition is ignored entirely.
-     *
-     * @return void
-     */
-    public function testNonCompletedTransitionIsIgnored(): void
-    {
-        $dispatcher = $this->recordingDispatcher();
-        $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $sync       = $this->spyingSync();
-        $listener   = new OpdrachtUitvoeringTransitionListener($emitter, $sync, new NullLogger());
+		$listener->handle($event);
 
-        $event = new ObjectTransitionedEvent(
-            $this->entity('OpdrachtUitvoering', [
-                'verplichtingId'  => 'TN-2026-0001',
-                'mijlpaalId'      => 'M-EIND',
-                'opleveringsType' => 'eindoplevering',
-                'goedgekeurd'     => true,
-            ]),
-            'starten',
-            'planned',
-            'in-progress',
-            'admin',
-            'shillinq',
-            'OpdrachtUitvoering'
-        );
+		$this->assertCount(0, $dispatcher->events);
+		$this->assertCount(0, $sync->syncCalls);
 
-        $listener->handle($event);
-
-        $this->assertCount(0, $dispatcher->events);
-        $this->assertCount(0, $sync->syncCalls);
-
-    }//end testNonCompletedTransitionIsIgnored()
-
-    /**
-     * A non-OpdrachtUitvoering schema is ignored.
-     *
-     * @return void
-     */
-    public function testNonOpdrachtUitvoeringSchemaIsIgnored(): void
-    {
-        $dispatcher = $this->recordingDispatcher();
-        $emitter    = new BudgetImpactEmitter($dispatcher, new NullLogger());
-        $sync       = $this->spyingSync();
-        $listener   = new OpdrachtUitvoeringTransitionListener($emitter, $sync, new NullLogger());
-
-        $event = new ObjectTransitionedEvent(
-            $this->entity('Verplichting', ['status' => 'active']),
-            'activeren',
-            'concept',
-            'completed',
-            'admin',
-            'shillinq',
-            'Verplichting'
-        );
-
-        $listener->handle($event);
-
-        $this->assertCount(0, $dispatcher->events);
-        $this->assertCount(0, $sync->syncCalls);
-
-    }//end testNonOpdrachtUitvoeringSchemaIsIgnored()
+	}//end testNonOpdrachtUitvoeringSchemaIsIgnored()
 }//end class

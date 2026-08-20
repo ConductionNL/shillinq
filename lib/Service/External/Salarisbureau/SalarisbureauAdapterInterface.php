@@ -35,7 +35,7 @@
  * @link https://developer.loket.nl/
  * @link https://support.nmbrs.com/hc/nl/articles/360013506839
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -64,37 +64,36 @@ namespace OCA\Shillinq\Service\External\Salarisbureau;
  *     `Application::register()` to the vendor-specific
  *     implementation (e.g. `OpenConnectorAdpSalarisbureauAdapter`).
  *
- * @spec openspec/changes/bookkeeping-detachering-payroll-administratie/tasks.md
+ * @spec openspec/specs/bookkeeping-detachering-payroll-administratie/spec.md
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
  */
-interface SalarisbureauAdapterInterface
-{
-    /**
-     * Submit a payroll-run delta to the salarisbureau.
-     *
-     * @param array<string,mixed> $payload The payroll-run envelope —
-     *                                     bureau (`adp`/`loket`/`nmbrs`/`visma`),
-     *                                     employerLoonheffingenNumber,
-     *                                     periodYear, periodMonth,
-     *                                     periodType (`maand`/`4-weken`),
-     *                                     employees[] (BSN, employeeNumber,
-     *                                     contractType, sectorCode,
-     *                                     loonHeffingsKorting, urenWerkelijk,
-     *                                     urenVerlof, bruto, fiscaleVergoeding,
-     *                                     pensioenpremie, stippAfdracht),
-     *                                     mutations[] (in-dienst /
-     *                                     uit-dienst / arbeidsverleden),
-     *                                     correlationId.
-     *
-     * @return SalarisbureauPayrollRunResult The dispatch outcome (status +
-     *                                       bureau run id + payslip URLs).
-     */
-    public function submit(array $payload): SalarisbureauPayrollRunResult;
+interface SalarisbureauAdapterInterface {
+	/**
+	 * Submit a payroll-run delta to the salarisbureau.
+	 *
+	 * @param array<string,mixed> $payload The payroll-run envelope —
+	 *                                     bureau (`adp`/`loket`/`nmbrs`/`visma`),
+	 *                                     employerLoonheffingenNumber,
+	 *                                     periodYear, periodMonth,
+	 *                                     periodType (`maand`/`4-weken`),
+	 *                                     employees[] (BSN, employeeNumber,
+	 *                                     contractType, sectorCode,
+	 *                                     loonHeffingsKorting, urenWerkelijk,
+	 *                                     urenVerlof, bruto, fiscaleVergoeding,
+	 *                                     pensioenpremie, stippAfdracht),
+	 *                                     mutations[] (in-dienst /
+	 *                                     uit-dienst / arbeidsverleden),
+	 *                                     correlationId.
+	 *
+	 * @return SalarisbureauPayrollRunResult The dispatch outcome (status +
+	 *                                       bureau run id + payslip URLs).
+	 */
+	public function submit(array $payload): SalarisbureauPayrollRunResult;
 
-    /**
-     * Whether the adapter is dormant — i.e. wired but not contacting any bureau.
-     *
-     * @return bool TRUE when the adapter is a log-only stub.
-     */
-    public function isDormant(): bool;
+	/**
+	 * Whether the adapter is dormant — i.e. wired but not contacting any bureau.
+	 *
+	 * @return bool TRUE when the adapter is a log-only stub.
+	 */
+	public function isDormant(): bool;
 }//end interface

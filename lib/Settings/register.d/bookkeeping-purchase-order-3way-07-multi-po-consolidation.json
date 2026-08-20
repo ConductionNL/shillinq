@@ -17,14 +17,19 @@
               "type": "string"
             },
             "default": [],
-            "example": ["po-1", "po-2"]
+            "example": [
+              "po-1",
+              "po-2"
+            ],
+            "title": "Matched PO Ids"
           },
           "consolidatedAt": {
             "type": "string",
             "format": "date-time",
             "description": "Timestamp of the most-recent multi-PO consolidation fan-out for this invoice. NULL until consolidation has run.",
             "nullable": true,
-            "example": "2026-07-31T10:00:00Z"
+            "example": "2026-07-31T10:00:00Z",
+            "title": "Consolidated At"
           },
           "lines": {
             "type": "array",
@@ -34,58 +39,70 @@
               "properties": {
                 "lineNumber": {
                   "type": "integer",
-                  "description": "1-based position of the line within the invoice."
+                  "description": "1-based position of the line within the invoice.",
+                  "title": "Line Number"
                 },
                 "productCode": {
                   "type": "string",
-                  "description": "Item identifier matched against PurchaseOrderLine.productOrServiceCode."
+                  "description": "Item identifier matched against PurchaseOrderLine.productOrServiceCode.",
+                  "title": "Product Code"
                 },
                 "description": {
                   "type": "string",
-                  "description": "Free-text description of the item."
+                  "description": "Free-text description of the item.",
+                  "title": "Description"
                 },
                 "quantity": {
                   "type": "number",
-                  "description": "Quantity invoiced."
+                  "description": "Quantity invoiced.",
+                  "title": "Quantity"
                 },
                 "unitPrice": {
                   "type": "integer",
-                  "description": "Unit price in integer euro cents (ADR-022)."
+                  "description": "Unit price in integer euro cents (ADR-022).",
+                  "title": "Unit Price"
                 },
                 "lineExtension": {
                   "type": "integer",
-                  "description": "Line extension amount (quantity x unitPrice) in cents."
+                  "description": "Line extension amount (quantity x unitPrice) in cents.",
+                  "title": "Line Extension"
                 },
                 "vatRate": {
                   "type": "number",
-                  "description": "VAT rate fraction (e.g. 0.21 for 21%)."
+                  "description": "VAT rate fraction (e.g. 0.21 for 21%).",
+                  "title": "VAT Rate"
                 },
                 "linkedPoLineId": {
                   "type": "string",
                   "description": "PurchaseOrderLine id the consolidation engine linked this invoice line to (slice 07). NULL when the line is unmatched, ambiguous, or in the missing-PO exception state.",
                   "nullable": true,
-                  "example": "pol-1"
+                  "example": "pol-1",
+                  "title": "Linked PO Line ID"
                 },
                 "linkedPoId": {
                   "type": "string",
                   "description": "PurchaseOrder id of linkedPoLineId. NULL when no PO link.",
                   "nullable": true,
-                  "example": "po-1"
+                  "example": "po-1",
+                  "title": "Linked PO ID"
                 },
                 "linkedGrnLineId": {
                   "type": "string",
                   "description": "GoodsReceiptLine id the engine linked this invoice line to. NULL on PO-only matches (services) or unmatched lines.",
                   "nullable": true,
-                  "example": "grl-1"
+                  "example": "grl-1",
+                  "title": "Linked Grn Line ID"
                 },
                 "linkedMatchId": {
                   "type": "string",
                   "description": "ThreeWayMatch id the consolidation engine produced for this line. NULL when no trio materialised yet (ambiguous pending operator disambiguation).",
                   "nullable": true,
-                  "example": "tw-1"
+                  "example": "tw-1",
+                  "title": "Linked Match ID"
                 }
               }
-            }
+            },
+            "title": "Lines"
           }
         }
       },
@@ -95,25 +112,29 @@
             "type": "string",
             "description": "FK to the PurchaseOrderLine in the matched (PO line, GRN line, invoice line) trio. NULL on legacy header-level matches (single-PO whole-invoice records). REQ-PO3W-007.",
             "nullable": true,
-            "example": "pol-1"
+            "example": "pol-1",
+            "title": "PO Line ID"
           },
           "grnLineId": {
             "type": "string",
             "description": "FK to the GoodsReceiptLine in the matched trio. NULL when no goods-receipt component (services, exception_missing_grn).",
             "nullable": true,
-            "example": "grl-1"
+            "example": "grl-1",
+            "title": "Grn Line ID"
           },
           "invoiceLineNumber": {
             "type": "integer",
             "description": "1-based position of the invoice line within the consolidated SupplierInvoice the match refers to. Mandatory for per-trio records produced by multi-PO consolidation; NULL for legacy header-level records.",
             "nullable": true,
-            "example": 1
+            "example": 1,
+            "title": "Invoice Line Number"
           },
           "productCode": {
             "type": "string",
             "description": "Product code shared by the matched PO line + GRN line + invoice line (the consolidation key). Stored on the match so the exception workflow + vendor performance reports do not need to re-resolve through the line FKs.",
             "nullable": true,
-            "example": "COFFEE-PRO-1"
+            "example": "COFFEE-PRO-1",
+            "title": "Product Code"
           },
           "disambiguationChoice": {
             "type": "object",
@@ -123,18 +144,21 @@
               "candidateCount": {
                 "type": "integer",
                 "description": "Number of candidate tuples presented to the operator.",
-                "example": 2
+                "example": 2,
+                "title": "Candidate Count"
               },
               "chosenPoLineId": {
                 "type": "string",
                 "description": "The PO line id chosen from the candidate set.",
-                "example": "pol-1"
+                "example": "pol-1",
+                "title": "Chosen PO Line ID"
               },
               "chosenGrnLineId": {
                 "type": "string",
                 "description": "The GRN line id chosen from the candidate set.",
                 "nullable": true,
-                "example": "grl-1"
+                "example": "grl-1",
+                "title": "Chosen Grn Line ID"
               },
               "rejectedPoLineIds": {
                 "type": "array",
@@ -142,20 +166,26 @@
                 "items": {
                   "type": "string"
                 },
-                "example": ["pol-7"]
+                "example": [
+                  "pol-7"
+                ],
+                "title": "Rejected PO Line Ids"
               },
               "chosenBy": {
                 "type": "string",
                 "description": "User id of the crediteuren-administrateur who made the choice.",
-                "example": "alice"
+                "example": "alice",
+                "title": "Chosen By"
               },
               "chosenAt": {
                 "type": "string",
                 "format": "date-time",
                 "description": "Timestamp of the disambiguation decision.",
-                "example": "2026-07-21T08:00:00Z"
+                "example": "2026-07-21T08:00:00Z",
+                "title": "Chosen At"
               }
-            }
+            },
+            "title": "Disambiguation Choice"
           }
         }
       }

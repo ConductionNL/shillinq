@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ensia-zelfevaluatie/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -37,84 +37,85 @@ namespace OCA\Shillinq\Service;
  * Generates concept Bevinding records from a peer-reviewed ENSIA cyclus
  * (REQ-ENSIA-005).
  *
- * @spec openspec/changes/bookkeeping-ensia-zelfevaluatie/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
-class ENSIABevindingGenerator
-{
-    /**
-     * Generate Bevinding records for every Evaluatievraag whose maturity
-     * score is strictly below its VNG normniveau (default 3).
-     *
-     * Only questions that have completed peer-review (peerReviewStatus =
-     * akkoord) are considered — questions still in wijziging-gevraagd are
-     * out of scope because their answer is still expected to change.
-     *
-     * Auto-generated records carry:
-     *   - cyclusId / administrationId from the parent cyclus
-     *   - vraagId pointing at the source Evaluatievraag
-     *   - type=tekortkoming
-     *   - beschrijving auto-populated with vraagCode + score gap
-     *   - status=open
-     *   - no owner / streefDatum (operator fills in on triage)
-     *
-     * @param array<string,mixed>            $cyclus The parent ENSIAJaarcyclus
-     *                                               record (provides cyclusId
-     *                                               + administrationId).
-     * @param array<int,array<string,mixed>> $vragen Every Evaluatievraag in
-     *                                               the cyclus.
-     *
-     * @return array<int,array<string,mixed>> Concept Bevinding records ready
-     *                                        for ObjectService::saveObject.
-     */
-    public function generate(array $cyclus, array $vragen): array
-    {
-        $cyclusId         = (string) ($cyclus['id'] ?? $cyclus['uuid'] ?? '');
-        $administrationId = (string) ($cyclus['administrationId'] ?? '');
+class ENSIABevindingGenerator {
+	/**
+	 * Generate Bevinding records for every Evaluatievraag whose maturity
+	 * score is strictly below its VNG normniveau (default 3).
+	 *
+	 * Only questions that have completed peer-review (peerReviewStatus =
+	 * akkoord) are considered — questions still in wijziging-gevraagd are
+	 * out of scope because their answer is still expected to change.
+	 *
+	 * Auto-generated records carry:
+	 *   - cyclusId / administrationId from the parent cyclus
+	 *   - vraagId pointing at the source Evaluatievraag
+	 *   - type=tekortkoming
+	 *   - beschrijving auto-populated with vraagCode + score gap
+	 *   - status=open
+	 *   - no owner / streefDatum (operator fills in on triage)
+	 *
+	 * @param array<string,mixed> $cyclus The parent ENSIAJaarcyclus
+	 *                                    record (provides cyclusId
+	 *                                    + administrationId).
+	 * @param array<int,array<string,mixed>> $vragen Every Evaluatievraag in
+	 *                                               the cyclus.
+	 *
+	 * @return array<int,array<string,mixed>> Concept Bevinding records ready
+	 *                                        for ObjectService::saveObject.
+	 */
+	public function generate(array $cyclus, array $vragen): array {
+		$cyclusId = (string)($cyclus['id'] ?? $cyclus['uuid'] ?? '');
+		$administrationId = (string)($cyclus['administrationId'] ?? '');
 
-        $findings = [];
-        foreach ($vragen as $v) {
-            $status = (string) ($v['peerReviewStatus'] ?? 'nog-niet-beoordeeld');
-            if ($status !== 'akkoord') {
-                continue;
-            }
+		$findings = [];
+		foreach ($vragen as $v) {
+			$status = (string)($v['peerReviewStatus'] ?? 'nog-niet-beoordeeld');
+			if ($status !== 'akkoord') {
+				continue;
+			}
 
-            $score      = $v['volwassenheidsScore'] ?? null;
-            $normniveau = $v['normniveau'] ?? null;
-            if (is_int($score) === false || is_int($normniveau) === false) {
-                continue;
-            }
+			$score = $v['maturityScore'] ?? null;
+			$normniveau = $v['normniveau'] ?? null;
+			if (is_int($score) === false || is_int($normniveau) === false) {
+				continue;
+			}
 
-            if ($score >= $normniveau) {
-                continue;
-            }
+			if ($score >= $normniveau) {
+				continue;
+			}
 
-            $vraagCode = (string) ($v['vraagCode'] ?? '');
-            $vraagTxt  = (string) ($v['vraagtekst'] ?? '');
-            $vraagId   = (string) ($v['id'] ?? $v['uuid'] ?? '');
+			$questionCode = (string)($v['questionCode'] ?? '');
+			$questionTxt = (string)($v['questionText'] ?? '');
+			$questionId = (string)($v['id'] ?? $v['uuid'] ?? '');
 
-            if ($vraagTxt !== '') {
-                $vraagLabel = $vraagTxt;
-            } else {
-                $vraagLabel = 'evaluatievraag';
-            }
+			if ($questionTxt !== '') {
+				$questionLabel = $questionTxt;
+			} else {
+				$questionLabel = 'evaluatievraag';
+			}
 
-            $findings[] = [
-                'cyclusId'         => $cyclusId,
-                'administrationId' => $administrationId,
-                'vraagId'          => $vraagId,
-                'type'             => 'tekortkoming',
-                'beschrijving'     => sprintf(
-                    '%s — %s: volwassenheidsScore %d ligt onder VNG normniveau %d.',
-                    $vraagCode,
-                    $vraagLabel,
-                    $score,
-                    $normniveau
-                ),
-                'status'           => 'open',
-            ];
-        }//end foreach
+			$findings[] = [
+				'cyclusId' => $cyclusId,
+				'administrationId' => $administrationId,
+				'questionId' => $questionId,
+				'type' => 'tekortkoming',
+				'description' => sprintf(
+					'%s — %s: volwassenheidsScore %d ligt onder VNG normniveau %d.',
+					$questionCode,
+					$questionLabel,
+					$score,
+					$normniveau
+				),
+				'status' => 'open',
+			];
+		}//end foreach
 
-        return $findings;
-
-    }//end generate()
+		return $findings;
+	}//end generate()
 }//end class

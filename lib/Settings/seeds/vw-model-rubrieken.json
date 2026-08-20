@@ -8,43 +8,43 @@
     "url": "https://wetten.overheid.nl/BWBR0003045/"
   },
   "models": {
-    "A-categorisch": {
-      "wettelijkeBasis": "art. 2:377 lid 2 BW",
+    "a-categorical": {
+      "statutoryBasis": "art. 2:377 lid 2 BW",
       "rubrieken": [
         { "position": 1, "rubrieckCode": "1", "label": "Netto-omzet" },
         { "position": 2, "rubrieckCode": "2", "label": "Wijziging in voorraden" },
         { "position": 3, "rubrieckCode": "3", "label": "Geactiveerde productie eigen bedrijf" },
         { "position": 4, "rubrieckCode": "4", "label": "Overige bedrijfsopbrengsten" },
-        { "position": "subtotaal-opbrengsten", "label": "Som der bedrijfsopbrengsten", "isSubtotaal": true },
+        { "position": "subtotaal-opbrengsten", "label": "Som der bedrijfsopbrengsten", "isSubtotal": true },
         { "position": 5, "rubrieckCode": "5", "label": "Kosten van grond- en hulpstoffen" },
         { "position": 6, "rubrieckCode": "6", "label": "Lonen en salarissen" },
         { "position": 7, "rubrieckCode": "7", "label": "Sociale lasten en pensioenlasten" },
         { "position": 8, "rubrieckCode": "8", "label": "Afschrijvingen" },
         { "position": 9, "rubrieckCode": "9", "label": "Overige bedrijfskosten" },
-        { "position": "subtotaal-lasten", "label": "Som der bedrijfslasten", "isSubtotaal": true },
-        { "position": "Bedrijfsresultaat", "label": "Bedrijfsresultaat", "isSubtotaal": true },
+        { "position": "subtotaal-lasten", "label": "Som der bedrijfslasten", "isSubtotal": true },
+        { "position": "Bedrijfsresultaat", "label": "Bedrijfsresultaat", "isSubtotal": true },
         { "position": 10, "rubrieckCode": "10", "label": "Rentebaten en soortgelijke opbrengsten" },
         { "position": 11, "rubrieckCode": "11", "label": "Rentelasten en soortgelijke kosten" },
-        { "position": "Resultaat voor belasting", "label": "Resultaat voor belastingen", "isSubtotaal": true },
+        { "position": "Resultaat voor belasting", "label": "Resultaat voor belastingen", "isSubtotal": true },
         { "position": 12, "rubrieckCode": "12", "label": "Belastingen" },
-        { "position": "Netto resultaat", "label": "Resultaat na belastingen", "isSubtotaal": true }
+        { "position": "Netto resultaat", "label": "Resultaat na belastingen", "isSubtotal": true }
       ]
     },
-    "E-functioneel": {
-      "wettelijkeBasis": "art. 2:377 lid 3 BW",
+    "e-functional": {
+      "statutoryBasis": "art. 2:377 lid 3 BW",
       "rubrieken": [
         { "position": 1, "rubrieckCode": "1", "label": "Netto-omzet" },
         { "position": 2, "rubrieckCode": "2", "label": "Kostprijs van de omzet" },
-        { "position": "Bruto-marge", "label": "Bruto-omzetresultaat", "isSubtotaal": true },
+        { "position": "Bruto-marge", "label": "Bruto-omzetresultaat", "isSubtotal": true },
         { "position": 3, "rubrieckCode": "3", "label": "Verkoopkosten" },
         { "position": 4, "rubrieckCode": "4", "label": "Algemene beheerskosten" },
-        { "position": "Bedrijfsresultaat", "label": "Bedrijfsresultaat", "isSubtotaal": true },
+        { "position": "Bedrijfsresultaat", "label": "Bedrijfsresultaat", "isSubtotal": true },
         { "position": 5, "rubrieckCode": "5", "label": "Overige bedrijfsopbrengsten" },
         { "position": 6, "rubrieckCode": "6", "label": "Rentebaten en soortgelijke opbrengsten" },
         { "position": 7, "rubrieckCode": "7", "label": "Rentelasten en soortgelijke kosten" },
-        { "position": "Resultaat voor belasting", "label": "Resultaat voor belastingen", "isSubtotaal": true },
+        { "position": "Resultaat voor belasting", "label": "Resultaat voor belastingen", "isSubtotal": true },
         { "position": 8, "rubrieckCode": "8", "label": "Belastingen" },
-        { "position": "Netto resultaat", "label": "Resultaat na belastingen", "isSubtotaal": true }
+        { "position": "Netto resultaat", "label": "Resultaat na belastingen", "isSubtotal": true }
       ]
     }
   }

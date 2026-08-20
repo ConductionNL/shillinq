@@ -27,9 +27,10 @@
  */
 
 import { test, expect, type Page } from '@playwright/test'
+import { becomesVisible } from './becomes-visible.js'
 
 const APP = '/apps/shillinq'
-const ROUTE_FINANCIAL = '/financial'
+const ROUTE_BANK_IMPORT = '/configuratie/bank-import'
 
 /**
  * Dismiss the first-run wizard if it intercepts the route.
@@ -40,6 +41,28 @@ async function dismissWizard(page: Page): Promise<void> {
 		await page.keyboard.press('Escape').catch(() => {})
 		await wizard.waitFor({ state: 'hidden', timeout: 4_000 }).catch(() => {})
 	}
+	// The cn-support-dialog is a SECOND, unrelated overlay, and it is the one
+	// that actually blocked here: the launch button reported "visible, enabled
+	// and stable" for the full 60s while
+	// `<div class="cn-support-dialog__body">… subtree intercepts pointer
+	// events`. Dismissing only `#firstrunwizard` is the same partial cleanup
+	// tests/e2e/spec-coverage/_helpers.ts already fixed in `dismissOverlays()`.
+	const support = page
+		.locator('.cn-support-dialog, [class*="support-dialog" i]')
+		.first()
+	if (await support.isVisible().catch(() => false)) {
+		const close = support
+			.locator(
+				'button[aria-label*="lose" i], button[aria-label*="luiten" i], .modal-container__close',
+			)
+			.first()
+		if (await close.isVisible().catch(() => false)) {
+			await close.click({ timeout: 2_000 }).catch(() => {})
+		} else {
+			await page.keyboard.press('Escape').catch(() => {})
+		}
+		await support.waitFor({ state: 'hidden', timeout: 3_000 }).catch(() => {})
+	}
 }
 
 /**
@@ -48,14 +71,33 @@ async function dismissWizard(page: Page): Promise<void> {
  * administration) so the caller can skip rather than fail.
  */
 async function openWizard(page: Page): Promise<boolean> {
-	await page.goto(`${APP}${ROUTE_FINANCIAL}`)
+	// The launcher is NOT on the Financial overview any more. This helper used
+	// to look for `fda-import-bank` there — an id that died with
+	// FinancialDashboardActions.vue in 9e329080 (ADR-049 Phase-4) — and its
+	// `isVisible()` miss made every caller `test.skip(...)`. All ELEVEN tests
+	// in this file therefore reported "skipped … Import bank action not
+	// available for this administration", blaming the instance for a selector
+	// that no longer exists anywhere in the app. The wizard now lives on the
+	// Configuratie page that hosts it (src/registry.js: BankImportPage,
+	// src/manifest.d/bank-import-settings.json).
+	//
+	// ⚠️ THE SELECTOR WAS REPAIRED; THE RACE WAS NOT. `isVisible()` does not
+	// wait — its `timeout` option is ignored — so this probe still asked "is
+	// the launcher here on this tick", one tick after a `goto`. It happens to
+	// answer yes on the current runner, which is why all eleven tests pass
+	// today; a slower runner silently returns all eleven to the same false
+	// "not available for this administration" skip, with no code change and no
+	// signal. `becomesVisible` polls, so the answer stops depending on timing.
+	await page.goto(`${APP}${ROUTE_BANK_IMPORT}`)
 	await dismissWizard(page)
-	const importBank = page.locator('[data-testid="fda-import-bank"]')
-	if (!(await importBank.isVisible().catch(() => false))) {
+	const importBank = page.locator('[data-testid="bank-import-launch"]')
+	if (!(await becomesVisible(importBank))) {
 		return false
 	}
 	await importBank.click()
-	await page.locator('[data-testid="bank-statement-wizard"]').waitFor({ state: 'visible', timeout: 8_000 })
+	await page
+		.locator('[data-testid="bank-statement-wizard"]')
+		.waitFor({ state: 'visible', timeout: 8_000 })
 	return true
 }
 
@@ -66,7 +108,10 @@ test.describe('shillinq-bank-statement-wizard', () => {
 	 * @e2e shillinq-bank-statement-wizard::clicking-import-bank-opens-the-wizard
 	 */
 	test('clicking Import bank opens the wizard', async ({ page }) => {
-		test.skip(!(await openWizard(page)), 'Financial dashboard / Import bank action not available for this administration')
+		test.skip(
+			!(await openWizard(page)),
+			'Financial dashboard / Import bank action not available for this administration',
+		)
 		await expect(page.locator('[data-testid="bsw-step-1"]')).toBeVisible()
 	})
 
@@ -110,7 +155,9 @@ test.describe('shillinq-bank-statement-wizard', () => {
 		// Step-2 markup is part of the same dialog; presence of the wizard shell
 		// proves the mapping step is reachable. The skip/remember branch logic is
 		// unit-tested (bankStatementWizard.spec.js: buildMappingDecision).
-		await expect(page.locator('[data-testid="bank-statement-wizard"]')).toBeVisible()
+		await expect(
+			page.locator('[data-testid="bank-statement-wizard"]'),
+		).toBeVisible()
 	})
 
 	/**
@@ -131,7 +178,9 @@ test.describe('shillinq-bank-statement-wizard', () => {
 	 *
 	 * @e2e shillinq-bank-statement-wizard::a-valid-camt053-upload-creates-a-statement-and-lines
 	 */
-	test('a valid CAMT.053 upload creates a statement and lines', async ({ page }) => {
+	test('a valid CAMT.053 upload creates a statement and lines', async ({
+		page,
+	}) => {
 		test.skip(!(await openWizard(page)), 'Import bank action not available')
 		await expect(page.locator('[data-testid="bsw-step-1"]')).toBeVisible()
 	})
@@ -145,7 +194,9 @@ test.describe('shillinq-bank-statement-wizard', () => {
 	 */
 	test('unparseable input is rejected', async ({ page }) => {
 		test.skip(!(await openWizard(page)), 'Import bank action not available')
-		await expect(page.locator('[data-testid="bank-statement-wizard"]')).toBeVisible()
+		await expect(
+			page.locator('[data-testid="bank-statement-wizard"]'),
+		).toBeVisible()
 	})
 
 	/**
@@ -158,7 +209,9 @@ test.describe('shillinq-bank-statement-wizard', () => {
 	 */
 	test('the endpoint never trusts a client administrationId', async ({ page }) => {
 		test.skip(!(await openWizard(page)), 'Import bank action not available')
-		await expect(page.locator('[data-testid="bank-statement-wizard"]')).toBeVisible()
+		await expect(
+			page.locator('[data-testid="bank-statement-wizard"]'),
+		).toBeVisible()
 	})
 
 	/**
@@ -169,7 +222,9 @@ test.describe('shillinq-bank-statement-wizard', () => {
 	 */
 	test('import and review navigates to reconciliation', async ({ page }) => {
 		test.skip(!(await openWizard(page)), 'Import bank action not available')
-		await expect(page.locator('[data-testid="bank-statement-wizard"]')).toBeVisible()
+		await expect(
+			page.locator('[data-testid="bank-statement-wizard"]'),
+		).toBeVisible()
 	})
 
 	/**

@@ -73,6 +73,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "CBSSubmission",
+				"_note": "STATISTICAL SUBMISSION (a periodic IV3 filing to the CBS). The body pairs the submission header — organisation identity, reporting period, status, submission date, IV3 file URI + checksum and any validation errors — with its CBS Lines (aggregated per classification/account-range, filtered on cbsSubmissionId), which are the substance of what is filed. lifecycleActions/actions drive validate → submit → accept/reject and the export generation. A regulatory filing, not correspondence, so no comms; the audit trail sidebar is the submission-status provenance.",
 				"fields": [
 					{ "key": "submissionNumber", "label": "Submission Number", "type": "string" },
 					{ "key": "reportingPeriodStartDate", "label": "Reporting Period Start", "type": "string" },
@@ -89,26 +90,18 @@
 					{ "key": "description", "label": "Description", "type": "string" },
 					{ "key": "currency", "label": "Currency", "type": "string" }
 				],
-				"relations": [
+				"relatedObjects": [
 					{
-						"schema": "CBSLine",
-						"via": "cbsSubmissionId",
+						"id": "cbs-lines",
 						"label": "CBS Lines",
-						"columns": [
-							{ "key": "cbsLineNumber", "label": "Line Number" },
-							{ "key": "cbsLineClassification", "label": "Classification" },
-							{ "key": "accountRangeStart", "label": "Account Range Start" },
-							{ "key": "accountRangeEnd", "label": "Account Range End" },
-							{ "key": "aggregatedAmount", "label": "Amount" },
-							{ "key": "glLineCount", "label": "GL Line Count" },
-							{ "key": "currency", "label": "Currency" }
-						]
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "CBSLine",
+							"filterField": "cbsSubmissionId",
+							"columns": ["cbsLineNumber", "cbsLineClassification", "accountRangeStart", "accountRangeEnd", "aggregatedAmount", "glLineCount", "currency"]
+						}
 					}
-				],
-				"tabs": [
-					{ "id": "lines", "label": "CBS Lines" },
-					{ "id": "files", "label": "Files" },
-					{ "id": "audit", "label": "Audit Trail" }
 				],
 				"actions": [
 					{
@@ -142,7 +135,27 @@
 						"requiresStatus": "draft"
 					}
 				],
-				"indexRoute": "CBSSubmissions"
+				"indexRoute": "CBSSubmissions",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		}
 	]

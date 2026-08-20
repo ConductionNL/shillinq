@@ -42,7 +42,9 @@ async function get(invoiceId) {
  * @return {Promise<object>} The posted invoice.
  */
 async function post(invoiceId) {
-	const { data } = await axios.post(base('/' + encodeURIComponent(invoiceId) + '/post'))
+	const { data } = await axios.post(
+		base('/' + encodeURIComponent(invoiceId) + '/post'),
+	)
 	return data
 }
 
@@ -69,7 +71,7 @@ async function exportPdf(invoiceId) {
  */
 async function list(filters = {}) {
 	const { data } = await axios.get(base(''), { params: filters })
-	return Array.isArray(data) ? data : (data?.invoices || [])
+	return Array.isArray(data) ? data : data?.invoices || []
 }
 
 export default { generate, get, post, exportPdf, list }

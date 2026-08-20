@@ -28,41 +28,74 @@
 				{{ t('shillinq', 'Audit trail') }}
 			</h2>
 			<p class="audit-trail__hint">
-				{{ t('shillinq', 'Complete lifecycle history for this supplier invoice. Exportable as an immutable ZIP for external auditors (BW2 art 2:10, 7-year retention).') }}
+				{{
+					t(
+						'shillinq',
+						'Complete lifecycle history for this supplier invoice. Exportable as an immutable ZIP for external auditors (BW2 art 2:10, 7-year retention).',
+					)
+				}}
 			</p>
 		</header>
 
-		<div v-if="loading" class="audit-trail__loading" data-testid="audit-trail-loading">
+		<div
+			v-if="loading"
+			class="audit-trail__loading"
+			data-testid="audit-trail-loading">
 			{{ t('shillinq', 'Loading audit trail…') }}
 		</div>
 
-		<div v-else-if="error" class="audit-trail__error" data-testid="audit-trail-error">
+		<div
+			v-else-if="error"
+			class="audit-trail__error"
+			data-testid="audit-trail-error">
 			{{ error }}
 		</div>
 
 		<div v-else-if="ledger" class="audit-trail__body">
 			<section class="audit-trail__summary" data-testid="audit-trail-summary">
 				<div class="audit-trail__field">
-					<span class="audit-trail__label">{{ t('shillinq', 'Invoice') }}</span>
-					<span class="audit-trail__value" data-testid="audit-trail-invoice-number">{{ summaryInvoiceNumber }}</span>
+					<span class="audit-trail__label">{{
+						t('shillinq', 'Invoice')
+					}}</span>
+					<span
+						class="audit-trail__value"
+						data-testid="audit-trail-invoice-number"
+						>{{ summaryInvoiceNumber }}</span
+					>
 				</div>
 				<div class="audit-trail__field">
-					<span class="audit-trail__label">{{ t('shillinq', 'Supplier') }}</span>
-					<span class="audit-trail__value" data-testid="audit-trail-supplier">{{ summarySupplierId }}</span>
+					<span class="audit-trail__label">{{
+						t('shillinq', 'Supplier')
+					}}</span>
+					<span
+						class="audit-trail__value"
+						data-testid="audit-trail-supplier"
+						>{{ summarySupplierId }}</span
+					>
 				</div>
 				<div class="audit-trail__field">
-					<span class="audit-trail__label">{{ t('shillinq', 'Total (incl. VAT)') }}</span>
+					<span class="audit-trail__label">{{
+						t('shillinq', 'Total (incl. VAT)')
+					}}</span>
 					<span class="audit-trail__value" data-testid="audit-trail-total">
 						{{ formatMoney(summaryTotal) }} {{ summaryCurrency }}
 					</span>
 				</div>
 				<div class="audit-trail__field">
-					<span class="audit-trail__label">{{ t('shillinq', 'Lifecycle events') }}</span>
-					<span class="audit-trail__value" data-testid="audit-trail-event-count">{{ events.length }}</span>
+					<span class="audit-trail__label">{{
+						t('shillinq', 'Lifecycle events')
+					}}</span>
+					<span
+						class="audit-trail__value"
+						data-testid="audit-trail-event-count"
+						>{{ events.length }}</span
+					>
 				</div>
 			</section>
 
-			<section class="audit-trail__timeline" data-testid="audit-trail-timeline">
+			<section
+				class="audit-trail__timeline"
+				data-testid="audit-trail-timeline">
 				<ol class="audit-trail__events">
 					<li
 						v-for="(event, index) in events"
@@ -73,16 +106,21 @@
 						<div class="audit-trail__event-marker" />
 						<div class="audit-trail__event-body">
 							<div class="audit-trail__event-row">
-								<span class="audit-trail__event-time" data-testid="audit-trail-event-time">
+								<span
+									class="audit-trail__event-time"
+									data-testid="audit-trail-event-time">
 									{{ formatTimestamp(event.timestamp) }}
 								</span>
-								<span class="audit-trail__event-name" data-testid="audit-trail-event-name">
+								<span
+									class="audit-trail__event-name"
+									data-testid="audit-trail-event-name">
 									{{ eventLabel(event.event) }}
 								</span>
 							</div>
 							<div class="audit-trail__event-meta">
 								<span data-testid="audit-trail-event-actor">
-									{{ t('shillinq', 'Actor') }}: {{ event.actor || '—' }}
+									{{ t('shillinq', 'Actor') }}:
+									{{ event.actor || '—' }}
 								</span>
 								<span data-testid="audit-trail-event-object">
 									{{ event.objectType }} #{{ event.objectId }}
@@ -93,11 +131,16 @@
 								class="audit-trail__event-details"
 								data-testid="audit-trail-event-details">
 								<dl>
-									<template v-for="(detailValue, detailKey) in event.details">
-										<dt :key="`${detailKey}-k`">
+									<!-- Vue 3 requires the v-for key on the <template> itself. -->
+									<template
+										v-for="(
+											detailValue, detailKey
+										) in event.details"
+										:key="detailKey">
+										<dt>
 											{{ detailKey }}
 										</dt>
-										<dd :key="`${detailKey}-v`">
+										<dd>
 											{{ formatDetailValue(detailValue) }}
 										</dd>
 									</template>
@@ -115,7 +158,11 @@
 					:disabled="exporting"
 					data-testid="audit-trail-export-button"
 					@click="exportPackage">
-					{{ exporting ? t('shillinq', 'Exporting…') : t('shillinq', 'Export audit package (ZIP)') }}
+					{{
+						exporting
+							? t('shillinq', 'Exporting…')
+							: t('shillinq', 'Export audit package (ZIP)')
+					}}
 				</button>
 				<div
 					v-if="exportError"
@@ -128,33 +175,58 @@
 					class="audit-trail__export-envelope"
 					data-testid="audit-trail-export-envelope">
 					<div class="audit-trail__field">
-						<span class="audit-trail__label">{{ t('shillinq', 'Package id') }}</span>
-						<span class="audit-trail__value" data-testid="audit-trail-export-package-id">
+						<span class="audit-trail__label">{{
+							t('shillinq', 'Package id')
+						}}</span>
+						<span
+							class="audit-trail__value"
+							data-testid="audit-trail-export-package-id">
 							{{ exportEnvelope.packageId }}
 						</span>
 					</div>
 					<div class="audit-trail__field">
-						<span class="audit-trail__label">{{ t('shillinq', 'SHA-256 (ledger)') }}</span>
-						<code class="audit-trail__value" data-testid="audit-trail-export-sha256">
+						<span class="audit-trail__label">{{
+							t('shillinq', 'SHA-256 (ledger)')
+						}}</span>
+						<code
+							class="audit-trail__value"
+							data-testid="audit-trail-export-sha256">
 							{{ exportEnvelope.sha256 }}
 						</code>
 					</div>
 					<div class="audit-trail__field">
-						<span class="audit-trail__label">{{ t('shillinq', 'Retention') }}</span>
-						<span class="audit-trail__value" data-testid="audit-trail-export-retention">
-							{{ exportEnvelope.retentionYears }} {{ t('shillinq', 'years (BW2 art 2:10)') }}
+						<span class="audit-trail__label">{{
+							t('shillinq', 'Retention')
+						}}</span>
+						<span
+							class="audit-trail__value"
+							data-testid="audit-trail-export-retention">
+							{{ exportEnvelope.retentionYears }}
+							{{ t('shillinq', 'years (BW2 art 2:10)') }}
 						</span>
 					</div>
 					<div class="audit-trail__field">
-						<span class="audit-trail__label">{{ t('shillinq', 'Events recorded') }}</span>
-						<span class="audit-trail__value" data-testid="audit-trail-export-event-count">
+						<span class="audit-trail__label">{{
+							t('shillinq', 'Events recorded')
+						}}</span>
+						<span
+							class="audit-trail__value"
+							data-testid="audit-trail-export-event-count">
 							{{ exportEnvelope.eventCount }}
 						</span>
 					</div>
 					<div class="audit-trail__field">
-						<span class="audit-trail__label">{{ t('shillinq', 'Archived to docudesk') }}</span>
-						<span class="audit-trail__value" data-testid="audit-trail-export-archived">
-							{{ exportEnvelope.archived ? t('shillinq', 'Yes') : t('shillinq', 'Pending') }}
+						<span class="audit-trail__label">{{
+							t('shillinq', 'Archived to docudesk')
+						}}</span>
+						<span
+							class="audit-trail__value"
+							data-testid="audit-trail-export-archived">
+							{{
+								exportEnvelope.archived
+									? t('shillinq', 'Yes')
+									: t('shillinq', 'Pending')
+							}}
 						</span>
 					</div>
 				</div>
@@ -164,8 +236,8 @@
 </template>
 
 <script>
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 
 const EVENT_LABELS = {
 	po_created: 'Purchase order created',
@@ -189,6 +261,7 @@ export default {
 			type: String,
 			required: true,
 		},
+
 		/**
 		 * Administration scope — supplied by the parent shell.
 		 */
@@ -197,6 +270,7 @@ export default {
 			default: '',
 		},
 	},
+
 	data() {
 		return {
 			ledger: null,
@@ -207,6 +281,7 @@ export default {
 			exportEnvelope: null,
 		}
 	},
+
 	computed: {
 		events() {
 			if (!this.ledger || !Array.isArray(this.ledger.events)) {
@@ -214,22 +289,46 @@ export default {
 			}
 			return this.ledger.events
 		},
+
 		summaryInvoiceNumber() {
-			return (this.ledger && this.ledger.summary && this.ledger.summary.invoiceNumber) || '—'
+			return (
+				(this.ledger
+					&& this.ledger.summary
+					&& this.ledger.summary.invoiceNumber)
+				|| '—'
+			)
 		},
+
 		summarySupplierId() {
-			return (this.ledger && this.ledger.summary && this.ledger.summary.supplierId) || '—'
+			return (
+				(this.ledger
+					&& this.ledger.summary
+					&& this.ledger.summary.supplierId)
+				|| '—'
+			)
 		},
+
 		summaryTotal() {
-			return (this.ledger && this.ledger.summary && this.ledger.summary.totalInclVat) || 0
+			return (
+				(this.ledger
+					&& this.ledger.summary
+					&& this.ledger.summary.totalInclVat)
+				|| 0
+			)
 		},
+
 		summaryCurrency() {
-			return (this.ledger && this.ledger.summary && this.ledger.summary.currency) || 'EUR'
+			return (
+				(this.ledger && this.ledger.summary && this.ledger.summary.currency)
+				|| 'EUR'
+			)
 		},
 	},
+
 	async created() {
 		await this.loadLedger()
 	},
+
 	methods: {
 		async loadLedger() {
 			this.loading = true
@@ -246,18 +345,22 @@ export default {
 				)
 				this.ledger = response.data || null
 			} catch (e) {
-				this.error = (e && e.response && e.response.data && e.response.data.error)
+				this.error =
+					(e && e.response && e.response.data && e.response.data.error)
 					|| this.t('shillinq', 'Failed to load audit trail')
 			} finally {
 				this.loading = false
 			}
 		},
+
 		async exportPackage() {
 			this.exporting = true
 			this.exportError = ''
 			try {
 				const response = await axios.post(
-					generateUrl('/apps/shillinq/api/three-way-match/audit-trail/export'),
+					generateUrl(
+						'/apps/shillinq/api/three-way-match/audit-trail/export',
+					),
 					{
 						administrationId: this.administrationId,
 						invoiceId: this.invoiceId,
@@ -265,15 +368,18 @@ export default {
 				)
 				this.exportEnvelope = response.data || null
 			} catch (e) {
-				this.exportError = (e && e.response && e.response.data && e.response.data.error)
+				this.exportError =
+					(e && e.response && e.response.data && e.response.data.error)
 					|| this.t('shillinq', 'Failed to export audit package')
 			} finally {
 				this.exporting = false
 			}
 		},
+
 		eventLabel(event) {
 			return this.t('shillinq', EVENT_LABELS[event] || event || 'Event')
 		},
+
 		eventClass(event) {
 			const status = (event && event.event) || ''
 			return {
@@ -284,6 +390,7 @@ export default {
 				'audit-trail__event--grn': status.startsWith('grn_'),
 			}
 		},
+
 		formatTimestamp(value) {
 			if (!value) {
 				return '—'
@@ -298,10 +405,15 @@ export default {
 				return value
 			}
 		},
+
 		formatMoney(cents) {
 			const value = Number(cents || 0) / 100
-			return value.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+			return value.toLocaleString('nl-NL', {
+				minimumFractionDigits: 2,
+				maximumFractionDigits: 2,
+			})
 		},
+
 		formatDetailValue(value) {
 			if (value === null || value === undefined) {
 				return '—'
@@ -314,6 +426,7 @@ export default {
 			}
 			return String(value)
 		},
+
 		hasDetails(details) {
 			if (!details || typeof details !== 'object') {
 				return false

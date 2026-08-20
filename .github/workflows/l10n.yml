@@ -1,0 +1,35 @@
+name: l10n
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, beta, development]
+
+permissions:
+  contents: read
+
+jobs:
+  l10n:
+    name: l10n coverage (en.json)
+    runs-on: ubuntu-latest
+    # Observed over 193 runs: max 1.1 min.
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      # check-l10n.js uses only Node built-ins (fs/path) — no npm ci needed.
+      - name: Check l10n coverage
+        run: npm run test:l10n
+      # ADR-057 D1/D2 — en.json <-> nl.json key parity in both directions.
+      # Scoped to nl only (not the full 34-locale EUROPEAN default): the
+      # other required locales carry large pre-existing gaps out of scope
+      # for this repo's current i18n work (setup-wizard-english REQ-SWE-004).
+      - name: Check l10n parity (en <-> nl)
+        run: npm run test:l10n-parity
+      # ADR-057 D3 — Dutch-as-source-string hard fail (t()/n() calls and
+      # manifest setup/page/menu title/body/label values).
+      - name: Check for Dutch-token source strings
+        run: npm run test:l10n-dutch-tokens

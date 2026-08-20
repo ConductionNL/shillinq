@@ -1,0 +1,275 @@
+{
+  "x-shillinq-fragment": "add-shillinq-einvoicing-ubl-peppol",
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "add-invoice-pdf-export-with-ubl-peppol-support",
+    "description": "Outbound e-invoicing (T4 UBL/Peppol capability reserved by bookkeeping-accounts-receivable-core REQ-AR-009). Adds the Peppol delivery-status field group to ARInvoice (REQ-AR-011) plus a Peppol participant id on CustomerMaster so the transmission port can resolve a debtor's Peppol identity the same way PurchaseOrderService resolves a supplier's via the Vendor schema. IMPORTANT: this fragment intentionally does NOT declare a second `x-openregister-lifecycle` block on ARInvoice. OpenRegister supports exactly ONE `x-openregister-lifecycle` annotation per schema (single top-level key, deep-merged across register.d fragments); ARInvoice's existing lifecycle is already fully declared (field: lifecycleState) in add-shillinq-bookkeeping-compliance.json. A second full lifecycle block keyed on a different field would deep-merge into the SAME object and silently clobber the canonical `field`/`initialState` scalars (fragment merge is scalar-overwrite, filename-order-dependent — see add-shillinq-rule-compliance-guard.json for the safe pattern, which only ever adds a `transitions.<name>.requires` leaf onto the existing lifecycle). The delivery sub-lifecycle is therefore declared as DATA under the documentation-only `x-shillinq-delivery-substates` extension (ignored by OR's LifecycleAnnotationValidator/TransitionEngine — no merge collision risk) and enforced imperatively by EInvoiceService (not-sent -> queued) and PeppolDeliveryStatusListener (queued/sent -> sent/delivered/rejected/failed and back to queued on re-send). See tasks.md Deviations."
+  },
+  "components": {
+    "schemas": {
+      "ARInvoice": {
+        "version": "0.13.0",
+        "properties": {
+          "deliveryStatus": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "not-sent",
+              "queued",
+              "sent",
+              "delivered",
+              "rejected",
+              "failed"
+            ],
+            "default": "not-sent",
+            "description": "Peppol e-invoice delivery status (REQ-AR-011). Orthogonal to lifecycleState (REQ-AR-004): an invoice can be issued/overdue/paid independently of its deliveryStatus. Defaults to 'not-sent' so pre-existing invoices without this field remain valid.",
+            "title": "Delivery Status"
+          },
+          "transmissionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Peppol message/transmission id (URN, e.g. urn:uuid:...) returned by the transmission port on a successful submit (REQ-EINV-004/006).",
+            "title": "Transmission ID"
+          },
+          "payloadFileUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "Docudesk/Files FK URI of the stored UBL / PDF-A3 hybrid artefact transmitted over Peppol (REQ-EINV-002/006). Never inline XML on the event bus.",
+            "title": "Payload File URI"
+          },
+          "deliveryDetail": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last delivery-status 'detail' message received from the access point (rejection/failure reason, or acceptance note).",
+            "title": "Delivery Detail"
+          },
+          "buyerPeppolParticipantId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Resolved Peppol participant id (scheme:identifier, e.g. 0106:00000000 for a B2G municipality) for the ARInvoice's debtor, mirroring the seller-side identifiers already carried by add-shillinq-invoice-lines.json. Populated from CustomerMaster.peppolParticipantId via the transmission port's lookupParticipant() (REQ-EINV-003) and persisted here for audit once a send succeeds.",
+            "title": "Buyer Peppol Participant ID"
+          }
+        },
+        "x-shillinq-delivery-substates": {
+          "_comment": "Documentation-only state graph for ARInvoice.deliveryStatus (REQ-AR-011). NOT an x-openregister-lifecycle block — see _meta.description. Enforced imperatively by EInvoiceService + PeppolDeliveryStatusListener.",
+          "field": "deliveryStatus",
+          "initialState": "not-sent",
+          "states": {
+            "not-sent": {
+              "label": "Not sent",
+              "description": "No Peppol transmission has been attempted, or the last attempt fell back to PDF + email."
+            },
+            "queued": {
+              "label": "Queued",
+              "description": "Pre-send validation passed and nl.conduction.peppol.outbound.requested was emitted; awaiting access-point acceptance."
+            },
+            "sent": {
+              "label": "Sent",
+              "description": "The access point accepted the transmission (delivery.status: sent)."
+            },
+            "delivered": {
+              "label": "Delivered",
+              "description": "The recipient access point confirmed delivery (delivery.status: delivered). Terminal."
+            },
+            "rejected": {
+              "label": "Rejected",
+              "description": "The access point or recipient rejected the document (delivery.status: rejected). The finance operator is notified."
+            },
+            "failed": {
+              "label": "Failed",
+              "description": "Transmission failed before the access point could process it (delivery.status: failed)."
+            }
+          },
+          "transitions": {
+            "queue": {
+              "from": "not-sent",
+              "to": "queued",
+              "label": "Send e-invoice",
+              "description": "Operator triggers Send e-invoice after pre-send validation passes (REQ-EINV-005). Enforced by EInvoiceService."
+            },
+            "accept": {
+              "from": "queued",
+              "to": "sent",
+              "label": "Access point accepts",
+              "description": "nl.conduction.peppol.delivery.status status: sent. Enforced by PeppolDeliveryStatusListener."
+            },
+            "confirm": {
+              "from": "sent",
+              "to": "delivered",
+              "label": "Recipient confirms",
+              "description": "nl.conduction.peppol.delivery.status status: delivered. Enforced by PeppolDeliveryStatusListener."
+            },
+            "reject-queued": {
+              "from": "queued",
+              "to": "rejected",
+              "label": "Access point rejects",
+              "description": "nl.conduction.peppol.delivery.status status: rejected before acceptance."
+            },
+            "reject-sent": {
+              "from": "sent",
+              "to": "rejected",
+              "label": "Recipient rejects",
+              "description": "nl.conduction.peppol.delivery.status status: rejected after acceptance."
+            },
+            "fail": {
+              "from": "queued",
+              "to": "failed",
+              "label": "Transmission error",
+              "description": "nl.conduction.peppol.delivery.status status: failed."
+            },
+            "requeue-rejected": {
+              "from": "rejected",
+              "to": "queued",
+              "label": "Re-send after correction",
+              "description": "Operator re-triggers Send e-invoice after correcting the rejection cause."
+            },
+            "requeue-failed": {
+              "from": "failed",
+              "to": "queued",
+              "label": "Re-send",
+              "description": "Operator re-triggers Send e-invoice after a transmission failure."
+            }
+          }
+        }
+      },
+      "CustomerMaster": {
+        "version": "0.2.0",
+        "properties": {
+          "peppolParticipantId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Debtor's Peppol participant id (scheme:identifier, e.g. 0106:00000000 for a Dutch municipality B2G participant, or 9944:nl123456789b01 for a commercial NL participant). Resolved by Peppol\\LogPeppolTransmissionAdapter::lookupParticipant() (REQ-EINV-003), mirroring Vendor.peppolParticipantId on the PO/supplier side. Absent = the debtor has no known Peppol identity; Send e-invoice falls back to PDF + email.",
+            "title": "Peppol Participant ID"
+          }
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CustomerMaster",
+          "slug": "customer-master-gemeente-zuidoost"
+        },
+        "customerId": "DEB-0001",
+        "legalName": "Gemeente Zuidoost",
+        "kvkNumber": "12340001",
+        "vatID": "NL001234567B01",
+        "email": "facturatie@gemeente-zuidoost-demo.nl",
+        "administrationId": "adm-shillinq-demo",
+        "lifecycleState": "active",
+        "peppolParticipantId": "0106:00000000"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CustomerMaster",
+          "slug": "customer-master-advies-bv"
+        },
+        "customerId": "DEB-0007",
+        "legalName": "Advies B.V.",
+        "kvkNumber": "12340007",
+        "vatID": "NL007234567B01",
+        "email": "facturen@advies-bv-demo.nl",
+        "administrationId": "adm-shillinq-demo",
+        "lifecycleState": "active",
+        "peppolParticipantId": "9944:nl007234567b01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CustomerMaster",
+          "slug": "customer-master-zzp-klant"
+        },
+        "customerId": "DEB-0012",
+        "legalName": "ZZP Klant",
+        "kvkNumber": "12340012",
+        "vatID": "NL012234567B01",
+        "email": "zzp-klant-demo@example.nl",
+        "administrationId": "adm-shillinq-demo",
+        "lifecycleState": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ARInvoice",
+          "slug": "ar-invoice-2026-0042"
+        },
+        "invoiceNumber": "2026-0042",
+        "customerId": "DEB-0001",
+        "administrationId": "adm-shillinq-demo",
+        "invoiceDate": "2026-06-10",
+        "dueDate": "2026-07-10",
+        "netAmount": 1000.0,
+        "vatAmount": 210.0,
+        "grossAmount": 1210.0,
+        "currency": "EUR",
+        "periodId": "2026-06",
+        "lifecycleState": "issued",
+        "sellerName": "Shillinq Consultancy B.V.",
+        "sellerVatId": "NL809876543B01",
+        "sellerCountryCode": "NL",
+        "buyerVatId": "NL001234567B01",
+        "buyerLegalRegId": "12340001",
+        "buyerPeppolParticipantId": "0106:00000000",
+        "deliveryStatus": "delivered",
+        "transmissionId": "urn:uuid:00000000-0000-0000-0000-000000000000",
+        "payloadFileUri": "docudesk://file/000",
+        "deliveryDetail": "Delivered to recipient AP"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ARInvoice",
+          "slug": "ar-invoice-2026-0051"
+        },
+        "invoiceNumber": "2026-0051",
+        "customerId": "DEB-0007",
+        "administrationId": "adm-shillinq-demo",
+        "invoiceDate": "2026-06-18",
+        "dueDate": "2026-07-18",
+        "netAmount": 500.0,
+        "vatAmount": 105.0,
+        "grossAmount": 605.0,
+        "currency": "EUR",
+        "periodId": "2026-06",
+        "lifecycleState": "paid",
+        "sellerName": "Shillinq Consultancy B.V.",
+        "sellerVatId": "NL809876543B01",
+        "sellerCountryCode": "NL",
+        "buyerVatId": "NL007234567B01",
+        "buyerLegalRegId": "12340007",
+        "buyerPeppolParticipantId": "9944:nl007234567b01",
+        "deliveryStatus": "sent",
+        "transmissionId": "urn:uuid:00000000-0000-0000-0000-000000000000",
+        "payloadFileUri": "docudesk://file/000",
+        "deliveryDetail": "Accepted by AP"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ARInvoice",
+          "slug": "ar-invoice-2026-0060"
+        },
+        "invoiceNumber": "2026-0060",
+        "customerId": "DEB-0012",
+        "administrationId": "adm-shillinq-demo",
+        "invoiceDate": "2026-06-25",
+        "dueDate": "2026-07-25",
+        "netAmount": 3000.0,
+        "vatAmount": 630.0,
+        "grossAmount": 3630.0,
+        "currency": "EUR",
+        "periodId": "2026-06",
+        "lifecycleState": "issued",
+        "sellerName": "Shillinq Consultancy B.V.",
+        "sellerVatId": "NL809876543B01",
+        "sellerCountryCode": "NL",
+        "buyerVatId": "NL012234567B01",
+        "buyerLegalRegId": "12340012",
+        "deliveryStatus": "not-sent"
+      }
+    ]
+  }
+}

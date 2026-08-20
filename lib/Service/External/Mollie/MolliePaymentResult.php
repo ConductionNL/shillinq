@@ -12,8 +12,8 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/specs/bookings-deposits/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -33,35 +33,34 @@ namespace OCA\Shillinq\Service\External\Mollie;
  * default so callers can persist a non-null payment reference even
  * when no outbound call took place.
  *
- * @spec openspec/changes/bookings-deposits/specs/bookings-deposits/spec.md
- * @spec openspec/changes/bookkeeping-accounts-receivable-core/specs/bookkeeping-accounts-receivable-core/spec.md
+ * @spec openspec/specs/bookings-deposits/spec.md
+ * @spec openspec/specs/bookkeeping-accounts-receivable-core/spec.md
  */
-final class MolliePaymentResult
-{
-    /**
-     * Construct the result value-object.
-     *
-     * @param string              $paymentStatus   Mollie-side state.
-     * @param string              $molliePaymentId Mollie-side intent id
-     *                                             (synthetic for dormant).
-     * @param string              $checkoutUrl     Hosted-checkout URL the
-     *                                             payer is redirected to
-     *                                             — empty string for
-     *                                             dormant.
-     * @param bool                $dormant         TRUE when the adapter was
-     *                                             dormant.
-     * @param array<string,mixed> $extras          Provider-specific extras
-     *                                             (e.g. mode
-     *                                             `live`/`test`, method
-     *                                             actually selected,
-     *                                             paidAt, amountRefunded).
-     */
-    public function __construct(
-        public readonly string $paymentStatus,
-        public readonly string $molliePaymentId,
-        public readonly string $checkoutUrl,
-        public readonly bool $dormant,
-        public readonly array $extras=[],
-    ) {
-    }//end __construct()
+final class MolliePaymentResult {
+	/**
+	 * Construct the result value-object.
+	 *
+	 * @param string $paymentStatus Mollie-side state.
+	 * @param string $molliePaymentId Mollie-side intent id
+	 *                                (synthetic for dormant).
+	 * @param string $checkoutUrl Hosted-checkout URL the
+	 *                            payer is redirected to
+	 *                            — empty string for
+	 *                            dormant.
+	 * @param bool $dormant TRUE when the adapter was
+	 *                      dormant.
+	 * @param array<string,mixed> $extras Provider-specific extras
+	 *                                    (e.g. mode
+	 *                                    `live`/`test`, method
+	 *                                    actually selected,
+	 *                                    paidAt, amountRefunded).
+	 */
+	public function __construct(
+		public readonly string $paymentStatus,
+		public readonly string $molliePaymentId,
+		public readonly string $checkoutUrl,
+		public readonly bool $dormant,
+		public readonly array $extras = [],
+	) {
+	}//end __construct()
 }//end class

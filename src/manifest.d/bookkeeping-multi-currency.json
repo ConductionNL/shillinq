@@ -3,13 +3,13 @@
 		{
 			"id": "Bookkeeping",
 			"label": "Bookkeeping",
-			"icon": "LedgerOutline",
+			"icon": "NotebookOutline",
 			"order": 11,
 			"children": [
 				{
 					"id": "BankAccounts",
 					"label": "Bank Accounts",
-					"icon": "Bank",
+					"icon": "BankOutline",
 					"route": "BankAccounts",
 					"order": 26
 				},
@@ -55,6 +55,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "BankAccount",
+				"_note": "MASTER archetype (native CnDetailPage). A bank account is master data holding one or more per-currency balances (multi-currency accounts). The treasurer reviews the account fields (name, IBAN, BIC, primary currency, administration, status), then the related list of CurrencyBalance snapshots (FK accountId) to see each currency position. NO comms leaves — a bank account is configured, not conversed with. Lifecycle actions expose the active/closed/frozen transitions. Audit-trail sidebar tab records status + field changes per REQ-AT-001.",
 				"fields": [
 					{"key": "accountName", "label": "Account name", "type": "string"},
 					{"key": "iban", "label": "IBAN", "type": "string"},
@@ -65,6 +66,43 @@
 					{"key": "lifecycleState", "label": "Status", "type": "string"},
 					{"key": "notes", "label": "Notes", "type": "string"}
 				],
+				"lifecycleActions": true,
+				"auditTrail": true,
+				"relatedLists": [
+					{
+						"id": "currency-balances",
+						"title": "Currency balances",
+						"schema": "CurrencyBalance",
+						"foreignKey": "accountId",
+						"columns": [
+							{"key": "currency", "label": "Currency"},
+							{"key": "balance", "label": "Balance"},
+							{"key": "previousBalance", "label": "Previous balance"},
+							{"key": "lastUpdated", "label": "Last updated"}
+						],
+						"detailRoute": "CurrencyBalanceDetail"
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/BankAccount/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
 				"indexRoute": "BankAccounts"
 			}
 		},
@@ -99,6 +137,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "CurrencyBalance",
+				"_note": "CONFIG/REFERENCE archetype (native CnDetailPage). A currency balance is a point-in-time per-currency snapshot on a bank account (operator-entered or bank-connector synced, REQ-MC-003/004) — not a workflow object, so no lifecycle actions and no child relatedLists. NO comms leaves and no files — it is a running balance figure, not a document holder. Audit-trail sidebar tab records each balance update (who changed which (accountId, currency) snapshot, when, from/to which amount) per REQ-AT-001 / REQ-MC-005.",
 				"fields": [
 					{"key": "balanceId", "label": "Balance ID", "type": "string"},
 					{"key": "accountId", "label": "Account", "type": "string"},
@@ -108,6 +147,27 @@
 					{"key": "lastUpdated", "label": "Last Updated", "type": "string"},
 					{"key": "notes", "label": "Notes", "type": "string"}
 				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/CurrencyBalance/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
 				"indexRoute": "CurrencyBalances"
 			}
 		}

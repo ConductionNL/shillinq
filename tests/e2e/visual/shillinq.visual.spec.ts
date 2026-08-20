@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2026 Conduction B.V.
- * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-License-Identifier: EUPL-1.2
  *
  * Visual-regression baselines for Shillinq's key surfaces (GAP-5).
  *
@@ -24,10 +24,22 @@ test.describe('Shillinq — visual baselines', () => {
 	// activation panel; baseline their chrome. Adapter status is dormant-by-
 	// default + static, so the shots are deterministic.
 	test('external adapters status', async ({ page }) => {
-		await shootSurface(page, `${APP}/external-adapters`, 'external-adapters-status.png')
+		await shootSurface(
+			page,
+			`${APP}/external-adapters`,
+			'external-adapters-status.png',
+		)
 	})
 
-	test('external adapter detail', async ({ page }) => {
-		await shootSurface(page, `${APP}/external-adapters/digipoort-sbr`, 'external-adapter-detail.png')
-	})
+	// NO per-adapter detail shot.
+	//
+	// `integration-config-to-openconnector` deleted the
+	// `/external-adapters/<family-id>` routes; none is declared in
+	// src/manifest*.json any more, so this shot pointed at a URL that now
+	// falls through vue-router's catch-all to the Dashboard — it would have
+	// silently re-baselined the wrong page.
+	//
+	// `external-adapters.spec.ts`'s "no test file references a removed
+	// per-adapter route" guard walks the whole e2e tree for exactly this
+	// literal and was failing on this file.
 })

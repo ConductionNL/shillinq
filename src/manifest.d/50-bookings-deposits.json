@@ -61,6 +61,10 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "DepositPayment",
+				"_note": "FINANCIAL/PAYMENT archetype — a deposit is a captured/authorised payment against a booking, treated as a money record. Native shillinq detail contract: config.aggregations[] surface the deposit-amount currency KPI so the sum reads first; config.fields[] render the payment data (booking, booking type, currency, state, due date, gateway/method, linked AR invoice, refund policy, last error); the sidebar carries a file-references tab for the gateway receipt and an audit-trail tab for the immutable state transitions (authorized/captured/voided). NO calendar/email/talk — DepositPayment declares no comms linkedType; the booking's own calendar lives on the booking, not the payment.",
+				"aggregations": [
+					{ "id": "depositAmount", "title": "Deposit amount", "field": "amount", "metric": "value", "format": "currency" }
+				],
 				"fields": [
 					{
 						"key": "orderId",
@@ -123,6 +127,17 @@
 						"type": "string"
 					}
 				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "documents", "label": "Receipts", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "DepositPayment", "objectId": ":id" } }
+						] },
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
 				"indexRoute": "Deposits"
 			}
 		}

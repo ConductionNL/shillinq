@@ -43,113 +43,109 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-16
  */
-class EliminationBalanceGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param LoggerInterface $logger Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class EliminationBalanceGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Returns true iff the elimination journal's lines balance (debit == credit).
-     *
-     * Computes SUM(line.debitAmount) and SUM(line.creditAmount) over the embedded
-     * `lines` array using integer-cent arithmetic to avoid IEEE-754 float equality
-     * issues, then requires the two sums to be equal. An elimination with no lines is
-     * rejected (an empty journal is meaningless). When `totalDebit`/`totalCredit` are
-     * supplied they must also be internally consistent with the line sums.
-     *
-     * Fail-closed: returns false on any exception (REQ-ICE-006 / CWE-863).
-     *
-     * @param array<string, mixed> $journal The EliminationJournal object array.
-     *
-     * @return bool True when the journal is balanced and may be persisted.
-     *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-16
-     */
-    public function isBalanced(array $journal): bool
-    {
-        try {
-            $lines = ($journal['lines'] ?? []);
-            if (is_array($lines) === false || $lines === []) {
-                $this->logger->warning(
-                    'EliminationBalanceGuard: journal has no lines — denying create (fail-closed)',
-                    ['eliminationId' => ($journal['eliminationId'] ?? 'unknown')]
-                );
-                return false;
-            }
+	/**
+	 * Returns true iff the elimination journal's lines balance (debit == credit).
+	 *
+	 * Computes SUM(line.debitAmount) and SUM(line.creditAmount) over the embedded
+	 * `lines` array using integer-cent arithmetic to avoid IEEE-754 float equality
+	 * issues, then requires the two sums to be equal. An elimination with no lines is
+	 * rejected (an empty journal is meaningless). When `totalDebit`/`totalCredit` are
+	 * supplied they must also be internally consistent with the line sums.
+	 *
+	 * Fail-closed: returns false on any exception (REQ-ICE-006 / CWE-863).
+	 *
+	 * @param array<string, mixed> $journal The EliminationJournal object array.
+	 *
+	 * @return bool True when the journal is balanced and may be persisted.
+	 *
+	 * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-16
+	 */
+	public function isBalanced(array $journal): bool {
+		try {
+			$lines = ($journal['lines'] ?? []);
+			if (is_array($lines) === false || $lines === []) {
+				$this->logger->warning(
+					'EliminationBalanceGuard: journal has no lines — denying create (fail-closed)',
+					['eliminationId' => ($journal['eliminationId'] ?? 'unknown')]
+				);
+				return false;
+			}
 
-            $debitCents  = 0;
-            $creditCents = 0;
-            foreach ($lines as $line) {
-                if (is_array($line) === false) {
-                    continue;
-                }
+			$debitCents = 0;
+			$creditCents = 0;
+			foreach ($lines as $line) {
+				if (is_array($line) === false) {
+					continue;
+				}
 
-                $debitCents  += (int) round((float) ($line['debitAmount'] ?? 0) * 100);
-                $creditCents += (int) round((float) ($line['creditAmount'] ?? 0) * 100);
-            }
+				$debitCents += (int)round((float)($line['debitAmount'] ?? 0) * 100);
+				$creditCents += (int)round((float)($line['creditAmount'] ?? 0) * 100);
+			}
 
-            if ($debitCents !== $creditCents) {
-                $this->logger->warning(
-                    'EliminationBalanceGuard: lines do not balance — denying create',
-                    [
-                        'eliminationId' => ($journal['eliminationId'] ?? 'unknown'),
-                        'debitCents'    => $debitCents,
-                        'creditCents'   => $creditCents,
-                    ]
-                );
-                return false;
-            }
+			if ($debitCents !== $creditCents) {
+				$this->logger->warning(
+					'EliminationBalanceGuard: lines do not balance — denying create',
+					[
+						'eliminationId' => ($journal['eliminationId'] ?? 'unknown'),
+						'debitCents' => $debitCents,
+						'creditCents' => $creditCents,
+					]
+				);
+				return false;
+			}
 
-            // When totals are supplied, verify they agree with the line sums.
-            return $this->totalsConsistent(journal: $journal, debitCents: $debitCents, creditCents: $creditCents);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'EliminationBalanceGuard: balance check failed — denying create (fail-closed)',
-                ['eliminationId' => ($journal['eliminationId'] ?? 'unknown'), 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
+			// When totals are supplied, verify they agree with the line sums.
+			return $this->totalsConsistent(journal: $journal, debitCents: $debitCents, creditCents: $creditCents);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'EliminationBalanceGuard: balance check failed — denying create (fail-closed)',
+				['eliminationId' => ($journal['eliminationId'] ?? 'unknown'), 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
 
-    }//end isBalanced()
+	}//end isBalanced()
 
-    /**
-     * Verify that any supplied totalDebit / totalCredit agree with the line sums.
-     *
-     * When the journal omits the totals this is vacuously true; when present they
-     * must equal the integer-cent line sums or the journal is rejected.
-     *
-     * @param array<string, mixed> $journal     The EliminationJournal object array.
-     * @param int                  $debitCents  The summed debit lines in cents.
-     * @param int                  $creditCents The summed credit lines in cents.
-     *
-     * @return bool True when the supplied totals are internally consistent.
-     *
-     * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-16
-     */
-    private function totalsConsistent(array $journal, int $debitCents, int $creditCents): bool
-    {
-        if (array_key_exists('totalDebit', $journal) === true) {
-            $totalDebitCents = (int) round((float) $journal['totalDebit'] * 100);
-            if ($totalDebitCents !== $debitCents) {
-                return false;
-            }
-        }
+	/**
+	 * Verify that any supplied totalDebit / totalCredit agree with the line sums.
+	 *
+	 * When the journal omits the totals this is vacuously true; when present they
+	 * must equal the integer-cent line sums or the journal is rejected.
+	 *
+	 * @param array<string, mixed> $journal The EliminationJournal object array.
+	 * @param int $debitCents The summed debit lines in cents.
+	 * @param int $creditCents The summed credit lines in cents.
+	 *
+	 * @return bool True when the supplied totals are internally consistent.
+	 *
+	 * @spec openspec/changes/bookkeeping-intercompany-elimination/tasks.md#task-16
+	 */
+	private function totalsConsistent(array $journal, int $debitCents, int $creditCents): bool {
+		if (array_key_exists('totalDebit', $journal) === true) {
+			$totalDebitCents = (int)round((float)$journal['totalDebit'] * 100);
+			if ($totalDebitCents !== $debitCents) {
+				return false;
+			}
+		}
 
-        if (array_key_exists('totalCredit', $journal) === true) {
-            $totalCreditCents = (int) round((float) $journal['totalCredit'] * 100);
-            if ($totalCreditCents !== $creditCents) {
-                return false;
-            }
-        }
+		if (array_key_exists('totalCredit', $journal) === true) {
+			$totalCreditCents = (int)round((float)$journal['totalCredit'] * 100);
+			if ($totalCreditCents !== $creditCents) {
+				return false;
+			}
+		}
 
-        return true;
-
-    }//end totalsConsistent()
+		return true;
+	}//end totalsConsistent()
 }//end class

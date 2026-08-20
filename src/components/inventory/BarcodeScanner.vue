@@ -17,7 +17,7 @@
   @spec openspec/changes/inventory-mobile-scanner/tasks.md#T2.6
 -->
 <template>
-	<div class="barcode-scanner" :aria-live="'polite'">
+	<div class="barcode-scanner" aria-live="polite">
 		<div v-if="cameraError" class="barcode-scanner__error" role="status">
 			{{ cameraError }}
 		</div>
@@ -28,7 +28,9 @@
 				autoplay
 				playsinline
 				muted
-				:aria-label="t('shillinq', 'Live camera preview for barcode scanning')" />
+				:aria-label="
+					t('shillinq', 'Live camera preview for barcode scanning')
+				" />
 			<p class="barcode-scanner__hint">
 				{{ t('shillinq', 'Point the camera at the barcode') }}
 			</p>
@@ -43,7 +45,7 @@
 					:placeholder="t('shillinq', 'Enter barcode or SKU')"
 					autocomplete="off"
 					inputmode="search"
-					:aria-label="t('shillinq', 'Manual barcode or SKU entry')">
+					:aria-label="t('shillinq', 'Manual barcode or SKU entry')" />
 			</label>
 			<button type="submit" :disabled="!manualValue">
 				{{ t('shillinq', 'Use this code') }}
@@ -61,8 +63,8 @@
 <script>
 import {
 	nativeDetectorAvailable,
-	requestCameraStream,
 	releaseStream,
+	requestCameraStream,
 	startScanLoop,
 } from '../../composables/useBarcodeScanner.js'
 
@@ -73,11 +75,13 @@ export default {
 			type: Array,
 			default: () => ['qr_code', 'ean_13', 'code_128', 'code_39', 'code_93'],
 		},
+
 		fallbackToManual: {
 			type: Boolean,
 			default: false,
 		},
 	},
+
 	emits: ['scan', 'cancel'],
 	data() {
 		return {
@@ -88,10 +92,14 @@ export default {
 			loop: null,
 		}
 	},
+
 	async mounted() {
 		const available = await nativeDetectorAvailable(this.formats)
 		if (!available) {
-			this.cameraError = this.t('shillinq', 'No barcode decoder available; use manual entry.')
+			this.cameraError = this.t(
+				'shillinq',
+				'No barcode decoder available; use manual entry.',
+			)
 			return
 		}
 		try {
@@ -109,16 +117,21 @@ export default {
 				}
 			}
 		} catch (e) {
-			this.cameraError = this.t('shillinq', 'Camera unavailable; use manual entry.')
+			this.cameraError = this.t(
+				'shillinq',
+				'Camera unavailable; use manual entry.',
+			)
 		}
 	},
-	beforeDestroy() {
+
+	beforeUnmount() {
 		if (this.loop && typeof this.loop.stop === 'function') {
 			this.loop.stop()
 		}
 		releaseStream(this.stream)
 		this.stream = null
 	},
+
 	methods: {
 		handleManualSubmit() {
 			const value = (this.manualValue || '').trim()
@@ -138,34 +151,41 @@ export default {
 	gap: var(--default-grid-baseline, 4px);
 	padding: var(--default-grid-baseline, 4px);
 }
+
 .barcode-scanner__viewport {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 }
+
 .barcode-scanner__viewport video {
 	max-width: 100%;
 	border-radius: var(--border-radius, 4px);
 	background: var(--color-background-dark, #000);
 }
+
 .barcode-scanner__hint {
 	color: var(--color-text-maxcontrast);
 	font-size: 0.9em;
 }
+
 .barcode-scanner__manual {
 	display: flex;
 	gap: var(--default-grid-baseline, 4px);
 	align-items: flex-end;
 	flex-wrap: wrap;
 }
+
 .barcode-scanner__manual label {
 	display: flex;
 	flex-direction: column;
 	flex: 1 1 200px;
 }
+
 .barcode-scanner__error {
 	color: var(--color-error);
 }
+
 .barcode-scanner__actions {
 	display: flex;
 	gap: var(--default-grid-baseline, 4px);

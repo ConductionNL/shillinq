@@ -29,11 +29,11 @@
 		role="region"
 		:aria-label="t('shillinq', 'Switch administration')">
 		<NcActions
-			:menu-name="activeLabel"
+			:menuName="activeLabel"
 			:title="t('shillinq', 'Switch administration')"
 			:disabled="loading"
-			:force-name="true"
-			:type="'tertiary'"
+			:forceName="true"
+			variant="tertiary"
 			:aria-label="t('shillinq', 'Switch administration')">
 			<template #icon>
 				<OfficeBuilding :size="20" />
@@ -43,10 +43,12 @@
 				v-for="administration in visibleAdministrations"
 				:key="administration.administrationId"
 				:disabled="loading || administration.administrationId === activeId"
-				:close-after-click="true"
+				:closeAfterClick="true"
 				@click="onSelect(administration.administrationId)">
 				<template #icon>
-					<CheckBold v-if="administration.administrationId === activeId" :size="18" />
+					<CheckBold
+						v-if="administration.administrationId === activeId"
+						:size="18" />
 					<OfficeBuildingOutline v-else :size="18" />
 				</template>
 				{{ formatLabel(administration) }}
@@ -59,7 +61,7 @@
 </template>
 
 <script>
-import { NcActions, NcActionButton, NcActionCaption } from '@nextcloud/vue'
+import { NcActionButton, NcActionCaption, NcActions } from '@nextcloud/vue'
 import CheckBold from 'vue-material-design-icons/CheckBold.vue'
 import OfficeBuilding from 'vue-material-design-icons/OfficeBuilding.vue'
 import OfficeBuildingOutline from 'vue-material-design-icons/OfficeBuildingOutline.vue'
@@ -205,7 +207,11 @@ export default {
 				const response = await switchAdministration(administrationId)
 				this.activeId = response.activeAdministrationId
 				this.$emit('switched', this.activeId)
-				if (this.reloadAfterSwitch && typeof window !== 'undefined' && window.location) {
+				if (
+					this.reloadAfterSwitch
+					&& typeof window !== 'undefined'
+					&& window.location
+				) {
 					window.location.reload()
 				}
 			} catch (error) {
@@ -215,7 +221,10 @@ export default {
 				} else if (status === 401) {
 					this.errorMessage = t('shillinq', 'Not authenticated')
 				} else {
-					this.errorMessage = t('shillinq', 'Failed to switch administration')
+					this.errorMessage = t(
+						'shillinq',
+						'Failed to switch administration',
+					)
 				}
 				this.$emit('error', error)
 			} finally {

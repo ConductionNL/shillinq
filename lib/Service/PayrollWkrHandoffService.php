@@ -35,120 +35,112 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Emits the period loonsom for the WKR app to compute the free-space ceiling.
  *
  * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
  */
-class PayrollWkrHandoffService
-{
-    /**
-     * Construct the service.
-     *
-     * @param ContainerInterface $container  DI container (OR's ObjectService is lazy).
-     * @param IAppConfig         $appConfig  App config for the register slug.
-     * @param PayrollCalculator  $calculator Cents arithmetic helper.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly PayrollCalculator $calculator,
-    ) {
-    }//end __construct()
+class PayrollWkrHandoffService {
+	/**
+	 * Construct the service.
+	 *
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param PayrollCalculator $calculator Cents arithmetic helper.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly PayrollCalculator $calculator,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    /**
-     * Build the WKR loonsom payload for a LoonPeriode.
-     *
-     * The loonsom sums fiscaalLoon (taxable wage) over every LoonStrook in
-     * the period; the WKR app divides it into "tot 400k" and "boven 400k"
-     * tranches at its own boundary so this service does not pre-tranche.
-     *
-     * @param string $administrationId Administration scope (server-resolved).
-     * @param string $periodeId        Period id.
-     *
-     * @return array<string,mixed> Loonsom payload for the WKR app.
-     *
-     * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
-     */
-    public function toWkrLoonsomPayload(string $administrationId, string $periodeId): array
-    {
-        $stroken = $this->findStroken(administrationId: $administrationId, periodeId: $periodeId);
+	/**
+	 * Build the WKR loonsom payload for a LoonPeriode.
+	 *
+	 * The loonsom sums fiscaalLoon (taxable wage) over every LoonStrook in
+	 * the period; the WKR app divides it into "tot 400k" and "boven 400k"
+	 * tranches at its own boundary so this service does not pre-tranche.
+	 *
+	 * @param string $administrationId Administration scope (server-resolved).
+	 * @param string $periodId Period id.
+	 *
+	 * @return array<string,mixed> Loonsom payload for the WKR app.
+	 *
+	 * @spec openspec/changes/bookkeeping-payroll-engine-nl/tasks.md
+	 */
+	public function toWkrLoonsomPayload(string $administrationId, string $periodId): array {
+		$stroken = $this->findStroken(administrationId: $administrationId, periodId: $periodId);
 
-        $loonsomC = 0;
-        $aantal   = 0;
-        foreach ($stroken as $strook) {
-            $loonsomC += $this->calculator->toCents(amount: (float) ($strook['fiscaalLoon'] ?? 0));
-            $aantal++;
-        }
+		$payrollTotalC = 0;
+		$count = 0;
+		foreach ($stroken as $slip) {
+			$payrollTotalC += $this->calculator->toCents(amount: (float)($slip['fiscalPay'] ?? 0));
+			$count++;
+		}
 
-        return [
-            'periodeId'        => $periodeId,
-            'administrationId' => $administrationId,
-            'loonsom'          => $this->calculator->fromCents(cents: $loonsomC),
-            'aantalStroken'    => $aantal,
-            'currency'         => 'EUR',
-            'source'           => 'LoonStrook',
-        ];
+		return [
+			'periodId' => $periodId,
+			'administrationId' => $administrationId,
+			'loonsom' => $this->calculator->fromCents(cents: $payrollTotalC),
+			'aantalStroken' => $count,
+			'currency' => 'EUR',
+			'source' => 'LoonStrook',
+		];
 
-    }//end toWkrLoonsomPayload()
+	}//end toWkrLoonsomPayload()
 
-    /**
-     * Read all LoonStrook records for the period, administration-scoped.
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $periodeId        Period id.
-     *
-     * @return array<int,array<string,mixed>>
-     */
-    private function findStroken(string $administrationId, string $periodeId): array
-    {
-        $results = $this->objectService()
-            ->setRegister($this->register())
-            ->setSchema('LoonStrook')
-            ->findAll(
-                [
-                    'filters' => [
-                        'administrationId' => $administrationId,
-                        'periodeId'        => $periodeId,
-                    ],
-                ]
-            );
+	/**
+	 * Read all LoonStrook records for the period, administration-scoped.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $periodId Period id.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function findStroken(string $administrationId, string $periodId): array {
+		$results = $this->objectService()
+			->setRegister($this->register())
+			->setSchema('LoonStrook')
+			->findAll(
+				[
+					'filters' => [
+						'administrationId' => $administrationId,
+						'periodId' => $periodId,
+					],
+				]
+			);
 
-        $out = [];
-        foreach ($results as $r) {
-            $out[] = (array) $r;
-        }
+		$out = [];
+		foreach ($results as $r) {
+			$out[] = (array)$r;
+		}
 
-        return $out;
+		return $out;
+	}//end findStroken()
 
-    }//end findStroken()
+	/**
+	 * Lazily fetch OpenRegister's ObjectService.
+	 *
+	 * @return object The ObjectService.
+	 */
+	private function objectService(): object {
+		return $this->objectService;
+	}//end objectService()
 
-    /**
-     * Lazily fetch OpenRegister's ObjectService.
-     *
-     * @return object The ObjectService.
-     */
-    private function objectService(): object
-    {
-        return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+	/**
+	 * Resolve the configured OpenRegister register slug.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-    }//end objectService()
-
-    /**
-     * Resolve the configured OpenRegister register slug.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
-
-        return $register;
-
-    }//end register()
+		return $register;
+	}//end register()
 }//end class

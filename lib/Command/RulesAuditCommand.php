@@ -17,7 +17,9 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-rule-audit/specs/bookkeeping-rule-engine/spec.md
+ * @spec openspec/specs/bookkeeping-rule-engine/spec.md
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment
  */
 
 declare(strict_types=1);
@@ -31,81 +33,83 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * occ command that audits bookkeeping data against the rule corpus.
+ * OCC command that audits bookkeeping data against the rule corpus.
  */
-class RulesAuditCommand extends Command
-{
+class RulesAuditCommand extends Command {
+	/**
+	 * Construct the rule-audit command.
+	 *
+	 * @param RuleAuditService $auditService The compliance auditor.
+	 */
+	public function __construct(
+		private readonly RuleAuditService $auditService,
+	) {
+		parent::__construct();
 
+	}//end __construct()
 
-    /**
-     * @param RuleAuditService $auditService The compliance auditor.
-     */
-    public function __construct(
-        private readonly RuleAuditService $auditService,
-    ) {
-        parent::__construct();
+	/**
+	 * Configure the command name, description and options.
+	 *
+	 * @return void
+	 */
+	protected function configure(): void {
+		$this->setName('shillinq:rules:audit')
+			->setDescription('Audit bookkeeping data against the machine-checkable rule corpus.')
+			->addOption('jurisdiction', null, InputOption::VALUE_REQUIRED, 'Jurisdiction context (ISO alpha-2)', 'NL');
 
-    }//end __construct()
+	}//end configure()
 
+	/**
+	 * Execute the audit and print the compliance summary to the console.
+	 *
+	 * @param InputInterface $input Console input.
+	 * @param OutputInterface $output Console output.
+	 *
+	 * @return int
+	 *
+	 * @spec openspec/specs/bookkeeping-rule-engine/spec.md
+	 */
+	protected function execute(InputInterface $input, OutputInterface $output): int {
+		$report = $this->auditService->audit(['jurisdiction' => (string)$input->getOption('jurisdiction')]);
 
-    /**
-     * @return void
-     */
-    protected function configure(): void
-    {
-        $this->setName('shillinq:rules:audit')
-            ->setDescription('Audit bookkeeping data against the machine-checkable rule corpus.')
-            ->addOption('jurisdiction', null, InputOption::VALUE_REQUIRED, 'Jurisdiction context (ISO alpha-2)', 'NL');
+		$output->writeln('<info>Shillinq rule-compliance audit</info>');
+		$output->writeln(sprintf('  catalogue version : %s', $report['catalogueVersion']));
+		$output->writeln(sprintf('  corpus rules      : %d (machine-checkable: %d)', $report['corpusTotal'], $report['machineCheckable']));
+		$output->writeln(sprintf('  enforceable today : %d (%.1f%% of machine-checkable)', $report['enforceableRules'], $report['coveragePct']));
+		$output->writeln('');
+		$output->writeln(sprintf('  objects checked   : %d', $report['objectsChecked']));
+		$output->writeln(sprintf('  compliant         : %d', $report['objectsCompliant']));
+		$output->writeln(sprintf('  with violations   : %d', $report['objectsWithViolations']));
+		$output->writeln(
+			sprintf(
+				'  violations        : %d mandatory / %d conditional / %d recommended',
+				$report['violationsBySeverity']['mandatory'] ?? 0,
+				$report['violationsBySeverity']['conditional'] ?? 0,
+				$report['violationsBySeverity']['recommended'] ?? 0
+			)
+		);
 
-    }//end configure()
+		foreach ($report['types'] as $type => $stat) {
+			$output->writeln(
+				sprintf(
+					'    %-16s checked=%d compliant=%d withViolations=%d',
+					$type,
+					$stat['checked'],
+					$stat['compliant'],
+					$stat['withViolations']
+				)
+			);
+		}
 
+		if (empty($report['topViolatedRules']) === false) {
+			$output->writeln('');
+			$output->writeln('  top violated rules:');
+			foreach ($report['topViolatedRules'] as $row) {
+				$output->writeln(sprintf('    %-34s %d', $row['ruleId'], $row['count']));
+			}
+		}
 
-    /**
-     * @param InputInterface  $input  Console input.
-     * @param OutputInterface $output Console output.
-     *
-     * @return int
-     */
-    protected function execute(InputInterface $input, OutputInterface $output): int
-    {
-        $report = $this->auditService->audit(['jurisdiction' => (string) $input->getOption('jurisdiction')]);
-
-        $output->writeln('<info>Shillinq rule-compliance audit</info>');
-        $output->writeln(sprintf('  catalogue version : %s', $report['catalogueVersion']));
-        $output->writeln(sprintf('  corpus rules      : %d (machine-checkable: %d)', $report['corpusTotal'], $report['machineCheckable']));
-        $output->writeln(sprintf('  enforceable today : %d (%.1f%% of machine-checkable)', $report['enforceableRules'], $report['coveragePct']));
-        $output->writeln('');
-        $output->writeln(sprintf('  objects checked   : %d', $report['objectsChecked']));
-        $output->writeln(sprintf('  compliant         : %d', $report['objectsCompliant']));
-        $output->writeln(sprintf('  with violations   : %d', $report['objectsWithViolations']));
-        $output->writeln(sprintf(
-            '  violations        : %d mandatory / %d conditional / %d recommended',
-            $report['violationsBySeverity']['mandatory'] ?? 0,
-            $report['violationsBySeverity']['conditional'] ?? 0,
-            $report['violationsBySeverity']['recommended'] ?? 0
-        ));
-
-        foreach ($report['types'] as $type => $stat) {
-            $output->writeln(sprintf(
-                '    %-16s checked=%d compliant=%d withViolations=%d',
-                $type,
-                $stat['checked'],
-                $stat['compliant'],
-                $stat['withViolations']
-            ));
-        }
-
-        if (empty($report['topViolatedRules']) === false) {
-            $output->writeln('');
-            $output->writeln('  top violated rules:');
-            foreach ($report['topViolatedRules'] as $row) {
-                $output->writeln(sprintf('    %-34s %d', $row['ruleId'], $row['count']));
-            }
-        }
-
-        return 0;
-
-    }//end execute()
-
-
+		return 0;
+	}//end execute()
 }//end class

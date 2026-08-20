@@ -43,7 +43,9 @@ describe('shillinq settings store', () => {
 	})
 
 	it('fetchSettings stores data and derives openregisters/admin flags', async () => {
-		mockFetchOnce({ json: { openregisters: true, isAdmin: true, invoiceSchema: 'invoice' } })
+		mockFetchOnce({
+			json: { openregisters: true, isAdmin: true, invoiceSchema: 'invoice' },
+		})
 		const store = useSettingsStore()
 		const data = await store.fetchSettings()
 		expect(globalThis.fetch).toHaveBeenCalledWith(

@@ -24,8 +24,9 @@
  * (`widget/`) so all four embed methods share the same surface (REQ-WSW-004).
  */
 
-import Vue from 'vue'
+import { createApp, h } from 'vue'
 import SelfServiceWidget from './SelfServiceWidget.vue'
+
 import '../../styles/widget.css'
 
 const DEFAULTS = {
@@ -38,6 +39,10 @@ const DEFAULTS = {
 // Validate the operator-supplied config. We reject silently if the bare
 // minimum (containerId / businessId / apiBase / apiKey) is missing — the
 // loader can never substitute "sensible defaults" for credentials.
+/**
+ *
+ * @param config
+ */
 function validateConfig(config) {
 	if (!config || typeof config !== 'object') {
 		return 'BookingWidget.init requires a config object.'
@@ -57,6 +62,10 @@ function validateConfig(config) {
 	return null
 }
 
+/**
+ *
+ * @param config
+ */
 function resolveContainer(config) {
 	if (config.element) {
 		return config.element
@@ -64,40 +73,46 @@ function resolveContainer(config) {
 	return document.getElementById(config.containerId)
 }
 
+/**
+ *
+ * @param container
+ * @param config
+ */
 function mountInto(container, config) {
-	const merged = Object.assign({}, DEFAULTS, config)
+	const merged = { ...DEFAULTS, ...config }
 	// Inject a child mount-point so Vue does not replace partner-supplied
 	// container markup (some partners use the same div for analytics).
 	const mountPoint = document.createElement('div')
 	container.appendChild(mountPoint)
 
-	const instance = new Vue({
-		render(h) {
+	// Vue 3: props go directly in `h()`'s second argument — the Vue 2
+	// `{ props: {...} }` wrapper would be passed through as a single attr
+	// named "props" and every real prop would arrive undefined.
+	const app = createApp({
+		render() {
 			return h(SelfServiceWidget, {
-				props: {
-					businessId: merged.businessId,
-					apiBase: merged.apiBase,
-					apiKey: merged.apiKey,
-					resourceId: merged.resourceId,
-					lang: merged.lang,
-					primaryColor: merged.primaryColor,
-					darkMode: !!merged.darkMode,
-					translations: merged.translations || {},
-				},
+				businessId: merged.businessId,
+				apiBase: merged.apiBase,
+				apiKey: merged.apiKey,
+				resourceId: merged.resourceId,
+				lang: merged.lang,
+				primaryColor: merged.primaryColor,
+				darkMode: !!merged.darkMode,
+				translations: merged.translations || {},
 			})
 		},
 	})
-	instance.$mount(mountPoint)
-	return instance
+	app.mount(mountPoint)
+	return app
 }
 
 export const BookingWidget = {
 	/**
-	 * Initialise a widget instance. Returns the Vue instance for caller
-	 * lifecycle control (destroy on SPA route change, etc.).
+	 * Initialise a widget instance. Returns the Vue application instance for
+	 * caller lifecycle control (`app.unmount()` on SPA route change, etc.).
 	 *
 	 * @param {object} config Widget configuration.
-	 * @return {object|null} Vue instance handle, or null on validation failure.
+	 * @return {object|null} Vue app handle, or null on validation failure.
 	 */
 	init(config) {
 		const error = validateConfig(config)
@@ -122,7 +137,7 @@ export const BookingWidget = {
 	 * @return {string} Iframe src URL.
 	 */
 	iframeUrl(config) {
-		const error = validateConfig(Object.assign({}, config, { containerId: 'iframe' }))
+		const error = validateConfig({ ...config, containerId: 'iframe' })
 		if (error) {
 			// eslint-disable-next-line no-console
 			console.error('[BookingWidget] ' + error)
@@ -137,7 +152,9 @@ export const BookingWidget = {
 		if (config.primaryColor) {
 			params.set('primaryColor', config.primaryColor)
 		}
-		return config.apiBase.replace(/\/$/, '') + '/widget/iframe?' + params.toString()
+		return (
+			config.apiBase.replace(/\/$/, '') + '/widget/iframe?' + params.toString()
+		)
 	},
 }
 

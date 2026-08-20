@@ -8,14 +8,15 @@
  and surfaces a conflict dialog on a 409 response with an override option.
 -->
 <template>
-	<form class="booking-form" @submit.prevent="submit">
+	<form class="booking-form" data-testid="booking-form" @submit.prevent="submit">
 		<div class="booking-form__field">
 			<label for="booking-title">{{ t('shillinq', 'Title') }}</label>
 			<input
 				id="booking-title"
 				v-model="form.title"
 				type="text"
-				:placeholder="t('shillinq', 'Booking title')">
+				data-testid="booking-form-title"
+				:placeholder="t('shillinq', 'Booking title')" />
 		</div>
 
 		<div class="booking-form__field">
@@ -23,7 +24,8 @@
 			<input
 				id="booking-start"
 				v-model="form.startTime"
-				type="datetime-local">
+				type="datetime-local"
+				data-testid="booking-form-start" />
 		</div>
 
 		<div class="booking-form__field">
@@ -31,7 +33,8 @@
 			<input
 				id="booking-end"
 				v-model="form.endTime"
-				type="datetime-local">
+				type="datetime-local"
+				data-testid="booking-form-end" />
 		</div>
 
 		<div class="booking-form__field">
@@ -40,33 +43,66 @@
 				id="booking-attendee"
 				v-model="form.attendee"
 				type="text"
-				:placeholder="t('shillinq', 'Attendee name')">
+				data-testid="booking-form-attendee"
+				:placeholder="t('shillinq', 'Attendee name')" />
 		</div>
 
 		<div class="booking-form__field">
 			<span class="booking-form__legend">{{ t('shillinq', 'Status') }}</span>
 			<label class="booking-form__radio">
-				<input v-model="form.status" type="radio" value="pending">
+				<input
+					v-model="form.status"
+					type="radio"
+					value="pending"
+					data-testid="booking-form-status-pending" />
 				{{ t('shillinq', 'Pending') }}
 			</label>
 			<label class="booking-form__radio">
-				<input v-model="form.status" type="radio" value="confirmed">
+				<input
+					v-model="form.status"
+					type="radio"
+					value="confirmed"
+					data-testid="booking-form-status-confirmed" />
 				{{ t('shillinq', 'Confirmed') }}
 			</label>
 		</div>
 
-		<p v-if="validationError" class="booking-form__error" data-testid="booking-form-error">
+		<p
+			v-if="validationError"
+			class="booking-form__error"
+			data-testid="booking-form-error">
 			{{ validationError }}
 		</p>
 
 		<div class="booking-form__actions">
-			<NcButton type="primary" native-type="submit" :disabled="submitting">
-				{{ submitting ? t('shillinq', 'Saving…') : t('shillinq', 'Create Booking') }}
+			<NcButton data-testid="booking-form-cancel" @click="$emit('cancel')">
+				{{ t('shillinq', 'Cancel') }}
+			</NcButton>
+			<NcButton
+				variant="primary"
+				type="submit"
+				data-testid="booking-form-submit"
+				:disabled="submitting">
+				{{
+					submitting
+						? t('shillinq', 'Saving…')
+						: t('shillinq', 'Create Booking')
+				}}
 			</NcButton>
 		</div>
 
+		<!--
+			`:open` is REQUIRED, not decorative. BookingConflictDialog gates its
+			entire template on `v-if="open"` with `default: false`, so mounting it
+			behind only the parent's `v-if` created a component that rendered
+			NOTHING. The 409 override flow was therefore unreachable: the API
+			correctly answers 409 (asserted directly in
+			tests/e2e/bookings-resource-calendar.spec.ts) and the operator saw no
+			dialog, no error, and no created booking.
+		-->
 		<BookingConflictDialog
 			v-if="showConflictDialog"
+			:open="showConflictDialog"
 			:conflicts="conflicts"
 			@confirm="confirmDespiteConflict"
 			@cancel="showConflictDialog = false" />
@@ -74,8 +110,8 @@
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
+import { NcButton } from '@nextcloud/vue'
 import BookingConflictDialog from '../../modals/BookingConflictDialog.vue'
 
 const MIN_DURATION_MS = 15 * 60 * 1000
@@ -96,19 +132,37 @@ export default {
 			type: String,
 			required: true,
 		},
+
+		/**
+		 * `datetime-local` value to pre-fill the start field with — the host
+		 * passes the clicked slot's window so the operator does not retype it.
+		 */
+		initialStart: {
+			type: String,
+			default: '',
+		},
+
+		/**
+		 * `datetime-local` value to pre-fill the end field with.
+		 */
+		initialEnd: {
+			type: String,
+			default: '',
+		},
 	},
 
-	emits: ['booking:created'],
+	emits: ['booking:created', 'cancel'],
 
 	data() {
 		return {
 			form: {
 				title: '',
-				startTime: '',
-				endTime: '',
+				startTime: this.initialStart,
+				endTime: this.initialEnd,
 				attendee: '',
 				status: 'pending',
 			},
+
 			validationError: '',
 			submitting: false,
 			showConflictDialog: false,
@@ -179,10 +233,11 @@ export default {
 		async postBooking(force) {
 			this.submitting = true
 			try {
-				const url = generateUrl(
-					'/apps/shillinq/api/v2/calendars/{calendarId}/bookings',
-					{ calendarId: this.calendarId },
-				) + (force ? '?force=1' : '')
+				const url =
+					generateUrl(
+						'/apps/shillinq/api/v2/calendars/{calendarId}/bookings',
+						{ calendarId: this.calendarId },
+					) + (force ? '?force=1' : '')
 
 				const payload = {
 					title: this.form.title,
@@ -216,7 +271,8 @@ export default {
 				}
 
 				const errBody = await response.json().catch(() => ({}))
-				this.validationError = errBody.error || t('shillinq', 'Failed to create booking')
+				this.validationError =
+					errBody.error || t('shillinq', 'Failed to create booking')
 			} catch (error) {
 				this.validationError = t('shillinq', 'Failed to create booking')
 			} finally {
@@ -240,7 +296,13 @@ export default {
 		 * @return {void}
 		 */
 		reset() {
-			this.form = { title: '', startTime: '', endTime: '', attendee: '', status: 'pending' }
+			this.form = {
+				title: '',
+				startTime: this.initialStart,
+				endTime: this.initialEnd,
+				attendee: '',
+				status: 'pending',
+			}
 			this.validationError = ''
 			this.conflicts = []
 		},

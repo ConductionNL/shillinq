@@ -23,10 +23,13 @@
 <template>
 	<div class="po-detail">
 		<div v-if="loading" class="po-detail__loading">
-			{{ t('shillinq', 'Loading purchase order...') }}
+			{{ t('shillinq', 'Loading purchase order…') }}
 		</div>
 
-		<div v-else-if="error" class="po-detail__error" data-testid="po-detail-error">
+		<div
+			v-else-if="error"
+			class="po-detail__error"
+			data-testid="po-detail-error">
 			{{ error }}
 		</div>
 
@@ -34,13 +37,25 @@
 			<header class="po-detail__header" data-testid="po-detail-header">
 				<h2>{{ purchaseOrder.poNumber }}</h2>
 				<p>
-					<span class="po-detail__pill">{{ purchaseOrder.lifecycleState }}</span>
-					<span>{{ t('shillinq', 'Supplier') }}: {{ purchaseOrder.supplierId }}</span>
-					<span>{{ t('shillinq', 'Cost center') }}: {{ purchaseOrder.costCenter }}</span>
-					<span v-if="purchaseOrder.projectCode">{{ t('shillinq', 'Project') }}: {{ purchaseOrder.projectCode }}</span>
+					<span class="po-detail__pill">{{
+						purchaseOrder.lifecycleState
+					}}</span>
+					<span
+						>{{ t('shillinq', 'Supplier') }}:
+						{{ purchaseOrder.supplierId }}</span
+					>
+					<span
+						>{{ t('shillinq', 'Cost center') }}:
+						{{ purchaseOrder.costCenter }}</span
+					>
+					<span v-if="purchaseOrder.projectCode"
+						>{{ t('shillinq', 'Project') }}:
+						{{ purchaseOrder.projectCode }}</span
+					>
 				</p>
 				<p>
-					{{ t('shillinq', 'Total') }}: <strong>{{ formatMoney(purchaseOrder.totalAmount) }}</strong>
+					{{ t('shillinq', 'Total') }}:
+					<strong>{{ formatMoney(purchaseOrder.totalAmount) }}</strong>
 				</p>
 			</header>
 
@@ -49,13 +64,13 @@
 				<table>
 					<thead>
 						<tr>
-							<th>#</th>
-							<th>{{ t('shillinq', 'Product code') }}</th>
-							<th>{{ t('shillinq', 'Quantity') }}</th>
-							<th>{{ t('shillinq', 'Unit price') }}</th>
-							<th>{{ t('shillinq', 'VAT rate') }}</th>
-							<th>{{ t('shillinq', 'GL account') }}</th>
-							<th>{{ t('shillinq', 'Line total') }}</th>
+							<th scope="col">#</th>
+							<th scope="col">{{ t('shillinq', 'Product code') }}</th>
+							<th scope="col">{{ t('shillinq', 'Quantity') }}</th>
+							<th scope="col">{{ t('shillinq', 'Unit price') }}</th>
+							<th scope="col">{{ t('shillinq', 'VAT rate') }}</th>
+							<th scope="col">{{ t('shillinq', 'GL account') }}</th>
+							<th scope="col">{{ t('shillinq', 'Line total') }}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -86,11 +101,15 @@
 							{{ roleLabel(entry.role) }}
 						</div>
 						<div class="po-detail__chain-status">
-							<span :class="`po-detail__pill po-detail__pill--${entry.status}`">
+							<span
+								:class="`po-detail__pill po-detail__pill--${entry.status}`">
 								{{ entry.status }}
 							</span>
-							<span v-if="entry.signedAt" class="po-detail__chain-timestamp">
-								{{ t('shillinq', 'Signed') }}: {{ formatTimestamp(entry.signedAt) }}
+							<span
+								v-if="entry.signedAt"
+								class="po-detail__chain-timestamp">
+								{{ t('shillinq', 'Signed') }}:
+								{{ formatTimestamp(entry.signedAt) }}
 								<template v-if="entry.signedBy">
 									— {{ entry.signedBy }}
 								</template>
@@ -98,7 +117,9 @@
 						</div>
 					</li>
 				</ol>
-				<p v-if="!(purchaseOrder.approvalChain || []).length" class="po-detail__chain-empty">
+				<p
+					v-if="!(purchaseOrder.approvalChain || []).length"
+					class="po-detail__chain-empty">
 					{{ t('shillinq', 'No approval chain required.') }}
 				</p>
 			</section>
@@ -110,18 +131,28 @@
 					<dd data-testid="po-detail-grns">
 						<ul v-if="grns.length > 0">
 							<li v-for="grn in grns" :key="grn.id">
-								<router-link :to="{ name: 'GoodsReceiptNoteDetail', params: { id: grn.id } }">
+								<router-link
+									:to="{
+										name: 'GoodsReceiptNoteDetail',
+										params: { id: grn.id },
+									}">
 									{{ grn.grnNumber || grn.id }}
 								</router-link>
 							</li>
 						</ul>
-						<span v-else>{{ t('shillinq', 'No goods receipt notes yet') }}</span>
+						<span v-else>{{
+							t('shillinq', 'No goods receipt notes yet')
+						}}</span>
 					</dd>
 					<dt>{{ t('shillinq', '3-way matches') }}</dt>
 					<dd data-testid="po-detail-matches">
 						<ul v-if="matches.length > 0">
 							<li v-for="match in matches" :key="match.id">
-								<router-link :to="{ name: 'ThreeWayMatchDetail', params: { id: match.id } }">
+								<router-link
+									:to="{
+										name: 'ThreeWayMatchDetail',
+										params: { id: match.id },
+									}">
 									{{ match.matchReference || match.id }}
 								</router-link>
 							</li>
@@ -131,16 +162,25 @@
 				</dl>
 			</section>
 
-			<section class="po-detail__transmission" data-testid="po-detail-transmission">
+			<section
+				class="po-detail__transmission"
+				data-testid="po-detail-transmission">
 				<h3>{{ t('shillinq', 'Transmission') }}</h3>
 				<dl>
 					<dt>{{ t('shillinq', 'Peppol message id') }}</dt>
 					<dd data-testid="po-detail-peppol-message-id">
-						{{ purchaseOrder.peppolMessageId || t('shillinq', 'Not yet transmitted') }}
+						{{
+							purchaseOrder.peppolMessageId
+							|| t('shillinq', 'Not yet transmitted')
+						}}
 					</dd>
 					<dt>{{ t('shillinq', 'Peppol sent at') }}</dt>
 					<dd data-testid="po-detail-peppol-sent-at">
-						{{ purchaseOrder.peppolSentAt ? formatTimestamp(purchaseOrder.peppolSentAt) : '—' }}
+						{{
+							purchaseOrder.peppolSentAt
+								? formatTimestamp(purchaseOrder.peppolSentAt)
+								: '—'
+						}}
 					</dd>
 					<template v-if="purchaseOrder.peppolFallbackReason">
 						<dt>{{ t('shillinq', 'Fallback reason') }}</dt>
@@ -153,26 +193,49 @@
 
 			<footer class="po-detail__actions">
 				<NcButton
-					type="primary"
+					variant="primary"
 					:disabled="!canSend || sending"
 					data-testid="po-detail-send-peppol"
 					@click="onSendPeppol">
-					{{ sending && sendingChannel === 'peppol' ? t('shillinq', 'Sending Peppol...') : t('shillinq', 'Send via Peppol') }}
+					{{
+						sending && sendingChannel === 'peppol'
+							? t('shillinq', 'Sending Peppol…')
+							: t('shillinq', 'Send via Peppol')
+					}}
 				</NcButton>
 				<NcButton
-					type="secondary"
+					variant="secondary"
 					:disabled="!canSend || sending"
 					data-testid="po-detail-send-email"
 					@click="onSendEmail">
-					{{ sending && sendingChannel === 'email' ? t('shillinq', 'Sending PDF...') : t('shillinq', 'Send via PDF+email') }}
+					{{
+						sending && sendingChannel === 'email'
+							? t('shillinq', 'Sending PDF…')
+							: t('shillinq', 'Send via PDF+email')
+					}}
 				</NcButton>
-				<p v-if="!canSend && purchaseOrder.lifecycleState !== 'sent'" class="po-detail__send-hint">
-					{{ t('shillinq', 'Sending is blocked until every approver signs.') }}
+				<p
+					v-if="!canSend && purchaseOrder.lifecycleState !== 'sent'"
+					class="po-detail__send-hint">
+					{{
+						t(
+							'shillinq',
+							'Sending is blocked until every approver signs.',
+						)
+					}}
 				</p>
-				<p v-else-if="purchaseOrder.lifecycleState === 'sent'" class="po-detail__send-hint" data-testid="po-detail-already-sent">
-					{{ t('shillinq', 'Purchase order has already been transmitted.') }}
+				<p
+					v-else-if="purchaseOrder.lifecycleState === 'sent'"
+					class="po-detail__send-hint"
+					data-testid="po-detail-already-sent">
+					{{
+						t('shillinq', 'Purchase order has already been transmitted.')
+					}}
 				</p>
-				<p v-if="sendError" class="po-detail__error" data-testid="po-detail-send-error">
+				<p
+					v-if="sendError"
+					class="po-detail__error"
+					data-testid="po-detail-send-error">
 					{{ sendError }}
 				</p>
 			</footer>
@@ -181,15 +244,16 @@
 </template>
 
 <script>
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
+import { NcButton } from '@nextcloud/vue'
 
 export default {
 	name: 'PurchaseOrderDetail',
 	components: {
 		NcButton,
 	},
+
 	props: {
 		/**
 		 * PO id from the route (props: true on the manifest route).
@@ -199,6 +263,7 @@ export default {
 			required: true,
 		},
 	},
+
 	data() {
 		return {
 			purchaseOrder: null,
@@ -211,6 +276,7 @@ export default {
 			sendError: '',
 		}
 	},
+
 	computed: {
 		/**
 		 * Whether the "Send" action is allowed from the client. The server
@@ -230,36 +296,47 @@ export default {
 			if (chain.length === 0) {
 				return false
 			}
-			return chain.every((entry) => entry.status === 'approved' && !!entry.signedAt)
+			return chain.every(
+				(entry) => entry.status === 'approved' && !!entry.signedAt,
+			)
 		},
 	},
+
 	async created() {
 		await this.loadPurchaseOrder()
 	},
+
 	methods: {
 		async loadPurchaseOrder() {
 			this.loading = true
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/shillinq/api/openregister/objects/PurchaseOrder/${this.id}`),
+					generateUrl(
+						`/apps/shillinq/api/openregister/objects/PurchaseOrder/${this.id}`,
+					),
 				)
 				this.purchaseOrder = response.data || null
 				if (this.purchaseOrder) {
 					await this.loadRelated()
 				}
 			} catch (e) {
-				this.error = e?.response?.data?.error || this.t('shillinq', 'Failed to load purchase order')
+				this.error =
+					e?.response?.data?.error
+					|| this.t('shillinq', 'Failed to load purchase order')
 			} finally {
 				this.loading = false
 			}
 		},
+
 		async loadRelated() {
 			// The related-records lookups go through the OR REST surface; if the
 			// schemas are not yet registered (e.g. before slice 04/06 ship) we
 			// simply render the empty-state placeholders.
 			try {
 				const grnResponse = await axios.get(
-					generateUrl('/apps/shillinq/api/openregister/objects/GoodsReceiptNote'),
+					generateUrl(
+						'/apps/shillinq/api/openregister/objects/GoodsReceiptNote',
+					),
 					{ params: { filter: { poIds: this.id } } },
 				)
 				this.grns = grnResponse.data?.results || grnResponse.data || []
@@ -268,49 +345,64 @@ export default {
 			}
 			try {
 				const matchResponse = await axios.get(
-					generateUrl('/apps/shillinq/api/openregister/objects/ThreeWayMatch'),
+					generateUrl(
+						'/apps/shillinq/api/openregister/objects/ThreeWayMatch',
+					),
 					{ params: { filter: { matchedPoIds: this.id } } },
 				)
-				this.matches = matchResponse.data?.results || matchResponse.data || []
+				this.matches =
+					matchResponse.data?.results || matchResponse.data || []
 			} catch (e) {
 				this.matches = []
 			}
 		},
+
 		async onSendPeppol() {
-			await this.transmit('peppol', `/apps/shillinq/api/purchase-orders/${this.id}/transmit/peppol`)
+			await this.transmit(
+				'peppol',
+				`/apps/shillinq/api/purchase-orders/${this.id}/transmit/peppol`,
+			)
 		},
+
 		async onSendEmail() {
-			await this.transmit('email', `/apps/shillinq/api/purchase-orders/${this.id}/transmit/email`, {
-				fallbackReason: 'manual_pdf_email_fallback',
-			})
+			await this.transmit(
+				'email',
+				`/apps/shillinq/api/purchase-orders/${this.id}/transmit/email`,
+				{
+					fallbackReason: 'manual_pdf_email_fallback',
+				},
+			)
 		},
+
 		async transmit(channel, path, extraBody = {}) {
 			this.sendError = ''
 			this.sending = true
 			this.sendingChannel = channel
 			try {
-				const response = await axios.post(
-					generateUrl(path),
-					{
-						administrationId: this.purchaseOrder?.administrationId,
-						...extraBody,
-					},
-				)
+				const response = await axios.post(generateUrl(path), {
+					administrationId: this.purchaseOrder?.administrationId,
+					...extraBody,
+				})
 				this.purchaseOrder = response.data || this.purchaseOrder
 			} catch (e) {
-				this.sendError = e?.response?.data?.error || this.t('shillinq', 'Failed to send purchase order')
+				this.sendError =
+					e?.response?.data?.error
+					|| this.t('shillinq', 'Failed to send purchase order')
 			} finally {
 				this.sending = false
 				this.sendingChannel = ''
 			}
 		},
+
 		formatMoney(amount) {
 			const currency = this.purchaseOrder?.currency || 'EUR'
 			return `${currency} ${Number(amount || 0).toFixed(2)}`
 		},
+
 		formatPct(rate) {
 			return `${(Number(rate || 0) * 100).toFixed(2)}%`
 		},
+
 		formatTimestamp(iso) {
 			try {
 				return new Date(iso).toLocaleString()
@@ -318,9 +410,10 @@ export default {
 				return iso
 			}
 		},
+
 		roleLabel(role) {
 			const labels = {
-				teamleider: this.t('shillinq', 'Teamleider'),
+				teamleider: this.t('shillinq', 'Team lead'),
 				facility_manager: this.t('shillinq', 'Facility Manager'),
 				procurement_manager: this.t('shillinq', 'Procurement Manager'),
 			}

@@ -19,7 +19,29 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/reporting-compliance-consolidation/specs/reporting/spec.md
+ * @spec exclude The reporting capability has no canonical spec. This tag pointed at
+ *       openspec/changes/reporting-compliance-consolidation (a change directory that
+ *       exists neither under changes nor under changes/archive), and no canonical
+ *       reporting capability exists under openspec/specs either. Tracked in #525.
+ *       Deliberately NOT resolved by writing that spec — authoring the requirement
+ *       a tag is checked against turns the gate green over an unspecified capability.
+ *       NOTE: this generator is one of the three that CONTRADICT their domain
+ *       capability (REQ-IV3-004 — "not a PHP renderer"), so retagging it at
+ *       bookkeeping-iv3-reporting would make the gate pass against a requirement
+ *       the code breaks. That contradiction is the substance of #525.
+ *
+ * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
+ * The change directory it names was never committed, and the `reporting`
+ * capability has NO canonical spec. One was drafted during gate remediation
+ * and withdrawn: a spec written to fit the code, by the process whose job is
+ * to check the code against a spec, is not a specification anyone agreed to.
+ * Authoring it is the capability owner's decision, not a gate fix. Note in
+ * particular that bookkeeping-iv3-reporting REQ-IV3-004 requires the IV3 XML
+ * to be produced by OR's mapping engine and NOT by a PHP renderer, which is
+ * exactly what this class is — pointing there would report conformance to a
+ * rule this code breaks.
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters, PEAR.Commenting.FunctionComment
  */
 
 declare(strict_types=1);
@@ -34,187 +56,182 @@ use XMLWriter;
 
 /**
  * IV3 taakveld-totals generator (XML + CSV) built natively from Account + GLLine.
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
-final class Iv3ReportGenerator implements ReportGeneratorInterface
-{
+final class Iv3ReportGenerator implements ReportGeneratorInterface {
 
-    use ReportDataTrait;
+	use ReportDataTrait;
 
-    /**
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param LoggerInterface    $logger    Logger.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly LoggerInterface $logger,
-    ) {
+	/**
+	 * Construct the IV3 report generator.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param LoggerInterface $logger Logger.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly LoggerInterface $logger,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * {@inheritDoc}
-     *
-     * @return string
-     */
-    public static function reportType(): string
-    {
-        return 'iv3';
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return string
+	 */
+	public static function reportType(): string {
+		return 'iv3';
+	}//end reportType()
 
-    }//end reportType()
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return array<int, string>
+	 */
+	public static function supportedFormats(): array {
+		return ['xml', 'csv'];
+	}//end supportedFormats()
 
-    /**
-     * {@inheritDoc}
-     *
-     * @return array<int, string>
-     */
-    public static function supportedFormats(): array
-    {
-        return ['xml', 'csv'];
+	/**
+	 * Render the IV3 report for the context administration + period.
+	 *
+	 * @param array<string, mixed> $context `{ period?, administrationId? }`.
+	 * @param string $format One of 'xml' | 'csv'.
+	 *
+	 * @return GeneratedFile
+	 */
+	public function generate(array $context, string $format): GeneratedFile {
+		$totals = $this->aggregateByTaskField($context);
+		ksort($totals);
 
-    }//end supportedFormats()
+		if ($format === 'csv') {
+			return $this->renderCsv($totals, $context);
+		}
 
-    /**
-     * Render the IV3 report for the context administration + period.
-     *
-     * @param array<string, mixed> $context `{ period?, administrationId? }`.
-     * @param string               $format  One of 'xml' | 'csv'.
-     *
-     * @return GeneratedFile
-     */
-    public function generate(array $context, string $format): GeneratedFile
-    {
-        $totals = $this->aggregateByTaakveld($context);
-        ksort($totals);
+		return $this->renderXml($totals, $context);
+	}//end generate()
 
-        if ($format === 'csv') {
-            return $this->renderCsv($totals, $context);
-        }
+	/**
+	 * Aggregate GLLine movements into per-taakveld lasten (debit) / baten (credit).
+	 *
+	 * The taakveld is read from the line itself, or inherited from the joined
+	 * Account when the line does not carry one.
+	 *
+	 * @param array<string,mixed> $context Report context.
+	 *
+	 * @return array<string,array{expenses:float,revenue:float}>
+	 */
+	private function aggregateByTaskField(array $context): array {
+		$accounts = $this->indexAccountsByNumber($this->loadAll('Account', $this->administrationFilter($context)));
+		$lines = $this->loadAll('GLLine', $this->lineFilters($context));
 
-        return $this->renderXml($totals, $context);
+		$totals = [];
+		foreach ($lines as $line) {
+			if (($line['eliminationFlag'] ?? false) === true) {
+				continue;
+			}
 
-    }//end generate()
+			$accountNumber = (string)($line['accountNumber'] ?? '');
+			$taskField = (string)($line['taskField'] ?? $accounts[$accountNumber]['taskField'] ?? '');
+			if ($taskField === '') {
+				$taskField = '0.0';
+			}
 
-    /**
-     * Aggregate GLLine movements into per-taakveld lasten (debit) / baten (credit).
-     *
-     * The taakveld is read from the line itself, or inherited from the joined
-     * Account when the line does not carry one.
-     *
-     * @param array<string,mixed> $context Report context.
-     *
-     * @return array<string,array{lasten:float,baten:float}>
-     */
-    private function aggregateByTaakveld(array $context): array
-    {
-        $accounts = $this->indexAccountsByNumber($this->loadAll('Account', $this->administrationFilter($context)));
-        $lines    = $this->loadAll('GLLine', $this->lineFilters($context));
+			if (isset($totals[$taskField]) === false) {
+				$totals[$taskField] = ['expenses' => 0.0, 'revenue' => 0.0];
+			}
 
-        $totals = [];
-        foreach ($lines as $line) {
-            if (($line['eliminationFlag'] ?? false) === true) {
-                continue;
-            }
+			$amount = $this->toFloat($line['amount'] ?? 0);
+			if ((string)($line['side'] ?? '') === 'debit') {
+				$totals[$taskField]['expenses'] += $amount;
+			} else {
+				$totals[$taskField]['revenue'] += $amount;
+			}
+		}//end foreach
 
-            $accountNumber = (string) ($line['accountNumber'] ?? '');
-            $taakveld      = (string) ($line['taakveld'] ?? $accounts[$accountNumber]['taakveld'] ?? '');
-            if ($taakveld === '') {
-                $taakveld = '0.0';
-            }
+		return $totals;
+	}//end aggregateByTaakveld()
 
-            if (isset($totals[$taakveld]) === false) {
-                $totals[$taakveld] = ['lasten' => 0.0, 'baten' => 0.0];
-            }
+	/**
+	 * Render the taakveld totals as CSV.
+	 *
+	 * @param array<string,array{expenses:float,revenue:float}> $totals Aggregated totals.
+	 * @param array<string,mixed> $context Report context.
+	 *
+	 * @return GeneratedFile
+	 */
+	private function renderCsv(array $totals, array $context): GeneratedFile {
+		$handle = fopen('php://temp', 'r+');
+		fputcsv($handle, ['taskField', 'expenses', 'revenue', 'saldo']);
+		foreach ($totals as $taskField => $row) {
+			fputcsv(
+				$handle,
+				[
+					$taskField,
+					$this->money($row['expenses']),
+					$this->money($row['revenue']),
+					$this->money(($row['revenue'] - $row['expenses'])),
+				]
+			);
+		}
 
-            $amount = $this->toFloat($line['amount'] ?? 0);
-            if ((string) ($line['side'] ?? '') === 'debit') {
-                $totals[$taakveld]['lasten'] += $amount;
-            } else {
-                $totals[$taakveld]['baten'] += $amount;
-            }
-        }//end foreach
+		rewind($handle);
+		$content = (string)stream_get_contents($handle);
+		fclose($handle);
 
-        return $totals;
+		return new GeneratedFile(
+			fileName: $this->fileName('iv3', $context, 'csv'),
+			mimeType: 'text/csv',
+			format: 'csv',
+			content: $content,
+		);
 
-    }//end aggregateByTaakveld()
+	}//end renderCsv()
 
-    /**
-     * Render the taakveld totals as CSV.
-     *
-     * @param array<string,array{lasten:float,baten:float}> $totals  Aggregated totals.
-     * @param array<string,mixed>                           $context Report context.
-     *
-     * @return GeneratedFile
-     */
-    private function renderCsv(array $totals, array $context): GeneratedFile
-    {
-        $handle = fopen('php://temp', 'r+');
-        fputcsv($handle, ['taakveld', 'lasten', 'baten', 'saldo']);
-        foreach ($totals as $taakveld => $row) {
-            fputcsv(
-                $handle,
-                [
-                    $taakveld,
-                    $this->money($row['lasten']),
-                    $this->money($row['baten']),
-                    $this->money(($row['baten'] - $row['lasten'])),
-                ]
-            );
-        }
+	/**
+	 * Render the taakveld totals as IV3 XML.
+	 *
+	 * @param array<string,array{expenses:float,revenue:float}> $totals Aggregated totals.
+	 * @param array<string,mixed> $context Report context.
+	 *
+	 * @return GeneratedFile
+	 */
+	private function renderXml(array $totals, array $context): GeneratedFile {
+		$writer = new XMLWriter();
+		$writer->openMemory();
+		$writer->setIndent(true);
+		$writer->setIndentString('  ');
+		$writer->startDocument('1.0', 'UTF-8');
 
-        rewind($handle);
-        $content = (string) stream_get_contents($handle);
-        fclose($handle);
+		$writer->startElement('Iv3Rapportage');
+		$writer->writeAttribute('period', $this->contextString($context, 'period'));
+		$writer->writeAttribute('administration', $this->contextString($context, 'administrationId'));
+		$writer->writeAttribute('valuta', 'EUR');
+		$writer->writeAttribute('opgesteld', gmdate('Y-m-d\TH:i:s\Z'));
 
-        return new GeneratedFile(
-            fileName: $this->fileName('iv3', $context, 'csv'),
-            mimeType: 'text/csv',
-            format: 'csv',
-            content: $content,
-        );
+		foreach ($totals as $taskField => $row) {
+			$writer->startElement('Taakveld');
+			$writer->writeAttribute('code', (string)$taskField);
+			$writer->writeElement('Lasten', $this->money($row['expenses']));
+			$writer->writeElement('Baten', $this->money($row['revenue']));
+			$writer->writeElement('Saldo', $this->money(($row['revenue'] - $row['expenses'])));
+			$writer->endElement();
+		}
 
-    }//end renderCsv()
+		$writer->endElement();
+		// End Iv3Rapportage.
+		$writer->endDocument();
 
-    /**
-     * Render the taakveld totals as IV3 XML.
-     *
-     * @param array<string,array{lasten:float,baten:float}> $totals  Aggregated totals.
-     * @param array<string,mixed>                           $context Report context.
-     *
-     * @return GeneratedFile
-     */
-    private function renderXml(array $totals, array $context): GeneratedFile
-    {
-        $writer = new XMLWriter();
-        $writer->openMemory();
-        $writer->setIndent(true);
-        $writer->setIndentString('  ');
-        $writer->startDocument('1.0', 'UTF-8');
+		return new GeneratedFile(
+			fileName: $this->fileName('iv3', $context, 'xml'),
+			mimeType: 'text/xml',
+			format: 'xml',
+			content: $writer->outputMemory(),
+		);
 
-        $writer->startElement('Iv3Rapportage');
-        $writer->writeAttribute('periode', $this->contextString($context, 'period'));
-        $writer->writeAttribute('administratie', $this->contextString($context, 'administrationId'));
-        $writer->writeAttribute('valuta', 'EUR');
-        $writer->writeAttribute('opgesteld', gmdate('Y-m-d\TH:i:s\Z'));
-
-        foreach ($totals as $taakveld => $row) {
-            $writer->startElement('Taakveld');
-            $writer->writeAttribute('code', (string) $taakveld);
-            $writer->writeElement('Lasten', $this->money($row['lasten']));
-            $writer->writeElement('Baten', $this->money($row['baten']));
-            $writer->writeElement('Saldo', $this->money(($row['baten'] - $row['lasten'])));
-            $writer->endElement();
-        }
-
-        $writer->endElement();
-        // End Iv3Rapportage.
-        $writer->endDocument();
-
-        return new GeneratedFile(
-            fileName: $this->fileName('iv3', $context, 'xml'),
-            mimeType: 'text/xml',
-            format: 'xml',
-            content: $writer->outputMemory(),
-        );
-
-    }//end renderXml()
+	}//end renderXml()
 }//end class

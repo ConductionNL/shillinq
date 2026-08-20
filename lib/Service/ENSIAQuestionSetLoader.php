@@ -31,7 +31,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-ensia-zelfevaluatie/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -45,123 +45,126 @@ namespace OCA\Shillinq\Service;
  * Loads VNG question-set definitions and maps them to Evaluatievraag shapes
  * (REQ-ENSIA-001).
  *
- * @spec openspec/changes/bookkeeping-ensia-zelfevaluatie/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ * @spec openspec/specs/bookkeeping-ensia-zelfevaluatie/spec.md
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
+ *     #506): early-return refactor deferred pending full behavioral
+ *     verification of each branch.
  */
-class ENSIAQuestionSetLoader
-{
-    /**
-     * Default seed location relative to lib/Service/.
-     *
-     * @var string
-     */
-    private const DEFAULT_SEED = __DIR__.'/../Settings/seeds/ensia-vng-2026.json';
+class ENSIAQuestionSetLoader {
+	/**
+	 * Default seed location relative to lib/Service/.
+	 *
+	 * @var string
+	 */
+	private const DEFAULT_SEED = __DIR__ . '/../Settings/seeds/ensia-vng-2026.json';
 
-    /**
-     * Construct the loader.
-     *
-     * @param string|null $seedPath Optional override of the default seed
-     *                              file path; primarily for unit testing.
-     */
-    public function __construct(private readonly ?string $seedPath=null)
-    {
+	/**
+	 * Construct the loader.
+	 *
+	 * @param string|null $seedPath Optional override of the default seed
+	 *                              file path; primarily for unit testing.
+	 */
+	public function __construct(
+		private readonly ?string $seedPath = null,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * Load the question set and produce Evaluatievraag shapes for the
-     * given verslagjaar + verantwoordingsdomeinen selection.
-     *
-     * @param int               $jaar             Verslagjaar (e.g. 2026).
-     * @param array<int,string> $domeinen         Selected domains, e.g.
-     *                                            ['BIO', 'DigiD'].
-     * @param string            $cyclusId         FK to ENSIAJaarcyclus
-     *                                            stamped onto each
-     *                                            Evaluatievraag
-     *                                            record.
-     * @param string            $administrationId FK to Administration
-     *                                            stamped onto each
-     *                                            Evaluatievraag
-     *                                            record.
-     *
-     * @return array{
-     *     vraagSetVersion: string,
-     *     vragen: array<int,array<string,mixed>>,
-     * } The loaded version stamp + per-question records.
-     */
-    public function load(int $jaar, array $domeinen, string $cyclusId, string $administrationId): array
-    {
-        $path = $this->seedPath ?? self::DEFAULT_SEED;
+	/**
+	 * Load the question set and produce Evaluatievraag shapes for the
+	 * given verslagjaar + verantwoordingsdomeinen selection.
+	 *
+	 * @param int $year Verslagjaar (e.g. 2026).
+	 * @param array<int,string> $domeinen Selected domains, e.g.
+	 *                                    ['BIO', 'DigiD'].
+	 * @param string $cyclusId FK to ENSIAJaarcyclus
+	 *                         stamped onto each
+	 *                         Evaluatievraag
+	 *                         record.
+	 * @param string $administrationId FK to Administration
+	 *                                 stamped onto each
+	 *                                 Evaluatievraag
+	 *                                 record.
+	 *
+	 * @return array{
+	 *     questionSetVersion: string,
+	 *     vragen: array<int,array<string,mixed>>,
+	 * } The loaded version stamp + per-question records.
+	 */
+	public function load(int $year, array $domeinen, string $cyclusId, string $administrationId): array {
+		$path = $this->seedPath ?? self::DEFAULT_SEED;
 
-        if (file_exists($path) === false || is_readable($path) === false) {
-            return [
-                'vraagSetVersion' => 'unknown',
-                'vragen'          => [],
-            ];
-        }
+		if (file_exists($path) === false || is_readable($path) === false) {
+			return [
+				'questionSetVersion' => 'unknown',
+				'vragen' => [],
+			];
+		}
 
-        $raw = file_get_contents($path);
-        if ($raw === false) {
-            return [
-                'vraagSetVersion' => 'unknown',
-                'vragen'          => [],
-            ];
-        }
+		$raw = file_get_contents($path);
+		if ($raw === false) {
+			return [
+				'questionSetVersion' => 'unknown',
+				'vragen' => [],
+			];
+		}
 
-        $payload = json_decode($raw, true);
-        if (is_array($payload) === false) {
-            return [
-                'vraagSetVersion' => 'unknown',
-                'vragen'          => [],
-            ];
-        }
+		$payload = json_decode($raw, true);
+		if (is_array($payload) === false) {
+			return [
+				'questionSetVersion' => 'unknown',
+				'vragen' => [],
+			];
+		}
 
-        $version = (string) ($payload['vraagSetVersion'] ?? sprintf('BIO-1.04-%d', $jaar));
-        $catalog = $payload['vragen'] ?? [];
+		$version = (string)($payload['questionSetVersion'] ?? sprintf('BIO-1.04-%d', $year));
+		$catalog = $payload['vragen'] ?? [];
 
-        if (is_array($catalog) === false) {
-            $catalog = [];
-        }
+		if (is_array($catalog) === false) {
+			$catalog = [];
+		}
 
-        $domeinSet = [];
-        foreach ($domeinen as $d) {
-            $domeinSet[(string) $d] = true;
-        }
+		$domeinSet = [];
+		foreach ($domeinen as $d) {
+			$domeinSet[(string)$d] = true;
+		}
 
-        $vragen = [];
-        foreach ($catalog as $q) {
-            if (is_array($q) === false) {
-                continue;
-            }
+		$vragen = [];
+		foreach ($catalog as $q) {
+			if (is_array($q) === false) {
+				continue;
+			}
 
-            $domein = (string) ($q['domein'] ?? '');
-            if ($domein === '' || isset($domeinSet[$domein]) === false) {
-                continue;
-            }
+			$domain = (string)($q['domain'] ?? '');
+			if ($domain === '' || isset($domeinSet[$domain]) === false) {
+				continue;
+			}
 
-            if (isset($q['normniveau']) === true) {
-                $normniveau = (int) $q['normniveau'];
-            } else {
-                $normniveau = null;
-            }
+			if (isset($q['normniveau']) === true) {
+				$normniveau = (int)$q['normniveau'];
+			} else {
+				$normniveau = null;
+			}
 
-            $vragen[] = [
-                'cyclusId'         => $cyclusId,
-                'administrationId' => $administrationId,
-                'domein'           => $domein,
-                'onderwerp'        => (string) ($q['onderwerp'] ?? ''),
-                'vraagCode'        => (string) ($q['vraagCode'] ?? ''),
-                'vraagtekst'       => (string) ($q['vraagtekst'] ?? ''),
-                'antwoordType'     => (string) ($q['antwoordType'] ?? 'ja-nee-nvt'),
-                'normniveau'       => $normniveau,
-                'peerReviewStatus' => 'nog-niet-beoordeeld',
-                'bewijsstukken'    => [],
-            ];
-        }//end foreach
+			$vragen[] = [
+				'cyclusId' => $cyclusId,
+				'administrationId' => $administrationId,
+				'domain' => $domain,
+				'subject' => (string)($q['subject'] ?? ''),
+				'questionCode' => (string)($q['questionCode'] ?? ''),
+				'questionText' => (string)($q['questionText'] ?? ''),
+				'answerType' => (string)($q['answerType'] ?? 'ja-nee-nvt'),
+				'normniveau' => $normniveau,
+				'peerReviewStatus' => 'nog-niet-beoordeeld',
+				'supportingDocuments' => [],
+			];
+		}//end foreach
 
-        return [
-            'vraagSetVersion' => $version,
-            'vragen'          => $vragen,
-        ];
+		return [
+			'questionSetVersion' => $version,
+			'vragen' => $vragen,
+		];
 
-    }//end load()
+	}//end load()
 }//end class

@@ -36,7 +36,7 @@ REQ-001 mandates that a contractmanager confirm the contract before it locks bud
 1. **Manual import** (REQ-001) or **auto-detect** (REQ-002) creates a Verplichting with `status: concept` — requires contractmanager action to proceed
 2. Contractmanager enriches: adds kostenplaats (cost centre), grootboekrekening (GL account), internal reference
 3. Contractmanager clicks "Activate" → status → `active`
-4. Budget-impact widget is notified; mydash re-renders
+4. Budget-impact widget is notified; launchpad re-renders
 
 This is a deliberate compliance gate: a finance medewerker or controller cannot be surprised by a budget commitment created by an external system without review. The enrichment step is recorded in the audit-trail (REQ-005).
 
@@ -182,9 +182,9 @@ mijlpalen:
 
 ### Q2: Concurrent supplier-specific contracts in omzet-prognose
 
-*Current spec*: mydash widget aggregates `Verplichting.contractWaarde` across all `bron: tenderned` records for the supplier. *Assumption*: no double-counting (each TenderNed award maps to exactly one Verplichting).
+*Current spec*: launchpad widget aggregates `Verplichting.contractWaarde` across all `bron: tenderned` records for the supplier. *Assumption*: no double-counting (each TenderNed award maps to exactly one Verplichting).
 
-*Test needed*: create 5 overlapping TenderNed awards for the same supplier in rapid succession; verify widget shows sum without duplication. *Owner*: mydash team during implementation.
+*Test needed*: create 5 overlapping TenderNed awards for the same supplier in rapid succession; verify widget shows sum without duplication. *Owner*: launchpad team during implementation.
 
 ### Q3: Cross-tenant / multi-kostenplaats visibility
 
@@ -210,10 +210,10 @@ mijlpalen:
 - **How**: `x-openregister-lifecycle` rules on Verplichting + OpdrachtUitvoering schemas
 - **No app-local reimplementation**
 
-### mydash
+### launchpad
 
 - **Publishes**: Budget-impact events (contractWaarde, period, kostenplaats)
-- **How**: Every TenderNedAanbesteding → Verplichting transition emits a CloudEvent; mydash listener updates the budget-widget
+- **How**: Every TenderNedAanbesteding → Verplichting transition emits a CloudEvent; launchpad listener updates the budget-widget
 - **SLA**: Widget reflects new obligation within 60 seconds (tested with 10 concurrent imports)
 
 ### docudesk
@@ -254,7 +254,7 @@ These are used by Newman/Postman tests and persona-test suites; not loaded into 
 ### Budget-Widget Update SLA (REQ-007)
 
 - **Target**: 60 seconds from award to widget re-render
-- **Path**: TenderNed API → openconnector polling (5 min max) → CloudEvent → mydash listener → widget cache invalidation → React re-render
+- **Path**: TenderNed API → openconnector polling (5 min max) → CloudEvent → launchpad listener → widget cache invalidation → React re-render
 - **Bottleneck**: openconnector's 5-minute cadence. Can be tightened to 1-minute if needed (configurable in openconnector admin).
 - **Testing**: 10 concurrent manual imports trigger mycash widget updates in parallel; measure wall-clock time
 

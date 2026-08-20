@@ -9,23 +9,20 @@
 		{
 			"id": "Bookkeeping",
 			"label": "Bookkeeping",
-			"icon": "icon-category-organization",
+			"icon": "NotebookOutline",
 			"order": 20,
 			"children": [
 				{
 					"id": "AnalyticalDimensions",
 					"label": "Analytical dimensions",
-					"i18n": {
-						"nl": "Analytische dimensies"
-					},
-					"icon": "ChartBoxOutline",
+					"icon": "ChartLineVariant",
 					"route": "AnalyticalDimensions",
 					"order": 92
 				},
 				{
 					"id": "SegmentPnLDashboard",
 					"label": "Segment P&L",
-					"icon": "PollOutline",
+					"icon": "Poll",
 					"route": "SegmentPnLDashboard",
 					"order": 93
 				}
@@ -38,9 +35,6 @@
 			"route": "/bookkeeping/dimensions/analytical-dimensions",
 			"type": "index",
 			"title": "Analytical dimensions",
-			"i18n": {
-				"nl": "Analytische dimensies"
-			},
 			"config": {
 				"register": "shillinq",
 				"schema": "AnalyticalDimension",
@@ -67,10 +61,8 @@
 			"route": "/bookkeeping/dimensions/analytical-dimensions/:id",
 			"type": "detail",
 			"title": "Analytical dimension",
-			"i18n": {
-				"nl": "Analytische dimensie"
-			},
 			"config": {
+				"_note": "An analytical dimension is a MASTER reference record — a bookkeeping axis (cost centre / cost object / custom) that GL transaction lines are tagged against for segment reporting. Body leads with the definition (code, data type, hierarchy, optional reference register/schema for open-list values); the segment-P&L aggregation rolls up the postings that carry this dimension so the accountant sees its financial weight without a fragile per-line filter. No comms — a chart-of-accounts master; audit trail in a sidebar tab to evidence dimension changes.",
 				"register": "shillinq",
 				"schema": "AnalyticalDimension",
 				"fields": [
@@ -85,7 +77,17 @@
 					{ "key": "sortOrder", "label": "Sort order", "type": "integer" },
 					{ "key": "lifecycleState", "label": "Status", "type": "string" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
-				]
+				],
+				"aggregation": "segmentPnl",
+				"auditTrail": true,
+				"indexRoute": "AnalyticalDimensions",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
 			}
 		},
 		{
@@ -93,7 +95,8 @@
 			"route": "/bookkeeping/dimensions/segment-pnl",
 			"type": "custom",
 			"title": "Segment P&L",
-			"component": "SegmentPnLDashboard"
+			"component": "SegmentPnLDashboard",
+			"_note": "The whole page is one table whose GROUPING AXIS is chosen at runtime: selector chips switch the source between the four x-openregister-aggregations on GLLine (byCostCenter, byCostCenterHierarchy, byProject, byAnalyticalDimension), with hierarchical roll-up and a CSV export (REQ-CD-004 / REQ-CD-007). A `type: dashboard` widget binds to ONE fixed aggregation, so expressing this declaratively would need four pages and still lose the shared roll-up state. The page also degrades to a client-side rollup of raw GLLine rows when the aggregation endpoint 404s on older OpenRegister builds."
 		}
 	]
 }
