@@ -233,13 +233,38 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 
 	test.afterAll(async () => {
 		// Unconditional — must run even if a step assertion above threw, so
-		// sibling spec files never inherit a blocking setup dialog.
+		// sibling spec files never inherit a blocking setup dialog. Playwright
+		// runs `afterAll` regardless of the test's own pass/fail; that part
+		// was already true. What was NOT already true: `restoreCiSeedBaseline`
+		// drives the SAME `seed` action via direct API calls
+		// (`POST /api/setup/action/seed`) that `waitForActionComplete` had to
+		// wait up to 120s for when UI-driven — and this hook had no timeout
+		// override, so it inherited the suite's default 60s HOOK timeout. A
+		// restore that times out mid-flight leaves the instance un-set-up,
+		// which is the exact contamination this file exists to prevent —
+		// just reached via the cleanup path instead of the walk. `test.
+		// setTimeout()` inside a hook sets THAT hook's own timeout.
+		test.setTimeout(180_000)
 		await restoreCiSeedBaseline(resolveBaseURL())
 	})
 
 	test('the wizard gates the shell and walks all 7 steps in English @e2e REQ-SWE-001 REQ-SWE-005', async ({
 		page,
 	}) => {
+		// `playwright.config.ts`'s suite-wide per-test `timeout` is 60_000ms,
+		// sized for the rest of the suite's single-page-load specs. This test
+		// is not that shape: it walks 7 real wizard steps AND runs TWO
+		// privileged server actions (`administration`, `seed`), each waited on
+		// individually by `waitForActionComplete()` below. Live evidence
+		// (partial, on a shared/contended dev box — see PR notes, NOT a clean
+		// measurement) showed the `seed` action alone still running past the
+		// 60s mark. A 60s WHOLE-TEST budget can never fit two actions each
+		// individually budgeted that high, regardless of environment — this
+		// override is a structural fix, not a tuning knob. 300s leaves room
+		// for nav + all 7 steps + two ~120s-worst-case actions + the finish
+		// assertions; CI's own history should confirm/tighten this number.
+		test.setTimeout(300_000)
+
 		await page.goto(APP, { waitUntil: 'domcontentloaded', timeout: 25_000 })
 		await dismissFirstRunWizard(page)
 
@@ -249,9 +274,21 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 			"shillinq's own ADR-042 setup dialog must gate the shell on a reset instance",
 		).toBeVisible({ timeout: 15_000 })
 
+		// `CnWizardDialog`'s own progress tablist (`.cn-wizard-dialog__progress`)
+		// renders every step's `label` (= `step.title`) as a permanently-visible
+		// tab, alongside `.cn-wizard-dialog__step-body` which renders the
+		// CURRENT step's content. An `info` step's `NcNoteCard` heading and a
+		// `choice` step's `NcSelect` `inputLabel` both echo `step.title` too —
+		// so a title check scoped to the whole `dialog` matches BOTH the tab
+		// chrome and the step content and fails Playwright's strict mode. Scope
+		// title assertions that are genuinely duplicated (info + choice steps)
+		// to `stepBody` so they prove the CONTENT renders English, not merely
+		// that the (out-of-scope, unmigrated) tablist chrome does.
+		const stepBody = dialog.locator('.cn-wizard-dialog__step-body')
+
 		// ── Step 0: welcome ──────────────────────────────────────────────
 		await expect(
-			dialog.getByText('Welcome to Shillinq', { exact: false }),
+			stepBody.getByText('Welcome to Shillinq', { exact: false }),
 		).toBeVisible()
 		await expect(
 			dialog.getByText(
@@ -264,7 +301,7 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 
 		// ── Step 1: country ──────────────────────────────────────────────
 		await expect(
-			dialog.getByText('Legal region (country)', { exact: false }),
+			stepBody.getByText('Legal region (country)', { exact: false }),
 		).toBeVisible()
 		await expect(
 			dialog.getByText(
@@ -272,33 +309,49 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 				{ exact: false },
 			),
 		).toBeVisible()
-		await expect(dialog.getByText('Netherlands', { exact: true })).toBeVisible()
-		await expect(dialog.getByText('Belgium', { exact: true })).toBeVisible()
-		await expect(dialog.getByText('Germany', { exact: true })).toBeVisible()
+		// `NcSelect` is a real combobox: its options are NOT in the DOM at all
+		// until it is opened (verified live — a closed `NcSelect` shows only
+		// the current/placeholder value; `getByRole('option')` has zero
+		// matches beforehand). Open it before asserting option labels.
+		//
+		// ⚠️ OPTIONS ARE `appendToBody: true` — QUERY `page`, NOT `dialog`/
+		// `stepBody`. `NcSelect`'s underlying vue-select defaults
+		// `appendToBody` to `true` (confirmed in `@nextcloud/vue`'s NcSelect
+		// props): the open listbox is teleported to a direct child of
+		// `<body>`, not nested inside the dialog's own DOM subtree at all. A
+		// browser accessibility-tree snapshot (`aria-owns`) SHOWS it nested
+		// under the combobox for readability, which is a false trail — real
+		// DOM-scoped locators (`dialog.getByRole('option')`,
+		// `stepBody.getByRole('option')`) match nothing, open or closed,
+		// confirmed live. `assertOptionVisible()` / `selectOption()` below
+		// therefore take `page`.
+		await openChoiceDropdown(stepBody)
+		await assertOptionVisible(page, 'Netherlands')
+		await assertOptionVisible(page, 'Belgium')
+		await assertOptionVisible(page, 'Germany')
 		await assertNoDutchToken(dialog)
-		await selectOption(dialog, 'Netherlands')
+		await selectOption(page, 'Netherlands')
 		await clickContinue(dialog)
 
 		// ── Step 2: organisation ─────────────────────────────────────────
 		await expect(
-			dialog.getByText('Organisation type', { exact: false }),
+			stepBody.getByText('Organisation type', { exact: false }),
 		).toBeVisible()
-		await expect(dialog.getByText('Municipality', { exact: true })).toBeVisible()
-		await expect(dialog.getByText('Province', { exact: true })).toBeVisible()
-		await expect(
-			dialog.getByText('Water authority', { exact: true }),
-		).toBeVisible()
+		await openChoiceDropdown(stepBody)
+		await assertOptionVisible(page, 'Municipality')
+		await assertOptionVisible(page, 'Province')
+		await assertOptionVisible(page, 'Water authority')
 		// Jurisdiction-specific legal-entity acronyms must remain unglossed
 		// (ADR-007 proper-noun/acronym exception) — see REQ-SWE-001.
-		await expect(dialog.getByText('ZZP', { exact: true })).toBeVisible()
-		await expect(dialog.getByText('MKB', { exact: true })).toBeVisible()
+		await assertOptionVisible(page, 'ZZP')
+		await assertOptionVisible(page, 'MKB')
 		await assertNoDutchToken(dialog)
-		await selectOption(dialog, 'Municipality')
+		await selectOption(page, 'Municipality')
 		await clickContinue(dialog)
 
 		// ── Step 3: rgs-template ─────────────────────────────────────────
 		await expect(
-			dialog.getByText('Chart of accounts (RGS)', { exact: false }),
+			stepBody.getByText('Chart of accounts (RGS)', { exact: false }),
 		).toBeVisible()
 		await expect(
 			dialog.getByText(
@@ -306,11 +359,10 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 				{ exact: false },
 			),
 		).toBeVisible()
-		await expect(
-			dialog.getByText('BBV (government)', { exact: true }),
-		).toBeVisible()
+		await openChoiceDropdown(stepBody)
+		await assertOptionVisible(page, 'BBV (government)')
 		await assertNoDutchToken(dialog)
-		await selectOption(dialog, 'BBV (government)')
+		await selectOption(page, 'BBV (government)')
 		await clickContinue(dialog)
 
 		// ── Step 4: administration (run-action) ──────────────────────────
@@ -413,23 +465,147 @@ async function clickRun(scope: ReturnType<Page['getByRole']>): Promise<void> {
 		.click({ timeout: 10_000 })
 }
 
-/** Select a choice-step option by its (English) label text. */
-async function selectOption(
+/**
+ * Open a `choice` step's `NcSelect` combobox so its options render.
+ *
+ * `NcSelect` (vue-select underneath) does not put its options in the DOM at
+ * all while closed — only the current value / placeholder is rendered.
+ * Verified live against a fresh wizard: `getByRole('option')` has ZERO
+ * matches until the combobox itself is clicked. Every `choice` step's
+ * option-label assertions (and `selectOption()` below) therefore depend on
+ * this running first.
+ *
+ * RETRIES THE CLICK, NOT JUST THE WAIT
+ * -------------------------------------
+ * A single click right after `clickContinue()` intermittently misses
+ * (verified live, twice, on the `organisation` step specifically — the new
+ * step's DOM, including the combobox, mounts fresh on every step change, so
+ * a click issued a beat too early can land on an element still transitioning
+ * in). `toPass()` re-issues the click, not just the visibility check, until
+ * the combobox reports itself open.
+ *
+ * WHY `aria-expanded`, NOT AN OPTION COUNT
+ * -------------------------------------------
+ * An early version gated the retry on `getByRole('option').count() === 0`
+ * (skip re-clicking if options already exist). `appendToBody: true` (see
+ * `findOptionByLabel()`) means those options are a `page`-level sibling of
+ * the dialog, not scoped to the current step — a still-unmounting PRIOR
+ * step's listbox can leave stale option nodes counted against the NEW
+ * step's combobox for a beat, making the count look non-zero when the
+ * current combobox is in fact still closed. The combobox's own
+ * `aria-expanded` reflects only ITS state, so it can't be fooled by a
+ * sibling step's leftovers.
+ */
+async function openChoiceDropdown(
 	scope: ReturnType<Page['getByRole']>,
-	label: string,
 ): Promise<void> {
-	await scope.getByText(label, { exact: true }).first().click({ timeout: 10_000 })
+	const page = scope.page()
+	const combobox = scope.getByRole('combobox').first()
+	await expect(combobox).toBeVisible({ timeout: 10_000 })
+	await expect(async () => {
+		if ((await combobox.getAttribute('aria-expanded')) !== 'true') {
+			await combobox.click({ timeout: 5_000 })
+		}
+		await expect(combobox).toHaveAttribute('aria-expanded', 'true', {
+			timeout: 2_000,
+		})
+		await expect(page.getByRole('option').first()).toBeVisible({
+			timeout: 2_000,
+		})
+	}).toPass({ timeout: 20_000 })
+}
+
+/**
+ * Find an OPEN dropdown's option whose label — once inter-element whitespace
+ * collapses — equals `label`, waiting (like `expect(...).toBeVisible()`
+ * would) for the DOM to catch up rather than reading it once.
+ *
+ * WHY NOT `getByText(label, { exact: true })`
+ * ---------------------------------------------
+ * `NcSelect`'s underlying option renderer splits a longer label across TWO
+ * sibling elements at a wrap point — verified live: "Netherlands" renders as
+ * `<span>Nether</span><span>lands</span>`, "Municipality" as `<span>Munici
+ * </span><span>pality</span>`, "Water authority" as `<span>Water au</span>
+ * <span>thority</span>` — a vendor (`@nextcloud/vue` `NcSelect`) rendering
+ * choice, not anything shillinq's manifest controls, and not visually a gap
+ * (a screenshot shows one unbroken word). Playwright's own text/accessible-
+ * name computation, however, INSERTS a separating space between sibling
+ * elements' text, so both `getByText(label, { exact: true })` and
+ * `getByRole('option', { name: label })` see "Nether lands" and never match
+ * "Netherlands" — not because the option is missing or mistranslated, but
+ * because two DOM nodes concatenated with an extra space. Shorter labels
+ * ("Belgium", "ZZP", …) are not split and would have matched either way, so
+ * this same whitespace-stripped comparison is used uniformly for all of
+ * them rather than special-casing the ones that happen to wrap.
+ */
+async function findOptionByLabel(
+	page: Page,
+	label: string,
+): Promise<ReturnType<Page['getByRole']> | null> {
+	const options = page.getByRole('option')
+	const wanted = label.replace(/\s+/g, '')
+	const deadline = Date.now() + 10_000
+	do {
+		const count = await options.count()
+		for (let i = 0; i < count; i++) {
+			const candidate = options.nth(i)
+			const text = await candidate.innerText().catch(() => '')
+			if (text.replace(/\s+/g, '') === wanted) {
+				return candidate
+			}
+		}
+		await new Promise((resolve) => setTimeout(resolve, 200))
+	} while (Date.now() < deadline)
+	return null
+}
+
+/** Assert an OPEN dropdown includes an option labelled (English) `label` — see `findOptionByLabel()`. */
+async function assertOptionVisible(page: Page, label: string): Promise<void> {
+	const option = await findOptionByLabel(page, label)
+	expect(
+		option,
+		`option "${label}" not found among the open dropdown's options`,
+	).not.toBeNull()
+	await expect(option as ReturnType<Page['getByRole']>).toBeVisible()
+}
+
+/** Select a choice-step option by its (English) label text. Call `openChoiceDropdown()` first. */
+async function selectOption(page: Page, label: string): Promise<void> {
+	const option = await findOptionByLabel(page, label)
+	if (option === null) {
+		throw new Error(
+			`[setup-wizard-english] option "${label}" not found among the open dropdown's options`,
+		)
+	}
+	await option.click({ timeout: 10_000 })
 }
 
 /**
  * `run-action` steps (`administration`, `seed`) run a privileged server call
- * and report their own completion; wait for the Continue action to become
- * available rather than a fixed sleep.
+ * and report their own completion; wait for that, not a fixed sleep.
+ *
+ * WHY THE `RUN` BUTTON, NOT `NEXT`/`CONTINUE`
+ * ---------------------------------------------
+ * Verified live: `Next` is NOT disabled while the action is in flight —
+ * clicking it early is caught by the wizard's own on-click `validate`
+ * callback, which shows a "Please run this step before continuing." banner
+ * and does not advance. Waiting for `Next` to become "enabled" therefore
+ * resolves immediately (it was never disabled) and races ahead of the real
+ * async action. `CnSetupWizard`'s own template binds the RUN button's
+ * `:disabled="running[step.id]"` — that flag is what actually tracks the
+ * in-flight action, so waiting for `Run` to re-enable is the real
+ * completion signal.
+ *
+ * TIMEOUT: partial live evidence, not a clean measurement. On a shared,
+ * contended dev box the `seed` action (chart of accounts + VAT rates + BBV
+ * task fields) was still running past 60s. 120s is a generous margin over
+ * that single data point, not a precise figure — CI's own history is the
+ * real source of truth here and should tighten this once it has runs.
  */
 async function waitForActionComplete(
 	scope: ReturnType<Page['getByRole']>,
 ): Promise<void> {
-	await expect(
-		scope.getByRole('button', { name: /next|continue/i }).first(),
-	).toBeEnabled({ timeout: 60_000 })
+	await expect(scope.getByRole('button', { name: /run/i }).first()).toBeEnabled({
+		timeout: 120_000,
+	})
 }

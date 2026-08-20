@@ -44,7 +44,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
-use PhpOffice\PhpWord\PhpWord;
+use OCA\Shillinq\Reporting\ReportSection;
 
 /**
  * Renders the statutory annual accounts from a FinancialStatement object.
@@ -71,19 +71,18 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 	/**
 	 * Build the jaarrekening body: cover, kerngegevens, balans, W&V, toelichting.
 	 *
-	 * @param PhpWord $phpWord The styled document.
+	 * @param ReportSection $section The block accumulator to fill.
 	 * @param array<string, mixed> $context `{ reportType, period, administrationId }`.
 	 *
 	 * @return void
 	 */
-	protected function build(PhpWord $phpWord, array $context): void {
+	protected function build(ReportSection $section, array $context): void {
 		$statement = $this->resolveStatement($context);
 		$currency = $this->str($statement, 'currency');
 		if ($currency === '') {
 			$currency = 'EUR';
 		}
 
-		$section = $this->addSection($phpWord);
 		$this->addCover($section, 'Jaarrekening', 'Titel 9 BW2 — jaarrekening', $context);
 
 		// --- Kerngegevens (key facts) ---
@@ -125,13 +124,13 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 	 * Lay out the balance sheet: assets on one side, equity/provisions/
 	 * liabilities on the other, from FinancialStatement.balanceSheet.
 	 *
-	 * @param \PhpOffice\PhpWord\Element\Section $section The section.
+	 * @param ReportSection $section The block accumulator.
 	 * @param array<string, mixed> $statement The statement object.
 	 * @param string $currency The presentation currency.
 	 *
 	 * @return void
 	 */
-	private function buildBalanceSheet(\PhpOffice\PhpWord\Element\Section $section, array $statement, string $currency): void {
+	private function buildBalanceSheet(ReportSection $section, array $statement, string $currency): void {
 		$balance = $statement['balanceSheet'] ?? [];
 		if (is_array($balance) === false) {
 			$balance = [];
@@ -187,13 +186,13 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 	/**
 	 * Lay out the profit-and-loss account from FinancialStatement.profitAndLoss.
 	 *
-	 * @param \PhpOffice\PhpWord\Element\Section $section The section.
+	 * @param ReportSection $section The block accumulator.
 	 * @param array<string, mixed> $statement The statement object.
 	 * @param string $currency The presentation currency.
 	 *
 	 * @return void
 	 */
-	private function buildProfitAndLoss(\PhpOffice\PhpWord\Element\Section $section, array $statement, string $currency): void {
+	private function buildProfitAndLoss(ReportSection $section, array $statement, string $currency): void {
 		$pnl = $statement['profitAndLoss'] ?? [];
 		if (is_array($pnl) === false) {
 			$pnl = [];
@@ -234,7 +233,7 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 	/**
 	 * Build the toelichting (notes): general principles, audit and filing.
 	 *
-	 * @param \PhpOffice\PhpWord\Element\Section $section The section.
+	 * @param ReportSection $section The block accumulator.
 	 * @param array<string, mixed> $statement The statement object.
 	 * @param string $currency The presentation currency.
 	 *
@@ -245,7 +244,7 @@ final class AnnualAccountsReportGenerator extends AbstractDocumentReportGenerato
 	 *     buildProfitAndLoss() phases the orchestrator calls uniformly;
 	 *     this phase does not itself render a currency-denominated figure.
 	 */
-	private function buildNotes(\PhpOffice\PhpWord\Element\Section $section, array $statement, string $currency): void {
+	private function buildNotes(ReportSection $section, array $statement, string $currency): void {
 		$sizeClass = $this->str($statement, 'sizeClass');
 		$intro = 'Deze jaarrekening is opgesteld op grond van Titel 9 Boek 2 BW';
 		if ($this->str($statement, 'jurisdiction') !== '' && strtoupper($this->str($statement, 'jurisdiction')) !== 'NL') {

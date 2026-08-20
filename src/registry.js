@@ -331,22 +331,22 @@ import BudgetGrid from './views/BudgetGrid.vue'
 // the strictly current-user-scoped /api/deadline-calendar/settings
 // endpoints; registered as a kind:"page" custom component per ADR-024.
 import DeadlineCalendarSettings from './views/DeadlineCalendarSettings.vue'
-import ExternalAdapterDetail from './views/external-adapters/ExternalAdapterDetail.vue'
-// Shillinq W8 (external-adapters admin UIs): the External Connections
-// section renders an operator roll-up + per-adapter activation panel
-// for the 14 dormant external-API adapter ports (Digipoort/SBR,
-// Salarisbureau, RvO, IB47, CBS Bestanden, CBS Iv3, BZK SiSa,
-// Mollie, Bunq, KvK, UWV, Treasury Rates, CCM Rule Engine,
-// CSRD ESRS XBRL, DepositPayment). Each page reads
-// /api/admin/external-adapters and surfaces the dormancy badge +
-// activation steps (config keys, openconnector source slug, feature
-// flag). Neither view fits a built-in `index` / `detail` page type:
-// the data is not an OR register (it's an in-controller registry of
-// adapter metadata), and the detail page renders an ordered
-// activation checklist + per-row code blocks. Both are kind:"page"
-// custom components per ADR-024 / ADR-036. The detail page is
-// reused for all 14 families by passing a slug via the manifest
-// page entry's `props.adapterId`.
+// integration-config-to-openconnector (formerly Shillinq W8): the
+// External Connections page renders one roster row per external-API
+// adapter family (15 — Digipoort/SBR, Salarisbureau, RvO, IB47, CBS
+// Bestanden, CBS Iv3, BZK SiSa, Mollie, Bunq, KvK, UWV, Treasury
+// Rates, CCM Rule Engine, CSRD ESRS XBRL, DepositPayment), sourced
+// from /api/admin/external-adapters: dormancy badge + declared
+// sourceSlug + live openconnector-provisioning status + a deep link
+// to openconnector's Source admin. The per-family detail page +
+// route this file used to also register are gone — integration
+// configuration (credentials, endpoints, protocol mapping) lives in
+// openconnector per ADR-067/ADR-091/ADR-022; this app holds only the
+// slug reference, so there is nothing left for a per-adapter page to
+// render. Does not fit a built-in `index` / `detail` page type: the
+// data is not an OR register, it's an in-controller registry of
+// adapter metadata plus a live per-row provisioning lookup. kind:
+// "page" custom component per ADR-024 / ADR-036.
 import ExternalAdaptersStatus from './views/external-adapters/ExternalAdaptersStatus.vue'
 import CountPage from './views/inventory/CountPage.vue'
 import MobileScannerHome from './views/inventory/MobileScannerHome.vue'
@@ -459,9 +459,8 @@ export default {
 	// compliance-deadline-calendar (REQ-CDC-006): deadline calendar settings.
 	DeadlineCalendarSettings: { kind: 'page', component: DeadlineCalendarSettings },
 
-	// Shillinq W8: External Connections admin pages (index + per-adapter detail).
+	// integration-config-to-openconnector: External Connections roster page.
 	ExternalAdaptersStatus: { kind: 'page', component: ExternalAdaptersStatus },
-	ExternalAdapterDetail: { kind: 'page', component: ExternalAdapterDetail },
 
 	// financial-dashboard-graphs (ADR-049 Phase-4): the only surviving custom
 	// financial widget. Cashflow merges realized GL lines with the 13-week

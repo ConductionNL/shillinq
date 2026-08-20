@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Shillinq External Adapters Admin Controller (W8).
+ * Shillinq External Adapters Admin Controller.
  *
- * Read-only admin endpoint over the 14 external-API adapter ports that
+ * Read-only admin endpoint over the 15 external-API adapter families that
  * Shillinq ships as dormant log-only stubs (per
  * `Application::register()`). Surfaces, for each adapter family:
  *
@@ -11,14 +11,20 @@
  *  - the dormancy flag (`isDormant()` on the bound implementation),
  *  - the OpenSpec change slug + REQ id the adapter belongs to,
  *  - the openconnector source slug operators must provision,
+ *  - whether that source slug is actually provisioned in openconnector
+ *    today (`resolveProvisioning()`, REQ-ICO-003), fail-soft to
+ *    `unknown` on any lookup error,
  *  - the feature flag (config key) that flips behaviour,
  *  - the human-readable activation steps the operator must follow.
  *
- * Drives the W8 `ExternalAdaptersStatus.vue` index + per-adapter
- * `ExternalAdapterDetail.vue` Vue pages mounted under the new
- * "External Connections" nav node. The detail page renders the
- * activation steps inline so operators can configure a real binding
- * without leaving the app.
+ * Drives the single `ExternalAdaptersStatus.vue` roster page mounted
+ * under the "External Connections" nav node — one row per family,
+ * with the activation steps disclosed in place per row. There is no
+ * per-family detail page/route any more
+ * (openspec/changes/integration-config-to-openconnector, REQ-ICO-002):
+ * integration configuration (credentials, endpoints, protocol
+ * mapping) belongs to openconnector per ADR-067/ADR-091/ADR-022; this
+ * app holds only the source-slug reference.
  *
  * Per ADR-005 / ADR-004 the endpoint is admin-gated via
  * `#[AuthorizedAdminSetting(Application::class)]` — only admins
@@ -36,7 +42,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
+ * @spec openspec/changes/integration-config-to-openconnector/specs/integration-config-to-openconnector/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -63,7 +69,6 @@ use OCA\Shillinq\Service\External\Sisa\BzkSisaUploadAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCA\Shillinq\Service\External\Uwv\UwvLoonaangifteAdapterInterface;
 use OCP\AppFramework\Controller;
-use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
@@ -72,13 +77,13 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * Read-only admin endpoints over the 14 external-API adapter ports.
+ * Read-only admin endpoint over the 15 external-API adapter families.
  *
- * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
+ * @spec openspec/changes/integration-config-to-openconnector/specs/integration-config-to-openconnector/spec.md
  */
 class ExternalAdaptersAdminController extends Controller {
 	/**
-	 * Adapter-family registry. Each entry describes one of the 14
+	 * Adapter-family registry. Each entry describes one of the 15
 	 * dormant external-API ports the app ships and the activation
 	 * recipe an operator must follow to bind a real implementation.
 	 *
@@ -455,17 +460,20 @@ class ExternalAdaptersAdminController extends Controller {
 	}//end __construct()
 
 	/**
-	 * List every external adapter family with live dormancy state.
+	 * List every external adapter family with live dormancy +
+	 * provisioning state.
 	 *
 	 * Shape:
 	 *  - adapters: list of family entries, each carrying every static
 	 *    field from the ADAPTERS registry plus a live `dormant: bool`
-	 *    flag resolved via the DI container.
+	 *    flag resolved via the DI container, and a `provisioning: {
+	 *    status, openconnectorObjectId?, deepLink }` block resolved
+	 *    per REQ-ICO-003.
 	 *  - summary: { total: int, dormant: int, live: int } roll-up.
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
+	 * @spec openspec/changes/integration-config-to-openconnector/specs/integration-config-to-openconnector/spec.md
 	 */
 	#[AuthorizedAdminSetting(Application::class)]
 	public function index(): JSONResponse {
@@ -474,7 +482,8 @@ class ExternalAdaptersAdminController extends Controller {
 
 		foreach (self::ADAPTERS as $entry) {
 			$dormant = $this->resolveDormancy(interfaceFqcn: $entry['interface']);
-			$entries[] = ($entry + ['dormant' => $dormant]);
+			$provisioning = $this->resolveProvisioning(sourceSlug: $entry['sourceSlug']);
+			$entries[] = ($entry + ['dormant' => $dormant, 'provisioning' => $provisioning]);
 			if ($dormant === true) {
 				$dormantCount++;
 			}
@@ -493,30 +502,6 @@ class ExternalAdaptersAdminController extends Controller {
 			]
 		);
 	}//end index()
-
-	/**
-	 * Return one adapter family by stable slug.
-	 *
-	 * @param string $id Adapter family slug (e.g. "digipoort-sbr").
-	 *
-	 * @return JSONResponse
-	 *
-	 * @spec openspec/specs/bookkeeping-bank-connectors/spec.md
-	 */
-	#[AuthorizedAdminSetting(Application::class)]
-	public function show(string $id): JSONResponse {
-		$entry = (self::ADAPTERS[$id] ?? null);
-		if ($entry === null) {
-			return new JSONResponse(
-				['error' => 'unknown-adapter', 'id' => $id],
-				Http::STATUS_NOT_FOUND
-			);
-		}
-
-		$dormant = $this->resolveDormancy(interfaceFqcn: $entry['interface']);
-
-		return new JSONResponse(($entry + ['dormant' => $dormant]));
-	}//end show()
 
 	/**
 	 * Resolve the bound adapter implementation and call `isDormant()`.
@@ -547,4 +532,68 @@ class ExternalAdaptersAdminController extends Controller {
 			return false;
 		}
 	}//end resolveDormancy()
+
+	/**
+	 * Resolve whether a family's declared openconnector source slug is
+	 * actually provisioned, per REQ-ICO-003.
+	 *
+	 * Read-only, existence-only: queries OpenRegister's generic object
+	 * API (via DI, the sanctioned ADR-022 abstraction — see
+	 * openspec/changes/integration-config-to-openconnector/design.md §4)
+	 * for `register: 'openconnector', schema: 'source'` filtered by
+	 * `slug`. Never reads or returns `configuration.headers`/credentials
+	 * from the resolved object — only its id.
+	 *
+	 * Defensive, mirroring {@see resolveDormancy()}'s shape exactly:
+	 * any Throwable (OpenRegister unavailable, openconnector not
+	 * installed, DI resolution failure) is caught, logged at
+	 * `warning`, and resolves to `unknown` rather than failing the
+	 * whole `#index` response.
+	 *
+	 * @param string $sourceSlug The family's declared openconnector
+	 *                           source slug.
+	 *
+	 * @return array{status:string,openconnectorObjectId?:string,deepLink:string}
+	 */
+	private function resolveProvisioning(string $sourceSlug): array {
+		$deepLink = '/apps/openconnector/sources';
+
+		try {
+			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
+
+			$records = $objectService
+				->setRegister('openconnector')
+				->setSchema('source')
+				->findAll(['filters' => ['slug' => $sourceSlug], 'limit' => 1]);
+
+			foreach ($records as $record) {
+				$objectId = null;
+				if (is_object($record) === true && method_exists($record, 'getId') === true) {
+					$objectId = $record->getId();
+				} elseif (is_array($record) === true && isset($record['id']) === true) {
+					$objectId = $record['id'];
+				}
+
+				return [
+					'status' => 'provisioned',
+					'openconnectorObjectId' => $objectId,
+					'deepLink' => $deepLink,
+				];
+			}
+
+			return [
+				'status' => 'declared-not-provisioned',
+				'deepLink' => $deepLink,
+			];
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'Shillinq ExternalAdaptersAdminController: provisioning lookup threw',
+				['sourceSlug' => $sourceSlug, 'exception' => $e->getMessage()]
+			);
+			return [
+				'status' => 'unknown',
+				'deepLink' => $deepLink,
+			];
+		}
+	}//end resolveProvisioning()
 }//end class

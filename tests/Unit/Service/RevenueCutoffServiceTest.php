@@ -103,7 +103,7 @@ final class RevenueCutoffServiceTest extends TestCase {
 			 */
 			public function __construct(array $contracts, array $events, array $allocations) {
 				$this->data = [
-					'Contract' => $contracts,
+					'RevenueContract' => $contracts,
 					'RevenueRecognitionEvent' => $events,
 					'PriceAllocation' => $allocations,
 				];
