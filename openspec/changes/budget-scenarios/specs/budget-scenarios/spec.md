@@ -212,23 +212,60 @@ reachable from the `Budgets` top-level navigation group, and MUST pass
 
 @e2e budget-scenarios::modifier-crud-reachable
 
-### Requirement: REQ-BSC-009 — Non-goals
+### Requirement: REQ-BSC-009 — A minimal balance-sheet `LedgerGroup` MUST be seeded so `LEDGER_AMOUNT_DELTA` has a valid target, without reversing `budget-core-schema`'s P&L-only default seed
+
+This change MUST seed exactly one balance-sheet-scoped `LedgerGroup`
+(`code: "VLA-LIQ"`, `name: "Liquide middelen"`, `accountRanges: [{"from":
+"1000", "to": "1099"}]`), sourced from `rj270-balance-sheet.json`'s own
+`VLA-LIQ` section, in this change's own register.d fragment — using the
+`LedgerGroup` schema exactly as `budget-core-schema` already defines it,
+with no field added or reinterpreted. This change MUST NOT seed any other
+`rj270-balance-sheet.json` section, and MUST NOT modify
+`budget-core-schema`'s own fragment or its P&L-only default-seed decision.
+
+#### Scenario: A fresh import gives `LEDGER_AMOUNT_DELTA` a real target out of the box
+
+- **GIVEN** a fresh OpenRegister import of this change's register fragment,
+  on top of `budget-core-schema`'s own P&L-only `LedgerGroup` seed
+- **WHEN** an operator creates a `LEDGER_AMOUNT_DELTA` modifier for
+  *"amount X transferred to the bank at date X"*
+- **THEN** a `LedgerGroup` named "Liquide middelen" exists and is a valid
+  `targetLedgerGroupId` — the task brief's own worked example is
+  expressible without the operator first creating a `LedgerGroup` by hand
+
+@e2e budget-scenarios::modifier-crud-reachable
+
+#### Scenario: No other balance-sheet section is seeded, and `budget-core-schema`'s own P&L-only default seed is unchanged
+
+- **GIVEN** this change's implementation diff
+- **WHEN** it is inspected
+- **THEN** exactly one `LedgerGroup` seed object is added (`VLA-LIQ`), no
+  other `rj270-balance-sheet.json` section (e.g. `VA`, `VLA-VRD`, `EV`) is
+  seeded, and `lib/Settings/register.d/budget-core-schema.json` is not
+  modified
+
+@e2e exclude diff inspection, no browser-visible behaviour
+
+### Requirement: REQ-BSC-010 — Non-goals
 
 This change MUST NOT implement the spreadsheet-grid UI or its
 scenario-selector embedding (`budget-grid-view`), projection/growth-rate
 math (`budget-projection-engine`), charts (`budget-charts`), any HR/payroll
-concept, or a fix to `CashflowScenario`'s missing `result` producer or
-`ScenarioCreator.vue`'s dead-code status. It MUST NOT write
+concept, a fix to `CashflowScenario`'s missing `result` producer or
+`ScenarioCreator.vue`'s dead-code status, or a restoration of
+`budget-core-schema`'s excluded balance-sheet `LedgerGroup` hierarchy
+beyond the one leaf named in REQ-BSC-009. It MUST NOT write
 `BudgetLine.source: "scenario"` rows.
 
-#### Scenario: No grid, projection, chart, HR, or CashflowScenario-fix code appears in this change's diff
+#### Scenario: No grid, projection, chart, HR, CashflowScenario-fix, or balance-sheet-restoration code appears in this change's diff
 
 - **GIVEN** this change's implementation diff
 - **WHEN** it is inspected
 - **THEN** no spreadsheet-grid component or grid-embedded selector, no
   projection-math service, no chart component, no employee/payroll schema
-  or field, no edit to `CashflowScenario`/`ScenarioCreator.vue`, and no
-  `BudgetLine` writer is present — only `BudgetScenario`,
+  or field, no edit to `CashflowScenario`/`ScenarioCreator.vue`, no
+  `BudgetLine` writer, and no balance-sheet `LedgerGroup` seed beyond
+  `VLA-LIQ` (REQ-BSC-009) is present — only `BudgetScenario`,
   `BudgetScenarioModifier`, the guard, the promoter, the evaluator, the
   reader, and the pages named in REQ-BSC-008
 

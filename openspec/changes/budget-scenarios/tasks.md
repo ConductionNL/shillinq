@@ -23,6 +23,18 @@ check current repo state before starting either.
       guard on either transition — `isDefault` is set via
       `BudgetScenarioDefaultPromoter`, not a lifecycle transition,
       `design.md` §2a). `x-openregister-audit-trail.enabled: true`.
+- [ ] **RULING 1 (2026-08-20)**: in the same fragment's `objects[]` array,
+      seed exactly one `LedgerGroup` object (schema owned by
+      `budget-core-schema`, not redeclared here) — `code: "VLA-LIQ"`,
+      `name: "Liquide middelen"`, `accountRanges: [{"from": "1000", "to":
+      "1099"}]`, `includedAccountNumbers: []`, `excludedAccountNumbers: []`,
+      `parentLedgerGroupId: null`, `@self.seedExemption: "anchor"`,
+      `@self.slug: "ledger-group-vla-liq"` — sourced from
+      `lib/Settings/statements/rj270-balance-sheet.json`'s own `VLA-LIQ`
+      section (`design.md` §4c). Do **not** seed any other
+      `rj270-balance-sheet.json` section — this is the one leaf
+      `LEDGER_AMOUNT_DELTA` needs, not a restoration of
+      `budget-core-schema`'s deliberately-excluded balance-sheet hierarchy.
 - [ ] `node tests/validate-registers.js` — PASS.
 
 ## 2. `BudgetScenarioDefaultPromoter` (REQ-BSC-002)

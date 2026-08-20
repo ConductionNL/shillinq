@@ -254,7 +254,45 @@ the `Budgets` top-level navigation group, showing `sourceType`,
 
 @e2e budget-known-costs::derivation-audit-trail-visible
 
-### Requirement: REQ-BKC-010 — Non-goals
+### Requirement: REQ-BKC-010 — Weekly and fortnightly recurring costs MUST expand via exact occurrence-date enumeration, never an averaged monthly factor
+
+For `frequency = "WEEKLY"` or `"FORTNIGHTLY"`, `KnownCostScheduleExpander`
+MUST compute each in-scope month's amount by enumerating the row's actual
+occurrence dates — starting at `validFrom` and stepping by 7 days
+(`WEEKLY`) or 14 days (`FORTNIGHTLY`), bounded by `validTo` when set — and
+booking `standardAmount` (indexed per REQ-BKC-003 where applicable) once
+per occurrence date that falls inside that month. It MUST NOT apply an
+averaged factor (e.g. 52/12 or 26/12) to approximate a monthly total.
+
+#### Scenario: A month with five weekly occurrences books five times the per-occurrence amount
+
+- **GIVEN** a `CashflowRecurring` row with `frequency: "WEEKLY"`,
+  `standardAmount: 100`, `indexationRule: "FIXED"`, `validFrom` anchored on
+  a Monday, and no `validTo`
+- **WHEN** the expander computes the amount for a calendar month that
+  contains 5 Mondays on or after `validFrom` (rather than the more common
+  4)
+- **THEN** that month's amount is `500` (5 × 100), not `433` (an averaged
+  52/12 × 100 approximation) and not `400` (a flat ×4 approximation)
+
+@e2e exclude pure-calculator arithmetic, no browser-visible surface —
+verified by `KnownCostScheduleExpanderTest::testMonthWithFiveWeeklyOccurrencesSumsAllFive`
+
+#### Scenario: A fortnightly cost books only the occurrences that actually land inside a given month
+
+- **GIVEN** a `CashflowRecurring` row with `frequency: "FORTNIGHTLY"`,
+  `standardAmount: 250`, `validFrom: "2027-01-04"`, no `validTo`
+- **WHEN** the expander computes January 2027's amount (occurrences on
+  `2027-01-04` and `2027-01-18`, both inside the month) and February 2027's
+  amount (the next occurrence, `2027-02-01`, plus `2027-02-15`)
+- **THEN** January's amount is `500` (2 occurrences) and February's is also
+  `500` (2 occurrences) — each derived from counting exact dates, not from
+  a fixed per-month occurrence assumption
+
+@e2e exclude pure-calculator arithmetic, no browser-visible surface —
+verified by `KnownCostScheduleExpanderTest::testFortnightlyExpansionEnumeratesExactOccurrenceDates`
+
+### Requirement: REQ-BKC-011 — Non-goals
 
 This change MUST NOT implement the spreadsheet-grid UI (`budget-grid-view`),
 projection/growth-rate math (`budget-projection-engine`), scenario or

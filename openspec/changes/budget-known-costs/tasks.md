@@ -65,17 +65,31 @@
 - [ ] Implement frequency → months-in-scope (`design.md` §6b): monthly
       books every in-scope month unchanged; quarterly spreads evenly across
       the quarter's 3 months; annually books whole in `monthOfYear`;
-      weekly/fortnightly return `needsOperatorInput` (§6d, flagged, not
-      guessed — `design.md` §13.1's open question).
+      weekly/fortnightly enumerate exact occurrence dates and count them per
+      month (RULING 2, 2026-08-20 — `design.md` §6d, REQ-BKC-010 —
+      supersedes the earlier `needsOperatorInput` deferral, `design.md`
+      §13.1 now resolved).
+- [ ] Implement the weekly/fortnightly occurrence-date enumeration exactly
+      (`design.md` §6d, REQ-BKC-010): first occurrence = `validFrom`;
+      subsequent occurrences step by 7 days (`WEEKLY`) or 14 days
+      (`FORTNIGHTLY`), bounded by `validTo` when set (unbounded when null,
+      per REQ-BKC-006); count occurrences landing inside each requested
+      month; book `standardAmount × <count>` — NOT an averaged 52/12 or
+      26/12 factor. `dagFromMonth` is confirmed null for these two
+      frequencies per the schema's own field description, so `validFrom`
+      itself is the only usable anchor.
 - [ ] Implement `validFrom`/`validTo` bounding, including the indefinite
       (`validTo: null`) case (`design.md` §6c, REQ-BKC-006).
 - [ ] Implement CPI compounding: `FIXED` unchanged every month;
       `CPI_PAST_YEAR` with `cpiRatePercent` set compounds once per calendar
       year relative to `validFrom`'s year, applied uniformly across that
-      year's in-scope months, integer cents, rounded once per computed
-      value (`design.md` §6e); `CPI_PAST_YEAR` with `cpiRatePercent` null
-      returns `needsOperatorInput`, never a fabricated or zero rate
-      (REQ-BKC-003).
+      year's in-scope months (for `WEEKLY`/`FORTNIGHTLY`, applied to the
+      per-occurrence amount before multiplying by the month's occurrence
+      count, `design.md` §6d point 3), integer cents, rounded once per
+      computed value (`design.md` §6e); `CPI_PAST_YEAR` with
+      `cpiRatePercent` null returns `needsOperatorInput`, never a
+      fabricated or zero rate (REQ-BKC-003) — this is now the only case
+      that returns `needsOperatorInput`.
 - [ ] Unit tests — one per named scenario in `spec.md`:
       `testCpiIndexationCompoundsAnnually`,
       `testCpiWithoutRateNeedsOperatorInput`,
@@ -83,7 +97,13 @@
       `testMidYearStartBudgetsOnlyFromStartMonth`,
       `testQuarterlySpreadsEvenlyAcrossQuarterMonths`,
       `testAnnuallyBooksWholeInAnchorMonth`,
-      `testWeeklyAndFortnightlyReturnNeedsOperatorInput`.
+      `testMonthWithFiveWeeklyOccurrencesSumsAllFive` (REQ-BKC-010, the
+      4-vs-5-occurrence-month case the ruling explicitly requires
+      coverage for),
+      `testFortnightlyExpansionEnumeratesExactOccurrenceDates` (REQ-BKC-010),
+      `testWeeklyIndexationAppliesPerOccurrenceBeforeMonthlySum` (§6d point
+      3 — a CPI step-up mid-year applied to each occurrence, not to the
+      pre-summed monthly total).
 
 ## 6. `KnownCostBudgetWriter` — idempotent orchestration (REQ-BKC-004, REQ-BKC-005, REQ-BKC-007)
 - [ ] Add `lib/Service/KnownCostBudgetWriter.php`: per-run algorithm

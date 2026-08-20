@@ -250,18 +250,90 @@ BudgetScenarioModifier
 - **`LEDGER_AMOUNT_DELTA`** — a signed one-off adjustment to
   `targetLedgerGroupId`'s budgeted amount for `effectiveDate`'s own month
   only (not a step change carried forward — a genuinely one-time event).
-  Covers *"amount X gets transferred to the bank at date X."*
-  **Flagged, not silently assumed** (§13.2): `budget-core-schema`'s default
-  seed is P&L-shaped only (no balance-sheet `LedgerGroup`s ship by
-  default, per that change's own §3c amendment) — representing "transferred
-  to the bank" meaningfully requires a balance-sheet-scoped `LedgerGroup`
-  (e.g. a "Bank" leaf) that an operator would have to create manually via
-  `budget-core-schema`'s own `LedgerGroup` CRUD pages first; this change
-  does not seed one and does not require one to exist, it only requires
-  `targetLedgerGroupId` to resolve to *some* real `LedgerGroup` at save
-  time, whatever its type.
+  Covers *"amount X gets transferred to the bank at date X."* **RESOLVED
+  (2026-08-20, RULING 1)** — this change now seeds the minimal
+  balance-sheet `LedgerGroup` this modifier needs as a target; see §4c.
 
-### 4c. Why a fourth, "RECURRING_START" kind is not declared
+### 4c. The balance-sheet `LedgerGroup` gap — closed here, minimally, and why this change (not `budget-known-costs`) owns it
+
+**The gap, confirmed blocking.** `budget-core-schema`'s default seed is
+P&L-shaped only — its own §3c amendment explicitly drops every
+`rj270-balance-sheet.json` section from the default seed, reasoning that
+"a begroting is a monthly-phased flow plan" and a balance-sheet stock
+account "is not a begroting use case this programme has identified." That
+reasoning does not hold for `LEDGER_AMOUNT_DELTA`: the task brief's own
+worked example — *"amount X gets transferred to the bank at date X"* — is
+precisely a balance-sheet, stock-side event (a cash/bank position moving),
+and with a P&L-only seed there is **no `LedgerGroup` node this modifier can
+target at all**. Ruling: this is a real, blocking gap, not a deferrable
+one — an operator following the task brief's own example verbatim, on a
+freshly imported administration, would find `LEDGER_AMOUNT_DELTA` has
+nothing to point at.
+
+**Ownership: `budget-scenarios`, not `budget-known-costs`.**
+`budget-known-costs` has no use for a balance-sheet `LedgerGroup` anywhere
+in its own scope — every `CashflowRecurring` row it reads targets an
+expense/revenue account via `accountNumberExpense`, resolved to a P&L-side
+`LedgerGroup`, exactly as `budget-core-schema`'s default seed already
+covers. The requirement for a balance-sheet target originates entirely
+from `LEDGER_AMOUNT_DELTA`, a schema this change alone declares — so this
+change is the one whose own new requirement creates the need, and the one
+that owns closing it. Handing this to `budget-known-costs` would mean that
+change growing a seed addition purely to satisfy a sibling's modifier
+type it has no other reason to know about.
+
+**What is seeded, and how it stays minimal.** This change's own
+`lib/Settings/register.d/budget-scenarios.json` fragment gains **one**
+seed `LedgerGroup` object — using the `LedgerGroup` schema exactly as
+`budget-core-schema` §3b already defines it, no field added or
+reinterpreted — sourced from `rj270-balance-sheet.json`'s own `VLA-LIQ`
+section (`"code": "VLA-LIQ", "label": "Liquide middelen", "accountRange":
+["1000", "1099"]`, verified directly against that file):
+
+```
+LedgerGroup (seed, this change's own fragment)
+  administrationId       — matches this wave's own seed administration convention
+  code                     "VLA-LIQ"
+  name                     "Liquide middelen"
+  order                    0
+  parentLedgerGroupId    null — root, no balance-sheet hierarchy added
+  accountRanges            [{ "from": "1000", "to": "1099" }]
+  includedAccountNumbers  []
+  excludedAccountNumbers  []
+  effectiveFrom / effectiveTo   null / null
+  @self.seedExemption     "anchor"  — canonical BW 2:373/RJ270 statutory reference
+                            data, same ADR-001 justification budget-core-schema's
+                            own P&L seed already uses
+  @self.slug               "ledger-group-vla-liq"  — matches budget-core-schema's own
+                            leaf-naming convention (`ledger-group-<rj270-code-lowercased>`)
+```
+
+A fragment other than the one declaring a schema seeding an object under
+that schema is an already-established, live pattern in this codebase —
+verified, not assumed: `bookkeeping-cost-centers-dimensions.json` seeds
+`Project` objects (a schema it does not declare) and
+`bookkeeping-provincies-bbv-variant.json` seeds `BBVProgramma` objects the
+same way. This change follows that exact precedent for its one
+`LedgerGroup` row, rather than editing `budget-core-schema`'s own fragment
+— consistent with this wave's repeated discipline of not touching a
+sibling's already-spec'd files.
+
+**This is explicitly NOT a reversal of `budget-core-schema`'s P&L-only
+default seed — stated here so a later reader does not "helpfully" re-add
+the whole balance sheet.** `budget-core-schema` §3c's decision to drop
+`rj270-balance-sheet.json` from the *default* seed stands, unchanged, for
+every reason that document gives. This change adds exactly **one** leaf —
+the one node `LEDGER_AMOUNT_DELTA` needs to be usable per the task brief's
+own example — not the `VA`/`VLA`/`EV`/… balance-sheet section family
+`budget-core-schema` deliberately excluded. No parent `LedgerGroup`
+("Vlottende activa") is added either, keeping this the smallest addition
+that closes the gap rather than a partial restoration of the excluded
+hierarchy. A future change that wants a fuller balance-sheet-scoped
+`LedgerGroup` tree (assets, liabilities, equity beyond this one leaf) is
+still doing new, deliberate work — this seed is not a foothold that
+"already got most of the way there."
+
+### 4d. Why a fourth, "RECURRING_START" kind is not declared
 
 A brand-new recurring cost with no prior real existence (e.g., "if we sell
 product X, we start a new logistics recurring cost from date Y") is
@@ -511,13 +583,15 @@ Backend-only, `@e2e exclude`:
    stronger guarantee (e.g. an OpenRegister-level optimistic-lock/ETag
    check on the promotion writes, if the platform offers one) is needed is
    a platform question, not resolved here.
-2. **`LEDGER_AMOUNT_DELTA` targeting a balance-sheet `LedgerGroup`** (§4b)
-   — this change does not seed a "Bank" `LedgerGroup` and does not require
-   one; "amount transferred to the bank" is only meaningfully representable
-   once an operator has created one. Whether this change (or
-   `budget-core-schema`) should seed a minimal balance-sheet
-   `LedgerGroup` for exactly this purpose is a product call.
-3. **A "brand-new, scenario-only" recurring cost** (§4c) — today, a
+2. **RESOLVED (2026-08-20, RULING 1)** — ~~`LEDGER_AMOUNT_DELTA` targeting
+   a balance-sheet `LedgerGroup`~~: §4c now answers this. This change seeds
+   exactly one balance-sheet `LedgerGroup` ("Liquide middelen," sourced
+   from `rj270-balance-sheet.json`'s `VLA-LIQ` section) in its own
+   fragment, closing the gap without reopening `budget-core-schema`'s own
+   P&L-only default seed decision. Left in place, struck through, so a
+   reader comparing against an earlier read of this document can see the
+   question was answered, not silently deleted.
+3. **A "brand-new, scenario-only" recurring cost** (§4d) — today, a
    scenario can only reference an already-existing real `CashflowRecurring`
    row. Whether a fourth modifier kind (a fully hypothetical, never-real
    recurring cost that exists only inside one scenario's evaluation) is

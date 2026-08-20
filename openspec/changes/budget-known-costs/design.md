@@ -275,11 +275,11 @@ weekly engine and does not touch `CashflowWeek`/`CashflowForecastHorizon`.
 ### 6b. Frequency → months-in-scope
 
 ```
-WEEKLY | FORTNIGHTLY | MONTHLY  -> every calendar month within [validFrom, validTo] ∩ fiscalYear
-                                    (a weekly/fortnightly cost still books monthly at this
-                                    granularity — this change reports a MONTHLY budgeted total,
-                                    not a week count; standardAmount is read as the operator's
-                                    own already-monthly-equivalent figure — see §6d)
+WEEKLY | FORTNIGHTLY             -> exact per-occurrence date enumeration, per month, per §6d
+                                    (RULING 2, 2026-08-20 — supersedes an earlier averaged-factor
+                                    draft; see §6d for the algorithm and why an average was rejected)
+MONTHLY                           -> every calendar month within [validFrom, validTo] ∩ fiscalYear;
+                                    standardAmount books once per in-scope month, unchanged
 QUARTERLY                        -> the 3 calendar months of each quarter containing a
                                     dagFromMonth-less quarter anchor is not modelled; the
                                     amount is spread EVENLY across the 3 months of each quarter
@@ -312,20 +312,40 @@ figure, so:
 
 - `MONTHLY`: `standardAmount` books once per in-scope month, unchanged —
   already monthly.
-- `WEEKLY`/`FORTNIGHTLY`: **flagged as a genuine open question (§13.1)**,
-  not silently resolved — multiplying `standardAmount` by ~4.33 (weekly) or
-  ~2.17 (fortnightly) to approximate a monthly total is a plausible
-  convention but not one this repo has established anywhere, and a wrong
-  multiplier silently mis-budgets every weekly/fortnightly recurring cost.
-  This change's default, stated explicitly rather than silently chosen: for
-  `WEEKLY`/`FORTNIGHTLY` frequencies, the expander returns a typed
-  `needs-monthly-equivalent` result (analogous to
-  `budget-projection-engine`'s own typed `unprojectable`, §3 there) instead
-  of a number — `KnownCostBudgetWriter` (§8) surfaces these rows on a
-  diagnostic list rather than silently booking an unverified figure. Seed
-  data for this wave (§9) uses only `MONTHLY`/`QUARTERLY`/`ANNUALLY`
-  recurrences so this path is exercised by a dedicated unit test but not by
-  day-one seed data.
+- `WEEKLY`/`FORTNIGHTLY`: **RESOLVED 2026-08-20 (RULING 2) — exact
+  per-occurrence date enumeration, never an averaged monthly factor.** An
+  earlier draft of this document proposed a `needsOperatorInput` deferral
+  here (open question §13.1, now struck through — see there); that was
+  rejected: a 52/12 ≈ 4.33 (weekly) or 26/12 ≈ 2.17 (fortnightly) averaged
+  multiplier would silently misstate any specific month, and the begroting
+  grid's entire purpose is comparing a monthly budgeted figure against that
+  same month's actual — a month is not "the average month," it is a real
+  4-or-5-Monday month with a real cash difference between the two. The
+  algorithm instead **enumerates the actual occurrence dates**:
+  1. `CashflowRecurring.dagFromMonth`'s own field description states it is
+     "Day of month for monthly recurrence; **null for other frequencies**"
+     — verified against the schema (`proposal.md`'s Why section) — so
+     `WEEKLY`/`FORTNIGHTLY` rows carry no day-of-month anchor at all. The
+     anchor is instead the row's own `validFrom` date: the first occurrence
+     is `validFrom` itself, and every subsequent occurrence is `validFrom +
+     7×k` days (`WEEKLY`) or `validFrom + 14×k` days (`FORTNIGHTLY`) for
+     `k = 1, 2, 3, …`, up to and including the last occurrence on or before
+     `validTo` (or unbounded when `validTo` is null, per §6c).
+  2. For a requested `fiscalYear` and calendar month, the expander counts
+     how many of those exact occurrence dates fall inside that month, and
+     books `standardAmount × <that count>` — a month containing 4
+     Mondays and a month containing 5 Mondays (the same weekday, the same
+     row, both real months within one indefinite recurrence) genuinely
+     receive different totals, and MUST, per this ruling.
+  3. Indexation (§6e) is applied to the per-occurrence `standardAmount`
+     before multiplying by the month's occurrence count — not to the
+     already-summed monthly total — so a CPI step-up mid-year still applies
+     uniformly to every occurrence in every month of its fiscal year,
+     exactly as §6e already specifies for `MONTHLY`/`QUARTERLY`/`ANNUALLY`.
+  Seed data for this wave (§9) uses only `MONTHLY`/`QUARTERLY`/`ANNUALLY`
+  recurrences, so this path is exercised by dedicated unit tests (including
+  a 5-occurrence-month fixture, `tasks.md` group 5) but not by day-one seed
+  data.
 - `QUARTERLY`: divided evenly across the quarter's 3 months (§6b) — this
   is a stated convention (not silently assumed), consistent with how a
   begroting operator would naturally spread a quarterly bill for planning
@@ -350,12 +370,14 @@ mid-chain). `Y < validFromYear` never occurs (§6c already excludes months
 before `validFrom`).
 
 `CPI_PAST_YEAR` with `cpiRatePercent` null (§3b's declared-but-unusable
-state): the expander returns the same typed `needs-monthly-equivalent`
-result as §6d's weekly/fortnightly case (renamed generically,
-`needsOperatorInput`, since both share one root cause: an amount this
-expander cannot compute without more operator-supplied information) —
-never silently substituting `FIXED`, which would be a wrong number wearing
-a right one's shape.
+state): the expander returns a typed `needsOperatorInput` result — an
+amount it cannot compute without more operator-supplied information — for
+every in-scope month, regardless of frequency. This is now the **only**
+case in this class (§6d's earlier `WEEKLY`/`FORTNIGHTLY` use of the same
+typed result was superseded by RULING 2's exact-date-enumeration algorithm,
+which computes a real number for those frequencies instead). The expander
+never silently substitutes `FIXED`, which would be a wrong number wearing a
+right one's shape.
 
 ## 7. Fiscal-year and default-`AnnualBudget` resolution
 
@@ -556,15 +578,16 @@ Backend-only, `@e2e exclude`:
 
 ## 13. Open questions
 
-1. **Weekly/fortnightly monthly-equivalent conversion** (§6d) — no
-   established convention exists in this codebase for converting a weekly
-   or fortnightly `standardAmount` into a monthly budgeted figure; this
-   change surfaces those rows as `needsOperatorInput` rather than guessing
-   a multiplier. A product call is needed on whether ×4.33/×2.17
-   (calendar-average) or ×4/×2 (a simpler, if less exact, convention) is
-   wanted, or whether weekly/fortnightly recurring costs should instead
-   require the operator to state a `standardAmount` that is already
-   monthly-equivalent (changing the guard, not the expander).
+1. **RESOLVED (2026-08-20, RULING 2)** — ~~Weekly/fortnightly
+   monthly-equivalent conversion~~: §6b/§6d now answer this. No averaged
+   factor is used; the expander enumerates the actual occurrence dates from
+   `validFrom` stepped by 7/14 days and counts how many fall in each
+   requested month, because a 4-vs-5-occurrence month is a real cash
+   difference an average would silently misstate, and the begroting grid's
+   purpose is comparing a monthly budget to that same month's actual. Left
+   in place, struck through, so a reader comparing against an earlier read
+   of this document can see the question was answered, not silently
+   deleted.
 2. **Reset action for an overridden derived line** (§8c) — deleting the
    `BudgetLine` is today's only reset path; a dedicated "reset to
    generated" button is a plausible, small follow-up once

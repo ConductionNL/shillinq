@@ -88,6 +88,18 @@ real budget, never mutating it.
   `CashflowRecurring` row's amount hypothetically replaced from a date), or
   `LEDGER_AMOUNT_DELTA` (a one-off signed adjustment to one `LedgerGroup`
   for one month — "amount X transferred... at date X"). `design.md` §4.
+- **ADD** (seed data, RULING 1, 2026-08-20): one balance-sheet `LedgerGroup`
+  ("Liquide middelen," `accountRange: 1000-1099`, sourced from
+  `rj270-balance-sheet.json`'s own `VLA-LIQ` section), seeded in this
+  change's own fragment against `budget-core-schema`'s already-defined
+  `LedgerGroup` schema — the minimal target `LEDGER_AMOUNT_DELTA` needs to
+  be usable at all, since `budget-core-schema`'s default seed is P&L-only.
+  **This owned and closed here, not in `budget-known-costs`**, because the
+  need originates entirely from this change's own `LEDGER_AMOUNT_DELTA`
+  modifier — `budget-known-costs` has no use for a balance-sheet
+  `LedgerGroup` anywhere in its own scope. **Explicitly not a reversal of**
+  `budget-core-schema`'s P&L-only default seed — one leaf only, no
+  balance-sheet hierarchy restored. `design.md` §4c.
 - **ADD** (guard): `BudgetScenarioModifierGuard` — rejects two modifiers in
   the same scenario targeting the same `CashflowRecurring` row with
   overlapping effective windows (an unresolvable conflict); otherwise
@@ -131,9 +143,14 @@ real budget, never mutating it.
   `budget-known-costs` this change carries no MODIFIED delta against
   `bookkeeping-cashflow-13wk` or any other existing capability.
 - **Affected code**: 1 new register.d fragment (`BudgetScenario`,
-  `BudgetScenarioModifier`), 1 new guard, 2 new PHP services
-  (`BudgetScenarioDefaultPromoter`, `BudgetScenarioEvaluator`) + PHPUnit
-  coverage, 1 new manifest fragment, new Playwright coverage.
+  `BudgetScenarioModifier`, plus one seed `LedgerGroup` object per RULING 1
+  — `budget-core-schema`'s own `LedgerGroup` schema is not edited, only a
+  seed object using it is added, the same cross-fragment seeding pattern
+  `bookkeeping-cost-centers-dimensions.json`/`bookkeeping-provincies-bbv-
+  variant.json` already use for schemas they do not themselves declare), 1
+  new guard, 2 new PHP services (`BudgetScenarioDefaultPromoter`,
+  `BudgetScenarioEvaluator`) + PHPUnit coverage, 1 new manifest fragment,
+  new Playwright coverage.
 - **Hard dependency — `budget-known-costs`**: `BudgetScenarioEvaluator`
   calls `budget-known-costs`'s `KnownCostScheduleExpander` directly (a
   pure, no-store-access class — a safe direct call, not a duplicated
