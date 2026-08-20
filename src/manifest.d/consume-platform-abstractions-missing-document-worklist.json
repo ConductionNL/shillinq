@@ -6,81 +6,29 @@
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json. ADR-022: consumes OpenRegister's declarative `IS NULL` filter operator (zoeken-filteren spec, `<field>_isnull`) instead of a bespoke worklist service.",
 		"description": "Missing-document worklist (routing-audit-2026-07-14.md item 2): two `type:\"index\"` pages filtering on `sourceDocumentUri: null` — the exact `filter: {\"field\": null}` idiom already used by the existing UnmatchedItems page (`src/manifest.json`, filter `{\"resolutionStatus\": null}`). `sourceDocumentUri` was added to both SupplierInvoice and Receipt by receipt-extraction-consume.json; no schema change needed here. Sorted oldest-invoice/receipt-date-first so the most aged gaps surface at the top of the list — no hard date cutoff is declared (OR's simple index-page `filter` does not support relative-date bindings; that is an aggregation-only capability), so \"aged\" is expressed as default sort order rather than a filtered threshold. No PHP: OpenRegister's REST layer already resolves the `_isnull` predicate against the register's search backend."
 	},
+	"_meta_nav_six_clusters_note": "nav-six-clusters (2026-08-20, design.md §4 rows 14/16): both index pages here were confirmed duplicates of the canonical Purchasing-cluster SupplierInvoices/Receipts pages (same schema, filtered `sourceDocumentUri IS NULL`) — deleted, replaced by menu[].query presets pointing at the canonical pages. The canonical pages already carry `rowRoute` (design.md §10's carry-forward checklist is already satisfied — nothing to move). The query key uses the `<field>_isnull` convention this fragment's own description names for the backend predicate, since a menu[].query value cannot be JSON `null` (app-manifest-v2.schema.json restricts query values to string/number/boolean).",
 	"menu": [
 		{
-			"id": "Bookkeeping",
+			"id": "Purchasing",
 			"children": [
 				{
 					"id": "SupplierInvoicesMissingDocument",
 					"label": "Missing Supplier Documents",
 					"icon": "FileDocumentMultipleOutline",
-					"route": "SupplierInvoicesMissingDocument",
+					"route": "SupplierInvoices",
+					"query": { "sourceDocumentUri_isnull": "true" },
 					"order": 29
 				},
 				{
 					"id": "ReceiptsMissingDocument",
 					"label": "Missing Receipt Photos",
 					"icon": "FileAlertOutline",
-					"route": "ReceiptsMissingDocument",
+					"route": "Receipts",
+					"query": { "sourceDocumentUri_isnull": "true" },
 					"order": 29
 				}
 			]
 		}
 	],
-	"pages": [
-		{
-			"id": "SupplierInvoicesMissingDocument",
-			"route": "/bookkeeping/supplier-invoices-missing-document",
-			"type": "index",
-			"title": "Supplier Invoices — Missing Document",
-			"config": {
-				"register": "shillinq",
-				"schema": "SupplierInvoice",
-				"filter": {
-					"sourceDocumentUri": null
-				},
-				"columns": [
-					{ "key": "invoiceNumber", "label": "Invoice #", "sortable": true },
-					{ "key": "supplierId", "label": "Supplier", "sortable": true },
-					{ "key": "invoiceDate", "label": "Invoice Date", "sortable": true, "type": "date" },
-					{ "key": "dueDate", "label": "Due", "sortable": true, "type": "date" },
-					{ "key": "totalInclVat", "label": "Total (incl. VAT)", "sortable": true, "type": "number" },
-					{ "key": "statusCode", "label": "Status", "sortable": true }
-				],
-				"defaultSort": "invoiceDate",
-				"detailRoute": "SupplierInvoiceDetail",
-				"_note_rowRoute": "`detailRoute` is inert — the library never reads it. See the Receipts index in manifest.json: SupplierInvoiceDetail is overlaid as `type:\"custom\"`, so rows here opened nothing without this key.",
-				"rowRoute": "SupplierInvoiceDetail",
-				"description": "Supplier invoices with no attached source document (UBL/OCR/Peppol origin never resolved) — a declarative OpenRegister `sourceDocumentUri IS NULL` filter (routing-audit-2026-07-14.md item 2), oldest invoice date first so the longest-outstanding gaps surface at the top. Not a bespoke worklist service.",
-				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bills"
-			}
-		},
-		{
-			"id": "ReceiptsMissingDocument",
-			"route": "/bookkeeping/receipts-missing-document",
-			"type": "index",
-			"title": "Receipts — Missing Document",
-			"config": {
-				"register": "shillinq",
-				"schema": "Receipt",
-				"filter": {
-					"sourceDocumentUri": null
-				},
-				"columns": [
-					{ "key": "receiptDate", "label": "Date", "sortable": true, "type": "date" },
-					{ "key": "vendorName", "label": "Vendor", "sortable": true },
-					{ "key": "category", "label": "Category", "sortable": true },
-					{ "key": "amount", "label": "Amount", "sortable": true, "type": "number" },
-					{ "key": "currency", "label": "Currency", "sortable": true },
-					{ "key": "claimId", "label": "Claim", "sortable": false }
-				],
-				"defaultSort": "receiptDate",
-				"detailRoute": "ReceiptDetail",
-				"_note_rowRoute": "Same as the supplier-invoice worklist above: ReceiptDetail is overlaid as `type:\"custom\"`, so rows here opened nothing without this key.",
-				"rowRoute": "ReceiptDetail",
-				"description": "Expense receipts with no attached source photo/scan — the same declarative `sourceDocumentUri IS NULL` filter as the supplier-invoice worklist, oldest receipt date first.",
-				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
-			}
-		}
-	]
+	"pages": []
 }

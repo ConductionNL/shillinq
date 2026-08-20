@@ -88,6 +88,38 @@ function resolveServerRoot(): string {
 }
 
 /**
+ * Run one `occ` subcommand against the instance under test.
+ *
+ * WHY THIS IS NOT ALWAYS `php <server-root>/occ` DIRECTLY
+ * ---------------------------------------------------------
+ * On this team's docker dev setup the checked-out `server/` tree on the HOST
+ * is source only — the live instance (config.php, DB connection, `installed:
+ * true`) exists solely INSIDE the Nextcloud container. Host `php occ status`
+ * there reads an empty/placeholder `config/config.php` and reports `installed:
+ * false` against a completely different (unconfigured) install, so
+ * `config:app:delete` fails with "Nextcloud is not installed" even though the
+ * real instance the browser drives is healthy. `NC_SERVER_ROOT` alone cannot
+ * fix this — the problem is the EXECUTION CONTEXT (host vs. container), not
+ * the path.
+ *
+ * `NC_CONTAINER` is this fleet's established escape hatch for exactly that
+ * (see `openregister/tests/e2e/base-url.ts::resolveContainer()` and
+ * `openbuild/tests/e2e/global-setup.ts::resolveContainerFor()`): when set,
+ * every `occ` call here runs via `docker exec -u www-data <container> php
+ * occ …` instead of the host binary. Unset (the CI default, where `occ` runs
+ * against a real `php -S`-served install on the runner itself) falls back to
+ * the previous direct-host invocation unchanged.
+ */
+function runOcc(serverRoot: string, occPath: string, args: string[]): void {
+	const container = process.env.NC_CONTAINER
+	const quotedArgs = args.map((a) => JSON.stringify(a)).join(' ')
+	const command = container
+		? `docker exec -u www-data ${JSON.stringify(container)} php occ ${quotedArgs}`
+		: `php ${JSON.stringify(occPath)} ${quotedArgs}`
+	execSync(command, { cwd: serverRoot, stdio: 'pipe' })
+}
+
+/**
  * Delete every setup app-config key server-side, so `SetupController::
  * status()` reports `completed: false` again on the NEXT request — a
  * genuinely first-run instance, not merely a fresh browser context.
@@ -97,20 +129,19 @@ function resolveServerRoot(): string {
 function resetSetupStateServerSide(): void {
 	const serverRoot = resolveServerRoot()
 	const occPath = path.join(serverRoot, 'occ')
-	if (!fs.existsSync(occPath)) {
+	if (!process.env.NC_CONTAINER && !fs.existsSync(occPath)) {
 		throw new Error(
 			`[setup-wizard-english] cannot find occ at ${occPath} (resolved server root: `
-				+ `${serverRoot}). Set NC_SERVER_ROOT to the Nextcloud install directory so this `
-				+ "spec can reset shillinq's setup app-config server-side — a fresh browser context "
-				+ 'alone does not reproduce the wizard, since SetupController::status() gates on '
-				+ 'server-side app-config (design.md "Fresh-context e2e").',
+				+ `${serverRoot}). Set NC_SERVER_ROOT to the Nextcloud install directory, or set `
+				+ 'NC_CONTAINER to the docker container serving the instance under test (see '
+				+ "runOcc() above), so this spec can reset shillinq's setup app-config server-side "
+				+ '— a fresh browser context alone does not reproduce the wizard, since '
+				+ 'SetupController::status() gates on server-side app-config (design.md '
+				+ '"Fresh-context e2e").',
 		)
 	}
 	for (const key of SETUP_CONFIG_KEYS) {
-		execSync(`php ${JSON.stringify(occPath)} config:app:delete shillinq ${JSON.stringify(key)}`, {
-			cwd: serverRoot,
-			stdio: 'pipe',
-		})
+		runOcc(serverRoot, occPath, ['config:app:delete', 'shillinq', key])
 	}
 }
 
@@ -133,10 +164,19 @@ async function restoreCiSeedBaseline(baseURL: string): Promise<void> {
 	})
 	try {
 		await ctx.post('/index.php/apps/shillinq/api/setup/config', {
-			data: { legal_country: 'nl', legal_region: 'gemeente', rgs_template: 'bbv' },
+			data: {
+				legal_country: 'nl',
+				legal_region: 'gemeente',
+				rgs_template: 'bbv',
+			},
 		})
-		await ctx.post('/index.php/apps/shillinq/api/setup/action/init-administration', { data: {} })
-		await ctx.post('/index.php/apps/shillinq/api/setup/action/seed', { data: {} })
+		await ctx.post(
+			'/index.php/apps/shillinq/api/setup/action/init-administration',
+			{ data: {} },
+		)
+		await ctx.post('/index.php/apps/shillinq/api/setup/action/seed', {
+			data: {},
+		})
 		const status = await ctx.get('/index.php/apps/shillinq/api/setup/status')
 		const body = await status.json().catch(() => ({}))
 		if (body?.completed !== true) {
@@ -197,16 +237,22 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await restoreCiSeedBaseline(resolveBaseURL())
 	})
 
-	test('the wizard gates the shell and walks all 7 steps in English @e2e REQ-SWE-001 REQ-SWE-005', async ({ page }) => {
+	test('the wizard gates the shell and walks all 7 steps in English @e2e REQ-SWE-001 REQ-SWE-005', async ({
+		page,
+	}) => {
 		await page.goto(APP, { waitUntil: 'domcontentloaded', timeout: 25_000 })
 		await dismissFirstRunWizard(page)
 
 		const dialog = page.getByRole('dialog').first()
-		await expect(dialog, 'shillinq\'s own ADR-042 setup dialog must gate the shell on a reset instance')
-			.toBeVisible({ timeout: 15_000 })
+		await expect(
+			dialog,
+			"shillinq's own ADR-042 setup dialog must gate the shell on a reset instance",
+		).toBeVisible({ timeout: 15_000 })
 
 		// ── Step 0: welcome ──────────────────────────────────────────────
-		await expect(dialog.getByText('Welcome to Shillinq', { exact: false })).toBeVisible()
+		await expect(
+			dialog.getByText('Welcome to Shillinq', { exact: false }),
+		).toBeVisible()
 		await expect(
 			dialog.getByText(
 				'First choose the country (legal region) and organisation type, then the chart-of-accounts template',
@@ -217,9 +263,15 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await clickContinue(dialog)
 
 		// ── Step 1: country ──────────────────────────────────────────────
-		await expect(dialog.getByText('Legal region (country)', { exact: false })).toBeVisible()
-		await expect(dialog.getByText('In which country is this organisation legally established?', { exact: false }))
-			.toBeVisible()
+		await expect(
+			dialog.getByText('Legal region (country)', { exact: false }),
+		).toBeVisible()
+		await expect(
+			dialog.getByText(
+				'In which country is this organisation legally established?',
+				{ exact: false },
+			),
+		).toBeVisible()
 		await expect(dialog.getByText('Netherlands', { exact: true })).toBeVisible()
 		await expect(dialog.getByText('Belgium', { exact: true })).toBeVisible()
 		await expect(dialog.getByText('Germany', { exact: true })).toBeVisible()
@@ -228,10 +280,14 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await clickContinue(dialog)
 
 		// ── Step 2: organisation ─────────────────────────────────────────
-		await expect(dialog.getByText('Organisation type', { exact: false })).toBeVisible()
+		await expect(
+			dialog.getByText('Organisation type', { exact: false }),
+		).toBeVisible()
 		await expect(dialog.getByText('Municipality', { exact: true })).toBeVisible()
 		await expect(dialog.getByText('Province', { exact: true })).toBeVisible()
-		await expect(dialog.getByText('Water authority', { exact: true })).toBeVisible()
+		await expect(
+			dialog.getByText('Water authority', { exact: true }),
+		).toBeVisible()
 		// Jurisdiction-specific legal-entity acronyms must remain unglossed
 		// (ADR-007 proper-noun/acronym exception) — see REQ-SWE-001.
 		await expect(dialog.getByText('ZZP', { exact: true })).toBeVisible()
@@ -241,19 +297,31 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await clickContinue(dialog)
 
 		// ── Step 3: rgs-template ─────────────────────────────────────────
-		await expect(dialog.getByText('Chart of accounts (RGS)', { exact: false })).toBeVisible()
 		await expect(
-			dialog.getByText('the standardised layout of ledger accounts your balance sheet', { exact: false }),
+			dialog.getByText('Chart of accounts (RGS)', { exact: false }),
 		).toBeVisible()
-		await expect(dialog.getByText('BBV (government)', { exact: true })).toBeVisible()
+		await expect(
+			dialog.getByText(
+				'the standardised layout of ledger accounts your balance sheet',
+				{ exact: false },
+			),
+		).toBeVisible()
+		await expect(
+			dialog.getByText('BBV (government)', { exact: true }),
+		).toBeVisible()
 		await assertNoDutchToken(dialog)
 		await selectOption(dialog, 'BBV (government)')
 		await clickContinue(dialog)
 
 		// ── Step 4: administration (run-action) ──────────────────────────
-		await expect(dialog.getByText('Create administration', { exact: false })).toBeVisible()
 		await expect(
-			dialog.getByText('This registers your organisation as an administration in OpenRegister', { exact: false }),
+			dialog.getByText('Create administration', { exact: false }),
+		).toBeVisible()
+		await expect(
+			dialog.getByText(
+				'This registers your organisation as an administration in OpenRegister',
+				{ exact: false },
+			),
 		).toBeVisible()
 		await assertNoDutchToken(dialog)
 		await clickRun(dialog)
@@ -261,9 +329,16 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 		await clickContinue(dialog)
 
 		// ── Step 5: seed (run-action) ─────────────────────────────────────
-		await expect(dialog.getByText('Load chart of accounts and reference data', { exact: false })).toBeVisible()
 		await expect(
-			dialog.getByText('Load the chosen chart of accounts (ledger accounts), the VAT rates', { exact: false }),
+			dialog.getByText('Load chart of accounts and reference data', {
+				exact: false,
+			}),
+		).toBeVisible()
+		await expect(
+			dialog.getByText(
+				'Load the chosen chart of accounts (ledger accounts), the VAT rates',
+				{ exact: false },
+			),
 		).toBeVisible()
 		await assertNoDutchToken(dialog)
 		await clickRun(dialog)
@@ -272,31 +347,48 @@ test.describe('Setup wizard — English source text (REQ-SWE-005)', () => {
 
 		// ── Step 6: done (summary) ────────────────────────────────────────
 		await expect(dialog.getByText('Done', { exact: true })).toBeVisible()
-		await expect(dialog.getByText('Review your choices below and complete the installation.', { exact: false }))
-			.toBeVisible()
+		await expect(
+			dialog.getByText(
+				'Review your choices below and complete the installation.',
+				{ exact: false },
+			),
+		).toBeVisible()
 		await assertNoDutchToken(dialog)
 
 		// Finish — the wizard's own "complete" action. Wording is a chrome
 		// string from `@conduction/nextcloud-vue` (not migrated by this
 		// change), so match broadly.
-		const finishButton = dialog.getByRole('button', { name: /finish|complete|done|close/i }).last()
+		const finishButton = dialog
+			.getByRole('button', { name: /finish|complete|done|close/i })
+			.last()
 		await finishButton.click({ timeout: 10_000 }).catch(() => {
 			// eslint-disable-next-line no-console
-			console.warn('[setup-wizard-english] no explicit finish button matched; the wizard may auto-close on `completed: true`.')
+			console.warn(
+				'[setup-wizard-english] no explicit finish button matched; the wizard may auto-close on `completed: true`.',
+			)
 		})
 
 		// ── The shell is unblocked ────────────────────────────────────────
-		await expect(dialog, 'the setup dialog must not still gate the shell once all required steps are done')
-			.not.toBeVisible({ timeout: 15_000 })
-		await expect(page.locator('main, [role="main"]')).toBeVisible({ timeout: 15_000 })
+		await expect(
+			dialog,
+			'the setup dialog must not still gate the shell once all required steps are done',
+		).not.toBeVisible({ timeout: 15_000 })
+		await expect(page.locator('main, [role="main"]')).toBeVisible({
+			timeout: 15_000,
+		})
 	})
 })
 
 /** Assert none of the pre-change Dutch strings appear inside `scope`'s text. */
-async function assertNoDutchToken(scope: ReturnType<Page['getByRole']>): Promise<void> {
+async function assertNoDutchToken(
+	scope: ReturnType<Page['getByRole']>,
+): Promise<void> {
 	const text = await scope.innerText()
 	for (const dutch of PRE_CHANGE_DUTCH_STRINGS) {
-		expect(text, `residual pre-change Dutch string "${dutch}" found in the setup dialog`).not.toContain(dutch)
+		expect(
+			text,
+			`residual pre-change Dutch string "${dutch}" found in the setup dialog`,
+		).not.toContain(dutch)
 	}
 }
 
@@ -307,16 +399,25 @@ async function assertNoDutchToken(scope: ReturnType<Page['getByRole']>): Promise
  * an exact label that could be "Next" or "Continue" depending on version.
  */
 async function clickContinue(scope: ReturnType<Page['getByRole']>): Promise<void> {
-	await scope.getByRole('button', { name: /next|continue/i }).first().click({ timeout: 10_000 })
+	await scope
+		.getByRole('button', { name: /next|continue/i })
+		.first()
+		.click({ timeout: 10_000 })
 }
 
 /** Click a `run-action` step's Run button (per design.md: "Klik op 'Run' om te starten" -> "Run"). */
 async function clickRun(scope: ReturnType<Page['getByRole']>): Promise<void> {
-	await scope.getByRole('button', { name: /run/i }).first().click({ timeout: 10_000 })
+	await scope
+		.getByRole('button', { name: /run/i })
+		.first()
+		.click({ timeout: 10_000 })
 }
 
 /** Select a choice-step option by its (English) label text. */
-async function selectOption(scope: ReturnType<Page['getByRole']>, label: string): Promise<void> {
+async function selectOption(
+	scope: ReturnType<Page['getByRole']>,
+	label: string,
+): Promise<void> {
 	await scope.getByText(label, { exact: true }).first().click({ timeout: 10_000 })
 }
 
@@ -325,7 +426,10 @@ async function selectOption(scope: ReturnType<Page['getByRole']>, label: string)
  * and report their own completion; wait for the Continue action to become
  * available rather than a fixed sleep.
  */
-async function waitForActionComplete(scope: ReturnType<Page['getByRole']>): Promise<void> {
-	await expect(scope.getByRole('button', { name: /next|continue/i }).first())
-		.toBeEnabled({ timeout: 60_000 })
+async function waitForActionComplete(
+	scope: ReturnType<Page['getByRole']>,
+): Promise<void> {
+	await expect(
+		scope.getByRole('button', { name: /next|continue/i }).first(),
+	).toBeEnabled({ timeout: 60_000 })
 }

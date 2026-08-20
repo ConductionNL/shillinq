@@ -566,6 +566,67 @@ final class DuckObjectServiceAdapter implements ObjectServiceInterface {
 	}//end updateObject()
 
 	/**
+	 * Merge a partial update onto an object.
+	 *
+	 * Added to the published contract in hydra-gates v1.8.1; v1.8.0 declared the
+	 * interface without it, so this adapter satisfied the contract by accident
+	 * and taking v1.8.1 turns that into a load-time fatal.
+	 *
+	 * Same two arms as `updateObject()` above, for the same reason: a double
+	 * that models `patchObject()` directly must be asked for it, or the
+	 * synthesised find()+saveObject() path below would ask it for a
+	 * `saveObject()` it never declared and the adapter would refuse — which
+	 * reads as "the patch was never persisted" rather than as a missing double.
+	 *
+	 * @param string          $objectId      The object UUID or id.
+	 * @param array           $data          The fields to merge.
+	 * @param string|int|null $register      Register id, UUID or slug.
+	 * @param string|int|null $schema        Schema id, UUID or slug.
+	 * @param bool            $_rbac         Apply register RBAC (ignored).
+	 * @param bool            $_multitenancy Apply organisation scoping (ignored).
+	 * @param ?IUser          $currentUser   Acting user (ignored).
+	 *
+	 * @return ObjectEntityInterface
+	 */
+	public function patchObject(
+		string $objectId,
+		array $data,
+		string|int|null $register = null,
+		string|int|null $schema = null,
+		bool $_rbac = true,
+		bool $_multitenancy = true,
+		?IUser $currentUser = null
+	): ObjectEntityInterface {
+		if (method_exists($this->inner, 'patchObject') === true) {
+			return $this->entity(
+				value: $this->invokeInner(
+					method: 'patchObject',
+					primary: $objectId,
+					named: [
+						'data'          => $data,
+						'object'        => $data,
+						'register'      => ($register ?? $this->register),
+						'schema'        => ($schema ?? $this->schema),
+						'_rbac'         => $_rbac,
+						'_multitenancy' => $_multitenancy,
+					]
+				)
+			) ?? new ObjectEntityStub(payload: $data);
+		}
+
+		$existing = $this->find(id: $objectId);
+		$merged   = $data;
+		if ($existing !== null) {
+			$merged = array_merge($existing->getObject(), $data);
+		}
+
+		$merged['id'] = $objectId;
+
+		return $this->saveObject(object: $merged);
+
+	}//end patchObject()
+
+	/**
 	 * Find without audit or read events.
 	 *
 	 * @param string          $id            Object id, UUID or slug.
