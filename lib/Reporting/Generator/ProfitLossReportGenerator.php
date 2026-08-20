@@ -45,7 +45,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
-use PhpOffice\PhpWord\PhpWord;
+use OCA\Shillinq\Reporting\ReportSection;
 
 /**
  * Renders a profit-and-loss account from revenue/expense account totals.
@@ -110,12 +110,12 @@ final class ProfitLossReportGenerator extends AbstractDocumentReportGenerator {
 	/**
 	 * Build the W&V body: revenue, expenses, result, from account totals.
 	 *
-	 * @param PhpWord $phpWord The styled document.
+	 * @param ReportSection $section The block accumulator to fill.
 	 * @param array<string, mixed> $context `{ reportType, period, administrationId }`.
 	 *
 	 * @return void
 	 */
-	protected function build(PhpWord $phpWord, array $context): void {
+	protected function build(ReportSection $section, array $context): void {
 		$administrationId = $this->str($context, 'administrationId');
 		$accounts = $this->loadAccounts($administrationId);
 
@@ -134,7 +134,6 @@ final class ProfitLossReportGenerator extends AbstractDocumentReportGenerator {
 		$totalExpense = $this->total($expenseLines);
 		$result = ($totalRevenue - $totalExpense);
 
-		$section = $this->addSection($phpWord);
 		$this->addCover($section, 'Winst- en verliesrekening', 'Resultatenrekening over de periode', $context);
 
 		// --- Opbrengsten ---

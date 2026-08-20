@@ -208,6 +208,7 @@ import FormatListBulleted from 'vue-material-design-icons/FormatListBulleted.vue
 import FormatListBulletedSquare from 'vue-material-design-icons/FormatListBulletedSquare.vue'
 import FormatListBulletedType from 'vue-material-design-icons/FormatListBulletedType.vue'
 import FormatListChecks from 'vue-material-design-icons/FormatListChecks.vue'
+import FormatListGroup from 'vue-material-design-icons/FormatListGroup.vue'
 import FormatListNumbered from 'vue-material-design-icons/FormatListNumbered.vue'
 import FormatListNumberedRtl from 'vue-material-design-icons/FormatListNumberedRtl.vue'
 import Gauge from 'vue-material-design-icons/Gauge.vue'
@@ -290,6 +291,7 @@ import Sync from 'vue-material-design-icons/Sync.vue'
 import TableAccount from 'vue-material-design-icons/TableAccount.vue'
 import TableArrowRight from 'vue-material-design-icons/TableArrowRight.vue'
 import TableClock from 'vue-material-design-icons/TableClock.vue'
+import TableColumn from 'vue-material-design-icons/TableColumn.vue'
 import TableLarge from 'vue-material-design-icons/TableLarge.vue'
 import TableMergeCells from 'vue-material-design-icons/TableMergeCells.vue'
 import TableRow from 'vue-material-design-icons/TableRow.vue'
@@ -522,6 +524,7 @@ export default {
 	FormatListBulletedSquare,
 	FormatListBulletedType,
 	FormatListChecks,
+	FormatListGroup,
 	FormatListNumbered,
 	FormatListNumberedRtl,
 	Gauge,
@@ -604,6 +607,7 @@ export default {
 	TableAccount,
 	TableArrowRight,
 	TableClock,
+	TableColumn,
 	TableLarge,
 	TableMergeCells,
 	TableRow,

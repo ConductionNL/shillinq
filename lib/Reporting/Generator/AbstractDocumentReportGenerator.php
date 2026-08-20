@@ -5,25 +5,35 @@
  *
  * Shared machinery for the "document" flavour of the report catalogue — the
  * jaarrekening, balans, winst-en-verliesrekening, management letter and BBV
- * jaarstukken. A document generator builds a single PhpWord document from a
- * DEFAULT layout defined in code (so a fresh install renders without any
- * external template asset) and emits it through one of three writers:
+ * jaarstukken. A document generator loads and classifies real OpenRegister
+ * objects into a `ReportSection` block tree (the same content a human report
+ * carries — headings, key/value tables, amount tables, notes), then this
+ * base hands that tree to docudesk for rendering:
+ * `OCA\DocuDesk\Service\DocumentService::generateDocument($templateId, [],
+ * $options)`, resolved by string FQCN through `\OCP\Server::get()` — no
+ * compile-time `use` import of any `OCA\DocuDesk\*` class, no composer/
+ * info.xml dependency on docudesk. This mirrors hrmq's `HrDocumentService`
+ * (`hrmq-docudesk-documents` / `payslip-pdf-docudesk`): the leaf assembles
+ * data and classification, docudesk renders (ADR-081 rule 6).
  *
- *  - DOCX via \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007')
- *  - ODT  via \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'ODText')
- *  - PDF  by configuring \PhpOffice\PhpWord\Settings::setPdfRendererName(
- *         Settings::PDF_RENDERER_DOMPDF) + setPdfRendererPath(<dompdf dir>) and
- *         createWriter($phpWord, 'PDF') — dompdf renders the HTML projection.
+ * Availability is duck-typed (docudeskAvailable()): when docudesk is not
+ * installed, or its services cannot be resolved, generate() throws
+ * DocudeskUnavailableException BEFORE any object loading, so
+ * ReportGenerationService can record a visible `status: 'unavailable'`
+ * outcome rather than a silent drop (ADR-081 rule 7).
  *
- * All three writers — PhpWord, dompdf — come from the PHPOffice libraries
- * BUNDLED IN OPENREGISTER, a runtime dependency whose autoloader is always
- * active, so this class merely `use`s the classes and adds nothing to
- * shillinq's composer.json.
+ * Template selection is config-first, discovery-second, and fails closed:
+ * an admin-set `IAppConfig` UUID wins; otherwise exactly one docudesk
+ * template with `namespace: "shillinq"` and `category` equal to the
+ * ReportCatalogue entry's `templateId` is used — zero or multiple matches
+ * refuse to render rather than guess between templates that produce
+ * official financial/statutory documents (mirrors hrmq design.md D3).
  *
  * The concrete generators are instantiated with no constructor arguments by
  * ReportGenerationService (mirroring RuleEngine provider discovery), so this
- * base resolves OpenRegister's ObjectService and the register slug lazily from
- * the Nextcloud server container rather than via constructor injection.
+ * base resolves OpenRegister's ObjectService, docudesk's services and the
+ * register slug lazily from the Nextcloud server container rather than via
+ * constructor injection.
  *
  * @category Reporting
  * @package  OCA\Shillinq\Reporting\Generator
@@ -34,23 +44,14 @@
  *
  * @link https://conduction.nl
  *
- * @spec exclude The reporting capability has no canonical spec. This tag pointed at
- *       openspec/changes/reporting-compliance-consolidation (a change directory that
- *       exists neither under changes nor under changes/archive), and no canonical
- *       reporting capability exists under openspec/specs either. Tracked in #525.
- *       Deliberately NOT resolved by writing that spec — authoring the requirement
- *       a tag is checked against turns the gate green over an unspecified capability.
+ * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-001
+ * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-002
+ * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-003
+ * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-004
+ * @spec openspec/changes/reports-via-docudesk/specs/reports-via-docudesk/spec.md#req-rvd-005
  *
- * KNOWINGLY DANGLING — do not repoint this tag (gate-46, shillinq#499).
- * The change directory it names was never committed, and the `reporting`
- * capability has NO canonical spec. One was drafted during gate remediation
- * and withdrawn: a spec written to fit the code, by the process whose job is
- * to check the code against a spec, is not a specification anyone agreed to.
- * Authoring it is the capability owner's decision, not a gate fix. No existing
- * target is honest either — bookkeeping-iv3-reporting REQ-IV3-004 and
- * bookkeeping-vat-btw-filing REQ-VBTW-004 forbid the PHP renderers in this
- * directory, so pointing there would report conformance to a rule this code
- * breaks.
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters, Squiz.Commenting.InlineComment, Squiz.PHP.DisallowInlineIf
  */
@@ -59,43 +60,74 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
+use OCA\Shillinq\Reporting\DocudeskUnavailableException;
 use OCA\Shillinq\Reporting\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportCatalogue;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
-use PhpOffice\PhpWord\Element\Section;
-use PhpOffice\PhpWord\IOFactory;
-use PhpOffice\PhpWord\PhpWord;
-use PhpOffice\PhpWord\Settings as PhpWordSettings;
-use PhpOffice\PhpWord\Shared\Converter;
-use ReflectionClass;
+use OCA\Shillinq\Reporting\ReportSection;
+use RuntimeException;
 use Throwable;
 
 /**
- * Base class carrying the default layout + the three-writer PhpWord pipeline.
+ * Base class carrying the default block vocabulary + the docudesk hand-off.
  */
 abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterface {
 
 	/**
-	 * Editable formats first, PDF last — the order ReportCatalogue offers.
+	 * Public-facing formats, editable first — the order ReportCatalogue offers.
+	 * `docx` is no longer offered: docudesk's DocumentService only supports
+	 * `pdf` / `odf` / `html` (see DOCUDESK_FORMATS for the mapping).
 	 */
-	private const FORMATS = ['docx', 'odt', 'pdf'];
+	private const FORMATS = ['odt', 'pdf'];
+
+	/**
+	 * Maps a public-facing format label to the format key docudesk's
+	 * `DocumentService::generateDocument()` `options.format` expects.
+	 */
+	private const DOCUDESK_FORMATS = [
+		'odt' => 'odf',
+		'pdf' => 'pdf',
+	];
 
 	/**
 	 * Per-format MIME types for the rendered file.
 	 */
 	private const MIME_TYPES = [
-		'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 		'odt' => 'application/vnd.oasis.opendocument.text',
 		'pdf' => 'application/pdf',
 	];
 
 	/**
-	 * The default theme colour (Conduction cobalt) for headings/accents.
+	 * The app id docudesk registers under (IAppManager::isInstalled probe).
+	 */
+	private const DOCUDESK_APP_ID = 'docudesk';
+
+	/**
+	 * docudesk's rendering service, resolved by string FQCN only (no
+	 * compile-time import).
+	 */
+	private const DOCUMENT_SERVICE_FQCN = 'OCA\\DocuDesk\\Service\\DocumentService';
+
+	/**
+	 * docudesk's template lookup service, resolved by string FQCN only.
+	 */
+	private const TEMPLATE_SERVICE_FQCN = 'OCA\\DocuDesk\\Service\\TemplateService';
+
+	/**
+	 * The docudesk template namespace shillinq's own templates live under.
+	 */
+	private const TEMPLATE_NAMESPACE = 'shillinq';
+
+	/**
+	 * The default theme colour (Conduction cobalt) for headings/accents — a
+	 * style hint carried into `ReportTable` cell styles (e.g. header row
+	 * `bgColor`); a docudesk template may use it or apply its own huisstijl.
 	 */
 	protected const ACCENT_COLOUR = '1A2A6C';
 
 	/**
-	 * Muted colour for sub-labels and footers.
+	 * Muted colour for sub-labels and footers — same style-hint role as
+	 * ACCENT_COLOUR.
 	 */
 	protected const MUTED_COLOUR = '6B7280';
 
@@ -109,43 +141,90 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	}//end supportedFormats()
 
 	/**
-	 * Render the report: the subclass builds the PhpWord document from real
-	 * objects, this base serialises it through the requested writer.
+	 * Render the report: the subclass builds the ReportSection block tree
+	 * from real objects, this base hands it to docudesk for rendering.
+	 *
+	 * Order matters: availability is checked BEFORE any object loading
+	 * (`build()` runs after the docudesk/template checks) so a docudesk
+	 * outage never costs an unnecessary OpenRegister scan and always fails
+	 * fast with a visible, distinguishable outcome (REQ-RVD-005).
 	 *
 	 * @param array<string, mixed> $context `{ reportType, period, administrationId, ... }`.
 	 * @param string $format One of supportedFormats().
 	 *
 	 * @return GeneratedFile
+	 *
+	 * @throws DocudeskUnavailableException When docudesk is not installed or unreachable.
+	 * @throws RuntimeException When template selection or docudesk rendering fails.
 	 */
 	public function generate(array $context, string $format): GeneratedFile {
-		$useFormat = in_array($format, self::FORMATS, true) === true ? $format : 'docx';
+		$useFormat = in_array($format, self::FORMATS, true) === true ? $format : self::FORMATS[0];
 
-		$phpWord = $this->newDocument();
-		$this->build($phpWord, $context);
+		if ($this->docudeskAvailable() === false) {
+			throw new DocudeskUnavailableException(sprintf(
+				'Docudesk is not installed or its renderer could not be resolved; "%s" cannot be rendered.',
+				static::reportType()
+			));
+		}
 
-		$bytes = $this->render($phpWord, $useFormat);
-		$fileName = $this->fileName($context, $useFormat);
+		$selected = $this->selectTemplate();
+		if ($selected['templateId'] === null) {
+			throw new RuntimeException((string)$selected['error']);
+		}
+
+		$section = new ReportSection();
+		$this->build($section, $context);
+
+		$reportBody = [
+			'title' => $this->documentTitle(),
+			'subtitle' => $this->catalogueLabel(),
+			'blocks' => $section->toArray(),
+		];
+
+		$options = [
+			'format' => self::DOCUDESK_FORMATS[$useFormat],
+			'userId' => $this->str($context, 'userId') !== '' ? $this->str($context, 'userId') : 'system',
+			'adHocData' => [
+				'report' => $reportBody,
+				'meta' => [
+					'reportType' => static::reportType(),
+					'period' => $this->str($context, 'period'),
+					'administrationId' => $this->str($context, 'administrationId'),
+					'generatedAt' => gmdate('Y-m-d\TH:i:s\Z'),
+				],
+			],
+		];
+
+		try {
+			$rendered = $this->documentService()->generateDocument($selected['templateId'], [], $options);
+		} catch (Throwable $e) {
+			throw new RuntimeException('Docudesk rendering failed: ' . $e->getMessage(), 0, $e);
+		}
+
+		$content = (string)($rendered['content'] ?? '');
+		if ($content === '') {
+			throw new RuntimeException('Docudesk returned no document content for "' . static::reportType() . '".');
+		}
 
 		return new GeneratedFile(
-			fileName: $fileName,
+			fileName: $this->fileName($context, $useFormat),
 			mimeType: self::MIME_TYPES[$useFormat],
 			format: $useFormat,
-			content: $bytes,
+			content: $content,
 		);
 
 	}//end generate()
 
 	/**
-	 * Build the report body into the prepared PhpWord document. The subclass
-	 * loads its real objects and lays out the sections; the default cover/styles
-	 * are already applied by newDocument().
+	 * Build the report body into the prepared ReportSection. The subclass
+	 * loads its real objects and lays out the sections.
 	 *
-	 * @param PhpWord $phpWord The styled, ready-to-fill document.
+	 * @param ReportSection $section The block accumulator to fill.
 	 * @param array<string, mixed> $context `{ reportType, period, administrationId }`.
 	 *
 	 * @return void
 	 */
-	abstract protected function build(PhpWord $phpWord, array $context): void;
+	abstract protected function build(ReportSection $section, array $context): void;
 
 	/**
 	 * A human title for the report's cover block (e.g. 'Jaarrekening').
@@ -155,112 +234,48 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	abstract protected function documentTitle(): string;
 
 	// -----------------------------------------------------------------------
-	// Default layout / PhpWord build helper.
+	// Default block-vocabulary helpers (mirror the former PhpWord helpers).
 	// -----------------------------------------------------------------------
 
 	/**
-	 * Create a PhpWord document pre-loaded with the DEFAULT shillinq layout:
-	 * document metadata, a base font, named paragraph/heading/table styles and
-	 * an A4 portrait section geometry. This is the in-code template — no
-	 * external template file is required for a fresh install to render.
+	 * Add a styled cover block: a big title, an optional subtitle, and the
+	 * period/administration meta line.
 	 *
-	 * @return PhpWord
-	 */
-	protected function newDocument(): PhpWord {
-		$phpWord = new PhpWord();
-
-		$properties = $phpWord->getDocInfo();
-		$properties->setCreator('Shillinq');
-		$properties->setCompany('Conduction B.V.');
-		$properties->setTitle($this->documentTitle());
-		$properties->setCategory('Reporting & Compliance');
-		$properties->setDescription('Generated by Shillinq Reporting & Compliance.');
-
-		$phpWord->setDefaultFontName('DejaVu Sans');
-		$phpWord->setDefaultFontSize(10);
-
-		$phpWord->addTitleStyle(
-			1,
-			['name' => 'DejaVu Sans', 'size' => 16, 'bold' => true, 'color' => self::ACCENT_COLOUR],
-			['spaceBefore' => Converter::pointToTwip(14), 'spaceAfter' => Converter::pointToTwip(6)]
-		);
-		$phpWord->addTitleStyle(
-			2,
-			['name' => 'DejaVu Sans', 'size' => 12, 'bold' => true, 'color' => self::ACCENT_COLOUR],
-			['spaceBefore' => Converter::pointToTwip(10), 'spaceAfter' => Converter::pointToTwip(4)]
-		);
-
-		$phpWord->addFontStyle('coverTitle', ['name' => 'DejaVu Sans', 'size' => 26, 'bold' => true, 'color' => self::ACCENT_COLOUR]);
-		$phpWord->addFontStyle('coverSubtitle', ['name' => 'DejaVu Sans', 'size' => 13, 'color' => self::MUTED_COLOUR]);
-		$phpWord->addFontStyle('coverMeta', ['name' => 'DejaVu Sans', 'size' => 10, 'color' => self::MUTED_COLOUR]);
-		$phpWord->addFontStyle('label', ['name' => 'DejaVu Sans', 'size' => 10, 'color' => self::MUTED_COLOUR]);
-		$phpWord->addFontStyle('value', ['name' => 'DejaVu Sans', 'size' => 10]);
-		$phpWord->addFontStyle('amount', ['name' => 'DejaVu Sans', 'size' => 10]);
-		$phpWord->addFontStyle('amountBold', ['name' => 'DejaVu Sans', 'size' => 10, 'bold' => true]);
-		$phpWord->addFontStyle('note', ['name' => 'DejaVu Sans', 'size' => 9, 'color' => self::MUTED_COLOUR]);
-
-		$phpWord->addParagraphStyle('default', ['spaceAfter' => Converter::pointToTwip(6), 'lineHeight' => 1.15]);
-		$phpWord->addParagraphStyle('tight', ['spaceAfter' => Converter::pointToTwip(2)]);
-
-		$phpWord->addTableStyle(
-			'reportTable',
-			[
-				'borderColor' => 'D1D5DB',
-				'borderSize' => 6,
-				'cellMargin' => 60,
-			],
-			[
-				'bgColor' => 'EEF2FF',
-			]
-		);
-
-		return $phpWord;
-	}//end newDocument()
-
-	/**
-	 * Add a styled cover/heading block to a section: a big title, an optional
-	 * subtitle, the period/administration meta line and a divider.
-	 *
-	 * @param Section $section The section to write into.
+	 * @param ReportSection $section The section to write into.
 	 * @param string $title The cover title.
 	 * @param string $subtitle Subtitle / report type label.
 	 * @param array<string, mixed> $context Generation context for the meta line.
 	 *
 	 * @return void
 	 */
-	protected function addCover(Section $section, string $title, string $subtitle, array $context): void {
-		$section->addText($title, 'coverTitle', ['spaceAfter' => Converter::pointToTwip(2)]);
-		if ($subtitle !== '') {
-			$section->addText($subtitle, 'coverSubtitle', ['spaceAfter' => Converter::pointToTwip(8)]);
-		}
+	protected function addCover(ReportSection $section, string $title, string $subtitle, array $context): void {
+		$period = $this->str($context, 'period');
+		$administrationId = $this->str($context, 'administrationId');
 
-		$period = (string)($context['period'] ?? '');
-		$administrationId = (string)($context['administrationId'] ?? '');
-		$metaParts = [];
+		$meta = [];
 		if ($period !== '') {
-			$metaParts[] = 'Periode: ' . $period;
+			$meta[] = 'Periode: ' . $period;
 		}
 
 		if ($administrationId !== '') {
-			$metaParts[] = 'Administratie: ' . $administrationId;
+			$meta[] = 'Administratie: ' . $administrationId;
 		}
 
-		$metaParts[] = 'Gegenereerd: ' . gmdate('Y-m-d H:i') . ' UTC';
-		$section->addText(implode('   ·   ', $metaParts), 'coverMeta', ['spaceAfter' => Converter::pointToTwip(10)]);
+		$meta[] = 'Gegenereerd: ' . gmdate('Y-m-d H:i') . ' UTC';
 
-		$section->addTextBreak(1);
+		$section->addCover($title, $subtitle, $meta);
 
 	}//end addCover()
 
 	/**
 	 * Add a level-2 section heading.
 	 *
-	 * @param Section $section The section to write into.
+	 * @param ReportSection $section The section to write into.
 	 * @param string $heading The heading text.
 	 *
 	 * @return void
 	 */
-	protected function addHeading(Section $section, string $heading): void {
+	protected function addHeading(ReportSection $section, string $heading): void {
 		$section->addTitle($heading, 2);
 
 	}//end addHeading()
@@ -269,34 +284,27 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	 * Add a key/value details table (two columns) from an associative array.
 	 * Empty values are skipped so the default layout stays clean on sparse data.
 	 *
-	 * @param Section $section The section to write into.
+	 * @param ReportSection $section The section to write into.
 	 * @param array<string, string> $rows Label => value pairs (insertion order kept).
 	 *
 	 * @return void
 	 */
-	protected function addDetailsTable(Section $section, array $rows): void {
+	protected function addDetailsTable(ReportSection $section, array $rows): void {
 		$rows = array_filter($rows, static fn ($value): bool => trim((string)$value) !== '');
 		if ($rows === []) {
-			$section->addText('Geen gegevens beschikbaar.', 'note');
+			$section->addNote('Geen gegevens beschikbaar.');
 			return;
 		}
 
-		$table = $section->addTable('reportTable');
-		foreach ($rows as $label => $value) {
-			$table->addRow();
-			$labelCell = $table->addCell(Converter::cmToTwip(6));
-			$labelCell->addText((string)$label, 'label');
-			$valueCell = $table->addCell(Converter::cmToTwip(10));
-			$valueCell->addText((string)$value, 'value');
-		}
+		$section->addDetailsTable($rows);
 
 	}//end addDetailsTable()
 
 	/**
 	 * Add a financial amount table: a header row, then label/amount lines, then
-	 * an optional bold total row. Amounts are right-aligned and formatted.
+	 * an optional bold total row.
 	 *
-	 * @param Section $section The section to write into.
+	 * @param ReportSection $section The section to write into.
 	 * @param string $labelHead Header for the label column.
 	 * @param string $amountHead Header for the amount column.
 	 * @param array<int, array{label: string, amount: float|int|null, bold?: bool}> $lines The body lines.
@@ -306,7 +314,7 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	 * @return void
 	 */
 	protected function addAmountTable(
-		Section $section,
+		ReportSection $section,
 		string $labelHead,
 		string $amountHead,
 		array $lines,
@@ -314,64 +322,23 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 		string $currency = 'EUR',
 	): void {
 		if ($lines === [] && $total === null) {
-			$section->addText('Geen posten in deze periode.', 'note');
+			$section->addNote('Geen posten in deze periode.');
 			return;
 		}
 
-		$table = $section->addTable('reportTable');
-
-		$table->addRow();
-		$table->addCell(Converter::cmToTwip(11), ['bgColor' => self::ACCENT_COLOUR])
-			->addText($labelHead, ['name' => 'DejaVu Sans', 'size' => 10, 'bold' => true, 'color' => 'FFFFFF']);
-		$table->addCell(Converter::cmToTwip(5), ['bgColor' => self::ACCENT_COLOUR])
-			->addText($amountHead, ['name' => 'DejaVu Sans', 'size' => 10, 'bold' => true, 'color' => 'FFFFFF'], ['alignment' => 'end']);
-
-		foreach ($lines as $line) {
-			$bold = (bool)($line['bold'] ?? false);
-			$style = $bold === true ? 'amountBold' : 'amount';
-			$table->addRow();
-			$table->addCell(Converter::cmToTwip(11))->addText((string)($line['label'] ?? ''), $style);
-			$table->addCell(Converter::cmToTwip(5))
-				->addText($this->amountCell($line['amount'] ?? null, $currency), $style, ['alignment' => 'end']);
-		}
-
-		if ($total !== null) {
-			$table->addRow();
-			$table->addCell(Converter::cmToTwip(11), ['bgColor' => 'EEF2FF'])->addText((string)($total['label'] ?? 'Totaal'), 'amountBold');
-			$table->addCell(Converter::cmToTwip(5), ['bgColor' => 'EEF2FF'])
-				->addText($this->amountCell($total['amount'] ?? 0, $currency), 'amountBold', ['alignment' => 'end']);
-		}
+		$section->addAmountTable($labelHead, $amountHead, $lines, $total, $currency);
 
 	}//end addAmountTable()
 
 	/**
-	 * Format an amount-table cell: a money string when a currency is given, or a
-	 * plain integer count when the currency is the empty string (used for the
-	 * count/severity tables that are not monetary).
-	 *
-	 * @param float|int|string|null $amount The cell value.
-	 * @param string $currency The currency code, or '' for counts.
-	 *
-	 * @return string
-	 */
-	private function amountCell(float|int|string|null $amount, string $currency): string {
-		if (trim($currency) === '') {
-			$value = is_numeric($amount) === true ? (float)$amount : 0.0;
-			return number_format($value, 0, ',', '.');
-		}
-
-		return $this->money($amount, $currency);
-	}//end amountCell()
-
-	/**
 	 * Add a paragraph of body text (toelichting / notes).
 	 *
-	 * @param Section $section The section to write into.
+	 * @param ReportSection $section The section to write into.
 	 * @param string $text The paragraph text.
 	 *
 	 * @return void
 	 */
-	protected function addParagraph(Section $section, string $text): void {
+	protected function addParagraph(ReportSection $section, string $text): void {
 		$section->addText($text, 'value', 'default');
 
 	}//end addParagraph()
@@ -379,138 +346,145 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	/**
 	 * Add a small grey footnote / note line.
 	 *
-	 * @param Section $section The section to write into.
+	 * @param ReportSection $section The section to write into.
 	 * @param string $text The note text.
 	 *
 	 * @return void
 	 */
-	protected function addNote(Section $section, string $text): void {
-		$section->addText($text, 'note', 'tight');
+	protected function addNote(ReportSection $section, string $text): void {
+		$section->addNote($text);
 
 	}//end addNote()
 
-	/**
-	 * Add a default A4 portrait section with comfortable margins.
-	 *
-	 * @param PhpWord $phpWord The document.
-	 *
-	 * @return Section
-	 */
-	protected function addSection(PhpWord $phpWord): Section {
-		return $phpWord->addSection(
-			[
-				'orientation' => 'portrait',
-				'marginTop' => Converter::cmToTwip(2.2),
-				'marginBottom' => Converter::cmToTwip(2.0),
-				'marginLeft' => Converter::cmToTwip(2.2),
-				'marginRight' => Converter::cmToTwip(2.2),
-			]
-		);
-
-	}//end addSection()
-
 	// -----------------------------------------------------------------------
-	// Three-writer rendering pipeline.
+	// Docudesk resolution + template selection.
 	// -----------------------------------------------------------------------
 
 	/**
-	 * Serialise the PhpWord document through the requested writer and return the
-	 * raw bytes. DOCX uses the Word2007 writer, ODT the ODText writer, PDF the
-	 * dompdf-backed PDF writer (Settings::PDF_RENDERER_DOMPDF + the bundled
-	 * dompdf path). All writers are bundled in OpenRegister.
+	 * Duck-typed docudesk availability probe: docudesk must be installed AND
+	 * both service FQCNs must resolve from the container. Mirrors hrmq's
+	 * HrDocumentService::docudeskAvailable() (design.md D5).
 	 *
-	 * @param PhpWord $phpWord The built document.
-	 * @param string $format docx | odt | pdf.
-	 *
-	 * @return string The rendered file bytes.
-	 *
-	 * @SuppressWarnings(PHPMD.ErrorControlOperator) `@unlink()` is
-	 *     best-effort temp-file cleanup in a `finally` block; a failure to
-	 *     remove it (already gone, permissions) must not mask the
-	 *     underlying render outcome.
+	 * @return bool
 	 */
-	protected function render(PhpWord $phpWord, string $format): string {
-		$writerName = match ($format) {
-			'odt' => 'ODText',
-			'pdf' => 'PDF',
-			default => 'Word2007',
-		};
-
-		if ($format === 'pdf') {
-			$this->configurePdfRenderer();
-		}
-
-		$tmp = tempnam(sys_get_temp_dir(), 'shillinq-report-');
-		if ($tmp === false) {
-			$tmp = sys_get_temp_dir() . '/shillinq-report-' . bin2hex(random_bytes(8));
-		}
-
+	protected function docudeskAvailable(): bool {
 		try {
-			$writer = IOFactory::createWriter($phpWord, $writerName);
-			$writer->save($tmp);
-			$bytes = (string)file_get_contents($tmp);
-		} finally {
-			if (is_file($tmp) === true) {
-				@unlink($tmp);
-			}
-		}
-
-		return $bytes;
-	}//end render()
-
-	/**
-	 * Point PhpWord's PDF writer at dompdf. The renderer NAME selects the dompdf
-	 * writer; the renderer PATH is set to the dompdf library directory bundled in
-	 * OpenRegister (resolved at runtime from the autoloaded \Dompdf\Dompdf class
-	 * file location, so it works wherever OpenRegister is installed). PhpWord
-	 * validates that the path exists, then loads the autoloaded Dompdf class.
-	 *
-	 * @return void
-	 */
-	protected function configurePdfRenderer(): void {
-		PhpWordSettings::setPdfRendererName(PhpWordSettings::PDF_RENDERER_DOMPDF);
-
-		$rendererPath = $this->dompdfLibraryPath();
-		if ($rendererPath !== null) {
-			PhpWordSettings::setPdfRendererPath($rendererPath);
-		}
-
-		// dompdf needs a writable temp/font dir; default to the system temp dir.
-		PhpWordSettings::setTempDir(sys_get_temp_dir());
-
-	}//end configurePdfRenderer()
-
-	/**
-	 * Resolve the directory of the bundled dompdf library from the autoloaded
-	 * \Dompdf\Dompdf class, so setPdfRendererPath() can validate a real path
-	 * without hard-coding OpenRegister's vendor location.
-	 *
-	 * @return string|null The dompdf library base dir, or null when unresolvable.
-	 */
-	private function dompdfLibraryPath(): ?string {
-		try {
-			if (class_exists('\\Dompdf\\Dompdf') === false) {
-				return null;
+			$appManager = \OCP\Server::get(\OCP\App\IAppManager::class);
+			if ($appManager->isInstalled(self::DOCUDESK_APP_ID) === false) {
+				return false;
 			}
 
-			$domPdfClass = '\\Dompdf\\Dompdf';
-			$reflection = new ReflectionClass($domPdfClass);
-			$file = $reflection->getFileName();
-			if ($file === false) {
-				return null;
-			}
-
-			// .../dompdf/dompdf/src/Dompdf.php -> .../dompdf/dompdf .
-			$dir = dirname($file, 2);
-			if (is_dir($dir) === true && is_readable($dir) === true) {
-				return $dir;
-			}
+			$this->documentService();
+			$this->templateService();
 		} catch (Throwable $e) {
-			return null;
-		}//end try
+			return false;
+		}
 
-		return null;
-	}//end dompdfLibraryPath()
+		return true;
+	}//end docudeskAvailable()
+
+	/**
+	 * docudesk's DocumentService, resolved by string FQCN only.
+	 *
+	 * @return object
+	 */
+	protected function documentService(): object {
+		return \OCP\Server::get(self::DOCUMENT_SERVICE_FQCN);
+	}//end documentService()
+
+	/**
+	 * docudesk's TemplateService, resolved by string FQCN only.
+	 *
+	 * @return object
+	 */
+	protected function templateService(): object {
+		return \OCP\Server::get(self::TEMPLATE_SERVICE_FQCN);
+	}//end templateService()
+
+	/**
+	 * Template selection: config-UUID first, then namespace/category
+	 * discovery against the ReportCatalogue entry's `templateId`, fail
+	 * closed on zero/multiple matches (REQ-RVD-004).
+	 *
+	 * @return array{templateId: string|null, error: string|null}
+	 */
+	protected function selectTemplate(): array {
+		$reportType = static::reportType();
+		$catalogue = ReportCatalogue::byId($reportType);
+		$category = (string)($catalogue['templateId'] ?? $reportType);
+
+		$configured = trim($this->configuredTemplateId($reportType));
+		if ($configured !== '') {
+			return ['templateId' => $configured, 'error' => null];
+		}
+
+		try {
+			$templates = $this->templateService()->getTemplatesByNamespace(self::TEMPLATE_NAMESPACE);
+		} catch (Throwable $e) {
+			return ['templateId' => null, 'error' => 'Could not look up docudesk templates: ' . $e->getMessage()];
+		}
+
+		$matches = [];
+		foreach ($this->normaliseRows($templates) as $template) {
+			if ((string)($template['category'] ?? '') === $category) {
+				$matches[] = $template;
+			}
+		}
+
+		if (count($matches) === 0) {
+			return [
+				'templateId' => null,
+				'error' => sprintf(
+					'No docudesk template found for "%s" in namespace "%s" (category "%s"); generation is refused.',
+					$reportType,
+					self::TEMPLATE_NAMESPACE,
+					$category
+				),
+			];
+		}
+
+		if (count($matches) > 1) {
+			$ids = array_map(
+				static fn (array $t): string => (string)($t['id'] ?? ($t['@self']['id'] ?? '?')),
+				$matches
+			);
+
+			return [
+				'templateId' => null,
+				'error' => sprintf(
+					'Multiple docudesk templates (%s) for "%s" in namespace "%s"; generation is refused '
+					. '(never guess between templates that produce official documents).',
+					implode(', ', $ids),
+					$reportType,
+					self::TEMPLATE_NAMESPACE
+				),
+			];
+		}
+
+		$id = (string)($matches[0]['id'] ?? $matches[0]['@self']['id'] ?? '');
+		if ($id === '') {
+			return ['templateId' => null, 'error' => 'The matched docudesk template has no id.'];
+		}
+
+		return ['templateId' => $id, 'error' => null];
+	}//end selectTemplate()
+
+	/**
+	 * An admin-configured docudesk template UUID override for this report type.
+	 *
+	 * @param string $reportType The ReportCatalogue report-type id.
+	 *
+	 * @return string The configured UUID, or '' when unset/unavailable.
+	 */
+	protected function configuredTemplateId(string $reportType): string {
+		try {
+			$appConfig = \OCP\Server::get(\OCP\IAppConfig::class);
+			return $appConfig->getValueString('shillinq', 'documents_template_' . $reportType, '');
+		} catch (Throwable $e) {
+			return '';
+		}
+
+	}//end configuredTemplateId()
 
 	// -----------------------------------------------------------------------
 	// Shared data access (self-resolved — generators take no constructor args).

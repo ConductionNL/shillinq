@@ -24,7 +24,7 @@
  *
  * REQ-BBC-001 asks for four KPIs. Three map onto declared properties directly:
  *
- *  - **Total budget** — `sum(Budget.totalAmount)` over the administration's
+ *  - **Total budget** — `sum(BbvProgrammeBudget.totalAmount)` over the administration's
  *    budgets for the fiscal year.
  *  - **Spent** — `sum(GLLine.amount)` for lines whose parent `GLTransaction`
  *    is in state `posted` inside the fiscal-year window, grouped by the line's

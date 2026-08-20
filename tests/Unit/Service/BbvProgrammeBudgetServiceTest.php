@@ -110,7 +110,7 @@ final class BbvProgrammeBudgetServiceTest extends TestCase {
 	 */
 	private function seed(): array {
 		return [
-			'Budget' => [
+			'BbvProgrammeBudget' => [
 				[
 					'budgetName' => 'Mobiliteit 2026',
 					'totalAmount' => 1000000.0,
@@ -342,7 +342,7 @@ final class BbvProgrammeBudgetServiceTest extends TestCase {
 	 */
 	public function testAnotherProvincesMoneyIsAbsentFromTheEnvelope(): void {
 		$rows = $this->seed();
-		$rows['Budget'][] = [
+		$rows['BbvProgrammeBudget'][] = [
 			'budgetName' => 'Mobiliteit 2026 (other province)',
 			'totalAmount' => 90000000.0,
 			'currency' => 'EUR',
@@ -431,47 +431,33 @@ final class BbvProgrammeBudgetServiceTest extends TestCase {
 	}//end testCommitmentsFromAnotherFiscalYearAreNotCounted()
 
 	/**
-	 * ⚠️ `Budget` is declared TWICE in `lib/Settings/register.d/` — by
-	 * bookkeeping-provincies-bbv-variant (`fiscalYear` / `totalAmount` /
-	 * `programmeStructure`) and by bookkeeping-verplichtingenadministratie
-	 * (`financialYear` / `authorised_amount` / `programmeCode`) — and the two
-	 * share no field names. The fragments deep-merge and the LATER file's
-	 * `required` wins, so a live instance refuses a BBV-shaped Budget with
-	 * "The required properties (financialYear, authorised_amount) are
-	 * missing". Measured on the rig, not inferred.
-	 *
-	 * A reader that knew only the BBV half would therefore report ZERO for a
-	 * province whose budgets exist — indistinguishable from one with no
-	 * budget at all. This asserts BOTH vocabularies land in the same total,
-	 * which is the only assertion that fails if either half is dropped.
+	 * `Budget` no longer collides — `budget-core-schema` split it into
+	 * `BbvProgrammeBudget` (this reader's own schema, BBV vocabulary:
+	 * `fiscalYear` / `totalAmount` / `programmeStructure`) and
+	 * `CommitmentBudget` (verplichtingenadministratie vocabulary:
+	 * `financialYear` / `authorised_amount` / `programmeCode`), two distinct,
+	 * non-colliding schemas (`openspec/changes/budget-core-schema/design.md`
+	 * §1/§2c). `BbvProgrammeBudgetReader` now queries `BbvProgrammeBudget`
+	 * only, and every record it reads back is BBV-shaped by construction —
+	 * there is no second vocabulary left to tolerate, so the dual-vocabulary
+	 * assertion this test previously made (`testABudgetWrittenInEitherVocabularyIsCounted`)
+	 * no longer applies and was removed rather than left asserting dead
+	 * behaviour.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md#req-bcs-002
 	 */
-	public function testABudgetWrittenInEitherVocabularyIsCounted(): void {
-		$rows = $this->seed();
-		// The verplichtingenadministratie half of the same colliding schema.
-		$rows['Budget'][] = [
-			'administrationId' => 'adm-prov-zh',
-			'financialYear' => 2026,
-			'programmeCode' => 'milieu',
-			'authorised_amount' => 300000.0,
-			'status' => 'approved',
-		];
+	public function testOnlyBbvProgrammeBudgetVocabularyIsRead(): void {
+		$envelope = $this->subject($this->seed())->programmeBudgetVsActuals();
 
-		$envelope = $this->subject($rows)->programmeBudgetVsActuals();
-
-		$this->assertSame(
-			300000.0,
-			$this->rowFor($envelope, 'milieu')['totalBudget'],
-			'a Budget written in the verplichtingenadministratie vocabulary is still this province budget'
-		);
 		$this->assertSame(
 			1000000.0,
 			$this->rowFor($envelope, 'mobiliteit')['totalBudget'],
-			'and the BBV vocabulary still counts'
+			'the BBV vocabulary (fiscalYear/totalAmount/programmeStructure) is read directly, no adapter involved'
 		);
-		$this->assertSame(1700000.0, $envelope['totals']['totalBudget']);
-	}//end testABudgetWrittenInEitherVocabularyIsCounted()
+		$this->assertSame(1400000.0, $envelope['totals']['totalBudget']);
+	}//end testOnlyBbvProgrammeBudgetVocabularyIsRead()
 
 	/**
 	 * A caller with no accessible administration gets the empty envelope —

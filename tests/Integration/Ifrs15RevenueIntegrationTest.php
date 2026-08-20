@@ -54,13 +54,12 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Integration;
 
-use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\RevenueCutoffService;
 use OCA\Shillinq\Service\RevenueRecognitionCalculator;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 
 /**
  * Cross-schema IFRS 15 integration tests.
@@ -70,13 +69,6 @@ use Psr\Container\ContainerInterface;
  * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#integration-tests
  */
 final class Ifrs15RevenueIntegrationTest extends TestCase {
-
-	/**
-	 * Mock ContainerInterface used to inject the in-memory OR stub.
-	 *
-	 * @var ContainerInterface&MockObject
-	 */
-	private ContainerInterface&MockObject $container;
 
 	/**
 	 * Mock IAppConfig stubbed to return the 'shillinq' register slug.
@@ -92,7 +84,6 @@ final class Ifrs15RevenueIntegrationTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		parent::setUp();
-		$this->container = $this->createMock(ContainerInterface::class);
 		$this->appConfig = $this->createMock(IAppConfig::class);
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
@@ -245,12 +236,17 @@ final class Ifrs15RevenueIntegrationTest extends TestCase {
 	 */
 	private function buildService(array $data, array &$saved): RevenueCutoffService {
 		$stub = $this->objectServiceStub($data, $saved);
-		$this->container->method('get')->willReturn($stub);
 
+		// Pre-ADR-083, this in-memory store reached RevenueCutoffService via
+		// a container mock; ADR-083/ADR-084 moved the service to constructor
+		// injection of ObjectServiceInterface, so the store must be wrapped
+		// to satisfy that contract (see DuckObjectServiceAdapter's docblock —
+		// an unconfigured ObjectServiceInterface mock here silently answers
+		// every read with an empty result, which reads as a product defect).
 		return new RevenueCutoffService(
 			appConfig: $this->appConfig,
 			calculator: new RevenueRecognitionCalculator(),
-			objectService: $this->createMock(ObjectServiceInterface::class),
+			objectService: new DuckObjectServiceAdapter($stub),
 		);
 
 	}//end buildService()
@@ -389,7 +385,7 @@ final class Ifrs15RevenueIntegrationTest extends TestCase {
 	public function testNightlyCutoffFailsGracefullyWhenPeriodClosed(): void {
 		$saved = [];
 		$data = [
-			'Contract' => [
+			'RevenueContract' => [
 				['contractNumber' => 'C-CLOSED', 'administrationId' => 'adm-1'],
 			],
 			'RevenueRecognitionEvent' => [
@@ -479,7 +475,7 @@ final class Ifrs15RevenueIntegrationTest extends TestCase {
 	public function testContractGroupCombination(): void {
 		$saved = [];
 		$data = [
-			'Contract' => [
+			'RevenueContract' => [
 				[
 					'contractNumber' => 'C-GROUP-A',
 					'contractGroupId' => 'GRP-1',

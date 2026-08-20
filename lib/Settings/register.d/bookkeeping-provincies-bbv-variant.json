@@ -64,11 +64,11 @@
           }
         }
       },
-      "Budget": {
-        "slug": "Budget",
+      "BbvProgrammeBudget": {
+        "slug": "BbvProgrammeBudget",
         "icon": "CashMultiple",
         "version": "0.1.0",
-        "title": "Budget",
+        "title": "BBV Programme Budget",
         "description": "A BBV programme budget for a Dutch provincie administration (REQ-BBC-001). Each budget allocates a fiscal-year amount to exactly one of the seven canonical BBV provincie programmes. The BBV Compliance Dashboard aggregates Spent and Committed GL lines (matched on GLLine.programmaStructure + fiscalYear) against the budget Total to derive Remaining and the traffic-light status. Provincie-scoped; gemeente/waterschap administrations use taakveld/kostentoedeling mappings instead.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-provincies-bbv-variant/spec.md",
@@ -288,8 +288,8 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Budget",
-        "slug": "bbv-prov-budget-mobiliteit-2026"
+        "schema": "BbvProgrammeBudget",
+        "slug": "example-bbv-prov-budget-mobiliteit-2026"
       },
       "budgetName": "Mobiliteit operationeel 2026",
       "totalAmount": 500000,
@@ -305,8 +305,8 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Budget",
-        "slug": "bbv-prov-budget-water-2026"
+        "schema": "BbvProgrammeBudget",
+        "slug": "example-bbv-prov-budget-water-2026"
       },
       "budgetName": "Water beheer 2026",
       "totalAmount": 300000,
@@ -322,8 +322,8 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Budget",
-        "slug": "bbv-prov-budget-cultuur-2026"
+        "schema": "BbvProgrammeBudget",
+        "slug": "example-bbv-prov-budget-cultuur-2026"
       },
       "budgetName": "Cultuur programmering 2026",
       "totalAmount": 150000,
@@ -339,8 +339,8 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Budget",
-        "slug": "bbv-prov-budget-economie-2026"
+        "schema": "BbvProgrammeBudget",
+        "slug": "example-bbv-prov-budget-economie-2026"
       },
       "budgetName": "Economie ontwikkeling 2026",
       "totalAmount": 200000,
@@ -356,8 +356,8 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Budget",
-        "slug": "bbv-prov-budget-bestuur-2026"
+        "schema": "BbvProgrammeBudget",
+        "slug": "example-bbv-prov-budget-bestuur-2026"
       },
       "budgetName": "Bestuur algemeen 2026",
       "totalAmount": 100000,
@@ -373,8 +373,8 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Budget",
-        "slug": "bbv-prov-budget-ruimte-2026"
+        "schema": "BbvProgrammeBudget",
+        "slug": "example-bbv-prov-budget-ruimte-2026"
       },
       "budgetName": "Ruimte gebiedsontwikkeling 2026",
       "totalAmount": 250000,

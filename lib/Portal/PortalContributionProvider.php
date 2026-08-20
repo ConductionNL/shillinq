@@ -262,7 +262,7 @@ class PortalContributionProvider {
 				[
 					'id' => 'contracts',
 					'register' => 'shillinq',
-					'schema' => 'Contract',
+					'schema' => 'RevenueContract',
 					'scopeField' => 'customerId',
 					'scopeClaim' => 'customerId',
 					'label' => 'My contracts',

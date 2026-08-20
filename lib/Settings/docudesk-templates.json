@@ -759,6 +759,79 @@
           ]
         }
       ]
+    },
+    {
+      "templateId": "shillinq-balans",
+      "title": "Balans",
+      "description": "Balance sheet per peildatum (openspec/changes/reports-via-docudesk REQ-RVD-006). NOT yet a live docudesk Template object -- BalanceSheetReportGenerator::selectTemplate() looks up `namespace: \"shillinq\", category: \"shillinq-balans\"` in docudesk's own `template` register and fails closed with a diagnostic until that Template's Twig/HTML content is authored (hrmq `hrmq-docudesk-documents` precedent: template content authoring is a docudesk-side follow-up, not part of the consumption leaf). This entry documents the ReportSection block tree BalanceSheetReportGenerator hands to `DocumentService::generateDocument()` via `options.adHocData.report`, so a template author knows what to render.",
+      "register": "shillinq",
+      "reportCatalogueId": "balance-sheet",
+      "blockVocabulary": {
+        "cover": "title 'Balans', subtitle, meta line (Periode/Administratie/Gegenereerd)",
+        "heading": "'Activa', 'Passiva', 'Balanscontrole'",
+        "amountTable": "Activa lines+total, Eigen vermogen lines+total, Schulden lines+total, Recapitulatie passiva lines+total -- each {labelHead, amountHead, lines: [{label, amount, bold?}], total: {label, amount}|null, currency}",
+        "text": "'Eigen vermogen' / 'Schulden' subheadings (style: amountBold)",
+        "detailsTable": "Balanscontrole key/value rows (Aantal grootboekrekeningen, Totaal activa, Totaal passiva, Verschil, Balans sluit aan)",
+        "note": "empty-state ('Er zijn geen grootboekrekeningen gevonden...') when no accounts"
+      }
+    },
+    {
+      "templateId": "shillinq-winst-verlies",
+      "title": "Winst- en verliesrekening",
+      "description": "Profit-and-loss account over the period (openspec/changes/reports-via-docudesk REQ-RVD-006). NOT yet a live docudesk Template object -- ProfitLossReportGenerator::selectTemplate() looks up `namespace: \"shillinq\", category: \"shillinq-winst-verlies\"`; see shillinq-balans's description for the fail-closed/follow-up rationale.",
+      "register": "shillinq",
+      "reportCatalogueId": "profit-loss",
+      "blockVocabulary": {
+        "cover": "title 'Winst- en verliesrekening', subtitle, meta line",
+        "heading": "'Opbrengsten', 'Kosten', 'Resultaat'",
+        "amountTable": "Opbrengsten lines+total, Kosten lines+total, Resultaatbepaling (opbrengsten/kosten/resultaat)",
+        "note": "methodology note + empty-state when no revenue/expense accounts"
+      }
+    },
+    {
+      "templateId": "shillinq-jaarrekening",
+      "title": "Jaarrekening",
+      "description": "Titel 9 BW2 jaarrekening -- kerngegevens, balans, W&V, toelichting (openspec/changes/reports-via-docudesk REQ-RVD-006). NOT yet a live docudesk Template object -- AnnualAccountsReportGenerator::selectTemplate() looks up `namespace: \"shillinq\", category: \"shillinq-jaarrekening\"`; see shillinq-balans's description for the fail-closed/follow-up rationale.",
+      "register": "shillinq",
+      "reportCatalogueId": "annual-accounts",
+      "blockVocabulary": {
+        "cover": "title 'Jaarrekening', subtitle 'Titel 9 BW2 -- jaarrekening', meta line",
+        "heading": "'Kerngegevens', 'Balans per <date>', 'Winst- en verliesrekening', 'Toelichting', 'Controle en deponering'",
+        "detailsTable": "Kerngegevens (soort/jurisdictie/stelsel/boekjaar/taal/valuta/grootteklasse/balanstotaal/omzet/personeel), Controle en deponering (gecontroleerd/kwalificatie/data)",
+        "amountTable": "Activa/Passiva (fixed+current assets, equity+provisions+liabilities), Resultatenrekening (omzet/lasten/financieel/resultaat)",
+        "text": "toelichting intro + comparatives/netting/components paragraphs",
+        "note": "balans-sluit-niet-aan warning when activa != passiva"
+      }
+    },
+    {
+      "templateId": "shillinq-management-letter",
+      "title": "Management letter",
+      "description": "Bevindingenrapport from RuleAuditService's compliance audit (openspec/changes/reports-via-docudesk REQ-RVD-006). NOT yet a live docudesk Template object -- ManagementLetterReportGenerator::selectTemplate() looks up `namespace: \"shillinq\", category: \"shillinq-management-letter\"`; see shillinq-balans's description for the fail-closed/follow-up rationale.",
+      "register": "shillinq",
+      "reportCatalogueId": "management-letter",
+      "blockVocabulary": {
+        "cover": "title 'Management letter', subtitle, meta line",
+        "text": "aanhef/introductie paragraphs, closing recommendation",
+        "heading": "'Samenvatting', 'Bevindingen naar ernst', 'Bevindingen per object-type' (conditional), 'Belangrijkste bevindingen' (conditional), 'Aanbeveling'",
+        "detailsTable": "Samenvatting key/value rows (normenkader, dekkingsgraad, objecten gecontroleerd/compliant, compliancegraad)",
+        "amountTable": "Bevindingen naar ernst (mandatory/conditional/recommended counts, currency ''), per object-type counts (conditional), top violated rules (conditional)",
+        "note": "closing note on the audit engine/coverage"
+      }
+    },
+    {
+      "templateId": "shillinq-bbv-jaarstukken",
+      "title": "BBV-jaarstukken",
+      "description": "NL public-sector BBV jaarstukken / programmaverantwoording (openspec/changes/reports-via-docudesk REQ-RVD-006). NOT yet a live docudesk Template object -- BbvJaarstukkenReportGenerator::selectTemplate() looks up `namespace: \"shillinq\", category: \"shillinq-bbv-jaarstukken\"`; see shillinq-balans's description for the fail-closed/follow-up rationale.",
+      "register": "shillinq",
+      "reportCatalogueId": "bbv-jaarstukken",
+      "blockVocabulary": {
+        "cover": "title 'BBV-jaarstukken', documentType+subtitle, meta line",
+        "heading": "'Kerngegevens', 'Programmaplan (art. 8 BBV)', 'Verplichte paragrafen (art. 9 BBV)', 'Overzicht taakvelden', 'Jaarrekening (art. 24 BBV)', 'Vaste activa (art. 59/62 BBV)'",
+        "detailsTable": "Kerngegevens, art. 9 paragraph presence (Aanwezig/Ontbreekt), Jaarrekening component presence (Ja/Nee)",
+        "amountTable": "Programmaplan algemene posten, Vaste activa lines+total",
+        "table": "Programmaplan programme list (code/naam), Taakvelden overview (code/naam/baten/lasten + totaalrij) -- generic {styleKey, rows: [{cells: [{widthCm, cellStyle, text, textStyle, textOptions}]}]} blocks, not amountTable/detailsTable",
+        "note": "empty-state notes for programmes/taakvelden/vaste activa when absent"
+      }
     }
   ]
 }

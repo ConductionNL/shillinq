@@ -494,9 +494,9 @@ class CommitmentMaterialisationService {
 
 	/**
 	 * Resolve the BBV programma code for a kostenplaats + boekjaar by
-	 * looking up the matching Budget row (which already carries an
-	 * optional kostenplaats scope). Best-effort: when no Budget matches,
-	 * returns an empty string and BudgetBlocker's own fail-closed
+	 * looking up the matching CommitmentBudget row (which already carries an
+	 * optional kostenplaats scope). Best-effort: when no CommitmentBudget
+	 * matches, returns an empty string and BudgetBlocker's own fail-closed
 	 * "no matching budget" rule denies the commitment naturally — no
 	 * silent success.
 	 *
@@ -512,7 +512,7 @@ class CommitmentMaterialisationService {
 		}
 
 		$budget = $this->findOne(
-			schema: 'Budget',
+			schema: 'CommitmentBudget',
 			filters: [
 				'administrationId' => $administrationId,
 				'costCentre' => $costCentre,

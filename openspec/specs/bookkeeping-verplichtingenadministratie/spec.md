@@ -101,15 +101,24 @@ commitment logic.
 
 ### Requirement: REQ-VPL-011 — Committed-vs-realised SHALL be reportable per budget line
 
+**Renamed 2026-08-20 by `budget-core-schema`:** the join target was `Budget`,
+which collided with an unrelated `Budget` declared by
+`bookkeeping-provincies-bbv-variant`; renamed to `CommitmentBudget`. This
+delta also records a positive-control finding surfaced while making that
+rename (see the finding below) — the "no bespoke reporting service" mandate
+below is conditioned on the declarative aggregation actually materialising.
+
 The system SHALL declare a per-budget-line committed-vs-realised aggregation via
 `x-openregister-aggregations`, grouping `VerplichtingRegel` records by budget
 coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening) and
-exposing, per line, `geautoriseerd`, `verplicht` (openstaande verplichtingen,
+joining through `CommitmentBudget`, exposing, per line, `geautoriseerd`,
+`verplicht` (openstaande verplichtingen,
 i.e. sum of `restant_verplicht`), `gerealiseerd` (sum of `gefactureerd_bedrag`),
 and `vrij` (`geautoriseerd − verplicht − gerealiseerd`). The UI SHALL provide a
 drilldown from a budget line to the underlying `Verplichting`s. This extends the
 per-programma BBV columns of REQ-VPL-009 to per-line granularity and MUST be
-declared declaratively (no bespoke reporting service).
+declared declaratively (no bespoke reporting service) **provided the declarative
+aggregation actually materialises** — see the positive-control finding below.
 
 #### Scenario: Budget-line drilldown shows the four columns
 
@@ -126,8 +135,76 @@ declared declaratively (no bespoke reporting service).
 
 - GIVEN the verplichtingenadministratie register configuration
 - WHEN scanned for the committed-vs-realised aggregation
-- THEN it MUST be declared under `x-openregister-aggregations` (per ADR-031), with
-  no parallel PHP reporting service computing the same figures
+- THEN it MUST be declared under `x-openregister-aggregations` (per ADR-031),
+  joining through `CommitmentBudget`, with no parallel PHP reporting service
+  computing the same figures **unless the positive-control finding below
+  shows the declarative path is discarded, in which case this "no parallel
+  service" mandate is an open question, not silently resolved by this
+  rename**
+
+#### Scenario: The aggregation's join target is renamed, and its declarative status is verified, not assumed
+
+- **GIVEN** `budget-core-schema`'s rename of `join.through` from `Budget` to
+  `CommitmentBudget` (`bookkeeping-verplichtingenadministratie.json:536`)
+- **WHEN** the positive control is run (grep `nextcloud.log` for `"annotation
+  on schema"`, query the aggregation endpoint directly)
+- **THEN** the measured outcome, recorded 2026-08-20:
+  1. **The platform hazard is real, confirmed live on the shared dev
+     instance** — `nextcloud.log` carries 40 occurrences of `"annotation on
+     schema"` warnings dated 2026-08-20, from `decidesk`'s schemas
+     (`meeting`, `decision`, `goal`, …), each discarding an
+     `x-openregister-aggregations`/`-calculations` block for exactly the
+     reason `AggregationAnnotationValidator`'s documented behaviour predicts.
+     This confirms the hazard class fires on THIS instance today, not merely
+     in theory.
+  2. **shillinq-specific dynamic verification could not be completed on the
+     shared instance**: it runs shillinq `0.2.1-unstable.20260818220149`,
+     which predates this change (`GET .../objects?schema=CommitmentBudget`
+     answers `"Schema not found"`) and exposes no working aggregation-proxy
+     route for `Verplichtingsregel`/`Budget` today (`GET
+     .../apps/shillinq/api/openregister/objects/.../aggregations/...`
+     resolves to the SPA fallback shell, HTTP 200 HTML, not JSON) — and
+     deploying this in-progress branch to the shared instance to force a
+     fresh import was judged out of scope (other engineers rely on that
+     instance; see this repo's own "no deploy to shared dev instance"
+     convention).
+  3. **Static analysis against the ACTUAL declared property lists** (not
+     assumed) stands in for the dynamic check:
+     - `CommitmentBudget.outstanding_commitments`'s `where` clause filters
+       on `programme` and `afgesloten` — **neither is a declared property of
+       `CommitmentBudget`** (only `programmeCode`, `administrationId`,
+       `financialYear`, `authorised_amount`, `realised_amount`,
+       `outstanding_commitments`, `free_capacity` are declared). Per
+       `AggregationAnnotationValidator`'s documented behaviour (checks
+       `where[].field` against the DECLARING schema), this annotation would
+       be discarded — **CONFIRMS** design.md finding #1, independent of this
+       rename.
+     - `committedVsRealisedPerBudgetLine`'s `groupBy`/`filter` fields
+       (`programme`, `costCentre`, `financialYear`, `generalLedgerAccount`,
+       `afgesloten`) **are all genuinely declared on `Verplichtingsregel`**
+       (the declaring schema) — this part would plausibly PASS the
+       declaring-schema check. **However**, its `join.select`
+       (`CommitmentBudget.geautoriseerd_bedrag`,
+       `CommitmentBudget.gerealiseerd_bedrag`) references field names that
+       do not exist on `CommitmentBudget` **under any name** — the schema's
+       real fields are `authorised_amount`/`realised_amount` (English), not
+       `geautoriseerd_bedrag`/`gerealiseerd_bedrag` (Dutch). This is a
+       genuine field-name defect independent of the declaring-vs-target
+       hazard theory: the join cannot resolve correctly regardless of which
+       schema the validator checks fields against. **New finding, not in
+       design.md's original two** — recorded here, not fixed (out of this
+       change's scope per REQ-BCS-011; owned by whichever change next
+       touches `committedVsRealisedPerBudgetLine`).
+  - **Net assessment**: both named aggregations are very likely discarded or
+    broken today — `outstanding_commitments` by the documented
+    declaring-schema hazard, `committedVsRealisedPerBudgetLine` by an
+    independent join-field-name defect — but this is inferred from static
+    inspection, not confirmed by a live materialised-vs-discarded
+    measurement. A live re-check once this branch (or an equivalent fix)
+    reaches a deployable instance is the outstanding follow-up (`design.md`
+    §11.2, handed to the orchestrator).
+
+@e2e exclude platform-diagnostic finding, not a repeatable browser assertion
 
 ### Requirement: REQ-VPL-012 — Auto-created commitments SHALL be fed into rechtmatigheid toetsing
 

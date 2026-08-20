@@ -45,8 +45,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
+use OCA\Shillinq\Reporting\ReportSection;
 use OCA\Shillinq\Service\RuleAuditService;
-use PhpOffice\PhpWord\PhpWord;
 use Throwable;
 
 /**
@@ -78,15 +78,14 @@ final class ManagementLetterReportGenerator extends AbstractDocumentReportGenera
 	/**
 	 * Build the management-letter body: summary, severity breakdown, findings.
 	 *
-	 * @param PhpWord $phpWord The styled document.
+	 * @param ReportSection $section The block accumulator to fill.
 	 * @param array<string, mixed> $context `{ reportType, period, administrationId }`.
 	 *
 	 * @return void
 	 */
-	protected function build(PhpWord $phpWord, array $context): void {
+	protected function build(ReportSection $section, array $context): void {
 		$audit = $this->runAudit($context);
 
-		$section = $this->addSection($phpWord);
 		$this->addCover($section, 'Management letter', 'Bevindingenrapport — compliance & interne beheersing', $context);
 
 		// --- Aanhef (salutation / introduction) ---
