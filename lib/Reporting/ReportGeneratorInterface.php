@@ -12,13 +12,15 @@
  * Two flavours of generator:
  *  - DATA reports (SAF-T XML, ledger CSV, SBR/XBRL) render bytes natively in
  *    shillinq.
- *  - DOCUMENT reports (annual accounts, management letters, statements) render
- *    editable DOCX/ODT and PDF via the PHPOffice libraries bundled in OpenRegister
- *    — PhpOffice\PhpWord (DOCX/ODT), PhpOffice\PhpSpreadsheet (XLSX/CSV) and dompdf
- *    (PDF). OpenRegister is a runtime dependency whose autoloader is always active,
- *    so these classes resolve without adding any office/PDF dependency to shillinq.
- *    Generation uses the DEFAULT templates shipped in lib/Reporting/templates/; if a
- *    user wants to customise those templates they do so in docudesk.
+ *  - DOCUMENT reports (annual accounts, management letters, statements) assemble
+ *    a structured report body (data loading + business classification, unchanged
+ *    from before) and hand it to docudesk's `DocumentService::generateDocument()`
+ *    for rendering into editable ODT ('odf' in docudesk's own vocabulary) or PDF
+ *    — shillinq holds no PhpWord/PhpSpreadsheet/dompdf and adds no office/PDF
+ *    dependency of its own (ADR-075: docudesk owns document/PDF generation for
+ *    the fleet). Template content lives in docudesk under
+ *    `namespace: "shillinq"`; this interface's implementations do not author it
+ *    (see openspec/changes/reports-via-docudesk).
  *
  * @category Reporting
  * @package  OCA\Shillinq\Reporting
@@ -66,8 +68,9 @@ interface ReportGeneratorInterface {
 
 	/**
 	 * The formats this generator can emit, in preference order. DATA reports return
-	 * e.g. ['xml'] or ['csv']; DOCUMENT reports return ['docx', 'odt', 'pdf'] (the
-	 * editable formats first, since docudesk renders them from one template).
+	 * e.g. ['xml'] or ['csv']; DOCUMENT reports return ['odt', 'pdf'] (the editable
+	 * format first, mapped internally to docudesk's 'odf'/'pdf' `options.format`
+	 * values — docudesk's DocumentService supports no `docx` output).
 	 *
 	 * @return array<int, string>
 	 */
