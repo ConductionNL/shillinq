@@ -330,13 +330,13 @@ export default defineConfig({
 		// the top-level list excludes.
 		...(process.env.SHILLINQ_SETUP_WIZARD_SPEC === '1'
 			? [
-				{
-					name: 'setup-wizard',
-					testMatch: '**/setup-wizard-english.spec.ts',
-					testIgnore: [] as string[],
-					use: { ...devices['Desktop Chrome'] },
-				},
-			]
+					{
+						name: 'setup-wizard',
+						testMatch: '**/setup-wizard-english.spec.ts',
+						testIgnore: [] as string[],
+						use: { ...devices['Desktop Chrome'] },
+					},
+				]
 			: []),
 	],
 })
