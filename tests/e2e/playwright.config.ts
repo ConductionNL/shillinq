@@ -120,6 +120,37 @@ const CI_TEST_IGNORE = [
 	// `docs-capture` project; re-shooting docs screenshots is not a regression.
 	'**/docs-screenshots.spec.ts',
 	'**/bookings-screenshots.spec.ts',
+	// ⚠️ MUTATES GLOBAL SERVER STATE — cannot run beside anything.
+	//
+	// `setup-wizard-english.spec.ts` proves the ADR-042 wizard renders on a
+	// GENUINELY first-run instance, so it deletes shillinq's setup app-config
+	// keys (`legal_country`, `administration_id`, `setup_completed_version`, …)
+	// with `occ config:app:delete`, walks the wizard, and restores the
+	// `ci-seed.sh` baseline in `afterAll`. Its own header names the hazard.
+	//
+	// Files run in PARALLEL here (`workers: 4`). Every OTHER spec assumes the
+	// wizard is already complete, so for the duration of that reset they get a
+	// blocking "Set up this app" modal over `main` instead of their page.
+	//
+	// MEASURED, run 32329757674 — 5 failures inside a 33-SECOND window:
+	//   04:05:50  provincies-bbv-variant.spec.ts:274
+	//   04:06:09  spec-coverage/belastingen.spec.ts:106  (KOR)
+	//   04:06:16  provincies-bbv-variant.spec.ts:313
+	//   04:06:18  spec-coverage/belastingen.spec.ts:106  (Tax Filing Prep)
+	//   04:06:23  setup-wizard-english.spec.ts:240       ← the resetting spec
+	// The four victims reported `tables=0 empty=0 lists=0 actions=0` — not an
+	// empty index, NO index: they never saw past the modal. Their page
+	// snapshots show the wizard open at step 5 with its Run button active,
+	// which is the reset in progress, not a defect in those pages.
+	//
+	// Run it as its own job/step, alone:
+	//   npx playwright test -c tests/e2e/playwright.config.ts \
+	//     --project=setup-wizard --workers=1
+	//
+	// Do NOT "fix" this by dismissing the dialog in `dismissOverlays()` — a
+	// victim completing the wizard re-runs `init-administration` underneath
+	// this spec's walk and corrupts the state it is asserting.
+	'**/setup-wizard-english.spec.ts',
 ]
 
 export default defineConfig({
@@ -283,5 +314,29 @@ export default defineConfig({
 			testIgnore: CI_TEST_IGNORE,
 			use: { ...devices['Desktop Chrome'] },
 		},
+		// OPT-IN, and it must run ALONE — see the `setup-wizard-english` entry
+		// in CI_TEST_IGNORE for the measurement.
+		//
+		// Gated on an env var rather than merely declared, because a project
+		// is part of a DEFAULT (no `--project`) run: declaring it
+		// unconditionally would put the resetting spec straight back beside
+		// its victims and undo the isolation this change exists for.
+		//
+		//   SHILLINQ_SETUP_WIZARD_SPEC=1 npx playwright test \
+		//     -c tests/e2e/playwright.config.ts --project=setup-wizard --workers=1
+		//
+		// `testIgnore: []` is deliberate: a project-level list REPLACES the
+		// top-level one, and this project exists precisely to collect the file
+		// the top-level list excludes.
+		...(process.env.SHILLINQ_SETUP_WIZARD_SPEC === '1'
+			? [
+				{
+					name: 'setup-wizard',
+					testMatch: '**/setup-wizard-english.spec.ts',
+					testIgnore: [] as string[],
+					use: { ...devices['Desktop Chrome'] },
+				},
+			]
+			: []),
 	],
 })

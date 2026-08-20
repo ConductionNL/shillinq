@@ -89,62 +89,17 @@ export function recordShillinqErrors(page: Page): PageRec {
 }
 
 /**
- * Drive shillinq's own ADR-042 "Set up this app" dialog to completion.
+ * Dismiss the NC first-run wizard and the cn-support-dialog overlay if present.
  *
- * `ci-seed.sh` already completes every step over the admin API and ASSERTS
- * that `/api/setup/status` returns `completed: true` — and it does. The SPA
- * renders the dialog anyway. Observed on run 32329757674: the seed logged
- * `administration: {done: true}` and wrote `setup_completed_version`, while
- * the browser opened the wizard at step 5 "Create administration" with its
- * Run button still active. Server and client disagree, and the client wins
- * the screen.
- *
- * It is a GATING modal — no close button, only Back / Next / Run — so it
- * hides `main` completely. That is why five specs failed reporting an empty
- * index surface (`tables=0 empty=0 lists=0 actions=0`) instead of anything
- * about their own subject: they never saw the page at all.
- *
- * Escape does not dismiss it, so this drives it the way a person would —
- * Run the pending action, then Next — bounded, and never fatal: if the
- * dialog is absent (the normal case) this costs one invisible-locator check.
+ * ⚠️ DELIBERATELY DOES NOT TOUCH shillinq's own "Set up this app" dialog.
+ * If that dialog is on screen during a run of this suite, the cause is
+ * `setup-wizard-english.spec.ts` deleting the server-side setup app-config
+ * keys while this file runs in a sibling worker — see the isolation note in
+ * `tests/e2e/playwright.config.ts`. Driving it to completion from here would
+ * re-run `init-administration` underneath that spec's own walk and corrupt
+ * the very state it is asserting. The fix is isolation, not dismissal.
  */
-async function completeSetupWizard(page: Page): Promise<void> {
-	const setup = page
-		.locator('[role="dialog"]')
-		.filter({ hasText: 'Set up this app' })
-		.first()
-
-	for (let i = 0; i < 12; i++) {
-		if ((await setup.isVisible().catch(() => false)) === false) {
-			return
-		}
-
-		const run = setup.locator('button', { hasText: /^\s*Run\s*$/ }).first()
-		if (await run.isVisible().catch(() => false)) {
-			await run.click({ timeout: 3_000 }).catch(() => {})
-			await page.waitForTimeout(700)
-			continue
-		}
-
-		const next = setup
-			.locator('button', { hasText: /^\s*(Next|Finish|Done|Close)\s*$/ })
-			.first()
-		if (await next.isVisible().catch(() => false)) {
-			await next.click({ timeout: 3_000 }).catch(() => {})
-			await page.waitForTimeout(400)
-			continue
-		}
-
-		break
-	}
-
-	await setup.waitFor({ state: 'hidden', timeout: 5_000 }).catch(() => {})
-}
-
-/** Dismiss the NC first-run wizard, shillinq's setup dialog and the cn-support-dialog overlay. */
 export async function dismissOverlays(page: Page): Promise<void> {
-	await completeSetupWizard(page)
-
 	const wizard = page.locator('#firstrunwizard')
 	if (await wizard.isVisible().catch(() => false)) {
 		await page.keyboard.press('Escape').catch(() => {})
