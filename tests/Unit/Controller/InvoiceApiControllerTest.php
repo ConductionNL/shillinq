@@ -338,5 +338,227 @@ final class InvoiceApiControllerTest extends TestCase {
 
 	}//end testPdfRendererFailureReturns500WithoutStackTrace()
 
+	/**
+	 * index() scopes every read to the server-resolved administration and
+	 * exposes no request parameter that could change that scope
+	 * (security-endpoint-guards REQ-001 — session-derived, IDOR-safe).
+	 *
+	 * @return void
+	 */
+	public function testIndexScopesToServerResolvedAdministration(): void {
+		$this->request->method('getParam')->willReturnCallback(
+			static fn (string $key, mixed $default = null): mixed => $default
+		);
+
+		$seenFilters = null;
+		$this->objectService->method('findAll')->willReturnCallback(
+			function (array $params) use (&$seenFilters): array {
+				$seenFilters = ($params['filters'] ?? []);
+				return [];
+			}
+		);
+
+		$response = $this->controller->index();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame(['administrationId' => 'adm-1'], $seenFilters);
+
+	}//end testIndexScopesToServerResolvedAdministration()
+
+	/**
+	 * An anonymous caller is rejected with HTTP 401 before any list read.
+	 *
+	 * @return void
+	 */
+	public function testIndexAnonymousReturns401(): void {
+		$this->user = null;
+		$this->objectService->expects($this->never())->method('findAll');
+
+		$response = $this->controller->index();
+
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+
+	}//end testIndexAnonymousReturns401()
+
+	/**
+	 * An invoice owned by another administration yields HTTP 403 for show()
+	 * and the lines are never fetched (security-endpoint-guards REQ-001).
+	 *
+	 * @return void
+	 */
+	public function testShowCrossTenantInvoiceReturns403(): void {
+		$this->objectService->method('find')->willReturn(
+			$this->entity(['invoiceNumber' => 'F-2026-0007', 'administrationId' => 'adm-someone-else'])
+		);
+		$this->objectService->expects($this->never())->method('findAll');
+
+		$response = $this->controller->show('inv-1');
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+
+	}//end testShowCrossTenantInvoiceReturns403()
+
+	/**
+	 * An invoice owned by the caller's own administration is returned with
+	 * its lines — the positive control for testShowCrossTenantInvoiceReturns403().
+	 *
+	 * @return void
+	 */
+	public function testShowOwnAdministrationReturnsInvoiceAndLines(): void {
+		$invoice = ['invoiceNumber' => 'F-2026-0007', 'administrationId' => 'adm-1'];
+		$lines = [['description' => 'Advies']];
+		$this->objectService->method('find')->willReturn($this->entity($invoice));
+		$this->objectService->method('findAll')->willReturn($lines);
+
+		$response = $this->controller->show('inv-1');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		$data = $response->getData();
+		self::assertSame($invoice, $data['invoice']);
+		self::assertSame($lines, $data['lines']);
+
+	}//end testShowOwnAdministrationReturnsInvoiceAndLines()
+
+	/**
+	 * An unknown invoice id yields HTTP 404 for show().
+	 *
+	 * @return void
+	 */
+	public function testShowUnknownInvoiceReturns404(): void {
+		$this->objectService->method('find')->willReturn(null);
+
+		$response = $this->controller->show('inv-missing');
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+
+	}//end testShowUnknownInvoiceReturns404()
+
+	/**
+	 * An invoice owned by another administration yields HTTP 403 for post()
+	 * and postInvoice() is never called (security-endpoint-guards REQ-001).
+	 *
+	 * @return void
+	 */
+	public function testPostCrossTenantInvoiceReturns403(): void {
+		$this->objectService->method('find')->willReturn(
+			$this->entity(['invoiceNumber' => 'F-2026-0007', 'administrationId' => 'adm-someone-else'])
+		);
+		$this->service->expects($this->never())->method('postInvoice');
+
+		$response = $this->controller->post('inv-1');
+
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+
+	}//end testPostCrossTenantInvoiceReturns403()
+
+	/**
+	 * An invoice owned by the caller's own administration is posted —
+	 * the positive control for testPostCrossTenantInvoiceReturns403().
+	 *
+	 * @return void
+	 */
+	public function testPostOwnAdministrationReturns200(): void {
+		$invoice = ['invoiceNumber' => 'F-2026-0007', 'administrationId' => 'adm-1', 'status' => 'draft'];
+		$posted = array_merge($invoice, ['status' => 'posted']);
+		$this->objectService->method('find')->willReturn($this->entity($invoice));
+		$this->service->method('postInvoice')->with($invoice)->willReturn($posted);
+
+		$response = $this->controller->post('inv-1');
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame($posted, $response->getData());
+
+	}//end testPostOwnAdministrationReturns200()
+
+	/**
+	 * A failed post() maps a RuntimeException to a slug, never the raw
+	 * exception text (ADR-050 / security-endpoint-guards REQ-003).
+	 *
+	 * @return void
+	 */
+	public function testPostAlreadyPostedReturnsConflictSlugWithoutLeakingMessage(): void {
+		$invoice = ['invoiceNumber' => 'F-2026-0007', 'administrationId' => 'adm-1', 'status' => 'posted'];
+		$this->objectService->method('find')->willReturn($this->entity($invoice));
+		$this->service->method('postInvoice')->willThrowException(new \RuntimeException('Invoice is already posted.'));
+		$this->logger->expects($this->once())->method('error');
+
+		$response = $this->controller->post('inv-1');
+
+		self::assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$data = $response->getData();
+		self::assertSame('invoice-post-conflict', $data['error']);
+		self::assertArrayHasKey('message', $data);
+
+	}//end testPostAlreadyPostedReturnsConflictSlugWithoutLeakingMessage()
+
+	/**
+	 * generate() ignores any administrationId the client tries to smuggle into
+	 * the request body — the drafted invoice is always scoped to the caller's
+	 * own session-resolved administration (security-endpoint-guards REQ-001).
+	 *
+	 * @return void
+	 */
+	public function testGenerateIgnoresClientSuppliedAdministrationId(): void {
+		$body = [
+			'administrationId' => 'adm-attacker',
+			'billingModel' => 't_and_m',
+			'customerId' => 'cust-1',
+			'fromDate' => '2026-01-01',
+			'toDate' => '2026-01-31',
+			'rateCardId' => 'rc-1',
+		];
+		$this->request->method('getParams')->willReturn($body);
+
+		$seenAdministrationId = null;
+		$this->service->method('draftInvoice')->willReturnCallback(
+			function (\OCA\Shillinq\Request\InvoiceGenerationRequest $req) use (&$seenAdministrationId): array {
+				$seenAdministrationId = $req->administrationId;
+				return ['administrationId' => $req->administrationId];
+			}
+		);
+
+		$response = $this->controller->generate();
+
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame('adm-1', $seenAdministrationId);
+
+	}//end testGenerateIgnoresClientSuppliedAdministrationId()
+
+	/**
+	 * An anonymous caller is rejected with HTTP 401 before any drafting work.
+	 *
+	 * @return void
+	 */
+	public function testGenerateAnonymousReturns401(): void {
+		$this->user = null;
+		$this->service->expects($this->never())->method('draftInvoice');
+
+		$response = $this->controller->generate();
+
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+
+	}//end testGenerateAnonymousReturns401()
+
+	/**
+	 * An invalid generation request maps to a static slug/message, never the
+	 * raw validation exception text (ADR-050 / security-endpoint-guards REQ-003).
+	 *
+	 * @return void
+	 */
+	public function testGenerateInvalidRequestReturnsSlugWithoutLeakingMessage(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->logger->expects($this->once())->method('error');
+
+		$response = $this->controller->generate();
+
+		self::assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $response->getStatus());
+		$data = $response->getData();
+		self::assertSame('invoice-generate-invalid', $data['error']);
+		self::assertStringNotContainsStringIgnoringCase('billingModel must be one of', (string)json_encode($data));
+
+	}//end testGenerateInvalidRequestReturnsSlugWithoutLeakingMessage()
+
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 }//end class

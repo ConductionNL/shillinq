@@ -28,6 +28,7 @@ use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -90,6 +91,13 @@ class BankStatementImportControllerTest extends TestCase {
 	private LoggerInterface&MockObject $logger;
 
 	/**
+	 * Mock IL10N.
+	 *
+	 * @var IL10N&MockObject
+	 */
+	private IL10N&MockObject $l10n;
+
+	/**
 	 * The capturing ObjectService stub the container returns.
 	 *
 	 * @var object
@@ -109,6 +117,8 @@ class BankStatementImportControllerTest extends TestCase {
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->session = $this->createMock(IUserSession::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->l10n = $this->createMock(IL10N::class);
+		$this->l10n->method('t')->willReturnCallback(static fn (string $text, $params = []): string => $text);
 
 		$this->objectService = $this->buildObjectServiceStub();
 		$this->container->method('get')->willReturn($this->objectService);
@@ -196,6 +206,7 @@ class BankStatementImportControllerTest extends TestCase {
 			session: $this->session,
 			logger: $this->logger,
 			objectService: new DuckObjectServiceAdapter($this->objectService),
+			l10n: $this->l10n,
 		);
 	}//end controller()
 

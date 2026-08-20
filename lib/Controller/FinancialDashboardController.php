@@ -9,14 +9,21 @@
  * /api/dashboard/financial-summary returns the KPI bag (turnover, margin,
  * open debtors/creditors, billable hours, all-time cash position) with
  * previous-period trend values. Both endpoints are available to any
- * authenticated user (#[NoAdminRequired]); all reads are delegated to
- * OpenRegister's ObjectService, which enforces RBAC and multitenancy
- * (ADR-005, ADR-022), so the endpoints expose exactly the objects the user
- * could already fetch through /apps/openregister/api/objects — computed
- * server-side over ALL matching objects instead of the client's 2000-object
- * truncation. There is no create/update/delete route and no client-supplied
- * object identifier (no IDOR surface); the only inputs are the optional
- * from/to date bounds, which are format-validated before use.
+ * authenticated user (#[NoAdminRequired]). There is no create/update/delete
+ * route and no client-supplied object identifier (no per-object IDOR
+ * surface); the only inputs are the optional from/to date bounds, which are
+ * format-validated before use.
+ *
+ * ⚠️ (security-endpoint-guards REQ-001) This class previously claimed reads
+ * were scoped by "OpenRegister's ObjectService, which enforces RBAC and
+ * multitenancy" — that claim did not hold: `FinancialDashboardService::
+ * fetchSchema()` issues an unfiltered `findAll([])` per schema, with no
+ * administration/tenant scope at all. `respond()` below now rejects a
+ * caller with zero `AdministrationMembership` records; the deeper fix (a
+ * per-row administration scope on every fetched schema, blocked on `GLLine`
+ * carrying no `administrationId` property — see the guard's own comment in
+ * `respond()`) requires a `FinancialDashboardService` change tracked as
+ * follow-up work, not delivered by this class alone.
  *
  * @category Controller
  * @package  OCA\Shillinq\Controller
@@ -102,6 +109,8 @@ class FinancialDashboardController extends Controller {
 	 * @return JSONResponse The series payload.
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function series(): JSONResponse {
@@ -125,6 +134,8 @@ class FinancialDashboardController extends Controller {
 	 * @return JSONResponse The summary payload.
 	 *
 	 * @spec openspec/specs/financial-dashboard-graphs/spec.md
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
+	 * @e2e exclude API-only endpoint, no UI surface (security-endpoint-guards)
 	 */
 	#[NoAdminRequired]
 	public function summary(): JSONResponse {
@@ -133,11 +144,14 @@ class FinancialDashboardController extends Controller {
 
 	/**
 	 * Shared request handling for both endpoints: authentication gate,
-	 * from/to validation, service dispatch and the no-stack-trace 500 path.
+	 * administration-membership gate, from/to validation, service dispatch
+	 * and the no-stack-trace 500 path.
 	 *
 	 * @param string $endpoint Either 'series' or 'summary'.
 	 *
 	 * @return JSONResponse The endpoint payload or an error envelope.
+	 *
+	 * @spec openspec/changes/security-endpoint-guards/specs/security-endpoint-guards/spec.md#req-001
 	 */
 	private function respond(string $endpoint): JSONResponse {
 		// Authentication gate — the NC SecurityMiddleware already rejects
@@ -148,6 +162,32 @@ class FinancialDashboardController extends Controller {
 			return new JSONResponse(
 				['error' => 'Not authenticated'],
 				Http::STATUS_UNAUTHORIZED
+			);
+		}
+
+		// GUARD (security-endpoint-guards REQ-001): FinancialDashboardService
+		// aggregates GLTransaction/GLLine/Account/UrenRegistratie/ARInvoice/
+		// APTransaction across ALL matching objects with no per-administration
+		// filter at all (verified by reading FinancialDashboardService::
+		// fetchSchema() — every read is an unfiltered findAll([])). The
+		// docblock's claim that "reads are delegated to OpenRegister's
+		// ObjectService, which enforces RBAC and multitenancy" does not hold in
+		// practice: several of the schemas involved (GLLine in particular —
+		// see tests/Unit/Service/SpendAnalyticsServiceTest.php::
+		// testGlBackedViewsCarryNoAdministrationFilterYet) carry no
+		// administrationId property at all, so a full per-row scope cannot be
+		// added without a FinancialDashboardService change (denormalising
+		// administrationId onto GLLine + a backfill) that is out of this
+		// batch's file scope. This check closes the sharpest sub-case in the
+		// meantime: an authenticated caller with ZERO AdministrationMembership
+		// records must not see the platform-wide aggregate of every tenant's
+		// turnover/margin/cashflow. Full cross-tenant row-level scoping for a
+		// user who DOES belong to one administration but not another remains
+		// open — tracked as follow-up work, not silently declared fixed here.
+		if ($this->context->accessibleAdministrationIds() === []) {
+			return new JSONResponse(
+				['error' => 'No accessible administration'],
+				Http::STATUS_FORBIDDEN
 			);
 		}
 
