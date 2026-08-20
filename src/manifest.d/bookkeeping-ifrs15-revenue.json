@@ -8,7 +8,7 @@
 			"children": [
 				{
 					"id": "RevenueContracts",
-					"label": "Contracts",
+					"label": "Revenue Contracts",
 					"icon": "FileSign",
 					"route": "RevenueContracts",
 					"order": 10
@@ -56,7 +56,7 @@
 			"id": "RevenueContracts",
 			"route": "/ifrs-15/contracts",
 			"type": "index",
-			"title": "Contracts",
+			"title": "Revenue Contracts",
 			"config": {
 				"register": "shillinq",
 				"schema": "Contract",
