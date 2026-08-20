@@ -78,13 +78,16 @@ existing Contract / AR invoice index views.
 - The pipelinq produce side (deal → quote emitter) is a separate change;
   pipelinq has no quote schema yet. Shillinq-standalone H1 works via its own
   `Quote` schema.
-- The merged `Contract`/`ARInvoice` schemas require fields that are not part
-  of the kind contracts (contract/invoice numbers, administration, period);
-  until the `abstract-order-primitive` required-dedup and/or an ADR-041
-  intake listener (numbering etc.) lands, a handoff execution fails target
-  validation — surfaced to the operator on the manual trigger, logged for
-  the lifecycle trigger. The quote's own `accepted` transition is never
-  blocked.
+- Since `contracts-single-home` un-collided `Contract` from the IFRS-15
+  revenue-recognition schema (now named `RevenueContract`), `Contract`'s
+  `required` list is CLM's own four fields only, and the H1 handoff CREATE
+  validates cleanly against it. The remaining validation-failure risk is
+  narrowed to `ARInvoice`, whose `required` list still requires fields that
+  are not part of the kind contract (invoice number, administration,
+  period); until the `abstract-order-primitive` required-dedup and/or an
+  ADR-041 intake listener (numbering etc.) lands, an H2 handoff execution
+  may still fail target validation — surfaced to the operator on the manual
+  trigger. The quote's own `accepted` transition is never blocked.
 - Two demo seeds (`CT-2026-HANDOFF-001`, `INV-2026-HANDOFF-001`) ship with
   the fragment so draft-arrival, provenance rendering and the notification
   condition are verifiable without pipelinq.

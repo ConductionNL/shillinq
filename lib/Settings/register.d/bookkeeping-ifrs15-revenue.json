@@ -4,16 +4,16 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-ifrs15-revenue",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 2 — IFRS 15 / ASC 606 five-step revenue recognition. Adds eleven new schemas (Contract, PerformanceObligation, TransactionPrice, PriceAllocation, RevenueRecognitionEvent, ContractAsset, ContractLiability, ContractModification, VariableConsiderationAdjustment, ContractCostAsset, RevenueWaterfall) implementing the five-step model: (1) identify the contract, (2) identify separate performance obligations, (3) determine the transaction price, (4) allocate the price across POs using relative stand-alone selling price (SSP), (5) recognise revenue when/as each PO is satisfied (REQ-IFRS15-001..011). Contract carries an x-openregister-lifecycle (draft -> signed -> in-delivery -> completed / cancelled); posting a RevenueRecognitionEvent materialises a balanced GLTransaction via the T1 materialisation extension (debit accrued-revenue / credit revenue, REQ-IFRS15-007). RevenueWaterfall declares an x-openregister-aggregations block documenting the per-contract, per-period roll-up of recognised + remaining transaction price for 60+ months (REQ-IFRS15-008). The nightly contract asset/liability cut-off (idempotent reverse-then-post), the relative-SSP / residual price allocation, the cost-to-cost percentage-of-completion, and the variable-consideration constraint + re-estimation are computed by OCA\\Shillinq\\Service\\RevenueCutoffService + RevenueRecognitionCalculator + VariableConsiderationReestimationService via the real OpenRegister ObjectService API (find / findAll / saveObject), with the declarative shapes documented on the schemas per ADR-031. ContractAsset / ContractLiability / RevenueWaterfall are read-only (derived nightly, never authored by operators). Seed objects provide the four worked examples from design.md (36-month SaaS bundle, cost-to-cost construction, multi-year maintenance with escalation, distinct-scope modification = new contract)."
+    "description": "Tier 2 — IFRS 15 / ASC 606 five-step revenue recognition. Adds eleven new schemas (RevenueContract, PerformanceObligation, TransactionPrice, PriceAllocation, RevenueRecognitionEvent, ContractAsset, ContractLiability, ContractModification, VariableConsiderationAdjustment, ContractCostAsset, RevenueWaterfall) implementing the five-step model: (1) identify the contract, (2) identify separate performance obligations, (3) determine the transaction price, (4) allocate the price across POs using relative stand-alone selling price (SSP), (5) recognise revenue when/as each PO is satisfied (REQ-IFRS15-001..011). RevenueContract is named to avoid colliding with contract-lifecycle-management's generic Contract schema, the fleet's canonical ADR-051 ns#Contract implementer (contracts-single-home); the two are deliberately separate registers for separate bounded contexts and MUST NOT be merged, aliased, or share a slug. RevenueContract carries an x-openregister-lifecycle (draft -> signed -> in-delivery -> completed / cancelled); posting a RevenueRecognitionEvent materialises a balanced GLTransaction via the T1 materialisation extension (debit accrued-revenue / credit revenue, REQ-IFRS15-007). RevenueWaterfall declares an x-openregister-aggregations block documenting the per-contract, per-period roll-up of recognised + remaining transaction price for 60+ months (REQ-IFRS15-008). The nightly contract asset/liability cut-off (idempotent reverse-then-post), the relative-SSP / residual price allocation, the cost-to-cost percentage-of-completion, and the variable-consideration constraint + re-estimation are computed by OCA\\Shillinq\\Service\\RevenueCutoffService + RevenueRecognitionCalculator + VariableConsiderationReestimationService via the real OpenRegister ObjectService API (find / findAll / saveObject), with the declarative shapes documented on the schemas per ADR-031. ContractAsset / ContractLiability / RevenueWaterfall are read-only (derived nightly, never authored by operators). Seed objects provide the four worked examples from design.md (36-month SaaS bundle, cost-to-cost construction, multi-year maintenance with escalation, distinct-scope modification = new contract)."
   },
   "components": {
     "schemas": {
-      "Contract": {
-        "slug": "Contract",
+      "RevenueContract": {
+        "slug": "RevenueContract",
         "icon": "FileSign",
         "version": "0.1.0",
-        "title": "Contract",
-        "description": "A customer contract under IFRS 15 — the legal instrument that bundles one or more performance obligations (REQ-IFRS15-001). Carries identification, dates, the decomposed transaction price (fixed + estimated variable), currency, the signed-at date, the originating quote/order reference, and a contractGroupId for IFRS 15.17 combination-of-contracts treatment (REQ-IFRS15-011). Contracts are first-class entities with their own lifecycle and modification history; they are never embedded in GL transactions or invoice rows.",
+        "title": "Revenue Contract",
+        "description": "A customer revenue contract under IFRS 15 — the legal instrument that bundles one or more performance obligations (REQ-IFRS15-001). Named RevenueContract (not the bare Contract) specifically to avoid colliding with contract-lifecycle-management's generic Contract schema, which is the fleet's canonical ADR-051 ns#Contract implementer; the two are deliberately separate registers for separate bounded contexts (revenue recognition vs. generic contract lifecycle) and MUST NOT be merged, aliased, or share a slug (contracts-single-home). Carries identification, dates, the decomposed transaction price (fixed + estimated variable), currency, the signed-at date, the originating quote/order reference, and a contractGroupId for IFRS 15.17 combination-of-contracts treatment (REQ-IFRS15-011). Revenue contracts are first-class entities with their own lifecycle and modification history; they are never embedded in GL transactions or invoice rows.",
         "x-schema-org": "schema:Contract",
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
@@ -192,7 +192,7 @@
         "properties": {
           "contractId": {
             "type": "string",
-            "description": "FK to the parent Contract.",
+            "description": "FK to the parent RevenueContract.",
             "example": "C-2026-001",
             "title": "Contract ID"
           },
@@ -338,7 +338,7 @@
         "properties": {
           "contractId": {
             "type": "string",
-            "description": "FK to the parent Contract.",
+            "description": "FK to the parent RevenueContract.",
             "example": "C-2026-001",
             "title": "Contract ID"
           },
@@ -440,7 +440,7 @@
         "properties": {
           "contractId": {
             "type": "string",
-            "description": "FK to the parent Contract.",
+            "description": "FK to the parent RevenueContract.",
             "example": "C-2026-001",
             "title": "Contract ID"
           },
@@ -514,7 +514,7 @@
           },
           "contractId": {
             "type": "string",
-            "description": "FK to the parent Contract (denormalised for waterfall aggregation).",
+            "description": "FK to the parent RevenueContract (denormalised for waterfall aggregation).",
             "example": "C-2026-001",
             "title": "Contract ID"
           },
@@ -613,7 +613,7 @@
         "properties": {
           "contractId": {
             "type": "string",
-            "description": "FK to the Contract.",
+            "description": "FK to the RevenueContract.",
             "example": "C-2026-001",
             "title": "Contract ID"
           },
@@ -701,7 +701,7 @@
         "properties": {
           "contractId": {
             "type": "string",
-            "description": "FK to the Contract.",
+            "description": "FK to the RevenueContract.",
             "example": "C-2026-001",
             "title": "Contract ID"
           },
@@ -778,7 +778,7 @@
         "properties": {
           "parentContractId": {
             "type": "string",
-            "description": "FK to the Contract being modified.",
+            "description": "FK to the RevenueContract being modified.",
             "example": "C-2026-001",
             "title": "Parent Contract ID"
           },
@@ -896,7 +896,7 @@
         "properties": {
           "contractId": {
             "type": "string",
-            "description": "FK to the Contract.",
+            "description": "FK to the RevenueContract.",
             "example": "C-2026-001",
             "title": "Contract ID"
           },
@@ -977,7 +977,7 @@
         "properties": {
           "contractId": {
             "type": "string",
-            "description": "FK to the Contract.",
+            "description": "FK to the RevenueContract.",
             "example": "C-2026-001",
             "title": "Contract ID"
           },
@@ -1089,7 +1089,7 @@
         "properties": {
           "contractId": {
             "type": "string",
-            "description": "FK to the Contract.",
+            "description": "FK to the RevenueContract.",
             "example": "C-2026-001",
             "title": "Contract ID"
           },
@@ -1231,7 +1231,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Contract",
+          "schema": "RevenueContract",
           "slug": "ifrs15-contract-c2026-001"
         },
         "contractNumber": "C-2026-001",
@@ -1252,7 +1252,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Contract",
+          "schema": "RevenueContract",
           "slug": "ifrs15-contract-c2026-050"
         },
         "contractNumber": "C-2026-050",
@@ -1273,7 +1273,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Contract",
+          "schema": "RevenueContract",
           "slug": "ifrs15-contract-c2026-100"
         },
         "contractNumber": "C-2026-100",
@@ -1296,7 +1296,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Contract",
+          "schema": "RevenueContract",
           "slug": "ifrs15-contract-c2026-001-mod-1"
         },
         "contractNumber": "C-2026-001-MOD-1",

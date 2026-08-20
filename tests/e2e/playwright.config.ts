@@ -31,8 +31,9 @@
  * documentation screenshots AND fail on visual baselines that were never meant
  * to be compared on a runner. Rather than delete or weaken either project,
  * `playwright-test-path: tests/e2e` in the caller makes the workflow's FIRST
- * lookup hit this file, which declares only the regression project. The root
- * config is untouched and stays the entry point for local runs.
+ * lookup hit this file, which declares only the regression projects (below:
+ * `chromium` plus the isolated `setup-wizard-isolated`). The root config is
+ * untouched and stays the entry point for local runs.
  *
  * ⚠️ `testIgnore` HAS TO BE REPEATED AT PROJECT LEVEL.
  * A project-level `testIgnore` REPLACES the top-level one, it does not merge
@@ -104,7 +105,7 @@ import { resolveBaseURL } from './base-url'
 /**
  * Everything under `tests/e2e` that is NOT part of the CI regression suite.
  *
- * Repeated verbatim on the project below — see the header.
+ * Repeated verbatim on both projects below — see the header.
  */
 const CI_TEST_IGNORE = [
 	// Support modules. They export helpers, not tests.
@@ -121,6 +122,88 @@ const CI_TEST_IGNORE = [
 	'**/docs-screenshots.spec.ts',
 	'**/bookings-screenshots.spec.ts',
 ]
+
+/**
+ * `setup-wizard-english.spec.ts` resets shillinq's setup app-config
+ * SERVER-SIDE (`resetSetupStateServerSide()`, see that file's own header) so
+ * ADR-042's wizard gates the shell again. The Nextcloud instance under test
+ * is ONE shared backend across every worker, so for the whole window between
+ * that reset and the file's `afterAll` restore, every OTHER spec file's
+ * app-config reads see an unconfigured instance and the "Set up this app"
+ * dialog blocks their page too — not a theory: this is what actually
+ * produced `provincies-bbv-variant.spec.ts` and
+ * `spec-coverage/belastingen.spec.ts`'s intermittent `cn-index-page` /
+ * "tables=0 lists=0 actions=0" failures on `development` (run 32329757674).
+ *
+ * ⚠️ WHY THIS PROJECT IS ENV-GATED, NOT JUST SEPARATED
+ * -------------------------------------------------------
+ * A separate `setup-wizard-isolated` project (below) alone does NOT stop the
+ * contamination in the run CI actually performs: the shared workflow invokes
+ * `npx playwright test --config="$CONFIG"` with NO `--project` flag (see
+ * `ConductionNL/.github/.github/workflows/quality.yml`'s `playwright` job —
+ * confirmed by reading it via `gh api`), so Playwright collects EVERY
+ * declared project and dispatches them together. Verified against the
+ * installed `playwright` package's own runner source
+ * (`createPhasesTask()`/`createRunTestsTask()` in
+ * `node_modules/playwright/lib/runner/index.js`): projects with no
+ * `dependencies` relationship land in the SAME phase and share the SAME
+ * worker pool — a separate project alone is only a labeling change, not
+ * isolation, for a config-less `npx playwright test` invocation.
+ *
+ * `dependencies` (Playwright's only cross-project SEQUENCING primitive)
+ * was considered and rejected: `createRunTestsTask()` only queues a
+ * dependent project's tests when `!project.deps.some(p =>
+ * !successfulProjects.has(p))` — i.e. ANY failure in a dependency SILENTLY
+ * SKIPS every test in whatever depends on it (the documented
+ * auth-`setup`-project pattern; never designed for "just don't overlap").
+ * This suite routinely has unrelated failures elsewhere, so wiring
+ * dependencies here would trade one contamination hazard for a worse,
+ * silent one: `chromium` depending on this project would blank out up to
+ * 50 files' worth of results the moment THIS file fails; the reverse would
+ * silently stop running THIS file the moment anything ELSE in the suite
+ * fails. Either is the "a workflow that never started reads as passing"
+ * defect this fleet has been burned by before, not a fix.
+ *
+ * So, until the real fix lands (see below), this project is GATED BEHIND
+ * `RUN_SETUP_WIZARD_SPEC=1` and therefore absent from the default CI run
+ * entirely — not run-and-racing, not silently overlapping, just not
+ * collected. Default CI (`RUN_SETUP_WIZARD_SPEC` unset) sees `chromium`'s
+ * 273 tests across 53 files with ZERO contamination window, because there
+ * is nothing else in the run to contaminate anything with.
+ *
+ * ⚠️ THIS IS A FULLY WORKING, CORRECT SPEC — NOT ABANDONED OR BROKEN.
+ * Every assertion in `setup-wizard-english.spec.ts` was fixed and is
+ * runnable (strict-mode locator scoping, `NcSelect`'s `appendToBody`
+ * teleport, its split-label rendering, the real `waitForActionComplete`
+ * signal, and both the test's and `afterAll`'s timeout budgets — see that
+ * file's own comments). A future reader must not read this gate as
+ * "disabled because broken" or add `test.skip`: run it explicitly —
+ *
+ *     RUN_SETUP_WIZARD_SPEC=1 npx playwright test --project=setup-wizard-isolated
+ *
+ * — locally, or via a future dedicated CI job once the cross-repo split
+ * below exists.
+ *
+ * THE REAL FIX (cross-repo, not this file): genuine non-overlap needs two
+ * SEPARATE `npx playwright test --project=X` process invocations as two
+ * steps, neither gating the other's execution — that has to be added to
+ * the SHARED `ConductionNL/.github/.github/workflows/quality.yml`
+ * `playwright` job, which affects all 18 fleet apps on this reusable
+ * workflow and belongs in its own PR against `.github`. Concrete proposal:
+ * `openspec/changes/setup-wizard-english/notes-github-playwright-split.md`.
+ * Once that lands, delete this env-gate and the `dependencies` discussion
+ * above becomes moot — the projects run as two independently-reported CI
+ * steps instead.
+ */
+const SETUP_WIZARD_ISOLATED_SPEC = '**/setup-wizard-english.spec.ts'
+
+/**
+ * Set to run `setup-wizard-isolated` at all — see the block above for why
+ * it is opt-in rather than always-collected. Any non-empty value other than
+ * exactly `'1'` is treated as unset (fail toward NOT adding the contaminating
+ * project by accident from a typo'd truthy-ish string).
+ */
+const RUN_SETUP_WIZARD_SPEC = process.env.RUN_SETUP_WIZARD_SPEC === '1'
 
 export default defineConfig({
 	testDir: __dirname,
@@ -279,9 +362,37 @@ export default defineConfig({
 		{
 			name: 'chromium',
 			// NOT a duplicate: a project-level testIgnore REPLACES the
-			// top-level one rather than merging with it.
-			testIgnore: CI_TEST_IGNORE,
+			// top-level one rather than merging with it. Also excludes
+			// `setup-wizard-english.spec.ts` unconditionally — see
+			// SETUP_WIZARD_ISOLATED_SPEC above — regardless of whether
+			// RUN_SETUP_WIZARD_SPEC is set, so that file NEVER falls back
+			// into this project's shared pool (the one thing that must not
+			// happen — it's the whole reason it has its own project).
+			testIgnore: [...CI_TEST_IGNORE, SETUP_WIZARD_ISOLATED_SPEC],
 			use: { ...devices['Desktop Chrome'] },
 		},
+		// Opt-in only — see RUN_SETUP_WIZARD_SPEC / SETUP_WIZARD_ISOLATED_SPEC
+		// above for why this project is absent from the array entirely
+		// (not merely empty of tests) unless explicitly requested. Default
+		// CI runs never see this project declared at all.
+		...(RUN_SETUP_WIZARD_SPEC
+			? [
+					{
+						// See SETUP_WIZARD_ISOLATED_SPEC above for what this
+						// isolates and, just as importantly, what it does NOT
+						// guarantee without the cross-repo workflow split.
+						name: 'setup-wizard-isolated',
+						testMatch: SETUP_WIZARD_ISOLATED_SPEC,
+						// Moot with only one file in this project (nothing else
+						// to run concurrently against it here) — kept because it
+						// states the actual intent per Playwright's own
+						// documented use for `project.workers`: "when all tests
+						// from a project share a single resource ... and
+						// therefore cannot be executed in parallel."
+						workers: 1,
+						use: { ...devices['Desktop Chrome'] },
+					},
+				]
+			: []),
 	],
 })

@@ -143,7 +143,7 @@ class RevenueCutoffService {
 	private function fetchContracts(string $administrationId): array {
 		$contracts = $this->objectService
 			->setRegister($this->register())
-			->setSchema('Contract')
+			->setSchema('RevenueContract')
 			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
 		$byNumber = [];

@@ -57,7 +57,7 @@ final class Ifrs15RevenueFragmentTest extends TestCase {
 	 * @var array<int,string>
 	 */
 	private array $expectedSchemas = [
-		'Contract',
+		'RevenueContract',
 		'PerformanceObligation',
 		'TransactionPrice',
 		'PriceAllocation',
@@ -136,12 +136,12 @@ final class Ifrs15RevenueFragmentTest extends TestCase {
 	}//end testDerivedSchemasAreReadOnly()
 
 	/**
-	 * Contract declares an x-openregister-lifecycle state machine (REQ-IFRS15-001).
+	 * RevenueContract declares an x-openregister-lifecycle state machine (REQ-IFRS15-001).
 	 *
 	 * @return void
 	 */
 	public function testContractDeclaresLifecycle(): void {
-		$contract = $this->fragment()['components']['schemas']['Contract'];
+		$contract = $this->fragment()['components']['schemas']['RevenueContract'];
 		self::assertArrayHasKey('x-openregister-lifecycle', $contract);
 		$transitions = $contract['x-openregister-lifecycle']['transitions'];
 		foreach (['sign', 'beginDelivery', 'complete', 'cancel'] as $transition) {
@@ -271,7 +271,7 @@ final class Ifrs15RevenueFragmentTest extends TestCase {
 		$objects = $this->fragment()['components']['objects'];
 		$contracts = array_filter(
 			$objects,
-			static fn (array $o): bool => $o['@self']['schema'] === 'Contract'
+			static fn (array $o): bool => $o['@self']['schema'] === 'RevenueContract'
 		);
 
 		self::assertGreaterThanOrEqual(4, count($contracts), 'Expect >= 4 worked-example contracts');

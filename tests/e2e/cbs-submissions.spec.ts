@@ -149,9 +149,34 @@ test.describe('CBS Submissions — list view', () => {
 	test('the submissions list renders through the generic CnDataTable', async ({
 		page,
 	}) => {
-		const table = page.getByTestId('cn-object-list-table')
-		const empty = page.getByTestId('cn-object-list-empty')
-		await expect(table.or(empty)).toBeVisible({ timeout: 15_000 })
+		// `cn-object-list-table` / `cn-object-list-empty` are CnObjectList's
+		// testids, and this page does not render CnObjectList.
+		// `/bookkeeping/cbs-submissions` is declared `type: "index"` with no
+		// `component` (src/manifest.d/bookkeeping-cbs-bestanden-extended.json),
+		// so CnIndexPage renders it — which is exactly what the sibling test
+		// above proves by finding `cn-index-page`. The old locators could never
+		// match, on any data, which is why this failed while the page was fine.
+		//
+		// Assert the same recognised index surface the rest of the suite uses
+		// (spec-coverage/_helpers.ts::assertIndexSurface): a data table, an
+		// empty-content block, rows, or the primary-action toolbar. Scoped to
+		// `#app-content-vue` — `#content-vue` also wraps the sidebar, which is
+		// identical on all ~107 pages and would satisfy any count.
+		const host = page.locator('#app-content-vue, main').first()
+		await expect(page.getByTestId('cn-index-page')).toBeVisible({
+			timeout: 15_000,
+		})
+
+		const tables = await host.locator('table:visible').count()
+		const empty = await host
+			.locator('.empty-content, .emptycontent, [class*="empty-content" i]')
+			.count()
+		const rows = await host.locator('[role="row"]').count()
+		const actionsBar = await page.getByTestId('cn-actions-bar').count()
+		expect(
+			tables + empty + rows + actionsBar,
+			'the CBS Submissions index rendered no table, no empty state, no rows and no actions bar',
+		).toBeGreaterThan(0)
 	})
 
 	/**

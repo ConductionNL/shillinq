@@ -45,7 +45,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Reporting\Generator;
 
-use PhpOffice\PhpWord\PhpWord;
+use OCA\Shillinq\Reporting\ReportSection;
 
 /**
  * Renders a balance sheet from Account balances (assets / liabilities / equity).
@@ -72,12 +72,12 @@ final class BalanceSheetReportGenerator extends AbstractDocumentReportGenerator 
 	/**
 	 * Build the balans body: assets vs. equity/liabilities from Account balances.
 	 *
-	 * @param PhpWord $phpWord The styled document.
+	 * @param ReportSection $section The block accumulator to fill.
 	 * @param array<string, mixed> $context `{ reportType, period, administrationId }`.
 	 *
 	 * @return void
 	 */
-	protected function build(PhpWord $phpWord, array $context): void {
+	protected function build(ReportSection $section, array $context): void {
 		$administrationId = $this->str($context, 'administrationId');
 		$accounts = $this->loadAccounts($administrationId);
 
@@ -92,7 +92,6 @@ final class BalanceSheetReportGenerator extends AbstractDocumentReportGenerator 
 
 		$grouped = $this->groupByType($accounts, $administrationId);
 
-		$section = $this->addSection($phpWord);
 		$this->addCover($section, 'Balans', 'Balans per peildatum', $context);
 
 		// --- Activa ---
