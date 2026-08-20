@@ -318,6 +318,14 @@ import WbsoTransactionsView from './views/bookkeeping/TransactionsView.vue'
 // drilldown. Registered as a kind:"page" custom component per ADR-024
 // (same pattern as SegmentPnLDashboard).
 import BudgetLineCommitments from './views/BudgetLineCommitments.vue'
+// budget-scenarios (REQ-BSC-008, design.md §9): the standalone scenario
+// comparison page composes an administration/fiscal-year/scenario PICKER
+// with a bespoke base/scenario/delta table calling
+// BudgetScenarioController::evaluate() — none of the declarative page types
+// (index/detail/dashboard) fit a picker-driven, non-register-bound table.
+// kind:"page" custom component; the manifest fragment
+// src/manifest.d/budget-scenarios.json declares the route.
+import BudgetScenarioComparison from './views/BudgetScenarioComparison.vue'
 // compliance-deadline-calendar (REQ-CDC-006): per-user category toggles
 // + reminder lead times for the compliance deadline calendar. Talks to
 // the strictly current-user-scoped /api/deadline-calendar/settings
@@ -491,6 +499,12 @@ export default {
 	AccountantPortalDashboard: {
 		kind: 'page',
 		component: AccountantPortalDashboard,
+	},
+
+	// budget-scenarios: standalone base/scenario/delta comparison page.
+	BudgetScenarioComparison: {
+		kind: 'page',
+		component: BudgetScenarioComparison,
 	},
 
 	// inventory-product-catalog (#860). See the import docblock above for why

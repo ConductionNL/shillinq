@@ -27,6 +27,7 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\Shillinq\Guard\BcfSubmissionGuard;
+use OCA\Shillinq\Guard\BudgetScenarioModifierGuard;
 use OCA\Shillinq\Guard\IntercompanyEliminationGuard;
 use OCA\Shillinq\Guard\Iv3SubmissionGuard;
 use OCA\Shillinq\Guard\Iv3XmlValidationGuard;
@@ -117,6 +118,7 @@ use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCA\Shillinq\Service\External\Uwv\LogUwvLoonaangifteAdapter;
 use OCA\Shillinq\Service\External\Uwv\UwvLoonaangifteAdapterInterface;
 use OCA\Shillinq\Service\InnovatieboxAuditEventLogger;
+use OCA\Shillinq\Service\KnownCostScheduleExpanderInterface;
 use OCA\Shillinq\Service\Payment\MolliePaymentProvider;
 use OCA\Shillinq\Service\Payment\PaymentProviderInterface;
 use OCA\Shillinq\Service\Peppol\LogPeppolTransmissionAdapter;
@@ -1106,7 +1108,7 @@ class Application extends App implements IBootstrap {
 			}
 		);
 
-		// budget-core-schema REQ-BCS-006 — the AnnualBudget.activate
+		// Budget-core-schema REQ-BCS-006 — the AnnualBudget.activate
 		// transition's `requires` tag
 		// (OCA\Shillinq\Lifecycle\AnnualBudgetDefaultGuard::isUniqueDefault)
 		// is a `Class::method`-shaped string, which per shillinq#425/#433
@@ -1123,6 +1125,61 @@ class Application extends App implements IBootstrap {
 					method: 'isUniqueDefault',
 					denyMessage: 'Another AnnualBudget already claims isDefault for this administration and fiscal year.',
 					logger: $c->get(LoggerInterface::class),
+				);
+			}
+		);
+
+		// Budget-scenarios REQ-BSC-004 — the BudgetScenarioModifier schema's
+		// `x-openregister-lifecycle.preconditions.save` tag
+		// (OCA\Shillinq\Guard\BudgetScenarioModifierGuard::validateOnSave) is a
+		// `Class::method`-shaped string, same shillinq#425/#433 resolution
+		// class every other guard on this list already works around.
+		// Registered (unlike the still-unregistered, pre-existing
+		// CashflowRecurringGuard/ProgrammaLinkGuard `preconditions.save` tags,
+		// shillinq#433's own fleet-wide gap, out of this change's scope) so
+		// this NEW guard actually enforces the one-unresolvable-conflict rule
+		// at runtime.
+		$context->registerService(
+			'OCA\Shillinq\Guard\BudgetScenarioModifierGuard::validateOnSave',
+			static function ($c): RegisterRequiresGuardAdapter {
+				return new RegisterRequiresGuardAdapter(
+					guard: $c->get(BudgetScenarioModifierGuard::class),
+					method: 'validateOnSave',
+					denyMessage: 'This modifier conflicts with an existing modifier in the same scenario, or is missing a required field for its type.',
+					logger: $c->get(LoggerInterface::class),
+				);
+			}
+		);
+
+		// Budget-scenarios REQ-BSC-006 — BudgetScenarioEvaluator depends on
+		// KnownCostScheduleExpanderInterface, not budget-known-costs's own
+		// concrete KnownCostScheduleExpander class directly, because that
+		// class lives on the sibling branch feat/budget-known-costs (PR #967)
+		// and does not exist in this checkout's dependency tree yet (see the
+		// interface's own docblock, lib/Service/
+		// KnownCostScheduleExpanderInterface.php). This binding resolves the
+		// interface to the real class via class_exists() AT RESOLUTION TIME
+		// (evaluated fresh on every container ->get(), never cached as a
+		// permanent stub) — once budget-known-costs lands and that class
+		// declares `implements KnownCostScheduleExpanderInterface`, this
+		// starts resolving to the real implementation with NO further code
+		// change here. Deliberately fails LOUD (throws) rather than silently
+		// substituting a no-op when the concrete class is still absent, so a
+		// missing integration reads as a clear error, not a passing test for
+		// the wrong reason.
+		$context->registerService(
+			KnownCostScheduleExpanderInterface::class,
+			static function ($c): KnownCostScheduleExpanderInterface {
+				$concreteClass = 'OCA\\Shillinq\\Service\\KnownCostScheduleExpander';
+				if (class_exists($concreteClass) === true) {
+					return $c->get($concreteClass);
+				}
+
+				throw new \RuntimeException(
+					'KnownCostScheduleExpander (budget-known-costs, PR #967) has not landed in '
+					. 'this checkout yet — BudgetScenarioEvaluator cannot evaluate RECURRING_* '
+					. 'modifiers until it does. This is the stated integration point '
+					. '(budget-scenarios design.md §6a, lib/Service/KnownCostScheduleExpanderInterface.php).'
 				);
 			}
 		);

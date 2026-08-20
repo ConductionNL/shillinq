@@ -556,6 +556,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'periodClose#lockAudit', 'url' => '/api/period-close/{periodId}/lock-audit', 'verb' => 'POST'],
             ['name' => 'periodClose#show', 'url' => '/api/period-close/{periodId}', 'verb' => 'GET'],
 
+            // Budget scenarios (budget-scenarios, REQ-BSC-002). isDefault is set
+            // exclusively via this endpoint (a service call, atomic demotion of
+            // the previous default) — never an x-openregister-lifecycle
+            // transition (BudgetScenarioDefaultPromoter's own docblock).
+            ['name' => 'budgetScenario#promote', 'url' => '/api/v1/budget-scenarios/{scenarioId}/promote', 'verb' => 'POST'],
+            ['name' => 'budgetScenario#evaluate', 'url' => '/api/v1/budget-scenarios/{scenarioId}/evaluate', 'verb' => 'GET'],
+
             // Continuous close + flux analysis (bookkeeping-soft-close-flux,
             // REQ-CLS-002, REQ-CLS-005, REQ-CLS-007). On-demand soft-close trigger
             // per administratie + on-demand flux run + flux narrative export
