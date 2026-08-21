@@ -186,17 +186,69 @@ async function openCreateDialog(page: Page) {
  * obj.title || id`, so a referenced `BudgetScenario`/`LedgerGroup` is
  * addressable by its own `name`. The listbox renders in a body-level
  * portal, so options are looked up on `page`, not inside the dialog.
+ *
+ * WHY NOT `getByRole('option', { name })`
+ * ---------------------------------------
+ * Because for any label of TEN CHARACTERS OR MORE it cannot match, and the
+ * reason is upstream rendering, not a missing option. `NcSelect` renders
+ * every option through `@nextcloud/vue`'s `NcEllipsisedOption`, which
+ * middle-truncates by splitting the label across TWO sibling spans —
+ * `needsTruncate = name.length >= 10`, `split = len - min(floor(len/2), 10)`:
+ *
+ *     <span class="name-parts" title="E2E modifier fixture 1787288143393">
+ *       <span class="name-parts__first">E2E modifier fixture 178</span>
+ *       <span class="name-parts__last">7288143393</span>
+ *     </span>
+ *
+ * Accessible-name computation concatenates sibling elements WITH A SEPARATING
+ * SPACE, so the option's accessible name is "E2E modifier fixture 178
+ * 7288143393" and an exact-name match against the real value can never
+ * succeed. Verified from CI run 32447166660's own trace: the listbox was
+ * open, `GET /apps/openregister/api/objects/shillinq/478?_limit=100` had
+ * returned `total: 1` — the fixture itself — and the single rendered option
+ * carried exactly that split name. The product was right; the locator could
+ * not see it.
+ *
+ * `textContent` has no such space (the two spans are adjacent with no
+ * whitespace node between them), so comparing WHITESPACE-STRIPPED
+ * `innerText` matches the real label. This is the same technique, and the
+ * same upstream defect, already documented and used by
+ * `setup-wizard-english.spec.ts`'s `findOptionByLabel()` ("Netherlands"
+ * rendering as "Nether lands").
+ *
+ * Note this is STRICTER than what it replaces, not looser: `optionName` is
+ * now a full-label equality check rather than a name pattern.
  */
 async function pickOption(
 	page: Page,
 	field: Locator,
-	optionName: string | RegExp,
+	optionName: string,
 	message: string,
 ): Promise<void> {
 	await field.click()
-	const option = page.getByRole('option', { name: optionName }).first()
-	await expect(option, message).toBeVisible({ timeout: 15_000 })
-	await option.click()
+
+	const options = page.getByRole('option')
+	const wanted = optionName.replace(/\s+/g, '')
+	const deadline = Date.now() + 15_000
+	let match: Locator | null = null
+
+	do {
+		const count = await options.count()
+		for (let i = 0; i < count; i++) {
+			const candidate = options.nth(i)
+			const text = await candidate.innerText().catch(() => '')
+			if (text.replace(/\s+/g, '') === wanted) {
+				match = candidate
+				break
+			}
+		}
+		if (match) break
+		await new Promise((resolve) => setTimeout(resolve, 200))
+	} while (Date.now() < deadline)
+
+	expect(match, message).not.toBeNull()
+	await expect(match as Locator, message).toBeVisible({ timeout: 15_000 })
+	await (match as Locator).click()
 }
 
 /**
@@ -274,6 +326,27 @@ function promoteButton(page: Page) {
  * backend, rather than only that a toast appeared.
  */
 async function promoteToDefault(page: Page): Promise<void> {
+	// Assert the button EXISTS before arming waitForResponse.
+	//
+	// waitForResponse's timeout starts when the promise is CREATED, not when
+	// the click happens. So if the click can never land, the response wait
+	// rejects first and blames a missing response — when the real cause is a
+	// button that was never rendered. That is precisely how this test failed
+	// opaquely in CI ("waitForResponse: Test timeout exceeded" at this line,
+	// with no indication the click never occurred).
+	//
+	// The action is gated by `visibleWhen: {field: isDefault, op: eq, value:
+	// false}`, and nc-vue compares with `actual === expected ||
+	// String(actual) === String(expected)`. An ABSENT isDefault (undefined)
+	// therefore does NOT match `false` and hides the button, while a stored
+	// `false` matches. Failing here says which of those happened.
+	await expect(
+		promoteButton(page).first(),
+		'the "Promote to default" action must be rendered before it can be clicked — '
+			+ 'it is gated by visibleWhen {isDefault eq false}, so if this fails the '
+			+ 'scenario either already IS default or stored no isDefault at all',
+	).toBeVisible({ timeout: 15_000 })
+
 	const promoted = page.waitForResponse(
 		(response) =>
 			/\/api\/v1\/budget-scenarios\/[^/]+\/promote$/.test(
@@ -516,6 +589,33 @@ test.describe('budget-scenarios — promote to default demotes the previous one 
 	test('promoting scenario B to default demotes scenario A in the same action', async ({
 		page,
 	}) => {
+		// PER-TEST BUDGET — 180s, and this number is MEASURED, from the trace
+		// of the run that failed on it (CI 32447166660, job 96670265262).
+		//
+		// The suite default is 60s, and `playwright.config.ts` derives it from
+		// "the slowest test that actually PASSES" — a rule that assumes an
+		// ordinary single-navigation test. This one is structurally different:
+		// it is the REQ-BSC-002 end-to-end invariant, and proving it needs FIVE
+		// full `page.goto` navigations, because every visibility verdict is
+		// deliberately read after a FRESH page load rather than trusting the
+		// api-call action to refresh the record in place (see the block above).
+		//
+		// On this instance a `page.goto` into the SPA costs ~11s. From that
+		// trace: 10.9s + 11.5s + 11.4s for the first three alone — 34s of the
+		// 60s cap spent on navigation before any assertion. The run reached
+		// "open scenario B" at 60.1s and was killed there; the two remaining
+		// index->detail cycles are ~15.5s each, so the whole test needs ~97s.
+		//
+		// 180s is 1.85x that, matching the per-test override
+		// `setup-wizard-english.spec.ts` already uses in this same suite.
+		//
+		// This is a budget, not a verdict: NOTHING here is skipped, softened or
+		// removed, and the test still fails if any assertion fails. The config's
+		// own note names the real fix — "fewer full-page navigations per test" —
+		// but every navigation here is load-bearing evidence for the invariant,
+		// so the honest move is to pay for them rather than to drop one.
+		test.setTimeout(180_000)
+
 		const stamp = uniqueSuffix()
 		const administrationId = await accessibleAdministrationId(page)
 		const nameA = `E2E scenario A ${stamp}`

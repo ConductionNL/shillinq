@@ -69,8 +69,9 @@
 					{"key": "status", "label": "Status", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"}
 				],
+				"_relatedCollectionsNote": "THE KEY IS `relatedCollections`, NOT `relatedLists`. CnDetailPage's prop is `relatedCollections`; CnPageRenderer spreads config onto props, so a `relatedLists` block lands in $attrs and renders NOTHING while every gate stays green. THE FILTER TOKEN IS `@objectId`: BudgetScenarioModifier.scenarioId is `format: uuid` with `$ref: BudgetScenario`, so the child stores the parent's UUID, and BudgetScenario exposes no flat business key (administrationId/description/isDefault/name/status) for `@object.<field>` to read.",
 				"relatedCollections": [
-					{"title": "Modifiers", "register": "shillinq", "schema": "BudgetScenarioModifier", "filter": {"scenarioId": "@objectId"}, "columns": [
+					{"id": "modifiers", "title": "Modifiers", "register": "shillinq", "schema": "BudgetScenarioModifier", "filter": {"scenarioId": "@objectId"}, "columns": [
 						{"key": "modifierType", "label": "Type"},
 						{"key": "effectiveDate", "label": "Effective date"},
 						{"key": "targetRecurId", "label": "Target recurring cost"},
