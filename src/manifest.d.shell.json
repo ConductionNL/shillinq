@@ -4862,6 +4862,31 @@
 		{
 			"menu": [
 				{
+					"id": "ReportingCompliance",
+					"children": [
+						{
+							"id": "SpendAnalytics",
+							"label": "Spend analysis",
+							"icon": "ChartBoxOutline",
+							"route": "SpendAnalytics",
+							"order": 15
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "spend-analytics-ui",
+					"id": "SpendAnalytics",
+					"route": "/reporting-compliance/spend-analytics",
+					"type": "dashboard",
+					"title": "Spend analysis"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "GeneralSettings",
 					"label": "General",
 					"icon": "CogOutline",

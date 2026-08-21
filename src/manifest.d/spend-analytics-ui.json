@@ -1,0 +1,60 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "spend-analytics-ui",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "First frontend consumer of GET /apps/shillinq/api/analytics/spend, which shipped fully implemented and unit-tested with zero consumers. Renders all four dimensions (supplier / category / costCentre / period). Rationale: openspec/changes/spend-analytics-ui/proposal.md."
+	},
+	"_menu_note": "NESTED, NOT TOP-LEVEL. shillinq is at ADR-097's six-cluster ceiling, reached hours ago by DEMOTING an entry, so no top-level slot is available to spend. This leaf merges into the existing ReportingCompliance cluster by menu id (mergeMenuItems in main.js), as budget-grid-view.json does under Budgets. Verified with tests/validate-nav-reachability.js: 51 top-level entries before and after.",
+	"menu": [
+		{
+			"id": "ReportingCompliance",
+			"children": [
+				{
+					"id": "SpendAnalytics",
+					"label": "Spend analysis",
+					"icon": "ChartBoxOutline",
+					"route": "SpendAnalytics",
+					"order": 15
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "SpendAnalytics",
+			"route": "/reporting-compliance/spend-analytics",
+			"type": "dashboard",
+			"title": "Spend analysis",
+			"slots": {
+				"widget-spend-analysis": "SpendAnalyticsPanel"
+			},
+			"config": {
+				"register": "shillinq",
+				"icon": "ChartBoxOutline",
+				"description": "Single-dimension spend analysis over the Accounts-Payable sub-ledger, scoped to your administration.",
+				"widgets": [
+					{
+						"id": "spend-analysis",
+						"title": "Spend analysis",
+						"type": "custom",
+						"iconClass": "icon-quota",
+						"_note": "Rendered through the page slot widget-spend-analysis -> SpendAnalyticsPanel (the CashflowChartWidget precedent on the Dashboard page). Not a declarative chart/stat widget because of how this endpoint FAILS: glline-administration-scope REQ-GLS-003 makes the three GL-backed views raise (HTTP 500) while the backfill is unproven, and CnChartWidget discards ep.error so a 500 renders as 'no data' — the silent zero that requirement exists to forbid. Full argument in the component's docblock."
+					}
+				],
+				"layout": [
+					{
+						"id": "layout-spend-analysis",
+						"widgetId": "spend-analysis",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 8,
+						"showTitle": false
+					}
+				]
+			}
+		}
+	]
+}
