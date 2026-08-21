@@ -237,14 +237,26 @@ test.describe('budget-core-schema — LedgerGroup seeded data (REQ-BCS-005)', ()
 			).toBeVisible({ timeout: 15_000 })
 		}
 
-		// design.md §3c: balance-sheet sections are deliberately NOT seeded —
-		// e.g. "Voorraden" (stock) and "Liquide middelen" (cash) never appear.
-		for (const balanceSheetLabel of ['Voorraden', 'Liquide middelen']) {
-			await expect(
-				body.getByText(balanceSheetLabel, { exact: true }),
-				`balance-sheet row "${balanceSheetLabel}" must NOT be seeded (design.md §3c)`,
-			).toHaveCount(0)
-		}
+		// design.md §3c: THIS capability's 19-row seed is P&L-shaped (sourced
+		// from `rj270-pl.json`), so it contributes no balance-sheet section.
+		//
+		// "Liquide middelen" (cash) is deliberately NOT asserted here any more.
+		// budget-scenarios legitimately seeds a cash LedgerGroup of that name
+		// (REQ-BSC-009, `register.d/budget-scenarios.json`) so its
+		// LEDGER_AMOUNT_DELTA modifier has an account to target — the product
+		// requires scenarios that move money to the bank on a given date, which
+		// is inherently a balance-sheet effect.
+		//
+		// The original assertion claimed "no balance-sheet row may exist
+		// ANYWHERE in the register", which is a stronger proposition than
+		// design.md §3c actually makes. Once another capability legitimately
+		// seeds one, that assertion tests the wrong thing and fails on a
+		// correct system. "Voorraden" (stock) stays asserted: nothing seeds it,
+		// so it still witnesses that this capability's own seed is P&L-shaped.
+		await expect(
+			body.getByText('Voorraden', { exact: true }),
+			'balance-sheet row "Voorraden" must NOT be seeded by budget-core-schema (design.md §3c)',
+		).toHaveCount(0)
 	})
 
 	/**
