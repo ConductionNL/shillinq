@@ -123,6 +123,28 @@ function uniqueSuffix(): string {
 }
 
 /**
+ * A per-run-unique `effectiveDate` for the modifier fixture, so each run's
+ * object carries distinct data on an index shared with every other run.
+ *
+ * NOT used to locate the row: the table renders a LOCALE-FORMATTED date (this
+ * instance renders Dutch), never the ISO string the form was given, so
+ * filtering on this value matched nothing. The row is addressed by the id the
+ * create response returns instead.
+ *
+ * Spreads over ~27 years of distinct days (10_000 days from 2027-01-01), keyed
+ * off the same clock as {@link uniqueSuffix}, so two runs collide only if they
+ * land on the same millisecond-derived day index.
+ *
+ * @return {string} An ISO `YYYY-MM-DD` date.
+ */
+function uniqueEffectiveDate(): string {
+	const base = Date.UTC(2027, 0, 1)
+	const dayOffset = Date.now() % 10_000
+	const d = new Date(base + dayOffset * 86_400_000)
+	return d.toISOString().slice(0, 10)
+}
+
+/**
  * The administration the signed-in user actually holds a membership for.
  *
  * This CANNOT be an invented value. `BudgetScenarioController::promote`
@@ -534,7 +556,22 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 			'REQ-BSC-009: the seeded "Liquide middelen" LedgerGroup must be a pickable LEDGER_AMOUNT_DELTA target on a fresh import',
 		)
 
-		await dialog.getByLabel(/^Effective Date/i).fill('2027-09-01')
+		// A UNIQUE effective date, because it is the only column on the
+		// BudgetScenarioModifiers index that this test can make unique.
+		//
+		// The three columns are scenarioId / modifierType / effectiveDate.
+		// scenarioId renders the raw stored value — a UUID (the property is
+		// `format: uuid`, `$ref: BudgetScenario`) — so the scenario's unique
+		// NAME never appears in the row, and modifierType is shared by every
+		// LEDGER_AMOUNT_DELTA row in the administration. Selecting the row by
+		// type alone therefore picks whatever row happens to sort first, which
+		// on a shared administration is somebody else's.
+		//
+		// That is not hypothetical: it started failing the moment the promote
+		// 500 was fixed, because the promotion test then began completing and
+		// leaving extra rows behind instead of aborting early.
+		const effectiveDate = uniqueEffectiveDate()
+		await dialog.getByLabel(/^Effective Date/i).fill(effectiveDate)
 		await dialog.getByLabel(/^Amount Delta/i).fill('-500000')
 
 		const submit = dialog.getByRole('button', { name: 'Create', exact: true })
@@ -542,22 +579,52 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 			submit,
 			'every required BudgetScenarioModifier field must be filled before Create enables',
 		).toBeEnabled({ timeout: 10_000 })
+
+		// Take the created object's OWN id from the POST, rather than trying to
+		// recognise its row by rendered text.
+		//
+		// Two earlier attempts failed on exactly that, for two different
+		// reasons, and both were invisible from the assertion message:
+		//   - filtering by modifierType alone matched ANY LEDGER_AMOUNT_DELTA
+		//     row, so `.first()` clicked another run's object on a shared
+		//     administration;
+		//   - filtering additionally by the ISO effectiveDate matched NOTHING,
+		//     because the table renders a LOCALE-FORMATTED date (this instance
+		//     renders Dutch) and never the `YYYY-MM-DD` the form was given.
+		//
+		// The id is the one identifier that is neither shared nor reformatted.
+		// waitForResponse is armed only AFTER the trigger is proven enabled
+		// above, because its timeout starts when the promise is CREATED — arm
+		// it before an unclickable trigger and it rejects first and blames the
+		// response for a click that never happened.
+		const created = page.waitForResponse(
+			(r) =>
+				/\/objects\/[^/]+\/BudgetScenarioModifier(\?|$)/.test(
+					new URL(r.url()).pathname + (new URL(r.url()).search ? '?' : ''),
+				) && r.request().method() === 'POST',
+			{ timeout: 25_000 },
+		)
 		await submit.click()
+		const createdResponse = await created
+		expect(
+			createdResponse.status(),
+			'creating a BudgetScenarioModifier must succeed',
+		).toBeLessThan(300)
+		const createdBody = await createdResponse.json()
+		const modifierId = String(
+			createdBody?.id ?? createdBody?.['@self']?.id ?? '',
+		)
+		expect(
+			modifierId,
+			"the create response must carry the new modifier id — without it this test cannot tell its own object from another run's",
+		).not.toBe('')
+
 		await expect(dialog).toBeHidden({ timeout: 15_000 })
 
-		// Creating from an index page refreshes the list in place rather than
-		// navigating to the new object's detail page, so the saved modifier is
-		// asserted on the index row it now owns.
-		const modifierRow = page
-			.locator('table tbody tr')
-			.filter({ hasText: 'LEDGER_AMOUNT_DELTA' })
-		await expect(
-			modifierRow.first(),
-			'the saved LEDGER_AMOUNT_DELTA modifier must appear on the BudgetScenarioModifiers index',
-		).toBeVisible({ timeout: 15_000 })
-
-		// …and its own detail page must render the type it was saved with.
-		await modifierRow.first().click()
+		// Its own detail page, addressed by id, must render the type it was
+		// saved with. Navigating directly also removes the row-click step,
+		// which was where the wrong-object confusion entered.
+		await gotoRoute(page, `/begroting/scenario-modifiers/${modifierId}`)
 		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
 			timeout: 15_000,
 		})
