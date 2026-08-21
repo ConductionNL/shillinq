@@ -244,13 +244,43 @@ test.describe('CBS Submissions — delete-own-draft flow', () => {
 			)
 			await expect(confirmDialog).toBeVisible({ timeout: 10_000 })
 
+			// The confirm button is NOT inside `confirmDialog`. CnDeleteDialog
+			// puts its Cancel/Delete buttons in NcDialog's `#actions` slot, and
+			// NcDialog renders that slot into `.dialog__actions` — a SIBLING of
+			// `.dialog__wrapper > .dialog__content`, which is where the
+			// `data-testid-phase` marker div lives. Scoping the button lookup to
+			// `confirmDialog` therefore matched ZERO buttons (that div holds only
+			// an NcNoteCard), so nothing was ever clicked, no DELETE went out, and
+			// the run died on `waitForResponse` 15s later rather than on the click.
+			// The old `{ name: /delete/i }` was a second, independent miss: this
+			// instance renders the dialog in Dutch — the buttons are "Annuleren"
+			// and "Verwijderen", so an English name regex matches nothing even
+			// when correctly scoped.
+			//
+			// Locate it instead by the destructive `variant="error"` NcButton that
+			// CnDeleteDialog gives the confirm action (`button-vue--error`) — the
+			// only error-variant button in the dialog, and language-independent.
+			// The `toHaveCount(1)` below is the guard that keeps this honest: if
+			// nc-vue ever restructures the dialog, this fails loudly instead of
+			// silently selecting Cancel or nothing.
+			const deleteDialog = page
+				.locator('.dialog')
+				.filter({ has: confirmDialog })
+			const confirmButton = deleteDialog.locator(
+				'.dialog__actions button.button-vue--error',
+			)
+			await expect(
+				confirmButton,
+				"CnDeleteDialog must expose exactly one destructive confirm button in the dialog's actions",
+			).toHaveCount(1)
+
 			const deleteRequest = page.waitForResponse(
 				(response) =>
 					response.url().includes(`/CBSSubmission/${seeded.id}`)
 					&& response.request().method() === 'DELETE',
 				{ timeout: 15_000 },
 			)
-			await confirmDialog.getByRole('button', { name: /delete/i }).click()
+			await confirmButton.click()
 			const deleteResponse = await deleteRequest
 			expect(
 				deleteResponse.status(),
