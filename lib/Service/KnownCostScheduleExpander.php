@@ -93,9 +93,20 @@ use DateTimeImmutable;
  * Pure `CashflowRecurring` -> 12-monthly-cents schedule arithmetic.
  * Reads nothing; every input is the caller's own already-loaded row.
  *
+ * Declares `implements KnownCostScheduleExpanderInterface` to close the
+ * integration seam budget-scenarios declared for it. Until this declaration
+ * existed, `BudgetScenarioRegistration` refused to bind the interface and
+ * threw by design, so `BudgetScenarioEvaluator` could not evaluate any
+ * `RECURRING_*` modifier at all. Both PRs were green in isolation and red
+ * only once both were on `development` — the class landed with #967 and the
+ * binding with #981, and neither could observe the other.
+ *
+ * The signature already matched the interface exactly, as that interface's
+ * own docblock states; only the declaration was missing.
+ *
  * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-003
  */
-class KnownCostScheduleExpander {
+class KnownCostScheduleExpander implements KnownCostScheduleExpanderInterface {
 	/**
 	 * Zero-padded month keys, `"01"` through `"12"`, in calendar order.
 	 *
