@@ -314,18 +314,12 @@ roll-up uses the live aggregation, not the exported snapshots.
 
 ### What if a deadline reminder doesn't arrive?
 
-> ⚠️ **Deadline reminders do not currently send.**
-> `TaxDeadlineReminderJob` is implemented and unit-tested, but it is **not
-> registered in `appinfo/info.xml`**, so Nextcloud never schedules it and it has
-> never run. Looking for it in `oc_background_jobs` or on the admin **Jobs**
-> page will find nothing — that is expected, not a broken install.
->
-> Enabling it is a deliberate decision rather than an oversight to correct
-> quietly: registering the job starts dispatching reminders to real users, and
-> a message once sent cannot be recalled. Track the deadlines yourself until
-> then.
+`TaxDeadlineReminderJob` is registered in `appinfo/info.xml` and runs on a
+24-hour interval, so it appears in `oc_background_jobs` and on the admin
+**Jobs** page. If it is absent there, that is a broken install, not the
+expected state.
 
-Once the job **is** registered, two reasons in practice:
+Two reasons a reminder does not arrive, in practice:
 
 1. The recipient's Nextcloud notification panel is paused or filtered
    for the `shillinq-vpb` notification source. Check Settings →
