@@ -238,11 +238,25 @@ test.describe('CBS Submissions — delete-own-draft flow', () => {
 			await row.getByTestId('cn-row-actions').click()
 			await page.getByTestId('cn-action-item-delete').click()
 
-			// Confirm in CnDeleteDialog's confirm phase.
-			const confirmDialog = page.locator(
+			// Wait for CnDeleteDialog to reach its confirm phase...
+			const confirmPhase = page.locator(
 				'[data-testid-modal="cn-delete-dialog"][data-testid-phase="confirm"]',
 			)
-			await expect(confirmDialog).toBeVisible({ timeout: 10_000 })
+			await expect(confirmPhase).toBeVisible({ timeout: 10_000 })
+
+			// ...but take the button from the DIALOG, not from that marker.
+			//
+			// `data-testid-phase="confirm"` sits on the div holding the warning
+			// NcNoteCard; the Cancel/Delete buttons live in NcDialog's `#actions`
+			// slot, which is a SIBLING of it (see CnDeleteDialog.vue in
+			// @conduction/nextcloud-vue). Scoping the button lookup to the phase
+			// marker searches a subtree that contains no buttons at all, so the
+			// click hangs — and because `waitForResponse` below starts its 15s
+			// timer before the click is awaited, IT rejects first. The failure
+			// therefore pointed at the response wait and read as "the app never
+			// issued a DELETE", when nothing had been clicked. The trace shows it:
+			// 78 GETs, one unrelated user_status PUT, and no DELETE.
+			const confirmDialog = page.getByRole('dialog').filter({ has: confirmPhase })
 
 			const deleteRequest = page.waitForResponse(
 				(response) =>
@@ -250,7 +264,7 @@ test.describe('CBS Submissions — delete-own-draft flow', () => {
 					&& response.request().method() === 'DELETE',
 				{ timeout: 15_000 },
 			)
-			await confirmDialog.getByRole('button', { name: /delete/i }).click()
+			await confirmDialog.getByRole('button', { name: /^delete$/i }).click()
 			const deleteResponse = await deleteRequest
 			expect(
 				deleteResponse.status(),
