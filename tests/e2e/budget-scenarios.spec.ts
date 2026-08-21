@@ -123,8 +123,13 @@ function uniqueSuffix(): string {
 }
 
 /**
- * A per-run-unique `effectiveDate`, used to identify THIS run's modifier row
- * on an index shared with every other run's rows.
+ * A per-run-unique `effectiveDate` for the modifier fixture, so each run's
+ * object carries distinct data on an index shared with every other run.
+ *
+ * NOT used to locate the row: the table renders a LOCALE-FORMATTED date (this
+ * instance renders Dutch), never the ISO string the form was given, so
+ * filtering on this value matched nothing. The row is addressed by the id the
+ * create response returns instead.
  *
  * Spreads over ~27 years of distinct days (10_000 days from 2027-01-01), keyed
  * off the same clock as {@link uniqueSuffix}, so two runs collide only if they
@@ -574,32 +579,52 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 			submit,
 			'every required BudgetScenarioModifier field must be filled before Create enables',
 		).toBeEnabled({ timeout: 10_000 })
+
+		// Take the created object's OWN id from the POST, rather than trying to
+		// recognise its row by rendered text.
+		//
+		// Two earlier attempts failed on exactly that, for two different
+		// reasons, and both were invisible from the assertion message:
+		//   - filtering by modifierType alone matched ANY LEDGER_AMOUNT_DELTA
+		//     row, so `.first()` clicked another run's object on a shared
+		//     administration;
+		//   - filtering additionally by the ISO effectiveDate matched NOTHING,
+		//     because the table renders a LOCALE-FORMATTED date (this instance
+		//     renders Dutch) and never the `YYYY-MM-DD` the form was given.
+		//
+		// The id is the one identifier that is neither shared nor reformatted.
+		// waitForResponse is armed only AFTER the trigger is proven enabled
+		// above, because its timeout starts when the promise is CREATED — arm
+		// it before an unclickable trigger and it rejects first and blames the
+		// response for a click that never happened.
+		const created = page.waitForResponse(
+			(r) =>
+				/\/objects\/[^/]+\/BudgetScenarioModifier(\?|$)/.test(
+					new URL(r.url()).pathname + (new URL(r.url()).search ? '?' : ''),
+				) && r.request().method() === 'POST',
+			{ timeout: 25_000 },
+		)
 		await submit.click()
+		const createdResponse = await created
+		expect(
+			createdResponse.status(),
+			'creating a BudgetScenarioModifier must succeed',
+		).toBeLessThan(300)
+		const createdBody = await createdResponse.json()
+		const modifierId = String(
+			createdBody?.id ?? createdBody?.['@self']?.id ?? '',
+		)
+		expect(
+			modifierId,
+			"the create response must carry the new modifier id — without it this test cannot tell its own object from another run's",
+		).not.toBe('')
+
 		await expect(dialog).toBeHidden({ timeout: 15_000 })
 
-		// Creating from an index page refreshes the list in place rather than
-		// navigating to the new object's detail page, so the saved modifier is
-		// asserted on the index row it now owns.
-		// Both filters, so this is THIS run's row and not merely A row of the
-		// right type. Asserting toHaveCount(1) makes an ambiguous match fail
-		// loudly instead of silently resolving to somebody else's modifier —
-		// which is exactly how this assertion passed while the detail-page
-		// assertion below failed on a different object.
-		const modifierRow = page
-			.locator('table tbody tr')
-			.filter({ hasText: 'LEDGER_AMOUNT_DELTA' })
-			.filter({ hasText: effectiveDate })
-		await expect(
-			modifierRow,
-			`exactly one LEDGER_AMOUNT_DELTA modifier dated ${effectiveDate} must exist — this run's own`,
-		).toHaveCount(1, { timeout: 15_000 })
-		await expect(
-			modifierRow.first(),
-			'the saved LEDGER_AMOUNT_DELTA modifier must appear on the BudgetScenarioModifiers index',
-		).toBeVisible({ timeout: 15_000 })
-
-		// …and its own detail page must render the type it was saved with.
-		await modifierRow.first().click()
+		// Its own detail page, addressed by id, must render the type it was
+		// saved with. Navigating directly also removes the row-click step,
+		// which was where the wrong-object confusion entered.
+		await gotoRoute(page, `/begroting/scenario-modifiers/${modifierId}`)
 		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
 			timeout: 15_000,
 		})
