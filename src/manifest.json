@@ -4738,6 +4738,20 @@
 				"sidebarProps": {
 					"tabs": [
 						{
+							"id": "trend",
+							"label": "Trend",
+							"icon": "ChartLine",
+							"order": 95,
+							"widgets": [
+								{
+									"type": "BudgetTrendChart",
+									"props": {
+										"scope": "account"
+									}
+								}
+							]
+						},
+						{
 							"id": "audit",
 							"label": "Audit Trail",
 							"icon": "History",

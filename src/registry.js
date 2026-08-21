@@ -46,6 +46,20 @@ import BbvLinkerFilterBar from './components/bbv-provincie/BbvLinkerFilterBar.vu
 // ReportingComplianceOverview above already uses; Reporting & Compliance
 // itself reuses that existing page rather than getting a new one.
 import BookkeepingOverview from './components/bookkeeping/BookkeepingOverview.vue'
+// budget-charts (REQ-BCH-007): the shared actual/projected/begroot
+// trend+cumulative chart, registered ONCE and consumed from TWO placements —
+// BudgetGrid's per-row inline chart (a direct .vue import, no registry
+// lookup needed there) and ChartOfAccountsDetail's sidebar tab, which DOES
+// need a registry lookup: CnObjectSidebar's `tabs[].widgets[].type`
+// resolves any non-built-in type against the flat customComponents map
+// main.js derives from EVERY entry here (regardless of `kind`), so this one
+// `kind:"widget"` entry — matching CashflowChartWidget's own kind exactly,
+// per design.md §6 — is sufficient for both placements; no separate
+// `kind:"sidebarTab"` entry is needed (verified by reading
+// CnObjectSidebar.vue's `resolveWidgetComponent()`/`resolveTabComponent()`
+// and main.js's `customComponentsProp` derivation — the budget-charts
+// design.md §1b spike's own finding, recorded there in full).
+import BudgetTrendChart from './components/budget-charts/BudgetTrendChart.vue'
 // bookkeeping-waterschappen-bbv-variant slice 07 (REQ-BBVW-004): the
 // Budget Mapping detail page composes two bespoke autocomplete pickers
 // (Chart of Accounts + BBVProgramme), a live per-account allocation
@@ -479,6 +493,19 @@ export default {
 		kind: 'widget',
 		component: CashflowChartWidget,
 		_note: 'Merges realized GL lines with the 13-week forecast (two data sources) into one chart — no built-in chart widget joins two sources (ADR-049 Phase-4 survivor).',
+	},
+
+	// budget-charts (REQ-BCH-007): actual/projected/begroot trend+cumulative
+	// chart, shared by BudgetGrid's inline placement and
+	// ChartOfAccountsDetail's sidebar tab. Custom kind:"widget" because the
+	// declarative type:"chart" dialect has no per-series dashed/dimmed
+	// styling, no two-source (GL actuals + growth-rate projection) merge,
+	// and no point-level `unprojectable` marker+tooltip — see the import
+	// docblock above.
+	BudgetTrendChart: {
+		kind: 'widget',
+		component: BudgetTrendChart,
+		_note: 'Actual/projected/begroot trend+cumulative chart with a dashed-not-colour-only projected seam and a point-level unprojectable marker — no declarative series[].path array can express either.',
 	},
 
 	// add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007).
