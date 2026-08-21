@@ -2919,7 +2919,24 @@
         "VAT/BTW filing, KOR, income tax, deferred tax, WBSO and R&D grants.": "VAT/BTW filing, KOR, income tax, deferred tax, WBSO and R&D grants.",
         "WBSO & R&D": "WBSO & R&D",
         "WBSO Activity Codes": "WBSO Activity Codes",
-        "Year-end close checklist": "Year-end close checklist"
+        "Year-end close checklist": "Year-end close checklist",
+        "Actual: {amount}": "Actual: {amount}",
+        "Administration not found.": "Administration not found.",
+        "Budget grid": "Budget grid",
+        "Difference: {amount}": "Difference: {amount}",
+        "End period": "End period",
+        "Failed to load the budget grid.": "Failed to load the budget grid.",
+        "Favorable:": "Favorable:",
+        "Granularity": "Granularity",
+        "Ledger group": "Ledger group",
+        "Ledger groups roll up GL accounts across a selectable period range. Past periods show actuals and the deviation from budget; the final column carries the running cumulative totals.": "Ledger groups roll up GL accounts across a selectable period range. Past periods show actuals and the deviation from budget; the final column carries the running cumulative totals.",
+        "Loading budget grid": "Loading budget grid",
+        "No accessible administration.": "No accessible administration.",
+        "No ledger groups": "No ledger groups",
+        "No LedgerGroup records exist yet for this administration. Create ledger groups to build a budget.": "No LedgerGroup records exist yet for this administration. Create ledger groups to build a budget.",
+        "Not logged in.": "Not logged in.",
+        "Start period": "Start period",
+        "Unfavorable:": "Unfavorable:"
     },
     "plurals": ""
 }

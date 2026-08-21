@@ -3870,6 +3870,118 @@
 		{
 			"menu": [
 				{
+					"id": "Budgets",
+					"label": "Budgets",
+					"icon": "PiggyBankOutline",
+					"order": 29,
+					"children": [
+						{
+							"id": "AnnualBudgets",
+							"label": "Annual Budgets",
+							"icon": "CalendarRange",
+							"route": "AnnualBudgets",
+							"order": 10
+						},
+						{
+							"id": "LedgerGroups",
+							"label": "Ledger Groups",
+							"icon": "FormatListGroup",
+							"route": "LedgerGroups",
+							"order": 20
+						},
+						{
+							"id": "BudgetLines",
+							"label": "Budget Lines",
+							"icon": "TableColumn",
+							"route": "BudgetLines",
+							"order": 30
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "budget-core-schema",
+					"id": "AnnualBudgets",
+					"route": "/begroting/annual-budgets",
+					"type": "index",
+					"title": "Annual Budgets"
+				},
+				{
+					"_fragment": "budget-core-schema",
+					"id": "AnnualBudgetDetail",
+					"route": "/begroting/annual-budgets/:id",
+					"type": "detail",
+					"title": "Annual Budget"
+				},
+				{
+					"_fragment": "budget-core-schema",
+					"id": "LedgerGroups",
+					"route": "/begroting/ledger-groups",
+					"type": "index",
+					"title": "Ledger Groups"
+				},
+				{
+					"_fragment": "budget-core-schema",
+					"id": "LedgerGroupDetail",
+					"route": "/begroting/ledger-groups/:id",
+					"type": "detail",
+					"title": "Ledger Group"
+				},
+				{
+					"_fragment": "budget-core-schema",
+					"id": "BudgetLines",
+					"route": "/begroting/budget-lines",
+					"type": "index",
+					"title": "Budget Lines"
+				},
+				{
+					"_fragment": "budget-core-schema",
+					"id": "BudgetLineDetail",
+					"route": "/begroting/budget-lines/:id",
+					"type": "detail",
+					"title": "Budget Line"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Budgets",
+					"label": "Budgets",
+					"icon": "PiggyBankOutline",
+					"order": 29,
+					"children": [
+						{
+							"id": "BudgetLineDerivations",
+							"label": "Derivations",
+							"icon": "SourceBranch",
+							"route": "BudgetLineDerivations",
+							"order": 40
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "budget-known-costs",
+					"id": "BudgetLineDerivations",
+					"route": "/begroting/derivations",
+					"type": "index",
+					"title": "Budget Line Derivations"
+				},
+				{
+					"_fragment": "budget-known-costs",
+					"id": "BudgetLineDerivationDetail",
+					"route": "/begroting/derivations/:id",
+					"type": "detail",
+					"title": "Budget Line Derivation"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "DeadlineCalendarSettings",
 					"label": "Deadline calendar",
 					"icon": "ClockAlertOutline",
