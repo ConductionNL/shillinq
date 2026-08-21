@@ -394,19 +394,18 @@ class ServiceReceiptService {
 	 * @throws \RuntimeException When no confirmation mode is supplied.
 	 */
 	private function deriveQuantity(array $payload, array $poLine): float {
-		if (isset($payload['quantityConfirmed']) === true && $payload['quantityConfirmed'] !== null && $payload['quantityConfirmed'] !== '') {
+		if (isset($payload['quantityConfirmed']) === true && $payload['quantityConfirmed'] !== '') {
 			return $this->normaliseQuantity(value: $payload['quantityConfirmed']);
 		}
 
 		$orderedQuantity = (float)($poLine['quantityOrdered'] ?? 0);
 
-		if (isset($payload['percentageComplete']) === true && $payload['percentageComplete'] !== null && $payload['percentageComplete'] !== '') {
+		if (isset($payload['percentageComplete']) === true && $payload['percentageComplete'] !== '') {
 			$basisPoints = (int)$payload['percentageComplete'];
 			return $this->normaliseQuantity(value: (($orderedQuantity * $basisPoints) / 10000.0));
 		}
 
 		$amountSupplied = (isset($payload['amountConfirmedCents']) === true
-			&& $payload['amountConfirmedCents'] !== null
 			&& $payload['amountConfirmedCents'] !== '');
 		if ($amountSupplied === true) {
 			$unitPriceCents = (int)($poLine['unitPrice'] ?? 0);

@@ -84,13 +84,14 @@
 					{ "key": "relatedPeriodId", "label": "Related period", "type": "string" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
-				"relatedLists": [
-					{"id": "payments", "title": "Payments for this deadline", "schema": "TaxPaymentTracking", "foreignKey": "relatedDeadlineId", "columns": [
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`; a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing while every gate stays green. TOKEN: `@objectId`. ⚠️ TaxPaymentTracking.relatedDeadlineId is documented as 'slug or id' — a slug lives at `@self.slug`, which `@object.<field>` cannot reach, and TaxDeadline exposes no flat deadline-key field (deadlineDate/deadlineType/relatedPeriodId are different values). `@objectId` is the only reachable half of that either/or; rows written with the slug spelling will not appear here until the FK is normalised to the id.",
+				"relatedCollections": [
+					{"title": "Payments for this deadline", "register": "shillinq", "schema": "TaxPaymentTracking", "filter": {"relatedDeadlineId": "@objectId"}, "columns": [
 						{"key": "paymentDate", "label": "Paid"},
 						{"key": "paymentType", "label": "Type"},
 						{"key": "amount", "label": "Amount"},
 						{"key": "status", "label": "Status"}
-					], "detailRoute": "VpbPaymentDetail"}
+					], "rowRoute": "VpbPaymentDetail"}
 				],
 				"auditTrail": true,
 				"indexRoute": "VpbDeadlines",
@@ -150,13 +151,7 @@
 					{ "key": "description", "label": "Description", "type": "string" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
-				"relatedLists": [
-					{"id": "deadline", "title": "Settled deadline", "schema": "TaxDeadline", "foreignKey": "id", "join": "relatedDeadlineId", "columns": [
-						{"key": "deadlineDate", "label": "Deadline"},
-						{"key": "deadlineType", "label": "Type"},
-						{"key": "status", "label": "Status"}
-					], "detailRoute": "VpbDeadlineDetail"}
-				],
+				"_relatedListsExclude": "'Settled deadline' NOT converted — removed rather than faked. It was declared under `relatedLists` (not a prop on any Cn page component, so it never rendered) as an INVERSE lookup: `foreignKey: 'id', join: 'relatedDeadlineId'`, i.e. 'show the ONE TaxDeadline whose identity equals this payment's relatedDeadlineId'. `relatedCollections` cannot express that: its filter matches CHILD PAYLOAD fields, and `id` is not a payload property on TaxDeadline (its properties are deadlineDate/deadlineType/description/fiscalYear/quarter/status/relatedPeriodId/administrationId) — object identity lives at `@self.id`, which the filter path does not address. This is a parent lookup, not a child collection; it belongs in a relationLinks/FK-resolve cell (CnFkResolveCell) rather than a related-collection section. See the relatedLists sweep report.",
 				"auditTrail": true,
 				"indexRoute": "VpbPayments",
 				"sidebarProps": {

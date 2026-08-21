@@ -71,7 +71,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "Controleprotocol",
-				"_note": "CONFIG archetype — the controleprotocol is the governing audit framework (materiality base/amount, reference framework, adoption decision, validity window) that tolerance matrices and audit statements hang off. Native shillinq detail contract: config.aggregations[] surface the materiality-amount currency KPI so an auditor sees the threshold first; config.fields[] render the protocol data; config.relatedLists[] list the tolerance matrices defined under this protocol (ToleranceMatrix, FK protocol=@self.id); and the sidebar carries an audit-trail tab. NO comms/files — a protocol is a policy record, not correspondence.",
+				"_note": "CONFIG archetype — the controleprotocol is the governing audit framework (materiality base/amount, reference framework, adoption decision, validity window) that tolerance matrices and audit statements hang off. Native shillinq detail contract: config.aggregations[] surface the materiality-amount currency KPI so an auditor sees the threshold first; config.fields[] render the protocol data; config.relatedCollections[] list the tolerance matrices defined under this protocol (ToleranceMatrix, FK protocol=@objectId). KEY+TOKEN: the prop is `relatedCollections` (a `relatedLists` block lands in $attrs and renders nothing), and the token is `@objectId`, NOT `@self.id` — `@self.id` is not a token resolveFilterTokens.js knows, so it passed through unresolved and the widget skipped the query. Controleprotocol has no flat business key in its payload and OCA\\Shillinq\\Service\\BadoControleprotocolService resolves `protocol` by object identity, so the child holds the protocol's UUID; and the sidebar carries an audit-trail tab. NO comms/files — a protocol is a policy record, not correspondence.",
 				"aggregations": [
 					{ "id": "materialityAmount", "title": "Materiality amount", "field": "materialityAmount", "metric": "value", "format": "currency" }
 				],
@@ -86,8 +86,8 @@
 					{ "key": "effectiveTo", "label": "Effective To", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
-				"relatedLists": [
-					{ "id": "tolerance-matrices", "title": "Tolerance matrices", "schema": "ToleranceMatrix", "filter": { "protocol": "@self.id" }, "columns": [
+				"relatedCollections": [
+					{ "title": "Tolerance matrices", "register": "shillinq", "schema": "ToleranceMatrix", "filter": { "protocol": "@objectId" }, "columns": [
 						{ "key": "topic", "label": "Topic" },
 						{ "key": "faithfulnessApprovalCeiling", "label": "Fair pres. approval %" },
 						{ "key": "lawfulnessApprovalCeiling", "label": "Lawfulness approval %" },

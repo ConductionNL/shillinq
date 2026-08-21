@@ -336,7 +336,7 @@ class StockReservationGuard {
 				]
 			);
 
-		if (is_array($rows) === false || count($rows) === 0) {
+		if (count($rows) === 0) {
 			return null;
 		}
 
