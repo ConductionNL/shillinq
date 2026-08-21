@@ -494,6 +494,24 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 			timeout: 15_000,
 		})
 
+		// Snapshot the index BEFORE creating, so the new row can be identified
+		// by difference rather than by any single column's rendering.
+		//
+		// Scoping by the scenario NAME does not work: the `Scenario` column
+		// renders the `$ref`'s raw id, not the referenced object's name — a
+		// name filter matched 0 rows when this was tried. Scoping by the
+		// modifier's own fields does not work either: the effective date and
+		// amount are hardcoded, so every run's modifier looks identical.
+		//
+		// The row's text DOES differ, because each run's scenario id differs.
+		// Diffing before/after therefore identifies this run's row without
+		// depending on column order, on locale-formatted dates, or on how a
+		// `$ref` happens to be rendered today.
+		const modifierRows = page
+			.locator('table tbody tr')
+			.filter({ hasText: 'LEDGER_AMOUNT_DELTA' })
+		const rowsBefore = new Set(await modifierRows.allTextContents())
+
 		const dialog = await openCreateDialog(page)
 
 		// Labels come from the schema `title` plus the required marker, e.g.
@@ -549,29 +567,29 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 		// navigating to the new object's detail page, so the saved modifier is
 		// asserted on the index row it now owns.
 		//
-		// SCOPED TO THIS TEST'S OWN SCENARIO, not to the modifier type alone.
-		// Every previous run leaves a LEDGER_AMOUNT_DELTA modifier on this
-		// index carrying the same hardcoded date and amount, so filtering on
-		// the type and taking `.first()` picked an arbitrary run's row —
-		// including rows whose scenario has since been cleaned up, whose
-		// detail page then renders no data and fails the type assertion below.
-		// Observed intermittently: 2 of 6 runs, always on that assertion.
-		//
-		// The scenario name is unique per run (`uniqueSuffix()`) and the index
-		// carries a `Scenario` column, so the row this test created is
-		// identifiable without depending on ordering or on cleanup.
-		const modifierRow = page
-			.locator('table tbody tr')
-			.filter({ hasText: 'LEDGER_AMOUNT_DELTA' })
-			.filter({ hasText: scenarioName })
+		// IDENTIFIED BY DIFFERENCE against the snapshot taken before the
+		// create, not by `.first()` on the type. Every previous run leaves a
+		// LEDGER_AMOUNT_DELTA modifier here with the same hardcoded date and
+		// amount, so `.first()` picked an arbitrary run's row — including rows
+		// whose scenario had since been cleaned up, whose detail page then
+		// renders no data and fails the type assertion below. Observed
+		// intermittently: 2 of 6 runs, always on that assertion, never on the
+		// create flow above it.
 		await expect(
-			modifierRow,
-			`exactly one modifier row must belong to "${scenarioName}" — if this is 0, the Scenario column did not render the scenario's name and the row cannot be identified; if >1, the fixture leaked`,
-		).toHaveCount(1, { timeout: 15_000 })
-		await expect(
-			modifierRow.first(),
+			modifierRows,
 			'the saved LEDGER_AMOUNT_DELTA modifier must appear on the BudgetScenarioModifiers index',
-		).toBeVisible({ timeout: 15_000 })
+		).toHaveCount(rowsBefore.size + 1, { timeout: 15_000 })
+
+		const newRowText = (await modifierRows.allTextContents()).find(
+			(text) => !rowsBefore.has(text),
+		)
+		expect(
+			newRowText,
+			'exactly one row must be new after the create — if this is undefined the new row is textually identical to an existing one, which would make it unidentifiable',
+		).toBeTruthy()
+
+		const modifierRow = modifierRows.filter({ hasText: newRowText as string })
+		await expect(modifierRow.first()).toBeVisible({ timeout: 15_000 })
 
 		// …and its own detail page must render the type it was saved with.
 		await modifierRow.first().click()
