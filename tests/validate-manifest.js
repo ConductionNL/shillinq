@@ -283,10 +283,7 @@ const DEAD_CONFIG_KEYS = {
  *
  * @type {Object<string,string>}
  */
-const PENDING_FRAGMENTS = {
-	'budget-core-schema.json':
-		'converted by PR #1011 (fix/ledgergroup-children), which owns this file; remove this entry when that PR merges',
-}
+const PENDING_FRAGMENTS = {}
 
 /**
  * Re-derive the `Cn*` prop names from the installed component sources and
