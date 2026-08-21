@@ -534,11 +534,11 @@
             },
             "join": {
               "through": "CommitmentBudget",
-              "on": "CommitmentBudget.programmaCode",
+              "on": "CommitmentBudget.programmeCode",
               "filter": {},
               "select": [
-                "CommitmentBudget.geautoriseerd_bedrag",
-                "CommitmentBudget.gerealiseerd_bedrag"
+                "CommitmentBudget.authorised_amount",
+                "CommitmentBudget.realised_amount"
               ]
             },
             "sum": [
@@ -1025,7 +1025,7 @@
           },
           "free_capacity": {
             "type": "calculation",
-            "formula": "geautoriseerd_bedrag - gerealiseerd_bedrag - openstaande_verplichtingen",
+            "formula": "authorised_amount - realised_amount - outstanding_commitments",
             "description": "Free budget snapshot (D9)."
           }
         },

@@ -3948,6 +3948,66 @@
 			"menu": [
 				{
 					"id": "Budgets",
+					"children": [
+						{
+							"id": "BudgetGrid",
+							"label": "Budget Grid",
+							"icon": "TableLarge",
+							"route": "BudgetGrid",
+							"order": 5
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "budget-grid-view",
+					"id": "BudgetGrid",
+					"route": "/begroting/grid",
+					"type": "custom",
+					"title": "Budget Grid"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Budgets",
+					"label": "Budgets",
+					"icon": "PiggyBankOutline",
+					"order": 29,
+					"children": [
+						{
+							"id": "BudgetLineDerivations",
+							"label": "Derivations",
+							"icon": "SourceBranch",
+							"route": "BudgetLineDerivations",
+							"order": 40
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "budget-known-costs",
+					"id": "BudgetLineDerivations",
+					"route": "/begroting/derivations",
+					"type": "index",
+					"title": "Budget Line Derivations"
+				},
+				{
+					"_fragment": "budget-known-costs",
+					"id": "BudgetLineDerivationDetail",
+					"route": "/begroting/derivations/:id",
+					"type": "detail",
+					"title": "Budget Line Derivation"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Budgets",
 					"label": "Budgets",
 					"icon": "PiggyBankOutline",
 					"order": 29,
