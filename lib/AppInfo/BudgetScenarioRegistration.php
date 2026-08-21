@@ -11,12 +11,11 @@
  *      `Class::method`-shaped string, same shillinq#425/#433 resolution class
  *      every other guard on {@see Application::register()}'s list already
  *      works around.
- *   2. The `KnownCostScheduleExpanderInterface` → concrete-class binding that
- *      resolves lazily via `class_exists()` at container-resolution time, so
- *      it starts serving the real implementation the moment budget-known-costs
- *      (PR #967, a sibling branch not in this base) lands — with no further
- *      code change here — and fails loudly rather than substituting a no-op
- *      until then.
+ *   2. The `KnownCostScheduleExpanderInterface` → `KnownCostScheduleExpander`
+ *      alias. This was a lazy `class_exists()`-probing factory while the
+ *      concrete class was still on an unmerged sibling branch; that class has
+ *      landed and now declares the interface, so the probe could no longer
+ *      fail and has been replaced by a plain alias (see the call site).
  *
  * Lives in its own class rather than inline in {@see Application::register()}
  * deliberately: that class already sits within PHPMD's `ExcessiveClassLength`
@@ -49,10 +48,10 @@ namespace OCA\Shillinq\AppInfo;
 
 use OCA\Shillinq\Guard\BudgetScenarioModifierGuard;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
+use OCA\Shillinq\Service\KnownCostScheduleExpander;
 use OCA\Shillinq\Service\KnownCostScheduleExpanderInterface;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 /**
  * Registers the BudgetScenarioModifier guard alias and the
@@ -69,14 +68,6 @@ final class BudgetScenarioRegistration {
 	 * @var string
 	 */
 	private const MODIFIER_GUARD_TAG = 'OCA\Shillinq\Guard\BudgetScenarioModifierGuard::validateOnSave';
-
-	/**
-	 * The budget-known-costs (PR #967) concrete class this binding resolves
-	 * to once that sibling branch lands.
-	 *
-	 * @var string
-	 */
-	private const KNOWN_COST_EXPANDER_CLASS = 'OCA\\Shillinq\\Service\\KnownCostScheduleExpander';
 
 	/**
 	 * Register the modifier guard alias and the known-cost expander binding.
@@ -107,53 +98,30 @@ final class BudgetScenarioRegistration {
 		);
 
 		// REQ-BSC-006 — BudgetScenarioEvaluator depends on
-		// KnownCostScheduleExpanderInterface, not budget-known-costs's own
-		// concrete KnownCostScheduleExpander class directly, because that
-		// class lives on the sibling branch feat/budget-known-costs (PR #967)
-		// and does not exist in this checkout's dependency tree yet (see the
-		// interface's own docblock, lib/Service/
-		// KnownCostScheduleExpanderInterface.php). This binding resolves the
-		// interface to the real class via class_exists() AT RESOLUTION TIME
-		// (evaluated fresh on every container ->get(), never cached as a
-		// permanent stub) — once budget-known-costs lands and that class
-		// declares `implements KnownCostScheduleExpanderInterface`, this
-		// starts resolving to the real implementation with NO further code
-		// change here. Deliberately fails LOUD (throws) rather than silently
-		// substituting a no-op when the concrete class is still absent, so a
-		// missing integration reads as a clear error, not a passing test for
-		// the wrong reason.
-		$context->registerService(
+		// KnownCostScheduleExpanderInterface rather than on budget-known-costs's
+		// concrete KnownCostScheduleExpander, and this is the binding between them.
+		//
+		// This used to be a runtime-probing factory. When budget-scenarios was
+		// written, the concrete class lived on an unmerged sibling branch (PR #967)
+		// and was absent from this checkout, so the factory tested for it at
+		// container-resolution time and threw a descriptive RuntimeException when it
+		// was missing — deliberately loud, so a missing integration could not read
+		// as a passing test.
+		//
+		// That scaffolding has done its job and is now dead. The class has landed
+		// and declares `implements KnownCostScheduleExpanderInterface`, which makes
+		// the probe unconditionally true (PHPStan: `function.alreadyNarrowedType`)
+		// and the throw unreachable. Keeping a guard that can no longer fail is
+		// worse than not having one: it reads like an active safety check while
+		// testing nothing.
+		//
+		// A plain alias is now strictly stronger than the probe ever was. The
+		// `implements` clause is checked by PHP at class-load time and by PHPStan
+		// at analysis time, so a class that stops satisfying the contract fails
+		// earlier and louder than any container-resolution check could manage.
+		$context->registerServiceAlias(
 			KnownCostScheduleExpanderInterface::class,
-			static function ($c): KnownCostScheduleExpanderInterface {
-				// The probe is `is_a(..., allow_string: true)`, NOT class_exists().
-				//
-				// The concrete class HAS since landed in this checkout, so
-				// class_exists() is now true — but it does not yet declare
-				// `implements KnownCostScheduleExpanderInterface`. Returning it
-				// from a factory typed to the interface is a TypeError at the
-				// return, i.e. the "fail loud" intent below was already being
-				// bypassed by a probe that asked the wrong question. PHPStan 2
-				// reports it as `should return
-				// KnownCostScheduleExpander&KnownCostScheduleExpanderInterface`.
-				//
-				// Completing the integration belongs to budget-known-costs
-				// (PR #967), which owns that class; this binding only has to
-				// refuse anything that does not satisfy the contract.
-				if (is_a(self::KNOWN_COST_EXPANDER_CLASS, KnownCostScheduleExpanderInterface::class, true) === true) {
-					$expander = $c->get(self::KNOWN_COST_EXPANDER_CLASS);
-					if (($expander instanceof KnownCostScheduleExpanderInterface) === true) {
-						return $expander;
-					}
-				}
-
-				throw new RuntimeException(
-					'KnownCostScheduleExpander does not satisfy KnownCostScheduleExpanderInterface in '
-					. 'this checkout — BudgetScenarioEvaluator cannot evaluate RECURRING_* modifiers '
-					. 'until the class declares `implements KnownCostScheduleExpanderInterface` '
-					. '(budget-known-costs, PR #967). This is the stated integration point '
-					. '(budget-scenarios design.md §6a, lib/Service/KnownCostScheduleExpanderInterface.php).'
-				);
-			}
+			KnownCostScheduleExpander::class
 		);
 
 	}//end register()

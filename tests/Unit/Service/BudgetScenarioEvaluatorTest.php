@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Service\BudgetScenarioEvaluator;
+use OCA\Shillinq\Service\KnownCostScheduleExpander;
 use OCA\Shillinq\Tests\Unit\Service\Support\FakeKnownCostScheduleExpander;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -409,4 +410,81 @@ final class BudgetScenarioEvaluatorTest extends TestCase {
 		$this->assertSame(250.0, $cashflowRecurringRows[0]['standardAmount']);
 
 	}//end testEvaluationLeavesInputsByteIdentical()
+
+	/**
+	 * THE CONTROL. Every other test in this file drives the evaluator through
+	 * {@see FakeKnownCostScheduleExpander}, and a fake can only ever confirm the
+	 * shape its author believed in. That is precisely how RECURRING_* modifiers
+	 * shipped as a total no-op with this suite green: the fake returned a flat
+	 * `["01" => cents]` map, the evaluator read a flat map, and the real
+	 * `KnownCostScheduleExpander` returned
+	 * `['kind' => 'amounts', 'monthlyCents' => [...]]` — a shape nothing under
+	 * test ever produced. Both halves agreed with each other and neither agreed
+	 * with production.
+	 *
+	 * So this one wires the REAL expander. It is the only test here that can
+	 * observe a mismatch between the evaluator and the class it actually calls
+	 * at runtime, and it fails (delta 0, every month) against the flat-indexing
+	 * code this test was added alongside.
+	 *
+	 * MONTHLY €250 from 2026-01-01 with no end, capped at 2027-06-30: July
+	 * through December 2027 lose €250 each.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-006
+	 */
+	public function testRecurringEndAgainstTheRealExpanderMovesTheNumber(): void {
+		$evaluator = new BudgetScenarioEvaluator(new KnownCostScheduleExpander(), new NullLogger());
+
+		$modifiers = [
+			['modifierType' => 'RECURRING_END', 'targetRecurId' => 'rec-hosting', 'effectiveDate' => '2027-06-30'],
+		];
+
+		$result = $evaluator->evaluate([], $this->ledgerGroups(), [$this->recurringRow()], $modifiers, 2027);
+
+		// June is still inside the capped window — unchanged.
+		$this->assertSame(0, $result['lg-hosting:2027-06']['delta']);
+		// July onward is cut. A non-zero delta here is the whole point: the
+		// pre-fix evaluator produced 0 for all twelve months.
+		$this->assertSame(-25000, $result['lg-hosting:2027-07']['delta']);
+		$this->assertSame(-25000, $result['lg-hosting:2027-12']['delta']);
+
+	}//end testRecurringEndAgainstTheRealExpanderMovesTheNumber()
+
+	/**
+	 * REQ-BKC-003: a CPI-indexed row with no `cpiRatePercent` makes the expander
+	 * answer `needsOperatorInput`, which carries no schedule at all.
+	 *
+	 * The evaluator must SKIP such a modifier. The tempting alternative — treat
+	 * the missing schedule as all-zero — is not neutral: the delta is
+	 * `hypothetical - real`, so a zeroed `real` posts the entire hypothetical
+	 * amount as if it were the change.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-003
+	 */
+	public function testNeedsOperatorInputSkipsTheModifierRatherThanZeroingTheBaseline(): void {
+		$evaluator = new BudgetScenarioEvaluator(new FakeKnownCostScheduleExpander(), new NullLogger());
+
+		$cpiRow = array_merge(
+			$this->recurringRow(),
+			['indexationRule' => 'CPI_PAST_YEAR', 'cpiRatePercent' => null]
+		);
+		$modifiers = [
+			['modifierType' => 'RECURRING_END', 'targetRecurId' => 'rec-hosting', 'effectiveDate' => '2027-06-30'],
+		];
+
+		$result = $evaluator->evaluate([], $this->ledgerGroups(), [$cpiRow], $modifiers, 2027);
+
+		foreach (['2027-06', '2027-07', '2027-12'] as $month) {
+			$this->assertSame(
+				0,
+				$result['lg-hosting:' . $month]['delta'],
+				$month . ': an unknowable schedule must post no delta at all'
+			);
+		}
+
+	}//end testNeedsOperatorInputSkipsTheModifierRatherThanZeroingTheBaseline()
 }//end class

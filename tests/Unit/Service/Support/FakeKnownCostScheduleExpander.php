@@ -4,15 +4,22 @@
  * Fake KnownCostScheduleExpanderInterface implementation for
  * BudgetScenarioEvaluator tests.
  *
- * `budget-known-costs`'s own real `KnownCostScheduleExpander` lives on the
- * sibling branch `feat/budget-known-costs` (PR #967) and does not exist in
- * this checkout — see `lib/Service/KnownCostScheduleExpanderInterface.php`'s
- * own docblock. This fake implements the SAME interface with a small,
- * deterministic, hand-verifiable arithmetic (never budget-known-costs's own
- * frequency/CPI/exact-occurrence-date rules) so
- * `BudgetScenarioEvaluatorTest` can assert on `BudgetScenarioEvaluator`'s
- * OWN logic (which months a modifier affects, which LedgerGroup it lands in,
- * that base is left unmutated) independent of that arithmetic.
+ * This fake implements the same interface as the real
+ * `KnownCostScheduleExpander` with a small, deterministic, hand-verifiable
+ * arithmetic (never budget-known-costs's own frequency/CPI/exact-occurrence-date
+ * rules) so `BudgetScenarioEvaluatorTest` can assert on
+ * `BudgetScenarioEvaluator`'s OWN logic (which months a modifier affects, which
+ * LedgerGroup it lands in, that base is left unmutated) independent of that
+ * arithmetic.
+ *
+ * ⚠️ A fake's job is to differ in ARITHMETIC, never in SHAPE. This one used to
+ * return a flat `["01" => cents, …]` map because it was written against the
+ * interface's docblock at a time when the real class was on an unmerged branch
+ * and could not be consulted. The real class returns
+ * `['kind' => 'amounts', 'monthlyCents' => [...]]`. Every evaluator test
+ * therefore passed against a shape production never produced, while the real
+ * code path silently read twelve missing keys and treated the whole feature as
+ * zero. Keep this return value pinned to the interface's tagged union.
  *
  * Rule: every in-scope month (MONTHLY frequency only, the only frequency
  * these tests use) within `[validFrom, validTo] ∩ fiscalYear` books
@@ -62,7 +69,8 @@ final class FakeKnownCostScheduleExpander implements KnownCostScheduleExpanderIn
 	 * @param int $fiscalYear The fiscal year to expand into.
 	 * @param array<string,mixed>|null $contract Unused by this fake.
 	 *
-	 * @return array<string,int> "01".."12" => cents.
+	 * @return array{kind:string,monthlyCents?:array<int|string,int>} The tagged
+	 *         union the real class returns — see the interface docblock.
 	 */
 	public function expand(array $recurring, int $fiscalYear, ?array $contract): array {
 		$this->calls[] = [
@@ -72,6 +80,15 @@ final class FakeKnownCostScheduleExpander implements KnownCostScheduleExpanderIn
 			'standardAmount' => ($recurring['standardAmount'] ?? null),
 		];
 
+		// REQ-BKC-003, mirroring the real class: a CPI-indexed row with no rate
+		// has no computable schedule. Previously absent from this fake, so no
+		// evaluator test ever exercised the branch.
+		if ((string)($recurring['indexationRule'] ?? 'FIXED') === 'CPI_PAST_YEAR'
+			&& ($recurring['cpiRatePercent'] ?? null) === null
+		) {
+			return ['kind' => 'needsOperatorInput'];
+		}
+
 		$monthly = [];
 		for ($month = 1; $month <= 12; $month++) {
 			$monthly[str_pad((string)$month, 2, '0', STR_PAD_LEFT)] = 0;
@@ -79,7 +96,7 @@ final class FakeKnownCostScheduleExpander implements KnownCostScheduleExpanderIn
 
 		$validFrom = (string)($recurring['validFrom'] ?? '');
 		if ($validFrom === '') {
-			return $monthly;
+			return ['kind' => 'amounts', 'monthlyCents' => $monthly];
 		}
 
 		$validTo = null;
@@ -103,7 +120,7 @@ final class FakeKnownCostScheduleExpander implements KnownCostScheduleExpanderIn
 			$monthly[str_pad((string)$month, 2, '0', STR_PAD_LEFT)] = $cents;
 		}
 
-		return $monthly;
+		return ['kind' => 'amounts', 'monthlyCents' => $monthly];
 
 	}//end expand()
 }//end class
