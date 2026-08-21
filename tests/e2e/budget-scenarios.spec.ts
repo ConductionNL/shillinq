@@ -548,9 +548,26 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 		// Creating from an index page refreshes the list in place rather than
 		// navigating to the new object's detail page, so the saved modifier is
 		// asserted on the index row it now owns.
+		//
+		// SCOPED TO THIS TEST'S OWN SCENARIO, not to the modifier type alone.
+		// Every previous run leaves a LEDGER_AMOUNT_DELTA modifier on this
+		// index carrying the same hardcoded date and amount, so filtering on
+		// the type and taking `.first()` picked an arbitrary run's row —
+		// including rows whose scenario has since been cleaned up, whose
+		// detail page then renders no data and fails the type assertion below.
+		// Observed intermittently: 2 of 6 runs, always on that assertion.
+		//
+		// The scenario name is unique per run (`uniqueSuffix()`) and the index
+		// carries a `Scenario` column, so the row this test created is
+		// identifiable without depending on ordering or on cleanup.
 		const modifierRow = page
 			.locator('table tbody tr')
 			.filter({ hasText: 'LEDGER_AMOUNT_DELTA' })
+			.filter({ hasText: scenarioName })
+		await expect(
+			modifierRow,
+			`exactly one modifier row must belong to "${scenarioName}" — if this is 0, the Scenario column did not render the scenario's name and the row cannot be identified; if >1, the fixture leaked`,
+		).toHaveCount(1, { timeout: 15_000 })
 		await expect(
 			modifierRow.first(),
 			'the saved LEDGER_AMOUNT_DELTA modifier must appear on the BudgetScenarioModifiers index',
