@@ -30,8 +30,10 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Service;
 
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\Service\BudgetScenarioDefaultPromoter;
 use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
+use OCA\Shillinq\Tests\Unit\Service\Support\ObjectEntityStub;
 use OCA\Shillinq\Tests\Unit\Service\Support\RacingDefaultObjectServiceDecorator;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -277,4 +279,104 @@ final class BudgetScenarioDefaultPromoterTest extends TestCase {
 		$this->assertSame(2, $outcome['defaultCount']);
 
 	}//end testLogsVerificationMismatchOnConcurrentPromotionRace()
+
+	/**
+	 * REGRESSION: findAll() hands back ObjectEntity INSTANCES, not arrays.
+	 *
+	 * Every other test here passes an InMemoryObjectServiceStub whose
+	 * findAll() returns plain arrays — which is why this defect shipped green.
+	 * The real ObjectService routes its rows through
+	 * RenderObject::renderEntities(), whose per-row renderEntity() is declared
+	 * `): ObjectEntity`, so production hands the promoter objects where the
+	 * stub hands it arrays. findCurrentDefault() is declared `: ?array`, so
+	 * PHP throws on the return itself —
+	 *
+	 *   TypeError: findCurrentDefault(): Return value must be of type ?array,
+	 *   ObjectEntity returned
+	 *
+	 * — and BudgetScenarioController's `catch (Throwable)` turns that into a
+	 * 500.
+	 *
+	 * It only ever fired on a promotion that had to DEMOTE a previous default:
+	 * the first promotion in an administration has nothing to demote. The e2e
+	 * trace showed exactly that pair — 200 with `demotedScenarioId: null`,
+	 * then 500 on the next promotion.
+	 *
+	 * This test drives findAll() through the ENTITY shape production actually
+	 * produces. It fails with the TypeError before the fix.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md#req-bsc-002
+	 */
+	public function testDemotesAPreviousDefaultWhenFindAllReturnsEntities(): void {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+
+		$rows = [
+			['id' => 'scn-a', 'administrationId' => 'ADM-001', 'name' => 'A', 'isDefault' => true, 'status' => 'active'],
+			['id' => 'scn-b', 'administrationId' => 'ADM-001', 'name' => 'B', 'isDefault' => false, 'status' => 'draft'],
+		];
+
+		$entity = static fn (array $row): ObjectEntityStub => new ObjectEntityStub(
+			payload: $row,
+			register: 'shillinq',
+			schema: 'BudgetScenario',
+		);
+
+		$saved = [];
+		$store = $this->createMock(ObjectServiceInterface::class);
+		$store->method('setRegister')->willReturnSelf();
+		$store->method('setSchema')->willReturnSelf();
+		$store->method('find')->willReturnCallback(
+			static function (int|string $id) use ($rows, $entity): ?ObjectEntityStub {
+				foreach ($rows as $row) {
+					if ($row['id'] === (string)$id) {
+						return $entity($row);
+					}
+				}
+
+				return null;
+			}
+		);
+		// THE POINT OF THIS TEST: entities, exactly as ObjectService returns.
+		$store->method('findAll')->willReturnCallback(
+			static function () use (&$saved, $rows, $entity): array {
+				$defaults = [];
+				foreach ($rows as $row) {
+					$current = ($saved[$row['id']] ?? $row);
+					if (($current['isDefault'] ?? false) === true) {
+						$defaults[] = $entity($current);
+					}
+				}
+
+				return $defaults;
+			}
+		);
+		$store->method('saveObject')->willReturnCallback(
+			static function (array $object) use (&$saved, $entity): ObjectEntityStub {
+				$saved[(string)($object['id'] ?? '')] = $object;
+
+				return $entity($object);
+			}
+		);
+
+		$promoter = new BudgetScenarioDefaultPromoter(
+			appConfig: $appConfig,
+			logger: new NullLogger(),
+			objectService: $store,
+		);
+
+		$outcome = $promoter->promote(scenarioId: 'scn-b');
+
+		$this->assertSame('scn-b', $outcome['scenarioId']);
+		$this->assertSame(
+			'scn-a',
+			$outcome['demotedScenarioId'],
+			'the previous default must be demoted even when findAll returns entities',
+		);
+		$this->assertTrue($outcome['verified']);
+		$this->assertSame(1, $outcome['defaultCount']);
+
+	}//end testDemotesAPreviousDefaultWhenFindAllReturnsEntities()
 }//end class

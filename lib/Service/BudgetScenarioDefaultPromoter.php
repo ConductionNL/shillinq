@@ -215,7 +215,39 @@ class BudgetScenarioDefaultPromoter {
 			return [];
 		}
 
-		return array_values($rows);
+		// ObjectService::findAll() returns ObjectEntity INSTANCES, not arrays:
+		// it hands its rows to RenderObject::renderEntities(), whose per-row
+		// renderEntity() is declared `): ObjectEntity`. find() above already
+		// accounts for this by returning `$entity->getObject()`; this path did
+		// not, and the docblock claiming `list<array<string,mixed>>` hid it.
+		//
+		// The consequence was a 500 on every promotion that had to DEMOTE a
+		// previous default. The throw point is findCurrentDefault()'s own
+		// return type:
+		//
+		//   TypeError: findCurrentDefault(): Return value must be of type
+		//   ?array, ObjectEntity returned
+		//
+		// PHP rejects it before promote() ever reaches array_merge(), and
+		// BudgetScenarioController's `catch (Throwable)` turns it into an
+		// unexpected error. It never fired on the FIRST promotion in an
+		// administration, because there is nothing to demote then — exactly
+		// the pair the e2e trace showed: 200 with `demotedScenarioId: null`,
+		// then 500 on the next one.
+		$normalised = [];
+		foreach ($rows as $row) {
+			if (is_array($row) === true) {
+				$normalised[] = $row;
+				continue;
+			}
+
+			$normalised[] = $row->getObject();
+		}
+
+		// No array_values(): appending to $normalised already produces a list.
+		// The original call was needed because findAll()'s own result may be
+		// keyed; this loop re-indexes it by construction.
+		return $normalised;
 
 	}//end findAllDefaults()
 
