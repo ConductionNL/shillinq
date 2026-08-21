@@ -179,7 +179,13 @@ final class ReconciliationResolutionControllerTest extends TestCase {
 
 	/**
 	 * A failure on one id is surfaced under `failed` without short-circuiting
-	 * the rest of the batch.
+	 * the rest of the batch — and the surfaced text is the localized generic
+	 * message for the exception *type*, not the raw exception message.
+	 *
+	 * The raw text is only written to the server log. Contract changed
+	 * deliberately: this map previously carried `$e->getMessage()` verbatim
+	 * inside a 200 body, which is the same information-leak class already
+	 * closed across ~30 other endpoints in this app.
 	 *
 	 * @return void
 	 */
@@ -200,21 +206,113 @@ final class ReconciliationResolutionControllerTest extends TestCase {
 				string $actor
 			): array {
 				if ($matchId === 'm-locked') {
-					throw new \DomainException('reconciliation is closed');
+					throw new \DomainException('reconciliation rec-1 is closed');
 				}
 
 				return ['id' => $matchId];
 			}
 		);
 
+		$logged = [];
+		$this->logger->expects($this->once())
+			->method('error')
+			->willReturnCallback(
+				static function (mixed $message, array $context = []) use (&$logged): void {
+					$logged = $context;
+				}
+			);
+
 		$response = $this->controller()->bulkResolve('rec-1');
 
 		self::assertSame(Http::STATUS_OK, $response->getStatus());
 		$data = $response->getData();
 		self::assertSame(2, $data['applied']);
-		self::assertSame(['m-locked' => 'reconciliation is closed'], $data['failed']);
+		self::assertSame(
+			['m-locked' => 'Unable to resolve a match on a locked reconciliation'],
+			$data['failed']
+		);
+
+		// The raw service text must not survive anywhere in the 200 body.
+		self::assertStringNotContainsString(
+			'reconciliation rec-1 is closed',
+			(string)json_encode($data)
+		);
+
+		// ...but it must still be recoverable from the server log.
+		self::assertSame('reconciliation rec-1 is closed', $logged['exception']);
+		self::assertSame('m-locked', $logged['matchId']);
 
 	}//end testBulkResolveIsolatesPerIdFailures()
+
+	/**
+	 * A missing match inside a batch reports the generic not-found message and
+	 * leaks neither the raw text nor the internals it carries.
+	 *
+	 * @return void
+	 */
+	public function testBulkResolveMasksMissingMatchText(): void {
+		$this->withParams(
+			[
+				'matchIds' => ['m-gone'],
+				'resolutionStatus' => 'timing',
+				'resolutionReason' => 'in transit',
+			]
+		);
+		$this->service->method('resolveMatch')->willThrowException(
+			new \OutOfBoundsException('ReconciliationMatch m-gone absent from register 42')
+		);
+
+		$this->logger->expects($this->once())->method('error');
+
+		$response = $this->controller()->bulkResolve('rec-1');
+
+		$data = $response->getData();
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame(0, $data['applied']);
+		self::assertSame(
+			['m-gone' => 'Unable to find the reconciliation match'],
+			$data['failed']
+		);
+		self::assertStringNotContainsString('register 42', (string)json_encode($data));
+
+	}//end testBulkResolveMasksMissingMatchText()
+
+	/**
+	 * An unexpected infrastructure failure (the shape that carries SQL state,
+	 * class names and file paths) is reduced to a generic message before it
+	 * reaches the 200 body.
+	 *
+	 * @return void
+	 */
+	public function testBulkResolveMasksUnexpectedFailureText(): void {
+		$this->withParams(
+			[
+				'matchIds' => ['m-1'],
+				'resolutionStatus' => 'adjustment',
+				'resolutionReason' => 'write-off',
+			]
+		);
+		$this->service->method('resolveMatch')->willThrowException(
+			new \RuntimeException(
+				'SQLSTATE[42S02]: Base table oc_shillinq_recon_match missing in /var/www/lib/Db/Mapper.php'
+			)
+		);
+
+		$this->logger->expects($this->once())->method('error');
+
+		$response = $this->controller()->bulkResolve('rec-1');
+
+		$data = $response->getData();
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame(0, $data['applied']);
+		self::assertSame(['m-1' => 'Unable to resolve this match'], $data['failed']);
+
+		$encoded = (string)json_encode($data);
+		self::assertStringNotContainsStringIgnoringCase('SQLSTATE', $encoded);
+		self::assertStringNotContainsStringIgnoringCase('/var/www', $encoded);
+		self::assertStringNotContainsStringIgnoringCase('oc_shillinq_recon_match', $encoded);
+
+	}//end testBulkResolveMasksUnexpectedFailureText()
 
 	/**
 	 * Blank ids inside the array are skipped without counting as applied or

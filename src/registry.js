@@ -325,6 +325,14 @@ import WbsoDocumentsView from './views/bookkeeping/DocumentsView.vue'
 // #[AuthorizedAdminSetting(Application::class)].
 import FxRatesAdmin from './views/bookkeeping/multi-currency/FxRatesAdmin.vue'
 import WbsoTransactionsView from './views/bookkeeping/TransactionsView.vue'
+// budget-grid-view (REQ-BGV-001..009): the year-basis begroting grid —
+// verzamelpost rows (LedgerGroup tree, expandable to child groups or
+// resolved grootboek accounts), a caller-selected period range/granularity,
+// past-column actuals-vs-budget deviation, and a TOTAAL cumulative column.
+// None of that fits `index`/`detail`/`dashboard`, so it is registered as a
+// kind:"page" custom component per ADR-024 (same pattern as
+// BudgetLineCommitments/SegmentPnLDashboard above).
+import BudgetGrid from './views/BudgetGrid.vue'
 // verplichtingen-commitment-accounting Task 4 (REQ-VPL-011): the
 // BudgetLineCommitments drilldown composes the declarative
 // committedVsRealisedPerBudgetLine aggregation declared on
@@ -460,6 +468,7 @@ export default {
 	// bookkeeping-cost-centers-dimensions Task 14: segment P&L drill-down.
 	SegmentPnLDashboard: { kind: 'page', component: SegmentPnLDashboard },
 	BudgetLineCommitments: { kind: 'page', component: BudgetLineCommitments },
+	BudgetGrid: { kind: 'page', component: BudgetGrid },
 
 	// compliance-deadline-calendar (REQ-CDC-006): deadline calendar settings.
 	DeadlineCalendarSettings: { kind: 'page', component: DeadlineCalendarSettings },
