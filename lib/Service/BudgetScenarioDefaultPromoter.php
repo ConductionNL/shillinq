@@ -215,10 +215,6 @@ class BudgetScenarioDefaultPromoter {
 			return [];
 		}
 
-		if (is_array($rows) === false) {
-			return [];
-		}
-
 		return array_values($rows);
 
 	}//end findAllDefaults()

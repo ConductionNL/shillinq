@@ -81,7 +81,7 @@ class KlantLadderOverrideApprovalGuard {
 				->setSchema('KlantLadderOverride')
 				->findAll(['filters' => ['id' => $overrideId]]);
 
-			if (is_array($rows) === false || $rows === []) {
+			if ($rows === []) {
 				$this->logger->warning('Shillinq: KlantLadderOverride ' . $overrideId . ' not found; fail-closed.');
 				return false;
 			}

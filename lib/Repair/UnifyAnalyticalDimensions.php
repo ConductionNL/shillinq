@@ -363,12 +363,12 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 
 		// Copy optional cost-center-specific fields when present.
 		foreach (['description', 'status', 'organizationId', 'parentCode', 'responsibleUser'] as $field) {
-			if (isset($source[$field]) === true && $source[$field] !== null && $source[$field] !== '') {
+			if (isset($source[$field]) === true && $source[$field] !== '') {
 				$record[$field] = $source[$field];
 			}
 		}
 
-		if (isset($source['budget']) === true && $source['budget'] !== null) {
+		if (isset($source['budget']) === true) {
 			$record['budget'] = $source['budget'];
 		}
 
@@ -401,7 +401,7 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 
 		// Copy optional fields when present.
 		foreach (['description', 'parentCode', 'responsibleUser'] as $field) {
-			if (isset($source[$field]) === true && $source[$field] !== null && $source[$field] !== '') {
+			if (isset($source[$field]) === true && $source[$field] !== '') {
 				$record[$field] = $source[$field];
 			}
 		}

@@ -762,11 +762,7 @@ class InvoiceGenerationService {
 			$rs = $this->objectService->setRegister($this->register())
 				->setSchema('BillableInvoice')
 				->findAll(['filters' => ['administrationId' => $administrationId]]);
-			if (is_array($rs) === true) {
-				$count = count($rs);
-			} else {
-				$count = 0;
-			}
+			$count = count($rs);
 		} catch (\Throwable $e) {
 			$count = 0;
 		}
@@ -869,10 +865,6 @@ class InvoiceGenerationService {
 					]
 				);
 		} catch (\Throwable $e) {
-			return null;
-		}
-
-		if (is_array($rows) === false) {
 			return null;
 		}
 

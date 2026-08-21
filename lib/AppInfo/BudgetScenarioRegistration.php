@@ -125,14 +125,32 @@ final class BudgetScenarioRegistration {
 		$context->registerService(
 			KnownCostScheduleExpanderInterface::class,
 			static function ($c): KnownCostScheduleExpanderInterface {
-				if (class_exists(self::KNOWN_COST_EXPANDER_CLASS) === true) {
-					return $c->get(self::KNOWN_COST_EXPANDER_CLASS);
+				// The probe is `is_a(..., allow_string: true)`, NOT class_exists().
+				//
+				// The concrete class HAS since landed in this checkout, so
+				// class_exists() is now true — but it does not yet declare
+				// `implements KnownCostScheduleExpanderInterface`. Returning it
+				// from a factory typed to the interface is a TypeError at the
+				// return, i.e. the "fail loud" intent below was already being
+				// bypassed by a probe that asked the wrong question. PHPStan 2
+				// reports it as `should return
+				// KnownCostScheduleExpander&KnownCostScheduleExpanderInterface`.
+				//
+				// Completing the integration belongs to budget-known-costs
+				// (PR #967), which owns that class; this binding only has to
+				// refuse anything that does not satisfy the contract.
+				if (is_a(self::KNOWN_COST_EXPANDER_CLASS, KnownCostScheduleExpanderInterface::class, true) === true) {
+					$expander = $c->get(self::KNOWN_COST_EXPANDER_CLASS);
+					if (($expander instanceof KnownCostScheduleExpanderInterface) === true) {
+						return $expander;
+					}
 				}
 
 				throw new RuntimeException(
-					'KnownCostScheduleExpander (budget-known-costs, PR #967) has not landed in '
-					. 'this checkout yet — BudgetScenarioEvaluator cannot evaluate RECURRING_* '
-					. 'modifiers until it does. This is the stated integration point '
+					'KnownCostScheduleExpander does not satisfy KnownCostScheduleExpanderInterface in '
+					. 'this checkout — BudgetScenarioEvaluator cannot evaluate RECURRING_* modifiers '
+					. 'until the class declares `implements KnownCostScheduleExpanderInterface` '
+					. '(budget-known-costs, PR #967). This is the stated integration point '
 					. '(budget-scenarios design.md §6a, lib/Service/KnownCostScheduleExpanderInterface.php).'
 				);
 			}

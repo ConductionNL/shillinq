@@ -137,7 +137,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "CcmRule",
-				"_note": "CONFIG archetype — a CCM rule is a control definition (logic, schedule, COSO assertion, owner/reviewer, SOX key-control flag). Native shillinq detail contract: config.fields[] render the definition (review cadence and versionHistory included); config.relatedLists[] show the findings this rule has fired (CcmFinding, FK ruleCode=@self.ruleCode) so a control owner immediately sees the rule's real-world impact; the sidebar carries an audit-trail tab. NO comms/files — a rule carries no source documents or conversation.",
+				"_note": "CONFIG archetype — a CCM rule is a control definition (logic, schedule, COSO assertion, owner/reviewer, SOX key-control flag). Native shillinq detail contract: config.fields[] render the definition (review cadence and versionHistory included); config.relatedCollections[] show the findings this rule has fired (CcmFinding, FK ruleCode=@object.ruleCode) so a control owner immediately sees the rule's real-world impact. KEY+TOKEN: the prop is `relatedCollections` (a `relatedLists` block lands in $attrs and renders nothing), and the token is `@object.ruleCode`, NOT `@self.ruleCode` — `@self.*` is not a token resolveFilterTokens.js knows, so it never resolved. CcmFinding.ruleCode is a DENORMALISED copy of CcmRule's flat `ruleCode` payload field (e.g. SoD-01), so `@objectId` would match zero rows; the sidebar carries an audit-trail tab. NO comms/files — a rule carries no source documents or conversation.",
 				"fields": [
 					{"key": "ruleCode", "label": "Code", "type": "string"},
 					{"key": "name", "label": "Name", "type": "string"},
@@ -151,8 +151,8 @@
 					{"key": "ruleOwner", "label": "Owner", "type": "string"},
 					{"key": "soxKeyControl", "label": "SOX key control", "type": "boolean"}
 				],
-				"relatedLists": [
-					{"id": "rule-findings", "title": "Findings from this rule", "schema": "CcmFinding", "filter": {"ruleCode": "@self.ruleCode"}, "columns": [
+				"relatedCollections": [
+					{"title": "Findings from this rule", "register": "shillinq", "schema": "CcmFinding", "filter": {"ruleCode": "@object.ruleCode"}, "columns": [
 						{"key": "title", "label": "Title"},
 						{"key": "severity", "label": "Severity"},
 						{"key": "status", "label": "Status"},
@@ -339,7 +339,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "CcmAuditCommitteeReport",
-				"_note": "REPORT/DOCUMENT archetype — a periodic audit-committee report summarises rule firings, SoD compliance and SOX deficiencies for governance sign-off. Native shillinq detail contract: config.fields[] render the narrative (executive summary, recommendations, approver, state); config.relatedLists[] list the open findings the committee reviews so risk reads first; the sidebar carries a file-references tab for the signed PDF and supporting workpapers and an audit-trail tab for the immutable approval/distribution log — governance evidence. NO comms — this is a formal artefact, not correspondence; no money aggregation of its own.",
+				"_note": "REPORT/DOCUMENT archetype — a periodic audit-committee report summarises rule firings, SoD compliance and SOX deficiencies for governance sign-off. Native shillinq detail contract: config.fields[] render the narrative (executive summary, recommendations, approver, state); config.relatedCollections[] list the open findings the committee reviews so risk reads first (KEY: `relatedCollections`, not `relatedLists`, which is not a prop on any Cn page component and renders nothing). This filter is a STATIC `status: open` equality with no object token — the section is deliberately register-wide, not scoped to this report, because CcmFinding carries no FK back to CcmAuditCommitteeReport; the sidebar carries a file-references tab for the signed PDF and supporting workpapers and an audit-trail tab for the immutable approval/distribution log — governance evidence. NO comms — this is a formal artefact, not correspondence; no money aggregation of its own.",
 				"fields": [
 					{"key": "period", "label": "Period", "type": "string"},
 					{"key": "reportingCadence", "label": "Cadence", "type": "string"},
@@ -349,8 +349,8 @@
 					{"key": "approvalDate", "label": "Approved", "type": "string"},
 					{"key": "state", "label": "State", "type": "string"}
 				],
-				"relatedLists": [
-					{"id": "open-findings", "title": "Open findings", "schema": "CcmFinding", "filter": {"status": "open"}, "columns": [
+				"relatedCollections": [
+					{"title": "Open findings", "register": "shillinq", "schema": "CcmFinding", "filter": {"status": "open"}, "columns": [
 						{"key": "ruleCode", "label": "Rule"},
 						{"key": "title", "label": "Title"},
 						{"key": "severity", "label": "Severity"},
