@@ -256,7 +256,9 @@ test.describe('CBS Submissions — delete-own-draft flow', () => {
 			// therefore pointed at the response wait and read as "the app never
 			// issued a DELETE", when nothing had been clicked. The trace shows it:
 			// 78 GETs, one unrelated user_status PUT, and no DELETE.
-			const confirmDialog = page.getByRole('dialog').filter({ has: confirmPhase })
+			const confirmDialog = page
+				.getByRole('dialog')
+				.filter({ has: confirmPhase })
 
 			const deleteRequest = page.waitForResponse(
 				(response) =>
