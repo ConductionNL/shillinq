@@ -256,7 +256,10 @@ class BudgetScenarioDefaultPromoter {
 			}
 		}
 
-		return array_values($normalised);
+		// No array_values() here: $normalised is only ever appended to with
+		// [], so it is already a list. PHPStan (arrayValues.list) rejects the
+		// redundant call outright rather than merely warning.
+		return $normalised;
 
 	}//end findAllDefaults()
 
