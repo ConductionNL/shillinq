@@ -34,25 +34,26 @@
 			"route": "/orders/:id",
 			"type": "detail",
 			"_note": "OrderPrimitive is the unified transactional WORKSPACE primitive that replaces the scattered Subsidie / Purchase Order / Quote / Sales Order records — one record whose orderType/direction re-skins it. Body leads with the order header (counterparty, type, terms, total) plus a total-amount KPI; the Order lines are the primary child table (the auditable breakdown) with Payments beside them so the operator sees what was ordered and what has been paid. Documents (quote/PO/contract) and the audit trail sit in the sidebar. No email/calendar leaf on the record itself — a transaction workspace, not a comms surface.",
-			"widgets": [
-				{
-					"id": "order-total",
-					"widgetKey": "stats-block",
-					"slot": "body",
-					"gridX": 0,
-					"gridY": 0,
-					"gridWidth": 12,
-					"gridHeight": 1,
-					"props": {
-						"entries": [
-							{ "title": "Order total", "register": "shillinq", "schema": "OrderLine", "metric": "sum", "field": "lineAmount", "filter": { "orderId": "@objectId" } }
-						]
-					}
-				}
-			],
 			"config": {
 				"register": "shillinq",
 				"schema": "OrderPrimitive",
+				"_widgetsNote": "These live under config.widgets[] + config.layout[], NOT as a page-level widgets[] block. A page-level widgets[] on a type:\"detail\" page makes CnPageRenderer render a bare CnWidgetGrid INSTEAD of the typed detail component, so the page silently loses its header, max-width, padding, sidebar and grid discipline — and the sidebarProps/relatedCollections below would never render at all. The v2 schema calls page-level widgets[] 'preferred'; for a TYPED page it is the broken spelling. gate-69 page-type-discipline catches it.",
+				"widgets": [
+					{
+						"id": "order-total",
+						"type": "stats-block",
+						"title": "Order total",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{ "title": "Order total", "register": "shillinq", "schema": "OrderLine", "metric": "sum", "field": "lineAmount", "filter": { "orderId": "@objectId" } }
+							]
+						}
+					}
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "order-total", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 2 }
+				],
 				"relatedCollections": [
 					{ "title": "Order lines", "register": "shillinq", "schema": "OrderLine", "filter": { "orderId": "@objectId" }, "columns": [
 						{"key": "lineNumber", "label": "#"},
