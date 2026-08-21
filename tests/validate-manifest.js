@@ -283,10 +283,13 @@ const DEAD_CONFIG_KEYS = {
  *
  * @type {Object<string,string>}
  */
-const PENDING_FRAGMENTS = {
-	'budget-core-schema.json':
-		'converted by PR #1011 (fix/ledgergroup-children), which owns this file; remove this entry when that PR merges',
-}
+// Empty by design. Entries here are SELF-RETIRING: the gate FAILS when a
+// listed fragment no longer declares a dead key, so a waiver cannot outlive
+// its reason. The one entry ('budget-core-schema.json', pending PR #1011) did
+// exactly that the moment #1011 merged — the gate demanded its own exemption
+// be deleted, which is this change. Add an entry only for a fragment whose fix
+// is genuinely in flight, and name the PR that retires it.
+const PENDING_FRAGMENTS = {}
 
 /**
  * Re-derive the `Cn*` prop names from the installed component sources and
