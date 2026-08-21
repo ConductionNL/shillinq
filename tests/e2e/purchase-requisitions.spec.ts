@@ -252,6 +252,29 @@ test.describe('purchase-requisition — the RequisitionDetail page (REQ-REQ-001)
 		).toHaveCount(1)
 		await expect(row).toBeVisible({ timeout: 15_000 })
 
+		// WAIT FOR THE OBJECT, NOT FOR A CLOCK.
+		//
+		// `cn-detail-page` is the shell; the field VALUES arrive on a separate
+		// single-object GET. Asserting on the text straight after the shell
+		// appears raced that fetch against a fixed `expect` timeout, and under
+		// CI load this test lost the race — commit 80c0c2d8 passed on its
+		// pull_request run and failed on its push run with the same tree.
+		//
+		// Armed BEFORE the click, because a waitForResponse promise starts its
+		// timeout when CREATED and the fetch can complete before the next
+		// statement runs. The row's object id is not known until the click, so
+		// this matches the SHAPE of a single-object read
+		// (`/objects/<register>/<schema>/<uuid>`) rather than a literal id —
+		// the index's own list GET has no uuid segment and does not match.
+		const detailLoaded = page.waitForResponse(
+			(r) =>
+				r.request().method() === 'GET'
+				&& /\/objects\/[^/]+\/[^/]+\/[0-9a-f-]{36}$/.test(
+					new URL(r.url()).pathname,
+				)
+				&& r.status() < 400,
+			{ timeout: 25_000 },
+		)
 		await row.click()
 
 		// `:id` is the object UUID, so match the shape rather than a literal.
@@ -262,6 +285,7 @@ test.describe('purchase-requisition — the RequisitionDetail page (REQ-REQ-001)
 		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
 			timeout: 15_000,
 		})
+		await detailLoaded
 		await expect(
 			page
 				.getByTestId('cn-detail-page')

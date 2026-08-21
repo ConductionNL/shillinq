@@ -624,10 +624,35 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 		// Its own detail page, addressed by id, must render the type it was
 		// saved with. Navigating directly also removes the row-click step,
 		// which was where the wrong-object confusion entered.
+		//
+		// WAIT FOR THE OBJECT, NOT FOR A CLOCK.
+		//
+		// `gotoRoute()` proves the SPA resolved the route — it waits for
+		// `#content-vue`, which is the shell. The field VALUES arrive on a
+		// separate GET afterwards, so asserting on the text straight after
+		// navigation raced that fetch against a fixed `expect` timeout and
+		// this test lost the race under CI load: commit 80c0c2d8 PASSED on
+		// its pull_request run (318 tests) and FAILED on its push run, same
+		// tree, same code. The failing attempt spent 59.2s of a 60s budget,
+		// so the last 10s assertion was competing with the deadline too.
+		//
+		// Arming the response wait BEFORE `gotoRoute()` is deliberate: a
+		// waitForResponse promise starts its timeout when it is CREATED, and
+		// the fetch can complete during navigation — created afterwards it
+		// can miss the very response it is waiting for. Same reasoning the
+		// `created` wait above this block already documents for the POST.
+		const detailLoaded = page.waitForResponse(
+			(r) =>
+				r.request().method() === 'GET'
+				&& r.url().includes(modifierId)
+				&& r.status() < 400,
+			{ timeout: 25_000 },
+		)
 		await gotoRoute(page, `/begroting/scenario-modifiers/${modifierId}`)
 		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
 			timeout: 15_000,
 		})
+		await detailLoaded
 		await expect(
 			page.getByText('LEDGER_AMOUNT_DELTA', { exact: false }).first(),
 			"the saved modifier's type must render on its own detail page",
