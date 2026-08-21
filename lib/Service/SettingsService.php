@@ -3029,7 +3029,7 @@ class SettingsService {
 					if ($dedupeKey === '__ikpKey') {
 						$filter['commercialActivityId'] = ($record['commercialActivityId'] ?? '');
 						$filter['period'] = ($record['period'] ?? '');
-					} elseif ($dedupeKey !== '' && isset($record[$dedupeKey]) === true) {
+					} elseif (isset($record[$dedupeKey]) === true) {
 						$filter[$dedupeKey] = $record[$dedupeKey];
 					}
 

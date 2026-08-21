@@ -229,10 +229,6 @@ class BudgetScenarioModifierGuard {
 				]
 			);
 
-		if (is_array($siblings) === false) {
-			$siblings = [];
-		}
-
 		foreach ($siblings as $sibling) {
 			$siblingType = (string)($sibling['modifierType'] ?? '');
 			if (in_array($siblingType, self::RECURRING_TYPES, true) === false) {

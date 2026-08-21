@@ -98,6 +98,8 @@ class WbsoAccountService {
 	 * @param array<int,array<string,mixed>> $accounts Flat account list.
 	 *
 	 * @return array<int,array<string,mixed>> Root nodes with nested children.
+	 *
+	 * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md#req-coa-003-the-account-schema-shall-declare-a-self-relation-for-hierarchy-via-x-openregister-relations
 	 */
 	public function buildHierarchy(array $accounts): array {
 		$byNumber = [];
@@ -122,7 +124,8 @@ class WbsoAccountService {
 			$byNumber[$parent]['children'][] = &$byNumber[$number];
 		}
 
-		return array_values($roots);
+		// `$roots` is only ever appended to with `[]=`, so it is already a list.
+		return $roots;
 	}//end buildHierarchy()
 
 	/**
@@ -280,6 +283,8 @@ class WbsoAccountService {
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException When validation fails.
+	 *
+	 * @spec openspec/specs/bookkeeping-chart-of-accounts/spec.md#req-coa-003-the-account-schema-shall-declare-a-self-relation-for-hierarchy-via-x-openregister-relations
 	 */
 	public function assertHierarchy(string $administrationId, string $accountNumber, string $parent): void {
 		if ($parent === '') {
@@ -311,7 +316,11 @@ class WbsoAccountService {
 		$cursor = $parent;
 		$depth = 1;
 		$seen = [$accountNumber => true];
-		while ($cursor !== '') {
+		// `$cursor` starts non-empty and is only ever reassigned from a `$next`
+		// the loop has already refused to accept when empty, so the
+		// `$cursor !== ''` condition this replaces could never end the loop —
+		// the `break` below is the only exit besides the throws.
+		while (true) {
 			if (isset($seen[$cursor]) === true) {
 				throw new InvalidArgumentException('Circular parent reference detected');
 			}
