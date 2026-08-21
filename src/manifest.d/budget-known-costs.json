@@ -1,0 +1,136 @@
+{
+	"_meta_note": "budget-known-costs REQ-BKC-009 — minimal, read-only index/detail pages for BudgetLineDerivation (the idempotency + override audit trail KnownCostBudgetWriter maintains). Nested under budget-core-schema's Budgets nav group (either-order convention, design.md §10) — no create/edit form ships since nothing in this change's own workflow expects an operator to author a BudgetLineDerivation by hand.",
+	"menu": [
+		{
+			"id": "Budgets",
+			"label": "Budgets",
+			"icon": "PiggyBankOutline",
+			"order": 29,
+			"children": [
+				{
+					"id": "BudgetLineDerivations",
+					"label": "Derivations",
+					"icon": "SourceBranch",
+					"route": "BudgetLineDerivations",
+					"order": 40
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "BudgetLineDerivations",
+			"route": "/begroting/derivations",
+			"type": "index",
+			"title": "Budget Line Derivations",
+			"config": {
+				"register": "shillinq",
+				"schema": "BudgetLineDerivation",
+				"columns": [
+					{
+						"key": "sourceType",
+						"label": "Source type",
+						"sortable": true
+					},
+					{
+						"key": "ledgerGroupId",
+						"label": "Ledger group",
+						"sortable": true
+					},
+					{
+						"key": "lastGeneratedAt",
+						"label": "Last generated",
+						"sortable": true
+					},
+					{
+						"key": "overridden",
+						"label": "Overridden",
+						"sortable": true
+					}
+				],
+				"defaultSort": "lastGeneratedAt",
+				"detailRoute": "BudgetLineDerivationDetail"
+			}
+		},
+		{
+			"id": "BudgetLineDerivationDetail",
+			"route": "/begroting/derivations/:id",
+			"type": "detail",
+			"title": "Budget Line Derivation",
+			"config": {
+				"_note": "REQ-BKC-004/005/009. Read-only audit/drill-down surface: which CashflowRecurring rows fed which BudgetLine, when it was last regenerated, and whether an operator's own edit has been detected (overridden). System-managed — written only by KnownCostBudgetWriter, never edited here (design.md §10).",
+				"register": "shillinq",
+				"schema": "BudgetLineDerivation",
+				"auditTrail": true,
+				"fields": [
+					{
+						"key": "sourceType",
+						"label": "Source type",
+						"type": "string"
+					},
+					{
+						"key": "annualBudgetId",
+						"label": "Annual budget",
+						"type": "string"
+					},
+					{
+						"key": "ledgerGroupId",
+						"label": "Ledger group",
+						"type": "string"
+					},
+					{
+						"key": "budgetLineId",
+						"label": "Budget line",
+						"type": "string"
+					},
+					{
+						"key": "contributingRecurIds",
+						"label": "Contributing recurring costs",
+						"type": "array"
+					},
+					{
+						"key": "lastGeneratedMonthlyAmounts",
+						"label": "Last generated monthly amounts",
+						"type": "array"
+					},
+					{
+						"key": "lastGeneratedAt",
+						"label": "Last generated at",
+						"type": "string"
+					},
+					{
+						"key": "overridden",
+						"label": "Overridden",
+						"type": "boolean"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "BudgetLineDerivations",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}
