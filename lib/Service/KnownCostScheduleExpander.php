@@ -482,7 +482,15 @@ class KnownCostScheduleExpander implements KnownCostScheduleExpanderInterface {
 	/**
 	 * An all-zero 12-month cents array.
 	 *
-	 * @return array<string,int> `"01".."12" => 0`.
+	 * Keyed by `int|string`, not `string`: PHP coerces a canonical numeric
+	 * string array key to an integer, so `array_fill_keys(self::MONTH_KEYS, 0)`
+	 * yields STRING keys for `"01".."09"` (the leading zero makes them
+	 * non-canonical) and INT keys for `10`, `11`, `12`. One array, two key
+	 * types. Lookups by `"10"` still work — the lookup coerces the same way —
+	 * but a consumer that tests `is_string($key)` will be wrong for a quarter
+	 * of the year.
+	 *
+	 * @return array<int|string,int> `"01".."12" => 0`.
 	 */
 	private function zeroMonths(): array {
 		return array_fill_keys(self::MONTH_KEYS, 0);

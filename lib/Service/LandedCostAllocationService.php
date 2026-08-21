@@ -348,10 +348,6 @@ class LandedCostAllocationService {
 				]
 			);
 
-		if (is_array($rows) === false) {
-			return [];
-		}
-
 		$lines = [];
 		foreach ($rows as $row) {
 			$lines[] = $this->asArray(row: $row);
@@ -383,7 +379,7 @@ class LandedCostAllocationService {
 				]
 			);
 
-		if (is_array($rows) === false || $rows === []) {
+		if ($rows === []) {
 			return null;
 		}
 
