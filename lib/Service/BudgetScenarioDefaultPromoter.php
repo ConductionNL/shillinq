@@ -54,7 +54,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
@@ -191,29 +190,9 @@ class BudgetScenarioDefaultPromoter {
 	 * administration — used both to find the scenario to demote and, after
 	 * promotion, to verify exactly one remains.
 	 *
-	 * ## Rows arrive as ENTITIES, not arrays
-	 *
-	 * OpenRegister's `ObjectService::findAll()` ends in
-	 * `RenderObject::renderEntities()`, whose declared return is
-	 * `list<ObjectEntity>` — every row is an OBJECT, and `ObjectEntity` does
-	 * NOT implement `ArrayAccess`. Handing those rows straight back made
-	 * `findCurrentDefault(): ?array` throw
-	 * `TypeError: ... Return value must be of type ?array, ObjectEntity
-	 * returned`, which `promote()` does not catch and
-	 * `BudgetScenarioController::promote()` turned into an opaque HTTP 500 on
-	 * EVERY promotion that had a previous default to demote — the exact
-	 * REQ-BSC-002 path the endpoint exists for. The unit suite could not see
-	 * it because its in-memory double answered plain arrays.
-	 *
-	 * So every row is normalised to its plain payload here, at the single
-	 * point where store rows enter this service — the same `getObject()`
-	 * conversion {@see BudgetScenarioReader::query()} already performs for
-	 * this change's read path. Arrays are passed through unchanged, so a
-	 * double or a future engine that answers arrays keeps working.
-	 *
 	 * @param string $administrationId The administration to scope the read to.
 	 *
-	 * @return list<array<string,mixed>> The matching rows, as plain arrays.
+	 * @return list<array<string,mixed>> The matching rows.
 	 */
 	private function findAllDefaults(string $administrationId): array {
 		try {
@@ -236,6 +215,25 @@ class BudgetScenarioDefaultPromoter {
 			return [];
 		}
 
+		// ObjectService::findAll() returns ObjectEntity INSTANCES, not arrays:
+		// it hands its rows to RenderObject::renderEntities(), whose per-row
+		// renderEntity() is declared `): ObjectEntity`. find() above already
+		// accounts for this by returning `$entity->getObject()`; this path did
+		// not, and the docblock claiming `list<array<string,mixed>>` hid it.
+		//
+		// The consequence was a 500 on every promotion that had to DEMOTE a
+		// previous default. The throw point is findCurrentDefault()'s own
+		// return type:
+		//
+		//   TypeError: findCurrentDefault(): Return value must be of type
+		//   ?array, ObjectEntity returned
+		//
+		// PHP rejects it before promote() ever reaches array_merge(), and
+		// BudgetScenarioController's `catch (Throwable)` turns it into an
+		// unexpected error. It never fired on the FIRST promotion in an
+		// administration, because there is nothing to demote then — exactly
+		// the pair the e2e trace showed: 200 with `demotedScenarioId: null`,
+		// then 500 on the next one.
 		$normalised = [];
 		foreach ($rows as $row) {
 			if (is_array($row) === true) {
@@ -243,22 +241,12 @@ class BudgetScenarioDefaultPromoter {
 				continue;
 			}
 
-			if ($row instanceof ObjectEntityInterface === true) {
-				$normalised[] = $row->getObject();
-				continue;
-			}
-
-			if (is_object($row) === true && method_exists($row, 'getObject') === true) {
-				$payload = $row->getObject();
-				if (is_array($payload) === true) {
-					$normalised[] = $payload;
-				}
-			}
+			$normalised[] = $row->getObject();
 		}
 
-		// No array_values() here: $normalised is only ever appended to with
-		// [], so it is already a list. PHPStan (arrayValues.list) rejects the
-		// redundant call outright rather than merely warning.
+		// No array_values(): appending to $normalised already produces a list.
+		// The original call was needed because findAll()'s own result may be
+		// keyed; this loop re-indexes it by construction.
 		return $normalised;
 
 	}//end findAllDefaults()
