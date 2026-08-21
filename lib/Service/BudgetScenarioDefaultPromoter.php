@@ -244,7 +244,10 @@ class BudgetScenarioDefaultPromoter {
 			$normalised[] = $row->getObject();
 		}
 
-		return array_values($normalised);
+		// No array_values(): appending to $normalised already produces a list.
+		// The original call was needed because findAll()'s own result may be
+		// keyed; this loop re-indexes it by construction.
+		return $normalised;
 
 	}//end findAllDefaults()
 
