@@ -260,6 +260,16 @@ class BudgetScenarioController extends Controller {
 	/**
 	 * Log an unexpected error server-side and return a generic 500 (no stack trace).
 	 *
+	 * The log entry names the throwable's CLASS and origin as well as its
+	 * message. A message alone is not enough to identify the fault: a
+	 * `TypeError` raised by a return-type mismatch deep in the promoter reads
+	 * as ordinary prose, and this handler's `catch (Throwable)` is the only
+	 * place it is ever observed. `promote()` returned an opaque 500 on every
+	 * demotion for exactly that reason (e2e budget-scenarios, CI run
+	 * 32462209787) — the cause had to be reconstructed from source rather
+	 * than read from the log. The client response is unchanged: still the
+	 * generic message, still no stack trace.
+	 *
 	 * @param string $action The controller action for the log entry.
 	 * @param \Throwable $e The caught throwable.
 	 *
@@ -268,7 +278,11 @@ class BudgetScenarioController extends Controller {
 	private function serverError(string $action, \Throwable $e): JSONResponse {
 		$this->logger->error(
 			'BudgetScenarioController: ' . $action . ' failed',
-			['exception' => $e->getMessage()]
+			[
+				'exceptionClass' => $e::class,
+				'exception' => $e->getMessage(),
+				'origin' => $e->getFile() . ':' . $e->getLine(),
+			]
 		);
 
 		return new JSONResponse(['error' => 'An unexpected error occurred'], Http::STATUS_INTERNAL_SERVER_ERROR);

@@ -54,6 +54,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
+use OCA\OpenRegister\Contract\ObjectEntityInterface;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
@@ -190,9 +191,29 @@ class BudgetScenarioDefaultPromoter {
 	 * administration — used both to find the scenario to demote and, after
 	 * promotion, to verify exactly one remains.
 	 *
+	 * ## Rows arrive as ENTITIES, not arrays
+	 *
+	 * OpenRegister's `ObjectService::findAll()` ends in
+	 * `RenderObject::renderEntities()`, whose declared return is
+	 * `list<ObjectEntity>` — every row is an OBJECT, and `ObjectEntity` does
+	 * NOT implement `ArrayAccess`. Handing those rows straight back made
+	 * `findCurrentDefault(): ?array` throw
+	 * `TypeError: ... Return value must be of type ?array, ObjectEntity
+	 * returned`, which `promote()` does not catch and
+	 * `BudgetScenarioController::promote()` turned into an opaque HTTP 500 on
+	 * EVERY promotion that had a previous default to demote — the exact
+	 * REQ-BSC-002 path the endpoint exists for. The unit suite could not see
+	 * it because its in-memory double answered plain arrays.
+	 *
+	 * So every row is normalised to its plain payload here, at the single
+	 * point where store rows enter this service — the same `getObject()`
+	 * conversion {@see BudgetScenarioReader::query()} already performs for
+	 * this change's read path. Arrays are passed through unchanged, so a
+	 * double or a future engine that answers arrays keeps working.
+	 *
 	 * @param string $administrationId The administration to scope the read to.
 	 *
-	 * @return list<array<string,mixed>> The matching rows.
+	 * @return list<array<string,mixed>> The matching rows, as plain arrays.
 	 */
 	private function findAllDefaults(string $administrationId): array {
 		try {
@@ -215,7 +236,27 @@ class BudgetScenarioDefaultPromoter {
 			return [];
 		}
 
-		return array_values($rows);
+		$normalised = [];
+		foreach ($rows as $row) {
+			if (is_array($row) === true) {
+				$normalised[] = $row;
+				continue;
+			}
+
+			if ($row instanceof ObjectEntityInterface === true) {
+				$normalised[] = $row->getObject();
+				continue;
+			}
+
+			if (is_object($row) === true && method_exists($row, 'getObject') === true) {
+				$payload = $row->getObject();
+				if (is_array($payload) === true) {
+					$normalised[] = $payload;
+				}
+			}
+		}
+
+		return array_values($normalised);
 
 	}//end findAllDefaults()
 
