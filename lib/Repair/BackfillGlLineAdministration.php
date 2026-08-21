@@ -134,7 +134,7 @@ class BackfillGlLineAdministration implements IRepairStep {
 			try {
 				$report = $this->migrator->backfillBatch(glLines: $lines, glTransactions: $transactions);
 			} catch (\Throwable $e) {
-				// assertCountsMatch() threw: at least one line's parent could
+				// The assertCountsMatch() call threw: at least one line's parent could
 				// not answer for it. NOTHING is written — a partially scoped
 				// ledger is the one state worse than an unscoped one — and the
 				// gate stays shut.

@@ -73,6 +73,8 @@ class RuleTestDataSeeder {
 	 * Backfill GL transactions to satisfy the enforced ledger rules.
 	 *
 	 * @return array<string, int> Counts: sourceReferencesAdded, linesAdded, alreadyCompliant.
+	 *
+	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function seed(): array {
 		$register = $this->register();
