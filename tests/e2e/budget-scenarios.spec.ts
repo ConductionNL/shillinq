@@ -326,6 +326,27 @@ function promoteButton(page: Page) {
  * backend, rather than only that a toast appeared.
  */
 async function promoteToDefault(page: Page): Promise<void> {
+	// Assert the button EXISTS before arming waitForResponse.
+	//
+	// waitForResponse's timeout starts when the promise is CREATED, not when
+	// the click happens. So if the click can never land, the response wait
+	// rejects first and blames a missing response — when the real cause is a
+	// button that was never rendered. That is precisely how this test failed
+	// opaquely in CI ("waitForResponse: Test timeout exceeded" at this line,
+	// with no indication the click never occurred).
+	//
+	// The action is gated by `visibleWhen: {field: isDefault, op: eq, value:
+	// false}`, and nc-vue compares with `actual === expected ||
+	// String(actual) === String(expected)`. An ABSENT isDefault (undefined)
+	// therefore does NOT match `false` and hides the button, while a stored
+	// `false` matches. Failing here says which of those happened.
+	await expect(
+		promoteButton(page).first(),
+		'the "Promote to default" action must be rendered before it can be clicked — '
+			+ 'it is gated by visibleWhen {isDefault eq false}, so if this fails the '
+			+ 'scenario either already IS default or stored no isDefault at all',
+	).toBeVisible({ timeout: 15_000 })
+
 	const promoted = page.waitForResponse(
 		(response) =>
 			/\/api\/v1\/budget-scenarios\/[^/]+\/promote$/.test(
