@@ -874,6 +874,21 @@
             "description": "FK to the administration (tenant scope) (REQ-CF-005).",
             "example": "adm-consultancy-nl",
             "title": "Administration ID"
+          },
+          "contractReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to Contract (contract-lifecycle-management); null means this recurring cost has no originating contract — a dated planned cost (budget-known-costs REQ-BKC-001). Additive, optional field.",
+            "example": null,
+            "title": "Contract Reference",
+            "$ref": "Contract"
+          },
+          "cpiRatePercent": {
+            "type": "number",
+            "nullable": true,
+            "description": "Operator-supplied annual indexation rate (e.g. 2.5 for 2.5%), consumed when indexationRule = CPI_PAST_YEAR; null means the rate is not yet known and CPI_PAST_YEAR indexation cannot be computed until it is supplied (budget-known-costs REQ-BKC-003). Additive, optional field.",
+            "example": 2.5,
+            "title": "CPI Rate Percent"
           }
         },
         "x-openregister-lifecycle": {
