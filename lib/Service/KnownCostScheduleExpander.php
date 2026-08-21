@@ -122,28 +122,37 @@ class KnownCostScheduleExpander implements KnownCostScheduleExpanderInterface {
 	 *                                       `standardAmount`, `validFrom`, `validTo`,
 	 *                                       `indexationRule`, `cpiRatePercent`, `monthOfYear`).
 	 * @param integer $fiscalYear The calendar year to compute monthly amounts for.
-	 * @param array<string,mixed>|null $_contract The linked Contract, when `contractReference` is
-	 *                                            set — unused by this class's own arithmetic (the
-	 *                                            Contract window is enforced by
-	 *                                            {@see \OCA\Shillinq\Guard\CashflowRecurringGuard}
-	 *                                            at save time, REQ-BKC-002); accepted for the
-	 *                                            design's declared public surface / call-site
-	 *                                            parity (`design.md` §6).
+	 * @param array<string,mixed>|null $contract The linked Contract, when `contractReference` is
+	 *                                           set — unused by this class's own arithmetic (the
+	 *                                           Contract window is enforced by
+	 *                                           {@see \OCA\Shillinq\Guard\CashflowRecurringGuard}
+	 *                                           at save time, REQ-BKC-002); accepted for the
+	 *                                           design's declared public surface / call-site
+	 *                                           parity (`design.md` §6).
 	 *
-	 * @return array{kind:string,monthlyCents?:array<string,int>} Either
+	 * @return array{kind:string,monthlyCents?:array<int|string,int>} Either
 	 *         `['kind' => 'amounts', 'monthlyCents' => ["01" => int, ..., "12" => int]]` or
 	 *         `['kind' => 'needsOperatorInput']` when `indexationRule = CPI_PAST_YEAR` and
 	 *         `cpiRatePercent` is null (REQ-BKC-003).
+	 *
+	 *         `int|string` keys, not `string`: built from MONTH_KEYS `['01' … '12']`,
+	 *         and PHP coerces a canonical numeric string key to int, so `"01".."09"`
+	 *         stay strings while `10`, `11`, `12` are ints.
 	 *
 	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-003
 	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-006
 	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-010
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $_contract is documented
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $contract is documented
 	 *     above as accepted for the design's declared public surface / call-site
 	 *     parity and is genuinely unused by this pure class's own arithmetic.
+	 *     It is deliberately NOT named `$_contract`: the interface calls it
+	 *     `$contract`, and this codebase calls with named arguments, so a
+	 *     leading-underscore rename here would make `expand(contract: …)` a fatal
+	 *     unknown-named-parameter error against the very type the caller holds.
+	 *     Psalm reports the divergence as ParamNameMismatch.
 	 */
-	public function expand(array $recurring, int $fiscalYear, ?array $_contract = null): array {
+	public function expand(array $recurring, int $fiscalYear, ?array $contract = null): array {
 		$indexationRule = (string)($recurring['indexationRule'] ?? 'FIXED');
 		$cpiRatePercent = ($recurring['cpiRatePercent'] ?? null);
 		if ($indexationRule === 'CPI_PAST_YEAR' && $cpiRatePercent === null) {
