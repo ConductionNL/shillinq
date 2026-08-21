@@ -276,6 +276,53 @@ final class DunningRunServiceTest extends TestCase {
 	}//end testResumePauseFlipsLifecycleState()
 
 	/**
+	 * resumePause() must refuse a pause belonging to another administration.
+	 *
+	 * The $administrationId parameter was accepted and then IGNORED —
+	 * fetchById() resolves by id alone, so before the guard the parameter
+	 * appeared exactly once in the method, its own declaration. A dead tenant
+	 * parameter reads as scoped at every call site while scoping nothing, and
+	 * that is precisely what enabled the resumePause IDOR.
+	 *
+	 * The refusal message is deliberately identical to the not-found case, so
+	 * the guard cannot be used as an existence oracle.
+	 *
+	 * @return void
+	 */
+	public function testResumePauseRefusesAnotherAdministrationsPause(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$os->seed(schema: 'DunningPauseDispute', rows: [
+			['id' => 'pause-b', 'administrationId' => 'adm-B', 'lifecycleState' => 'active'],
+		]);
+		$service = $this->makeService(os: $os);
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('DunningPauseDispute pause-b not found.');
+		$service->resumePause(administrationId: 'adm-A', pauseId: 'pause-b', resolution: 'resolve');
+
+	}//end testResumePauseRefusesAnotherAdministrationsPause()
+
+	/**
+	 * The paired must-PASS control: the OWNING administration still resolves.
+	 *
+	 * Without this, a guard that refused everything would look identical to a
+	 * guard that refuses correctly.
+	 *
+	 * @return void
+	 */
+	public function testResumePauseStillResolvesForTheOwningAdministration(): void {
+		$os = new OpenRegisterFaithfulObjectService();
+		$os->seed(schema: 'DunningPauseDispute', rows: [
+			['id' => 'pause-own', 'administrationId' => 'adm-A', 'lifecycleState' => 'active'],
+		]);
+		$service = $this->makeService(os: $os);
+
+		$resolved = $service->resumePause(administrationId: 'adm-A', pauseId: 'pause-own', resolution: 'resolve');
+		self::assertSame('resolved', $resolved['lifecycleState']);
+
+	}//end testResumePauseStillResolvesForTheOwningAdministration()
+
+	/**
 	 * REQ-CCD-010: writeOff materialises the OninbaarAfschrijving record.
 	 *
 	 * @return void
