@@ -317,9 +317,10 @@ fi
 # only look at the parsed list. A wrong lookup manufactures an absence for free,
 # so the two are reported as different errors.
 verify() {
-	python3 - "$1" "$2" "$3" <<'PY'
+	python3 - "$1" "$2" "$3" "$4" <<'PY'
 import json, sys
 path, kind, code = sys.argv[1], sys.argv[2], sys.argv[3]
+limit = int(sys.argv[4]) if len(sys.argv) > 4 else 10**9
 required = {
     'registers': ['shillinq'],
     'schemas': [
@@ -345,6 +346,27 @@ items = body if isinstance(body, list) else body.get('results', [])
 slugs = {i.get('slug') for i in items if isinstance(i, dict)}
 missing = [s for s in required if s not in slugs]
 print(f'[ci-seed] {kind} present: {len(slugs)}')
+
+# A TRUNCATED PAGE MUST NOT READ AS "MISSING".
+#
+# This check asks for a bounded page and then concludes absence from what came
+# back. If the instance holds MORE than that bound, the required slug can be on
+# a page we never fetched and the check reports it missing when it is present.
+#
+# Observed on a shared dev instance carrying 407 registers against a `_limit`
+# of 300: the probe declared `shillinq` missing while `?_limit=1000` returned
+# it. The error text was confident and completely wrong, and it named the app's
+# own register — the most alarming possible false positive.
+#
+# So: if the page came back FULL, we cannot distinguish "absent" from
+# "truncated", and saying nothing is the only honest answer.
+if missing and len(items) >= limit:
+    print(f'::error::{kind} lookup returned exactly {len(items)} item(s) — the '
+          f'requested page limit. This page is FULL, so {missing} may simply be '
+          f'on a page that was never fetched. This is NOT evidence of absence.')
+    print(f'::error::Re-run with a higher _limit (or paginate) before trusting '
+          f'any "missing" verdict here.')
+    sys.exit(1)
 if kind == 'registers':
     print(f'[ci-seed] register slugs: {sorted(s for s in slugs if s)}')
 if missing:
@@ -360,14 +382,14 @@ PY
 REG_BODY="$(mktemp)"
 REG_CODE="$(curl -sS -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
 	-o "$REG_BODY" -w '%{http_code}' --max-time 300 \
-	"${BASE}/index.php/apps/openregister/api/registers?_limit=300" || echo 000)"
-verify "$REG_BODY" registers "$REG_CODE"
+	"${BASE}/index.php/apps/openregister/api/registers?_limit=2000" || echo 000)"
+verify "$REG_BODY" registers "$REG_CODE" 2000
 
 SCH_BODY="$(mktemp)"
 SCH_CODE="$(curl -sS -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
 	-o "$SCH_BODY" -w '%{http_code}' --max-time 300 \
-	"${BASE}/index.php/apps/openregister/api/schemas?_limit=1000" || echo 000)"
-verify "$SCH_BODY" schemas "$SCH_CODE"
+	"${BASE}/index.php/apps/openregister/api/schemas?_limit=5000" || echo 000)"
+verify "$SCH_BODY" schemas "$SCH_CODE" 5000
 
 # The register existing is still not the same as it being READABLE by the admin
 # session the specs use. `workflows/_fixtures.ts` probes this collection shape
