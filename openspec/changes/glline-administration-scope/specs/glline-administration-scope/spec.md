@@ -74,8 +74,15 @@ failure this requirement exists to prevent.
 - **WHEN** an `adm-A` member opens the three views
 - **THEN** no `adm-B` row MUST contribute to any total
 
-@e2e glline-administration-scope::scoped-views-still-return-rows
-@e2e glline-administration-scope::totals-exclude-another-administration
+@e2e exclude `/api/analytics/spend` has NO frontend consumer — `grep -rn
+"analytics/spend" src/` returns nothing and no `src/manifest.d/` page declares
+it, so the four spend views are an API-only surface today. Both scenarios are
+enforced instead by `tests/Unit/Service/SpendAnalyticsServiceTest.php`
+(`testGlBackedViewsExcludeOtherAdministrations` for the negative control,
+`testScopedViewsStillReturnRowsAndRealTotals` for the positive one), each
+proven to fail with the guard removed. A Playwright spec navigating to a page
+that never calls this endpoint would assert nothing about either scenario.
+Re-tag as `@e2e glline-administration-scope::…` when a UI consumer lands.
 
 ### Requirement: REQ-GLS-004 — the stale warning MUST be removed with the fix
 

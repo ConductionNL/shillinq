@@ -179,6 +179,15 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\InitializeBbvAdministration</step>
             <step>OCA\Shillinq\Repair\UnifyAnalyticalDimensions</step>
             <step>OCA\Shillinq\Repair\RetireCostProjectStep</step>
+            <!-- glline-administration-scope (REQ-GLS-002 / REQ-GLS-003). Backfills
+                 GLLine.administrationId from the parent GLTransaction, then RE-READS every
+                 line and opens the SpendAnalytics scoping gate only on a zero-missing total.
+                 MUST run after InitializeSettings, which imports the register.d fragment that
+                 declares the property in the first place. The gate is cleared at the START of
+                 the step, so an instance that never reaches it — or crashes inside it — leaves
+                 SpendAnalytics refusing its GL-backed views rather than serving either
+                 cross-administration totals or a silently-zeroed scoped one. -->
+            <step>OCA\Shillinq\Repair\BackfillGlLineAdministration</step>
             <step>OCA\Shillinq\Repair\BackfillFiscalPeriods</step>
             <step>OCA\Shillinq\Repair\PeriodCloseBackfill</step>
             <step>OCA\Shillinq\Repair\LoadCbsSeedsStep</step>

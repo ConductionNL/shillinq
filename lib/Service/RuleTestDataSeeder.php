@@ -105,9 +105,16 @@ class RuleTestDataSeeder {
 			if ($this->lineCount($register, $id, $num) < 2) {
 				$key = $num !== '' ? $num : $id;
 				$currency = (string)($tx['currency'] ?? 'EUR');
+				// administrationId is DENORMALISED onto every seeded line from
+				// the parent transaction (REQ-GLS-001). Seeded rows are not
+				// exempt: they land in the same register the SpendAnalytics
+				// aggregations read, and one un-stamped seed row flips the
+				// backfill completeness gate red for the whole instance.
+				$administrationId = (string)($tx['administrationId'] ?? '');
 				foreach ([['1000', 'debit'], ['8000', 'credit']] as $i => $spec) {
 					$line = [
 						'transactionId' => $key,
+						'administrationId' => $administrationId,
 						'lineNumber' => ($i + 1),
 						'accountNumber' => $spec[0],
 						'side' => $spec[1],

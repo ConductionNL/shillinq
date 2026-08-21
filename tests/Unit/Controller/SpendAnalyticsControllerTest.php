@@ -293,4 +293,74 @@ final class SpendAnalyticsControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 	}//end testSpendPassesTheProvenAdministrationIntoTheAggregation()
+
+	/**
+	 * The THREE GL-BACKED dimensions must receive the proven administration
+	 * too (REQ-GLS-003).
+	 *
+	 * They used to be dispatched with NO argument at all, because `GLLine`
+	 * declared no administration property and a parameter the service could
+	 * not honour would have read as a scope that was applied. Written to fail
+	 * on that controller in the most direct way available: it did not pass the
+	 * value, so `->with('ADM-042')` cannot match.
+	 *
+	 * @dataProvider glBackedDimensions
+	 *
+	 * @param string $dimension The dimension query parameter.
+	 * @param string $method The service method it must dispatch to.
+	 *
+	 * @return void
+	 */
+	public function testGlBackedDimensionsAlsoReceiveTheProvenAdministration(string $dimension, string $method): void {
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParam')->willReturnCallback(
+			static function (string $key, $default = null) use ($dimension) {
+				if ($key === 'dimension') {
+					return $dimension;
+				}
+
+				if ($key === 'administration_id') {
+					return 'ADM-042';
+				}
+
+				return $default;
+			}
+		);
+
+		$service = $this->createMock(SpendAnalyticsService::class);
+		$service->expects($this->once())
+			->method($method)
+			->with('ADM-042')
+			->willReturn(['dimension' => $dimension, 'groups' => [], 'total' => 0.0, 'backend' => 'postgres']);
+
+		$context = $this->createMock(AdministrationContextService::class);
+		$context->method('currentUserId')->willReturn('alice');
+		$context->method('canAccess')->willReturn(true);
+
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnArgument(0);
+
+		$controller = new SpendAnalyticsController(
+			request: $request,
+			service: $service,
+			context: $context,
+			l10n: $l10n,
+			logger: $this->createMock(LoggerInterface::class)
+		);
+
+		$this->assertSame(Http::STATUS_OK, $controller->spend()->getStatus());
+	}//end testGlBackedDimensionsAlsoReceiveTheProvenAdministration()
+
+	/**
+	 * The three GLLine-sourced dimensions and their service methods.
+	 *
+	 * @return array<string,array{0:string,1:string}>
+	 */
+	public static function glBackedDimensions(): array {
+		return [
+			'category' => ['category', 'spendByCategory'],
+			'costCentre' => ['costCentre', 'spendByCostCentre'],
+			'period' => ['period', 'spendByPeriod'],
+		];
+	}//end glBackedDimensions()
 }//end class
