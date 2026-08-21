@@ -87,7 +87,7 @@ class DunningRunExecuteGuard {
 				->setRegister($register)
 				->setSchema('DunningRun')
 				->findAll(['filters' => ['id' => $runId]]);
-			if (is_array($runs) === false || $runs === []) {
+			if ($runs === []) {
 				return false;
 			}
 
@@ -109,7 +109,7 @@ class DunningRunExecuteGuard {
 						],
 					]
 				);
-			if (is_array($pauses) === true && $pauses !== []) {
+			if ($pauses !== []) {
 				$this->logger->info('Shillinq: DunningRun ' . $runId . ' blocked by active pause.');
 				return false;
 			}

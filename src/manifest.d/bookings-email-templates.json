@@ -94,13 +94,7 @@
 					{ "key": "activatedAt", "label": "First activated", "type": "date-time" }
 				],
 				"lifecycleActions": true,
-				"relatedLists": [
-					{"id": "triggers", "title": "Triggers using this template", "schema": "BookingNotificationTrigger", "foreignKey": "templateOverrideSlug", "join": "templateOverrideSlug", "columns": [
-						{"key": "name", "label": "Trigger"},
-						{"key": "triggerType", "label": "Type"},
-						{"key": "status", "label": "Status"}
-					], "detailRoute": "NotificationTriggerDetail"}
-				],
+				"_relatedListsExclude": "'Triggers using this template' NOT converted — removed rather than faked. It was declared under `relatedLists`, which is not a prop on any Cn page component (it lands in $attrs and renders nothing), so it has never rendered. It is also not expressible as a `relatedCollections` filter: BookingNotificationTrigger.templateOverrideSlug stores a template SLUG (schema example 'default-confirmation-nl'), but BookingConfirmationTemplate exposes no flat slug field — only `name` ('Default Booking Confirmation'), a different value. A slug lives at `@self.slug`, which `@object.<field>` cannot reach (flat payload fields only), and `@objectId` yields a UUID that nothing stores in that field. No PHP reads or writes templateOverrideSlug, so there is no writer to prove an alternative. Restoring it needs a flat slug/key field on the template schemas, or a `@self.slug` token in nextcloud-vue.",
 				"auditTrail": true,
 				"indexRoute": "ConfirmationTemplates",
 				"sidebarProps": {
@@ -166,13 +160,7 @@
 					{ "key": "activatedAt", "label": "First activated", "type": "date-time" }
 				],
 				"lifecycleActions": true,
-				"relatedLists": [
-					{"id": "triggers", "title": "Triggers using this template", "schema": "BookingNotificationTrigger", "foreignKey": "templateOverrideSlug", "join": "templateOverrideSlug", "columns": [
-						{"key": "name", "label": "Trigger"},
-						{"key": "triggerType", "label": "Type"},
-						{"key": "status", "label": "Status"}
-					], "detailRoute": "NotificationTriggerDetail"}
-				],
+				"_relatedListsExclude": "'Triggers using this template' NOT converted — removed rather than faked. Same cause as ConfirmationTemplateDetail above: it was declared under `relatedLists` (not a prop on any Cn page component, so it never rendered), and BookingNotificationTrigger.templateOverrideSlug stores a template SLUG that BookingReminderTemplate exposes nowhere as a flat payload field. `@object.<field>` cannot reach `@self.slug` and `@objectId` yields a UUID nothing stores. Needs a flat slug/key field on the template schemas, or a `@self.slug` token in nextcloud-vue.",
 				"auditTrail": true,
 				"indexRoute": "ReminderTemplates",
 				"sidebarProps": {
@@ -238,13 +226,7 @@
 					{ "key": "activatedAt", "label": "First activated", "type": "date-time" }
 				],
 				"lifecycleActions": true,
-				"relatedLists": [
-					{"id": "triggers", "title": "Triggers using this template", "schema": "BookingNotificationTrigger", "foreignKey": "templateOverrideSlug", "join": "templateOverrideSlug", "columns": [
-						{"key": "name", "label": "Trigger"},
-						{"key": "triggerType", "label": "Type"},
-						{"key": "status", "label": "Status"}
-					], "detailRoute": "NotificationTriggerDetail"}
-				],
+				"_relatedListsExclude": "'Triggers using this template' NOT converted — removed rather than faked. Same cause as ConfirmationTemplateDetail above: it was declared under `relatedLists` (not a prop on any Cn page component, so it never rendered), and BookingNotificationTrigger.templateOverrideSlug stores a template SLUG that BookingCancellationTemplate exposes nowhere as a flat payload field. `@object.<field>` cannot reach `@self.slug` and `@objectId` yields a UUID nothing stores. Needs a flat slug/key field on the template schemas, or a `@self.slug` token in nextcloud-vue.",
 				"auditTrail": true,
 				"indexRoute": "CancellationTemplates",
 				"sidebarProps": {

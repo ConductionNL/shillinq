@@ -184,7 +184,8 @@ class KnownCostBudgetWriter {
 			}
 		}
 
-		$summary['skippedFiscalYears'] = array_values(array_keys($summary['skippedFiscalYears']));
+		// `array_keys()` already returns a list.
+		$summary['skippedFiscalYears'] = array_keys($summary['skippedFiscalYears']);
 
 		return $summary;
 
@@ -399,7 +400,11 @@ class KnownCostBudgetWriter {
 	 * @param list<array<string,mixed>> $rows The group's CashflowRecurring rows.
 	 * @param integer $fiscalYear The fiscal year to compute.
 	 *
-	 * @return array<string,int> `"01".."12" => summed cents`.
+	 * Keyed by `int|string` — see KnownCostScheduleExpander::zeroMonths(): PHP
+	 * coerces `"10".."12"` to integer array keys while `"01".."09"` stay
+	 * strings.
+	 *
+	 * @return array<int|string,int> `"01".."12" => summed cents`.
 	 */
 	private function sumMonthlyCents(array $rows, int $fiscalYear): array {
 		$sum = array_fill_keys(self::MONTH_KEYS, 0);

@@ -83,7 +83,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "ImportBatch",
-				"_note": "MASTER archetype (native CnDetailPage). An import batch is a staged administration migration (XAF + companion CSVs → opening journal, open items, relations) that owns its ImportMapping review rows (FK batchReference) as the actual mapping-review surface, so it renders via relatedLists rather than a bespoke object-list widget. The source XAF/CSV files are metadata on sourceFiles (Nextcloud Files references, linked not stored) so the Documents sidebar tab surfaces them via openregister-file-references. The status field drives a fail-closed lifecycle (draft → parsing → staged → mapping → validated|validation_failed → dry_run_complete → posting → posted|posting_failed → reversed), so the lifecycle toolbar is preserved via lifecycleActions. Audit trail lives in the canonical sidebarProps audit tab.",
+				"_note": "MASTER archetype (native CnDetailPage). An import batch is a staged administration migration (XAF + companion CSVs → opening journal, open items, relations) that owns its ImportMapping review rows (FK batchReference) as the actual mapping-review surface, so it renders via relatedCollections rather than a bespoke object-list widget. KEY: the prop is `relatedCollections` — a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing. TOKEN: `@objectId` — ImportMapping.batchReference is documented as \"UUID or slug\" and ImportBatch exposes no flat batch-reference field, so the UUID is the only value reachable from a filter token. The source XAF/CSV files are metadata on sourceFiles (Nextcloud Files references, linked not stored) so the Documents sidebar tab surfaces them via openregister-file-references. The status field drives a fail-closed lifecycle (draft → parsing → staged → mapping → validated|validation_failed → dry_run_complete → posting → posted|posting_failed → reversed), so the lifecycle toolbar is preserved via lifecycleActions. Audit trail lives in the canonical sidebarProps audit tab.",
 				"fields": [
 					{"key": "sourceSystem", "label": "Source system", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"},
@@ -99,12 +99,12 @@
 					{"key": "owner", "label": "Owner", "type": "string"}
 				],
 				"lifecycleActions": true,
-				"relatedLists": [
+				"relatedCollections": [
 					{
-						"id": "mappings",
 						"title": "Account mappings",
+						"register": "shillinq",
 						"schema": "ImportMapping",
-						"foreignKey": "batchReference",
+						"filter": { "batchReference": "@objectId" },
 						"columns": [
 							{"key": "sourceCode", "label": "Source code"},
 							{"key": "sourceName", "label": "Source name"},
@@ -113,7 +113,7 @@
 							{"key": "mappingSource", "label": "Mapping source"},
 							{"key": "confirmed", "label": "Confirmed"}
 						],
-						"detailRoute": "ImportMappingDetail"
+						"rowRoute": "ImportMappingDetail"
 					}
 				],
 				"sidebarProps": {
