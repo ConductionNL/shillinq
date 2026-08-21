@@ -2919,7 +2919,24 @@
         "VAT/BTW filing, KOR, income tax, deferred tax, WBSO and R&D grants.": "BTW-aangifte, KOR, inkomstenbelasting, latente belasting, WBSO en R&D-subsidies.",
         "WBSO & R&D": "WBSO & R&D",
         "WBSO Activity Codes": "WBSO-activiteitencodes",
-        "Year-end close checklist": "Checklist jaarafsluiting"
+        "Year-end close checklist": "Checklist jaarafsluiting",
+        "Actual: {amount}": "Werkelijk: {amount}",
+        "Administration not found.": "Administratie niet gevonden.",
+        "Budget grid": "Begrotingsraster",
+        "Difference: {amount}": "Verschil: {amount}",
+        "End period": "Eindperiode",
+        "Failed to load the budget grid.": "Laden van het begrotingsraster mislukt.",
+        "Favorable:": "Gunstig:",
+        "Granularity": "Granulariteit",
+        "Ledger group": "Verzamelpost",
+        "Ledger groups roll up GL accounts across a selectable period range. Past periods show actuals and the deviation from budget; the final column carries the running cumulative totals.": "Verzamelposten tellen grootboekrekeningen op over een instelbare periode. Afgesloten periodes tonen de werkelijke cijfers en de afwijking ten opzichte van de begroting; de laatste kolom toont het lopende cumulatieve totaal.",
+        "Loading budget grid": "Begrotingsraster laden",
+        "No accessible administration.": "Geen toegankelijke administratie.",
+        "No ledger groups": "Geen verzamelposten",
+        "No LedgerGroup records exist yet for this administration. Create ledger groups to build a budget.": "Er bestaan nog geen verzamelposten voor deze administratie. Maak verzamelposten aan om een begroting op te bouwen.",
+        "Not logged in.": "Niet ingelogd.",
+        "Start period": "Startperiode",
+        "Unfavorable:": "Ongunstig:"
     },
     "plurals": ""
 }
