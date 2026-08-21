@@ -87,6 +87,8 @@ class BackfillGlLineAdministration implements IRepairStep {
 	 * @param IAppConfig $appConfig App config — holds the completeness gate.
 	 * @param LoggerInterface $logger The logger interface.
 	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 *
+	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
 	public function __construct(
 		private readonly SettingsService $settingsService,

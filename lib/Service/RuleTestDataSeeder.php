@@ -105,7 +105,7 @@ class RuleTestDataSeeder {
 			if ($this->lineCount($register, $id, $num) < 2) {
 				$key = $num !== '' ? $num : $id;
 				$currency = (string)($tx['currency'] ?? 'EUR');
-				// administrationId is DENORMALISED onto every seeded line from
+				// The administrationId is DENORMALISED onto every seeded line from
 				// the parent transaction (REQ-GLS-001). Seeded rows are not
 				// exempt: they land in the same register the SpendAnalytics
 				// aggregations read, and one un-stamped seed row flips the

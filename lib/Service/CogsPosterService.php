@@ -160,7 +160,7 @@ class CogsPosterService {
 
 			$cogsAmount = round(($cogsCents / 100), 2);
 
-			// administrationId is DENORMALISED onto every line from the header
+			// The administrationId is DENORMALISED onto every line from the header
 			// above (REQ-GLS-001) — see GlLineAdministrationBackfillMigrator.
 			// A line written without it is invisible to its own
 			// administration's SpendAnalytics totals AND flips the backfill

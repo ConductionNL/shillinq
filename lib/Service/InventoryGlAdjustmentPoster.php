@@ -165,7 +165,7 @@ class InventoryGlAdjustmentPoster {
 
 			$transactionId = (string)($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
 
-			// administrationId is DENORMALISED onto every line from the header
+			// The administrationId is DENORMALISED onto every line from the header
 			// above (REQ-GLS-001). GLLine now declares the property, and
 			// SpendAnalyticsService filters the category / cost-centre /
 			// period aggregations on it — a line written without it would be

@@ -485,7 +485,7 @@ class VatSuppletieDetectionService {
 			}
 
 			$lineNumber++;
-			// administrationId is DENORMALISED onto every line from the same
+			// The administrationId is DENORMALISED onto every line from the same
 			// scope the header carries (REQ-GLS-001) — see
 			// GlLineAdministrationBackfillMigrator. A line written without it
 			// is invisible to its own administration's SpendAnalytics totals
