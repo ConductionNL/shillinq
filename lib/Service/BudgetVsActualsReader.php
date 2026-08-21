@@ -141,11 +141,25 @@ class BudgetVsActualsReader {
 	 * administration, batched to at most 5 `findAll()` calls total
 	 * (4 when `$includeLedgerGroups` is false).
 	 *
+	 * **Amended for `budget-grid-view` (REQ-BGV-004/REQ-BGV-007), additive
+	 * only — no new `findAll()` call:** the raw `accounts` rows fetched by
+	 * call (1) above are now also returned verbatim. This class already
+	 * fetches them (to resolve `LedgerGroup` membership); previously only
+	 * the derived `actualsByAccountMonth`/`ledgerGroupEntries.
+	 * memberAccountNumbers` were exposed, dropping each account's own
+	 * `accountType`/`name`/id. `BudgetGridReader` needs `Account.accountType`
+	 * per resolved member for the deviation sign convention (REQ-BGV-004)
+	 * and each account's id/name to render a grootboek leaf row that links to
+	 * `ChartOfAccountsDetail` (REQ-BGV-007) — without this it would have to
+	 * issue its own separate `Account.findAll()`, breaking the flat query
+	 * bound (REQ-BGV-009) for no reason, since the data was already in hand.
+	 *
 	 * @param string $administrationId The administration to scope every read to.
 	 * @param list<string> $annualBudgetIds The AnnualBudget ids to load BudgetLines for; empty = none loaded.
 	 * @param boolean $includeLedgerGroups Whether to load + resolve LedgerGroup membership (skips call 4 when false).
 	 *
 	 * @return array{
+	 *     accounts: list<array<string,mixed>>,
 	 *     actualsByAccountMonth: array<string,array<string,int>>,
 	 *     ledgerGroupEntries: list<array{id:string,slug:string,parentRef:?string,memberAccountNumbers:list<string>}>,
 	 *     ledgerGroupKeyToIndex: array<string,int>,
@@ -154,6 +168,7 @@ class BudgetVsActualsReader {
 	 * } The assembled context the calculator consumes.
 	 *
 	 * @spec openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md#req-bcs-008
+	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The flag is REQ-BCS-008's own
 	 * call-budget toggle (5 calls with LedgerGroups, 4 without) — splitting it
@@ -181,6 +196,7 @@ class BudgetVsActualsReader {
 		}
 
 		return [
+			'accounts' => $accounts,
 			'actualsByAccountMonth' => $actualsByAccountMonth,
 			'ledgerGroupEntries' => $ledgerGroupContext['entries'],
 			'ledgerGroupKeyToIndex' => $ledgerGroupContext['keyToIndex'],
@@ -351,12 +367,12 @@ class BudgetVsActualsReader {
 			$included = $ledgerGroup['includedAccountNumbers'];
 		}
 
-		$excludedAccountNumbers = [];
+		$excludedNumbers = [];
 		if (is_array($ledgerGroup['excludedAccountNumbers'] ?? null) === true) {
-			$excludedAccountNumbers = $ledgerGroup['excludedAccountNumbers'];
+			$excludedNumbers = $ledgerGroup['excludedAccountNumbers'];
 		}
 
-		$excluded = array_flip(array_map('strval', $excludedAccountNumbers));
+		$excluded = array_flip(array_map('strval', $excludedNumbers));
 
 		$members = [];
 		foreach ($accounts as $account) {

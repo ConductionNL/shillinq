@@ -557,6 +557,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'periodClose#lockAudit', 'url' => '/api/period-close/{periodId}/lock-audit', 'verb' => 'POST'],
             ['name' => 'periodClose#show', 'url' => '/api/period-close/{periodId}', 'verb' => 'GET'],
 
+            // Budget scenarios (budget-scenarios, REQ-BSC-002). isDefault is set
+            // exclusively via this endpoint (a service call, atomic demotion of
+            // the previous default) — never an x-openregister-lifecycle
+            // transition (BudgetScenarioDefaultPromoter's own docblock).
+            ['name' => 'budgetScenario#promote', 'url' => '/api/v1/budget-scenarios/{scenarioId}/promote', 'verb' => 'POST'],
+            ['name' => 'budgetScenario#evaluate', 'url' => '/api/v1/budget-scenarios/{scenarioId}/evaluate', 'verb' => 'GET'],
+
             // Continuous close + flux analysis (bookkeeping-soft-close-flux,
             // REQ-CLS-002, REQ-CLS-005, REQ-CLS-007). On-demand soft-close trigger
             // per administratie + on-demand flux run + flux narrative export
@@ -621,6 +628,12 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // last per Symfony route ordering. Every endpoint is #[NoAdminRequired] and
             // authentication + role gating happens in the controller body.
             ['name' => 'wbsoAccountApi#hierarchy', 'url' => '/api/v1/accounts/hierarchy', 'verb' => 'GET'],
+
+            // budget-grid-view REQ-BGV-001/002/003 — the begroting grid's own
+            // single read endpoint. One request returns the whole tree +
+            // column set pre-computed (design.md §1c: expand/collapse must
+            // cost zero further requests).
+            ['name' => 'budgetGrid#index', 'url' => '/api/budget-grid', 'verb' => 'GET'],
             ['name' => 'wbsoAccountApi#index', 'url' => '/api/v1/accounts', 'verb' => 'GET'],
             ['name' => 'wbsoAccountApi#create', 'url' => '/api/v1/accounts', 'verb' => 'POST'],
             ['name' => 'wbsoAccountApi#show', 'url' => '/api/v1/accounts/{accountNumber}', 'verb' => 'GET'],
