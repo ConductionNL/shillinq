@@ -123,6 +123,23 @@ function uniqueSuffix(): string {
 }
 
 /**
+ * A per-run-unique `effectiveDate`, used to identify THIS run's modifier row
+ * on an index shared with every other run's rows.
+ *
+ * Spreads over ~27 years of distinct days (10_000 days from 2027-01-01), keyed
+ * off the same clock as {@link uniqueSuffix}, so two runs collide only if they
+ * land on the same millisecond-derived day index.
+ *
+ * @return {string} An ISO `YYYY-MM-DD` date.
+ */
+function uniqueEffectiveDate(): string {
+	const base = Date.UTC(2027, 0, 1)
+	const dayOffset = Date.now() % 10_000
+	const d = new Date(base + dayOffset * 86_400_000)
+	return d.toISOString().slice(0, 10)
+}
+
+/**
  * The administration the signed-in user actually holds a membership for.
  *
  * This CANNOT be an invented value. `BudgetScenarioController::promote`
@@ -534,7 +551,22 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 			'REQ-BSC-009: the seeded "Liquide middelen" LedgerGroup must be a pickable LEDGER_AMOUNT_DELTA target on a fresh import',
 		)
 
-		await dialog.getByLabel(/^Effective Date/i).fill('2027-09-01')
+		// A UNIQUE effective date, because it is the only column on the
+		// BudgetScenarioModifiers index that this test can make unique.
+		//
+		// The three columns are scenarioId / modifierType / effectiveDate.
+		// scenarioId renders the raw stored value — a UUID (the property is
+		// `format: uuid`, `$ref: BudgetScenario`) — so the scenario's unique
+		// NAME never appears in the row, and modifierType is shared by every
+		// LEDGER_AMOUNT_DELTA row in the administration. Selecting the row by
+		// type alone therefore picks whatever row happens to sort first, which
+		// on a shared administration is somebody else's.
+		//
+		// That is not hypothetical: it started failing the moment the promote
+		// 500 was fixed, because the promotion test then began completing and
+		// leaving extra rows behind instead of aborting early.
+		const effectiveDate = uniqueEffectiveDate()
+		await dialog.getByLabel(/^Effective Date/i).fill(effectiveDate)
 		await dialog.getByLabel(/^Amount Delta/i).fill('-500000')
 
 		const submit = dialog.getByRole('button', { name: 'Create', exact: true })
@@ -548,9 +580,19 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 		// Creating from an index page refreshes the list in place rather than
 		// navigating to the new object's detail page, so the saved modifier is
 		// asserted on the index row it now owns.
+		// Both filters, so this is THIS run's row and not merely A row of the
+		// right type. Asserting toHaveCount(1) makes an ambiguous match fail
+		// loudly instead of silently resolving to somebody else's modifier —
+		// which is exactly how this assertion passed while the detail-page
+		// assertion below failed on a different object.
 		const modifierRow = page
 			.locator('table tbody tr')
 			.filter({ hasText: 'LEDGER_AMOUNT_DELTA' })
+			.filter({ hasText: effectiveDate })
+		await expect(
+			modifierRow,
+			`exactly one LEDGER_AMOUNT_DELTA modifier dated ${effectiveDate} must exist — this run's own`,
+		).toHaveCount(1, { timeout: 15_000 })
 		await expect(
 			modifierRow.first(),
 			'the saved LEDGER_AMOUNT_DELTA modifier must appear on the BudgetScenarioModifiers index',
