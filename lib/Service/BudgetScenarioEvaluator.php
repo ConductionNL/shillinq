@@ -70,7 +70,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -103,6 +102,19 @@ class BudgetScenarioEvaluator {
 	];
 
 	/**
+	 * The hypothetical-schedule arithmetic for `RECURRING_*` modifiers.
+	 *
+	 * Built here rather than injected so the constructor signature stays
+	 * `(expander, logger)` for every existing caller and DI registration, and so
+	 * it provably shares the ONE expander instance this evaluator was handed —
+	 * which is what makes `design.md` §6a's "never a second arithmetic" rule
+	 * observable through a single call log in tests.
+	 *
+	 * @var RecurringModifierExpander
+	 */
+	private readonly RecurringModifierExpander $recurringExpander;
+
+	/**
 	 * Construct the evaluator.
 	 *
 	 * @param KnownCostScheduleExpanderInterface $scheduleExpander The pure `budget-known-costs`
@@ -113,9 +125,11 @@ class BudgetScenarioEvaluator {
 	 * @param LoggerInterface $logger Logger for skipped/unresolved-target diagnostics.
 	 */
 	public function __construct(
-		private readonly KnownCostScheduleExpanderInterface $scheduleExpander,
+		KnownCostScheduleExpanderInterface $scheduleExpander,
 		private readonly LoggerInterface $logger,
 	) {
+		$this->recurringExpander = new RecurringModifierExpander(scheduleExpander: $scheduleExpander);
+
 	}//end __construct()
 
 	/**
@@ -356,15 +370,12 @@ class BudgetScenarioEvaluator {
 		}
 
 		try {
-			$realMonthly = $this->scheduleExpander->expand($real, $fiscalYear, null);
-			$hypotheticalMonthly = [];
-			if ($type === 'RECURRING_END') {
-				$hypotheticalMonthly = $this->expandRecurringEnd(real: $real, modifier: $modifier, fiscalYear: $fiscalYear);
-			}
-
-			if ($type === 'RECURRING_AMOUNT_CHANGE') {
-				$hypotheticalMonthly = $this->expandRecurringAmountChange(real: $real, modifier: $modifier, fiscalYear: $fiscalYear);
-			}
+			$monthlyDeltas = $this->recurringExpander->monthlyDeltas(
+				real: $real,
+				modifier: $modifier,
+				type: $type,
+				fiscalYear: $fiscalYear
+			);
 		} catch (Throwable $e) {
 			$this->logger->error(
 				'BudgetScenarioEvaluator: KnownCostScheduleExpander::expand() failed — skipping this modifier',
@@ -373,11 +384,22 @@ class BudgetScenarioEvaluator {
 			return;
 		}
 
+		// REQ-BKC-003: the expander answers `needsOperatorInput` when the row is
+		// CPI-indexed and no rate has been supplied. There is no schedule to
+		// difference against in that case, and inventing one (treating it as all
+		// zeros) would post a delta equal to the whole hypothetical amount.
+		if ($monthlyDeltas === null) {
+			$this->logger->info(
+				'BudgetScenarioEvaluator: the expander needs operator input (missing CPI rate) '
+				. 'for this CashflowRecurring row — skipping this modifier',
+				['targetRecurId' => $recurId, 'modifierType' => $type]
+			);
+			return;
+		}
+
 		foreach (self::MONTH_FIELDS as $index2 => $monthField) {
 			$monthKey = str_pad((string)($index2 + 1), 2, '0', STR_PAD_LEFT);
-			$realCents = (int)($realMonthly[$monthKey] ?? 0);
-			$hypotheticalCents = (int)($hypotheticalMonthly[$monthKey] ?? 0);
-			$delta = ($hypotheticalCents - $realCents);
+			$delta = ($monthlyDeltas[$monthKey] ?? 0);
 			if ($delta === 0) {
 				continue;
 			}
@@ -386,68 +408,6 @@ class BudgetScenarioEvaluator {
 		}
 
 	}//end applyRecurringModifier()
-
-	/**
-	 * `RECURRING_END`: one hypothetical row with `validTo` capped at
-	 * `effectiveDate` (never later than the row's own real `validTo`).
-	 *
-	 * @param array<string,mixed> $real The real CashflowRecurring row.
-	 * @param array<string,mixed> $modifier The RECURRING_END modifier.
-	 * @param int $fiscalYear The fiscal year being evaluated.
-	 *
-	 * @return array<string,int> "01".."12" => cents.
-	 */
-	private function expandRecurringEnd(array $real, array $modifier, int $fiscalYear): array {
-		$effectiveDate = (string)($modifier['effectiveDate'] ?? '');
-		$realValidTo = null;
-		if (($real['validTo'] ?? null) !== null) {
-			$realValidTo = (string)$real['validTo'];
-		}
-
-		$cappedValidTo = $effectiveDate;
-		if ($realValidTo !== null && $this->compareDates(a: $realValidTo, b: $effectiveDate) < 0) {
-			// The real row already ends before the hypothetical cap — no change.
-			$cappedValidTo = $realValidTo;
-		}
-
-		$hypothetical = array_merge($real, ['validTo' => $cappedValidTo]);
-
-		return $this->scheduleExpander->expand($hypothetical, $fiscalYear, null);
-
-	}//end expandRecurringEnd()
-
-	/**
-	 * `RECURRING_AMOUNT_CHANGE`: the real amount still applies strictly
-	 * BEFORE `effectiveDate`; `newStandardAmount` applies from
-	 * `effectiveDate` forward. Sliced into two rows, both expanded through
-	 * the shared expander, then summed (design.md §4b — no second
-	 * arithmetic).
-	 *
-	 * @param array<string,mixed> $real The real CashflowRecurring row.
-	 * @param array<string,mixed> $modifier The RECURRING_AMOUNT_CHANGE modifier.
-	 * @param int $fiscalYear The fiscal year being evaluated.
-	 *
-	 * @return array<string,int> "01".."12" => cents.
-	 */
-	private function expandRecurringAmountChange(array $real, array $modifier, int $fiscalYear): array {
-		$effectiveDate = (string)($modifier['effectiveDate'] ?? '');
-		$newStandardAmount = $modifier['newStandardAmount'] ?? null;
-
-		$beforeRow = array_merge($real, ['validTo' => $this->dayBefore(date: $effectiveDate)]);
-		$afterRow = array_merge($real, ['validFrom' => $effectiveDate, 'standardAmount' => $newStandardAmount]);
-
-		$before = $this->scheduleExpander->expand($beforeRow, $fiscalYear, null);
-		$after = $this->scheduleExpander->expand($afterRow, $fiscalYear, null);
-
-		$combined = [];
-		foreach (array_keys(self::MONTH_FIELDS) as $i) {
-			$monthKey = str_pad((string)($i + 1), 2, '0', STR_PAD_LEFT);
-			$combined[$monthKey] = ((int)($before[$monthKey] ?? 0) + (int)($after[$monthKey] ?? 0));
-		}
-
-		return $combined;
-
-	}//end expandRecurringAmountChange()
 
 	/**
 	 * Apply one `LEDGER_AMOUNT_DELTA` modifier into `$deltas` (passed by
@@ -693,42 +653,4 @@ class BudgetScenarioEvaluator {
 
 	}//end monthField()
 
-	/**
-	 * Compare two ISO date strings. Returns negative when `$a` is earlier,
-	 * positive when later, 0 when equal or unparseable.
-	 *
-	 * @param string $a The first date.
-	 * @param string $b The second date.
-	 *
-	 * @return int The comparison result.
-	 */
-	private function compareDates(string $a, string $b): int {
-		try {
-			$dateA = new DateTimeImmutable($a);
-			$dateB = new DateTimeImmutable($b);
-		} catch (Throwable) {
-			return 0;
-		}
-
-		return ($dateA <=> $dateB);
-
-	}//end compareDates()
-
-	/**
-	 * The calendar day immediately before an ISO date string.
-	 *
-	 * @param string $date The ISO date string.
-	 *
-	 * @return string The previous day, ISO-formatted; `$date` unchanged when unparseable.
-	 */
-	private function dayBefore(string $date): string {
-		try {
-			$parsed = new DateTimeImmutable($date);
-		} catch (Throwable) {
-			return $date;
-		}
-
-		return $parsed->modify('-1 day')->format('Y-m-d');
-
-	}//end dayBefore()
 }//end class
