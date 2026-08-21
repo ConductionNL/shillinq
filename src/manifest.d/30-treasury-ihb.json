@@ -73,7 +73,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "CashPool",
-				"_note": "MASTER archetype — a cash pool is the header record for a notional/zero-balancing sweep structure; its real substance is the member accounts. Native shillinq detail contract: config.aggregations[] surface the minimum-cash-policy currency KPI; config.fields[] render the pool configuration (type, master account, interest rate/allocation, sweep frequency/time); config.relatedLists[] show the participating accounts (CashPoolMembership, FK poolId=@self.id) — the pool's line items; and the sidebar carries an audit-trail tab for the immutable sweep-config history. NO comms/files — a cash pool is treasury plumbing, not correspondence.",
+				"_note": "MASTER archetype — a cash pool is the header record for a notional/zero-balancing sweep structure; its real substance is the member accounts. Native shillinq detail contract: config.aggregations[] surface the minimum-cash-policy currency KPI; config.fields[] render the pool configuration (type, master account, interest rate/allocation, sweep frequency/time); config.relatedCollections[] show the participating accounts (CashPoolMembership, FK poolId=@objectId) — the pool's line items. KEY+TOKEN: the prop is `relatedCollections` (a `relatedLists` block lands in $attrs and renders nothing), and the token is `@objectId`, NOT `@self.id` — `@self.id` is not a token the resolver knows (see nextcloud-vue utils/resolveFilterTokens.js), so it passed through unresolved and the widget skipped the query entirely. CashPool has no flat business key in its payload, so poolId holds the pool's OpenRegister UUID; and the sidebar carries an audit-trail tab for the immutable sweep-config history. NO comms/files — a cash pool is treasury plumbing, not correspondence.",
 				"aggregations": [
 					{ "id": "minimumCashPolicy", "title": "Minimum cash policy", "field": "minimumCashPolicy", "metric": "value", "format": "currency" }
 				],
@@ -91,8 +91,8 @@
 					{ "key": "administrationId", "label": "Administration", "type": "string" },
 					{ "key": "notes", "label": "Notes", "type": "string" }
 				],
-				"relatedLists": [
-					{ "id": "member-accounts", "title": "Member accounts", "schema": "CashPoolMembership", "filter": { "poolId": "@self.id" }, "columns": [
+				"relatedCollections": [
+					{ "title": "Member accounts", "register": "shillinq", "schema": "CashPoolMembership", "filter": { "poolId": "@objectId" }, "columns": [
 						{ "key": "bankAccount", "label": "Bank account" },
 						{ "key": "sweepDirection", "label": "Sweep" },
 						{ "key": "targetBalance", "label": "Target balance" },
@@ -140,7 +140,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "IntercompanyLoan",
-				"_note": "TRANSACTION/instrument archetype — an intercompany loan is a principal-bearing agreement between two group administrations with a transfer-pricing basis. Native shillinq detail contract: config.aggregations[] surface the principal currency KPI so the exposure reads first; config.fields[] render the loan terms (lender/borrower, rate type/fixed rate/reference+spread, dates, IFRS classification, TP document); config.relatedLists[] show the drawdowns/repayments (IntercompanyTransaction, FK loanId=@self.id); the sidebar carries a file-references tab for the transfer-pricing documentation and an audit-trail tab for the immutable term/state history. NO comms.",
+				"_note": "TRANSACTION/instrument archetype — an intercompany loan is a principal-bearing agreement between two group administrations with a transfer-pricing basis. Native shillinq detail contract: config.aggregations[] surface the principal currency KPI so the exposure reads first; config.fields[] render the loan terms (lender/borrower, rate type/fixed rate/reference+spread, dates, IFRS classification, TP document); config.relatedCollections[] show the drawdowns/repayments (IntercompanyTransaction, FK loanId=@objectId — the prop is `relatedCollections`, and `@self.id` is not a resolver token so it never resolved; IntercompanyLoan carries no flat business key, so loanId holds the loan's OpenRegister UUID); the sidebar carries a file-references tab for the transfer-pricing documentation and an audit-trail tab for the immutable term/state history. NO comms.",
 				"aggregations": [
 					{ "id": "principal", "title": "Principal", "field": "principal", "metric": "value", "format": "currency" }
 				],
@@ -160,8 +160,8 @@
 					{ "key": "ifrsClassification", "label": "IFRS classification", "type": "string" },
 					{ "key": "state", "label": "Status", "type": "string" }
 				],
-				"relatedLists": [
-					{ "id": "loan-movements", "title": "Loan movements", "schema": "IntercompanyTransaction", "filter": { "loanId": "@self.id" }, "columns": [
+				"relatedCollections": [
+					{ "title": "Loan movements", "register": "shillinq", "schema": "IntercompanyTransaction", "filter": { "loanId": "@objectId" }, "columns": [
 						{ "key": "movementType", "label": "Type" },
 						{ "key": "amount", "label": "Amount" },
 						{ "key": "currency", "label": "Ccy" },
