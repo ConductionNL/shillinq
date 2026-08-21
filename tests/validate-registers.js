@@ -219,9 +219,26 @@ function collectSchemas() {
 					files: [],
 					auditDeclaredIn: [],
 					fullDefinitionFiles: [],
+					props: new Set(),
+					aggregations: [],
 					slug,
 				}
 			registry[slug].files.push(fp)
+			// Accumulate the MERGED property set across every fragment that
+			// touches this slug — a cross-schema field reference must be
+			// checked against what the schema ends up with after
+			// deepMergeConfig(), not against one fragment in isolation.
+			if (def && def.properties && typeof def.properties === 'object') {
+				for (const p of Object.keys(def.properties))
+					registry[slug].props.add(p)
+			}
+			const aggs = def && def['x-openregister-aggregations']
+			if (aggs && typeof aggs === 'object') {
+				for (const [aggName, agg] of Object.entries(aggs)) {
+					if (agg && typeof agg === 'object')
+						registry[slug].aggregations.push({ aggName, agg, file: fp })
+				}
+			}
 			// The DB slug is the explicit `slug` when present, else the
 			// components.schemas key. OpenRegister resolves the slug, not the
 			// key. `files` is walked in the same sorted order that
@@ -263,8 +280,8 @@ function isFullSchemaDefinition(def) {
 	return (
 		def !== null
 		&& typeof def === 'object'
-		&& Object.prototype.hasOwnProperty.call(def, 'type')
-		&& Object.prototype.hasOwnProperty.call(def, 'required')
+		&& Object.hasOwn(def, 'type')
+		&& Object.hasOwn(def, 'required')
 	)
 }
 
@@ -436,6 +453,201 @@ function checkSameSlugFullDefinitionCollisions(registry) {
 	return false
 }
 
+// A declarative aggregation can name a field on ANOTHER schema
+// (`join.on`, `join.select`) or a computed `formula` over its OWN fields.
+// Nothing resolves those names at import time, so a rename on the target
+// schema leaves the reference stranded and the aggregation silently
+// resolves to nothing — it does not error, it just never matches.
+//
+// Found live on 2026-08-21: `Verplichtingsregel`'s
+// `committedVsRealisedPerBudgetLine` joined `CommitmentBudget.programmaCode`
+// and selected `geautoriseerd_bedrag`/`gerealiseerd_bedrag`, while the
+// schema had been migrated to English (`programmeCode`, `authorised_amount`,
+// `realised_amount`) — three dead references. `CommitmentBudget.free_capacity`
+// carried a fourth in its formula. All four were the Dutch half of a rename
+// that moved the properties but not the references to them.
+//
+// Deliberately CONSERVATIVE about formulas: only expressions built purely
+// from bare identifiers, integers and + - * / ( ) are checked. Anything
+// richer (`@self`, `??`, `sum(...)`, dotted paths — all of which appear
+// legitimately elsewhere in register.d) is skipped rather than guessed at,
+// because a noisy gate gets switched off and a gate that is off protects
+// nothing.
+const FORMULA_SIMPLE_RE =
+	/^[A-Za-z_][A-Za-z0-9_]*(?:\s*[-+*/]\s*(?:[A-Za-z_][A-Za-z0-9_]*|\d+))*$/
+const FORMULA_IDENT_RE = /[A-Za-z_][A-Za-z0-9_]*/g
+
+// Every OpenRegister object carries these regardless of what the schema's
+// `properties` declares, so a reference to one is legitimate and must not
+// be flagged.
+const IMPLICIT_OBJECT_FIELDS = new Set([
+	'id',
+	'uuid',
+	'uri',
+	'version',
+	'created',
+	'updated',
+	'published',
+	'depublished',
+	'owner',
+	'organisation',
+	'application',
+	'register',
+	'schema',
+])
+
+// `join.on` appears in two shapes in the wild:
+//   "CommitmentBudget.programmeCode"                                (bare)
+//   "CashflowRecurring.administrationId = CashflowWeek.administrationId"  (equality)
+// Splitting naively on the first dot turns the second into a field named
+// `administrationId = CashflowWeek.administrationId`, which is a parser bug,
+// not a finding. Split on `=` first and validate each side independently.
+function qualifiedRefs(join) {
+	const refs = []
+	if (!join || typeof join !== 'object') return refs
+	if (typeof join.on === 'string') {
+		for (const side of join.on.split('=')) {
+			const trimmed = side.trim()
+			if (trimmed !== '') refs.push({ key: 'join.on', ref: trimmed })
+		}
+	}
+	if (Array.isArray(join.select)) {
+		for (const s of join.select)
+			if (typeof s === 'string')
+				refs.push({ key: 'join.select', ref: s.trim() })
+	}
+	if (typeof join.from === 'string')
+		refs.push({ key: 'join.from', ref: join.from.trim() })
+	return refs
+}
+
+// `groupBy` entries are either a bare field on the source schema or a
+// qualified `Other.field`. Only the qualified form is checked here — the
+// bare form would need the source schema resolved, which `source` /
+// `sourceSchema` spell inconsistently across fragments. Checked because a
+// stranded groupBy reference is exactly how the BBV programma roll-up
+// silently grouped by nothing.
+function groupByRefs(agg) {
+	const refs = []
+	if (!Array.isArray(agg.groupBy)) return refs
+	for (const g of agg.groupBy) {
+		if (typeof g === 'string' && g.includes('.') === true)
+			refs.push({ key: 'groupBy', ref: g.trim() })
+	}
+	return refs
+}
+
+// Known-unresolved references that are NOT a mechanical rename and must not
+// be guessed at. Each entry is a decision waiting on a human, not a defect
+// this gate should silently tolerate forever — the point of listing them
+// here (rather than deleting the check) is that the gate keeps protecting
+// every OTHER reference while these stay visible.
+//
+// `GLLine.fiscalYearId`: GLLine has no fiscal-year property at all. Its
+// nearest field is `periodId`, but a period is a FINER grain than a year,
+// so substituting it would silently change what these P&L roll-ups group
+// by — an architecture decision (add a fiscalYearId to GLLine, or join
+// through GLTransaction/Period to derive the year), not a rename.
+const AGGREGATION_REF_BASELINE = new Map([
+	[
+		'GLLine.fiscalYearId',
+		'GLLine declares no fiscal-year field; periodId is a finer grain, so this needs a schema decision, not a rename. Affects AnalyticalDimension.segmentPnl, AnalyticalDimension.segmentPnlByCostObject, Project.segmentPnl.',
+	],
+])
+
+function checkAggregationFieldRefs(registry) {
+	const problems = []
+	const baselined = []
+	let checkedRefs = 0
+
+	for (const slug of Object.keys(registry).sort()) {
+		for (const { aggName, agg, file } of registry[slug].aggregations) {
+			for (const { key, ref } of [
+				...qualifiedRefs(agg.join),
+				...groupByRefs(agg),
+			]) {
+				const dot = ref.indexOf('.')
+				if (dot === -1) continue
+				const targetSlug = ref.slice(0, dot)
+				const field = ref.slice(dot + 1)
+				const target = registry[targetSlug]
+				// An unknown target schema is a different defect class
+				// (and may live in another app's register) — not this check's job.
+				if (!target) continue
+				if (IMPLICIT_OBJECT_FIELDS.has(field) === true) continue
+				checkedRefs++
+				if (
+					target.props.has(field) === false
+					&& AGGREGATION_REF_BASELINE.has(ref) === true
+				) {
+					baselined.push(`${slug}.${aggName} ${key}="${ref}"`)
+					continue
+				}
+				if (target.props.has(field) === false) {
+					problems.push(
+						`${slug}.${aggName} ${key}="${ref}" — ${targetSlug} has no property "${field}" `
+							+ `(it has: ${[...target.props].sort().join(', ')})\n      declared in ${file}`,
+					)
+				}
+			}
+
+			if (agg.type === 'calculation' && typeof agg.formula === 'string') {
+				const f = agg.formula.trim()
+				if (FORMULA_SIMPLE_RE.test(f) === true) {
+					for (const ident of f.match(FORMULA_IDENT_RE) || []) {
+						checkedRefs++
+						if (registry[slug].props.has(ident) === false) {
+							problems.push(
+								`${slug}.${aggName} formula references "${ident}", which is not a property of ${slug} `
+									+ `(it has: ${[...registry[slug].props].sort().join(', ')})\n      declared in ${file}`,
+							)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	console.log(
+		`[validate-registers] aggregation field references checked: ${checkedRefs}`,
+	)
+	// Never let a baselined entry pass silently — a waiver nobody sees is a
+	// waiver nobody revisits.
+	if (baselined.length > 0) {
+		console.log(
+			`[validate-registers] aggregation refs BASELINED (known-unresolved, awaiting a decision): ${baselined.length}`,
+		)
+		// Deliberately NOT the "  - " prefix the failure list uses: I misread
+		// my own output once while building this, grepping "^  - " and seeing
+		// waived entries as findings. A waiver must not look like a failure.
+		for (const b of baselined) {
+			const reason = AGGREGATION_REF_BASELINE.get(
+				b.slice(b.indexOf('"') + 1, b.lastIndexOf('"')),
+			)
+			console.log(`  ~ [baselined] ${b}\n      reason: ${reason}`)
+		}
+	}
+	// A check that examined nothing must not report success.
+	if (checkedRefs === 0) {
+		console.error(
+			'[validate-registers] FAIL — the aggregation field-reference check resolved ZERO references. '
+				+ 'That means it stopped seeing its own subject (parsing or shape drift), not that the registers are clean.',
+		)
+		return false
+	}
+	if (problems.length === 0) {
+		console.log(
+			'[validate-registers] PASS — every checkable aggregation field reference resolves to a real property',
+		)
+		return true
+	}
+	console.error(
+		'[validate-registers] FAIL — aggregation field references that cannot ever resolve:',
+	)
+	for (const p of problems) console.error(`  - ${p}`)
+	return false
+}
+
 function main() {
 	const registry = collectSchemas()
 	const all = Object.keys(registry).sort()
@@ -457,9 +669,15 @@ function main() {
 
 	const slugsOk = checkSlugCaseCollisions(registry)
 	const sameSlugFullDefinitionOk = checkSameSlugFullDefinitionCollisions(registry)
+	const aggregationRefsOk = checkAggregationFieldRefs(registry)
 
 	if (offenders.length === 0) {
-		if (slugsOk === false || sameSlugFullDefinitionOk === false) process.exit(1)
+		if (
+			slugsOk === false
+			|| sameSlugFullDefinitionOk === false
+			|| aggregationRefsOk === false
+		)
+			process.exit(1)
 		console.log(
 			'[validate-registers] PASS — every bookkeeping + procurement schema declares x-openregister-audit-trail.enabled=true (REQ-AT-001 / REQ-RAP-001)',
 		)
