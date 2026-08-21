@@ -664,6 +664,7 @@ export default {
 		 * value, mirroring BudgetProjectionCalculator's own "unprojectable
 		 * contributes 0" cumulative rule for the TOTAAL column).
 		 *
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
 		 * @param {(number|null)[]} amounts The amounts to sum, in EUR cents.
 		 * @return {number} The total, in EUR cents.
 		 */
@@ -674,6 +675,7 @@ export default {
 		/**
 		 * Format a EUR-cents total for the TOTAAL column.
 		 *
+		 * @spec openspec/changes/budget-charts/specs/budget-charts/spec.md#req-bch-009
 		 * @param {number} cents The total, in EUR cents.
 		 * @return {string}
 		 */
