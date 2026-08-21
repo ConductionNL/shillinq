@@ -62,7 +62,9 @@ function read(p) {
 function main() {
 	const infoXml = read(INFO_XML)
 	if (infoXml === null) {
-		console.error('[validate-job-registration] FAIL — appinfo/info.xml not readable; cannot tell which jobs are registered.')
+		console.error(
+			'[validate-job-registration] FAIL — appinfo/info.xml not readable; cannot tell which jobs are registered.',
+		)
 		process.exit(1)
 	}
 
@@ -73,7 +75,9 @@ function main() {
 		const docPath = path.join(REPO_ROOT, doc)
 		const docText = read(docPath)
 		if (docText === null) {
-			problems.push(`${doc} does not exist, but ${job} is listed as documented there.`)
+			problems.push(
+				`${doc} does not exist, but ${job} is listed as documented there.`,
+			)
 			continue
 		}
 		checked++
@@ -102,7 +106,9 @@ function main() {
 
 	// A check that inspected nothing must not report success.
 	if (checked === 0) {
-		console.error('[validate-job-registration] FAIL — inspected ZERO documented jobs. The list is empty or every doc path is wrong; that is a broken gate, not a clean repo.')
+		console.error(
+			'[validate-job-registration] FAIL — inspected ZERO documented jobs. The list is empty or every doc path is wrong; that is a broken gate, not a clean repo.',
+		)
 		process.exit(1)
 	}
 
@@ -112,7 +118,9 @@ function main() {
 		process.exit(1)
 	}
 
-	console.log('[validate-job-registration] PASS — every documented job\'s registration state matches its documentation.')
+	console.log(
+		"[validate-job-registration] PASS — every documented job's registration state matches its documentation.",
+	)
 	process.exit(0)
 }
 
