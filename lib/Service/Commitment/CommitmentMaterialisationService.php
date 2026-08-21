@@ -713,10 +713,6 @@ class CommitmentMaterialisationService {
 				->setSchema(schema: $schema)
 				->findAll($query);
 
-			if (is_array($result) === false) {
-				return [];
-			}
-
 			return array_values($result);
 		} catch (Throwable $e) {
 			$this->logger->debug(

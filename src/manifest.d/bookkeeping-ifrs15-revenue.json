@@ -82,7 +82,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "RevenueContract",
-				"_note": "FINANCIAL/MASTER archetype — an IFRS-15 revenue contract is the header for the five-step revenue model; its substance is the performance obligations that decompose the transaction price. Native shillinq detail contract: config.aggregations[] surface the fixed + variable consideration currency KPIs so an accountant reads the deal size first; config.fields[] render the contract header (number, customer, dates, currency, sales-order/group references, state); config.relatedLists[] show the performance obligations (PerformanceObligation, FK contractId=@self.id) — the allocation lines; the sidebar carries a file-references tab for the signed contract PDF and an audit-trail tab for the immutable modification/lifecycle history. NO email/calendar — a revenue contract is a financial artefact, not a conversation.",
+				"_note": "FINANCIAL/MASTER archetype — an IFRS-15 revenue contract is the header for the five-step revenue model; its substance is the performance obligations that decompose the transaction price. Native shillinq detail contract: config.aggregations[] surface the fixed + variable consideration currency KPIs so an accountant reads the deal size first; config.fields[] render the contract header (number, customer, dates, currency, sales-order/group references, state); config.relatedCollections[] show the performance obligations (PerformanceObligation, FK contractId=@object.contractNumber) — the allocation lines. KEY+TOKEN: the prop is `relatedCollections` (a `relatedLists` block lands in $attrs and renders nothing), and the token is `@object.contractNumber`, NOT `@self.id` — `@self.id` is not a token resolveFilterTokens.js knows, so it never resolved. PerformanceObligation.contractId carries the schema example 'C-2026-001', which is exactly RevenueContract.contractNumber's example, i.e. the child references the contract by its flat business key, not by UUID. ⚠️ MEDIUM CONFIDENCE: no PHP writes PerformanceObligation (it is UI-created), so this rests on the matching schema examples rather than on an observed writer; the sidebar carries a file-references tab for the signed contract PDF and an audit-trail tab for the immutable modification/lifecycle history. NO email/calendar — a revenue contract is a financial artefact, not a conversation.",
 				"aggregations": [
 					{ "id": "fixedConsideration", "title": "Fixed consideration", "field": "fixedConsideration", "metric": "value", "format": "currency" },
 					{ "id": "variableConsideration", "title": "Variable consideration", "field": "variableConsideration", "metric": "value", "format": "currency" }
@@ -100,8 +100,8 @@
 					{ "key": "contractGroupId", "label": "Contract Group", "type": "string" },
 					{ "key": "lifecycleState", "label": "State", "type": "string" }
 				],
-				"relatedLists": [
-					{ "id": "performance-obligations", "title": "Performance obligations", "schema": "PerformanceObligation", "filter": { "contractId": "@self.id" }, "columns": [
+				"relatedCollections": [
+					{ "title": "Performance obligations", "register": "shillinq", "schema": "PerformanceObligation", "filter": { "contractId": "@object.contractNumber" }, "columns": [
 						{ "key": "description", "label": "Description" },
 						{ "key": "satisfactionPattern", "label": "Satisfaction" },
 						{ "key": "sspAmount", "label": "SSP" },

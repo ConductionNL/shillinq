@@ -311,6 +311,14 @@ import WbsoDocumentsView from './views/bookkeeping/DocumentsView.vue'
 // #[AuthorizedAdminSetting(Application::class)].
 import FxRatesAdmin from './views/bookkeeping/multi-currency/FxRatesAdmin.vue'
 import WbsoTransactionsView from './views/bookkeeping/TransactionsView.vue'
+// budget-grid-view (REQ-BGV-001..009): the year-basis begroting grid —
+// verzamelpost rows (LedgerGroup tree, expandable to child groups or
+// resolved grootboek accounts), a caller-selected period range/granularity,
+// past-column actuals-vs-budget deviation, and a TOTAAL cumulative column.
+// None of that fits `index`/`detail`/`dashboard`, so it is registered as a
+// kind:"page" custom component per ADR-024 (same pattern as
+// BudgetLineCommitments/SegmentPnLDashboard above).
+import BudgetGrid from './views/BudgetGrid.vue'
 // verplichtingen-commitment-accounting Task 4 (REQ-VPL-011): the
 // BudgetLineCommitments drilldown composes the declarative
 // committedVsRealisedPerBudgetLine aggregation declared on
@@ -318,6 +326,14 @@ import WbsoTransactionsView from './views/bookkeeping/TransactionsView.vue'
 // drilldown. Registered as a kind:"page" custom component per ADR-024
 // (same pattern as SegmentPnLDashboard).
 import BudgetLineCommitments from './views/BudgetLineCommitments.vue'
+// budget-scenarios (REQ-BSC-008, design.md §9): the standalone scenario
+// comparison page composes an administration/fiscal-year/scenario PICKER
+// with a bespoke base/scenario/delta table calling
+// BudgetScenarioController::evaluate() — none of the declarative page types
+// (index/detail/dashboard) fit a picker-driven, non-register-bound table.
+// kind:"page" custom component; the manifest fragment
+// src/manifest.d/budget-scenarios.json declares the route.
+import BudgetScenarioComparison from './views/BudgetScenarioComparison.vue'
 // compliance-deadline-calendar (REQ-CDC-006): per-user category toggles
 // + reminder lead times for the compliance deadline calendar. Talks to
 // the strictly current-user-scoped /api/deadline-calendar/settings
@@ -446,6 +462,7 @@ export default {
 	// bookkeeping-cost-centers-dimensions Task 14: segment P&L drill-down.
 	SegmentPnLDashboard: { kind: 'page', component: SegmentPnLDashboard },
 	BudgetLineCommitments: { kind: 'page', component: BudgetLineCommitments },
+	BudgetGrid: { kind: 'page', component: BudgetGrid },
 
 	// compliance-deadline-calendar (REQ-CDC-006): deadline calendar settings.
 	DeadlineCalendarSettings: { kind: 'page', component: DeadlineCalendarSettings },
@@ -490,6 +507,12 @@ export default {
 	AccountantPortalDashboard: {
 		kind: 'page',
 		component: AccountantPortalDashboard,
+	},
+
+	// budget-scenarios: standalone base/scenario/delta comparison page.
+	BudgetScenarioComparison: {
+		kind: 'page',
+		component: BudgetScenarioComparison,
 	},
 
 	// inventory-product-catalog (#860). See the import docblock above for why

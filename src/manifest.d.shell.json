@@ -3947,6 +3947,136 @@
 		{
 			"menu": [
 				{
+					"id": "Budgets",
+					"children": [
+						{
+							"id": "BudgetGrid",
+							"label": "Budget Grid",
+							"icon": "TableLarge",
+							"route": "BudgetGrid",
+							"order": 5
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "budget-grid-view",
+					"id": "BudgetGrid",
+					"route": "/begroting/grid",
+					"type": "custom",
+					"title": "Budget Grid"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Budgets",
+					"label": "Budgets",
+					"icon": "PiggyBankOutline",
+					"order": 29,
+					"children": [
+						{
+							"id": "BudgetLineDerivations",
+							"label": "Derivations",
+							"icon": "SourceBranch",
+							"route": "BudgetLineDerivations",
+							"order": 40
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "budget-known-costs",
+					"id": "BudgetLineDerivations",
+					"route": "/begroting/derivations",
+					"type": "index",
+					"title": "Budget Line Derivations"
+				},
+				{
+					"_fragment": "budget-known-costs",
+					"id": "BudgetLineDerivationDetail",
+					"route": "/begroting/derivations/:id",
+					"type": "detail",
+					"title": "Budget Line Derivation"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Budgets",
+					"label": "Budgets",
+					"icon": "PiggyBankOutline",
+					"order": 29,
+					"children": [
+						{
+							"id": "BudgetScenarios",
+							"label": "Scenarios",
+							"icon": "SourceBranch",
+							"route": "BudgetScenarios",
+							"order": 40
+						},
+						{
+							"id": "BudgetScenarioModifiers",
+							"label": "Scenario Modifiers",
+							"icon": "TuneVariant",
+							"route": "BudgetScenarioModifiers",
+							"order": 50
+						},
+						{
+							"id": "BudgetScenarioComparison",
+							"label": "Scenario Comparison",
+							"icon": "CompareHorizontal",
+							"route": "BudgetScenarioComparison",
+							"order": 60
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "budget-scenarios",
+					"id": "BudgetScenarios",
+					"route": "/begroting/scenarios",
+					"type": "index",
+					"title": "Budget Scenarios"
+				},
+				{
+					"_fragment": "budget-scenarios",
+					"id": "BudgetScenarioDetail",
+					"route": "/begroting/scenarios/:id",
+					"type": "detail",
+					"title": "Budget Scenario"
+				},
+				{
+					"_fragment": "budget-scenarios",
+					"id": "BudgetScenarioModifiers",
+					"route": "/begroting/scenario-modifiers",
+					"type": "index",
+					"title": "Budget Scenario Modifiers"
+				},
+				{
+					"_fragment": "budget-scenarios",
+					"id": "BudgetScenarioModifierDetail",
+					"route": "/begroting/scenario-modifiers/:id",
+					"type": "detail",
+					"title": "Budget Scenario Modifier"
+				},
+				{
+					"_fragment": "budget-scenarios",
+					"id": "BudgetScenarioComparison",
+					"route": "/begroting/scenarios/compare",
+					"type": "custom",
+					"title": "Scenario Comparison"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
 					"id": "DeadlineCalendarSettings",
 					"label": "Deadline calendar",
 					"icon": "ClockAlertOutline",

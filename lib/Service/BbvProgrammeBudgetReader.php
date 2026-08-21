@@ -287,7 +287,9 @@ class BbvProgrammeBudgetReader {
 		$list = array_keys($years);
 		rsort($list);
 
-		return array_values($list);
+		// `array_keys()` returns a list and rsort() reindexes in place — the
+		// array_values() this replaces was a no-op.
+		return $list;
 
 	}//end fiscalYearsFor()
 

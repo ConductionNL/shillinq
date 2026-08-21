@@ -176,10 +176,7 @@ class InvoiceApiController extends Controller {
 				->setSchema('BillableInvoice')
 				->findAll(['filters' => $filters]);
 
-			$items = [];
-			if (is_array($all) === true) {
-				$items = $all;
-			}
+			$items = $all;
 
 			return new JSONResponse($items, Http::STATUS_OK);
 		} catch (\Throwable $e) {
@@ -235,10 +232,7 @@ class InvoiceApiController extends Controller {
 				->setSchema('BillableInvoiceLine')
 				->findAll(['filters' => ['invoiceId' => $invoiceId]]);
 
-			$lineItems = [];
-			if (is_array($lines) === true) {
-				$lineItems = $lines;
-			}
+			$lineItems = $lines;
 
 			return new JSONResponse(
 				[
@@ -358,10 +352,7 @@ class InvoiceApiController extends Controller {
 				->setRegister('shillinq')
 				->setSchema('BillableInvoiceLine')
 				->findAll(['filters' => ['invoiceId' => $invoiceId]]);
-			$lineItems = [];
-			if (is_array($lines) === true) {
-				$lineItems = $lines;
-			}
+			$lineItems = $lines;
 
 			$pdf = $this->pdfGenerator->generatePdf(invoice: $invoice, lines: $lineItems);
 

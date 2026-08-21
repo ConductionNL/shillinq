@@ -45,15 +45,24 @@
  * This is the same batched shape `budget-projection-engine design.md` §7b
  * independently arrived at for its own GL-based reader.
  *
- * ## Dual-keyed LedgerGroup lookups
+ * ## Triple-keyed LedgerGroup lookups
  *
  * `LedgerGroup.parentLedgerGroupId` and `BudgetLine.ledgerGroupId` may each
- * reference a `LedgerGroup` by either its OpenRegister object id or its
- * `@self.slug` (seed data uses the slug, since a real id is not known at
- * authoring time — mirrors `GLLine.transactionId`'s own dual convention).
- * Every internal `LedgerGroup` lookup index here is keyed by BOTH values
- * pointing at the same entry, so a caller or seed using either convention
- * resolves correctly.
+ * reference a `LedgerGroup` by its OpenRegister object id, its `@self.slug`, or
+ * its `code` (mirrors `GLLine.transactionId`'s own multi-key convention). Every
+ * internal `LedgerGroup` lookup index here is keyed by ALL THREE values pointing
+ * at the same entry, so a caller or seed using any convention resolves
+ * correctly.
+ *
+ * The shipped seed stores the `code`, and the id/slug branches are deliberately
+ * KEPT rather than dead: dropping either would silently reroot any hand-authored
+ * row that still uses one. `code` is not merely a convenience — it is the only
+ * parent identity the manifest's declarative filter engine can produce, because
+ * `@object.<field>` reads a FLAT payload field and cannot reach `@self.slug`,
+ * while `@objectId` yields a UUID no seed can know at authoring time. That is
+ * what makes the LedgerGroupDetail `children` relatedCollection resolve in the
+ * UI; slug-shaped stored values matched nothing and the page rendered
+ * "No relations yet".
  *
  * @category Service
  * @package  OCA\Shillinq\Service
@@ -141,11 +150,25 @@ class BudgetVsActualsReader {
 	 * administration, batched to at most 5 `findAll()` calls total
 	 * (4 when `$includeLedgerGroups` is false).
 	 *
+	 * **Amended for `budget-grid-view` (REQ-BGV-004/REQ-BGV-007), additive
+	 * only — no new `findAll()` call:** the raw `accounts` rows fetched by
+	 * call (1) above are now also returned verbatim. This class already
+	 * fetches them (to resolve `LedgerGroup` membership); previously only
+	 * the derived `actualsByAccountMonth`/`ledgerGroupEntries.
+	 * memberAccountNumbers` were exposed, dropping each account's own
+	 * `accountType`/`name`/id. `BudgetGridReader` needs `Account.accountType`
+	 * per resolved member for the deviation sign convention (REQ-BGV-004)
+	 * and each account's id/name to render a grootboek leaf row that links to
+	 * `ChartOfAccountsDetail` (REQ-BGV-007) — without this it would have to
+	 * issue its own separate `Account.findAll()`, breaking the flat query
+	 * bound (REQ-BGV-009) for no reason, since the data was already in hand.
+	 *
 	 * @param string $administrationId The administration to scope every read to.
 	 * @param list<string> $annualBudgetIds The AnnualBudget ids to load BudgetLines for; empty = none loaded.
 	 * @param boolean $includeLedgerGroups Whether to load + resolve LedgerGroup membership (skips call 4 when false).
 	 *
 	 * @return array{
+	 *     accounts: list<array<string,mixed>>,
 	 *     actualsByAccountMonth: array<string,array<string,int>>,
 	 *     ledgerGroupEntries: list<array{id:string,slug:string,parentRef:?string,memberAccountNumbers:list<string>}>,
 	 *     ledgerGroupKeyToIndex: array<string,int>,
@@ -154,6 +177,7 @@ class BudgetVsActualsReader {
 	 * } The assembled context the calculator consumes.
 	 *
 	 * @spec openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md#req-bcs-008
+	 * @spec openspec/changes/budget-grid-view/specs/budget-grid-view/spec.md#req-bgv-004
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The flag is REQ-BCS-008's own
 	 * call-budget toggle (5 calls with LedgerGroups, 4 without) — splitting it
@@ -181,6 +205,7 @@ class BudgetVsActualsReader {
 		}
 
 		return [
+			'accounts' => $accounts,
 			'actualsByAccountMonth' => $actualsByAccountMonth,
 			'ledgerGroupEntries' => $ledgerGroupContext['entries'],
 			'ledgerGroupKeyToIndex' => $ledgerGroupContext['keyToIndex'],
@@ -285,6 +310,7 @@ class BudgetVsActualsReader {
 		foreach ($rows as $row) {
 			$id = (string)($row['@self']['id'] ?? $row['id'] ?? '');
 			$slug = (string)($row['@self']['slug'] ?? $row['slug'] ?? '');
+			$code = (string)($row['code'] ?? '');
 			$index = count($entries);
 
 			$parentRef = null;
@@ -305,6 +331,16 @@ class BudgetVsActualsReader {
 
 			if ($slug !== '' && $slug !== $id) {
 				$keyToIndex[$slug] = $index;
+			}
+
+			// `code` is the THIRD accepted parent key, and the one the shipped
+			// seed actually stores (see the register fragment's
+			// parentLedgerGroupId description). `code` is unique within an
+			// administration, which is exactly the scope $rows covers —
+			// LedgerGroup rows are loaded per administrationId. First writer
+			// wins so an id/slug key is never shadowed by a colliding code.
+			if ($code !== '' && isset($keyToIndex[$code]) === false) {
+				$keyToIndex[$code] = $index;
 			}
 		}
 
@@ -351,12 +387,12 @@ class BudgetVsActualsReader {
 			$included = $ledgerGroup['includedAccountNumbers'];
 		}
 
-		$excludedAccountNumbers = [];
+		$excludedNumbers = [];
 		if (is_array($ledgerGroup['excludedAccountNumbers'] ?? null) === true) {
-			$excludedAccountNumbers = $ledgerGroup['excludedAccountNumbers'];
+			$excludedNumbers = $ledgerGroup['excludedAccountNumbers'];
 		}
 
-		$excluded = array_flip(array_map('strval', $excludedAccountNumbers));
+		$excluded = array_flip(array_map('strval', $excludedNumbers));
 
 		$members = [];
 		foreach ($accounts as $account) {
