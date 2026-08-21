@@ -69,13 +69,13 @@
 					{"key": "status", "label": "Status", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"}
 				],
-				"relatedLists": [
-					{"id": "modifiers", "title": "Modifiers", "schema": "BudgetScenarioModifier", "foreignKey": "scenarioId", "join": "scenarioId", "columns": [
+				"relatedCollections": [
+					{"title": "Modifiers", "register": "shillinq", "schema": "BudgetScenarioModifier", "filter": {"scenarioId": "@objectId"}, "columns": [
 						{"key": "modifierType", "label": "Type"},
 						{"key": "effectiveDate", "label": "Effective date"},
 						{"key": "targetRecurId", "label": "Target recurring cost"},
 						{"key": "targetLedgerGroupId", "label": "Target ledger group"}
-					], "detailRoute": "BudgetScenarioModifierDetail"}
+					], "rowRoute": "BudgetScenarioModifierDetail"}
 				],
 				"indexRoute": "BudgetScenarios",
 				"sidebarProps": {
