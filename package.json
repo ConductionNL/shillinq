@@ -40,7 +40,8 @@
     "format": "prettier --check \"**/*.{js,ts,vue,css,scss}\"",
     "format:fix": "prettier --write \"**/*.{js,ts,vue,css,scss}\"",
     "stylelint-fix": "stylelint \"src/**/*.vue\" \"src/**/*.scss\" \"src/**/*.css\" --fix",
-    "prepare": "git config core.hooksPath .githooks || true"
+    "prepare": "git config core.hooksPath .githooks || true",
+    "check:job-registration": "node tests/validate-job-registration.js"
   },
   "browserslist": [
     "extends @nextcloud/browserslist-config"
