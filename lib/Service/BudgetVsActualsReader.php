@@ -45,15 +45,24 @@
  * This is the same batched shape `budget-projection-engine design.md` §7b
  * independently arrived at for its own GL-based reader.
  *
- * ## Dual-keyed LedgerGroup lookups
+ * ## Triple-keyed LedgerGroup lookups
  *
  * `LedgerGroup.parentLedgerGroupId` and `BudgetLine.ledgerGroupId` may each
- * reference a `LedgerGroup` by either its OpenRegister object id or its
- * `@self.slug` (seed data uses the slug, since a real id is not known at
- * authoring time — mirrors `GLLine.transactionId`'s own dual convention).
- * Every internal `LedgerGroup` lookup index here is keyed by BOTH values
- * pointing at the same entry, so a caller or seed using either convention
- * resolves correctly.
+ * reference a `LedgerGroup` by its OpenRegister object id, its `@self.slug`, or
+ * its `code` (mirrors `GLLine.transactionId`'s own multi-key convention). Every
+ * internal `LedgerGroup` lookup index here is keyed by ALL THREE values pointing
+ * at the same entry, so a caller or seed using any convention resolves
+ * correctly.
+ *
+ * The shipped seed stores the `code`, and the id/slug branches are deliberately
+ * KEPT rather than dead: dropping either would silently reroot any hand-authored
+ * row that still uses one. `code` is not merely a convenience — it is the only
+ * parent identity the manifest's declarative filter engine can produce, because
+ * `@object.<field>` reads a FLAT payload field and cannot reach `@self.slug`,
+ * while `@objectId` yields a UUID no seed can know at authoring time. That is
+ * what makes the LedgerGroupDetail `children` relatedCollection resolve in the
+ * UI; slug-shaped stored values matched nothing and the page rendered
+ * "No relations yet".
  *
  * @category Service
  * @package  OCA\Shillinq\Service
@@ -301,6 +310,7 @@ class BudgetVsActualsReader {
 		foreach ($rows as $row) {
 			$id = (string)($row['@self']['id'] ?? $row['id'] ?? '');
 			$slug = (string)($row['@self']['slug'] ?? $row['slug'] ?? '');
+			$code = (string)($row['code'] ?? '');
 			$index = count($entries);
 
 			$parentRef = null;
@@ -321,6 +331,16 @@ class BudgetVsActualsReader {
 
 			if ($slug !== '' && $slug !== $id) {
 				$keyToIndex[$slug] = $index;
+			}
+
+			// `code` is the THIRD accepted parent key, and the one the shipped
+			// seed actually stores (see the register fragment's
+			// parentLedgerGroupId description). `code` is unique within an
+			// administration, which is exactly the scope $rows covers —
+			// LedgerGroup rows are loaded per administrationId. First writer
+			// wins so an id/slug key is never shadowed by a colliding code.
+			if ($code !== '' && isset($keyToIndex[$code]) === false) {
+				$keyToIndex[$code] = $index;
 			}
 		}
 

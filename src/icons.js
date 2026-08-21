@@ -141,6 +141,7 @@ import Cog from 'vue-material-design-icons/Cog.vue'
 import CogOutline from 'vue-material-design-icons/CogOutline.vue'
 import CommentOutline from 'vue-material-design-icons/CommentOutline.vue'
 import Compare from 'vue-material-design-icons/Compare.vue'
+import CompareHorizontal from 'vue-material-design-icons/CompareHorizontal.vue'
 import Counter from 'vue-material-design-icons/Counter.vue'
 import CreditCardOutline from 'vue-material-design-icons/CreditCardOutline.vue'
 import CubeOutline from 'vue-material-design-icons/CubeOutline.vue'
@@ -283,6 +284,7 @@ import SolarPower from 'vue-material-design-icons/SolarPower.vue'
 import SourceBranch from 'vue-material-design-icons/SourceBranch.vue'
 import SpeedometerSlow from 'vue-material-design-icons/SpeedometerSlow.vue'
 import StairsUp from 'vue-material-design-icons/StairsUp.vue'
+import StarOutline from 'vue-material-design-icons/StarOutline.vue'
 import StoreOutline from 'vue-material-design-icons/StoreOutline.vue'
 import SwapHorizontal from 'vue-material-design-icons/SwapHorizontal.vue'
 import SwapHorizontalBold from 'vue-material-design-icons/SwapHorizontalBold.vue'
@@ -457,6 +459,7 @@ export default {
 	CogOutline,
 	CommentOutline,
 	Compare,
+	CompareHorizontal,
 	Counter,
 	CreditCardOutline,
 	CubeOutline,
@@ -599,6 +602,7 @@ export default {
 	SourceBranch,
 	SpeedometerSlow,
 	StairsUp,
+	StarOutline,
 	StoreOutline,
 	SwapHorizontal,
 	SwapHorizontalBold,

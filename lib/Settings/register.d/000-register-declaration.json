@@ -77,6 +77,8 @@
                     "BtwAangifte",
                     "BudgetBBVMapping",
                     "BudgetLine",
+                    "BudgetScenario",
+                    "BudgetScenarioModifier",
                     "CBSLine",
                     "CBSSubmission",
                     "Calendar",

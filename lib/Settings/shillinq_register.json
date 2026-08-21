@@ -1060,8 +1060,8 @@
             "sourceSchema": "GLLine",
             "groupBy": [
               "periodId",
-              "BbvAccountMapping.taakveld",
-              "BbvAccountMapping.iv3Categorie"
+              "BbvAccountMapping.taskField",
+              "BbvAccountMapping.iv3Bucket"
             ],
             "filter": {
               "eliminationFlag": false,
@@ -1072,8 +1072,8 @@
               "through": "BbvAccountMapping",
               "on": "BbvAccountMapping.accountNumber",
               "select": [
-                "BbvAccountMapping.taakveld",
-                "BbvAccountMapping.iv3Categorie"
+                "BbvAccountMapping.taskField",
+                "BbvAccountMapping.iv3Bucket"
               ]
             },
             "operations": {

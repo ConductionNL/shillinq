@@ -1127,6 +1127,12 @@ class Application extends App implements IBootstrap {
 			}
 		);
 
+		// Budget-scenarios REQ-BSC-004/REQ-BSC-006 — the BudgetScenarioModifier
+		// guard alias and the KnownCostScheduleExpanderInterface binding,
+		// registered as one unit. See BudgetScenarioRegistration's own
+		// docblock for why this lives in its own class.
+		(new BudgetScenarioRegistration())->register(context: $context);
+
 	}//end register()
 
 	/**
