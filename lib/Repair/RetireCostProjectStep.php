@@ -182,7 +182,7 @@ class RetireCostProjectStep implements IRepairStep {
 			return ['migrated' => 0, 'skipped' => 0, 'failed' => 0];
 		}
 
-		if (is_array($costProjects) === false || $costProjects === []) {
+		if ($costProjects === []) {
 			$output->info('Shillinq: RetireCostProjectStep — no CostProject records found; nothing to migrate.');
 			return ['migrated' => 0, 'skipped' => 0, 'failed' => 0];
 		}
@@ -405,21 +405,21 @@ class RetireCostProjectStep implements IRepairStep {
 			'organizationId',
 		];
 		foreach ($optionalFields as $field) {
-			if (isset($source[$field]) === true && $source[$field] !== null && $source[$field] !== '') {
+			if (isset($source[$field]) === true && $source[$field] !== '') {
 				$record[$field] = $source[$field];
 			}
 		}
 
 		// Copy integer budget fields when positive.
 		foreach (['totalBudget', 'totalEstimatedCosts'] as $field) {
-			if (isset($source[$field]) === true && $source[$field] !== null) {
+			if (isset($source[$field]) === true) {
 				$record[$field] = (int)$source[$field];
 			}
 		}
 
 		// Copy date fields when non-empty.
 		foreach (['startDate', 'endDate'] as $field) {
-			if (isset($source[$field]) === true && $source[$field] !== null && $source[$field] !== '') {
+			if (isset($source[$field]) === true && $source[$field] !== '') {
 				$record[$field] = (string)$source[$field];
 			}
 		}

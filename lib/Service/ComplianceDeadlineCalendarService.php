@@ -1225,10 +1225,6 @@ class ComplianceDeadlineCalendarService {
 				->setSchema(schema: $schema)
 				->findAll([]);
 
-			if (is_array($result) === false) {
-				return [];
-			}
-
 			// ObjectService::findAll() yields ObjectEntity objects, NOT arrays.
 			// Everything downstream — objectId(), the deadline builders — reads
 			// rows with array syntax, so passing them through verbatim threw

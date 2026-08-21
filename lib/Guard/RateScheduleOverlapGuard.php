@@ -107,10 +107,6 @@ class RateScheduleOverlapGuard {
 					]
 				);
 
-			if (is_array($siblings) === false) {
-				$siblings = [];
-			}
-
 			$currentId = ($schedule['id'] ?? null);
 			foreach ($siblings as $sibling) {
 				if ($currentId !== null && ($sibling['id'] ?? null) === $currentId) {

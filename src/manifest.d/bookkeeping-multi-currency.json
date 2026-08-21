@@ -68,19 +68,20 @@
 				],
 				"lifecycleActions": true,
 				"auditTrail": true,
-				"relatedLists": [
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`; a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing while every gate stays green. TOKEN: `@objectId`. ⚠️ CurrencyBalance.accountId is documented as 'FK to BankAccount.slug (or BankAccount.id)' — a slug lives at `@self.slug`, which `@object.<field>` cannot reach, and BankAccount exposes no flat slug field (accountName/iban are different values). `@objectId` is therefore the only reachable half of that either/or; rows written with the slug spelling will not appear here until the FK is normalised to the id.",
+				"relatedCollections": [
 					{
-						"id": "currency-balances",
 						"title": "Currency balances",
+						"register": "shillinq",
 						"schema": "CurrencyBalance",
-						"foreignKey": "accountId",
+						"filter": { "accountId": "@objectId" },
 						"columns": [
 							{"key": "currency", "label": "Currency"},
 							{"key": "balance", "label": "Balance"},
 							{"key": "previousBalance", "label": "Previous balance"},
 							{"key": "lastUpdated", "label": "Last updated"}
 						],
-						"detailRoute": "CurrencyBalanceDetail"
+						"rowRoute": "CurrencyBalanceDetail"
 					}
 				],
 				"sidebarProps": {

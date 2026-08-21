@@ -41,6 +41,7 @@ use OCA\Shillinq\Guard\DBAOpdrachtGuard;
 use OCA\Shillinq\Guard\DBAScoreCalculator;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\DBAVbarMonitorService;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -649,7 +650,20 @@ class DBAController extends Controller {
 	/**
 	 * Helper: resolve OR's ObjectService lazily.
 	 *
-	 * @return object|null The ObjectService, or null when OR is unavailable.
+	 * The native return type stays `?object` on purpose — this resolves the
+	 * service by container id and the call sites duck-type it, which is what
+	 * lets the unit tests inject a focused fake implementing only the four
+	 * methods this controller actually calls rather than all 26 on the
+	 * contract. Adding a runtime `instanceof` here would reject that fake and
+	 * turn 22 passing tests into 503s without making production any safer.
+	 *
+	 * The DOCBLOCK is narrower than the native type, and that is the point:
+	 * with a bare `object`, every `$os->saveObject(...)` in this class produced
+	 * an unresolved type, which PHPStan then refused to accept as a
+	 * JSONResponse payload. The responses type-checked only in the sense that
+	 * nothing about them could be checked at all.
+	 *
+	 * @return ObjectServiceInterface|null The ObjectService, or null when OR is unavailable.
 	 */
 	private function objectService(): ?object {
 		try {

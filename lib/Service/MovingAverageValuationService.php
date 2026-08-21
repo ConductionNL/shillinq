@@ -244,10 +244,6 @@ class MovingAverageValuationService {
 				]
 			);
 
-		if (is_array($existing) === false) {
-			$existing = [];
-		}
-
 		if (count($existing) > 0) {
 			return $this->asArray(row: $existing[0]);
 		}

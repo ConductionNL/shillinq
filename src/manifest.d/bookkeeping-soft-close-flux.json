@@ -119,7 +119,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "AutoAccrualRule",
-				"_note": "CONFIG archetype — an auto-accrual rule defines how a period-end accrual is calculated and reversed against a target/contra GL. Native shillinq detail contract: config.fields[] renders the rule definition (GL accounts, calculation method/parameters, reversal cadence); a native relatedLists[] shows the postings this rule generated (AutoAccrualPosting, FK ruleId=@self.id) so an accountant sees its real activity; and the immutable audit trail lives in the sidebar. NO comms/files/aggregation — a calculation rule carries no documents or financial totals of its own.",
+				"_note": "CONFIG archetype — an auto-accrual rule defines how a period-end accrual is calculated and reversed against a target/contra GL. Native shillinq detail contract: config.fields[] renders the rule definition (GL accounts, calculation method/parameters, reversal cadence); a native relatedCollections[] shows the postings this rule generated (AutoAccrualPosting, FK ruleId=@objectId) so an accountant sees its real activity. KEY+TOKEN: the prop is `relatedCollections` (a `relatedLists` block lands in $attrs and renders nothing), and the token is `@objectId`, NOT `@self.id` — `@self.id` is not a token resolveFilterTokens.js knows, so it never resolved. AutoAccrualRule's payload carries no flat rule-key field (`ruleName` is a display label), so the posting holds the rule's UUID; and the immutable audit trail lives in the sidebar. NO comms/files/aggregation — a calculation rule carries no documents or financial totals of its own.",
 				"fields": [
 					{"key": "ruleName", "label": "Rule", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"},
@@ -132,8 +132,8 @@
 					{"key": "frequency", "label": "Frequency", "type": "string"},
 					{"key": "ruleVersion", "label": "Version", "type": "number"}
 				],
-				"relatedLists": [
-					{"id": "generated-postings", "title": "Generated postings", "schema": "AutoAccrualPosting", "filter": {"ruleId": "@self.id"}, "columns": [
+				"relatedCollections": [
+					{"title": "Generated postings", "register": "shillinq", "schema": "AutoAccrualPosting", "filter": {"ruleId": "@objectId"}, "columns": [
 						{"key": "periodId", "label": "Period"},
 						{"key": "amountCents", "label": "Amount (cents)"},
 						{"key": "journalEntryId", "label": "Journal entry"},
@@ -180,7 +180,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "FluxRun",
-				"_note": "REPORT/ANALYSIS archetype — a flux run compares budget vs actual per GL account and ranks the material variances. Native shillinq detail contract: config.fields[] renders the run parameters (scope, comparison basis, materiality thresholds, result summary); a native relatedLists[] shows the ranked variance items (FluxItem, FK fluxRunId=@self.id) — the substance of the run; the immutable audit trail lives in the sidebar; and the three narrative export links (Markdown/PDF/JSON) are preserved verbatim as config.links[]. NO comms/files/aggregation — a flux run is derived analysis, not correspondence.",
+				"_note": "REPORT/ANALYSIS archetype — a flux run compares budget vs actual per GL account and ranks the material variances. Native shillinq detail contract: config.fields[] renders the run parameters (scope, comparison basis, materiality thresholds, result summary); the ranked variance items (FluxItem, FK fluxRunId) are currently ABSENT from this page — see _relatedListsExclude below: the run record does not store its own run id, so no filter token can reach the value FluxItem holds, and a converted section would render empty while looking fixed; the immutable audit trail lives in the sidebar; and the three narrative export links (Markdown/PDF/JSON) are preserved verbatim as config.links[]. NO comms/files/aggregation — a flux run is derived analysis, not correspondence.",
 				"fields": [
 					{"key": "administrationId", "label": "Administration", "type": "string"},
 					{"key": "periodId", "label": "Period", "type": "string"},
@@ -193,17 +193,7 @@
 					{"key": "status", "label": "Status", "type": "string"},
 					{"key": "resultSummary", "label": "Result summary", "type": "object"}
 				],
-				"relatedLists": [
-					{"id": "variance-items", "title": "Variance items", "schema": "FluxItem", "filter": {"fluxRunId": "@self.id"}, "columns": [
-						{"key": "glAccountNumber", "label": "GL account"},
-						{"key": "budgetCents", "label": "Budget (cents)"},
-						{"key": "actualCents", "label": "Actual (cents)"},
-						{"key": "varianceCents", "label": "Variance (cents)"},
-						{"key": "percentageVariance", "label": "Variance %"},
-						{"key": "materialityClassification", "label": "Materiality"},
-						{"key": "status", "label": "Status"}
-					]}
-				],
+				"_relatedListsExclude": "'Variance items' NOT converted — removed rather than faked, because NO filter token can produce the stored value. It was declared under `relatedLists` (not a prop on any Cn page component, so it never rendered) with `@self.id`, which is not a token resolveFilterTokens.js knows either. Converting the key cannot fix it: OCA\\Shillinq\\Service\\FluxService::persistRun() saves the FluxRun object WITHOUT any fluxRunId field, while every FluxItem stores `fluxRunId` = generateRunId() = sprintf('flux-%s-%s-%s', administrationId, periodId, His) — a synthetic run id the parent record does not carry in ANY flat payload field (FluxRun's properties are administrationId/periodId/scope/comparisonBasis/materiality*/runTimestamp/status/resultSummary). So `@object.<field>` has nothing to read and `@objectId` yields a UUID that no FluxItem stores. Restoring this needs persistRun() to persist fluxRunId onto the FluxRun row (then the token becomes `@object.fluxRunId`) — see the relatedLists sweep report.",
 				"auditTrail": true,
 				"sidebarProps": {
 					"tabs": [
