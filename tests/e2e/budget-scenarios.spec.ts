@@ -493,6 +493,25 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 	test('an operator can create a LEDGER_AMOUNT_DELTA modifier targeting the seeded Liquide middelen ledger group', async ({
 		page,
 	}) => {
+		// PER-TEST BUDGET — 120s, MEASURED, same rule as the 180s on
+		// `promoting scenario B to default` below.
+		//
+		// This test PASSES at 51.3s (run 32509290566, job for chromium) against
+		// the suite default of 60s — 17% headroom. That is not a budget, it is a
+		// coin flip: the identical commit 80c0c2d8 passed on its pull_request
+		// run and failed on its push run, and the failing attempt reported
+		// "Test timeout of 60000ms exceeded" after 59.2s. Whichever assertion
+		// happened to be in flight when the clock ran out got the blame, which
+		// is why this first read as a detail-page bug.
+		//
+		// It is structurally a multi-step test, not an ordinary single
+		// navigation: it seeds its own BudgetScenario, opens the create dialog,
+		// resolves three `$ref` comboboxes against live option lists, submits,
+		// waits for the POST, waits for the dialog to close, then navigates to
+		// the new object's own detail route. 51s is what that costs on an idle
+		// runner; the budget has to cover a loaded one.
+		test.setTimeout(120_000)
+
 		const stamp = uniqueSuffix()
 		const administrationId = await accessibleAdministrationId(page)
 		const scenarioName = `E2E modifier fixture ${stamp}`

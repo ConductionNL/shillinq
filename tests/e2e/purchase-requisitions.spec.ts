@@ -252,29 +252,6 @@ test.describe('purchase-requisition — the RequisitionDetail page (REQ-REQ-001)
 		).toHaveCount(1)
 		await expect(row).toBeVisible({ timeout: 15_000 })
 
-		// WAIT FOR THE OBJECT, NOT FOR A CLOCK.
-		//
-		// `cn-detail-page` is the shell; the field VALUES arrive on a separate
-		// single-object GET. Asserting on the text straight after the shell
-		// appears raced that fetch against a fixed `expect` timeout, and under
-		// CI load this test lost the race — commit 80c0c2d8 passed on its
-		// pull_request run and failed on its push run with the same tree.
-		//
-		// Armed BEFORE the click, because a waitForResponse promise starts its
-		// timeout when CREATED and the fetch can complete before the next
-		// statement runs. The row's object id is not known until the click, so
-		// this matches the SHAPE of a single-object read
-		// (`/objects/<register>/<schema>/<uuid>`) rather than a literal id —
-		// the index's own list GET has no uuid segment and does not match.
-		const detailLoaded = page.waitForResponse(
-			(r) =>
-				r.request().method() === 'GET'
-				&& /\/objects\/[^/]+\/[^/]+\/[0-9a-f-]{36}$/.test(
-					new URL(r.url()).pathname,
-				)
-				&& r.status() < 400,
-			{ timeout: 25_000 },
-		)
 		await row.click()
 
 		// `:id` is the object UUID, so match the shape rather than a literal.
@@ -285,7 +262,26 @@ test.describe('purchase-requisition — the RequisitionDetail page (REQ-REQ-001)
 		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
 			timeout: 15_000,
 		})
-		await detailLoaded
+		// NOT A TEST TIMING PROBLEM — do not "fix" this by raising the timeout
+		// below or by awaiting the object GET (both were tried, 2026-08-21).
+		//
+		// When this fails, the object read has already completed and the page
+		// has mounted; it simply renders NO FIELDS. The accessibility snapshot
+		// from the failing run (shillinq#1085, CI 32530827572) is the whole
+		// `main` region at the moment of failure:
+		//
+		//     - main:
+		//       - heading "Requisition" [level=2]
+		//       - button "Actions"
+		//       - group "related":
+		//           - note "No relations yet"
+		//       - status
+		//
+		// Shell, actions and the related-lists group are all there. None of the
+		// sixteen `config.fields` are — not requisitionNumber, not requester,
+		// nothing. Awaiting the fetch cannot help a render that never happens,
+		// and a longer clock would only mean waiting longer for the same empty
+		// page. Tracked in shillinq#928.
 		await expect(
 			page
 				.getByTestId('cn-detail-page')
