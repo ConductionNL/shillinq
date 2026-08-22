@@ -74,21 +74,32 @@ failure this requirement exists to prevent.
 - **WHEN** an `adm-A` member opens the three views
 - **THEN** no `adm-B` row MUST contribute to any total
 
-@e2e exclude `/api/analytics/spend` has NO frontend consumer — `grep -rn
-"analytics/spend" src/` returns nothing and no `src/manifest.d/` page declares
-it, so the four spend views are an API-only surface today. Both scenarios are
-enforced instead by `tests/Unit/Service/SpendAnalyticsServiceTest.php`
+@e2e exclude neither scenario's PRECONDITIONS can be established in the e2e
+environment. `totals-exclude-another-administration` needs two administrations
+that both carry GL activity plus a member of exactly one of them;
+`scoped-views-still-return-rows` needs a register whose GLLine backfill has
+already been proven complete, and the completeness gate (REQ-GLS-003) is shut
+on every environment available to the suite — while it is shut the views raise
+by design, so a Playwright assertion there would be measuring the gate, not the
+scoping. Both scenarios are enforced instead by
+`tests/Unit/Service/SpendAnalyticsServiceTest.php`
 (`testGlBackedViewsExcludeOtherAdministrations` for the negative control,
-`testScopedViewsStillReturnRowsAndRealTotals` for the positive one), each
-proven to fail with the guard removed. A Playwright spec navigating to a page
-that never calls this endpoint would assert nothing about either scenario.
-Re-tag as `@e2e glline-administration-scope::…` when a UI consumer lands.
+`testScopedViewsStillReturnRowsAndRealTotals` for the positive one), each proven
+to fail with the guard removed.
+
+⚠️ This reason was REWRITTEN. It previously read "`/api/analytics/spend` has NO
+frontend consumer", which was true when written and became FALSE the moment
+`feat/spend-analytics-ui` (#1143) landed a page that calls this endpoint. The
+exclusion is still warranted, but not for that reason — and an exclusion whose
+stated reason has quietly expired is exactly how a gate stops meaning anything.
+Re-tag as `@e2e glline-administration-scope::…` once a seeded, backfilled
+two-administration fixture exists.
 
 ### Requirement: REQ-GLS-004 — the stale warning MUST be removed with the fix
 
 When the filter is enabled, the `⚠️ ADMINISTRATION SCOPE IS NOT UNIFORM` section
-of `SpendAnalyticsService`'s docblock — including its *"Do not 'fix' it by adding
-the unmatched filter"* instruction — MUST be deleted.
+of `SpendAnalyticsService`'s docblock — including its _"Do not 'fix' it by adding
+the unmatched filter"_ instruction — MUST be deleted.
 
 Leaving it makes the file lie in the opposite direction, telling the next reader
 the views are unscoped when they are scoped, and warning them off a fix that has
