@@ -1,5 +1,6 @@
-{
-    "translations": {
+OC.L10N.register(
+    "shillinq",
+    {
         "(no invoice number)": "(geen factuurnummer)",
         "(not recorded)": "(niet geregistreerd)",
         "1 to 2 year": "1 tot 2 jaar",
@@ -2921,10 +2922,7 @@
         "ZZP Deduction": "ZZP-aftrek",
         "ZZP-aftrek": "ZZP-aftrek",
         "Zelfstandigenaftrek": "Zelfstandigenaftrek",
-        "_%n invoice outstanding_::_%n invoices outstanding_": [
-            "%n openstaande factuur",
-            "%n openstaande facturen"
-        ],
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n openstaande factuur","%n openstaande facturen"],
         "active": "actief",
         "actual": "werkelijk",
         "automatically matched": "automatisch gematcht",
@@ -2985,6 +2983,5 @@
         "Unknown error": "Onbekende fout",
         "You are not a member of any administration, so there is no spend to report on.": "U bent geen lid van een administratie, dus er zijn geen uitgaven om over te rapporteren."
     },
-    "plurals": "",
-    "pluralForm": "nplurals=2; plural=(n != 1);"
-}
+    "nplurals=2; plural=(n != 1);"
+)

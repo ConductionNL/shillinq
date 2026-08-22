@@ -26,6 +26,8 @@
     "test:coverage": "vitest run --coverage --coverage.provider=v8 --coverage.reporter=json-summary --coverage.reporter=text-summary --coverage.include=src/** --coverage.reportsDirectory=coverage-vitest",
     "test:coverage-ratchet": "npm run test:coverage && bash tests/coverage-ratchet.sh vitest coverage-vitest/coverage-summary.json",
     "check:manifest": "node tests/validate-manifest.js",
+    "l10n:build": "node scripts/build-l10n-js.js",
+    "check:l10n-js": "node scripts/build-l10n-js.js --check",
     "check:manifest-shell": "node tests/validate-manifest-shell.js",
     "check:manifest-budget": "node tests/check-manifest-budget.js",
     "check:registers": "node tests/validate-registers.js",
