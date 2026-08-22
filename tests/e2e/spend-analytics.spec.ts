@@ -280,10 +280,9 @@ test.describe('spend-analytics-ui — the SpendAnalytics dashboard page', () => 
 		// flagged it as js/incomplete-sanitization. Asking the URL directly
 		// whether its path ends with the route needs no escaping at all and
 		// says what the assertion actually means.
-		await expect(page).toHaveURL(
-			(url) => url.pathname.endsWith(SPEND_ROUTE),
-			{ timeout: 15_000 },
-		)
+		await expect(page).toHaveURL((url) => url.pathname.endsWith(SPEND_ROUTE), {
+			timeout: 15_000,
+		})
 		await expect(page.getByTestId('spend-analytics-panel')).toBeVisible({
 			timeout: 15_000,
 		})
