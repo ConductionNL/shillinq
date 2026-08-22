@@ -164,11 +164,40 @@ class RechtmatigheidWorkflowTest extends TestCase {
 			message: 'trigger must be the canonical object form, not a legacy event string.'
 		);
 		self::assertSame(expected: 'created', actual: ($trigger['type'] ?? null));
-		self::assertTrue(condition: ($notif['enabled'] ?? false), message: 'Rule must be enabled.');
 
-		$filter = ($trigger['filter'] ?? []);
-		self::assertSame(expected: 'begroting', actual: ($filter['criterium'] ?? null));
-		self::assertSame(expected: 'error', actual: ($filter['kind'] ?? null));
+		// This assertion used to be `enabled === true` plus a filter of
+		// {criterium: begroting, kind: error}. That pinned a rule which could
+		// never fire: the created path reads ONE clause, {field, operator,
+		// value}, so a field=>value map made createdFilterMatches() return
+		// false for every bevinding. The test passed on the declaration while
+		// the feature was dead — the failure mode it existed to prevent.
+		//
+		// What is actually required is the invariant below: the rule is either
+		// live with a filter the engine can execute, or switched off with the
+		// reason written down. Both states are legitimate; "enabled with a
+		// filter that matches nothing" is not, and now fails here.
+		$filter  = ($trigger['filter'] ?? []);
+		$enabled = ($notif['enabled'] ?? false);
+
+		if ($enabled === true) {
+			self::assertArrayHasKey(
+				key: 'field',
+				array: $filter,
+				message: 'An enabled created-trigger rule needs a single {field, operator, value} clause — '
+					. 'a field=>value map is the scheduled path\'s grammar and matches nothing here.'
+			);
+			self::assertContains(
+				needle: ($filter['operator'] ?? 'equals'),
+				haystack: ['equals', 'in', 'notIn'],
+				message: 'createdFilterMatches() implements only equals|in|notIn.'
+			);
+		} else {
+			self::assertNotSame(
+				expected: '',
+				actual: (string)($notif['_note'] ?? ''),
+				message: 'A disabled rule must record why it is off and what unblocks it.'
+			);
+		}
 
 		$groups = [];
 		foreach (($notif['recipients'] ?? []) as $recipient) {
