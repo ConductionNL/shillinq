@@ -273,10 +273,16 @@ test.describe('spend-analytics-ui — the SpendAnalytics dashboard page', () => 
 		).toBeVisible({ timeout: 15_000 })
 		await leaf.locator('a.app-navigation-entry-link').first().click()
 
-		await expect(page).toHaveURL(
-			new RegExp(`${SPEND_ROUTE.replace(/\//g, '\\/')}$`),
-			{ timeout: 15_000 },
-		)
+		// A predicate, not `new RegExp(SPEND_ROUTE.replace(/\//g, '\\/'))`. That
+		// hand-rolled escaping only handled forward slashes, so every other
+		// regex metacharacter in the route (`.`, `?`, `+`, and a backslash
+		// itself) would have been interpreted rather than matched — CodeQL
+		// flagged it as js/incomplete-sanitization. Asking the URL directly
+		// whether its path ends with the route needs no escaping at all and
+		// says what the assertion actually means.
+		await expect(page).toHaveURL((url) => url.pathname.endsWith(SPEND_ROUTE), {
+			timeout: 15_000,
+		})
 		await expect(page.getByTestId('spend-analytics-panel')).toBeVisible({
 			timeout: 15_000,
 		})
