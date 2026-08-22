@@ -147,12 +147,24 @@ final class SpendAnalyticsServiceTest extends TestCase {
 	 *
 	 * @return SpendAnalyticsService
 	 */
-	private function makeService(InMemoryAggregationRunner $runner, bool $backfillProven = true): SpendAnalyticsService {
+	private function makeService(
+		InMemoryAggregationRunner $runner,
+		bool $backfillProven = true,
+		?string $gateOverride = null
+	): SpendAnalyticsService {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($runner);
 
+		// `$gateOverride` exists so a STALE, NON-EMPTY version can be tested.
+		// Without it this helper only ever produces '' or the current version,
+		// so the exact-match comparison in assertGlScopeIsEnforceable() is
+		// never exercised against a wrong-but-present value — and a
+		// `!== ''` check would pass every test here while leaving a proof
+		// written by an older contract looking valid.
 		$gate = '';
-		if ($backfillProven === true) {
+		if ($gateOverride !== null) {
+			$gate = $gateOverride;
+		} elseif ($backfillProven === true) {
 			$gate = GlLineAdministrationBackfillMigrator::GATE_CONTRACT_VERSION;
 		}
 
@@ -511,6 +523,32 @@ final class SpendAnalyticsServiceTest extends TestCase {
 
 		$service->spendByCategory(administrationId: 'ADM-A');
 	}//end testGlBackedViewsRefuseWhileTheBackfillIsUnproven()
+
+	/**
+	 * A proof written by an OLDER contract version is not a proof.
+	 *
+	 * This is the reader half of the version contract. The writer half —
+	 * that a stale value is destroyed and replaced when it can be re-proven —
+	 * lives in BackfillGlLineAdministrationTest. Both halves are needed:
+	 * REQ-GLS-003 makes the gate a VERSION rather than a boolean precisely so
+	 * that adding a new GLLine writer invalidates every deployment's stored
+	 * proof, and that only holds if the READ is an exact match. A `!== ''`
+	 * check would satisfy every other test in this file while treating a
+	 * proof from a superseded contract as current — the filter would then
+	 * switch on over rows the newer writer never scoped.
+	 *
+	 * @return void
+	 */
+	public function testAProofFromASupersededContractVersionDoesNotCount(): void {
+		$runner = new InMemoryAggregationRunner();
+		$runner->seed('GLLine', $this->glLines());
+		$service = $this->makeService($runner, gateOverride: 'v0-superseded');
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('backfill is not proven complete');
+
+		$service->spendByCategory(administrationId: 'ADM-A');
+	}//end testAProofFromASupersededContractVersionDoesNotCount()
 
 	/**
 	 * The supplier view is unaffected by the GLLine gate: it reads
