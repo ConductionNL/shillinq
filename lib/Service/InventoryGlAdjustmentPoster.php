@@ -165,10 +165,17 @@ class InventoryGlAdjustmentPoster {
 
 			$transactionId = (string)($transaction['id'] ?? ($transaction['@self']['id'] ?? ''));
 
+			// The administrationId is DENORMALISED onto every line from the header
+			// above (REQ-GLS-001). GLLine now declares the property, and
+			// SpendAnalyticsService filters the category / cost-centre /
+			// period aggregations on it — a line written without it would be
+			// invisible to its own administration's totals while the backfill
+			// completeness gate flipped red for the whole instance.
 			$this->saveOnSchema(
 				schema: 'GLLine',
 				data: [
 					'transactionId' => $transactionId,
+					'administrationId' => $administrationId,
 					'lineNumber' => 1,
 					'accountNumber' => $debitAccount,
 					'side' => 'debit',
@@ -182,6 +189,7 @@ class InventoryGlAdjustmentPoster {
 				schema: 'GLLine',
 				data: [
 					'transactionId' => $transactionId,
+					'administrationId' => $administrationId,
 					'lineNumber' => 2,
 					'accountNumber' => $creditAccount,
 					'side' => 'credit',

@@ -123,8 +123,15 @@ class BackfillFiscalPeriods implements IRepairStep {
 					continue;
 				}
 
-				// GLLine does not carry administrationId directly — derive
-				// it from the parent GLTransaction by transactionId.
+				// GLLine now DOES carry administrationId directly,
+				// denormalised from the parent GLTransaction by
+				// glline-administration-scope (REQ-GLS-001) and backfilled by
+				// BackfillGlLineAdministration, which is registered ahead of
+				// this step. The comment that used to sit here said the
+				// opposite and told the reader to derive it from the parent —
+				// which this line never did, so it silently bucketed every
+				// historical tuple under administration ''. Reading the
+				// property is now both what the code does and what works.
 				$administrationId = (string)($arr['administrationId'] ?? '');
 				$key = $administrationId . '|' . $periodId;
 				if (isset($tuples[$key]) === true) {

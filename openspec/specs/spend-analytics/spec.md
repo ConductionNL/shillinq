@@ -116,32 +116,41 @@ anyone naming an id.
 - **THEN** the response status SHALL be 401
 - @e2e exclude Backend auth gate (ADR-005); no browser flow.
 
-### Requirement: REQ-SPA-005 — The administration scope SHALL be pushed into the aggregation for every view whose source schema can carry it, and the views that cannot SHALL say so rather than pretend
+### Requirement: REQ-SPA-005 — The administration scope SHALL be pushed into the aggregation for every view, and a view whose source rows cannot honour it SHALL refuse rather than return a zero
 
 `spendBySupplier()` reads `APTransaction`, which DECLARES `administrationId`, so
 that view SHALL pass the caller's administration into the aggregation filter.
 
 `spendByCategory()` / `spendByCostCentre()` / `spendByPeriod()` read `GLLine`,
-which declares NO administration or organisation property — the administration
-lives one hop away on the parent `GLTransaction`, and OpenRegister's `filters`
-address an object's own JSON properties and cannot join. These three views
-SHALL NOT be given an `administrationId` filter term: on `GLLine` such a term
-addresses a property that does not exist and matches NOTHING for every value,
-which would turn a real spend figure into a silent zero in a bookkeeping total.
-They SHALL instead declare, in code and here, that they aggregate every
-administration in the register, with the membership check of REQ-SPA-003 as
-their only containment — it reduces the audience from "any authenticated
-Nextcloud user" to "a member of some administration" but does not isolate one
-administration from another.
+which NOW declares `administrationId` too, denormalised from the parent
+`GLTransaction` by `glline-administration-scope` (REQ-GLS-001). All three SHALL
+pass the caller's administration into the aggregation filter.
 
-Closing that gap SHALL be done by denormalising `administrationId` onto the
-`GLLine` schema and backfilling existing rows (a schema + data migration), not
-by adding the unmatched filter.
+Until that change landed, `GLLine` declared no administration or organisation
+property at all — the administration lived one hop away on the parent, and
+OpenRegister's `filters` address an object's own JSON properties and cannot
+join — so those three views aggregated EVERY administration in the register
+while the supplier view was correctly scoped. The membership check of
+REQ-SPA-003 reduced their audience from "any authenticated Nextcloud user" to
+"a member of some administration" but did not isolate one administration from
+another. That read is closed.
 
-#### Scenario: The GL-backed views carry no administration filter until GLLine can honour one
-- **GIVEN** the category view is computed
-- **THEN** the filter sent to OpenRegister SHALL be exactly `{side: debit, subLedgerType: ap}` with no administration term
-- @e2e exclude Pins a deliberate, documented gap at the query-construction layer; asserts the absence of a filter term, which no browser flow can observe.
+The filter SHALL remain conditional on proof that the backfill is complete
+(REQ-GLS-003): filtering on a property some rows lack matches nothing for those
+rows, so a GL-backed view SHALL RAISE — not fall back to the unfiltered query,
+and not return the filtered one — while that proof is absent. Raising leaks
+nothing and claims nothing false; the two alternatives each do one of those.
+
+#### Scenario: The GL-backed views carry the caller's administration in their filter
+- **GIVEN** the category view is computed for a member of `ADM-A`
+- **THEN** the filter sent to OpenRegister SHALL be exactly `{administrationId: ADM-A, side: debit, subLedgerType: ap}`, and no `ADM-B` row SHALL contribute to any group or total
+- @e2e exclude `/api/analytics/spend` has no frontend consumer today (API-only surface); enforced by SpendAnalyticsServiceTest::testGlBackedViewsExcludeOtherAdministrations, proven to fail with the filter term removed.
+
+#### Scenario: A GL-backed view refuses while the backfill is unproven
+- **GIVEN** the `GLLine` administration backfill has not been proven complete
+- **WHEN** the category / cost-centre / period view is requested
+- **THEN** the service SHALL raise and the endpoint SHALL return an error status, rather than a total of zero
+- @e2e exclude Asserts a raise at the query-construction layer driven by an app-config gate; the browser sees only a generic error status.
 
 ### Requirement: REQ-SPA-004 — Cross-tab spend analysis SHALL be routed to OpenRegister, and no inert cross-tab declaration SHALL remain undocumented
 

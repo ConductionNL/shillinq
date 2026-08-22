@@ -160,9 +160,15 @@ class CogsPosterService {
 
 			$cogsAmount = round(($cogsCents / 100), 2);
 
+			// The administrationId is DENORMALISED onto every line from the header
+			// above (REQ-GLS-001) — see GlLineAdministrationBackfillMigrator.
+			// A line written without it is invisible to its own
+			// administration's SpendAnalytics totals AND flips the backfill
+			// completeness gate red for the whole instance.
 			$this->saveLine(
 				data: [
 					'transactionId' => $transactionId,
+					'administrationId' => $administrationId,
 					'lineNumber' => 1,
 					'accountNumber' => $cogsAccount,
 					'side' => 'debit',
@@ -175,6 +181,7 @@ class CogsPosterService {
 			$this->saveLine(
 				data: [
 					'transactionId' => $transactionId,
+					'administrationId' => $administrationId,
 					'lineNumber' => 2,
 					'accountNumber' => $inventoryAccount,
 					'side' => 'credit',
