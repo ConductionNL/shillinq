@@ -231,15 +231,39 @@ test.describe('spend-analytics-ui — the SpendAnalytics dashboard page', () => 
 			'ReportingCompliance is a top-level nav entry',
 		).toBeVisible({ timeout: 15_000 })
 
-		// NcAppNavigationItem only renders `app-navigation-entry__children`
-		// while the entry is open. `count()` here picks the ACTION to take; the
-		// gate on the outcome is the auto-waiting expect() below, never this
-		// probe — a point-in-time probe used as a pass/skip gate is how a
-		// missing page reads as a green run.
+		// EXPAND ON THE CLUSTER'S OWN STATE, NOT ON THE LEAF'S PRESENCE.
+		//
+		// The first version of this gated the toggle on
+		// `(await leaf.count()) === 0`, and CI proved that wrong: the leaf IS
+		// in the DOM while the cluster is collapsed, so `count()` returned 1,
+		// the expand was skipped, and the assertion below timed out against an
+		// element it had already resolved —
+		//
+		//     28 × locator resolved to <li … data-cn-route="SpendAnalytics">
+		//        - unexpected value "hidden"
+		//
+		// "present" and "visible" are different questions, and only the second
+		// one is what a user can click.
+		//
+		// `aria-expanded` is the deterministic signal. Clicking unconditionally
+		// would COLLAPSE an already-open cluster and produce the identical
+		// failure, so the state has to be read before acting.
+		//
+		// IT IS ON THE LINK, NOT THE BUTTON. Measured against the live DOM:
+		// `[data-testid="cn-nav-entry-ReportingCompliance"] [aria-expanded]`
+		// resolves to exactly one element, `a.app-navigation-entry-link`. The
+		// collapse BUTTON carries no aria-expanded at all, so reading it there
+		// returns null, `null !== 'true'` is always true, and the toggle would
+		// be clicked every time — collapsing an already-open cluster and
+		// reproducing this very failure on the next run.
+		//
+		// The click still goes to the button (the link navigates rather than
+		// expanding), and the button is addressed by its structural class
+		// because this instance renders Dutch — an English accessible name
+		// matches nothing here.
 		const leaf = page.getByTestId('cn-nav-entry-SpendAnalytics')
-		if ((await leaf.count()) === 0) {
-			// Structural class, not a label: this instance renders Dutch, so the
-			// toggle's accessible name is not English.
+		const expandedFlag = cluster.locator('a.app-navigation-entry-link').first()
+		if ((await expandedFlag.getAttribute('aria-expanded')) !== 'true') {
 			await cluster.locator('button.icon-collapse').first().click()
 		}
 
