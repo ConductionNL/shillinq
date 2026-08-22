@@ -493,6 +493,25 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 	test('an operator can create a LEDGER_AMOUNT_DELTA modifier targeting the seeded Liquide middelen ledger group', async ({
 		page,
 	}) => {
+		// PER-TEST BUDGET — 120s, MEASURED, same rule as the 180s on
+		// `promoting scenario B to default` below.
+		//
+		// This test PASSES at 51.3s (run 32509290566, job for chromium) against
+		// the suite default of 60s — 17% headroom. That is not a budget, it is a
+		// coin flip: the identical commit 80c0c2d8 passed on its pull_request
+		// run and failed on its push run, and the failing attempt reported
+		// "Test timeout of 60000ms exceeded" after 59.2s. Whichever assertion
+		// happened to be in flight when the clock ran out got the blame, which
+		// is why this first read as a detail-page bug.
+		//
+		// It is structurally a multi-step test, not an ordinary single
+		// navigation: it seeds its own BudgetScenario, opens the create dialog,
+		// resolves three `$ref` comboboxes against live option lists, submits,
+		// waits for the POST, waits for the dialog to close, then navigates to
+		// the new object's own detail route. 51s is what that costs on an idle
+		// runner; the budget has to cover a loaded one.
+		test.setTimeout(120_000)
+
 		const stamp = uniqueSuffix()
 		const administrationId = await accessibleAdministrationId(page)
 		const scenarioName = `E2E modifier fixture ${stamp}`
@@ -624,10 +643,35 @@ test.describe('budget-scenarios — modifier CRUD reachable (REQ-BSC-008, REQ-BS
 		// Its own detail page, addressed by id, must render the type it was
 		// saved with. Navigating directly also removes the row-click step,
 		// which was where the wrong-object confusion entered.
+		//
+		// WAIT FOR THE OBJECT, NOT FOR A CLOCK.
+		//
+		// `gotoRoute()` proves the SPA resolved the route — it waits for
+		// `#content-vue`, which is the shell. The field VALUES arrive on a
+		// separate GET afterwards, so asserting on the text straight after
+		// navigation raced that fetch against a fixed `expect` timeout and
+		// this test lost the race under CI load: commit 80c0c2d8 PASSED on
+		// its pull_request run (318 tests) and FAILED on its push run, same
+		// tree, same code. The failing attempt spent 59.2s of a 60s budget,
+		// so the last 10s assertion was competing with the deadline too.
+		//
+		// Arming the response wait BEFORE `gotoRoute()` is deliberate: a
+		// waitForResponse promise starts its timeout when it is CREATED, and
+		// the fetch can complete during navigation — created afterwards it
+		// can miss the very response it is waiting for. Same reasoning the
+		// `created` wait above this block already documents for the POST.
+		const detailLoaded = page.waitForResponse(
+			(r) =>
+				r.request().method() === 'GET'
+				&& r.url().includes(modifierId)
+				&& r.status() < 400,
+			{ timeout: 25_000 },
+		)
 		await gotoRoute(page, `/begroting/scenario-modifiers/${modifierId}`)
 		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
 			timeout: 15_000,
 		})
+		await detailLoaded
 		await expect(
 			page.getByText('LEDGER_AMOUNT_DELTA', { exact: false }).first(),
 			"the saved modifier's type must render on its own detail page",

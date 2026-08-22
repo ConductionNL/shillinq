@@ -262,6 +262,26 @@ test.describe('purchase-requisition — the RequisitionDetail page (REQ-REQ-001)
 		await expect(page.getByTestId('cn-detail-page')).toBeVisible({
 			timeout: 15_000,
 		})
+		// NOT A TEST TIMING PROBLEM — do not "fix" this by raising the timeout
+		// below or by awaiting the object GET (both were tried, 2026-08-21).
+		//
+		// When this fails, the object read has already completed and the page
+		// has mounted; it simply renders NO FIELDS. The accessibility snapshot
+		// from the failing run (shillinq#1085, CI 32530827572) is the whole
+		// `main` region at the moment of failure:
+		//
+		//     - main:
+		//       - heading "Requisition" [level=2]
+		//       - button "Actions"
+		//       - group "related":
+		//           - note "No relations yet"
+		//       - status
+		//
+		// Shell, actions and the related-lists group are all there. None of the
+		// sixteen `config.fields` are — not requisitionNumber, not requester,
+		// nothing. Awaiting the fetch cannot help a render that never happens,
+		// and a longer clock would only mean waiting longer for the same empty
+		// page. Tracked in shillinq#928.
 		await expect(
 			page
 				.getByTestId('cn-detail-page')
