@@ -3,14 +3,14 @@
 /**
  * Budget Blocker
  *
- * ADR-031 exception-path lifecycle guard for the Verplichting `aangaan` /
+ * ADR-031 exception-path lifecycle guard for the Commitment `aangaan` /
  * `goedkeuren` transitions. Budget-blocking is the core verplichtingen-
  * administratie rule: a commitment reduces available budget the moment it is
  * signed, not when an invoice arrives (REQ-VPL-001). The check resolves the
- * matching per-programme / per-financial_year Budget for each Verplichtingsregel and
+ * matching per-programme / per-financial_year Budget for each CommitmentLine and
  * verifies sufficient free_capacity, unless the signer holds an override-mandate.
  *
- * Referenced from the Verplichting schema's x-openregister-lifecycle transitions
+ * Referenced from the Commitment schema's x-openregister-lifecycle transitions
  * in lib/Settings/register.d/bookkeeping-verplichtingenadministratie.json.
  *
  * ADR-031 exception reason: the check joins each rule to its matching Budget by
@@ -43,7 +43,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Budget-room precondition + pure budget-math helpers for the Verplichting schema
+ * Budget-room precondition + pure budget-math helpers for the Commitment schema
  * (REQ-VPL-001).
  *
  * Fail-closed: any unexpected exception denies the commitment (CWE-863).
@@ -57,13 +57,13 @@ class BudgetBlocker {
 	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
 	 * @param IAppConfig $appConfig App config for register slug resolution.
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
-	 * @param MandaatEnforcer $mandate Mandate resolver for override-mandate detection.
+	 * @param MandateEnforcer $mandate Mandate resolver for override-mandate detection.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
-		private readonly MandaatEnforcer $mandate,
+		private readonly MandateEnforcer $mandate,
 	) {
 	}//end __construct()
 
@@ -80,7 +80,7 @@ class BudgetBlocker {
 	 * Fail-closed: returns false on any exception (CWE-863).
 	 *
 	 * @param string $commitmentNumber The commitment identifier (lifecycle-engine call parity).
-	 * @param array<string,mixed>|null $object The Verplichting object being transitioned.
+	 * @param array<string,mixed>|null $object The Commitment object being transitioned.
 	 *
 	 * @return bool True when the commitment may be signed.
 	 *
@@ -88,7 +88,7 @@ class BudgetBlocker {
 	 */
 	public function canCommit(string $commitmentNumber, ?array $object = null): bool {
 		try {
-			$commitment = ($object ?? $this->findOne(schema: 'Verplichting', filters: ['commitmentNumber' => $commitmentNumber]));
+			$commitment = ($object ?? $this->findOne(schema: 'Commitment', filters: ['commitmentNumber' => $commitmentNumber]));
 			if ($commitment === null) {
 				$this->logger->info(
 					'BudgetBlocker: commitment not found — denying commitment',
@@ -235,7 +235,7 @@ class BudgetBlocker {
 
 	/**
 	 * Resolve the rules for a commitment. Prefers rules embedded on the object;
-	 * otherwise queries the Verplichtingsregel register. When neither yields rows,
+	 * otherwise queries the CommitmentLine register. When neither yields rows,
 	 * falls back to a single synthetic rule from the commitment totals so a
 	 * single-line commitment is still budget-checked.
 	 *
@@ -252,7 +252,7 @@ class BudgetBlocker {
 		$number = (string)($commitment['commitmentNumber'] ?? '');
 		$queried = [];
 		if ($number !== '') {
-			$queried = $this->findMany(schema: 'Verplichtingsregel', filters: ['commitment' => $number]);
+			$queried = $this->findMany(schema: 'CommitmentLine', filters: ['commitment' => $number]);
 		}
 
 		if (count($queried) > 0) {

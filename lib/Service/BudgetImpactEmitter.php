@@ -3,7 +3,7 @@
 /**
  * Budget Impact Emitter Service.
  *
- * REQ-007 — on activation of a `bron: tenderned` Verplichting, publish an
+ * REQ-007 — on activation of a `bron: tenderned` Commitment, publish an
  * `obligation.activated` CloudEvent so launchpad's budget-utilisation widget
  * can reflect the new committed expense within 60 seconds.
  *
@@ -19,7 +19,7 @@
  *     shillinq-owned event class. Wrapping in a typed class is reserved
  *     for the cross-app contract reconciliation (deferred — design D4).
  *
- * The same emitter is reused by the OpdrachtUitvoeringTransitionListener
+ * The same emitter is reused by the OrderFulfilmentTransitionListener
  * for the `milestone.completed` event (Task 5.3), so the spec's three
  * REQ-007/REQ-002/REQ-005 emission points share one tested kernel.
  *
@@ -95,8 +95,8 @@ class BudgetImpactEmitter {
 	 * failure on the openconnector outbound source) do not double-count
 	 * the committed expense.
 	 *
-	 * @param array<string, mixed> $commitment Activated Verplichting payload.
-	 * @param array<string, mixed> $source Source TenderNedAanbesteding payload (dossier URL).
+	 * @param array<string, mixed> $commitment Activated Commitment payload.
+	 * @param array<string, mixed> $source Source TenderNedProcurement payload (dossier URL).
 	 *
 	 * @return void
 	 *
@@ -122,12 +122,12 @@ class BudgetImpactEmitter {
 	/**
 	 * Emit the `milestone.completed` CloudEvent (Task 5.3 / REQ-005).
 	 *
-	 * Carries the OpdrachtUitvoering identifier, the linked obligation,
+	 * Carries the OrderFulfilment identifier, the linked obligation,
 	 * the approval marker, and the bewijsstuk count so downstream
 	 * subscribers (audit-trail consumer + budget-utilisation widget) can
 	 * reconcile without re-fetching the OR record.
 	 *
-	 * @param array<string, mixed> $oplevering Completed OpdrachtUitvoering payload.
+	 * @param array<string, mixed> $oplevering Completed OrderFulfilment payload.
 	 *
 	 * @return void
 	 *

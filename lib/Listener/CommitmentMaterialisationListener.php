@@ -6,7 +6,7 @@
  * REQ-VPL-010 (Tasks 1+2) — thin event-glue that reacts to a PurchaseOrder
  * reaching `approved` or a Contract reaching `active`, and forwards to
  * {@see CommitmentMaterialisationService} to auto-materialise the matching
- * `Verplichting`. Contains no budget/mandate/assembly logic itself.
+ * `Commitment`. Contains no budget/mandate/assembly logic itself.
  *
  * PO path is fail-closed: {@see InsufficientCommitmentBudgetException} is
  * allowed to propagate. OR dispatches `ObjectTransitionedEvent` /

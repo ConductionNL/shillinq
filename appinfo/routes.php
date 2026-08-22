@@ -263,7 +263,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
 
         // Purchase requisition (aanvraag) — server-authoritative create /
         // submit / approve / reject / convert-to-PO. Approval reuses
-        // BudgetBlocker/MandaatEnforcer from bookkeeping-verplichtingenadministratie
+        // BudgetBlocker/MandateEnforcer from bookkeeping-verplichtingenadministratie
         // (no parallel approval system). Every endpoint is #[NoAdminRequired]
         // with a per-administration IDOR guard in the controller (ADR-005).
         // Static segments precede the {id} wildcard so Symfony's route

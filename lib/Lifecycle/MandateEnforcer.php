@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Mandaat Enforcer
+ * Mandate Enforcer
  *
- * ADR-031 exception-path lifecycle guard for the Verplichting commitment
+ * ADR-031 exception-path lifecycle guard for the Commitment commitment
  * transitions. Mandate-checking is context-specific (amount + soort + effective
  * date + second-signature threshold), which the declarative lifecycle DSL cannot
  * express, so it lives in this thin guard referenced from the schema's
@@ -46,7 +46,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Mandate-check precondition helpers for the Verplichting schema (REQ-VPL-002).
+ * Mandate-check precondition helpers for the Commitment schema (REQ-VPL-002).
  *
  * Fail-closed: when mandate sufficiency cannot be established the commitment is
  * treated as NOT sufficiently mandated (it must go through approval), never
@@ -54,7 +54,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.3
  */
-class MandaatEnforcer {
+class MandateEnforcer {
 	/**
 	 * Construct the guard with DI dependencies.
 	 *
@@ -76,7 +76,7 @@ class MandaatEnforcer {
 	 * Fail-closed: returns false on any exception or when no mandaat applies.
 	 *
 	 * @param string $commitmentNumber The verplichting identifier (lifecycle-engine call parity).
-	 * @param array<string,mixed>|null $object The Verplichting object being transitioned.
+	 * @param array<string,mixed>|null $object The Commitment object being transitioned.
 	 *
 	 * @return bool True when a valid mandaat covers the commitment amount and soort.
 	 *
@@ -84,7 +84,7 @@ class MandaatEnforcer {
 	 */
 	public function hasSufficientMandate(string $commitmentNumber, ?array $object = null): bool {
 		try {
-			$commitment = ($object ?? $this->findOne(schema: 'Verplichting', filters: ['commitmentNumber' => $commitmentNumber]));
+			$commitment = ($object ?? $this->findOne(schema: 'Commitment', filters: ['commitmentNumber' => $commitmentNumber]));
 			if ($commitment === null) {
 				return false;
 			}
@@ -92,7 +92,7 @@ class MandaatEnforcer {
 			return $this->resolveApplicableMandate(commitment: $commitment) !== null;
 		} catch (\Throwable $e) {
 			$this->logger->error(
-				'MandaatEnforcer: hasSufficientMandate failed — treating as not mandated (fail-closed)',
+				'MandateEnforcer: hasSufficientMandate failed — treating as not mandated (fail-closed)',
 				['commitment' => $commitmentNumber, 'exception' => $e->getMessage()]
 			);
 			return false;
@@ -109,7 +109,7 @@ class MandaatEnforcer {
 	 * authorization.
 	 *
 	 * @param string $commitmentNumber The verplichting identifier.
-	 * @param array<string,mixed>|null $object The Verplichting object being transitioned.
+	 * @param array<string,mixed>|null $object The Commitment object being transitioned.
 	 *
 	 * @return bool True when approval is required (mandate insufficient or absent).
 	 *
@@ -142,7 +142,7 @@ class MandaatEnforcer {
 		$amount = (int)($commitment['total_amount_excl_vat'] ?? 0);
 		$admin = (string)($commitment['administrationId'] ?? '');
 
-		$mandaten = $this->findMany(schema: 'Mandaat', filters: ['administrationId' => $admin]);
+		$mandaten = $this->findMany(schema: 'Mandate', filters: ['administrationId' => $admin]);
 
 		$best = null;
 		foreach ($mandaten as $mandate) {
@@ -312,7 +312,7 @@ class MandaatEnforcer {
 			return array_values($result);
 		} catch (\Throwable $e) {
 			$this->logger->debug(
-				'MandaatEnforcer: schema lookup unavailable — treating as absent',
+				'MandateEnforcer: schema lookup unavailable — treating as absent',
 				['schema' => $schema, 'exception' => $e->getMessage()]
 			);
 			return [];

@@ -82,7 +82,7 @@ class BbvProgrammeBudgetReader {
 	 *
 	 * @var string
 	 */
-	public const SCHEMA_COMMITMENT_LINE = 'Verplichtingsregel';
+	public const SCHEMA_COMMITMENT_LINE = 'CommitmentLine';
 
 	/**
 	 * Chart-of-accounts schema slug.

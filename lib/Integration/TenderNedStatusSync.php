@@ -25,7 +25,7 @@
  *    fully unit-testable without a live HTTP socket.
  *
  * Authorisation is checked here defensively in addition to the
- * declarative RBAC + TenderNedAanbestedingGuard upstream: the
+ * declarative RBAC + TenderNedProcurementGuard upstream: the
  * `awardedSupplier` of the linked aanbesteding must match the tenant
  * KvK before the call is allowed (vendors cannot sync; only the
  * aanbestedende dienst can — see design D6).
@@ -98,13 +98,13 @@ class TenderNedStatusSync {
 	/**
 	 * Sync the completion of an eindoplevering back to TenderNed (REQ-006).
 	 *
-	 * Called by `OpdrachtUitvoeringTransitionListener` when the approved
+	 * Called by `OrderFulfilmentTransitionListener` when the approved
 	 * eindoplevering for a `bron: tenderned` obligation transitions to
 	 * `completed`. Returns true when the outbound call was attempted (the
 	 * live transport may still fail downstream — the contract guarantees
 	 * a "best-effort" send + structured log only).
 	 *
-	 * @param array<string, mixed> $oplevering Completed OpdrachtUitvoering payload.
+	 * @param array<string, mixed> $oplevering Completed OrderFulfilment payload.
 	 *
 	 * @return bool True when a sync attempt was made; false when ineligible.
 	 *
@@ -151,7 +151,7 @@ class TenderNedStatusSync {
 	}//end syncCompletion()
 
 	/**
-	 * Resolve the TenderNedAanbesteding linked to a Verplichting.
+	 * Resolve the TenderNedProcurement linked to a Commitment.
 	 *
 	 * @param string $commitmentId The linked obligation identifier.
 	 *
@@ -168,7 +168,7 @@ class TenderNedStatusSync {
 		try {
 			$rows = $objectService
 				->setRegister(register: $this->getRegisterSlug())
-				->setSchema(schema: 'TenderNedAanbesteding')
+				->setSchema(schema: 'TenderNedProcurement')
 				->findAll(
 					[
 						'filters' => ['commitmentId' => $commitmentId],
@@ -194,7 +194,7 @@ class TenderNedStatusSync {
 	/**
 	 * Check whether the tenant is the aanbestedende dienst on the dossier.
 	 *
-	 * @param array<string, mixed> $tender TenderNedAanbesteding payload.
+	 * @param array<string, mixed> $tender TenderNedProcurement payload.
 	 *
 	 * @return bool
 	 */

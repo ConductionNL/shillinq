@@ -13,7 +13,7 @@
  * against the Requisition object itself: BudgetBlocker is schema-agnostic (it
  * reads array fields off whatever object it is given), and Requisition
  * deliberately carries the same programma/boekjaar/totaalbedrag_excl_btw/soort
- * field contract the Verplichting schema already uses, so the guard's budget
+ * field contract the Commitment schema already uses, so the guard's budget
  * lookup and override-mandate check work verbatim (ADR-031, ADR-022 —
  * consume, don't reimplement).
  *
@@ -170,7 +170,7 @@ class RequisitionService {
 	 * Submit a draft requisition for approval (REQ-REQ-002).
 	 *
 	 * Always routes through human approval regardless of mandate sufficiency
-	 * — unlike Verplichting's `indienen` transition, a Requisition never
+	 * — unlike Commitment's `indienen` transition, a Requisition never
 	 * skips straight to approved.
 	 *
 	 * @param string $administrationId Administration scope (server-resolved).
@@ -206,7 +206,7 @@ class RequisitionService {
 	 * bookkeeping-verplichtingenadministratie. BudgetBlocker resolves the
 	 * matching Budget for (programma, boekjaar) and checks that
 	 * totaalbedrag_excl_btw fits the free room, or that the approver's
-	 * mandate carries an override, exactly as it does for a Verplichting.
+	 * mandate carries an override, exactly as it does for a Commitment.
 	 * Fail-closed: when the budget check fails or errors, the requisition is
 	 * NOT approved (CWE-863).
 	 *
@@ -230,7 +230,7 @@ class RequisitionService {
 
 		// Reuse BudgetBlocker unmodified: it reads programma/boekjaar/
 		// totaalbedrag_excl_btw/administrationId/soort straight off $requisition
-		// because $object is supplied directly (no Verplichting lookup happens).
+		// because $object is supplied directly (no Commitment lookup happens).
 		if ($this->budgetBlocker->canCommit(commitmentNumber: $requisitionId, object: $requisition) === false) {
 			throw new RuntimeException('Requisition exceeds available budget');
 		}

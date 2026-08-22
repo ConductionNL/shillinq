@@ -22,7 +22,7 @@
  * shillinq_register.json can NEVER resolve unless the app explicitly
  * registers that exact literal string as a service alias. Before this
  * change, shillinq registered none of them — not even for guards whose
- * class already existed (MandaatEnforcer, BudgetBlocker, PeriodCloseGuard,
+ * class already existed (MandateEnforcer, BudgetBlocker, PeriodCloseGuard,
  * InventoryPostingGuard, KorThresholdGuard, ...): every one of those
  * transitions ALSO hard-fails today. That pre-existing, fleet-wide gap is
  * filed separately (see shillinq#433) — fixing it for the dozens of
@@ -31,7 +31,7 @@
  *
  * This adapter is the reusable glue: it wraps a plain guard object's single
  * boolean precondition method (the existing, fleet-wide convention — see
- * MandaatEnforcer::requiresApproval(), PeriodCloseGuard::periodOpen(), etc.)
+ * MandateEnforcer::requiresApproval(), PeriodCloseGuard::periodOpen(), etc.)
  * into a real `LifecycleGuardInterface::check()` implementation, so
  * Application.php can register the EXACT literal `requires` tag string for
  * each of the 16 guards this change fixes and have it genuinely resolve and
