@@ -58,6 +58,17 @@ use RuntimeException;
  * migrator would let the step pass while doing the wrong thing with a real one.
  *
  * @covers \OCA\Shillinq\Repair\BackfillGlLineAdministration
+ *
+ * The migrator is exercised for real rather than stubbed, deliberately: it is
+ * `final`, and these are tests of the STEP's ordering and its treatment of the
+ * store, so a stubbed migrator would let the step pass while doing the wrong
+ * thing with the real one. That collaboration is declared here because
+ * PHPUnit's strict coverage config reports undeclared execution as RISKY, and
+ * a risky test fails this build — the run reported
+ * "Tests: 4927, Assertions: 46194, Risky: 5" with zero failures and zero
+ * errors, so the suite passed and the job still went red.
+ *
+ * @uses \OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator
  */
 final class BackfillGlLineAdministrationTest extends TestCase {
 
