@@ -256,93 +256,6 @@
             "description": "Human-readable rate-limit summary for the admin list (REQ-BNT-006/008)."
           }
         },
-        "x-openregister-notifications": {
-          "onTriggerEventFired": {
-            "trigger": "{{triggerType}}",
-            "channels": "{{channels}}",
-            "scheduleOffsetHours": "{{reminderHoursBeforeStart}}",
-            "appliesWhen": {
-              "field": "status",
-              "in": [
-                "enabled"
-              ]
-            },
-            "scopeBy": {
-              "field": "appliesToBookingSlug",
-              "matchBooking": "slug",
-              "nullMeansGlobal": true
-            },
-            "recipients": "{{recipients}}",
-            "selectTemplate": {
-              "byType": {
-                "booking.created": "BookingConfirmationTemplate",
-                "booking.changed": "BookingConfirmationTemplate",
-                "booking.cancelled": "BookingCancellationTemplate",
-                "booking.reminder": "BookingReminderTemplate"
-              },
-              "overrideSlug": "{{templateOverrideSlug}}",
-              "matchLocale": "recipient.languagePreference"
-            },
-            "skipWhen": {
-              "any": [
-                {
-                  "recipientField": "notificationOptOut[{{triggerType}}]",
-                  "equals": true,
-                  "onlyIf": "{{respectOptOut}}"
-                },
-                {
-                  "rateLimit": {
-                    "scope": "booking",
-                    "max": "{{rateLimitPerBookingPerHour}}",
-                    "windowMinutes": 60
-                  }
-                },
-                {
-                  "rateLimit": {
-                    "scope": "organizer",
-                    "max": "{{rateLimitPerOrganizerPerDay}}",
-                    "windowMinutes": 1440
-                  }
-                },
-                {
-                  "deduplicate": {
-                    "key": [
-                      "recipient",
-                      "triggerType",
-                      "bookingId"
-                    ],
-                    "windowMinutes": "{{deduplicationWindowMinutes}}"
-                  }
-                }
-              ]
-            },
-            "audit": {
-              "schema": "NotificationDelivery",
-              "writeOn": [
-                "sent",
-                "failed",
-                "skipped",
-                "queued"
-              ],
-              "fields": {
-                "triggerName": "{{name}}",
-                "triggerType": "{{triggerType}}",
-                "bookingId": "booking.id",
-                "channel": "channel",
-                "recipient": "recipient.address",
-                "status": "status",
-                "failureReason": "failureReason",
-                "retryCount": "retryCount",
-                "sentAt": "now"
-              }
-            },
-            "fallback": {
-              "mode": "next-channel",
-              "description": "On adapter failure, advance to the next channel in the trigger's own channels list. Each attempt is recorded in NotificationDelivery (REQ-BNT-004/005)."
-            },
-            "description": "Declarative trigger dispatch consumed from OR's notification engine (ADR-022, REQ-BNT-001/003/004/005/006/009). When the configured booking lifecycle event fires (booking.created / changed / cancelled / reminder), the engine evaluates appliesWhen (status=enabled), scope (appliesToBookingSlug null = global, else match), the recipient rules (each rule's condition expression), the skipWhen gates (opt-out, rate-limit per booking/organizer, dedupe), and dispatches the rendered template through the first available channel. Every attempt is recorded immutably in NotificationDelivery for audit (REQ-BNT-005). Pure-logic gating (rate-limit window, dedupe key, recipient-rule condition parsing, opt-out lookup) is implemented in Shillinq's Notification/ helper namespace for unit-test coverage; live dispatch stays in OR's engine."
-          }
-        },
         "x-openregister-rbac": {
           "roles": {
             "notification-administrator": {
@@ -380,7 +293,8 @@
             "booking:notification:delete": "delete"
           },
           "description": "Trigger administration is restricted to the notification-administrator role (full CRUD), booking-administrator (read/update, used for the admin monitor disable-all toggle), booking-organizer (read/update — limited to triggers scoped via appliesToBookingSlug to their own bookings), and auditor (read-only). Permission slugs map onto OR CRUD permissions; enable/disable are modelled as status updates gated by the lifecycle state machine."
-        }
+        },
+        "_note": "Design sketch removed from x-openregister-notifications (shillinq#1193). 'onTriggerEventFired' was never a notification rule and could never fire: its trigger was the literal placeholder '{{triggerType}}', its channels and recipients were '{{channels}}' / '{{recipients}}', and it used five keys the ADR-031 dialect has no concept of (scheduleOffsetHours, appliesWhen, scopeBy, selectTemplate, skipWhen). It described what a user-configured BookingNotificationTrigger OBJECT should contain — this schema's own instances — rather than a rule the engine dispatches for this schema. The intended behaviour it sketched: fire the object's triggerType for enabled triggers, scoped by appliesToBookingSlug (null meaning global), selecting a template by event type with a locale match and an override slug, offset by reminderHoursBeforeStart. That belongs in the service that reads these objects, not in a schema annotation. Kept here verbatim so the design is not lost: {\"onTriggerEventFired\":{\"trigger\":\"{{triggerType}}\",\"channels\":\"{{channels}}\",\"scheduleOffsetHours\":\"{{reminderHoursBeforeStart}}\",\"appliesWhen\":{\"field\":\"status\",\"in\":[\"enabled\"]},\"scopeBy\":{\"field\":\"appliesToBookingSlug\",\"matchBooking\":\"slug\",\"nullMeansGlobal\":true},\"recipients\":\"{{recipients}}\",\"selectTemplate\":{\"byType\":{\"booking.created\":\"BookingConfirmationTemplate\",\"booking.changed\":\"BookingConfirmationTemplate\",\"booking.cancelled\":\"BookingCancellationTemplate\",\"booking.reminder\":\"BookingReminderTemplate\"},\"overrideSlug\":\"{{templateOverrideSlug}}\",\"matchLocale\":\"recipient.languagePreference\"},\"skipWhen\":{\"any\":[{\"recipientField\":\"notificationOptOut[{{triggerType}}]\",\"equals\":true,\"onlyIf\":\"{{respectOptOut}}\"},{\"rateLimit\":{\"scope\":\"booking\",\"max\":\"{{rateLimitPerBookingPerHour}}\",\"windowMinutes\":60}},{\"rateLimit\":{\"scope\":\"organizer\",\"max\":\"{{rateLimitPerOrganizerPerDay}}\",\"windowMinutes\":1440}},{\"deduplicate\":{\"key\":[\"recipient\",\"triggerType\",\"bookingId\"],\"windowMinutes\":\"{{deduplicationWindowMinutes}}\"}}]},\"audit\":{\"schema\":\"NotificationDelivery\",\"writeOn\":[\"sent\",\"failed\",\"skipped\",\"queued\"],\"fields\":{\"triggerName\":\"{{name}}\",\"triggerType\":\"{{triggerType}}\",\"bookingId\":\"booking.id\",\"channel\":\"channel\",\"recipient\":\"recipient.address\",\"status\":\"status\",\"failureReason\":\"failureReason\",\"retryCount\":\"retryCount\",\"sentAt\":\"now\"}},\"fallback\":{\"mode\":\"next-channel\",\"description\":\"On adapter failure, advance to the next channel in the trigger's own channels list. Each attempt is recorded in NotificationDelivery (REQ-BNT-004/005).\"},\"description\":\"Declarative trigger dispatch consumed from OR's notification engine (ADR-022, REQ-BNT-001/003/004/005/006/009). When the configured booking lifecycle event fires (booking.created / changed / cancelled / reminder), the engine evaluates appliesWhen (status=enabled), scope (appliesToBookingSlug null = global, else match), the recipient rules (each rule's condition expression), the skipWhen gates (opt-out, rate-limit per booking/organizer, dedupe), and dispatches the rendered template through the first available channel. Every attempt is recorded immutably in NotificationDelivery for audit (REQ-BNT-005). Pure-logic gating (rate-limit window, dedupe key, recipient-rule condition parsing, opt-out lookup) is implemented in Shillinq's Notification/ helper namespace for unit-test coverage; live dispatch stays in OR's engine.\"}}"
       },
       "NotificationDelivery": {
         "slug": "NotificationDelivery",
