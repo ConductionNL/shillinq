@@ -2973,7 +2973,17 @@
         "{hours} hours": "{hours} uur",
         "{name} (default)": "{name} (standaard)",
         "{pct}% of turnover": "{pct}% van de omzet",
-        "Δ": "Δ"
+        "Δ": "Δ",
+        "(unassigned)": "(niet toegewezen)",
+        "Computed by": "Berekend door",
+        "Loading administration context…": "Administratiecontext laden…",
+        "The administration context could not be loaded, so no spend figures were requested.": "De administratiecontext kon niet worden geladen, dus zijn er geen uitgavecijfers opgevraagd.",
+        "The aggregation ran and matched no rows for this administration.": "De aggregatie is uitgevoerd en vond geen regels voor deze administratie.",
+        "The category, cost centre and period views read GLLine. They refuse to report until the GLLine administrationId backfill is proven complete, because filtering on a property some rows still lack would silently exclude those rows and report a zero total as though it were a measurement.": "De weergaven per categorie, kostenplaats en periode lezen GLLine. Zij rapporteren pas wanneer bewezen is dat de backfill van GLLine.administrationId volledig is, omdat filteren op een eigenschap die sommige regels nog missen die regels stilzwijgend zou uitsluiten en een nultotaal zou tonen alsof het een meting was.",
+        "The request failed.": "Het verzoek is mislukt.",
+        "This view is unavailable — no figure is shown because none could be trusted.": "Deze weergave is niet beschikbaar — er wordt geen bedrag getoond omdat geen enkel bedrag betrouwbaar zou zijn.",
+        "Unknown error": "Onbekende fout",
+        "You are not a member of any administration, so there is no spend to report on.": "U bent geen lid van een administratie, dus er zijn geen uitgaven om over te rapporteren."
     },
     "plurals": ""
 }

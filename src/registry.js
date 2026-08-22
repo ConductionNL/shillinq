@@ -196,6 +196,10 @@ import SalesOverview from './components/sales/SalesOverview.vue'
 // dashboard so it sits with the other one-time setup tasks. manifest fragment
 // src/manifest.d/bank-import-settings.json declares the route + menu entry.
 import BankImportPage from './components/settings/BankImportPage.vue'
+// spend-analytics-ui: the panel behind the SpendAnalytics dashboard page's
+// `widget-spend-analysis` slot — see the registry entry below for why the
+// declarative chart/stat widgets cannot render this endpoint's failure state.
+import SpendAnalyticsPanel from './components/spend-analytics/SpendAnalyticsPanel.vue'
 // bookkeeping-purchase-order-3way slice 05 (REQ-PO3W-004 / REQ-PO3W-007):
 // the supplier-invoice detail view renders the OCR-confidence indicator,
 // the Peppol/UBL provenance block and the link to the related
@@ -506,6 +510,16 @@ export default {
 		kind: 'widget',
 		component: BudgetTrendChart,
 		_note: 'Actual/projected/begroot trend+cumulative chart with a dashed-not-colour-only projected seam and a point-level unprojectable marker — no declarative series[].path array can express either.',
+	},
+
+	// spend-analytics-ui: the first frontend consumer of
+	// GET /api/analytics/spend, rendered on the SpendAnalytics dashboard
+	// page through the slot `widget-spend-analysis`.
+	SpendAnalyticsPanel: {
+		// @custom-widget-ratchet exclude the four spend views must distinguish "unavailable" from "no rows", and no built-in dashboard widget can: CnChartWidget subscribes to useEndpointSource but keeps only ep.data/ep.refetch and DISCARDS ep.error, so glline-administration-scope REQ-GLS-003's deliberate HTTP 500 would render as its emptyLabel ("no data") — the silent-zero reading that requirement exists to forbid — while CnStatWidget surfaces it only as a bare em dash behind a title tooltip, with no test id and nothing a keyboard user reaches. The alternative to this entry is a UI that reports a shut completeness gate as an absence of spend.
+		kind: 'widget',
+		component: SpendAnalyticsPanel,
+		_note: 'Renders all four /api/analytics/spend dimensions with four distinct states (loading / unavailable / no-rows / rows) and prints no figure for a view that did not answer. No built-in widget surfaces an endpoint error as anything but "no data" (CnChartWidget discards ep.error) or a bare em dash (CnStatWidget), which would report REQ-GLS-003\'s deliberate raise as a zero total.',
 	},
 
 	// add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007).

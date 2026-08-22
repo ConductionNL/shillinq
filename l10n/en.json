@@ -2973,7 +2973,17 @@
         "{hours} hours": "{hours} hours",
         "{name} (default)": "{name} (default)",
         "{pct}% of turnover": "{pct}% of turnover",
-        "Δ": "Δ"
+        "Δ": "Δ",
+        "(unassigned)": "(unassigned)",
+        "Computed by": "Computed by",
+        "Loading administration context…": "Loading administration context…",
+        "The administration context could not be loaded, so no spend figures were requested.": "The administration context could not be loaded, so no spend figures were requested.",
+        "The aggregation ran and matched no rows for this administration.": "The aggregation ran and matched no rows for this administration.",
+        "The category, cost centre and period views read GLLine. They refuse to report until the GLLine administrationId backfill is proven complete, because filtering on a property some rows still lack would silently exclude those rows and report a zero total as though it were a measurement.": "The category, cost centre and period views read GLLine. They refuse to report until the GLLine administrationId backfill is proven complete, because filtering on a property some rows still lack would silently exclude those rows and report a zero total as though it were a measurement.",
+        "The request failed.": "The request failed.",
+        "This view is unavailable — no figure is shown because none could be trusted.": "This view is unavailable — no figure is shown because none could be trusted.",
+        "Unknown error": "Unknown error",
+        "You are not a member of any administration, so there is no spend to report on.": "You are not a member of any administration, so there is no spend to report on."
     },
     "plurals": ""
 }
