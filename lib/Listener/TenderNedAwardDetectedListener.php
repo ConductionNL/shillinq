@@ -119,6 +119,19 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 * @return void
 	 *
 	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+	 *
+	 * KNOWN ADR-078 VIOLATION — gate-61, tracked in issue #1198. This handler
+	 * calls saveObject() inside another object's write. That is pre-existing:
+	 * the change that touched this file renamed identifiers only, and gate-61
+	 * is diff-scoped, so the rename is what pulled a long-standing registration
+	 * into scope rather than anything new.
+	 *
+	 * Deliberately NOT annotated with `@listener-placement inline`. That escape
+	 * hatch takes one of four closed ADR-078 categories (realtime, sapi-memory,
+	 * cheap-bounded, correctness) and none of them is true here — claiming one
+	 * would buy a green gate with a false declaration, which is worse than the
+	 * red. The fix is real deferral through OpenRegister's
+	 * ListenerDeferralService; see #1198.
 	 */
 	public function handle(Event $event): void {
 		try {
@@ -360,6 +373,13 @@ class TenderNedAwardDetectedListener implements IEventListener {
 							'source' => 'tenderned',
 							'sourceReference' => $sourceReference,
 						],
+						// This is an existence check: the loop below returns the
+						// first row and discards the rest, so listing more than
+						// one was only ever cost. OpenRegister control params
+						// take an underscore prefix — a bare `limit` is read as
+						// a FILTER on a property named "limit", which matches
+						// nothing and silently returns the unbounded list.
+						'_limit' => 1,
 					]
 				);
 		} catch (Throwable $e) {

@@ -136,6 +136,8 @@ class RenameCommitmentSchemas implements IRepairStep {
 	 * @param IOutput $output Repair output channel.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
 	 */
 	public function run(IOutput $output): void {
 		try {
