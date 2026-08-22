@@ -4,12 +4,12 @@
   },
   "components": {
     "schemas": {
-      "Verplichting": {
-        "slug": "Verplichting",
+      "Commitment": {
+        "slug": "Commitment",
         "icon": "FileSign",
         "version": "0.1.0",
-        "title": "Verplichting",
-        "description": "A financial commitment (verplichting) tracked from the moment it becomes legally binding (PO signed, raamovereenkomst agreed, arbeidscontract executed, subsidiebeschikking awarded) through delivery, invoicing, payment, and closure. Drives budget-blocking at commitment-time (REQ-VPL-001) and mandate enforcement on aangaan (REQ-VPL-002). The status field is the lifecycle field; every state change is recorded as an immutable Verplichtingsmutatie (D1). The tegenpartij is an embedded vendor reference (kvk/naam/iban) — not a bespoke customer schema; a customer/contact is a Nextcloud entity (ADR). THIS FRAGMENT IS THE SINGLE OWNER OF THIS SCHEMA'S `required` LIST: ADR-037's deepMergeConfig() CONCATENATES list values, so a second fragment declaring `required` makes the effective list the UNION of both and no payload of either model can satisfy it. Overlay fragments (20-bookkeeping-tenderned-integratie.json) contribute properties only.",
+        "title": "Commitment",
+        "description": "A financial commitment (verplichting) tracked from the moment it becomes legally binding (PO signed, raamovereenkomst agreed, arbeidscontract executed, subsidiebeschikking awarded) through delivery, invoicing, payment, and closure. Drives budget-blocking at commitment-time (REQ-VPL-001) and mandate enforcement on aangaan (REQ-VPL-002). The status field is the lifecycle field; every state change is recorded as an immutable CommitmentMovement (D1). The tegenpartij is an embedded vendor reference (kvk/naam/iban) — not a bespoke customer schema; a customer/contact is a Nextcloud entity (ADR). THIS FRAGMENT IS THE SINGLE OWNER OF THIS SCHEMA'S `required` LIST: ADR-037's deepMergeConfig() CONCATENATES list values, so a second fragment declaring `required` makes the effective list the UNION of both and no payload of either model can satisfy it. Overlay fragments (20-bookkeeping-tenderned-integratie.json) contribute properties only.",
         "x-schema-org": "schema:Order",
         "x-openregister-purpose": "fact",
         "type": "object",
@@ -28,14 +28,14 @@
           },
           "commitmentNumber": {
             "type": "string",
-            "description": "Operator-assigned unique commitment number within the administration. NOTE — a second spelling of this same field, camelCase `verplichtingNummer`, is also live in production: it is written by TenderNedAwardDetectedListener and read by VerplichtingGuard, while this one is written by CommitmentMaterialisationService and read by BudgetBlocker::canCommit, MandaatEnforcer::hasSufficientMandate and RequisitionService. The split is resolved by the English domain rename (Verplichting -> Commitment), which owns collapsing the two and the repair step that migrates stored values; it is deliberately NOT done in this fragment.",
+            "description": "Operator-assigned unique commitment number within the administration. This is the single spelling: the camelCase `verplichtingNummer` variant that TenderNedAwardDetectedListener once wrote is gone — every writer (CommitmentMaterialisationService, TenderNedAwardDetectedListener) and every reader (BudgetBlocker::canCommit, MandateEnforcer::hasSufficientMandate, CommitmentGuard, RequisitionService) now agrees on `commitmentNumber`.",
             "example": "PO-2026-00874",
             "title": "Verplichtingsnummer"
           },
           "sourceReference": {
             "type": "string",
             "nullable": true,
-            "description": "Provenance reference for auto-materialised commitments (REQ-VPL-010): the poNumber of the approved PurchaseOrder or the contractNumber of the signed Contract this Verplichting was raised from. Used as the idempotency key so a repeated approval/signature transition never creates a duplicate commitment. Null for manually-created commitments.",
+            "description": "Provenance reference for auto-materialised commitments (REQ-VPL-010): the poNumber of the approved PurchaseOrder or the contractNumber of the signed Contract this Commitment was raised from. Used as the idempotency key so a repeated approval/signature transition never creates a duplicate commitment. Null for manually-created commitments.",
             "example": "PO-2026-0207",
             "title": "Bron Referentie"
           },
@@ -168,7 +168,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Commitment lifecycle state. Derived from the latest Verplichtingsmutatie (D1).",
+            "description": "Commitment lifecycle state. Derived from the latest CommitmentMovement (D1).",
             "enum": [
               "draft",
               "in_goedkeuring",
@@ -186,7 +186,7 @@
           "mandate_applied": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the Mandaat under whose authority this commitment was signed (REQ-VPL-002).",
+            "description": "FK to the Mandate under whose authority this commitment was signed (REQ-VPL-002).",
             "example": "M-INKOOP-50K",
             "title": "Mandaat Toegepast"
           },
@@ -243,7 +243,7 @@
             },
             "aangegaan": {
               "label": "Aangegaan",
-              "description": "Signed/legally binding. Budget is blocked; an aangegaan Verplichtingsmutatie is recorded (REQ-VPL-001/003)."
+              "description": "Signed/legally binding. Budget is blocked; an aangegaan CommitmentMovement is recorded (REQ-VPL-001/003)."
             },
             "deels_geleverd": {
               "label": "Deels geleverd",
@@ -271,23 +271,23 @@
               "from": "draft",
               "to": "in_goedkeuring",
               "label": "Ter goedkeuring aanbieden",
-              "description": "Offer for approval when the signer's mandaat is insufficient. Gated by MandaatEnforcer (REQ-VPL-002).",
-              "requires": "OCA\\Shillinq\\Lifecycle\\MandaatEnforcer::requiresApproval"
+              "description": "Offer for approval when the signer's mandaat is insufficient. Gated by MandateEnforcer (REQ-VPL-002).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\MandateEnforcer::requiresApproval"
             },
             "aangaan": {
               "from": "draft",
               "to": "aangegaan",
               "label": "Verplichting aangaan",
-              "description": "Sign the commitment within mandaat and budget. Gated by MandaatEnforcer (mandaat sufficient) and BudgetBlocker (vrije_ruimte sufficient or override). An aangegaan Verplichtingsmutatie is recorded (REQ-VPL-001/002).",
+              "description": "Sign the commitment within mandaat and budget. Gated by MandateEnforcer (mandaat sufficient) and BudgetBlocker (vrije_ruimte sufficient or override). An aangegaan CommitmentMovement is recorded (REQ-VPL-001/002).",
               "requires": "OCA\\Shillinq\\Lifecycle\\BudgetBlocker::canCommit",
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "record-mutatie",
-                  "description": "Record an aangegaan Verplichtingsmutatie and increase openstaande_verplichtingen on the matching budgets (REQ-VPL-001/003).",
+                  "description": "Record an aangegaan CommitmentMovement and increase openstaande_verplichtingen on the matching budgets (REQ-VPL-001/003).",
                   "actionParameters": {
                     "register": "shillinq",
-                    "schema": "Verplichtingsmutatie",
+                    "schema": "CommitmentMovement",
                     "kind": "committed"
                   }
                 }
@@ -333,8 +333,8 @@
           }
         },
         "x-openregister-approval-chains": {
-          "verplichting-goedkeuring": {
-            "description": "Approval chain that gates the Verplichting in_goedkeuring -> aangegaan `goedkeuren` transition (REQ-VPL-013). A commitment reaches in_goedkeuring only when MandaatEnforcer::requiresApproval routed it there because the signer's mandaat was insufficient (REQ-VPL-002); this chain then runs the finance approval workflow that releases it. Threshold-routed on totaalbedrag_excl_btw (EUR cents): a single commitment-administrator approves from EUR 0, and a finance-director approves commitments at or above EUR 250.000. Separation of duties is enforced - the requester who submitted the commitment cannot approve their own step. On completion the goedkeuren transition auto-advances (BudgetBlocker still gates the budget). Declarative metadata only: OpenRegister's approval-workflow primitive (x-openregister-approval-chains, ApprovalChainGateListener/ApprovalChainAdvanceListener) materialises and gates the actual steps; this app ships no PHP approval-chain implementation. INERT until the OpenRegister release carrying the declarative approval-chains capability (PR #396/#397) is deployed - see openspec/changes/migrate-mandaat-to-approval-chains/design.md for the sequencing and the named follow-up.",
+          "commitment-approval": {
+            "description": "Approval chain that gates the Commitment in_goedkeuring -> aangegaan `goedkeuren` transition (REQ-VPL-013). A commitment reaches in_goedkeuring only when MandateEnforcer::requiresApproval routed it there because the signer's mandaat was insufficient (REQ-VPL-002); this chain then runs the finance approval workflow that releases it. Threshold-routed on totaalbedrag_excl_btw (EUR cents): a single commitment-administrator approves from EUR 0, and a finance-director approves commitments at or above EUR 250.000. Separation of duties is enforced - the requester who submitted the commitment cannot approve their own step. On completion the goedkeuren transition auto-advances (BudgetBlocker still gates the budget). Declarative metadata only: OpenRegister's approval-workflow primitive (x-openregister-approval-chains, ApprovalChainGateListener/ApprovalChainAdvanceListener) materialises and gates the actual steps; this app ships no PHP approval-chain implementation. INERT until the OpenRegister release carrying the declarative approval-chains capability (PR #396/#397) is deployed - see openspec/changes/migrate-mandaat-to-approval-chains/design.md for the sequencing and the named follow-up.",
             "transition": "goedkeuren",
             "amountField": "total_amount_excl_vat",
             "separationOfDuties": true,
@@ -386,12 +386,12 @@
           }
         }
       },
-      "Verplichtingsregel": {
-        "slug": "Verplichtingsregel",
+      "CommitmentLine": {
+        "slug": "CommitmentLine",
         "icon": "FormatListNumbered",
         "version": "0.1.0",
-        "title": "Verplichtingsregel",
-        "description": "A budget-tracking line on a Verplichting, one per budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Each regel tracks its own delivery, invoicing, and payment independently so multi-year raamovereenkomsten block budget per boekjaar (D2, REQ-VPL-004).",
+        "title": "CommitmentLine",
+        "description": "A budget-tracking line on a Commitment, one per budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Each regel tracks its own delivery, invoicing, and payment independently so multi-year raamovereenkomsten block budget per boekjaar (D2, REQ-VPL-004).",
         "x-openregister-purpose": "fact",
         "type": "object",
         "required": [
@@ -410,9 +410,9 @@
           },
           "commitment": {
             "type": "string",
-            "description": "FK to the parent Verplichting (verplichtingsnummer).",
+            "description": "FK to the parent Commitment (commitmentNumber).",
             "example": "PO-2026-00874",
-            "title": "Verplichting"
+            "title": "Commitment"
           },
           "ruleNumber": {
             "type": "integer",
@@ -521,7 +521,7 @@
         "x-openregister-aggregations": {
           "committedVsRealisedPerBudgetLine": {
             "description": "REQ-VPL-011: per-budget-line committed-vs-realised rollup, grouped by budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Excludes afgesloten regels. verplicht = sum(restant_verplicht); gerealiseerd = sum(gefactureerd_bedrag); geautoriseerd is joined from the matching CommitmentBudget (administrationId + programmaCode = programma + boekjaar); vrij = geautoriseerd - verplicht - gerealiseerd is computed by the drilldown view (BudgetLineCommitments.vue) from these three declared figures — no parallel PHP reporting service (ADR-031).",
-            "source": "Verplichtingsregel",
+            "source": "CommitmentLine",
             "groupBy": [
               "programme",
               "costCentre",
@@ -549,15 +549,15 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Verplichtingsregel is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a CommitmentLine is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
-      "Verplichtingsmutatie": {
-        "slug": "Verplichtingsmutatie",
+      "CommitmentMovement": {
+        "slug": "CommitmentMovement",
         "icon": "History",
         "version": "0.1.0",
-        "title": "Verplichtingsmutatie",
-        "description": "Immutable audit-log entry for every change to a Verplichting (D1, REQ-VPL-010). The verplichting.status is derived from the latest mutatie. Bedrag may be negative for geannuleerd/verlaagd/teruggevorderd; aggregations track sign explicitly.",
+        "title": "CommitmentMovement",
+        "description": "Immutable audit-log entry for every change to a Commitment (D1, REQ-VPL-010). The commitment.status is derived from the latest mutatie. Bedrag may be negative for geannuleerd/verlaagd/teruggevorderd; aggregations track sign explicitly.",
         "x-openregister-purpose": "fact",
         "x-openregister-immutable": true,
         "type": "object",
@@ -577,16 +577,16 @@
           },
           "commitment": {
             "type": "string",
-            "description": "FK to the parent Verplichting (verplichtingsnummer).",
+            "description": "FK to the parent Commitment (commitmentNumber).",
             "example": "PO-2026-00874",
-            "title": "Verplichting"
+            "title": "Commitment"
           },
           "commitmentRule": {
             "type": "string",
             "nullable": true,
-            "description": "Optional FK to the specific Verplichtingsregel affected.",
+            "description": "Optional FK to the specific CommitmentLine affected.",
             "example": "PO-2026-00874-1",
-            "title": "Verplichtingsregel"
+            "title": "CommitmentLine"
           },
           "date": {
             "type": "string",
@@ -663,15 +663,15 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Verplichtingsmutatie is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a CommitmentMovement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
-      "Mandaat": {
-        "slug": "Mandaat",
+      "Mandate": {
+        "slug": "Mandate",
         "icon": "AccountKey",
         "version": "0.1.0",
-        "title": "Mandaat",
-        "description": "Authorization record defining who may sign commitments up to what amount, for which soort_verplichting, with optional second-signature thresholds (D6, REQ-VPL-002). Enforced by MandaatEnforcer on the verplichting aangaan transition. A register (not an enum) so operators can manage mandates over time.",
+        "title": "Mandate",
+        "description": "Authorization record defining who may sign commitments up to what amount, for which soort_verplichting, with optional second-signature thresholds (D6, REQ-VPL-002). Enforced by MandateEnforcer on the verplichting aangaan transition. A register (not an enum) so operators can manage mandates over time.",
         "x-openregister-purpose": "dimension",
         "type": "object",
         "required": [
@@ -814,15 +814,15 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Mandaat is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Mandate is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
-      "Goedkeuringsstap": {
-        "slug": "Goedkeuringsstap",
+      "ApprovalStep": {
+        "slug": "ApprovalStep",
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
-        "title": "Goedkeuringsstap",
-        "description": "A workflow step in a commitment's approval chain when the signer's mandaat is exceeded (D7, REQ-VPL-002). Created by MandaatEnforcer when a verplichting moves to in_goedkeuring; gives finance a clear view of pending approvals.",
+        "title": "ApprovalStep",
+        "description": "A workflow step in a commitment's approval chain when the signer's mandaat is exceeded (D7, REQ-VPL-002). Created by MandateEnforcer when a verplichting moves to in_goedkeuring; gives finance a clear view of pending approvals.",
         "x-openregister-purpose": "fact",
         "type": "object",
         "required": [
@@ -841,9 +841,9 @@
           },
           "commitment": {
             "type": "string",
-            "description": "FK to the Verplichting awaiting approval.",
+            "description": "FK to the Commitment awaiting approval.",
             "example": "PO-2026-00874",
-            "title": "Verplichting"
+            "title": "Commitment"
           },
           "stepNumber": {
             "type": "integer",
@@ -916,7 +916,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Goedkeuringsstap is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a ApprovalStep is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
       "CommitmentBudget": {
@@ -981,7 +981,7 @@
           },
           "outstanding_commitments": {
             "type": "integer",
-            "description": "Outstanding commitments aggregated from Verplichtingsregels, in minor units (D9, REQ-VPL-001).",
+            "description": "Outstanding commitments aggregated from CommitmentLines, in minor units (D9, REQ-VPL-001).",
             "default": 0,
             "example": 0,
             "title": "Openstaande Verplichtingen"
@@ -997,7 +997,7 @@
         "x-openregister-aggregations": {
           "outstanding_commitments": {
             "type": "sum",
-            "source": "Verplichtingsregel",
+            "source": "CommitmentLine",
             "field": "remaining_committed",
             "where": [
               {
@@ -1064,7 +1064,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Mandaat",
+        "schema": "Mandate",
         "slug": "vpl-mandaat-inkoop-50k"
       },
       "administrationId": "adm-demo",
@@ -1085,7 +1085,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Mandaat",
+        "schema": "Mandate",
         "slug": "vpl-mandaat-directeur-250k"
       },
       "administrationId": "adm-demo",
@@ -1108,7 +1108,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Mandaat",
+        "schema": "Mandate",
         "slug": "vpl-mandaat-cfo-override"
       },
       "administrationId": "adm-demo",
@@ -1161,7 +1161,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Verplichting",
+        "schema": "Commitment",
         "slug": "verplichting-2026-0001"
       },
       "administrationId": "adm-demo",
@@ -1181,7 +1181,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Verplichtingsregel",
+        "schema": "CommitmentLine",
         "slug": "vpl-regel-0001"
       },
       "administrationId": "adm-demo",
@@ -1199,7 +1199,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Verplichting",
+        "schema": "Commitment",
         "slug": "verplichting-2026-0002"
       },
       "administrationId": "adm-demo",
@@ -1219,7 +1219,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Verplichtingsregel",
+        "schema": "CommitmentLine",
         "slug": "vpl-regel-0002"
       },
       "administrationId": "adm-demo",
@@ -1237,7 +1237,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Verplichtingsregel",
+        "schema": "CommitmentLine",
         "slug": "vpl-regel-0003"
       },
       "administrationId": "adm-demo",
@@ -1255,7 +1255,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Verplichting",
+        "schema": "Commitment",
         "slug": "verplichting-2026-0003"
       },
       "administrationId": "adm-demo",
@@ -1274,7 +1274,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Verplichtingsregel",
+        "schema": "CommitmentLine",
         "slug": "vpl-regel-0004"
       },
       "administrationId": "adm-demo",

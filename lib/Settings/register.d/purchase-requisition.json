@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "purchase-requisition",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Purchase requisition (aanvraag) capability: an employee raises a Requisition with RequisitionLine items, it is submitted for approval, approved/rejected, and an approved Requisition converts to a PurchaseOrder (member 02 of bookkeeping-purchase-order-3way, unchanged). Approval routing deliberately reuses the existing commitment mandate/budget infrastructure from bookkeeping-verplichtingenadministratie (OCA\\Shillinq\\Lifecycle\\MandaatEnforcer, OCA\\Shillinq\\Lifecycle\\BudgetBlocker) rather than inventing a parallel approval system: Requisition carries the same `programma` / `boekjaar` / `totaalbedrag_excl_btw` / `soort` field contract those guards already read (schema-agnostic — they operate on the passed object array, not a hardcoded Verplichting lookup, whenever the lifecycle engine supplies the object being transitioned), so BudgetBlocker::canCommit runs unmodified against a Requisition exactly as it does against a Verplichting. Money fields are integer euro cents (ADR-022)."
+    "description": "Purchase requisition (aanvraag) capability: an employee raises a Requisition with RequisitionLine items, it is submitted for approval, approved/rejected, and an approved Requisition converts to a PurchaseOrder (member 02 of bookkeeping-purchase-order-3way, unchanged). Approval routing deliberately reuses the existing commitment mandate/budget infrastructure from bookkeeping-verplichtingenadministratie (OCA\\Shillinq\\Lifecycle\\MandateEnforcer, OCA\\Shillinq\\Lifecycle\\BudgetBlocker) rather than inventing a parallel approval system: Requisition carries the same `programma` / `boekjaar` / `totaalbedrag_excl_btw` / `soort` field contract those guards already read (schema-agnostic — they operate on the passed object array, not a hardcoded Commitment lookup, whenever the lifecycle engine supplies the object being transitioned), so BudgetBlocker::canCommit runs unmodified against a Requisition exactly as it does against a Commitment. Money fields are integer euro cents (ADR-022)."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "ClipboardTextOutline",
         "version": "0.1.0",
         "title": "Purchase Requisition",
-        "description": "Internal purchase requisition (aanvraag) raised by an employee before a PurchaseOrder exists (REQ-REQ-001). Lifecycle draft -> submitted -> approved|rejected -> converted. Approval reuses BudgetBlocker (budget availability + override-mandate) and MandaatEnforcer (mandate resolution) from bookkeeping-verplichtingenadministratie via a shared field contract (programma/boekjaar/totaalbedrag_excl_btw/soort) — no parallel approval engine is built. An approved Requisition converts to a PurchaseOrder via RequisitionConversionService, which reuses PurchaseOrderService::createPurchaseOrder() unmodified.",
+        "description": "Internal purchase requisition (aanvraag) raised by an employee before a PurchaseOrder exists (REQ-REQ-001). Lifecycle draft -> submitted -> approved|rejected -> converted. Approval reuses BudgetBlocker (budget availability + override-mandate) and MandateEnforcer (mandate resolution) from bookkeeping-verplichtingenadministratie via a shared field contract (programma/boekjaar/totaalbedrag_excl_btw/soort) — no parallel approval engine is built. An approved Requisition converts to a PurchaseOrder via RequisitionConversionService, which reuses PurchaseOrderService::createPurchaseOrder() unmodified.",
         "x-schema-org": "schema:OrderAction",
         "x-spec": "openspec/specs/purchase-requisition/spec.md",
         "type": "object",
@@ -43,13 +43,13 @@
           },
           "programme": {
             "type": "string",
-            "description": "Cost centre / budget programme code the requisition draws against. Matches Budget.programmaCode and Verplichting.programma so BudgetBlocker's budget lookup works unmodified against a Requisition.",
+            "description": "Cost centre / budget programme code the requisition draws against. Matches Budget.programmaCode and Commitment.programma so BudgetBlocker's budget lookup works unmodified against a Requisition.",
             "example": "PROG-IT-OPERATIONS",
             "title": "Cost Centre / Budget Programme"
           },
           "financialYear": {
             "type": "integer",
-            "description": "Fiscal year the requisition's budget impact is checked against. Matches Budget.boekjaar and Verplichting.boekjaar (BudgetBlocker field contract).",
+            "description": "Fiscal year the requisition's budget impact is checked against. Matches Budget.boekjaar and Commitment.boekjaar (BudgetBlocker field contract).",
             "example": 2026,
             "title": "Fiscal Year"
           },
@@ -68,7 +68,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "Commitment type used to resolve the applicable Mandaat (MandaatEnforcer's soort_verplichting match). Matches the soort vocabulary already used by Verplichting (e.g. 'inkoop').",
+            "description": "Commitment type used to resolve the applicable Mandaat (MandateEnforcer's soort_verplichting match). Matches the soort vocabulary already used by Commitment (e.g. 'inkoop').",
             "example": "inkoop",
             "title": "Commitment Type (Soort)"
           },
@@ -184,7 +184,7 @@
               "from": "draft",
               "to": "submitted",
               "label": "Indienen",
-              "description": "Submit the requisition for approval. Always routed through human approval regardless of mandate sufficiency (REQ-REQ-002) — unlike Verplichting, a Requisition never skips straight to approved."
+              "description": "Submit the requisition for approval. Always routed through human approval regardless of mandate sufficiency (REQ-REQ-002) — unlike Commitment, a Requisition never skips straight to approved."
             },
             "approve": {
               "from": "submitted",
