@@ -38,7 +38,7 @@
   loading / unavailable / no-rows / rows — and never prints a figure for a
   view that did not answer. A view that failed shows no total at all.
 
-  @spec openspec/changes/spend-analytics-ui/specs/spend-analytics-ui/spec.md
+  @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
 -->
 <template>
 	<div class="spend-analytics" data-testid="spend-analytics-panel">
@@ -265,6 +265,7 @@ export default {
 		 * The dimension descriptors, exposed to the template.
 		 *
 		 * @return {Array<object>} The four dimensions.
+		 * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
 		 */
 		dimensions() {
 			return SPEND_DIMENSIONS
@@ -286,6 +287,7 @@ export default {
 		 *
 		 * @param {string} key The dimension key.
 		 * @return {string} The translated title.
+		 * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
 		 */
 		titleFor(key) {
 			const view = SPEND_DIMENSIONS.find((d) => d.key === key)
@@ -298,6 +300,7 @@ export default {
 		 *
 		 * @param {string} key The dimension key.
 		 * @return {boolean} True for category / costCentre / period.
+		 * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
 		 */
 		isGlBacked(key) {
 			const view = SPEND_DIMENSIONS.find((d) => d.key === key)
@@ -314,6 +317,7 @@ export default {
 		 *
 		 * @param {string} key The dimension key.
 		 * @return {string} The render state.
+		 * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
 		 */
 		stateFor(key) {
 			const view = this.views[key]
@@ -333,6 +337,7 @@ export default {
 		 *
 		 * @param {string} key The dimension key.
 		 * @return {string} The message to show.
+		 * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
 		 */
 		errorFor(key) {
 			const view = this.views[key]
@@ -345,6 +350,7 @@ export default {
 		 *
 		 * @param {string} key The dimension key.
 		 * @return {Array<{key: (string|number|null), amount: number}>} The groups.
+		 * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
 		 */
 		groupsFor(key) {
 			const view = this.views[key]
@@ -361,6 +367,7 @@ export default {
 		 *
 		 * @param {string} key The dimension key.
 		 * @return {?number} The total, or null.
+		 * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
 		 */
 		totalFor(key) {
 			const view = this.views[key]
@@ -378,6 +385,7 @@ export default {
 		 *
 		 * @param {string} key The dimension key.
 		 * @return {string} The backend name.
+		 * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
 		 */
 		backendFor(key) {
 			const view = this.views[key]
@@ -395,6 +403,7 @@ export default {
 		 *
 		 * @param {(string|number|null|undefined)} value The raw group key.
 		 * @return {string} The display label.
+		 * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
 		 */
 		keyLabel(value) {
 			if (value === null || value === undefined || value === '') {
@@ -409,6 +418,7 @@ export default {
 		 *
 		 * @param {?number} amount The amount.
 		 * @return {string} The formatted amount.
+		 * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
 		 */
 		formatAmount(amount) {
 			if (typeof amount !== 'number' || Number.isNaN(amount)) {
@@ -427,6 +437,7 @@ export default {
 		 * unproven) never suppresses the three that answer.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
 		 */
 		async load() {
 			const administrationId = await this.loadAdministrationContext()
@@ -447,6 +458,7 @@ export default {
 		 * with no administration is a first-class state, not an error.
 		 *
 		 * @return {Promise<?string>} The administration id, or null.
+		 * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
 		 */
 		async loadAdministrationContext() {
 			try {
@@ -484,6 +496,7 @@ export default {
 		 * @param {string} key The dimension key.
 		 * @param {string} administrationId The administration to scope to.
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
 		 */
 		async loadDimension(key, administrationId) {
 			this.views[key] = { status: 'loading', payload: null, error: '' }
@@ -519,6 +532,7 @@ export default {
 		 *
 		 * @param {(Error & {response?: {data?: {error?: string}}})} e The thrown error.
 		 * @return {string} A human-readable cause.
+		 * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
 		 */
 		readError(e) {
 			const serverMessage = e?.response?.data?.error

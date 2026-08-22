@@ -26,7 +26,7 @@
  * are invoked bound to a fake `this` — no DOM mount, so the environment
  * stays `node`, mirroring tests/vitest/bbvLinkerFilterBar.spec.js.
  *
- * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics-ui/spec.md
+ * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
