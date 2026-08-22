@@ -31,16 +31,16 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
     <documentation>
-        <user>https://codeberg.org/Conduction/shillinq</user>
-        <admin>https://codeberg.org/Conduction/shillinq</admin>
-        <developer>https://codeberg.org/Conduction/shillinq</developer>
+        <user>https://github.com/ConductionNL/shillinq</user>
+        <admin>https://github.com/ConductionNL/shillinq</admin>
+        <developer>https://github.com/ConductionNL/shillinq</developer>
     </documentation>
     <category>organization</category>
-    <website>https://codeberg.org/Conduction/shillinq</website>
-    <bugs>https://codeberg.org/Conduction/shillinq/issues</bugs>
-    <repository>https://codeberg.org/Conduction/shillinq</repository>
+    <website>https://github.com/ConductionNL/shillinq</website>
+    <bugs>https://github.com/ConductionNL/shillinq/issues</bugs>
+    <repository>https://github.com/ConductionNL/shillinq</repository>
 
-    <screenshot>https://codeberg.org/Conduction/shillinq/raw/branch/main/img/app-store.svg</screenshot>
+    <screenshot>https://raw.githubusercontent.com/ConductionNL/shillinq/development/img/app-store.svg</screenshot>
 
     <dependencies>
         <php min-version="8.3"/>
