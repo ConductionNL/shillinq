@@ -151,8 +151,13 @@ class OrderFulfilmentTransitionListener implements IEventListener {
 	 */
 	private function isOrderFulfilmentSchema(string $schema): bool {
 		$normalised = strtolower(trim($schema));
-		return ($normalised === 'orderfulfilment'
-			|| str_ends_with(haystack: $normalised, needle: 'orderfulfilment'));
+
+		// The legacy Dutch slug is still matched on purpose: objects stored
+		// before the rename carry 'opdrachtuitvoering' until the repair step
+		// has run on that instance, and matching only the new slug would make
+		// this listener silently do nothing for every one of them.
+		return (str_ends_with(haystack: $normalised, needle: 'orderfulfilment')
+			|| str_ends_with(haystack: $normalised, needle: 'opdrachtuitvoering'));
 
 	}//end isOrderFulfilmentSchema()
 }//end class

@@ -25,19 +25,19 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\Lifecycle\OpdrachtUitvoeringGuard;
-use OCA\Shillinq\Listener\OpdrachtUitvoeringBewijsstukListener;
+use OCA\Shillinq\Lifecycle\OrderFulfilmentGuard;
+use OCA\Shillinq\Listener\OrderFulfilmentEvidenceListener;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
 /**
- * REQ-004: an OpdrachtUitvoering may only carry `status: completed` when at
+ * REQ-004: an OrderFulfilment may only carry `status: completed` when at
  * least one bewijsstuk with a documentId is attached — on the PLAIN WRITE path,
  * not only on the lifecycle transition endpoint.
  *
  * Measured on a live Nextcloud 32 + OpenRegister instance before the fix:
- * `POST /apps/openregister/api/objects/shillinq/OpdrachtUitvoering` with
+ * `POST /apps/openregister/api/objects/shillinq/OrderFulfilment` with
  * `{"status":"completed","supportingDocuments":[]}` returned **201 Created** and
  * persisted the terminal state. After the fix the same request returns 422,
  * and the same request WITH a valid bewijsstuk still returns 201.
@@ -48,7 +48,7 @@ use Psr\Log\NullLogger;
  *
  * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  */
-final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase {
+final class OrderFulfilmentEvidenceListenerTest extends TestCase {
 
 	/**
 	 * A completion without a bewijsstuk is vetoed.
@@ -72,7 +72,7 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase {
 		self::assertTrue($event->isPropagationStopped(), 'The write must be refused (REQ-004).');
 		self::assertSame('supportingDocuments', $event->getErrors()['field'] ?? null);
 		self::assertSame(
-			OpdrachtUitvoeringBewijsstukListener::DENY_MESSAGE,
+			OrderFulfilmentEvidenceListener::DENY_MESSAGE,
 			$event->getErrors()['message'] ?? null
 		);
 
@@ -178,23 +178,23 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase {
 
 		$this->listener(matches: false)->handle($event);
 
-		self::assertFalse($event->isPropagationStopped(), 'The guard must be scoped to OpdrachtUitvoering.');
+		self::assertFalse($event->isPropagationStopped(), 'The guard must be scoped to OrderFulfilment.');
 
 	}//end testOtherSchemasAreUntouched()
 
 	/**
 	 * Build the listener with a schema resolver that does or does not match.
 	 *
-	 * @param bool $matches Whether the entity is an OpdrachtUitvoering.
+	 * @param bool $matches Whether the entity is an OrderFulfilment.
 	 *
-	 * @return OpdrachtUitvoeringBewijsstukListener
+	 * @return OrderFulfilmentEvidenceListener
 	 */
-	private function listener(bool $matches): OpdrachtUitvoeringBewijsstukListener {
+	private function listener(bool $matches): OrderFulfilmentEvidenceListener {
 		$resolver = $this->createMock(ListenerSchemaResolver::class);
 		$resolver->method('matchesSchema')->willReturn($matches);
 
-		return new OpdrachtUitvoeringBewijsstukListener(
-			guard: new OpdrachtUitvoeringGuard(logger: new NullLogger()),
+		return new OrderFulfilmentEvidenceListener(
+			guard: new OrderFulfilmentGuard(logger: new NullLogger()),
 			schemaResolver: $resolver,
 			logger: new NullLogger(),
 		);
@@ -214,7 +214,7 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase {
 	private function creatingEvent(array $data): ObjectCreatingEvent {
 		$entity = new ObjectEntity();
 		$entity->setObject($data);
-		$entity->setSchema('OpdrachtUitvoering');
+		$entity->setSchema('OrderFulfilment');
 		$entity->setRegister('shillinq');
 
 		return new ObjectCreatingEvent($entity);
@@ -230,7 +230,7 @@ final class OpdrachtUitvoeringBewijsstukListenerTest extends TestCase {
 	private function updatingEvent(array $data): ObjectUpdatingEvent {
 		$entity = new ObjectEntity();
 		$entity->setObject($data);
-		$entity->setSchema('OpdrachtUitvoering');
+		$entity->setSchema('OrderFulfilment');
 		$entity->setRegister('shillinq');
 
 		return new ObjectUpdatingEvent($entity);

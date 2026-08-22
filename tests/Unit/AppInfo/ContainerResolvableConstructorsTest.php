@@ -321,7 +321,7 @@ final class ContainerResolvableConstructorsTest extends TestCase {
 	 * `lib/AppInfo/`.
 	 *
 	 * Application::register() is not the only place a binding can live:
-	 * `OpdrachtUitvoeringGateRegistration`, `SigningDelegationRegistration`
+	 * `OrderFulfilmentGateRegistration`, `SigningDelegationRegistration`
 	 * and `BudgetScenarioRegistration` are focused registrar classes,
 	 * `(new ...Registration())->register($context)`-called from
 	 * Application::register() specifically to keep it under PHPMD's

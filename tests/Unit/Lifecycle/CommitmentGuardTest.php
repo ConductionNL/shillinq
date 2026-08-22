@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit tests for VerplichtingGuard.
+ * Unit tests for CommitmentGuard.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Lifecycle
@@ -19,13 +19,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\Shillinq\Lifecycle\VerplichtingGuard;
+use OCA\Shillinq\Lifecycle\CommitmentGuard;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Tests for VerplichtingGuard::canActiveren per design D2 + date-range validation.
+ * Tests for CommitmentGuard::canActiveren per design D2 + date-range validation.
  *
  * Covers:
  * - Missing kostenplaats → denied.
@@ -39,7 +39,7 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class VerplichtingGuardTest extends TestCase {
+class CommitmentGuardTest extends TestCase {
 
 	/**
 	 * Mock LoggerInterface.
@@ -51,9 +51,9 @@ class VerplichtingGuardTest extends TestCase {
 	/**
 	 * The guard under test.
 	 *
-	 * @var VerplichtingGuard
+	 * @var CommitmentGuard
 	 */
-	private VerplichtingGuard $guard;
+	private CommitmentGuard $guard;
 
 	/**
 	 * Set up test fixtures.
@@ -63,7 +63,7 @@ class VerplichtingGuardTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->logger = $this->createMock(LoggerInterface::class);
-		$this->guard = new VerplichtingGuard(logger: $this->logger);
+		$this->guard = new CommitmentGuard(logger: $this->logger);
 
 	}//end setUp()
 

@@ -13,7 +13,7 @@
 //   CONFLICTING — the two lists are different SETS. The merged schema demands
 //                 the union, i.e. the vocabulary of BOTH models at once, and no
 //                 payload of either model can satisfy it. Measured on
-//                 `Verplichting`: `20-bookkeeping-tenderned-integratie.json`
+//                 `Commitment`: `20-bookkeeping-tenderned-integratie.json`
 //                 required [verplichtingNummer, omschrijving, bron, bedrag,
 //                 administrationId, status] while
 //                 `bookkeeping-verplichtingenadministratie.json` required

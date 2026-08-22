@@ -416,9 +416,16 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 */
 	private function isTenderSchema(string $schema): bool {
 		$normalised = strtolower(trim($schema));
-		return ($normalised === 'tenderedaanbesteding'
-			|| $normalised === 'tendernedaanbesteding'
+
+		// The legacy Dutch slug is still matched on purpose. The schema was
+		// renamed TenderNedAanbesteding -> TenderNedProcurement, but objects
+		// already stored carry the old slug until the repair step has run on
+		// that instance. Matching only the new slug would make this listener
+		// silently do nothing for every pre-existing tender -- the exact
+		// no-op failure mode the guards in this app have hit before, which
+		// raises no error and writes no log line.
+		return (str_ends_with(haystack: $normalised, needle: 'tendernedprocurement')
 			|| str_ends_with(haystack: $normalised, needle: 'tendernedaanbesteding'));
 
-	}//end isAanbestedingSchema()
+	}//end isTenderSchema()
 }//end class

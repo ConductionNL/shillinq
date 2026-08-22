@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit tests for OpdrachtUitvoeringGateRegistration.
+ * Unit tests for OrderFulfilmentGateRegistration.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\AppInfo
@@ -24,10 +24,10 @@ namespace OCA\Shillinq\Tests\Unit\AppInfo;
 
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\AppInfo\OpdrachtUitvoeringGateRegistration;
-use OCA\Shillinq\Lifecycle\OpdrachtUitvoeringGuard;
+use OCA\Shillinq\AppInfo\OrderFulfilmentGateRegistration;
+use OCA\Shillinq\Lifecycle\OrderFulfilmentGuard;
 use OCA\Shillinq\Lifecycle\RegisterRequiresGuardAdapter;
-use OCA\Shillinq\Listener\OpdrachtUitvoeringBewijsstukListener;
+use OCA\Shillinq\Listener\OrderFulfilmentEvidenceListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -38,7 +38,7 @@ use Psr\Log\LoggerInterface;
  *
  * A direct create/update never triggers a lifecycle transition, so the
  * declarative `requires` guard alone does not see it — measured on a live
- * instance, POSTing an OpdrachtUitvoering with `status: completed` and
+ * instance, POSTing an OrderFulfilment with `status: completed` and
  * `bewijsstukken: []` returned 201 Created. Registering only the transition
  * guard, or only the create event and not the update event, reopens that hole
  * silently, so this test pins the full set rather than the fact that
@@ -46,13 +46,13 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class OpdrachtUitvoeringGateRegistrationTest extends TestCase {
+final class OrderFulfilmentGateRegistrationTest extends TestCase {
 	/**
-	 * The tag the OpdrachtUitvoering `voltooien` transition declares.
+	 * The tag the OrderFulfilment `voltooien` transition declares.
 	 *
 	 * @var string
 	 */
-	private const GUARD_TAG = 'OCA\Shillinq\Lifecycle\OpdrachtUitvoeringGuard::canVoltooien';
+	private const GUARD_TAG = 'OCA\Shillinq\Lifecycle\OrderFulfilmentGuard::canVoltooien';
 
 	/**
 	 * Captured registerEventListener() calls as [event, listener] pairs.
@@ -97,7 +97,7 @@ final class OpdrachtUitvoeringGateRegistrationTest extends TestCase {
 	 * @return void
 	 */
 	public function testBothPreSaveEventsGetTheBewijsstukListener(): void {
-		(new OpdrachtUitvoeringGateRegistration())->register($this->recordingContext());
+		(new OrderFulfilmentGateRegistration())->register($this->recordingContext());
 
 		$events = array_column($this->listeners, 0);
 
@@ -113,7 +113,7 @@ final class OpdrachtUitvoeringGateRegistrationTest extends TestCase {
 		);
 
 		foreach ($this->listeners as [$event, $listener]) {
-			self::assertSame(OpdrachtUitvoeringBewijsstukListener::class, $listener, 'for ' . $event);
+			self::assertSame(OrderFulfilmentEvidenceListener::class, $listener, 'for ' . $event);
 		}
 
 	}//end testBothPreSaveEventsGetTheBewijsstukListener()
@@ -129,7 +129,7 @@ final class OpdrachtUitvoeringGateRegistrationTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheTransitionGuardIsRegisteredUnderTheDeclaredLiteralTag(): void {
-		(new OpdrachtUitvoeringGateRegistration())->register($this->recordingContext());
+		(new OrderFulfilmentGateRegistration())->register($this->recordingContext());
 
 		self::assertArrayHasKey(self::GUARD_TAG, $this->services);
 
@@ -146,12 +146,12 @@ final class OpdrachtUitvoeringGateRegistrationTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheFactoryBuildsAnAdapterThatDeniesWithTheListenersWording(): void {
-		(new OpdrachtUitvoeringGateRegistration())->register($this->recordingContext());
+		(new OrderFulfilmentGateRegistration())->register($this->recordingContext());
 
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			fn (string $id) => match ($id) {
-				OpdrachtUitvoeringGuard::class => $this->createMock(OpdrachtUitvoeringGuard::class),
+				OrderFulfilmentGuard::class => $this->createMock(OrderFulfilmentGuard::class),
 				LoggerInterface::class => $this->createMock(LoggerInterface::class),
 				default => null,
 			}
@@ -174,7 +174,7 @@ final class OpdrachtUitvoeringGateRegistrationTest extends TestCase {
 		$denyMessage = $reflection->getProperty('denyMessage');
 		$denyMessage->setAccessible(true);
 		self::assertSame(
-			OpdrachtUitvoeringBewijsstukListener::DENY_MESSAGE,
+			OrderFulfilmentEvidenceListener::DENY_MESSAGE,
 			$denyMessage->getValue($adapter),
 			'Both enforcement points must deny with the same wording.'
 		);
