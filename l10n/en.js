@@ -1,5 +1,6 @@
-{
-    "translations": {
+OC.L10N.register(
+    "shillinq",
+    {
         "(no invoice number)": "(no invoice number)",
         "(not recorded)": "(not recorded)",
         "1 to 2 year": "1 to 2 year",
@@ -2921,10 +2922,7 @@
         "ZZP Deduction": "ZZP Deduction",
         "ZZP-aftrek": "Self-employed deductions",
         "Zelfstandigenaftrek": "Self-employed deduction",
-        "_%n invoice outstanding_::_%n invoices outstanding_": [
-            "%n invoice outstanding",
-            "%n invoices outstanding"
-        ],
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n invoice outstanding","%n invoices outstanding"],
         "active": "active",
         "actual": "actual",
         "automatically matched": "automatically matched",
@@ -2985,6 +2983,5 @@
         "Unknown error": "Unknown error",
         "You are not a member of any administration, so there is no spend to report on.": "You are not a member of any administration, so there is no spend to report on."
     },
-    "plurals": "",
-    "pluralForm": "nplurals=2; plural=(n != 1);"
-}
+    "nplurals=2; plural=(n != 1);"
+)
