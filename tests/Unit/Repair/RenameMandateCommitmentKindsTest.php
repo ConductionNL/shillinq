@@ -287,7 +287,7 @@ final class RenameMandateCommitmentKindsTest extends TestCase {
 		$this->wireDb(
 			['14'],
 			[['table_name' => 'oc_openregister_table_14_99']],
-			[['id' => 7, 'kinds' => '["inkooporder","leasing"]']]
+			[['_id' => 7, 'kinds' => '["inkooporder","leasing"]']]
 		);
 
 		$written = [];
@@ -322,7 +322,7 @@ final class RenameMandateCommitmentKindsTest extends TestCase {
 		$this->wireDb(
 			['14'],
 			[['table_name' => 'oc_openregister_table_14_99']],
-			[['id' => 7, 'kinds' => '["purchase_order","leasing"]']]
+			[['_id' => 7, 'kinds' => '["purchase_order","leasing"]']]
 		);
 
 		$this->db->expects($this->never())->method('executeStatement');
@@ -346,7 +346,7 @@ final class RenameMandateCommitmentKindsTest extends TestCase {
 		$this->wireDb(
 			['14'],
 			[['table_name' => 'oc_openregister_table_77_99']],
-			[['id' => 7, 'kinds' => '["inkooporder"]']]
+			[['_id' => 7, 'kinds' => '["inkooporder"]']]
 		);
 
 		$this->db->expects($this->never())->method('executeStatement');
@@ -374,6 +374,32 @@ final class RenameMandateCommitmentKindsTest extends TestCase {
 		(new RenameMandateCommitmentKinds($this->db, $this->logger))->run($this->output);
 
 	}//end testNoOpWhenNoShillinqRegisterExists()
+
+	/**
+	 * The SQL addresses the shard table's `_id`, never a bare `id`.
+	 *
+	 * OpenRegister prefixes every control column of a per-schema shard table
+	 * with an underscore (`_id`, `_uuid`, `_schema`, ...); only the schema's own
+	 * properties are bare. An earlier revision of this step used `id`, which
+	 * throws "column does not exist" on the first row — swallowed by the
+	 * fail-soft catch, reported as "rewrote 0 mandate row(s)", i.e. success
+	 * having migrated nothing.
+	 *
+	 * A mocked result set cannot catch that: it hands back whatever key the
+	 * test wrote. So this asserts the SQL TEXT, which is the thing the database
+	 * actually reads. Found by running the step against a real Postgres.
+	 *
+	 * @return void
+	 */
+	public function testSqlUsesTheUnderscoredShardPrimaryKey(): void {
+		$source = (string)file_get_contents(__DIR__ . '/../../../lib/Repair/RenameMandateCommitmentKinds.php');
+
+		self::assertStringContainsString('SELECT _id, ', $source, 'the SELECT must read _id');
+		self::assertStringContainsString('WHERE _id = ?', $source, 'the UPDATE must match on _id');
+		self::assertStringNotContainsString('SELECT id, ', $source, 'a bare `id` column does not exist on a shard table');
+		self::assertStringNotContainsString('WHERE id = ?', $source, 'a bare `id` column does not exist on a shard table');
+
+	}//end testSqlUsesTheUnderscoredShardPrimaryKey()
 
 	/**
 	 * A table that cannot be READ is logged and skipped, not fatal.
@@ -430,7 +456,7 @@ final class RenameMandateCommitmentKindsTest extends TestCase {
 		$this->wireDb(
 			['14'],
 			[['table_name' => 'oc_openregister_table_14_99']],
-			[['id' => 7, 'kinds' => '["inkooporder"]']]
+			[['_id' => 7, 'kinds' => '["inkooporder"]']]
 		);
 
 		$this->db->method('executeStatement')->willThrowException(new \OCP\DB\Exception('read only'));

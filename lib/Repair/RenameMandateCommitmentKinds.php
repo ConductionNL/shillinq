@@ -177,8 +177,17 @@ class RenameMandateCommitmentKinds implements IRepairStep {
 	 */
 	private function rewriteTable(string $table): int {
 		try {
+			// `_id`, not `id`. OpenRegister prefixes every control column of a
+			// per-schema shard table with an underscore (_id, _uuid, _schema,
+			// _register, ...); only the schema's own properties are bare. This
+			// was `id` and would have thrown "column does not exist" on the
+			// first row, been swallowed by the fail-soft catch below, and
+			// reported "rewrote 0 mandate row(s)" — success, having migrated
+			// nothing. Caught by running it against a real database; the unit
+			// tests could not see it, because a mocked result set returns
+			// whatever key the test wrote.
 			$rows = $this->db->executeQuery(
-				'SELECT id, `' . self::COLUMN . '` AS kinds FROM `' . $table . '`'
+				'SELECT _id, `' . self::COLUMN . '` AS kinds FROM `' . $table . '`'
 			)->fetchAll();
 		} catch (Exception $e) {
 			$this->logger->warning(
@@ -197,14 +206,14 @@ class RenameMandateCommitmentKinds implements IRepairStep {
 
 			try {
 				$this->db->executeStatement(
-					'UPDATE `' . $table . '` SET `' . self::COLUMN . '` = ? WHERE id = ?',
-					[$translated, $row['id']]
+					'UPDATE `' . $table . '` SET `' . self::COLUMN . '` = ? WHERE _id = ?',
+					[$translated, $row['_id']]
 				);
 				$changed++;
 			} catch (Exception $e) {
 				$this->logger->warning(
 					'RenameMandateCommitmentKinds: could not write a mandate row.',
-					['table' => $table, 'id' => ($row['id'] ?? '?'), 'exception' => $e->getMessage()]
+					['table' => $table, 'id' => ($row['_id'] ?? '?'), 'exception' => $e->getMessage()]
 				);
 			}
 		}//end foreach
