@@ -36,6 +36,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -53,6 +54,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/bookkeeping-bbv-compliance/spec.md
  */
 class InitializeBbvAdministration implements IRepairStep {
+	use RunsUnderSystemIdentity;
+
 	private const BBV_ADMINISTRATION_TYPES = ['municipality', 'province', 'waterAuthority'];
 
 	private const RESERVE_TAAKVELD = '0.10';
@@ -113,6 +116,27 @@ class InitializeBbvAdministration implements IRepairStep {
 			return;
 		}
 
+		// Under a system identity: an upgrade has no session, and OpenRegister
+		// refuses `create` for 'Anonymous'. Without it this bootstrap writes
+		// nothing and says so only in a warning, which does not fail an upgrade.
+		$this->withSystemIdentity(
+			objectService: $objectService,
+			work: function () use ($objectService, $output): void {
+				$this->runInner(objectService: $objectService, output: $output);
+			}
+		);
+	}//end run()
+
+	/**
+	 * The bootstrap itself.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param IOutput $output The output interface for progress reporting.
+	 *
+	 * @return void
+	 */
+	private function runInner(object $objectService, IOutput $output): void {
+
 		$registerSlug = $this->getRegisterSlug();
 
 		try {
@@ -172,7 +196,7 @@ class InitializeBbvAdministration implements IRepairStep {
 			)
 		);
 
-	}//end run()
+	}//end runInner()
 
 	/**
 	 * Ensure an Algemene reserve exists for the given administration.

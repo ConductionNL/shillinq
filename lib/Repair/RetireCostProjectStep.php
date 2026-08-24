@@ -69,6 +69,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -84,6 +85,7 @@ use Psr\Log\LoggerInterface;
  */
 class RetireCostProjectStep implements IRepairStep {
 	use ReadsSourceRowsInBatches;
+	use RunsUnderSystemIdentity;
 
 	/**
 	 * Maximum suffix attempts when a minted code collides.
@@ -129,6 +131,41 @@ class RetireCostProjectStep implements IRepairStep {
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
 	public function run(IOutput $output): void {
+		// Under a system identity: an upgrade has no session, and OpenRegister
+		// refuses every write for 'Anonymous'. Without it this retirement moves
+		// nothing and says so only in a warning, which does not fail an upgrade.
+		$this->withSystemIdentity(
+			objectService: $this->resolveObjectServiceForIdentity(),
+			work: function () use ($output): void {
+				$this->runInner(output: $output);
+			}
+		);
+	}//end run()
+
+	/**
+	 * OpenRegister's ObjectService, or null when it cannot be resolved.
+	 *
+	 * Null is not fatal: the work then runs without a system identity, exactly
+	 * as it did before this wrapper existed.
+	 *
+	 * @return object|null The service.
+	 */
+	private function resolveObjectServiceForIdentity(): ?object {
+		try {
+			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		} catch (\Throwable $e) {
+			return null;
+		}
+	}//end resolveObjectServiceForIdentity()
+
+	/**
+	 * The retirement itself.
+	 *
+	 * @param IOutput $output The repair-step output.
+	 *
+	 * @return void
+	 */
+	private function runInner(IOutput $output): void {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->settingsService->getRegisterSlug();
@@ -156,7 +193,7 @@ class RetireCostProjectStep implements IRepairStep {
 			);
 		}//end try
 
-	}//end run()
+	}//end runInner()
 
 	/**
 	 * Iterate over all CostProject objects and convert each to a
