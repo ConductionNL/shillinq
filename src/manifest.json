@@ -62,9 +62,10 @@
 						"id": "done",
 						"sinceVersion": "1.3.18",
 						"placement": "center",
-						"title": "You're all set",
-						"body": "Nicely done — your first invoice is on the books. Head back to the Dashboard to track your finances, and reopen this tour anytime from the … menu.",
-						"target": { "kind": "page", "ref": "Dashboard" },
+						"title": "Your first invoice is on the books",
+						"body": "The Dashboard tracks your finances as invoices come and go. The documentation covers the rest.",
+						"task": "Open the documentation to keep going",
+						"target": { "kind": "nav-item", "ref": "Documentation" },
 						"advanceOn": { "type": "manual" }
 					}
 				]
