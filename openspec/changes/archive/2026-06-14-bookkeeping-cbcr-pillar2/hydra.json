@@ -2,7 +2,7 @@
   "schema_version": 2,
   "spec_slug": "bookkeeping-cbcr-pillar2",
   "app": "shillinq",
-  "repo": "https://codeberg.org/Conduction/shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
   "issue": 54,
   "depends_on": [],
   "cycles": [

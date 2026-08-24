@@ -2,7 +2,7 @@
   "spec_slug": "inventory-valuation-fifo-avg",
   "title": "Inventory Valuation (FIFO + moving-average)",
   "app": "shillinq",
-  "repo": "https://codeberg.org/Conduction/shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
   "depends_on": [
     "inventory-stock-movement-ledger"
   ],

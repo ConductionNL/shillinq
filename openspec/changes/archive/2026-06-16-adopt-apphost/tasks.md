@@ -36,7 +36,7 @@
 ## 5. Quality gates + delivery
 
 - [x] 5.1 PHPUnit (`phpunit-unit.xml`) parity-green (same 7 failures + 1 error as baseline, all pre-existing + unrelated; `CustomerBridgeMetricsServiceTest` incl. the new provider-contract test passes); `npm run build` green; hydra gates diff-clean vs baseline.
-- [x] 5.2 **PR-only delivery**: delivered via a Codeberg PR on `https://codeberg.org/Conduction/shillinq` from branch `build/adopt-apphost-2026-06-16`; never direct-pushed to `development`.
+- [x] 5.2 **PR-only delivery**: delivered via a Codeberg PR on the pre-migration `Conduction/shillinq` repo (now https://github.com/ConductionNL/shillinq) from branch `build/adopt-apphost-2026-06-16`; never direct-pushed to `development`.
 
 ## 6. Implementation record (what actually shipped + deviations)
 

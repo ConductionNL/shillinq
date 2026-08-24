@@ -24,4 +24,4 @@ OpenRegister (canonical data backbone), OpenConnector (source sync),
 DocuDesk (invoice and contract generation), Peppol / NLCIUS (e-invoicing
 transport), SBR / Digipoort (Belastingdienst filing), CAMT.053
 bank-statement import, Nextcloud Contacts (counterparties), OAuth /
-Keycloak (SSO). Pages land via [issue #78](https://codeberg.org/Conduction/shillinq/issues/78).
+Keycloak (SSO). Pages land via Codeberg issue shillinq#78 (pre-migration, not migrated to GitHub).
