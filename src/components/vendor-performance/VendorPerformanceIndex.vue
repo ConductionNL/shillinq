@@ -14,7 +14,7 @@
  ineligible / all suppliers. The row count is bounded by the supplier base
  (typically <100 active suppliers) so an in-memory filter is well-sized.
 
- Data flow: GET /apps/shillinq/api/openregister/objects/VendorPerformance
+ Data flow: GET /apps/openregister/api/objects/shillinq/VendorPerformance
  — paginated by the OR endpoint; sorted in-memory after fetch.
 
  @spec openspec/changes/bookkeeping-purchase-order-3way-10-vendor-performance/tasks.md
@@ -128,6 +128,8 @@ import { CnDataTable } from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 
+const REGISTER_SLUG = 'shillinq'
+
 export default {
 	name: 'VendorPerformanceIndex',
 	components: {
@@ -234,7 +236,7 @@ export default {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						'/apps/shillinq/api/openregister/objects/VendorPerformance',
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/VendorPerformance`,
 					),
 				)
 				const rows = response.data?.results || response.data || []

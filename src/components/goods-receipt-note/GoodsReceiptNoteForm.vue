@@ -190,6 +190,8 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcInputField, NcSelect, NcTextField } from '@nextcloud/vue'
 
+const REGISTER_SLUG = 'shillinq'
+
 export default {
 	name: 'GoodsReceiptNoteForm',
 	components: {
@@ -289,7 +291,7 @@ export default {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						'/apps/shillinq/api/openregister/objects/PurchaseOrder',
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/PurchaseOrder`,
 					),
 				)
 				const records = response.data?.results || response.data || []
@@ -322,7 +324,7 @@ export default {
 				try {
 					const response = await axios.get(
 						generateUrl(
-							'/apps/shillinq/api/openregister/objects/PurchaseOrderLine',
+							`/apps/openregister/api/objects/${REGISTER_SLUG}/PurchaseOrderLine`,
 						),
 						{ params: { filter: { poId } } },
 					)

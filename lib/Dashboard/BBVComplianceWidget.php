@@ -17,7 +17,7 @@
  * scheduled-export pipeline reuse the same envelope.
  *
  * The shape follows the JSON the slice-05 dashboard consumes via
- * `GET /apps/shillinq/api/openregister/objects/BBVProgramme` today:
+ * `GET /apps/openregister/api/objects/shillinq/BBVProgramme` today:
  * an array of programme rows carrying the materialised aggregation
  * fields. Switching the dashboard to `GET /apps/shillinq/bbv-dashboard`
  * therefore needs no widget refactor — slice 05 already binds against

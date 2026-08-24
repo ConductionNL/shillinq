@@ -16,7 +16,7 @@
  index — the per-month rates above are computed from those exact records
  so the operator can cross-check the underlying activity.
 
- Data flow: GET /apps/shillinq/api/openregister/objects/VendorPerformance/{id}
+ Data flow: GET /apps/openregister/api/objects/shillinq/VendorPerformance/{id}
  — the route is the standard OR object endpoint and the scorecard is
  read-only from the UI's perspective (the cron writes it).
 
@@ -208,6 +208,8 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 
+const REGISTER_SLUG = 'shillinq'
+
 export default {
 	name: 'VendorPerformanceDetail',
 	props: {
@@ -254,7 +256,7 @@ export default {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						`/apps/shillinq/api/openregister/objects/VendorPerformance/${id}`,
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/VendorPerformance/${id}`,
 					),
 				)
 				this.scorecard = response.data || null

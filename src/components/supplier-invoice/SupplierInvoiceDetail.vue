@@ -181,6 +181,8 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 
+const REGISTER_SLUG = 'shillinq'
+
 export default {
 	name: 'SupplierInvoiceDetail',
 	props: {
@@ -268,7 +270,7 @@ export default {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						`/apps/shillinq/api/openregister/objects/SupplierInvoice/${this.id}`,
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/SupplierInvoice/${this.id}`,
 					),
 				)
 				this.invoice = response.data || null
@@ -290,7 +292,7 @@ export default {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						'/apps/shillinq/api/openregister/objects/ThreeWayMatch',
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/ThreeWayMatch`,
 					),
 					{ params: { filter: { invoiceId: this.id } } },
 				)

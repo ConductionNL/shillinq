@@ -248,6 +248,8 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
 
+const REGISTER_SLUG = 'shillinq'
+
 export default {
 	name: 'PurchaseOrderDetail',
 	components: {
@@ -312,7 +314,7 @@ export default {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						`/apps/shillinq/api/openregister/objects/PurchaseOrder/${this.id}`,
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/PurchaseOrder/${this.id}`,
 					),
 				)
 				this.purchaseOrder = response.data || null
@@ -335,7 +337,7 @@ export default {
 			try {
 				const grnResponse = await axios.get(
 					generateUrl(
-						'/apps/shillinq/api/openregister/objects/GoodsReceiptNote',
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/GoodsReceiptNote`,
 					),
 					{ params: { filter: { poIds: this.id } } },
 				)
@@ -346,7 +348,7 @@ export default {
 			try {
 				const matchResponse = await axios.get(
 					generateUrl(
-						'/apps/shillinq/api/openregister/objects/ThreeWayMatch',
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/ThreeWayMatch`,
 					),
 					{ params: { filter: { matchedPoIds: this.id } } },
 				)

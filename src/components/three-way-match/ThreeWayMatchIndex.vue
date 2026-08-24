@@ -142,6 +142,8 @@ import { CnDataTable } from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 
+const REGISTER_SLUG = 'shillinq'
+
 export default {
 	name: 'ThreeWayMatchIndex',
 	components: {
@@ -266,7 +268,7 @@ export default {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						'/apps/shillinq/api/openregister/objects/ThreeWayMatch',
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/ThreeWayMatch`,
 					),
 				)
 				const rows = response.data?.results || response.data || []
@@ -282,7 +284,7 @@ export default {
 					try {
 						const inv = await axios.get(
 							generateUrl(
-								`/apps/shillinq/api/openregister/objects/SupplierInvoice/${id}`,
+								`/apps/openregister/api/objects/${REGISTER_SLUG}/SupplierInvoice/${id}`,
 							),
 						)
 						this.invoices[id] = inv.data || null

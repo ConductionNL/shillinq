@@ -219,6 +219,8 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 
+const REGISTER_SLUG = 'shillinq'
+
 const EXCEPTION_STATUSES = [
 	'exception_price',
 	'exception_quantity',
@@ -328,7 +330,7 @@ export default {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						`/apps/shillinq/api/openregister/objects/ThreeWayMatch/${this.id}`,
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/ThreeWayMatch/${this.id}`,
 					),
 				)
 				this.match = response.data || null
@@ -371,7 +373,7 @@ export default {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						`/apps/shillinq/api/openregister/objects/SupplierInvoice/${this.match.invoiceId}`,
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/SupplierInvoice/${this.match.invoiceId}`,
 					),
 				)
 				this.invoice = response.data || null
@@ -384,7 +386,7 @@ export default {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						`/apps/shillinq/api/openregister/objects/PurchaseOrder/${poId}`,
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/PurchaseOrder/${poId}`,
 					),
 				)
 				this.po = response.data || null
@@ -397,7 +399,7 @@ export default {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						`/apps/shillinq/api/openregister/objects/GoodsReceiptNote/${grnId}`,
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/GoodsReceiptNote/${grnId}`,
 					),
 				)
 				this.grn = response.data || null

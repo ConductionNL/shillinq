@@ -182,6 +182,8 @@ import {
 	normaliseBudgetLineRows,
 } from './budgetLineCommitmentsHelpers.js'
 
+const REGISTER_SLUG = 'shillinq'
+
 export default {
 	name: 'BudgetLineCommitments',
 
@@ -216,7 +218,7 @@ export default {
 
 			try {
 				const url = generateUrl(
-					'/apps/shillinq/api/openregister/objects/CommitmentLine/aggregations/committedVsRealisedPerBudgetLine',
+					`/apps/openregister/api/objects/aggregations/${REGISTER_SLUG}/CommitmentLine/committedVsRealisedPerBudgetLine`,
 				)
 				const { data } = await axios.get(url)
 				this.rows = normaliseBudgetLineRows(data)
@@ -267,7 +269,7 @@ export default {
 					params[`filters[${key}]`] = filters[key]
 				})
 				const url = generateUrl(
-					'/apps/shillinq/api/openregister/objects/CommitmentLine',
+					`/apps/openregister/api/objects/${REGISTER_SLUG}/CommitmentLine`,
 				)
 				const { data } = await axios.get(url, { params })
 				const items = Array.isArray(data?.results)
