@@ -157,6 +157,8 @@ import {
 	NcLoadingIcon,
 } from '@nextcloud/vue'
 
+const REGISTER_SLUG = 'shillinq'
+
 const SEGMENT_AGGREGATION = {
 	costCenter: 'byCostCenter',
 	costCenterHierarchy: 'byCostCenterHierarchy',
@@ -232,6 +234,7 @@ export default {
 			this.loadSegment(segment)
 		},
 
+		/** @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-14 */
 		async loadSegment(segment) {
 			this.loading = true
 			this.errorMessage = ''
@@ -246,7 +249,7 @@ export default {
 
 			try {
 				const url = generateUrl(
-					'/apps/shillinq/api/openregister/objects/GLLine/aggregations/'
+					`/apps/openregister/api/objects/aggregations/${REGISTER_SLUG}/GLLine/`
 						+ encodeURIComponent(aggregationName),
 				)
 				const { data } = await axios.get(url)

@@ -16,7 +16,7 @@
    └────────────────────────────────────────────────────────────────┘
 
  The page fetches `BBVProgramme` objects from the OR endpoint
- (`/apps/shillinq/api/openregister/objects/BBVProgramme`). The slice-02
+ (`/apps/openregister/api/objects/shillinq/BBVProgramme`). The slice-02
  x-openregister-aggregations block materialises totalBudget, ytdSpend,
  utilization, utilizationPercentage and complianceStatus directly on
  each returned object, so every widget reads server-authoritative data —
