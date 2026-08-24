@@ -3,8 +3,8 @@
 /**
  * End-to-end workflow scenarios for verplichtingenadministratie.
  *
- * Composes the three Verplichting lifecycle guards (BudgetBlocker +
- * MandaatEnforcer + VerplichtingGuard) and walks through the REQ-VPL-001 ..
+ * Composes the three Commitment lifecycle guards (BudgetBlocker +
+ * MandateEnforcer + CommitmentGuard) and walks through the REQ-VPL-001 ..
  * REQ-VPL-010 GIVEN/WHEN/THEN scenarios at the unit level. The lifecycle
  * engine and a live OpenRegister instance are simulated by an in-memory
  * filter-aware ObjectService stub. This is the closest assertion we can make
@@ -37,7 +37,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
-use OCA\Shillinq\Lifecycle\MandaatEnforcer;
+use OCA\Shillinq\Lifecycle\MandateEnforcer;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -45,11 +45,11 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Verplichting workflow scenarios per REQ-VPL-001 through REQ-VPL-004.
+ * Commitment workflow scenarios per REQ-VPL-001 through REQ-VPL-004.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class VerplichtingWorkflowTest extends TestCase {
+class CommitmentWorkflowTest extends TestCase {
 
 	/**
 	 * Mock ContainerInterface.
@@ -75,9 +75,9 @@ class VerplichtingWorkflowTest extends TestCase {
 	/**
 	 * Mandate-check guard under test.
 	 *
-	 * @var MandaatEnforcer
+	 * @var MandateEnforcer
 	 */
-	private MandaatEnforcer $mandate;
+	private MandateEnforcer $mandate;
 
 	/**
 	 * Budget-room guard under test.
@@ -100,7 +100,7 @@ class VerplichtingWorkflowTest extends TestCase {
 
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->mandate = new MandaatEnforcer(
+		$this->mandate = new MandateEnforcer(
 			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
@@ -221,7 +221,7 @@ class VerplichtingWorkflowTest extends TestCase {
 	 * GIVEN a gemeente administration with a EUR 500k budget on programma 5.1 /
 	 * boekjaar 2026 and a user mandate covering EUR 100k inkooporders
 	 * WHEN a EUR 75k inkooporder is moved to `aangegaan`
-	 * THEN MandaatEnforcer.hasSufficientMandate returns true AND
+	 * THEN MandateEnforcer.hasSufficientMandate returns true AND
 	 *      BudgetBlocker.canCommit returns true AND
 	 *      BudgetBlocker.freeRoom decreases by EUR 75k after the commitment is recorded.
 	 *
@@ -236,7 +236,7 @@ class VerplichtingWorkflowTest extends TestCase {
 			$this->buildObjectServiceStub(
 				[
 					'CommitmentBudget' => [$budget],
-					'Mandaat' => [$mandate],
+					'Mandate' => [$mandate],
 				]
 			)
 		);
@@ -260,7 +260,7 @@ class VerplichtingWorkflowTest extends TestCase {
 	 *
 	 * GIVEN a user mandate covering only EUR 50k inkooporders
 	 * WHEN a EUR 75k inkooporder is moved to `aangegaan`
-	 * THEN MandaatEnforcer.requiresApproval returns true,
+	 * THEN MandateEnforcer.requiresApproval returns true,
 	 *      hasSufficientMandate returns false,
 	 *      and BudgetBlocker.canCommit still returns true (budget room exists, just
 	 *      requires approval first).
@@ -276,12 +276,12 @@ class VerplichtingWorkflowTest extends TestCase {
 			$this->buildObjectServiceStub(
 				[
 					'CommitmentBudget' => [$budget],
-					'Mandaat' => [$mandate],
+					'Mandate' => [$mandate],
 				]
 			)
 		);
 
-		// Mandate check fails → must route to in_goedkeuring (Goedkeuringsstap created).
+		// Mandate check fails → must route to in_goedkeuring (ApprovalStep created).
 		$this->assertFalse($this->mandate->hasSufficientMandate('PO-1', $mandatory));
 		$this->assertTrue($this->mandate->requiresApproval('PO-1', $mandatory));
 
@@ -314,7 +314,7 @@ class VerplichtingWorkflowTest extends TestCase {
 			$this->buildObjectServiceStub(
 				[
 					'CommitmentBudget' => [$budget2026, $budget2027],
-					'Mandaat' => [],
+					'Mandate' => [],
 				]
 			)
 		);
@@ -364,7 +364,7 @@ class VerplichtingWorkflowTest extends TestCase {
 			$this->buildObjectServiceStub(
 				[
 					'CommitmentBudget' => [$budget],
-					'Mandaat' => [$override],
+					'Mandate' => [$override],
 				]
 			)
 		);
@@ -395,7 +395,7 @@ class VerplichtingWorkflowTest extends TestCase {
 			$this->buildObjectServiceStub(
 				[
 					'CommitmentBudget' => [$this->makeBudget()],
-					'Mandaat' => [$mandate],
+					'Mandate' => [$mandate],
 				]
 			)
 		);

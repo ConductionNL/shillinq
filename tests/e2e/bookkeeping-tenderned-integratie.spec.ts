@@ -6,7 +6,7 @@
  * SPA smoke (REQ-001, REQ-002, REQ-008).
  *
  * The change ships three manifest navigation entries under the new "Inkoop"
- * cluster — `TenderNed Aanbestedingen`, `Verplichtingen`, `Mijn Contracten`
+ * cluster — `TenderNed tenders`, `Commitments`, `Mijn Contracten`
  * — plus their detail pages. All four pages are declarative (manifest-v2),
  * rendered by the @conduction/nextcloud-vue manifest shell; there is NO
  * custom Vue / router for this change (Task 4 / Task 9).
@@ -41,7 +41,7 @@ test.describe('shillinq — bookkeeping-tenderned-integratie SPA smoke', () => {
 		page.setViewportSize({ width: 1280, height: 800 })
 	})
 
-	test('TenderNed Aanbestedingen index — mounts on /inkoop/tenderned', async ({
+	test('TenderNed tenders index — mounts on /inkoop/tenderned', async ({
 		page,
 	}) => {
 		await page.goto(APP + '/inkoop/tenderned')
@@ -53,7 +53,7 @@ test.describe('shillinq — bookkeeping-tenderned-integratie SPA smoke', () => {
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('Verplichtingen index — mounts on /inkoop/verplichtingen', async ({
+	test('Commitments index — mounts on /inkoop/verplichtingen', async ({
 		page,
 	}) => {
 		await page.goto(APP + '/inkoop/verplichtingen')

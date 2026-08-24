@@ -1,18 +1,18 @@
 <?php
 
 /**
- * OpdrachtUitvoering bewijsstuk write-path guard
+ * OrderFulfilment bewijsstuk write-path guard
  *
- * Enforces REQ-004 — an OpdrachtUitvoering may only carry `status: completed`
+ * Enforces REQ-004 — an OrderFulfilment may only carry `status: completed`
  * when at least one bewijsstuk (proof of delivery) is attached — on the PLAIN
  * WRITE path, i.e. `POST`/`PUT` against
- * `/apps/openregister/api/objects/{register}/OpdrachtUitvoering`.
+ * `/apps/openregister/api/objects/{register}/OrderFulfilment`.
  *
  * Why this listener has to exist
  * ------------------------------
  * The schema declares the gate declaratively, as a `requires:` clause on the
  * `voltooien` lifecycle transition (`in-progress` → `completed`) pointing at
- * {@see \OCA\Shillinq\Lifecycle\OpdrachtUitvoeringGuard::canVoltooien}. That
+ * {@see \OCA\Shillinq\Lifecycle\OrderFulfilmentGuard::canVoltooien}. That
  * clause is only ever consulted by OpenRegister's TransitionController, on the
  * explicit transition endpoint. It says nothing about — and cannot see — a
  * write that sets `status` directly:
@@ -64,7 +64,7 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCA\Shillinq\Lifecycle\OpdrachtUitvoeringGuard;
+use OCA\Shillinq\Lifecycle\OrderFulfilmentGuard;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -77,17 +77,17 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
  */
-class OpdrachtUitvoeringBewijsstukListener implements IEventListener {
+class OrderFulfilmentEvidenceListener implements IEventListener {
 
 	/**
 	 * Schema slug this guard is scoped to.
 	 *
 	 * @var string
 	 */
-	private const SCHEMA_SLUG = 'OpdrachtUitvoering';
+	private const SCHEMA_SLUG = 'OrderFulfilment';
 
 	/**
-	 * The lifecycle field on the OpdrachtUitvoering schema.
+	 * The lifecycle field on the OrderFulfilment schema.
 	 *
 	 * @var string
 	 */
@@ -109,18 +109,18 @@ class OpdrachtUitvoeringBewijsstukListener implements IEventListener {
 	 *
 	 * @var string
 	 */
-	public const DENY_MESSAGE = 'An OpdrachtUitvoering can only be completed when at least one bewijsstuk '
+	public const DENY_MESSAGE = 'An OrderFulfilment can only be completed when at least one bewijsstuk '
 		. '(proof of delivery) with a documentId is attached (REQ-004).';
 
 	/**
 	 * Constructor.
 	 *
-	 * @param OpdrachtUitvoeringGuard $guard The REQ-004 precondition guard (single source of truth).
+	 * @param OrderFulfilmentGuard $guard The REQ-004 precondition guard (single source of truth).
 	 * @param ListenerSchemaResolver $schemaResolver Resolves the entity's schema to its slug.
 	 * @param LoggerInterface $logger Logger for guard diagnostics.
 	 */
 	public function __construct(
-		private readonly OpdrachtUitvoeringGuard $guard,
+		private readonly OrderFulfilmentGuard $guard,
 		private readonly ListenerSchemaResolver $schemaResolver,
 		private readonly LoggerInterface $logger,
 	) {
@@ -174,7 +174,7 @@ class OpdrachtUitvoeringBewijsstukListener implements IEventListener {
 		}
 
 		$this->logger->warning(
-			'Shillinq: refused an OpdrachtUitvoering write into `completed` without a bewijsstuk (REQ-004)',
+			'Shillinq: refused an OrderFulfilment write into `completed` without a bewijsstuk (REQ-004)',
 			[
 				'commitmentId' => ($data['commitmentId'] ?? 'unknown'),
 				'milestoneId' => ($data['milestoneId'] ?? 'unknown'),

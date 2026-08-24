@@ -4,16 +4,16 @@
  * TenderNed Award Detected Listener.
  *
  * REQ-002 — auto-promote an awarded TenderNed dossier into an active
- * Verplichting when the winning KvK matches the tenant organisation.
+ * Commitment when the winning KvK matches the tenant organisation.
  *
  * The listener is the in-app side of the `tenderned.award.detected`
  * CloudEvent contract documented in design.md D4. Openconnector polls
  * the TenderNed source on its own schedule (live-instance concern, see
  * Task 0.2) and writes / updates the corresponding
- * `TenderNedAanbesteding` OR record. OR fires
+ * `TenderNedProcurement` OR record. OR fires
  * `ObjectCreatedEvent` / `ObjectTransitionedEvent` on every write, and
  * THIS listener turns "status == gegund + matching tenant KvK" into an
- * idempotent Verplichting promotion + audit-trail entry.
+ * idempotent Commitment promotion + audit-trail entry.
  *
  * Two surfaces:
  *
@@ -24,21 +24,21 @@
  *
  * Both paths converge in `promoteIfEligible()`, which checks:
  *
- *  1. The dossier is on the `TenderNedAanbesteding` schema.
+ *  1. The dossier is on the `TenderNedProcurement` schema.
  *  2. The new status is `gegund` with `contractWaarde >= 1`.
  *  3. The `awardedSupplier` KvK prefix matches the configured tenant
  *     KvK (`shillinq` app config key `tenant_kvk`).
- *  4. No Verplichting with the same `bronReferentie` exists yet
+ *  4. No Commitment with the same `bronReferentie` exists yet
  *     (idempotency contract from the spec scenario).
  *
- * On match the listener creates a new Verplichting with `bron=tenderned`,
+ * On match the listener creates a new Commitment with `bron=tenderned`,
  * `status=active`, and a milestone plan generated via
  * `MilestoneTemplateService` (REQ-003), then sets the aanbesteding to
  * `in-uitvoering`. The cross-app budget-impact CloudEvent (REQ-007) is
  * emitted by `BudgetImpactEmitter` from the same handler.
  *
  * Fail-soft: any unexpected exception is logged but never bubbles up to
- * the OR write path. The TenderNedAanbestedingGuard still defends the
+ * the OR write path. The TenderNedProcurementGuard still defends the
  * declarative `gunnen` transition; this listener is the cross-schema
  * materialisation step layered on top.
  *
@@ -119,6 +119,19 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 * @return void
 	 *
 	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+	 *
+	 * KNOWN ADR-078 VIOLATION — gate-61, tracked in issue #1198. This handler
+	 * calls saveObject() inside another object's write. That is pre-existing:
+	 * the change that touched this file renamed identifiers only, and gate-61
+	 * is diff-scoped, so the rename is what pulled a long-standing registration
+	 * into scope rather than anything new.
+	 *
+	 * Deliberately NOT annotated with `@listener-placement inline`. That escape
+	 * hatch takes one of four closed ADR-078 categories (realtime, sapi-memory,
+	 * cheap-bounded, correctness) and none of them is true here — claiming one
+	 * would buy a green gate with a false declaration, which is worse than the
+	 * red. The fix is real deferral through OpenRegister's
+	 * ListenerDeferralService; see #1198.
 	 */
 	public function handle(Event $event): void {
 		try {
@@ -144,7 +157,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	}//end handle()
 
 	/**
-	 * Pull the `TenderNedAanbesteding` payload from the OR event.
+	 * Pull the `TenderNedProcurement` payload from the OR event.
 	 *
 	 * Returns null when the event refers to a different schema or carries
 	 * no usable object array (defensive).
@@ -222,7 +235,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	}//end isAwardEligible()
 
 	/**
-	 * Promote the aanbesteding to a Verplichting (REQ-002 + REQ-003 + REQ-007).
+	 * Promote the aanbesteding to a Commitment (REQ-002 + REQ-003 + REQ-007).
 	 *
 	 * @param array<string, mixed> $payload Aanbesteding payload.
 	 *
@@ -278,7 +291,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		try {
 			$objectService
 				->setRegister(register: $this->getRegisterSlug())
-				->setSchema(schema: 'Verplichting')
+				->setSchema(schema: 'Commitment')
 				->saveObject(object: $commitment);
 		} catch (Throwable $e) {
 			$this->logger->warning(
@@ -296,7 +309,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 			$payload['commitmentId'] = 'TN-' . $tenderId;
 			$objectService
 				->setRegister(register: $this->getRegisterSlug())
-				->setSchema(schema: 'TenderNedAanbesteding')
+				->setSchema(schema: 'TenderNedProcurement')
 				->saveObject(object: $payload);
 		} catch (Throwable $e) {
 			$this->logger->info(
@@ -312,7 +325,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	/**
 	 * Generate the milestone plan, catching invalid-date exceptions so a
 	 * missing looptijd does not block the promotion (the operator can
-	 * enrich the term in the Verplichting detail view later).
+	 * enrich the term in the Commitment detail view later).
 	 *
 	 * @param string $assignmentType Contract type.
 	 * @param string $termStart Term start.
@@ -342,7 +355,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	}//end safeGeneratePlan()
 
 	/**
-	 * Look up an existing Verplichting by bronReferentie.
+	 * Look up an existing Commitment by bronReferentie.
 	 *
 	 * @param object $objectService OR ObjectService.
 	 * @param string $sourceReference TenderNed aanbestedingId.
@@ -353,13 +366,20 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		try {
 			$rows = $objectService
 				->setRegister(register: $this->getRegisterSlug())
-				->setSchema(schema: 'Verplichting')
+				->setSchema(schema: 'Commitment')
 				->findAll(
 					[
 						'filters' => [
 							'source' => 'tenderned',
 							'sourceReference' => $sourceReference,
 						],
+						// This is an existence check: the loop below returns the
+						// first row and discards the rest, so listing more than
+						// one was only ever cost. OpenRegister control params
+						// take an underscore prefix — a bare `limit` is read as
+						// a FILTER on a property named "limit", which matches
+						// nothing and silently returns the unbounded list.
+						'_limit' => 1,
 					]
 				);
 		} catch (Throwable $e) {
@@ -408,7 +428,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	}//end getRegisterSlug()
 
 	/**
-	 * Check whether the schema slug is the TenderNedAanbesteding schema.
+	 * Check whether the schema slug is the TenderNedProcurement schema.
 	 *
 	 * @param string $schema Schema slug from the event.
 	 *
@@ -416,9 +436,16 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 */
 	private function isTenderSchema(string $schema): bool {
 		$normalised = strtolower(trim($schema));
-		return ($normalised === 'tenderedaanbesteding'
-			|| $normalised === 'tendernedaanbesteding'
+
+		// The legacy Dutch slug is still matched on purpose. The schema was
+		// renamed TenderNedAanbesteding -> TenderNedProcurement, but objects
+		// already stored carry the old slug until the repair step has run on
+		// that instance. Matching only the new slug would make this listener
+		// silently do nothing for every pre-existing tender -- the exact
+		// no-op failure mode the guards in this app have hit before, which
+		// raises no error and writes no log line.
+		return (str_ends_with(haystack: $normalised, needle: 'tendernedprocurement')
 			|| str_ends_with(haystack: $normalised, needle: 'tendernedaanbesteding'));
 
-	}//end isAanbestedingSchema()
+	}//end isTenderSchema()
 }//end class

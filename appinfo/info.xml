@@ -188,6 +188,18 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
     <repair-steps>
         <post-migration>
+            <!-- MUST BE FIRST — ahead of InitializeSettings, which imports the
+                 register.d fragments. OpenRegister's importer matches a schema
+                 by SLUG and creates one when the slug is absent, so importing
+                 the renamed fragment against a database still holding
+                 `Verplichting` produces a SECOND schema (new id, new empty
+                 shard table) and leaves every existing object bound to the old
+                 one. Nothing errors; the commitment views just come back empty.
+                 Renaming the rows first makes the import an UPDATE of the
+                 existing schema, so ids, shard tables and objects all survive.
+                 Idempotent, register-scoped, non-destructive, fail-soft; it
+                 refuses rather than merges when both slugs already exist. -->
+            <step>OCA\Shillinq\Repair\RenameCommitmentSchemas</step>
             <step>OCA\Shillinq\Repair\InitializeSettings</step>
             <step>OCA\Shillinq\Repair\InitializeBbvAdministration</step>
             <step>OCA\Shillinq\Repair\UnifyAnalyticalDimensions</step>

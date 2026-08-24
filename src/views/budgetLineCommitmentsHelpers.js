@@ -5,7 +5,7 @@
  * Pure helpers for BudgetLineCommitments.vue (REQ-VPL-011).
  *
  * Normalises the `committedVsRealisedPerBudgetLine` aggregation response
- * (Verplichtingsregel buckets grouped by programme/cost_centre/financial_year/
+ * (CommitmentLine buckets grouped by programme/cost_centre/financial_year/
  * general_ledger_account, joined to CommitmentBudget.authorised_amount /
  * CommitmentBudget.realised_amount — the aggregation response buckets its
  * joined fields as `<join.through>.<field>`, so the `CommitmentBudget` rename
@@ -88,10 +88,10 @@ export function formatAmount(cents) {
 
 /**
  * Build the exact-match filter set to drill down from a budget-line row to
- * its underlying Verplichtingsregel records.
+ * its underlying CommitmentLine records.
  *
  * @param {object} row Normalised budget-line row.
- * @return {object} Filters keyed by Verplichtingsregel field name.
+ * @return {object} Filters keyed by CommitmentLine field name.
  */
 export function drilldownFilters(row) {
 	const filters = {}

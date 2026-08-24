@@ -30,7 +30,7 @@
 //   GET /api/v2/calendars/cal-001 -> 404
 //
 // and the whole bookings collection failed against an app whose calendar code
-// was never wrong. Same mechanism on `Verplichting` (tenderned vs
+// was never wrong. Same mechanism on `Commitment` (tenderned vs
 // verplichtingenadministratie) — see the report in the PR.
 //
 // WHY A RATCHET, NOT A HARD ZERO: 81 shipped seed objects fail this check on

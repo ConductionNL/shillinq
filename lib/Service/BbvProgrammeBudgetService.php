@@ -38,7 +38,7 @@
  * ledger, so that filter would match nothing for every value, silently (the
  * failure mode {@see CashflowExportService} documents for `filters.id`).
  * Commitments in this application live in the verplichtingenadministratie:
- * `Verplichtingsregel` carries `programme`, `financialYear`, `administrationId`
+ * `CommitmentLine` carries `programme`, `financialYear`, `administrationId`
  * and `remaining_committed`, which is precisely the "active contracts and
  * purchase orders" the same requirement's own prose describes. Committed is
  * therefore summed from there. The deviation is recorded rather than hidden:

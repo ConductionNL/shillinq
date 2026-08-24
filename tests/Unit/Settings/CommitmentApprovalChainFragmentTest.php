@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit tests for the Verplichting declarative approval-chain block.
+ * Unit tests for the Commitment declarative approval-chain block.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Settings
@@ -26,7 +26,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Verifies the declarative `x-openregister-approval-chains` block that gates the
- * Verplichting `goedkeuren` transition (REQ-VPL-013).
+ * Commitment `goedkeuren` transition (REQ-VPL-013).
  *
  * The runtime gate itself (block-until-approved, separation of duties, tier
  * routing, auto-advance) is exercised by OpenRegister's own approval-chains tests
@@ -37,10 +37,10 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class VerplichtingApprovalChainFragmentTest extends TestCase {
+final class CommitmentApprovalChainFragmentTest extends TestCase {
 
 	/**
-	 * Absolute path to the Verplichting register fragment.
+	 * Absolute path to the Commitment register fragment.
 	 *
 	 * @var string
 	 */
@@ -56,15 +56,15 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase {
 	}//end fragment()
 
 	/**
-	 * Load the Verplichting schema definition from the fragment.
+	 * Load the Commitment schema definition from the fragment.
 	 *
 	 * @return array<string, mixed>
 	 */
 	private function commitment(): array {
 		$schemas = ($this->fragment()['components']['schemas'] ?? []);
-		self::assertArrayHasKey('Verplichting', $schemas, 'Fragment must declare the Verplichting schema');
-		return $schemas['Verplichting'];
-	}//end verplichting()
+		self::assertArrayHasKey('Commitment', $schemas, 'Fragment must declare the Commitment schema');
+		return $schemas['Commitment'];
+	}//end commitment()
 
 	/**
 	 * Load the declared approval chain.
@@ -73,10 +73,10 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase {
 	 */
 	private function chain(): array {
 		$schema = $this->commitment();
-		self::assertArrayHasKey('x-openregister-approval-chains', $schema, 'Verplichting must declare x-openregister-approval-chains');
+		self::assertArrayHasKey('x-openregister-approval-chains', $schema, 'Commitment must declare x-openregister-approval-chains');
 		$chains = $schema['x-openregister-approval-chains'];
-		self::assertArrayHasKey('verplichting-goedkeuring', $chains);
-		return $chains['verplichting-goedkeuring'];
+		self::assertArrayHasKey('commitment-approval', $chains);
+		return $chains['commitment-approval'];
 	}//end chain()
 
 	/**
@@ -183,19 +183,19 @@ final class VerplichtingApprovalChainFragmentTest extends TestCase {
 	}//end testChainEnforcesSodAndAutoAdvances()
 
 	/**
-	 * No dead control: the imperative mandate-record routing (MandaatEnforcer)
+	 * No dead control: the imperative mandate-record routing (MandateEnforcer)
 	 * is retained and still wired to the indienen transition. This change is
 	 * strictly additive; it removes no imperative enforcement.
 	 *
 	 * @return void
 	 */
 	public function testMandateEnforcerIsRetained(): void {
-		self::assertFileExists(__DIR__ . '/../../../lib/Lifecycle/MandaatEnforcer.php');
+		self::assertFileExists(__DIR__ . '/../../../lib/Lifecycle/MandateEnforcer.php');
 
 		$transitions = ($this->commitment()['x-openregister-lifecycle']['transitions'] ?? []);
 		self::assertArrayHasKey('indienen', $transitions);
 		self::assertSame(
-			'OCA\\Shillinq\\Lifecycle\\MandaatEnforcer::requiresApproval',
+			'OCA\\Shillinq\\Lifecycle\\MandateEnforcer::requiresApproval',
 			$transitions['indienen']['requires']
 		);
 

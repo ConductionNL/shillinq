@@ -13,7 +13,7 @@
 //   CONFLICTING — the two lists are different SETS. The merged schema demands
 //                 the union, i.e. the vocabulary of BOTH models at once, and no
 //                 payload of either model can satisfy it. Measured on
-//                 `Verplichting`: `20-bookkeeping-tenderned-integratie.json`
+//                 `Commitment`: `20-bookkeeping-tenderned-integratie.json`
 //                 required [verplichtingNummer, omschrijving, bron, bedrag,
 //                 administrationId, status] while
 //                 `bookkeeping-verplichtingenadministratie.json` required
@@ -62,7 +62,7 @@ const FRAGMENT_DIR = path.join(SETTINGS_DIR, 'register.d')
 // waiver: 47 schemas are already broken this way and fixing them all is a much
 // larger piece of work than the one this gate was written for. The count may
 // only ever be LOWERED — no new conflicting declaration can land.
-const BASELINE = 46
+const BASELINE = 44
 
 const loadJson = (file) => {
 	try {

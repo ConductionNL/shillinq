@@ -459,7 +459,7 @@ function checkSameSlugFullDefinitionCollisions(registry) {
 // schema leaves the reference stranded and the aggregation silently
 // resolves to nothing — it does not error, it just never matches.
 //
-// Found live on 2026-08-21: `Verplichtingsregel`'s
+// Found live on 2026-08-21: `CommitmentLine`'s
 // `committedVsRealisedPerBudgetLine` joined `CommitmentBudget.programmaCode`
 // and selected `geautoriseerd_bedrag`/`gerealiseerd_bedrag`, while the
 // schema had been migrated to English (`programmeCode`, `authorised_amount`,

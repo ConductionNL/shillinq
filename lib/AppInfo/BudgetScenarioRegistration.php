@@ -21,7 +21,7 @@
  * deliberately: that class already sits within PHPMD's `ExcessiveClassLength`
  * threshold (1300), and this change's own registrations were what would have
  * pushed it over. Keeping new registrations in focused registrars, the same
- * pattern {@see OpdrachtUitvoeringGateRegistration} and
+ * pattern {@see OrderFulfilmentGateRegistration} and
  * {@see SigningDelegationRegistration} already established, stops Application
  * growing further and keeps this change's wiring next to its own
  * documentation.

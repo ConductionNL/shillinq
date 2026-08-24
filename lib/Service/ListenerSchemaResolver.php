@@ -192,7 +192,7 @@ class ListenerSchemaResolver {
 	 * app can never trip a shillinq guard.
 	 *
 	 * @param object|null $entity The OpenRegister ObjectEntity from the event.
-	 * @param string $expectedSlug The schema slug to match (e.g. 'OpdrachtUitvoering').
+	 * @param string $expectedSlug The schema slug to match (e.g. 'OrderFulfilment').
 	 *
 	 * @return bool True when the entity is an instance of that schema.
 	 *

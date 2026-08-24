@@ -1,16 +1,16 @@
 <?php
 
 /**
- * Unit tests for OpdrachtUitvoeringTransitionListener.
+ * Unit tests for OrderFulfilmentTransitionListener.
  *
  * Verifies the listener's contract (Task 5.3 / REQ-005 / REQ-006):
  *
- *  - Transition to=completed on OpdrachtUitvoering emits milestone.completed.
+ *  - Transition to=completed on OrderFulfilment emits milestone.completed.
  *  - Approved eindoplevering triggers the outbound TenderNed sync.
  *  - Non-eindoplevering completion does NOT trigger sync (only the audit emit).
  *  - Unapproved eindoplevering does NOT trigger sync.
  *  - Non-completed transition is ignored.
- *  - Non-OpdrachtUitvoering schema is ignored.
+ *  - Non-OrderFulfilment schema is ignored.
  *  - Handler swallows downstream exceptions (fail-soft).
  *
  * @category Test
@@ -35,7 +35,7 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
 use OCA\Shillinq\Integration\TenderNedStatusSync;
-use OCA\Shillinq\Listener\OpdrachtUitvoeringTransitionListener;
+use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCP\EventDispatcher\Event;
@@ -46,11 +46,11 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 
 /**
- * Tests for OpdrachtUitvoeringTransitionListener.
+ * Tests for OrderFulfilmentTransitionListener.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
+final class OrderFulfilmentTransitionListenerTest extends TestCase {
 
 	/**
 	 * Build a recording IEventDispatcher.
@@ -186,7 +186,53 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 		$dispatcher = $this->recordingDispatcher();
 		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
 		$sync = $this->spyingSync();
-		$listener = new OpdrachtUitvoeringTransitionListener(
+		$listener = new OrderFulfilmentTransitionListener(
+			$emitter,
+			$sync,
+			$this->resolver('OrderFulfilment'),
+			new NullLogger()
+		);
+
+		$event = new ObjectTransitionedEvent(
+			$this->entity('1201', [
+				'commitmentId' => 'TN-2026-0001',
+				'milestoneId' => 'M-Q1',
+				'deliveryType' => 'tussenoplevering',
+				'approved' => true,
+				'supportingDocuments' => [['documentId' => 'doc-1']],
+			]),
+			'voltooien',
+			'in-progress',
+			'completed',
+			'admin',
+			'shillinq',
+			'OrderFulfilment'
+		);
+
+		$listener->handle($event);
+
+		$this->assertCount(1, $dispatcher->events);
+		$this->assertSame(BudgetImpactEmitter::EVENT_MILESTONE_COMPLETED, $dispatcher->events[0]['name']);
+		$this->assertCount(0, $sync->syncCalls);
+
+	}//end testCompletedMilestoneEmitsButDoesNotSync()
+
+	/**
+	 * The legacy Dutch slug still matches.
+	 *
+	 * Objects stored before the OpdrachtUitvoering -> OrderFulfilment rename
+	 * keep the old slug until the repair step has run on that instance. Were
+	 * the guard to match the new slug only, this listener would stop firing
+	 * for all of them without raising an error or writing a log line -- so the
+	 * legacy slug is a supported input, not an accident, and is pinned here.
+	 *
+	 * @return void
+	 */
+	public function testLegacyDutchSlugStillEmits(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
+		$sync = $this->spyingSync();
+		$listener = new OrderFulfilmentTransitionListener(
 			$emitter,
 			$sync,
 			$this->resolver('OpdrachtUitvoering'),
@@ -213,9 +259,8 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 
 		$this->assertCount(1, $dispatcher->events);
 		$this->assertSame(BudgetImpactEmitter::EVENT_MILESTONE_COMPLETED, $dispatcher->events[0]['name']);
-		$this->assertCount(0, $sync->syncCalls);
 
-	}//end testCompletedMilestoneEmitsButDoesNotSync()
+	}//end testLegacyDutchSlugStillEmits()
 
 	/**
 	 * A completed approved eindoplevering triggers the outbound sync.
@@ -226,10 +271,10 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 		$dispatcher = $this->recordingDispatcher();
 		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
 		$sync = $this->spyingSync();
-		$listener = new OpdrachtUitvoeringTransitionListener(
+		$listener = new OrderFulfilmentTransitionListener(
 			$emitter,
 			$sync,
-			$this->resolver('OpdrachtUitvoering'),
+			$this->resolver('OrderFulfilment'),
 			new NullLogger()
 		);
 
@@ -246,7 +291,7 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 			'completed',
 			'admin',
 			'shillinq',
-			'OpdrachtUitvoering'
+			'OrderFulfilment'
 		);
 
 		$listener->handle($event);
@@ -265,10 +310,10 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 		$dispatcher = $this->recordingDispatcher();
 		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
 		$sync = $this->spyingSync();
-		$listener = new OpdrachtUitvoeringTransitionListener(
+		$listener = new OrderFulfilmentTransitionListener(
 			$emitter,
 			$sync,
-			$this->resolver('OpdrachtUitvoering'),
+			$this->resolver('OrderFulfilment'),
 			new NullLogger()
 		);
 
@@ -285,7 +330,7 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 			'completed',
 			'admin',
 			'shillinq',
-			'OpdrachtUitvoering'
+			'OrderFulfilment'
 		);
 
 		$listener->handle($event);
@@ -303,10 +348,10 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 		$dispatcher = $this->recordingDispatcher();
 		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
 		$sync = $this->spyingSync();
-		$listener = new OpdrachtUitvoeringTransitionListener(
+		$listener = new OrderFulfilmentTransitionListener(
 			$emitter,
 			$sync,
-			$this->resolver('OpdrachtUitvoering'),
+			$this->resolver('OrderFulfilment'),
 			new NullLogger()
 		);
 
@@ -322,7 +367,7 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 			'in-progress',
 			'admin',
 			'shillinq',
-			'OpdrachtUitvoering'
+			'OrderFulfilment'
 		);
 
 		$listener->handle($event);
@@ -333,18 +378,18 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 	}//end testNonCompletedTransitionIsIgnored()
 
 	/**
-	 * A non-OpdrachtUitvoering schema is ignored.
+	 * A non-OrderFulfilment schema is ignored.
 	 *
 	 * @return void
 	 */
-	public function testNonOpdrachtUitvoeringSchemaIsIgnored(): void {
+	public function testNonOrderFulfilmentSchemaIsIgnored(): void {
 		$dispatcher = $this->recordingDispatcher();
 		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
 		$sync = $this->spyingSync();
-		$listener = new OpdrachtUitvoeringTransitionListener(
+		$listener = new OrderFulfilmentTransitionListener(
 			$emitter,
 			$sync,
-			$this->resolver('Verplichting'),
+			$this->resolver('Commitment'),
 			new NullLogger()
 		);
 
@@ -355,7 +400,7 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 			'completed',
 			'admin',
 			'shillinq',
-			'Verplichting'
+			'Commitment'
 		);
 
 		$listener->handle($event);
@@ -363,5 +408,5 @@ final class OpdrachtUitvoeringTransitionListenerTest extends TestCase {
 		$this->assertCount(0, $dispatcher->events);
 		$this->assertCount(0, $sync->syncCalls);
 
-	}//end testNonOpdrachtUitvoeringSchemaIsIgnored()
+	}//end testNonOrderFulfilmentSchemaIsIgnored()
 }//end class

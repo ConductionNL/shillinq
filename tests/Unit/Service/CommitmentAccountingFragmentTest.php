@@ -32,7 +32,7 @@ use PHPUnit\Framework\TestCase;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase {
+final class CommitmentAccountingFragmentTest extends TestCase {
 
 	/**
 	 * Absolute path to the change fragment.
@@ -63,17 +63,17 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase {
 	}//end testFragmentIsValidJson()
 
 	/**
-	 * REQ-VPL-010: Verplichting declares an optional bronReferentie provenance field.
+	 * REQ-VPL-010: Commitment declares an optional bronReferentie provenance field.
 	 *
 	 * @return void
 	 */
-	public function testVerplichtingDeclaresBronReferentie(): void {
-		$commitment = $this->fragment()['components']['schemas']['Verplichting'];
+	public function testCommitmentDeclaresBronReferentie(): void {
+		$commitment = $this->fragment()['components']['schemas']['Commitment'];
 		self::assertArrayHasKey('sourceReference', $commitment['properties']);
 		self::assertTrue($commitment['properties']['sourceReference']['nullable'] ?? false);
 		self::assertArrayNotContains('sourceReference', ($commitment['required'] ?? []));
 
-	}//end testVerplichtingDeclaresBronReferentie()
+	}//end testCommitmentDeclaresBronReferentie()
 
 	/**
 	 * Custom PHPUnit-style helper: assertArrayNotContains (not a native
@@ -90,18 +90,18 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase {
 	}//end assertArrayNotContains()
 
 	/**
-	 * REQ-VPL-011: Verplichtingsregel declares the committed-vs-realised
+	 * REQ-VPL-011: CommitmentLine declares the committed-vs-realised
 	 * per-budget-line aggregation, grouped by the full coderingscombinatie.
 	 *
 	 * @return void
 	 */
-	public function testVerplichtingsregelDeclaresCommittedVsRealisedAggregation(): void {
-		$rule = $this->fragment()['components']['schemas']['Verplichtingsregel'];
+	public function testCommitmentLineDeclaresCommittedVsRealisedAggregation(): void {
+		$rule = $this->fragment()['components']['schemas']['CommitmentLine'];
 		self::assertArrayHasKey('x-openregister-aggregations', $rule);
 		self::assertArrayHasKey('committedVsRealisedPerBudgetLine', $rule['x-openregister-aggregations']);
 
 		$agg = $rule['x-openregister-aggregations']['committedVsRealisedPerBudgetLine'];
-		self::assertSame('Verplichtingsregel', $agg['source']);
+		self::assertSame('CommitmentLine', $agg['source']);
 		self::assertSame(
 			['programme', 'costCentre', 'financialYear', 'generalLedgerAccount'],
 			$agg['groupBy']
@@ -110,7 +110,7 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase {
 		self::assertContains('invoiced_amount', $agg['sum']);
 		self::assertSame('CommitmentBudget', $agg['join']['through']);
 
-	}//end testVerplichtingsregelDeclaresCommittedVsRealisedAggregation()
+	}//end testCommitmentLineDeclaresCommittedVsRealisedAggregation()
 
 	/**
 	 * REQ-VPL-011 / ADR-031: no PHP class in lib/Service or lib/Lifecycle
@@ -146,22 +146,22 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase {
 
 	/**
 	 * Fragment merges additively onto the monolith without dropping the
-	 * existing Verplichting/Verplichtingsregel/Budget schemas.
+	 * existing Commitment/CommitmentLine/Budget schemas.
 	 *
 	 * @return void
 	 */
 	public function testFragmentSchemasStillPresent(): void {
 		$schemas = $this->fragment()['components']['schemas'];
-		foreach (['Verplichting', 'Verplichtingsregel', 'Verplichtingsmutatie', 'Mandaat', 'Goedkeuringsstap', 'CommitmentBudget'] as $name) {
+		foreach (['Commitment', 'CommitmentLine', 'CommitmentMovement', 'Mandate', 'ApprovalStep', 'CommitmentBudget'] as $name) {
 			self::assertArrayHasKey($name, $schemas, "Fragment must still declare $name");
 		}
 
 	}//end testFragmentSchemasStillPresent()
 
 	/**
-	 * Task 6: three auto-materialised-style Verplichting seed objects
+	 * Task 6: three auto-materialised-style Commitment seed objects
 	 * (inkooporder/raamovereenkomst/subsidiebeschikking), each with at
-	 * least one Verplichtingsregel and every regel's coderingscombinatie
+	 * least one CommitmentLine and every regel's coderingscombinatie
 	 * covered by a seeded Budget, so the drilldown is populated on a fresh
 	 * install.
 	 *
@@ -170,22 +170,22 @@ final class VerplichtingenCommitmentAccountingFragmentTest extends TestCase {
 	public function testSeedDataPopulatesDrilldown(): void {
 		$objects = $this->fragment()['objects'];
 
-		$verplichtingen = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'Verplichting'));
-		$rules = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'Verplichtingsregel'));
+		$commitments = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'Commitment'));
+		$rules = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'CommitmentLine'));
 		$budgets = array_values(array_filter($objects, static fn ($o) => $o['@self']['schema'] === 'CommitmentBudget'));
 
-		self::assertGreaterThanOrEqual(3, count($verplichtingen));
+		self::assertGreaterThanOrEqual(3, count($commitments));
 		self::assertGreaterThanOrEqual(1, count($budgets));
 
-		$soorten = array_map(static fn ($v) => $v['kind'], $verplichtingen);
+		$soorten = array_map(static fn ($v) => $v['kind'], $commitments);
 		foreach (['inkooporder', 'frameworkAgreement', 'subsidiebeschikking'] as $expected) {
-			self::assertContains($expected, $soorten, "Seed must include a $expected Verplichting");
+			self::assertContains($expected, $soorten, "Seed must include a $expected Commitment");
 		}
 
-		foreach ($verplichtingen as $v) {
-			self::assertNotEmpty($v['sourceReference'] ?? '', "Seeded Verplichting {$v['commitmentNumber']} must carry a bronReferentie");
+		foreach ($commitments as $v) {
+			self::assertNotEmpty($v['sourceReference'] ?? '', "Seeded Commitment {$v['commitmentNumber']} must carry a bronReferentie");
 			$ownRules = array_filter($rules, static fn ($r) => $r['commitment'] === $v['commitmentNumber']);
-			self::assertNotEmpty($ownRules, "Seeded Verplichting {$v['commitmentNumber']} must have at least one Verplichtingsregel");
+			self::assertNotEmpty($ownRules, "Seeded Commitment {$v['commitmentNumber']} must have at least one CommitmentLine");
 
 			foreach ($ownRules as $rule) {
 				$matchingBudget = array_filter(

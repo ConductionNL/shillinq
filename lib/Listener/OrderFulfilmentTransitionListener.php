@@ -1,11 +1,11 @@
 <?php
 
 /**
- * OpdrachtUitvoering Transition Listener.
+ * OrderFulfilment Transition Listener.
  *
  * Task 5.3 / REQ-005 / REQ-006 — emit the cross-app `milestone.completed`
  * CloudEvent and trigger the outbound status-sync to TenderNed when an
- * OpdrachtUitvoering transitions to `completed` AND the eindoplevering of
+ * OrderFulfilment transitions to `completed` AND the eindoplevering of
  * a TenderNed-sourced obligation is approved.
  *
  * Two responsibilities, both fail-soft:
@@ -21,7 +21,7 @@
  *     0.2 / 6.1).
  *
  * The listener layers on top of the declarative
- * `OpdrachtUitvoering.voltooien` transition, which `OpdrachtUitvoeringGuard`
+ * `OrderFulfilment.voltooien` transition, which `OrderFulfilmentGuard`
  * has already gated on at least one bewijsstuk being attached (REQ-004).
  * By the time the event fires the precondition has held; the listener's
  * job is purely cross-cutting notification + outbound sync.
@@ -56,13 +56,13 @@ use Throwable;
 
 /**
  * Cross-app emitter + outbound status-sync dispatcher for completed
- * OpdrachtUitvoering records (Task 5.3 / REQ-006).
+ * OrderFulfilment records (Task 5.3 / REQ-006).
  *
  * @implements IEventListener<Event>
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
  */
-class OpdrachtUitvoeringTransitionListener implements IEventListener {
+class OrderFulfilmentTransitionListener implements IEventListener {
 	/**
 	 * Construct the listener.
 	 *
@@ -81,7 +81,7 @@ class OpdrachtUitvoeringTransitionListener implements IEventListener {
 	}//end __construct()
 
 	/**
-	 * Handle an ObjectTransitionedEvent on the OpdrachtUitvoering schema.
+	 * Handle an ObjectTransitionedEvent on the OrderFulfilment schema.
 	 *
 	 * @param Event $event OR transition event.
 	 *
@@ -105,7 +105,7 @@ class OpdrachtUitvoeringTransitionListener implements IEventListener {
 			}
 
 			$schema = $this->schemaResolver->schemaSlug(entity: $entity);
-			if ($this->isAssignmentUitvoeringSchema(schema: $schema) === false) {
+			if ($this->isOrderFulfilmentSchema(schema: $schema) === false) {
 				return;
 			}
 
@@ -131,7 +131,7 @@ class OpdrachtUitvoeringTransitionListener implements IEventListener {
 			$this->sync->syncCompletion(oplevering: $oplevering);
 		} catch (Throwable $e) {
 			$this->logger->warning(
-				'OpdrachtUitvoeringTransitionListener: fail-soft on completion',
+				'OrderFulfilmentTransitionListener: fail-soft on completion',
 				['exception' => $e->getMessage()]
 			);
 		}//end try
@@ -139,16 +139,25 @@ class OpdrachtUitvoeringTransitionListener implements IEventListener {
 	}//end handle()
 
 	/**
-	 * Check whether the schema slug is OpdrachtUitvoering.
+	 * Check whether the schema slug is OrderFulfilment.
+	 *
+	 * Compares against a lower-cased LITERAL — the shape that stops firing
+	 * silently if the schema is renamed and this string is not. It moved from
+	 * 'opdrachtuitvoering' to 'orderfulfilment' with the schema rename.
 	 *
 	 * @param string $schema Schema slug.
 	 *
 	 * @return bool
 	 */
-	private function isAssignmentUitvoeringSchema(string $schema): bool {
+	private function isOrderFulfilmentSchema(string $schema): bool {
 		$normalised = strtolower(trim($schema));
-		return ($normalised === 'opdrachtuitvoering'
+
+		// The legacy Dutch slug is still matched on purpose: objects stored
+		// before the rename carry 'opdrachtuitvoering' until the repair step
+		// has run on that instance, and matching only the new slug would make
+		// this listener silently do nothing for every one of them.
+		return (str_ends_with(haystack: $normalised, needle: 'orderfulfilment')
 			|| str_ends_with(haystack: $normalised, needle: 'opdrachtuitvoering'));
 
-	}//end isOpdrachtUitvoeringSchema()
+	}//end isOrderFulfilmentSchema()
 }//end class

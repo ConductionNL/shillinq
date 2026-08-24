@@ -17,8 +17,8 @@
  * outcome listener) was correct but orphaned — nothing invoked it.
  *
  * Mirrors the established `*TransitionListener` pattern used elsewhere in
- * shillinq ({@see VerplichtingTransitionListener},
- * {@see OpdrachtUitvoeringTransitionListener}): filter
+ * shillinq ({@see CommitmentTransitionListener},
+ * {@see OrderFulfilmentTransitionListener}): filter
  * `ObjectTransitionedEvent` by schema + transition action, react, fail-soft.
  * Persisting the request-side mirror (`signingRequestRef` / `signingStatus`)
  * follows the lazy-container-ObjectService pattern used by the sibling

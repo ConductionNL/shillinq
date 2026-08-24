@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit tests for OpdrachtUitvoeringGuard.
+ * Unit tests for OrderFulfilmentGuard.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Lifecycle
@@ -19,13 +19,13 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\Shillinq\Lifecycle\OpdrachtUitvoeringGuard;
+use OCA\Shillinq\Lifecycle\OrderFulfilmentGuard;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Tests for OpdrachtUitvoeringGuard::canVoltooien per REQ-004 (bewijsstuk gate).
+ * Tests for OrderFulfilmentGuard::canVoltooien per REQ-004 (bewijsstuk gate).
  *
  * Covers:
  * - No bewijsstukken → completion denied.
@@ -36,7 +36,7 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class OpdrachtUitvoeringGuardTest extends TestCase {
+class OrderFulfilmentGuardTest extends TestCase {
 
 	/**
 	 * Mock LoggerInterface.
@@ -48,9 +48,9 @@ class OpdrachtUitvoeringGuardTest extends TestCase {
 	/**
 	 * The guard under test.
 	 *
-	 * @var OpdrachtUitvoeringGuard
+	 * @var OrderFulfilmentGuard
 	 */
-	private OpdrachtUitvoeringGuard $guard;
+	private OrderFulfilmentGuard $guard;
 
 	/**
 	 * Set up test fixtures.
@@ -60,7 +60,7 @@ class OpdrachtUitvoeringGuardTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->logger = $this->createMock(LoggerInterface::class);
-		$this->guard = new OpdrachtUitvoeringGuard(logger: $this->logger);
+		$this->guard = new OrderFulfilmentGuard(logger: $this->logger);
 
 	}//end setUp()
 

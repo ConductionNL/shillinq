@@ -1,30 +1,30 @@
 {
 	"menu": [
 		{
-			"id": "Verplichtingen",
+			"id": "Commitments",
 			"label": "Commitments",
 			"icon": "FileSign",
 			"order": 30,
 			"children": [
 				{
-					"id": "Verplichtingenregister",
+					"id": "CommitmentsRegister",
 					"label": "Commitments register",
 					"icon": "DatabaseOutline",
-					"route": "Verplichtingenregister",
+					"route": "CommitmentsRegister",
 					"order": 10
 				},
 				{
-					"id": "Mandaten",
+					"id": "Mandates",
 					"label": "Mandates",
 					"icon": "AccountKey",
-					"route": "Mandaten",
+					"route": "Mandates",
 					"order": 20
 				},
 				{
-					"id": "Goedkeuringsstappen",
+					"id": "ApprovalSteps",
 					"label": "Approvals",
 					"icon": "CheckDecagramOutline",
-					"route": "Goedkeuringsstappen",
+					"route": "ApprovalSteps",
 					"order": 30
 				},
 				{
@@ -39,13 +39,13 @@
 	],
 	"pages": [
 		{
-			"id": "Verplichtingenregister",
+			"id": "CommitmentsRegister",
 			"route": "/verplichtingen",
 			"type": "index",
 			"title": "Commitments register",
 			"config": {
 				"register": "shillinq",
-				"schema": "Verplichting",
+				"schema": "Commitment",
 				"columns": [
 					{"key": "commitmentNumber", "label": "Number", "sortable": true},
 					{"key": "kind", "label": "Kind", "sortable": true},
@@ -56,18 +56,18 @@
 					{"key": "mandate_applied", "label": "Mandate", "sortable": true}
 				],
 				"defaultSort": "commitmentNumber",
-				"detailRoute": "VerplichtingDetail"
+				"detailRoute": "CommitmentDetail"
 			}
 		},
 		{
-			"id": "VerplichtingDetail",
+			"id": "CommitmentDetail",
 			"route": "/verplichtingen/:id",
 			"type": "detail",
 			"title": "Commitment",
 			"config": {
 				"register": "shillinq",
-				"schema": "Verplichting",
-				"_note": "COMMITMENT (the parent obligation an organisation enters into — a purchase order/contract encumbrance). The body pairs the commitment header (amounts, term, BTW, applied mandate) with its three child registers, all filtered on `verplichting`: the budget lines (Verplichtingsregel) that break it down per GL/programme with delivered/invoiced/paid running balances, the movements (Verplichtingsmutatie) that draw it down over time, and the approval steps (Goedkeuringsstap) that authorise it. This is the encumbrance-tracking view. No comms leaves; audit trail sidebar records mandate overrides and amount changes.",
+				"schema": "Commitment",
+				"_note": "COMMITMENT (the parent obligation an organisation enters into — a purchase order/contract encumbrance). The body pairs the commitment header (amounts, term, BTW, applied mandate) with its three child registers, all filtered on `verplichting`: the budget lines (CommitmentLine) that break it down per GL/programme with delivered/invoiced/paid running balances, the movements (CommitmentMovement) that draw it down over time, and the approval steps (ApprovalStep) that authorise it. This is the encumbrance-tracking view. No comms leaves; audit trail sidebar records mandate overrides and amount changes.",
 				"fields": [
 					{"key": "commitmentNumber", "label": "Number", "type": "string"},
 					{"key": "kind", "label": "Kind", "type": "string"},
@@ -91,7 +91,7 @@
 						"componentName": "openregister-related-list",
 						"componentProps": {
 							"register": "shillinq",
-							"schema": "Verplichtingsregel",
+							"schema": "CommitmentLine",
 							"filterField": "commitment",
 							"columns": ["ruleNumber", "description", "amount_excl_vat", "delivered_amount", "invoiced_amount", "restant_verplicht"]
 						}
@@ -102,7 +102,7 @@
 						"componentName": "openregister-related-list",
 						"componentProps": {
 							"register": "shillinq",
-							"schema": "Verplichtingsmutatie",
+							"schema": "CommitmentMovement",
 							"filterField": "commitment",
 							"columns": ["date", "kind", "amount", "related_invoice", "journalEntry"]
 						}
@@ -113,13 +113,13 @@
 						"componentName": "openregister-related-list",
 						"componentProps": {
 							"register": "shillinq",
-							"schema": "Goedkeuringsstap",
+							"schema": "ApprovalStep",
 							"filterField": "commitment",
 							"columns": ["stepNumber", "role_required", "assigned_in", "status", "handled_on"]
 						}
 					}
 				],
-				"indexRoute": "Verplichtingenregister",
+				"indexRoute": "CommitmentsRegister",
 				"sidebarProps": {
 					"tabs": [
 						{
@@ -148,16 +148,16 @@
 			"type": "custom",
 			"title": "Committed vs. realised",
 			"component": "BudgetLineCommitments",
-			"_note": "Rows are AGGREGATION BUCKETS, not objects: the page renders the committedVsRealisedPerBudgetLine aggregation on Verplichtingsregel (geautoriseerd / verplicht / gerealiseerd / vrij per budget coding combination) and lets the controller drill from a bucket into the underlying Verplichtingen. `type: index` lists objects of one schema, so it cannot have aggregation buckets as its rows; `type: dashboard` can show an aggregation as a widget but not drill from a row into the commitments behind it (REQ-VPL-011). Both the aggregation and the drilldown go through OpenRegister's own APIs — no parallel shillinq reporting endpoint."
+			"_note": "Rows are AGGREGATION BUCKETS, not objects: the page renders the committedVsRealisedPerBudgetLine aggregation on CommitmentLine (geautoriseerd / verplicht / gerealiseerd / vrij per budget coding combination) and lets the controller drill from a bucket into the underlying Commitments. `type: index` lists objects of one schema, so it cannot have aggregation buckets as its rows; `type: dashboard` can show an aggregation as a widget but not drill from a row into the commitments behind it (REQ-VPL-011). Both the aggregation and the drilldown go through OpenRegister's own APIs — no parallel shillinq reporting endpoint."
 		},
 		{
-			"id": "Mandaten",
+			"id": "Mandates",
 			"route": "/verplichtingen/mandaten",
 			"type": "index",
 			"title": "Mandates",
 			"config": {
 				"register": "shillinq",
-				"schema": "Mandaat",
+				"schema": "Mandate",
 				"columns": [
 					{"key": "mandateCode", "label": "Code", "sortable": true},
 					{"key": "name", "label": "Name", "sortable": true},
@@ -166,17 +166,17 @@
 					{"key": "valid_to", "label": "Valid until", "sortable": true}
 				],
 				"defaultSort": "mandateCode",
-				"detailRoute": "MandaatDetail"
+				"detailRoute": "MandateDetail"
 			}
 		},
 		{
-			"id": "MandaatDetail",
+			"id": "MandateDetail",
 			"route": "/verplichtingen/mandaten/:id",
 			"type": "detail",
 			"title": "Mandate",
 			"config": {
 				"register": "shillinq",
-				"schema": "Mandaat",
+				"schema": "Mandate",
 				"_note": "MANDATE (the authority definition that governs who may enter commitments and up to what amount). The body is the rule: holder + holder type, maximum amount, whether it is an override mandate, the second-signature threshold, validity window and the decision that adopted it. A config record with no children of its own; no comms. The audit trail sidebar is critical — a mandate is a delegated-authority control, so every change to its limits or holder must be traceable.",
 				"fields": [
 					{"key": "mandateCode", "label": "Code", "type": "string"},
@@ -190,7 +190,7 @@
 					{"key": "valid_to", "label": "Valid until", "type": "string"},
 					{"key": "determined_at", "label": "Adopted by", "type": "string"}
 				],
-				"indexRoute": "Mandaten",
+				"indexRoute": "Mandates",
 				"sidebarProps": {
 					"tabs": [
 						{
@@ -214,13 +214,13 @@
 			}
 		},
 		{
-			"id": "Goedkeuringsstappen",
+			"id": "ApprovalSteps",
 			"route": "/verplichtingen/goedkeuringen",
 			"type": "index",
 			"title": "Approvals",
 			"config": {
 				"register": "shillinq",
-				"schema": "Goedkeuringsstap",
+				"schema": "ApprovalStep",
 				"columns": [
 					{"key": "commitment", "label": "Commitment", "sortable": true},
 					{"key": "stepNumber", "label": "Step", "sortable": true},
@@ -229,17 +229,17 @@
 					{"key": "status", "label": "Status", "sortable": true}
 				],
 				"defaultSort": "commitment",
-				"detailRoute": "GoedkeuringsstapDetail"
+				"detailRoute": "ApprovalStepDetail"
 			}
 		},
 		{
-			"id": "GoedkeuringsstapDetail",
+			"id": "ApprovalStepDetail",
 			"route": "/verplichtingen/goedkeuringen/:id",
 			"type": "detail",
 			"title": "Approval step",
 			"config": {
 				"register": "shillinq",
-				"schema": "Goedkeuringsstap",
+				"schema": "ApprovalStep",
 				"_note": "APPROVAL STEP (one node in a commitment's authorisation chain). The body is the step: which commitment, step number, required role, assignee, current status, when it was handled, the remark, and whether a signature is required. A single workflow item with no children; no comms. The audit trail sidebar is the sign-off evidence — approvals must be individually traceable for segregation-of-duties.",
 				"fields": [
 					{"key": "commitment", "label": "Commitment", "type": "string"},
@@ -251,7 +251,7 @@
 					{"key": "remark", "label": "Remark", "type": "string"},
 					{"key": "required_signature", "label": "Signature required", "type": "boolean"}
 				],
-				"indexRoute": "Goedkeuringsstappen",
+				"indexRoute": "ApprovalSteps",
 				"sidebarProps": {
 					"tabs": [
 						{

@@ -135,17 +135,17 @@
 					"order": 35,
 					"children": [
 						{
-							"id": "TenderNedAanbestedingen",
+							"id": "TenderNedProcurements",
 							"label": "TenderNed tenders",
 							"icon": "Gavel",
-							"route": "TenderNedAanbestedingen",
+							"route": "TenderNedProcurements",
 							"order": 10
 						},
 						{
 							"id": "MijnContracten",
 							"label": "TenderNed-sourced commitments",
 							"icon": "FileSign",
-							"route": "Verplichtingenregister",
+							"route": "CommitmentsRegister",
 							"query": {
 								"source": "tenderned"
 							},
@@ -157,21 +157,21 @@
 			"pages": [
 				{
 					"_fragment": "20-tenderned-integratie",
-					"id": "TenderNedAanbestedingen",
+					"id": "TenderNedProcurements",
 					"route": "/inkoop/tenderned",
 					"type": "index",
 					"title": "TenderNed tenders"
 				},
 				{
 					"_fragment": "20-tenderned-integratie",
-					"id": "TenderNedAanbestedingDetail",
+					"id": "TenderNedProcurementDetail",
 					"route": "/inkoop/tenderned/:id",
 					"type": "detail",
 					"title": "TenderNed file"
 				},
 				{
 					"_fragment": "20-tenderned-integratie",
-					"id": "VerplichtingDetail",
+					"id": "CommitmentDetail",
 					"route": "/inkoop/verplichtingen/:id",
 					"type": "detail",
 					"title": "Commitment"
@@ -3334,30 +3334,30 @@
 		{
 			"menu": [
 				{
-					"id": "Verplichtingen",
+					"id": "Commitments",
 					"label": "Commitments",
 					"icon": "FileSign",
 					"order": 30,
 					"children": [
 						{
-							"id": "Verplichtingenregister",
+							"id": "CommitmentsRegister",
 							"label": "Commitments register",
 							"icon": "DatabaseOutline",
-							"route": "Verplichtingenregister",
+							"route": "CommitmentsRegister",
 							"order": 10
 						},
 						{
-							"id": "Mandaten",
+							"id": "Mandates",
 							"label": "Mandates",
 							"icon": "AccountKey",
-							"route": "Mandaten",
+							"route": "Mandates",
 							"order": 20
 						},
 						{
-							"id": "Goedkeuringsstappen",
+							"id": "ApprovalSteps",
 							"label": "Approvals",
 							"icon": "CheckDecagramOutline",
-							"route": "Goedkeuringsstappen",
+							"route": "ApprovalSteps",
 							"order": 30
 						},
 						{
@@ -3373,14 +3373,14 @@
 			"pages": [
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
-					"id": "Verplichtingenregister",
+					"id": "CommitmentsRegister",
 					"route": "/verplichtingen",
 					"type": "index",
 					"title": "Commitments register"
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
-					"id": "VerplichtingDetail",
+					"id": "CommitmentDetail",
 					"route": "/verplichtingen/:id",
 					"type": "detail",
 					"title": "Commitment"
@@ -3394,28 +3394,28 @@
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
-					"id": "Mandaten",
+					"id": "Mandates",
 					"route": "/verplichtingen/mandaten",
 					"type": "index",
 					"title": "Mandates"
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
-					"id": "MandaatDetail",
+					"id": "MandateDetail",
 					"route": "/verplichtingen/mandaten/:id",
 					"type": "detail",
 					"title": "Mandate"
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
-					"id": "Goedkeuringsstappen",
+					"id": "ApprovalSteps",
 					"route": "/verplichtingen/goedkeuringen",
 					"type": "index",
 					"title": "Approvals"
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
-					"id": "GoedkeuringsstapDetail",
+					"id": "ApprovalStepDetail",
 					"route": "/verplichtingen/goedkeuringen/:id",
 					"type": "detail",
 					"title": "Approval step"

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit tests for TenderNedAanbestedingGuard.
+ * Unit tests for TenderNedProcurementGuard.
  *
  * @category Test
  * @package  OCA\Shillinq\Tests\Unit\Lifecycle
@@ -19,7 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
-use OCA\Shillinq\Lifecycle\TenderNedAanbestedingGuard;
+use OCA\Shillinq\Lifecycle\TenderNedProcurementGuard;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -27,7 +27,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Tests for TenderNedAanbestedingGuard::canGunnen (REQ-002) and ::canAfronden (REQ-006).
+ * Tests for TenderNedProcurementGuard::canGunnen (REQ-002) and ::canAfronden (REQ-006).
  *
  * Covers:
  * - canGunnen: missing supplier denied; zero value denied; valid award permitted.
@@ -36,7 +36,7 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-class TenderNedAanbestedingGuardTest extends TestCase {
+class TenderNedProcurementGuardTest extends TestCase {
 
 	/**
 	 * Mock ContainerInterface.
@@ -62,9 +62,9 @@ class TenderNedAanbestedingGuardTest extends TestCase {
 	/**
 	 * The guard under test.
 	 *
-	 * @var TenderNedAanbestedingGuard
+	 * @var TenderNedProcurementGuard
 	 */
-	private TenderNedAanbestedingGuard $guard;
+	private TenderNedProcurementGuard $guard;
 
 	/**
 	 * Set up test fixtures.
@@ -78,7 +78,7 @@ class TenderNedAanbestedingGuardTest extends TestCase {
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$this->guard = new TenderNedAanbestedingGuard(
+		$this->guard = new TenderNedProcurementGuard(
 			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
@@ -87,9 +87,9 @@ class TenderNedAanbestedingGuardTest extends TestCase {
 	}//end setUp()
 
 	/**
-	 * Build a fluent ObjectService stub returning the given OpdrachtUitvoering records.
+	 * Build a fluent ObjectService stub returning the given OrderFulfilment records.
 	 *
-	 * @param array<int, array<string, mixed>> $records OpdrachtUitvoering records.
+	 * @param array<int, array<string, mixed>> $records OrderFulfilment records.
 	 *
 	 * @return object
 	 */

@@ -4,7 +4,7 @@
  * Insufficient Commitment Budget Exception.
  *
  * Thrown by {@see CommitmentMaterialisationService} when a PurchaseOrder
- * approval would auto-materialise a Verplichting for which BudgetBlocker
+ * approval would auto-materialise a Commitment for which BudgetBlocker
  * denies budget room and no override-mandate applies (REQ-VPL-010). The
  * PO-approval write path (CommitmentMaterialisationListener) lets this
  * exception propagate so the approval itself surfaces the denial rather

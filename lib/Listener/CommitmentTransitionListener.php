@@ -1,21 +1,21 @@
 <?php
 
 /**
- * Verplichting Transition Listener.
+ * Commitment Transition Listener.
  *
  * Task 5.2 / REQ-007 — emit the cross-app `obligation.activated` CloudEvent
- * when a `bron: tenderned` Verplichting transitions to `active`, so the
+ * when a `bron: tenderned` Commitment transitions to `active`, so the
  * launchpad budget-utilisation widget reflects the newly committed expense
  * within 60 seconds (REQ-007 scenario).
  *
  * Two activation paths converge here:
  *
  *  - The auto-promotion path (REQ-002), where
- *    `TenderNedAwardDetectedListener` writes a fresh Verplichting with
+ *    `TenderNedAwardDetectedListener` writes a fresh Commitment with
  *    `status: active` directly. OR fires `ObjectCreatedEvent` for that
  *    write, and this listener picks it up to emit the budget event.
  *  - The manual-import-and-enrich path (REQ-001 -> activeren), where an
- *    operator hand-enriches a concept Verplichting and transitions it
+ *    operator hand-enriches a concept Commitment and transitions it
  *    through `activeren`. OR fires `ObjectTransitionedEvent` for that
  *    change, again handled here.
  *
@@ -58,13 +58,13 @@ use Throwable;
 
 /**
  * Cross-app `obligation.activated` emitter for TenderNed-sourced
- * Verplichting records (Task 5.2 / REQ-007).
+ * Commitment records (Task 5.2 / REQ-007).
  *
  * @implements IEventListener<Event>
  *
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
  */
-class VerplichtingTransitionListener implements IEventListener {
+class CommitmentTransitionListener implements IEventListener {
 	/**
 	 * Construct the listener.
 	 *
@@ -82,7 +82,7 @@ class VerplichtingTransitionListener implements IEventListener {
 
 	/**
 	 * Handle an OR ObjectCreatedEvent or ObjectTransitionedEvent on the
-	 * Verplichting schema.
+	 * Commitment schema.
 	 *
 	 * @param Event $event OR object lifecycle event.
 	 *
@@ -100,7 +100,7 @@ class VerplichtingTransitionListener implements IEventListener {
 			$this->emitIfTenderNed(commitment: $payload);
 		} catch (Throwable $e) {
 			$this->logger->warning(
-				'VerplichtingTransitionListener: emission failed — fail-soft',
+				'CommitmentTransitionListener: emission failed — fail-soft',
 				['exception' => $e->getMessage()]
 			);
 		}//end try
@@ -108,7 +108,7 @@ class VerplichtingTransitionListener implements IEventListener {
 	}//end handle()
 
 	/**
-	 * Pull the activated Verplichting payload from an OR event, or null
+	 * Pull the activated Commitment payload from an OR event, or null
 	 * when the event is irrelevant.
 	 *
 	 * @param Event $event OR event.
@@ -131,7 +131,7 @@ class VerplichtingTransitionListener implements IEventListener {
 			return null;
 		}
 
-		// ObjectCreatedEvent fires for every fresh Verplichting; only emit
+		// ObjectCreatedEvent fires for every fresh Commitment; only emit
 		// for those that are already in the active state (the REQ-002
 		// auto-promotion path, design D4).
 		if ($event instanceof ObjectCreatedEvent === true
@@ -141,7 +141,7 @@ class VerplichtingTransitionListener implements IEventListener {
 		}
 
 		return $payload;
-	}//end extractActivatedVerplichting()
+	}//end extractActivatedCommitment()
 
 	/**
 	 * Resolve the carrying entity for ObjectCreatedEvent or
@@ -169,7 +169,7 @@ class VerplichtingTransitionListener implements IEventListener {
 	/**
 	 * Emit the budget-impact event only for TenderNed-sourced obligations.
 	 *
-	 * @param array<string, mixed> $commitment Verplichting payload.
+	 * @param array<string, mixed> $commitment Commitment payload.
 	 *
 	 * @return void
 	 */
@@ -183,7 +183,12 @@ class VerplichtingTransitionListener implements IEventListener {
 	}//end emitIfTenderNed()
 
 	/**
-	 * Check whether the schema slug is Verplichting.
+	 * Check whether the schema slug is Commitment.
+	 *
+	 * The comparison is against a lower-cased LITERAL, which is precisely the
+	 * shape that stops firing silently when the schema is renamed and this
+	 * string is not: no error, the listener simply never matches again. It moved
+	 * from 'verplichting' to 'commitment' with the schema rename.
 	 *
 	 * @param string $schema Schema slug from the event.
 	 *
@@ -191,8 +196,13 @@ class VerplichtingTransitionListener implements IEventListener {
 	 */
 	private function isCommitmentSchema(string $schema): bool {
 		$normalised = strtolower(trim($schema));
-		return ($normalised === 'verplichting'
+
+		// The legacy Dutch slug is still matched on purpose: objects stored
+		// before the rename carry 'verplichting' until the repair step has run
+		// on that instance, and matching only the new slug would make this
+		// listener silently do nothing for every one of them.
+		return (str_ends_with(haystack: $normalised, needle: 'commitment')
 			|| str_ends_with(haystack: $normalised, needle: 'verplichting'));
 
-	}//end isVerplichtingSchema()
+	}//end isCommitmentSchema()
 }//end class
