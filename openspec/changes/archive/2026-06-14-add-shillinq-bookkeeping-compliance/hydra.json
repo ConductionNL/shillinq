@@ -2,7 +2,7 @@
   "schema_version": 2,
   "spec_slug": "add-shillinq-bookkeeping-compliance",
   "app": "shillinq",
-  "repo": "https://codeberg.org/Conduction/shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
   "issue": 13,
   "depends_on": [],
   "cycles": [

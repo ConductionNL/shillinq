@@ -30,7 +30,7 @@ pipelinq. No PHP in this change.
   binding on ad-hoc/named aggregations (the reusable, SQL-translatable half of the missing
   primitive; the per-row interval-overlap reducer deliberately stays out of OR's aggregation
   core per design.md's "Why not the overlap reducer" — that part stays the app-side
-  `-engine` service). Filed: https://codeberg.org/Conduction/openregister/issues/477
+  `-engine` service). Filed: Codeberg issue openregister#477 (pre-migration, not migrated to GitHub)
 
 ## 5. Verification
 

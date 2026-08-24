@@ -2,7 +2,7 @@
   "schema_version": 2,
   "spec_slug": "bookkeeping-market-government-separation",
   "app": "shillinq",
-  "repo": "https://codeberg.org/Conduction/shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
   "issue": 61,
   "depends_on": [],
   "cycles": [

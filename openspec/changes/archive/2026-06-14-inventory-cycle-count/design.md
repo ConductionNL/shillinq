@@ -1,7 +1,7 @@
 # Design — Inventory Cycle Count / Stock-take
 
 <!-- status: pr-created -->
-<!-- pr: https://codeberg.org/Conduction/shillinq/pulls/294 -->
+<!-- pr: Codeberg shillinq PR #294 (pre-migration, not migrated to GitHub) -->
 
 ## Context
 
