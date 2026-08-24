@@ -810,5 +810,23 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // before the SPA catch-all per ADR-016.
             ['name' => 'accountantPortal#dashboard', 'url' => '/api/accountant/dashboard', 'verb' => 'GET'],
             ['name' => 'accountantPortal#handoverPack', 'url' => '/api/accountant/administrations/{id}/handover-pack', 'verb' => 'GET'],
+
+            // MUST BE THE LAST ENTRY IN $extra. Routes::standard() does
+            // `array_merge($canonical, $extra)` and only then appends the
+            // `/{path}` SPA catch-all, so this sits after every genuine API
+            // route and before the catch-all: only a true miss reaches it.
+            //
+            // Without it an unmatched `/apps/shillinq/api/...` fell through to
+            // the SPA and was answered with HTTP 200 + ~39KB of HTML. A browser
+            // deep link wants that; an `axios.get()` does not — the promise
+            // RESOLVES, `data.results` is undefined, and the caller renders an
+            // empty list. Measured on a live instance, a real schema, a retired
+            // schema and pure nonsense all returned the identical 200 + HTML.
+            //
+            // That is how eleven components ended up fetching
+            // `/api/openregister/objects/...`, a route this app has never
+            // declared, and silently rendering nothing (issue #1209). This
+            // entry makes that class of mistake fail visibly.
+            ['name' => 'apiFallback#notFound', 'url' => '/api/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+']],
         ]
         );
