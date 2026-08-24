@@ -376,6 +376,117 @@ final class RenameMandateCommitmentKindsTest extends TestCase {
 	}//end testNoOpWhenNoShillinqRegisterExists()
 
 	/**
+	 * A table that cannot be READ is logged and skipped, not fatal.
+	 *
+	 * One unreadable shard must not abort the others, and must not be counted
+	 * as migrated.
+	 *
+	 * @return void
+	 */
+	public function testUnreadableTableIsLoggedAndSkipped(): void {
+		$registerResult = $this->createMock(\OCP\DB\IResult::class);
+		$registerResult->method('fetchAll')->willReturn(['14']);
+
+		$this->db->method('executeQuery')->willReturnCallback(
+			static function (string $sql) use ($registerResult) {
+				if (str_contains($sql, 'openregister_registers') === true) {
+					return $registerResult;
+				}
+
+				throw new \OCP\DB\Exception('table is gone');
+			}
+		);
+
+		$stmt = $this->createMock(\OCP\DB\IPreparedStatement::class);
+		$rows = [['table_name' => 'oc_openregister_table_14_99']];
+		$stmt->method('fetch')->willReturnCallback(
+			static function () use (&$rows) {
+				return ($rows === [] ? false : array_shift($rows));
+			}
+		);
+		$this->db->method('prepare')->willReturn($stmt);
+
+		$this->db->expects($this->never())->method('executeStatement');
+		$this->logger->expects($this->once())
+			->method('warning')
+			->with($this->stringContains('could not read a mandate table'));
+		$this->output->expects($this->once())
+			->method('info')
+			->with($this->stringContains('rewrote 0 mandate row'));
+
+		(new RenameMandateCommitmentKinds($this->db, $this->logger))->run($this->output);
+
+	}//end testUnreadableTableIsLoggedAndSkipped()
+
+	/**
+	 * A row that cannot be WRITTEN is logged and not counted.
+	 *
+	 * A partial failure must report the true number migrated — reporting the
+	 * attempted count would make a half-done migration read as complete.
+	 *
+	 * @return void
+	 */
+	public function testUnwritableRowIsLoggedAndNotCounted(): void {
+		$this->wireDb(
+			['14'],
+			[['table_name' => 'oc_openregister_table_14_99']],
+			[['id' => 7, 'kinds' => '["inkooporder"]']]
+		);
+
+		$this->db->method('executeStatement')->willThrowException(new \OCP\DB\Exception('read only'));
+
+		$this->logger->expects($this->once())
+			->method('warning')
+			->with($this->stringContains('could not write a mandate row'));
+		$this->output->expects($this->once())
+			->method('info')
+			->with($this->stringContains('rewrote 0 mandate row'));
+
+		(new RenameMandateCommitmentKinds($this->db, $this->logger))->run($this->output);
+
+	}//end testUnwritableRowIsLoggedAndNotCounted()
+
+	/**
+	 * An unresolvable register list is logged and yields no work.
+	 *
+	 * @return void
+	 */
+	public function testUnresolvableRegistersAreLoggedAndSkipped(): void {
+		$this->db->method('executeQuery')->willThrowException(new \OCP\DB\Exception('no registers table'));
+
+		$this->db->expects($this->never())->method('executeStatement');
+		$this->logger->expects($this->once())
+			->method('warning')
+			->with($this->stringContains('could not resolve the shillinq register'));
+		$this->output->expects($this->once())
+			->method('info')
+			->with($this->stringContains('no shillinq mandate table found'));
+
+		(new RenameMandateCommitmentKinds($this->db, $this->logger))->run($this->output);
+
+	}//end testUnresolvableRegistersAreLoggedAndSkipped()
+
+	/**
+	 * A failing information_schema probe is logged and yields no work.
+	 *
+	 * @return void
+	 */
+	public function testUnlistableColumnsAreLoggedAndSkipped(): void {
+		$registerResult = $this->createMock(\OCP\DB\IResult::class);
+		$registerResult->method('fetchAll')->willReturn(['14']);
+		$this->db->method('executeQuery')->willReturn($registerResult);
+		$this->db->method('prepare')->willThrowException(new \RuntimeException('no information_schema'));
+
+		$this->db->expects($this->never())->method('executeStatement');
+		$this->logger->expects($this->once())
+			->method('warning')
+			->with($this->stringContains('could not list columns'));
+
+		(new RenameMandateCommitmentKinds($this->db, $this->logger))->run($this->output);
+
+	}//end testUnlistableColumnsAreLoggedAndSkipped()
+
+	/**
 	 * The step is registered, and AFTER RenameDutchValues.
 	 *
 	 * @return void
