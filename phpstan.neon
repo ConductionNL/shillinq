@@ -35,6 +35,17 @@ parameters:
     # must NOT go back into the runtime autoloader.
     scanDirectories:
         - %currentWorkingDirectory%/tests/stubs/OpenRegister/Contract
+        # ADR-078 listener-deferral contract (#1198). TenderNedAwardPromotionJob
+        # EXTENDS OCA\OpenRegister\BackgroundJob\ActorForwardedJob, and phpstan
+        # refuses to ignore an "extends unknown class" error — it says
+        # "cannot be ignored, use excludePaths instead". excludePaths is what the
+        # cross-app *interface* implementors below had to do, but it drops the
+        # file from analysis entirely; scanDirectories makes the base class
+        # visible instead, so the new job stays analysed.
+        - %currentWorkingDirectory%/tests/stubs/OpenRegister/BackgroundJob
+        # Covers Service/Deferral too — scanDirectories recurses, so listing the
+        # subdirectory separately would be redundant, not additive.
+        - %currentWorkingDirectory%/tests/stubs/OpenRegister/Service
 
     # PHPDoc @return bool / @return array types are often intentionally broader than the
     # inferred type (e.g. SimpleXMLElement methods, third-party SDKs). Treating PHPDoc

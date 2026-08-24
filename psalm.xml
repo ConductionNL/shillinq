@@ -89,6 +89,13 @@
                 <referencedClass name="OCA\OpenRegister\Lifecycle\LifecycleGuardInterface"/>
                 <referencedClass name="OCA\OpenRegister\Lifecycle\LifecycleActionInterface"/>
                 <referencedClass name="OCA\OpenRegister\Lifecycle\GuardResult"/>
+                <!-- OpenRegister listener-deferral contract (ADR-078). Used by
+                     TenderNedAwardPromotionJob + TenderNedAwardDetectedListener to
+                     move post-`*ed` work off the caller's write path (#1198). -->
+                <referencedClass name="OCA\OpenRegister\BackgroundJob\ActorForwardedJob"/>
+                <referencedClass name="OCA\OpenRegister\Service\Deferral\ListenerDeferralService"/>
+                <referencedClass name="OCA\OpenRegister\Service\Deferral\DeferredListenerContext"/>
+                <referencedClass name="OCA\OpenRegister\Service\OrganisationService"/>
                 <!-- OpenRegister AppHost (GenericController/Settings wrappers) -->
                 <referencedClass name="OCA\OpenRegister\AppHost\IMetricsProvider"/>
                 <referencedClass name="OCA\OpenRegister\AppHost\Controller\GenericDashboardController"/>
