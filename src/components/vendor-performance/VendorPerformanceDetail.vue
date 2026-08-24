@@ -244,6 +244,7 @@ export default {
 	},
 
 	methods: {
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-10-vendor-performance/tasks.md */
 		async loadScorecard() {
 			this.loading = true
 			this.error = ''

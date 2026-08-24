@@ -325,6 +325,7 @@ export default {
 	},
 
 	methods: {
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md */
 		async loadMatch() {
 			this.loading = true
 			try {
@@ -369,6 +370,7 @@ export default {
 			await Promise.all(tasks)
 		},
 
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md */
 		async loadInvoice() {
 			try {
 				const response = await axios.get(
@@ -382,6 +384,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md */
 		async loadPo(poId) {
 			try {
 				const response = await axios.get(
@@ -395,6 +398,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-08-exception-workflow/tasks.md */
 		async loadGrn(grnId) {
 			try {
 				const response = await axios.get(

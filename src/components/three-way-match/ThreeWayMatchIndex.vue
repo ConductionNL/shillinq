@@ -262,6 +262,7 @@ export default {
 	},
 
 	methods: {
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-06-matching-engine/tasks.md */
 		async loadMatches() {
 			this.loading = true
 			this.error = ''

@@ -96,6 +96,16 @@ class ApiFallbackController extends Controller {
 	 * @return JSONResponse A 404 naming the unmatched route.
 	 *
 	 * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
+	 *
+	 * @no-admin-idor-exempt There is no object to scope. This method reads
+	 * nothing, touches no storage, no service and no mapper, and returns a
+	 * constant 404 whose only variable part is the caller's own request path
+	 * echoed back. `$path` is not an object id and is never looked up, so it
+	 * cannot address another tenant's data. The endpoint is deliberately
+	 * app-wide: it exists so an unmatched `/api/` path fails visibly for EVERY
+	 * caller instead of being answered with the SPA page (issue #1209), and an
+	 * admin-only or guarded variant would restore the silent 200 for exactly
+	 * the ordinary users the guardrail is for.
 	 */
 	#[NoAdminRequired]
 	public function notFound(string $path = ''): JSONResponse {

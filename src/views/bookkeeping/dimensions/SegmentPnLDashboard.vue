@@ -234,6 +234,7 @@ export default {
 			this.loadSegment(segment)
 		},
 
+		/** @spec openspec/changes/bookkeeping-cost-centers-dimensions/tasks.md#task-14 */
 		async loadSegment(segment) {
 			this.loading = true
 			this.errorMessage = ''

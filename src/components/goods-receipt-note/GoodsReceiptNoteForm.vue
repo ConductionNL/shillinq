@@ -287,6 +287,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md */
 		async loadOpenPurchaseOrders() {
 			try {
 				const response = await axios.get(
@@ -312,6 +313,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md */
 		async refreshLines() {
 			if (this.selectedPoIds.length === 0) {
 				this.availableLines = []

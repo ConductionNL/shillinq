@@ -230,6 +230,7 @@ export default {
 	},
 
 	methods: {
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md */
 		async load() {
 			this.loading = true
 			try {
@@ -253,6 +254,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md */
 		async loadLines() {
 			try {
 				const response = await axios.get(
@@ -267,6 +269,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md */
 		async loadPurchaseOrders() {
 			const map = {}
 			for (const poId of this.grn.poIds || []) {
@@ -284,6 +287,7 @@ export default {
 			this.purchaseOrders = map
 		},
 
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md */
 		async loadMatches() {
 			try {
 				const response = await axios.get(

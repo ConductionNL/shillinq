@@ -309,6 +309,7 @@ export default {
 	},
 
 	methods: {
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md */
 		async loadPurchaseOrder() {
 			this.loading = true
 			try {
@@ -330,6 +331,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-02-purchase-order-core/tasks.md */
 		async loadRelated() {
 			// The related-records lookups go through the OR REST surface; if the
 			// schemas are not yet registered (e.g. before slice 04/06 ship) we

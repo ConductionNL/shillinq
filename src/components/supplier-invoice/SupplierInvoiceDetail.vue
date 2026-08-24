@@ -265,6 +265,7 @@ export default {
 	},
 
 	methods: {
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md */
 		async loadInvoice() {
 			this.loading = true
 			try {
@@ -286,6 +287,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion/tasks.md */
 		async loadMatches() {
 			// ThreeWayMatch records are populated by slice 06; gracefully fall
 			// through to the empty state when the lookup isn't available yet.
