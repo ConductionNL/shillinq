@@ -56,6 +56,8 @@ use Psr\Log\LoggerInterface;
  *     pending a dedicated refactor.
  */
 class LoadSbrXbrlSeedsStep implements IRepairStep {
+	use \OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
+
 	/**
 	 * Schemas this step is responsible for seeding.
 	 *
@@ -147,6 +149,27 @@ class LoadSbrXbrlSeedsStep implements IRepairStep {
 			return;
 		}
 
+		// Under a system identity: an upgrade has no session, and OpenRegister
+		// refuses `create` for 'Anonymous'. Without it this seed writes nothing
+		// and says so only in a warning, which does not fail an upgrade.
+		$this->withSystemIdentity(
+			objectService: $objectService,
+			work: function () use ($objectService, $objects, $output): void {
+				$this->runInner(objectService: $objectService, objects: $objects, output: $output);
+			}
+		);
+	}//end run()
+
+	/**
+	 * The seed itself.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param array<int, mixed> $objects The seed objects.
+	 * @param IOutput $output Progress reporting.
+	 *
+	 * @return void
+	 */
+	private function runInner(object $objectService, array $objects, IOutput $output): void {
 		$registerSlug = $this->register();
 		$seeded = 0;
 		$skipped = 0;
@@ -217,7 +240,7 @@ class LoadSbrXbrlSeedsStep implements IRepairStep {
 			)
 		);
 
-	}//end run()
+	}//end runInner()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
