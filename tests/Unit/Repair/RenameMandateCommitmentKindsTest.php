@@ -1,0 +1,255 @@
+<?php
+
+/**
+ * Unit tests for RenameMandateCommitmentKinds.
+ *
+ * The step exists because a whole-cell equality UPDATE cannot reach a value
+ * stored INSIDE a JSON array. These tests pin the translation itself — the
+ * part that decides whether a stored mandate keeps matching commitments after
+ * the Commitment.kind rename — plus the no-op and fail-soft behaviours that
+ * make it safe to run unattended on every upgrade.
+ *
+ * @category Test
+ * @package  OCA\Shillinq\Tests\Unit\Repair
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @link https://conduction.nl
+ *
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
+ * phpcs:disable CustomSniffs.Functions.NamedParameters
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Shillinq\Tests\Unit\Repair;
+
+use OCA\Shillinq\Repair\RenameMandateCommitmentKinds;
+use OCP\IDBConnection;
+use OCP\Migration\IOutput;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+use ReflectionClass;
+
+/**
+ * Tests for the Mandate.kind_commitment array rewrite.
+ *
+ * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
+ */
+final class RenameMandateCommitmentKindsTest extends TestCase {
+
+	/**
+	 * Mocked database connection.
+	 *
+	 * @var IDBConnection&MockObject
+	 */
+	private IDBConnection&MockObject $db;
+
+	/**
+	 * Mocked logger.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
+
+	/**
+	 * Mocked repair output.
+	 *
+	 * @var IOutput&MockObject
+	 */
+	private IOutput&MockObject $output;
+
+	/**
+	 * Build the mocks.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->db = $this->createMock(IDBConnection::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->output = $this->createMock(IOutput::class);
+
+	}//end setUp()
+
+	/**
+	 * Call the private translate() with one stored cell.
+	 *
+	 * @param mixed $raw The stored cell.
+	 *
+	 * @return string|null The rewritten JSON, or null for "leave it alone".
+	 */
+	private function translate(mixed $raw): ?string {
+		$step = new RenameMandateCommitmentKinds($this->db, $this->logger);
+		$method = (new ReflectionClass($step))->getMethod('translate');
+		$method->setAccessible(true);
+		return $method->invoke($step, $raw);
+
+	}//end translate()
+
+	/**
+	 * A Dutch member is translated and the list shape is preserved.
+	 *
+	 * @return void
+	 */
+	public function testTranslatesEveryDutchKind(): void {
+		self::assertSame(
+			'["purchase_order","employment_contract","grant_decision","lease_agreement"]',
+			$this->translate('["inkooporder","arbeidscontract","subsidiebeschikking","huurovereenkomst"]')
+		);
+
+	}//end testTranslatesEveryDutchKind()
+
+	/**
+	 * Unknown members survive verbatim beside a translated one.
+	 *
+	 * `leasing` and `other` are already English members of the same enum, so a
+	 * mandate mixing them with a Dutch value must keep both.
+	 *
+	 * @return void
+	 */
+	public function testPreservesUnmappedMembers(): void {
+		self::assertSame(
+			'["purchase_order","leasing","other"]',
+			$this->translate('["inkooporder","leasing","other"]')
+		);
+
+	}//end testPreservesUnmappedMembers()
+
+	/**
+	 * An already-English list is left alone, which is what makes a re-run a no-op.
+	 *
+	 * @return void
+	 */
+	public function testAlreadyEnglishListIsUntouched(): void {
+		self::assertNull($this->translate('["purchase_order","leasing"]'));
+
+	}//end testAlreadyEnglishListIsUntouched()
+
+	/**
+	 * Shapes that are not a JSON list are skipped rather than coerced.
+	 *
+	 * An empty list already means "any kind" to MandateEnforcer, so rewriting
+	 * one of these would change meaning rather than preserve it.
+	 *
+	 * @return void
+	 */
+	public function testNonListShapesAreSkipped(): void {
+		self::assertNull($this->translate(null), 'null');
+		self::assertNull($this->translate(''), 'empty string');
+		self::assertNull($this->translate('[]'), 'empty list');
+		self::assertNull($this->translate('not json'), 'unparseable');
+		self::assertNull($this->translate('"inkooporder"'), 'bare scalar');
+		self::assertNull($this->translate('{"kind":"inkooporder"}'), 'object, not a list');
+
+	}//end testNonListShapesAreSkipped()
+
+	/**
+	 * A numerically-keyed JSON object IS treated as a list, deliberately.
+	 *
+	 * `{"0":"inkooporder"}` and `["inkooporder"]` both decode to the same PHP
+	 * value under `json_decode($raw, true)`, so no guard can tell them apart
+	 * after decoding. Rewriting it normalises the cell to a real JSON list,
+	 * which is the shape OpenRegister writes anyway — recording the behaviour
+	 * here so it reads as a decision rather than an accident.
+	 *
+	 * @return void
+	 */
+	public function testNumericallyKeyedObjectIsNormalisedToAList(): void {
+		self::assertSame('["purchase_order"]', $this->translate('{"0":"inkooporder"}'));
+
+	}//end testNumericallyKeyedObjectIsNormalisedToAList()
+
+	/**
+	 * The map matches the Commitment.kind rename exactly.
+	 *
+	 * If the scalar column and this array ever disagree, a mandate stops
+	 * matching its own commitments and nothing errors — so the two vocabularies
+	 * are pinned to each other here.
+	 *
+	 * @return void
+	 */
+	public function testMapMatchesTheCommitmentKindRename(): void {
+		$map = (new ReflectionClass(RenameMandateCommitmentKinds::class))->getConstant('KIND_MAP');
+
+		self::assertSame(
+			[
+				'inkooporder' => 'purchase_order',
+				'arbeidscontract' => 'employment_contract',
+				'subsidiebeschikking' => 'grant_decision',
+				'huurovereenkomst' => 'lease_agreement',
+			],
+			$map
+		);
+
+	}//end testMapMatchesTheCommitmentKindRename()
+
+	/**
+	 * Every target value is a member of the Commitment.kind enum the fragment declares.
+	 *
+	 * This is the assertion that catches the two halves drifting: a target that
+	 * the schema does not accept would migrate stored data to a value the
+	 * register rejects.
+	 *
+	 * @return void
+	 */
+	public function testEveryTargetIsDeclaredByTheFragment(): void {
+		$fragmentPath = __DIR__ . '/../../../lib/Settings/register.d/bookkeeping-verplichtingenadministratie.json';
+		self::assertFileExists($fragmentPath);
+
+		$fragment = json_decode((string)file_get_contents($fragmentPath), true);
+		$enum = ($fragment['components']['schemas']['Commitment']['properties']['kind']['enum'] ?? []);
+		self::assertNotEmpty($enum, 'Commitment.kind must declare an enum');
+
+		$map = (new ReflectionClass(RenameMandateCommitmentKinds::class))->getConstant('KIND_MAP');
+		foreach ($map as $old => $new) {
+			self::assertContains($new, $enum, "Commitment.kind must declare the migration target '$new'");
+			self::assertNotContains($old, $enum, "Commitment.kind must no longer declare the Dutch '$old'");
+		}
+
+	}//end testEveryTargetIsDeclaredByTheFragment()
+
+	/**
+	 * A \Throwable is swallowed so the upgrade is never blocked.
+	 *
+	 * @return void
+	 */
+	public function testFailSoftOnUnexpectedError(): void {
+		$this->db->method('executeQuery')->willThrowException(new \RuntimeException('db is gone'));
+
+		$this->logger->expects($this->once())->method('warning');
+		$this->output->expects($this->once())
+			->method('warning')
+			->with($this->stringContains('db is gone'));
+
+		(new RenameMandateCommitmentKinds($this->db, $this->logger))->run($this->output);
+
+	}//end testFailSoftOnUnexpectedError()
+
+	/**
+	 * The step is registered, and AFTER RenameDutchValues.
+	 *
+	 * @return void
+	 */
+	public function testRegisteredAfterRenameDutchValues(): void {
+		$info = (string)file_get_contents(__DIR__ . '/../../../appinfo/info.xml');
+
+		$values = strpos($info, 'Repair\RenameDutchValues</step>');
+		$kinds = strpos($info, 'Repair\RenameMandateCommitmentKinds</step>');
+
+		self::assertNotFalse($kinds, 'RenameMandateCommitmentKinds must be registered as a repair step');
+		self::assertNotFalse($values, 'RenameDutchValues must be registered as a repair step');
+		self::assertGreaterThan(
+			$values,
+			$kinds,
+			'RenameMandateCommitmentKinds must run AFTER RenameDutchValues'
+		);
+
+	}//end testRegisteredAfterRenameDutchValues()
+}//end class

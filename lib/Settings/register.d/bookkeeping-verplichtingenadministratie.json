@@ -9,7 +9,7 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Commitment",
-        "description": "A financial commitment (verplichting) tracked from the moment it becomes legally binding (PO signed, raamovereenkomst agreed, arbeidscontract executed, subsidiebeschikking awarded) through delivery, invoicing, payment, and closure. Drives budget-blocking at commitment-time (REQ-VPL-001) and mandate enforcement on aangaan (REQ-VPL-002). The status field is the lifecycle field; every state change is recorded as an immutable CommitmentMovement (D1). The tegenpartij is an embedded vendor reference (kvk/naam/iban) — not a bespoke customer schema; a customer/contact is a Nextcloud entity (ADR). THIS FRAGMENT IS THE SINGLE OWNER OF THIS SCHEMA'S `required` LIST: ADR-037's deepMergeConfig() CONCATENATES list values, so a second fragment declaring `required` makes the effective list the UNION of both and no payload of either model can satisfy it. Overlay fragments (20-bookkeeping-tenderned-integratie.json) contribute properties only.",
+        "description": "A financial commitment (verplichting) tracked from the moment it becomes legally binding (purchase order signed, framework agreement agreed, employment contract executed, grant decision awarded) through delivery, invoicing, payment, and closure. Drives budget-blocking at commitment-time (REQ-VPL-001) and mandate enforcement on aangaan (REQ-VPL-002). The status field is the lifecycle field; every state change is recorded as an immutable CommitmentMovement (D1). The tegenpartij is an embedded vendor reference (kvk/naam/iban) — not a bespoke customer schema; a customer/contact is a Nextcloud entity (ADR). THIS FRAGMENT IS THE SINGLE OWNER OF THIS SCHEMA'S `required` LIST: ADR-037's deepMergeConfig() CONCATENATES list values, so a second fragment declaring `required` makes the effective list the UNION of both and no payload of either model can satisfy it. Overlay fragments (20-bookkeeping-tenderned-integratie.json) contribute properties only.",
         "x-schema-org": "schema:Order",
         "x-openregister-purpose": "fact",
         "type": "object",
@@ -43,22 +43,22 @@
             "type": "string",
             "description": "Kind of commitment.",
             "enum": [
-              "inkooporder",
+              "purchase_order",
               "frameworkAgreement",
-              "arbeidscontract",
-              "subsidiebeschikking",
-              "huurovereenkomst",
+              "employment_contract",
+              "grant_decision",
+              "lease_agreement",
               "leasing",
               "other"
             ],
-            "example": "inkooporder",
+            "example": "purchase_order",
             "title": "Soort"
           },
           "commencementDate": {
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Date the commitment became legally binding (set when moved to aangegaan).",
+            "description": "Date the commitment became legally binding (set when moved to committed).",
             "example": "2026-04-15",
             "title": "Aangaandatum"
           },
@@ -159,7 +159,7 @@
             "description": "VAT regime applied to the commitment.",
             "enum": [
               "standard",
-              "verlegd",
+              "reverse_charged",
               "exempt"
             ],
             "default": "standard",
@@ -171,13 +171,13 @@
             "description": "Commitment lifecycle state. Derived from the latest CommitmentMovement (D1).",
             "enum": [
               "draft",
-              "in_goedkeuring",
-              "aangegaan",
-              "deels_geleverd",
-              "deels_gefactureerd",
-              "deels_betaald",
-              "afgesloten",
-              "geannuleerd"
+              "in_approval",
+              "committed",
+              "partially_delivered",
+              "partially_invoiced",
+              "partially_paid",
+              "closed",
+              "cancelled"
             ],
             "default": "draft",
             "example": "draft",
@@ -237,31 +237,31 @@
               "label": "Concept",
               "description": "Commitment drafted, not yet signed. No budget impact."
             },
-            "in_goedkeuring": {
+            "in_approval": {
               "label": "In goedkeuring",
               "description": "Mandate exceeded; routed to a goedkeuringsstap approval chain (REQ-VPL-002, D7)."
             },
-            "aangegaan": {
+            "committed": {
               "label": "Aangegaan",
-              "description": "Signed/legally binding. Budget is blocked; an aangegaan CommitmentMovement is recorded (REQ-VPL-001/003)."
+              "description": "Signed/legally binding. Budget is blocked; a `committed` CommitmentMovement is recorded (REQ-VPL-001/003)."
             },
-            "deels_geleverd": {
+            "partially_delivered": {
               "label": "Deels geleverd",
-              "description": "Goods/services partially received (prestatie_ontvangen). Informational; no budget change (REQ-VPL-003)."
+              "description": "Goods/services partially received (performance_received). Informational; no budget change (REQ-VPL-003)."
             },
-            "deels_gefactureerd": {
+            "partially_invoiced": {
               "label": "Deels gefactureerd",
-              "description": "Partially invoiced; restant_verplicht reduced and AP invoice matched (REQ-VPL-003)."
+              "description": "Partially invoiced; remaining_committed reduced and AP invoice matched (REQ-VPL-003)."
             },
-            "deels_betaald": {
+            "partially_paid": {
               "label": "Deels betaald",
               "description": "Partially paid; no further budget impact (REQ-VPL-003)."
             },
-            "afgesloten": {
+            "closed": {
               "label": "Afgesloten",
               "description": "Closed; remaining restant released back to budget (REQ-VPL-006)."
             },
-            "geannuleerd": {
+            "cancelled": {
               "label": "Geannuleerd",
               "description": "Cancelled; reversal mutatie posted and openstaande_verplichtingen reduced (REQ-VPL-006). Remains queryable for audit."
             }
@@ -269,22 +269,22 @@
           "transitions": {
             "indienen": {
               "from": "draft",
-              "to": "in_goedkeuring",
+              "to": "in_approval",
               "label": "Ter goedkeuring aanbieden",
               "description": "Offer for approval when the signer's mandaat is insufficient. Gated by MandateEnforcer (REQ-VPL-002).",
               "requires": "OCA\\Shillinq\\Lifecycle\\MandateEnforcer::requiresApproval"
             },
             "aangaan": {
               "from": "draft",
-              "to": "aangegaan",
+              "to": "committed",
               "label": "Verplichting aangaan",
-              "description": "Sign the commitment within mandaat and budget. Gated by MandateEnforcer (mandaat sufficient) and BudgetBlocker (vrije_ruimte sufficient or override). An aangegaan CommitmentMovement is recorded (REQ-VPL-001/002).",
+              "description": "Sign the commitment within mandaat and budget. Gated by MandateEnforcer (mandaat sufficient) and BudgetBlocker (vrije_ruimte sufficient or override). A `committed` CommitmentMovement is recorded (REQ-VPL-001/002).",
               "requires": "OCA\\Shillinq\\Lifecycle\\BudgetBlocker::canCommit",
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "record-mutatie",
-                  "description": "Record an aangegaan CommitmentMovement and increase openstaande_verplichtingen on the matching budgets (REQ-VPL-001/003).",
+                  "description": "Record a `committed` CommitmentMovement and increase openstaande_verplichtingen on the matching budgets (REQ-VPL-001/003).",
                   "actionParameters": {
                     "register": "shillinq",
                     "schema": "CommitmentMovement",
@@ -294,39 +294,39 @@
               ]
             },
             "goedkeuren": {
-              "from": "in_goedkeuring",
-              "to": "aangegaan",
+              "from": "in_approval",
+              "to": "committed",
               "label": "Goedkeuren",
               "description": "Approval chain completed; the commitment becomes binding. Gated by BudgetBlocker (REQ-VPL-002).",
               "requires": "OCA\\Shillinq\\Lifecycle\\BudgetBlocker::canCommit"
             },
             "ontvangen": {
-              "from": "aangegaan",
-              "to": "deels_geleverd",
+              "from": "committed",
+              "to": "partially_delivered",
               "label": "Prestatie ontvangen",
               "description": "Record (partial) receipt. Informational; budget unchanged (REQ-VPL-003)."
             },
             "factureren": {
-              "from": "deels_geleverd",
-              "to": "deels_gefactureerd",
+              "from": "partially_delivered",
+              "to": "partially_invoiced",
               "label": "Factureren",
-              "description": "Invoice matched against the commitment; restant_verplicht reduced (REQ-VPL-003)."
+              "description": "Invoice matched against the commitment; remaining_committed reduced (REQ-VPL-003)."
             },
             "betalen": {
-              "from": "deels_gefactureerd",
-              "to": "deels_betaald",
+              "from": "partially_invoiced",
+              "to": "partially_paid",
               "label": "Betalen",
               "description": "Payment settled; openstaande_verplichtingen unchanged (already released at gefactureerd, REQ-VPL-003)."
             },
             "afsluiten": {
-              "from": "aangegaan",
-              "to": "afgesloten",
+              "from": "committed",
+              "to": "closed",
               "label": "Afsluiten",
               "description": "Close the commitment; restant released back to budget (REQ-VPL-006)."
             },
             "annuleren": {
-              "from": "aangegaan",
-              "to": "geannuleerd",
+              "from": "committed",
+              "to": "cancelled",
               "label": "Annuleren",
               "description": "Cancel; reversal mutatie posted, openstaande_verplichtingen reduced (REQ-VPL-006)."
             }
@@ -334,7 +334,7 @@
         },
         "x-openregister-approval-chains": {
           "commitment-approval": {
-            "description": "Approval chain that gates the Commitment in_goedkeuring -> aangegaan `goedkeuren` transition (REQ-VPL-013). A commitment reaches in_goedkeuring only when MandateEnforcer::requiresApproval routed it there because the signer's mandaat was insufficient (REQ-VPL-002); this chain then runs the finance approval workflow that releases it. Threshold-routed on totaalbedrag_excl_btw (EUR cents): a single commitment-administrator approves from EUR 0, and a finance-director approves commitments at or above EUR 250.000. Separation of duties is enforced - the requester who submitted the commitment cannot approve their own step. On completion the goedkeuren transition auto-advances (BudgetBlocker still gates the budget). Declarative metadata only: OpenRegister's approval-workflow primitive (x-openregister-approval-chains, ApprovalChainGateListener/ApprovalChainAdvanceListener) materialises and gates the actual steps; this app ships no PHP approval-chain implementation. INERT until the OpenRegister release carrying the declarative approval-chains capability (PR #396/#397) is deployed - see openspec/changes/migrate-mandaat-to-approval-chains/design.md for the sequencing and the named follow-up.",
+            "description": "Approval chain that gates the Commitment in_approval -> committed `goedkeuren` transition (REQ-VPL-013). A commitment reaches in_approval only when MandateEnforcer::requiresApproval routed it there because the signer's mandaat was insufficient (REQ-VPL-002); this chain then runs the finance approval workflow that releases it. Threshold-routed on totaalbedrag_excl_btw (EUR cents): a single commitment-administrator approves from EUR 0, and a finance-director approves commitments at or above EUR 250.000. Separation of duties is enforced - the requester who submitted the commitment cannot approve their own step. On completion the goedkeuren transition auto-advances (BudgetBlocker still gates the budget). Declarative metadata only: OpenRegister's approval-workflow primitive (x-openregister-approval-chains, ApprovalChainGateListener/ApprovalChainAdvanceListener) materialises and gates the actual steps; this app ships no PHP approval-chain implementation. INERT until the OpenRegister release carrying the declarative approval-chains capability (PR #396/#397) is deployed - see openspec/changes/migrate-mandaat-to-approval-chains/design.md for the sequencing and the named follow-up.",
             "transition": "goedkeuren",
             "amountField": "total_amount_excl_vat",
             "separationOfDuties": true,
@@ -557,7 +557,7 @@
         "icon": "History",
         "version": "0.1.0",
         "title": "CommitmentMovement",
-        "description": "Immutable audit-log entry for every change to a Commitment (D1, REQ-VPL-010). The commitment.status is derived from the latest mutatie. Bedrag may be negative for geannuleerd/verlaagd/teruggevorderd; aggregations track sign explicitly.",
+        "description": "Immutable audit-log entry for every change to a Commitment (D1, REQ-VPL-010). The commitment.status is derived from the latest mutatie. Bedrag may be negative for cancelled/decreased/reclaimed; aggregations track sign explicitly.",
         "x-openregister-purpose": "fact",
         "x-openregister-immutable": true,
         "type": "object",
@@ -614,7 +614,7 @@
           },
           "amount": {
             "type": "integer",
-            "description": "Mutation amount in minor units (EUR cents); may be negative for verlaagd/geannuleerd/teruggevorderd.",
+            "description": "Mutation amount in minor units (EUR cents); may be negative for decreased/cancelled/reclaimed.",
             "example": 5000000,
             "title": "Bedrag"
           },
@@ -726,21 +726,21 @@
           },
           "kind_commitment": {
             "type": "array",
-            "description": "Commitment kinds this mandate applies to.",
+            "description": "Commitment kinds this mandate applies to. MUST use the same vocabulary as Commitment.kind: MandateEnforcer::mandateApplies() matches the commitment's `kind` against this list with in_array(strict), so a value that drifts from Commitment.kind's enum makes the mandate silently stop applying rather than error.",
             "items": {
               "type": "string",
               "enum": [
-                "inkooporder",
+                "purchase_order",
                 "frameworkAgreement",
-                "arbeidscontract",
-                "subsidiebeschikking",
-                "huurovereenkomst",
+                "employment_contract",
+                "grant_decision",
+                "lease_agreement",
                 "leasing",
                 "other"
               ]
             },
             "example": [
-              "inkooporder",
+              "purchase_order",
               "frameworkAgreement"
             ],
             "title": "Soort Verplichting"
@@ -822,7 +822,7 @@
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "ApprovalStep",
-        "description": "A workflow step in a commitment's approval chain when the signer's mandaat is exceeded (D7, REQ-VPL-002). Created by MandateEnforcer when a verplichting moves to in_goedkeuring; gives finance a clear view of pending approvals.",
+        "description": "A workflow step in a commitment's approval chain when the signer's mandaat is exceeded (D7, REQ-VPL-002). Created by MandateEnforcer when a verplichting moves to in_approval; gives finance a clear view of pending approvals.",
         "x-openregister-purpose": "fact",
         "type": "object",
         "required": [
@@ -853,14 +853,14 @@
           },
           "role_required": {
             "type": "string",
-            "description": "Role required to action this step.",
+            "description": "Role required to action this step. `municipal_executive` is the College van B&W (the municipal executive board), not an educational college.",
             "enum": [
-              "budgethouder",
-              "teamleider",
-              "directeur",
-              "college"
+              "budget_holder",
+              "team_lead",
+              "director",
+              "municipal_executive"
             ],
-            "example": "directeur",
+            "example": "director",
             "title": "Rol Vereist"
           },
           "assigned_in": {
@@ -872,6 +872,7 @@
           },
           "status": {
             "type": "string",
+            "_note": "DELIBERATELY LEFT DUTCH — do not anglicise these values piecemeal. RenameDutchValueDecisions::VALUE_MAP is keyed by PROPERTY NAME and every entry applies REGISTER-WIDE, so a `status` entry translating `in_behandeling` or `afgewezen` would also rewrite stored rows of Rechtmatigheidstoets.status, Rechtmatigheidsbevinding.status and JournalEntry.lawfulness.status (bookkeeping-rechtmatigheidsverantwoording.json) plus ReviewWorkflow's nested step/comment statuses (bookkeeping-titel-9-jaarrekening.json) — all of which still declare the Dutch enum. Schema and data would silently desync: OpenRegister does not reject an out-of-enum stored value, the filter just returns nothing. A wholly Dutch enum is honest; a half-renamed one is a trap. Anglicise this only together with those fragments, or after the value map grows a schema-scoped key.",
             "description": "Step status.",
             "enum": [
               "wachtend",
@@ -1073,7 +1074,7 @@
       "holder_type": "role",
       "maximumAmount": 5000000,
       "kind_commitment": [
-        "inkooporder",
+        "purchase_order",
         "frameworkAgreement"
       ],
       "is_override": false,
@@ -1094,10 +1095,10 @@
       "holder_type": "role",
       "maximumAmount": 25000000,
       "kind_commitment": [
-        "inkooporder",
+        "purchase_order",
         "frameworkAgreement",
-        "arbeidscontract",
-        "huurovereenkomst",
+        "employment_contract",
+        "lease_agreement",
         "leasing"
       ],
       "is_override": false,
@@ -1117,13 +1118,13 @@
       "holder_type": "role",
       "maximumAmount": 1000000000,
       "kind_commitment": [
-        "inkooporder",
+        "purchase_order",
         "frameworkAgreement",
-        "arbeidscontract",
-        "subsidiebeschikking",
-        "huurovereenkomst",
+        "employment_contract",
+        "grant_decision",
+        "lease_agreement",
         "leasing",
-        "overig"
+        "other"
       ],
       "is_override": true,
       "valid_from": "2026-01-01",
@@ -1167,8 +1168,8 @@
       "administrationId": "adm-demo",
       "commitmentNumber": "VPL-2026-0001",
       "sourceReference": "PO-2026-0207",
-      "kind": "inkooporder",
-      "status": "aangegaan",
+      "kind": "purchase_order",
+      "status": "committed",
       "commencementDate": "2026-04-15",
       "total_amount_excl_vat": 7500000,
       "mandate_applied": "M-DIRECTEUR-250K",
@@ -1206,7 +1207,7 @@
       "commitmentNumber": "VPL-2026-0002",
       "sourceReference": "PO-2026-0231",
       "kind": "frameworkAgreement",
-      "status": "aangegaan",
+      "status": "committed",
       "commencementDate": "2026-03-01",
       "total_amount_excl_vat": 20000000,
       "mandate_applied": "M-DIRECTEUR-250K",
@@ -1261,8 +1262,8 @@
       "administrationId": "adm-demo",
       "commitmentNumber": "VPL-2026-0003",
       "sourceReference": "BES-2026-0044",
-      "kind": "subsidiebeschikking",
-      "status": "aangegaan",
+      "kind": "grant_decision",
+      "status": "committed",
       "commencementDate": "2026-02-10",
       "total_amount_excl_vat": 4000000,
       "interne_reference": "Eindafrekening 20% restant nog te ontvangen",

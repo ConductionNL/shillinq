@@ -312,7 +312,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 						'administrationId' => 'adm-1',
 						'mandateCode' => 'M-INKOOP-50K',
 						'maximumAmount' => 10000000,
-						'kind_commitment' => ['inkooporder'],
+						'kind_commitment' => ['purchase_order'],
 						'is_override' => false,
 						'valid_from' => '2020-01-01',
 						'valid_to' => '2999-12-31',
@@ -328,7 +328,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 
 		self::assertNotNull($result);
 		self::assertSame('PO-2026-0207', $result['sourceReference']);
-		self::assertSame('aangegaan', $result['status']);
+		self::assertSame('committed', $result['status']);
 		self::assertSame(7500000, $result['total_amount_excl_vat']);
 
 		$ruleSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'CommitmentLine'));
@@ -350,7 +350,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 			'administrationId' => 'adm-1',
 			'commitmentNumber' => 'PO-2026-0207',
 			'sourceReference' => 'PO-2026-0207',
-			'status' => 'aangegaan',
+			'status' => 'committed',
 		];
 
 		$service = $this->buildService(
@@ -394,7 +394,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 						// the budget check (this test is specifically about budget
 						// denial, not mandate denial).
 						'maximumAmount' => 100000000,
-						'kind_commitment' => ['inkooporder'],
+						'kind_commitment' => ['purchase_order'],
 						'is_override' => false,
 						'valid_from' => '2020-01-01',
 						'valid_to' => '2999-12-31',
@@ -437,7 +437,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 						'administrationId' => 'adm-1',
 						'mandateCode' => 'M-CFO-OVERRIDE',
 						'maximumAmount' => 1000000000,
-						'kind_commitment' => ['inkooporder'],
+						'kind_commitment' => ['purchase_order'],
 						'is_override' => true,
 						'valid_from' => '2020-01-01',
 						'valid_to' => '2999-12-31',
@@ -450,7 +450,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		$result = $service->materialiseFromPurchaseOrder(purchaseOrder: $this->purchaseOrder());
 
 		self::assertNotNull($result);
-		self::assertSame('aangegaan', $result['status']);
+		self::assertSame('committed', $result['status']);
 		self::assertNotEmpty($result['override_reason']);
 		self::assertSame('M-CFO-OVERRIDE', $result['mandate_applied']);
 
@@ -463,12 +463,12 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 
 	/**
 	 * REQ-VPL-002 parity: no sufficient mandate routes the auto-materialised
-	 * commitment to in_goedkeuring without a budget check (mirrors the
+	 * commitment to in_approval without a budget check (mirrors the
 	 * existing manual `indienen` semantics).
 	 *
 	 * @return void
 	 */
-	public function testNoSufficientMandateRoutesToInGoedkeuring(): void {
+	public function testNoSufficientMandateRoutesToInApproval(): void {
 		$service = $this->buildService(
 			[
 				'Commitment' => [],
@@ -482,9 +482,9 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		$result = $service->materialiseFromPurchaseOrder(purchaseOrder: $this->purchaseOrder());
 
 		self::assertNotNull($result);
-		self::assertSame('in_goedkeuring', $result['status']);
+		self::assertSame('in_approval', $result['status']);
 
-	}//end testNoSufficientMandateRoutesToInGoedkeuring()
+	}//end testNoSufficientMandateRoutesToInApproval()
 
 	/**
 	 * REQ-VPL-010: a multi-year framework PO (lines dated across boekjaren)
@@ -500,7 +500,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 			'administrationId' => 'adm-1',
 			'mandateCode' => 'M-DIRECTEUR-250K',
 			'maximumAmount' => 25000000,
-			'kind_commitment' => ['inkooporder'],
+			'kind_commitment' => ['purchase_order'],
 			'is_override' => false,
 			'valid_from' => '2020-01-01',
 			'valid_to' => '2999-12-31',
@@ -522,7 +522,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 		$result = $service->materialiseFromPurchaseOrder(purchaseOrder: $this->purchaseOrder(['poNumber' => 'PO-2026-0231']));
 
 		self::assertNotNull($result);
-		self::assertSame('aangegaan', $result['status']);
+		self::assertSame('committed', $result['status']);
 
 		$ruleSaves = array_values(array_filter($this->objectServiceStub->saved, static fn ($s) => $s[0] === 'CommitmentLine'));
 		self::assertCount(2, $ruleSaves);
@@ -550,7 +550,7 @@ class CommitmentMaterialisationServiceTest extends TestCase {
 						'administrationId' => 'adm-1',
 						'mandateCode' => 'M-DIRECTEUR-250K',
 						'maximumAmount' => 25000000,
-						'kind_commitment' => ['leasing', 'other', 'huurovereenkomst'],
+						'kind_commitment' => ['leasing', 'other', 'lease_agreement'],
 						'is_override' => false,
 						'valid_from' => '2020-01-01',
 						'valid_to' => '2999-12-31',

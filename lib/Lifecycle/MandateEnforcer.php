@@ -12,7 +12,7 @@
  *
  * Responsibilities (REQ-VPL-002):
  *   - requiresApproval(): true when no valid mandaat covers the commitment, so the
- *     `indienen` transition routes the verplichting to in_goedkeuring.
+ *     `indienen` transition routes the verplichting to in_approval.
  *   - hasSufficientMandate(): true when a valid mandaat covers the commitment, so the
  *     `aangaan` transition may proceed (within budget, checked by BudgetBlocker).
  *   - resolveApplicableMandate(): the matching mandaat, or null.
@@ -105,7 +105,7 @@ class MandateEnforcer {
 	 * through an approval chain because no valid mandaat covers it (REQ-VPL-002)?
 	 *
 	 * The inverse of {@see self::hasSufficientMandate()}. Fail-open toward approval:
-	 * any error routes the commitment to in_goedkeuring rather than letting it skip
+	 * any error routes the commitment to in_approval rather than letting it skip
 	 * authorization.
 	 *
 	 * @param string $commitmentNumber The verplichting identifier.

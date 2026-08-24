@@ -199,7 +199,7 @@ class MandateEnforcerTest extends TestCase {
 				'administrationId' => 'adm-1',
 				'mandateCode' => 'M-INKOOP-50K',
 				'maximumAmount' => 5000000,
-				'kind_commitment' => ['inkooporder', 'frameworkAgreement'],
+				'kind_commitment' => ['purchase_order', 'frameworkAgreement'],
 				'is_override' => false,
 				'valid_from' => '2020-01-01',
 				'valid_to' => '2999-12-31',
@@ -237,10 +237,10 @@ class MandateEnforcerTest extends TestCase {
 		$this->withObjectService($this->buildObjectServiceStub(['Mandate' => [$this->mandate()]]));
 
 		$this->assertTrue(
-			$this->guard->hasSufficientMandate('PO-1', $this->commitment('inkooporder', 3000000))
+			$this->guard->hasSufficientMandate('PO-1', $this->commitment('purchase_order', 3000000))
 		);
 		$this->assertFalse(
-			$this->guard->requiresApproval('PO-1', $this->commitment('inkooporder', 3000000))
+			$this->guard->requiresApproval('PO-1', $this->commitment('purchase_order', 3000000))
 		);
 
 	}//end testSufficientMandateWithinLimit()
@@ -254,10 +254,10 @@ class MandateEnforcerTest extends TestCase {
 		$this->withObjectService($this->buildObjectServiceStub(['Mandate' => [$this->mandate()]]));
 
 		$this->assertFalse(
-			$this->guard->hasSufficientMandate('PO-1', $this->commitment('inkooporder', 7500000))
+			$this->guard->hasSufficientMandate('PO-1', $this->commitment('purchase_order', 7500000))
 		);
 		$this->assertTrue(
-			$this->guard->requiresApproval('PO-1', $this->commitment('inkooporder', 7500000))
+			$this->guard->requiresApproval('PO-1', $this->commitment('purchase_order', 7500000))
 		);
 
 	}//end testAmountExceedsMandateRequiresApproval()
@@ -270,9 +270,9 @@ class MandateEnforcerTest extends TestCase {
 	public function testSoortNotCoveredRequiresApproval(): void {
 		$this->withObjectService($this->buildObjectServiceStub(['Mandate' => [$this->mandate()]]));
 
-		// An arbeidscontract is not in the mandate's soort_verplichting list.
+		// An employment_contract is not in the mandate's kind_commitment list.
 		$this->assertFalse(
-			$this->guard->hasSufficientMandate('PO-1', $this->commitment('arbeidscontract', 1000000))
+			$this->guard->hasSufficientMandate('PO-1', $this->commitment('employment_contract', 1000000))
 		);
 
 	}//end testSoortNotCoveredRequiresApproval()
@@ -287,7 +287,7 @@ class MandateEnforcerTest extends TestCase {
 		$this->withObjectService($this->buildObjectServiceStub(['Mandate' => [$expired]]));
 
 		$this->assertFalse(
-			$this->guard->hasSufficientMandate('PO-1', $this->commitment('inkooporder', 1000000))
+			$this->guard->hasSufficientMandate('PO-1', $this->commitment('purchase_order', 1000000))
 		);
 
 	}//end testExpiredMandateIsIgnored()
@@ -302,7 +302,7 @@ class MandateEnforcerTest extends TestCase {
 		$this->withObjectService($this->buildObjectServiceStub(['Mandate' => [$future]]));
 
 		$this->assertFalse(
-			$this->guard->hasSufficientMandate('PO-1', $this->commitment('inkooporder', 1000000))
+			$this->guard->hasSufficientMandate('PO-1', $this->commitment('purchase_order', 1000000))
 		);
 
 	}//end testFutureMandateIsIgnored()
@@ -317,10 +317,10 @@ class MandateEnforcerTest extends TestCase {
 		$this->withObjectService($this->buildObjectServiceStub(['Mandate' => [$mandate]]));
 
 		$this->assertTrue(
-			$this->guard->requiresSecondSignature($this->commitment('inkooporder', 3000000))
+			$this->guard->requiresSecondSignature($this->commitment('purchase_order', 3000000))
 		);
 		$this->assertFalse(
-			$this->guard->requiresSecondSignature($this->commitment('inkooporder', 2000000))
+			$this->guard->requiresSecondSignature($this->commitment('purchase_order', 2000000))
 		);
 
 	}//end testSecondSignatureRequiredAboveThreshold()
@@ -338,7 +338,7 @@ class MandateEnforcerTest extends TestCase {
 
 		$this->withObjectService($this->buildObjectServiceStub(['Mandate' => [$big, $override, $small]]));
 
-		$resolved = $this->guard->resolveApplicableMandate($this->commitment('inkooporder', 3000000));
+		$resolved = $this->guard->resolveApplicableMandate($this->commitment('purchase_order', 3000000));
 		$this->assertNotNull($resolved);
 		$this->assertSame('SMALL', $resolved['mandateCode']);
 
@@ -353,7 +353,7 @@ class MandateEnforcerTest extends TestCase {
 		$this->withObjectService($this->buildObjectServiceStub(['Mandate' => []]));
 
 		$this->assertTrue(
-			$this->guard->requiresApproval('PO-1', $this->commitment('inkooporder', 1000000))
+			$this->guard->requiresApproval('PO-1', $this->commitment('purchase_order', 1000000))
 		);
 
 	}//end testNoMandateRequiresApproval()
@@ -368,7 +368,7 @@ class MandateEnforcerTest extends TestCase {
 		$this->container->method('get')->willThrowException(new \RuntimeException('boom'));
 
 		$this->assertFalse(
-			$this->guard->hasSufficientMandate('PO-1', $this->commitment('inkooporder', 1000000))
+			$this->guard->hasSufficientMandate('PO-1', $this->commitment('purchase_order', 1000000))
 		);
 
 	}//end testFailClosedOnException()

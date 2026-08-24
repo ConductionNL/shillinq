@@ -141,7 +141,7 @@ class CommitmentMaterialisationService {
 
 		return $this->materialise(
 			sourceReference: $sourceReference,
-			kind: 'inkooporder',
+			kind: 'purchase_order',
 			administrationId: $administrationId,
 			ruleInputs: $ruleInputs,
 			counterparty: $counterparty,
@@ -257,11 +257,11 @@ class CommitmentMaterialisationService {
 			'commencementDate' => (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y-m-d'),
 		];
 
-		// REQ-VPL-002 parity: no sufficient mandate routes to in_goedkeuring
+		// REQ-VPL-002 parity: no sufficient mandate routes to in_approval
 		// (the existing `indienen` semantics) without a budget check — the
 		// fail-closed budget guarantee only applies to the direct-commit path.
 		if ($this->mandate->hasSufficientMandate(commitmentNumber: $sourceReference, object: $draft) === false) {
-			$draft['status'] = 'in_goedkeuring';
+			$draft['status'] = 'in_approval';
 			$saved = $this->persist(draft: $draft, ruleInputs: $ruleInputs);
 			$this->dispatchLawfulnessTrigger(commitment: $saved);
 			return $saved;
@@ -281,7 +281,7 @@ class CommitmentMaterialisationService {
 			return null;
 		}
 
-		$draft['status'] = 'aangegaan';
+		$draft['status'] = 'committed';
 
 		$applied = $this->mandate->resolveApplicableMandate(commitment: $draft);
 		if ($applied !== null) {
@@ -415,24 +415,24 @@ class CommitmentMaterialisationService {
 	}//end buildRegelsFromContract()
 
 	/**
-	 * Map a Contract.contractType to the closest Commitment.soort enum
-	 * value. lease -> leasing; employment -> arbeidscontract; everything
-	 * else (purchase/sales/service/subscription/other) -> overig, since
-	 * Commitment.soort has no generic "contract" bucket and inferring a
+	 * Map a Contract.contractType to the closest Commitment.kind enum
+	 * value. lease -> leasing; employment -> employment_contract; everything
+	 * else (purchase/sales/service/subscription/other) -> other, since
+	 * Commitment.kind has no generic "contract" bucket and inferring a
 	 * more specific value from contractType alone would be unreliable.
 	 *
 	 * @param string $contractType Contract.contractType.
 	 *
-	 * @return string Commitment.soort enum value.
+	 * @return string Commitment.kind enum value.
 	 */
 	private function mapContractKind(string $contractType): string {
 		return match ($contractType) {
 			'lease' => 'leasing',
-			'employment' => 'arbeidscontract',
+			'employment' => 'employment_contract',
 			default => 'other',
 		};
 
-	}//end mapContractSoort()
+	}//end mapContractKind()
 
 	/**
 	 * Resolve the boekjaar for a single date string, falling back to the

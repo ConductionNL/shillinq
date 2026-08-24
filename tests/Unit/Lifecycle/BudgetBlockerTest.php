@@ -226,7 +226,7 @@ class BudgetBlockerTest extends TestCase {
 		return [
 			'administrationId' => 'adm-1',
 			'commitmentNumber' => 'PO-1',
-			'kind' => 'inkooporder',
+			'kind' => 'purchase_order',
 			'total_amount_excl_vat' => $amount,
 			'rules' => [
 				[
@@ -294,7 +294,7 @@ class BudgetBlockerTest extends TestCase {
 			'administrationId' => 'adm-1',
 			'mandateCode' => 'M-CFO-OVERRIDE',
 			'maximumAmount' => 1000000000,
-			'kind_commitment' => ['inkooporder'],
+			'kind_commitment' => ['purchase_order'],
 			'is_override' => true,
 			'valid_from' => '2020-01-01',
 			'valid_to' => '2999-12-31',

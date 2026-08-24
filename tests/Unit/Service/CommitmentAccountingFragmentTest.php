@@ -160,7 +160,7 @@ final class CommitmentAccountingFragmentTest extends TestCase {
 
 	/**
 	 * Task 6: three auto-materialised-style Commitment seed objects
-	 * (inkooporder/raamovereenkomst/subsidiebeschikking), each with at
+	 * (purchase_order/frameworkAgreement/grant_decision), each with at
 	 * least one CommitmentLine and every regel's coderingscombinatie
 	 * covered by a seeded Budget, so the drilldown is populated on a fresh
 	 * install.
@@ -178,7 +178,7 @@ final class CommitmentAccountingFragmentTest extends TestCase {
 		self::assertGreaterThanOrEqual(1, count($budgets));
 
 		$soorten = array_map(static fn ($v) => $v['kind'], $commitments);
-		foreach (['inkooporder', 'frameworkAgreement', 'subsidiebeschikking'] as $expected) {
+		foreach (['purchase_order', 'frameworkAgreement', 'grant_decision'] as $expected) {
 			self::assertContains($expected, $soorten, "Seed must include a $expected Commitment");
 		}
 
