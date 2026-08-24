@@ -233,6 +233,149 @@ final class RenameMandateCommitmentKindsTest extends TestCase {
 	}//end testFailSoftOnUnexpectedError()
 
 	/**
+	 * Wire the mocks for one shard table carrying the given rows.
+	 *
+	 * `shardTablesWithColumn()` asks the registers table for shillinq's ids,
+	 * then information_schema for tables carrying the column; `rewriteTable()`
+	 * then SELECTs the rows. Both go through executeQuery/prepare, so the mock
+	 * dispatches on the SQL.
+	 *
+	 * @param array<int, string>              $registerIds Register ids to report.
+	 * @param array<int, array<string, mixed>> $tableRows  information_schema rows.
+	 * @param array<int, array<string, mixed>> $dataRows   Mandate rows.
+	 *
+	 * @return void
+	 */
+	private function wireDb(array $registerIds, array $tableRows, array $dataRows): void {
+		$registerResult = $this->createMock(\OCP\DB\IResult::class);
+		$registerResult->method('fetchAll')->willReturn($registerIds);
+
+		$dataResult = $this->createMock(\OCP\DB\IResult::class);
+		$dataResult->method('fetchAll')->willReturn($dataRows);
+
+		$this->db->method('executeQuery')->willReturnCallback(
+			static function (string $sql) use ($registerResult, $dataResult) {
+				if (str_contains($sql, 'openregister_registers') === true) {
+					return $registerResult;
+				}
+
+				return $dataResult;
+			}
+		);
+
+		$stmt = $this->createMock(\OCP\DB\IPreparedStatement::class);
+		$queue = $tableRows;
+		$stmt->method('fetch')->willReturnCallback(
+			static function () use (&$queue) {
+				if ($queue === []) {
+					return false;
+				}
+
+				return array_shift($queue);
+			}
+		);
+		$this->db->method('prepare')->willReturn($stmt);
+
+	}//end wireDb()
+
+	/**
+	 * A Dutch row is rewritten and counted.
+	 *
+	 * @return void
+	 */
+	public function testRunRewritesADutchRow(): void {
+		$this->wireDb(
+			['14'],
+			[['table_name' => 'oc_openregister_table_14_99']],
+			[['id' => 7, 'kinds' => '["inkooporder","leasing"]']]
+		);
+
+		$written = [];
+		$this->db->method('executeStatement')->willReturnCallback(
+			static function (string $sql, array $params) use (&$written): int {
+				$written[] = $params;
+				return 1;
+			}
+		);
+
+		$this->output->expects($this->once())
+			->method('info')
+			->with($this->stringContains('rewrote 1 mandate row'));
+
+		(new RenameMandateCommitmentKinds($this->db, $this->logger))->run($this->output);
+
+		self::assertCount(1, $written);
+		self::assertSame('["purchase_order","leasing"]', $written[0][0]);
+		self::assertSame(7, $written[0][1]);
+
+	}//end testRunRewritesADutchRow()
+
+	/**
+	 * An already-English row is not written at all.
+	 *
+	 * This is the idempotency guarantee at the step level, not just in
+	 * translate(): a re-run must issue no UPDATE.
+	 *
+	 * @return void
+	 */
+	public function testRunWritesNothingWhenAlreadyEnglish(): void {
+		$this->wireDb(
+			['14'],
+			[['table_name' => 'oc_openregister_table_14_99']],
+			[['id' => 7, 'kinds' => '["purchase_order","leasing"]']]
+		);
+
+		$this->db->expects($this->never())->method('executeStatement');
+		$this->output->expects($this->once())
+			->method('info')
+			->with($this->stringContains('rewrote 0 mandate row'));
+
+		(new RenameMandateCommitmentKinds($this->db, $this->logger))->run($this->output);
+
+	}//end testRunWritesNothingWhenAlreadyEnglish()
+
+	/**
+	 * A table belonging to ANOTHER register is never touched.
+	 *
+	 * The shard table name embeds the register id, so a same-named column in a
+	 * different register must not be reachable.
+	 *
+	 * @return void
+	 */
+	public function testForeignRegisterTablesAreIgnored(): void {
+		$this->wireDb(
+			['14'],
+			[['table_name' => 'oc_openregister_table_77_99']],
+			[['id' => 7, 'kinds' => '["inkooporder"]']]
+		);
+
+		$this->db->expects($this->never())->method('executeStatement');
+		$this->output->expects($this->once())
+			->method('info')
+			->with($this->stringContains('no shillinq mandate table found'));
+
+		(new RenameMandateCommitmentKinds($this->db, $this->logger))->run($this->output);
+
+	}//end testForeignRegisterTablesAreIgnored()
+
+	/**
+	 * With no shillinq register the step reports and writes nothing.
+	 *
+	 * @return void
+	 */
+	public function testNoOpWhenNoShillinqRegisterExists(): void {
+		$this->wireDb([], [], []);
+
+		$this->db->expects($this->never())->method('executeStatement');
+		$this->output->expects($this->once())
+			->method('info')
+			->with($this->stringContains('no shillinq mandate table found'));
+
+		(new RenameMandateCommitmentKinds($this->db, $this->logger))->run($this->output);
+
+	}//end testNoOpWhenNoShillinqRegisterExists()
+
+	/**
 	 * The step is registered, and AFTER RenameDutchValues.
 	 *
 	 * @return void
