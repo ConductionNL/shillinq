@@ -47,6 +47,8 @@ use Psr\Log\LoggerInterface;
  * cleanup. Deferred to a follow-up.
  */
 class InitializeSettings implements IRepairStep {
+	use \OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
+
 	/**
 	 * Constructor for InitializeSettings.
 	 *
@@ -224,13 +226,12 @@ class InitializeSettings implements IRepairStep {
 				);
 			}
 
-			if ($objectService !== null && method_exists($objectService, 'runAsSystem') === true) {
-				$objectService->runAsSystem(function () use ($output): void {
+			$this->withSystemIdentity(
+				objectService: $objectService,
+				work: function () use ($output): void {
 					$this->runSeeders(output: $output);
-				});
-			} else {
-				$this->runSeeders(output: $output);
-			}
+				}
+			);
 		} catch (\Throwable $e) {
 			$output->warning('Could not auto-configure Shillinq: ' . $e->getMessage());
 			$this->logger->error(

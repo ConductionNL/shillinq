@@ -50,6 +50,7 @@ namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -63,6 +64,8 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @spec openspec/changes/add-shillinq-period-close/tasks.md#task-11
  */
 class BackfillFiscalPeriods implements IRepairStep {
+	use RunsUnderSystemIdentity;
+
 	use ReadsSourceRowsInBatches;
 
 	/**
@@ -101,6 +104,26 @@ class BackfillFiscalPeriods implements IRepairStep {
 	 * @spec openspec/changes/add-shillinq-period-close/tasks.md#task-11
 	 */
 	public function run(IOutput $output): void {
+		// Under a system identity: an upgrade has no session, and OpenRegister
+		// refuses `create` for 'Anonymous' — measured against this register, not
+		// assumed. Without it this backfill writes nothing and says so only in a
+		// warning, which does not fail the upgrade.
+		$this->withSystemIdentity(
+			objectService: $this->objectService,
+			work: function () use ($output): void {
+				$this->runInner(output: $output);
+			}
+		);
+	}//end run()
+
+	/**
+	 * The backfill itself.
+	 *
+	 * @param IOutput $output Progress reporting.
+	 *
+	 * @return void
+	 */
+	private function runInner(IOutput $output): void {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();
 
@@ -187,7 +210,7 @@ class BackfillFiscalPeriods implements IRepairStep {
 			);
 		}//end try
 
-	}//end run()
+	}//end runInner()
 
 	/**
 	 * Whether a FiscalPeriod record already exists for the given
