@@ -172,7 +172,7 @@
 				{
 					"_fragment": "20-tenderned-integratie",
 					"id": "CommitmentDetail",
-					"route": "/inkoop/verplichtingen/:id",
+					"route": "/inkoop/commitments/:id",
 					"type": "detail",
 					"title": "Commitment"
 				}
@@ -3374,49 +3374,49 @@
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
 					"id": "CommitmentsRegister",
-					"route": "/verplichtingen",
+					"route": "/commitments",
 					"type": "index",
 					"title": "Commitments register"
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
 					"id": "CommitmentDetail",
-					"route": "/verplichtingen/:id",
+					"route": "/commitments/:id",
 					"type": "detail",
 					"title": "Commitment"
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
 					"id": "BudgetLineCommitments",
-					"route": "/verplichtingen/budget-lines",
+					"route": "/commitments/budget-lines",
 					"type": "custom",
 					"title": "Committed vs. realised"
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
 					"id": "Mandates",
-					"route": "/verplichtingen/mandaten",
+					"route": "/commitments/mandates",
 					"type": "index",
 					"title": "Mandates"
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
 					"id": "MandateDetail",
-					"route": "/verplichtingen/mandaten/:id",
+					"route": "/commitments/mandates/:id",
 					"type": "detail",
 					"title": "Mandate"
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
 					"id": "ApprovalSteps",
-					"route": "/verplichtingen/goedkeuringen",
+					"route": "/commitments/approvals",
 					"type": "index",
 					"title": "Approvals"
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
 					"id": "ApprovalStepDetail",
-					"route": "/verplichtingen/goedkeuringen/:id",
+					"route": "/commitments/approvals/:id",
 					"type": "detail",
 					"title": "Approval step"
 				}

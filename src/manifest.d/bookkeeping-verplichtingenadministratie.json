@@ -40,7 +40,7 @@
 	"pages": [
 		{
 			"id": "CommitmentsRegister",
-			"route": "/verplichtingen",
+			"route": "/commitments",
 			"type": "index",
 			"title": "Commitments register",
 			"config": {
@@ -61,7 +61,7 @@
 		},
 		{
 			"id": "CommitmentDetail",
-			"route": "/verplichtingen/:id",
+			"route": "/commitments/:id",
 			"type": "detail",
 			"title": "Commitment",
 			"config": {
@@ -144,7 +144,7 @@
 		},
 		{
 			"id": "BudgetLineCommitments",
-			"route": "/verplichtingen/budget-lines",
+			"route": "/commitments/budget-lines",
 			"type": "custom",
 			"title": "Committed vs. realised",
 			"component": "BudgetLineCommitments",
@@ -152,7 +152,7 @@
 		},
 		{
 			"id": "Mandates",
-			"route": "/verplichtingen/mandaten",
+			"route": "/commitments/mandates",
 			"type": "index",
 			"title": "Mandates",
 			"config": {
@@ -171,7 +171,7 @@
 		},
 		{
 			"id": "MandateDetail",
-			"route": "/verplichtingen/mandaten/:id",
+			"route": "/commitments/mandates/:id",
 			"type": "detail",
 			"title": "Mandate",
 			"config": {
@@ -215,7 +215,7 @@
 		},
 		{
 			"id": "ApprovalSteps",
-			"route": "/verplichtingen/goedkeuringen",
+			"route": "/commitments/approvals",
 			"type": "index",
 			"title": "Approvals",
 			"config": {
@@ -234,7 +234,7 @@
 		},
 		{
 			"id": "ApprovalStepDetail",
-			"route": "/verplichtingen/goedkeuringen/:id",
+			"route": "/commitments/approvals/:id",
 			"type": "detail",
 			"title": "Approval step",
 			"config": {
