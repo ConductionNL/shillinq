@@ -100,6 +100,28 @@ class TenderNedAwardPromotionJobTest extends TestCase {
 	}//end job()
 
 	/**
+	 * Build a buffered entry in the shape `dispatchPromotion()` queues.
+	 *
+	 * @param string $uuid     Dossier uuid — what the listener re-reads by.
+	 * @param string $tenderId Tender id carried in the payload.
+	 * @param string $schema   Schema slug captured at dispatch time.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function entry(
+		string $uuid,
+		string $tenderId,
+		string $schema = 'TenderNedProcurement',
+	): array {
+		return [
+			'uuid'    => $uuid,
+			'schema'  => $schema,
+			'payload' => ['tenderId' => $tenderId],
+		];
+
+	}//end entry()
+
+	/**
 	 * Wrap entries in a context.
 	 *
 	 * @param array<int, array<string, mixed>> $entries Buffered entries.
@@ -126,56 +148,87 @@ class TenderNedAwardPromotionJobTest extends TestCase {
 		$seen = [];
 		$listener->method('runDeferredPromotion')
 			->willReturnCallback(
-				function (array $payload) use (&$seen): void {
-					$seen[] = $payload['tenderId'];
+				function (array $entry) use (&$seen): void {
+					$seen[] = $entry['uuid'];
 				}
 			);
 
 		$this->job($listener)->runForTest(
 			$this->context(
 				[
-					['payload' => ['tenderId' => 'TN-1']],
-					['payload' => ['tenderId' => 'TN-2']],
+					$this->entry('u-1', 'TN-1'),
+					$this->entry('u-2', 'TN-2'),
 				]
 			)
 		);
 
-		$this->assertSame(['TN-1', 'TN-2'], $seen);
+		$this->assertSame(['u-1', 'u-2'], $seen);
 
 	}//end testEachBufferedEntryIsPromoted()
 
 	/**
-	 * An entry with no payload is skipped, and does NOT stop the batch.
+	 * The whole entry reaches the listener, not just the payload.
+	 *
+	 * The listener re-resolves the dossier by uuid and schema before it
+	 * promotes anything (ADR-078: at-least-once delivery). A job that forwarded
+	 * only the payload would leave it with nothing to re-read, and the
+	 * promotion would silently fall back to acting on the stale snapshot.
+	 *
+	 * @return void
+	 */
+	public function testTheEntryIdentityReachesTheListener(): void {
+		$listener = $this->createMock(TenderNedAwardDetectedListener::class);
+
+		$received = null;
+		$listener->method('runDeferredPromotion')
+			->willReturnCallback(
+				function (array $entry) use (&$received): void {
+					$received = $entry;
+				}
+			);
+
+		$this->job($listener)->runForTest(
+			$this->context([$this->entry('u-9', 'TN-9', 'TenderNedAanbesteding')])
+		);
+
+		$this->assertSame('u-9', $received['uuid']);
+		$this->assertSame('TenderNedAanbesteding', $received['schema']);
+		$this->assertSame('TN-9', $received['payload']['tenderId']);
+
+	}//end testTheEntryIdentityReachesTheListener()
+
+	/**
+	 * An entry with no uuid is skipped, and does NOT stop the batch.
 	 *
 	 * A malformed entry aborting the loop would silently drop every award
 	 * queued behind it in the same flush.
 	 *
 	 * @return void
 	 */
-	public function testEntryWithoutPayloadIsSkippedWithoutStoppingTheBatch(): void {
+	public function testEntryWithoutUuidIsSkippedWithoutStoppingTheBatch(): void {
 		$listener = $this->createMock(TenderNedAwardDetectedListener::class);
 
 		$seen = [];
 		$listener->method('runDeferredPromotion')
 			->willReturnCallback(
-				function (array $payload) use (&$seen): void {
-					$seen[] = $payload['tenderId'];
+				function (array $entry) use (&$seen): void {
+					$seen[] = $entry['uuid'];
 				}
 			);
 
 		$this->job($listener)->runForTest(
 			$this->context(
 				[
-					['payload' => 'not-an-array'],
+					['payload' => ['tenderId' => 'TN-orphan']],
 					[],
-					['payload' => ['tenderId' => 'TN-3']],
+					$this->entry('u-3', 'TN-3'),
 				]
 			)
 		);
 
-		$this->assertSame(['TN-3'], $seen);
+		$this->assertSame(['u-3'], $seen);
 
-	}//end testEntryWithoutPayloadIsSkippedWithoutStoppingTheBatch()
+	}//end testEntryWithoutUuidIsSkippedWithoutStoppingTheBatch()
 
 	/**
 	 * A throwing promotion is fail-soft and the batch continues.
@@ -192,25 +245,25 @@ class TenderNedAwardPromotionJobTest extends TestCase {
 		$seen = [];
 		$listener->method('runDeferredPromotion')
 			->willReturnCallback(
-				function (array $payload) use (&$seen): void {
-					if ($payload['tenderId'] === 'TN-BOOM') {
+				function (array $entry) use (&$seen): void {
+					if ($entry['uuid'] === 'u-boom') {
 						throw new RuntimeException('promotion exploded');
 					}
 
-					$seen[] = $payload['tenderId'];
+					$seen[] = $entry['uuid'];
 				}
 			);
 
 		$this->job($listener)->runForTest(
 			$this->context(
 				[
-					['payload' => ['tenderId' => 'TN-BOOM']],
-					['payload' => ['tenderId' => 'TN-4']],
+					$this->entry('u-boom', 'TN-BOOM'),
+					$this->entry('u-4', 'TN-4'),
 				]
 			)
 		);
 
-		$this->assertSame(['TN-4'], $seen);
+		$this->assertSame(['u-4'], $seen);
 
 	}//end testThrowingPromotionIsFailSoftAndBatchContinues()
 
@@ -221,7 +274,7 @@ class TenderNedAwardPromotionJobTest extends TestCase {
 	 */
 	public function testUnresolvableListenerDropsTheBatchQuietly(): void {
 		$this->job(null)->runForTest(
-			$this->context([['payload' => ['tenderId' => 'TN-5']]])
+			$this->context([$this->entry('u-5', 'TN-5')])
 		);
 
 		$this->assertTrue(true, 'runDeferred() returned without throwing');

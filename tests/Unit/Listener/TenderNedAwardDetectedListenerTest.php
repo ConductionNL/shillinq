@@ -167,6 +167,79 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 				return [];
 			}
 
+			/**
+			 * Current body the deferred re-read resolves to, or null for gone.
+			 *
+			 * @var array<string, mixed>|null
+			 */
+			public ?array $dossier = null;
+
+			/**
+			 * Soft-delete marker returned by the re-read.
+			 *
+			 * @var array<string, mixed>|null
+			 */
+			public ?array $dossierDeleted = null;
+
+			/**
+			 * Records what the deferred re-read asked for.
+			 *
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $finds = [];
+
+			/**
+			 * Stand in for ObjectService::find(). Parameter NAMES matter — the
+			 * listener calls this with named arguments.
+			 *
+			 * @param string|int   $id       Object uuid.
+			 * @param array|null   $_extend  Unused.
+			 * @param bool         $files    Unused.
+			 * @param string|null  $register Register slug.
+			 * @param string|null  $schema   Schema slug.
+			 *
+			 * @return object|null
+			 */
+			public function find(
+				string | int $id,
+				?array $_extend = [],
+				bool $files = false,
+				string | null $register = null,
+				string | null $schema = null,
+			): ?object {
+				$this->finds[] = ['id' => $id, 'register' => $register, 'schema' => $schema];
+				if ($this->dossier === null) {
+					return null;
+				}
+
+				return new class($this->dossier, $this->dossierDeleted) {
+
+					/**
+					 * @param array<string, mixed>      $body    Object body.
+					 * @param array<string, mixed>|null $deleted Delete marker.
+					 */
+					public function __construct(
+						private readonly array $body,
+						private readonly ?array $deleted,
+					) {
+					}
+
+					/**
+					 * @return array<string, mixed>
+					 */
+					public function getObject(): array {
+						return $this->body;
+					}
+
+					/**
+					 * @return array<string, mixed>|null
+					 */
+					public function getDeleted(): ?array {
+						return $this->deleted;
+					}
+				};
+			}
+
 			public function saveObject(array $object): array {
 				$this->saves[] = ['schema' => $this->currentSchema, 'object' => $object];
 				return $object;
@@ -265,10 +338,14 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 	 *
 	 * @return ObjectEntity
 	 */
-	private function entity(string $schemaId, array $payload): ObjectEntity {
+	private function entity(string $schemaId, array $payload, string $uuid = 'dossier-uuid-1'): ObjectEntity {
 		$entity = new ObjectEntity();
 		$entity->setSchema($schemaId);
 		$entity->setObject($payload);
+		// A uuid is not decoration here: it is the identity the deferred
+		// promotion re-reads by. Without it the listener cannot honour the
+		// at-least-once contract and deliberately stays inline.
+		$entity->setUuid($uuid);
 		return $entity;
 	}//end entity()
 
@@ -610,13 +687,14 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 		[$container, $recorder] = $this->containerAndRecorder([]);
 		[$listener, $dispatcher] = $this->listener($container, '30280353');
 
+		// The dossier as it stands NOW — this, not the buffered payload, is
+		// what the promotion must be built from.
+		$recorder->dossier = $this->awardBody('TN-2026-0002');
+
 		$listener->runDeferredPromotion([
-			'tenderId'       => 'TN-2026-0002',
-			'title'          => 'Onderhoud',
-			'contractValue'  => 12000.0,
-			'assignmentType' => 'other',
-			'termStart'      => '2026-02-01',
-			'termEnd'        => '2026-11-30',
+			'uuid'    => 'dossier-uuid-1',
+			'schema'  => 'TenderNedProcurement',
+			'payload' => ['tenderId' => 'STALE-SHOULD-NOT-BE-USED'],
 		]);
 
 		$commitmentSave = null;
@@ -628,9 +706,116 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 		}
 
 		$this->assertNotNull($commitmentSave);
+		// Proves the promotion used the re-read body, not the buffered one.
 		$this->assertSame('TN-2026-0002', $commitmentSave['sourceReference']);
 		$this->assertSame('active', $commitmentSave['status']);
 		$this->assertCount(1, $dispatcher->events);
 
+		// And it re-read by the identity captured at dispatch time.
+		$this->assertSame('dossier-uuid-1', $recorder->finds[0]['id']);
+		$this->assertSame('TenderNedProcurement', $recorder->finds[0]['schema']);
+
 	}//end testRunDeferredPromotionWritesTheCommitment()
+
+	/**
+	 * A dossier deleted between the event and the job must not promote.
+	 *
+	 * Deferred delivery is at-least-once, so the job can land after a delete
+	 * or a same-uuid re-create. Promoting the buffered snapshot would create
+	 * a Commitment referencing an award that no longer exists — and because
+	 * the promotion is fail-soft, nothing downstream would report it.
+	 *
+	 * @return void
+	 */
+	public function testDeletedDossierIsNotPromoted(): void {
+		[$container, $recorder] = $this->containerAndRecorder([]);
+		[$listener, $dispatcher] = $this->listener($container, '30280353');
+
+		$recorder->dossier = null;
+
+		$listener->runDeferredPromotion([
+			'uuid'    => 'dossier-uuid-1',
+			'schema'  => 'TenderNedProcurement',
+			'payload' => $this->awardBody('TN-2026-0003'),
+		]);
+
+		$this->assertSame([], $recorder->saves);
+		$this->assertCount(0, $dispatcher->events);
+
+	}//end testDeletedDossierIsNotPromoted()
+
+	/**
+	 * A soft-deleted dossier counts as gone.
+	 *
+	 * `find()` still returns the entity for a soft-deleted object, so a null
+	 * check alone would sail straight past it and promote a deleted dossier.
+	 *
+	 * @return void
+	 */
+	public function testSoftDeletedDossierIsNotPromoted(): void {
+		[$container, $recorder] = $this->containerAndRecorder([]);
+		[$listener, $dispatcher] = $this->listener($container, '30280353');
+
+		$recorder->dossier        = $this->awardBody('TN-2026-0004');
+		$recorder->dossierDeleted = ['deletedAt' => '2026-08-24T05:00:00Z'];
+
+		$listener->runDeferredPromotion([
+			'uuid'    => 'dossier-uuid-1',
+			'schema'  => 'TenderNedProcurement',
+			'payload' => $this->awardBody('TN-2026-0004'),
+		]);
+
+		$this->assertSame([], $recorder->saves);
+		$this->assertCount(0, $dispatcher->events);
+
+	}//end testSoftDeletedDossierIsNotPromoted()
+
+	/**
+	 * An award reverted before the job runs must not promote.
+	 *
+	 * The buffered payload said `gegund`; the dossier no longer does. The
+	 * eligibility rules have to be re-applied to the CURRENT body, or moving
+	 * the work to cron would quietly promote awards that were taken back.
+	 *
+	 * @return void
+	 */
+	public function testAwardRevertedBeforeTheJobRunsIsNotPromoted(): void {
+		[$container, $recorder] = $this->containerAndRecorder([]);
+		[$listener, $dispatcher] = $this->listener($container, '30280353');
+
+		$reverted           = $this->awardBody('TN-2026-0005');
+		$reverted['status'] = 'open';
+		$recorder->dossier  = $reverted;
+
+		$listener->runDeferredPromotion([
+			'uuid'    => 'dossier-uuid-1',
+			'schema'  => 'TenderNedProcurement',
+			'payload' => $this->awardBody('TN-2026-0005'),
+		]);
+
+		$this->assertSame([], $recorder->saves);
+		$this->assertCount(0, $dispatcher->events);
+
+	}//end testAwardRevertedBeforeTheJobRunsIsNotPromoted()
+
+	/**
+	 * An eligible award body, as stored on the dossier.
+	 *
+	 * @param string $tenderId Tender id.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function awardBody(string $tenderId): array {
+		return [
+			'status'          => 'gegund',
+			'contractValue'   => 12000.0,
+			'awardedSupplier' => '30280353 Conduction B.V.',
+			'tenderId'        => $tenderId,
+			'title'           => 'Onderhoud',
+			'assignmentType'  => 'other',
+			'termStart'       => '2026-02-01',
+			'termEnd'         => '2026-11-30',
+		];
+
+	}//end awardBody()
 }//end class
