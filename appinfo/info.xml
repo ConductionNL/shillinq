@@ -258,6 +258,22 @@ Vrij en open source onder de EUPL-1.2-licentie.
                 as "nothing to do", so the loss is silent.
             -->
             <step>OCA\Shillinq\Repair\RenameDutchValues</step>
+            <!--
+                Must run AFTER RenameDutchValues, which moves the scalar
+                `Commitment.kind` column this list mirrors.
+                `Mandate.kind_commitment` holds the SAME four values but as a
+                JSON ARRAY, and ValueMigrationPort::rewrite() is an equality
+                UPDATE on the whole cell — against `["inkooporder","leasing"]`
+                it matches nothing and returns 0. So this cannot be a bucket in
+                the RenameDutchValues map; a map entry would report success
+                having migrated no mandate at all.
+                Without it MandateEnforcer's `in_array($kind, $soorten, true)`
+                compares an English kind against stored Dutch members and the
+                mandate silently stops applying — an empty list already means
+                "any kind", so nothing errors. Idempotent, list-only,
+                non-destructive, fail-soft.
+            -->
+            <step>OCA\Shillinq\Repair\RenameMandateCommitmentKinds</step>
         </post-migration>
 
         <!-- FRESH INSTALL. Nextcloud does NOT run `post-migration` on a first

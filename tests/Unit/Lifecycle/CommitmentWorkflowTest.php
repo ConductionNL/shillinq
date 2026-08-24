@@ -216,11 +216,11 @@ class CommitmentWorkflowTest extends TestCase {
 
 	/**
 	 * REQ-VPL-001 + REQ-VPL-002, T2.3 scenario 1: mandate-covered + budget-blocked
-	 * sign of an inkooporder.
+	 * sign of a purchase_order.
 	 *
 	 * GIVEN a gemeente administration with a EUR 500k budget on programma 5.1 /
-	 * boekjaar 2026 and a user mandate covering EUR 100k inkooporders
-	 * WHEN a EUR 75k inkooporder is moved to `aangegaan`
+	 * boekjaar 2026 and a user mandate covering EUR 100k purchase orders
+	 * WHEN a EUR 75k purchase order is moved to `committed`
 	 * THEN MandateEnforcer.hasSufficientMandate returns true AND
 	 *      BudgetBlocker.canCommit returns true AND
 	 *      BudgetBlocker.freeRoom decreases by EUR 75k after the commitment is recorded.
@@ -258,8 +258,8 @@ class CommitmentWorkflowTest extends TestCase {
 	/**
 	 * REQ-VPL-002, T2.4: mandate-exceeded routes to approval workflow.
 	 *
-	 * GIVEN a user mandate covering only EUR 50k inkooporders
-	 * WHEN a EUR 75k inkooporder is moved to `aangegaan`
+	 * GIVEN a user mandate covering only EUR 50k purchase orders
+	 * WHEN a EUR 75k purchase order is moved to `committed`
 	 * THEN MandateEnforcer.requiresApproval returns true,
 	 *      hasSufficientMandate returns false,
 	 *      and BudgetBlocker.canCommit still returns true (budget room exists, just
@@ -281,7 +281,7 @@ class CommitmentWorkflowTest extends TestCase {
 			)
 		);
 
-		// Mandate check fails → must route to in_goedkeuring (ApprovalStep created).
+		// Mandate check fails → must route to in_approval (ApprovalStep created).
 		$this->assertFalse($this->mandate->hasSufficientMandate('PO-1', $mandatory));
 		$this->assertTrue($this->mandate->requiresApproval('PO-1', $mandatory));
 
@@ -444,7 +444,7 @@ class CommitmentWorkflowTest extends TestCase {
 				'administrationId' => 'adm-1',
 				'mandateCode' => 'M-INKOOP-100K',
 				'maximumAmount' => 10000000,
-				'kind_commitment' => ['inkooporder', 'frameworkAgreement'],
+				'kind_commitment' => ['purchase_order', 'frameworkAgreement'],
 				'is_override' => false,
 				'valid_from' => '2020-01-01',
 				'valid_to' => '2999-12-31',
@@ -455,7 +455,7 @@ class CommitmentWorkflowTest extends TestCase {
 	}//end makeMandate()
 
 	/**
-	 * Helper: build a single-line inkooporder commitment on programma 5.1 / 2026.
+	 * Helper: build a single-line purchase-order commitment on programma 5.1 / 2026.
 	 *
 	 * @param int $amount Amount in minor units.
 	 *
@@ -465,7 +465,7 @@ class CommitmentWorkflowTest extends TestCase {
 		return [
 			'administrationId' => 'adm-1',
 			'commitmentNumber' => 'PO-1',
-			'kind' => 'inkooporder',
+			'kind' => 'purchase_order',
 			'total_amount_excl_vat' => $amount,
 			'rules' => [
 				[

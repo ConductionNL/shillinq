@@ -91,7 +91,7 @@
 				},
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"commitmentNumber\": \"V-NEWMAN-0001\",\n  \"description\": \"Newman concept obligation\",\n  \"kind\": \"inkooporder\",\n  \"source\": \"tenderned\",\n  \"sourceReference\": \"{{tender_aanbesteding_id}}\",\n  \"amount\": 50000.0,\n  \"termStart\": \"2026-07-01\",\n  \"termEnd\": \"2027-06-30\",\n  \"status\": \"draft\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"milestones\": []\n}"
+					"raw": "{\n  \"commitmentNumber\": \"V-NEWMAN-0001\",\n  \"description\": \"Newman concept obligation\",\n  \"kind\": \"purchase_order\",\n  \"source\": \"tenderned\",\n  \"sourceReference\": \"{{tender_aanbesteding_id}}\",\n  \"amount\": 50000.0,\n  \"termStart\": \"2026-07-01\",\n  \"termEnd\": \"2027-06-30\",\n  \"status\": \"draft\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"milestones\": []\n}"
 				}
 			},
 			"event": [{
