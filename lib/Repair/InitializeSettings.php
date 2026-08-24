@@ -184,6 +184,76 @@ class InitializeSettings implements IRepairStep {
 				return;
 			}
 
+			// EVERY SEEDER BELOW RUNS UNDER A SYSTEM IDENTITY.
+			//
+			// A repair step executes during `occ upgrade`, where there is no
+			// session — so OpenRegister resolves the actor as 'Anonymous' and
+			// refuses `create`. Measured on a live instance before this wrap
+			// existed, this one step emitted EIGHT such failures:
+			//
+			//   BBV stam-data seeding failed:      … schema 'Taakveld'
+			//   Demo barcode seeding issue:        … schema 'Barcode'
+			//   Inventory valuation example …:     … schema 'Inventory Valuation'
+			//   InventoryStock example …:          … schema 'Inventory Stock'
+			//   InventoryGLConfig seeding issue:   … schema 'Inventory GL Posting Configuration'
+			//   BBVProgramme demo seeding issue:   … schema 'BBV Programme'
+			//   Mandaat templates seeding issue:   … schema 'Mandaat'
+			//   FixedAssets demo seeding issue:    … schema 'Fixed Asset'
+			//
+			// Each was reported with `$output->warning()`, which does NOT fail an
+			// upgrade — so the upgrade said "Update successful" while eight sets
+			// of reference data were never written.
+			//
+			// The wrap is around the WHOLE block rather than each seeder: they
+			// resolve their own ObjectService instances, and one identity scope
+			// covering the block is both cheaper and impossible to half-apply.
+			// Resolved DEFENSIVELY, and the seeders run either way.
+			//
+			// An earlier revision of this fix resolved ObjectService directly
+			// here. That made a resolution failure abort EVERY seeder through the
+			// outer catch below — where previously each seeder handled its own
+			// failure and the rest still ran. Adding an identity must not cost
+			// the degradation behaviour that was already there.
+			$objectService = null;
+			try {
+				$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			} catch (\Throwable $e) {
+				$this->logger->warning(
+					'Shillinq: ObjectService unavailable; seeding without a system identity',
+					['exception' => $e->getMessage()]
+				);
+			}
+
+			if ($objectService !== null && method_exists($objectService, 'runAsSystem') === true) {
+				$objectService->runAsSystem(function () use ($output): void {
+					$this->runSeeders(output: $output);
+				});
+			} else {
+				$this->runSeeders(output: $output);
+			}
+		} catch (\Throwable $e) {
+			$output->warning('Could not auto-configure Shillinq: ' . $e->getMessage());
+			$this->logger->error(
+				'Shillinq initialization failed',
+				['exception' => $e->getMessage()]
+			);
+		}//end try
+
+	}//end run()
+
+	/**
+	 * Run every seeder, under whatever identity the caller established.
+	 *
+	 * Split out of run() so the entire sequence sits inside ONE runAsSystem()
+	 * scope. Wrapping each seeder separately would re-enter the scope a few
+	 * dozen times and, worse, make it possible to add a seeder that quietly
+	 * sits outside it.
+	 *
+	 * @param IOutput $output Progress reporting.
+	 *
+	 * @return void
+	 */
+	private function runSeeders(IOutput $output): void {
 			$this->seedDefaultAdministration(output: $output);
 			$this->migrateRevenueContractObjects(output: $output);
 			$this->seedChartOfAccounts(output: $output);
@@ -220,15 +290,7 @@ class InitializeSettings implements IRepairStep {
 			$this->seedWmoCommercialActivities(output: $output);
 			$this->seedSbrMappings(output: $output);
 			$this->seedFixedAssetsDemo(output: $output);
-		} catch (\Throwable $e) {
-			$output->warning('Could not auto-configure Shillinq: ' . $e->getMessage());
-			$this->logger->error(
-				'Shillinq initialization failed',
-				['exception' => $e->getMessage()]
-			);
-		}//end try
-
-	}//end run()
+	}//end runSeeders()
 
 	/**
 	 * Seed the default Administration on fresh install, idempotently (REQ-MA-001, REQ-MA-007).
