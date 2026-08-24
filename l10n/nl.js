@@ -1,5 +1,6 @@
-{
-    "translations": {
+OC.L10N.register(
+    "shillinq",
+    {
         "(no invoice number)": "(geen factuurnummer)",
         "(not recorded)": "(niet geregistreerd)",
         "1 to 2 year": "1 tot 2 jaar",
@@ -1620,7 +1621,7 @@
         "No LedgerGroup records exist yet for this administration. Create ledger groups to build a budget.": "Er bestaan nog geen verzamelposten voor deze administratie. Maak verzamelposten aan om een begroting op te bouwen.",
         "No OpenProject provider configured — reference stored but not resolved": "Geen OpenProject-provider geconfigureerd — referentie opgeslagen maar niet omgezet",
         "No Peppol participant found for this debtor — use PDF + email instead.": "Geen Peppol-deelnemer gevonden voor deze debiteur — gebruik in plaats daarvan PDF + e-mail.",
-        "No commitment line records exist yet. Approve a purchase order or sign a contract to materialise a commitment.": "Er zijn nog geen verplichtingsregels. Keur een inkooporder goed of teken een contract om een verplichting te materialiseren.",
+        "No Verplichtingsregel records exist yet. Approve a purchase order or sign a contract to materialise a commitment.": "Er zijn nog geen verplichtingsregels. Keur een inkooporder goed of teken een contract om een verplichting te materialiseren.",
         "No accessible administration.": "Geen toegankelijke administratie.",
         "No accounts yet": "Nog geen rekeningen",
         "No active programmes found for this fiscal year.": "Geen actieve programma's gevonden voor dit boekjaar.",
@@ -1885,7 +1886,7 @@
         "Per period (net)": "Per periode (netto)",
         "Per posting": "Per boeking",
         "Per-Country Distribution": "Verdeling per land",
-        "Per-budget-line breakdown of authorized, committed, realised and available budget, drilling down to the underlying commitments.": "Per-budgetregel overzicht van geautoriseerd, verplicht, gerealiseerd en vrij budget, met doorklikken naar de onderliggende verplichtingen.",
+        "Per-budget-line breakdown of authorized, committed, realised and available budget, drilling down to the underlying commitments (Verplichtingen).": "Per-budgetregel overzicht van geautoriseerd, verplicht, gerealiseerd en vrij budget, met doorklikken naar de onderliggende verplichtingen.",
         "Per-segment profit and loss roll-up across cost centers, projects, and operator-defined analytical dimensions. Driven by the server-side aggregations on GLLine — no client-side recomputation.": "Winst-en-verliesoverzicht per segment over kostenplaatsen, projecten en door de beheerder gedefinieerde analytische dimensies. Gebaseerd op de server-side aggregaties op GLLine — geen herberekening aan de clientzijde.",
         "Performance Accountability Report": "Prestatieverantwoording",
         "Performance received": "Prestatie ontvangen",
@@ -2921,10 +2922,7 @@
         "ZZP Deduction": "ZZP-aftrek",
         "ZZP-aftrek": "ZZP-aftrek",
         "Zelfstandigenaftrek": "Zelfstandigenaftrek",
-        "_%n invoice outstanding_::_%n invoices outstanding_": [
-            "%n openstaande factuur",
-            "%n openstaande facturen"
-        ],
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n openstaande factuur","%n openstaande facturen"],
         "active": "actief",
         "actual": "werkelijk",
         "automatically matched": "automatisch gematcht",
@@ -2985,6 +2983,5 @@
         "Unknown error": "Onbekende fout",
         "You are not a member of any administration, so there is no spend to report on.": "U bent geen lid van een administratie, dus er zijn geen uitgaven om over te rapporteren."
     },
-    "plurals": "",
-    "pluralForm": "nplurals=2; plural=(n != 1);"
-}
+    "nplurals=2; plural=(n != 1);"
+)

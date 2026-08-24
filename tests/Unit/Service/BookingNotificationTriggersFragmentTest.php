@@ -130,46 +130,84 @@ final class BookingNotificationTriggersFragmentTest extends TestCase {
 	}//end testTriggerLifecycleDeclaresEnabledDisabledArchived()
 
 	/**
-	 * Trigger fragment defines the x-openregister-notifications binding the
-	 * engine consumes (selectTemplate.byType maps each trigger type onto
-	 * the bookings-email-templates schemas).
+	 * The trigger fragment carries the fields a dispatching service needs, and
+	 * declares no notification rule the engine cannot execute.
 	 *
-	 * The trigger type and channel list are read off the stored trigger
-	 * object itself, expressed with the canonical `{{prop}}` interpolation
-	 * token — the legacy `@self.` form is the one gate-18 (ADR-031)
-	 * rejects inside a notification block.
+	 * This test used to assert `trigger === '{{triggerType}}'` and
+	 * `channels === '{{channels}}'` on a rule named `onTriggerEventFired`,
+	 * describing them as "the canonical {{prop}} interpolation token". That was
+	 * a misreading of the dialect, and the test pinned it in place: `{{prop}}`
+	 * interpolation applies to subject and message TEXT, never to the trigger
+	 * itself — a trigger is compared literally, so `{{triggerType}}` could only
+	 * ever match an event named `{{triggerType}}`. The rule also used five keys
+	 * the dialect has no concept of. It was a design sketch of what a
+	 * user-configured trigger OBJECT contains, sitting in the slot reserved for
+	 * rules the engine dispatches FOR this schema, and it never fired.
+	 *
+	 * The sketch is preserved verbatim in the schema `_note`. What is asserted
+	 * here is what must actually hold: the object carries the fields that design
+	 * needs, and the schema declares no unexecutable rule.
 	 *
 	 * @return void
 	 */
-	public function testTriggerNotificationBindsToEmailTemplates(): void {
-		$data = $this->fragment();
-		$bind = $data['components']['schemas']['BookingNotificationTrigger']['x-openregister-notifications']['onTriggerEventFired'];
+	public function testTriggerCarriesTheFieldsADispatcherNeedsAndNoUnexecutableRule(): void {
+		$schema = $this->fragment()['components']['schemas']['BookingNotificationTrigger'];
 
-		self::assertSame('{{triggerType}}', $bind['trigger']);
-		self::assertSame('{{channels}}', $bind['channels']);
-		self::assertSame('BookingConfirmationTemplate', $bind['selectTemplate']['byType']['booking.created']);
-		self::assertSame('BookingCancellationTemplate', $bind['selectTemplate']['byType']['booking.cancelled']);
-		self::assertSame('BookingReminderTemplate', $bind['selectTemplate']['byType']['booking.reminder']);
-	}//end testTriggerNotificationBindsToEmailTemplates()
+		foreach (['triggerType', 'channels', 'recipients', 'appliesToBookingSlug', 'reminderHoursBeforeStart', 'templateOverrideSlug'] as $property) {
+			self::assertArrayHasKey(
+				$property,
+				$schema['properties'],
+				$property . ' is read by the service that dispatches these triggers'
+			);
+		}
+
+		self::assertArrayNotHasKey(
+			'x-openregister-notifications',
+			$schema,
+			'This schema describes user-configured triggers; a rule here would be dispatched FOR the schema, '
+			. 'which is not what the sketch meant. See the schema _note.'
+		);
+
+		self::assertStringContainsString(
+			'BookingConfirmationTemplate',
+			(string) ($schema['_note'] ?? ''),
+			'the template mapping the sketch defined must survive its removal'
+		);
+	}//end testTriggerCarriesTheFieldsADispatcherNeedsAndNoUnexecutableRule()
 
 	/**
-	 * No rule in the trigger fragment may carry the retired `@self.`
-	 * interpolation token (ADR-031 / gate-18). Written as a whole-block
-	 * scan so a future rule cannot reintroduce the legacy dialect in a
-	 * key this test does not name individually.
+	 * No NOTIFICATION block in this fragment may carry the retired `@self.`
+	 * interpolation token (ADR-031 / gate-18).
+	 *
+	 * Scoped to notification blocks on purpose. `@self.` is still the correct
+	 * token in `x-openregister-calculations` — this fragment uses it in
+	 * `count(@self.channels)` and three siblings — so a fragment-wide scan
+	 * reports legitimate usage as a violation. The previous version was scoped
+	 * correctly but asserted the block was non-empty first, which turned the
+	 * removal of a rule into a failure rather than a pass.
+	 *
+	 * Both traps are avoided by anchoring on the schemas (always present) and
+	 * scanning whatever notification blocks exist, however many that is.
 	 *
 	 * @return void
 	 */
 	public function testNoNotificationRuleUsesTheLegacySelfToken(): void {
-		$data = $this->fragment();
-		$notifications = ($data['components']['schemas']['BookingNotificationTrigger']['x-openregister-notifications'] ?? []);
+		$schemas = ($this->fragment()['components']['schemas'] ?? []);
 
-		self::assertNotEmpty($notifications);
-		self::assertStringNotContainsString(
-			'@self.',
-			(string)json_encode($notifications),
-			'x-openregister-notifications must use {{prop}}, not the legacy @self. token.'
-		);
+		self::assertNotEmpty($schemas, 'the fragment must declare schemas — an empty scan is not a pass');
+
+		foreach ($schemas as $name => $schema) {
+			$notifications = ($schema['x-openregister-notifications'] ?? null);
+			if (is_array($notifications) === false) {
+				continue;
+			}
+
+			self::assertStringNotContainsString(
+				'@self.',
+				(string) json_encode($notifications),
+				$name . ': x-openregister-notifications must use {{prop}}, not the legacy @self. token.'
+			);
+		}
 	}//end testNoNotificationRuleUsesTheLegacySelfToken()
 
 	/**

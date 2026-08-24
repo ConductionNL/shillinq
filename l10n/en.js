@@ -1,5 +1,6 @@
-{
-    "translations": {
+OC.L10N.register(
+    "shillinq",
+    {
         "(no invoice number)": "(no invoice number)",
         "(not recorded)": "(not recorded)",
         "1 to 2 year": "1 to 2 year",
@@ -1620,7 +1621,7 @@
         "No LedgerGroup records exist yet for this administration. Create ledger groups to build a budget.": "No LedgerGroup records exist yet for this administration. Create ledger groups to build a budget.",
         "No OpenProject provider configured — reference stored but not resolved": "No OpenProject provider configured — reference stored but not resolved",
         "No Peppol participant found for this debtor — use PDF + email instead.": "No Peppol participant found for this debtor — use PDF + email instead.",
-        "No commitment line records exist yet. Approve a purchase order or sign a contract to materialise a commitment.": "No commitment line records exist yet. Approve a purchase order or sign a contract to materialise a commitment.",
+        "No Verplichtingsregel records exist yet. Approve a purchase order or sign a contract to materialise a commitment.": "No Verplichtingsregel records exist yet. Approve a purchase order or sign a contract to materialise a commitment.",
         "No accessible administration.": "No accessible administration.",
         "No accounts yet": "No accounts yet",
         "No active programmes found for this fiscal year.": "No active programmes found for this fiscal year.",
@@ -1885,7 +1886,7 @@
         "Per period (net)": "Per period (net)",
         "Per posting": "Per posting",
         "Per-Country Distribution": "Per-Country Distribution",
-        "Per-budget-line breakdown of authorized, committed, realised and available budget, drilling down to the underlying commitments.": "Per-budget-line breakdown of authorized, committed, realised and available budget, drilling down to the underlying commitments.",
+        "Per-budget-line breakdown of authorized, committed, realised and available budget, drilling down to the underlying commitments (Verplichtingen).": "Per-budget-line breakdown of authorized, committed, realised and available budget, drilling down to the underlying commitments (Verplichtingen).",
         "Per-segment profit and loss roll-up across cost centers, projects, and operator-defined analytical dimensions. Driven by the server-side aggregations on GLLine — no client-side recomputation.": "Per-segment profit and loss roll-up across cost centers, projects, and operator-defined analytical dimensions. Driven by the server-side aggregations on GLLine — no client-side recomputation.",
         "Performance Accountability Report": "Performance Accountability Report",
         "Performance received": "Performance received",
@@ -2921,10 +2922,7 @@
         "ZZP Deduction": "ZZP Deduction",
         "ZZP-aftrek": "Self-employed deductions",
         "Zelfstandigenaftrek": "Self-employed deduction",
-        "_%n invoice outstanding_::_%n invoices outstanding_": [
-            "%n invoice outstanding",
-            "%n invoices outstanding"
-        ],
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n invoice outstanding","%n invoices outstanding"],
         "active": "active",
         "actual": "actual",
         "automatically matched": "automatically matched",
@@ -2985,6 +2983,5 @@
         "Unknown error": "Unknown error",
         "You are not a member of any administration, so there is no spend to report on.": "You are not a member of any administration, so there is no spend to report on."
     },
-    "plurals": "",
-    "pluralForm": "nplurals=2; plural=(n != 1);"
-}
+    "nplurals=2; plural=(n != 1);"
+)

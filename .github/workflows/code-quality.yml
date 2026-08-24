@@ -353,7 +353,17 @@ jobs:
       # Measured on this tree before enabling: PASSES, 216 of 222 tracked
       # frontend files in scope (docs/ excluded via .prettierignore; build
       # output via .gitignore, which prettier 3 also reads).
-      frontend-checks: '["check:manifest", "check:manifest-shell", "check:manifest-budget", "check:markers", "check:registers", "check:seeds", "check:fragment-required", "check:nav-reachability", "check:job-registration", "test:l10n", "format"]'
+      # `check:l10n-js` regenerates l10n/<locale>.js from the JSON catalogue and
+      # fails when the committed file is stale. Nextcloud serves ONLY the JS half
+      # to a browser — raw JSON out of an app directory is a 404 — so a catalogue
+      # that exists only as JSON renders English in the entire UI while every
+      # server-rendered string is translated, with no error anywhere.
+      # `check:schema-l10n` is a RATCHET, not a gate. Every string inside a form
+      # comes from the schema and is a key in THIS app's catalogue; an absent key
+      # renders the English source inside an otherwise translated form, silently.
+      # The fleet had 30,459 such strings, so this records the current count and
+      # fails only when it GROWS — burning it down stays an ordinary PR.
+      frontend-checks: '["check:manifest", "check:manifest-shell", "check:manifest-budget", "check:markers", "check:registers", "check:seeds", "check:fragment-required", "check:nav-reachability", "check:job-registration", "test:l10n", "format", "check:l10n-js", "check:schema-l10n"]'
 
       # ── Coverage ratchet ─────────────────────────────────────────────────
       # `enable-coverage-guard` defaults to FALSE, which is why both
