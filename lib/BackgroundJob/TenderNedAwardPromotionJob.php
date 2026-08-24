@@ -96,6 +96,8 @@ class TenderNedAwardPromotionJob extends ActorForwardedJob {
 	 * @param DeferredListenerContext $context Actor + buffered entries.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
 	 */
 	protected function runDeferred(DeferredListenerContext $context): void {
 		$listener = $this->resolveListener();
