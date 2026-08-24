@@ -63,7 +63,9 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Service\Deferral\ListenerDeferralService;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\BackgroundJob\TenderNedAwardPromotionJob;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\MilestoneTemplateService;
@@ -85,6 +87,18 @@ use Throwable;
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
  */
 class TenderNedAwardDetectedListener implements IEventListener {
+
+	/**
+	 * Dedupe prefix for buffered promotions.
+	 *
+	 * Combined with the tenderId this collapses the two surfaces
+	 * (`ObjectCreatedEvent` and `ObjectTransitionedEvent`) firing for the
+	 * same dossier in one request into a single queued promotion.
+	 *
+	 * @var string
+	 */
+	public const HANDLER_KEY = 'tenderned-award-detected';
+
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
@@ -126,12 +140,18 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 * is diff-scoped, so the rename is what pulled a long-standing registration
 	 * into scope rather than anything new.
 	 *
-	 * Deliberately NOT annotated with `@listener-placement inline`. That escape
-	 * hatch takes one of four closed ADR-078 categories (realtime, sapi-memory,
-	 * cheap-bounded, correctness) and none of them is true here — claiming one
-	 * would buy a green gate with a false declaration, which is worse than the
-	 * red. The fix is real deferral through OpenRegister's
-	 * ListenerDeferralService; see #1198.
+	 * Carries no inline-placement escape hatch. That declaration takes one of
+	 * four closed ADR-078 categories (realtime, sapi-memory, cheap-bounded,
+	 * correctness) and none of them was true here — claiming one would have
+	 * bought a green gate with a false declaration, which is worse than the red.
+	 * The fix was real deferral through OpenRegister's ListenerDeferralService
+	 * (#1198), and that is what this handler now does.
+	 *
+	 * The prose above deliberately does not spell the annotation out. Gate-61
+	 * finds its tag by regex and reads the next token as the category, so a
+	 * sentence MENTIONING the tag was parsed as a malformed declaration and
+	 * reported as "`.` is not one of the four closed categories" — a note
+	 * explaining why there was no annotation became an invalid one.
 	 */
 	public function handle(Event $event): void {
 		try {
@@ -144,7 +164,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 				return;
 			}
 
-			$this->promote(payload: $payload);
+			$this->dispatchPromotion(payload: $payload);
 		} catch (Throwable $e) {
 			// Fail-soft: never block the OR write path. The dossier itself
 			// is persisted; the promotion can be retried on the next event.
@@ -235,7 +255,88 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	}//end isAwardEligible()
 
 	/**
+	 * Route the promotion off the caller's write path (ADR-078, #1198).
+	 *
+	 * Falls back to running inline when deferral is unavailable or the admin
+	 * has switched OpenRegister to inline mode. That fallback is deliberate:
+	 * a promotion that silently never happens because the deferral service
+	 * could not be resolved would be indistinguishable from a dossier that
+	 * was not eligible, and this listener is the ONLY thing that turns an
+	 * award into a Commitment.
+	 *
+	 * @param array<string, mixed> $payload Eligible award payload.
+	 *
+	 * @return void
+	 */
+	private function dispatchPromotion(array $payload): void {
+		$deferral = $this->resolveDeferral();
+		if ($deferral === null || $deferral->isDeferralEnabled() === false) {
+			$this->promote(payload: $payload);
+			return;
+		}
+
+		// The payload crosses a job-argument boundary, so it must survive a
+		// JSON round-trip. It is an OR object body (scalars, arrays, nulls),
+		// which does — but a future field carrying an object or a resource
+		// would be dropped here rather than at the call site.
+		$deferral->defer(
+			jobClass: TenderNedAwardPromotionJob::class,
+			entry: ['payload' => $payload],
+			dedupeKey: (self::HANDLER_KEY . '|' . (string)($payload['tenderId'] ?? ''))
+		);
+
+	}//end dispatchPromotion()
+
+	/**
+	 * Run the promotion from the background job.
+	 *
+	 * Public only so `TenderNedAwardPromotionJob` can call back in; the
+	 * eligibility rules and the idempotency check stay owned by this class so
+	 * the inline and deferred paths cannot drift.
+	 *
+	 * @param array<string, mixed> $payload Award payload buffered by `dispatchPromotion()`.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+	 */
+	public function runDeferredPromotion(array $payload): void {
+		$this->promote(payload: $payload);
+
+	}//end runDeferredPromotion()
+
+	/**
+	 * Resolve OpenRegister's deferral service from the container (lazy).
+	 *
+	 * Lazy for the same reason `resolveObjectService()` is: this listener is
+	 * registered even on an instance where the service cannot be built, and a
+	 * typed constructor dependency would turn that into a resolution failure
+	 * at dispatch time instead of a logged skip.
+	 *
+	 * @return ListenerDeferralService|null Null when unavailable.
+	 */
+	private function resolveDeferral(): ?ListenerDeferralService {
+		try {
+			$deferral = $this->container->get(ListenerDeferralService::class);
+		} catch (Throwable $e) {
+			return null;
+		}
+
+		if (($deferral instanceof ListenerDeferralService) === false) {
+			return null;
+		}
+
+		return $deferral;
+
+	}//end resolveDeferral()
+
+	/**
 	 * Promote the aanbesteding to a Commitment (REQ-002 + REQ-003 + REQ-007).
+	 *
+	 * Reached from two paths now: `runDeferredPromotion()` on the deferred
+	 * path, and `dispatchPromotion()` directly when deferral is off. The
+	 * idempotency check below is what makes both safe under the deferral
+	 * service's at-least-once delivery.
 	 *
 	 * @param array<string, mixed> $payload Aanbesteding payload.
 	 *
