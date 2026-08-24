@@ -35,7 +35,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { becomesVisible } from './becomes-visible.js'
 
 const APP = '/apps/shillinq'
-const ROUTE = '/verplichtingen/budget-lines'
+const ROUTE = '/commitments/budget-lines'
 
 async function dismissWizard(page: Page): Promise<void> {
 	const wizard = page.locator('#firstrunwizard')

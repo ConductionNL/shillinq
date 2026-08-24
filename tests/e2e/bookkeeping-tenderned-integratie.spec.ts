@@ -53,10 +53,8 @@ test.describe('shillinq — bookkeeping-tenderned-integratie SPA smoke', () => {
 		await expect(page).toHaveTitle(/shillinq/i, { timeout: 15_000 })
 	})
 
-	test('Commitments index — mounts on /inkoop/verplichtingen', async ({
-		page,
-	}) => {
-		await page.goto(APP + '/inkoop/verplichtingen')
+	test('Commitments index — mounts on /inkoop/commitments', async ({ page }) => {
+		await page.goto(APP + '/inkoop/commitments')
 		await page.waitForLoadState('domcontentloaded')
 		await dismissWizard(page)
 
@@ -92,7 +90,7 @@ test.describe('shillinq — bookkeeping-tenderned-integratie SPA smoke', () => {
 		// new routes.
 		const inkoopLink = page
 			.locator(
-				'a[href*="/inkoop/tenderned"], a[href*="/inkoop/verplichtingen"], a[href*="/inkoop/mijn-contracten"], a:has-text("Inkoop"), a:has-text("TenderNed")',
+				'a[href*="/inkoop/tenderned"], a[href*="/inkoop/commitments"], a[href*="/inkoop/mijn-contracten"], a:has-text("Inkoop"), a:has-text("TenderNed")',
 			)
 			.first()
 

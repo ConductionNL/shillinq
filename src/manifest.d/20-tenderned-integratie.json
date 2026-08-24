@@ -106,7 +106,7 @@
 		},
 		{
 			"id": "CommitmentDetail",
-			"route": "/inkoop/verplichtingen/:id",
+			"route": "/inkoop/commitments/:id",
 			"type": "detail",
 			"title": "Commitment",
 			"config": {
