@@ -86,6 +86,18 @@ class CommitmentMaterialisationListener implements IEventListener {
 	 *
 	 * @throws InsufficientCommitmentBudgetException When a PO approval denies for insufficient budget (fail-closed).
 	 *
+	 * @listener-placement inline correctness — this handler must run INSIDE the
+	 *   write it observes, because the write's outcome depends on it. OR
+	 *   dispatches ObjectCreatedEvent synchronously in the same path as
+	 *   PurchaseOrderApprovalService::saveObject(), so an
+	 *   InsufficientCommitmentBudgetException raised here propagates back to the
+	 *   approval caller and fails the request. That propagation IS the mechanism
+	 *   REQ-VPL-010 relies on for "insufficient budget blocks the approval, not
+	 *   just the invoice". Deferring this through ListenerDeferralService would
+	 *   let the approval succeed and surface the denial later, which is the
+	 *   opposite of the specified behaviour — so the latency is the price of the
+	 *   guarantee rather than an oversight.
+	 *
 	 * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
 	 */
 	public function handle(Event $event): void {
