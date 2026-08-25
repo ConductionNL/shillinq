@@ -102,6 +102,8 @@ class LoadCbsSeedsStep implements IRepairStep {
 	 * @param IOutput $output Progress output interface.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
 	 */
 	public function run(IOutput $output): void {
 		$output->info('Seeding CBSSubmission + CBSLine example records...');

@@ -98,6 +98,8 @@ class StampJournalTypeOnGlTransactions implements IRepairStep {
 	 * @param IOutput $output The repair-step output (progress + warnings).
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
 	 */
 	public function run(IOutput $output): void {
 		// Under a system identity: an upgrade has no session, and OpenRegister
