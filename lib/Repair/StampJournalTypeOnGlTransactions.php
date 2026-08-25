@@ -118,6 +118,8 @@ class StampJournalTypeOnGlTransactions implements IRepairStep {
 	 * exactly as it ran before this wrapper existed.
 	 *
 	 * @return object|null The service.
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
 	 */
 	private function resolveObjectServiceForIdentity(): ?object {
 		try {

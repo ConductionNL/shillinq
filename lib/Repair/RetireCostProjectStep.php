@@ -149,6 +149,8 @@ class RetireCostProjectStep implements IRepairStep {
 	 * as it did before this wrapper existed.
 	 *
 	 * @return object|null The service.
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
 	 */
 	private function resolveObjectServiceForIdentity(): ?object {
 		try {
