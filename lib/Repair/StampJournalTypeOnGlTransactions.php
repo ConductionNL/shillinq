@@ -133,6 +133,8 @@ class StampJournalTypeOnGlTransactions implements IRepairStep {
 	 * @param IOutput $output The repair-step output (progress + warnings).
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
 	 */
 	private function runInner(IOutput $output): void {
 		try {

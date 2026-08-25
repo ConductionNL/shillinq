@@ -122,6 +122,8 @@ class BackfillFiscalPeriods implements IRepairStep {
 	 * @param IOutput $output Progress reporting.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
 	 */
 	private function runInner(IOutput $output): void {
 		try {

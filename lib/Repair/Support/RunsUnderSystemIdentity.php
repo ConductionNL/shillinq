@@ -38,7 +38,7 @@ namespace OCA\Shillinq\Repair\Support;
  * was written. On a seeded instance it is quieter still: the step skips because
  * the data already exists, so it never attempts the create that would fail.
  *
- * @spec openspec/specs/repair-steps/spec.md
+ * @spec openspec/specs/app-administration/spec.md
  */
 trait RunsUnderSystemIdentity {
 	/**
@@ -56,7 +56,7 @@ trait RunsUnderSystemIdentity {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/repair-steps/spec.md
+	 * @spec openspec/specs/app-administration/spec.md
 	 */
 	private function withSystemIdentity(?object $objectService, callable $work): void {
 		if ($objectService !== null && method_exists($objectService, 'runAsSystem') === true) {

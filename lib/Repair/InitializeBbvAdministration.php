@@ -134,6 +134,8 @@ class InitializeBbvAdministration implements IRepairStep {
 	 * @param IOutput $output The output interface for progress reporting.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
 	 */
 	private function runInner(object $objectService, IOutput $output): void {
 

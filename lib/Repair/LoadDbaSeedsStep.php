@@ -145,6 +145,8 @@ class LoadDbaSeedsStep implements IRepairStep {
 	 * @param IOutput $output Progress reporting.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
 	 */
 	private function runInner(object $objectService, array $objects, IOutput $output): void {
 		$registerSlug = $this->register();

@@ -253,6 +253,8 @@ class InitializeSettings implements IRepairStep {
 	 * @param IOutput $output Progress reporting.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
 	 */
 	private function runSeeders(IOutput $output): void {
 			$this->seedDefaultAdministration(output: $output);
