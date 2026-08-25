@@ -54,6 +54,7 @@ use Psr\Log\LoggerInterface;
  *     pending a dedicated refactor.
  */
 class LoadCbsSeedsStep implements IRepairStep {
+	use \OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 
 	/**
 	 * Absolute path to the canonical seed JSON (the register fragment).
@@ -101,6 +102,8 @@ class LoadCbsSeedsStep implements IRepairStep {
 	 * @param IOutput $output Progress output interface.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
 	 */
 	public function run(IOutput $output): void {
 		$output->info('Seeding CBSSubmission + CBSLine example records...');
@@ -135,6 +138,29 @@ class LoadCbsSeedsStep implements IRepairStep {
 			return;
 		}
 
+		// Under a system identity: an upgrade has no session, and OpenRegister
+		// refuses `create` for 'Anonymous'. Without it this seed writes nothing
+		// and says so only in a warning, which does not fail an upgrade.
+		$this->withSystemIdentity(
+			objectService: $objectService,
+			work: function () use ($objectService, $objects, $output): void {
+				$this->runInner(objectService: $objectService, objects: $objects, output: $output);
+			}
+		);
+	}//end run()
+
+	/**
+	 * The seed itself.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param array<int, mixed> $objects The seed objects.
+	 * @param IOutput $output Progress reporting.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
+	 */
+	private function runInner(object $objectService, array $objects, IOutput $output): void {
 		$registerSlug = $this->register();
 		$seeded = 0;
 		$skipped = 0;
@@ -205,7 +231,7 @@ class LoadCbsSeedsStep implements IRepairStep {
 			)
 		);
 
-	}//end run()
+	}//end runInner()
 
 	/**
 	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.

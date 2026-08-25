@@ -63,6 +63,7 @@ namespace OCA\Shillinq\Repair;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\IAppConfig;
@@ -78,6 +79,7 @@ use Psr\Log\LoggerInterface;
  */
 class BackfillGlLineAdministration implements IRepairStep {
 	use ReadsSourceRowsInBatches;
+	use RunsUnderSystemIdentity;
 
 	/**
 	 * Constructor.
@@ -125,6 +127,32 @@ class BackfillGlLineAdministration implements IRepairStep {
 		// rather than serving unscoped totals or silent zeros.
 		$this->closeGate();
 
+		// Under a system identity: an upgrade has no session, and OpenRegister
+		// refuses the write for 'Anonymous'. This step carries `_rbac: false`,
+		// which is NOT sufficient on its own — measured in InitializeSettings,
+		// a step flagging every one of its own writes still failed eight times,
+		// because the refusals arrive from writes further down the call chain.
+		//
+		// The gate is closed BEFORE the scope so it stays shut even if
+		// establishing the identity throws.
+		$this->withSystemIdentity(
+			objectService: $this->objectService,
+			work: function () use ($output): void {
+				$this->runInner(output: $output);
+			}
+		);
+	}//end run()
+
+	/**
+	 * The backfill itself.
+	 *
+	 * @param IOutput $output Progress reporting.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
+	 */
+	private function runInner(IOutput $output): void {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();
 
@@ -170,7 +198,7 @@ class BackfillGlLineAdministration implements IRepairStep {
 			);
 		}//end try
 
-	}//end run()
+	}//end runInner()
 
 	/**
 	 * Re-read every `GLLine` and open the gate only on a zero-missing total.
