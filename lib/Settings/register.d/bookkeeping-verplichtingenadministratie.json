@@ -147,7 +147,7 @@
             "example": 6050000,
             "title": "Totaalbedrag Incl BTW"
           },
-          "valuta": {
+          "currency": {
             "type": "string",
             "description": "ISO 4217 currency code. EUR-only in this tier.",
             "default": "EUR",
@@ -197,7 +197,7 @@
             "example": "Spoedlevering approved door CFO",
             "title": "Override Reden"
           },
-          "interne_reference": {
+          "internal_reference": {
             "type": "string",
             "nullable": true,
             "description": "Optional internal reference (contract number, dossier, etc.).",
@@ -216,7 +216,7 @@
             ],
             "title": "Rechtmatigheidstoetsen"
           },
-          "documenten": {
+          "documents": {
             "type": "array",
             "nullable": true,
             "description": "File URIs (e.g. docudesk) for the signed PO/contract/beschikking.",
@@ -618,7 +618,7 @@
             "example": 5000000,
             "title": "Bedrag"
           },
-          "valuta": {
+          "currency": {
             "type": "string",
             "description": "ISO 4217 currency code.",
             "default": "EUR",
@@ -1266,7 +1266,7 @@
       "status": "committed",
       "commencementDate": "2026-02-10",
       "total_amount_excl_vat": 4000000,
-      "interne_reference": "Eindafrekening 20% restant nog te ontvangen",
+      "internal_reference": "Eindafrekening 20% restant nog te ontvangen",
       "counterparty": {
         "kind": "grantRecipient",
         "name": "Stichting Cultuurhuis Zuidoost"
