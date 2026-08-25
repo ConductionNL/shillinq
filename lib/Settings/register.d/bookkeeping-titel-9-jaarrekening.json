@@ -30,7 +30,7 @@
           "financialYearEnd",
           "sizeCategory",
           "rapportageBasis",
-          "valuta",
+          "currency",
           "status"
         ],
         "properties": {
@@ -128,7 +128,7 @@
             "example": "rj-commercial",
             "title": "Rapportage Grondslag"
           },
-          "valuta": {
+          "currency": {
             "type": "string",
             "description": "ISO-4217 presentation currency of the jaarrekening.",
             "default": "EUR",
@@ -1251,7 +1251,7 @@
         "override": false
       },
       "rapportageBasis": "rj-commercial",
-      "valuta": "EUR",
+      "currency": "EUR",
       "status": "draft",
       "layoutDate": null,
       "determinationDate": null,
@@ -1286,7 +1286,7 @@
         "override": false
       },
       "rapportageBasis": "rj-commercial",
-      "valuta": "EUR",
+      "currency": "EUR",
       "status": "draft",
       "layoutDate": null,
       "determinationDate": null,

@@ -102,7 +102,7 @@
 						"type": "string"
 					},
 					{
-						"key": "valuta",
+						"key": "currency",
 						"label": "Currency",
 						"type": "string"
 					},
