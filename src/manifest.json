@@ -12,9 +12,9 @@
 			{ "id": "welcome", "type": "info", "title": "Welcome to Shillinq", "body": "First choose the country (legal region) and organisation type, then the chart-of-accounts template, and create the administration. Finally you can load the chart of accounts and the reference data." },
 			{ "id": "country", "type": "choice", "title": "Legal region (country)", "body": "In which country is this organisation legally established? This determines the available organisation types and standards.", "configKey": "legal_country", "required": true, "options": [ { "value": "nl", "label": "Netherlands" }, { "value": "be", "label": "Belgium" }, { "value": "de", "label": "Germany" } ] },
 			{ "id": "organisation", "type": "choice", "title": "Organisation type", "configKey": "legal_region", "required": true, "dependsOn": "legal_country", "optionsByParent": { "nl": [ { "value": "municipality", "label": "Municipality" }, { "value": "provincie", "label": "Province" }, { "value": "waterschap", "label": "Water authority" }, { "value": "zzp", "label": "ZZP" }, { "value": "mkb", "label": "MKB" } ], "be": [ { "value": "vzw", "label": "VZW" }, { "value": "bv", "label": "Besloten Vennootschap (BV)" }, { "value": "eenmanszaak", "label": "Eenmanszaak" } ], "de": [ { "value": "gmbh", "label": "GmbH" }, { "value": "verein", "label": "Verein" }, { "value": "einzelunternehmen", "label": "Einzelunternehmen" } ] } },
-			{ "id": "rgs-template", "type": "choice", "title": "Chart of accounts (RGS)", "body": "A chart of accounts (RGS – Referentie GrootboekSchema) is the standardised layout of ledger accounts your balance sheet and profit-and-loss statement are based on. Based on your organisation type, a matching template is already suggested — you can adjust it.", "configKey": "rgs_template", "required": true, "suggestFrom": "legal_region", "suggestMap": { "municipality": "bbv", "provincie": "bbv", "waterschap": "bbv", "zzp": "zzp", "mkb": "mkb", "vzw": "mkb", "bv": "mkb", "eenmanszaak": "zzp", "gmbh": "mkb", "verein": "mkb", "einzelunternehmen": "zzp" }, "options": [ { "value": "mkb", "label": "MKB" }, { "value": "zzp", "label": "ZZP" }, { "value": "bbv", "label": "BBV (government)" } ] },
+			{ "id": "rgs-template", "type": "choice", "title": "Chart of accounts (RGS)", "body": "A chart of accounts (RGS, Referentie GrootboekSchema) is the standardised layout of ledger accounts your balance sheet and profit-and-loss statement are based on. Based on your organisation type, a matching template is already suggested. You can adjust it.", "configKey": "rgs_template", "required": true, "suggestFrom": "legal_region", "suggestMap": { "municipality": "bbv", "provincie": "bbv", "waterschap": "bbv", "zzp": "zzp", "mkb": "mkb", "vzw": "mkb", "bv": "mkb", "eenmanszaak": "zzp", "gmbh": "mkb", "verein": "mkb", "einzelunternehmen": "zzp" }, "options": [ { "value": "mkb", "label": "MKB" }, { "value": "zzp", "label": "ZZP" }, { "value": "bbv", "label": "BBV (government)" } ] },
 			{ "id": "administration", "type": "run-action", "title": "Create administration", "body": "Create the default administration. This registers your organisation as an administration in OpenRegister, so bookings, invoices and reports can be linked to it. Click \"Run\" to create the administration.", "action": "init-administration", "required": true },
-			{ "id": "seed", "type": "run-action", "title": "Load chart of accounts and reference data", "body": "Load the chosen chart of accounts (ledger accounts), the VAT rates, and — for government bodies — the BBV task fields into the administration. This may take a while. Click \"Run\" to start.", "action": "seed", "required": false },
+			{ "id": "seed", "type": "run-action", "title": "Load chart of accounts and reference data", "body": "Load the chosen chart of accounts (ledger accounts), the VAT rates, and, for government bodies, the BBV task fields into the administration. This may take a while. Click \"Run\" to start.", "action": "seed", "required": false },
 			{ "id": "done", "type": "summary", "title": "Done", "body": "Review your choices below and complete the installation.", "healthCheck": true }
 		]
 	},
@@ -34,7 +34,7 @@
 						"sinceVersion": "1.3.18",
 						"placement": "center",
 						"title": "Welcome to Shillinq",
-						"body": "Let's take a quick spin through your bookkeeping — we'll create a sales invoice together so you can see how the pieces fit. You'll add the record yourself.",
+						"body": "Let's take a quick spin through your bookkeeping. We'll create a sales invoice together so you can see how the pieces fit, and you'll add the record yourself.",
 						"target": { "kind": "page", "ref": "Dashboard" },
 						"advanceOn": { "type": "manual" }
 					},
@@ -794,7 +794,7 @@
 				},
 				{
 					"id": "BewaartermijnenDashboard",
-					"label": "Retention periods — Dashboard",
+					"label": "Retention periods dashboard",
 					"icon": "ViewDashboardOutline",
 					"route": "BewaartermijnenDashboard",
 					"order": 20
@@ -5260,7 +5260,7 @@
 								"limit": 8
 							},
 							"rowRoute": "ARInvoiceDetail",
-							"emptyText": "No open debtor invoices — everything is paid.",
+							"emptyText": "No open debtor invoices. Everything is paid.",
 							"columns": [
 								{ "key": "invoiceNumber", "label": "Invoice" },
 								{ "key": "customerId", "label": "Customer" },
@@ -5283,7 +5283,7 @@
 								"order": { "dueDate": "asc" },
 								"limit": 8
 							},
-							"emptyText": "No open creditor invoices — nothing due.",
+							"emptyText": "No open creditor invoices. Nothing is due.",
 							"columns": [
 								{ "key": "invoiceNumber", "label": "Invoice" },
 								{ "key": "vendorId", "label": "Vendor" },
@@ -7051,7 +7051,7 @@
 			"id": "BewaartermijnenDashboard",
 			"route": "/administratie/bewaartermijnen/dashboard",
 			"type": "dashboard",
-			"title": "Retention periods — Dashboard",
+			"title": "Retention periods dashboard",
 			"config": {
 				"widgets": [
 					{
@@ -7094,7 +7094,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "TaxSummaryReport",
-				"description": "Per-category tax summaries feeding the annual filing. Converted from the never-rendered type=report (no such page type is registered) to a plain index — the KPI dashboard variant needs a dedicated renderer first.",
+				"description": "Tax totals per category, ready for the annual filing.",
 				"filters": [
 					{
 						"key": "fiscalYear",
@@ -12943,7 +12943,7 @@
 				],
 				"defaultSort": "-requisitionNumber",
 				"detailRoute": "RequisitionDetail",
-				"description": "Purchase requisitions (aanvragen) raised by employees prior to purchase-order creation. Member of the purchase-requisition change — approval reuses the bookkeeping-verplichtingenadministratie budget/mandate infrastructure.",
+				"description": "Purchase requests (aanvragen) raised by employees before a purchase order is created. Approval checks the same budget and mandate rules as commitments.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/requisitions"
 			}
 		},
@@ -13111,7 +13111,7 @@
 						},
 						"successMessage": "Requisition approved.",
 						"errorMessage": "Requisition exceeds available budget.",
-						"description": "Approve the submitted requisition. Server-side gated by BudgetBlocker::canCommit — budget availability or an override-mandate (REQ-REQ-003)."
+						"description": "Approve the submitted request. Approval requires available budget, or a mandate that overrides it."
 					},
 					{
 						"id": "reject-requisition",
@@ -13430,7 +13430,7 @@
 				],
 				"defaultSort": "receivedAt",
 				"detailRoute": "GoodsReceiptDetail",
-				"description": "Goods Receipt Notes (GRN) — physical receipt against POs. Member 04 owns the capture flow.",
+				"description": "Goods receipt notes recording what physically arrived against each purchase order.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/purchasing/overview"
 			}
 		},
@@ -14052,7 +14052,7 @@
 					}
 				],
 				"defaultSort": "-created",
-				"description": "Pre-filtered OR audit-log view of records transitioning to marked-for-destruction or destruction-completed per REQ-RAP-003 / REQ-RAP-008. Serves as legal proof of Archiefwet-compliant disposal — every row links to the OR hash-chain entry certifying the transition. Use this surface for external auditor compliance verification."
+				"description": "Records marked for destruction, and records already destroyed. This is the legal proof of Archiefwet-compliant disposal: every row links to the audit-trail entry certifying the change, so an external auditor can verify it here."
 			}
 		},
 		{
@@ -14154,7 +14154,7 @@
 						"admin"
 					]
 				},
-				"description": "Compliance Export API surface per REQ-RAP-005 — RBAC-scoped to the auditor group; non-auditor callers receive 403. Server filters PII fields (email, phone, address, displayName, firstName, lastName, birthDate, socialSecurityNumber, taxId, personId, ipAddress) before rendering CSV/XLSX/JSON. Every export request is itself recorded in the OR audit trail per REQ-RAP-005 scenario 3."
+				"description": "Export compliance data as CSV, XLSX or JSON. Only the auditor group can use this. Personal data such as names, addresses, contact details and identification numbers is removed before the file is written, and every export is itself recorded in the audit trail."
 			}
 		},
 		{
@@ -16895,7 +16895,7 @@
 											"reconId": ":id",
 											"resolutionStatus": null
 										},
-										"description": "Unresolved items for this session — bulk-classify via the resolution endpoint (REQ-REC-004).",
+										"description": "Items in this session that still need a decision. Select several to classify them in one go.",
 										"bulkActions": [
 											{
 												"id": "mark-timing",
@@ -16927,7 +16927,7 @@
 									"type": "static",
 									"componentName": "reconciliation-closure-summary",
 									"props": {
-										"description": "REQ-REC-006: pre-close summary — matched count, unmatched GL/bank counts, total variance, and sign-off comment field. Verifier MUST supply sign-off before the verify transition.",
+										"description": "A summary before closing: how many items matched, how many are still unmatched on either side, and the total variance. Sign-off is required before this reconciliation can be verified.",
 										"fields": [
 											"matchedCount",
 											"unmatchedGLCount",
@@ -17014,7 +17014,7 @@
 						"payload": {
 							"resolutionStatus": "timing"
 						},
-						"description": "Bulk REQ-REC-004 classification — operator supplies one reason for the whole selection."
+						"description": "Classify every selected item as a timing difference, using one reason for the whole selection."
 					},
 					{
 						"id": "bulk-classify-pending",
@@ -17047,7 +17047,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "BankReconciliation",
-				"description": "REQ-REC-007: variance per closed reconciliation, derived from BankReconciliation records. Converted from the never-rendered type=report (no such page type is registered) to a plain index — the KPI/aggregation dashboard variant needs a dedicated renderer first.",
+				"description": "The variance recorded against each closed reconciliation.",
 				"filters": [
 					{
 						"key": "reconciliationStatus",

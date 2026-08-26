@@ -64,7 +64,7 @@
 				"defaultSort": "draftedAt",
 				"defaultSortDirection": "desc",
 				"detailRoute": "StockMovementDetail",
-				"description": "Immutable double-entry ledger of every receipt, transfer, issue, manufacture and repack per REQ-SM-008. Posted moves are locked — cancellation emits an offsetting move so the original row stays auditable."
+				"description": "A permanent record of every receipt, transfer, issue, manufacture and repack. Once posted, a move cannot be edited: cancelling it adds an opposite move instead, so the original stays visible for audit."
 			}
 		},
 		{
@@ -141,7 +141,7 @@
 				"defaultSort": "lastMovementDate",
 				"defaultSortDirection": "desc",
 				"x-drilldown-deferred": "The per-row drill-down to the stock-ledger trace (REQ-SM-005) is NOT WIRED — tracked in ConductionNL/shillinq#508, which carries the full contract analysis. Its page declaration was withdrawn because the manifest was naming a page whose component exists nowhere (registered in neither src/registry.js nor a customComponents.js, which this app does not have), and the route contract does not match stockLedger#trace either: the route supplied an InventoryStock UUID while the endpoint requires administration_id + location_id + sku. The BACKEND HALF IS COMPLETE and untouched (StockLedgerController + StockLedgerService); only the Vue view was never written. Restoring the `StockLedgerTrace` page entry (and a `rowRoute` here, which is the key CnIndexPage actually reads — `detailRoute` is read by nothing) is part of building the view, so the declaration cannot return before the surface does.",
-				"description": "Per REQ-SM-005 — every InventoryStock row drills down to the chronological run of posted, non-cancelled StockMoves that comprise its current balance, with cumulative running totals matching `quantity` exactly."
+				"description": "Open any stock line to see the moves behind its current balance, in date order, with a running total that adds up to the quantity on hand."
 			}
 		}
 	]
