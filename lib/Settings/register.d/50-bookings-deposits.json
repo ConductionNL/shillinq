@@ -403,22 +403,22 @@
         "x-openregister-aggregations": {
           "byState": {
             "field": "state",
-            "operation": "count",
+            "metric": "count",
             "description": "Number of deposits per lifecycle state — drives the Deposits overview state filter (REQ-DP-010).",
-            "groupBy": "state"
+            "groupBy": ["state"]
           },
           "pendingByDueDate": {
             "field": "amount",
-            "operation": "sum",
+            "metric": "sum",
             "description": "Total pending deposit value grouped by due date, for the operator follow-up worklist (REQ-DP-010).",
-            "groupBy": "dueDate",
+            "groupBy": ["dueDate"],
             "filter": {
               "state": "pending"
             }
           },
           "failedCount": {
             "field": "state",
-            "operation": "count",
+            "metric": "count",
             "description": "Count of failed deposits requiring operator follow-up (REQ-DP-011).",
             "filter": {
               "state": "failed"

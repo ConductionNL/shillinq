@@ -575,7 +575,67 @@ const AGGREGATION_REF_BASELINE = new Map([
 // A RATCHET, not a hard fail — 265 cannot be fixed in one pass, and each needs
 // its semantics checked against a live instance rather than pattern-matched.
 // The count may fall; it may never rise.
-const AGG_NO_METRIC_BASELINE = 265
+// 265 -> 219: the 46 declarations whose `operation` was a plain
+// count/sum/avg on their OWN schema, renamed to `metric`. Nothing else about
+// them changed — `count` ignores `field` and counts rows either way, so the
+// semantics carry over exactly.
+//
+// Deliberately NOT translated: 19 more are simple metrics whose `source` names
+// a DIFFERENT schema. `source` does not map to `from` — `from` switches the
+// runner into its cross-schema path, which needs a parent row and behaves
+// differently. Those are a redesign, not a rename, and they are the GL/tax ones
+// where a wrong number matters most.
+const AGG_NO_METRIC_BASELINE = 219
+
+// A STRING `groupBy` is silently ignored, and the result is a WRONG NUMBER.
+//
+// AggregationQuery::normaliseGroupByFields() opens with
+// `if (is_array($groupBy) === false) { return []; }`. So `"groupBy": "status"`
+// yields no group fields and the engine returns one ungrouped total.
+//
+// This is worse than the empty result it replaces, and it is how I nearly
+// shipped one. Measured live: `Service.countByStatus` with a metric and
+// `"groupBy": "status"` returned `value: 8` — the grand total of all services,
+// presented by a page that asked for a per-status breakdown. A plausible
+// number is harder to notice than an empty table.
+//
+// ZERO tolerance, but only where a `metric` exists: without one the
+// aggregation returns nothing anyway, so a string groupBy there is latent
+// rather than wrong. Those are tracked with the rest of #1261.
+function checkAggregationGroupByShape(registry) {
+	const offenders = []
+	for (const slug of Object.keys(registry).sort()) {
+		for (const { aggName, agg, file } of registry[slug].aggregations) {
+			if (agg === null || typeof agg !== 'object') continue
+			const hasMetric = 'metric' in agg || 'metrics' in agg
+			if (hasMetric === false) continue
+			if (typeof agg.groupBy !== 'string') continue
+			offenders.push(
+				`${slug}.${aggName} (${path.relative(REPO_ROOT, file)})`
+					+ ` — "groupBy": ${JSON.stringify(agg.groupBy)}`,
+			)
+		}
+	}
+
+	if (offenders.length === 0) {
+		console.log(
+			'[validate-registers] PASS — every metric-bearing aggregation declares groupBy as an array',
+		)
+		return true
+	}
+
+	console.error(
+		'[validate-registers] FAIL — a metric-bearing aggregation declares `groupBy` as a STRING. '
+			+ 'normaliseGroupByFields() returns [] for a non-array, so the grouping is silently dropped '
+			+ 'and the engine answers with ONE UNGROUPED TOTAL — a plausible wrong number, not an error:',
+	)
+	for (const o of offenders) console.error(`  - ${o}`)
+	console.error('')
+	console.error(
+		'[validate-registers] Fix: "groupBy": ["field"] — an array, even for a single field.',
+	)
+	return false
+}
 
 function checkAggregationMetrics(registry) {
 	const missing = []
@@ -853,6 +913,7 @@ function main() {
 	const aggregationRefsOk = checkAggregationFieldRefs(registry)
 	const aggregationPlaceholdersOk = checkAggregationPlaceholders(registry)
 	const aggregationMetricsOk = checkAggregationMetrics(registry)
+	const aggregationGroupByOk = checkAggregationGroupByShape(registry)
 
 	if (offenders.length === 0) {
 		if (
@@ -861,6 +922,7 @@ function main() {
 			|| aggregationRefsOk === false
 			|| aggregationPlaceholdersOk === false
 			|| aggregationMetricsOk === false
+			|| aggregationGroupByOk === false
 		)
 			process.exit(1)
 		console.log(
