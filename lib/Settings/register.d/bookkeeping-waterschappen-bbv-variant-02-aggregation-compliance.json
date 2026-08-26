@@ -81,9 +81,6 @@
               },
               "fiscalYear": {
                 "equals": "@self.fiscalYear"
-              },
-              "administrationId": {
-                "equals": "@self.administrationId"
               }
             },
             "groupBy": [
@@ -119,9 +116,6 @@
               },
               "fiscalYear": {
                 "equals": "@self.fiscalYear"
-              },
-              "administrationId": {
-                "equals": "@self.administrationId"
               },
               "postingDate": {
                 "between": [

@@ -531,8 +531,7 @@
               ]
             },
             "filter": {
-              "financialYear": "@self.boekjaar",
-              "administrationId": "@self.administrationId"
+              "financialYear": "@self.boekjaar"
             },
             "groupBy": [
               "IBProfitAttribution.qualifying_asset_id"

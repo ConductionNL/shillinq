@@ -471,7 +471,6 @@
               "deductionType"
             ],
             "filter": {
-              "administrationId": "@self.administrationId",
               "taxYear": "@self.period.year"
             },
             "sum": [

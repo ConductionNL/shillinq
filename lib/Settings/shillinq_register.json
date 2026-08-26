@@ -2032,7 +2032,6 @@
               "select": "Account.accountType"
             },
             "filter": {
-              "administrationId": "@self.administrationId",
               "fiscalYearId": "@self.fiscalYearId",
               "eliminationFlag": false
             },
@@ -2246,7 +2245,6 @@
           "trialBalanceTotals": {
             "description": "Computes totalDebits, totalCredits, and isBalanced flag from GLLine entries for the fiscal period. Satisfies REQ-FS-005 verification check. No TrialBalanceService — pure declarative aggregation per ADR-031.",
             "filter": {
-              "administrationId": "@self.administrationId",
               "fiscalYearId": "@self.fiscalYearId",
               "eliminationFlag": false
             },
@@ -2284,7 +2282,6 @@
               ]
             },
             "filter": {
-              "administrationId": "@self.administrationId",
               "fiscalYearId": "@self.fiscalYearId",
               "eliminationFlag": false
             },
@@ -2836,7 +2833,6 @@
             "groupBy": "BbvAccountMapping.iv3Bucket",
             "valueField": "debit - credit",
             "filter": {
-              "administrationId": "@self.administrationId",
               "periodId": {
                 "from": "BookkeepingPeriod",
                 "where": {
@@ -3081,7 +3077,6 @@
             "filter": {
               "eliminationFlag": false,
               "GLTransaction.state": "posted",
-              "administrationId": "@self.administrationId",
               "fiscalYearId": "@self.fiscalYearId"
             },
             "operations": {
@@ -4409,7 +4404,6 @@
             "operation": "sum",
             "field": "totalAmountExclVat",
             "filter": {
-              "administrationId": "@self.administrationId",
               "invoiceYear": "@self.currentCalendarYear",
               "state": {
                 "not": [
@@ -8139,7 +8133,6 @@
               "register": "shillinq",
               "schema": "ClosingEntry",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "fiscalYearId": "@self.id",
                 "entryType": {
                   "in": [
@@ -8186,7 +8179,6 @@
               "register": "shillinq",
               "schema": "ClosingEntry",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "fiscalYearId": "@self.id",
                 "entryType": "depreciation",
                 "approvalStatus": {
@@ -8205,7 +8197,6 @@
               "register": "shillinq",
               "schema": "FixedAsset",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "lifecycleState": "active"
               }
             }
@@ -8217,7 +8208,6 @@
               "register": "shillinq",
               "schema": "ClosingEntry",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "fiscalYearId": "@self.id",
                 "currency": {
                   "!=": "EUR"
@@ -8232,7 +8222,6 @@
               "register": "shillinq",
               "schema": "GLTransaction",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "fiscalYearId": "@self.id",
                 "currency": {
                   "!=": "EUR"
@@ -8247,7 +8236,6 @@
               "register": "shillinq",
               "schema": "GLTransaction",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "fiscalYearId": "@self.id",
                 "state": "posted",
                 "relatedParty": true,
@@ -8264,7 +8252,6 @@
               "register": "shillinq",
               "schema": "GLTransaction",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "fiscalYearId": "@self.id",
                 "state": "posted",
                 "relatedParty": true
@@ -8295,7 +8282,6 @@
               "register": "shillinq",
               "schema": "RetainedEarnings",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "fiscalYear.yearNumber": "@self.yearNumber - 1"
               }
             }
@@ -8770,7 +8756,6 @@
               "register": "shillinq",
               "schema": "RetainedEarnings",
               "match": {
-                "administrationId": "@self.administrationId",
                 "fiscalYear.yearNumber": "@self.fiscalYear.yearNumber - 1"
               }
             },
@@ -13662,7 +13647,6 @@
             "sourceSchema": "Obligation",
             "sourceRegister": "shillinq",
             "filter": {
-              "administrationId": "@self.administrationId",
               "fiscalYear": "@self.fiscalYear",
               "grantIsSISAEligible": true,
               "status": {
@@ -13692,7 +13676,6 @@
             "sourceSchema": "ComplianceAuditTrail",
             "sourceRegister": "shillinq",
             "filter": {
-              "administrationId": "@self.administrationId",
               "fiscalYear": "@self.fiscalYear"
             },
             "operations": {
@@ -16911,7 +16894,6 @@
                   "schema": "WinstToerekening",
                   "condition": "WinstToerekening.ipAssetId IN (SELECT id FROM IPAssetValuation WHERE administrationId = @self.administrationId)",
                   "filter": {
-                    "administrationId": "@self.administrationId",
                     "fiscalYear": "@self.fiscalYear"
                   }
                 },
@@ -17524,7 +17506,6 @@
             ],
             "valueField": "amount",
             "filter": {
-              "administrationId": "@self.administrationId",
               "transactionDate": {
                 "gte": "@self.periodStart",
                 "lte": "@self.periodEnd"
@@ -17931,7 +17912,6 @@
             "groupBy": "VatTariff.rubriek",
             "valueField": "amount",
             "filter": {
-              "administrationId": "@self.administrationId",
               "periodStart": {
                 "gte": "@self.periodStart"
               },
@@ -18508,7 +18488,6 @@
             "sourceSchema": "GLLine",
             "sourceRegister": "shillinq",
             "filter": {
-              "administrationId": "@self.administrationId",
               "fiscalYear": "@self.taxYear",
               "entryType": "credit",
               "accountType": "revenue"
@@ -18520,7 +18499,6 @@
             "sourceSchema": "GLLine",
             "sourceRegister": "shillinq",
             "filter": {
-              "administrationId": "@self.administrationId",
               "fiscalYear": "@self.taxYear",
               "entryType": "debit",
               "accountType": "expense"
@@ -18890,7 +18868,6 @@
             "operation": "sum",
             "field": "hours",
             "filter": {
-              "administrationId": "@self.administrationId",
               "personId": "@self.personId",
               "date": {
                 "gte": "@self.taxYear + '-01-01'",
@@ -18912,7 +18889,6 @@
             "operation": "sum",
             "field": "amount",
             "filter": {
-              "administrationId": "@self.administrationId",
               "fiscalYear": "@self.taxYear",
               "taxCategory": "self-employment-income"
             },
