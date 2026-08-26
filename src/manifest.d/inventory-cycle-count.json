@@ -129,7 +129,7 @@
 				],
 				"defaultSort": "reasonId",
 				"defaultSortDirection": "asc",
-				"description": "Configurable variance reason-code taxonomy per REQ-ICC-005 — the dropdown source for InventoryCycleCountLine.reasonCode. Bookkeepers can deactivate codes (historic FKs remain queryable); warehouse_manager + bookkeeper roles can create new per-administration entries."
+				"description": "The reason codes offered when a counted quantity differs from the recorded one. Bookkeepers can retire a code without affecting counts that already use it, and warehouse managers and bookkeepers can add new ones per administration."
 			}
 		},
 		{
