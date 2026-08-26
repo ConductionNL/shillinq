@@ -555,6 +555,70 @@ const AGGREGATION_REF_BASELINE = new Map([
 	],
 ])
 
+// An aggregation without `metric`/`metrics` cannot produce a value.
+//
+// AggregationRunner::run() reads exactly nine keys off a spec — measured from
+// its source, not from docs:
+//
+//   field  filter  from  groupBy  join  metric  metrics  select  where
+//
+// `source`, `sum`, `operation`, `operations`, `expression`, `sourceSchema` and
+// friends are read by NOTHING. A spec without metric/metrics comes back as
+// `{"metric":"","field":null,"groups":[]}` — an empty result with HTTP 200,
+// which every page renders as its own empty state and reads as "no data yet".
+//
+// This is #1216's FIRST layer, and it is still true of 265 of 268 declarations
+// (#1261). It is also why #1255's placeholder problem went unnoticed for so
+// long: these aggregations were already returning nothing for a second,
+// independent reason.
+//
+// A RATCHET, not a hard fail — 265 cannot be fixed in one pass, and each needs
+// its semantics checked against a live instance rather than pattern-matched.
+// The count may fall; it may never rise.
+const AGG_NO_METRIC_BASELINE = 265
+
+function checkAggregationMetrics(registry) {
+	const missing = []
+	for (const slug of Object.keys(registry).sort()) {
+		for (const { aggName, agg, file } of registry[slug].aggregations) {
+			if (agg === null || typeof agg !== 'object') continue
+			if ('metric' in agg || 'metrics' in agg) continue
+			missing.push(
+				`${slug}.${aggName} (${path.relative(REPO_ROOT, file)})`
+					+ ` — declares ${JSON.stringify(Object.keys(agg).filter((k) => k !== 'description'))}`,
+			)
+		}
+	}
+
+	console.log(
+		`[validate-registers] aggregations without metric/metrics: ${missing.length} `
+			+ `(baseline ${AGG_NO_METRIC_BASELINE}) — these return an empty result, see #1261`,
+	)
+
+	if (missing.length > AGG_NO_METRIC_BASELINE) {
+		console.error(
+			`[validate-registers] FAIL — aggregations that cannot compute a value rose to `
+				+ `${missing.length}, above the baseline of ${AGG_NO_METRIC_BASELINE}.`,
+		)
+		console.error(
+			'[validate-registers] The engine reads only: field filter from groupBy join metric '
+				+ 'metrics select where. `source`/`sum`/`operation` are read by nothing, and a spec '
+				+ 'without metric/metrics returns {"metric":"","field":null,"groups":[]} with HTTP 200.',
+		)
+		for (const m of missing.slice(-10)) console.error(`  - ${m}`)
+		return false
+	}
+
+	if (missing.length < AGG_NO_METRIC_BASELINE) {
+		console.log(
+			`[validate-registers] ${AGG_NO_METRIC_BASELINE - missing.length} better than baseline — `
+				+ `please lower AGG_NO_METRIC_BASELINE to ${missing.length}.`,
+		)
+	}
+
+	return true
+}
+
 // `@`-prefixed placeholders in an aggregation's filter are NOT resolved.
 //
 // OpenRegister's PlaceholderResolver acts only on values beginning with `$`
@@ -788,6 +852,7 @@ function main() {
 	const sameSlugFullDefinitionOk = checkSameSlugFullDefinitionCollisions(registry)
 	const aggregationRefsOk = checkAggregationFieldRefs(registry)
 	const aggregationPlaceholdersOk = checkAggregationPlaceholders(registry)
+	const aggregationMetricsOk = checkAggregationMetrics(registry)
 
 	if (offenders.length === 0) {
 		if (
@@ -795,6 +860,7 @@ function main() {
 			|| sameSlugFullDefinitionOk === false
 			|| aggregationRefsOk === false
 			|| aggregationPlaceholdersOk === false
+			|| aggregationMetricsOk === false
 		)
 			process.exit(1)
 		console.log(
