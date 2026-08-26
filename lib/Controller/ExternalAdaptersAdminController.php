@@ -452,6 +452,8 @@ class ExternalAdaptersAdminController extends Controller {
 	 * @param IRequest $request Nextcloud request.
 	 * @param ContainerInterface $container DI container for adapter resolution.
 	 * @param LoggerInterface $logger Structured logger.
+	 * @param IAppManager $appManager App manager, used to resolve the integriq
+	 *                                app id across the fleet rename.
 	 */
 	public function __construct(
 		IRequest $request,
