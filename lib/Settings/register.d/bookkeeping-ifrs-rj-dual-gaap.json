@@ -522,7 +522,6 @@
             "source": "DualTransaction",
             "filter": {
               "period": "@self.period",
-              "administrationId": "@self.administrationId",
               "state": "reconciled"
             },
             "groupBy": [

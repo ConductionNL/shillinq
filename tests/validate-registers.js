@@ -555,6 +555,119 @@ const AGGREGATION_REF_BASELINE = new Map([
 	],
 ])
 
+// `@`-prefixed placeholders in an aggregation's filter are NOT resolved.
+//
+// OpenRegister's PlaceholderResolver acts only on values beginning with `$`
+// (it implements `$currentUser` and the date expressions). A value starting
+// with `@` fails that test and is returned UNCHANGED, so the filter that runs
+// is a literal string comparison against `"@self.whatever"` — which matches
+// nothing. The aggregation then returns an empty result with HTTP 200, and the
+// page renders its own empty state over live data. That is issue #1216, and it
+// was found only by querying a real instance; every unit test and gate was
+// green throughout.
+//
+// TWO TIERS, deliberately:
+//
+//   1. `administrationId` / `organisationId` — ZERO tolerance. These are
+//      tenant scoping, and they have all been removed. An administration is a
+//      shillinq-specific layer over OpenRegister's organisation tenancy, so it
+//      is NOT `@self` metadata: it is a normal property, and the CALLER passes
+//      it as a narrowing filter (`?filter[administrationId]=...`), which
+//      openregister#2852 accepts and can never relax. A new one appearing means
+//      somebody re-introduced an aggregation that silently returns nothing.
+//
+//   2. every other `@self.*` — RATCHET. Those are a different intent ("this
+//      object's field", e.g. `@self.id`), and deleting them would widen the
+//      aggregation rather than fix it. They need the placeholder to be
+//      implemented, not removed. Tracked in #1255; the count may fall, never
+//      rise.
+const AGG_PLACEHOLDER_TENANT_KEYS = new Set(['administrationId', 'organisationId'])
+// Measured 2026-08-26 by this check, after removing 67 tenant placeholders
+// across 22 files. Counted BY THE GATE, not by a one-off script — an earlier
+// estimate of 73 came from a narrower hand-written predicate and was wrong.
+const AGG_PLACEHOLDER_BASELINE = 84
+
+function collectPlaceholders(node, path, out) {
+	if (node === null || node === undefined) return
+	if (typeof node === 'string') {
+		if (node.includes('@self.')) out.push({ path, value: node })
+		return
+	}
+	if (Array.isArray(node)) {
+		node.forEach((v, i) => collectPlaceholders(v, `${path}[${i}]`, out))
+		return
+	}
+	if (typeof node === 'object') {
+		for (const [k, v] of Object.entries(node)) {
+			collectPlaceholders(v, path ? `${path}.${k}` : k, out)
+		}
+	}
+}
+
+function checkAggregationPlaceholders(registry) {
+	const tenant = []
+	const others = []
+
+	for (const slug of Object.keys(registry).sort()) {
+		for (const { aggName, agg, file } of registry[slug].aggregations) {
+			const found = []
+			for (const key of ['filter', 'where', 'join', 'match']) {
+				collectPlaceholders(agg[key], key, found)
+			}
+			// NOT `path` — that shadows the `path` module this file already
+			// imports, and the shadow only bites on the failure branch.
+			for (const { path: at, value } of found) {
+				const leaf = at.split('.').pop().replace(/\[\d+\]$/, '')
+				const where = `${slug}.${aggName} ${at} = ${JSON.stringify(value)}`
+					+ ` (${path.relative(REPO_ROOT, file)})`
+				if (AGG_PLACEHOLDER_TENANT_KEYS.has(leaf)) tenant.push(where)
+				else others.push(where)
+			}
+		}
+	}
+
+	console.log(
+		`[validate-registers] aggregation @self placeholders: ${tenant.length} tenant, `
+			+ `${others.length} other (baseline ${AGG_PLACEHOLDER_BASELINE})`,
+	)
+
+	let ok = true
+
+	if (tenant.length > 0) {
+		console.error(
+			'[validate-registers] FAIL — an aggregation scopes a tenant with an `@self` placeholder, '
+				+ 'which OpenRegister does not resolve. The filter runs as a literal string, matches '
+				+ 'nothing, and the aggregation returns an empty result with HTTP 200 (#1216):',
+		)
+		for (const t of tenant) console.error(`  - ${t}`)
+		console.error('')
+		console.error(
+			'[validate-registers] Fix: remove the key from the declaration and have the CALLER pass it — '
+				+ '`?filter[administrationId]=<active>`. An administration is a normal property, not @self metadata.',
+		)
+		console.error(
+			'[validate-registers] Removing it WITHOUT a caller that supplies one turns "returns nothing" '
+				+ 'into "returns every administration", so change the caller first.',
+		)
+		ok = false
+	}
+
+	if (others.length > AGG_PLACEHOLDER_BASELINE) {
+		console.error(
+			`[validate-registers] FAIL — @self placeholders in aggregation filters rose to ${others.length}, `
+				+ `above the baseline of ${AGG_PLACEHOLDER_BASELINE}. These resolve to nothing (#1255).`,
+		)
+		ok = false
+	} else if (others.length < AGG_PLACEHOLDER_BASELINE) {
+		console.log(
+			`[validate-registers] ${AGG_PLACEHOLDER_BASELINE - others.length} better than baseline — `
+				+ `please lower AGG_PLACEHOLDER_BASELINE to ${others.length}.`,
+		)
+	}
+
+	return ok
+}
+
 function checkAggregationFieldRefs(registry) {
 	const problems = []
 	const baselined = []
@@ -670,12 +783,14 @@ function main() {
 	const slugsOk = checkSlugCaseCollisions(registry)
 	const sameSlugFullDefinitionOk = checkSameSlugFullDefinitionCollisions(registry)
 	const aggregationRefsOk = checkAggregationFieldRefs(registry)
+	const aggregationPlaceholdersOk = checkAggregationPlaceholders(registry)
 
 	if (offenders.length === 0) {
 		if (
 			slugsOk === false
 			|| sameSlugFullDefinitionOk === false
 			|| aggregationRefsOk === false
+			|| aggregationPlaceholdersOk === false
 		)
 			process.exit(1)
 		console.log(

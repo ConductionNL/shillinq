@@ -103,9 +103,7 @@
             "groupBy": [
               "BbvAccountMapping.programmeCode"
             ],
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
+            "filter": {},
             "join": {
               "through": "BbvAccountMapping",
               "on": "BbvAccountMapping.accountNumber",
@@ -125,9 +123,7 @@
             "groupBy": [
               "BbvAccountMapping.autorisatieniveau"
             ],
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
+            "filter": {},
             "join": {
               "through": "BbvAccountMapping",
               "on": "BbvAccountMapping.accountNumber",

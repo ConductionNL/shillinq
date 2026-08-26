@@ -235,9 +235,7 @@
             "groupBy": [
               "administrationId"
             ],
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
+            "filter": {},
             "sum": [
               "amount_involved"
             ]
@@ -467,9 +465,7 @@
             "groupBy": [
               "financialYear"
             ],
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
+            "filter": {},
             "sum": [
               "amount_error",
               "amount_uncertainty"

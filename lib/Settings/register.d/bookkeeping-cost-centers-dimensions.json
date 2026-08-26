@@ -374,9 +374,7 @@
             "groupBy": [
               "costCenterCode"
             ],
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
+            "filter": {},
             "join": {
               "through": "AnalyticalDimension",
               "on": "AnalyticalDimension.code",
@@ -398,9 +396,7 @@
             "groupBy": [
               "AnalyticalDimension.parentCode"
             ],
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
+            "filter": {},
             "join": {
               "through": "AnalyticalDimension",
               "on": "AnalyticalDimension.code",
@@ -422,9 +418,7 @@
             "groupBy": [
               "costCarrierCode"
             ],
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
+            "filter": {},
             "join": {
               "through": "AnalyticalDimension",
               "on": "AnalyticalDimension.code",
@@ -446,9 +440,7 @@
             "groupBy": [
               "projectCode"
             ],
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
+            "filter": {},
             "join": {
               "through": "Project",
               "on": "Project.code",
@@ -467,9 +459,7 @@
             "groupBy": [
               "dimensions.*"
             ],
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
+            "filter": {},
             "join": {
               "through": "AnalyticalDimension",
               "on": "AnalyticalDimension.code",
