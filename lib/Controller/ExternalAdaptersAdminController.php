@@ -68,6 +68,8 @@ use OCA\Shillinq\Service\External\Salarisbureau\SalarisbureauAdapterInterface;
 use OCA\Shillinq\Service\External\Sisa\BzkSisaUploadAdapterInterface;
 use OCA\Shillinq\Service\External\TreasuryRate\TreasuryRateAdapterInterface;
 use OCA\Shillinq\Service\External\Uwv\UwvLoonaangifteAdapterInterface;
+use OCA\Shillinq\Support\FleetAppId;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
@@ -455,6 +457,7 @@ class ExternalAdaptersAdminController extends Controller {
 		IRequest $request,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
+		private readonly IAppManager $appManager,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -556,7 +559,16 @@ class ExternalAdaptersAdminController extends Controller {
 	 * @return array{status:string,openconnectorObjectId?:string,deepLink:string}
 	 */
 	private function resolveProvisioning(string $sourceSlug): array {
-		$deepLink = '/apps/openconnector/sources';
+		// The deep link is a ROUTING KEY: NC mounts routes under the registered
+		// app id, which is `integriq` on development and `openconnector` on
+		// beta/main. Resolve it rather than hardcoding either, or half the fleet
+		// gets a 404 from this link.
+		//
+		// NOTE: the register slug passed to setRegister() below stays
+		// 'openconnector' deliberately. OpenRegister register slugs are frozen
+		// across the rename — they are literals already written into stored
+		// data, so changing one orphans the records it names.
+		$deepLink = (FleetAppId::appPath($this->appManager, 'integriq', 'sources') ?? '/apps/openconnector/sources');
 
 		try {
 			$objectService = $this->container->get('OCA\\OpenRegister\\Service\\ObjectService');
