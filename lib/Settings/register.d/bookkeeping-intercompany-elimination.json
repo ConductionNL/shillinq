@@ -336,8 +336,7 @@
             "description": "Declarative shape of the per-relation, per-period matching the engine computes (REQ-ICE-003). Groups IntercompanyTransaction by (relationId, periodId) within the consolidation, sums entity-A-side and entity-B-side amounts (debit minus credit per side) into totalAmountA/totalAmountB, and derives mismatchAmount = totalAmountA - totalAmountB. The tolerance evaluation that sets matchStatus runs in the create lifecycle guard. When the OpenRegister aggregation engine cannot express the per-side conditional sum, the same result is computed in PHP from the real ObjectService API (findAll).",
             "source": "IntercompanyTransaction",
             "filter": {
-              "relationId": "@self.relationId",
-              "administrationId": "@self.administrationId"
+              "relationId": "@self.relationId"
             },
             "groupBy": [
               "IntercompanyTransaction.relationId"
@@ -753,8 +752,7 @@
             "description": "Declarative shape of the per-pair, per-period counterparty roll-up the engine computes (REQ-ICE-007). Groups IntercompanyTransaction by (entityAId, entityBId, periodId) within the consolidation and sums receivables, payables, sales and purchase flows, counting transactions and related mismatches. When the OpenRegister aggregation engine cannot express the multi-source roll-up, the same result is computed in PHP from the real ObjectService API (findAll).",
             "source": "IntercompanyTransaction",
             "filter": {
-              "periodId": "@self.periodId",
-              "administrationId": "@self.administrationId"
+              "periodId": "@self.periodId"
             },
             "groupBy": [
               "IntercompanyTransaction.counterpartyEntityId",

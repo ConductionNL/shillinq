@@ -368,7 +368,6 @@
               "ossContext.destinationCountry"
             ],
             "filter": {
-              "administrationId": "@self.administrationId",
               "ossContext.ossEligible": true
             },
             "sum": [
@@ -628,7 +627,6 @@
               "ossContext.appliedRateCategory"
             ],
             "filter": {
-              "administrationId": "@self.administrationId",
               "ossContext.ossReportingPeriod": "@self.periodYear-@self.periodQuarter"
             },
             "sum": [

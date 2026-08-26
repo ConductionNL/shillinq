@@ -378,7 +378,6 @@
             "source": "Account",
             "filter": {
               "status": "active",
-              "administrationId": "@self.administrationId",
               "_not_exists": {
                 "schema": "XBRLMapping",
                 "match": {
@@ -395,7 +394,6 @@
             "source": "Account",
             "filter": {
               "status": "active",
-              "administrationId": "@self.administrationId",
               "_not_exists": {
                 "schema": "XBRLMapping",
                 "match": {
@@ -415,8 +413,7 @@
             "description": "Percentage of active accounts with active XBRLMapping for the selected taxonomy version (REQ-SBR-007). Surfaced in the Mapping Validation index.",
             "source": "Account",
             "filter": {
-              "status": "active",
-              "administrationId": "@self.administrationId"
+              "status": "active"
             },
             "compute": "(count_where(XBRLMapping, status='active', taxonomyVersion=@self.taxonomyVersion, sourceAccountId in @source.ids) / count(@source)) * 100"
           },
@@ -424,7 +421,6 @@
             "description": "Delta between total GL debits and credits for the filing period (REQ-SBR-006 GL Balance check). MUST be zero before validation passes.",
             "source": "GLLine",
             "filter": {
-              "administrationId": "@self.administrationId",
               "transactionDate_gte": "@self.fiscalYearStart",
               "transactionDate_lte": "@self.fiscalYearEnd"
             },

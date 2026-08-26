@@ -112,7 +112,7 @@
 										"register": "shillinq",
 										"schema": "PaymentRequest",
 										"filter": {"invoiceReference": ":invoiceReference"},
-										"description": "All payment requests for the same invoice — expired/failed attempts preserved as history (REQ-APL-008)."
+										"description": "Every payment request raised for this invoice. Expired and failed attempts are kept, so the history stays complete."
 									}
 								}
 							]

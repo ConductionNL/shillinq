@@ -127,7 +127,7 @@
 					{
 						"id": "disable-all-triggers",
 						"label": "Disable all triggers",
-						"description": "Emergency off-switch (REQ-BNT-008). Transitions every enabled trigger to disabled — no notifications dispatch until an admin re-enables them.",
+						"description": "Emergency off-switch. Disables every active trigger at once. No notifications are sent until an administrator turns them back on.",
 						"icon": "BellOffOutline",
 						"confirm": true
 					},
