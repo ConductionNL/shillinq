@@ -79,7 +79,22 @@ const FRAGMENT_DIR = path.join(REPO_ROOT, 'lib', 'Settings', 'register.d')
 // `RevenueContract`'s own `required`; the `contract-handoff-demo-2026` seed
 // already satisfied both required lists before and after, so is not part of
 // this delta.
-const BASELINE = 61
+// Lowered 61 -> 53 by the commitment anglicisation, and by the same kind of
+// fix as the one above: un-merging a schema whose `required` list had been the
+// concatenation of two domains. All 8 were `Budget` seeds failing against a
+// merged required list spanning both (financialYear, authorised_amount,
+// budgetName, totalAmount, programmeStructure, status, fiscalYear — two
+// schemas' requirements fused into one). `Budget` is now split, and each seed
+// checks against the schema it actually belongs to: the 6 in
+// bookkeeping-provincies-bbv-variant.json are `BbvProgrammeBudget`, the 2 in
+// bookkeeping-verplichtingenadministratie.json are `CommitmentBudget`. Verified
+// by counting the seeds on both sides — 726 -> 746 objects checked, so none of
+// the 8 was removed; they moved schema and now satisfy it.
+//
+// The 9th change in that range is a rename with no effect on the count:
+// `1 x Verplichting — missing: kind` is now `1 x Commitment — missing: kind`.
+// It still fails, and is still counted here.
+const BASELINE = 53
 
 const asArray = (value) => (Array.isArray(value) ? value : [])
 
