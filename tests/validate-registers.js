@@ -617,8 +617,12 @@ function checkAggregationPlaceholders(registry) {
 			// NOT `path` — that shadows the `path` module this file already
 			// imports, and the shadow only bites on the failure branch.
 			for (const { path: at, value } of found) {
-				const leaf = at.split('.').pop().replace(/\[\d+\]$/, '')
-				const where = `${slug}.${aggName} ${at} = ${JSON.stringify(value)}`
+				const leaf = at
+					.split('.')
+					.pop()
+					.replace(/\[\d+\]$/, '')
+				const where =
+					`${slug}.${aggName} ${at} = ${JSON.stringify(value)}`
 					+ ` (${path.relative(REPO_ROOT, file)})`
 				if (AGG_PLACEHOLDER_TENANT_KEYS.has(leaf)) tenant.push(where)
 				else others.push(where)
