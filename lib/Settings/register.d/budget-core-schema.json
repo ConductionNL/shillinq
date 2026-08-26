@@ -406,9 +406,7 @@
             "groupBy": [
               "accountNumber"
             ],
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
+            "filter": {},
             "join": {
               "through": "GLTransaction",
               "on": "GLTransaction.state",

@@ -194,9 +194,7 @@
           "icpLedgerByBuyerSupplyType": {
             "description": "The ICP ledger (REQ-ICP-003): group all qualifying IcpSupply records for a period+administration by (buyerVatId, supplyType), SUM amountExclVat with sign preserved (credit notes are negative), sort by buyerVatId ascending. Triangulation (T) lines are never merged with L or S even when the buyerVatId matches (REQ-ICP-006). When the OpenRegister aggregation engine cannot express the period-window selection, IcpService computes the same result in PHP via the real ObjectService API.",
             "source": "IcpSupply",
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
+            "filter": {},
             "groupBy": [
               "IcpSupply.buyerVatId",
               "IcpSupply.supplyType"

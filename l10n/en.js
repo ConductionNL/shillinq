@@ -2982,7 +2982,8 @@ OC.L10N.register(
         "The request failed.": "The request failed.",
         "This view is unavailable — no figure is shown because none could be trusted.": "This view is unavailable — no figure is shown because none could be trusted.",
         "Unknown error": "Unknown error",
-        "You are not a member of any administration, so there is no spend to report on.": "You are not a member of any administration, so there is no spend to report on."
+        "You are not a member of any administration, so there is no spend to report on.": "You are not a member of any administration, so there is no spend to report on.",
+        "No active administration — cannot scope segment P&L.": "No active administration — cannot scope segment P&L."
     },
     "nplurals=2; plural=(n != 1);"
 )

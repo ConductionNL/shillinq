@@ -318,7 +318,6 @@
             "description": "Declaratieve vorm van de KOR-drempel-benutting die KorMonitorService berekent (REQ-KOR-002). Somt KOR-eligible AR-omzet (vrijstellingsGrondslag = KOR_ART25_OB, status != draft, leveringsDatum in jaar) per administratie + jaar, exclusief uitgeslotenPosten; drempelBenutting = lopendeOmzet / drempel; prognoseEindeJaar via lineaire trend op maandgemiddelde. Wanneer de aggregatie-engine de maand-trend + uitsluitingen niet native kan uitdrukken, berekent KorMonitorService hetzelfde resultaat in PHP via de echte ObjectService API.",
             "source": "ARInvoice",
             "filter": {
-              "administrationId": "@self.administrationId",
               "vrijstellingsGrondslag": "KOR_ART25_OB",
               "leveringsDatumYear": "@self.jaar"
             },
