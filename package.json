@@ -68,7 +68,7 @@
     "gridstack": "^13.2.0",
     "marked": "^18.0.10",
     "path-browserify": "^1.0.1",
-    "pinia": "^3.0.3",
+    "pinia": "^4.0.3",
     "terser-webpack-plugin": "^5.6.1",
     "vue": "^3.5.41",
     "vue-material-design-icons": "^5.3.1",
