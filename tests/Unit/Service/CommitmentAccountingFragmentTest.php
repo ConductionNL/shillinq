@@ -101,14 +101,48 @@ final class CommitmentAccountingFragmentTest extends TestCase {
 		self::assertArrayHasKey('committedVsRealisedPerBudgetLine', $rule['x-openregister-aggregations']);
 
 		$agg = $rule['x-openregister-aggregations']['committedVsRealisedPerBudgetLine'];
-		self::assertSame('CommitmentLine', $agg['source']);
+
+		// ASSERTS THE ENGINE'S VOCABULARY, NOT AN IMAGINED ONE. This used to
+		// pin `source` and a `sum` list. OpenRegister reads neither — the
+		// annotation keys are field / filter / from / groupBy / join / metric /
+		// metrics / select / where — so the runner recognised the aggregation
+		// by NAME and understood none of its body, returning groups:[] against
+		// live objects with no error (issue #1216). The test passed throughout,
+		// because it only ever compared the declaration to itself.
+		self::assertArrayNotHasKey('source', $agg, '`source` is not an engine key; the intra-schema aggregation needs none');
+		self::assertArrayNotHasKey('sum', $agg, '`sum` is not an engine key; use metrics[]');
+
 		self::assertSame(
 			['programme', 'costCentre', 'financialYear', 'generalLedgerAccount'],
 			$agg['groupBy']
 		);
-		self::assertContains('remaining_committed', $agg['sum']);
-		self::assertContains('invoiced_amount', $agg['sum']);
+
+		// Two figures over one grouping — the multi-metric spelling
+		// (openregister#2849). Each entry names a metric AND its field.
+		self::assertSame(
+			[
+				['metric' => 'sum', 'field' => 'remaining_committed'],
+				['metric' => 'sum', 'field' => 'invoiced_amount'],
+			],
+			$agg['metrics']
+		);
+
 		self::assertSame('CommitmentBudget', $agg['join']['through']);
+
+		// The explicit {parentField: joinedField} map, not the string
+		// shorthand. The shorthand names only the joined side and leaves the
+		// parent side to be INFERRED from the group fields; it happens to infer
+		// correctly here, but it is a guess, and only the map can express a
+		// composite join key.
+		self::assertSame(['programme' => 'programmeCode'], $agg['join']['on']);
+
+		// administrationId must NOT be declared: it differs per caller, and the
+		// `@self.administrationId` that used to stand here is not a placeholder
+		// OpenRegister implements — it was left literal and filtered every row
+		// away. Scoping is supplied by the caller as a NARROWING filter
+		// (openregister#2852), which cannot relax what is declared here.
+		self::assertArrayNotHasKey('administrationId', $agg['filter']);
+		self::assertFalse($agg['filter']['afgesloten']);
 
 	}//end testCommitmentLineDeclaresCommittedVsRealisedAggregation()
 

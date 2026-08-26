@@ -521,30 +521,30 @@
         "x-openregister-aggregations": {
           "committedVsRealisedPerBudgetLine": {
             "description": "REQ-VPL-011: per-budget-line committed-vs-realised rollup, grouped by budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Excludes afgesloten regels. verplicht = sum(restant_verplicht); gerealiseerd = sum(gefactureerd_bedrag); geautoriseerd is joined from the matching CommitmentBudget (administrationId + programmaCode = programma + boekjaar); vrij = geautoriseerd - verplicht - gerealiseerd is computed by the drilldown view (BudgetLineCommitments.vue) from these three declared figures — no parallel PHP reporting service (ADR-031).",
-            "source": "CommitmentLine",
+            "_grammar_note": "Rewritten into OpenRegister's actual annotation vocabulary (openregister#2846 + #2849). It previously used `source` and a `sum` list, neither of which the engine reads — the runner recognised the aggregation by NAME and understood none of its body, returning metric:\"\", field:null, groups:[] against live objects with no error at all (issue #1216). `source` is dropped because this is an intra-schema aggregation declared ON CommitmentLine; `from` is the cross-schema key and would have sent it down a different path. `sum: [a, b]` becomes `metrics: [{metric, field}, ...]`, the multi-metric spelling. `on` uses the explicit {parentField: joinedField} map rather than the string shorthand: the shorthand names only the joined side and leaves the parent side to be inferred from the group fields, which happens to give the right answer here but is a guess, and the map is the only spelling that could express a composite key later.",
             "groupBy": [
               "programme",
               "costCentre",
               "financialYear",
               "generalLedgerAccount"
             ],
+            "_scoping_note": "administrationId is NOT declared here, deliberately. It used to read `@self.administrationId`, which is not a placeholder the resolver knows — `$currentUser` is the only one — so it was left literal, matched nothing, and filtered every row away. Declaring it as a constant is impossible because it differs per caller, so scoping is supplied BY the caller as a narrowing filter: BudgetLineCommitments.vue passes filter[administrationId] from /api/administrations/context. openregister#2852 makes that safe — a request filter may ADD a constraint and can never relax or replace a declared one, so this cannot become a way to widen the set. Do not re-add a placeholder here without first checking PlaceholderResolver actually implements it.",
             "filter": {
-              "administrationId": "@self.administrationId",
               "afgesloten": false
             },
+            "metrics": [
+              { "metric": "sum", "field": "remaining_committed" },
+              { "metric": "sum", "field": "invoiced_amount" }
+            ],
             "join": {
               "through": "CommitmentBudget",
-              "on": "CommitmentBudget.programmeCode",
+              "on": { "programme": "programmeCode" },
               "filter": {},
               "select": [
                 "CommitmentBudget.authorised_amount",
                 "CommitmentBudget.realised_amount"
               ]
-            },
-            "sum": [
-              "remaining_committed",
-              "invoiced_amount"
-            ]
+            }
           }
         },
         "x-openregister-audit-trail": {

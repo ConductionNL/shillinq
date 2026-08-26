@@ -1631,6 +1631,7 @@ OC.L10N.register(
         "No approvers required yet — add lines.": "Nog geen goedkeurders vereist — voeg regels toe.",
         "No attribute definitions are available.": "Er zijn geen attribuutdefinities beschikbaar.",
         "No barcode decoder available; use manual entry.": "Geen barcodedecoder beschikbaar; gebruik handmatige invoer.",
+        "No active administration — cannot scope budget lines.": "Geen actieve administratie — budgetregels kunnen niet worden afgebakend.",
         "No budget lines": "Geen budgetregels",
         "No checklist items yet.": "Nog geen checklist-items.",
         "No client administrations": "Geen klantadministraties",

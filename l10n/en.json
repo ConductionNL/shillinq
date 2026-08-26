@@ -1630,6 +1630,7 @@
         "No approvers required yet — add lines.": "No approvers required yet — add lines.",
         "No attribute definitions are available.": "No attribute definitions are available.",
         "No barcode decoder available; use manual entry.": "No barcode decoder available; use manual entry.",
+        "No active administration — cannot scope budget lines.": "No active administration — cannot scope budget lines.",
         "No budget lines": "No budget lines",
         "No checklist items yet.": "No checklist items yet.",
         "No client administrations": "No client administrations",
