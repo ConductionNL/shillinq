@@ -5201,7 +5201,11 @@
         "Tax accuracy": "Nauwkeurigheid belastingen",
         "Where the automation lives": "Waar de automatisering zit",
         "Flows are what happens without anyone clicking: a reminder before a deadline passes, a confirmation sent on submission. This is where you read and edit them. Nothing to build now.": "Flows zijn wat er gebeurt zonder dat iemand klikt: een herinnering voordat een termijn verstrijkt, een bevestiging bij indiening. Hier lees en bewerk je ze. Je hoeft nu niets te bouwen.",
-        "Open Flows in the menu": "Open Flows in het menu"
+        "Open Flows in the menu": "Open Flows in het menu",
+        "Automate the repetitive parts": "Automatiseer het repeterende werk",
+        "Flows run the steps you would otherwise repeat by hand, such as chasing an overdue invoice, posting a recurring journal, or notifying someone when a budget is exceeded. This stop only shows you where they live. You do not have to build one now.": "Flows voeren de stappen uit die u anders handmatig zou herhalen, zoals het aanmanen van een openstaande factuur, het boeken van een terugkerende journaalpost of het waarschuwen van iemand wanneer een budget wordt overschreden. Deze stap laat alleen zien waar ze staan. U hoeft er nu nog geen te bouwen.",
+        "Have a look at the Flows page": "Bekijk de pagina Flows",
+        "FK to the FiscalYear this line belongs to, denormalised from the parent GLTransaction.fiscalYearId so line-level roll-ups can group by year. GLLine declared no fiscal-year property at all, so every aggregation grouping on it put all rows into ONE null bucket — a plausible total, not an error. periodId is NOT a substitute: a period is a finer grain than a year. Backfilled from the parent transaction by BackfillGlLineFiscalYear.": "FK naar het boekjaar waartoe deze regel behoort, gedenormaliseerd vanuit de bovenliggende GLTransaction.fiscalYearId zodat roll-ups op regelniveau per jaar kunnen groeperen. GLLine had helemaal geen boekjaar-eigenschap, waardoor elke aggregatie die erop groepeerde alle rijen in ÉÉN null-bucket plaatste — een plausibel totaal, geen foutmelding. periodId is GEEN vervanging: een periode is een fijnere granulariteit dan een jaar. Wordt vanuit de bovenliggende transactie gevuld door BackfillGlLineFiscalYear."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

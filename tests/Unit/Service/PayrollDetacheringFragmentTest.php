@@ -139,11 +139,23 @@ final class PayrollDetacheringFragmentTest extends TestCase {
 		$payroll = $this->fragment()['components']['schemas']['Payroll'];
 		$aggregations = $payroll['x-openregister-aggregations'];
 
+		// `from`, not `source`. AggregationRunner reads `from` and nothing else —
+		// `source` was an inert key it never consulted, so these aggregated the
+		// DECLARING schema instead of Deduction.
 		self::assertArrayHasKey('netAmount', $aggregations);
-		self::assertSame('Deduction', $aggregations['netAmount']['source']);
+		self::assertSame('Deduction', $aggregations['netAmount']['from']);
+		self::assertArrayNotHasKey('source', $aggregations['netAmount'], '`source` is not an engine key');
+
 		self::assertArrayHasKey('annualEmployeeDeductions', $aggregations);
-		self::assertSame('Deduction', $aggregations['annualEmployeeDeductions']['source']);
+		self::assertSame('Deduction', $aggregations['annualEmployeeDeductions']['from']);
 		self::assertContains('deductionType', $aggregations['annualEmployeeDeductions']['groupBy']);
+
+		// The `@self` correlation became a groupBy DIMENSION. No caller supplies a
+		// parent row, so `payrollId: "@self.id"` stayed a literal string and matched
+		// nothing — an empty result under HTTP 200. Grouping by the same field needs
+		// no parent row and is narrowed per record through extraFilter.
+		self::assertContains('payrollId', $aggregations['netAmount']['groupBy']);
+		self::assertArrayNotHasKey('payrollId', ($aggregations['netAmount']['filter'] ?? []));
 	}//end testPayrollAggregations()
 
 	/**

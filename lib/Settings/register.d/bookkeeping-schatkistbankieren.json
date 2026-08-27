@@ -605,11 +605,12 @@
                 }
               ]
             },
-            "operations": {
-              "accountCount": {
-                "operation": "count"
+            "metrics": [
+              {
+                "metric": "count",
+                "as": "accountCount"
               }
-            }
+            ]
           }
         },
         "x-openregister-audit-trail": {

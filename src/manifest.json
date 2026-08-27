@@ -71,6 +71,18 @@
 							"advanceOn": {"type": "route-match", "route": "Flows"}
 						},
 					{
+						"id": "see-flows",
+						"sinceVersion": "1.4.0",
+						"placement": "center",
+						"optional": true,
+						"allowManualNext": true,
+						"title": "Automate the repetitive parts",
+						"body": "Flows run the steps you would otherwise repeat by hand, such as chasing an overdue invoice, posting a recurring journal, or notifying someone when a budget is exceeded. This stop only shows you where they live. You do not have to build one now.",
+						"task": "Have a look at the Flows page",
+						"target": { "kind": "page", "ref": "Flows" },
+						"advanceOn": { "type": "route-match", "route": "Flows" }
+					},
+					{
 						"id": "done",
 						"sinceVersion": "1.3.18",
 						"placement": "center",

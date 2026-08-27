@@ -845,6 +845,13 @@
             "example": "2026-Q1",
             "title": "Period ID"
           },
+          "fiscalYearId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the FiscalYear this line belongs to, denormalised from the parent GLTransaction.fiscalYearId so line-level roll-ups can group by year. GLLine declared no fiscal-year property at all, so every aggregation grouping on it put all rows into ONE null bucket — a plausible total, not an error. periodId is NOT a substitute: a period is a finer grain than a year. Backfilled from the parent transaction by BackfillGlLineFiscalYear.",
+            "example": "fy-2026-nl",
+            "title": "Fiscal Year ID"
+          },
           "subLedgerType": {
             "type": "string",
             "enum": [
@@ -1994,14 +2001,14 @@
               "to": "final",
               "label": "Finalise balance sheet",
               "description": "Operator or scheduled workflow closes fiscal period. Triggers balance-sheet aggregation (REQ-FS-004).",
-              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requireFiscalPeriodClosed"
+              "requires": "OCA\\Shillinq\\Service\\ConsolidationGuard::requireFiscalPeriodClosed"
             },
             "publish": {
               "from": "final",
               "to": "published",
               "label": "Publish balance sheet",
               "description": "Operator (role: controller) releases to stakeholders via OR publication extension or ConsolidationGuard fallback per ADR-031.",
-              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requirePublicationApproval"
+              "requires": "OCA\\Shillinq\\Service\\ConsolidationGuard::requirePublicationApproval"
             },
             "archive": {
               "from": "published",
@@ -2212,14 +2219,14 @@
               "to": "final",
               "label": "Finalise trial balance",
               "description": "Operator or scheduled workflow closes fiscal period. Also triggered by BalanceSheet finalise hook.",
-              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requireFiscalPeriodClosed"
+              "requires": "OCA\\Shillinq\\Service\\ConsolidationGuard::requireFiscalPeriodClosed"
             },
             "publish": {
               "from": "final",
               "to": "published",
               "label": "Publish trial balance",
               "description": "Operator (role: controller) releases to stakeholders via OR publication extension or ConsolidationGuard fallback per ADR-031.",
-              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requirePublicationApproval"
+              "requires": "OCA\\Shillinq\\Service\\ConsolidationGuard::requirePublicationApproval"
             },
             "archive": {
               "from": "published",
@@ -2583,14 +2590,14 @@
               "to": "final",
               "label": "Finalise consolidated report",
               "description": "Applies consolidation workflow and inter-company eliminations per ConsolidationGroup.eliminationRules. Consumed via OR consolidation extension (ADR-022) or ConsolidationGuard fallback per ADR-031 exception.",
-              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requireAllMembersFinalised"
+              "requires": "OCA\\Shillinq\\Service\\ConsolidationGuard::requireAllMembersFinalised"
             },
             "publish": {
               "from": "final",
               "to": "published",
               "label": "Publish consolidated report",
               "description": "Operator (role: controller) releases to stakeholders via OR publication extension or ConsolidationGuard fallback per ADR-031.",
-              "requires": "OCA\\Shillinq\\Consolidation\\ConsolidationGuard::requirePublicationApproval"
+              "requires": "OCA\\Shillinq\\Service\\ConsolidationGuard::requirePublicationApproval"
             },
             "archive": {
               "from": "published",

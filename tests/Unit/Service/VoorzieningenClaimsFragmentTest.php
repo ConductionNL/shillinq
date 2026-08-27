@@ -314,10 +314,20 @@ final class VoorzieningenClaimsFragmentTest extends TestCase {
 		$schema = $this->fragment()['components']['schemas']['ProvisionDisclosureTabel'];
 		$agg = $schema['x-openregister-aggregations']['provisionDisclosureGeneration'];
 
-		self::assertSame('ProvisionMovement', $agg['source']);
+		// `from`/`metrics`, not `source`/`operations`. AggregationRunner reads
+		// neither of the old keys, so this aggregation produced none of the eight
+		// figures below — it just returned nothing, under HTTP 200.
+		self::assertSame('ProvisionMovement', $agg['from']);
+		self::assertArrayNotHasKey('source', $agg, '`source` is not an engine key');
+		self::assertArrayNotHasKey('operations', $agg, '`operations` is not an engine key');
 		self::assertSame(['Provision.provisionType', 'ProvisionMovement.period'], $agg['groupBy']);
+
+		$byAlias = [];
+		foreach ($agg['metrics'] as $metric) {
+			$byAlias[$metric['as']] = $metric;
+		}
 		foreach (['openingBalance', 'additions', 'used', 'released', 'unwinding', 'estimatesChange', 'closingBalance', 'count'] as $bucket) {
-			self::assertArrayHasKey($bucket, $agg['operations'], "Disclosure aggregation must produce $bucket");
+			self::assertArrayHasKey($bucket, $byAlias, "Disclosure aggregation must produce $bucket");
 		}
 
 	}//end testDisclosureTableAggregationIsDeclared()

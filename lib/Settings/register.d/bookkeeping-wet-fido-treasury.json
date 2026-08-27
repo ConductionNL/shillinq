@@ -1186,13 +1186,13 @@
               "quarter": "@self.kwartaal",
               "auditYear": "@self.auditYear"
             },
-            "operations": {
-              "loansMovements": {
+            "metrics": [
+              {
+                "metric": "summarise",
                 "field": "Lening.principal",
-                "operation": "summarise",
-                "target": "loansMovements"
+                "as": "loansMovements"
               }
-            }
+            ]
           }
         },
         "x-openregister-audit-trail": {

@@ -533,16 +533,18 @@
               "recipientName",
               "paymentTypeCode"
             ],
-            "operations": {
-              "totalBetalingen": {
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "paymentsTotal",
-                "operation": "sum"
+                "as": "totalBetalingen"
               },
-              "recordCount": {
+              {
+                "metric": "count",
                 "field": "id",
-                "operation": "count"
+                "as": "recordCount"
               }
-            }
+            ]
           },
           "ib47DryRunTotalsPerMonth": {
             "description": "Monthly dry-run aggregation for the reconciliation invariant check. Must equal the final yearly batch totals per recipient (€0 tolerance) per REQ-DPA-005.",
@@ -556,12 +558,13 @@
               "dryRunMonth",
               "paymentTypeCode"
             ],
-            "operations": {
-              "maandTotaalBetalingen": {
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "paymentsTotal",
-                "operation": "sum"
+                "as": "maandTotaalBetalingen"
               }
-            }
+            ]
           },
           "ib47ReconciliationCheck": {
             "description": "Invariant check: final yearly batch totals per recipient MUST equal the sum of 12 monthly dry-run totals (€0 tolerance) per REQ-DPA-005. Surfaced as a non-blocking warning when the invariant is violated before submission.",

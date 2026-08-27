@@ -30,8 +30,8 @@
  * KvK before the call is allowed (vendors cannot sync; only the
  * aanbestedende dienst can — see design D6).
  *
- * @category Integration
- * @package  OCA\Shillinq\Integration
+ * @category Service
+ * @package  OCA\Shillinq\Service
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -47,7 +47,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Integration;
+namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;

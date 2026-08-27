@@ -317,7 +317,6 @@
         "x-openregister-aggregations": {
           "quarterlyTaxStatement": {
             "description": "Declarative shape of the quarterly Vpb statement TaxReportService computes (REQ-VPB-003, REQ-VPB-009). Filters GLLine by administrationId + periodId, joins Account for accountType, groups by accountType and taxTreatment, sums amounts, and derives netTaxableIncome = revenue - operatingExpenses + nonOperating - specialDeductions. When the aggregation engine cannot express the GLLine→Account join + tax-treatment grouping, TaxReportService computes the same result in PHP via the real ObjectService API.",
-            "source": "GLLine",
             "join": {
               "from": "GLLine.accountNumber",
               "through": "Account",
@@ -326,12 +325,14 @@
                 "Account.accountType"
               ]
             },
-            "filter": {
-              "periodId": "@self.periodId"
-            },
+            "filter": {},
             "group": [
               "Account.accountType",
               "GLLine.taxTreatment"
+            ],
+            "from": "GLLine",
+            "groupBy": [
+              "periodId"
             ]
           }
         },
