@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Recognition;
 
-use OCA\Shillinq\Recognition\RevenueRecognitionService;
+use OCA\Shillinq\Service\RevenueRecognitionService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
