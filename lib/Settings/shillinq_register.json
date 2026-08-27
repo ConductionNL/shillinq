@@ -937,20 +937,30 @@
         "x-openregister-aggregations": {
           "consolidatedTrialBalance": {
             "description": "Trial-balance rollup that excludes inter-GR lines flagged for elimination. Produces debit and credit totals per accountNumber for the GR own jaarrekening per REQ-GRC-003.",
-            "filter": "eliminationFlag = false",
-            "groupBy": "accountNumber",
-            "operations": {
-              "totalDebit": {
+            "filter": {
+              "eliminationFlag": false
+            },
+            "groupBy": [
+              "accountNumber"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "amount",
-                "operation": "sum",
-                "condition": "side = 'debit'"
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "totalDebit"
               },
-              "totalCredit": {
+              {
+                "metric": "sum",
                 "field": "amount",
-                "operation": "sum",
-                "condition": "side = 'credit'"
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "totalCredit"
               }
-            }
+            ]
           },
           "segmentPnlByCostCenter": {
             "description": "Segment P&L roll-up keyed by costCenterCode and fiscalYearId. Aggregates debit and credit amounts per cost center, rolling child cost centers up to their parent via the AnalyticalDimension(dimensionType=cost-center) self-relation per REQ-CC-005 + REQ-ADIM-101. Consumed by launchpad widgets via runtime GraphQL. Re-targeted from CostCenter to AnalyticalDimension (field name and stored values unchanged).",
