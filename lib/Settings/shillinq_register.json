@@ -845,6 +845,13 @@
             "example": "2026-Q1",
             "title": "Period ID"
           },
+          "fiscalYearId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the FiscalYear this line belongs to, denormalised from the parent GLTransaction.fiscalYearId so line-level roll-ups can group by year. GLLine declared no fiscal-year property at all, so every aggregation grouping on it put all rows into ONE null bucket — a plausible total, not an error. periodId is NOT a substitute: a period is a finer grain than a year. Backfilled from the parent transaction by BackfillGlLineFiscalYear.",
+            "example": "fy-2026-nl",
+            "title": "Fiscal Year ID"
+          },
           "subLedgerType": {
             "type": "string",
             "enum": [

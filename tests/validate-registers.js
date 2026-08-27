@@ -543,17 +543,13 @@ function groupByRefs(agg) {
 // here (rather than deleting the check) is that the gate keeps protecting
 // every OTHER reference while these stay visible.
 //
-// `GLLine.fiscalYearId`: GLLine has no fiscal-year property at all. Its
-// nearest field is `periodId`, but a period is a FINER grain than a year,
-// so substituting it would silently change what these P&L roll-ups group
-// by — an architecture decision (add a fiscalYearId to GLLine, or join
-// through GLTransaction/Period to derive the year), not a rename.
-const AGGREGATION_REF_BASELINE = new Map([
-	[
-		'GLLine.fiscalYearId',
-		'GLLine declares no fiscal-year field; periodId is a finer grain, so this needs a schema decision, not a rename. Affects AnalyticalDimension.segmentPnl, AnalyticalDimension.segmentPnlByCostObject, Project.segmentPnl.',
-	],
-])
+// `GLLine.fiscalYearId` was here, waived, with the note that it needed a
+// schema decision rather than a rename. The decision was taken: GLLine now
+// DECLARES `fiscalYearId`, denormalised from the parent GLTransaction and
+// backfilled by BackfillGlLineFiscalYear. `periodId` was deliberately not
+// substituted — a period is a finer grain than a year, so it would have
+// silently changed what the three P&L roll-ups group by.
+const AGGREGATION_REF_BASELINE = new Map([])
 
 // An aggregation without `metric`/`metrics` cannot produce a value.
 //
@@ -832,13 +828,13 @@ function checkAggregationPlaceholders(registry) {
 // `sourceSchema` are inert keys it never consults. So the target is `from`
 // when present and the declaring schema otherwise, exactly as the runner
 // computes it, and the ambiguity that justified skipping this is gone.
-// 120 of the 451 bare references checked resolve to nothing today. They are
+// 116 of the 454 bare references checked resolve to nothing today. They are
 // NOT waived — each returns a plausible figure (one null bucket, or zero rows)
 // under HTTP 200, which is why the class went unnoticed. The ratchet keeps the
 // number falling and refuses any new one. Classified in #1261; the bulk are
 // declarations carrying the inert `source` key that MEANT another schema and
 // therefore resolve their fields against the declaring schema instead.
-const AGG_BARE_REF_BASELINE = 120
+const AGG_BARE_REF_BASELINE = 116
 
 function checkAggregationBareRefs(registry) {
 	const offenders = []
