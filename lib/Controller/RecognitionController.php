@@ -44,7 +44,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
-use OCA\Shillinq\Recognition\RevenueRecognitionService;
+use OCA\Shillinq\Service\RevenueRecognitionService;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;

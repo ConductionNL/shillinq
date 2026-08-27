@@ -543,17 +543,13 @@ function groupByRefs(agg) {
 // here (rather than deleting the check) is that the gate keeps protecting
 // every OTHER reference while these stay visible.
 //
-// `GLLine.fiscalYearId`: GLLine has no fiscal-year property at all. Its
-// nearest field is `periodId`, but a period is a FINER grain than a year,
-// so substituting it would silently change what these P&L roll-ups group
-// by — an architecture decision (add a fiscalYearId to GLLine, or join
-// through GLTransaction/Period to derive the year), not a rename.
-const AGGREGATION_REF_BASELINE = new Map([
-	[
-		'GLLine.fiscalYearId',
-		'GLLine declares no fiscal-year field; periodId is a finer grain, so this needs a schema decision, not a rename. Affects AnalyticalDimension.segmentPnl, AnalyticalDimension.segmentPnlByCostObject, Project.segmentPnl.',
-	],
-])
+// `GLLine.fiscalYearId` was here, waived, with the note that it needed a
+// schema decision rather than a rename. The decision was taken: GLLine now
+// DECLARES `fiscalYearId`, denormalised from the parent GLTransaction and
+// backfilled by BackfillGlLineFiscalYear. `periodId` was deliberately not
+// substituted — a period is a finer grain than a year, so it would have
+// silently changed what the three P&L roll-ups group by.
+const AGGREGATION_REF_BASELINE = new Map([])
 
 // An aggregation without `metric`/`metrics` cannot produce a value.
 //
@@ -590,7 +586,7 @@ const AGGREGATION_REF_BASELINE = new Map([
 // and NOT a `from`, which would have switched the runner into its cross-schema
 // path — plus `sum: ["amount"]`, which is not an engine key. Verified live
 // against the rows, not just for a non-empty response.
-const AGG_NO_METRIC_BASELINE = 211
+const AGG_NO_METRIC_BASELINE = 180
 
 // A STRING `groupBy` is silently ignored, and the result is a WRONG NUMBER.
 //
@@ -714,7 +710,7 @@ const AGG_PLACEHOLDER_TENANT_KEYS = new Set(['administrationId', 'organisationId
 // Measured 2026-08-26 by this check, after removing 67 tenant placeholders
 // across 22 files. Counted BY THE GATE, not by a one-off script — an earlier
 // estimate of 73 came from a narrower hand-written predicate and was wrong.
-const AGG_PLACEHOLDER_BASELINE = 81
+const AGG_PLACEHOLDER_BASELINE = 62
 
 function collectPlaceholders(node, path, out) {
 	if (node === null || node === undefined) return
@@ -832,13 +828,86 @@ function checkAggregationPlaceholders(registry) {
 // `sourceSchema` are inert keys it never consults. So the target is `from`
 // when present and the declaring schema otherwise, exactly as the runner
 // computes it, and the ambiguity that justified skipping this is gone.
-// 120 of the 451 bare references checked resolve to nothing today. They are
+// 102 of the 454 bare references checked resolve to nothing today. They are
 // NOT waived — each returns a plausible figure (one null bucket, or zero rows)
 // under HTTP 200, which is why the class went unnoticed. The ratchet keeps the
 // number falling and refuses any new one. Classified in #1261; the bulk are
 // declarations carrying the inert `source` key that MEANT another schema and
 // therefore resolve their fields against the declaring schema instead.
-const AGG_BARE_REF_BASELINE = 120
+const AGG_BARE_REF_BASELINE = 102
+
+// A derived metric that names an alias which does not exist.
+//
+// `{"metric":"expression","expression":"a - b"}` reads the aliases of the
+// metrics BESIDE it. OpenRegister raises when one is missing — deliberately,
+// because resolving it to 0 would turn a typo into a plausible number. That
+// raise happens at RUN time, on a dashboard, in front of whoever opened it.
+//
+// This catches it at declaration time. It matters more than it looks: the
+// `operations` maps these were translated from keyed their entries one way and
+// named their `target` another, so an expression written against the map KEY
+// silently referred to an alias the translated metrics list does not have. A
+// first pass of that translation produced 41 such references across 13
+// aggregations, every one of which would have raised on first use.
+//
+// Order matters and is checked: an expression may only name aliases declared
+// BEFORE it, because that is the order the engine computes them in.
+function checkAggregationExpressionAliases(registry) {
+	const offenders = []
+	let checked = 0
+
+	for (const slug of Object.keys(registry).sort()) {
+		for (const { aggName, agg, file } of registry[slug].aggregations) {
+			if (Array.isArray(agg.metrics) === false) continue
+
+			const declared = new Set()
+			for (const metric of agg.metrics) {
+				if (metric === null || typeof metric !== 'object') continue
+
+				if (metric.metric === 'expression') {
+					checked++
+					const expression = String(metric.expression ?? '')
+					if (expression.trim() === '') {
+						offenders.push(
+							`${slug}.${aggName} declares a derived metric with an empty expression`
+								+ `\n      declared in ${file}`,
+						)
+					}
+					for (const ident of expression.match(/[A-Za-z_]\w*/g) || []) {
+						// `min`/`max` are the only functions the grammar has.
+						if (ident === 'min' || ident === 'max') continue
+						if (declared.has(ident) === false) {
+							offenders.push(
+								`${slug}.${aggName} expression "${expression}" names "${ident}", which is not `
+									+ `a metric declared before it (available: ${[...declared].join(', ') || 'none'})`
+									+ `\n      declared in ${file}`,
+							)
+						}
+					}
+				}
+
+				const alias = metric.as
+				if (typeof alias === 'string' && alias !== '') declared.add(alias)
+			}
+		}
+	}
+
+	console.log(
+		`[validate-registers] derived-metric expressions checked: ${checked}`,
+	)
+	if (offenders.length === 0) {
+		console.log(
+			'[validate-registers] PASS — every derived metric names only aliases declared before it',
+		)
+		return true
+	}
+	console.error(
+		'[validate-registers] FAIL — derived metrics naming an alias that does not exist. '
+			+ 'OpenRegister raises on these at run time, on whatever dashboard opened them:',
+	)
+	for (const o of offenders) console.error(`  - ${o}`)
+	return false
+}
 
 function checkAggregationBareRefs(registry) {
 	const offenders = []
@@ -1043,6 +1112,7 @@ function main() {
 	const sameSlugFullDefinitionOk = checkSameSlugFullDefinitionCollisions(registry)
 	const aggregationRefsOk = checkAggregationFieldRefs(registry)
 	const aggregationBareRefsOk = checkAggregationBareRefs(registry)
+	const aggregationExpressionsOk = checkAggregationExpressionAliases(registry)
 	const aggregationPlaceholdersOk = checkAggregationPlaceholders(registry)
 	const aggregationMetricsOk = checkAggregationMetrics(registry)
 	const aggregationGroupByOk = checkAggregationGroupByShape(registry)
@@ -1053,6 +1123,7 @@ function main() {
 			|| sameSlugFullDefinitionOk === false
 			|| aggregationRefsOk === false
 			|| aggregationBareRefsOk === false
+			|| aggregationExpressionsOk === false
 			|| aggregationPlaceholdersOk === false
 			|| aggregationMetricsOk === false
 			|| aggregationGroupByOk === false

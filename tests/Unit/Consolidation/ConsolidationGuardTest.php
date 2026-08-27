@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Consolidation;
 
-use OCA\Shillinq\Consolidation\ConsolidationGuard;
+use OCA\Shillinq\Service\ConsolidationGuard;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;

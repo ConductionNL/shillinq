@@ -189,22 +189,21 @@
         "x-openregister-aggregations": {
           "sluitendByBegroting": {
             "description": "Declarative shape of the sluitend-criterium SluitendCalculator computes (REQ-008, REQ-011). Walks the Meerjarenraming records for jaren T+1..T+4 of this begroting and sets sluitendStructureel = (every jaar has lastenStructureel ≤ batenStructureel) and sluitendReëel = (every jaar has saldoReëel ≥ 0 after nominaleOntwikkeling correction). When the aggregation engine cannot express the per-year all-quantifier with the cross-schema nominale correction, SluitendCalculator computes the same result in PHP from the real ObjectService API.",
-            "source": "Meerjarenraming",
-            "filter": {
-              "budgetId": "@self.id"
-            },
-            "operations": {
-              "structurallyBalanced": {
-                "operation": "all",
-                "condition": "Meerjarenraming.lastenStructureel <= Meerjarenraming.batenStructureel",
-                "target": "sluitendStructureel"
+            "filter": {},
+            "from": "Meerjarenraming",
+            "groupBy": [
+              "budgetId"
+            ],
+            "metrics": [
+              {
+                "metric": "all",
+                "as": "sluitendStructureel"
               },
-              "sluitendReëel": {
-                "operation": "all",
-                "condition": "Meerjarenraming.saldoReëel >= 0",
-                "target": "sluitendReëel"
+              {
+                "metric": "all",
+                "as": "sluitendReëel"
               }
-            }
+            ]
           }
         },
         "x-openregister-audit-trail": {
@@ -306,10 +305,7 @@
         "x-openregister-aggregations": {
           "programmaRollup": {
             "description": "Declarative shape of the Programma roll-up ProgrammaAggregator computes (REQ-002, design D1). Sums child Taakveld.baten and Taakveld.lasten (in integer cents to avoid drift), derives saldoVoorMutaties = batenTotaal - lastenTotaal and saldoNaMutaties = saldoVoorMutaties + mutatiesReserves.",
-            "source": "Taakveld",
-            "filter": {
-              "programmeId": "@self.id"
-            },
+            "filter": {},
             "operations": {
               "revenueTotal": {
                 "field": "Taakveld.baten",
@@ -331,7 +327,11 @@
                 "expression": "saldoVoorMutaties + mutatiesReserves",
                 "target": "balanceAfterMovements"
               }
-            }
+            },
+            "from": "Taakveld",
+            "groupBy": [
+              "programmeId"
+            ]
           }
         }
       },

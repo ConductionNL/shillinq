@@ -114,7 +114,6 @@
         "x-openregister-aggregations": {
           "trialBalanceByAccountPeriod": {
             "description": "Declarative shape of the per-account period roll-up TrialBalanceService computes (REQ-TB-001, REQ-TB-018). Groups GLLine by (periodId, accountNumber) within an administration, sums debit and credit movements, joins Account for name/type/parent, and derives closingBalance = openingBalance + (debitMovement - creditMovement). openingBalance is carried from the prior period's closingBalance (REQ-TB-002). When the OpenRegister aggregation engine cannot express the prior-period carry + cross-schema join, TrialBalanceService computes the same result in PHP from the real ObjectService API.",
-            "source": "GLLine",
             "join": {
               "from": "GLLine.accountNumber",
               "through": "Account",
@@ -127,10 +126,10 @@
               ]
             },
             "filter": {
-              "periodId": "@self.periodId",
               "eliminationFlag": false
             },
             "groupBy": [
+              "periodId",
               "GLLine.periodId",
               "GLLine.accountNumber"
             ],
@@ -152,7 +151,8 @@
                 "expression": "openingBalance + (debitMovement - creditMovement)",
                 "target": "closingBalance"
               }
-            }
+            },
+            "from": "GLLine"
           }
         }
       }

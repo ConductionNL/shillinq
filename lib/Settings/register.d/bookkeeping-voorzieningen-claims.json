@@ -1274,7 +1274,6 @@
         "x-openregister-aggregations": {
           "provisionDisclosureGeneration": {
             "description": "Declarative shape of the disclosure-table generation (REQ-PROV-008). Joins ProvisionMovement records per provisionType per period, computes the sum buckets and emits one ProvisionDisclosureTabel per (period, provisionType). When the engine cannot template the merge, the same arithmetic is rebuilt from ProvisionMovement + ContingentLiability via the real ObjectService API.",
-            "source": "ProvisionMovement",
             "join": {
               "from": "ProvisionMovement.provision",
               "through": "Provision",
@@ -1289,48 +1288,49 @@
               "Provision.provisionType",
               "ProvisionMovement.period"
             ],
-            "operations": {
-              "openingBalance": {
-                "operation": "sum",
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "openingBalance",
-                "target": "openingBalance"
+                "as": "openingBalance"
               },
-              "additions": {
-                "operation": "sum",
+              {
+                "metric": "sum",
                 "field": "additions",
-                "target": "additions"
+                "as": "additions"
               },
-              "used": {
-                "operation": "sum",
+              {
+                "metric": "sum",
                 "field": "usedDuringPeriod",
-                "target": "used"
+                "as": "used"
               },
-              "released": {
-                "operation": "sum",
+              {
+                "metric": "sum",
                 "field": "releasedUnused",
-                "target": "released"
+                "as": "released"
               },
-              "unwinding": {
-                "operation": "sum",
+              {
+                "metric": "sum",
                 "field": "unwindingOfDiscount",
-                "target": "unwinding"
+                "as": "unwinding"
               },
-              "estimatesChange": {
-                "operation": "sum",
+              {
+                "metric": "sum",
                 "field": "effectOfChangeInEstimate",
-                "target": "estimatesChange"
+                "as": "estimatesChange"
               },
-              "closingBalance": {
-                "operation": "sum",
+              {
+                "metric": "sum",
                 "field": "closingBalance",
-                "target": "closingBalance"
+                "as": "closingBalance"
               },
-              "count": {
-                "operation": "count",
+              {
+                "metric": "count",
                 "field": "provision",
-                "target": "count"
+                "as": "count"
               }
-            }
+            ],
+            "from": "ProvisionMovement"
           }
         },
         "x-openregister-audit-trail": {

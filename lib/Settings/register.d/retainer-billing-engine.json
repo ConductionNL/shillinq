@@ -226,40 +226,43 @@
         "x-openregister-aggregations": {
           "drawdownsByPool": {
             "description": "Declarative shape of the drawdown-balance aggregation (REQ-RETN-003). Sums RetainerDrawdown.drawdownAmount for this pool where drawdownDate <= as-of-date and status in (materialized, adjusted). The available-balance UI computes poolAmount - drawnAmount + sum(RetainerRollover.carryoverAmount where targetPeriodPoolId=@self.id).",
-            "source": "RetainerDrawdown",
             "filter": {
-              "poolId": "@self.id",
               "status": "materialized"
             },
-            "operations": {
-              "drawnAmount": {
-                "field": "RetainerDrawdown.drawdownAmount",
-                "operation": "sum",
-                "target": "drawnAmount"
+            "from": "RetainerDrawdown",
+            "groupBy": [
+              "poolId"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "drawdownAmount",
+                "as": "drawnAmount"
               },
-              "drawnHours": {
-                "field": "RetainerDrawdown.hoursOrAmount",
-                "operation": "sum",
-                "target": "drawnHours"
+              {
+                "metric": "sum",
+                "field": "hoursOrAmount",
+                "as": "drawnHours"
               },
-              "drawdownCount": {
-                "operation": "count",
-                "target": "drawdownCount"
+              {
+                "metric": "count",
+                "as": "drawdownCount"
               }
-            }
+            ]
           },
           "trueUpsByPool": {
             "description": "Declarative count of period-end true-ups attached to this pool (REQ-RETN-006). Used by the detail view to prevent duplicate true-up creation per REQ-RETN-007.",
-            "source": "RetainerTrueUp",
-            "filter": {
-              "poolId": "@self.id"
-            },
-            "operations": {
-              "trueUpCount": {
-                "operation": "count",
-                "target": "trueUpCount"
+            "filter": {},
+            "from": "RetainerTrueUp",
+            "groupBy": [
+              "poolId"
+            ],
+            "metrics": [
+              {
+                "metric": "count",
+                "as": "trueUpCount"
               }
-            }
+            ]
           }
         },
         "x-openregister-uniqueness": {
@@ -806,18 +809,20 @@
         "x-openregister-aggregations": {
           "drawdownsForPeriod": {
             "description": "Declarative shape of the actualDrawdown derivation (REQ-RETN-006). Sums RetainerDrawdown.drawdownAmount where poolId=@self.poolId AND drawdownDate BETWEEN pool.periodStart AND pool.periodEnd AND status='materialized'.",
-            "source": "RetainerDrawdown",
             "filter": {
-              "poolId": "@self.poolId",
               "status": "materialized"
             },
-            "operations": {
-              "actualDrawdown": {
-                "field": "RetainerDrawdown.drawdownAmount",
-                "operation": "sum",
-                "target": "actualDrawdown"
+            "from": "RetainerDrawdown",
+            "groupBy": [
+              "poolId"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "drawdownAmount",
+                "as": "actualDrawdown"
               }
-            }
+            ]
           }
         },
         "x-openregister-rbac": {

@@ -520,7 +520,6 @@
         "x-openregister-aggregations": {
           "innovatieboxAdministratie": {
             "description": "Per-asset Vpb innovatiebox roll-up (REQ-IBA-006). For each valid QualifyingAsset, joins IBProfitAttribution + NexusCalculation + CarryForwardLoss for the boekjaar and emits naam, kwalificerende_winst_voor_nexus, nexusbreuk_toegepast, kwalificerende_winst_na_nexus, effectief_tarief, vpb_op_innovatiedeel. The grand total contributes to Vpb-aangifte regel 23. InnovatieboxAggregationService computes this in PHP from the real ObjectService API.",
-            "source": "IBProfitAttribution",
             "join": {
               "from": "IBProfitAttribution.qualifying_asset_id",
               "through": "QualifyingAsset",
@@ -530,19 +529,19 @@
                 "QualifyingAsset.status"
               ]
             },
-            "filter": {
-              "financialYear": "@self.boekjaar"
-            },
+            "filter": {},
             "groupBy": [
+              "financialYear",
               "IBProfitAttribution.qualifying_asset_id"
             ],
-            "operations": {
-              "vpb_on_innovation_share": {
-                "field": "IBProfitAttribution.kwalificerende_winst_na_nexus",
-                "operation": "sum",
-                "target": "vpb_on_innovation_share"
+            "from": "IBProfitAttribution",
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "qualifying_profit_after_nexus",
+                "as": "vpb_on_innovation_share"
               }
-            }
+            ]
           }
         },
         "x-openregister-audit-trail": {

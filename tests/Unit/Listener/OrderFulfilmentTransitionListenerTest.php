@@ -34,7 +34,7 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
-use OCA\Shillinq\Integration\TenderNedStatusSync;
+use OCA\Shillinq\Service\TenderNedStatusSync;
 use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
@@ -108,7 +108,19 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase {
 			 */
 			public array $syncCalls = [];
 
+			/**
+			 * When true, syncCompletion() throws — so a test can show the
+			 * listener's fail-soft catch keeps the transition alive.
+			 *
+			 * @var bool
+			 */
+			public bool $throwOnSync = false;
+
 			public function syncCompletion(array $oplevering): bool {
+				if ($this->throwOnSync === true) {
+					throw new \RuntimeException('TenderNed is unreachable');
+				}
+
 				$this->syncCalls[] = $oplevering;
 				return true;
 			}//end syncCompletion()
@@ -344,6 +356,75 @@ final class OrderFulfilmentTransitionListenerTest extends TestCase {
 	 *
 	 * @return void
 	 */
+	/**
+	 * An event of another type is ignored. The dispatcher hands `Event`, so
+	 * the instanceof guard is the only thing between this listener and a
+	 * getTo() that does not exist on that class.
+	 *
+	 * @return void
+	 */
+	public function testAnEventOfAnotherTypeIsIgnored(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$sync = $this->spyingSync();
+		$listener = new OrderFulfilmentTransitionListener(
+			new BudgetImpactEmitter($dispatcher, new NullLogger()),
+			$sync,
+			$this->resolver('OrderFulfilment'),
+			new NullLogger()
+		);
+
+		$listener->handle(new \OCP\EventDispatcher\GenericEvent());
+
+		$this->assertCount(0, $dispatcher->events);
+		$this->assertCount(0, $sync->syncCalls);
+
+	}//end testAnEventOfAnotherTypeIsIgnored()
+
+	/**
+	 * THE FAIL-SOFT CONTRACT. This listener runs inside another object's
+	 * transition, so a throw here would roll that transition back. A sync
+	 * that blows up must be logged and swallowed, not propagated — and the
+	 * milestone event that already fired must still stand.
+	 *
+	 * @return void
+	 */
+	public function testAThrowingSyncIsSwallowedAndTheMilestoneStillEmitted(): void {
+		$dispatcher = $this->recordingDispatcher();
+		$sync = $this->spyingSync();
+		$sync->throwOnSync = true;
+
+		$listener = new OrderFulfilmentTransitionListener(
+			new BudgetImpactEmitter($dispatcher, new NullLogger()),
+			$sync,
+			$this->resolver('OrderFulfilment'),
+			new NullLogger()
+		);
+
+		$listener->handle(
+			new ObjectTransitionedEvent(
+				$this->entity('1201', [
+					'commitmentId' => 'TN-2026-0001',
+					'milestoneId' => 'M-EIND',
+					'deliveryType' => 'eindoplevering',
+					'approved' => true,
+				]),
+				'afronden',
+				'in-progress',
+				'completed',
+				'admin',
+				'shillinq',
+				'OrderFulfilment'
+			)
+		);
+
+		$this->assertCount(
+			1,
+			$dispatcher->events,
+			'the milestone event fires before the sync, so it must survive the sync failing'
+		);
+
+	}//end testAThrowingSyncIsSwallowedAndTheMilestoneStillEmitted()
+
 	public function testNonCompletedTransitionIsIgnored(): void {
 		$dispatcher = $this->recordingDispatcher();
 		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());

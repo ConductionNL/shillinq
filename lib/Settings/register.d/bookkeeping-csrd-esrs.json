@@ -756,12 +756,13 @@
               "schema": "EmissionSource",
               "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope = '1'"
             },
-            "operations": {
-              "totalScope1": {
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "EmissionSource.co2eResult",
-                "operation": "sum"
+                "as": "totalScope1"
               }
-            }
+            ]
           },
           "scope2LocationBasedTotal": {
             "description": "total-Scope-2-location-based = SUM(co2eResult) for scope=2 rows using grid-average factors (REQ-CSR-003).",
@@ -769,12 +770,13 @@
               "schema": "EmissionSource",
               "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope = '2' AND EmissionSource.scope2Method = 'location-based'"
             },
-            "operations": {
-              "totalScope2LocationBased": {
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "EmissionSource.co2eResult",
-                "operation": "sum"
+                "as": "totalScope2LocationBased"
               }
-            }
+            ]
           },
           "scope2MarketBasedTotal": {
             "description": "total-Scope-2-market-based = SUM(co2eResult) for scope=2 rows using contract-specific factors (REQ-CSR-003).",
@@ -782,12 +784,13 @@
               "schema": "EmissionSource",
               "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope = '2' AND EmissionSource.scope2Method = 'market-based'"
             },
-            "operations": {
-              "totalScope2MarketBased": {
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "EmissionSource.co2eResult",
-                "operation": "sum"
+                "as": "totalScope2MarketBased"
               }
-            }
+            ]
           },
           "scope3ByCategory": {
             "description": "total-Scope-3 broken down by the 15 GHG Protocol categories: SUM(co2eResult) grouped by category for scope LIKE '3-cat-%' rows (REQ-CSR-003).",
@@ -795,13 +798,16 @@
               "schema": "EmissionSource",
               "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope LIKE '3-cat-%'"
             },
-            "groupBy": "EmissionSource.scope",
-            "operations": {
-              "totalScope3": {
+            "groupBy": [
+              "EmissionSource.scope"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "EmissionSource.co2eResult",
-                "operation": "sum"
+                "as": "totalScope3"
               }
-            }
+            ]
           }
         },
         "x-openregister-lifecycle": {
