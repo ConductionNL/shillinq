@@ -220,7 +220,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\LoadDbaSeedsStep</step>
             <step>OCA\Shillinq\Repair\MigrateProductVendorMasterToPipelinq</step>
             <step>OCA\Shillinq\Repair\DelegateSigningMigrationRepair</step>
-            <!-- FoldIntoOrder RE-ENABLED (issue #503, 2026-07-25): live-verified end to end on 8080 against real
+            <!-- FoldIntoOrder RE-ENABLED (issue #1094, formerly Codeberg #503, 2026-07-25): live-verified end to end on 8080 against real
                  created rows for ALL THREE source types (Subsidie / PurchaseOrder / DBAOpdracht). Each folds into a
                  correctly-mapped OrderPrimitive (purchase cent->EUR conversion confirmed: 121000 -> 1210.00); a re-run
                  skips every already-folded row (idempotent - exactly one OrderPrimitive per source, no duplicates);
@@ -233,17 +233,21 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\FoldDunningWriteoffIntoArInvoice</step>
             <step>OCA\Shillinq\Repair\StampJournalTypeOnGlTransactions</step>
             <step>OCA\Shillinq\Repair\FoldExpensesAndHoursIntoProject</step>
-            <!-- hydra-gate-98 held: OCA\Shillinq\Repair\RetireSubsidieSchema — it irreversibly deletes the
-                 Subsidie rows FoldIntoOrder folded, so it must lag that fold by at least one release to leave a
-                 folded instance a rollback window. Wire it up once the fold has run on a real instance and been
-                 confirmed for a release, and the delete has itself been live-verified on real data (issue #503). -->
-            <!-- OCA\Shillinq\Repair\RetireSubsidieSchema STILL HELD (issue #503): DELETES folded Subsidie objects, so it
+            <!-- OCA\Shillinq\Repair\RetireSubsidieSchema STILL HELD (issue #1094): DELETES folded Subsidie objects, so it
                  stays held even though the fold itself is now live-verified and re-enabled above, and even though its own
                  read/idempotency bugs are now FIXED (issue #382: the limit=>0 dead-read and the dot-path orderExists()
                  delete-gate that never matched — both resolved). It remains held for ONE reason now: deleting real source
                  rows is irreversible and MUST lag the fold by at least one release, so a folded instance keeps a rollback
                  window before its Subsidie source data is removed. Re-enable only after the fold has run on a real instance
-                 and been confirmed for at least one release, and the delete has itself been live-verified on real data. -->
+                 and been confirmed for at least one release, and the delete has itself been live-verified on real data.
+
+                 The tracker was #503 until now, which is the CODEBERG issue number. On GitHub #503 resolves to an
+                 unrelated MERGED pull request, so following the old reference lands on finished work and reads as
+                 though the hold were stale. It migrated to GitHub as #1094. Corrected because gate-98
+                 (repair-step-registration) flags this step as "written but never registered" and cannot tell a
+                 deliberate hold from an oversight — its suggested remedy is to register it, which on a step that
+                 deletes irreversible source rows is the wrong move. The comment is the only thing standing between
+                 that gate's advice and real data, so its reference has to resolve. -->
             <step>OCA\Shillinq\Repair\RematerialiseConvertedCalculations</step>
             <!--
                 Must run AFTER the register sync that adds the English columns,
