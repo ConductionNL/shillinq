@@ -757,28 +757,28 @@
               "IntercompanyTransaction.counterpartyEntityId",
               "IntercompanyTransaction.sourceAdministrationId"
             ],
-            "operations": {
-              "totalReceivablesAonB": {
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "IntercompanyTransaction.debitAmount",
-                "operation": "sum",
-                "target": "totalReceivablesAonB"
+                "as": "totalReceivablesAonB"
               },
-              "totalPayablesAtoB": {
+              {
+                "metric": "sum",
                 "field": "IntercompanyTransaction.creditAmount",
-                "operation": "sum",
-                "target": "totalPayablesAtoB"
+                "as": "totalPayablesAtoB"
               },
-              "netPositionAtoB": {
-                "operation": "expression",
+              {
+                "metric": "expression",
                 "expression": "totalReceivablesAonB - totalPayablesAtoB",
-                "target": "netPositionAtoB"
+                "as": "netPositionAtoB"
               },
-              "transactionCount": {
+              {
+                "metric": "count",
                 "field": "IntercompanyTransaction.id",
-                "operation": "count",
-                "target": "transactionCount"
+                "as": "transactionCount"
               }
-            }
+            ]
           }
         },
         "x-openregister-audit-trail": {
