@@ -87,7 +87,8 @@
 					:count="reports.length"
 					:countLabel="t('shillinq', 'report types')"
 					variant="default"
-					:loading="loading" />
+					:loading="loading"
+					:error="error" />
 				<router-link
 					class="reporting-overview__generated-link"
 					data-testid="reporting-overview-generated-link"
