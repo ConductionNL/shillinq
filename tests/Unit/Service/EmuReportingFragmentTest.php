@@ -152,9 +152,20 @@ final class EmuReportingFragmentTest extends TestCase {
 			self::assertContains($cat, $enum, "categorieEurostat must include $cat");
 		}
 
+		// `metric`/`field`, not `sum`. AggregationRunner reads neither `sum` nor
+		// `source`, so this computed nothing at all.
 		$agg = $schema['x-openregister-aggregations']['brutoSchuldPerCategorie'];
 		self::assertTrue($agg['filter']['teltMeeInEmuDebt']);
-		self::assertContains('outstandingDebt', $agg['sum']);
+		self::assertSame('sum', $agg['metric']);
+		self::assertSame('outstandingDebt', $agg['field']);
+		self::assertArrayNotHasKey('sum', $agg, '`sum` is not an engine key');
+		self::assertArrayNotHasKey('source', $agg, '`source` is not an engine key');
+
+		// The per-report correlation is a groupBy DIMENSION now: `reportId:
+		// "@self.reportId"` needed a parent row that no caller supplies, so it
+		// stayed a literal string and matched nothing.
+		self::assertContains('reportId', $agg['groupBy']);
+		self::assertArrayNotHasKey('reportId', $agg['filter']);
 	}//end testDebtPositionEsa2010ClassificationAndAggregation()
 
 	/**

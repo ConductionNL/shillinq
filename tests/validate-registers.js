@@ -586,7 +586,7 @@ const AGGREGATION_REF_BASELINE = new Map([])
 // and NOT a `from`, which would have switched the runner into its cross-schema
 // path — plus `sum: ["amount"]`, which is not an engine key. Verified live
 // against the rows, not just for a non-empty response.
-const AGG_NO_METRIC_BASELINE = 211
+const AGG_NO_METRIC_BASELINE = 185
 
 // A STRING `groupBy` is silently ignored, and the result is a WRONG NUMBER.
 //
@@ -710,7 +710,7 @@ const AGG_PLACEHOLDER_TENANT_KEYS = new Set(['administrationId', 'organisationId
 // Measured 2026-08-26 by this check, after removing 67 tenant placeholders
 // across 22 files. Counted BY THE GATE, not by a one-off script — an earlier
 // estimate of 73 came from a narrower hand-written predicate and was wrong.
-const AGG_PLACEHOLDER_BASELINE = 81
+const AGG_PLACEHOLDER_BASELINE = 62
 
 function collectPlaceholders(node, path, out) {
 	if (node === null || node === undefined) return
@@ -828,13 +828,13 @@ function checkAggregationPlaceholders(registry) {
 // `sourceSchema` are inert keys it never consults. So the target is `from`
 // when present and the declaring schema otherwise, exactly as the runner
 // computes it, and the ambiguity that justified skipping this is gone.
-// 116 of the 454 bare references checked resolve to nothing today. They are
+// 102 of the 454 bare references checked resolve to nothing today. They are
 // NOT waived — each returns a plausible figure (one null bucket, or zero rows)
 // under HTTP 200, which is why the class went unnoticed. The ratchet keeps the
 // number falling and refuses any new one. Classified in #1261; the bulk are
 // declarations carrying the inert `source` key that MEANT another schema and
 // therefore resolve their fields against the declaring schema instead.
-const AGG_BARE_REF_BASELINE = 116
+const AGG_BARE_REF_BASELINE = 102
 
 function checkAggregationBareRefs(registry) {
 	const offenders = []

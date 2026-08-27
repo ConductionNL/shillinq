@@ -227,12 +227,12 @@
         "x-openregister-aggregations": {
           "totaleAdjustments": {
             "description": "Sum of EMUAdjustment.bedrag (signed by richting) for this report, driving the BBV-reconciliation control (REQ-EMU-009).",
-            "source": "EMUAdjustment",
-            "filter": {
-              "reportId": "@self.id"
-            },
-            "sum": [
-              "amount"
+            "filter": {},
+            "from": "EMUAdjustment",
+            "metric": "sum",
+            "field": "amount",
+            "groupBy": [
+              "reportId"
             ]
           }
         },
@@ -689,17 +689,16 @@
         "x-openregister-aggregations": {
           "brutoSchuldPerCategorie": {
             "description": "Sum of uitstaandeSchuld grouped by categorieEurostat for AF.2/AF.3/AF.4 instruments that count toward the bruto EMU-schuld (REQ-EMU-004).",
-            "source": "DebtPosition",
             "groupBy": [
+              "reportId",
               "categoryEurostat"
             ],
             "filter": {
-              "reportId": "@self.reportId",
               "teltMeeInEmuDebt": true
             },
-            "sum": [
-              "outstandingDebt"
-            ]
+            "from": "DebtPosition",
+            "metric": "sum",
+            "field": "outstandingDebt"
           }
         },
         "x-openregister-notifications": {

@@ -199,17 +199,17 @@
               "IcpSupply.buyerVatId",
               "IcpSupply.supplyType"
             ],
-            "operations": {
-              "amountExclVat": {
-                "field": "IcpSupply.amountExclVat",
-                "operation": "sum",
-                "target": "amountExclVat"
-              }
-            },
             "sort": [
               {
                 "field": "buyerVatId",
                 "direction": "asc"
+              }
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "IcpSupply.amountExclVat",
+                "as": "amountExclVat"
               }
             ]
           }
