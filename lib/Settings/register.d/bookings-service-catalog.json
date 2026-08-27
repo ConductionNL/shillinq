@@ -163,15 +163,15 @@
         "x-openregister-aggregations": {
           "countByStatus": {
             "field": "status",
-            "operation": "count",
+            "metric": "count",
             "description": "Number of services per lifecycle state.",
-            "groupBy": "status"
+            "groupBy": ["status"]
           },
           "countByCategory": {
             "field": "serviceCategory",
-            "operation": "count",
+            "metric": "count",
             "description": "Number of services per flat category grouping (REQ-SC-006).",
-            "groupBy": "serviceCategory"
+            "groupBy": ["serviceCategory"]
           }
         }
       }

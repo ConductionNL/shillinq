@@ -189,7 +189,7 @@ class PeriodStatusGuard {
 			->setSchema('GLTransaction')
 			->findAll(['filters' => ['id' => $transaction], 'limit' => 1]);
 
-		if (is_array($found) === true && $found !== []) {
+		if ($found !== []) {
 			return (array)$found[0];
 		}
 
@@ -221,7 +221,7 @@ class PeriodStatusGuard {
 			->setSchema('PeriodStatus')
 			->findAll(['filters' => $filters, 'limit' => 1]);
 
-		if (is_array($found) === true && $found !== []) {
+		if ($found !== []) {
 			return (array)$found[0];
 		}
 

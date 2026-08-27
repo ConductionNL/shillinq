@@ -60,8 +60,8 @@
 						"defaultValue": "ACTIEF",
 						"options": [
 							{ "value": "ACTIEF", "label": "Active" },
-							{ "value": "GEEINDIGD_OVERSCHRIJDING", "label": "Ended — exceedance" },
-							{ "value": "GEEINDIGD_VRIJWILLIG", "label": "Ended — voluntary" }
+							{ "value": "GEEINDIGD_OVERSCHRIJDING", "label": "Ended (exceeded threshold)" },
+							{ "value": "GEEINDIGD_VRIJWILLIG", "label": "Ended (voluntary)" }
 						]
 					}
 				],

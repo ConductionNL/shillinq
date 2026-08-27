@@ -72,7 +72,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "RetainerPool",
-				"_note": "FINANCIAL / MASTER archetype (native CnDetailPage). A retainer pool is a prepaid-hours account with three consumption/reconciliation ledgers hanging off it: drawdowns (RetainerDrawdown.poolId), true-ups (RetainerTrueUp.poolId) and rollovers (RetainerRollover.sourcePeriodPoolId) — surfaced as native relatedLists so the operator can drill from the pool into its full trail (REQ-RETN-010). Deliberately NO comms leaves and NO file-references tab — a pool declares no email/calendar linkedType and no source-document field on the schema; it is an accounting balance, not a conversation or a filing. The lifecycle action toolbar (activate/close/archive + manual true-up trigger) stays on `actions`; audit-trail lives in a sidebar tab as the correct home for a financial balance's immutable change log.",
+				"_note": "FINANCIAL / MASTER archetype (native CnDetailPage). A retainer pool is a prepaid-hours account with three consumption/reconciliation ledgers hanging off it: drawdowns (RetainerDrawdown.poolId), true-ups (RetainerTrueUp.poolId) and rollovers (RetainerRollover.sourcePeriodPoolId) — surfaced as native relatedCollections (see _relatedCollectionsNote for the key and filter-token evidence) so the operator can drill from the pool into its full trail (REQ-RETN-010). Deliberately NO comms leaves and NO file-references tab — a pool declares no email/calendar linkedType and no source-document field on the schema; it is an accounting balance, not a conversation or a filing. The lifecycle action toolbar (activate/close/archive + manual true-up trigger) stays on `actions`; audit-trail lives in a sidebar tab as the correct home for a financial balance's immutable change log.",
 				"fields": [
 					{"key": "poolId", "label": "Pool ID", "type": "string"},
 					{"key": "clientId", "label": "Client", "type": "string"},
@@ -92,12 +92,13 @@
 					{"key": "description", "label": "Description", "type": "string"}
 				],
 				"lifecycleActions": true,
-				"relatedLists": [
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`; a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing while every gate stays green. TOKEN: `@object.poolId` — RetainerPool exposes a FLAT `poolId` business key (example 'RETN-2026-01-001'), and every child FK carries that same example value (RetainerDrawdown.poolId, RetainerTrueUp.poolId, RetainerRollover.sourcePeriodPoolId), i.e. the children reference the pool by its business key, not by UUID. ⚠️ MEDIUM CONFIDENCE — EVIDENCE CONFLICTS: OCA\\Shillinq\\Lifecycle\\RetainerGuard::canMaterializeDrawdown() resolves `$drawdown['poolId']` via ObjectIdentifier::findOne() with NO fallbackProperty, i.e. by OpenRegister UUID identity, which would imply `@objectId` instead. tests/Unit/Lifecycle/RetainerGuardTest.php makes the ambiguity explicit — its fixture sets id === poolId === 'RETN-2026-01-001' and its own comment notes the earlier fixture 'passed solely because this store's findAll() returns its rows whatever it is asked'. No seed and no writer settles it. The schema pair (flat parent key + matching child examples) is the stronger signal and matches the LedgerGroup precedent in PR #1011, so `@object.poolId` is used here; if these sections render empty against real data, the guard's identity resolution is the thing to reconcile, not this filter.",
+				"relatedCollections": [
 					{
-						"id": "drawdowns",
 						"title": "Drawdowns",
+						"register": "shillinq",
 						"schema": "RetainerDrawdown",
-						"foreignKey": "poolId",
+						"filter": { "poolId": "@object.poolId" },
 						"columns": [
 							{"key": "drawdownDate", "label": "Date"},
 							{"key": "timeEntryId", "label": "Time entry"},
@@ -105,33 +106,33 @@
 							{"key": "drawdownAmount", "label": "Amount"},
 							{"key": "status", "label": "Status"}
 						],
-						"detailRoute": "RetainerDrawdownDetail"
+						"rowRoute": "RetainerDrawdownDetail"
 					},
 					{
-						"id": "trueups",
 						"title": "True-Ups",
+						"register": "shillinq",
 						"schema": "RetainerTrueUp",
-						"foreignKey": "poolId",
+						"filter": { "poolId": "@object.poolId" },
 						"columns": [
 							{"key": "trueUpId", "label": "True-Up"},
 							{"key": "generatedAt", "label": "Generated at"},
 							{"key": "overageAmount", "label": "Overage"},
 							{"key": "status", "label": "Status"}
 						],
-						"detailRoute": "RetainerTrueUpDetail"
+						"rowRoute": "RetainerTrueUpDetail"
 					},
 					{
-						"id": "rollovers",
 						"title": "Rollovers",
+						"register": "shillinq",
 						"schema": "RetainerRollover",
-						"foreignKey": "sourcePeriodPoolId",
+						"filter": { "sourcePeriodPoolId": "@object.poolId" },
 						"columns": [
 							{"key": "rolloverId", "label": "Rollover"},
 							{"key": "targetPeriodPoolId", "label": "Target pool"},
 							{"key": "carryoverAmount", "label": "Carryover"},
 							{"key": "status", "label": "Status"}
 						],
-						"detailRoute": "RetainerRolloverDetail"
+						"rowRoute": "RetainerRolloverDetail"
 					}
 				],
 				"indexRoute": "RetainerPools",

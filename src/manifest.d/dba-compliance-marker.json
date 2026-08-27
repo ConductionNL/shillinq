@@ -70,12 +70,13 @@
 					{"key": "interpretatie", "label": "Risk band", "type": "string"},
 					{"key": "state", "label": "State", "type": "string"}
 				],
-				"relatedLists": [
-					{"id": "flags", "title": "Risk flags on this assignment", "schema": "DBARisicoflag", "foreignKey": "assignmentId", "join": "assignmentId", "columns": [
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`; a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing while every gate stays green. TOKEN: `@object.assignmentId`, NOT `@objectId` — this is a SIBLING relation, not a parent/child one: both DBAIntake and DBARisicoflag carry a flat `assignmentId` FK onto the same third object (DBAOpdracht, example 'dba-opdr-2026-0042'). `@objectId` would resolve to the intake's own UUID and match zero flags.",
+				"relatedCollections": [
+					{"title": "Risk flags on this assignment", "register": "shillinq", "schema": "DBARisicoflag", "filter": {"assignmentId": "@object.assignmentId"}, "columns": [
 						{"key": "type", "label": "Flag type"},
 						{"key": "ernst", "label": "Severity"},
 						{"key": "status", "label": "Status"}
-					], "detailRoute": "DBARisicoflagDetail"}
+					], "rowRoute": "DBARisicoflagDetail"}
 				],
 				"auditTrail": true,
 				"indexRoute": "DBAIntakes",

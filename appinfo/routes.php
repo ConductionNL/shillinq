@@ -106,6 +106,15 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
         // #[NoAdminRequired]; RBAC/multitenancy enforced by OR aggregation.
             ['name' => 'spendAnalytics#spend', 'url' => '/api/analytics/spend', 'verb' => 'GET'],
 
+        // Budget charts (budget-charts, REQ-BCH-003): actual/projected/begroot
+        // trend+cumulative series for every in-scope Account/LedgerGroup in one
+        // administration, composed from budget-core-schema's
+        // BudgetVsActualsReader/Calculator and budget-projection-engine's
+        // BudgetProjectionReader/Calculator. #[NoAdminRequired]; per-administration
+        // membership enforced by AdministrationContextService::canAccess()
+        // (masked 404), mirroring spendAnalytics#spend's own posture.
+            ['name' => 'budgetCharts#series', 'url' => '/api/budget-charts/series', 'verb' => 'GET'],
+
         // Credit control & dunning ladder (Tier 2 — issue #124).
         // Static segments first; the resume route uses a {pauseId} wildcard.
             ['name' => 'dunning#bik', 'url' => '/api/dunning/bik', 'verb' => 'POST'],
@@ -254,7 +263,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
 
         // Purchase requisition (aanvraag) — server-authoritative create /
         // submit / approve / reject / convert-to-PO. Approval reuses
-        // BudgetBlocker/MandaatEnforcer from bookkeeping-verplichtingenadministratie
+        // BudgetBlocker/MandateEnforcer from bookkeeping-verplichtingenadministratie
         // (no parallel approval system). Every endpoint is #[NoAdminRequired]
         // with a per-administration IDOR guard in the controller (ADR-005).
         // Static segments precede the {id} wildcard so Symfony's route
@@ -557,6 +566,13 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             ['name' => 'periodClose#lockAudit', 'url' => '/api/period-close/{periodId}/lock-audit', 'verb' => 'POST'],
             ['name' => 'periodClose#show', 'url' => '/api/period-close/{periodId}', 'verb' => 'GET'],
 
+            // Budget scenarios (budget-scenarios, REQ-BSC-002). isDefault is set
+            // exclusively via this endpoint (a service call, atomic demotion of
+            // the previous default) — never an x-openregister-lifecycle
+            // transition (BudgetScenarioDefaultPromoter's own docblock).
+            ['name' => 'budgetScenario#promote', 'url' => '/api/v1/budget-scenarios/{scenarioId}/promote', 'verb' => 'POST'],
+            ['name' => 'budgetScenario#evaluate', 'url' => '/api/v1/budget-scenarios/{scenarioId}/evaluate', 'verb' => 'GET'],
+
             // Continuous close + flux analysis (bookkeeping-soft-close-flux,
             // REQ-CLS-002, REQ-CLS-005, REQ-CLS-007). On-demand soft-close trigger
             // per administratie + on-demand flux run + flux narrative export
@@ -621,6 +637,12 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // last per Symfony route ordering. Every endpoint is #[NoAdminRequired] and
             // authentication + role gating happens in the controller body.
             ['name' => 'wbsoAccountApi#hierarchy', 'url' => '/api/v1/accounts/hierarchy', 'verb' => 'GET'],
+
+            // budget-grid-view REQ-BGV-001/002/003 — the begroting grid's own
+            // single read endpoint. One request returns the whole tree +
+            // column set pre-computed (design.md §1c: expand/collapse must
+            // cost zero further requests).
+            ['name' => 'budgetGrid#index', 'url' => '/api/budget-grid', 'verb' => 'GET'],
             ['name' => 'wbsoAccountApi#index', 'url' => '/api/v1/accounts', 'verb' => 'GET'],
             ['name' => 'wbsoAccountApi#create', 'url' => '/api/v1/accounts', 'verb' => 'POST'],
             ['name' => 'wbsoAccountApi#show', 'url' => '/api/v1/accounts/{accountNumber}', 'verb' => 'GET'],
@@ -788,5 +810,23 @@ return \OCA\OpenRegister\AppHost\Routes::standard(
             // before the SPA catch-all per ADR-016.
             ['name' => 'accountantPortal#dashboard', 'url' => '/api/accountant/dashboard', 'verb' => 'GET'],
             ['name' => 'accountantPortal#handoverPack', 'url' => '/api/accountant/administrations/{id}/handover-pack', 'verb' => 'GET'],
+
+            // MUST BE THE LAST ENTRY IN $extra. Routes::standard() does
+            // `array_merge($canonical, $extra)` and only then appends the
+            // `/{path}` SPA catch-all, so this sits after every genuine API
+            // route and before the catch-all: only a true miss reaches it.
+            //
+            // Without it an unmatched `/apps/shillinq/api/...` fell through to
+            // the SPA and was answered with HTTP 200 + ~39KB of HTML. A browser
+            // deep link wants that; an `axios.get()` does not — the promise
+            // RESOLVES, `data.results` is undefined, and the caller renders an
+            // empty list. Measured on a live instance, a real schema, a retired
+            // schema and pure nonsense all returned the identical 200 + HTML.
+            //
+            // That is how eleven components ended up fetching
+            // `/api/openregister/objects/...`, a route this app has never
+            // declared, and silently rendering nothing (issue #1209). This
+            // entry makes that class of mistake fail visibly.
+            ['name' => 'apiFallback#notFound', 'url' => '/api/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+']],
         ]
         );

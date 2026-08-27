@@ -327,7 +327,9 @@ class BookingDetailController extends Controller {
 	 */
 	private function presentBooking(array $appointment): array {
 		$pipelinqContactId = null;
-		if (isset($appointment['pipelinqContactId']) === true && $appointment['pipelinqContactId'] !== null) {
+		// `isset()` is already false for null — the `!== null` conjunct this
+		// replaces was unreachable.
+		if (isset($appointment['pipelinqContactId']) === true) {
 			$pipelinqContactId = (string)$appointment['pipelinqContactId'];
 		}
 

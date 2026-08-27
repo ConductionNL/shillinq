@@ -1199,8 +1199,7 @@
             "description": "Declarative shape of the per-contract, per-period revenue roll-up RevenueCutoffService computes (REQ-IFRS15-008). Groups RevenueRecognitionEvent by (contractId, period) within an administration, sums recognisedAmount into periodRecognised, carries priorCumulativeRecognised from the prior period, derives cumulativeRecognised = priorCumulativeRecognised + periodRecognised and remainingAmount = transactionPriceAllocated - cumulativeRecognised, and forecasts the remaining amount forward over remainingMonths (60+, IFRS 15.120). contractGroupId enables group-level rollup for combination-of-contracts (REQ-IFRS15-011). When the OpenRegister aggregation engine cannot express the prior-period carry or the forward forecast, RevenueCutoffService computes the same result in PHP via the real ObjectService API.",
             "source": "RevenueRecognitionEvent",
             "filter": {
-              "contractId": "@self.contractId",
-              "administrationId": "@self.administrationId"
+              "contractId": "@self.contractId"
             },
             "groupBy": [
               "RevenueRecognitionEvent.contractId",

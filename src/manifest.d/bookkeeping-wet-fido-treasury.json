@@ -152,13 +152,14 @@
 					{ "key": "reportingCadence", "label": "Reporting cadence", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
-				"relatedLists": [
-					{"id": "loans", "title": "Loans under this statute", "schema": "Lening", "foreignKey": "treasuryStatuteId", "columns": [
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`; a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing while every gate stays green. TOKEN: `@objectId` — Treasurystatuut's payload carries no flat statute-key field (`version`/`adoptionDecision` are different values), so Lening.treasuryStatuteId holds the statute's UUID. ⚠️ The schema example ('statuut-gemeente-2026') is slug-shaped; if statutes are in practice referenced by slug, that value lives at `@self.slug` and is unreachable from any filter token — see the relatedLists sweep report.",
+				"relatedCollections": [
+					{"title": "Loans under this statute", "register": "shillinq", "schema": "Lening", "filter": {"treasuryStatuteId": "@objectId"}, "columns": [
 						{"key": "counterparty", "label": "Counterparty"},
 						{"key": "principal", "label": "Principal"},
 						{"key": "maturityDate", "label": "Maturity"},
 						{"key": "status", "label": "Status"}
-					], "detailRoute": "LeningDetail"}
+					], "rowRoute": "LeningDetail"}
 				],
 				"auditTrail": true,
 				"indexRoute": "Treasurystatuten",
@@ -332,17 +333,18 @@
 					{ "key": "submissionReceipt", "label": "Receipt", "type": "string" },
 					{ "key": "status", "label": "Status", "type": "string" }
 				],
-				"relatedLists": [
-					{"id": "loans", "title": "Loans (organisation)", "schema": "Lening", "foreignKey": "organisationId", "join": "organisationId", "columns": [
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`; a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing while every gate stays green. TOKEN: `@object.organisationId`, NOT `@objectId` — these are SIBLING lists scoped to the same organisation, not children of the report: QuartaalrapportageFido, Lening and Derivaat each carry a flat `organisationId` field with identical semantics ('FK to the organisation', example 'org-gemeente-1'). `@objectId` would resolve to the report's own UUID and match zero rows.",
+				"relatedCollections": [
+					{"title": "Loans (organisation)", "register": "shillinq", "schema": "Lening", "filter": {"organisationId": "@object.organisationId"}, "columns": [
 						{"key": "counterparty", "label": "Counterparty"},
 						{"key": "principal", "label": "Principal"},
 						{"key": "maturityDate", "label": "Maturity"}
-					], "detailRoute": "LeningDetail"},
-					{"id": "derivatives", "title": "Derivatives (organisation)", "schema": "Derivaat", "foreignKey": "organisationId", "join": "organisationId", "columns": [
+					], "rowRoute": "LeningDetail"},
+					{"title": "Derivatives (organisation)", "register": "shillinq", "schema": "Derivaat", "filter": {"organisationId": "@object.organisationId"}, "columns": [
 						{"key": "type", "label": "Type"},
 						{"key": "notional", "label": "Notional"},
 						{"key": "marketValue", "label": "Fair value"}
-					], "detailRoute": "DerivaatDetail"}
+					], "rowRoute": "DerivaatDetail"}
 				],
 				"auditTrail": true,
 				"indexRoute": "QuartaalrapportagesFido",

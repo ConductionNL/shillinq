@@ -95,7 +95,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "CommercialActivity",
-				"_note": "FINANCIAL / MASTER archetype (native CnDetailPage). A commercial activity is the master record a municipality must ring-fence under the Wet Markt & Overheid. Native contract only: fields[] lead with the activity data (turnover, cost method, exemption). The compliance ledgers hanging off it are surfaced as relatedLists — IntegralCostPrice, ActivityCostAllocation and AlertLog, all FK commercialActivityId — so an officer walks from the master to its cost-recovery evidence. NO comms. Sidebar carries a file-references tab (the cost model and exemption ruling are real source documents) and an audit-trail tab for the immutable change log. lifecycleActions on because the activity moves through states (active / exempted / ended).",
+				"_note": "FINANCIAL / MASTER archetype (native CnDetailPage). A commercial activity is the master record a municipality must ring-fence under the Wet Markt & Overheid. Native contract only: fields[] lead with the activity data (turnover, cost method, exemption). The compliance ledgers hanging off it are surfaced as relatedCollections — IntegralCostPrice, ActivityCostAllocation and AlertLog, all FK commercialActivityId=@object.code (see _relatedCollectionsNote) — so an officer walks from the master to its cost-recovery evidence. NO comms. Sidebar carries a file-references tab (the cost model and exemption ruling are real source documents) and an audit-trail tab for the immutable change log. lifecycleActions on because the activity moves through states (active / exempted / ended).",
 				"fields": [
 					{ "key": "code", "label": "Code", "type": "string" },
 					{ "key": "name", "label": "Name", "type": "string" },
@@ -118,12 +118,13 @@
 					{ "key": "state", "label": "State", "type": "string" }
 				],
 				"lifecycleActions": true,
-				"relatedLists": [
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`; a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing while every gate stays green. TOKEN: `@object.code`, NOT `@objectId` — SEED-PROVEN. lib/Settings/seeds/commercial-activities/integral-cost-price-example-q1-2026.json stores `\"commercialActivityId\": \"MO-SP-015\"`, and the activity it points at is seeded in sportaccommodaties-gemeente.json with the flat payload field `\"code\": \"MO-SP-015\"`. So the children reference the activity by its flat `code` business key, and a UUID filter would match zero rows. Note the IntegralCostPrice schema's own `example` ('ca-mo-sp-014') is STALE and disagrees with the seeded data — the seed is authoritative here.",
+				"relatedCollections": [
 					{
-						"id": "costprices",
 						"title": "Integral cost prices",
+						"register": "shillinq",
 						"schema": "IntegralCostPrice",
-						"foreignKey": "commercialActivityId",
+						"filter": { "commercialActivityId": "@object.code" },
 						"columns": [
 							{ "key": "period", "label": "Period" },
 							{ "key": "totalCost", "label": "Total cost" },
@@ -132,13 +133,13 @@
 							{ "key": "compliant", "label": "Compliant" },
 							{ "key": "status", "label": "Status" }
 						],
-						"detailRoute": "IntegralCostPriceDetail"
+						"rowRoute": "IntegralCostPriceDetail"
 					},
 					{
-						"id": "allocations",
 						"title": "Cost allocations",
+						"register": "shillinq",
 						"schema": "ActivityCostAllocation",
-						"foreignKey": "commercialActivityId",
+						"filter": { "commercialActivityId": "@object.code" },
 						"columns": [
 							{ "key": "postingDate", "label": "Posting date" },
 							{ "key": "journalEntryId", "label": "Journal entry" },
@@ -146,13 +147,13 @@
 							{ "key": "automaticApplied", "label": "Auto" },
 							{ "key": "status", "label": "Status" }
 						],
-						"detailRoute": "ActivityCostAllocationDetail"
+						"rowRoute": "ActivityCostAllocationDetail"
 					},
 					{
-						"id": "alerts",
 						"title": "Cross-subsidy alerts",
+						"register": "shillinq",
 						"schema": "AlertLog",
-						"foreignKey": "commercialActivityId",
+						"filter": { "commercialActivityId": "@object.code" },
 						"columns": [
 							{ "key": "alertType", "label": "Type" },
 							{ "key": "severity", "label": "Severity" },
@@ -160,7 +161,7 @@
 							{ "key": "assignedTo", "label": "Assigned to" },
 							{ "key": "status", "label": "Status" }
 						],
-						"detailRoute": "CrossSubsidyAlertDetail"
+						"rowRoute": "CrossSubsidyAlertDetail"
 					}
 				],
 				"indexRoute": "CommercialActivities",

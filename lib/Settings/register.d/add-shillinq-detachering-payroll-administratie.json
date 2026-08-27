@@ -631,7 +631,7 @@
         },
         "x-openregister-notifications": {
           "onIb47BatchSubmitted": {
-            "trigger": "ib47-submission:submitted",
+            "trigger": "ib47.submitted",
             "recipients": [
               {
                 "kind": "expression",

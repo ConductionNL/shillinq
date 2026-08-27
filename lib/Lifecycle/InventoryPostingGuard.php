@@ -304,7 +304,7 @@ class InventoryPostingGuard {
 						]
 					);
 
-				if (is_array($matches) === false || $matches === []) {
+				if ($matches === []) {
 					$this->logger->info(
 						'InventoryPostingGuard: account FK does not resolve',
 						[
@@ -351,7 +351,7 @@ class InventoryPostingGuard {
 				]
 			);
 
-		if (is_array($matches) === false || $matches === []) {
+		if ($matches === []) {
 			return null;
 		}
 

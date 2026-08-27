@@ -1,0 +1,151 @@
+{
+	"_meta_note": "budget-scenarios REQ-BSC-008 — minimal index/detail pages for BudgetScenario/BudgetScenarioModifier, plus the standalone BudgetScenarioComparison page (design.md §9). Nested into the existing 'Budgets' top-level group budget-core-schema.json already declares — mergeMenuItems (@conduction/nextcloud-vue buildManifest.js) unions children[] by id across fragments, so re-declaring the 'Budgets' id here with only this change's own children is the established either-order convention every sibling in this wave follows. That group is itself relocated into Cluster-4 'Banking & Cashflow' via src/menu-layout.json#relocations (see budget-core-schema.json's own _meta_note) — no change needed here.",
+	"menu": [
+		{
+			"id": "Budgets",
+			"label": "Budgets",
+			"icon": "PiggyBankOutline",
+			"order": 29,
+			"children": [
+				{"id": "BudgetScenarios", "label": "Scenarios", "icon": "SourceBranch", "route": "BudgetScenarios", "order": 40},
+				{"id": "BudgetScenarioModifiers", "label": "Scenario Modifiers", "icon": "TuneVariant", "route": "BudgetScenarioModifiers", "order": 50},
+				{"id": "BudgetScenarioComparison", "label": "Scenario Comparison", "icon": "CompareHorizontal", "route": "BudgetScenarioComparison", "order": 60}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "BudgetScenarios",
+			"route": "/begroting/scenarios",
+			"type": "index",
+			"title": "Budget Scenarios",
+			"config": {
+				"register": "shillinq",
+				"schema": "BudgetScenario",
+				"columns": [
+					{"key": "name", "label": "Name", "sortable": true},
+					{"key": "isDefault", "label": "Default", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "name",
+				"detailRoute": "BudgetScenarioDetail"
+			}
+		},
+		{
+			"id": "BudgetScenarioDetail",
+			"route": "/begroting/scenarios/:id",
+			"type": "detail",
+			"title": "Budget Scenario",
+			"config": {
+				"_note": "REQ-BSC-001/002/009. A named cluster of dated modifiers compared side-by-side against the real budget (never mutating it). isDefault is set via the 'Promote to default' header action (BudgetScenarioController::promote -> BudgetScenarioDefaultPromoter, atomic demotion of any previous default), not a lifecycle transition (design.md §2a/§3). Publish/archive are ordinary status transitions. The modifiers related list is this scenario's own BudgetScenarioModifier rows.",
+				"register": "shillinq",
+				"schema": "BudgetScenario",
+				"auditTrail": true,
+				"lifecycleActions": {
+					"field": "status"
+				},
+				"headerActions": [
+					{
+						"id": "promote-to-default",
+						"label": "Promote to default",
+						"type": "api-call",
+						"url": "/apps/shillinq/api/v1/budget-scenarios/@objectId/promote",
+						"method": "POST",
+						"icon": "StarOutline",
+						"variant": "primary",
+						"successMessage": "Scenario promoted to default; the previous default (if any) was demoted.",
+						"errorMessage": "Could not promote this scenario to default.",
+						"visibleWhen": {
+							"field": "isDefault",
+							"op": "eq",
+							"value": false
+						}
+					}
+				],
+				"fields": [
+					{"key": "name", "label": "Name", "type": "string"},
+					{"key": "description", "label": "Description", "type": "string"},
+					{"key": "isDefault", "label": "Default", "type": "boolean"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"_relatedCollectionsNote": "THE KEY IS `relatedCollections`, NOT `relatedLists`. CnDetailPage's prop is `relatedCollections`; CnPageRenderer spreads config onto props, so a `relatedLists` block lands in $attrs and renders NOTHING while every gate stays green. THE FILTER TOKEN IS `@objectId`: BudgetScenarioModifier.scenarioId is `format: uuid` with `$ref: BudgetScenario`, so the child stores the parent's UUID, and BudgetScenario exposes no flat business key (administrationId/description/isDefault/name/status) for `@object.<field>` to read.",
+				"relatedCollections": [
+					{"id": "modifiers", "title": "Modifiers", "register": "shillinq", "schema": "BudgetScenarioModifier", "filter": {"scenarioId": "@objectId"}, "columns": [
+						{"key": "modifierType", "label": "Type"},
+						{"key": "effectiveDate", "label": "Effective date"},
+						{"key": "targetRecurId", "label": "Target recurring cost"},
+						{"key": "targetLedgerGroupId", "label": "Target ledger group"}
+					], "rowRoute": "BudgetScenarioModifierDetail"}
+				],
+				"indexRoute": "BudgetScenarios",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
+			}
+		},
+		{
+			"id": "BudgetScenarioModifiers",
+			"route": "/begroting/scenario-modifiers",
+			"type": "index",
+			"title": "Budget Scenario Modifiers",
+			"config": {
+				"register": "shillinq",
+				"schema": "BudgetScenarioModifier",
+				"columns": [
+					{"key": "scenarioId", "label": "Scenario", "sortable": true},
+					{"key": "modifierType", "label": "Type", "sortable": true},
+					{"key": "effectiveDate", "label": "Effective date", "sortable": true}
+				],
+				"defaultSort": "effectiveDate",
+				"detailRoute": "BudgetScenarioModifierDetail"
+			}
+		},
+		{
+			"id": "BudgetScenarioModifierDetail",
+			"route": "/begroting/scenario-modifiers/:id",
+			"type": "detail",
+			"title": "Budget Scenario Modifier",
+			"config": {
+				"_note": "REQ-BSC-003/004/009. One dated modifier: RECURRING_END / RECURRING_AMOUNT_CHANGE (targets a CashflowRecurring row by targetRecurId) or LEDGER_AMOUNT_DELTA (targets a LedgerGroup for effectiveDate's own month only). BudgetScenarioModifierGuard rejects a second RECURRING_* modifier in the same scenario on the same targetRecurId at save time (design.md §5a) — this page surfaces that as a save-time error, not a UI-level disablement.",
+				"register": "shillinq",
+				"schema": "BudgetScenarioModifier",
+				"auditTrail": true,
+				"fields": [
+					{"key": "scenarioId", "label": "Scenario", "type": "string"},
+					{"key": "modifierType", "label": "Modifier type", "type": "string"},
+					{"key": "effectiveDate", "label": "Effective date", "type": "string"},
+					{"key": "targetRecurId", "label": "Target recurring cost", "type": "string"},
+					{"key": "newStandardAmount", "label": "New standard amount", "type": "number"},
+					{"key": "targetLedgerGroupId", "label": "Target ledger group", "type": "string"},
+					{"key": "amountDeltaCents", "label": "Amount delta (cents)", "type": "number"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"indexRoute": "BudgetScenarioModifiers",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
+			}
+		},
+		{
+			"id": "BudgetScenarioComparison",
+			"route": "/begroting/scenarios/compare",
+			"type": "custom",
+			"title": "Scenario Comparison",
+			"component": "BudgetScenarioComparison",
+			"_note": "REQ-BSC-005/008, design.md §9. Custom because the page composes an administration/fiscal-year/scenario PICKER with a bespoke base/scenario/delta table calling BudgetScenarioController::evaluate() — none of the declarative page types (index/detail/dashboard) fit. Deliberately no `:id` route segment: the picker defaults to the administration's own isDefault=true scenario (REQ-BSC-002), so this page is reachable as a plain top-level nav entry rather than requiring the operator to first open a scenario's own detail page.",
+			"config": {
+				"register": "shillinq",
+				"icon": "CompareHorizontal"
+			}
+		}
+	]
+}

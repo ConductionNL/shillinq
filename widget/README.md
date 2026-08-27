@@ -1,6 +1,6 @@
 # @conduction/bookings-widget
 
-Embeddable booking widget for [Shillinq](https://codeberg.org/Conduction/shillinq) /
+Embeddable booking widget for [Shillinq](https://github.com/ConductionNL/shillinq) /
 Conduction bookings (REQ-WSW-004).
 
 ## Embed methods

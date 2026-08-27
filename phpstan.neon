@@ -13,6 +13,40 @@ parameters:
     # App-specific only. The base already sets level, paths, bootstrapFiles,
     # excludePaths, scanDirectories and every fleet-wide ignore.
 
+    # OpenRegister's contract, which lib/ typehints in 174 places but does not own.
+    #
+    # This app already SHIPS the stubs, at tests/stubs/OpenRegister/Contract/ —
+    # but phpstan refuses to autoload them and says so:
+    #
+    #   Class OCA\OpenRegister\Contract\ObjectServiceInterface located in
+    #   ./tests/stubs/OpenRegister/Contract/ObjectServiceInterface.php does not
+    #   comply with psr-4 autoloading standard (rule: OCA\Shillinq\Tests\ =>
+    #   ./tests). Skipping.
+    #
+    # It resolved anyway until now, because conduction/hydra-gates declared
+    # `OCA\OpenRegister\Contract\` as a runtime psr-4 prefix. That was a bug —
+    # the prefix is longer than openregister's own, so a vendored copy in ANY app
+    # defined the contract for the whole process — and v1.9.0 removed it
+    # (ConductionNL/.github#531). The skip notice was always there; the removal is
+    # what made it matter.
+    #
+    # scanDirectories loads the files for ANALYSIS without going through psr-4,
+    # which is exactly the seam needed: the class must be visible to phpstan and
+    # must NOT go back into the runtime autoloader.
+    scanDirectories:
+        - %currentWorkingDirectory%/tests/stubs/OpenRegister/Contract
+        # ADR-078 listener-deferral contract (#1198). TenderNedAwardPromotionJob
+        # EXTENDS OCA\OpenRegister\BackgroundJob\ActorForwardedJob, and phpstan
+        # refuses to ignore an "extends unknown class" error — it says
+        # "cannot be ignored, use excludePaths instead". excludePaths is what the
+        # cross-app *interface* implementors below had to do, but it drops the
+        # file from analysis entirely; scanDirectories makes the base class
+        # visible instead, so the new job stays analysed.
+        - %currentWorkingDirectory%/tests/stubs/OpenRegister/BackgroundJob
+        # Covers Service/Deferral too — scanDirectories recurses, so listing the
+        # subdirectory separately would be redundant, not additive.
+        - %currentWorkingDirectory%/tests/stubs/OpenRegister/Service
+
     # PHPDoc @return bool / @return array types are often intentionally broader than the
     # inferred type (e.g. SimpleXMLElement methods, third-party SDKs). Treating PHPDoc
     # types as certain causes spurious `=== true/false` / `=== null` "always false" errors.

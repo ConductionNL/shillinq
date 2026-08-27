@@ -485,10 +485,16 @@ class VatSuppletieDetectionService {
 			}
 
 			$lineNumber++;
+			// The administrationId is DENORMALISED onto every line from the same
+			// scope the header carries (REQ-GLS-001) — see
+			// GlLineAdministrationBackfillMigrator. A line written without it
+			// is invisible to its own administration's SpendAnalytics totals
+			// AND flips the backfill completeness gate red instance-wide.
 			$this->saveObject(
 				schema: 'GLLine',
 				data: [
 					'transactionId' => $transactionId,
+					'administrationId' => $administrationId,
 					'lineNumber' => $lineNumber,
 					'accountNumber' => $account,
 					'side' => $side,
@@ -517,6 +523,7 @@ class VatSuppletieDetectionService {
 				schema: 'GLLine',
 				data: [
 					'transactionId' => $transactionId,
+					'administrationId' => $administrationId,
 					'lineNumber' => $lineNumber,
 					'accountNumber' => $clearingAccount,
 					'side' => $clearingSide,

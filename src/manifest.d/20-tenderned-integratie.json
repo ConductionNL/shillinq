@@ -1,5 +1,5 @@
 {
-	"_meta_nav_six_clusters_note": "nav-six-clusters (2026-08-20, design.md §4 row 5): the duplicate `Verplichtingen` index page (schema Verplichting) here was confirmed a thinner duplicate of the canonical `Verplichtingenregister` (bookkeeping-verplichtingenadministratie.json) — deleted; its unique `costCentre` column was ported onto the canonical page (ADR-044 spirit, orchestrator ruling). `MijnContracten`'s \"My contracts\" label was misleading (its filter is `source=tenderned`, a data-source scope, not a caller-identity/RBAC scope) — relabelled \"TenderNed-sourced commitments\" and converted to a menu[].query preset on the canonical page; its own page deleted (both pages already shared the `VerplichtingDetail` detail route, so no reachability loss).",
+	"_meta_nav_six_clusters_note": "nav-six-clusters (2026-08-20, design.md §4 row 5): the duplicate `Commitments` index page (schema Commitment) here was confirmed a thinner duplicate of the canonical `CommitmentsRegister` (bookkeeping-verplichtingenadministratie.json) — deleted; its unique `costCentre` column was ported onto the canonical page (ADR-044 spirit, orchestrator ruling). `MijnContracten`'s \"My contracts\" label was misleading (its filter is `source=tenderned`, a data-source scope, not a caller-identity/RBAC scope) — relabelled \"TenderNed-sourced commitments\" and converted to a menu[].query preset on the canonical page; its own page deleted (both pages already shared the `CommitmentDetail` detail route, so no reachability loss).",
 	"menu": [
 		{
 			"id": "Purchasing",
@@ -8,17 +8,17 @@
 			"order": 35,
 			"children": [
 				{
-					"id": "TenderNedAanbestedingen",
+					"id": "TenderNedProcurements",
 					"label": "TenderNed tenders",
 					"icon": "Gavel",
-					"route": "TenderNedAanbestedingen",
+					"route": "TenderNedProcurements",
 					"order": 10
 				},
 				{
 					"id": "MijnContracten",
 					"label": "TenderNed-sourced commitments",
 					"icon": "FileSign",
-					"route": "Verplichtingenregister",
+					"route": "CommitmentsRegister",
 					"query": { "source": "tenderned" },
 					"order": 30
 				}
@@ -27,13 +27,13 @@
 	],
 	"pages": [
 		{
-			"id": "TenderNedAanbestedingen",
+			"id": "TenderNedProcurements",
 			"route": "/inkoop/tenderned",
 			"type": "index",
 			"title": "TenderNed tenders",
 			"config": {
 				"register": "shillinq",
-				"schema": "TenderNedAanbesteding",
+				"schema": "TenderNedProcurement",
 				"columns": [
 					{ "key": "tenderId", "label": "Tender", "sortable": true },
 					{ "key": "title", "label": "Title", "sortable": true },
@@ -43,18 +43,18 @@
 					{ "key": "status", "label": "Status", "sortable": true }
 				],
 				"defaultSort": "awardDate",
-				"detailRoute": "TenderNedAanbestedingDetail"
+				"detailRoute": "TenderNedProcurementDetail"
 			}
 		},
 		{
-			"id": "TenderNedAanbestedingDetail",
+			"id": "TenderNedProcurementDetail",
 			"route": "/inkoop/tenderned/:id",
 			"type": "detail",
 			"title": "TenderNed file",
 			"config": {
 				"register": "shillinq",
-				"schema": "TenderNedAanbesteding",
-				"_note": "INTEGRATION archetype — a tender award imported from the TenderNed portal (title, CPV codes, contracting authority, award date, contract value, supplier, term, source URL). Body leads with a contract-value KPI, then a schema-driven Data widget beside a Related panel that surfaces the single outbound `verplichtingId` FK (the materialised commitment this tender feeds, null until import promotes the dossier) — a Related panel is correct here rather than an object-list because the relation is a scalar FK to ONE Verplichting, not a filtered collection. Tender documents move from the sidebar into a full-width Files leaf (a real content type for an imported dossier). No comms — an imported reference record, not a conversation. Audit trail moves to the sidebar per policy.",
+				"schema": "TenderNedProcurement",
+				"_note": "INTEGRATION archetype — a tender award imported from the TenderNed portal (title, CPV codes, contracting authority, award date, contract value, supplier, term, source URL). Body leads with a contract-value KPI, then a schema-driven Data widget beside a Related panel that surfaces the single outbound `verplichtingId` FK (the materialised commitment this tender feeds, null until import promotes the dossier) — a Related panel is correct here rather than an object-list because the relation is a scalar FK to ONE Commitment, not a filtered collection. Tender documents move from the sidebar into a full-width Files leaf (a real content type for an imported dossier). No comms — an imported reference record, not a conversation. Audit trail moves to the sidebar per policy.",
 				"widgets": [
 					{
 						"id": "tender-data",
@@ -70,7 +70,7 @@
 						"icon": "CurrencyEur",
 						"content": {
 							"entries": [
-								{ "title": "Contract value", "register": "shillinq", "schema": "TenderNedAanbesteding", "metric": "sum", "field": "contractValue", "filter": { "id": "@objectId" }, "format": "currency" }
+								{ "title": "Contract value", "register": "shillinq", "schema": "TenderNedProcurement", "metric": "sum", "field": "contractValue", "filter": { "id": "@objectId" }, "format": "currency" }
 							]
 						}
 					},
@@ -105,47 +105,47 @@
 			}
 		},
 		{
-			"id": "VerplichtingDetail",
-			"route": "/inkoop/verplichtingen/:id",
+			"id": "CommitmentDetail",
+			"route": "/inkoop/commitments/:id",
 			"type": "detail",
 			"title": "Commitment",
 			"config": {
 				"register": "shillinq",
-				"schema": "Verplichting",
-				"_note": "LEDGER archetype — a financial obligation (verplichting) booked against a cost centre and GL account, sourced from a tender or a manual contract, carrying a term and a milestone schedule (mijlpalen). Body leads with a committed-amount KPI, then a schema-driven Data widget beside a Related panel surfacing the outbound `kostenplaats` (FK to CostCenter.costCentreCode) and `grootboekrekening` (FK to Account.accountNumber) references. The tender(s) that generated it are the genuine inbound collection — TenderNedAanbesteding filtered verplichtingId=@objectId — so that stays an object-list, unlike the sibling page's outbound single-FK case. Contract documents move from the sidebar into a full-width Files leaf. No comms — an obligation ledger record. Audit trail moves to the sidebar per policy.",
+				"schema": "Commitment",
+				"_note": "LEDGER archetype — a financial obligation (verplichting) booked against a cost centre and GL account, sourced from a tender or a manual contract, carrying a term and a milestone schedule (mijlpalen). Body leads with a committed-amount KPI, then a schema-driven Data widget beside a Related panel surfacing the outbound `kostenplaats` (FK to CostCenter.costCentreCode) and `grootboekrekening` (FK to Account.accountNumber) references. The tender(s) that generated it are the genuine inbound collection — TenderNedProcurement filtered verplichtingId=@objectId — so that stays an object-list, unlike the sibling page's outbound single-FK case. Contract documents move from the sidebar into a full-width Files leaf. No comms — an obligation ledger record. Audit trail moves to the sidebar per policy.",
 				"widgets": [
 					{
-						"id": "verplichting-data",
+						"id": "commitment-data",
 						"type": "data",
 						"title": "Commitment details",
 						"icon": "Gavel",
 						"content": { "columns": 2 }
 					},
 					{
-						"id": "verplichting-stats",
+						"id": "commitment-stats",
 						"type": "stats-block",
 						"title": "Committed amount",
 						"icon": "CurrencyEur",
 						"content": {
 							"entries": [
-								{ "title": "Committed amount", "register": "shillinq", "schema": "Verplichting", "metric": "sum", "field": "amount", "filter": { "id": "@objectId" }, "format": "currency" }
+								{ "title": "Committed amount", "register": "shillinq", "schema": "Commitment", "metric": "sum", "field": "amount", "filter": { "id": "@objectId" }, "format": "currency" }
 							]
 						}
 					},
 					{
-						"id": "verplichting-related",
+						"id": "commitment-related",
 						"type": "related",
 						"title": "Cost centre & GL account",
 						"icon": "LinkVariant"
 					},
 					{
-						"id": "verplichting-tenders",
+						"id": "commitment-tenders",
 						"type": "object-list",
 						"title": "Source tenders",
 						"icon": "FileSign",
 						"content": {
 							"register": "shillinq",
-							"schema": "TenderNedAanbesteding",
+							"schema": "TenderNedProcurement",
 							"filter": { "commitmentId": "@objectId" },
 							"columns": [
 								{ "key": "title", "label": "Tender" },
@@ -153,15 +153,15 @@
 								{ "key": "contractValue", "label": "Contract value" }
 							],
 							"limit": 20,
-							"rowRoute": "TenderNedAanbestedingDetail",
-							"viewAllRoute": "TenderNedAanbestedingen",
+							"rowRoute": "TenderNedProcurementDetail",
+							"viewAllRoute": "TenderNedProcurements",
 							"viewAllQuery": { "commitmentId": "@objectId" },
 							"emptyText": "No tenders have generated this commitment yet.",
 							"allowCreate": false
 						}
 					},
 					{
-						"id": "verplichting-files",
+						"id": "commitment-files",
 						"type": "integration",
 						"integrationId": "files",
 						"title": "Contract documents",
@@ -169,11 +169,11 @@
 					}
 				],
 				"layout": [
-					{ "id": "1", "widgetId": "verplichting-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 7 },
-					{ "id": "2", "widgetId": "verplichting-stats", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 3 },
-					{ "id": "3", "widgetId": "verplichting-related", "gridX": 8, "gridY": 3, "gridWidth": 4, "gridHeight": 4 },
-					{ "id": "4", "widgetId": "verplichting-tenders", "gridX": 0, "gridY": 7, "gridWidth": 12, "gridHeight": 4 },
-					{ "id": "5", "widgetId": "verplichting-files", "gridX": 0, "gridY": 11, "gridWidth": 12, "gridHeight": 4 }
+					{ "id": "1", "widgetId": "commitment-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 7 },
+					{ "id": "2", "widgetId": "commitment-stats", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 3 },
+					{ "id": "3", "widgetId": "commitment-related", "gridX": 8, "gridY": 3, "gridWidth": 4, "gridHeight": 4 },
+					{ "id": "4", "widgetId": "commitment-tenders", "gridX": 0, "gridY": 7, "gridWidth": 12, "gridHeight": 4 },
+					{ "id": "5", "widgetId": "commitment-files", "gridX": 0, "gridY": 11, "gridWidth": 12, "gridHeight": 4 }
 				],
 				"lifecycleActions": true,
 				"sidebar": {

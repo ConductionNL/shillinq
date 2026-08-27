@@ -10,9 +10,9 @@
  * lifecycle's "in force" state — no separate `signed`/`executed` state
  * exists on the shipped Contract schema; `active` is treated as the
  * legally-binding trigger, per design.md's Open Question resolution),
- * this service assembles the matching `Verplichting` + `Verplichtingsregel`
+ * this service assembles the matching `Commitment` + `CommitmentLine`
  * rows from the source object and delegates to the ALREADY-SHIPPED
- * `MandaatEnforcer` and `BudgetBlocker` guards. It computes no budget or
+ * `MandateEnforcer` and `BudgetBlocker` guards. It computes no budget or
  * mandate logic of its own (ADR-031 thin-glue exception).
  *
  * Fail-closed vs fail-soft: the PO-approval path is fail-closed (an
@@ -64,7 +64,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
-use OCA\Shillinq\Lifecycle\MandaatEnforcer;
+use OCA\Shillinq\Lifecycle\MandateEnforcer;
 use OCP\EventDispatcher\GenericEvent;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -73,9 +73,9 @@ use Throwable;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
- * Assembles a Verplichting + Verplichtingsregels from an approved
+ * Assembles a Commitment + CommitmentLines from an approved
  * PurchaseOrder or an activated Contract and drives it through the
- * existing MandaatEnforcer / BudgetBlocker guards (REQ-VPL-010).
+ * existing MandateEnforcer / BudgetBlocker guards (REQ-VPL-010).
  *
  * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
  */
@@ -91,7 +91,7 @@ class CommitmentMaterialisationService {
 	 * Construct the service with DI dependencies.
 	 *
 	 * @param IAppConfig $appConfig App config for register slug resolution.
-	 * @param MandaatEnforcer $mandate Reused mandate-sufficiency guard (REQ-VPL-002).
+	 * @param MandateEnforcer $mandate Reused mandate-sufficiency guard (REQ-VPL-002).
 	 * @param BudgetBlocker $budget Reused budget-room guard (REQ-VPL-001).
 	 * @param IEventDispatcher $dispatcher NC event dispatcher (rechtmatigheid trigger transport).
 	 * @param LoggerInterface $logger Logger for fail-soft/fail-closed diagnostics.
@@ -99,7 +99,7 @@ class CommitmentMaterialisationService {
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
-		private readonly MandaatEnforcer $mandate,
+		private readonly MandateEnforcer $mandate,
 		private readonly BudgetBlocker $budget,
 		private readonly IEventDispatcher $dispatcher,
 		private readonly LoggerInterface $logger,
@@ -108,7 +108,7 @@ class CommitmentMaterialisationService {
 	}//end __construct()
 
 	/**
-	 * Materialise a Verplichting from an approved PurchaseOrder (REQ-VPL-010).
+	 * Materialise a Commitment from an approved PurchaseOrder (REQ-VPL-010).
 	 *
 	 * Fail-closed: throws {@see InsufficientCommitmentBudgetException} when
 	 * budget is insufficient and no override-mandate applies, so the caller
@@ -117,7 +117,7 @@ class CommitmentMaterialisationService {
 	 *
 	 * @param array<string, mixed> $purchaseOrder Approved PurchaseOrder payload.
 	 *
-	 * @return array<string, mixed>|null The materialised (or pre-existing) Verplichting, or null when there is nothing to materialise.
+	 * @return array<string, mixed>|null The materialised (or pre-existing) Commitment, or null when there is nothing to materialise.
 	 *
 	 * @throws InsufficientCommitmentBudgetException When budget denies and no override applies.
 	 *
@@ -141,7 +141,7 @@ class CommitmentMaterialisationService {
 
 		return $this->materialise(
 			sourceReference: $sourceReference,
-			kind: 'inkooporder',
+			kind: 'purchase_order',
 			administrationId: $administrationId,
 			ruleInputs: $ruleInputs,
 			counterparty: $counterparty,
@@ -151,14 +151,14 @@ class CommitmentMaterialisationService {
 	}//end materialiseFromPurchaseOrder()
 
 	/**
-	 * Materialise a Verplichting from an activated Contract (REQ-VPL-010,
+	 * Materialise a Commitment from an activated Contract (REQ-VPL-010,
 	 * Task 2). Fail-soft: any denial is logged, never thrown — the
 	 * Contract's own `activate` transition is a different capability
 	 * (contract-lifecycle-management) not modified by this change.
 	 *
 	 * @param array<string, mixed> $contract Activated Contract payload.
 	 *
-	 * @return array<string, mixed>|null The materialised (or pre-existing) Verplichting, or null.
+	 * @return array<string, mixed>|null The materialised (or pre-existing) Commitment, or null.
 	 *
 	 * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
 	 */
@@ -208,13 +208,13 @@ class CommitmentMaterialisationService {
 	 * and rechtmatigheid linkage. Shared by both source paths (REQ-VPL-010).
 	 *
 	 * @param string $sourceReference Source PO/contract business key (idempotency key).
-	 * @param string $kind Verplichting.soort enum value.
+	 * @param string $kind Commitment.soort enum value.
 	 * @param string $administrationId Owning administration.
 	 * @param array<int, array<string,mixed>> $ruleInputs Regel inputs built by the source-specific builder.
 	 * @param array<string, mixed> $counterparty Embedded counterparty reference.
 	 * @param bool $failClosed Whether a budget denial should throw (PO) or log (Contract).
 	 *
-	 * @return array<string, mixed>|null The materialised (or pre-existing) Verplichting, or null when nothing to do.
+	 * @return array<string, mixed>|null The materialised (or pre-existing) Commitment, or null when nothing to do.
 	 *
 	 * @throws InsufficientCommitmentBudgetException When $failClosed and budget denies with no override.
 	 */
@@ -257,11 +257,11 @@ class CommitmentMaterialisationService {
 			'commencementDate' => (new DateTimeImmutable('today', new DateTimeZone('UTC')))->format('Y-m-d'),
 		];
 
-		// REQ-VPL-002 parity: no sufficient mandate routes to in_goedkeuring
+		// REQ-VPL-002 parity: no sufficient mandate routes to in_approval
 		// (the existing `indienen` semantics) without a budget check — the
 		// fail-closed budget guarantee only applies to the direct-commit path.
 		if ($this->mandate->hasSufficientMandate(commitmentNumber: $sourceReference, object: $draft) === false) {
-			$draft['status'] = 'in_goedkeuring';
+			$draft['status'] = 'in_approval';
 			$saved = $this->persist(draft: $draft, ruleInputs: $ruleInputs);
 			$this->dispatchLawfulnessTrigger(commitment: $saved);
 			return $saved;
@@ -281,7 +281,7 @@ class CommitmentMaterialisationService {
 			return null;
 		}
 
-		$draft['status'] = 'aangegaan';
+		$draft['status'] = 'committed';
 
 		$applied = $this->mandate->resolveApplicableMandate(commitment: $draft);
 		if ($applied !== null) {
@@ -317,7 +317,7 @@ class CommitmentMaterialisationService {
 	 * a multi-year framework order naturally splits into one regel per
 	 * boekjaar when its lines are dated across years — no new PurchaseOrder
 	 * schema field is introduced for this (design.md scoped schema changes
-	 * to Verplichting only).
+	 * to Commitment only).
 	 *
 	 * @param array<string, mixed> $purchaseOrder Parent PurchaseOrder payload.
 	 * @param array<int, array<string,mixed>> $lines PurchaseOrderLine rows for this order.
@@ -415,24 +415,24 @@ class CommitmentMaterialisationService {
 	}//end buildRegelsFromContract()
 
 	/**
-	 * Map a Contract.contractType to the closest Verplichting.soort enum
-	 * value. lease -> leasing; employment -> arbeidscontract; everything
-	 * else (purchase/sales/service/subscription/other) -> overig, since
-	 * Verplichting.soort has no generic "contract" bucket and inferring a
+	 * Map a Contract.contractType to the closest Commitment.kind enum
+	 * value. lease -> leasing; employment -> employment_contract; everything
+	 * else (purchase/sales/service/subscription/other) -> other, since
+	 * Commitment.kind has no generic "contract" bucket and inferring a
 	 * more specific value from contractType alone would be unreliable.
 	 *
 	 * @param string $contractType Contract.contractType.
 	 *
-	 * @return string Verplichting.soort enum value.
+	 * @return string Commitment.kind enum value.
 	 */
 	private function mapContractKind(string $contractType): string {
 		return match ($contractType) {
 			'lease' => 'leasing',
-			'employment' => 'arbeidscontract',
+			'employment' => 'employment_contract',
 			default => 'other',
 		};
 
-	}//end mapContractSoort()
+	}//end mapContractKind()
 
 	/**
 	 * Resolve the boekjaar for a single date string, falling back to the
@@ -524,25 +524,25 @@ class CommitmentMaterialisationService {
 	}//end resolveProgramma()
 
 	/**
-	 * Persist the Verplichting and its Verplichtingsregel rows.
+	 * Persist the Commitment and its CommitmentLine rows.
 	 *
-	 * @param array<string, mixed> $draft Assembled Verplichting.
-	 * @param array<int, array<string,mixed>> $ruleInputs Regel inputs to persist as Verplichtingsregel rows.
+	 * @param array<string, mixed> $draft Assembled Commitment.
+	 * @param array<int, array<string,mixed>> $ruleInputs Regel inputs to persist as CommitmentLine rows.
 	 *
-	 * @return array<string, mixed> The persisted Verplichting.
+	 * @return array<string, mixed> The persisted Commitment.
 	 */
 	private function persist(array $draft, array $ruleInputs): array {
 
 		$saved = $this->objectService
 			->setRegister(register: $this->getRegisterSlug())
-			->setSchema(schema: 'Verplichting')
+			->setSchema(schema: 'Commitment')
 			->saveObject(object: $draft);
 
 		$ruleNumber = 1;
 		foreach ($ruleInputs as $rule) {
 			$this->objectService
 				->setRegister(register: $this->getRegisterSlug())
-				->setSchema(schema: 'Verplichtingsregel')
+				->setSchema(schema: 'CommitmentLine')
 				->saveObject(
 					object: [
 						'administrationId' => (string)($draft['administrationId'] ?? ''),
@@ -561,7 +561,7 @@ class CommitmentMaterialisationService {
 
 		// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so the
 		// is_array() arm here was unreachable by type and persist() returned the
-		// unsaved DRAFT on every call — the Verplichting's stored id never
+		// unsaved DRAFT on every call — the Commitment's stored id never
 		// reached the caller.
 		return (array)$saved->jsonSerialize();
 	}//end persist()
@@ -573,7 +573,7 @@ class CommitmentMaterialisationService {
 	 * target for an afwijking raised before any journaalpost exists —
 	 * fail-soft: a write failure here never blocks the commitment itself.
 	 *
-	 * @param array<string, mixed> $commitment Persisted Verplichting.
+	 * @param array<string, mixed> $commitment Persisted Commitment.
 	 * @param array<int, array<string,mixed>> $ruleInputs Regel inputs (for boekjaar/programma).
 	 *
 	 * @return void
@@ -598,7 +598,7 @@ class CommitmentMaterialisationService {
 						'amount_error' => $amount,
 						'description' => (string)($commitment['override_reason'] ?? ''),
 						'cause' => sprintf(
-							'Verplichting %s automatisch aangegaan onder override-mandaat wegens ontoereikende vrije_ruimte.',
+							'Commitment %s automatisch aangegaan onder override-mandaat wegens ontoereikende vrije_ruimte.',
 							(string)($commitment['commitmentNumber'] ?? '')
 						),
 						'status' => 'open',
@@ -618,7 +618,7 @@ class CommitmentMaterialisationService {
 	 * (REQ-VPL-012). Fail-soft, mirroring
 	 * {@see \OCA\Shillinq\Service\BudgetImpactEmitter::dispatch()}.
 	 *
-	 * @param array<string, mixed>|null $commitment Persisted Verplichting, or null (no-op).
+	 * @param array<string, mixed>|null $commitment Persisted Commitment, or null (no-op).
 	 *
 	 * @return void
 	 */
@@ -649,14 +649,14 @@ class CommitmentMaterialisationService {
 	}//end dispatchRechtmatigheidTrigger()
 
 	/**
-	 * Look up an existing Verplichting by bronReferentie (idempotency, REQ-VPL-010).
+	 * Look up an existing Commitment by bronReferentie (idempotency, REQ-VPL-010).
 	 *
 	 * @param string $sourceReference Source PO/contract business key.
 	 *
 	 * @return array<string, mixed>|null
 	 */
 	private function findExistingBySourceReference(string $sourceReference): ?array {
-		return $this->findOne(schema: 'Verplichting', filters: ['sourceReference' => $sourceReference]);
+		return $this->findOne(schema: 'Commitment', filters: ['sourceReference' => $sourceReference]);
 	}//end findExistingByBronReferentie()
 
 	/**
@@ -712,10 +712,6 @@ class CommitmentMaterialisationService {
 				->setRegister(register: $this->getRegisterSlug())
 				->setSchema(schema: $schema)
 				->findAll($query);
-
-			if (is_array($result) === false) {
-				return [];
-			}
 
 			return array_values($result);
 		} catch (Throwable $e) {

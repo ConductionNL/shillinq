@@ -331,10 +331,6 @@ class SoftCloseExecutor {
 			->setSchema('AutoAccrualRule')
 			->findAll(['filters' => $filters]);
 
-		if (is_array($found) === false) {
-			return [];
-		}
-
 		return array_values(array_map(static fn ($r): array => (array)$r, $found));
 	}//end findActiveRules()
 
@@ -535,7 +531,7 @@ class SoftCloseExecutor {
 				]
 			);
 
-		if (is_array($found) === true && $found !== []) {
+		if ($found !== []) {
 			$record = (array)$found[0];
 		} else {
 			$record = [

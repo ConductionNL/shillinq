@@ -7,7 +7,7 @@
 	"homepage": "https://conduction.nl",
 	"repository": {
 		"type": "git",
-		"url": "https://codeberg.org/Conduction/shillinq"
+		"url": "https://github.com/ConductionNL/shillinq"
 	},
 	"main": "index.js",
 	"module": "index.js",

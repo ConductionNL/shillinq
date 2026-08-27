@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "spec_slug": "add-shillinq-iv3-reporting",
-  "repo": "https://codeberg.org/Conduction/shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
   "issue": 29,
   "cycles": [
     {

@@ -212,10 +212,6 @@ class DoorsnijdingsVerbodValidator {
 				]
 			);
 
-		if (is_array($rows) === false) {
-			return [];
-		}
-
 		return $rows;
 	}//end fetchExclusiveAllocations()
 
@@ -232,10 +228,6 @@ class DoorsnijdingsVerbodValidator {
 			->setRegister($this->register())
 			->setSchema('GLLine')
 			->findAll(['filters' => ['administrationId' => $administrationId, 'financialYear' => $financialYear]]);
-
-		if (is_array($rows) === false) {
-			return [];
-		}
 
 		return $rows;
 	}//end fetchGlDeductions()

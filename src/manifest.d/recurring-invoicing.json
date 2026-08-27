@@ -104,7 +104,8 @@
                                 "lastBillingPeriod",
                                 "remainingOccurrences",
                                 "status"
-                            ]
+                            ],
+                            "overrides": { "status": { "editable": false } }
                         }
                     },
                     {

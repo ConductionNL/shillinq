@@ -458,7 +458,7 @@ class PeriodCloseService {
 			->setSchema('FiscalPeriod')
 			->findAll(['filters' => $filters, 'limit' => 1]);
 
-		if (is_array($found) === true && $found !== []) {
+		if ($found !== []) {
 			return $this->normaliseRow(row: $found[0]);
 		}
 

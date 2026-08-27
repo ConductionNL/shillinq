@@ -184,6 +184,8 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
 
+const REGISTER_SLUG = 'shillinq'
+
 export default {
 	name: 'GoodsReceiptNoteDetail',
 	components: {
@@ -228,12 +230,13 @@ export default {
 	},
 
 	methods: {
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md */
 		async load() {
 			this.loading = true
 			try {
 				const response = await axios.get(
 					generateUrl(
-						`/apps/shillinq/api/openregister/objects/GoodsReceiptNote/${this.id}`,
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/GoodsReceiptNote/${this.id}`,
 					),
 				)
 				this.grn = response.data || null
@@ -251,11 +254,12 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md */
 		async loadLines() {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						'/apps/shillinq/api/openregister/objects/GoodsReceiptLine',
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/GoodsReceiptLine`,
 					),
 					{ params: { filter: { grnId: this.id } } },
 				)
@@ -265,13 +269,14 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md */
 		async loadPurchaseOrders() {
 			const map = {}
 			for (const poId of this.grn.poIds || []) {
 				try {
 					const response = await axios.get(
 						generateUrl(
-							`/apps/shillinq/api/openregister/objects/PurchaseOrder/${poId}`,
+							`/apps/openregister/api/objects/${REGISTER_SLUG}/PurchaseOrder/${poId}`,
 						),
 					)
 					map[poId] = response.data || null
@@ -282,11 +287,12 @@ export default {
 			this.purchaseOrders = map
 		},
 
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md */
 		async loadMatches() {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						'/apps/shillinq/api/openregister/objects/ThreeWayMatch',
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/ThreeWayMatch`,
 					),
 					{ params: { filter: { grnIds: this.id } } },
 				)

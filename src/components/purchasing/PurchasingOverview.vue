@@ -6,7 +6,7 @@
 
  Thin wrapper around the shared ClusterOverview card grid. Absorbs
  AccountsPayableT2, PO Matching (renamed from the id-colliding PurchaseOrders
- top-level group, design.md §5), the Verplichtingen/Commitments group and
+ top-level group, design.md §5), the Commitments group and
  Contracts (relabelled "Procurement Contracts" to disambiguate from
  RevenueContracts, design.md §4 row 25) on top of the original Purchasing &
  Inventory group.
@@ -131,9 +131,9 @@ export default {
 					label: this.t('shillinq', 'Commitments & Contracts'),
 					cards: [
 						{
-							id: 'Verplichtingenregister',
+							id: 'CommitmentsRegister',
 							label: this.t('shillinq', 'Commitments register'),
-							route: 'Verplichtingenregister',
+							route: 'CommitmentsRegister',
 						},
 						{
 							id: 'MijnContracten',
@@ -142,7 +142,7 @@ export default {
 								'TenderNed-sourced commitments',
 							),
 
-							route: 'Verplichtingenregister',
+							route: 'CommitmentsRegister',
 							query: { source: 'tenderned' },
 						},
 						{

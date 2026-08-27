@@ -399,7 +399,12 @@ class CBSSubmissionController extends Controller {
 
 		if (($body['status'] ?? '') === 'validated') {
 			$validation = $this->exportService->validateSubmission(submission: $body);
-			if (($validation['valid'] ?? false) === false) {
+			// `validateSubmission()` returns `array{valid:bool,errors:...,warnings:...}`,
+			// so `valid` always exists. The `?? false` this replaces did not just
+			// read as defensive — it made PHPStan lose the shape inside this
+			// branch, leaving `$validation['errors']` an unresolved type and the
+			// whole response payload unverifiable.
+			if ($validation['valid'] === false) {
 				return new JSONResponse(
 					[
 						'error' => 'validation failed',
@@ -759,9 +764,14 @@ class CBSSubmissionController extends Controller {
 	/**
 	 * Lazy DI of OpenRegister's ObjectService.
 	 *
-	 * @return object The ObjectService instance.
+	 * The injected property is already `ObjectServiceInterface`; this accessor
+	 * used to widen it back to a bare `object`, which threw away every method
+	 * signature and left the JSONResponse payloads built from its results
+	 * unresolvable to static analysis.
+	 *
+	 * @return ObjectServiceInterface The ObjectService instance.
 	 */
-	private function objectService(): object {
+	private function objectService(): ObjectServiceInterface {
 		return $this->objectService;
 	}//end objectService()
 

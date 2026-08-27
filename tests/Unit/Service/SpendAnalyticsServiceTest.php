@@ -28,6 +28,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\OpenRegister\Service\Aggregation\AggregationQuery;
+use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
 use OCA\Shillinq\Service\SpendAnalyticsService;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -142,15 +143,41 @@ final class SpendAnalyticsServiceTest extends TestCase {
 	 * Build the service around the in-memory runner.
 	 *
 	 * @param InMemoryAggregationRunner $runner The seeded runner double.
+	 * @param bool $backfillProven Whether the GLLine administration backfill gate is open.
 	 *
 	 * @return SpendAnalyticsService
 	 */
-	private function makeService(InMemoryAggregationRunner $runner): SpendAnalyticsService {
+	private function makeService(
+		InMemoryAggregationRunner $runner,
+		bool $backfillProven = true,
+		?string $gateOverride = null
+	): SpendAnalyticsService {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($runner);
 
+		// `$gateOverride` exists so a STALE, NON-EMPTY version can be tested.
+		// Without it this helper only ever produces '' or the current version,
+		// so the exact-match comparison in assertGlScopeIsEnforceable() is
+		// never exercised against a wrong-but-present value — and a
+		// `!== ''` check would pass every test here while leaving a proof
+		// written by an older contract looking valid.
+		$gate = '';
+		if ($gateOverride !== null) {
+			$gate = $gateOverride;
+		} elseif ($backfillProven === true) {
+			$gate = GlLineAdministrationBackfillMigrator::GATE_CONTRACT_VERSION;
+		}
+
 		$appConfig = $this->createMock(IAppConfig::class);
-		$appConfig->method('getValueString')->willReturn('shillinq');
+		$appConfig->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use ($gate): string {
+				if ($key === GlLineAdministrationBackfillMigrator::GATE_CONFIG_KEY) {
+					return $gate;
+				}
+
+				return 'shillinq';
+			}
+		);
 
 		$logger = $this->createMock(LoggerInterface::class);
 
@@ -186,19 +213,35 @@ final class SpendAnalyticsServiceTest extends TestCase {
 
 	/**
 	 * A known set of GL debit AP expense lines across accounts / cost centres
-	 * / periods, plus non-matching noise (credit line, non-ap sub-ledger).
+	 * / periods, plus non-matching noise (credit line, non-ap sub-ledger) —
+	 * and, crucially, a SECOND administration's lines.
+	 *
+	 * Every line carries `administrationId`, because that is exactly what
+	 * `glline-administration-scope` denormalised onto GLLine and what the
+	 * three GL-backed views now filter on. ADM-B's figures are deliberately an
+	 * order of magnitude larger than every ADM-A figure, so a service that
+	 * dropped the filter could not pass any assertion below by coincidence —
+	 * it would fold 9000/7000/2000 into ADM-A's totals and surface ADM-B's
+	 * account 4900, cost centre CC90 and period 2026-03 as groups the caller
+	 * has no membership to see.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
 	private function glLines(): array {
 		return [
-			['accountNumber' => '4000', 'costCenterCode' => 'CC10', 'periodId' => '2026-01', 'amount' => 60.00, 'side' => 'debit', 'subLedgerType' => 'ap'],
-			['accountNumber' => '4000', 'costCenterCode' => 'CC20', 'periodId' => '2026-01', 'amount' => 40.00, 'side' => 'debit', 'subLedgerType' => 'ap'],
-			['accountNumber' => '4100', 'costCenterCode' => 'CC10', 'periodId' => '2026-02', 'amount' => 25.00, 'side' => 'debit', 'subLedgerType' => 'ap'],
+			['administrationId' => 'ADM-A', 'accountNumber' => '4000', 'costCenterCode' => 'CC10', 'periodId' => '2026-01', 'amount' => 60.00, 'side' => 'debit', 'subLedgerType' => 'ap'],
+			['administrationId' => 'ADM-A', 'accountNumber' => '4000', 'costCenterCode' => 'CC20', 'periodId' => '2026-01', 'amount' => 40.00, 'side' => 'debit', 'subLedgerType' => 'ap'],
+			['administrationId' => 'ADM-A', 'accountNumber' => '4100', 'costCenterCode' => 'CC10', 'periodId' => '2026-02', 'amount' => 25.00, 'side' => 'debit', 'subLedgerType' => 'ap'],
 			// Credit line — excluded (side != debit).
-			['accountNumber' => '1600', 'costCenterCode' => 'CC10', 'periodId' => '2026-01', 'amount' => 125.00, 'side' => 'credit', 'subLedgerType' => 'ap'],
+			['administrationId' => 'ADM-A', 'accountNumber' => '1600', 'costCenterCode' => 'CC10', 'periodId' => '2026-01', 'amount' => 125.00, 'side' => 'credit', 'subLedgerType' => 'ap'],
 			// Non-AP sub-ledger — excluded.
-			['accountNumber' => '4000', 'costCenterCode' => 'CC10', 'periodId' => '2026-01', 'amount' => 500.00, 'side' => 'debit', 'subLedgerType' => 'ar'],
+			['administrationId' => 'ADM-A', 'accountNumber' => '4000', 'costCenterCode' => 'CC10', 'periodId' => '2026-01', 'amount' => 500.00, 'side' => 'debit', 'subLedgerType' => 'ar'],
+			// ANOTHER ADMINISTRATION'S committed postings. Same schema, same
+			// register, same posting slice — the ONLY thing separating them is
+			// the administrationId filter this change added.
+			['administrationId' => 'ADM-B', 'accountNumber' => '4000', 'costCenterCode' => 'CC10', 'periodId' => '2026-01', 'amount' => 9000.00, 'side' => 'debit', 'subLedgerType' => 'ap'],
+			['administrationId' => 'ADM-B', 'accountNumber' => '4900', 'costCenterCode' => 'CC90', 'periodId' => '2026-03', 'amount' => 7000.00, 'side' => 'debit', 'subLedgerType' => 'ap'],
+			['administrationId' => 'ADM-B', 'accountNumber' => '4100', 'costCenterCode' => 'CC90', 'periodId' => '2026-02', 'amount' => 2000.00, 'side' => 'debit', 'subLedgerType' => 'ap'],
 		];
 
 	}//end glLines()
@@ -302,7 +345,7 @@ final class SpendAnalyticsServiceTest extends TestCase {
 		$runner->seed('GLLine', $this->glLines());
 		$service = $this->makeService($runner);
 
-		$result = $service->spendByCategory();
+		$result = $service->spendByCategory(administrationId: 'ADM-A');
 
 		$byKey = [];
 		foreach ($result['groups'] as $group) {
@@ -319,7 +362,10 @@ final class SpendAnalyticsServiceTest extends TestCase {
 		$this->assertSame('sum', $query->metric);
 		$this->assertSame('amount', $query->field);
 		$this->assertSame('accountNumber', $query->getGroupByField());
-		$this->assertSame(['side' => 'debit', 'subLedgerType' => 'ap'], $query->filter);
+		$this->assertSame(
+			['administrationId' => 'ADM-A', 'side' => 'debit', 'subLedgerType' => 'ap'],
+			$query->filter
+		);
 	}//end testSpendByCategoryCorrectTotals()
 
 	/**
@@ -330,7 +376,7 @@ final class SpendAnalyticsServiceTest extends TestCase {
 		$runner->seed('GLLine', $this->glLines());
 		$service = $this->makeService($runner);
 
-		$result = $service->spendByCostCentre();
+		$result = $service->spendByCostCentre(administrationId: 'ADM-A');
 
 		$byKey = [];
 		foreach ($result['groups'] as $group) {
@@ -352,7 +398,7 @@ final class SpendAnalyticsServiceTest extends TestCase {
 		$runner->seed('GLLine', $this->glLines());
 		$service = $this->makeService($runner);
 
-		$result = $service->spendByPeriod();
+		$result = $service->spendByPeriod(administrationId: 'ADM-A');
 
 		$byKey = [];
 		foreach ($result['groups'] as $group) {
@@ -384,31 +430,171 @@ final class SpendAnalyticsServiceTest extends TestCase {
 	}//end testRaisesWhenRunnerUnavailable()
 
 	/**
-	 * Pins the KNOWN GAP so it cannot be mistaken for a solved problem: the
-	 * three GL-backed views are NOT administration-scoped, because `GLLine`
-	 * declares no administration property and OpenRegister's filters cannot
-	 * join to the parent GLTransaction that holds one.
+	 * THE NEGATIVE CONTROL (REQ-GLS-003). A member of administration A must
+	 * not see administration B's category / cost-centre / period totals.
 	 *
-	 * This test asserts the current, deliberate state — the GL filter carries
-	 * the posting slice and nothing else. It is written to FAIL the moment
-	 * someone adds an `administrationId` term to a GLLine query, because on
-	 * that schema such a term addresses a property that does not exist and
-	 * matches NOTHING for every value: a silent zero in a bookkeeping total.
-	 * The real fix is `administrationId` denormalised onto GLLine plus a
-	 * backfill of existing rows; when that lands, this test is the one to
-	 * change, alongside the fixture that proves the new filter matches.
+	 * This is the read that used to be open. `GLLine` declared no
+	 * administration property at all, so these three views aggregated EVERY
+	 * administration in the register while the fourth (spend-by-supplier) was
+	 * correctly scoped — the service looked scoped and was not. Written to
+	 * FAIL on the pre-fix service in every dimension at once: without the
+	 * filter, account 4000 sums 60 + 40 + ADM-B's 9000, cost centre CC10 sums
+	 * 85 + 9000, period 2026-01 sums 100 + 9000, and ADM-B's 4900 / CC90 /
+	 * 2026-03 all surface as groups the caller has no membership to see.
+	 *
+	 * @return void
 	 */
-	public function testGlBackedViewsCarryNoAdministrationFilterYet(): void {
+	public function testGlBackedViewsExcludeOtherAdministrations(): void {
 		$runner = new InMemoryAggregationRunner();
 		$runner->seed('GLLine', $this->glLines());
 		$service = $this->makeService($runner);
 
-		$service->spendByCategory();
+		$category = $this->byKey($service->spendByCategory(administrationId: 'ADM-A'));
+		$costCentre = $this->byKey($service->spendByCostCentre(administrationId: 'ADM-A'));
+		$period = $this->byKey($service->spendByPeriod(administrationId: 'ADM-A'));
 
-		$this->assertSame(
-			['side' => 'debit', 'subLedgerType' => 'ap'],
-			$runner->lastQuery['GLLine']->filter,
-			'GLLine cannot be filtered by administration — see SpendAnalyticsService class docblock.'
-		);
-	}//end testGlBackedViewsCarryNoAdministrationFilterYet()
+		// ADM-B's amounts must not be folded into any shared group key...
+		$this->assertSame(100.0, $category['4000']);
+		$this->assertSame(85.0, $costCentre['CC10']);
+		$this->assertSame(100.0, $period['2026-01']);
+
+		// ...and ADM-B's own keys must not appear at all.
+		$this->assertArrayNotHasKey('4900', $category);
+		$this->assertArrayNotHasKey('CC90', $costCentre);
+		$this->assertArrayNotHasKey('2026-03', $period);
+
+		// The scope must reach OR as a FILTER TERM, not merely be checked and
+		// dropped upstream: an aggregation is executed by the database, so a
+		// scope that never enters the query never narrows anything.
+		$this->assertSame('ADM-A', $runner->lastQuery['GLLine']->filter['administrationId']);
+	}//end testGlBackedViewsExcludeOtherAdministrations()
+
+	/**
+	 * THE POSITIVE CONTROL (REQ-GLS-003). The scoped views must still return
+	 * ROWS and REAL TOTALS for a correctly-backfilled administration.
+	 *
+	 * This is the control the forbidden naive fix would have failed. Adding
+	 * `administrationId` to a GLLine filter BEFORE the backfill addresses a
+	 * property those rows do not carry; an unmatched key matches nothing for
+	 * every value, so all three views would have read ZERO — a wrong number
+	 * that looks exactly like "this administration has no spend", which is
+	 * worse than the exposure it pretends to close. Asserting non-empty groups
+	 * and exact totals is what tells those two states apart.
+	 *
+	 * @return void
+	 */
+	public function testScopedViewsStillReturnRowsAndRealTotals(): void {
+		$runner = new InMemoryAggregationRunner();
+		$runner->seed('GLLine', $this->glLines());
+		$service = $this->makeService($runner);
+
+		foreach (['category', 'costCentre', 'period'] as $dimension) {
+			$result = match ($dimension) {
+				'category' => $service->spendByCategory(administrationId: 'ADM-A'),
+				'costCentre' => $service->spendByCostCentre(administrationId: 'ADM-A'),
+				default => $service->spendByPeriod(administrationId: 'ADM-A'),
+			};
+
+			$this->assertNotSame([], $result['groups'], $dimension . ' returned no rows at all');
+			$this->assertGreaterThan(0.0, $result['total'], $dimension . ' silently totalled zero');
+			$this->assertSame(125.0, $result['total'], $dimension . ' total is not the hand-computed figure');
+		}
+
+		// And the same seeded set read as the OTHER tenant returns that
+		// tenant's figures — proving the filter is the caller's administration
+		// and not a constant that happens to match the first fixture.
+		$this->assertSame(18000.0, $service->spendByCategory(administrationId: 'ADM-B')['total']);
+	}//end testScopedViewsStillReturnRowsAndRealTotals()
+
+	/**
+	 * The GL-backed views RAISE while the backfill gate is shut, rather than
+	 * serving unscoped totals (the original exposure) or a filtered query over
+	 * rows that cannot match it (a silent zero).
+	 *
+	 * @return void
+	 */
+	public function testGlBackedViewsRefuseWhileTheBackfillIsUnproven(): void {
+		$runner = new InMemoryAggregationRunner();
+		$runner->seed('GLLine', $this->glLines());
+		$service = $this->makeService($runner, backfillProven: false);
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('backfill is not proven complete');
+
+		$service->spendByCategory(administrationId: 'ADM-A');
+	}//end testGlBackedViewsRefuseWhileTheBackfillIsUnproven()
+
+	/**
+	 * A proof written by an OLDER contract version is not a proof.
+	 *
+	 * This is the reader half of the version contract. The writer half —
+	 * that a stale value is destroyed and replaced when it can be re-proven —
+	 * lives in BackfillGlLineAdministrationTest. Both halves are needed:
+	 * REQ-GLS-003 makes the gate a VERSION rather than a boolean precisely so
+	 * that adding a new GLLine writer invalidates every deployment's stored
+	 * proof, and that only holds if the READ is an exact match. A `!== ''`
+	 * check would satisfy every other test in this file while treating a
+	 * proof from a superseded contract as current — the filter would then
+	 * switch on over rows the newer writer never scoped.
+	 *
+	 * @return void
+	 */
+	public function testAProofFromASupersededContractVersionDoesNotCount(): void {
+		$runner = new InMemoryAggregationRunner();
+		$runner->seed('GLLine', $this->glLines());
+		$service = $this->makeService($runner, gateOverride: 'v0-superseded');
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('backfill is not proven complete');
+
+		$service->spendByCategory(administrationId: 'ADM-A');
+	}//end testAProofFromASupersededContractVersionDoesNotCount()
+
+	/**
+	 * The supplier view is unaffected by the GLLine gate: it reads
+	 * APTransaction, which has always declared `administrationId`.
+	 *
+	 * @return void
+	 */
+	public function testSupplierViewIsUnaffectedByTheGlLineGate(): void {
+		$runner = new InMemoryAggregationRunner();
+		$runner->seed('APTransaction', $this->apTransactions());
+		$service = $this->makeService($runner, backfillProven: false);
+
+		$this->assertSame(350.0, $service->spendBySupplier(administrationId: 'ADM-001')['total']);
+	}//end testSupplierViewIsUnaffectedByTheGlLineGate()
+
+	/**
+	 * An empty administration is refused rather than filtered on, because
+	 * `administrationId = ''` matches nothing — the same silent zero by a
+	 * different route.
+	 *
+	 * @return void
+	 */
+	public function testEmptyAdministrationIsRefused(): void {
+		$runner = new InMemoryAggregationRunner();
+		$runner->seed('GLLine', $this->glLines());
+		$service = $this->makeService($runner);
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('requires a non-empty administrationId');
+
+		$service->spendByPeriod(administrationId: '  ');
+	}//end testEmptyAdministrationIsRefused()
+
+	/**
+	 * Flatten a shaped result to `key => amount`.
+	 *
+	 * @param array<string,mixed> $result The service payload.
+	 *
+	 * @return array<string,float>
+	 */
+	private function byKey(array $result): array {
+		$byKey = [];
+		foreach ($result['groups'] as $group) {
+			$byKey[$group['key']] = $group['amount'];
+		}
+
+		return $byKey;
+	}//end byKey()
 }//end class

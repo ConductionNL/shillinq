@@ -524,10 +524,6 @@ class InventoryValuationReportService {
 			->setSchema('StockMove')
 			->findAll(['filters' => $filters]);
 
-		if (is_array($rows) === false) {
-			return [];
-		}
-
 		$groups = [];
 		foreach ($rows as $row) {
 			$move = $this->asArray(row: $row);
@@ -613,10 +609,6 @@ class InventoryValuationReportService {
 			->setSchema('StockMove')
 			->findAll(['filters' => $filters]);
 
-		if (is_array($rows) === false) {
-			return [];
-		}
-
 		$out = [];
 		foreach ($rows as $row) {
 			$out[] = $this->asArray(row: $row);
@@ -650,7 +642,7 @@ class InventoryValuationReportService {
 					]
 				);
 
-			if (is_array($rows) === true && $rows !== []) {
+			if ($rows !== []) {
 				$method = (string)($this->asArray(row: $rows[0])['valuationMethod'] ?? 'FIFO');
 				if ($method === 'average') {
 					return 'average';

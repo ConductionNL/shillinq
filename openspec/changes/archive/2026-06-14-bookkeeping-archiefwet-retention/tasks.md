@@ -586,7 +586,7 @@ capabilities that are now present on `development`. Verified 2026-06-11.
    and 14 above resolve through that umbrella (it is the single source of
    truth per ADR-024 / ADR-031). Validation note: the umbrella stays
    `Status: proposed` until OpenRegister ships the disposition + selective
-   anonymisation work tracked at <https://codeberg.org/Conduction/openregister/issues/99>.
+   anonymisation work tracked at Codeberg issue openregister#99 (pre-migration, not migrated to GitHub).
 
 2. **Sibling T2 capability — `add-shillinq-audit-trail`**
    (`openspec/changes/add-shillinq-audit-trail/specs/bookkeeping-audit-trail/spec.md`).

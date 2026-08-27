@@ -363,18 +363,18 @@
         "x-openregister-aggregations": {
           "openCountByAdministration": {
             "field": "id",
-            "operation": "count",
+            "metric": "count",
             "description": "REQ-AANS-008: count of open AansluitingResult rows per administration, for a dashboard tile / period-close flag surface.",
-            "groupBy": "administrationId",
+            "groupBy": ["administrationId"],
             "filter": {
               "status": "open"
             }
           },
           "openCountByAansluiting": {
             "field": "id",
-            "operation": "count",
+            "metric": "count",
             "description": "Count of open results per Aansluiting definition, across all computed periods.",
-            "groupBy": "reconciliationId",
+            "groupBy": ["reconciliationId"],
             "filter": {
               "status": "open"
             }

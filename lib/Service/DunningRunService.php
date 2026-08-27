@@ -520,6 +520,31 @@ class DunningRunService {
 			throw new RuntimeException(sprintf('DunningPauseDispute %s not found.', $pauseId));
 		}
 
+		// Defence in depth: $administrationId was accepted and then IGNORED.
+		//
+		// fetchById() resolves by id ALONE, so before this check the parameter
+		// appeared exactly once in the whole method — its own declaration. A
+		// dead tenant parameter is what enabled the resumePause IDOR in the
+		// first place: it reads as scoped at every call site while scoping
+		// nothing. The controller layer closes the live hole; this closes it
+		// again at the service, so the guarantee does not depend on one caller
+		// remembering.
+		//
+		// The message is deliberately IDENTICAL to the not-found case above:
+		// a distinct "wrong administration" error would confirm the object
+		// exists, turning the guard into an existence oracle — the same
+		// masking rule AdministrationContextService::canAccess() follows when
+		// it answers 404 rather than 403.
+		//
+		// administrationId is `required` on DunningPauseDispute, so a stored
+		// row always carries one; an empty argument is treated as "no scope
+		// asserted" and left to the caller's own guard rather than silently
+		// matching everything.
+		$pauseAdministrationId = (string)($pause['administrationId'] ?? '');
+		if ($administrationId !== '' && $pauseAdministrationId !== $administrationId) {
+			throw new RuntimeException(sprintf('DunningPauseDispute %s not found.', $pauseId));
+		}
+
 		$pause['pauseEnd'] = (new DateTimeImmutable())->format(DATE_ATOM);
 		if ($resolution === 'expire') {
 			$pause['lifecycleState'] = 'hardDeadlineExpired';
@@ -1265,11 +1290,7 @@ class DunningRunService {
 				->setRegister($this->register())
 				->setSchema($schema)
 				->findAll(['filters' => $filters]);
-			if (is_array($rows) === true) {
-				return $rows;
-			}
-
-			return [];
+			return $rows;
 		} catch (\Throwable $e) {
 			$this->logger->warning('Shillinq: dunning findAll(' . $schema . ') failed: ' . $e->getMessage());
 			return [];

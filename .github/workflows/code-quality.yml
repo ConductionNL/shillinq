@@ -67,7 +67,48 @@ on:
 # Proven in openconnector#1158: its first-ever completed `development` push run
 # (31048998594) executed Coverage Baseline Check, SBOM and Features Extract.
 concurrency:
-  group: quality-${{ github.head_ref || github.ref_name }}${{ (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'development')) && '-push' || '' }}
+  # SUFFIXED BY EVENT NAME, not just by `-push`.
+  #
+  # The previous expression gave a push on `development` its own lane
+  # (`-push`) but left EVERYTHING ELSE sharing `quality-development`. On this
+  # repo that is not a quiet lane: `Sync to Beta` keeps a PR open whose
+  # head_ref IS `development`, so its run computes `quality-development` too
+  # and is re-triggered on every merge.
+  #
+  # A `workflow_dispatch` therefore landed in the same group as that PR and
+  # was cancelled by it. Observed 2026-08-21: dispatch 32487948678 on
+  # `development` cancelled by pull_request run 32490160836, head_branch
+  # `development`, 25 minutes later. A run someone deliberately asked for
+  # could essentially never complete on this repo.
+  #
+  # That matters beyond ad-hoc verification: the fleet gate-drift sweep
+  # (.github#523) dispatches per app with `--ref development`, so under the
+  # old group its runs would be cancelled here and report neither pass nor
+  # fail — a routine that produces no verdict is indistinguishable from one
+  # that never ran.
+  #
+  # This is hermiq's form, already in use there. Pull requests keep the bare
+  # group (so a PR still supersedes its own earlier run); push, dispatch and
+  # schedule each get their own lane.
+  #
+  # THE BRANCH RESTRICTION IS GONE, because it contradicted the sentence above.
+  #
+  # The suffix used to apply only when `ref_name` was `main` or `development`,
+  # so on every OTHER branch push and pull_request computed the SAME group —
+  # and `cancel-in-progress` made them kill each other. That became reachable
+  # when the push allow-list widened on 2026-08-14 to include `feat/**`,
+  # `fix/**`, `perf/**`, `refactor/**` and `chore/**`: those branches now get
+  # both a push run and a pull_request run for one commit.
+  #
+  # `quality / Quality Report` is a `needs:`-gated aggregator and reports
+  # FAILURE when its dependencies are CANCELLED, so the collision shows up as a
+  # red gate on a PR that was never actually evaluated — and re-running collides
+  # the same way. Measured on openregister#2821: a push run left queued and a
+  # pull_request run cancelled, 18 seconds apart, on one commit.
+  #
+  # A branch name is not a unique lane when two event types can each produce a
+  # run for it, so the event is now always part of the key.
+  group: quality-${{ github.head_ref || github.ref_name }}${{ github.event_name != 'pull_request' && format('-{0}', github.event_name) || '' }}
   cancel-in-progress: true
 
 # Permission CEILING for the called quality pipeline. GitHub statically
@@ -287,6 +328,37 @@ jobs:
       #                          declaring the same names in a different order,
       #                          which merge fine. The baseline is a hard
       #                          ceiling that may only be lowered.
+      #   check:manifest-shell   NEW. `src/manifest.d.shell.json` is GENERATED
+      #                          by `scripts/generate-manifest-shell.js` and yet
+      #                          COMMITTED, and every local consumer regenerates
+      #                          it first (`prebuild`, `predev`, `prewatch`,
+      #                          `pretest:unit`), so the committed copy could
+      #                          drift arbitrarily far from `src/manifest.d/*`
+      #                          with NOTHING going red. The regeneration that
+      #                          keeps the build correct is exactly what made
+      #                          the drift invisible. Observed twice on
+      #                          2026-08-20: `feat/budget-known-costs` shipped a
+      #                          shell with ZERO occurrences of
+      #                          `BudgetLineDerivations`/`AnnualBudgets` while
+      #                          both fragments were on the branch, and
+      #                          `development` itself was stale by +77 lines — a
+      #                          whole `Budgets` menu group plus 6
+      #                          `budget-core-schema` pages. It is load-bearing:
+      #                          `src/main.js` builds the vue-router table AND
+      #                          the sidebar from `manifestShell.fragments`, and
+      #                          the lazy `require.context` only backfills each
+      #                          page's `config` — it never adds a page or a
+      #                          menu entry. The check runs the REAL generator
+      #                          CLI in a throwaway sandbox (never the working
+      #                          tree) and compares byte-for-byte; it FAILS
+      #                          rather than passes if the regenerated document
+      #                          is empty or covers fewer fragments than
+      #                          `src/manifest.d/` holds, so a generator that
+      #                          stopped seeing its subject cannot report
+      #                          success. Measured on this branch: FAILS on the
+      #                          inherited `development` shell, PASSES after
+      #                          regenerating it (the +77 lines are in this
+      #                          commit).
       #
       # `format` (prettier --check) is listed because the shared workflow has NO
       # prettier job of its own — `quality.yml` runs eslint and stylelint and
@@ -299,7 +371,17 @@ jobs:
       # Measured on this tree before enabling: PASSES, 216 of 222 tracked
       # frontend files in scope (docs/ excluded via .prettierignore; build
       # output via .gitignore, which prettier 3 also reads).
-      frontend-checks: '["check:manifest", "check:manifest-budget", "check:markers", "check:registers", "check:seeds", "check:fragment-required", "check:nav-reachability", "test:l10n", "format"]'
+      # `check:l10n-js` regenerates l10n/<locale>.js from the JSON catalogue and
+      # fails when the committed file is stale. Nextcloud serves ONLY the JS half
+      # to a browser — raw JSON out of an app directory is a 404 — so a catalogue
+      # that exists only as JSON renders English in the entire UI while every
+      # server-rendered string is translated, with no error anywhere.
+      # `check:schema-l10n` is a RATCHET, not a gate. Every string inside a form
+      # comes from the schema and is a key in THIS app's catalogue; an absent key
+      # renders the English source inside an otherwise translated form, silently.
+      # The fleet had 30,459 such strings, so this records the current count and
+      # fails only when it GROWS — burning it down stays an ordinary PR.
+      frontend-checks: '["check:manifest", "check:manifest-shell", "check:manifest-budget", "check:markers", "check:registers", "check:seeds", "check:fragment-required", "check:nav-reachability", "check:job-registration", "test:l10n", "format", "check:l10n-js", "check:schema-l10n"]'
 
       # ── Coverage ratchet ─────────────────────────────────────────────────
       # `enable-coverage-guard` defaults to FALSE, which is why both

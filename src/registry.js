@@ -46,6 +46,20 @@ import BbvLinkerFilterBar from './components/bbv-provincie/BbvLinkerFilterBar.vu
 // ReportingComplianceOverview above already uses; Reporting & Compliance
 // itself reuses that existing page rather than getting a new one.
 import BookkeepingOverview from './components/bookkeeping/BookkeepingOverview.vue'
+// budget-charts (REQ-BCH-007): the shared actual/projected/begroot
+// trend+cumulative chart, registered ONCE and consumed from TWO placements —
+// BudgetGrid's per-row inline chart (a direct .vue import, no registry
+// lookup needed there) and ChartOfAccountsDetail's sidebar tab, which DOES
+// need a registry lookup: CnObjectSidebar's `tabs[].widgets[].type`
+// resolves any non-built-in type against the flat customComponents map
+// main.js derives from EVERY entry here (regardless of `kind`), so this one
+// `kind:"widget"` entry — matching CashflowChartWidget's own kind exactly,
+// per design.md §6 — is sufficient for both placements; no separate
+// `kind:"sidebarTab"` entry is needed (verified by reading
+// CnObjectSidebar.vue's `resolveWidgetComponent()`/`resolveTabComponent()`
+// and main.js's `customComponentsProp` derivation — the budget-charts
+// design.md §1b spike's own finding, recorded there in full).
+import BudgetTrendChart from './components/budget-charts/BudgetTrendChart.vue'
 // bookkeeping-waterschappen-bbv-variant slice 07 (REQ-BBVW-004): the
 // Budget Mapping detail page composes two bespoke autocomplete pickers
 // (Chart of Accounts + BBVProgramme), a live per-account allocation
@@ -182,6 +196,10 @@ import SalesOverview from './components/sales/SalesOverview.vue'
 // dashboard so it sits with the other one-time setup tasks. manifest fragment
 // src/manifest.d/bank-import-settings.json declares the route + menu entry.
 import BankImportPage from './components/settings/BankImportPage.vue'
+// spend-analytics-ui: the panel behind the SpendAnalytics dashboard page's
+// `widget-spend-analysis` slot — see the registry entry below for why the
+// declarative chart/stat widgets cannot render this endpoint's failure state.
+import SpendAnalyticsPanel from './components/spend-analytics/SpendAnalyticsPanel.vue'
 // bookkeeping-purchase-order-3way slice 05 (REQ-PO3W-004 / REQ-PO3W-007):
 // the supplier-invoice detail view renders the OCR-confidence indicator,
 // the Peppol/UBL provenance block and the link to the related
@@ -311,13 +329,29 @@ import WbsoDocumentsView from './views/bookkeeping/DocumentsView.vue'
 // #[AuthorizedAdminSetting(Application::class)].
 import FxRatesAdmin from './views/bookkeeping/multi-currency/FxRatesAdmin.vue'
 import WbsoTransactionsView from './views/bookkeeping/TransactionsView.vue'
+// budget-grid-view (REQ-BGV-001..009): the year-basis begroting grid —
+// verzamelpost rows (LedgerGroup tree, expandable to child groups or
+// resolved grootboek accounts), a caller-selected period range/granularity,
+// past-column actuals-vs-budget deviation, and a TOTAAL cumulative column.
+// None of that fits `index`/`detail`/`dashboard`, so it is registered as a
+// kind:"page" custom component per ADR-024 (same pattern as
+// BudgetLineCommitments/SegmentPnLDashboard above).
+import BudgetGrid from './views/BudgetGrid.vue'
 // verplichtingen-commitment-accounting Task 4 (REQ-VPL-011): the
 // BudgetLineCommitments drilldown composes the declarative
 // committedVsRealisedPerBudgetLine aggregation declared on
-// Verplichtingsregel into a per-budget-line report with a commitment
+// CommitmentLine into a per-budget-line report with a commitment
 // drilldown. Registered as a kind:"page" custom component per ADR-024
 // (same pattern as SegmentPnLDashboard).
 import BudgetLineCommitments from './views/BudgetLineCommitments.vue'
+// budget-scenarios (REQ-BSC-008, design.md §9): the standalone scenario
+// comparison page composes an administration/fiscal-year/scenario PICKER
+// with a bespoke base/scenario/delta table calling
+// BudgetScenarioController::evaluate() — none of the declarative page types
+// (index/detail/dashboard) fit a picker-driven, non-register-bound table.
+// kind:"page" custom component; the manifest fragment
+// src/manifest.d/budget-scenarios.json declares the route.
+import BudgetScenarioComparison from './views/BudgetScenarioComparison.vue'
 // compliance-deadline-calendar (REQ-CDC-006): per-user category toggles
 // + reminder lead times for the compliance deadline calendar. Talks to
 // the strictly current-user-scoped /api/deadline-calendar/settings
@@ -446,6 +480,7 @@ export default {
 	// bookkeeping-cost-centers-dimensions Task 14: segment P&L drill-down.
 	SegmentPnLDashboard: { kind: 'page', component: SegmentPnLDashboard },
 	BudgetLineCommitments: { kind: 'page', component: BudgetLineCommitments },
+	BudgetGrid: { kind: 'page', component: BudgetGrid },
 
 	// compliance-deadline-calendar (REQ-CDC-006): deadline calendar settings.
 	DeadlineCalendarSettings: { kind: 'page', component: DeadlineCalendarSettings },
@@ -462,6 +497,29 @@ export default {
 		kind: 'widget',
 		component: CashflowChartWidget,
 		_note: 'Merges realized GL lines with the 13-week forecast (two data sources) into one chart — no built-in chart widget joins two sources (ADR-049 Phase-4 survivor).',
+	},
+
+	// budget-charts (REQ-BCH-007): actual/projected/begroot trend+cumulative
+	// chart, shared by BudgetGrid's inline placement and
+	// ChartOfAccountsDetail's sidebar tab. Custom kind:"widget" because the
+	// declarative type:"chart" dialect has no per-series dashed/dimmed
+	// styling, no two-source (GL actuals + growth-rate projection) merge,
+	// and no point-level `unprojectable` marker+tooltip — see the import
+	// docblock above.
+	BudgetTrendChart: {
+		kind: 'widget',
+		component: BudgetTrendChart,
+		_note: 'Actual/projected/begroot trend+cumulative chart with a dashed-not-colour-only projected seam and a point-level unprojectable marker — no declarative series[].path array can express either.',
+	},
+
+	// spend-analytics-ui: the first frontend consumer of
+	// GET /api/analytics/spend, rendered on the SpendAnalytics dashboard
+	// page through the slot `widget-spend-analysis`.
+	SpendAnalyticsPanel: {
+		// @custom-widget-ratchet exclude the four spend views must distinguish "unavailable" from "no rows", and no built-in dashboard widget can: CnChartWidget subscribes to useEndpointSource but keeps only ep.data/ep.refetch and DISCARDS ep.error, so glline-administration-scope REQ-GLS-003's deliberate HTTP 500 would render as its emptyLabel ("no data") — the silent-zero reading that requirement exists to forbid — while CnStatWidget surfaces it only as a bare em dash behind a title tooltip, with no test id and nothing a keyboard user reaches. The alternative to this entry is a UI that reports a shut completeness gate as an absence of spend.
+		kind: 'widget',
+		component: SpendAnalyticsPanel,
+		_note: 'Renders all four /api/analytics/spend dimensions with four distinct states (loading / unavailable / no-rows / rows) and prints no figure for a view that did not answer. No built-in widget surfaces an endpoint error as anything but "no data" (CnChartWidget discards ep.error) or a bare em dash (CnStatWidget), which would report REQ-GLS-003\'s deliberate raise as a zero total.',
 	},
 
 	// add-invoice-pdf-export-with-ubl-peppol-support (REQ-EINV-007).
@@ -490,6 +548,12 @@ export default {
 	AccountantPortalDashboard: {
 		kind: 'page',
 		component: AccountantPortalDashboard,
+	},
+
+	// budget-scenarios: standalone base/scenario/delta comparison page.
+	BudgetScenarioComparison: {
+		kind: 'page',
+		component: BudgetScenarioComparison,
 	},
 
 	// inventory-product-catalog (#860). See the import docblock above for why

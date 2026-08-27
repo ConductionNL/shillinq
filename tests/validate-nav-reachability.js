@@ -73,7 +73,6 @@ async function resolveBuildManifestModule() {
 			const mod = await import(pathToFileURL(candidate).href)
 			return { modulePath: candidate, mod }
 		} catch (err) {
-			// eslint-disable-next-line no-console
 			console.error(
 				`[check:nav-reachability] found ${candidate} but failed to import it: ${err.message}`,
 			)
@@ -297,10 +296,67 @@ function diffBaseline(orphans, baseline) {
 	return { newOrphans, staleExceptions }
 }
 
+/**
+ * Collect every menu id declared by the base manifest and the fragments,
+ * at any depth. `menu-layout.json` addresses MENU ids; addressing a PAGE id
+ * there is a silent no-op.
+ *
+ * @param {object} base      The bundled base manifest.
+ * @param {Array<object>} fragments The `manifest.d` fragments.
+ *
+ * @return {Set<string>} Every declared menu id.
+ */
+function collectMenuIds(base, fragments) {
+	const ids = new Set()
+	const walk = (items) => {
+		for (const item of items || []) {
+			if (item && typeof item.id === 'string' && item.id !== '')
+				ids.add(item.id)
+			walk(item && item.children)
+		}
+	}
+	walk(base && base.menu)
+	for (const fragment of fragments) walk(fragment && fragment.menu)
+	return ids
+}
+
+/**
+ * An id in `settingsSection` or on either side of a `relocations` pair that
+ * matches no menu entry does NOTHING — it is indistinguishable from a correct
+ * id, because the pipeline has nothing to report against. That is exactly how
+ * the External Connections demotion failed: the PAGE id was used where the
+ * MENU id was required.
+ *
+ * `removals` is deliberately NOT checked: this repo keeps it empty by policy
+ * (see `_removals_note`), and a stale id there is inert in the harmless
+ * direction.
+ *
+ * @param {object} base      The bundled base manifest.
+ * @param {Array<object>} fragments The `manifest.d` fragments.
+ * @param {object} menuLayout `{ relocations?, settingsSection?, removals? }`.
+ *
+ * @return {Array<{list: string, id: string}>} Inert ids, empty when clean.
+ */
+function findInertLayoutIds(base, fragments, menuLayout) {
+	const known = collectMenuIds(base, fragments)
+	const inert = []
+	for (const id of menuLayout.settingsSection || []) {
+		if (known.has(id) === false) inert.push({ list: 'settingsSection', id })
+	}
+	for (const [source, target] of Object.entries(menuLayout.relocations || {})) {
+		if (known.has(source) === false) {
+			inert.push({ list: 'relocations (source)', id: source })
+		}
+		if (known.has(target) === false) {
+			inert.push({ list: 'relocations (target)', id: target })
+		}
+	}
+	return inert
+}
+
 async function main() {
 	const resolved = await resolveBuildManifestModule()
 	if (!resolved) {
-		// eslint-disable-next-line no-console
 		console.error(
 			'[check:nav-reachability] FAIL: could not resolve the real @conduction/nextcloud-vue '
 				+ 'buildManifest pipeline. Checked:\n'
@@ -320,19 +376,39 @@ async function main() {
 		applyMenuRemovals,
 		applySettingsSection,
 	} = mod
-	// eslint-disable-next-line no-console
+
 	console.log(`[check:nav-reachability] buildManifest pipeline: ${modulePath}`)
 
 	const { base, fragments, menuLayout } = loadManifestInputs()
 	const manifest = buildManifest(base, fragments, menuLayout)
-	// eslint-disable-next-line no-console
+
 	console.log(
 		`[check:nav-reachability] effective manifest: ${manifest.pages.length} pages, `
 			+ `${manifest.menu.length} top-level menu entries`,
 	)
 
+	const inertIds = findInertLayoutIds(base, fragments, menuLayout)
+	if (inertIds.length > 0) {
+		console.error(
+			'[check:nav-reachability] FAIL: menu-layout.json names ids that match NO menu entry. '
+				+ 'These are INERT — they lift nothing, move nothing, and report nothing:',
+		)
+		for (const { list, id } of inertIds) {
+			console.error(`  - ${list}: "${id}"`)
+		}
+
+		console.error(
+			'[check:nav-reachability] These are MENU ids, not PAGE ids. External Connections sat '
+				+ 'top-level for months because settingsSection carried the PAGE id '
+				+ '"ExternalAdaptersStatus" while the menu id is "ExternalConnections" — the demotion '
+				+ 'silently did nothing, and nothing reported it.',
+		)
+		process.exit(1)
+		return
+	}
+
 	const { orphans } = computeReachable(manifest)
-	// eslint-disable-next-line no-console
+
 	console.log(
 		`[check:nav-reachability] orphaned page ids (unreachable from any menu entry): ${orphans.length}`,
 	)
@@ -341,7 +417,6 @@ async function main() {
 	try {
 		baseline = JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'))
 	} catch (err) {
-		// eslint-disable-next-line no-console
 		console.error(
 			`[check:nav-reachability] FAIL: could not read/parse ${BASELINE_PATH}: ${err.message}`,
 		)
@@ -352,20 +427,17 @@ async function main() {
 	const { newOrphans, staleExceptions } = diffBaseline(orphans, baseline)
 
 	if (staleExceptions.length > 0) {
-		// eslint-disable-next-line no-console
 		console.warn(
 			`[check:nav-reachability] WARN: ${staleExceptions.length} baseline exception(s) are no longer `
 				+ 'orphaned (page became reachable, or was deleted) — safe to prune from '
 				+ 'tests/nav-reachability-baseline.json:',
 		)
 		for (const id of staleExceptions) {
-			// eslint-disable-next-line no-console
 			console.warn(`  - ${id}`)
 		}
 	}
 
 	if (newOrphans.length === 0) {
-		// eslint-disable-next-line no-console
 		console.log(
 			`[check:nav-reachability] PASS: 0 new orphans (${orphans.length - newOrphans.length} baselined, `
 				+ `${staleExceptions.length} stale warnings above).`,
@@ -373,7 +445,6 @@ async function main() {
 		return
 	}
 
-	// eslint-disable-next-line no-console
 	console.error(
 		`[check:nav-reachability] FAIL: ${newOrphans.length} new orphan(s) not in the baseline:`,
 	)
@@ -385,10 +456,10 @@ async function main() {
 	})
 	for (const id of newOrphans) {
 		const cause = attributeCause(id, stages)
-		// eslint-disable-next-line no-console
+
 		console.error(`  - ${id}: cause = ${cause}`)
 	}
-	// eslint-disable-next-line no-console
+
 	console.error(
 		'[check:nav-reachability] Either restore reachability for the id(s) above, or — if the '
 			+ 'loss is deliberate and the page is reachable some other, non-menu way — add a '

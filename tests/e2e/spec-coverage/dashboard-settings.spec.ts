@@ -22,6 +22,13 @@ test.describe('shillinq spec-coverage — Dashboard & Settings', () => {
 	// test's uncaught "Element not found" page error was silently costing
 	// the Settings tests below it their verdict.
 
+	// object-store-retirement (REQ-OSR-003): this test's mount path runs
+	// App.vue's `created()` → `initializeStores()` — the exact function edited
+	// to drop the dead `object.js` store. A broken bootstrap after that
+	// removal would surface here as a shillinq-origin console/page error.
+	/**
+	 * @e2e object-store-retirement::dashboard-boots-without-object-store
+	 */
 	test('Dashboard — root SPA mounts with the Dashboard surface', async ({
 		page,
 	}) => {
@@ -65,6 +72,13 @@ test.describe('shillinq spec-coverage — Dashboard & Settings', () => {
 	// they rendered as empty cards. That page has been deleted; the surface
 	// this asserts is the platform one — hence no `gotoPage`, which pins the
 	// URL to /apps/shillinq.
+	// object-store-retirement (REQ-OSR-003): this test's mount path runs
+	// AdminRoot.vue's `created()` → `initializeStores()` — the same edited
+	// function as the Dashboard test above, exercised via the platform admin
+	// settings surface instead of the in-app SPA.
+	/**
+	 * @e2e object-store-retirement::admin-settings-boots-without-object-store
+	 */
 	test('Settings — the platform admin settings section mounts', async ({
 		page,
 	}) => {

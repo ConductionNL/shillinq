@@ -67,39 +67,10 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "LeaseContract",
-				"_note": "FINANCIAL / LEASE-CONTRACT (master) archetype — native CnDetailPage. An IFRS 16 lease contract capitalises a right-of-use asset and a lease liability; the contract fields (lessor, term, payment, IBR, classification, status) are the primary record. Two related child schemas hang off leaseContract FK: the amortisation schedule (LeasePaymentSchedule, one row per period — opening/closing liability, interest, principal, depreciation) and reassessment/modification events (LeaseReassessmentEvent — remeasurements, IBR resets, terminations). Both surface as relatedLists so the accountant can drill from the master into either child list. The signed lease contract PDF (plus amortisation workpapers) is a real source document, so a Documents sidebar tab (openregister-file-references) is present. lifecycleActions surface the draft→active→modified→terminated/expired state machine (x-openregister-lifecycle on LeaseContract, REQ-LC-004); auditTrail records classification/remeasurement changes. NO comms leaves — a lease is an accounting instrument, not a conversation.",
+				"_note": "FINANCIAL / LEASE-CONTRACT (master) archetype — native CnDetailPage. An IFRS 16 lease contract capitalises a right-of-use asset and a lease liability; the contract fields (lessor, term, payment, IBR, classification, status) are the primary record. Two related child schemas hang off leaseContract FK: the amortisation schedule (LeasePaymentSchedule, one row per period — opening/closing liability, interest, principal, depreciation) and reassessment/modification events (LeaseReassessmentEvent — remeasurements, IBR resets, terminations). Both child lists are currently ABSENT from this page — see _relatedListsExclude below: they were declared under the dead `relatedLists` key and their FK value (`@self.slug`) cannot be produced by any filter token, so they were removed rather than converted into sections that render empty but look fixed. The signed lease contract PDF (plus amortisation workpapers) is a real source document, so a Documents sidebar tab (openregister-file-references) is present. lifecycleActions surface the draft→active→modified→terminated/expired state machine (x-openregister-lifecycle on LeaseContract, REQ-LC-004); auditTrail records classification/remeasurement changes. NO comms leaves — a lease is an accounting instrument, not a conversation.",
 				"lifecycleActions": true,
 				"auditTrail": true,
-				"relatedLists": [
-					{
-						"id": "paymentSchedule",
-						"title": "Amortisation Schedule",
-						"schema": "LeasePaymentSchedule",
-						"foreignKey": "leaseContract",
-						"columns": [
-							{ "key": "periodSequence", "label": "Period" },
-							{ "key": "periodEnd", "label": "Period End" },
-							{ "key": "interestAccrued", "label": "Interest" },
-							{ "key": "paymentPrincipalPortion", "label": "Principal" },
-							{ "key": "closingLeaseLiability", "label": "Closing Liability" },
-							{ "key": "depreciationCharge", "label": "Depreciation" }
-						]
-					},
-					{
-						"id": "reassessmentEvents",
-						"title": "Reassessment Events",
-						"schema": "LeaseReassessmentEvent",
-						"foreignKey": "leaseContract",
-						"columns": [
-							{ "key": "reassessmentNumber", "label": "Event #" },
-							{ "key": "eventType", "label": "Event type" },
-							{ "key": "eventDate", "label": "Event date" },
-							{ "key": "rouAssetAdjustment", "label": "RoU impact" },
-							{ "key": "approvalStatus", "label": "Approval" }
-						],
-						"detailRoute": "LeaseReassessmentEvents"
-					}
-				],
+				"_relatedListsExclude": "'Amortisation Schedule' and 'Reassessment Events' NOT converted — removed rather than faked, because the linking value is unreachable from any filter token. Both were declared under `relatedLists`, which is not a prop on any Cn page component (it lands in $attrs and renders nothing), so neither has ever rendered. Converting the key alone would not fix them: OCA\\Shillinq\\Listener\\LeaseActivationListener::resolveLeaseId() PREFERS `@self.slug` and only falls back to `@self.id`, so LeasePaymentSchedule.leaseContract holds the lease's SLUG whenever one exists (schema example 'lease-vh-2024-001' confirms the slug shape). `@object.<field>` reads FLAT payload fields only and cannot reach `@self.slug`; LeaseContract exposes no flat slug/lease-key field (`leaseNumber` is a different value); and `@objectId` yields the UUID, which resolveLeaseId only writes when the slug is empty. Picking either token would render an empty section that LOOKS fixed. Restoring these needs resolveLeaseId() to write a stable identifier the parent also exposes flat (or a `@self.slug` token in nextcloud-vue) — see the relatedLists sweep report.",
 				"sidebarProps": {
 					"tabs": [
 						{

@@ -235,9 +235,7 @@
             "groupBy": [
               "administrationId"
             ],
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
+            "filter": {},
             "sum": [
               "amount_involved"
             ]
@@ -467,9 +465,7 @@
             "groupBy": [
               "financialYear"
             ],
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
+            "filter": {},
             "sum": [
               "amount_error",
               "amount_uncertainty"
@@ -478,15 +474,12 @@
         },
         "x-openregister-notifications": {
           "onBudgetOvershoot": {
+            "_note": "This rule has never fired. It carried a field=>value map ({criterium: begroting, kind: error}) — the SCHEDULED path's grammar — on a CREATED trigger. createdFilterMatches() reads a single clause {field, operator, value}, so it looked for a 'field' key, found none, and returned false for every bevinding. It cannot be repaired as-is either: the intent is criterium=begroting AND kind=error, and the created path has no combinator, only one clause. Narrowing to criterium=begroting alone would notify the portefeuillehouder about warnings and uncertainties as well as errors, which is a different rule than REQ-RV-001 asks for. Left disabled and honest rather than half-right, pending combinators on the created path — the created-vs-scheduled convergence deferred by ConductionNL/openregister#2787. DO NOT re-enable without a filter: with none, this matches every Rechtmatigheidsbevinding.",
             "trigger": {
-              "type": "created",
-              "filter": {
-                "criterium": "begroting",
-                "kind": "error"
-              }
+              "type": "created"
             },
             "description": "REQ-RV-001: notify the portefeuillehouder of the affected programma when a begroting-fout bevinding is created.",
-            "enabled": true,
+            "enabled": false,
             "channels": [
               "nc-notification"
             ],

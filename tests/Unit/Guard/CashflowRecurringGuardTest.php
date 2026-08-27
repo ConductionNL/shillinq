@@ -13,6 +13,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-29
+ * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-002
  */
 
 declare(strict_types=1);
@@ -20,12 +21,15 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Guard;
 
 use OCA\Shillinq\Guard\CashflowRecurringGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\InMemoryObjectServiceStub;
+use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Tests for CashflowRecurringGuard::validateOnSave per REQ-CF-005.
+ * Tests for CashflowRecurringGuard::validateOnSave per REQ-CF-005 and,
+ * per `budget-known-costs` REQ-BKC-002, the extended contract-window check.
  *
  * Covers:
  * - Happy path monthly rent definition is accepted.
@@ -37,6 +41,10 @@ use Psr\Log\LoggerInterface;
  * - Unparseable geldigVan is denied.
  * - CPI indexing on a non-annual frequency is denied.
  * - Fail-closed on malformed input.
+ * - REQ-BKC-002: within a linked Contract's window is accepted, before the
+ *   Contract's startDate is denied, after its endDate is denied, an
+ *   indefinite Contract imposes no bound, and an absent contractReference
+ *   skips the check entirely.
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
@@ -63,9 +71,30 @@ final class CashflowRecurringGuardTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		$this->logger = $this->createMock(LoggerInterface::class);
-		$this->guard = new CashflowRecurringGuard($this->logger);
+		$this->guard = $this->buildGuard([]);
 
 	}//end setUp()
+
+	/**
+	 * Build a guard over an in-memory Contract fixture store.
+	 *
+	 * @param array<int,array<string,mixed>> $contracts Contract rows.
+	 *
+	 * @return CashflowRecurringGuard
+	 */
+	private function buildGuard(array $contracts): CashflowRecurringGuard {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturn('shillinq');
+
+		$objectService = new InMemoryObjectServiceStub(['Contract' => $contracts]);
+
+		return new CashflowRecurringGuard(
+			appConfig: $appConfig,
+			logger: $this->logger,
+			objectService: $objectService,
+		);
+
+	}//end buildGuard()
 
 	/**
 	 * A valid monthly rent definition is accepted.
@@ -237,4 +266,130 @@ final class CashflowRecurringGuardTest extends TestCase {
 		self::assertTrue($this->guard->validateOnSave($recurring));
 
 	}//end testIndefiniteWindowIsAccepted()
+
+	/**
+	 * A recurring cost whose validFrom/validTo fall within its linked
+	 * Contract's own startDate/endDate is accepted (REQ-BKC-002).
+	 *
+	 * @return void
+	 */
+	public function testWithinContractWindowIsAccepted(): void {
+		$guard = $this->buildGuard(
+			[
+				['id' => 'contract-1', 'startDate' => '2026-01-01', 'endDate' => '2027-12-31'],
+			]
+		);
+
+		$recurring = [
+			'recurId' => 'rec-linked',
+			'frequency' => 'MONTHLY',
+			'dagFromMonth' => 1,
+			'standardAmount' => 500.0,
+			'validFrom' => '2026-06-01',
+			'validTo' => '2027-06-01',
+			'contractReference' => 'contract-1',
+		];
+
+		self::assertTrue($guard->validateOnSave($recurring));
+
+	}//end testWithinContractWindowIsAccepted()
+
+	/**
+	 * A recurring cost starting before its linked Contract's startDate is
+	 * denied (REQ-BKC-002).
+	 *
+	 * @return void
+	 */
+	public function testBeforeContractStartIsDenied(): void {
+		$guard = $this->buildGuard(
+			[
+				['id' => 'contract-1', 'startDate' => '2027-01-01', 'endDate' => null],
+			]
+		);
+
+		$recurring = [
+			'recurId' => 'rec-early',
+			'frequency' => 'MONTHLY',
+			'dagFromMonth' => 1,
+			'standardAmount' => 500.0,
+			'validFrom' => '2026-06-01',
+			'contractReference' => 'contract-1',
+		];
+
+		self::assertFalse($guard->validateOnSave($recurring));
+
+	}//end testBeforeContractStartIsDenied()
+
+	/**
+	 * A recurring cost ending after its linked Contract's endDate is denied
+	 * (REQ-BKC-002).
+	 *
+	 * @return void
+	 */
+	public function testAfterContractEndIsDenied(): void {
+		$guard = $this->buildGuard(
+			[
+				['id' => 'contract-1', 'startDate' => null, 'endDate' => '2026-12-31'],
+			]
+		);
+
+		$recurring = [
+			'recurId' => 'rec-late',
+			'frequency' => 'MONTHLY',
+			'dagFromMonth' => 1,
+			'standardAmount' => 500.0,
+			'validFrom' => '2026-01-01',
+			'validTo' => '2027-06-01',
+			'contractReference' => 'contract-1',
+		];
+
+		self::assertFalse($guard->validateOnSave($recurring));
+
+	}//end testAfterContractEndIsDenied()
+
+	/**
+	 * An indefinite Contract (both startDate and endDate null) imposes no
+	 * bound (REQ-BKC-002).
+	 *
+	 * @return void
+	 */
+	public function testIndefiniteContractImposesNoBound(): void {
+		$guard = $this->buildGuard(
+			[
+				['id' => 'contract-1', 'startDate' => null, 'endDate' => null],
+			]
+		);
+
+		$recurring = [
+			'recurId' => 'rec-indef-contract',
+			'frequency' => 'MONTHLY',
+			'dagFromMonth' => 1,
+			'standardAmount' => 500.0,
+			'validFrom' => '2024-01-01',
+			'contractReference' => 'contract-1',
+		];
+
+		self::assertTrue($guard->validateOnSave($recurring));
+
+	}//end testIndefiniteContractImposesNoBound()
+
+	/**
+	 * A recurring cost with no contractReference skips the contract-window
+	 * check entirely — no regression to the four pre-existing checks
+	 * (REQ-BKC-002).
+	 *
+	 * @return void
+	 */
+	public function testAbsentContractReferenceSkipsCheck(): void {
+		$recurring = [
+			'recurId' => 'rec-no-contract',
+			'frequency' => 'MONTHLY',
+			'dagFromMonth' => 1,
+			'standardAmount' => 500.0,
+			'validFrom' => '2020-01-01',
+		];
+
+		self::assertTrue($this->guard->validateOnSave($recurring));
+
+	}//end testAbsentContractReferenceSkipsCheck()
 }//end class

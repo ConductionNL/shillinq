@@ -135,17 +135,17 @@
 					"order": 35,
 					"children": [
 						{
-							"id": "TenderNedAanbestedingen",
+							"id": "TenderNedProcurements",
 							"label": "TenderNed tenders",
 							"icon": "Gavel",
-							"route": "TenderNedAanbestedingen",
+							"route": "TenderNedProcurements",
 							"order": 10
 						},
 						{
 							"id": "MijnContracten",
 							"label": "TenderNed-sourced commitments",
 							"icon": "FileSign",
-							"route": "Verplichtingenregister",
+							"route": "CommitmentsRegister",
 							"query": {
 								"source": "tenderned"
 							},
@@ -157,22 +157,22 @@
 			"pages": [
 				{
 					"_fragment": "20-tenderned-integratie",
-					"id": "TenderNedAanbestedingen",
+					"id": "TenderNedProcurements",
 					"route": "/inkoop/tenderned",
 					"type": "index",
 					"title": "TenderNed tenders"
 				},
 				{
 					"_fragment": "20-tenderned-integratie",
-					"id": "TenderNedAanbestedingDetail",
+					"id": "TenderNedProcurementDetail",
 					"route": "/inkoop/tenderned/:id",
 					"type": "detail",
 					"title": "TenderNed file"
 				},
 				{
 					"_fragment": "20-tenderned-integratie",
-					"id": "VerplichtingDetail",
-					"route": "/inkoop/verplichtingen/:id",
+					"id": "CommitmentDetail",
+					"route": "/inkoop/commitments/:id",
 					"type": "detail",
 					"title": "Commitment"
 				}
@@ -3334,30 +3334,30 @@
 		{
 			"menu": [
 				{
-					"id": "Verplichtingen",
+					"id": "Commitments",
 					"label": "Commitments",
 					"icon": "FileSign",
 					"order": 30,
 					"children": [
 						{
-							"id": "Verplichtingenregister",
+							"id": "CommitmentsRegister",
 							"label": "Commitments register",
 							"icon": "DatabaseOutline",
-							"route": "Verplichtingenregister",
+							"route": "CommitmentsRegister",
 							"order": 10
 						},
 						{
-							"id": "Mandaten",
+							"id": "Mandates",
 							"label": "Mandates",
 							"icon": "AccountKey",
-							"route": "Mandaten",
+							"route": "Mandates",
 							"order": 20
 						},
 						{
-							"id": "Goedkeuringsstappen",
+							"id": "ApprovalSteps",
 							"label": "Approvals",
 							"icon": "CheckDecagramOutline",
-							"route": "Goedkeuringsstappen",
+							"route": "ApprovalSteps",
 							"order": 30
 						},
 						{
@@ -3373,50 +3373,50 @@
 			"pages": [
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
-					"id": "Verplichtingenregister",
-					"route": "/verplichtingen",
+					"id": "CommitmentsRegister",
+					"route": "/commitments",
 					"type": "index",
 					"title": "Commitments register"
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
-					"id": "VerplichtingDetail",
-					"route": "/verplichtingen/:id",
+					"id": "CommitmentDetail",
+					"route": "/commitments/:id",
 					"type": "detail",
 					"title": "Commitment"
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
 					"id": "BudgetLineCommitments",
-					"route": "/verplichtingen/budget-lines",
+					"route": "/commitments/budget-lines",
 					"type": "custom",
 					"title": "Committed vs. realised"
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
-					"id": "Mandaten",
-					"route": "/verplichtingen/mandaten",
+					"id": "Mandates",
+					"route": "/commitments/mandates",
 					"type": "index",
 					"title": "Mandates"
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
-					"id": "MandaatDetail",
-					"route": "/verplichtingen/mandaten/:id",
+					"id": "MandateDetail",
+					"route": "/commitments/mandates/:id",
 					"type": "detail",
 					"title": "Mandate"
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
-					"id": "Goedkeuringsstappen",
-					"route": "/verplichtingen/goedkeuringen",
+					"id": "ApprovalSteps",
+					"route": "/commitments/approvals",
 					"type": "index",
 					"title": "Approvals"
 				},
 				{
 					"_fragment": "bookkeeping-verplichtingenadministratie",
-					"id": "GoedkeuringsstapDetail",
-					"route": "/verplichtingen/goedkeuringen/:id",
+					"id": "ApprovalStepDetail",
+					"route": "/commitments/approvals/:id",
 					"type": "detail",
 					"title": "Approval step"
 				}
@@ -3864,6 +3864,213 @@
 					"route": "/treasury/quartaalrapportages-fido/:id",
 					"type": "detail",
 					"title": "Quarterly Fido Report"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Budgets",
+					"label": "Budgets",
+					"icon": "PiggyBankOutline",
+					"order": 29,
+					"children": [
+						{
+							"id": "AnnualBudgets",
+							"label": "Annual Budgets",
+							"icon": "CalendarRange",
+							"route": "AnnualBudgets",
+							"order": 10
+						},
+						{
+							"id": "LedgerGroups",
+							"label": "Ledger Groups",
+							"icon": "FormatListGroup",
+							"route": "LedgerGroups",
+							"order": 20
+						},
+						{
+							"id": "BudgetLines",
+							"label": "Budget Lines",
+							"icon": "TableColumn",
+							"route": "BudgetLines",
+							"order": 30
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "budget-core-schema",
+					"id": "AnnualBudgets",
+					"route": "/begroting/annual-budgets",
+					"type": "index",
+					"title": "Annual Budgets"
+				},
+				{
+					"_fragment": "budget-core-schema",
+					"id": "AnnualBudgetDetail",
+					"route": "/begroting/annual-budgets/:id",
+					"type": "detail",
+					"title": "Annual Budget"
+				},
+				{
+					"_fragment": "budget-core-schema",
+					"id": "LedgerGroups",
+					"route": "/begroting/ledger-groups",
+					"type": "index",
+					"title": "Ledger Groups"
+				},
+				{
+					"_fragment": "budget-core-schema",
+					"id": "LedgerGroupDetail",
+					"route": "/begroting/ledger-groups/:id",
+					"type": "detail",
+					"title": "Ledger Group"
+				},
+				{
+					"_fragment": "budget-core-schema",
+					"id": "BudgetLines",
+					"route": "/begroting/budget-lines",
+					"type": "index",
+					"title": "Budget Lines"
+				},
+				{
+					"_fragment": "budget-core-schema",
+					"id": "BudgetLineDetail",
+					"route": "/begroting/budget-lines/:id",
+					"type": "detail",
+					"title": "Budget Line"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Budgets",
+					"children": [
+						{
+							"id": "BudgetGrid",
+							"label": "Budget Grid",
+							"icon": "TableLarge",
+							"route": "BudgetGrid",
+							"order": 5
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "budget-grid-view",
+					"id": "BudgetGrid",
+					"route": "/begroting/grid",
+					"type": "custom",
+					"title": "Budget Grid"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Budgets",
+					"label": "Budgets",
+					"icon": "PiggyBankOutline",
+					"order": 29,
+					"children": [
+						{
+							"id": "BudgetLineDerivations",
+							"label": "Derivations",
+							"icon": "SourceBranch",
+							"route": "BudgetLineDerivations",
+							"order": 40
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "budget-known-costs",
+					"id": "BudgetLineDerivations",
+					"route": "/begroting/derivations",
+					"type": "index",
+					"title": "Budget Line Derivations"
+				},
+				{
+					"_fragment": "budget-known-costs",
+					"id": "BudgetLineDerivationDetail",
+					"route": "/begroting/derivations/:id",
+					"type": "detail",
+					"title": "Budget Line Derivation"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Budgets",
+					"label": "Budgets",
+					"icon": "PiggyBankOutline",
+					"order": 29,
+					"children": [
+						{
+							"id": "BudgetScenarios",
+							"label": "Scenarios",
+							"icon": "SourceBranch",
+							"route": "BudgetScenarios",
+							"order": 40
+						},
+						{
+							"id": "BudgetScenarioModifiers",
+							"label": "Scenario Modifiers",
+							"icon": "TuneVariant",
+							"route": "BudgetScenarioModifiers",
+							"order": 50
+						},
+						{
+							"id": "BudgetScenarioComparison",
+							"label": "Scenario Comparison",
+							"icon": "CompareHorizontal",
+							"route": "BudgetScenarioComparison",
+							"order": 60
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "budget-scenarios",
+					"id": "BudgetScenarios",
+					"route": "/begroting/scenarios",
+					"type": "index",
+					"title": "Budget Scenarios"
+				},
+				{
+					"_fragment": "budget-scenarios",
+					"id": "BudgetScenarioDetail",
+					"route": "/begroting/scenarios/:id",
+					"type": "detail",
+					"title": "Budget Scenario"
+				},
+				{
+					"_fragment": "budget-scenarios",
+					"id": "BudgetScenarioModifiers",
+					"route": "/begroting/scenario-modifiers",
+					"type": "index",
+					"title": "Budget Scenario Modifiers"
+				},
+				{
+					"_fragment": "budget-scenarios",
+					"id": "BudgetScenarioModifierDetail",
+					"route": "/begroting/scenario-modifiers/:id",
+					"type": "detail",
+					"title": "Budget Scenario Modifier"
+				},
+				{
+					"_fragment": "budget-scenarios",
+					"id": "BudgetScenarioComparison",
+					"route": "/begroting/scenarios/compare",
+					"type": "custom",
+					"title": "Scenario Comparison"
 				}
 			]
 		},
@@ -4649,6 +4856,31 @@
 					"route": "/retainer-true-ups/:id",
 					"type": "detail",
 					"title": "True-Up"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "ReportingCompliance",
+					"children": [
+						{
+							"id": "SpendAnalytics",
+							"label": "Spend analysis",
+							"icon": "ChartBoxOutline",
+							"route": "SpendAnalytics",
+							"order": 15
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "spend-analytics-ui",
+					"id": "SpendAnalytics",
+					"route": "/reporting-compliance/spend-analytics",
+					"type": "dashboard",
+					"title": "Spend analysis"
 				}
 			]
 		},

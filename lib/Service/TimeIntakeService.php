@@ -382,13 +382,13 @@ class TimeIntakeService {
 				throw new InvalidArgumentException('Each entry requires a non-empty externalId and a valid ISO date.');
 			}
 
-			if (isset($entry['rateRef']) === true && $entry['rateRef'] !== null) {
+			if (isset($entry['rateRef']) === true) {
 				$rateRef = (string)$entry['rateRef'];
 			} else {
 				$rateRef = null;
 			}
 
-			if (isset($entry['projectRef']) === true && $entry['projectRef'] !== null) {
+			if (isset($entry['projectRef']) === true) {
 				$entryProjectRef = (string)$entry['projectRef'];
 			} else {
 				$entryProjectRef = null;
@@ -408,19 +408,19 @@ class TimeIntakeService {
 		$billingModel = (string)($body['billingModel'] ?? '');
 		$currency = (string)($body['currency'] ?? 'EUR');
 
-		if (isset($body['rateCardId']) === true && $body['rateCardId'] !== null && $body['rateCardId'] !== '') {
+		if (isset($body['rateCardId']) === true && $body['rateCardId'] !== '') {
 			$requestRateCardId = (string)$body['rateCardId'];
 		} else {
 			$requestRateCardId = null;
 		}
 
-		if (isset($body['projectRef']) === true && $body['projectRef'] !== null) {
+		if (isset($body['projectRef']) === true) {
 			$projectRef = (string)$body['projectRef'];
 		} else {
 			$projectRef = null;
 		}
 
-		if (isset($body['notes']) === true && $body['notes'] !== null) {
+		if (isset($body['notes']) === true) {
 			$notes = (string)$body['notes'];
 		} else {
 			$notes = null;
@@ -743,11 +743,7 @@ class TimeIntakeService {
 	private function findAll(string $schema, array $filters): array {
 		try {
 			$rs = $this->objectService->setRegister($this->register())->setSchema($schema)->findAll(['filters' => $filters]);
-			if (is_array($rs) === true) {
-				return $rs;
-			}
-
-			return [];
+			return $rs;
 		} catch (\Throwable $e) {
 			$this->logger->error(sprintf('TimeIntakeService findAll(%s) failed: %s', $schema, $e->getMessage()));
 			return [];

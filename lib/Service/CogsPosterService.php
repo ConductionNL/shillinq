@@ -57,7 +57,6 @@ namespace OCA\Shillinq\Service;
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
@@ -161,9 +160,15 @@ class CogsPosterService {
 
 			$cogsAmount = round(($cogsCents / 100), 2);
 
+			// The administrationId is DENORMALISED onto every line from the header
+			// above (REQ-GLS-001) — see GlLineAdministrationBackfillMigrator.
+			// A line written without it is invisible to its own
+			// administration's SpendAnalytics totals AND flips the backfill
+			// completeness gate red for the whole instance.
 			$this->saveLine(
 				data: [
 					'transactionId' => $transactionId,
+					'administrationId' => $administrationId,
 					'lineNumber' => 1,
 					'accountNumber' => $cogsAccount,
 					'side' => 'debit',
@@ -176,6 +181,7 @@ class CogsPosterService {
 			$this->saveLine(
 				data: [
 					'transactionId' => $transactionId,
+					'administrationId' => $administrationId,
 					'lineNumber' => 2,
 					'accountNumber' => $inventoryAccount,
 					'side' => 'credit',
@@ -366,28 +372,17 @@ class CogsPosterService {
 			->setSchema($schema)
 			->saveObject($data);
 
-		// ADR-084: saveObject() is declared `: ObjectEntityInterface`, so an
-		// is_array() arm here is unreachable by type. The jsonSerialize() path
-		// below is the one that has always run.
-		if (is_object($saved) === true && method_exists($saved, 'jsonSerialize') === true) {
-			$out = $saved->jsonSerialize();
-			if (is_array($out) === true) {
-				return $out;
-			}
-
-			return [];
+		// ADR-084: saveObject() is declared `: ObjectEntityInterface`, which
+		// extends JsonSerializable — so the is_object()/method_exists() guards
+		// that used to wrap this call could never be false, and neither the
+		// getObject() fallback nor the trailing throw was reachable.
+		// jsonSerialize() still returns mixed, so that check stays.
+		$out = $saved->jsonSerialize();
+		if (is_array($out) === true) {
+			return $out;
 		}
 
-		if (is_object($saved) === true && method_exists($saved, 'getObject') === true) {
-			$out = $saved->getObject();
-			if (is_array($out) === true) {
-				return $out;
-			}
-
-			return [];
-		}
-
-		throw new RuntimeException('CogsPosterService: unsupported row type from ObjectService::saveObject');
+		return [];
 	}//end saveOnSchema()
 
 	/**

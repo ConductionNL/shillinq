@@ -466,7 +466,8 @@ class MultiPoConsolidationService {
 			'candidateCount' => count($candidates),
 			'chosenPoLineId' => $chosenPoLineId,
 			'chosenGrnLineId' => $persistedGrnLineId,
-			'rejectedPoLineIds' => array_values(array_keys($rejectedPoLineIds)),
+			// `array_keys()` already returns a list.
+			'rejectedPoLineIds' => array_keys($rejectedPoLineIds),
 			'chosenBy' => $this->currentUserId(),
 			'chosenAt' => $this->nowIso(),
 		];
@@ -632,12 +633,12 @@ class MultiPoConsolidationService {
 		string $matchStatus,
 	): array {
 		$matchedPoIds = [];
-		if (isset($candidate['poId']) === true && $candidate['poId'] !== null && $candidate['poId'] !== '') {
+		if (isset($candidate['poId']) === true && $candidate['poId'] !== '') {
 			$matchedPoIds[] = (string)$candidate['poId'];
 		}
 
 		$matchedGrnIds = [];
-		if (isset($candidate['grnId']) === true && $candidate['grnId'] !== null && $candidate['grnId'] !== '') {
+		if (isset($candidate['grnId']) === true && $candidate['grnId'] !== '') {
 			$matchedGrnIds[] = (string)$candidate['grnId'];
 		}
 

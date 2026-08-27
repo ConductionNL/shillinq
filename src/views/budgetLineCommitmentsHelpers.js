@@ -5,7 +5,7 @@
  * Pure helpers for BudgetLineCommitments.vue (REQ-VPL-011).
  *
  * Normalises the `committedVsRealisedPerBudgetLine` aggregation response
- * (Verplichtingsregel buckets grouped by programme/cost_centre/financial_year/
+ * (CommitmentLine buckets grouped by programme/cost_centre/financial_year/
  * general_ledger_account, joined to CommitmentBudget.authorised_amount /
  * CommitmentBudget.realised_amount — the aggregation response buckets its
  * joined fields as `<join.through>.<field>`, so the `CommitmentBudget` rename
@@ -21,43 +21,78 @@
 /**
  * Normalise the raw aggregation payload into budget-line rows.
  *
+ * READS THE ENVELOPE OPENREGISTER ACTUALLY RETURNS. This previously looked for
+ * `payload.buckets` holding flat rows (`bucket.programme`,
+ * `bucket.remaining_committed`, ...). No such shape exists — the engine returns
+ *
+ *   { groups: [ { keys:   { programme, costCentre, financialYear,
+ *                           generalLedgerAccount },
+ *                 values: { sum_remaining_committed, sum_invoiced_amount },
+ *                 joined: { 'CommitmentBudget.authorised_amount': n,
+ *                           'CommitmentBudget.realised_amount':  n } } ] }
+ *
+ * so `buckets` was always undefined and this always returned []. Together with
+ * the declaration being written in a grammar the engine did not read, that is
+ * why the page rendered its empty state over live data (issue #1216): every
+ * layer agreed on a shape none of them produced.
+ *
+ * The OUTPUT contract is unchanged — the template and drilldownFilters() read
+ * snake_case row fields — so only the parsing moved.
+ *
+ * The legacy flat spelling is still accepted per field. An instance whose
+ * OpenRegister predates the composite-groupBy work returns the single-key
+ * shape, and falling back keeps this readable rather than blank there.
+ *
  * @param {object} payload Raw response from the aggregation endpoint.
  * @return {Array<object>} Rows with programme/cost_centre/financial_year/general_ledger_account + the four amount columns (minor units).
  *
  * @spec openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md#req-bcs-002
  */
 export function normaliseBudgetLineRows(payload) {
-	const buckets = Array.isArray(payload?.buckets)
-		? payload.buckets
-		: Array.isArray(payload)
-			? payload
-			: []
+	const groups = Array.isArray(payload?.groups)
+		? payload.groups
+		: Array.isArray(payload?.buckets)
+			? payload.buckets
+			: Array.isArray(payload)
+				? payload
+				: []
 
-	return buckets.map((bucket) => {
+	return groups.map((group) => {
+		const keys = group?.keys ?? group ?? {}
+		const values = group?.values ?? group ?? {}
+		const joined = group?.joined ?? group ?? {}
+
+		const programme = keys?.programme ?? ''
+		const costCentre = keys?.costCentre ?? keys?.cost_centre ?? ''
+		const financialYear = keys?.financialYear ?? keys?.financial_year ?? null
+		const glAccount =
+			keys?.generalLedgerAccount ?? keys?.general_ledger_account ?? ''
+
 		const geautoriseerd = Number(
-			bucket?.['CommitmentBudget.authorised_amount']
-				?? bucket?.geautoriseerd
+			joined?.['CommitmentBudget.authorised_amount']
+				?? group?.geautoriseerd
 				?? 0,
 		)
 		const mandatory = Number(
-			bucket?.remaining_committed ?? bucket?.verplicht ?? 0,
+			values?.sum_remaining_committed
+				?? values?.remaining_committed
+				?? group?.verplicht
+				?? 0,
 		)
 		const gerealiseerd = Number(
-			bucket?.invoiced_amount ?? bucket?.gerealiseerd ?? 0,
+			values?.sum_invoiced_amount
+				?? values?.invoiced_amount
+				?? group?.gerealiseerd
+				?? 0,
 		)
 		const vrij = geautoriseerd - mandatory - gerealiseerd
 
 		return {
-			key: [
-				bucket?.programme,
-				bucket?.cost_centre,
-				bucket?.financial_year,
-				bucket?.general_ledger_account,
-			].join('|'),
-			programme: String(bucket?.programme ?? ''),
-			cost_centre: String(bucket?.cost_centre ?? ''),
-			financial_year: bucket?.financial_year ?? null,
-			general_ledger_account: String(bucket?.general_ledger_account ?? ''),
+			key: [programme, costCentre, financialYear, glAccount].join('|'),
+			programme: String(programme ?? ''),
+			cost_centre: String(costCentre ?? ''),
+			financial_year: financialYear ?? null,
+			general_ledger_account: String(glAccount ?? ''),
 			geautoriseerd,
 			mandatory,
 			gerealiseerd,
@@ -88,10 +123,23 @@ export function formatAmount(cents) {
 
 /**
  * Build the exact-match filter set to drill down from a budget-line row to
- * its underlying Verplichtingsregel records.
+ * its underlying CommitmentLine records.
+ *
+ * KEYED BY SCHEMA PROPERTY NAME, NOT COLUMN NAME. OpenRegister filters on the
+ * property as declared — `costCentre`, `financialYear`, `generalLedgerAccount`
+ * — while the shard TABLE snake_cases them into columns. This used to emit the
+ * column spelling, and a filter on a property that does not exist does not
+ * error: it matches nothing and returns `{"results":[],"total":0}` with HTTP
+ * 200, so the drilldown rendered "No underlying commitments found" over rows
+ * that were plainly there. Measured on a live instance: `?programme=5.1&
+ * costCentre=FAC-2026` returns 6, the same query with `cost_centre` returns 0.
+ *
+ * The ROW keeps its snake_case shape — the template and its tests read
+ * `row.cost_centre` — so the mapping happens here, at the boundary where the
+ * request is built.
  *
  * @param {object} row Normalised budget-line row.
- * @return {object} Filters keyed by Verplichtingsregel field name.
+ * @return {object} Filters keyed by CommitmentLine PROPERTY name.
  */
 export function drilldownFilters(row) {
 	const filters = {}
@@ -99,13 +147,13 @@ export function drilldownFilters(row) {
 		filters.programme = row.programme
 	}
 	if (row.cost_centre) {
-		filters.cost_centre = row.cost_centre
+		filters.costCentre = row.cost_centre
 	}
 	if (row.financial_year !== null && row.financial_year !== undefined) {
-		filters.financial_year = row.financial_year
+		filters.financialYear = row.financial_year
 	}
 	if (row.general_ledger_account) {
-		filters.general_ledger_account = row.general_ledger_account
+		filters.generalLedgerAccount = row.general_ledger_account
 	}
 	return filters
 }

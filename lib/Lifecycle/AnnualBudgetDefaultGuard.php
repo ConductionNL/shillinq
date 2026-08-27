@@ -124,10 +124,6 @@ class AnnualBudgetDefaultGuard {
 					]
 				);
 
-			if (is_array($siblings) === false) {
-				$siblings = [];
-			}
-
 			$currentId = ($budget['id'] ?? $budget['@self']['id'] ?? null);
 			foreach ($siblings as $sibling) {
 				$siblingId = ($sibling['id'] ?? $sibling['@self']['id'] ?? null);

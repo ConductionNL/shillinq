@@ -339,7 +339,6 @@
             "description": "Declarative shape of the daily kasgeldlimiet recompute (REQ-FDO-002). Sums net short-term debt = (opgenomen kasgeldleningen + rekening-courant draws + schuld RO + overige korte schuld < 1 jaar) − (korte vorderingen < 1 jaar) from the prior 90 banking days of GL short-term debt postings, divides by the number of banking days to obtain the rolling 3-month average, sets currentExposure and derives headroom = calculatedCeiling − currentExposure. status follows the enforcement ladder over consecutive quarters. When the engine cannot express the rolling window, the same result is computed from the real ObjectService API (find/findAll) over the GL ledger.",
             "source": "GLLine",
             "filter": {
-              "administrationId": "@self.organisationId",
               "shortTermDebt": true,
               "windowDays": 90
             },
@@ -481,7 +480,6 @@
             "description": "Declarative shape of the 4-year forward rente-risiconorm projection (REQ-FDO-003). Reads recorded Leningen with repaymentSchedule and floating-rate renteherzieningsmoment, projects per-year herfinanciering (maturing principal) + rate-reset volume for the next four years, sets forwardLooking4Year and derives headroomPerYear = ceiling − exposure per year. Recomputed on every lening-entry and floating-rate reset-event. When the engine cannot express the forward arithmetic, the same result is computed from the real ObjectService API (find/findAll) over recorded Leningen.",
             "source": "Lening",
             "filter": {
-              "organisationId": "@self.organisationId",
               "type": [
                 "onderhandse-lening",
                 "obligatie",
@@ -1185,7 +1183,6 @@
             "description": "Declarative shape of the quarterly-rapportage auto-generation (REQ-FDO-006). Aggregates the quarter's Leningen + Derivaten mutations, the closing kasgeldlimiet / rente-risiconorm / schatkistbankieren snapshots and the overridesApplied list into a draft rapportage on Day 10 after quarter-end. When the engine cannot express the cross-schema roll-up, the same result is computed from the real ObjectService API (find/findAll).",
             "source": "Lening",
             "filter": {
-              "organisationId": "@self.organisationId",
               "quarter": "@self.kwartaal",
               "auditYear": "@self.auditYear"
             },

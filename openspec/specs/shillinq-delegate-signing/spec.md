@@ -33,7 +33,7 @@ now-superseded "integration registry `call()`" transport that was never
 wired to anything real) and was reconstructed 2026-07-22 to reflect the
 transport actually shipped: both delegation paths now use `IEventDispatcher`
 event contracts, not a registry. See
-[Conduction/shillinq#491](https://codeberg.org/Conduction/shillinq/issues/491)
+Codeberg issue shillinq#491 (pre-migration, not migrated to GitHub)
 for the reconstruction history.
 ## Requirements
 ### Requirement: REQ-SIGN-001 — Document e-signature on a shillinq finance document SHALL be delegated to docudesk via IEventDispatcher, request-then-consume-outcome; shillinq stores only the returned reference and mirrored status and NEVER signs on local authority

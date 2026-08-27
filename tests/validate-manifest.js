@@ -90,8 +90,10 @@ function loadAjv() {
 	// "https://json-schema.org/draft/2020-12/schema"). Standard Ajv (v7+)
 	// does not auto-load the 2020 meta-schema; we need the `ajv/dist/2020`
 	// entry point.
-	let Ajv2020 = null
-	let addFormats = null
+	// Declared without initialisers: every path below assigns or returns, so a
+	// placeholder value would be dead (eslint no-useless-assignment).
+	let Ajv2020
+	let addFormats
 	try {
 		// Ajv 8+ ships the 2020 draft entry point.
 		Ajv2020 = require('ajv/dist/2020').default || require('ajv/dist/2020')
@@ -208,6 +210,239 @@ function consistencyCheck(manifest) {
 	return errors
 }
 
+// ---------------------------------------------------------------------------
+// Dead-config-key gate (fragment scope)
+// ---------------------------------------------------------------------------
+//
+// WHY THIS EXISTS. `src/manifest.json` is the only document the Ajv pass above
+// validates, but the per-feature page config actually ships in
+// `src/manifest.d/*.json` fragments, lazily loaded at runtime
+// (`scripts/generate-manifest-shell.js` deliberately drops `config` from the
+// boot shell). Those fragments were therefore completely unvalidated — which is
+// exactly how the defect below survived across 21 files.
+//
+// THE DEFECT. A fragment declared its related-object lists under
+// `config.relatedLists`. No component reads that key. `CnDetailPage`'s prop is
+// `relatedCollections`; `CnPageRenderer` spreads `config` onto props, so a
+// `relatedLists` block lands in `$attrs`, renders NOTHING, and the page shows
+// the generic "No relations yet" widget — with no error, no warning, and every
+// quality gate green. A dead config key is invisible precisely because it is
+// inert.
+//
+// WHAT THIS CHECKS. Two things, both hard failures:
+//   1. No page config declares a key on DEAD_CONFIG_KEYS.
+//   2. The gate actually SAW its subject — zero fragments, or zero page
+//      configs, is a failure, not a pass. A check that stopped reaching what it
+//      inspects must not be able to report success.
+// Plus a self-check (3) when `node_modules` is present: it re-derives the real
+// prop names off the installed `Cn*` components and fails if the premise behind
+// the deny-list has changed (i.e. if `relatedLists` ever BECOMES a prop, or if
+// the documented replacement stops being one). That keeps the list honest
+// instead of letting it fossilise.
+
+/** Fragment directory holding the lazily-loaded per-feature page config. */
+const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
+
+/** Installed nextcloud-vue component root; absent in a bare checkout. */
+const CN_COMPONENTS_DIR = path.join(
+	REPO_ROOT,
+	'node_modules',
+	'@conduction',
+	'nextcloud-vue',
+	'src',
+	'components',
+)
+
+/**
+ * Config keys that no `Cn*` page component accepts as a prop, mapped to the
+ * key that replaces them. Declaring one is always a silent no-op, so it is a
+ * hard failure.
+ *
+ * Keep this list EXPLICIT rather than derived. A naive "every config key must
+ * be a prop" rule produces false positives by design: `config` legitimately
+ * carries renderer-level keys (`register`, `schema`, `detailRoute`,
+ * `indexRoute`, `_note`, …) that `CnPageRenderer` consumes itself and never
+ * forwards to the page component. An explicit list of keys PROVEN dead is
+ * honest; a derived one would be noise. `checkCnPropPremise()` below guards
+ * this list against drift.
+ *
+ * @type {Object<string,string>}
+ */
+const DEAD_CONFIG_KEYS = {
+	// Proven on LedgerGroupDetail: converting the key to `relatedCollections`
+	// made the child rows actually render.
+	relatedLists: 'relatedCollections',
+}
+
+/**
+ * Fragments allowed to still carry a dead key because a DIFFERENT open branch
+ * owns the fix, keyed to the reason. This exemption is SELF-RETIRING: once the
+ * owning change lands and the key is gone, `checkFragmentConfigKeys()` fails
+ * demanding the entry be deleted, so a stale exemption cannot sit here quietly
+ * widening the gate.
+ *
+ * @type {Object<string,string>}
+ */
+// Empty by design. Entries here are SELF-RETIRING: the gate FAILS when a
+// listed fragment no longer declares a dead key, so a waiver cannot outlive
+// its reason. The one entry ('budget-core-schema.json', pending PR #1011) did
+// exactly that the moment #1011 merged — the gate demanded its own exemption
+// be deleted, which is this change. Add an entry only for a fragment whose fix
+// is genuinely in flight, and name the PR that retires it.
+const PENDING_FRAGMENTS = {}
+
+/**
+ * Re-derive the `Cn*` prop names from the installed component sources and
+ * verify the premise DEAD_CONFIG_KEYS rests on: each dead key must NOT be a
+ * prop on any `Cn*` component, and its documented replacement MUST be one.
+ *
+ * Skipped (not failed) when `node_modules` is absent, so the gate still runs
+ * in a bare checkout — the deny-list is enforced either way.
+ *
+ * @return {Array<string>} Premise-violation messages (empty == OK or skipped).
+ */
+function checkCnPropPremise() {
+	const errors = []
+	let dirs
+	try {
+		dirs = fs.readdirSync(CN_COMPONENTS_DIR).filter((d) => d.startsWith('Cn'))
+	} catch (_) {
+		console.log(
+			'[validate-manifest] Cn* prop premise: SKIPPED (node_modules absent) — deny-list still enforced',
+		)
+		return errors
+	}
+	if (dirs.length === 0) {
+		console.log(
+			'[validate-manifest] Cn* prop premise: SKIPPED (no Cn* components found)',
+		)
+		return errors
+	}
+
+	// Collect prop names from every `Cn*.vue`'s `props: { ... }` block. Props
+	// are declared one-per-line as `\t\tname: {`, so a line-anchored scan is
+	// enough and avoids parsing SFCs.
+	const props = new Set()
+	for (const dir of dirs) {
+		const file = path.join(CN_COMPONENTS_DIR, dir, `${dir}.vue`)
+		let src
+		try {
+			src = fs.readFileSync(file, 'utf8')
+		} catch (_) {
+			continue
+		}
+		const propsAt = src.indexOf('props: {')
+		if (propsAt === -1) continue
+		for (const line of src.slice(propsAt).split('\n')) {
+			const m = line.match(/^\t\t([A-Za-z][A-Za-z0-9]*): \{/)
+			if (m) props.add(m[1])
+		}
+	}
+	if (props.size === 0) {
+		errors.push(
+			'Cn* prop premise: parsed 0 prop names from the installed components — the scan stopped seeing its subject',
+		)
+		return errors
+	}
+
+	for (const [dead, replacement] of Object.entries(DEAD_CONFIG_KEYS)) {
+		if (props.has(dead)) {
+			errors.push(
+				`Cn* prop premise: "${dead}" is on the DEAD_CONFIG_KEYS list but IS now a prop on a Cn* component — the list is stale, re-check it`,
+			)
+		}
+		if (!props.has(replacement)) {
+			errors.push(
+				`Cn* prop premise: "${dead}" is documented as replaced by "${replacement}", but "${replacement}" is not a prop on any Cn* component — the replacement is wrong or was renamed`,
+			)
+		}
+	}
+	console.log(
+		`[validate-manifest] Cn* prop premise: checked ${DEAD_CONFIG_KEYS ? Object.keys(DEAD_CONFIG_KEYS).length : 0} dead key(s) against ${props.size} prop names from ${dirs.length} Cn* components`,
+	)
+	return errors
+}
+
+/**
+ * Scan every `src/manifest.d/*.json` fragment for dead page-config keys.
+ *
+ * Fails when a fragment declares a key on {@link DEAD_CONFIG_KEYS}, and ALSO
+ * when the scan inspected zero fragments or zero page configs — a gate that
+ * stopped reaching its subject must not report success.
+ *
+ * @return {Array<string>} Human-readable error messages (empty == OK).
+ */
+function checkFragmentConfigKeys() {
+	const errors = []
+	let files
+	try {
+		files = fs
+			.readdirSync(MANIFEST_D_DIR)
+			.filter((f) => f.endsWith('.json'))
+			.sort()
+	} catch (e) {
+		return [
+			`dead-config-key gate: cannot read ${MANIFEST_D_DIR} (${e.message}) — the gate inspected NOTHING`,
+		]
+	}
+
+	if (files.length === 0) {
+		return [
+			`dead-config-key gate: 0 fragments found in ${MANIFEST_D_DIR} — the gate inspected NOTHING, which is a failure, not a pass`,
+		]
+	}
+
+	let configsSeen = 0
+	const hitFragments = new Set()
+	for (const file of files) {
+		let fragment
+		try {
+			fragment = loadJson(path.join(MANIFEST_D_DIR, file))
+		} catch (e) {
+			errors.push(`${file}: not parseable as JSON (${e.message})`)
+			continue
+		}
+		for (const page of fragment.pages || []) {
+			const config = page && page.config
+			if (!config || typeof config !== 'object') continue
+			configsSeen++
+			for (const [dead, replacement] of Object.entries(DEAD_CONFIG_KEYS)) {
+				if (!Object.hasOwn(config, dead)) continue
+				hitFragments.add(file)
+				if (PENDING_FRAGMENTS[file]) continue
+				errors.push(
+					`${file}: pages[id=${page.id || '?'}].config declares "${dead}", which no Cn* page component accepts as a prop — it lands in $attrs and renders NOTHING. Use "${replacement}" ({title, register, schema, filter, columns, rowRoute}) and pick a filter token that resolves against what the CHILD actually stores (@objectId = the row's UUID; @object.<field> = a FLAT payload field, and it cannot reach @self.slug).`,
+				)
+			}
+		}
+	}
+
+	if (configsSeen === 0) {
+		errors.push(
+			`dead-config-key gate: read ${files.length} fragments but found 0 page configs — the gate inspected NOTHING, which is a failure, not a pass`,
+		)
+	}
+
+	// Self-retiring exemptions: once the owning change lands, the key is gone
+	// and the entry must go with it, or it silently widens the gate forever.
+	for (const [file, reason] of Object.entries(PENDING_FRAGMENTS)) {
+		if (!files.includes(file)) {
+			errors.push(
+				`dead-config-key gate: PENDING_FRAGMENTS lists "${file}", which no longer exists — delete the entry (${reason})`,
+			)
+		} else if (!hitFragments.has(file)) {
+			errors.push(
+				`dead-config-key gate: PENDING_FRAGMENTS exempts "${file}", but it no longer declares a dead config key — the fix landed, so DELETE the entry (${reason})`,
+			)
+		}
+	}
+
+	console.log(
+		`[validate-manifest] dead-config-key gate: inspected ${configsSeen} page configs across ${files.length} fragments`,
+	)
+	return errors
+}
+
 /**
  * Run the consistency check and exit 0/1 accordingly. Called from every
  * path where schema/structural validation already passed.
@@ -219,11 +454,23 @@ function finishOk(manifest) {
 	const errors = consistencyCheck(manifest)
 	if (errors.length === 0) {
 		console.log('[validate-manifest] consistency check: PASS (0 issues)')
-		process.exit(0)
+	} else {
+		console.error('[validate-manifest] consistency check: FAIL')
+		for (const err of errors) console.error(`  - ${err}`)
 	}
-	console.error('[validate-manifest] consistency check: FAIL')
-	for (const err of errors) console.error(`  - ${err}`)
-	process.exit(1)
+
+	// Fragment-scope gate. Runs on every path that reaches here, and reports
+	// independently of the consistency check so one failing gate never hides
+	// the other's result.
+	const deadKeyErrors = [...checkCnPropPremise(), ...checkFragmentConfigKeys()]
+	if (deadKeyErrors.length === 0) {
+		console.log('[validate-manifest] dead-config-key gate: PASS (0 issues)')
+	} else {
+		console.error('[validate-manifest] dead-config-key gate: FAIL')
+		for (const err of deadKeyErrors) console.error(`  - ${err}`)
+	}
+
+	process.exit(errors.length + deadKeyErrors.length === 0 ? 0 : 1)
 }
 
 function main() {

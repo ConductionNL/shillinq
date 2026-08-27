@@ -459,7 +459,9 @@ class BadoControleprotocolService {
 		$classified = [];
 		foreach ($findings as $finding) {
 			$sampleId = (string)($finding['sample'] ?? '');
-			if ($sampleIds !== [] && isset($sampleIds[$sampleId]) === false) {
+			// The `empty($sampleIds)` early return above already guarantees a
+			// non-empty map, so the `!== []` conjunct this replaces was dead.
+			if (isset($sampleIds[$sampleId]) === false) {
 				continue;
 			}
 

@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Lifecycle;
 
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
-use OCA\Shillinq\Lifecycle\MandaatEnforcer;
+use OCA\Shillinq\Lifecycle\MandateEnforcer;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -79,7 +79,7 @@ class BudgetBlockerTest extends TestCase {
 
 		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-		$mandate = new MandaatEnforcer(
+		$mandate = new MandateEnforcer(
 			container: $this->container,
 			appConfig: $this->appConfig,
 			logger: $this->logger,
@@ -226,7 +226,7 @@ class BudgetBlockerTest extends TestCase {
 		return [
 			'administrationId' => 'adm-1',
 			'commitmentNumber' => 'PO-1',
-			'kind' => 'inkooporder',
+			'kind' => 'purchase_order',
 			'total_amount_excl_vat' => $amount,
 			'rules' => [
 				[
@@ -260,7 +260,7 @@ class BudgetBlockerTest extends TestCase {
 	 */
 	public function testCommitmentWithinBudgetAllowed(): void {
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandaat' => []])
+			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandate' => []])
 		);
 
 		// Free room is EUR 300.000; a EUR 250.000 commitment fits.
@@ -275,7 +275,7 @@ class BudgetBlockerTest extends TestCase {
 	 */
 	public function testCommitmentExceedingBudgetRejected(): void {
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandaat' => []])
+			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandate' => []])
 		);
 
 		// Free room is EUR 300.000; a EUR 350.000 commitment exceeds it.
@@ -294,14 +294,14 @@ class BudgetBlockerTest extends TestCase {
 			'administrationId' => 'adm-1',
 			'mandateCode' => 'M-CFO-OVERRIDE',
 			'maximumAmount' => 1000000000,
-			'kind_commitment' => ['inkooporder'],
+			'kind_commitment' => ['purchase_order'],
 			'is_override' => true,
 			'valid_from' => '2020-01-01',
 			'valid_to' => '2999-12-31',
 		];
 
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandaat' => [$override]])
+			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandate' => [$override]])
 		);
 
 		// EUR 350.000 exceeds free room but the override-mandate forces acceptance.
@@ -321,7 +321,7 @@ class BudgetBlockerTest extends TestCase {
 
 		$this->withObjectService(
 			$this->buildObjectServiceStub(
-				['CommitmentBudget' => [$budget2026, $budget2027], 'Mandaat' => []]
+				['CommitmentBudget' => [$budget2026, $budget2027], 'Mandate' => []]
 			)
 		);
 
@@ -349,7 +349,7 @@ class BudgetBlockerTest extends TestCase {
 	 */
 	public function testMissingBudgetRejected(): void {
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['CommitmentBudget' => [], 'Mandaat' => []])
+			$this->buildObjectServiceStub(['CommitmentBudget' => [], 'Mandate' => []])
 		);
 
 		$this->assertFalse($this->guard->canCommit('PO-1', $this->commitment(1000000)));
@@ -384,7 +384,7 @@ class BudgetBlockerTest extends TestCase {
 	 */
 	public function testRegelWithUnreadableAmountIsDenied(): void {
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandaat' => []])
+			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandate' => []])
 		);
 
 		$commitment = $this->commitment(500000000);
@@ -410,7 +410,7 @@ class BudgetBlockerTest extends TestCase {
 	 */
 	public function testRegelWithNonNumericAmountIsDenied(): void {
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandaat' => []])
+			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandate' => []])
 		);
 
 		$commitment = $this->commitment(500000000);
@@ -431,7 +431,7 @@ class BudgetBlockerTest extends TestCase {
 	 */
 	public function testReadableAmountWithinBudgetIsStillAllowed(): void {
 		$this->withObjectService(
-			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandaat' => []])
+			$this->buildObjectServiceStub(['CommitmentBudget' => [$this->budget()], 'Mandate' => []])
 		);
 
 		$this->assertTrue($this->guard->canCommit('PO-1', $this->commitment(10000000)));

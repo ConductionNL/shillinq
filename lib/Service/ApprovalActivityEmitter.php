@@ -308,9 +308,9 @@ class ApprovalActivityEmitter {
 				->setSubject($event, $parameters)
 				->setObject($objectType, 0, $objectId);
 
-			if (method_exists($activity, 'setMessage') === true) {
-				$activity->setMessage('summary', ['summary' => $summary]);
-			}
+			// `setMessage()` is declared on OCP\Activity\IEvent, so the
+			// method_exists() probe this replaces could never be false.
+			$activity->setMessage('summary', ['summary' => $summary]);
 
 			$this->activityManager->publish($activity);
 		} catch (\Throwable $e) {

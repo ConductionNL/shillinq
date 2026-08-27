@@ -520,10 +520,6 @@ class NotificationController extends Controller {
 		}
 
 		foreach ((array)$rows as $row) {
-			if (is_array($row) === false) {
-				$row = (array)json_decode((string)json_encode($row), true);
-			}
-
 			$rowId = (string)($row['id'] ?? ($row['@self']['id'] ?? ''));
 			if ($rowId !== $bookingId && (string)($row['bookingId'] ?? '') !== $bookingId) {
 				continue;

@@ -317,9 +317,10 @@ fi
 # only look at the parsed list. A wrong lookup manufactures an absence for free,
 # so the two are reported as different errors.
 verify() {
-	python3 - "$1" "$2" "$3" <<'PY'
+	python3 - "$1" "$2" "$3" "$4" <<'PY'
 import json, sys
 path, kind, code = sys.argv[1], sys.argv[2], sys.argv[3]
+limit = int(sys.argv[4]) if len(sys.argv) > 4 else 10**9
 required = {
     'registers': ['shillinq'],
     'schemas': [
@@ -345,6 +346,27 @@ items = body if isinstance(body, list) else body.get('results', [])
 slugs = {i.get('slug') for i in items if isinstance(i, dict)}
 missing = [s for s in required if s not in slugs]
 print(f'[ci-seed] {kind} present: {len(slugs)}')
+
+# A TRUNCATED PAGE MUST NOT READ AS "MISSING".
+#
+# This check asks for a bounded page and then concludes absence from what came
+# back. If the instance holds MORE than that bound, the required slug can be on
+# a page we never fetched and the check reports it missing when it is present.
+#
+# Observed on a shared dev instance carrying 407 registers against a `_limit`
+# of 300: the probe declared `shillinq` missing while `?_limit=1000` returned
+# it. The error text was confident and completely wrong, and it named the app's
+# own register — the most alarming possible false positive.
+#
+# So: if the page came back FULL, we cannot distinguish "absent" from
+# "truncated", and saying nothing is the only honest answer.
+if missing and len(items) >= limit:
+    print(f'::error::{kind} lookup returned exactly {len(items)} item(s) — the '
+          f'requested page limit. This page is FULL, so {missing} may simply be '
+          f'on a page that was never fetched. This is NOT evidence of absence.')
+    print(f'::error::Re-run with a higher _limit (or paginate) before trusting '
+          f'any "missing" verdict here.')
+    sys.exit(1)
 if kind == 'registers':
     print(f'[ci-seed] register slugs: {sorted(s for s in slugs if s)}')
 if missing:
@@ -360,14 +382,14 @@ PY
 REG_BODY="$(mktemp)"
 REG_CODE="$(curl -sS -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
 	-o "$REG_BODY" -w '%{http_code}' --max-time 300 \
-	"${BASE}/index.php/apps/openregister/api/registers?_limit=300" || echo 000)"
-verify "$REG_BODY" registers "$REG_CODE"
+	"${BASE}/index.php/apps/openregister/api/registers?_limit=2000" || echo 000)"
+verify "$REG_BODY" registers "$REG_CODE" 2000
 
 SCH_BODY="$(mktemp)"
 SCH_CODE="$(curl -sS -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
 	-o "$SCH_BODY" -w '%{http_code}' --max-time 300 \
-	"${BASE}/index.php/apps/openregister/api/schemas?_limit=1000" || echo 000)"
-verify "$SCH_BODY" schemas "$SCH_CODE"
+	"${BASE}/index.php/apps/openregister/api/schemas?_limit=5000" || echo 000)"
+verify "$SCH_BODY" schemas "$SCH_CODE" 5000
 
 # The register existing is still not the same as it being READABLE by the admin
 # session the specs use. `workflows/_fixtures.ts` probes this collection shape
@@ -643,8 +665,14 @@ PY
 # POST one object into the shillinq register through OpenRegister's generic
 # object API. Admin Basic auth + OCS-APIRequest for the same CSRF reason as the
 # import above.
+#
+# $3 is the consequence line — what breaks if this object is missing. It is
+# optional and defaults to the bookings wording this helper was written for,
+# because an error that confidently names the WRONG spec is worse than a vague
+# one: a failed CommitmentBudget used to print "the calendar grid renders empty"
+# and send the reader to look at bookings code.
 or_create() {
-	local schema="$1" payload="$2" body code
+	local schema="$1" payload="$2" consequence="${3:-}" body code
 	body="$(mktemp)"
 	code="$(
 		curl -sS -o "$body" -w '%{http_code}' --max-time 300 \
@@ -657,9 +685,13 @@ or_create() {
 		echo "::error::Creating a ${schema} fixture returned HTTP ${code}."
 		echo "::error::Payload: $(cat "$payload")"
 		echo "::error::Response: $(head -c 800 "$body")"
-		echo "::error::bookings-resource-calendar.spec.ts asserts against these objects; without them"
-		echo "::error::the calendar grid renders empty and every one of its assertions fails on a"
-		echo "::error::selector timeout that blames the UI rather than the missing fixture."
+		if [ -n "$consequence" ]; then
+			echo "::error::${consequence}"
+		else
+			echo "::error::bookings-resource-calendar.spec.ts asserts against these objects; without them"
+			echo "::error::the calendar grid renders empty and every one of its assertions fails on a"
+			echo "::error::selector timeout that blames the UI rather than the missing fixture."
+		fi
 		exit 1
 	fi
 }
@@ -781,6 +813,204 @@ else:
     print('[ci-seed] The spec deep-links by calendar id and is unaffected; the param-less')
     print("[ci-seed] menu entry's picker will look empty until the admin user has an")
     print('[ci-seed] AdministrationMembership, which the setup wizard does not create.')
+PY
+
+# ── 2b. Commitment fixtures for the budget-line drilldown ────────────────────
+#
+# WHY THIS EXISTS. `budget-line-commitments.spec.ts` skips its real assertions
+# when no CommitmentLine is visible, and in CI it always was — so the one spec
+# that proves REQ-VPL-011 end to end had never run here. It reported as a pass.
+#
+# The bundled seeds in `lib/Settings/register.d/bookkeeping-verplichtingen-
+# administratie.json` DO carry commitments, but every one of them is stamped
+# `administrationId: "adm-demo"`, while first-time setup creates `ADM-001` and
+# makes that the caller's active administration. The page scopes the aggregation
+# to the caller's administration (it must — a declared aggregation cannot name a
+# per-caller value, see openregister#2852), so it correctly returned zero groups
+# over data that was plainly in the register. Nothing errored: an aggregation
+# that matches nothing is an empty result, which renders as the page's own empty
+# state and reads as "no data yet".
+#
+# Fixtures are created HERE, under the resolved ${ADM_ID}, for the same reason
+# the bookings fixtures are: the shipped seeds are demo content with their own
+# administration, and rewriting them to ADM-001 would bend product data to suit
+# a test. This also keeps the two mutually-exclusive specs honest — the drilldown
+# one now runs, and the empty-state one skips for a reason it states.
+#
+# Two lines in ONE coderingscombinatie on purpose: the aggregation must SUM them
+# into a single row, so a regression that returned rows un-summed would fail
+# here rather than look plausible.
+CMT_NUMBER="E2E-VPL-001"
+CMT_PROGRAMME="5.1"
+CMT_COST_CENTRE="FAC-2026"
+CMT_GL="4400"
+CMT_YEAR="2026"
+
+CMT_PROBE_BODY="$(mktemp)"
+CMT_PROBE="$(curl -sS -o "$CMT_PROBE_BODY" -w '%{http_code}' --max-time 300 \
+	-u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
+	"${BASE}/index.php/apps/openregister/api/objects/shillinq/CommitmentLine?commitment=${CMT_NUMBER}&_limit=5" \
+	|| echo 000)"
+
+CMT_EXISTING="$(python3 - "$CMT_PROBE_BODY" "$CMT_PROBE" <<'PY'
+import json, sys
+path, code = sys.argv[1], sys.argv[2]
+if code != '200':
+    print(0)
+    sys.exit(0)
+try:
+    body = json.load(open(path))
+except Exception:
+    print(0)
+    sys.exit(0)
+results = body.get('results') if isinstance(body, dict) else body
+print(len(results or []))
+PY
+)"
+
+if [ "$CMT_EXISTING" -ge 2 ]; then
+	echo "[ci-seed] commitment fixtures already present (${CMT_EXISTING} lines) — not recreating."
+else
+	echo "[ci-seed] creating commitment fixtures under administration ${ADM_ID}."
+	CMTDIR="$(mktemp -d)"
+	python3 - "$CMTDIR" "$ADM_ID" "$CMT_NUMBER" "$CMT_PROGRAMME" "$CMT_COST_CENTRE" "$CMT_GL" "$CMT_YEAR" <<'PY'
+import json, os, sys
+out, adm, number, programme, cost_centre, gl, year = sys.argv[1:8]
+year = int(year)
+
+def write(name, payload):
+    with open(os.path.join(out, name), 'w') as fh:
+        json.dump(payload, fh)
+
+# The join side. `join.on` is {programme: programmeCode}, so programmeCode here
+# MUST equal the lines' `programme` or the joined figures come back absent and
+# every Authorized cell renders as zero.
+write('budget.json', {
+    'administrationId': adm,
+    'programmeCode': programme,
+    'costCentre': cost_centre,
+    'financialYear': year,
+    'description': 'E2E budget line for the committed-vs-realised drilldown',
+    'authorised_amount': 80000000,
+    'realised_amount': 2500000,
+})
+
+write('commitment.json', {
+    'administrationId': adm,
+    'commitmentNumber': number,
+    'sourceReference': 'e2e/budget-line-commitments',
+    'kind': 'purchase_order',
+    'status': 'committed',
+    'currency': 'EUR',
+    'total_amount_excl_vat': 15000000,
+})
+
+# `afgesloten: false` is REQUIRED, not incidental: the declared aggregation
+# filters on it, and openregister#2852 refuses any caller filter that would
+# relax a declared key. A line seeded without it (or with true) is invisible to
+# the page no matter what else is right.
+for n, (amount, remaining, invoiced) in enumerate(
+    [(10000000, 9000000, 1000000), (5000000, 4500000, 500000)], start=1
+):
+    write(f'line{n}.json', {
+        'administrationId': adm,
+        'commitment': number,
+        'ruleNumber': n,
+        'description': f'E2E commitment line {n}',
+        'financialYear': year,
+        'amount_excl_vat': amount,
+        'generalLedgerAccount': gl,
+        'costCentre': cost_centre,
+        'programme': programme,
+        'remaining_committed': remaining,
+        'invoiced_amount': invoiced,
+        'afgesloten': False,
+    })
+
+print(f'[ci-seed] commitment fixtures written for {number} '
+      f'({programme}/{cost_centre}/{year}/{gl}).')
+PY
+
+	CMT_WHY="budget-line-commitments.spec.ts (REQ-VPL-011) needs these; without them the page has no rows, the spec SKIPS its assertions, and the suite reports a pass."
+	or_create CommitmentBudget "${CMTDIR}/budget.json" "$CMT_WHY"
+	or_create Commitment "${CMTDIR}/commitment.json" "$CMT_WHY"
+	or_create CommitmentLine "${CMTDIR}/line1.json" "$CMT_WHY"
+	or_create CommitmentLine "${CMTDIR}/line2.json" "$CMT_WHY"
+fi
+
+# Prove the AGGREGATION returns the row, not merely that the objects exist.
+#
+# Creating four objects and declaring victory is the failure this whole section
+# is repairing: the objects were always there. What was broken was whether the
+# aggregation could see them. Ask the endpoint the page asks, with the filter the
+# page sends, and gate on a group coming back.
+AGG_BODY="$(mktemp)"
+AGG_CODE="$(curl -sS -o "$AGG_BODY" -w '%{http_code}' --max-time 300 \
+	-u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
+	"${BASE}/index.php/apps/openregister/api/objects/aggregations/shillinq/CommitmentLine/committedVsRealisedPerBudgetLine?filter%5BadministrationId%5D=${ADM_ID}" \
+	|| echo 000)"
+python3 - "$AGG_BODY" "$AGG_CODE" "$CMT_PROGRAMME" <<'PY'
+import json, sys
+path, code, programme = sys.argv[1], sys.argv[2], sys.argv[3]
+if code != '200':
+    print(f'::error::The committed-vs-realised aggregation returned HTTP {code}.')
+    print('::error::budget-line-commitments.spec.ts would skip its assertions and report a PASS.')
+    sys.exit(1)
+try:
+    body = json.load(open(path))
+except Exception:
+    print('::error::The aggregation returned non-JSON.')
+    sys.exit(1)
+groups = body.get('groups') or []
+mine = [g for g in groups if (g.get('keys') or {}).get('programme') == programme]
+if len(mine) > 1:
+    print(f'::error::The aggregation returned {len(mine)} groups for programme {programme}; '
+          'expected exactly one.')
+    print('::error::The two fixture lines share one coderingscombinatie, so they must collapse '
+          'into a single group. More than one means the grouping is not composite.')
+    print(f'::error::Groups: {json.dumps(mine)[:600]}')
+    sys.exit(1)
+if not mine:
+    print(f'::error::The aggregation returned no group for programme {programme}.')
+    print(f'::error::Saw {len(groups)} group(s): {json.dumps(groups)[:600]}')
+    print('::error::The fixtures were created, so this is the aggregation not seeing them —')
+    print('::error::most likely an administration mismatch or the declared `afgesloten` filter.')
+    print('::error::Without a group the spec skips and the suite reports a pass over a broken page.')
+    sys.exit(1)
+g = mine[0]
+values = g.get('values') or {}
+joined = g.get('joined') or {}
+committed = values.get('sum_remaining_committed')
+invoiced = values.get('sum_invoiced_amount')
+authorised = joined.get('CommitmentBudget.authorised_amount')
+print(f'[ci-seed] aggregation group OK: keys={json.dumps(g.get("keys"))} '
+      f'committed={committed} invoiced={invoiced} authorised={authorised}')
+# Both fixture lines must be SUMMED into this one group.
+#
+# `>=`, not `==`, on purpose. The bundled seeds currently sit in `adm-demo` so
+# ADM-001 holds only these two lines, but that is a fact about today's seed data,
+# not a contract. Pinning the exact total would turn "somebody finally moved the
+# demo seeds into the default administration" into a red build with a message
+# about summing — punishing the fix. The floor still catches what matters: if the
+# aggregation returned one line instead of two, or stopped summing, the total
+# drops below it. The single-group check above is what proves the collapse.
+FLOOR_COMMITTED, FLOOR_INVOICED, FLOOR_AUTHORISED = 13500000, 1500000, 80000000
+if not isinstance(committed, (int, float)) or committed < FLOOR_COMMITTED:
+    print(f'::error::sum_remaining_committed={committed}, expected at least {FLOOR_COMMITTED} '
+          '(the two fixture lines, 9000000 + 4500000).')
+    print('::error::The rows are reaching the page un-summed, or one line is missing.')
+    sys.exit(1)
+if not isinstance(invoiced, (int, float)) or invoiced < FLOOR_INVOICED:
+    print(f'::error::sum_invoiced_amount={invoiced}, expected at least {FLOOR_INVOICED} '
+          '(1000000 + 500000).')
+    sys.exit(1)
+if not isinstance(authorised, (int, float)) or authorised < FLOOR_AUTHORISED:
+    print(f'::error::The CommitmentBudget join returned authorised={authorised}, '
+          f'expected at least {FLOOR_AUTHORISED}.')
+    print('::error::A missing join is the difference between the Authorized column showing a '
+          'budget and showing zero, and both render without erroring.')
+    sys.exit(1)
+print('[ci-seed] commitment fixtures OK — the drilldown spec will run, not skip.')
 PY
 
 # ── 3. Warm the SPA so the first spec doesn't pay the cold start ─────────────

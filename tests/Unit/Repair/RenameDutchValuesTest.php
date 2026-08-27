@@ -348,6 +348,288 @@ final class RenameDutchValuesTest extends TestCase
 
     }//end testMapContainsNoCaseOnlyEntries()
     /**
+     * The tranche-2 commitment vocabulary, as property => old => new.
+     *
+     * Kept in one place so every tranche-2 test below asserts against the same
+     * list rather than each restating it.
+     *
+     * @return array<string, array<string, string>>
+     */
+    private function commitmentTrancheTwo(): array
+    {
+        return [
+            'status' => [
+                'in_goedkeuring'     => 'in_approval',
+                'aangegaan'          => 'committed',
+                'deels_geleverd'     => 'partially_delivered',
+                'deels_gefactureerd' => 'partially_invoiced',
+                'deels_betaald'      => 'partially_paid',
+                'afgesloten'         => 'closed',
+                'geannuleerd'        => 'cancelled',
+            ],
+            'kind' => [
+                'inkooporder'         => 'purchase_order',
+                'arbeidscontract'     => 'employment_contract',
+                'subsidiebeschikking' => 'grant_decision',
+                'huurovereenkomst'    => 'lease_agreement',
+            ],
+            'vat_regime' => [
+                'verlegd' => 'reverse_charged',
+            ],
+            'role_required' => [
+                'budgethouder' => 'budget_holder',
+                'teamleider'   => 'team_lead',
+                'directeur'    => 'director',
+                'college'      => 'municipal_executive',
+            ],
+        ];
+    }//end commitmentTrancheTwo()
+
+    /**
+     * The register fragment that owns the commitment schemas.
+     *
+     * @return array<string, mixed>
+     */
+    private function commitmentFragment(): array
+    {
+        $path = __DIR__.'/../../../lib/Settings/register.d/bookkeeping-verplichtingenadministratie.json';
+
+        return (array) json_decode((string) file_get_contents($path), true);
+    }//end commitmentFragment()
+
+    /**
+     * Every tranche-2 rename is in the map, under the right property.
+     *
+     * Without its entry a rename is schema-only: fresh installs get the English
+     * value and every upgraded install keeps the Dutch one, which does not
+     * error — the filter simply stops matching.
+     *
+     * @return void
+     *
+     * @spec exclude Predicate of the Dutch-to-English vocabulary migration.
+     */
+    public function testCommitmentTrancheTwoValuesAreMapped(): void
+    {
+        foreach ($this->commitmentTrancheTwo() as $property => $values) {
+            self::assertArrayHasKey(
+                $property,
+                RenameDutchValueDecisions::VALUE_MAP,
+                sprintf('VALUE_MAP has no "%s" bucket', (string) $property)
+            );
+
+            foreach ($values as $old => $new) {
+                self::assertSame(
+                    $new,
+                    (RenameDutchValueDecisions::VALUE_MAP[$property][$old] ?? null),
+                    sprintf('%s: "%s" must migrate to "%s"', (string) $property, (string) $old, $new)
+                );
+            }
+        }
+
+    }//end testCommitmentTrancheTwoValuesAreMapped()
+
+    /**
+     * The map's replacements are exactly what the schema now declares.
+     *
+     * The migration writes the `new` value into the shard column; if the enum
+     * does not list it, every upgraded row lands out-of-enum. The reverse is
+     * just as bad: an `old` value still in the enum means the schema kept a
+     * spelling the migration translates away.
+     *
+     * @return void
+     *
+     * @spec exclude Contract between the vocabulary migration and the schema.
+     */
+    public function testCommitmentEnumsMatchTheMigrationTargets(): void
+    {
+        $schemas = $this->commitmentFragment()['components']['schemas'];
+        $enums   = [
+            'status'        => $schemas['Commitment']['properties']['status']['enum'],
+            'kind'          => $schemas['Commitment']['properties']['kind']['enum'],
+            'vat_regime'    => $schemas['Commitment']['properties']['vat_regime']['enum'],
+            'role_required' => $schemas['ApprovalStep']['properties']['role_required']['enum'],
+        ];
+
+        foreach ($this->commitmentTrancheTwo() as $property => $values) {
+            foreach ($values as $old => $new) {
+                self::assertContains(
+                    $new,
+                    $enums[$property],
+                    sprintf('%s enum must declare the migrated value "%s"', (string) $property, $new)
+                );
+                self::assertNotContains(
+                    (string) $old,
+                    $enums[$property],
+                    sprintf('%s enum still declares the Dutch value "%s"', (string) $property, (string) $old)
+                );
+            }
+        }
+
+    }//end testCommitmentEnumsMatchTheMigrationTargets()
+
+    /**
+     * The step plans the tranche-2 rewrites when the table has the columns.
+     *
+     * testCommitmentTrancheTwoValuesAreMapped proves the entries exist; this
+     * proves they survive plannedRewrites() and reach the port, which is where
+     * a property whose column name is spelled wrong drops out in silence.
+     *
+     * @return void
+     *
+     * @spec exclude Data migration for the Dutch-to-English vocabulary change.
+     */
+    public function testStepPlansEveryCommitmentTrancheTwoRewrite(): void
+    {
+        $log  = [];
+        $step = new RenameDutchValues(
+            $this->fakePort(
+                ['oc_openregister_table_9'],
+                ['oc_openregister_table_9' => ['id', 'status', 'kind', 'vat_regime', 'role_required']],
+                $log
+            ),
+            $this->decisions
+        );
+
+        $step->run($this->createMock(IOutput::class));
+
+        $seen = [];
+        foreach ($log as $rewrite) {
+            $seen[$rewrite['column'].'|'.$rewrite['old']] = $rewrite['new'];
+        }
+
+        foreach ($this->commitmentTrancheTwo() as $property => $values) {
+            $column = $this->decisions->columnFor(name: (string) $property);
+            foreach ($values as $old => $new) {
+                self::assertSame(
+                    $new,
+                    ($seen[$column.'|'.$old] ?? null),
+                    sprintf('the step must rewrite %s.%s to "%s"', $column, (string) $old, $new)
+                );
+            }
+        }
+
+    }//end testStepPlansEveryCommitmentTrancheTwoRewrite()
+
+    /**
+     * A second run rewrites nothing, because no replacement is another key.
+     *
+     * `rewrite()` is `UPDATE t SET c = ? WHERE c = ?`, so a row already holding
+     * the English value cannot match a Dutch key — the step is idempotent by
+     * construction. The one way to break that is a chained entry (a => b
+     * alongside b => c) within the same bucket, which would keep moving the
+     * same row on every upgrade. Assert no bucket contains one.
+     *
+     * @return void
+     *
+     * @spec exclude Predicate of the Dutch-to-English vocabulary migration.
+     */
+    public function testNoBucketChainsOneReplacementIntoAnotherKey(): void
+    {
+        foreach (RenameDutchValueDecisions::VALUE_MAP as $property => $values) {
+            foreach ($values as $old => $new) {
+                self::assertArrayNotHasKey(
+                    $new,
+                    $values,
+                    sprintf(
+                        '%s: "%s" -> "%s" chains into "%s" -> "%s"; the step would keep moving the row',
+                        (string) $property,
+                        (string) $old,
+                        $new,
+                        $new,
+                        (string) ($values[$new] ?? '')
+                    )
+                );
+            }
+        }
+
+    }//end testNoBucketChainsOneReplacementIntoAnotherKey()
+
+    /**
+     * ApprovalStep.status stays Dutch, and stays out of the map.
+     *
+     * `in_behandeling` and `afgewezen` are ALSO live in the rechtmatigheid and
+     * titel-9 fragments, which still declare the Dutch enum. Because VALUE_MAP
+     * is keyed by property name and applies register-wide, adding either one
+     * here would rewrite their stored rows too and desync schema from data —
+     * silently, since an out-of-enum stored value does not error.
+     *
+     * @return void
+     *
+     * @spec exclude Deliberate scope boundary of the vocabulary migration.
+     */
+    public function testApprovalStepStatusIsLeftWhollyDutch(): void
+    {
+        $schemas = $this->commitmentFragment()['components']['schemas'];
+        $enum    = $schemas['ApprovalStep']['properties']['status']['enum'];
+
+        self::assertContains('in_behandeling', $enum, 'the enum must stay Dutch, not be half-renamed');
+        self::assertContains('afgewezen', $enum);
+        self::assertNotEmpty(
+            ($schemas['ApprovalStep']['properties']['status']['_note'] ?? ''),
+            'the deliberate exception must be recorded next to the enum it applies to'
+        );
+
+        foreach (['wachtend', 'in_behandeling', 'afgewezen', 'teruggezonden'] as $dutch) {
+            self::assertArrayNotHasKey(
+                $dutch,
+                RenameDutchValueDecisions::VALUE_MAP['status'],
+                sprintf('"%s" would also rewrite the rechtmatigheid/titel-9 status columns', $dutch)
+            );
+        }
+
+        // The collision is real, not hypothetical: prove the other fragments
+        // still declare these values, so the day they stop this test tells us.
+        $rechtmatigheid = (array) json_decode(
+            (string) file_get_contents(
+                __DIR__.'/../../../lib/Settings/register.d/bookkeeping-rechtmatigheidsverantwoording.json'
+            ),
+            true
+        );
+        self::assertContains(
+            'in_behandeling',
+            $rechtmatigheid['components']['schemas']['Rechtmatigheidstoets']['properties']['status']['enum']
+        );
+
+    }//end testApprovalStepStatusIsLeftWhollyDutch()
+
+    /**
+     * Mandate.kind_commitment speaks the same vocabulary as Commitment.kind.
+     *
+     * MandateEnforcer::mandateApplies() matches the commitment's `kind` against
+     * this array with in_array(strict). Let the two enums drift and every
+     * mandate stops applying — which reads as "mandate insufficient", so the
+     * commitment routes to approval rather than raising anything.
+     *
+     * @return void
+     *
+     * @spec exclude Contract between the mandate matcher and the kind enum.
+     */
+    public function testMandateKindCommitmentTracksTheCommitmentKindEnum(): void
+    {
+        $schemas = $this->commitmentFragment()['components']['schemas'];
+
+        self::assertSame(
+            $schemas['Commitment']['properties']['kind']['enum'],
+            $schemas['Mandate']['properties']['kind_commitment']['items']['enum'],
+            'Mandate.kind_commitment must enumerate exactly Commitment.kind'
+        );
+
+        // The seeded mandates must speak it too, or a fresh install ships
+        // mandates that match no commitment.
+        $allowed = $schemas['Commitment']['properties']['kind']['enum'];
+        foreach (($this->commitmentFragment()['objects'] ?? []) as $object) {
+            if (($object['@self']['schema'] ?? '') !== 'Mandate') {
+                continue;
+            }
+
+            foreach (($object['kind_commitment'] ?? []) as $kind) {
+                self::assertContains($kind, $allowed, sprintf('seeded mandate carries unknown kind "%s"', (string) $kind));
+            }
+        }
+
+    }//end testMandateKindCommitmentTracksTheCommitmentKindEnum()
+
+    /**
      * The shard-table LIKE pattern keeps its underscores escaped.
      *
      * Unescaped, `_` is LIKE's single-character wildcard, so the migration

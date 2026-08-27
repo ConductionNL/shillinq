@@ -125,15 +125,25 @@ test.describe('budget-core-schema — Budgets nav group + index pages (REQ-BCS-0
 			name: /Banking.*Cashflow/i,
 		})
 		await expect(bankingCashflow.first()).toBeVisible({ timeout: 15_000 })
-		await bankingCashflow.first().click()
 
-		const budgetsGroup = page.getByText('Budgets', { exact: true })
-		await expect(budgetsGroup.first()).toBeVisible({ timeout: 10_000 })
+		// `src/menu-layout.json` relocations documents its own semantics:
+		// "groups dissolve into the target, leaves move under it" — the
+		// `Budgets` source group has no surviving group label to assert on
+		// after `"Budgets": "BankingCashflow"` relocates it; only its three
+		// leaves are expected to remain reachable, flattened alongside
+		// BankingCashflow's own children. Also: the top-level LINK navigates
+		// to the overview page rather than expanding children — the
+		// dedicated toggle (`CnAppNav` stamps `cn-nav-entry-<id>`, per
+		// chart-of-accounts.spec.ts's own precedent) is what reveals them.
+		await page
+			.locator('[data-testid="cn-nav-entry-BankingCashflow"]')
+			.getByRole('button', { name: /menu/i })
+			.click()
 
 		for (const label of ['Annual Budgets', 'Ledger Groups', 'Budget Lines']) {
 			await expect(
 				page.getByRole('link', { name: label }).first(),
-				`nav leaf "${label}" must be reachable under Budgets`,
+				`nav leaf "${label}" must be reachable under Banking & Cashflow`,
 			).toBeVisible({ timeout: 10_000 })
 		}
 	})
@@ -227,14 +237,26 @@ test.describe('budget-core-schema — LedgerGroup seeded data (REQ-BCS-005)', ()
 			).toBeVisible({ timeout: 15_000 })
 		}
 
-		// design.md §3c: balance-sheet sections are deliberately NOT seeded —
-		// e.g. "Voorraden" (stock) and "Liquide middelen" (cash) never appear.
-		for (const balanceSheetLabel of ['Voorraden', 'Liquide middelen']) {
-			await expect(
-				body.getByText(balanceSheetLabel, { exact: true }),
-				`balance-sheet row "${balanceSheetLabel}" must NOT be seeded (design.md §3c)`,
-			).toHaveCount(0)
-		}
+		// design.md §3c: THIS capability's 19-row seed is P&L-shaped (sourced
+		// from `rj270-pl.json`), so it contributes no balance-sheet section.
+		//
+		// "Liquide middelen" (cash) is deliberately NOT asserted here any more.
+		// budget-scenarios legitimately seeds a cash LedgerGroup of that name
+		// (REQ-BSC-009, `register.d/budget-scenarios.json`) so its
+		// LEDGER_AMOUNT_DELTA modifier has an account to target — the product
+		// requires scenarios that move money to the bank on a given date, which
+		// is inherently a balance-sheet effect.
+		//
+		// The original assertion claimed "no balance-sheet row may exist
+		// ANYWHERE in the register", which is a stronger proposition than
+		// design.md §3c actually makes. Once another capability legitimately
+		// seeds one, that assertion tests the wrong thing and fails on a
+		// correct system. "Voorraden" (stock) stays asserted: nothing seeds it,
+		// so it still witnesses that this capability's own seed is P&L-shaped.
+		await expect(
+			body.getByText('Voorraden', { exact: true }),
+			'balance-sheet row "Voorraden" must NOT be seeded by budget-core-schema (design.md §3c)',
+		).toHaveCount(0)
 	})
 
 	/**
@@ -243,7 +265,10 @@ test.describe('budget-core-schema — LedgerGroup seeded data (REQ-BCS-005)', ()
 	 * REQ-BCS-004 scenario: a nested LedgerGroup is reachable from its
 	 * parent's detail page — `Personeel` (parent) lists `Lonen en
 	 * salarissen`/`Sociale lasten en pensioenlasten` (children) via the
-	 * `children` relatedList (`parentLedgerGroupId`).
+	 * `children` relatedCollection (`parentLedgerGroupId`). The manifest key
+	 * is `relatedCollections` — `relatedLists` is not a prop on any Cn page
+	 * component, so it lands in `$attrs` and renders nothing while every
+	 * gate stays green.
 	 */
 	test("Personeel's detail page lists its two seeded children", async ({
 		page,
@@ -255,6 +280,17 @@ test.describe('budget-core-schema — LedgerGroup seeded data (REQ-BCS-005)', ()
 
 		const body = page.locator('#app-content-vue, main').first()
 		const personeelRow = body.getByText('Personeel', { exact: true }).first()
+		// `isVisible()` is a POINT-IN-TIME probe with no auto-wait, and
+		// `cn-index-page` mounts BEFORE its rows arrive. Probing straight
+		// after the mount therefore races the row load, and the defensive
+		// skip below fires on a page that would have rendered the row a
+		// moment later — observed self-skipping 3 of 4 runs. A skip and a
+		// pass are indistinguishable in the summary line, so this raced
+		// itself into looking green. Wait for the row explicitly first; the
+		// skip then means what it says (genuinely absent seed data).
+		await personeelRow
+			.waitFor({ state: 'visible', timeout: 15_000 })
+			.catch(() => {})
 		const found = await personeelRow.isVisible().catch(() => false)
 		test.skip(
 			!found,
@@ -313,15 +349,23 @@ test.describe('budget-core-schema — BudgetLine 12 monthly columns (REQ-BCS-007
 
 		const annualBudgetField = page.getByLabel(/annual budget/i)
 		const ledgerGroupField = page.getByLabel(/ledger group/i)
-		const hasAnnualBudgetOption = await annualBudgetField
-			.isVisible()
+
+		// A visible field only means the form renders — it says nothing about
+		// whether the field has any selectable options. AnnualBudget ships
+		// with no seed data (design.md §10), so the field is present but its
+		// option list is empty on a fresh install; open it and check for an
+		// actual option before deciding whether to skip.
+		await annualBudgetField.click()
+		const hasAnnualBudgetOption = await page
+			.getByRole('option')
+			.first()
+			.isVisible({ timeout: 3_000 })
 			.catch(() => false)
 		test.skip(
 			!hasAnnualBudgetOption,
 			'no AnnualBudget option available — this schema ships with no seed data by design (design.md §10)',
 		)
 
-		await annualBudgetField.click()
 		await page.getByRole('option').first().click()
 		await ledgerGroupField.click()
 		await page.getByRole('option').first().click()

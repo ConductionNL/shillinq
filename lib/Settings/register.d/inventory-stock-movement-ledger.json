@@ -400,8 +400,7 @@
             "description": "Stock-ledger reconciliation per REQ-SM-005: InventoryStock.quantity = initialStock + SUM(destination posted moves) - SUM(source posted moves). Excludes cancelled rows.",
             "source": "StockMove",
             "filter": {
-              "lifecycleState": "posted",
-              "administrationId": "@self.administrationId"
+              "lifecycleState": "posted"
             },
             "operation": "computed",
             "expression": "SUM(quantity WHERE destinationLocationId = @location AND itemId = @item) - SUM(quantity WHERE sourceLocationId = @location AND itemId = @item)",
@@ -411,10 +410,9 @@
             "description": "Reserved-stock visibility per REQ-SM-009: SUM(draft moves whose source is this location for this item). Powers the Reserved Stock index and the Available = quantity - reservedQty breakdown on the InventoryStock detail.",
             "source": "StockMove",
             "filter": {
-              "lifecycleState": "draft",
-              "administrationId": "@self.administrationId"
+              "lifecycleState": "draft"
             },
-            "operation": "sum",
+            "metric": "sum",
             "field": "quantity",
             "groupBy": [
               "sourceLocationId",
@@ -424,12 +422,10 @@
           "movesByType": {
             "description": "Stock Movements index filter aggregation per REQ-SM-008: count of moves per movementType for the dashboard tile.",
             "source": "StockMove",
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
-            "operation": "count",
+            "filter": {},
+            "metric": "count",
             "field": "id",
-            "groupBy": "movementType"
+            "groupBy": ["movementType"]
           }
         },
         "x-openregister-indexes": [

@@ -219,16 +219,16 @@
         "x-openregister-aggregations": {
           "varianceByAccount": {
             "field": "variance",
-            "operation": "sum",
+            "metric": "sum",
             "description": "REQ-REC-007: Total absolute variance per bank account across all closed reconciliations. Open reconciliations are excluded (REQ-REC-007 scenario 'variance aggregation excludes open reconciliations').",
-            "groupBy": "bankAccountId",
+            "groupBy": ["bankAccountId"],
             "filter": {
               "reconciliationStatus": "closed"
             }
           },
           "varianceByPeriod": {
             "field": "variance",
-            "operation": "sum",
+            "metric": "sum",
             "description": "REQ-REC-007: Variance by (bankAccountId, statementPeriodEnd). Used for trend analysis — accountants spot drift across multiple closing periods.",
             "groupBy": [
               "bankAccountId",
@@ -240,9 +240,9 @@
           },
           "reconciliationCount": {
             "field": "id",
-            "operation": "count",
+            "metric": "count",
             "description": "Number of closed reconciliations per account.",
-            "groupBy": "bankAccountId",
+            "groupBy": ["bankAccountId"],
             "filter": {
               "reconciliationStatus": "closed"
             }
@@ -360,16 +360,16 @@
         "x-openregister-aggregations": {
           "matchesByRecon": {
             "field": "reconId",
-            "operation": "count",
+            "metric": "count",
             "description": "Number of ReconciliationMatch records per reconciliation session. Drives BankReconciliation.matchedCount.",
-            "groupBy": "reconId",
+            "groupBy": ["reconId"],
             "filter": {
               "resolutionStatus": "matched"
             }
           },
           "varianceByType": {
             "field": "resolutionStatus",
-            "operation": "count",
+            "metric": "count",
             "description": "REQ-REC-007 variance-by-type aggregation: count of unmatched items by classification (timing/pending/adjustment). Excludes resolved 'matched' items.",
             "groupBy": [
               "reconId",
@@ -378,9 +378,9 @@
           },
           "unresolvedByRecon": {
             "field": "id",
-            "operation": "count",
+            "metric": "count",
             "description": "Count of unmatched (resolutionStatus=null) entries per reconciliation. Drives the REQ-REC-006 pre-close summary.",
-            "groupBy": "reconId",
+            "groupBy": ["reconId"],
             "filter": {
               "resolutionStatus": null
             }
@@ -471,9 +471,9 @@
         "x-openregister-aggregations": {
           "totalVarianceByAdmin": {
             "field": "totalVariance",
-            "operation": "sum",
+            "metric": "sum",
             "description": "REQ-REC-007: Total variance booked across all closed reconciliations per administration. Drives the variance dashboard.",
-            "groupBy": "administrationId"
+            "groupBy": ["administrationId"]
           }
         },
         "x-openregister-rbac": {
