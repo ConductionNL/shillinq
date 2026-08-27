@@ -230,31 +230,40 @@
               "returnId",
               "VATLine.type"
             ],
-            "operations": {
-              "totalVATCollected": {
-                "field": "VATLine.vatAmount",
-                "operation": "sum",
-                "condition": "VATLine.type = 'collected'",
-                "target": "totalVATCollected"
+            "from": "VATLine",
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "vatAmount",
+                "condition": {
+                  "type": "collected"
+                },
+                "as": "totalVATCollected"
               },
-              "totalVATPaid": {
-                "field": "VATLine.vatAmount",
-                "operation": "sum",
-                "condition": "VATLine.type IN ('paid','reverse-charge')",
-                "target": "totalVATPaid"
+              {
+                "metric": "sum",
+                "field": "vatAmount",
+                "condition": {
+                  "type": {
+                    "in": [
+                      "paid",
+                      "reverse-charge"
+                    ]
+                  }
+                },
+                "as": "totalVATPaid"
               },
-              "totalTaxableAmount": {
-                "field": "VATLine.taxableAmount",
-                "operation": "sum",
-                "target": "totalTaxableAmount"
+              {
+                "metric": "sum",
+                "field": "taxableAmount",
+                "as": "totalTaxableAmount"
               },
-              "vatBalance": {
-                "operation": "expression",
+              {
+                "metric": "expression",
                 "expression": "totalVATPaid - totalVATCollected",
-                "target": "vatBalance"
+                "as": "vatBalance"
               }
-            },
-            "from": "VATLine"
+            ]
           }
         },
         "x-openregister-rbac": {

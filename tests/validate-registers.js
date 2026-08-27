@@ -586,7 +586,7 @@ const AGGREGATION_REF_BASELINE = new Map([])
 // and NOT a `from`, which would have switched the runner into its cross-schema
 // path — plus `sum: ["amount"]`, which is not an engine key. Verified live
 // against the rows, not just for a non-empty response.
-const AGG_NO_METRIC_BASELINE = 185
+const AGG_NO_METRIC_BASELINE = 180
 
 // A STRING `groupBy` is silently ignored, and the result is a WRONG NUMBER.
 //
@@ -836,6 +836,79 @@ function checkAggregationPlaceholders(registry) {
 // therefore resolve their fields against the declaring schema instead.
 const AGG_BARE_REF_BASELINE = 102
 
+// A derived metric that names an alias which does not exist.
+//
+// `{"metric":"expression","expression":"a - b"}` reads the aliases of the
+// metrics BESIDE it. OpenRegister raises when one is missing — deliberately,
+// because resolving it to 0 would turn a typo into a plausible number. That
+// raise happens at RUN time, on a dashboard, in front of whoever opened it.
+//
+// This catches it at declaration time. It matters more than it looks: the
+// `operations` maps these were translated from keyed their entries one way and
+// named their `target` another, so an expression written against the map KEY
+// silently referred to an alias the translated metrics list does not have. A
+// first pass of that translation produced 41 such references across 13
+// aggregations, every one of which would have raised on first use.
+//
+// Order matters and is checked: an expression may only name aliases declared
+// BEFORE it, because that is the order the engine computes them in.
+function checkAggregationExpressionAliases(registry) {
+	const offenders = []
+	let checked = 0
+
+	for (const slug of Object.keys(registry).sort()) {
+		for (const { aggName, agg, file } of registry[slug].aggregations) {
+			if (Array.isArray(agg.metrics) === false) continue
+
+			const declared = new Set()
+			for (const metric of agg.metrics) {
+				if (metric === null || typeof metric !== 'object') continue
+
+				if (metric.metric === 'expression') {
+					checked++
+					const expression = String(metric.expression ?? '')
+					if (expression.trim() === '') {
+						offenders.push(
+							`${slug}.${aggName} declares a derived metric with an empty expression`
+								+ `\n      declared in ${file}`,
+						)
+					}
+					for (const ident of expression.match(/[A-Za-z_]\w*/g) || []) {
+						// `min`/`max` are the only functions the grammar has.
+						if (ident === 'min' || ident === 'max') continue
+						if (declared.has(ident) === false) {
+							offenders.push(
+								`${slug}.${aggName} expression "${expression}" names "${ident}", which is not `
+									+ `a metric declared before it (available: ${[...declared].join(', ') || 'none'})`
+									+ `\n      declared in ${file}`,
+							)
+						}
+					}
+				}
+
+				const alias = metric.as
+				if (typeof alias === 'string' && alias !== '') declared.add(alias)
+			}
+		}
+	}
+
+	console.log(
+		`[validate-registers] derived-metric expressions checked: ${checked}`,
+	)
+	if (offenders.length === 0) {
+		console.log(
+			'[validate-registers] PASS — every derived metric names only aliases declared before it',
+		)
+		return true
+	}
+	console.error(
+		'[validate-registers] FAIL — derived metrics naming an alias that does not exist. '
+			+ 'OpenRegister raises on these at run time, on whatever dashboard opened them:',
+	)
+	for (const o of offenders) console.error(`  - ${o}`)
+	return false
+}
+
 function checkAggregationBareRefs(registry) {
 	const offenders = []
 	let checked = 0
@@ -1039,6 +1112,7 @@ function main() {
 	const sameSlugFullDefinitionOk = checkSameSlugFullDefinitionCollisions(registry)
 	const aggregationRefsOk = checkAggregationFieldRefs(registry)
 	const aggregationBareRefsOk = checkAggregationBareRefs(registry)
+	const aggregationExpressionsOk = checkAggregationExpressionAliases(registry)
 	const aggregationPlaceholdersOk = checkAggregationPlaceholders(registry)
 	const aggregationMetricsOk = checkAggregationMetrics(registry)
 	const aggregationGroupByOk = checkAggregationGroupByShape(registry)
@@ -1049,6 +1123,7 @@ function main() {
 			|| sameSlugFullDefinitionOk === false
 			|| aggregationRefsOk === false
 			|| aggregationBareRefsOk === false
+			|| aggregationExpressionsOk === false
 			|| aggregationPlaceholdersOk === false
 			|| aggregationMetricsOk === false
 			|| aggregationGroupByOk === false
