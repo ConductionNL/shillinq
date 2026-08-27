@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"version": "1.3.18",
+	"version": "1.4.0",
 	"dependencies": [
 		"openregister"
 	],
@@ -60,7 +60,7 @@
 					},
 					{
 						"id": "see-flows",
-						"sinceVersion": "1.3.18",
+						"sinceVersion": "1.4.0",
 						"placement": "center",
 						"optional": true,
 						"allowManualNext": true,
