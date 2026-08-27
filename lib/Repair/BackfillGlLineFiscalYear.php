@@ -91,6 +91,8 @@ class BackfillGlLineFiscalYear implements IRepairStep {
 	 * Human-readable step name shown by `occ upgrade`.
 	 *
 	 * @return string The step name.
+	 *
+	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md#req-cc-005
 	 */
 	public function getName(): string {
 		return 'Shillinq: backfill GLLine.fiscalYearId from the parent GLTransaction';
@@ -102,6 +104,8 @@ class BackfillGlLineFiscalYear implements IRepairStep {
 	 * @param IOutput $output Migration output channel.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md#req-cc-005
 	 */
 	public function run(IOutput $output): void {
 		// Under a system identity: an upgrade has no session, and OpenRegister
