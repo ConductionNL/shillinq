@@ -5509,27 +5509,34 @@
         },
         "x-openregister-aggregations": {
           "segmentPnl": {
-            "description": "Segment P&L for this project: sum of GLLine amounts whose projectCode equals this record's code per REQ-CC-005. Shape is sufficient for WBSO time-per-project join per REQ-CC-007.",
-            "join": {
-              "schema": "GLLine",
-              "condition": "GLLine.projectCode = @self.code AND GLLine.eliminationFlag = false"
+            "description": "Segment P&L per project (REQ-CC-005): debit/credit sums of non-eliminated GLLine amounts, grouped by projectCode + periodId + accountNumber. Returns EVERY project; narrow to one with the extraFilter query params (?projectCode=...), which is what the REST endpoint passes through. It does not correlate on @self: no caller supplies a parent row, and an unanswerable @self reference now raises rather than filtering on null. Shape is sufficient for the WBSO time-per-project join per REQ-CC-007.",
+            "from": "GLLine",
+            "where": {
+              "eliminationFlag": false
             },
             "groupBy": [
+              "projectCode",
               "GLLine.fiscalYearId",
-              "GLLine.accountNumber"
+              "accountNumber"
             ],
-            "operations": {
-              "totalDebit": {
-                "field": "GLLine.amount",
-                "operation": "sum",
-                "condition": "GLLine.side = 'debit'"
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "totalDebit"
               },
-              "totalCredit": {
-                "field": "GLLine.amount",
-                "operation": "sum",
-                "condition": "GLLine.side = 'credit'"
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "totalCredit"
               }
-            }
+            ]
           },
           "costsIncurredToDate": {
             "description": "Sum of GL expense-account postings tagged to this project via GLLine.subLedgerRef (REQ-CPA-006).",
