@@ -142,14 +142,39 @@ final class CostCentersDimensionsFragmentTest extends TestCase {
 			self::assertArrayNotHasKey('sum', $aggs[$key], '`sum` is not an engine key; use metric+field');
 		}
 
-		// byCostCenterHierarchy and byAnalyticalDimension are NOT translated and
-		// still compute nothing. They need engine features rather than a
-		// rewrite: the first groups by `AnalyticalDimension.parentCode`, a field
-		// on the JOINED schema, and the second by the wildcard `dimensions.*`.
-		// Tracked in #1261; pinned here so the gap stays visible.
-		foreach (['byCostCenterHierarchy', 'byAnalyticalDimension'] as $key) {
-			self::assertArrayNotHasKey('metric', $aggs[$key], 'still untranslated — see #1261');
-		}
+		// byCostCenterHierarchy groups by `AnalyticalDimension.parentCode` — a
+		// field that exists only on the JOINED schema. applyJoin() runs AFTER
+		// grouping, so this used to group on a column every row lacks, giving
+		// one null bucket holding everything: a plausible total, not an error.
+		// OpenRegister #2916 projects joined group fields onto the rows first,
+		// which is what makes the declaration computable.
+		self::assertSame('sum', $aggs['byCostCenterHierarchy']['metric']);
+		self::assertSame('amount', $aggs['byCostCenterHierarchy']['field']);
+		self::assertArrayNotHasKey(
+			'source',
+			$aggs['byCostCenterHierarchy'],
+			'`source` is not an engine key'
+		);
+
+		// The `on` SHORTHAND ("AnalyticalDimension.code") is refused by the
+		// joined-field grouping path: it names the joined side only, leaving the
+		// parent key to be inferred — and inferring the JOINED field produced a
+		// single '' bucket rather than one per region. The explicit map states
+		// both sides: parent GLLine.costCenterCode -> joined AnalyticalDimension.code.
+		self::assertSame(
+			['costCenterCode' => 'code'],
+			$aggs['byCostCenterHierarchy']['join']['on'],
+			'`on` MUST be an explicit parent-field => joined-field map'
+		);
+
+		// byAnalyticalDimension is still untranslated: it groups by the wildcard
+		// `dimensions.*`, which no engine key expresses. Tracked in #1261 and
+		// pinned here so the gap stays visible.
+		self::assertArrayNotHasKey(
+			'metric',
+			$aggs['byAnalyticalDimension'],
+			'still untranslated — wildcard groupBy, see #1261'
+		);
 
 		// After the ADIM merge (REQ-ADIM-101), byCostCenter joins through the unified
 		// AnalyticalDimension schema (filtered by dimensionType=cost-center) rather than
