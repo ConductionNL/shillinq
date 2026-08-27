@@ -10,3 +10,8 @@
  */
 
 export const CnDataTable = { name: 'CnDataTable', render: () => null }
+// BudgetTrendChart (budget-charts) wraps CnChartWidget. Its own vitest
+// coverage exercises `methods`/`computed` bound to a fake `this` (see
+// tests/vitest/budgetTrendChart.spec.js), never the template, so this stub
+// only needs to be a valid (empty) Vue component option object.
+export const CnChartWidget = { name: 'CnChartWidget', render: () => null }

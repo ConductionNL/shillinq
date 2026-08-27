@@ -50,6 +50,7 @@ namespace OCA\Shillinq\Repair;
 
 use DateTimeImmutable;
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -63,6 +64,8 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
  * @spec openspec/changes/add-shillinq-period-close/tasks.md#task-11
  */
 class BackfillFiscalPeriods implements IRepairStep {
+	use RunsUnderSystemIdentity;
+
 	use ReadsSourceRowsInBatches;
 
 	/**
@@ -101,6 +104,28 @@ class BackfillFiscalPeriods implements IRepairStep {
 	 * @spec openspec/changes/add-shillinq-period-close/tasks.md#task-11
 	 */
 	public function run(IOutput $output): void {
+		// Under a system identity: an upgrade has no session, and OpenRegister
+		// refuses `create` for 'Anonymous' — measured against this register, not
+		// assumed. Without it this backfill writes nothing and says so only in a
+		// warning, which does not fail the upgrade.
+		$this->withSystemIdentity(
+			objectService: $this->objectService,
+			work: function () use ($output): void {
+				$this->runInner(output: $output);
+			}
+		);
+	}//end run()
+
+	/**
+	 * The backfill itself.
+	 *
+	 * @param IOutput $output Progress reporting.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
+	 */
+	private function runInner(IOutput $output): void {
 		try {
 			$registerSlug = $this->settingsService->getRegisterSlug();
 
@@ -123,8 +148,15 @@ class BackfillFiscalPeriods implements IRepairStep {
 					continue;
 				}
 
-				// GLLine does not carry administrationId directly — derive
-				// it from the parent GLTransaction by transactionId.
+				// GLLine now DOES carry administrationId directly,
+				// denormalised from the parent GLTransaction by
+				// glline-administration-scope (REQ-GLS-001) and backfilled by
+				// BackfillGlLineAdministration, which is registered ahead of
+				// this step. The comment that used to sit here said the
+				// opposite and told the reader to derive it from the parent —
+				// which this line never did, so it silently bucketed every
+				// historical tuple under administration ''. Reading the
+				// property is now both what the code does and what works.
 				$administrationId = (string)($arr['administrationId'] ?? '');
 				$key = $administrationId . '|' . $periodId;
 				if (isset($tuples[$key]) === true) {
@@ -180,7 +212,7 @@ class BackfillFiscalPeriods implements IRepairStep {
 			);
 		}//end try
 
-	}//end run()
+	}//end runInner()
 
 	/**
 	 * Whether a FiscalPeriod record already exists for the given

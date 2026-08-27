@@ -326,10 +326,6 @@ class SupplierInvoiceImportController extends Controller {
 			return false;
 		}
 
-		if (is_array($rows) === false) {
-			return false;
-		}
-
 		foreach ($rows as $row) {
 			if (is_array($row) === true) {
 				return true;

@@ -190,7 +190,7 @@ final class BbvProgrammeBudgetServiceTest extends TestCase {
 					'programmeStructure' => 'mobiliteit',
 				],
 			],
-			'Verplichtingsregel' => [
+			'CommitmentLine' => [
 				[
 					'administrationId' => 'adm-prov-zh',
 					'ruleNumber' => 1,
@@ -256,7 +256,7 @@ final class BbvProgrammeBudgetServiceTest extends TestCase {
 	/**
 	 * The end-to-end envelope reports the seeded province's real money — the
 	 * budget from `Budget`, the spend from the POSTED journal's two lines and
-	 * the commitment from `Verplichtingsregel`.
+	 * the commitment from `CommitmentLine`.
 	 *
 	 * @return void
 	 */
@@ -370,7 +370,7 @@ final class BbvProgrammeBudgetServiceTest extends TestCase {
 			'currency' => 'EUR',
 			'programmeStructure' => 'mobiliteit',
 		];
-		$rows['Verplichtingsregel'][] = [
+		$rows['CommitmentLine'][] = [
 			'administrationId' => 'adm-prov-noord',
 			'ruleNumber' => 9,
 			'financialYear' => 2026,
@@ -580,7 +580,7 @@ final class BbvProgrammeBudgetServiceTest extends TestCase {
 	 */
 	public function testOverspentProgrammeReachesTheExceptionList(): void {
 		$rows = $this->seed();
-		$rows['Verplichtingsregel'][0]['remaining_committed'] = 500000.0;
+		$rows['CommitmentLine'][0]['remaining_committed'] = 500000.0;
 
 		$envelope = $this->subject($rows)->programmeBudgetVsActuals();
 

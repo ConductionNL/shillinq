@@ -213,10 +213,6 @@ class InnovatieboxAggregationService {
 			->setSchema('QualifyingAsset')
 			->findAll(['filters' => ['administrationId' => $administrationId, 'status' => 'valid']]);
 
-		if (is_array($rows) === false) {
-			return [];
-		}
-
 		// Re-run the toegangsticket validator at compute time so an asset whose
 		// persisted status='valid' is now stale (e.g. S&O cert expired since the
 		// last save) is excluded from the roll-up (REQ-IBA-001).
@@ -249,10 +245,6 @@ class InnovatieboxAggregationService {
 			->setSchema('IBProfitAttribution')
 			->findAll(['filters' => ['administrationId' => $administrationId, 'financialYear' => $financialYear]]);
 
-		if (is_array($rows) === false) {
-			return [];
-		}
-
 		return $rows;
 	}//end fetchAttributions()
 
@@ -268,10 +260,6 @@ class InnovatieboxAggregationService {
 			->setRegister($this->register())
 			->setSchema('CarryForwardLoss')
 			->findAll(['filters' => ['administrationId' => $administrationId, 'status' => 'open']]);
-
-		if (is_array($rows) === false) {
-			return [];
-		}
 
 		return $rows;
 	}//end fetchOpenLosses()

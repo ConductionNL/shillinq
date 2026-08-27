@@ -2,7 +2,7 @@
   "schema_version": 2,
   "spec_slug": "bookkeeping-intercompany-elimination",
   "app": "shillinq",
-  "repo": "https://codeberg.org/Conduction/shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
   "issue": 56,
   "depends_on": [],
   "cycles": [

@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Service;
 
 use OCA\Shillinq\Lifecycle\BudgetBlocker;
-use OCA\Shillinq\Lifecycle\MandaatEnforcer;
+use OCA\Shillinq\Lifecycle\MandateEnforcer;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\RequisitionService;
 use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
@@ -203,7 +203,7 @@ final class RequisitionServiceTest extends TestCase {
 
 	/**
 	 * Build the service over an in-memory ObjectService stub, with a REAL
-	 * BudgetBlocker/MandaatEnforcer wired to the same stub.
+	 * BudgetBlocker/MandateEnforcer wired to the same stub.
 	 *
 	 * @param array<string,array<int,array<string,mixed>>> $data Schema => rows.
 	 * @param array<int,array<string,mixed>> $saved Captured saves (by reference).
@@ -230,7 +230,7 @@ final class RequisitionServiceTest extends TestCase {
 			}
 		);
 
-		$mandate = new MandaatEnforcer(container: $container, appConfig: $this->appConfig, logger: $this->logger);
+		$mandate = new MandateEnforcer(container: $container, appConfig: $this->appConfig, logger: $this->logger);
 		$budget = new BudgetBlocker(container: $container, appConfig: $this->appConfig, logger: $this->logger, mandate: $mandate);
 
 		return new RequisitionService(

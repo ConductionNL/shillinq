@@ -317,34 +317,48 @@ final class ContainerResolvableConstructorsTest extends TestCase {
 	}//end splitParameters()
 
 	/**
-	 * Collect every type bound via `registerService(` in Application.php.
+	 * Collect every type bound via `registerService(` anywhere under
+	 * `lib/AppInfo/`.
+	 *
+	 * Application::register() is not the only place a binding can live:
+	 * `OrderFulfilmentGateRegistration`, `SigningDelegationRegistration`
+	 * and `BudgetScenarioRegistration` are focused registrar classes,
+	 * `(new ...Registration())->register($context)`-called from
+	 * Application::register() specifically to keep it under PHPMD's
+	 * `ExcessiveClassLength` threshold. A binding moved into one of those
+	 * classes is bound at runtime exactly as if it were written inline, so
+	 * this scan must follow it there or it reports a false violation for
+	 * every interface a registrar (rather than Application.php itself) binds.
 	 *
 	 * @return array<string,true> FQCN => true.
 	 */
 	private function registeredServices(): array {
-		$source = (string)file_get_contents($this->root . '/lib/AppInfo/Application.php');
-		$aliases = $this->useAliases($source);
 		$bound = [];
 
-		preg_match_all(
-			'/registerService\(\s*(?:[\w]+:\s*)?([A-Za-z_\\\\][\w\\\\]*)::class/',
-			$source,
-			$matches
-		);
+		foreach (glob($this->root . '/lib/AppInfo/*.php') as $file) {
+			$source = (string)file_get_contents($file);
+			$aliases = $this->useAliases($source);
 
-		foreach ($matches[1] as $short) {
-			$bound[$aliases[$short] ?? ('OCA\\Shillinq\\AppInfo\\' . $short)] = true;
-		}
+			preg_match_all(
+				'/registerService\(\s*(?:[\w]+:\s*)?([A-Za-z_\\\\][\w\\\\]*)::class/',
+				$source,
+				$matches
+			);
 
-		// registerServiceAlias() is the other binding form the framework offers.
-		preg_match_all(
-			'/registerServiceAlias\(\s*(?:[\w]+:\s*)?([A-Za-z_\\\\][\w\\\\]*)::class/',
-			$source,
-			$aliasMatches
-		);
+			foreach ($matches[1] as $short) {
+				$bound[$aliases[$short] ?? ('OCA\\Shillinq\\AppInfo\\' . $short)] = true;
+			}
 
-		foreach ($aliasMatches[1] as $short) {
-			$bound[$aliases[$short] ?? ('OCA\\Shillinq\\AppInfo\\' . $short)] = true;
+			// registerServiceAlias() is the other binding form the framework offers.
+			preg_match_all(
+				'/registerServiceAlias\(\s*(?:[\w]+:\s*)?([A-Za-z_\\\\][\w\\\\]*)::class/',
+				$source,
+				$aliasMatches
+			);
+
+			foreach ($aliasMatches[1] as $short) {
+				$bound[$aliases[$short] ?? ('OCA\\Shillinq\\AppInfo\\' . $short)] = true;
+			}
 		}
 
 		return $bound;

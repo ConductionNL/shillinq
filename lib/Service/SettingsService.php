@@ -2739,7 +2739,7 @@ class SettingsService {
 	/**
 	 * Seed mandaat (signing-authority) templates from mandaat-templates.json, idempotently.
 	 *
-	 * Reads lib/Settings/seeds/mandaat-templates.json and imports Mandaat records
+	 * Reads lib/Settings/seeds/mandaat-templates.json and imports Mandate records
 	 * via OpenRegister's ObjectService, stamping the tenant administrationId.
 	 * Already-existing records (matched by mandate_code + administrationId) are
 	 * skipped, preserving operator edits. Per REQ-VPL-002. Requires a non-empty
@@ -2751,7 +2751,7 @@ class SettingsService {
 	 *
 	 * @spec openspec/changes/bookkeeping-verplichtingenadministratie/tasks.md#task-1.7
 	 */
-	public function seedMandaatTemplates(string $administrationId): array {
+	public function seedMandateTemplates(string $administrationId): array {
 		if ($this->isOpenRegisterAvailable() === false) {
 			return [
 				'success' => false,
@@ -2793,13 +2793,13 @@ class SettingsService {
 			$skipped = 0;
 
 			foreach ($templates as $template) {
-				// _meta-only fields that are not Mandaat properties are dropped.
+				// _meta-only fields that are not Mandate properties are dropped.
 				unset($template['doelgroep']);
 				$template['administrationId'] = $administrationId;
 
 				$existing = $objectService
 					->setRegister($registerSlug)
-					->setSchema('Mandaat')
+					->setSchema('Mandate')
 					->findAll(
 						[
 							'filters' => [
@@ -2818,7 +2818,7 @@ class SettingsService {
 				$objectService->saveObject(
 					object: $template,
 					register: $registerSlug,
-					schema: 'Mandaat',
+					schema: 'Mandate',
 				);
 				$seeded++;
 			}//end foreach
@@ -2833,7 +2833,7 @@ class SettingsService {
 
 			return [
 				'success' => true,
-				'message' => 'Mandaat templates seeded successfully.',
+				'message' => 'Mandate templates seeded successfully.',
 				'seeded' => $seeded,
 				'skipped' => $skipped,
 			];
@@ -2848,7 +2848,7 @@ class SettingsService {
 			];
 		}//end try
 
-	}//end seedMandaatTemplates()
+	}//end seedMandateTemplates()
 
 	/**
 	 * Import the three RJ 270 statement presentation manifests, idempotently.
@@ -3029,7 +3029,7 @@ class SettingsService {
 					if ($dedupeKey === '__ikpKey') {
 						$filter['commercialActivityId'] = ($record['commercialActivityId'] ?? '');
 						$filter['period'] = ($record['period'] ?? '');
-					} elseif ($dedupeKey !== '' && isset($record[$dedupeKey]) === true) {
+					} elseif (isset($record[$dedupeKey]) === true) {
 						$filter[$dedupeKey] = $record[$dedupeKey];
 					}
 

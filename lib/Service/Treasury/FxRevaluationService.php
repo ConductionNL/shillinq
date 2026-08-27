@@ -479,9 +479,6 @@ class FxRevaluationService {
 			return [];
 		}
 
-		if (is_array($found) === false) {
-			return [];
-		}
 
 		return array_values(array_map(fn ($row): array => $this->asArray(row: $row), $found));
 	}//end findOpenPositions()

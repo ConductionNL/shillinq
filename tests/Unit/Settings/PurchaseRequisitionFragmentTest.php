@@ -75,7 +75,7 @@ final class PurchaseRequisitionFragmentTest extends TestCase {
 
 	/**
 	 * REQ-REQ-001: Requisition carries the field contract BudgetBlocker and
-	 * MandaatEnforcer already read off a Verplichting — programma, boekjaar,
+	 * MandateEnforcer already read off a Commitment — programma, boekjaar,
 	 * totaalbedrag_excl_btw, soort, administrationId — so the guards run
 	 * unmodified against a Requisition object.
 	 *
@@ -202,9 +202,9 @@ final class PurchaseRequisitionFragmentTest extends TestCase {
 			'PurchaseOrder is owned by bookkeeping-purchase-order-3way-01; this fragment must not redeclare it'
 		);
 		self::assertArrayNotHasKey(
-			'Verplichting',
+			'Commitment',
 			$schemas,
-			'Verplichting is owned by bookkeeping-verplichtingenadministratie; this fragment must not redeclare it'
+			'Commitment is owned by bookkeeping-verplichtingenadministratie; this fragment must not redeclare it'
 		);
 
 	}//end testFragmentDoesNotRedeclareSiblingSchemas()

@@ -6,7 +6,7 @@
  * REQ-VPL-010 (Tasks 1+2) — thin event-glue that reacts to a PurchaseOrder
  * reaching `approved` or a Contract reaching `active`, and forwards to
  * {@see CommitmentMaterialisationService} to auto-materialise the matching
- * `Verplichting`. Contains no budget/mandate/assembly logic itself.
+ * `Commitment`. Contains no budget/mandate/assembly logic itself.
  *
  * PO path is fail-closed: {@see InsufficientCommitmentBudgetException} is
  * allowed to propagate. OR dispatches `ObjectTransitionedEvent` /
@@ -85,6 +85,18 @@ class CommitmentMaterialisationListener implements IEventListener {
 	 * @return void
 	 *
 	 * @throws InsufficientCommitmentBudgetException When a PO approval denies for insufficient budget (fail-closed).
+	 *
+	 * @listener-placement inline correctness — this handler must run INSIDE the
+	 *   write it observes, because the write's outcome depends on it. OR
+	 *   dispatches ObjectCreatedEvent synchronously in the same path as
+	 *   PurchaseOrderApprovalService::saveObject(), so an
+	 *   InsufficientCommitmentBudgetException raised here propagates back to the
+	 *   approval caller and fails the request. That propagation IS the mechanism
+	 *   REQ-VPL-010 relies on for "insufficient budget blocks the approval, not
+	 *   just the invoice". Deferring this through ListenerDeferralService would
+	 *   let the approval succeed and surface the denial later, which is the
+	 *   opposite of the specified behaviour — so the latency is the price of the
+	 *   guarantee rather than an oversight.
 	 *
 	 * @spec openspec/specs/bookkeeping-verplichtingenadministratie/spec.md
 	 */

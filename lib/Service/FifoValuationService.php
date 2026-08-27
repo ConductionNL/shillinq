@@ -453,10 +453,6 @@ class FifoValuationService {
 				]
 			);
 
-		if (is_array($rows) === false) {
-			$rows = [];
-		}
-
 		$lots = [];
 		foreach ($rows as $row) {
 			$data = $this->asArray(row: $row);
@@ -507,10 +503,6 @@ class FifoValuationService {
 				]
 			);
 
-		if (is_array($rows) === false) {
-			$rows = [];
-		}
-
 		$consumed = 0.0;
 		foreach ($rows as $row) {
 			$data = $this->asArray(row: $row);
@@ -554,10 +546,6 @@ class FifoValuationService {
 					'limit' => 1,
 				]
 			);
-
-		if (is_array($existing) === false) {
-			$existing = [];
-		}
 
 		if (count($existing) > 0) {
 			return $this->asArray(row: $existing[0]);

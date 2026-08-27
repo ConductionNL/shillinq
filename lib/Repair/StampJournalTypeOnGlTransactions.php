@@ -52,6 +52,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -65,6 +66,7 @@ use Psr\Log\LoggerInterface;
  */
 class StampJournalTypeOnGlTransactions implements IRepairStep {
 	use ReadsSourceRowsInBatches;
+	use RunsUnderSystemIdentity;
 
 	/**
 	 * Constructor.
@@ -96,8 +98,49 @@ class StampJournalTypeOnGlTransactions implements IRepairStep {
 	 * @param IOutput $output The repair-step output (progress + warnings).
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
 	 */
 	public function run(IOutput $output): void {
+		// Under a system identity: an upgrade has no session, and OpenRegister
+		// refuses every write for 'Anonymous'. Without it this stamp updates
+		// nothing and says so only in a warning, which does not fail an upgrade.
+		$this->withSystemIdentity(
+			objectService: $this->resolveObjectServiceForIdentity(),
+			work: function () use ($output): void {
+				$this->runInner(output: $output);
+			}
+		);
+	}//end run()
+
+	/**
+	 * OpenRegister's ObjectService, or null when it cannot be resolved.
+	 *
+	 * Null is not fatal: {@see withSystemIdentity()} then runs the work anyway,
+	 * exactly as it ran before this wrapper existed.
+	 *
+	 * @return object|null The service.
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
+	 */
+	private function resolveObjectServiceForIdentity(): ?object {
+		try {
+			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		} catch (\Throwable $e) {
+			return null;
+		}
+	}//end resolveObjectServiceForIdentity()
+
+	/**
+	 * The stamp itself.
+	 *
+	 * @param IOutput $output The repair-step output (progress + warnings).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
+	 */
+	private function runInner(IOutput $output): void {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->settingsService->getRegisterSlug();
@@ -128,7 +171,7 @@ class StampJournalTypeOnGlTransactions implements IRepairStep {
 			);
 		}//end try
 
-	}//end run()
+	}//end runInner()
 
 	/**
 	 * Stamp journalType='closing' (+ folded closing fields) onto every

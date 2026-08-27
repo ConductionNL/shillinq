@@ -312,9 +312,9 @@
         "x-openregister-aggregations": {
           "countByState": {
             "field": "state",
-            "operation": "count",
+            "metric": "count",
             "description": "Number of orders per lifecycle state.",
-            "groupBy": "state"
+            "groupBy": ["state"]
           }
         }
       },
@@ -552,15 +552,15 @@
         "x-openregister-aggregations": {
           "countByState": {
             "field": "state",
-            "operation": "count",
+            "metric": "count",
             "description": "Number of invoices per state for AR aging dashboards (REQ-DI-009).",
-            "groupBy": "state"
+            "groupBy": ["state"]
           },
           "outstandingGross": {
             "field": "grossAmount",
-            "operation": "sum",
+            "metric": "sum",
             "description": "Total outstanding gross by state.",
-            "groupBy": "state"
+            "groupBy": ["state"]
           }
         }
       },

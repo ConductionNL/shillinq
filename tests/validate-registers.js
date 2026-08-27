@@ -219,9 +219,26 @@ function collectSchemas() {
 					files: [],
 					auditDeclaredIn: [],
 					fullDefinitionFiles: [],
+					props: new Set(),
+					aggregations: [],
 					slug,
 				}
 			registry[slug].files.push(fp)
+			// Accumulate the MERGED property set across every fragment that
+			// touches this slug — a cross-schema field reference must be
+			// checked against what the schema ends up with after
+			// deepMergeConfig(), not against one fragment in isolation.
+			if (def && def.properties && typeof def.properties === 'object') {
+				for (const p of Object.keys(def.properties))
+					registry[slug].props.add(p)
+			}
+			const aggs = def && def['x-openregister-aggregations']
+			if (aggs && typeof aggs === 'object') {
+				for (const [aggName, agg] of Object.entries(aggs)) {
+					if (agg && typeof agg === 'object')
+						registry[slug].aggregations.push({ aggName, agg, file: fp })
+				}
+			}
 			// The DB slug is the explicit `slug` when present, else the
 			// components.schemas key. OpenRegister resolves the slug, not the
 			// key. `files` is walked in the same sorted order that
@@ -263,8 +280,8 @@ function isFullSchemaDefinition(def) {
 	return (
 		def !== null
 		&& typeof def === 'object'
-		&& Object.prototype.hasOwnProperty.call(def, 'type')
-		&& Object.prototype.hasOwnProperty.call(def, 'required')
+		&& Object.hasOwn(def, 'type')
+		&& Object.hasOwn(def, 'required')
 	)
 }
 
@@ -436,6 +453,442 @@ function checkSameSlugFullDefinitionCollisions(registry) {
 	return false
 }
 
+// A declarative aggregation can name a field on ANOTHER schema
+// (`join.on`, `join.select`) or a computed `formula` over its OWN fields.
+// Nothing resolves those names at import time, so a rename on the target
+// schema leaves the reference stranded and the aggregation silently
+// resolves to nothing — it does not error, it just never matches.
+//
+// Found live on 2026-08-21: `CommitmentLine`'s
+// `committedVsRealisedPerBudgetLine` joined `CommitmentBudget.programmaCode`
+// and selected `geautoriseerd_bedrag`/`gerealiseerd_bedrag`, while the
+// schema had been migrated to English (`programmeCode`, `authorised_amount`,
+// `realised_amount`) — three dead references. `CommitmentBudget.free_capacity`
+// carried a fourth in its formula. All four were the Dutch half of a rename
+// that moved the properties but not the references to them.
+//
+// Deliberately CONSERVATIVE about formulas: only expressions built purely
+// from bare identifiers, integers and + - * / ( ) are checked. Anything
+// richer (`@self`, `??`, `sum(...)`, dotted paths — all of which appear
+// legitimately elsewhere in register.d) is skipped rather than guessed at,
+// because a noisy gate gets switched off and a gate that is off protects
+// nothing.
+const FORMULA_SIMPLE_RE =
+	/^[A-Za-z_][A-Za-z0-9_]*(?:\s*[-+*/]\s*(?:[A-Za-z_][A-Za-z0-9_]*|\d+))*$/
+const FORMULA_IDENT_RE = /[A-Za-z_][A-Za-z0-9_]*/g
+
+// Every OpenRegister object carries these regardless of what the schema's
+// `properties` declares, so a reference to one is legitimate and must not
+// be flagged.
+const IMPLICIT_OBJECT_FIELDS = new Set([
+	'id',
+	'uuid',
+	'uri',
+	'version',
+	'created',
+	'updated',
+	'published',
+	'depublished',
+	'owner',
+	'organisation',
+	'application',
+	'register',
+	'schema',
+])
+
+// `join.on` appears in two shapes in the wild:
+//   "CommitmentBudget.programmeCode"                                (bare)
+//   "CashflowRecurring.administrationId = CashflowWeek.administrationId"  (equality)
+// Splitting naively on the first dot turns the second into a field named
+// `administrationId = CashflowWeek.administrationId`, which is a parser bug,
+// not a finding. Split on `=` first and validate each side independently.
+function qualifiedRefs(join) {
+	const refs = []
+	if (!join || typeof join !== 'object') return refs
+	if (typeof join.on === 'string') {
+		for (const side of join.on.split('=')) {
+			const trimmed = side.trim()
+			if (trimmed !== '') refs.push({ key: 'join.on', ref: trimmed })
+		}
+	}
+	if (Array.isArray(join.select)) {
+		for (const s of join.select)
+			if (typeof s === 'string')
+				refs.push({ key: 'join.select', ref: s.trim() })
+	}
+	if (typeof join.from === 'string')
+		refs.push({ key: 'join.from', ref: join.from.trim() })
+	return refs
+}
+
+// `groupBy` entries are either a bare field on the source schema or a
+// qualified `Other.field`. Only the qualified form is checked here — the
+// bare form would need the source schema resolved, which `source` /
+// `sourceSchema` spell inconsistently across fragments. Checked because a
+// stranded groupBy reference is exactly how the BBV programma roll-up
+// silently grouped by nothing.
+function groupByRefs(agg) {
+	const refs = []
+	if (!Array.isArray(agg.groupBy)) return refs
+	for (const g of agg.groupBy) {
+		if (typeof g === 'string' && g.includes('.') === true)
+			refs.push({ key: 'groupBy', ref: g.trim() })
+	}
+	return refs
+}
+
+// Known-unresolved references that are NOT a mechanical rename and must not
+// be guessed at. Each entry is a decision waiting on a human, not a defect
+// this gate should silently tolerate forever — the point of listing them
+// here (rather than deleting the check) is that the gate keeps protecting
+// every OTHER reference while these stay visible.
+//
+// `GLLine.fiscalYearId`: GLLine has no fiscal-year property at all. Its
+// nearest field is `periodId`, but a period is a FINER grain than a year,
+// so substituting it would silently change what these P&L roll-ups group
+// by — an architecture decision (add a fiscalYearId to GLLine, or join
+// through GLTransaction/Period to derive the year), not a rename.
+const AGGREGATION_REF_BASELINE = new Map([
+	[
+		'GLLine.fiscalYearId',
+		'GLLine declares no fiscal-year field; periodId is a finer grain, so this needs a schema decision, not a rename. Affects AnalyticalDimension.segmentPnl, AnalyticalDimension.segmentPnlByCostObject, Project.segmentPnl.',
+	],
+])
+
+// An aggregation without `metric`/`metrics` cannot produce a value.
+//
+// AggregationRunner::run() reads exactly nine keys off a spec — measured from
+// its source, not from docs:
+//
+//   field  filter  from  groupBy  join  metric  metrics  select  where
+//
+// `source`, `sum`, `operation`, `operations`, `expression`, `sourceSchema` and
+// friends are read by NOTHING. A spec without metric/metrics comes back as
+// `{"metric":"","field":null,"groups":[]}` — an empty result with HTTP 200,
+// which every page renders as its own empty state and reads as "no data yet".
+//
+// This is #1216's FIRST layer, and it is still true of 265 of 268 declarations
+// (#1261). It is also why #1255's placeholder problem went unnoticed for so
+// long: these aggregations were already returning nothing for a second,
+// independent reason.
+//
+// A RATCHET, not a hard fail — 265 cannot be fixed in one pass, and each needs
+// its semantics checked against a live instance rather than pattern-matched.
+// The count may fall; it may never rise.
+// 265 -> 219: the 46 declarations whose `operation` was a plain
+// count/sum/avg on their OWN schema, renamed to `metric`. Nothing else about
+// them changed — `count` ignores `field` and counts rows either way, so the
+// semantics carry over exactly.
+//
+// Deliberately NOT translated: 19 more are simple metrics whose `source` names
+// a DIFFERENT schema. `source` does not map to `from` — `from` switches the
+// runner into its cross-schema path, which needs a parent row and behaves
+// differently. Those are a redesign, not a rename, and they are the GL/tax ones
+// where a wrong number matters most.
+const AGG_NO_METRIC_BASELINE = 219
+
+// A STRING `groupBy` is silently ignored, and the result is a WRONG NUMBER.
+//
+// AggregationQuery::normaliseGroupByFields() opens with
+// `if (is_array($groupBy) === false) { return []; }`. So `"groupBy": "status"`
+// yields no group fields and the engine returns one ungrouped total.
+//
+// This is worse than the empty result it replaces, and it is how I nearly
+// shipped one. Measured live: `Service.countByStatus` with a metric and
+// `"groupBy": "status"` returned `value: 8` — the grand total of all services,
+// presented by a page that asked for a per-status breakdown. A plausible
+// number is harder to notice than an empty table.
+//
+// ZERO tolerance, but only where a `metric` exists: without one the
+// aggregation returns nothing anyway, so a string groupBy there is latent
+// rather than wrong. Those are tracked with the rest of #1261.
+function checkAggregationGroupByShape(registry) {
+	const offenders = []
+	for (const slug of Object.keys(registry).sort()) {
+		for (const { aggName, agg, file } of registry[slug].aggregations) {
+			if (agg === null || typeof agg !== 'object') continue
+			const hasMetric = 'metric' in agg || 'metrics' in agg
+			if (hasMetric === false) continue
+			if (typeof agg.groupBy !== 'string') continue
+			offenders.push(
+				`${slug}.${aggName} (${path.relative(REPO_ROOT, file)})`
+					+ ` — "groupBy": ${JSON.stringify(agg.groupBy)}`,
+			)
+		}
+	}
+
+	if (offenders.length === 0) {
+		console.log(
+			'[validate-registers] PASS — every metric-bearing aggregation declares groupBy as an array',
+		)
+		return true
+	}
+
+	console.error(
+		'[validate-registers] FAIL — a metric-bearing aggregation declares `groupBy` as a STRING. '
+			+ 'normaliseGroupByFields() returns [] for a non-array, so the grouping is silently dropped '
+			+ 'and the engine answers with ONE UNGROUPED TOTAL — a plausible wrong number, not an error:',
+	)
+	for (const o of offenders) console.error(`  - ${o}`)
+	console.error('')
+	console.error(
+		'[validate-registers] Fix: "groupBy": ["field"] — an array, even for a single field.',
+	)
+	return false
+}
+
+function checkAggregationMetrics(registry) {
+	const missing = []
+	for (const slug of Object.keys(registry).sort()) {
+		for (const { aggName, agg, file } of registry[slug].aggregations) {
+			if (agg === null || typeof agg !== 'object') continue
+			if ('metric' in agg || 'metrics' in agg) continue
+			missing.push(
+				`${slug}.${aggName} (${path.relative(REPO_ROOT, file)})`
+					+ ` — declares ${JSON.stringify(Object.keys(agg).filter((k) => k !== 'description'))}`,
+			)
+		}
+	}
+
+	console.log(
+		`[validate-registers] aggregations without metric/metrics: ${missing.length} `
+			+ `(baseline ${AGG_NO_METRIC_BASELINE}) — these return an empty result, see #1261`,
+	)
+
+	if (missing.length > AGG_NO_METRIC_BASELINE) {
+		console.error(
+			`[validate-registers] FAIL — aggregations that cannot compute a value rose to `
+				+ `${missing.length}, above the baseline of ${AGG_NO_METRIC_BASELINE}.`,
+		)
+		console.error(
+			'[validate-registers] The engine reads only: field filter from groupBy join metric '
+				+ 'metrics select where. `source`/`sum`/`operation` are read by nothing, and a spec '
+				+ 'without metric/metrics returns {"metric":"","field":null,"groups":[]} with HTTP 200.',
+		)
+		for (const m of missing.slice(-10)) console.error(`  - ${m}`)
+		return false
+	}
+
+	if (missing.length < AGG_NO_METRIC_BASELINE) {
+		console.log(
+			`[validate-registers] ${AGG_NO_METRIC_BASELINE - missing.length} better than baseline — `
+				+ `please lower AGG_NO_METRIC_BASELINE to ${missing.length}.`,
+		)
+	}
+
+	return true
+}
+
+// `@`-prefixed placeholders in an aggregation's filter are NOT resolved.
+//
+// OpenRegister's PlaceholderResolver acts only on values beginning with `$`
+// (it implements `$currentUser` and the date expressions). A value starting
+// with `@` fails that test and is returned UNCHANGED, so the filter that runs
+// is a literal string comparison against `"@self.whatever"` — which matches
+// nothing. The aggregation then returns an empty result with HTTP 200, and the
+// page renders its own empty state over live data. That is issue #1216, and it
+// was found only by querying a real instance; every unit test and gate was
+// green throughout.
+//
+// TWO TIERS, deliberately:
+//
+//   1. `administrationId` / `organisationId` — ZERO tolerance. These are
+//      tenant scoping, and they have all been removed. An administration is a
+//      shillinq-specific layer over OpenRegister's organisation tenancy, so it
+//      is NOT `@self` metadata: it is a normal property, and the CALLER passes
+//      it as a narrowing filter (`?filter[administrationId]=...`), which
+//      openregister#2852 accepts and can never relax. A new one appearing means
+//      somebody re-introduced an aggregation that silently returns nothing.
+//
+//   2. every other `@self.*` — RATCHET. Those are a different intent ("this
+//      object's field", e.g. `@self.id`), and deleting them would widen the
+//      aggregation rather than fix it. They need the placeholder to be
+//      implemented, not removed. Tracked in #1255; the count may fall, never
+//      rise.
+const AGG_PLACEHOLDER_TENANT_KEYS = new Set(['administrationId', 'organisationId'])
+// Measured 2026-08-26 by this check, after removing 67 tenant placeholders
+// across 22 files. Counted BY THE GATE, not by a one-off script — an earlier
+// estimate of 73 came from a narrower hand-written predicate and was wrong.
+const AGG_PLACEHOLDER_BASELINE = 84
+
+function collectPlaceholders(node, path, out) {
+	if (node === null || node === undefined) return
+	if (typeof node === 'string') {
+		if (node.includes('@self.')) out.push({ path, value: node })
+		return
+	}
+	if (Array.isArray(node)) {
+		node.forEach((v, i) => collectPlaceholders(v, `${path}[${i}]`, out))
+		return
+	}
+	if (typeof node === 'object') {
+		for (const [k, v] of Object.entries(node)) {
+			collectPlaceholders(v, path ? `${path}.${k}` : k, out)
+		}
+	}
+}
+
+function checkAggregationPlaceholders(registry) {
+	const tenant = []
+	const others = []
+
+	for (const slug of Object.keys(registry).sort()) {
+		for (const { aggName, agg, file } of registry[slug].aggregations) {
+			const found = []
+			for (const key of ['filter', 'where', 'join', 'match']) {
+				collectPlaceholders(agg[key], key, found)
+			}
+			// NOT `path` — that shadows the `path` module this file already
+			// imports, and the shadow only bites on the failure branch.
+			for (const { path: at, value } of found) {
+				const leaf = at
+					.split('.')
+					.pop()
+					.replace(/\[\d+\]$/, '')
+				const where =
+					`${slug}.${aggName} ${at} = ${JSON.stringify(value)}`
+					+ ` (${path.relative(REPO_ROOT, file)})`
+				if (AGG_PLACEHOLDER_TENANT_KEYS.has(leaf)) tenant.push(where)
+				else others.push(where)
+			}
+		}
+	}
+
+	console.log(
+		`[validate-registers] aggregation @self placeholders: ${tenant.length} tenant, `
+			+ `${others.length} other (baseline ${AGG_PLACEHOLDER_BASELINE})`,
+	)
+
+	let ok = true
+
+	if (tenant.length > 0) {
+		console.error(
+			'[validate-registers] FAIL — an aggregation scopes a tenant with an `@self` placeholder, '
+				+ 'which OpenRegister does not resolve. The filter runs as a literal string, matches '
+				+ 'nothing, and the aggregation returns an empty result with HTTP 200 (#1216):',
+		)
+		for (const t of tenant) console.error(`  - ${t}`)
+		console.error('')
+		console.error(
+			'[validate-registers] Fix: remove the key from the declaration and have the CALLER pass it — '
+				+ '`?filter[administrationId]=<active>`. An administration is a normal property, not @self metadata.',
+		)
+		console.error(
+			'[validate-registers] Removing it WITHOUT a caller that supplies one turns "returns nothing" '
+				+ 'into "returns every administration", so change the caller first.',
+		)
+		ok = false
+	}
+
+	if (others.length > AGG_PLACEHOLDER_BASELINE) {
+		console.error(
+			`[validate-registers] FAIL — @self placeholders in aggregation filters rose to ${others.length}, `
+				+ `above the baseline of ${AGG_PLACEHOLDER_BASELINE}. These resolve to nothing (#1255).`,
+		)
+		ok = false
+	} else if (others.length < AGG_PLACEHOLDER_BASELINE) {
+		console.log(
+			`[validate-registers] ${AGG_PLACEHOLDER_BASELINE - others.length} better than baseline — `
+				+ `please lower AGG_PLACEHOLDER_BASELINE to ${others.length}.`,
+		)
+	}
+
+	return ok
+}
+
+function checkAggregationFieldRefs(registry) {
+	const problems = []
+	const baselined = []
+	let checkedRefs = 0
+
+	for (const slug of Object.keys(registry).sort()) {
+		for (const { aggName, agg, file } of registry[slug].aggregations) {
+			for (const { key, ref } of [
+				...qualifiedRefs(agg.join),
+				...groupByRefs(agg),
+			]) {
+				const dot = ref.indexOf('.')
+				if (dot === -1) continue
+				const targetSlug = ref.slice(0, dot)
+				const field = ref.slice(dot + 1)
+				const target = registry[targetSlug]
+				// An unknown target schema is a different defect class
+				// (and may live in another app's register) — not this check's job.
+				if (!target) continue
+				if (IMPLICIT_OBJECT_FIELDS.has(field) === true) continue
+				checkedRefs++
+				if (
+					target.props.has(field) === false
+					&& AGGREGATION_REF_BASELINE.has(ref) === true
+				) {
+					baselined.push(`${slug}.${aggName} ${key}="${ref}"`)
+					continue
+				}
+				if (target.props.has(field) === false) {
+					problems.push(
+						`${slug}.${aggName} ${key}="${ref}" — ${targetSlug} has no property "${field}" `
+							+ `(it has: ${[...target.props].sort().join(', ')})\n      declared in ${file}`,
+					)
+				}
+			}
+
+			if (agg.type === 'calculation' && typeof agg.formula === 'string') {
+				const f = agg.formula.trim()
+				if (FORMULA_SIMPLE_RE.test(f) === true) {
+					for (const ident of f.match(FORMULA_IDENT_RE) || []) {
+						checkedRefs++
+						if (registry[slug].props.has(ident) === false) {
+							problems.push(
+								`${slug}.${aggName} formula references "${ident}", which is not a property of ${slug} `
+									+ `(it has: ${[...registry[slug].props].sort().join(', ')})\n      declared in ${file}`,
+							)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	console.log(
+		`[validate-registers] aggregation field references checked: ${checkedRefs}`,
+	)
+	// Never let a baselined entry pass silently — a waiver nobody sees is a
+	// waiver nobody revisits.
+	if (baselined.length > 0) {
+		console.log(
+			`[validate-registers] aggregation refs BASELINED (known-unresolved, awaiting a decision): ${baselined.length}`,
+		)
+		// Deliberately NOT the "  - " prefix the failure list uses: I misread
+		// my own output once while building this, grepping "^  - " and seeing
+		// waived entries as findings. A waiver must not look like a failure.
+		for (const b of baselined) {
+			const reason = AGGREGATION_REF_BASELINE.get(
+				b.slice(b.indexOf('"') + 1, b.lastIndexOf('"')),
+			)
+			console.log(`  ~ [baselined] ${b}\n      reason: ${reason}`)
+		}
+	}
+	// A check that examined nothing must not report success.
+	if (checkedRefs === 0) {
+		console.error(
+			'[validate-registers] FAIL — the aggregation field-reference check resolved ZERO references. '
+				+ 'That means it stopped seeing its own subject (parsing or shape drift), not that the registers are clean.',
+		)
+		return false
+	}
+	if (problems.length === 0) {
+		console.log(
+			'[validate-registers] PASS — every checkable aggregation field reference resolves to a real property',
+		)
+		return true
+	}
+	console.error(
+		'[validate-registers] FAIL — aggregation field references that cannot ever resolve:',
+	)
+	for (const p of problems) console.error(`  - ${p}`)
+	return false
+}
+
 function main() {
 	const registry = collectSchemas()
 	const all = Object.keys(registry).sort()
@@ -457,9 +910,21 @@ function main() {
 
 	const slugsOk = checkSlugCaseCollisions(registry)
 	const sameSlugFullDefinitionOk = checkSameSlugFullDefinitionCollisions(registry)
+	const aggregationRefsOk = checkAggregationFieldRefs(registry)
+	const aggregationPlaceholdersOk = checkAggregationPlaceholders(registry)
+	const aggregationMetricsOk = checkAggregationMetrics(registry)
+	const aggregationGroupByOk = checkAggregationGroupByShape(registry)
 
 	if (offenders.length === 0) {
-		if (slugsOk === false || sameSlugFullDefinitionOk === false) process.exit(1)
+		if (
+			slugsOk === false
+			|| sameSlugFullDefinitionOk === false
+			|| aggregationRefsOk === false
+			|| aggregationPlaceholdersOk === false
+			|| aggregationMetricsOk === false
+			|| aggregationGroupByOk === false
+		)
+			process.exit(1)
 		console.log(
 			'[validate-registers] PASS — every bookkeeping + procurement schema declares x-openregister-audit-trail.enabled=true (REQ-AT-001 / REQ-RAP-001)',
 		)

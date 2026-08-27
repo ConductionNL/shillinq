@@ -48,10 +48,9 @@
           "parentLedgerGroupId": {
             "type": "string",
             "nullable": true,
-            "description": "Self-FK (the parent LedgerGroup's @self.slug), enabling nesting — mirrors Account.parentAccountNumber. Null for a root group. A parent with children uses its OWN BudgetLine if one exists; otherwise its value is the recursive sum of its children's resolved values (design.md §3d) — no double counting when both exist.",
+            "description": "Self-FK holding the parent LedgerGroup's `code` — a flat business key, exactly as the description says it mirrors: Account.parentAccountNumber references an accountNumber, not an object id. Null for a root group. WHY A BUSINESS KEY AND NOT AN ID: a real object id is not known at seed-authoring time, and OpenRegister's `@ref:` seed-token mechanism (which would mint one) is unusable here — it only walks `components.objects`, a bucket shillinq's fragment merge currently corrupts (see _objects_placement_note). A `code` is the only parent identity BOTH the PHP rollup and the manifest's declarative filter engine can resolve: the LedgerGroupDetail `children` relatedCollection filters `parentLedgerGroupId == @object.code`, and `@object.<field>` reads a FLAT payload field only — it cannot reach `@self.slug`. `code` is unique within an administration, which is the scope BudgetVsActualsReader loads. BudgetVsActualsReader keeps its id|slug|code lookup so hand-authored id or slug references still resolve. A parent with children uses its OWN BudgetLine if one exists; otherwise its value is the recursive sum of its children's resolved values (design.md §3d) — no double counting when both exist.",
             "example": null,
-            "title": "Parent Ledger Group ID",
-            "$ref": "LedgerGroup"
+            "title": "Parent Ledger Group Code"
           },
           "accountRanges": {
             "type": "array",
@@ -407,9 +406,7 @@
             "groupBy": [
               "accountNumber"
             ],
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
+            "filter": {},
             "join": {
               "through": "GLTransaction",
               "on": "GLTransaction.state",
@@ -454,6 +451,7 @@
       }
     }
   },
+  "_objects_placement_note": "These seed objects sit at the TOP-LEVEL `objects` key, NOT under `components.objects`. Both buckets are imported by OpenRegister's ImportHandler, but SettingsService::deepMergeConfig() currently mis-merges the `components.objects` bucket across fragments: measured on this tree it keeps only 98 of the ~483 objects the fragments declare, later fragments overwriting earlier ones index-by-index. Moving these 19 rows there loses 11 of them AND clobbers 19 rows belonging to other fragments. Do not move them until that merge bug is fixed (tracked separately). CONSEQUENCE: `@ref:<schema>:<slug>` seed-reference tokens — which the importer rewrites into the target object's UUID — are NOT usable here, because resolveSeedReferenceTokens() only walks `components.objects`. That is why parentLedgerGroupId below carries the parent's `code` (a flat business key, exactly like Account.parentAccountNumber) rather than an object id: it is the only parent identity that both the PHP rollup and the manifest's `@object.code` filter token can resolve. SECOND TRAP: the import loop only re-saves an ALREADY-IMPORTED object when the incoming `@self.version` compares HIGHER than the stored one (both default to '1.0.0'), so on any instance that already seeded these rows an edit here is a silent no-op — the old values stay in the database and nothing is logged at warning level. The eight child rows therefore carry `@self.version: \"1.0.1\"`; bump it again on any future change to their payload.",
   "objects": [
     {
       "@self": {
@@ -476,13 +474,14 @@
         "register": "shillinq",
         "schema": "LedgerGroup",
         "slug": "ledger-group-neto",
+        "version": "1.0.1",
         "seedExemption": "anchor"
       },
       "administrationId": "template",
       "code": "NETO",
       "name": "Netto-omzet",
       "order": 10,
-      "parentLedgerGroupId": "ledger-group-omzet",
+      "parentLedgerGroupId": "OMZET",
       "accountRanges": [
         {
           "from": "8000",
@@ -497,13 +496,14 @@
         "register": "shillinq",
         "schema": "LedgerGroup",
         "slug": "ledger-group-wvpv",
+        "version": "1.0.1",
         "seedExemption": "anchor"
       },
       "administrationId": "template",
       "code": "WVPV",
       "name": "Wijziging voorraden gereed product en onderhanden werk",
       "order": 20,
-      "parentLedgerGroupId": "ledger-group-omzet",
+      "parentLedgerGroupId": "OMZET",
       "accountRanges": [
         {
           "from": "8100",
@@ -518,13 +518,14 @@
         "register": "shillinq",
         "schema": "LedgerGroup",
         "slug": "ledger-group-geac",
+        "version": "1.0.1",
         "seedExemption": "anchor"
       },
       "administrationId": "template",
       "code": "GEAC",
       "name": "Geactiveerde productie eigen bedrijf",
       "order": 30,
-      "parentLedgerGroupId": "ledger-group-omzet",
+      "parentLedgerGroupId": "OMZET",
       "accountRanges": [
         {
           "from": "8200",
@@ -539,13 +540,14 @@
         "register": "shillinq",
         "schema": "LedgerGroup",
         "slug": "ledger-group-ovop",
+        "version": "1.0.1",
         "seedExemption": "anchor"
       },
       "administrationId": "template",
       "code": "OVOP",
       "name": "Overige bedrijfsopbrengsten",
       "order": 40,
-      "parentLedgerGroupId": "ledger-group-omzet",
+      "parentLedgerGroupId": "OMZET",
       "accountRanges": [
         {
           "from": "8300",
@@ -576,13 +578,14 @@
         "register": "shillinq",
         "schema": "LedgerGroup",
         "slug": "ledger-group-kpvo",
+        "version": "1.0.1",
         "seedExemption": "anchor"
       },
       "administrationId": "template",
       "code": "KPVO",
       "name": "Kostprijs van de omzet",
       "order": 10,
-      "parentLedgerGroupId": "ledger-group-kostprijs-van-de-omzet",
+      "parentLedgerGroupId": "KPOMZET",
       "accountRanges": [
         {
           "from": "7000",
@@ -597,13 +600,14 @@
         "register": "shillinq",
         "schema": "LedgerGroup",
         "slug": "ledger-group-inkw",
+        "version": "1.0.1",
         "seedExemption": "anchor"
       },
       "administrationId": "template",
       "code": "INKW",
       "name": "Inkoopwaarde van de omzet",
       "order": 20,
-      "parentLedgerGroupId": "ledger-group-kostprijs-van-de-omzet",
+      "parentLedgerGroupId": "KPOMZET",
       "accountRanges": [
         {
           "from": "7100",
@@ -634,13 +638,14 @@
         "register": "shillinq",
         "schema": "LedgerGroup",
         "slug": "ledger-group-lone",
+        "version": "1.0.1",
         "seedExemption": "anchor"
       },
       "administrationId": "template",
       "code": "LONE",
       "name": "Lonen en salarissen",
       "order": 10,
-      "parentLedgerGroupId": "ledger-group-personeel",
+      "parentLedgerGroupId": "PERSONEEL",
       "accountRanges": [
         {
           "from": "4000",
@@ -655,13 +660,14 @@
         "register": "shillinq",
         "schema": "LedgerGroup",
         "slug": "ledger-group-socl",
+        "version": "1.0.1",
         "seedExemption": "anchor"
       },
       "administrationId": "template",
       "code": "SOCL",
       "name": "Sociale lasten en pensioenlasten",
       "order": 20,
-      "parentLedgerGroupId": "ledger-group-personeel",
+      "parentLedgerGroupId": "PERSONEEL",
       "accountRanges": [
         {
           "from": "4100",

@@ -80,19 +80,16 @@
 					{ "key": "activatedAt", "label": "First enabled", "type": "date-time" }
 				],
 				"lifecycleActions": true,
-				"relatedLists": [
-					{"id": "deliveries", "title": "Recent deliveries", "schema": "NotificationDelivery", "foreignKey": "triggerName", "join": "name", "columns": [
+				"relatedCollections": [
+					{"title": "Recent deliveries", "register": "shillinq", "schema": "NotificationDelivery", "filter": {"triggerName": "@object.name"}, "columns": [
 						{"key": "sentAt", "label": "Sent"},
 						{"key": "channel", "label": "Channel"},
 						{"key": "status", "label": "Status"},
 						{"key": "skipReason", "label": "Reason"}
-					], "detailRoute": "NotificationDeliveryDetail"},
-					{"id": "template", "title": "Overridden template", "schema": "BookingConfirmationTemplate", "foreignKey": "name", "join": "templateOverrideSlug", "columns": [
-						{"key": "name", "label": "Template"},
-						{"key": "locale", "label": "Locale"},
-						{"key": "status", "label": "Status"}
-					]}
+					], "rowRoute": "NotificationDeliveryDetail"}
 				],
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`; a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing while every gate stays green. TOKEN for deliveries: `@object.name`, NOT `@objectId` — OCA\\Shillinq\\Service\\BookingNotificationService writes `'triggerName' => $trigger['name']` on every delivery it records, i.e. the child denormalises the trigger's flat `name` payload field (deliberately, for audit immutability), so a UUID filter would match zero rows.",
+				"_relatedListsExclude": "The 'Overridden template' section is NOT convertible and was removed rather than faked. BookingNotificationTrigger.templateOverrideSlug stores a template SLUG (schema example 'default-confirmation-nl'), but BookingConfirmationTemplate has no flat `slug` payload field — only `name` ('Default Booking Confirmation'), which is a different value. The slug lives at `@self.slug`, which `@object.<field>` cannot reach (it reads flat payload fields only), and `@objectId` would yield the trigger's UUID, which nothing stores. No PHP resolves templateOverrideSlug either, so there is no writer to confirm an alternative. Restoring this section needs a flat slug/key field on the template schemas (or a `@self.slug` token in nextcloud-vue) — see the relatedLists sweep report.",
 				"auditTrail": true,
 				"indexRoute": "NotificationTriggers",
 				"sidebarProps": {
@@ -130,7 +127,7 @@
 					{
 						"id": "disable-all-triggers",
 						"label": "Disable all triggers",
-						"description": "Emergency off-switch (REQ-BNT-008). Transitions every enabled trigger to disabled — no notifications dispatch until an admin re-enables them.",
+						"description": "Emergency off-switch. Disables every active trigger at once. No notifications are sent until an administrator turns them back on.",
 						"icon": "BellOffOutline",
 						"confirm": true
 					},
@@ -170,14 +167,15 @@
 					{ "key": "sentAt", "label": "Sent at", "type": "date-time" }
 				],
 				"lifecycleActions": false,
-				"relatedLists": [
-					{"id": "groupAttempts", "title": "Attempts in this dispatch group", "schema": "NotificationDelivery", "foreignKey": "dispatchGroupId", "join": "dispatchGroupId", "columns": [
+				"relatedCollections": [
+					{"title": "Attempts in this dispatch group", "register": "shillinq", "schema": "NotificationDelivery", "filter": {"dispatchGroupId": "@object.dispatchGroupId"}, "columns": [
 						{"key": "channel", "label": "Channel"},
 						{"key": "status", "label": "Status"},
 						{"key": "retryCount", "label": "Retries"},
 						{"key": "sentAt", "label": "Sent"}
-					], "detailRoute": "NotificationDeliveryDetail"}
+					], "rowRoute": "NotificationDeliveryDetail"}
 				],
+				"_relatedCollectionsNote": "KEY: `relatedCollections`, not `relatedLists` (the latter is not a prop on any Cn page component and renders nothing). TOKEN: `@object.dispatchGroupId` — this is a SIBLING list (NotificationDelivery filtered against NotificationDelivery), and dispatchGroupId is a flat payload field on both sides, reused across fallback channels by the dispatch engine. `@objectId` would resolve to THIS delivery's own UUID and match at most itself.",
 				"auditTrail": true,
 				"indexRoute": "NotificationMonitor",
 				"sidebarProps": {

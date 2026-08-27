@@ -37,20 +37,24 @@
  * 403 would confirm the administration exists and turn this into an
  * enumeration oracle for the tenant list.
  *
- * ⚠️ That guard is COMPLETE for `dimension=supplier` only. The supplier view
- * reads APTransaction, which declares `administrationId`, so the caller's
- * administration is pushed into the aggregation filter. The category /
- * cost-centre / period views read GLLine, which declares no administration
- * property at all (the administration lives on the parent GLTransaction and
- * OpenRegister's filters cannot join), so those three still aggregate every
- * administration in the register. The membership check reduces their audience
- * from "any authenticated Nextcloud user" to "a member of some
- * administration" but does not isolate one administration from another.
- * Closing it requires `administrationId` denormalised onto GLLine plus a
- * backfill — a schema + data migration, out of scope here and tracked
- * separately. See SpendAnalyticsService's class docblock; do NOT close it by
- * passing an `administrationId` filter GLLine cannot match, which would
- * silently return a zero total.
+ * That guard is now COMPLETE for all four dimensions. It used to be complete
+ * for `dimension=supplier` only: the supplier view reads APTransaction, which
+ * declares `administrationId`, while the category / cost-centre / period views
+ * read GLLine, which declared no administration property at all (the
+ * administration lived on the parent GLTransaction and OpenRegister's filters
+ * cannot join) — so those three aggregated every administration in the
+ * register, and the membership check reduced their audience from "any
+ * authenticated Nextcloud user" to "a member of some administration" without
+ * isolating one administration from another. `glline-administration-scope`
+ * denormalises `administrationId` onto GLLine, backfills the existing rows and
+ * pushes the caller's administration into all four filters.
+ *
+ * ⚠️ The three GL-backed views raise, and this endpoint returns 500, whenever
+ * the backfill is not proven complete — see SpendAnalyticsService's class
+ * docblock. That is deliberate and must not be softened into "just return what
+ * the filter matches": a filter on a property some rows lack matches nothing
+ * for those rows, and a silently-zeroed bookkeeping total is a wrong number
+ * that looks like a real one.
  *
  * @category Controller
  * @package  OCA\Shillinq\Controller
@@ -219,10 +223,12 @@ class SpendAnalyticsController extends Controller {
 	/**
 	 * Dispatch to the matching service method for the validated dimension.
 	 *
-	 * Only the supplier view can be narrowed to an administration, so only it
-	 * receives `$administrationId`. The three GL-backed views take no
-	 * administration argument at all — a parameter they could not honour would
-	 * read as a scope that is applied. See the class docblock.
+	 * All four views are narrowed to the administration the caller proved
+	 * membership of, so all four receive `$administrationId`. The three
+	 * GL-backed views additionally refuse to run at all until the
+	 * `GLLine.administrationId` backfill is proven complete; that raise
+	 * surfaces through the caller's catch as an error status rather than as a
+	 * zero total. See SpendAnalyticsService's class docblock.
 	 *
 	 * @param string $dimension The validated dimension.
 	 * @param string $administrationId The administration the caller proved membership of.
@@ -234,11 +240,11 @@ class SpendAnalyticsController extends Controller {
 			case 'supplier':
 				return $this->service->spendBySupplier(administrationId: $administrationId);
 			case 'category':
-				return $this->service->spendByCategory();
+				return $this->service->spendByCategory(administrationId: $administrationId);
 			case 'costCentre':
-				return $this->service->spendByCostCentre();
+				return $this->service->spendByCostCentre(administrationId: $administrationId);
 			default:
-				return $this->service->spendByPeriod();
+				return $this->service->spendByPeriod(administrationId: $administrationId);
 		}
 
 	}//end dispatch()

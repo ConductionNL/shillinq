@@ -174,11 +174,6 @@
       "count": 2
     }
   },
-  "src/store/modules/object.js": {
-    "no-console": {
-      "count": 2
-    }
-  },
   "src/store/modules/settings.js": {
     "no-console": {
       "count": 2

@@ -180,7 +180,7 @@ class PeriodCloseGuard {
 				->setSchema('GLLine')
 				->findAll(['filters' => ['periodId' => $periodId]]);
 
-			if (is_array($lines) === false || $lines === []) {
+			if ($lines === []) {
 				return true;
 			}
 
@@ -365,7 +365,7 @@ class PeriodCloseGuard {
 			->setSchema('GLTransaction')
 			->findAll(['filters' => ['id' => $transaction], 'limit' => 1]);
 
-		if (is_array($found) === true && $found !== []) {
+		if ($found !== []) {
 			return (array)$found[0];
 		}
 
@@ -389,7 +389,7 @@ class PeriodCloseGuard {
 			->setSchema('FiscalPeriod')
 			->findAll(['filters' => ['id' => $period], 'limit' => 1]);
 
-		if (is_array($found) === true && $found !== []) {
+		if ($found !== []) {
 			return (array)$found[0];
 		}
 
@@ -415,7 +415,7 @@ class PeriodCloseGuard {
 			->setSchema('FiscalPeriod')
 			->findAll(['filters' => $filters, 'limit' => 1]);
 
-		if (is_array($found) === true && $found !== []) {
+		if ($found !== []) {
 			return (array)$found[0];
 		}
 

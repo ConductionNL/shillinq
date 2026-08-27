@@ -18,13 +18,13 @@
  *     and `tests/Unit/Listener/CommitmentMaterialisationListenerTest.php`
  *     (PHPUnit);
  *   - the declarative aggregation shape lives in
- *     `tests/Unit/Service/VerplichtingenCommitmentAccountingFragmentTest.php`
+ *     `tests/Unit/Service/CommitmentAccountingFragmentTest.php`
  *     (PHPUnit);
  *   - the row-normalisation / vrij computation / drilldown-filter logic
  *     lives in `tests/vitest/budgetLineCommitmentsHelpers.spec.js` against
  *     the pure helpers in `src/views/budgetLineCommitmentsHelpers.js`.
  *
- * Data-defensive: when no Verplichtingsregel rows are seeded (fresh
+ * Data-defensive: when no CommitmentLine rows are seeded (fresh
  * administration) the table renders the empty state — the suite skips
  * the row-interaction assertions rather than failing.
  *
@@ -35,7 +35,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { becomesVisible } from './becomes-visible.js'
 
 const APP = '/apps/shillinq'
-const ROUTE = '/verplichtingen/budget-lines'
+const ROUTE = '/commitments/budget-lines'
 
 async function dismissWizard(page: Page): Promise<void> {
 	const wizard = page.locator('#firstrunwizard')
@@ -59,7 +59,7 @@ test.describe('verplichtingen-commitment-accounting — budget-line committed-vs
 
 		const row = page.getByTestId('budget-line-row').first()
 		const opened = await becomesVisible(row)
-		test.skip(!opened, 'no Verplichtingsregel seeded in this administration')
+		test.skip(!opened, 'no CommitmentLine seeded in this administration')
 
 		// The four BBV columns are text-labelled, not colour-coded only
 		// (WCAG 2.1 AA per the spec's Non-Functional Requirements).
@@ -68,7 +68,7 @@ test.describe('verplichtingen-commitment-accounting — budget-line committed-vs
 		await expect(page.getByText('Realised', { exact: true })).toBeVisible()
 		await expect(page.getByText('Available', { exact: true })).toBeVisible()
 
-		// Drilling into a line lists its underlying Verplichting(s).
+		// Drilling into a line lists its underlying Commitment(s).
 		await row.click()
 		await expect(page.getByTestId('budget-line-drilldown')).toBeVisible({
 			timeout: 10_000,

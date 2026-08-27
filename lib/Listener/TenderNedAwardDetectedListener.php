@@ -4,16 +4,16 @@
  * TenderNed Award Detected Listener.
  *
  * REQ-002 — auto-promote an awarded TenderNed dossier into an active
- * Verplichting when the winning KvK matches the tenant organisation.
+ * Commitment when the winning KvK matches the tenant organisation.
  *
  * The listener is the in-app side of the `tenderned.award.detected`
  * CloudEvent contract documented in design.md D4. Openconnector polls
  * the TenderNed source on its own schedule (live-instance concern, see
  * Task 0.2) and writes / updates the corresponding
- * `TenderNedAanbesteding` OR record. OR fires
+ * `TenderNedProcurement` OR record. OR fires
  * `ObjectCreatedEvent` / `ObjectTransitionedEvent` on every write, and
  * THIS listener turns "status == gegund + matching tenant KvK" into an
- * idempotent Verplichting promotion + audit-trail entry.
+ * idempotent Commitment promotion + audit-trail entry.
  *
  * Two surfaces:
  *
@@ -24,21 +24,21 @@
  *
  * Both paths converge in `promoteIfEligible()`, which checks:
  *
- *  1. The dossier is on the `TenderNedAanbesteding` schema.
+ *  1. The dossier is on the `TenderNedProcurement` schema.
  *  2. The new status is `gegund` with `contractWaarde >= 1`.
  *  3. The `awardedSupplier` KvK prefix matches the configured tenant
  *     KvK (`shillinq` app config key `tenant_kvk`).
- *  4. No Verplichting with the same `bronReferentie` exists yet
+ *  4. No Commitment with the same `bronReferentie` exists yet
  *     (idempotency contract from the spec scenario).
  *
- * On match the listener creates a new Verplichting with `bron=tenderned`,
+ * On match the listener creates a new Commitment with `bron=tenderned`,
  * `status=active`, and a milestone plan generated via
  * `MilestoneTemplateService` (REQ-003), then sets the aanbesteding to
  * `in-uitvoering`. The cross-app budget-impact CloudEvent (REQ-007) is
  * emitted by `BudgetImpactEmitter` from the same handler.
  *
  * Fail-soft: any unexpected exception is logged but never bubbles up to
- * the OR write path. The TenderNedAanbestedingGuard still defends the
+ * the OR write path. The TenderNedProcurementGuard still defends the
  * declarative `gunnen` transition; this listener is the cross-schema
  * materialisation step layered on top.
  *
@@ -63,7 +63,9 @@ namespace OCA\Shillinq\Listener;
 
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectTransitionedEvent;
+use OCA\OpenRegister\Service\Deferral\ListenerDeferralService;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\BackgroundJob\TenderNedAwardPromotionJob;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
 use OCA\Shillinq\Service\MilestoneTemplateService;
@@ -85,6 +87,18 @@ use Throwable;
  * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
  */
 class TenderNedAwardDetectedListener implements IEventListener {
+
+	/**
+	 * Dedupe prefix for buffered promotions.
+	 *
+	 * Combined with the tenderId this collapses the two surfaces
+	 * (`ObjectCreatedEvent` and `ObjectTransitionedEvent`) firing for the
+	 * same dossier in one request into a single queued promotion.
+	 *
+	 * @var string
+	 */
+	public const HANDLER_KEY = 'tenderned-award-detected';
+
 	/**
 	 * Construct the listener with DI dependencies.
 	 *
@@ -119,6 +133,25 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 * @return void
 	 *
 	 * @spec openspec/changes/bookkeeping-tenderned-integratie/tasks.md#task-5
+	 *
+	 * KNOWN ADR-078 VIOLATION — gate-61, tracked in issue #1198. This handler
+	 * calls saveObject() inside another object's write. That is pre-existing:
+	 * the change that touched this file renamed identifiers only, and gate-61
+	 * is diff-scoped, so the rename is what pulled a long-standing registration
+	 * into scope rather than anything new.
+	 *
+	 * Carries no inline-placement escape hatch. That declaration takes one of
+	 * four closed ADR-078 categories (realtime, sapi-memory, cheap-bounded,
+	 * correctness) and none of them was true here — claiming one would have
+	 * bought a green gate with a false declaration, which is worse than the red.
+	 * The fix was real deferral through OpenRegister's ListenerDeferralService
+	 * (#1198), and that is what this handler now does.
+	 *
+	 * The prose above deliberately does not spell the annotation out. Gate-61
+	 * finds its tag by regex and reads the next token as the category, so a
+	 * sentence MENTIONING the tag was parsed as a malformed declaration and
+	 * reported as "`.` is not one of the four closed categories" — a note
+	 * explaining why there was no annotation became an invalid one.
 	 */
 	public function handle(Event $event): void {
 		try {
@@ -131,7 +164,10 @@ class TenderNedAwardDetectedListener implements IEventListener {
 				return;
 			}
 
-			$this->promote(payload: $payload);
+			$this->dispatchPromotion(
+				payload: $payload,
+				identity: $this->extractIdentity(event: $event)
+			);
 		} catch (Throwable $e) {
 			// Fail-soft: never block the OR write path. The dossier itself
 			// is persisted; the promotion can be retried on the next event.
@@ -144,7 +180,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	}//end handle()
 
 	/**
-	 * Pull the `TenderNedAanbesteding` payload from the OR event.
+	 * Pull the `TenderNedProcurement` payload from the OR event.
 	 *
 	 * Returns null when the event refers to a different schema or carries
 	 * no usable object array (defensive).
@@ -222,7 +258,215 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	}//end isAwardEligible()
 
 	/**
-	 * Promote the aanbesteding to a Verplichting (REQ-002 + REQ-003 + REQ-007).
+	 * Route the promotion off the caller's write path (ADR-078, #1198).
+	 *
+	 * Falls back to running inline when deferral is unavailable or the admin
+	 * has switched OpenRegister to inline mode. That fallback is deliberate:
+	 * a promotion that silently never happens because the deferral service
+	 * could not be resolved would be indistinguishable from a dossier that
+	 * was not eligible, and this listener is the ONLY thing that turns an
+	 * award into a Commitment.
+	 *
+	 * @param array<string, mixed>                  $payload  Eligible award payload.
+	 * @param array{uuid: string, schema: string}   $identity Dossier identity for the re-read.
+	 *
+	 * @return void
+	 */
+	private function dispatchPromotion(array $payload, array $identity): void {
+		$deferral = $this->resolveDeferral();
+		if ($deferral === null || $deferral->isDeferralEnabled() === false) {
+			// The inline path IS the write path, so the payload it holds is
+			// the current state by construction — no re-read needed here.
+			$this->promote(payload: $payload);
+			return;
+		}
+
+		if ($identity['uuid'] === '') {
+			// Without a uuid the deferred run cannot re-resolve the dossier,
+			// and promoting from the snapshot is exactly what the contract
+			// forbids. Running inline is the honest fallback: slower, but it
+			// cannot act on stale identity.
+			$this->promote(payload: $payload);
+			return;
+		}
+
+		// The entry crosses a job-argument boundary, so it must survive a
+		// JSON round-trip. It is an OR object body (scalars, arrays, nulls),
+		// which does — but a future field carrying an object or a resource
+		// would be dropped here rather than at the call site.
+		//
+		// The payload rides along for logging only. The deferred run promotes
+		// from a FRESH read, never from this copy.
+		$deferral->defer(
+			jobClass: TenderNedAwardPromotionJob::class,
+			entry: [
+				'uuid'    => $identity['uuid'],
+				'schema'  => $identity['schema'],
+				'payload' => $payload,
+			],
+			dedupeKey: (self::HANDLER_KEY . '|' . (string)($payload['tenderId'] ?? ''))
+		);
+
+	}//end dispatchPromotion()
+
+	/**
+	 * Capture the dossier's identity for the deferred re-read.
+	 *
+	 * The schema slug is captured rather than assumed because this listener
+	 * deliberately still matches the legacy Dutch slug: a dossier stored as
+	 * `TenderNedAanbesteding` must be re-read on THAT schema, and hardcoding
+	 * the new slug would turn every pre-repair dossier into a silent no-op.
+	 *
+	 * @param Event $event The dispatched event.
+	 *
+	 * @return array{uuid: string, schema: string} Empty uuid when unavailable.
+	 */
+	private function extractIdentity(Event $event): array {
+		if ($event instanceof ObjectCreatedEvent === false
+			&& $event instanceof ObjectTransitionedEvent === false
+		) {
+			return ['uuid' => '', 'schema' => ''];
+		}
+
+		$entity = $event->getObject();
+		if ($entity === null) {
+			return ['uuid' => '', 'schema' => ''];
+		}
+
+		return [
+			'uuid'   => (string)$entity->getUuid(),
+			'schema' => $this->schemaResolver->schemaSlug(entity: $entity),
+		];
+
+	}//end extractIdentity()
+
+	/**
+	 * Run the promotion from the background job.
+	 *
+	 * Public only so `TenderNedAwardPromotionJob` can call back in; the
+	 * eligibility rules and the idempotency check stay owned by this class so
+	 * the inline and deferred paths cannot drift.
+	 *
+	 * Deferred delivery is at-least-once, so this MUST NOT promote from the
+	 * payload captured at dispatch time (ADR-078 / object-event-work-placement:
+	 * "a deferred handler MUST re-resolve the object it acts on and MUST no-op
+	 * when the object is gone or soft-deleted"). Between the event and this
+	 * run the dossier can have been deleted, or the award reverted — promoting
+	 * a stale snapshot would create a Commitment for an award that no longer
+	 * exists, and nothing downstream would flag it.
+	 *
+	 * @param array<string, mixed> $entry Buffered entry: uuid, schema, payload.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md
+	 */
+	public function runDeferredPromotion(array $entry): void {
+		$uuid    = (string)($entry['uuid'] ?? '');
+		$schema  = (string)($entry['schema'] ?? '');
+		$current = $this->reresolveDossier(uuid: $uuid, schema: $schema);
+		if ($current === null) {
+			// Gone, soft-deleted, or unreadable. Nothing to promote.
+			return;
+		}
+
+		// Re-check against CURRENT state, not the state that queued this. An
+		// award reverted between the event and this run must not promote.
+		if ($this->isAwardEligible(payload: $current) === false) {
+			$this->logger->info(
+				'TenderNedAwardDetectedListener: dossier no longer eligible at run time — skipped',
+				['uuid' => $uuid]
+			);
+			return;
+		}
+
+		$this->promote(payload: $current);
+
+	}//end runDeferredPromotion()
+
+	/**
+	 * Re-read the dossier the deferred promotion acts on.
+	 *
+	 * @param string $uuid   Dossier uuid captured at dispatch time.
+	 * @param string $schema Schema slug captured at dispatch time.
+	 *
+	 * @return array<string, mixed>|null Current body, or null when gone.
+	 */
+	private function reresolveDossier(string $uuid, string $schema): ?array {
+		if ($uuid === '' || $schema === '') {
+			return null;
+		}
+
+		$objectService = $this->resolveObjectService();
+		if ($objectService === null) {
+			return null;
+		}
+
+		try {
+			$object = $objectService->find(
+				id: $uuid,
+				register: $this->getRegisterSlug(),
+				schema: $schema
+			);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'TenderNedAwardDetectedListener: could not re-read the dossier — promotion skipped',
+				['uuid' => $uuid, 'exception' => $e->getMessage()]
+			);
+			return null;
+		}
+
+		if ($object === null) {
+			return null;
+		}
+
+		// Soft-deleted counts as gone. `deleted` is a JSON column that is an
+		// empty array on a live object, so emptiness — not null — is the test.
+		if (empty($object->getDeleted()) === false) {
+			return null;
+		}
+
+		$body = $object->getObject();
+		if (is_array($body) === false) {
+			return null;
+		}
+
+		return $body;
+
+	}//end reresolveDossier()
+
+	/**
+	 * Resolve OpenRegister's deferral service from the container (lazy).
+	 *
+	 * Lazy for the same reason `resolveObjectService()` is: this listener is
+	 * registered even on an instance where the service cannot be built, and a
+	 * typed constructor dependency would turn that into a resolution failure
+	 * at dispatch time instead of a logged skip.
+	 *
+	 * @return ListenerDeferralService|null Null when unavailable.
+	 */
+	private function resolveDeferral(): ?ListenerDeferralService {
+		try {
+			$deferral = $this->container->get(ListenerDeferralService::class);
+		} catch (Throwable $e) {
+			return null;
+		}
+
+		if (($deferral instanceof ListenerDeferralService) === false) {
+			return null;
+		}
+
+		return $deferral;
+
+	}//end resolveDeferral()
+
+	/**
+	 * Promote the aanbesteding to a Commitment (REQ-002 + REQ-003 + REQ-007).
+	 *
+	 * Reached from two paths now: `runDeferredPromotion()` on the deferred
+	 * path, and `dispatchPromotion()` directly when deferral is off. The
+	 * idempotency check below is what makes both safe under the deferral
+	 * service's at-least-once delivery.
 	 *
 	 * @param array<string, mixed> $payload Aanbesteding payload.
 	 *
@@ -278,7 +522,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		try {
 			$objectService
 				->setRegister(register: $this->getRegisterSlug())
-				->setSchema(schema: 'Verplichting')
+				->setSchema(schema: 'Commitment')
 				->saveObject(object: $commitment);
 		} catch (Throwable $e) {
 			$this->logger->warning(
@@ -296,7 +540,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 			$payload['commitmentId'] = 'TN-' . $tenderId;
 			$objectService
 				->setRegister(register: $this->getRegisterSlug())
-				->setSchema(schema: 'TenderNedAanbesteding')
+				->setSchema(schema: 'TenderNedProcurement')
 				->saveObject(object: $payload);
 		} catch (Throwable $e) {
 			$this->logger->info(
@@ -312,7 +556,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	/**
 	 * Generate the milestone plan, catching invalid-date exceptions so a
 	 * missing looptijd does not block the promotion (the operator can
-	 * enrich the term in the Verplichting detail view later).
+	 * enrich the term in the Commitment detail view later).
 	 *
 	 * @param string $assignmentType Contract type.
 	 * @param string $termStart Term start.
@@ -342,7 +586,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	}//end safeGeneratePlan()
 
 	/**
-	 * Look up an existing Verplichting by bronReferentie.
+	 * Look up an existing Commitment by bronReferentie.
 	 *
 	 * @param object $objectService OR ObjectService.
 	 * @param string $sourceReference TenderNed aanbestedingId.
@@ -353,13 +597,20 @@ class TenderNedAwardDetectedListener implements IEventListener {
 		try {
 			$rows = $objectService
 				->setRegister(register: $this->getRegisterSlug())
-				->setSchema(schema: 'Verplichting')
+				->setSchema(schema: 'Commitment')
 				->findAll(
 					[
 						'filters' => [
 							'source' => 'tenderned',
 							'sourceReference' => $sourceReference,
 						],
+						// This is an existence check: the loop below returns the
+						// first row and discards the rest, so listing more than
+						// one was only ever cost. OpenRegister control params
+						// take an underscore prefix — a bare `limit` is read as
+						// a FILTER on a property named "limit", which matches
+						// nothing and silently returns the unbounded list.
+						'_limit' => 1,
 					]
 				);
 		} catch (Throwable $e) {
@@ -408,7 +659,7 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	}//end getRegisterSlug()
 
 	/**
-	 * Check whether the schema slug is the TenderNedAanbesteding schema.
+	 * Check whether the schema slug is the TenderNedProcurement schema.
 	 *
 	 * @param string $schema Schema slug from the event.
 	 *
@@ -416,9 +667,16 @@ class TenderNedAwardDetectedListener implements IEventListener {
 	 */
 	private function isTenderSchema(string $schema): bool {
 		$normalised = strtolower(trim($schema));
-		return ($normalised === 'tenderedaanbesteding'
-			|| $normalised === 'tendernedaanbesteding'
+
+		// The legacy Dutch slug is still matched on purpose. The schema was
+		// renamed TenderNedAanbesteding -> TenderNedProcurement, but objects
+		// already stored carry the old slug until the repair step has run on
+		// that instance. Matching only the new slug would make this listener
+		// silently do nothing for every pre-existing tender -- the exact
+		// no-op failure mode the guards in this app have hit before, which
+		// raises no error and writes no log line.
+		return (str_ends_with(haystack: $normalised, needle: 'tendernedprocurement')
 			|| str_ends_with(haystack: $normalised, needle: 'tendernedaanbesteding'));
 
-	}//end isAanbestedingSchema()
+	}//end isTenderSchema()
 }//end class

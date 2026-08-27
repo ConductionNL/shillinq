@@ -249,7 +249,7 @@ class ExtractionPrefillService {
 			$parts[] = (string)$fields['supplierName'];
 		}
 
-		if (isset($fields['totalIncl']) === true && $fields['totalIncl'] !== null) {
+		if (isset($fields['totalIncl']) === true) {
 			$currency = (string)($fields['currency'] ?? 'EUR');
 			$parts[] = sprintf('%s %.2f', $currency, (float)$fields['totalIncl']);
 		}

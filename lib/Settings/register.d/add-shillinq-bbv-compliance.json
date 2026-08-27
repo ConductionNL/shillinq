@@ -101,17 +101,15 @@
             "description": "Per-programmaCode roll-up of posted GL amounts within an administration, sourced via the BbvAccountMapping → GLLine join (REQ-BBV-004). Drives the BBV programma-summary view; sibling spec bookkeeping-iv3-reporting consumes a similar shape for IV3 export. Declared declaratively per ADR-031 — no PHP BbvReportingService walks the GL.",
             "source": "GLLine",
             "groupBy": [
-              "BbvAccountMapping.programmaCode"
+              "BbvAccountMapping.programmeCode"
             ],
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
+            "filter": {},
             "join": {
               "through": "BbvAccountMapping",
               "on": "BbvAccountMapping.accountNumber",
               "select": [
-                "BbvAccountMapping.programmaCode",
-                "BbvAccountMapping.paragraafCode"
+                "BbvAccountMapping.programmeCode",
+                "BbvAccountMapping.paragraphCode"
               ]
             },
             "sum": [
@@ -125,9 +123,7 @@
             "groupBy": [
               "BbvAccountMapping.autorisatieniveau"
             ],
-            "filter": {
-              "administrationId": "@self.administrationId"
-            },
+            "filter": {},
             "join": {
               "through": "BbvAccountMapping",
               "on": "BbvAccountMapping.accountNumber",

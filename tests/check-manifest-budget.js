@@ -94,7 +94,36 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // (0.46%), matching the 5,126 B (0.46%) this check ran with immediately
 // before, so the tripwire keeps exactly the sensitivity it had. It is NOT
 // rounded up to a comfortable number.
-const DEFAULT_BUDGET_BYTES = 1_126_300
+//
+// Re-measured 2026-08-22 (spend-analytics-ui): 1,128,098 bytes, +2,447 on the
+// 1,125,651 this branch started from. The growth is one new fragment,
+// `src/manifest.d/spend-analytics-ui.json`, giving
+// `GET /api/analytics/spend` its first frontend consumer — one dashboard page
+// plus one nested menu leaf. TRIMMED FIRST, per this file's own rule: the
+// first draft measured 3,373 B and moving the widget-choice argument out of
+// the manifest `_note` and into the component docblock + proposal.md, where it
+// does not ship in the main webpack chunk, recovered 926 B. What is left is
+// the pointer, not the argument.
+//
+// ⚠️ THE HEADROOM HAD ALREADY GONE, and that is the finding worth recording.
+// The 2026-08-17 entry above set 1,126,300 against a measured 1,121,104 and
+// called the resulting 5,196 B "part of the setting". By the time this change
+// branched, the base measured 1,125,651: +4,547 B of organic growth had landed
+// against a budget nobody re-measured, leaving 649 B — 0.058%, not 0.46%. The
+// gate did not fire for any of that growth; it fired for the first change
+// unlucky enough to arrive after the slack ran out. A tripwire whose margin is
+// consumed silently between re-measurements reports the arrival order of
+// changes, not their size.
+//
+// HEADROOM RE-STATED, per the same rule: 1,128,750 leaves 652 B (0.058%),
+// matching the 649 B (0.058%) this check ran with immediately before, so the
+// tripwire keeps exactly the sensitivity it had — and is NOT topped back up to
+// the 0.46% of 2026-08-17, because that slack is what let 4,547 B land
+// unseen. At this ratio essentially every manifest change must re-measure,
+// which is the honest consequence of the rule as written; if that is not the
+// intended policy, the fix is to decide a margin deliberately and say why,
+// not to round this constant up here.
+const DEFAULT_BUDGET_BYTES = 1_128_750
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

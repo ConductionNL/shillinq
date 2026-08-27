@@ -271,10 +271,6 @@ class NrvWriteDownService {
 				]
 			);
 
-		if (is_array($rows) === false) {
-			return [];
-		}
-
 		$out = [];
 		foreach ($rows as $row) {
 			$out[] = $this->asArray(row: $row);

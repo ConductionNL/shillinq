@@ -68,7 +68,7 @@
   but verified against HEAD that guard service was never actually written: both fields still
   declare the OLD `formula`/`source`/`filter` shape (no `materialise: true`, no `guard:` key),
   and no `ComplianceReportService`-like class exists anywhere in `lib/`. Still dead. Filed
-  https://codeberg.org/Conduction/shillinq/issues/490 documenting the gap and the required
+  Codeberg issue shillinq#490 (pre-migration, not migrated to GitHub) documenting the gap and the required
   guard service shape, rather than either implementing it here (task explicitly says do NOT) or
   silently marking this task done without flagging the incomplete carry-forward.
 

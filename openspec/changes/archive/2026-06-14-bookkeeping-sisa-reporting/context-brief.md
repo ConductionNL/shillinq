@@ -1540,7 +1540,7 @@ Applied to:
 - `images/reviewer/CLAUDE.md` — the "Bound-fixable" row in the fix-category table + the "Warnings ARE in scope for fix" section
 - `images/security/CLAUDE.md` — the "What you MAY fix in-container" and "What you MUST NOT fix" sections
 
-Rolled out via PR [#136](https://codeberg.org/Conduction/hydra/pulls/136), 2026-04-23.
+Rolled out via Codeberg hydra PR #136 (pre-migration, not migrated to GitHub), 2026-04-23.
 
 ## References
 
@@ -1661,7 +1661,7 @@ Every exception requires an app-local ADR. "We didn't know OR had this" is not a
 
 ### Migration
 
-Apps currently in violation (openconnector's bespoke linked-entity handling, decidesk's X-DECIDESK-* CalDAV properties, app-local audit copies) are not required to migrate immediately. Each gets a tracked "consume-OR-abstraction" issue with a target date. See the openregister integration registry umbrella ([openregister#1307](https://codeberg.org/Conduction/openregister/issues/1307)) for the calendar/email/deck/contacts/talk migration pattern.
+Apps currently in violation (openconnector's bespoke linked-entity handling, decidesk's X-DECIDESK-* CalDAV properties, app-local audit copies) are not required to migrate immediately. Each gets a tracked "consume-OR-abstraction" issue with a target date. See the openregister integration registry umbrella (Codeberg issue openregister#1307, pre-migration, not migrated to GitHub) for the calendar/email/deck/contacts/talk migration pattern.
 
 ## Related
 

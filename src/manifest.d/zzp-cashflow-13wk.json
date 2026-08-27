@@ -79,14 +79,15 @@
 					{ "key": "bufferStatus", "label": "Buffer status", "type": "string" },
 					{ "key": "administrationId", "label": "Administration", "type": "string" }
 				],
-				"relatedLists": [
-					{"id": "horizonWeeks", "title": "Other weeks in this horizon", "schema": "CashflowWeek", "foreignKey": "horizonId", "join": "horizonId", "columns": [
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`; a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing while every gate stays green. TOKEN: `@object.horizonId`, NOT `@objectId` — this is a SIBLING list (CashflowWeek filtered against CashflowWeek): both sides carry the same flat `horizonId` FK onto the parent CashflowForecastHorizon (example 'hor-2026-w22-adm1'), which is exactly what 'other weeks in this horizon' means. `@objectId` would resolve to THIS week's own UUID and match at most itself. Confirmed by OCA\\Shillinq\\BackgroundJob\\CrisisModeRefreshJob, which reads weeks back with `'filters' => ['horizonId' => $horizonId]`.",
+				"relatedCollections": [
+					{"title": "Other weeks in this horizon", "register": "shillinq", "schema": "CashflowWeek", "filter": {"horizonId": "@object.horizonId"}, "columns": [
 						{"key": "weeknummer", "label": "Week"},
 						{"key": "inflows_total", "label": "Inflows"},
 						{"key": "outflows_total", "label": "Outflows"},
 						{"key": "closingBalance", "label": "Closing balance"},
 						{"key": "bufferStatus", "label": "Buffer"}
-					], "detailRoute": "CashflowWeekDetail"}
+					], "rowRoute": "CashflowWeekDetail"}
 				],
 				"auditTrail": true,
 				"indexRoute": "CashflowDashboard",

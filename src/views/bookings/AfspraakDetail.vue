@@ -426,6 +426,6 @@ export default {
 .afspraak-detail__summary-fields dd {
 	margin: 0;
 	color: var(--color-main-text);
-	word-break: break-word;
+	overflow-wrap: break-word;
 }
 </style>

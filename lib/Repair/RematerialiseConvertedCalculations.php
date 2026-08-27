@@ -244,7 +244,7 @@ class RematerialiseConvertedCalculations implements IRepairStep {
 			return 0;
 		}
 
-		if (is_array($objects) === false || $objects === []) {
+		if ($objects === []) {
 			return 0;
 		}
 

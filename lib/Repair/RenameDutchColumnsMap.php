@@ -540,7 +540,15 @@ final class RenameDutchColumnsMap {
 		'innovatiebox_winst' => 'innovation_box_profit',
 		'intake_datum' => 'intake_date',
 		'integrale_kostprijs' => 'integral_cost_price',
-		'interne_kenmerk' => 'interne_reference',
+		// Two sources, one destination, deliberately. An earlier pass moved
+		// `interne_kenmerk` to `interne_reference`, which is itself half Dutch;
+		// both now land on `internal_reference`. hasCollision() only refuses
+		// when BOTH source columns exist in the SAME table, which cannot happen
+		// here: an instance is either pre-first-rename (only interne_kenmerk)
+		// or post (only interne_reference). A table carrying both is genuinely
+		// ambiguous and being refused is the right answer.
+		'interne_kenmerk' => 'internal_reference',
+		'interne_reference' => 'internal_reference',
 		'investering' => 'investment',
 		'investering_eigen_middelen_score' => 'investment_own_resources_score',
 		'investerings_kasstroom' => 'investment_cash_flow',
@@ -997,6 +1005,11 @@ final class RenameDutchColumnsMap {
 		'detectie_moment' => 'detection_moment',
 		'dimensie' => 'dimension',
 		'directe_materialen' => 'direct_materials',
+		// Shares its destination with `stukken` => `documents`, which is safe:
+		// hasCollision() refuses only when both source columns exist in the
+		// SAME table, and no schema declares both (checked across every
+		// register.d fragment).
+		'documenten' => 'documents',
 		'doel' => 'purpose',
 		'doel_norm' => 'purpose_norm',
 		'domein' => 'domain',
@@ -1092,6 +1105,13 @@ final class RenameDutchColumnsMap {
 		'uitkomst' => 'outcome',
 		'urencriterium' => 'hours_criterion',
 		'vakantiegeld_pct' => 'holiday_allowance_pct',
+		// Declared by four schemas across three fragments (Commitment,
+		// CommitmentMovement, AnnualReport, InvestmentAsset). All four move
+		// together: this map is keyed by COLUMN NAME and applies to every shard
+		// table, so renaming the column for one owner while the others still
+		// declare `valuta` would leave those schemas reading a column that no
+		// longer exists.
+		'valuta' => 'currency',
 		'vanaf' => 'from',
 		'verkort_type' => 'abbreviated_type',
 		'verplicht' => 'mandatory',

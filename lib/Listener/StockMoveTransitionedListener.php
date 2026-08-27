@@ -207,10 +207,6 @@ class StockMoveTransitionedListener implements IEventListener {
 					]
 				);
 
-			if (is_array($rows) === false) {
-				$rows = [];
-			}
-
 			if (count($rows) === 0) {
 				return null;
 			}

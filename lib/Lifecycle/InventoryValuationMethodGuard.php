@@ -150,10 +150,6 @@ class InventoryValuationMethodGuard {
 					]
 				);
 
-			if (is_array($existing) === false) {
-				$existing = [];
-			}
-
 			foreach ($existing as $row) {
 				$rowId = '';
 				if (is_array($row) === true) {

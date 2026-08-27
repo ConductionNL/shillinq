@@ -176,9 +176,16 @@ final class CashflowForecastFragmentTest extends TestCase {
 		$schemas = $this->load($this->fragmentPath)['components']['schemas'];
 		$aggs = $schemas['CashflowARProjection']['x-openregister-aggregations'];
 
+		// `metric`, not `operation`, and `groupBy` as an ARRAY. Both are the
+		// engine's vocabulary rather than an invented one: AggregationRunner
+		// reads only field/filter/from/groupBy/join/metric/metrics/select/where,
+		// and normaliseGroupByFields() returns [] for a non-array groupBy, so
+		// the previous spelling computed nothing and — once `metric` was added
+		// without fixing groupBy — an ungrouped TOTAL. See #1261.
 		self::assertArrayHasKey('projectedReceiptsByWeek', $aggs);
-		self::assertSame('sum', $aggs['projectedReceiptsByWeek']['operation']);
-		self::assertSame('expectedReceiptWeek', $aggs['projectedReceiptsByWeek']['groupBy']);
+		self::assertSame('sum', $aggs['projectedReceiptsByWeek']['metric']);
+		self::assertArrayNotHasKey('operation', $aggs['projectedReceiptsByWeek']);
+		self::assertSame(['expectedReceiptWeek'], $aggs['projectedReceiptsByWeek']['groupBy']);
 
 	}//end testArProjectionDeclaresReceiptsAggregation()
 

@@ -195,7 +195,11 @@ class ReconciliationResolutionController extends Controller {
 	 *
 	 * Returns HTTP 200 with { applied: int, failed: array<string,string> }.
 	 * Per-id failures are surfaced in the response body but do NOT short-circuit
-	 * the rest of the batch.
+	 * the rest of the batch. The `failed` map carries a localized, generic
+	 * message per id — never the raw exception text, which would leak service
+	 * internals (SQL state, class names, file paths) into a 200 body. The real
+	 * message is written to the server log instead, exactly as resolve() does
+	 * for its own failures.
 	 *
 	 * @param string $reconId The parent BankReconciliation id.
 	 *
@@ -252,7 +256,11 @@ class ReconciliationResolutionController extends Controller {
 				);
 				$applied++;
 			} catch (\Throwable $e) {
-				$failed[$matchId] = $e->getMessage();
+				$this->logger->error(
+					'ReconciliationResolutionController: bulk resolve failed for one match',
+					['reconId' => $reconId, 'matchId' => $matchId, 'exception' => $e->getMessage()]
+				);
+				$failed[$matchId] = $this->safeFailureMessage(exception: $e);
 			}
 		}
 
@@ -262,6 +270,32 @@ class ReconciliationResolutionController extends Controller {
 		);
 
 	}//end bulkResolve()
+
+	/**
+	 * Map a per-id bulk failure onto a message that is safe to return to the
+	 * client.
+	 *
+	 * Mirrors the classification resolve() applies in its own catch blocks:
+	 * the exception *type* selects a localized generic message, so the caller
+	 * still learns whether the row was missing or locked, while the raw
+	 * exception text never reaches the response body. Callers are expected to
+	 * have logged the real message before calling this.
+	 *
+	 * @param \Throwable $exception The caught per-id failure.
+	 *
+	 * @return string A localized message containing no service internals.
+	 */
+	private function safeFailureMessage(\Throwable $exception): string {
+		if ($exception instanceof \OutOfBoundsException) {
+			return $this->l10n->t('Unable to find the reconciliation match');
+		}
+
+		if ($exception instanceof \DomainException) {
+			return $this->l10n->t('Unable to resolve a match on a locked reconciliation');
+		}
+
+		return $this->l10n->t('Unable to resolve this match');
+	}//end safeFailureMessage()
 
 	/**
 	 * Validate the resolutionStatus + resolutionReason payload. Returns a

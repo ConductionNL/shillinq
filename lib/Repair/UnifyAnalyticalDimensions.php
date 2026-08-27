@@ -68,6 +68,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Repair;
 
 use OCA\Shillinq\Repair\Support\ReadsSourceRowsInBatches;
+use OCA\Shillinq\Repair\Support\RunsUnderSystemIdentity;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -84,6 +85,7 @@ use Psr\Log\LoggerInterface;
  */
 class UnifyAnalyticalDimensions implements IRepairStep {
 	use ReadsSourceRowsInBatches;
+	use RunsUnderSystemIdentity;
 
 	/**
 	 * Constructor.
@@ -123,6 +125,45 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
 	public function run(IOutput $output): void {
+		// Under a system identity: an upgrade has no session, and OpenRegister
+		// refuses every write for 'Anonymous'. Without it this migration moves
+		// nothing and says so only in a warning, which does not fail an upgrade.
+		$this->withSystemIdentity(
+			objectService: $this->resolveObjectServiceForIdentity(),
+			work: function () use ($output): void {
+				$this->runInner(output: $output);
+			}
+		);
+	}//end run()
+
+	/**
+	 * OpenRegister's ObjectService, or null when it cannot be resolved.
+	 *
+	 * Null is not fatal: the work then runs without a system identity, exactly
+	 * as it did before this wrapper existed.
+	 *
+	 * @return object|null The service.
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
+	 */
+	private function resolveObjectServiceForIdentity(): ?object {
+		try {
+			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		} catch (\Throwable $e) {
+			return null;
+		}
+	}//end resolveObjectServiceForIdentity()
+
+	/**
+	 * The migration itself.
+	 *
+	 * @param IOutput $output The repair-step output.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/app-administration/spec.md
+	 */
+	private function runInner(IOutput $output): void {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$registerSlug = $this->settingsService->getRegisterSlug();
@@ -156,7 +197,7 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 			);
 		}//end try
 
-	}//end run()
+	}//end runInner()
 
 	/**
 	 * Migrate all CostCenter objects into AnalyticalDimension with
@@ -363,12 +404,12 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 
 		// Copy optional cost-center-specific fields when present.
 		foreach (['description', 'status', 'organizationId', 'parentCode', 'responsibleUser'] as $field) {
-			if (isset($source[$field]) === true && $source[$field] !== null && $source[$field] !== '') {
+			if (isset($source[$field]) === true && $source[$field] !== '') {
 				$record[$field] = $source[$field];
 			}
 		}
 
-		if (isset($source['budget']) === true && $source['budget'] !== null) {
+		if (isset($source['budget']) === true) {
 			$record['budget'] = $source['budget'];
 		}
 
@@ -401,7 +442,7 @@ class UnifyAnalyticalDimensions implements IRepairStep {
 
 		// Copy optional fields when present.
 		foreach (['description', 'parentCode', 'responsibleUser'] as $field) {
-			if (isset($source[$field]) === true && $source[$field] !== null && $source[$field] !== '') {
+			if (isset($source[$field]) === true && $source[$field] !== '') {
 				$record[$field] = $source[$field];
 			}
 		}

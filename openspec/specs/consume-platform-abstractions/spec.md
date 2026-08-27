@@ -96,9 +96,9 @@ in the owning repository.
 
 Follow-ups filed rather than forced through this change:
 
-- [shillinq#443](https://codeberg.org/Conduction/shillinq/issues/443) — `InventoryStock.status`
+- shillinq#443 (Codeberg, pre-migration, not migrated to GitHub) — `InventoryStock.status`
   never mirrors `Product.status`; quarantine (`InventoryLot.lotStatus`) has no enforcement
   path at dispatch. Needs a real check in `SalesDispatchStockIssueService`, not a schema edit.
-- [openconnector#159](https://codeberg.org/Conduction/openconnector/issues/159) —
+- openconnector#159 (Codeberg, pre-migration, not migrated to GitHub) —
   `Consumer.authorizationType: apiKey` is not enforced; `Consumer` has no declarative
   import handler; the gateway has no self-generated OAS.

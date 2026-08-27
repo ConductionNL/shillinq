@@ -72,12 +72,13 @@
 					{"key": "state", "label": "State", "type": "string"}
 				],
 				"lifecycleActions": true,
-				"relatedLists": [
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`; a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing while every gate stays green. TOKEN: `@objectId` — ConsolidationGroup's payload carries no flat group-key field (groupName is a display label, not an FK value), so ConsolidationPeriod.consolidationGroupId holds the group's OpenRegister UUID.",
+				"relatedCollections": [
 					{
-						"id": "consolidation-periods",
 						"title": "Consolidation periods",
+						"register": "shillinq",
 						"schema": "ConsolidationPeriod",
-						"foreignKey": "consolidationGroupId",
+						"filter": { "consolidationGroupId": "@objectId" },
 						"columns": [
 							{"key": "periodStart", "label": "Period start"},
 							{"key": "periodEnd", "label": "Period end"},
@@ -86,7 +87,7 @@
 							{"key": "totalEliminationAmount", "label": "Elimination amount"},
 							{"key": "status", "label": "Status"}
 						],
-						"detailRoute": "ConsolidationPeriodDetail"
+						"rowRoute": "ConsolidationPeriodDetail"
 					}
 				],
 				"indexRoute": "ConsolidationGroups",
@@ -145,12 +146,13 @@
 					{"key": "status", "label": "Status", "type": "string"}
 				],
 				"lifecycleActions": true,
-				"relatedLists": [
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`, not `relatedLists` (the latter lands in $attrs and renders nothing). TOKEN: `@objectId` — ConsolidationPeriod's payload carries no flat period-key field (it has periodStart/periodEnd, not a period id), so both children hold the period's OpenRegister UUID. Consistent with OCA\\Shillinq\\Lifecycle\\ConsolidationGuard, which reads back with `findAll(['filters' => ['consolidationPeriodId' => $periodId]])` on the period's identity.",
+				"relatedCollections": [
 					{
-						"id": "elimination-entries",
 						"title": "Elimination entries",
+						"register": "shillinq",
 						"schema": "EliminationEntry",
-						"foreignKey": "consolidationPeriodId",
+						"filter": { "consolidationPeriodId": "@objectId" },
 						"columns": [
 							{"key": "eliminationType", "label": "Type"},
 							{"key": "bookingDate", "label": "Booking date"},
@@ -160,10 +162,10 @@
 						]
 					},
 					{
-						"id": "consolidated-balances",
 						"title": "Consolidated balances",
+						"register": "shillinq",
 						"schema": "ConsolidatedBalance",
-						"foreignKey": "consolidationPeriodId",
+						"filter": { "consolidationPeriodId": "@objectId" },
 						"columns": [
 							{"key": "reportDate", "label": "Report date"},
 							{"key": "totalAssets", "label": "Total assets"},
@@ -171,7 +173,7 @@
 							{"key": "totalEquity", "label": "Total equity"},
 							{"key": "state", "label": "State"}
 						],
-						"detailRoute": "ConsolidatedBalanceDetail"
+						"rowRoute": "ConsolidatedBalanceDetail"
 					}
 				],
 				"indexRoute": "ConsolidationPeriods",

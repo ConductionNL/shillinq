@@ -108,7 +108,7 @@
               "on": "VpbBalansLink.accountNumbers",
               "select": [
                 "VpbBalansLink.costCenterId",
-                "VpbBalansLink.vpbPligtigVanaf"
+                "VpbBalansLink.vpbLiableFrom"
               ]
             },
             "groupBy": [

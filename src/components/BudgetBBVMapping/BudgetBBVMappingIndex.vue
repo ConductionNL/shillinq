@@ -6,8 +6,8 @@
  bookkeeping-waterschappen-bbv-variant).
 
  Renders the list of `BudgetBBVMapping` records served by the
- OpenRegister object endpoint (`/apps/shillinq/api/openregister/
- objects/BudgetBBVMapping`). The page wraps `CnIndexPage` from the
+ OpenRegister object endpoint (`/apps/openregister/api/objects/
+ shillinq/BudgetBBVMapping`). The page wraps `CnIndexPage` from the
  shared `@conduction/nextcloud-vue` library so columns, sort, paging,
  empty state and the Add-button affordance are all platform-rendered.
 

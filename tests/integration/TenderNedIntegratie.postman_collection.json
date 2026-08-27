@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "shillinq-bookkeeping-tenderned-integratie",
 		"name": "Shillinq Bookkeeping TenderNed Integratie",
-		"description": "Newman integration tests for bookkeeping-tenderned-integratie. Exercises the four REQ-NNN flows end-to-end against a live Nextcloud + OpenRegister instance:\n\n- REQ-001 — import a TenderNed dossier into a concept Verplichting (POST /objects/.../TenderNedAanbesteding, POST /objects/.../Verplichting source=tenderned/status=concept).\n- REQ-002 — auto-promote an awarded dossier (PATCH the aanbesteding to status=gegund and observe the linked Verplichting becoming active via OR lifecycle / shillinq listeners).\n- REQ-004 — block OpdrachtUitvoering completion without a bewijsstuk (POST without supportingDocuments should 4xx or remain in 'in-progress').\n- REQ-006 — buyer-only completion gate: a vendor cannot mark the eindoplevering as completed (PATCH with vendor-user 4xx).\n\nThere are NO bespoke shillinq HTTP controllers for this change (Task 9: declarative OR CRUD + lifecycle transitions only); the collection therefore drives the OR /api/objects surface and asserts the schema's lifecycle/guard behaviour. The Guard preconditions are also unit-tested via PHPUnit — this Newman run is the live end-to-end smoke.",
+		"description": "Newman integration tests for bookkeeping-tenderned-integratie. Exercises the four REQ-NNN flows end-to-end against a live Nextcloud + OpenRegister instance:\n\n- REQ-001 — import a TenderNed dossier into a concept Commitment (POST /objects/.../TenderNedProcurement, POST /objects/.../Commitment source=tenderned/status=concept).\n- REQ-002 — auto-promote an awarded dossier (PATCH the aanbesteding to status=gegund and observe the linked Commitment becoming active via OR lifecycle / shillinq listeners).\n- REQ-004 — block OrderFulfilment completion without a bewijsstuk (POST without supportingDocuments should 4xx or remain in 'in-progress').\n- REQ-006 — buyer-only completion gate: a vendor cannot mark the eindoplevering as completed (PATCH with vendor-user 4xx).\n\nThere are NO bespoke shillinq HTTP controllers for this change (Task 9: declarative OR CRUD + lifecycle transitions only); the collection therefore drives the OR /api/objects surface and asserts the schema's lifecycle/guard behaviour. The Guard preconditions are also unit-tested via PHPUnit — this Newman run is the live end-to-end smoke.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"event": [
@@ -50,9 +50,9 @@
 					{ "key": "OCS-APIRequest", "value": "true" }
 				],
 				"url": {
-					"raw": "{{base_url}}/index.php/apps/openregister/api/objects/{{register_slug}}/TenderNedAanbesteding",
+					"raw": "{{base_url}}/index.php/apps/openregister/api/objects/{{register_slug}}/TenderNedProcurement",
 					"host": ["{{base_url}}"],
-					"path": ["index.php", "apps", "openregister", "api", "objects", "{{register_slug}}", "TenderNedAanbesteding"]
+					"path": ["index.php", "apps", "openregister", "api", "objects", "{{register_slug}}", "TenderNedProcurement"]
 				},
 				"body": {
 					"mode": "raw",
@@ -64,7 +64,7 @@
 				"script": {
 					"type": "text/javascript",
 					"exec": [
-						"pm.test('TenderNedAanbesteding created (200/201)', function () {",
+						"pm.test('TenderNedProcurement created (200/201)', function () {",
 						"    pm.expect([200, 201]).to.include(pm.response.code);",
 						"    const body = pm.response.json();",
 						"    const uuid = body.uuid || body['@self']?.uuid || body.id;",
@@ -76,7 +76,7 @@
 			}]
 		},
 		{
-			"name": "REQ-001 — Create the linked concept Verplichting",
+			"name": "REQ-001 — Create the linked concept Commitment",
 			"request": {
 				"method": "POST",
 				"header": [
@@ -85,13 +85,13 @@
 					{ "key": "OCS-APIRequest", "value": "true" }
 				],
 				"url": {
-					"raw": "{{base_url}}/index.php/apps/openregister/api/objects/{{register_slug}}/Verplichting",
+					"raw": "{{base_url}}/index.php/apps/openregister/api/objects/{{register_slug}}/Commitment",
 					"host": ["{{base_url}}"],
-					"path": ["index.php", "apps", "openregister", "api", "objects", "{{register_slug}}", "Verplichting"]
+					"path": ["index.php", "apps", "openregister", "api", "objects", "{{register_slug}}", "Commitment"]
 				},
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"commitmentNumber\": \"V-NEWMAN-0001\",\n  \"description\": \"Newman concept obligation\",\n  \"kind\": \"inkooporder\",\n  \"source\": \"tenderned\",\n  \"sourceReference\": \"{{tender_aanbesteding_id}}\",\n  \"amount\": 50000.0,\n  \"termStart\": \"2026-07-01\",\n  \"termEnd\": \"2027-06-30\",\n  \"status\": \"draft\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"milestones\": []\n}"
+					"raw": "{\n  \"commitmentNumber\": \"V-NEWMAN-0001\",\n  \"description\": \"Newman concept obligation\",\n  \"kind\": \"purchase_order\",\n  \"source\": \"tenderned\",\n  \"sourceReference\": \"{{tender_aanbesteding_id}}\",\n  \"amount\": 50000.0,\n  \"termStart\": \"2026-07-01\",\n  \"termEnd\": \"2027-06-30\",\n  \"status\": \"draft\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"milestones\": []\n}"
 				}
 			},
 			"event": [{
@@ -99,7 +99,7 @@
 				"script": {
 					"type": "text/javascript",
 					"exec": [
-						"pm.test('Verplichting created in concept state', function () {",
+						"pm.test('Commitment created in concept state', function () {",
 						"    pm.expect([200, 201]).to.include(pm.response.code);",
 						"    const body = pm.response.json();",
 						"    pm.expect(body.source || body.object?.source).to.equal('tenderned');",
@@ -120,9 +120,9 @@
 					{ "key": "Accept", "value": "application/json" }
 				],
 				"url": {
-					"raw": "{{base_url}}/index.php/apps/openregister/api/objects/{{register_slug}}/Verplichting?source=tenderned&sourceReference={{tender_aanbesteding_id}}",
+					"raw": "{{base_url}}/index.php/apps/openregister/api/objects/{{register_slug}}/Commitment?source=tenderned&sourceReference={{tender_aanbesteding_id}}",
 					"host": ["{{base_url}}"],
-					"path": ["index.php", "apps", "openregister", "api", "objects", "{{register_slug}}", "Verplichting"],
+					"path": ["index.php", "apps", "openregister", "api", "objects", "{{register_slug}}", "Commitment"],
 					"query": [
 						{ "key": "source", "value": "tenderned" },
 						{ "key": "sourceReference", "value": "{{tender_aanbesteding_id}}" }
@@ -134,14 +134,14 @@
 				"script": {
 					"type": "text/javascript",
 					"exec": [
-						"pm.test('200 with the filtered Verplichting present', function () {",
+						"pm.test('200 with the filtered Commitment present', function () {",
 						"    pm.expect(pm.response.code).to.equal(200);",
 						"    const body = pm.response.json();",
 						"    const rows = body.results || body.objects || body;",
 						"    pm.expect(Array.isArray(rows)).to.be.true;",
 						"    pm.expect(rows.length).to.be.at.least(1);",
 						"    const found = rows.find(r => (r.sourceReference || r.object?.sourceReference) === pm.collectionVariables.get('tender_aanbesteding_id'));",
-						"    pm.expect(found, 'Verplichting with the expected sourceReference').to.not.be.undefined;",
+						"    pm.expect(found, 'Commitment with the expected sourceReference').to.not.be.undefined;",
 						"});"
 					]
 				}
@@ -157,9 +157,9 @@
 					{ "key": "OCS-APIRequest", "value": "true" }
 				],
 				"url": {
-					"raw": "{{base_url}}/index.php/apps/openregister/api/objects/{{register_slug}}/OpdrachtUitvoering",
+					"raw": "{{base_url}}/index.php/apps/openregister/api/objects/{{register_slug}}/OrderFulfilment",
 					"host": ["{{base_url}}"],
-					"path": ["index.php", "apps", "openregister", "api", "objects", "{{register_slug}}", "OpdrachtUitvoering"]
+					"path": ["index.php", "apps", "openregister", "api", "objects", "{{register_slug}}", "OrderFulfilment"]
 				},
 				"body": {
 					"mode": "raw",
@@ -179,7 +179,7 @@
 						"    }",
 						"    // OR may also accept the write but reject the lifecycle transition, in which",
 						"    // case the persisted status MUST NOT be 'completed' (the bewijsstuk-required",
-						"    // OpdrachtUitvoeringGuard denies it).",
+						"    // OrderFulfilmentGuard denies it).",
 						"    const body = pm.response.json();",
 						"    const status = body.status || body.object?.status;",
 						"    pm.expect(status).to.not.equal('completed');",
@@ -197,9 +197,9 @@
 					{ "key": "OCS-APIRequest", "value": "true" }
 				],
 				"url": {
-					"raw": "{{base_url}}/index.php/apps/openregister/api/objects/{{register_slug}}/TenderNedAanbesteding/{{aanbesteding_uuid}}",
+					"raw": "{{base_url}}/index.php/apps/openregister/api/objects/{{register_slug}}/TenderNedProcurement/{{aanbesteding_uuid}}",
 					"host": ["{{base_url}}"],
-					"path": ["index.php", "apps", "openregister", "api", "objects", "{{register_slug}}", "TenderNedAanbesteding", "{{aanbesteding_uuid}}"]
+					"path": ["index.php", "apps", "openregister", "api", "objects", "{{register_slug}}", "TenderNedProcurement", "{{aanbesteding_uuid}}"]
 				}
 			},
 			"event": [{

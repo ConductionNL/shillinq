@@ -74,7 +74,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "AnnualReport",
-				"_note": "REPORT/DOCUMENT archetype — the Titel-9 jaarrekening is a statutory annual report assembled from a balance sheet, income statement, cash-flow statement and disclosure notes. Native shillinq detail contract: config.fields[] render the report header (administration, boekjaar window, size category, reporting basis, currency, status, the three preparation/adoption/filing dates and the auditor/cashflow/management-report requirement flags); config.relatedLists[] show the disclosure notes (Note, FK reportId=@self.id) so a preparer sees disclosure completeness; the sidebar carries a file-references tab for the filed/deposited document and an audit-trail tab for the immutable prepare→adopt→file history. NO comms — the jaarrekening is a formal filing, not correspondence; no money aggregation of its own (totals live on the constituent statements).",
+				"_note": "REPORT/DOCUMENT archetype — the Titel-9 jaarrekening is a statutory annual report assembled from a balance sheet, income statement, cash-flow statement and disclosure notes. Native shillinq detail contract: config.fields[] render the report header (administration, boekjaar window, size category, reporting basis, currency, status, the three preparation/adoption/filing dates and the auditor/cashflow/management-report requirement flags); config.relatedCollections[] show the disclosure notes (Note, FK reportId=@objectId) so a preparer sees disclosure completeness. KEY+TOKEN: the prop is `relatedCollections` (a `relatedLists` block lands in $attrs and renders nothing), and the token is `@objectId`, NOT `@self.id` — `@self.id` is not a token resolveFilterTokens.js knows, so it never resolved. AnnualReport's payload carries no flat report-key field, so Note.reportId holds the report's UUID; the sidebar carries a file-references tab for the filed/deposited document and an audit-trail tab for the immutable prepare→adopt→file history. NO comms — the jaarrekening is a formal filing, not correspondence; no money aggregation of its own (totals live on the constituent statements).",
 				"fields": [
 					{
 						"key": "administrationId",
@@ -102,7 +102,7 @@
 						"type": "string"
 					},
 					{
-						"key": "valuta",
+						"key": "currency",
 						"label": "Currency",
 						"type": "string"
 					},
@@ -147,8 +147,8 @@
 						"type": "boolean"
 					}
 				],
-				"relatedLists": [
-					{"id": "disclosure-notes", "title": "Disclosure notes", "schema": "Note", "filter": {"reportId": "@self.id"}, "columns": [
+				"relatedCollections": [
+					{"title": "Disclosure notes", "register": "shillinq", "schema": "Note", "filter": {"reportId": "@objectId"}, "columns": [
 						{"key": "code", "label": "Code"},
 						{"key": "title", "label": "Title"},
 						{"key": "statutoryBasis", "label": "Legal basis"},

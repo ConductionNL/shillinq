@@ -227,10 +227,15 @@ final class BankReconciliationSchemaTest extends TestCase {
 	public function testReconciliationAggregations(): void {
 		$schema = $this->fragment['components']['schemas']['BankReconciliation'];
 
+		// `metric`, not `operation`, and `groupBy` as an ARRAY — the engine's
+		// vocabulary. `operation` is read by nothing, and a string `groupBy` is
+		// silently dropped, so the old spelling returned no value and then, with
+		// `metric` alone, an ungrouped total. See #1261.
 		$agg = $schema['x-openregister-aggregations']['countByStatus'];
 		self::assertSame('status', $agg['field']);
-		self::assertSame('count', $agg['operation']);
-		self::assertSame('status', $agg['groupBy']);
+		self::assertSame('count', $agg['metric']);
+		self::assertArrayNotHasKey('operation', $agg);
+		self::assertSame(['status'], $agg['groupBy']);
 
 	}//end testReconciliationAggregations()
 
@@ -372,15 +377,24 @@ final class BankReconciliationSchemaTest extends TestCase {
 		$schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
 		$agg = $schema['x-openregister-aggregations']['approvedAmountTotal'];
 
+		// `approvedAmountTotal` is NOT translated: it uses an `operations` dict
+		// whose custom alias (`approvedTotal`) the engine cannot express — its
+		// `metrics` form emits `sum_<field>` keys, so translating it changes
+		// what every CONSUMER must read, not just the declaration. Its `filter`
+		// is also a SQL-ish string the engine does not parse. Both are tracked
+		// in #1261, and this test pins the shape as it stands so the debt stays
+		// visible rather than looking intentional.
 		self::assertSame("matchType = 'approved'", $agg['filter']);
 		self::assertSame('reconciliationId', $agg['groupBy']);
 		self::assertSame('bankTransactionAmount', $agg['operations']['approvedTotal']['field']);
 		self::assertSame('sum', $agg['operations']['approvedTotal']['operation']);
 
+		// `countByType` IS translated — a plain count over its own schema.
 		$countByType = $schema['x-openregister-aggregations']['countByType'];
 		self::assertSame('matchType', $countByType['field']);
-		self::assertSame('count', $countByType['operation']);
-		self::assertSame('matchType', $countByType['groupBy']);
+		self::assertSame('count', $countByType['metric']);
+		self::assertArrayNotHasKey('operation', $countByType);
+		self::assertSame(['matchType'], $countByType['groupBy']);
 
 	}//end testApprovedAmountTotalAggregation()
 

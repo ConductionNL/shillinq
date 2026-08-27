@@ -31,7 +31,7 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | Invoice PDF export with embedded NLCIUS UBL 2.1 XML (NL/Peppol; not Factur-X/ZUGFeRD) | planned | must | [add-invoice-pdf-export-with-ubl-peppol-support](changes/add-invoice-pdf-export-with-ubl-peppol-support/) |
 | Peppol BIS 3.0 outbound transmission | planned | must | [add-invoice-pdf-export-with-ubl-peppol-support](changes/add-invoice-pdf-export-with-ubl-peppol-support/) |
 | Dutch KvK and BTW number validation for e-invoicing | planned | must | [add-invoice-pdf-export-with-ubl-peppol-support](changes/add-invoice-pdf-export-with-ubl-peppol-support/) |
-| True Factur-X / ZUGFeRD (UN/CEFACT CII) invoice output for DE/FR trading partners — explicitly NOT provided today (REQ-EINV-008); needs a real conformance validator (KoSIT/Mustang for CII, veraPDF for PDF/A) in the loop | planned | could | `facturx-cii-generator` (follow-up — [#408](https://codeberg.org/Conduction/shillinq/issues/408)) |
+| True Factur-X / ZUGFeRD (UN/CEFACT CII) invoice output for DE/FR trading partners — explicitly NOT provided today (REQ-EINV-008); needs a real conformance validator (KoSIT/Mustang for CII, veraPDF for PDF/A) in the loop | planned | could | `facturx-cii-generator` (follow-up — Codeberg issue shillinq#408, pre-migration, not migrated to GitHub) |
 
 ## Budget & Commitment Accounting Features
 

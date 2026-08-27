@@ -31,16 +31,16 @@ Vrij en open source onder de EUPL-1.2-licentie.
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
     <documentation>
-        <user>https://codeberg.org/Conduction/shillinq</user>
-        <admin>https://codeberg.org/Conduction/shillinq</admin>
-        <developer>https://codeberg.org/Conduction/shillinq</developer>
+        <user>https://github.com/ConductionNL/shillinq</user>
+        <admin>https://github.com/ConductionNL/shillinq</admin>
+        <developer>https://github.com/ConductionNL/shillinq</developer>
     </documentation>
     <category>organization</category>
-    <website>https://codeberg.org/Conduction/shillinq</website>
-    <bugs>https://codeberg.org/Conduction/shillinq/issues</bugs>
-    <repository>https://codeberg.org/Conduction/shillinq</repository>
+    <website>https://github.com/ConductionNL/shillinq</website>
+    <bugs>https://github.com/ConductionNL/shillinq/issues</bugs>
+    <repository>https://github.com/ConductionNL/shillinq</repository>
 
-    <screenshot>https://codeberg.org/Conduction/shillinq/raw/branch/main/img/app-store.svg</screenshot>
+    <screenshot>https://raw.githubusercontent.com/ConductionNL/shillinq/development/img/app-store.svg</screenshot>
 
     <dependencies>
         <php min-version="8.3"/>
@@ -171,14 +171,48 @@ Vrij en open source onder de EUPL-1.2-licentie.
              a calendar-less instance logs and degrades; cron never
              crashes. -->
         <job>OCA\Shillinq\BackgroundJob\DeadlineReminderJob</job>
+        <!-- Registered 2026-08-21 on an explicit user decision. All three were
+             implemented, unit-tested and documented, but had never been listed
+             here, so they had never executed once. TaxDeadlineReminderJob is
+             the reason this mattered: its documentation described it as
+             running, so the docs asserted a behaviour the app did not have.
+             Registering these three makes reality match the documentation.
+             They dispatch to REAL USERS on the next cron tick, which is why
+             this needed a human decision rather than a quiet fix.
+             All three are TimedJob with an explicit interval (24h / 1h / a
+             named INTERVAL_SECONDS constant), so none busy-loops cron. -->
+        <job>OCA\Shillinq\BackgroundJob\TaxDeadlineReminderJob</job>
+        <job>OCA\Shillinq\BackgroundJob\BookingReminderJob</job>
+        <job>OCA\Shillinq\BackgroundJob\ViesOutageRetryJob</job>
     </background-jobs>
 
     <repair-steps>
         <post-migration>
+            <!-- MUST BE FIRST — ahead of InitializeSettings, which imports the
+                 register.d fragments. OpenRegister's importer matches a schema
+                 by SLUG and creates one when the slug is absent, so importing
+                 the renamed fragment against a database still holding
+                 `Verplichting` produces a SECOND schema (new id, new empty
+                 shard table) and leaves every existing object bound to the old
+                 one. Nothing errors; the commitment views just come back empty.
+                 Renaming the rows first makes the import an UPDATE of the
+                 existing schema, so ids, shard tables and objects all survive.
+                 Idempotent, register-scoped, non-destructive, fail-soft; it
+                 refuses rather than merges when both slugs already exist. -->
+            <step>OCA\Shillinq\Repair\RenameCommitmentSchemas</step>
             <step>OCA\Shillinq\Repair\InitializeSettings</step>
             <step>OCA\Shillinq\Repair\InitializeBbvAdministration</step>
             <step>OCA\Shillinq\Repair\UnifyAnalyticalDimensions</step>
             <step>OCA\Shillinq\Repair\RetireCostProjectStep</step>
+            <!-- glline-administration-scope (REQ-GLS-002 / REQ-GLS-003). Backfills
+                 GLLine.administrationId from the parent GLTransaction, then RE-READS every
+                 line and opens the SpendAnalytics scoping gate only on a zero-missing total.
+                 MUST run after InitializeSettings, which imports the register.d fragment that
+                 declares the property in the first place. The gate is cleared at the START of
+                 the step, so an instance that never reaches it — or crashes inside it — leaves
+                 SpendAnalytics refusing its GL-backed views rather than serving either
+                 cross-administration totals or a silently-zeroed scoped one. -->
+            <step>OCA\Shillinq\Repair\BackfillGlLineAdministration</step>
             <step>OCA\Shillinq\Repair\BackfillFiscalPeriods</step>
             <step>OCA\Shillinq\Repair\PeriodCloseBackfill</step>
             <step>OCA\Shillinq\Repair\LoadCbsSeedsStep</step>
@@ -224,6 +258,22 @@ Vrij en open source onder de EUPL-1.2-licentie.
                 as "nothing to do", so the loss is silent.
             -->
             <step>OCA\Shillinq\Repair\RenameDutchValues</step>
+            <!--
+                Must run AFTER RenameDutchValues, which moves the scalar
+                `Commitment.kind` column this list mirrors.
+                `Mandate.kind_commitment` holds the SAME four values but as a
+                JSON ARRAY, and ValueMigrationPort::rewrite() is an equality
+                UPDATE on the whole cell — against `["inkooporder","leasing"]`
+                it matches nothing and returns 0. So this cannot be a bucket in
+                the RenameDutchValues map; a map entry would report success
+                having migrated no mandate at all.
+                Without it MandateEnforcer's `in_array($kind, $soorten, true)`
+                compares an English kind against stored Dutch members and the
+                mandate silently stops applying — an empty list already means
+                "any kind", so nothing errors. Idempotent, list-only,
+                non-destructive, fail-soft.
+            -->
+            <step>OCA\Shillinq\Repair\RenameMandateCommitmentKinds</step>
         </post-migration>
 
         <!-- FRESH INSTALL. Nextcloud does NOT run `post-migration` on a first

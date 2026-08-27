@@ -52,6 +52,7 @@
             <property name="exceptions" value="
                 DateTimeImmutable,
                 OCP\Server,
+                OCA\Shillinq\Support\FleetAppId,
                 OCA\OpenRegister\Lifecycle\GuardResult,
                 OCA\OpenRegister\Service\Aggregation\AggregationQuery,
                 OCA\OpenRegister\AppHost\Observability\MetricSample,

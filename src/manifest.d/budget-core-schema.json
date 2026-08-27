@@ -38,7 +38,7 @@
 			"type": "detail",
 			"title": "Annual Budget",
 			"config": {
-				"_note": "REQ-BCS-006/009. The fiscal-year begroting container. State chip drives the draft/active/closed lifecycle (activate is gated by AnnualBudgetDefaultGuard's one-default invariant); the budgetLines related list is this budget's phased BudgetLine rows.",
+				"_note": "REQ-BCS-006/009. The fiscal-year begroting container. State chip drives the draft/active/closed lifecycle (activate is gated by AnnualBudgetDefaultGuard's one-default invariant); the budgetLines relatedCollection is this budget's phased BudgetLine rows (key MUST be `relatedCollections` — see the LedgerGroupDetail note below).",
 				"register": "shillinq",
 				"schema": "AnnualBudget",
 				"auditTrail": true,
@@ -49,12 +49,12 @@
 					{"key": "state", "label": "State", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"}
 				],
-				"relatedLists": [
-					{"id": "budgetLines", "title": "Budget lines", "schema": "BudgetLine", "foreignKey": "annualBudgetId", "join": "annualBudgetId", "columns": [
+				"relatedCollections": [
+					{"title": "Budget lines", "register": "shillinq", "schema": "BudgetLine", "filter": {"annualBudgetId": "@objectId"}, "columns": [
 						{"key": "ledgerGroupId", "label": "Ledger group"},
 						{"key": "source", "label": "Source"},
 						{"key": "month01Amount", "label": "Jan"}
-					], "detailRoute": "BudgetLineDetail"}
+					], "rowRoute": "BudgetLineDetail"}
 				],
 				"indexRoute": "AnnualBudgets",
 				"sidebarProps": {
@@ -90,7 +90,7 @@
 			"type": "detail",
 			"title": "Ledger Group",
 			"config": {
-				"_note": "REQ-BCS-004/005/009. A verzamelpost: an ordered, nestable GL-account grouping resolved from accountRanges + explicit include/exclude (design.md §3a) — membership is computed in PHP (BudgetVsActualsReader), not shown as a live query here. The children related list surfaces nested LedgerGroups via parentLedgerGroupId (design.md §3d's parent-rollup rule).",
+				"_note": "REQ-BCS-004/005/009. A verzamelpost: an ordered, nestable GL-account grouping resolved from accountRanges + explicit include/exclude (design.md §3a) — membership is computed in PHP (BudgetVsActualsReader), not shown as a live query here. The children relatedCollection surfaces nested LedgerGroups via parentLedgerGroupId (design.md §3d's parent-rollup rule). NOTE THE KEY: CnDetailPage's prop is `relatedCollections` with a token-resolved `filter` — a `relatedLists` block (the spelling 22 other shillinq fragments still use) is not a prop on any Cn page component, so it lands in $attrs, renders nothing, and the page shows only the generic 'No relations yet' widget while every gate stays green. THE FILTER TOKEN IS `@object.code`, NOT `@objectId`: `@objectId` resolves to the row's UUID, but parentLedgerGroupId stores the parent's `code` (a flat business key — see the register fragment's note on why an id is not available at seed time), so an `@objectId` filter matched zero rows and the page fell back to 'No relations yet'. `@object.<field>` reads a FLAT payload field only — it cannot reach `@self.slug`, which is why the seed cannot reference the parent by slug either.",
 				"register": "shillinq",
 				"schema": "LedgerGroup",
 				"auditTrail": true,
@@ -106,12 +106,12 @@
 					{"key": "effectiveTo", "label": "Effective to", "type": "string"},
 					{"key": "administrationId", "label": "Administration", "type": "string"}
 				],
-				"relatedLists": [
-					{"id": "children", "title": "Child ledger groups", "schema": "LedgerGroup", "foreignKey": "parentLedgerGroupId", "join": "parentLedgerGroupId", "columns": [
+				"relatedCollections": [
+					{"title": "Child ledger groups", "register": "shillinq", "schema": "LedgerGroup", "filter": {"parentLedgerGroupId": "@object.code"}, "columns": [
 						{"key": "code", "label": "Code"},
 						{"key": "name", "label": "Name"},
 						{"key": "order", "label": "Order"}
-					], "detailRoute": "LedgerGroupDetail"}
+					], "rowRoute": "LedgerGroupDetail"}
 				],
 				"indexRoute": "LedgerGroups",
 				"sidebarProps": {

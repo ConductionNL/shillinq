@@ -82,7 +82,7 @@
             "example": 5000000,
             "title": "Aanschafwaarde"
           },
-          "valuta": {
+          "currency": {
             "type": "string",
             "description": "ISO 4217 currency code. EUR-only in this tier.",
             "default": "EUR",

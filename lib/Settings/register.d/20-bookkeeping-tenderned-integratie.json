@@ -1,12 +1,12 @@
 {
   "components": {
     "schemas": {
-      "TenderNedAanbesteding": {
-        "slug": "TenderNedAanbesteding",
+      "TenderNedProcurement": {
+        "slug": "TenderNedProcurement",
         "icon": "Gavel",
         "version": "0.1.0",
         "title": "TenderNed Aanbesteding",
-        "description": "A procurement tender imported from TenderNed (Logius central procurement platform). Wraps the public dossier metadata (REQ-001) and links to the materialised Shillinq Verplichting. Both the aanbestedende dienst (public buyer) and the inschrijvende leverancier (winning vendor) consume this schema, with role-based visibility filtering (design D6).",
+        "description": "A procurement tender imported from TenderNed (Logius central procurement platform). Wraps the public dossier metadata (REQ-001) and links to the materialised Shillinq Commitment. Both the aanbestedende dienst (public buyer) and the inschrijvende leverancier (winning vendor) consume this schema, with role-based visibility filtering (design D6).",
         "x-schema-org": "schema:Order",
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
@@ -108,10 +108,10 @@
           },
           "commitmentId": {
             "type": "string",
-            "description": "FK to the materialised Shillinq Verplichting (obligation). Null until import promotes the dossier to a concept obligation (REQ-001).",
+            "description": "FK to the materialised Shillinq Commitment (obligation). Null until import promotes the dossier to a concept obligation (REQ-001).",
             "nullable": true,
-            "title": "Verplichting ID",
-            "$ref": "Verplichting"
+            "title": "Commitment ID",
+            "$ref": "Commitment"
           },
           "administrationId": {
             "type": "string",
@@ -148,11 +148,11 @@
             },
             "gegund": {
               "label": "Gegund",
-              "description": "Awarded. The winning supplier is recorded; if it matches the tenant organisation a concept Verplichting is created (REQ-002)."
+              "description": "Awarded. The winning supplier is recorded; if it matches the tenant organisation a concept Commitment is created (REQ-002)."
             },
             "in-uitvoering": {
               "label": "In uitvoering",
-              "description": "Contract under execution; milestones (OpdrachtUitvoering) are tracked (REQ-004)."
+              "description": "Contract under execution; milestones (OrderFulfilment) are tracked (REQ-004)."
             },
             "afgerond": {
               "label": "Afgerond",
@@ -168,21 +168,21 @@
               "from": "open",
               "to": "gegund",
               "label": "Gunning registreren",
-              "description": "Record the award. Auto-promotion to an active Verplichting fires when the winning KvK matches the tenant organisation (REQ-002).",
-              "requires": "OCA\\Shillinq\\Lifecycle\\TenderNedAanbestedingGuard::canGunnen"
+              "description": "Record the award. Auto-promotion to an active Commitment fires when the winning KvK matches the tenant organisation (REQ-002).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\TenderNedProcurementGuard::canGunnen"
             },
             "start-uitvoering": {
               "from": "gegund",
               "to": "in-uitvoering",
               "label": "Uitvoering starten",
-              "description": "Move the awarded tender into execution once the contractmanager activates the Verplichting (REQ-002 / REQ-003)."
+              "description": "Move the awarded tender into execution once the contractmanager activates the Commitment (REQ-002 / REQ-003)."
             },
             "afronden": {
               "from": "in-uitvoering",
               "to": "afgerond",
               "label": "Afronden",
               "description": "Complete the contract once the eindoplevering milestone is approved (REQ-006). Status-sync back to TenderNed is offered to the aanbestedende dienst role.",
-              "requires": "OCA\\Shillinq\\Lifecycle\\TenderNedAanbestedingGuard::canAfronden"
+              "requires": "OCA\\Shillinq\\Lifecycle\\TenderNedProcurementGuard::canAfronden"
             },
             "beeindigen": {
               "from": "in-uitvoering",
@@ -224,21 +224,21 @@
           "description": "Every create, update and delete of a TenderNed Aanbesteding is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
-      "Verplichting": {
-        "slug": "Verplichting",
+      "Commitment": {
+        "slug": "Commitment",
         "icon": "FileSign",
         "version": "0.1.0",
-        "title": "Verplichting",
-        "description": "A financial obligation (commitment) that reserves budget. The obligation may originate manually, from an inkooporder, or from a won TenderNed tender (bron field, REQ-001). A concept obligation must be enriched (kostenplaats, grootboekrekening) and activated by a contractmanager before it locks budget (design D2). This fragment is the TenderNed OVERLAY on the Verplichting schema: bookkeeping-verplichtingenadministratie.json owns the schema and is the single place its `required` list is declared, because ADR-037's deepMergeConfig() CONCATENATES list values — two `required` declarations become an unsatisfiable union. Everything below is additive: TenderNed provenance (bron, bronReferentie, gegundeLeverancierKvk), the milestone plan, and the concept -> active enrichment lifecycle.",
+        "title": "Commitment",
+        "description": "A financial obligation (commitment) that reserves budget. The obligation may originate manually, from an inkooporder, or from a won TenderNed tender (bron field, REQ-001). A concept obligation must be enriched (kostenplaats, grootboekrekening) and activated by a contractmanager before it locks budget (design D2). This fragment is the TenderNed OVERLAY on the Commitment schema: bookkeeping-verplichtingenadministratie.json owns the schema and is the single place its `required` list is declared, because ADR-037's deepMergeConfig() CONCATENATES list values — two `required` declarations become an unsatisfiable union. Everything below is additive: TenderNed provenance (bron, bronReferentie, gegundeLeverancierKvk), the milestone plan, and the concept -> active enrichment lifecycle.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
         "properties": {
           "commitmentNumber": {
             "type": "string",
-            "description": "Sequential obligation number unique per administration, as written by TenderNedAwardDetectedListener and read by VerplichtingGuard. This is the camelCase half of a LIVE TWO-SPELLING SPLIT — bookkeeping-verplichtingenadministratie.json owns this schema and declares `verplichtingsnummer` for the commitment-accounting path, which is the spelling in the merged `required` list. Until the two collapse, a record written through the TenderNed path does not satisfy that requirement. Resolving the split belongs to the English domain rename (Verplichting -> Commitment), which owns the repair step that migrates stored values; renaming here without one would make every stored value invisible, because OpenRegister's MagicMapper discards undeclared properties.",
+            "description": "Sequential obligation number unique per administration, as written by TenderNedAwardDetectedListener and read by CommitmentGuard. This is the camelCase half of a LIVE TWO-SPELLING SPLIT — bookkeeping-verplichtingenadministratie.json owns this schema and declares `verplichtingsnummer` for the commitment-accounting path, which is the spelling in the merged `required` list. Until the two collapse, a record written through the TenderNed path does not satisfy that requirement. Resolving the split belongs to the English domain rename (Commitment -> Commitment), which owns the repair step that migrates stored values; renaming here without one would make every stored value invisible, because OpenRegister's MagicMapper discards undeclared properties.",
             "example": "VPL-2026-0001",
-            "title": "Verplichting Nummer"
+            "title": "Commitment Nummer"
           },
           "description": {
             "type": "string",
@@ -305,7 +305,7 @@
           },
           "milestones": {
             "type": "array",
-            "description": "Milestone plan generated on activation from the contract template (REQ-003). Value objects embedded on the obligation header; each milestone's proof and approval live on the related OpdrachtUitvoering (design D5).",
+            "description": "Milestone plan generated on activation from the contract template (REQ-003). Value objects embedded on the obligation header; each milestone's proof and approval live on the related OrderFulfilment (design D5).",
             "items": {
               "type": "object",
               "required": [
@@ -318,7 +318,7 @@
               "properties": {
                 "milestoneId": {
                   "type": "string",
-                  "description": "Stable milestone identifier, referenced by OpdrachtUitvoering.mijlpaalId.",
+                  "description": "Stable milestone identifier, referenced by OrderFulfilment.mijlpaalId.",
                   "example": "MS-Q1",
                   "title": "Mijlpaal ID"
                 },
@@ -404,7 +404,7 @@
               "to": "active",
               "label": "Activeren",
               "description": "Activate the obligation after enrichment. Requires kostenplaats and grootboekrekening to be set (design D2); generates the milestone plan when an opdrachttype is supplied (REQ-003).",
-              "requires": "OCA\\Shillinq\\Lifecycle\\VerplichtingGuard::canActiveren"
+              "requires": "OCA\\Shillinq\\Lifecycle\\CommitmentGuard::canActiveren"
             },
             "archiveren": {
               "from": "active",
@@ -443,15 +443,15 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Verplichting is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Commitment is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
         }
       },
-      "OpdrachtUitvoering": {
-        "slug": "OpdrachtUitvoering",
+      "OrderFulfilment": {
+        "slug": "OrderFulfilment",
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "Opdracht Uitvoering",
-        "description": "Execution ledger for a single contract milestone (design D5). Distinct from the Verplichting it belongs to: this is the operational delivery log carrying proof-of-delivery (bewijsstukken) and approval metadata. A milestone cannot be approved (approved false→true) until at least one bewijsstuk is attached (REQ-004).",
+        "description": "Execution ledger for a single contract milestone (design D5). Distinct from the Commitment it belongs to: this is the operational delivery log carrying proof-of-delivery (bewijsstukken) and approval metadata. A milestone cannot be approved (approved false→true) until at least one bewijsstuk is attached (REQ-004).",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
@@ -465,13 +465,13 @@
         "properties": {
           "commitmentId": {
             "type": "string",
-            "description": "FK to the parent Verplichting (design D5).",
-            "title": "Verplichting ID",
-            "$ref": "Verplichting"
+            "description": "FK to the parent Commitment (design D5).",
+            "title": "Commitment ID",
+            "$ref": "Commitment"
           },
           "milestoneId": {
             "type": "string",
-            "description": "Identifier of the milestone within the parent Verplichting.mijlpalen array (Task 2.2).",
+            "description": "Identifier of the milestone within the parent Commitment.mijlpalen array (Task 2.2).",
             "title": "Mijlpaal ID"
           },
           "deliveryDate": {
@@ -575,7 +575,7 @@
               "to": "completed",
               "label": "Markeer als voltooid",
               "description": "Complete the delivery. Blocked until at least one bewijsstuk is attached (REQ-004); on completion the final-milestone status-sync to TenderNed is offered to the aanbestedende dienst (REQ-006).",
-              "requires": "OCA\\Shillinq\\Lifecycle\\OpdrachtUitvoeringGuard::canVoltooien"
+              "requires": "OCA\\Shillinq\\Lifecycle\\OrderFulfilmentGuard::canVoltooien"
             },
             "annuleren": {
               "from": "in-progress",
@@ -623,7 +623,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "TenderNedAanbesteding",
+        "schema": "TenderNedProcurement",
         "slug": "tn-sample-utrecht-schoonmaak"
       },
       "tenderId": "TN-2026-0001",
@@ -646,7 +646,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "TenderNedAanbesteding",
+        "schema": "TenderNedProcurement",
         "slug": "tn-sample-brabant-it"
       },
       "tenderId": "TN-2026-0002",
@@ -670,7 +670,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Verplichting",
+        "schema": "Commitment",
         "slug": "vpl-sample-utrecht-schoonmaak"
       },
       "commitmentNumber": "VPL-2026-0001",

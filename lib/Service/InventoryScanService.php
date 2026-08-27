@@ -582,10 +582,6 @@ class InventoryScanService {
 				->setSchema(schema: $schema)
 				->findAll($params);
 
-			if (is_array($result) === false) {
-				return [];
-			}
-
 			return $result;
 		} catch (\Throwable $e) {
 			$this->logger->debug(

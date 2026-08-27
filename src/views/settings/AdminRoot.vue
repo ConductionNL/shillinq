@@ -31,8 +31,8 @@ export default {
 	},
 
 	/**
-	 * Bring up the Pinia stores (object + settings) so the embedded Settings
-	 * form can read register data, then reveal it.
+	 * Bring up the Pinia stores (settings) so the embedded Settings form can
+	 * read register data, then reveal it.
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-5
 	 */

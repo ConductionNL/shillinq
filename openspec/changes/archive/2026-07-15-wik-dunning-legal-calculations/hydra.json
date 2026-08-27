@@ -2,7 +2,7 @@
   "spec_slug": "bookkeeping-credit-control-dunning",
   "title": "WIK dunning legal calculations — max cap, rate table, BTW-over-incassokosten",
   "app": "shillinq",
-  "repo": "https://codeberg.org/Conduction/shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
   "depends_on": [],
   "issue": null
 }

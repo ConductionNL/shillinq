@@ -190,6 +190,8 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcInputField, NcSelect, NcTextField } from '@nextcloud/vue'
 
+const REGISTER_SLUG = 'shillinq'
+
 export default {
 	name: 'GoodsReceiptNoteForm',
 	components: {
@@ -285,11 +287,12 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md */
 		async loadOpenPurchaseOrders() {
 			try {
 				const response = await axios.get(
 					generateUrl(
-						'/apps/shillinq/api/openregister/objects/PurchaseOrder',
+						`/apps/openregister/api/objects/${REGISTER_SLUG}/PurchaseOrder`,
 					),
 				)
 				const records = response.data?.results || response.data || []
@@ -310,6 +313,7 @@ export default {
 			}
 		},
 
+		/** @spec openspec/changes/bookkeeping-purchase-order-3way-04-goods-receipt-note/tasks.md */
 		async refreshLines() {
 			if (this.selectedPoIds.length === 0) {
 				this.availableLines = []
@@ -322,7 +326,7 @@ export default {
 				try {
 					const response = await axios.get(
 						generateUrl(
-							'/apps/shillinq/api/openregister/objects/PurchaseOrderLine',
+							`/apps/openregister/api/objects/${REGISTER_SLUG}/PurchaseOrderLine`,
 						),
 						{ params: { filter: { poId } } },
 					)

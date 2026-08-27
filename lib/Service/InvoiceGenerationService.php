@@ -37,6 +37,8 @@ use OCA\OpenRegister\Contract\ObjectServiceInterface;
 /**
  * Drafting, validation, and GL posting of BillableInvoice rows.
  *
+ * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
+ *
  * @SuppressWarnings(PHPMD.ElseExpression) Pre-existing style debt (issue
  *     #506): early-return refactor deferred pending full behavioral
  *     verification of each branch.
@@ -221,6 +223,8 @@ class InvoiceGenerationService {
 	 * @param array<string,mixed> $invoice Persisted BillableInvoice.
 	 *
 	 * @return array{valid:bool,errors:array<int,string>}
+	 *
+	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
 	 */
 	public function validateInvoice(array $invoice): array {
 		$errors = [];
@@ -276,6 +280,8 @@ class InvoiceGenerationService {
 	 * @param array<string,mixed> $invoice Persisted BillableInvoice.
 	 *
 	 * @return array<string,mixed> Updated invoice (and obligation summary).
+	 *
+	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
 	 */
 	public function postInvoice(array $invoice): array {
 		$status = (string)($invoice['status'] ?? '');
@@ -369,6 +375,8 @@ class InvoiceGenerationService {
 	 * @param array<int,array<string,mixed>> $lineItems Line items.
 	 *
 	 * @return int Cents.
+	 *
+	 * @spec openspec/specs/invoice-from-time-and-expense/spec.md#requirement-invoice-generation-service
 	 */
 	public function calculateNetAmount(array $lineItems): int {
 		$total = 0;
@@ -440,7 +448,8 @@ class InvoiceGenerationService {
 				return $this->billingEngine->calculateRetainer(
 					retainer: $this->retainers->resolveRetainerAmount(
 						scheduleId: (string)$request->retainerScheduleId,
-						invoiceMonth: $request->toDate
+						invoiceMonth: $request->toDate,
+						administrationId: $request->administrationId
 					),
 					retainerMonth: substr($request->toDate, 0, 7),
 					hoursLogged: $hoursLogged,
@@ -466,7 +475,8 @@ class InvoiceGenerationService {
 				return $this->billingEngine->calculateMixed(
 					retainer: $this->retainers->resolveRetainerAmount(
 						scheduleId: (string)$request->retainerScheduleId,
-						invoiceMonth: $request->toDate
+						invoiceMonth: $request->toDate,
+						administrationId: $request->administrationId
 					),
 					retainerMonth: substr($request->toDate, 0, 7),
 					hoursLogged: $hoursLogged,
@@ -518,7 +528,8 @@ class InvoiceGenerationService {
 				$rate = $this->rateCards->resolveRate(
 					rateCardId: $rateCardId,
 					resourceType: $resourceType,
-					date: $date
+					date: $date,
+					administrationId: $administrationId
 				);
 			} else {
 				$rate = [
@@ -751,11 +762,7 @@ class InvoiceGenerationService {
 			$rs = $this->objectService->setRegister($this->register())
 				->setSchema('BillableInvoice')
 				->findAll(['filters' => ['administrationId' => $administrationId]]);
-			if (is_array($rs) === true) {
-				$count = count($rs);
-			} else {
-				$count = 0;
-			}
+			$count = count($rs);
 		} catch (\Throwable $e) {
 			$count = 0;
 		}
@@ -858,10 +865,6 @@ class InvoiceGenerationService {
 					]
 				);
 		} catch (\Throwable $e) {
-			return null;
-		}
-
-		if (is_array($rows) === false) {
 			return null;
 		}
 

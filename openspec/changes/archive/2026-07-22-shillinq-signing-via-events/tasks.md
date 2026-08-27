@@ -6,7 +6,7 @@
 > not exist — a pre-existing gap unrelated to this change (the `2026-06-14-shillinq-delegate-
 > signing` archive never synced it), which also blocks the still-open sibling change
 > `shillinq-delegation-via-events`. Tracked in
-> [Conduction/shillinq#491](https://codeberg.org/Conduction/shillinq/issues/491). Re-run the
+> Codeberg issue shillinq#491 (pre-migration, not migrated to GitHub). Re-run the
 > archive once that is resolved.
 
 ## 1. Rewire the request path onto the docudesk event contract

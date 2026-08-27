@@ -482,7 +482,6 @@
             "description": "Revenue excl. VAT summed over GL revenue postings for the fiscal year (REQ-IB-001). The matched journaalposten are linked into IBAuditTrail.",
             "source": "GLLine",
             "filter": {
-              "administrationId": "@self.administrationId",
               "accountClass": "revenue"
             },
             "sum": [
@@ -493,7 +492,6 @@
             "description": "Cost of goods sold summed over GL cost-of-sales postings (REQ-IB-001).",
             "source": "GLLine",
             "filter": {
-              "administrationId": "@self.administrationId",
               "accountClass": "cost-of-sales"
             },
             "sum": [

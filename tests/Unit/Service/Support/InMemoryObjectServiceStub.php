@@ -95,16 +95,55 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	private int $idCounter = 0;
 
 	/**
+	 * Whether `findAll()` answers ObjectEntityInterface instances (what the
+	 * real engine returns) instead of plain arrays.
+	 *
+	 * @var boolean
+	 */
+	private bool $findAllRendersEntities = false;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param array<string,array<int,array<string,mixed>>> $data      Seed rows.
-	 * @param array<int,array<string,mixed>>|null          $saveSink  Optional caller-owned
-	 *                                                                array to bind {@see $saved}
-	 *                                                                to, for tests that assert on
-	 *                                                                a local `$saved` variable.
+	 * ## `$findAllRendersEntities` — modelling what the engine really returns
+	 *
+	 * Real OpenRegister's `ObjectService::findAll()` ends in
+	 * `RenderObject::renderEntities()`, declared `@psalm-return
+	 * list<ObjectEntity>` — every row is an OBJECT. `ObjectEntity` does NOT
+	 * implement `ArrayAccess`, so `$row['id']` against a real row is
+	 * `Error: Cannot use object of type ...\ObjectEntity as array`, and
+	 * `array_merge($row, [...])` is a `TypeError`.
+	 *
+	 * This double has always answered plain arrays, so a consumer that
+	 * subscripts a row goes green locally and fatals the moment it meets the
+	 * deployed engine. `BudgetScenarioDefaultPromoter::promote()` shipped
+	 * exactly that and returned HTTP 500 on every demotion, under five green
+	 * unit tests (shillinq budget-scenarios, CI run 32462209787).
+	 *
+	 * ⚠️ Opt-in rather than the default, for the same reason
+	 * {@see OpenRegisterFaithfulObjectService} is opt-in: the app carries many
+	 * live `findAll()` consumers written against the array shape, and flipping
+	 * the default red-lines them all at once — repairs that are product
+	 * decisions, not test-side ones. Pass `true` wherever a test must be ABLE
+	 * to see this defect; a test whose double cannot fail here proves nothing
+	 * about the row handling it exercises.
+	 *
+	 * @param array<string,array<int,array<string,mixed>>> $data                   Seed rows.
+	 * @param array<int,array<string,mixed>>|null          $saveSink               Optional caller-owned
+	 *                                                                             array to bind {@see $saved}
+	 *                                                                             to, for tests that assert on
+	 *                                                                             a local `$saved` variable.
+	 * @param bool                                         $findAllRendersEntities Answer `findAll()` with
+	 *                                                                             ObjectEntityInterface rows,
+	 *                                                                             as the real engine does.
 	 */
-	public function __construct(array $data = [], ?array &$saveSink = null) {
+	public function __construct(
+		array $data = [],
+		?array &$saveSink = null,
+		bool $findAllRendersEntities = false
+	) {
 		$this->data = $data;
+		$this->findAllRendersEntities = $findAllRendersEntities;
 		if ($saveSink !== null) {
 			$this->saved = &$saveSink;
 		}
@@ -151,17 +190,21 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	/**
 	 * Return rows for the active schema, applying equality filters.
 	 *
+	 * Answers plain arrays by default; answers ObjectEntityInterface rows —
+	 * the shape the real engine returns — when the double was constructed
+	 * with `findAllRendersEntities: true`.
+	 *
 	 * @param array $config        Filters, limit, offset, sort and search.
 	 * @param bool  $_rbac         Apply register RBAC (ignored by the stub).
 	 * @param bool  $_multitenancy Apply organisation scoping (ignored by the stub).
 	 *
-	 * @return array<int,array<string,mixed>>
+	 * @return array<int,array<string,mixed>|ObjectEntityInterface>
 	 */
 	public function findAll(array $config = [], bool $_rbac = true, bool $_multitenancy = true): array {
 		$rows = ($this->data[$this->schema] ?? []);
 		$filters = ($config['filters'] ?? []);
 
-		return array_values(
+		$matched = array_values(
 			array_filter(
 				$rows,
 				static function (array $row) use ($filters): bool {
@@ -174,6 +217,19 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 					return true;
 				}
 			)
+		);
+
+		if ($this->findAllRendersEntities === false) {
+			return $matched;
+		}
+
+		return array_map(
+			fn (array $row): ObjectEntityInterface => new ObjectEntityStub(
+				payload: $row,
+				register: $this->register,
+				schema: $this->schema
+			),
+			$matched
 		);
 
 	}//end findAll()

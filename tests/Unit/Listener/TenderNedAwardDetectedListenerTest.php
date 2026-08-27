@@ -11,8 +11,8 @@
  *  - No tenant KvK configured -> NO promotion (ambiguous).
  *  - Tenant KvK does NOT match the awarded supplier -> NO promotion.
  *  - Tenant KvK MATCHES + value valid + OR available -> promotion attempted
- *    (saveObject invoked on Verplichting + emitter fires).
- *  - Idempotency: when an existing Verplichting carries the bronReferentie,
+ *    (saveObject invoked on Commitment + emitter fires).
+ *  - Idempotency: when an existing Commitment carries the bronReferentie,
  *    no new saveObject is issued; the budget event IS re-emitted.
  *  - Handler swallows all downstream exceptions (fail-soft).
  *
@@ -40,6 +40,8 @@ namespace OCA\Shillinq\Tests\Unit\Listener;
 
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
+use OCA\OpenRegister\Service\Deferral\ListenerDeferralService;
+use OCA\Shillinq\BackgroundJob\TenderNedAwardPromotionJob;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
 use OCA\Shillinq\Service\BudgetImpactEmitter;
 use OCA\Shillinq\Service\ListenerSchemaResolver;
@@ -113,20 +115,24 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 
 	/**
 	 * Build a container that resolves the OR ObjectService to a recording
-	 * fluent stub. Returns an array $verplichtingenRows on the Verplichting
+	 * fluent stub. Returns an array $commitmentRows on the Commitment
 	 * lookup.
 	 *
-	 * @param array<int, array<string, mixed>> $verplichtingenRows Existing matching obligations.
+	 * @param array<int, array<string, mixed>> $commitmentRows Existing matching obligations.
+	 * @param ListenerDeferralService|null     $deferral       Bind OR's deferral service, or leave it unresolvable.
 	 *
 	 * @return array{0: ContainerInterface, 1: object} Container and the recorder so the test can inspect saveObject() calls.
 	 */
-	private function containerAndRecorder(array $verplichtingenRows): array {
-		$recorder = new class($verplichtingenRows) {
+	private function containerAndRecorder(
+		array $commitmentRows,
+		?ListenerDeferralService $deferral = null,
+	): array {
+		$recorder = new class($commitmentRows) {
 
 			/**
 			 * @var array<int, array<string, mixed>>
 			 */
-			private array $verplichtingenRows;
+			private array $commitmentRows;
 
 			/**
 			 * @var string
@@ -142,7 +148,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 			 * @param array<int, array<string, mixed>> $rows Existing rows.
 			 */
 			public function __construct(array $rows) {
-				$this->verplichtingenRows = $rows;
+				$this->commitmentRows = $rows;
 			}
 
 			public function setRegister(string $register): self {
@@ -155,10 +161,83 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 			}
 
 			public function findAll(array $opts = []): array {
-				if ($this->currentSchema === 'Verplichting') {
-					return $this->verplichtingenRows;
+				if ($this->currentSchema === 'Commitment') {
+					return $this->commitmentRows;
 				}
 				return [];
+			}
+
+			/**
+			 * Current body the deferred re-read resolves to, or null for gone.
+			 *
+			 * @var array<string, mixed>|null
+			 */
+			public ?array $dossier = null;
+
+			/**
+			 * Soft-delete marker returned by the re-read.
+			 *
+			 * @var array<string, mixed>|null
+			 */
+			public ?array $dossierDeleted = null;
+
+			/**
+			 * Records what the deferred re-read asked for.
+			 *
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $finds = [];
+
+			/**
+			 * Stand in for ObjectService::find(). Parameter NAMES matter — the
+			 * listener calls this with named arguments.
+			 *
+			 * @param string|int   $id       Object uuid.
+			 * @param array|null   $_extend  Unused.
+			 * @param bool         $files    Unused.
+			 * @param string|null  $register Register slug.
+			 * @param string|null  $schema   Schema slug.
+			 *
+			 * @return object|null
+			 */
+			public function find(
+				string | int $id,
+				?array $_extend = [],
+				bool $files = false,
+				string | null $register = null,
+				string | null $schema = null,
+			): ?object {
+				$this->finds[] = ['id' => $id, 'register' => $register, 'schema' => $schema];
+				if ($this->dossier === null) {
+					return null;
+				}
+
+				return new class($this->dossier, $this->dossierDeleted) {
+
+					/**
+					 * @param array<string, mixed>      $body    Object body.
+					 * @param array<string, mixed>|null $deleted Delete marker.
+					 */
+					public function __construct(
+						private readonly array $body,
+						private readonly ?array $deleted,
+					) {
+					}
+
+					/**
+					 * @return array<string, mixed>
+					 */
+					public function getObject(): array {
+						return $this->body;
+					}
+
+					/**
+					 * @return array<string, mixed>|null
+					 */
+					public function getDeleted(): ?array {
+						return $this->deleted;
+					}
+				};
 			}
 
 			public function saveObject(array $object): array {
@@ -167,10 +246,11 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 			}
 		};
 
-		$container = new class($recorder) implements ContainerInterface {
+		$container = new class($recorder, $deferral) implements ContainerInterface {
 
 			public function __construct(
 				private readonly object $objectService,
+				private readonly ?ListenerDeferralService $deferral,
 			) {
 			}
 
@@ -178,11 +258,26 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 				if ($id === 'OCA\\OpenRegister\\Service\\ObjectService') {
 					return $this->objectService;
 				}
+
+				// Left UNBOUND by default on purpose. Every test written
+				// before the promotion was deferred (#1198) asserts the
+				// Commitment write happened during handle(), and reaches it
+				// through the listener's inline fallback — which is only
+				// honest as long as the fallback is what an unresolvable
+				// deferral service actually produces.
+				if ($id === ListenerDeferralService::class && $this->deferral !== null) {
+					return $this->deferral;
+				}
+
 				throw new class('not bound') extends \Exception implements \Psr\Container\NotFoundExceptionInterface {
 				};
 			}
 
 			public function has(string $id): bool {
+				if ($id === ListenerDeferralService::class) {
+					return $this->deferral !== null;
+				}
+
 				return $id === 'OCA\\OpenRegister\\Service\\ObjectService';
 			}
 		};
@@ -202,7 +297,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 	private function listener(
 		ContainerInterface $container,
 		string $tenantKvk = '',
-		string $schemaSlug = 'TenderNedAanbesteding',
+		string $schemaSlug = 'TenderNedProcurement',
 	): array {
 		$dispatcher = $this->recordingDispatcher();
 		$emitter = new BudgetImpactEmitter($dispatcher, new NullLogger());
@@ -243,10 +338,14 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 	 *
 	 * @return ObjectEntity
 	 */
-	private function entity(string $schemaId, array $payload): ObjectEntity {
+	private function entity(string $schemaId, array $payload, string $uuid = 'dossier-uuid-1'): ObjectEntity {
 		$entity = new ObjectEntity();
 		$entity->setSchema($schemaId);
 		$entity->setObject($payload);
+		// A uuid is not decoration here: it is the identity the deferred
+		// promotion re-reads by. Without it the listener cannot honour the
+		// at-least-once contract and deliberately stays inline.
+		$entity->setUuid($uuid);
 		return $entity;
 	}//end entity()
 
@@ -257,7 +356,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 	 */
 	public function testNonAanbestedingSchemaIsIgnored(): void {
 		[$container, $recorder] = $this->containerAndRecorder([]);
-		[$listener, $dispatcher] = $this->listener($container, '30280353', 'Verplichting');
+		[$listener, $dispatcher] = $this->listener($container, '30280353', 'Commitment');
 
 		$event = new ObjectCreatedEvent(
 			$this->entity('1089', ['status' => 'gegund', 'contractValue' => 100.0])
@@ -367,7 +466,7 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 	}//end testSupplierMismatchSkipsPromotion()
 
 	/**
-	 * A KvK match writes a Verplichting + emits the budget event (REQ-002 / REQ-007).
+	 * A KvK match writes a Commitment + emits the budget event (REQ-002 / REQ-007).
 	 *
 	 * @return void
 	 */
@@ -391,11 +490,11 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 
 		$listener->handle($event);
 
-		// 1 Verplichting + 1 update of the aanbesteding to in-uitvoering = 2 saves.
+		// 1 Commitment + 1 update of the aanbesteding to in-uitvoering = 2 saves.
 		$this->assertGreaterThanOrEqual(1, count($recorder->saves));
 		$commitmentSave = null;
 		foreach ($recorder->saves as $save) {
-			if ($save['schema'] === 'Verplichting') {
+			if ($save['schema'] === 'Commitment') {
 				$commitmentSave = $save['object'];
 				break;
 			}
@@ -413,8 +512,8 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 	}//end testMatchingKvkPromotesAndEmits()
 
 	/**
-	 * An existing Verplichting with the same bronReferentie is idempotent —
-	 * no new Verplichting is written; the budget event IS re-emitted.
+	 * An existing Commitment with the same bronReferentie is idempotent —
+	 * no new Commitment is written; the budget event IS re-emitted.
 	 *
 	 * @return void
 	 */
@@ -442,13 +541,281 @@ final class TenderNedAwardDetectedListenerTest extends TestCase {
 
 		$listener->handle($event);
 
-		// No NEW Verplichting save.
+		// No NEW Commitment save.
 		foreach ($recorder->saves as $save) {
-			$this->assertNotSame('Verplichting', $save['schema'], 'No new Verplichting should be created on idempotent re-event');
+			$this->assertNotSame('Commitment', $save['schema'], 'No new Commitment should be created on idempotent re-event');
 		}
 
 		// Budget impact event WAS re-emitted to nudge launchpad.
 		$this->assertCount(1, $dispatcher->events);
 
 	}//end testIdempotentOnExistingBronReferentie()
+
+	/**
+	 * Build the canonical eligible award event.
+	 *
+	 * @param string $tenderId Source reference to award.
+	 *
+	 * @return ObjectCreatedEvent
+	 */
+	private function eligibleAward(string $tenderId = 'TN-2026-0001'): ObjectCreatedEvent {
+		return new ObjectCreatedEvent(
+			$this->entity('1090', [
+				'status'           => 'gegund',
+				'contractValue'    => 50000.0,
+				'awardedSupplier'  => '30280353 Conduction B.V.',
+				'tenderId'         => $tenderId,
+				'title'            => 'Schoonmaak',
+				'assignmentType'   => 'delivery-in-phases',
+				'termStart'        => '2026-01-01',
+				'termEnd'          => '2026-12-31',
+				'administrationId' => 'adm-x',
+			])
+		);
+
+	}//end eligibleAward()
+
+	/**
+	 * With deferral available the promotion leaves the caller's write path.
+	 *
+	 * This is the ADR-078 contract from #1198 and the DEFAULT path in
+	 * production. Asserting `saves === []` is the whole point: every other
+	 * test in this class asserts the opposite, and would keep passing if the
+	 * deferral were wired up but never consulted.
+	 *
+	 * @return void
+	 */
+	public function testPromotionIsDeferredWhenDeferralIsEnabled(): void {
+		$deferral = new ListenerDeferralService(enabled: true);
+		[$container, $recorder] = $this->containerAndRecorder([], $deferral);
+		[$listener, $dispatcher] = $this->listener($container, '30280353');
+
+		$listener->handle($this->eligibleAward());
+
+		// Nothing was written, and no CloudEvent was emitted, DURING the
+		// OpenRegister write that raised the event.
+		$this->assertSame([], $recorder->saves);
+		$this->assertCount(0, $dispatcher->events);
+
+		// It was queued instead — onto the job, carrying the payload, keyed
+		// so the Created + Transitioned surfaces collapse into one promotion.
+		$this->assertCount(1, $deferral->deferred);
+		$this->assertSame(
+			TenderNedAwardPromotionJob::class,
+			$deferral->deferred[0]['jobClass']
+		);
+		$this->assertSame(
+			'TN-2026-0001',
+			$deferral->deferred[0]['entry']['payload']['tenderId']
+		);
+		$this->assertSame(
+			TenderNedAwardDetectedListener::HANDLER_KEY . '|TN-2026-0001',
+			$deferral->deferred[0]['dedupeKey']
+		);
+
+	}//end testPromotionIsDeferredWhenDeferralIsEnabled()
+
+	/**
+	 * The buffered entry must survive the job-argument JSON round-trip.
+	 *
+	 * `defer()` serialises the entry into job arguments. A payload that only
+	 * works in-process would defer cleanly here and then arrive at the job
+	 * with fields missing — a failure with no error at either end.
+	 *
+	 * @return void
+	 */
+	public function testDeferredEntrySurvivesJsonRoundTrip(): void {
+		$deferral = new ListenerDeferralService(enabled: true);
+		[$container] = $this->containerAndRecorder([], $deferral);
+		[$listener] = $this->listener($container, '30280353');
+
+		$listener->handle($this->eligibleAward());
+
+		$entry   = $deferral->deferred[0]['entry'];
+		$encoded = json_encode($entry);
+		$this->assertIsString($encoded);
+
+		$decoded = json_decode($encoded, true);
+
+		// No field is dropped crossing the boundary.
+		$this->assertSame(
+			array_keys($entry['payload']),
+			array_keys($decoded['payload'])
+		);
+		$this->assertEquals($entry, $decoded);
+
+		// The values survive but their PHP TYPES do not: json_encode(50000.0)
+		// writes `50000`, which decodes as int. Measured here, not assumed.
+		// It is harmless today only because promote() casts on the way in
+		// (`'amount' => (float)($payload['contractValue'] ?? 0)`). A future
+		// field where int-vs-float decides behaviour would arrive at the job
+		// silently retyped — no error at either end — so the coercion is
+		// pinned rather than papered over with a loose comparison.
+		$this->assertSame(50000.0, $entry['payload']['contractValue']);
+		$this->assertSame(50000, $decoded['payload']['contractValue']);
+
+	}//end testDeferredEntrySurvivesJsonRoundTrip()
+
+	/**
+	 * Admin-selected inline mode still promotes, on the caller's path.
+	 *
+	 * @return void
+	 */
+	public function testInlineModePromotesSynchronously(): void {
+		$deferral = new ListenerDeferralService(enabled: false);
+		[$container, $recorder] = $this->containerAndRecorder([], $deferral);
+		[$listener, $dispatcher] = $this->listener($container, '30280353');
+
+		$listener->handle($this->eligibleAward());
+
+		$this->assertSame([], $deferral->deferred);
+		$this->assertNotEmpty($recorder->saves);
+		$this->assertCount(1, $dispatcher->events);
+
+	}//end testInlineModePromotesSynchronously()
+
+	/**
+	 * The deferred entry point performs the same promotion as the inline one.
+	 *
+	 * Guards the seam the job calls through: if `runDeferredPromotion()` ever
+	 * stops reaching `promote()`, deferral becomes a silent drop — the
+	 * listener would report nothing wrong and no Commitment would appear.
+	 *
+	 * @return void
+	 */
+	public function testRunDeferredPromotionWritesTheCommitment(): void {
+		[$container, $recorder] = $this->containerAndRecorder([]);
+		[$listener, $dispatcher] = $this->listener($container, '30280353');
+
+		// The dossier as it stands NOW — this, not the buffered payload, is
+		// what the promotion must be built from.
+		$recorder->dossier = $this->awardBody('TN-2026-0002');
+
+		$listener->runDeferredPromotion([
+			'uuid'    => 'dossier-uuid-1',
+			'schema'  => 'TenderNedProcurement',
+			'payload' => ['tenderId' => 'STALE-SHOULD-NOT-BE-USED'],
+		]);
+
+		$commitmentSave = null;
+		foreach ($recorder->saves as $save) {
+			if ($save['schema'] === 'Commitment') {
+				$commitmentSave = $save['object'];
+				break;
+			}
+		}
+
+		$this->assertNotNull($commitmentSave);
+		// Proves the promotion used the re-read body, not the buffered one.
+		$this->assertSame('TN-2026-0002', $commitmentSave['sourceReference']);
+		$this->assertSame('active', $commitmentSave['status']);
+		$this->assertCount(1, $dispatcher->events);
+
+		// And it re-read by the identity captured at dispatch time.
+		$this->assertSame('dossier-uuid-1', $recorder->finds[0]['id']);
+		$this->assertSame('TenderNedProcurement', $recorder->finds[0]['schema']);
+
+	}//end testRunDeferredPromotionWritesTheCommitment()
+
+	/**
+	 * A dossier deleted between the event and the job must not promote.
+	 *
+	 * Deferred delivery is at-least-once, so the job can land after a delete
+	 * or a same-uuid re-create. Promoting the buffered snapshot would create
+	 * a Commitment referencing an award that no longer exists — and because
+	 * the promotion is fail-soft, nothing downstream would report it.
+	 *
+	 * @return void
+	 */
+	public function testDeletedDossierIsNotPromoted(): void {
+		[$container, $recorder] = $this->containerAndRecorder([]);
+		[$listener, $dispatcher] = $this->listener($container, '30280353');
+
+		$recorder->dossier = null;
+
+		$listener->runDeferredPromotion([
+			'uuid'    => 'dossier-uuid-1',
+			'schema'  => 'TenderNedProcurement',
+			'payload' => $this->awardBody('TN-2026-0003'),
+		]);
+
+		$this->assertSame([], $recorder->saves);
+		$this->assertCount(0, $dispatcher->events);
+
+	}//end testDeletedDossierIsNotPromoted()
+
+	/**
+	 * A soft-deleted dossier counts as gone.
+	 *
+	 * `find()` still returns the entity for a soft-deleted object, so a null
+	 * check alone would sail straight past it and promote a deleted dossier.
+	 *
+	 * @return void
+	 */
+	public function testSoftDeletedDossierIsNotPromoted(): void {
+		[$container, $recorder] = $this->containerAndRecorder([]);
+		[$listener, $dispatcher] = $this->listener($container, '30280353');
+
+		$recorder->dossier        = $this->awardBody('TN-2026-0004');
+		$recorder->dossierDeleted = ['deletedAt' => '2026-08-24T05:00:00Z'];
+
+		$listener->runDeferredPromotion([
+			'uuid'    => 'dossier-uuid-1',
+			'schema'  => 'TenderNedProcurement',
+			'payload' => $this->awardBody('TN-2026-0004'),
+		]);
+
+		$this->assertSame([], $recorder->saves);
+		$this->assertCount(0, $dispatcher->events);
+
+	}//end testSoftDeletedDossierIsNotPromoted()
+
+	/**
+	 * An award reverted before the job runs must not promote.
+	 *
+	 * The buffered payload said `gegund`; the dossier no longer does. The
+	 * eligibility rules have to be re-applied to the CURRENT body, or moving
+	 * the work to cron would quietly promote awards that were taken back.
+	 *
+	 * @return void
+	 */
+	public function testAwardRevertedBeforeTheJobRunsIsNotPromoted(): void {
+		[$container, $recorder] = $this->containerAndRecorder([]);
+		[$listener, $dispatcher] = $this->listener($container, '30280353');
+
+		$reverted           = $this->awardBody('TN-2026-0005');
+		$reverted['status'] = 'open';
+		$recorder->dossier  = $reverted;
+
+		$listener->runDeferredPromotion([
+			'uuid'    => 'dossier-uuid-1',
+			'schema'  => 'TenderNedProcurement',
+			'payload' => $this->awardBody('TN-2026-0005'),
+		]);
+
+		$this->assertSame([], $recorder->saves);
+		$this->assertCount(0, $dispatcher->events);
+
+	}//end testAwardRevertedBeforeTheJobRunsIsNotPromoted()
+
+	/**
+	 * An eligible award body, as stored on the dossier.
+	 *
+	 * @param string $tenderId Tender id.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function awardBody(string $tenderId): array {
+		return [
+			'status'          => 'gegund',
+			'contractValue'   => 12000.0,
+			'awardedSupplier' => '30280353 Conduction B.V.',
+			'tenderId'        => $tenderId,
+			'title'           => 'Onderhoud',
+			'assignmentType'  => 'other',
+			'termStart'       => '2026-02-01',
+			'termEnd'         => '2026-11-30',
+		];
+
+	}//end awardBody()
 }//end class

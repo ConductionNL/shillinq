@@ -372,7 +372,9 @@
         },
         "x-openregister-notifications": {
           "onNewStatement": {
-            "trigger": "onCreate",
+            "trigger": {
+              "type": "created"
+            },
             "recipients": [
               {
                 "resolver": "bank-connection-operator",
@@ -1060,8 +1062,8 @@
             "sourceSchema": "GLLine",
             "groupBy": [
               "periodId",
-              "BbvAccountMapping.taakveld",
-              "BbvAccountMapping.iv3Categorie"
+              "BbvAccountMapping.taskField",
+              "BbvAccountMapping.iv3Bucket"
             ],
             "filter": {
               "eliminationFlag": false,
@@ -1072,8 +1074,8 @@
               "through": "BbvAccountMapping",
               "on": "BbvAccountMapping.accountNumber",
               "select": [
-                "BbvAccountMapping.taakveld",
-                "BbvAccountMapping.iv3Categorie"
+                "BbvAccountMapping.taskField",
+                "BbvAccountMapping.iv3Bucket"
               ]
             },
             "operations": {
@@ -2030,7 +2032,6 @@
               "select": "Account.accountType"
             },
             "filter": {
-              "administrationId": "@self.administrationId",
               "fiscalYearId": "@self.fiscalYearId",
               "eliminationFlag": false
             },
@@ -2244,7 +2245,6 @@
           "trialBalanceTotals": {
             "description": "Computes totalDebits, totalCredits, and isBalanced flag from GLLine entries for the fiscal period. Satisfies REQ-FS-005 verification check. No TrialBalanceService — pure declarative aggregation per ADR-031.",
             "filter": {
-              "administrationId": "@self.administrationId",
               "fiscalYearId": "@self.fiscalYearId",
               "eliminationFlag": false
             },
@@ -2282,7 +2282,6 @@
               ]
             },
             "filter": {
-              "administrationId": "@self.administrationId",
               "fiscalYearId": "@self.fiscalYearId",
               "eliminationFlag": false
             },
@@ -2834,7 +2833,6 @@
             "groupBy": "BbvAccountMapping.iv3Bucket",
             "valueField": "debit - credit",
             "filter": {
-              "administrationId": "@self.administrationId",
               "periodId": {
                 "from": "BookkeepingPeriod",
                 "where": {
@@ -3079,7 +3077,6 @@
             "filter": {
               "eliminationFlag": false,
               "GLTransaction.state": "posted",
-              "administrationId": "@self.administrationId",
               "fiscalYearId": "@self.fiscalYearId"
             },
             "operations": {
@@ -4407,7 +4404,6 @@
             "operation": "sum",
             "field": "totalAmountExclVat",
             "filter": {
-              "administrationId": "@self.administrationId",
               "invoiceYear": "@self.currentCalendarYear",
               "state": {
                 "not": [
@@ -4451,7 +4447,8 @@
             "message": "KOR-omzetdrempel van €{{thresholdAmount}} is overschreden (ytdRevenue: €{{ytdRevenue}}). Opt-out vereist; er wordt een journaalpost aangemaakt ter beoordeling."
           },
           "onOptOut": {
-            "trigger": "lifecycle.optOutFromExceeded,lifecycle.optOutFromOptedIn",
+            "_note": "Was a comma-separated pair, 'lifecycle.optOutFromExceeded,lifecycle.optOutFromOptedIn'. A trigger names ONE event; a comma-list matches neither. Both paths end in the same outcome — the administration left KOR — and the recipients and message are identical either way, so they collapse to one event the app raises from both places. If the two paths ever need different wording, split them into two rules rather than reintroducing a list.",
+            "trigger": "lifecycle.optOut",
             "description": "Notify vat-administrator when the administration opts out of KOR.",
             "recipients": {
               "role": "vat-administrator",
@@ -8136,7 +8133,6 @@
               "register": "shillinq",
               "schema": "ClosingEntry",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "fiscalYearId": "@self.id",
                 "entryType": {
                   "in": [
@@ -8183,7 +8179,6 @@
               "register": "shillinq",
               "schema": "ClosingEntry",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "fiscalYearId": "@self.id",
                 "entryType": "depreciation",
                 "approvalStatus": {
@@ -8202,7 +8197,6 @@
               "register": "shillinq",
               "schema": "FixedAsset",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "lifecycleState": "active"
               }
             }
@@ -8214,7 +8208,6 @@
               "register": "shillinq",
               "schema": "ClosingEntry",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "fiscalYearId": "@self.id",
                 "currency": {
                   "!=": "EUR"
@@ -8229,7 +8222,6 @@
               "register": "shillinq",
               "schema": "GLTransaction",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "fiscalYearId": "@self.id",
                 "currency": {
                   "!=": "EUR"
@@ -8244,7 +8236,6 @@
               "register": "shillinq",
               "schema": "GLTransaction",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "fiscalYearId": "@self.id",
                 "state": "posted",
                 "relatedParty": true,
@@ -8261,7 +8252,6 @@
               "register": "shillinq",
               "schema": "GLTransaction",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "fiscalYearId": "@self.id",
                 "state": "posted",
                 "relatedParty": true
@@ -8292,7 +8282,6 @@
               "register": "shillinq",
               "schema": "RetainedEarnings",
               "filter": {
-                "administrationId": "@self.administrationId",
                 "fiscalYear.yearNumber": "@self.yearNumber - 1"
               }
             }
@@ -8767,7 +8756,6 @@
               "register": "shillinq",
               "schema": "RetainedEarnings",
               "match": {
-                "administrationId": "@self.administrationId",
                 "fiscalYear.yearNumber": "@self.fiscalYear.yearNumber - 1"
               }
             },
@@ -10627,7 +10615,7 @@
         "x-openregister-notifications": {
           "lowStockAlert": {
             "description": "Dispatches a low-stock alert when InventoryStock.quantity ≤ minimumLevel and lifecycleState = active and (snoozeUntil is null or snoozeUntil < now). REQ-IRA-004.",
-            "trigger": "aggregation:lowStockTrigger",
+            "trigger": "aggregation.lowStockTrigger",
             "guard": {
               "field": "lifecycleState",
               "equals": "active"
@@ -10676,7 +10664,7 @@
           },
           "spendingLimitExceeded": {
             "description": "Dispatches an escalation notification to procurement-manager role when auto-PO total exceeds spendingLimit. REQ-IRA-006.",
-            "trigger": "auto-po-spending-limit-exceeded",
+            "trigger": "purchase-order.spendingLimitExceeded",
             "notificationType": "inventory-spending-limit-exceeded",
             "recipientRole": "procurement-manager",
             "channels": [
@@ -13659,7 +13647,6 @@
             "sourceSchema": "Obligation",
             "sourceRegister": "shillinq",
             "filter": {
-              "administrationId": "@self.administrationId",
               "fiscalYear": "@self.fiscalYear",
               "grantIsSISAEligible": true,
               "status": {
@@ -13689,7 +13676,6 @@
             "sourceSchema": "ComplianceAuditTrail",
             "sourceRegister": "shillinq",
             "filter": {
-              "administrationId": "@self.administrationId",
               "fiscalYear": "@self.fiscalYear"
             },
             "operations": {
@@ -14675,7 +14661,24 @@
         "x-openregister-notifications": {
           "filingDeadlineReminder": {
             "description": "REQ-SBR-008: notify operators 30 days before filingDeadline when the administration's entity type is in applicableEntityTypes and the filing is not yet submitted.",
-            "trigger": "scheduled",
+            "_note": "The applicableEntityTypes half of REQ-SBR-008 is not expressed here: it is a condition on the ADMINISTRATION, and a scheduled filter evaluates fields of the object it scans. The deadline window and the not-yet-submitted half are, so the rule now fires for the right documents and over-reaches only on entity type.",
+            "trigger": {
+              "type": "scheduled",
+              "intervalSec": 86400,
+              "filter": {
+                "filingDeadline": {
+                  "operator": "withinNext",
+                  "value": "P30D"
+                },
+                "filingState": {
+                  "operator": "notIn",
+                  "values": [
+                    "submitted",
+                    "approved"
+                  ]
+                }
+              }
+            },
             "scheduledDaysBeforeField": "filingDeadline",
             "daysBefore": 30,
             "condition": "filingState IN ('draft', 'validated') AND status = 'active'",
@@ -15593,7 +15596,7 @@
         },
         "x-openregister-notifications": {
           "onOverdue": {
-            "trigger": "lifecycle:markOverdue",
+            "trigger": "lifecycle.markOverdue",
             "recipients": [
               "subsidie-coordinator"
             ],
@@ -16891,7 +16894,6 @@
                   "schema": "WinstToerekening",
                   "condition": "WinstToerekening.ipAssetId IN (SELECT id FROM IPAssetValuation WHERE administrationId = @self.administrationId)",
                   "filter": {
-                    "administrationId": "@self.administrationId",
                     "fiscalYear": "@self.fiscalYear"
                   }
                 },
@@ -17504,7 +17506,6 @@
             ],
             "valueField": "amount",
             "filter": {
-              "administrationId": "@self.administrationId",
               "transactionDate": {
                 "gte": "@self.periodStart",
                 "lte": "@self.periodEnd"
@@ -17911,7 +17912,6 @@
             "groupBy": "VatTariff.rubriek",
             "valueField": "amount",
             "filter": {
-              "administrationId": "@self.administrationId",
               "periodStart": {
                 "gte": "@self.periodStart"
               },
@@ -18488,7 +18488,6 @@
             "sourceSchema": "GLLine",
             "sourceRegister": "shillinq",
             "filter": {
-              "administrationId": "@self.administrationId",
               "fiscalYear": "@self.taxYear",
               "entryType": "credit",
               "accountType": "revenue"
@@ -18500,7 +18499,6 @@
             "sourceSchema": "GLLine",
             "sourceRegister": "shillinq",
             "filter": {
-              "administrationId": "@self.administrationId",
               "fiscalYear": "@self.taxYear",
               "entryType": "debit",
               "accountType": "expense"
@@ -18870,7 +18868,6 @@
             "operation": "sum",
             "field": "hours",
             "filter": {
-              "administrationId": "@self.administrationId",
               "personId": "@self.personId",
               "date": {
                 "gte": "@self.taxYear + '-01-01'",
@@ -18892,7 +18889,6 @@
             "operation": "sum",
             "field": "amount",
             "filter": {
-              "administrationId": "@self.administrationId",
               "fiscalYear": "@self.taxYear",
               "taxCategory": "self-employment-income"
             },
@@ -18909,7 +18905,7 @@
         },
         "x-openregister-notifications": {
           "onCriteriumMet": {
-            "trigger": "calculation-crossing:qualifiesForUrencriterium",
+            "trigger": "calculation.qualifiesForUrencriterium",
             "condition": "qualifiesForUrencriterium === true",
             "description": "Notify zzp-administrator when 1225-urencriterium is met. REQ-ZZP-004.",
             "recipients": {
@@ -18920,7 +18916,8 @@
             "message": "Het urencriterium voor {{taxYear}} is gehaald ({{ytdQualifyingHours}} uren). Zelfstandigenaftrek is van toepassing."
           },
           "onCriteriumAtRisk": {
-            "trigger": "scheduled:monthly",
+            "_note": "Kept as an app event rather than converted to {type: scheduled}. The condition is 'PROJECTED end-of-year qualifying hours < 1225' — a projection over ytdQualifyingHours and the remaining year, not a stored field, and the scheduled filter grammar has no numeric comparison. shillinq must compute the projection and raise this event; a monthly scheduled trigger could pick the cadence but not the test.",
+            "trigger": "zzp.criteriumAtRisk",
             "condition": "ytdQualifyingHours * (12 / currentMonth()) < 1225",
             "description": "Monthly projection: warn zzp-administrator when projected EOY qualifying hours < 1225. REQ-ZZP-004.",
             "recipients": {
@@ -23020,7 +23017,7 @@
       },
       "x-openregister-notifications": {
         "onSisaSubmitted": {
-          "trigger": "onAuditEvent:sisa.submitted",
+          "trigger": "audit.sisaSubmitted",
           "recipients": [
             {
               "resolver": "administration-financial-officer",

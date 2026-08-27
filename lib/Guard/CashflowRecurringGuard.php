@@ -15,6 +15,9 @@
  *      not before geldigVan (a non-empty validity window).
  *   4. CPI indexing (indexatieRegel = CPI_AFGELOPEN_JAAR) is only meaningful for
  *      JAARLIJKS items; on other frequencies it is rejected.
+ *   5. (budget-known-costs REQ-BKC-002) When contractReference is set, validFrom/
+ *      validTo must fall within the referenced Contract's own startDate/endDate,
+ *      open on whichever side the Contract itself leaves open.
  *
  * Referenced from the CashflowRecurring schema's x-openregister-lifecycle.preconditions.save
  * in lib/Settings/register.d/zzp-cashflow-13wk.json.
@@ -26,6 +29,12 @@
  * when the engine supports cross-field predicates. It computes nothing about the
  * forecast itself — all forecast maths stays in OR aggregations.
  *
+ * `budget-known-costs` (REQ-BKC-002) extends this guard with one further
+ * check, {@see hasConsistentContractWindow()}: when `contractReference` is
+ * set, `validFrom`/`validTo` must fall within the referenced `Contract`'s
+ * own `startDate`/`endDate`, open on whichever side the Contract itself
+ * leaves open (`design.md` §3c).
+ *
  * @category Guard
  * @package  OCA\Shillinq\Guard
  *
@@ -36,6 +45,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/zzp-cashflow-13wk/tasks.md#task-5
+ * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-002
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,6 +56,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Guard;
 
 use DateTimeImmutable;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
+use OCA\Shillinq\AppInfo\Application;
+use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -65,12 +78,26 @@ class CashflowRecurringGuard {
 	private const MONTHLY_FREQUENCIES = ['MONTHLY'];
 
 	/**
+	 * The Contract schema slug (contract-lifecycle-management).
+	 *
+	 * @var string
+	 */
+	private const SCHEMA_CONTRACT = 'Contract';
+
+	/**
 	 * Construct the guard.
 	 *
+	 * @param IAppConfig $appConfig App config for register slug resolution
+	 *                              (REQ-BKC-002's Contract-window check).
 	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 * @param ObjectServiceInterface $objectService OpenRegister object service (ADR-083/084),
+	 *                                              used to resolve a `contractReference`'s
+	 *                                              Contract when one is set.
 	 */
 	public function __construct(
+		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
 	) {
 	}//end __construct()
 
@@ -100,7 +127,11 @@ class CashflowRecurringGuard {
 				return false;
 			}
 
-			return $this->hasApplicableIndexation(recurring: $recurring);
+			if ($this->hasApplicableIndexation(recurring: $recurring) === false) {
+				return false;
+			}
+
+			return $this->hasConsistentContractWindow(recurring: $recurring);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'CashflowRecurringGuard: validateOnSave failed — denying save (fail-closed)',
@@ -247,6 +278,119 @@ class CashflowRecurringGuard {
 
 		return true;
 	}//end hasApplicableIndexation()
+
+	/**
+	 * When `contractReference` is set, `validFrom`/`validTo` must fall within
+	 * the referenced `Contract`'s own `startDate`/`endDate` — open on
+	 * whichever side the Contract itself leaves open (`budget-known-costs`
+	 * REQ-BKC-002, `design.md` §3c). An absent `contractReference` skips this
+	 * check entirely; an unresolvable Contract reference is treated the same
+	 * way (nothing to bound against) rather than denied, since a dangling
+	 * reference is a different, pre-existing data-integrity concern this
+	 * change does not own.
+	 *
+	 * @param array<string, mixed> $recurring Recurring object array.
+	 *
+	 * @return bool True when no contract window is violated.
+	 *
+	 * @spec openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md#req-bkc-002
+	 */
+	private function hasConsistentContractWindow(array $recurring): bool {
+		$contractReference = (string)($recurring['contractReference'] ?? '');
+		if ($contractReference === '') {
+			return true;
+		}
+
+		$contract = $this->fetchContract(contractReference: $contractReference);
+		if ($contract === null) {
+			return true;
+		}
+
+		$from = $this->parseDate(value: (string)($recurring['validFrom'] ?? ''));
+		if ($from === null) {
+			// The hasValidValidityWindow() check already denies this case;
+			// nothing further to check here.
+			return true;
+		}
+
+		$contractStart = $this->parseDate(value: (string)($contract['startDate'] ?? ''));
+		if ($contractStart !== null && $from < $contractStart) {
+			$this->logger->info(
+				'CashflowRecurringGuard: validFrom precedes the linked Contract\'s startDate — denying save',
+				['recurId' => ($recurring['recurId'] ?? 'unknown'), 'contractReference' => $contractReference]
+			);
+			return false;
+		}
+
+		$toRaw = ($recurring['validTo'] ?? null);
+		if ($toRaw === null || $toRaw === '') {
+			return true;
+		}
+
+		$to = $this->parseDate(value: (string)$toRaw);
+		if ($to === null) {
+			// The hasValidValidityWindow() check already denies this case.
+			return true;
+		}
+
+		$contractEnd = $this->parseDate(value: (string)($contract['endDate'] ?? ''));
+		if ($contractEnd !== null && $to > $contractEnd) {
+			$this->logger->info(
+				'CashflowRecurringGuard: validTo follows the linked Contract\'s endDate — denying save',
+				['recurId' => ($recurring['recurId'] ?? 'unknown'), 'contractReference' => $contractReference]
+			);
+			return false;
+		}
+
+		return true;
+
+	}//end hasConsistentContractWindow()
+
+	/**
+	 * Fetch the Contract a `contractReference` points at (by id, UUID or
+	 * slug), returning null when it cannot be resolved.
+	 *
+	 * @param string $contractReference The `contractReference` value.
+	 *
+	 * @return array<string, mixed>|null The Contract object array, or null.
+	 */
+	private function fetchContract(string $contractReference): ?array {
+		try {
+			$result = $this->objectService
+				->setRegister($this->register())
+				->setSchema(self::SCHEMA_CONTRACT)
+				->find($contractReference);
+
+			if ($result === null) {
+				return null;
+			}
+
+			$serialized = $result->jsonSerialize();
+			if (is_array($serialized) === true) {
+				return $serialized;
+			}
+
+			return null;
+		} catch (\Throwable) {
+			return null;
+		}//end try
+
+	}//end fetchContract()
+
+	/**
+	 * Resolve the OpenRegister register slug from app config.
+	 *
+	 * @return string The register slug, defaulting to `shillinq`.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
+
+		return $register;
+
+	}//end register()
 
 	/**
 	 * Validate a day-of-month integer in the inclusive range 1-31.

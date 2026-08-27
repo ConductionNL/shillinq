@@ -235,9 +235,6 @@ class ObligationTaskBridge {
 				->setSchema(schema: 'ContractObligation')
 				->findAll([]);
 
-			if (is_array($rows) === false) {
-				return [];
-			}
 
 			$deadlines = [];
 			foreach (array_values($rows) as $row) {

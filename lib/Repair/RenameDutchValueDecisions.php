@@ -268,7 +268,27 @@ class RenameDutchValueDecisions
             'afgesloten' => 'closed',
             'geannuleerd' => 'cancelled',
             'teruggevorderd' => 'reclaimed',
+            // Commitment.kind (tranche 2). CommitmentMovement.kind above shares
+            // this column; the two vocabularies are disjoint, so one bucket is
+            // safe. Mandate.kind_commitment holds the SAME four values but in a
+            // JSON ARRAY, and `rewrite()` is an equality UPDATE — see the note
+            // on kind_commitment below.
+            'inkooporder' => 'purchase_order',
+            'arbeidscontract' => 'employment_contract',
+            'subsidiebeschikking' => 'grant_decision',
+            'huurovereenkomst' => 'lease_agreement',
         ],
+        // NO 'kind_commitment' BUCKET, DELIBERATELY. Mandate.kind_commitment is
+        // an ARRAY of the Commitment.kind values renamed just above, and
+        // ValueMigrationPort::rewrite() is `UPDATE t SET c = ? WHERE c = ?` —
+        // an equality match on the whole cell. Against a stored `["inkooporder",
+        // "leasing"]` it matches nothing and returns 0, so the step would report
+        // success having migrated no mandate at all. Adding the entry anyway
+        // would be worse than leaving it out: it would look like the rename was
+        // covered. Stored Mandate rows therefore need a separate array-aware
+        // repair step (read-modify-write of the JSON list) before
+        // MandateEnforcer::mandateApplies() will match them again; the schema
+        // and both seed sources already carry the English values.
         'state' => [
             'geboekt' => 'posted',
             'ingediend_bij_MA' => 'submitted_at_ma',
@@ -401,6 +421,27 @@ class RenameDutchValueDecisions
             'concept' => 'draft',
             'vastgesteld' => 'determined',
             'vrijgesteld' => 'exempt',
+            // Commitment.status (tranche 2). Every one of these seven is unique
+            // to bookkeeping-verplichtingenadministratie.json across all 100+
+            // `status` enums in the register, which is what makes a bucket
+            // keyed on the bare property name safe here.
+            //
+            // ApprovalStep.status is DELIBERATELY ABSENT and must stay absent
+            // until its collision is resolved: two of its values,
+            // `in_behandeling` and `afgewezen`, are also live in
+            // Rechtmatigheidstoets.status, Rechtmatigheidsbevinding.status,
+            // JournalEntry.lawfulness.status and ReviewWorkflow's nested step
+            // and comment statuses. Those fragments still declare the Dutch
+            // enum, so an entry here would rewrite their stored rows and leave
+            // schema and data desynced — silently, because an out-of-enum
+            // stored value does not error, it just stops matching a filter.
+            'in_goedkeuring' => 'in_approval',
+            'aangegaan' => 'committed',
+            'deels_geleverd' => 'partially_delivered',
+            'deels_gefactureerd' => 'partially_invoiced',
+            'deels_betaald' => 'partially_paid',
+            'afgesloten' => 'closed',
+            'geannuleerd' => 'cancelled',
         ],
         'claimType' => [
             'overig' => 'other',
@@ -525,6 +566,21 @@ class RenameDutchValueDecisions
         'vat_regime' => [
             'standaard' => 'standard',
             'vrijgesteld' => 'exempt',
+            // Commitment.vat_regime (tranche 2). `verlegd` is the BTW reverse
+            // charge. The word also appears in other fragments, but only ever
+            // under a DIFFERENT property (btwTarief, vatTreatment, prose), and
+            // this bucket is scoped to the `vat_regime` column alone.
+            'verlegd' => 'reverse_charged',
+        ],
+        // ApprovalStep.role_required (tranche 2). The only `role_required`
+        // column in the register — PurchaseOrder's approval chain spells its
+        // equivalent `role`, which this bucket does not touch.
+        'role_required' => [
+            'budgethouder' => 'budget_holder',
+            'teamleider' => 'team_lead',
+            'directeur' => 'director',
+            // College van B&W, the municipal executive board — not a school.
+            'college' => 'municipal_executive',
         ],
         'paymentArrangement' => [
             'maandelijks' => 'monthly',

@@ -33,34 +33,35 @@
  * credit leg are excluded from the GL debit slice) — they answer different
  * questions and are labelled distinctly.
  *
- * ⚠️ ADMINISTRATION SCOPE IS NOT UNIFORM ACROSS THE FOUR VIEWS, because the
- * two source schemas do not carry the same scope column.
+ * ADMINISTRATION SCOPE IS UNIFORM ACROSS ALL FOUR VIEWS. Every one of them
+ * takes the caller's administration and pushes it into the aggregation filter,
+ * so the totals returned contain no other administration's money.
  *
  *  - `APTransaction` DECLARES `administrationId` (bookkeeping-accounts-payable-
- *    core.json), so `spendBySupplier()` takes the caller's administration and
- *    pushes it into the aggregation filter. That view is really scoped.
- *  - `GLLine` declares NO administration/organisation property at all (its
- *    property set is transactionId, lineNumber, accountNumber, side, amount,
- *    currency, description, costCenter(Code), costCarrierCode, projectCode,
- *    periodId, ozbCategory, dimensions, subLedgerType, subLedgerRef,
- *    accountRef, eliminationFlag) — the administration lives one hop away on
- *    the parent `GLTransaction`. OpenRegister's `filters` address the object's
- *    own JSON properties and cannot join, so there is NO filter this service
- *    can pass that scopes a GLLine aggregation to one administration. A
- *    filter on `administrationId` here would address a property that does not
- *    exist and match NOTHING for every value — a silent zero in a bookkeeping
- *    total, which is worse than the exposure it would pretend to fix. So it is
- *    deliberately NOT applied, and the category / cost-centre / period views
- *    aggregate every administration in the register.
+ *    core.json), so `spendBySupplier()` has always been scoped.
+ *  - `GLLine` NOW declares `administrationId` too, denormalised from the parent
+ *    `GLTransaction` by `register.d/glline-administration-scope.json`
+ *    (REQ-GLS-001). Until that fragment landed it declared no administration or
+ *    organisation property at all — the administration lived one hop away on
+ *    the parent, and OpenRegister's `filters` address an object's own JSON
+ *    properties and cannot join — so the category / cost-centre / period views
+ *    aggregated EVERY administration in the register while looking scoped.
+ *    That is closed. The parent remains the source of truth; this column is a
+ *    copy that exists purely so the filter has something to address.
  *
- * The controller's membership check (AdministrationContextService::canAccess())
- * is therefore the ONLY containment on the three GL views: it reduces the
- * audience from "any authenticated Nextcloud user" to "a member of some
- * administration", but it does not stop a member of administration A reading
- * administration B's category / cost-centre / period totals. Closing that
- * needs `administrationId` denormalised onto GLLine plus a backfill of the
- * existing rows — a schema + data migration, tracked separately. Do not
- * "fix" it by adding the unmatched filter.
+ * ⚠️ THE FILTER IS CONDITIONAL, AND THAT IS THE LOAD-BEARING PART. Filtering on
+ * a property that some rows lack matches NOTHING for those rows, so switching
+ * this on over a half-backfilled ledger returns a silent ZERO in a bookkeeping
+ * total — a wrong number that looks like a real one, which is worse than the
+ * cross-administration read it replaces. So the GL-backed views do not simply
+ * filter: they first require `GlLineAdministrationBackfillMigrator::
+ * GATE_CONFIG_KEY` to hold `GATE_CONTRACT_VERSION`, a value only
+ * `BackfillGlLineAdministration` writes, and only after RE-READING every
+ * `GLLine` row and counting zero without a scope. When the gate is shut the
+ * views RAISE (see assertGlScopeIsEnforceable()). Raising is the right third
+ * option: it leaks nothing, unlike serving unscoped totals, and it claims
+ * nothing false, unlike serving zeros. Do not replace that raise with a
+ * fallback to the unfiltered query — that is the original bug, re-armed.
  *
  * What DOES NOT scope these reads, verified rather than assumed:
  *  - OR's `AggregationRunner` applies a `_organisation = ?` predicate and a
@@ -93,6 +94,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\OpenRegister\Service\Aggregation\AggregationQuery;
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\Migration\GlLineAdministrationBackfillMigrator;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -189,24 +191,27 @@ class SpendAnalyticsService {
 
 	/**
 	 * Spend grouped by expense category (GL accountNumber) over the debit AP
-	 * expense postings.
+	 * expense postings, scoped to one administration.
 	 *
-	 * ⚠️ NOT administration-scoped, and deliberately takes no administration
-	 * parameter so the signature does not imply a scope it cannot apply:
-	 * `GLLine` declares no administration property, so no filter this service
-	 * can pass would narrow the aggregation to one tenant. See the class
-	 * docblock.
+	 * Scoped through `GLLine.administrationId`, denormalised from the parent
+	 * `GLTransaction` (REQ-GLS-001). Raises rather than returning anything at
+	 * all while the backfill gate is shut — see the class docblock.
+	 *
+	 * @param string $administrationId The administration the caller is a member of.
 	 *
 	 * @return array<string,mixed> `{ dimension, groups:[{key,amount}], total, backend }`.
 	 *
+	 * @throws RuntimeException When the GLLine administration backfill is not proven complete.
+	 *
 	 * @spec openspec/specs/spend-analytics/spec.md
+	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
-	public function spendByCategory(): array {
+	public function spendByCategory(string $administrationId): array {
 		return $this->aggregate(
 			dimension: 'category',
 			schema: self::SCHEMA_GL_LINE,
 			metricField: 'amount',
-			filter: $this->apExpenseDebitFilter(),
+			filter: $this->apExpenseDebitFilter(administrationId: $administrationId),
 			groupField: 'accountNumber'
 		);
 
@@ -214,21 +219,23 @@ class SpendAnalyticsService {
 
 	/**
 	 * Spend grouped by analytical cost centre (GL costCenterCode) over the
-	 * debit AP expense postings.
+	 * debit AP expense postings, scoped to one administration.
 	 *
-	 * ⚠️ NOT administration-scoped — see spendByCategory() and the class
-	 * docblock for why `GLLine` cannot be filtered to one administration.
+	 * @param string $administrationId The administration the caller is a member of.
 	 *
 	 * @return array<string,mixed> `{ dimension, groups:[{key,amount}], total, backend }`.
 	 *
+	 * @throws RuntimeException When the GLLine administration backfill is not proven complete.
+	 *
 	 * @spec openspec/specs/spend-analytics/spec.md
+	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
-	public function spendByCostCentre(): array {
+	public function spendByCostCentre(string $administrationId): array {
 		return $this->aggregate(
 			dimension: 'costCentre',
 			schema: self::SCHEMA_GL_LINE,
 			metricField: 'amount',
-			filter: $this->apExpenseDebitFilter(),
+			filter: $this->apExpenseDebitFilter(administrationId: $administrationId),
 			groupField: 'costCenterCode'
 		);
 
@@ -236,39 +243,116 @@ class SpendAnalyticsService {
 
 	/**
 	 * Spend grouped by fiscal period (GL periodId) over the debit AP expense
-	 * postings.
+	 * postings, scoped to one administration.
 	 *
-	 * ⚠️ NOT administration-scoped — see spendByCategory() and the class
-	 * docblock for why `GLLine` cannot be filtered to one administration.
+	 * @param string $administrationId The administration the caller is a member of.
 	 *
 	 * @return array<string,mixed> `{ dimension, groups:[{key,amount}], total, backend }`.
 	 *
+	 * @throws RuntimeException When the GLLine administration backfill is not proven complete.
+	 *
 	 * @spec openspec/specs/spend-analytics/spec.md
+	 * @spec openspec/changes/glline-administration-scope/specs/glline-administration-scope/spec.md
 	 */
-	public function spendByPeriod(): array {
+	public function spendByPeriod(string $administrationId): array {
 		return $this->aggregate(
 			dimension: 'period',
 			schema: self::SCHEMA_GL_LINE,
 			metricField: 'amount',
-			filter: $this->apExpenseDebitFilter(),
+			filter: $this->apExpenseDebitFilter(administrationId: $administrationId),
 			groupField: 'periodId'
 		);
 
 	}//end spendByPeriod()
 
 	/**
-	 * The posting slice that constitutes AP expense spend: debit lines whose
-	 * sub-ledger is accounts-payable.
+	 * The posting slice that constitutes AP expense spend, scoped to one
+	 * administration: debit lines whose sub-ledger is accounts-payable.
+	 *
+	 * Asserts the backfill gate BEFORE building the filter, so a caller can
+	 * never end up with a `GLLine` query carrying an `administrationId` term
+	 * that some rows cannot match.
+	 *
+	 * @param string $administrationId The administration to scope to.
 	 *
 	 * @return array<string,mixed> The aggregation filter map.
+	 *
+	 * @throws RuntimeException When the backfill is not proven complete, or the scope is empty.
 	 */
-	private function apExpenseDebitFilter(): array {
+	private function apExpenseDebitFilter(string $administrationId): array {
+		$this->assertGlScopeIsEnforceable();
+
+		$scope = trim($administrationId);
+		if ($scope === '') {
+			// An empty scope would filter `administrationId = ''`, matching
+			// nothing — the same silent zero by a different route.
+			throw new RuntimeException(
+				'SpendAnalyticsService: a GL-backed spend view requires a non-empty administrationId'
+			);
+		}
+
 		return [
+			'administrationId' => $scope,
 			'side' => 'debit',
 			'subLedgerType' => 'ap',
 		];
 
 	}//end apExpenseDebitFilter()
+
+	/**
+	 * Refuse the GL-backed views unless the `GLLine.administrationId` backfill
+	 * has been PROVEN complete (REQ-GLS-003).
+	 *
+	 * The gate holds `GlLineAdministrationBackfillMigrator::
+	 * GATE_CONTRACT_VERSION` only when `BackfillGlLineAdministration` re-read
+	 * every `GLLine` row from the store and counted zero without a scope. It is
+	 * cleared at the start of every run of that step, so an instance that has
+	 * not run it, crashed inside it, or aborted its batch reads as shut.
+	 *
+	 * It is a VERSION rather than a boolean so that adding a new `GLLine`
+	 * writer can invalidate every deployment's stored proof by bumping one
+	 * constant — completeness is a claim about the code as well as the data,
+	 * and a boolean would keep answering "yes" on evidence gathered before the
+	 * new writer existed.
+	 *
+	 * Throwing is deliberate and must not be softened into a fallback: the
+	 * controller turns it into an error status, whereas returning the
+	 * unfiltered aggregation would restore the cross-administration read and
+	 * returning the filtered one would report a zero total as though it were a
+	 * measurement.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When the gate is shut.
+	 */
+	private function assertGlScopeIsEnforceable(): void {
+		$gate = $this->appConfig->getValueString(
+			Application::APP_ID,
+			GlLineAdministrationBackfillMigrator::GATE_CONFIG_KEY,
+			''
+		);
+
+		if ($gate === GlLineAdministrationBackfillMigrator::GATE_CONTRACT_VERSION) {
+			return;
+		}
+
+		$this->logger->error(
+			'SpendAnalyticsService: refusing a GL-backed spend view — the GLLine administrationId '
+			. 'backfill is not proven complete, so an administration filter would silently exclude '
+			. 'un-backfilled lines. Run occ maintenance:repair to re-run BackfillGlLineAdministration.',
+			[
+				'gate' => $gate,
+				'expected' => GlLineAdministrationBackfillMigrator::GATE_CONTRACT_VERSION,
+			]
+		);
+
+		throw new RuntimeException(
+			'GLLine administration backfill is not proven complete; the category / cost-centre / '
+			. 'period spend views are unavailable until BackfillGlLineAdministration has re-read '
+			. 'every GLLine and found zero without an administrationId.'
+		);
+
+	}//end assertGlScopeIsEnforceable()
 
 	/**
 	 * Build and dispatch one single-field aggregation through OR's

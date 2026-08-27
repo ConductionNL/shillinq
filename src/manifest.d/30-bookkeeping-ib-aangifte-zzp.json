@@ -90,41 +90,41 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "IBAangifte",
-				"_note": "FINANCIAL / REPORT archetype (native CnDetailPage). An income-tax (IB) return for a sole trader is a tax filing - a signed/submitted document with a lifecycle (CONCEPT -> GEVALIDEERD -> XBRL_GEVALIDEERD -> INGEDIEND -> CORRECTIE_SUPPLETIE) and a Digipoort acknowledgement. Fields carry the P-formulier totals. relatedLists link to the three schedule schemas that have their own index+detail pages in this fragment (IBOndernemersaftrek, IBLijfrenteAOV, IBBox3Vermogen; all FK aangifteId) so the preparer can drill into each schedule. Sidebar carries a Documents tab (XBRL/Digipoort source documents) and an Audit Trail tab (immutable filing record, REQ-IB-009). NO comms leaves - a tax return is filed, not discussed.",
+				"_note": "FINANCIAL / REPORT archetype (native CnDetailPage). An income-tax (IB) return for a sole trader is a tax filing - a signed/submitted document with a lifecycle (CONCEPT -> GEVALIDEERD -> XBRL_GEVALIDEERD -> INGEDIEND -> CORRECTIE_SUPPLETIE) and a Digipoort acknowledgement. Fields carry the P-formulier totals. relatedCollections link to the three schedule schemas that have their own index+detail pages in this fragment (IBOndernemersaftrek, IBLijfrenteAOV, IBBox3Vermogen; all FK taxReturnId) so the preparer can drill into each schedule. KEY: `relatedCollections`, NOT `relatedLists` — `relatedLists` is not a prop on any Cn page component, so it lands in $attrs and renders nothing while every gate stays green (tests/validate-manifest.js now hard-fails on it). TOKEN: `@objectId` — IBAangifte carries no flat business key for a schedule to reference (its payload has enterpriseId/bsn/taxYear but no taxReturnId), so the child FK holds the parent's OpenRegister UUID. Sidebar carries a Documents tab (XBRL/Digipoort source documents) and an Audit Trail tab (immutable filing record, REQ-IB-009). NO comms leaves - a tax return is filed, not discussed.",
 				"lifecycleActions": true,
-				"relatedLists": [
+				"relatedCollections": [
 					{
-						"id": "ondernemersaftrekken",
 						"title": "Entrepreneur allowances",
+						"register": "shillinq",
 						"schema": "IBOndernemersaftrek",
-						"foreignKey": "taxReturnId",
+						"filter": { "taxReturnId": "@objectId" },
 						"columns": [
 							{ "key": "mkbProfitExemption", "label": "MKB exemption" },
 							{ "key": "totalDeduction", "label": "Total deduction" }
 						],
-						"detailRoute": "IbOndernemersaftrekDetail"
+						"rowRoute": "IbOndernemersaftrekDetail"
 					},
 					{
-						"id": "lijfrente",
 						"title": "Annuity & AOV",
+						"register": "shillinq",
 						"schema": "IBLijfrenteAOV",
-						"foreignKey": "taxReturnId",
+						"filter": { "taxReturnId": "@objectId" },
 						"columns": [
 							{ "key": "totalDeductible", "label": "Total deductible" }
 						],
-						"detailRoute": "IbLijfrenteBeheerDetail"
+						"rowRoute": "IbLijfrenteBeheerDetail"
 					},
 					{
-						"id": "box3",
 						"title": "Box 3 assets",
+						"register": "shillinq",
 						"schema": "IBBox3Vermogen",
-						"foreignKey": "taxReturnId",
+						"filter": { "taxReturnId": "@objectId" },
 						"columns": [
 							{ "key": "referenceDate", "label": "Reference date" },
 							{ "key": "totalYieldBasis", "label": "Yield basis" },
 							{ "key": "taxableBasis", "label": "Taxable basis" }
 						],
-						"detailRoute": "IbBox3VermogenDetail"
+						"rowRoute": "IbBox3VermogenDetail"
 					}
 				],
 				"sidebarProps": {

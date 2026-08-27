@@ -2,7 +2,7 @@
   "spec_slug": "expense-capture-core",
   "title": "Expense Capture (receipt photo, mileage, per-diem)",
   "app": "shillinq",
-  "repo": "https://codeberg.org/Conduction/shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
   "depends_on": [],
   "issue": null
 }

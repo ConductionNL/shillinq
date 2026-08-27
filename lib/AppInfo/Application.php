@@ -63,7 +63,7 @@ use OCA\Shillinq\Listener\GRIRClearingListener;
 use OCA\Shillinq\Listener\InnovatieboxAuditTrailListener;
 use OCA\Shillinq\Listener\IntercompanyLinkListener;
 use OCA\Shillinq\Listener\LeaseActivationListener;
-use OCA\Shillinq\Listener\OpdrachtUitvoeringTransitionListener;
+use OCA\Shillinq\Listener\OrderFulfilmentTransitionListener;
 use OCA\Shillinq\Listener\OssPaymentReconciliationListener;
 use OCA\Shillinq\Listener\PeppolDeliveryStatusListener;
 use OCA\Shillinq\Listener\PeppolInboundUblInvoiceListener;
@@ -71,7 +71,7 @@ use OCA\Shillinq\Listener\PosStockDecrementListener;
 use OCA\Shillinq\Listener\ReconciliationMatchToReportListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
-use OCA\Shillinq\Listener\VerplichtingTransitionListener;
+use OCA\Shillinq\Listener\CommitmentTransitionListener;
 use OCA\Shillinq\Notification\DeadlineReminderNotifier;
 use OCA\Shillinq\Notification\PosStockUnmatchedLineNotifier;
 use OCA\Shillinq\Notification\RoleFallbackResolver;
@@ -700,7 +700,7 @@ class Application extends App implements IBootstrap {
 		// the originating OR write path.
 		//
 		// Task 5.1 — TenderNedAwardDetectedListener auto-promotes an
-		// awarded TenderNed dossier into an active Verplichting when the
+		// awarded TenderNed dossier into an active Commitment when the
 		// winning KvK matches the tenant org (REQ-002 idempotent on
 		// bronReferentie + REQ-003 milestone plan generated from the
 		// opdrachttype template).
@@ -712,7 +712,7 @@ class Application extends App implements IBootstrap {
 			listener: TenderNedAwardDetectedListener::class
 		);
 
-		// Task 5.2 — VerplichtingTransitionListener emits the cross-app
+		// Task 5.2 — CommitmentTransitionListener emits the cross-app
 		// `obligation.activated` CloudEvent on auto-promoted (created
 		// active) AND manually-enriched (transitioned to active)
 		// tenderned-sourced obligations (REQ-007 budget-impact pipeline).
@@ -721,23 +721,23 @@ class Application extends App implements IBootstrap {
 		// ObjectTransitionedEvent registration below stays global.
 		$context->registerEventListener(
 			event: ObjectTransitionedEvent::class,
-			listener: VerplichtingTransitionListener::class
+			listener: CommitmentTransitionListener::class
 		);
 
-		// Task 5.3 — OpdrachtUitvoeringTransitionListener emits
-		// `milestone.completed` on every completed OpdrachtUitvoering and
+		// Task 5.3 — OrderFulfilmentTransitionListener emits
+		// `milestone.completed` on every completed OrderFulfilment and
 		// (for the approved eindoplevering of a tenderned-sourced
 		// obligation) triggers the outbound status-sync to TenderNed
 		// (REQ-006). The buyer-side gate is enforced both server-side
-		// (RBAC + TenderNedAanbestedingGuard::canAfronden) and inside
+		// (RBAC + TenderNedProcurementGuard::canAfronden) and inside
 		// TenderNedStatusSync as a defence-in-depth tenant KvK check.
 		$context->registerEventListener(
 			event: ObjectTransitionedEvent::class,
-			listener: OpdrachtUitvoeringTransitionListener::class
+			listener: OrderFulfilmentTransitionListener::class
 		);
 
 		// REQ-004 bewijsstuk-required completion gate, both halves.
-		(new OpdrachtUitvoeringGateRegistration())->register(context: $context);
+		(new OrderFulfilmentGateRegistration())->register(context: $context);
 
 		// REQ-SIGN-001/005/006 — the decidesk DECISION and docudesk DOCUMENT
 		// signing request+outcome listeners, registered as one unit.
@@ -777,9 +777,9 @@ class Application extends App implements IBootstrap {
 		);
 
 		// Change verplichtingen-commitment-accounting Tasks 1/2 (REQ-VPL-010) —
-		// CommitmentMaterialisationListener auto-materialises a Verplichting
+		// CommitmentMaterialisationListener auto-materialises a Commitment
 		// when a PurchaseOrder reaches `approved` or a Contract reaches
-		// `active`, reusing the existing BudgetBlocker/MandaatEnforcer
+		// `active`, reusing the existing BudgetBlocker/MandateEnforcer
 		// guards. PO path is fail-closed (denial propagates); Contract path
 		// is fail-soft (design.md Open Question: no separate signed/executed
 		// state exists on the shipped Contract schema, so `active` is
@@ -833,7 +833,7 @@ class Application extends App implements IBootstrap {
 		//
 		// This is deliberately scoped to the 17 guards + PeriodCloseGuard
 		// method shillinq#425 covers. Dozens of pre-existing guards
-		// (MandaatEnforcer, BudgetBlocker, PeriodCloseGuard's other three
+		// (MandateEnforcer, BudgetBlocker, PeriodCloseGuard's other three
 		// methods, InventoryPostingGuard, KorThresholdGuard, ...) reference
 		// tags shaped the same way and are NOT registered — every one of
 		// those transitions also hard-fails today. That fleet-wide gap is
@@ -1127,6 +1127,12 @@ class Application extends App implements IBootstrap {
 			}
 		);
 
+		// Budget-scenarios REQ-BSC-004/REQ-BSC-006 — the BudgetScenarioModifier
+		// guard alias and the KnownCostScheduleExpanderInterface binding,
+		// registered as one unit. See BudgetScenarioRegistration's own
+		// docblock for why this lives in its own class.
+		(new BudgetScenarioRegistration())->register(context: $context);
+
 	}//end register()
 
 	/**
@@ -1410,26 +1416,26 @@ class Application extends App implements IBootstrap {
 
 		// Bookkeeping-tenderned-integratie Task 5.1 — interest declared on the
 		// create path: `isAanbestedingSchema()` resolves to the
-		// `TenderNedAanbesteding` schema, the same slug the handler writes back
-		// with `->setSchema('TenderNedAanbesteding')`. The
+		// `TenderNedProcurement` schema, the same slug the handler writes back
+		// with `->setSchema('TenderNedProcurement')`. The
 		// ObjectTransitionedEvent registration in register() stays global.
 		$this->registerFilteredObjectListener(
 			dispatcher: $dispatcher,
 			event: ObjectCreatedEvent::class,
 			listener: TenderNedAwardDetectedListener::class,
-			schemas: ['TenderNedAanbesteding']
+			schemas: ['TenderNedProcurement']
 		);
 
 		// Bookkeeping-tenderned-integratie Task 5.2 — interest declared on the
-		// create path: `isVerplichtingSchema()` resolves to the `Verplichting`
+		// create path: `isCommitmentSchema()` resolves to the `Commitment`
 		// schema, the same slug TenderNedAwardDetectedListener writes with
 		// `->setSchema(…)`. The ObjectTransitionedEvent registration in
 		// register() stays global.
 		$this->registerFilteredObjectListener(
 			dispatcher: $dispatcher,
 			event: ObjectCreatedEvent::class,
-			listener: VerplichtingTransitionListener::class,
-			schemas: ['Verplichting']
+			listener: CommitmentTransitionListener::class,
+			schemas: ['Commitment']
 		);
 
 	}//end boot()

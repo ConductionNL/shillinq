@@ -321,9 +321,9 @@
         "x-openregister-aggregations": {
           "countByStatus": {
             "field": "status",
-            "operation": "count",
+            "metric": "count",
             "description": "Number of appointments per status.",
-            "groupBy": "status"
+            "groupBy": ["status"]
           }
         }
       }
