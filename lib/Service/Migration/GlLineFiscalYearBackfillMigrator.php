@@ -116,6 +116,8 @@ class GlLineFiscalYearBackfillMigrator {
 	 * @param array<int, array<string, mixed>> $glTransactions Parent rows.
 	 *
 	 * @return array<string, string> Identity => fiscal year id.
+	 *
+	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md#req-cc-005
 	 */
 	public function indexFiscalYearsByTransaction(array $glTransactions): array {
 		$index = [];
@@ -147,6 +149,8 @@ class GlLineFiscalYearBackfillMigrator {
 	 * @param array<string, string> $index  Output of indexFiscalYearsByTransaction().
 	 *
 	 * @return string|null The fiscal year id, or null when it cannot be resolved.
+	 *
+	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md#req-cc-005
 	 */
 	public function resolveFiscalYearId(array $glLine, array $index): ?string {
 		$transactionId = trim((string)($glLine['transactionId'] ?? ''));
@@ -169,6 +173,8 @@ class GlLineFiscalYearBackfillMigrator {
 	 * @param array<string, string> $index  Output of indexFiscalYearsByTransaction().
 	 *
 	 * @return string One of the CLASS_* constants.
+	 *
+	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md#req-cc-005
 	 */
 	public function classify(array $glLine, array $index): string {
 		if (trim((string)($glLine[self::YEAR_PROPERTY] ?? '')) !== '') {
@@ -192,6 +198,8 @@ class GlLineFiscalYearBackfillMigrator {
 	 * @param string               $fiscalYearId The resolved fiscal year id.
 	 *
 	 * @return array<string, mixed> The line, stamped or unchanged.
+	 *
+	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md#req-cc-005
 	 */
 	public function stampFiscalYearId(array $glLine, string $fiscalYearId): array {
 		if (trim((string)($glLine[self::YEAR_PROPERTY] ?? '')) !== '') {
@@ -230,6 +238,8 @@ class GlLineFiscalYearBackfillMigrator {
 	 *               disagreements: array<int, string>}
 	 *
 	 * @throws RuntimeException When the class counts do not sum to the rows seen.
+	 *
+	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md#req-cc-005
 	 */
 	public function backfillBatch(array $glLines, array $glTransactions): array {
 		$index = $this->indexFiscalYearsByTransaction(glTransactions: $glTransactions);
@@ -307,6 +317,8 @@ class GlLineFiscalYearBackfillMigrator {
 	 * @param array<int, array<string, mixed>> $glLines The line rows.
 	 *
 	 * @return int How many rows lack a fiscal year.
+	 *
+	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md#req-cc-005
 	 */
 	public function countMissingFiscalYearId(array $glLines): int {
 		$missing = 0;
@@ -333,6 +345,8 @@ class GlLineFiscalYearBackfillMigrator {
 	 * @return void
 	 *
 	 * @throws RuntimeException When the two disagree.
+	 *
+	 * @spec openspec/specs/bookkeeping-cost-centers-dimensions/spec.md#req-cc-005
 	 */
 	public function assertCountsMatch(int $sourceCount, int $classifiedCount): void {
 		if ($sourceCount === $classifiedCount) {
