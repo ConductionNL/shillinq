@@ -590,7 +590,7 @@ const AGGREGATION_REF_BASELINE = new Map([
 // and NOT a `from`, which would have switched the runner into its cross-schema
 // path — plus `sum: ["amount"]`, which is not an engine key. Verified live
 // against the rows, not just for a non-empty response.
-const AGG_NO_METRIC_BASELINE = 216
+const AGG_NO_METRIC_BASELINE = 211
 
 // A STRING `groupBy` is silently ignored, and the result is a WRONG NUMBER.
 //
@@ -714,7 +714,7 @@ const AGG_PLACEHOLDER_TENANT_KEYS = new Set(['administrationId', 'organisationId
 // Measured 2026-08-26 by this check, after removing 67 tenant placeholders
 // across 22 files. Counted BY THE GATE, not by a one-off script — an earlier
 // estimate of 73 came from a narrower hand-written predicate and was wrong.
-const AGG_PLACEHOLDER_BASELINE = 84
+const AGG_PLACEHOLDER_BASELINE = 81
 
 function collectPlaceholders(node, path, out) {
 	if (node === null || node === undefined) return
@@ -739,6 +739,22 @@ function checkAggregationPlaceholders(registry) {
 
 	for (const slug of Object.keys(registry).sort()) {
 		for (const { aggName, agg, file } of registry[slug].aggregations) {
+			// `where` IS scanned on a cross-schema spec too.
+			//
+			// This check briefly exempted it, on the reasoning that
+			// runCrossSchema() substitutes `@self.<field>` against the parent
+			// row and so the spelling works there. It resolves it, but nothing
+			// SUPPLIES a parent row: AggregationController, ReportRenderService
+			// and ThresholdEvaluationService all call AggregationRunner::run()
+			// without one, so `@self.code` became null — and a null is applied
+			// as a real filter VALUE, returning the target rows whose own field
+			// is null. For a segment P&L that is the unassigned total, handed
+			// back confidently for every parent record.
+			//
+			// OpenRegister now raises on an unresolvable `@self` rather than
+			// filtering on null, which makes these declarations loudly broken
+			// instead of quietly wrong. Either way they are defects, so the
+			// exemption is gone.
 			const found = []
 			for (const key of ['filter', 'where', 'join', 'match']) {
 				collectPlaceholders(agg[key], key, found)
@@ -799,6 +815,116 @@ function checkAggregationPlaceholders(registry) {
 	}
 
 	return ok
+}
+
+// The BARE half of the same subject.
+//
+// checkAggregationFieldRefs() validates only `Schema.field` refs — it opens
+// with `if (dot === -1) continue`, so a bare `fiscalYearId` was never looked
+// at. That is the larger half: a bare groupBy on a property the target schema
+// does not declare groups every row into ONE null bucket, and a bare filter
+// key that resolves to nothing narrows to zero rows. Both answer HTTP 200 with
+// a plausible figure, which is why none of them ever surfaced as a bug.
+//
+// The bare form was skipped because "the source schema would need resolving,
+// which source/sourceSchema spell inconsistently". The engine settles it:
+// AggregationRunner reads `from` and nothing else — `source` and
+// `sourceSchema` are inert keys it never consults. So the target is `from`
+// when present and the declaring schema otherwise, exactly as the runner
+// computes it, and the ambiguity that justified skipping this is gone.
+// 120 of the 451 bare references checked resolve to nothing today. They are
+// NOT waived — each returns a plausible figure (one null bucket, or zero rows)
+// under HTTP 200, which is why the class went unnoticed. The ratchet keeps the
+// number falling and refuses any new one. Classified in #1261; the bulk are
+// declarations carrying the inert `source` key that MEANT another schema and
+// therefore resolve their fields against the declaring schema instead.
+const AGG_BARE_REF_BASELINE = 120
+
+function checkAggregationBareRefs(registry) {
+	const offenders = []
+	let checked = 0
+
+	for (const slug of Object.keys(registry).sort()) {
+		for (const { aggName, agg, file } of registry[slug].aggregations) {
+			// Resolve the target the way AggregationRunner does.
+			const targetSlug =
+				typeof agg.from === 'string' && agg.from !== '' ? agg.from : slug
+			const target = registry[targetSlug]
+			// An unresolvable target is a different defect class — and may
+			// legitimately live in another app's register.
+			if (!target) continue
+
+			const refs = []
+			const gb = Array.isArray(agg.groupBy)
+				? agg.groupBy
+				: typeof agg.groupBy === 'string'
+					? [agg.groupBy]
+					: []
+			for (const g of gb)
+				if (typeof g === 'string')
+					refs.push({ key: 'groupBy', ref: g.trim() })
+			for (const src of ['filter', 'where']) {
+				const v = agg[src]
+				if (v && typeof v === 'object' && Array.isArray(v) === false)
+					for (const k of Object.keys(v))
+						refs.push({ key: src, ref: k.trim() })
+			}
+			if (typeof agg.field === 'string' && agg.field !== '')
+				refs.push({ key: 'field', ref: agg.field.trim() })
+			if (Array.isArray(agg.metrics))
+				for (const m of agg.metrics)
+					if (m && typeof m.field === 'string' && m.field !== '')
+						refs.push({ key: 'metrics[].field', ref: m.field.trim() })
+
+			for (const { key, ref } of refs) {
+				// Dotted refs are checkAggregationFieldRefs()' subject.
+				if (ref.includes('.') === true) continue
+				// `_`-prefixed keys are OpenRegister control params, not
+				// properties; `@`-prefixed values are placeholders.
+				if (ref.startsWith('_') === true || ref.startsWith('@') === true)
+					continue
+				if (IMPLICIT_OBJECT_FIELDS.has(ref) === true) continue
+				checked++
+				if (target.props.has(ref) === false)
+					offenders.push(
+						`${slug}.${aggName} ${key}="${ref}" — ${targetSlug} declares no such property`
+							+ `\n      declared in ${file}`,
+					)
+			}
+		}
+	}
+
+	console.log(
+		`[validate-registers] aggregation BARE field references checked: ${checked}`,
+	)
+	// A check that examined nothing must not report success.
+	if (checked === 0) {
+		console.error(
+			'[validate-registers] FAIL — the bare aggregation reference check resolved ZERO references. '
+				+ 'That means it stopped seeing its own subject, not that the registers are clean.',
+		)
+		return false
+	}
+	console.log(
+		`[validate-registers] aggregation bare refs that resolve to nothing: ${offenders.length} `
+			+ `(baseline ${AGG_BARE_REF_BASELINE}) — see #1261`,
+	)
+	if (offenders.length > AGG_BARE_REF_BASELINE) {
+		console.error(
+			'[validate-registers] FAIL — bare aggregation references that cannot resolve: '
+				+ `${offenders.length}, above the baseline of ${AGG_BARE_REF_BASELINE}.`,
+		)
+		for (const o of offenders) console.error(`  - ${o}`)
+		return false
+	}
+	if (offenders.length < AGG_BARE_REF_BASELINE) {
+		console.error(
+			`[validate-registers] ${AGG_BARE_REF_BASELINE - offenders.length} better than baseline — `
+				+ `please lower AGG_BARE_REF_BASELINE to ${offenders.length}.`,
+		)
+		return false
+	}
+	return true
 }
 
 function checkAggregationFieldRefs(registry) {
@@ -916,6 +1042,7 @@ function main() {
 	const slugsOk = checkSlugCaseCollisions(registry)
 	const sameSlugFullDefinitionOk = checkSameSlugFullDefinitionCollisions(registry)
 	const aggregationRefsOk = checkAggregationFieldRefs(registry)
+	const aggregationBareRefsOk = checkAggregationBareRefs(registry)
 	const aggregationPlaceholdersOk = checkAggregationPlaceholders(registry)
 	const aggregationMetricsOk = checkAggregationMetrics(registry)
 	const aggregationGroupByOk = checkAggregationGroupByShape(registry)
@@ -925,6 +1052,7 @@ function main() {
 			slugsOk === false
 			|| sameSlugFullDefinitionOk === false
 			|| aggregationRefsOk === false
+			|| aggregationBareRefsOk === false
 			|| aggregationPlaceholdersOk === false
 			|| aggregationMetricsOk === false
 			|| aggregationGroupByOk === false
