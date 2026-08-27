@@ -154,14 +154,33 @@ final class VatBtwFilingFragmentTest extends TestCase {
 		self::assertArrayHasKey('totalsByReturn', $aggregations);
 
 		$totals = $aggregations['totalsByReturn'];
-		self::assertSame('VATLine', $totals['source']);
 
-		self::assertArrayHasKey('operations', $totals);
+		// `from`, not `source`. AggregationRunner reads `from` and nothing else,
+		// so `source` never switched this onto VATLine at all.
+		self::assertSame('VATLine', $totals['from']);
+		self::assertArrayNotHasKey('source', $totals, '`source` is not an engine key');
+
+		// The per-return correlation is a groupBy DIMENSION now. `returnId:
+		// "@self.id"` needed a parent row that no caller supplies, so it stayed a
+		// literal string and matched nothing.
+		self::assertContains('returnId', $totals['groupBy']);
+		self::assertArrayNotHasKey('returnId', ($totals['filter'] ?? []));
+
+		// `operations` is DELIBERATELY still here, and still inert.
+		//
+		// It cannot be translated to `metrics` mechanically like the other
+		// twenty-two were: `vatBalance` is an `expression` op, which the engine
+		// has no equivalent for, and the `condition`s are SQL-ish STRINGS
+		// ("VATLine.type = 'collected'") where computeMetrics() takes a filter
+		// OBJECT. Rewriting either by guesswork would produce a confident wrong
+		// number, which is the failure mode this whole effort is removing.
+		//
+		// Pinned so the remaining gap stays visible rather than looking finished.
+		self::assertArrayHasKey('operations', $totals, 'still untranslated — see #1261');
 		self::assertArrayHasKey('totalVATCollected', $totals['operations']);
 		self::assertArrayHasKey('totalVATPaid', $totals['operations']);
+		self::assertArrayNotHasKey('metrics', $totals, 'not yet translated — expression op + string conditions');
 
-		// Sum operations aggregate over a VATLine.* field; the `vatBalance`
-		// operation is an expression op derived from the sum results.
 		foreach ($totals['operations'] as $operation) {
 			self::assertContains(
 				$operation['operation'],

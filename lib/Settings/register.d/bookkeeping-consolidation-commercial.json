@@ -498,12 +498,13 @@
               "schema": "EliminationEntry",
               "condition": "EliminationEntry.consolidationPeriodId = @self.id"
             },
-            "operations": {
-              "totalEliminationCount": {
+            "metrics": [
+              {
+                "metric": "count",
                 "field": "EliminationEntry.id",
-                "operation": "count"
+                "as": "totalEliminationCount"
               }
-            }
+            ]
           },
           "totalEliminationAmount": {
             "description": "totalEliminationAmount = SUM(EliminationEntry.lines[].debit) for approved eliminations of this period (REQ-CONS-002).",
@@ -511,12 +512,13 @@
               "schema": "EliminationEntry",
               "condition": "EliminationEntry.consolidationPeriodId = @self.id AND EliminationEntry.reviewStatus = 'approved'"
             },
-            "operations": {
-              "totalEliminationAmount": {
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "EliminationEntry.lines.debit",
-                "operation": "sum"
+                "as": "totalEliminationAmount"
               }
-            }
+            ]
           }
         },
         "x-openregister-lifecycle": {

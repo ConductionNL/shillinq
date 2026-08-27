@@ -298,24 +298,25 @@
         "x-openregister-aggregations": {
           "lastIntegralCostPricePeriod": {
             "description": "Most-recent IKP period (REQ-WMO-002). Drives the cross-subsidy 'omzet spike without IKP update' alert.",
-            "source": "IntegralCostPrice",
-            "groupBy": [],
-            "filter": {
-              "commercialActivityId": "@self.id"
-            },
+            "groupBy": [
+              "commercialActivityId"
+            ],
+            "filter": {},
             "max": [
               "period"
-            ]
+            ],
+            "from": "IntegralCostPrice"
           },
           "totalManualOverrides": {
             "description": "Cumulative count of handmatige overrides for this activity, used by REQ-WMO-007 detector scenario 5.",
-            "source": "ActivityCostAllocation",
-            "groupBy": [],
+            "groupBy": [
+              "commercialActivityId"
+            ],
             "filter": {
-              "commercialActivityId": "@self.id",
               "automaticApplied": false
             },
-            "count": true
+            "count": true,
+            "from": "ActivityCostAllocation"
           }
         },
         "x-openregister-rbac": {

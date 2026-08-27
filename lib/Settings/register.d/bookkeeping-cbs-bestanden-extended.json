@@ -187,12 +187,12 @@
         "x-openregister-aggregations": {
           "totalAggregatedAmount": {
             "description": "Sum of CBSLine.aggregatedAmount for this submission, used by validation to compare against GL totals (REQ-CBS-008).",
-            "source": "CBSLine",
-            "filter": {
-              "cbsSubmissionId": "@self.id"
-            },
-            "sum": [
-              "aggregatedAmount"
+            "filter": {},
+            "from": "CBSLine",
+            "metric": "sum",
+            "field": "aggregatedAmount",
+            "groupBy": [
+              "cbsSubmissionId"
             ]
           }
         },

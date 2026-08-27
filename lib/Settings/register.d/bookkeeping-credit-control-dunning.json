@@ -595,15 +595,17 @@
               "invoiceId",
               "stageNr"
             ],
-            "operations": {
-              "count": {
-                "operation": "count"
+            "metrics": [
+              {
+                "metric": "count",
+                "as": "count"
               },
-              "latestExecutedAt": {
+              {
+                "metric": "max",
                 "field": "executedOn",
-                "operation": "max"
+                "as": "latestExecutedAt"
               }
-            }
+            ]
           },
           "deliveryByStage": {
             "label": "Delivery by stage",
@@ -614,11 +616,12 @@
               "stageNr",
               "deliveryStatus"
             ],
-            "operations": {
-              "count": {
-                "operation": "count"
+            "metrics": [
+              {
+                "metric": "count",
+                "as": "count"
               }
-            }
+            ]
           }
         },
         "x-openregister-rbac": {
