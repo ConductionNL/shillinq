@@ -585,7 +585,12 @@ const AGGREGATION_REF_BASELINE = new Map([
 // runner into its cross-schema path, which needs a parent row and behaves
 // differently. Those are a redesign, not a rename, and they are the GL/tax ones
 // where a wrong number matters most.
-const AGG_NO_METRIC_BASELINE = 219
+// 219 -> 216: the segment-P&L batch (GLLine byCostCenter / byCostObject /
+// byProject). Each declared `source: "GLLine"` on GLLine itself — redundant,
+// and NOT a `from`, which would have switched the runner into its cross-schema
+// path — plus `sum: ["amount"]`, which is not an engine key. Verified live
+// against the rows, not just for a non-empty response.
+const AGG_NO_METRIC_BASELINE = 216
 
 // A STRING `groupBy` is silently ignored, and the result is a WRONG NUMBER.
 //
