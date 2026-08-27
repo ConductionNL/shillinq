@@ -35,7 +35,7 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Integration;
 
-use OCA\Shillinq\Integration\TenderNedStatusSync;
+use OCA\Shillinq\Service\TenderNedStatusSync;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
