@@ -586,7 +586,7 @@ const AGGREGATION_REF_BASELINE = new Map([])
 // and NOT a `from`, which would have switched the runner into its cross-schema
 // path — plus `sum: ["amount"]`, which is not an engine key. Verified live
 // against the rows, not just for a non-empty response.
-const AGG_NO_METRIC_BASELINE = 158
+const AGG_NO_METRIC_BASELINE = 151
 
 // A STRING `groupBy` is silently ignored, and the result is a WRONG NUMBER.
 //

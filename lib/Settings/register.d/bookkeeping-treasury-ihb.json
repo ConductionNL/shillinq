@@ -1001,15 +1001,27 @@
         "x-openregister-aggregations": {
           "groupTotal": {
             "description": "Consolidated group position per currency = sum of all entity positions and fair values (REQ-IHB-006, REQ-IHB-007).",
-            "source": "FXPosition",
             "groupBy": [
               "foreignCurrency"
             ],
-            "sum": [
-              "position",
-              "fairValue",
-              "unrealisedPL"
-            ]
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "position",
+                "as": "position"
+              },
+              {
+                "metric": "sum",
+                "field": "fairValue",
+                "as": "fairValue"
+              },
+              {
+                "metric": "sum",
+                "field": "unrealisedPL",
+                "as": "unrealisedPL"
+              }
+            ],
+            "from": "FXPosition"
           }
         },
         "x-openregister-rbac": {

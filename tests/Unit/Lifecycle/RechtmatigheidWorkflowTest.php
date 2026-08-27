@@ -528,9 +528,19 @@ class RechtmatigheidWorkflowTest extends TestCase {
 			actual: ($agg['groupBy'] ?? null),
 			message: 'foutenPerBoekjaar must group by boekjaar.'
 		);
+		// `metrics`, not `sum`. AggregationRunner reads neither `sum` nor
+		// `source`, so this aggregation produced nothing at all — it did not
+		// fail, it just answered with no figures.
+		self::assertArrayNotHasKey('sum', $agg, '`sum` is not an engine key');
+		$summed = [];
+		foreach (($agg['metrics'] ?? []) as $metric) {
+			self::assertSame('sum', $metric['metric']);
+			$summed[] = $metric['field'];
+		}
+
 		self::assertSame(
 			expected: ['amount_error', 'amount_uncertainty'],
-			actual: ($agg['sum'] ?? null),
+			actual: $summed,
 			message: 'foutenPerBoekjaar must sum bedrag_fout + bedrag_onzekerheid.'
 		);
 

@@ -1319,15 +1319,29 @@
         "x-openregister-aggregations": {
           "position": {
             "description": "Sum of GLLine net postings on accounts where isSchatkistAccount=true for the business day (REQ-SBK-004).",
-            "source": "GLLine",
             "filter": {
               "isTreasuryAccount": true,
               "postingDate": "@self.businessDate"
             },
-            "sum": [
-              "debit",
-              "credit"
-            ]
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "debit"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "credit"
+              }
+            ],
+            "from": "GLLine"
           }
         },
         "x-openregister-notifications": {
