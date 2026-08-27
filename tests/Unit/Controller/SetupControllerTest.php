@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\SetupController;
+use OCA\Shillinq\Service\DemoDataService;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
@@ -86,6 +87,7 @@ final class SetupControllerTest extends TestCase {
 			appName: 'shillinq',
 			request: $this->request,
 			appConfig: $this->appConfig,
+			demoDataService: $this->createMock(DemoDataService::class),
 			settingsService: $this->settingsService,
 		);
 
