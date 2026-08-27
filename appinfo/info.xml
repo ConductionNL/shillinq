@@ -213,6 +213,19 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  SpendAnalytics refusing its GL-backed views rather than serving either
                  cross-administration totals or a silently-zeroed scoped one. -->
             <step>OCA\Shillinq\Repair\BackfillGlLineAdministration</step>
+            <!--
+                GLLine declared no fiscal-year property, so the three segment-P&amp;L
+                roll-ups grouping by GLLine.fiscalYearId put every row into ONE
+                null bucket — a plausible total, not an error. The property now
+                exists; without this backfill every historical row carries null
+                and those roll-ups stay wrong for a new reason.
+
+                post-migration only: a fresh install has no historical lines to
+                stamp. Idempotent and non-destructive — a line that already
+                carries a year is left alone, and a parent that disagrees is
+                reported rather than resolved.
+            -->
+            <step>OCA\Shillinq\Repair\BackfillGlLineFiscalYear</step>
             <step>OCA\Shillinq\Repair\BackfillFiscalPeriods</step>
             <step>OCA\Shillinq\Repair\PeriodCloseBackfill</step>
             <step>OCA\Shillinq\Repair\LoadCbsSeedsStep</step>
