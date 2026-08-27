@@ -2983,7 +2983,10 @@ OC.L10N.register(
         "This view is unavailable — no figure is shown because none could be trusted.": "This view is unavailable — no figure is shown because none could be trusted.",
         "Unknown error": "Unknown error",
         "You are not a member of any administration, so there is no spend to report on.": "You are not a member of any administration, so there is no spend to report on.",
-        "No active administration — cannot scope segment P&L.": "No active administration — cannot scope segment P&L."
+        "No active administration — cannot scope segment P&L.": "No active administration — cannot scope segment P&L.",
+        "Automate the repetitive parts": "Automate the repetitive parts",
+        "Flows run the steps you would otherwise repeat by hand, such as chasing an overdue invoice, posting a recurring journal, or notifying someone when a budget is exceeded. This stop only shows you where they live. You do not have to build one now.": "Flows run the steps you would otherwise repeat by hand, such as chasing an overdue invoice, posting a recurring journal, or notifying someone when a budget is exceeded. This stop only shows you where they live. You do not have to build one now.",
+        "Have a look at the Flows page": "Have a look at the Flows page"
     },
     "nplurals=2; plural=(n != 1);"
 )
