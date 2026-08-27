@@ -233,6 +233,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Shillinq\Repair\FoldDunningWriteoffIntoArInvoice</step>
             <step>OCA\Shillinq\Repair\StampJournalTypeOnGlTransactions</step>
             <step>OCA\Shillinq\Repair\FoldExpensesAndHoursIntoProject</step>
+            <!-- hydra-gate-98 held: OCA\Shillinq\Repair\RetireSubsidieSchema — it irreversibly deletes the
+                 Subsidie rows FoldIntoOrder folded, so it must lag that fold by at least one release to leave a
+                 folded instance a rollback window. Wire it up once the fold has run on a real instance and been
+                 confirmed for a release, and the delete has itself been live-verified on real data (issue #503). -->
             <!-- OCA\Shillinq\Repair\RetireSubsidieSchema STILL HELD (issue #503): DELETES folded Subsidie objects, so it
                  stays held even though the fold itself is now live-verified and re-enabled above, and even though its own
                  read/idempotency bugs are now FIXED (issue #382: the limit=>0 dead-read and the dot-path orderExists()
