@@ -392,15 +392,15 @@
         "x-openregister-aggregations": {
           "countByRisicoNiveau": {
             "field": "riskLevel",
-            "operation": "count",
+            "metric": "count",
             "description": "Aantal opdrachten per risico-niveau (LAAG/LAAG_MIDDEN/MIDDEN_HOOG/HOOG/VERKORT_LAGE_DREMPEL).",
-            "groupBy": "riskLevel"
+            "groupBy": ["riskLevel"]
           },
           "omzetPerKlant": {
             "field": "realisedRevenue",
-            "operation": "sum",
+            "metric": "sum",
             "description": "Totale gerealiseerde omzet per klant (eurocenten); voedt concentratie-aggregatie REQ-DBA-005.",
-            "groupBy": "customerId"
+            "groupBy": ["customerId"]
           }
         },
         "x-openregister-audit-trail": {
@@ -1058,18 +1058,18 @@
         "x-openregister-aggregations": {
           "openFlagsPerOpdracht": {
             "field": "assignmentId",
-            "operation": "count",
+            "metric": "count",
             "description": "Open-flag-aantal per opdracht (voedt DBAOpdracht.openFlags).",
-            "groupBy": "assignmentId",
+            "groupBy": ["assignmentId"],
             "filter": {
               "status": "OPEN"
             }
           },
           "flagsByType": {
             "field": "type",
-            "operation": "count",
+            "metric": "count",
             "description": "Aantal flags per type (voor dashboard).",
-            "groupBy": "type"
+            "groupBy": ["type"]
           }
         },
         "x-openregister-audit-trail": {
@@ -1261,9 +1261,9 @@
         "x-openregister-aggregations": {
           "countByOverallRisico": {
             "field": "overallRisk",
-            "operation": "count",
+            "metric": "count",
             "description": "Aantal portfolio-records per overall-risico-niveau.",
-            "groupBy": "overallRisk"
+            "groupBy": ["overallRisk"]
           }
         },
         "x-openregister-audit-trail": {

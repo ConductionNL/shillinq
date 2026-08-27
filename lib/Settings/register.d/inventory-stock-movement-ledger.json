@@ -412,7 +412,7 @@
             "filter": {
               "lifecycleState": "draft"
             },
-            "operation": "sum",
+            "metric": "sum",
             "field": "quantity",
             "groupBy": [
               "sourceLocationId",
@@ -423,9 +423,9 @@
             "description": "Stock Movements index filter aggregation per REQ-SM-008: count of moves per movementType for the dashboard tile.",
             "source": "StockMove",
             "filter": {},
-            "operation": "count",
+            "metric": "count",
             "field": "id",
-            "groupBy": "movementType"
+            "groupBy": ["movementType"]
           }
         },
         "x-openregister-indexes": [

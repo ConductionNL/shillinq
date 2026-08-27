@@ -252,8 +252,8 @@
           "depreciationByMethod": {
             "description": "REQ-FA-009 (1) — count of active assets grouped by depreciationMethod. Drives the Depreciation Expense report method-mix breakdown.",
             "field": "depreciationMethod",
-            "operation": "count",
-            "groupBy": "depreciationMethod",
+            "metric": "count",
+            "groupBy": ["depreciationMethod"],
             "filter": {
               "lifecycleState": "active"
             }
@@ -261,8 +261,8 @@
           "depreciationByCostCenter": {
             "description": "REQ-FA-009 (2) — sum of acquisitionCost grouped by costCenterCode (proxy for current-fiscal-year depreciation allocation). Drives the Depreciation Expense cost-center report.",
             "field": "acquisitionCost",
-            "operation": "sum",
-            "groupBy": "costCenterCode",
+            "metric": "sum",
+            "groupBy": ["costCenterCode"],
             "filter": {
               "lifecycleState": "active"
             }
@@ -270,8 +270,8 @@
           "bookValuesByStatus": {
             "description": "REQ-FA-009 (4) — count of assets grouped by lifecycleState (proxy for book-value buckets). Drives balance-sheet reporting splits.",
             "field": "lifecycleState",
-            "operation": "count",
-            "groupBy": "lifecycleState"
+            "metric": "count",
+            "groupBy": ["lifecycleState"]
           }
         }
       },
@@ -456,8 +456,8 @@
           "depreciationAmountByCostCenter": {
             "description": "REQ-FA-009 (2) — sum of depreciationAmount grouped by costCenterCode for the current fiscal year. Drives the Depreciation Expense cost-center report.",
             "field": "depreciationAmount",
-            "operation": "sum",
-            "groupBy": "costCenterCode",
+            "metric": "sum",
+            "groupBy": ["costCenterCode"],
             "filter": {
               "status": "active"
             }
@@ -465,8 +465,8 @@
           "depreciationAmountByMethod": {
             "description": "REQ-FA-009 (1) — sum of depreciationAmount grouped by depreciationMethod for the current fiscal year. Drives the Depreciation Expense method-mix report.",
             "field": "depreciationAmount",
-            "operation": "sum",
-            "groupBy": "depreciationMethod",
+            "metric": "sum",
+            "groupBy": ["depreciationMethod"],
             "filter": {
               "status": "active"
             }
@@ -474,8 +474,8 @@
           "accumulatedDepreciationByAsset": {
             "description": "REQ-FA-009 (3) — sum of depreciationAmount grouped by assetRef across all closed periods. Drives the asset-by-asset accumulated-depreciation report.",
             "field": "depreciationAmount",
-            "operation": "sum",
-            "groupBy": "assetRef"
+            "metric": "sum",
+            "groupBy": ["assetRef"]
           }
         }
       },

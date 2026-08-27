@@ -168,9 +168,9 @@
         "x-openregister-aggregations": {
           "countByDrempelStatus": {
             "field": "thresholdStatus",
-            "operation": "count",
+            "metric": "count",
             "description": "Aantal onderneming-jaren per drempel-status.",
-            "groupBy": "thresholdStatus"
+            "groupBy": ["thresholdStatus"]
           }
         },
         "x-openregister-audit-trail": {
@@ -677,9 +677,9 @@
         "x-openregister-aggregations": {
           "countByUrgentie": {
             "field": "urgency",
-            "operation": "count",
+            "metric": "count",
             "description": "Aantal alerts per urgentie-niveau.",
-            "groupBy": "urgency"
+            "groupBy": ["urgency"]
           }
         },
         "x-openregister-audit-trail": {

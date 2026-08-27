@@ -225,8 +225,8 @@
         "x-openregister-aggregations": {
           "countByStatus": {
             "field": "status",
-            "operation": "count",
-            "groupBy": "status",
+            "metric": "count",
+            "groupBy": ["status"],
             "description": "Number of reconciliation sessions per lifecycle status, for the index status filter and dashboard."
           }
         }
@@ -417,8 +417,8 @@
           },
           "countByType": {
             "field": "matchType",
-            "operation": "count",
-            "groupBy": "matchType",
+            "metric": "count",
+            "groupBy": ["matchType"],
             "description": "Number of matches per matchType, for the detail-page match summary."
           }
         },
