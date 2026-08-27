@@ -847,9 +847,8 @@ function checkAggregationBareRefs(registry) {
 	for (const slug of Object.keys(registry).sort()) {
 		for (const { aggName, agg, file } of registry[slug].aggregations) {
 			// Resolve the target the way AggregationRunner does.
-			const targetSlug = (typeof agg.from === 'string' && agg.from !== '')
-				? agg.from
-				: slug
+			const targetSlug =
+				typeof agg.from === 'string' && agg.from !== '' ? agg.from : slug
 			const target = registry[targetSlug]
 			// An unresolvable target is a different defect class — and may
 			// legitimately live in another app's register.
@@ -858,13 +857,17 @@ function checkAggregationBareRefs(registry) {
 			const refs = []
 			const gb = Array.isArray(agg.groupBy)
 				? agg.groupBy
-				: (typeof agg.groupBy === 'string' ? [agg.groupBy] : [])
+				: typeof agg.groupBy === 'string'
+					? [agg.groupBy]
+					: []
 			for (const g of gb)
-				if (typeof g === 'string') refs.push({ key: 'groupBy', ref: g.trim() })
+				if (typeof g === 'string')
+					refs.push({ key: 'groupBy', ref: g.trim() })
 			for (const src of ['filter', 'where']) {
 				const v = agg[src]
 				if (v && typeof v === 'object' && Array.isArray(v) === false)
-					for (const k of Object.keys(v)) refs.push({ key: src, ref: k.trim() })
+					for (const k of Object.keys(v))
+						refs.push({ key: src, ref: k.trim() })
 			}
 			if (typeof agg.field === 'string' && agg.field !== '')
 				refs.push({ key: 'field', ref: agg.field.trim() })
@@ -878,7 +881,8 @@ function checkAggregationBareRefs(registry) {
 				if (ref.includes('.') === true) continue
 				// `_`-prefixed keys are OpenRegister control params, not
 				// properties; `@`-prefixed values are placeholders.
-				if (ref.startsWith('_') === true || ref.startsWith('@') === true) continue
+				if (ref.startsWith('_') === true || ref.startsWith('@') === true)
+					continue
 				if (IMPLICIT_OBJECT_FIELDS.has(ref) === true) continue
 				checked++
 				if (target.props.has(ref) === false)
