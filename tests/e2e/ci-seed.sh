@@ -479,12 +479,19 @@ setup_post '/index.php/apps/shillinq/api/setup/action/seed' '{}'
 # "no thanks" impossible to express. Writing `skipped` is what an operator who
 # declined leaves behind, and it avoids seeding a dataset the specs do not
 # expect. Same fix as buildiq#523.
-if [ -f "${SERVER_DIR}/occ" ]; then
-	if (cd "${SERVER_DIR}" && php occ config:app:set shillinq demo_data_decided --value=skipped); then
+# `./occ`, matching this script's own idiom above ("Only attempted when `occ` is
+# reachable, i.e. cwd is the Nextcloud server root"). An earlier version of this
+# block used `${SERVER_DIR}/occ`, copied from buildiq#523 where that variable
+# exists -- it does not here, and this script runs under `set -u`, so the seed
+# aborted with `SERVER_DIR: unbound variable` and took every E2E run with it.
+if [ -f "./occ" ]; then
+	if php ./occ config:app:set shillinq demo_data_decided --value=skipped; then
 		echo "[ci-seed] demo-data step marked decided (skipped)."
 	else
 		echo "::warning::could not set demo_data_decided; the wizard may reopen over the SPA."
 	fi
+else
+	echo "::warning::./occ not reachable from $(pwd); demo_data_decided not set."
 fi
 
 # VERIFY, do not assume. `status()` is also what persists
