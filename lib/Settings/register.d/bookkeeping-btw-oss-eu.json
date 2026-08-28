@@ -362,7 +362,6 @@
         "x-openregister-aggregations": {
           "b2cEuTurnoverByYear": {
             "description": "Declarative shape of the counter OssThresholdGuard computes (REQ-OSS-002): sum Invoice.netAmount for invoices whose ossContext.ossEligible is true within the calendar year, excluding cancelled invoices, credit notes and B2B reverse-charge supplies. Grouped by destination country and quarter for the breakdown. The PHP guard is the ADR-031 fallback for the cross-period, conditional sum.",
-            "source": "Invoice",
             "groupBy": [
               "administrationId",
               "ossContext.destinationCountry"
@@ -370,9 +369,14 @@
             "filter": {
               "ossContext.ossEligible": true
             },
-            "sum": [
-              "netAmount"
-            ]
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "netAmount",
+                "as": "netAmount"
+              }
+            ],
+            "from": "Invoice"
           }
         },
         "x-openregister-rbac": {
@@ -621,7 +625,6 @@
         "x-openregister-aggregations": {
           "linesByCountryRate": {
             "description": "Declarative shape of the quarterly aggregation OssReturnGenerator performs (REQ-OSS-004): group OSS-eligible Invoice/CreditNote lines in the period by (ossContext.destinationCountry, ossContext.appliedRateCategory), summing taxable base and VAT amount net of credit notes. The PHP service is the ADR-031 fallback for the cross-document, conditional group-by.",
-            "source": "Invoice",
             "groupBy": [
               "ossContext.destinationCountry",
               "ossContext.appliedRateCategory"
@@ -629,10 +632,19 @@
             "filter": {
               "ossContext.ossReportingPeriod": "@self.periodYear-@self.periodQuarter"
             },
-            "sum": [
-              "netAmount",
-              "vatAmount"
-            ]
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "netAmount",
+                "as": "netAmount"
+              },
+              {
+                "metric": "sum",
+                "field": "vatAmount",
+                "as": "vatAmount"
+              }
+            ],
+            "from": "Invoice"
           }
         },
         "x-openregister-rbac": {

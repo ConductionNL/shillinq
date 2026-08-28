@@ -461,15 +461,23 @@
         "x-openregister-aggregations": {
           "foutenPerBoekjaar": {
             "description": "REQ-RV-005: SUM bedrag_fout / bedrag_onzekerheid per boekjaar for openstaande bevindingen (status != opgelost), driving paragraaf tolerance comparison.",
-            "source": "Rechtmatigheidsbevinding",
             "groupBy": [
               "financialYear"
             ],
             "filter": {},
-            "sum": [
-              "amount_error",
-              "amount_uncertainty"
-            ]
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount_error",
+                "as": "amount_error"
+              },
+              {
+                "metric": "sum",
+                "field": "amount_uncertainty",
+                "as": "amount_uncertainty"
+              }
+            ],
+            "from": "Rechtmatigheidsbevinding"
           }
         },
         "x-openregister-notifications": {
