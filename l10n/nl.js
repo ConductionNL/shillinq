@@ -5203,7 +5203,9 @@ OC.L10N.register(
         "FK to the FiscalYear this line belongs to, denormalised from the parent GLTransaction.fiscalYearId so line-level roll-ups can group by year. GLLine declared no fiscal-year property at all, so every aggregation grouping on it put all rows into ONE null bucket — a plausible total, not an error. periodId is NOT a substitute: a period is a finer grain than a year. Backfilled from the parent transaction by BackfillGlLineFiscalYear.": "FK naar het boekjaar waartoe deze regel behoort, gedenormaliseerd vanuit de bovenliggende GLTransaction.fiscalYearId zodat roll-ups op regelniveau per jaar kunnen groeperen. GLLine had helemaal geen boekjaar-eigenschap, waardoor elke aggregatie die erop groepeerde alle rijen in ÉÉN null-bucket plaatste — een plausibel totaal, geen foutmelding. periodId is GEEN vervanging: een periode is een fijnere granulariteit dan een jaar. Wordt vanuit de bovenliggende transactie gevuld door BackfillGlLineFiscalYear.",
         "Where the automation lives": "Waar de automatisering zit",
         "Flows are what happens without anyone clicking: a reminder before a deadline passes, a confirmation sent on submission. This is where you read and edit them. Nothing to build now.": "Flows zijn wat er gebeurt zonder dat iemand klikt: een herinnering voordat een termijn verstrijkt, een bevestiging bij indiening. Hier lees en bewerk je ze. Je hoeft nu niets te bouwen.",
-        "Open Flows in the menu": "Open Flows in het menu"
+        "Open Flows in the menu": "Open Flows in het menu",
+        "Demo data (optional)": "Demodata (optioneel)",
+        "Load example invoices, subscriptions and ledger entries. Skip on production.": "Laad voorbeeldfacturen, -abonnementen en grootboekregels. Sla dit over bij productie."
     },
     "nplurals=2; plural=(n != 1);"
 )
