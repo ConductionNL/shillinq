@@ -95,6 +95,12 @@ test.describe('ADR-111 demo data', () => {
 	test('installing the demo data reports HOW MUCH landed, not just success', async ({
 		page,
 	}) => {
+		// 🔴 A REAL IMPORT, NOT A STUB. The largest app seeds 1497 objects; the
+		// call took 49.6s on one run and exceeded the 60s default on the next, so
+		// it sits on the boundary. The assertion is worth its cost: it is the only
+		// check that the install WROTE something.
+		test.slow()
+
 		const res = await api(
 			page,
 			'POST',
