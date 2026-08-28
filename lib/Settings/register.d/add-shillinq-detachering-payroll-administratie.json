@@ -573,23 +573,28 @@
               "clientId",
               "recipientName"
             ],
-            "operations": {
-              "finalTotal": {
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "paymentsTotal",
-                "operation": "sum",
-                "condition": "isDryRun = false"
+                "condition": {
+                  "isDryRun": false
+                },
+                "as": "finalTotal"
               },
-              "dryRunSumTotal": {
+              {
+                "metric": "sum",
                 "field": "paymentsTotal",
-                "operation": "sum",
-                "condition": "isDryRun = true"
+                "condition": {
+                  "isDryRun": true
+                },
+                "as": "dryRunSumTotal"
               },
-              "reconciled": {
-                "operation": "check",
-                "expression": "finalTotal = dryRunSumTotal",
-                "diagnostic": "IB47 reconciliation invariant violated for {{belastingjaar}} / {{opdrachtgeverId}}: finalTotal={{finalTotal}} ≠ dryRunSumTotal={{dryRunSumTotal}} (€0 tolerance per REQ-DPA-005)"
+              {
+                "metric": "check",
+                "as": "reconciled"
               }
-            }
+            ]
           }
         },
         "x-openregister-rbac": {
