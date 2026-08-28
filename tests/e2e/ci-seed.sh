@@ -462,6 +462,31 @@ setup_post '/index.php/apps/shillinq/api/setup/config' \
 setup_post '/index.php/apps/shillinq/api/setup/action/init-administration' '{}'
 setup_post '/index.php/apps/shillinq/api/setup/action/seed' '{}'
 
+# The OPTIONAL step too, not just the required ones.
+#
+# `status()` recomputes every step from its own evidence and writes
+# `setup_completed_version` only when the REQUIRED ones are done, so
+# `completed: true` says nothing about `demo-data`. Since nextcloud-vue 2.21 an
+# outstanding OPTIONAL step is enough to open the wizard on its own
+# (nextcloud-vue#806 stopped it short-circuiting on `completed`), so an undone
+# `demo-data` puts the dialog over the SPA and every click lands on the overlay.
+#
+# Measured: 59 failures across 18 unrelated spec files, every one
+# `locator.click: Test timeout`, from the merge of #1295 onward.
+#
+# `demo_data_decided` is the app's own DEALT-WITH flag, not "demo objects
+# exist" -- SetupController says re-offering the import every visit would make
+# "no thanks" impossible to express. Writing `skipped` is what an operator who
+# declined leaves behind, and it avoids seeding a dataset the specs do not
+# expect. Same fix as buildiq#523.
+if [ -f "${SERVER_DIR}/occ" ]; then
+	if (cd "${SERVER_DIR}" && php occ config:app:set shillinq demo_data_decided --value=skipped); then
+		echo "[ci-seed] demo-data step marked decided (skipped)."
+	else
+		echo "::warning::could not set demo_data_decided; the wizard may reopen over the SPA."
+	fi
+fi
+
 # VERIFY, do not assume. `status()` is also what persists
 # `setup_completed_version`, which is the manifest's `completionConfigKey` —
 # so this call is both the assertion and the last write the wizard needs.
@@ -480,8 +505,12 @@ if code != '200':
     print(raw[:500])
     sys.exit(1)
 body = json.loads(raw)
-if body.get('completed') is not True:
-    undone = [k for k, v in (body.get('steps') or {}).items() if not v.get('done')]
+undone = [k for k, v in (body.get('steps') or {}).items() if not v.get('done')]
+# EVERY step, not just `completed`. `completed` reflects the REQUIRED steps
+# only, so it stayed true while `demo-data` sat undone -- and since
+# nextcloud-vue 2.21 that alone reopens the wizard over the SPA. This guard
+# passed straight through the exact failure it exists to prevent.
+if body.get('completed') is not True or undone:
     print(f'::error::Shillinq first-time setup is NOT complete. Unfinished steps: {undone}')
     print('::error::The SPA will render a "Set up this app" dialog over every page and no spec can reach `main`.')
     sys.exit(1)
