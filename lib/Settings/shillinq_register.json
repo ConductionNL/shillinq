@@ -2293,26 +2293,29 @@
               "fiscalYearId": "@self.fiscalYearId",
               "eliminationFlag": false
             },
-            "operations": {
-              "totalDebits": {
-                "field": "GLLine.amount",
-                "operation": "sum",
-                "condition": "GLLine.side = 'debit'",
-                "target": "totalDebits"
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "totalDebits"
               },
-              "totalCredits": {
-                "field": "GLLine.amount",
-                "operation": "sum",
-                "condition": "GLLine.side = 'credit'",
-                "target": "totalCredits"
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "totalCredits"
               },
-              "isBalanced": {
-                "operation": "check",
-                "expression": "totalDebits = totalCredits",
-                "target": "isBalanced",
-                "diagnostic": "Trial balance is not balanced: debits({{totalDebits}}) ≠ credits({{totalCredits}}), discrepancy = {{totalDebits - totalCredits}}"
+              {
+                "metric": "check",
+                "as": "isBalanced"
               }
-            }
+            ],
+            "from": "GLLine"
           },
           "trialBalanceByAccount": {
             "description": "Per-account trial balance listing: accountNumber, name, accountType, totalDebits, totalCredits per REQ-FS-005 for the fiscal period.",
@@ -14756,20 +14759,27 @@
               "schema": "GLLine",
               "condition": "GLLine.administrationId = @self.administrationId"
             },
-            "operations": {
-              "totalDebit": {
-                "field": "GLLine.amount",
-                "operation": "sum",
-                "condition": "GLLine.side = 'debit'"
-              },
-              "totalCredit": {
-                "field": "GLLine.amount",
-                "operation": "sum",
-                "condition": "GLLine.side = 'credit'"
-              }
-            },
             "invariant": "totalDebit = totalCredit",
-            "onViolation": "error"
+            "onViolation": "error",
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "totalDebit"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "totalCredit"
+              }
+            ],
+            "from": "GLLine"
           },
           "unmappedAccounts": {
             "description": "REQ-SBR-007: queries all active Account records, checks XBRLMapping coverage per taxonomyVersion, returns list of unmapped account IDs. Idempotent and side-effect-free.",
@@ -17066,14 +17076,13 @@
               "administrationId",
               "fiscalYear"
             ],
-            "operations": {
-              "electionCount": {
+            "metrics": [
+              {
+                "metric": "count",
                 "field": "id",
-                "operation": "count",
-                "target": "electionCount",
-                "diagnostic": "Multiple InnovatieboxElection records for administrationId={{administrationId}} fiscalYear={{fiscalYear}} — mutual exclusion violated"
+                "as": "electionCount"
               }
-            }
+            ]
           }
         },
         "x-openregister-calculations": {
@@ -18483,13 +18492,18 @@
           },
           "lowLiquidityAccounts": {
             "description": "Identify (account, currency) pairs with balance < 5000 (low-liquidity warning). Used for risk-level filtering in the Currency Balances index page.",
-            "filter": "balance < 5000",
-            "operations": {
-              "count": {
-                "field": "balanceId",
-                "operation": "count"
+            "filter": {
+              "balance": {
+                "lt": 5000
               }
-            }
+            },
+            "metrics": [
+              {
+                "metric": "count",
+                "field": "balanceId",
+                "as": "count"
+              }
+            ]
           }
         }
       },
