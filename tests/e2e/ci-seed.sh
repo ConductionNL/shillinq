@@ -462,6 +462,24 @@ setup_post '/index.php/apps/shillinq/api/setup/config' \
 setup_post '/index.php/apps/shillinq/api/setup/action/init-administration' '{}'
 setup_post '/index.php/apps/shillinq/api/setup/action/seed' '{}'
 
+# 🔴 SETTLE THE DEMO-DATA DECISION, or the wizard masks the whole app.
+#
+# ADR-111 added an OPTIONAL `demo-data` step. CnAppRoot opens the non-gating
+# wizard while ANY optional step that is not info/summary is reported
+# not-done, as a full modal mask, in EVERY fresh browser context — and this
+# script's own error text above already describes that outcome.
+#
+# Measured on development at 38931fc65: 58 specs failed, every one a 60s
+# timeout whose call log reads "locator resolved to <button ...> - attempting
+# click action". The element was found; the click never landed, because the
+# mask was over it.
+#
+# SKIP rather than install: recording the decision is what closes the wizard,
+# and installing would put 1497 demo objects into every list the suite asserts
+# on. `demo-data-setup-step.spec.ts` exercises the install path deliberately
+# and in isolation.
+setup_post '/index.php/apps/shillinq/api/setup/action/skip-demo-data' '{}'
+
 # VERIFY, do not assume. `status()` is also what persists
 # `setup_completed_version`, which is the manifest's `completionConfigKey` —
 # so this call is both the assertion and the last write the wizard needs.
