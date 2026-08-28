@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\SetupController;
+use OCA\Shillinq\Service\DemoDataService;
 use OCA\Shillinq\Service\SettingsService;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
@@ -68,6 +69,13 @@ final class SetupControllerTest extends TestCase {
 	 *
 	 * @var SetupController
 	 */
+	/**
+	 * Mock DemoDataService.
+	 *
+	 * @var DemoDataService&MockObject
+	 */
+	private DemoDataService&MockObject $demoDataService;
+
 	private SetupController $controller;
 
 	/**
@@ -81,11 +89,13 @@ final class SetupControllerTest extends TestCase {
 		$this->request = $this->createMock(IRequest::class);
 		$this->appConfig = $this->createMock(IAppConfig::class);
 		$this->settingsService = $this->createMock(SettingsService::class);
+		$this->demoDataService = $this->createMock(DemoDataService::class);
 
 		$this->controller = new SetupController(
 			appName: 'shillinq',
 			request: $this->request,
 			appConfig: $this->appConfig,
+			demoDataService: $this->demoDataService,
 			settingsService: $this->settingsService,
 		);
 
@@ -210,6 +220,72 @@ final class SetupControllerTest extends TestCase {
 	 *
 	 * @return void
 	 */
+	/**
+	 * 🔴 THE COUNTS REACH THE OPERATOR. "Demo data installed" with no numbers
+	 * cannot be told apart from an import that wrote nothing — the exact defect
+	 * the openregister half of this programme shipped and had to fix.
+	 *
+	 * @return void
+	 */
+	public function testRunActionInstallDemoDataReportsWhatLanded(): void {
+		$this->demoDataService->expects($this->once())
+			->method('install')
+			->willReturn(['objects' => 1497, 'schemas' => 499]);
+
+		$this->appConfig->expects($this->once())
+			->method('setValueString')
+			->with('shillinq', 'demo_data_decided', 'installed');
+
+		$response = $this->controller->runAction('install-demo-data');
+		$data = $response->getData();
+
+		self::assertTrue($data['success']);
+		self::assertStringContainsString('1497', $data['message']);
+		self::assertStringContainsString('499', $data['message']);
+
+	}//end testRunActionInstallDemoDataReportsWhatLanded()
+
+	/**
+	 * 🔴 A FAILED INSTALL LEAVES THE STEP UNDECIDED.
+	 *
+	 * The decision is recorded only after the import returns. Recording it first
+	 * would let a failed install present as a finished step: the wizard would
+	 * never offer it again and nobody would learn the demo data is absent.
+	 *
+	 * @return void
+	 */
+	public function testRunActionInstallDemoDataFailureLeavesTheStepUndecided(): void {
+		$this->demoDataService->method('install')
+			->willThrowException(new \RuntimeException('openregister is not installed'));
+
+		$this->appConfig->expects($this->never())->method('setValueString');
+
+		$data = $this->controller->runAction('install-demo-data')->getData();
+
+		self::assertFalse($data['success']);
+		self::assertStringContainsString('openregister', $data['message']);
+
+	}//end testRunActionInstallDemoDataFailureLeavesTheStepUndecided()
+
+	/**
+	 * Skipping is a DECISION, not the absence of one: it records `skipped` so
+	 * the optional wizard stops offering the step, and imports nothing.
+	 *
+	 * @return void
+	 */
+	public function testRunActionSkipDemoDataRecordsTheDecisionWithoutImporting(): void {
+		$this->demoDataService->expects($this->never())->method('install');
+
+		$this->appConfig->expects($this->once())
+			->method('setValueString')
+			->with('shillinq', 'demo_data_decided', 'skipped');
+
+		$data = $this->controller->runAction('skip-demo-data')->getData();
+
+		self::assertTrue($data['success']);
+
+	}//end testRunActionSkipDemoDataRecordsTheDecisionWithoutImporting()
+
 	public function testRunActionInitAdministrationPersistsSeedAdministrationCode(): void {
 		$this->settingsService->expects($this->once())->method('loadConfigurationForced');
 		$this->settingsService->expects($this->once())
