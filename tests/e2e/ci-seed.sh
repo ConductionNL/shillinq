@@ -50,6 +50,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 
+# The Nextcloud server root, where `occ` lives. CI already runs with cwd set
+# there, but derive it from the app's own location so the script also works
+# when run from anywhere else — the same definition buildiq's ci-seed.sh uses.
+SERVER_DIR="$(cd -- "${APP_DIR}/../.." && pwd)"
+
 # ── Target resolution ────────────────────────────────────────────────────────
 # The shared workflow's "Seed test data" step exports BASE_URL / NEXTCLOUD_URL /
 # NC_BASE_URL / ADMIN_USER / ADMIN_PASSWORD / NC_ADMIN_USER / NC_ADMIN_PASS.
