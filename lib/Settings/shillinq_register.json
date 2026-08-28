@@ -982,27 +982,34 @@
               "fiscalYearId",
               "accountNumber"
             ],
-            "operations": {
-              "totalDebit": {
-                "field": "amount",
-                "operation": "sum",
-                "condition": "side = 'debit'"
-              },
-              "totalCredit": {
-                "field": "amount",
-                "operation": "sum",
-                "condition": "side = 'credit'"
-              },
-              "netAmount": {
-                "operation": "expression",
-                "expression": "totalDebit - totalCredit"
-              }
-            },
             "hierarchyRollup": {
               "relation": "costCenterRelation",
               "parentField": "parentCode",
               "depth": 4
-            }
+            },
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "totalDebit"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "totalCredit"
+              },
+              {
+                "metric": "expression",
+                "expression": "totalDebit - totalCredit",
+                "as": "netAmount"
+              }
+            ]
           },
           "segmentPnlByKostenDrager": {
             "description": "Segment P&L roll-up keyed by kostenDragerCode and fiscalYearId. Mirrors the cost-center aggregation for the cost-object dimension per REQ-CC-005 + REQ-ADIM-004. Re-targeted from the retired KostenDrager register to AnalyticalDimension(dimensionType=cost-object). Field name and stored values unchanged.",
@@ -1017,27 +1024,34 @@
               "fiscalYearId",
               "accountNumber"
             ],
-            "operations": {
-              "totalDebit": {
-                "field": "amount",
-                "operation": "sum",
-                "condition": "side = 'debit'"
-              },
-              "totalCredit": {
-                "field": "amount",
-                "operation": "sum",
-                "condition": "side = 'credit'"
-              },
-              "netAmount": {
-                "operation": "expression",
-                "expression": "totalDebit - totalCredit"
-              }
-            },
             "hierarchyRollup": {
               "relation": "kostenDragerRelation",
               "parentField": "parentCode",
               "depth": 4
-            }
+            },
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "totalDebit"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "totalCredit"
+              },
+              {
+                "metric": "expression",
+                "expression": "totalDebit - totalCredit",
+                "as": "netAmount"
+              }
+            ]
           },
           "segmentPnlByProject": {
             "description": "Segment P&L roll-up keyed by projectCode and fiscalYearId. Used for project accounting and as the time-per-project projection target for WBSO pre-positioning per REQ-CC-005 + REQ-CC-007.",
@@ -1052,27 +1066,34 @@
               "fiscalYearId",
               "accountNumber"
             ],
-            "operations": {
-              "totalDebit": {
-                "field": "amount",
-                "operation": "sum",
-                "condition": "side = 'debit'"
-              },
-              "totalCredit": {
-                "field": "amount",
-                "operation": "sum",
-                "condition": "side = 'credit'"
-              },
-              "netAmount": {
-                "operation": "expression",
-                "expression": "totalDebit - totalCredit"
-              }
-            },
             "hierarchyRollup": {
               "relation": "projectRelation",
               "parentField": "parentCode",
               "depth": 4
-            }
+            },
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "totalDebit"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "totalCredit"
+              },
+              {
+                "metric": "expression",
+                "expression": "totalDebit - totalCredit",
+                "as": "netAmount"
+              }
+            ]
           },
           "iv3DetailByTaakveldCategorie": {
             "description": "Iv3-detail roll-up grouping GLLine records by (periodId, taakveld, categorie) summing (debit - credit) per REQ-CBSE-002. Joins GLLine → Account → BbvAccountMapping for taakveld + iv3Categorie. Sum across all categorieën per taakveld MUST equal the base IV3 total for that taakveld (€0 tolerance). Quarterly cadence; docudesk template: iv3-detail-2026.csv; openconnector source: cbs-iv3-detail.",
@@ -1244,13 +1265,16 @@
         "x-openregister-aggregations": {
           "aandeelSumCheck": {
             "description": "Computes the sum of aandeel across all actief deelnemers. Surfaces a non-blocking warning in the Consolidated view when the result differs from 1.0 per REQ-GRC-004 and design Risk 2.",
-            "filter": "actief = true",
-            "operations": {
-              "aandeelSum": {
+            "filter": {
+              "actief": true
+            },
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "share",
-                "operation": "sum"
+                "as": "aandeelSum"
               }
-            }
+            ]
           }
         }
       },
@@ -1558,15 +1582,19 @@
         "x-openregister-aggregations": {
           "countByType": {
             "field": "accountType",
-            "operation": "count",
             "description": "Number of accounts per accountType.",
-            "groupBy": "accountType"
+            "groupBy": [
+              "accountType"
+            ],
+            "metric": "count"
           },
           "countByLifecycle": {
             "field": "lifecycleState",
-            "operation": "count",
             "description": "Number of accounts per lifecycleState.",
-            "groupBy": "lifecycleState"
+            "groupBy": [
+              "lifecycleState"
+            ],
+            "metric": "count"
           },
           "emuSaldoByQuarter": {
             "description": "Quarterly EMU-saldo (debit minus credit) grouped by ESA-2010 sector for a given quarter, riding the IV3-base quarterly data per REQ-EMU-003. Filters GLLine rows by period and respects per-line emuInclusionRule (included|partial only; excluded lines are omitted). Partial lines count at 50% contribution. If the declarative engine cannot express the combined multi-sector + emuInclusionRule filter, the guard OCA\\Shillinq\\Guard\\EmuCalculator::computeQuarterlySaldo is invoked per ADR-031 exception path.",
@@ -2265,26 +2293,29 @@
               "fiscalYearId": "@self.fiscalYearId",
               "eliminationFlag": false
             },
-            "operations": {
-              "totalDebits": {
-                "field": "GLLine.amount",
-                "operation": "sum",
-                "condition": "GLLine.side = 'debit'",
-                "target": "totalDebits"
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "totalDebits"
               },
-              "totalCredits": {
-                "field": "GLLine.amount",
-                "operation": "sum",
-                "condition": "GLLine.side = 'credit'",
-                "target": "totalCredits"
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "totalCredits"
               },
-              "isBalanced": {
-                "operation": "check",
-                "expression": "totalDebits = totalCredits",
-                "target": "isBalanced",
-                "diagnostic": "Trial balance is not balanced: debits({{totalDebits}}) ≠ credits({{totalCredits}}), discrepancy = {{totalDebits - totalCredits}}"
+              {
+                "metric": "check",
+                "as": "isBalanced"
               }
-            }
+            ],
+            "from": "GLLine"
           },
           "trialBalanceByAccount": {
             "description": "Per-account trial balance listing: accountNumber, name, accountType, totalDebits, totalCredits per REQ-FS-005 for the fiscal period.",
@@ -3487,28 +3518,42 @@
         "x-openregister-aggregations": {
           "totalByHeffingType": {
             "description": "Total aanslag bedrag per heffingType for the administration, excluding reversed postings. Used by the waterschapsbelastingen index page.",
-            "filter": "state != 'reversed'",
-            "groupBy": "levyType",
-            "operations": {
-              "totalAanslag": {
-                "field": "assessmentAmount",
-                "operation": "sum"
-              },
-              "count": {
-                "field": "id",
-                "operation": "count"
+            "filter": {
+              "state": {
+                "ne": "reversed"
               }
-            }
+            },
+            "groupBy": [
+              "levyType"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "assessmentAmount",
+                "as": "totalAanslag"
+              },
+              {
+                "metric": "count",
+                "field": "id",
+                "as": "count"
+              }
+            ]
           },
           "emuIncludedTotal": {
             "description": "Total aanslag bedrag for postings included in the EMU-saldo computation (emuExclusionRule != 'excluded'). Read by the bookkeeping-emu-reporting sibling spec.",
-            "filter": "state = 'posted' AND emuExclusionRule != 'excluded'",
-            "operations": {
-              "emuTotal": {
-                "field": "assessmentAmount",
-                "operation": "sum"
+            "filter": {
+              "state": "posted",
+              "emuExclusionRule": {
+                "ne": "excluded"
               }
-            }
+            },
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "assessmentAmount",
+                "as": "emuTotal"
+              }
+            ]
           }
         }
       },
@@ -4120,20 +4165,22 @@
         "x-openregister-aggregations": {
           "totalByCategory": {
             "field": "assetCategory",
-            "operation": "count",
             "description": "Number of active assets per assetCategory.",
-            "groupBy": "assetCategory",
+            "groupBy": [
+              "assetCategory"
+            ],
             "filter": {
               "lifecycleState": "active"
-            }
+            },
+            "metric": "count"
           },
           "totalAcquisitionCost": {
             "field": "acquisitionCost",
-            "operation": "sum",
             "description": "Total gross acquisition cost of all active assets.",
             "filter": {
               "lifecycleState": "active"
-            }
+            },
+            "metric": "sum"
           }
         }
       },
@@ -4719,14 +4766,19 @@
         "x-openregister-aggregations": {
           "activeConfigurationsByYear": {
             "description": "Count of active TaxRegimeConfiguration records per fiscal year. Surfaced on Tax Filing Prep dashboard.",
-            "filter": "status = 'active'",
-            "groupBy": "fiscalYear",
-            "operations": {
-              "count": {
+            "filter": {
+              "status": "active"
+            },
+            "groupBy": [
+              "fiscalYear"
+            ],
+            "metrics": [
+              {
+                "metric": "count",
                 "field": "fiscalYear",
-                "operation": "count"
+                "as": "count"
               }
-            }
+            ]
           }
         }
       },
@@ -4922,31 +4974,39 @@
               "fiscalYear",
               "taxCategory"
             ],
-            "operations": {
-              "totalGross": {
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "grossAmount",
-                "operation": "sum"
+                "as": "totalGross"
               },
-              "totalNet": {
+              {
+                "metric": "sum",
                 "field": "netAmount",
-                "operation": "sum"
+                "as": "totalNet"
               },
-              "reportCount": {
+              {
+                "metric": "count",
                 "field": "status",
-                "operation": "count"
+                "as": "reportCount"
               }
-            }
+            ]
           },
           "finalizedSummaryCount": {
             "description": "Count of finalized TaxSummaryReport rows. Surfaced as the 'tax summaries ready' KPI on Tax Filing Prep dashboard per REQ-TAX-006.",
-            "filter": "status = 'finalized'",
-            "groupBy": "administrationId",
-            "operations": {
-              "count": {
+            "filter": {
+              "status": "finalized"
+            },
+            "groupBy": [
+              "administrationId"
+            ],
+            "metrics": [
+              {
+                "metric": "count",
                 "field": "status",
-                "operation": "count"
+                "as": "count"
               }
-            }
+            ]
           }
         },
         "x-openregister-rbac": {
@@ -5171,21 +5231,25 @@
           },
           "currentEstimateByYear": {
             "description": "Most recent current TaxEstimate per administrationId and fiscalYear. Surfaced as 'Estimated annual liability' KPI on Tax Filing Prep dashboard per REQ-TAX-006.",
-            "filter": "status = 'current'",
+            "filter": {
+              "status": "current"
+            },
             "groupBy": [
               "administrationId",
               "fiscalYear"
             ],
-            "operations": {
-              "latestLiability": {
+            "metrics": [
+              {
+                "metric": "max",
                 "field": "estimatedNetLiability",
-                "operation": "max"
+                "as": "latestLiability"
               },
-              "latestSnapshotDate": {
+              {
+                "metric": "max",
                 "field": "snapshotDate",
-                "operation": "max"
+                "as": "latestSnapshotDate"
               }
-            }
+            ]
           }
         },
         "x-openregister-rbac": {
@@ -6689,23 +6753,28 @@
         "x-openregister-aggregations": {
           "schedulesByTier": {
             "description": "Rate schedules grouped by tier for this version. Used by rate-lookup UI and aggregation queries.",
-            "source": "RateSchedule",
             "joinOn": "versionId",
-            "groupBy": "tier",
-            "operations": {
-              "count": {
+            "groupBy": [
+              "tier"
+            ],
+            "metrics": [
+              {
+                "metric": "count",
                 "field": "scheduleId",
-                "operation": "count"
+                "as": "count"
               },
-              "minRate": {
+              {
+                "metric": "min",
                 "field": "rate",
-                "operation": "min"
+                "as": "minRate"
               },
-              "maxRate": {
+              {
+                "metric": "max",
                 "field": "rate",
-                "operation": "max"
+                "as": "maxRate"
               }
-            }
+            ],
+            "from": "RateSchedule"
           }
         },
         "x-openregister-rbac": {
@@ -6981,17 +7050,21 @@
               "status": "active",
               "administrationId": "@params.administrationId"
             },
-            "groupBy": "tier",
-            "operations": {
-              "count": {
+            "groupBy": [
+              "tier"
+            ],
+            "metrics": [
+              {
+                "metric": "count",
                 "field": "scheduleId",
-                "operation": "count"
+                "as": "count"
               },
-              "avgRate": {
+              {
+                "metric": "avg",
                 "field": "rate",
-                "operation": "avg"
+                "as": "avgRate"
               }
-            }
+            ]
           }
         },
         "x-openregister-calculations": {
@@ -7254,33 +7327,39 @@
               "resolvedRate",
               "resolvedUnit"
             ],
-            "operations": {
-              "count": {
+            "metrics": [
+              {
+                "metric": "count",
                 "field": "recordId",
-                "operation": "count"
+                "as": "count"
               },
-              "firstLookup": {
+              {
+                "metric": "min",
                 "field": "lookupDate",
-                "operation": "min"
+                "as": "firstLookup"
               },
-              "lastLookup": {
+              {
+                "metric": "max",
                 "field": "lookupDate",
-                "operation": "max"
+                "as": "lastLookup"
               }
-            }
+            ]
           },
           "countByTier": {
             "description": "Count of rate lookups per resolved tier for an administration. Used by Rate Audit Trail widget.",
             "filter": {
               "administrationId": "@params.administrationId"
             },
-            "groupBy": "resolvedTier",
-            "operations": {
-              "count": {
+            "groupBy": [
+              "resolvedTier"
+            ],
+            "metrics": [
+              {
+                "metric": "count",
                 "field": "recordId",
-                "operation": "count"
+                "as": "count"
               }
-            }
+            ]
           }
         },
         "x-openregister-rbac": {
@@ -12570,18 +12649,20 @@
         "x-openregister-aggregations": {
           "countBySource": {
             "field": "source",
-            "operation": "count",
             "description": "Number of FX rate records per source (ecb, manual, internal-policy).",
-            "groupBy": "source"
+            "groupBy": [
+              "source"
+            ],
+            "metric": "count"
           },
           "latestRatePerPair": {
             "field": "date",
-            "operation": "max",
             "description": "Most recent rate date per (transactionCurrency, baseCurrency) pair.",
             "groupBy": [
               "transactionCurrency",
               "baseCurrency"
-            ]
+            ],
+            "metric": "max"
           }
         },
         "x-openregister-rbac": {
@@ -13174,41 +13255,52 @@
         "x-openregister-aggregations": {
           "depreciationByMethod": {
             "description": "Sum of depreciation amounts grouped by method for current fiscal year per REQ-FA-009 item 1.",
-            "groupBy": "depreciationMethod",
-            "operations": {
-              "totalDepreciation": {
+            "groupBy": [
+              "depreciationMethod"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "depreciationAmount",
-                "operation": "sum"
+                "as": "totalDepreciation"
               },
-              "scheduleCount": {
+              {
+                "metric": "count",
                 "field": "scheduleNumber",
-                "operation": "count"
+                "as": "scheduleCount"
               }
-            }
+            ]
           },
           "depreciationByCostCenter": {
             "description": "Sum of depreciation amounts grouped by cost center for current fiscal year per REQ-FA-009 item 2.",
-            "groupBy": "costCenterCode",
-            "operations": {
-              "totalDepreciation": {
+            "groupBy": [
+              "costCenterCode"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "depreciationAmount",
-                "operation": "sum"
+                "as": "totalDepreciation"
               }
-            }
+            ]
           },
           "accumulatedDepreciationByAsset": {
             "description": "Cumulative depreciation across all periods per asset per REQ-FA-009 item 3.",
-            "groupBy": "assetRef",
-            "operations": {
-              "totalAccumulatedDepreciation": {
+            "groupBy": [
+              "assetRef"
+            ],
+            "metrics": [
+              {
+                "metric": "max",
                 "field": "accumulatedDepreciation",
-                "operation": "max"
+                "as": "totalAccumulatedDepreciation"
               },
-              "totalDepreciation": {
+              {
+                "metric": "sum",
                 "field": "depreciationAmount",
-                "operation": "sum"
+                "as": "totalDepreciation"
               }
-            }
+            ]
           },
           "bookValuesByStatus": {
             "description": "Book values grouped by asset status for balance-sheet reporting per REQ-FA-009 item 4.",
@@ -13697,38 +13789,55 @@
           },
           "findingCounts": {
             "description": "Aggregate audit finding counts per REQ-SISA-008 from ComplianceAuditTrail. Groups by severity and counts overdue remediations.",
-            "sourceSchema": "ComplianceAuditTrail",
             "sourceRegister": "shillinq",
             "filter": {
               "fiscalYear": "@self.fiscalYear"
             },
-            "operations": {
-              "criticalFindingsCount": {
+            "metrics": [
+              {
+                "metric": "count",
                 "field": "id",
-                "operation": "count",
-                "condition": "findingSeverity = 'critical'"
+                "condition": {
+                  "findingSeverity": "critical"
+                },
+                "as": "criticalFindingsCount"
               },
-              "majorFindingsCount": {
+              {
+                "metric": "count",
                 "field": "id",
-                "operation": "count",
-                "condition": "findingSeverity = 'major'"
+                "condition": {
+                  "findingSeverity": "major"
+                },
+                "as": "majorFindingsCount"
               },
-              "minorFindingsCount": {
+              {
+                "metric": "count",
                 "field": "id",
-                "operation": "count",
-                "condition": "findingSeverity = 'minor'"
+                "condition": {
+                  "findingSeverity": "minor"
+                },
+                "as": "minorFindingsCount"
               },
-              "observationsCount": {
+              {
+                "metric": "count",
                 "field": "id",
-                "operation": "count",
-                "condition": "observationNumber IS NOT NULL"
+                "condition": {
+                  "observationNumber": {
+                    "ne": null
+                  }
+                },
+                "as": "observationsCount"
               },
-              "remediationOverdueCount": {
+              {
+                "metric": "count",
                 "field": "id",
-                "operation": "count",
-                "condition": "remediationStatus = 'overdue'"
+                "condition": {
+                  "remediationStatus": "overdue"
+                },
+                "as": "remediationOverdueCount"
               }
-            }
+            ],
+            "from": "ComplianceAuditTrail"
           }
         },
         "x-openregister-calculations": {
@@ -14068,21 +14177,23 @@
               "administrationId",
               "reportPeriod"
             ],
-            "operations": {
-              "totalAccounts": {
+            "metrics": [
+              {
+                "metric": "count",
                 "field": "reportNumber",
-                "operation": "count"
+                "as": "totalAccounts"
               },
-              "averageScore": {
+              {
+                "metric": "average",
                 "field": "complianceScore",
-                "operation": "average"
+                "as": "averageScore"
               },
-              "compliancePercentage": {
+              {
+                "metric": "average",
                 "field": "complianceScore",
-                "operation": "average",
-                "description": "Average compliance score as a percentage across all accounts in the period."
+                "as": "compliancePercentage"
               }
-            }
+            ]
           },
           "byRuleType": {
             "description": "Pass/fail counts grouped by ruleType across all criteriaResults. Identifies systematically failing rules per REQ-SCHATKIST-007.",
@@ -14648,20 +14759,27 @@
               "schema": "GLLine",
               "condition": "GLLine.administrationId = @self.administrationId"
             },
-            "operations": {
-              "totalDebit": {
-                "field": "GLLine.amount",
-                "operation": "sum",
-                "condition": "GLLine.side = 'debit'"
-              },
-              "totalCredit": {
-                "field": "GLLine.amount",
-                "operation": "sum",
-                "condition": "GLLine.side = 'credit'"
-              }
-            },
             "invariant": "totalDebit = totalCredit",
-            "onViolation": "error"
+            "onViolation": "error",
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "totalDebit"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "totalCredit"
+              }
+            ],
+            "from": "GLLine"
           },
           "unmappedAccounts": {
             "description": "REQ-SBR-007: queries all active Account records, checks XBRLMapping coverage per taxonomyVersion, returns list of unmapped account IDs. Idempotent and side-effect-free.",
@@ -15796,15 +15914,19 @@
         "x-openregister-aggregations": {
           "byTaakveld": {
             "field": "taskField",
-            "operation": "count",
             "description": "Number of accounts mapped per taakveld.",
-            "groupBy": "taskField"
+            "groupBy": [
+              "taskField"
+            ],
+            "metric": "count"
           },
           "byProgramma": {
             "field": "programmeCode",
-            "operation": "count",
             "description": "Number of accounts mapped per programma code.",
-            "groupBy": "programmeCode"
+            "groupBy": [
+              "programmeCode"
+            ],
+            "metric": "count"
           },
           "bbvProgrammaSummary": {
             "description": "Sum of GL debits and credits per programmaCode for BBV reporting (REQ-BBV-004). Joins BbvAccountMapping with GLLine via accountNumber.",
@@ -16647,18 +16769,26 @@
         "x-openregister-aggregations": {
           "totalByFondsType": {
             "description": "Total uitkering bedrag per fondsType for the administration, excluding reversed postings. Used by the provinciale fondsen index page.",
-            "filter": "state != 'reversed'",
-            "groupBy": "fondsType",
-            "operations": {
-              "totalUitkering": {
-                "field": "benefitAmount",
-                "operation": "sum"
-              },
-              "count": {
-                "field": "id",
-                "operation": "count"
+            "filter": {
+              "state": {
+                "ne": "reversed"
               }
-            }
+            },
+            "groupBy": [
+              "fondsType"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "benefitAmount",
+                "as": "totalUitkering"
+              },
+              {
+                "metric": "count",
+                "field": "id",
+                "as": "count"
+              }
+            ]
           }
         },
         "x-openregister-audit-trail": {
@@ -16946,14 +17076,13 @@
               "administrationId",
               "fiscalYear"
             ],
-            "operations": {
-              "electionCount": {
+            "metrics": [
+              {
+                "metric": "count",
                 "field": "id",
-                "operation": "count",
-                "target": "electionCount",
-                "diagnostic": "Multiple InnovatieboxElection records for administrationId={{administrationId}} fiscalYear={{fiscalYear}} — mutual exclusion violated"
+                "as": "electionCount"
               }
-            }
+            ]
           }
         },
         "x-openregister-calculations": {
@@ -18345,27 +18474,36 @@
         "x-openregister-aggregations": {
           "totalByCurrency": {
             "description": "Aggregate total balance across all accounts grouped by currency. Enables multi-account EUR/USD/GBP cash-position reporting without custom PHP per REQ-MC-004.",
-            "groupBy": "currency",
-            "operations": {
-              "totalBalance": {
+            "groupBy": [
+              "currency"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "balance",
-                "operation": "sum"
+                "as": "totalBalance"
               },
-              "accountCount": {
+              {
+                "metric": "count",
                 "field": "accountId",
-                "operation": "count"
+                "as": "accountCount"
               }
-            }
+            ]
           },
           "lowLiquidityAccounts": {
             "description": "Identify (account, currency) pairs with balance < 5000 (low-liquidity warning). Used for risk-level filtering in the Currency Balances index page.",
-            "filter": "balance < 5000",
-            "operations": {
-              "count": {
-                "field": "balanceId",
-                "operation": "count"
+            "filter": {
+              "balance": {
+                "lt": 5000
               }
-            }
+            },
+            "metrics": [
+              {
+                "metric": "count",
+                "field": "balanceId",
+                "as": "count"
+              }
+            ]
           }
         }
       },
@@ -22006,13 +22144,15 @@
       "x-openregister-aggregations": {
         "childCount": {
           "description": "Number of direct child locations per REQ-LOC-007.",
-          "source": "Location",
           "filter": {
             "parentLocationId": "@self.id"
           },
-          "operation": "count",
           "field": "id",
-          "groupBy": "locationType"
+          "groupBy": [
+            "locationType"
+          ],
+          "metric": "count",
+          "from": "Location"
         },
         "descendantCount": {
           "description": "Total descendant locations at all depth levels (recursive) per REQ-LOC-007.",

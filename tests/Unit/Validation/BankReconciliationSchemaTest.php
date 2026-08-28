@@ -377,17 +377,21 @@ final class BankReconciliationSchemaTest extends TestCase {
 		$schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
 		$agg = $schema['x-openregister-aggregations']['approvedAmountTotal'];
 
-		// `approvedAmountTotal` is NOT translated: it uses an `operations` dict
-		// whose custom alias (`approvedTotal`) the engine cannot express — its
-		// `metrics` form emits `sum_<field>` keys, so translating it changes
-		// what every CONSUMER must read, not just the declaration. Its `filter`
-		// is also a SQL-ish string the engine does not parse. Both are tracked
-		// in #1261, and this test pins the shape as it stands so the debt stays
-		// visible rather than looking intentional.
-		self::assertSame("matchType = 'approved'", $agg['filter']);
-		self::assertSame('reconciliationId', $agg['groupBy']);
-		self::assertSame('bankTransactionAmount', $agg['operations']['approvedTotal']['field']);
-		self::assertSame('sum', $agg['operations']['approvedTotal']['operation']);
+		// `approvedAmountTotal` IS translated now. Both reasons it was pinned as
+		// untranslatable have been removed: the custom alias `approvedTotal` is
+		// expressible since `as` landed, and the SQL-ish string filter converts
+		// to the filter OBJECT the engine actually reads.
+		self::assertSame(['matchType' => 'approved'], $agg['filter'], 'filter is an object, not a string');
+		self::assertSame(['reconciliationId'], $agg['groupBy'], 'groupBy is an ARRAY — a string is silently dropped');
+		self::assertArrayNotHasKey('operations', $agg, '`operations` is not an engine key');
+
+		$byAlias = [];
+		foreach ($agg['metrics'] as $metric) {
+			$byAlias[$metric['as']] = $metric;
+		}
+		self::assertArrayHasKey('approvedTotal', $byAlias, 'the custom alias survives as `as`');
+		self::assertSame('sum', $byAlias['approvedTotal']['metric']);
+		self::assertSame('bankTransactionAmount', $byAlias['approvedTotal']['field']);
 
 		// `countByType` IS translated — a plain count over its own schema.
 		$countByType = $schema['x-openregister-aggregations']['countByType'];
