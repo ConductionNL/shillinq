@@ -1582,15 +1582,19 @@
         "x-openregister-aggregations": {
           "countByType": {
             "field": "accountType",
-            "operation": "count",
             "description": "Number of accounts per accountType.",
-            "groupBy": "accountType"
+            "groupBy": [
+              "accountType"
+            ],
+            "metric": "count"
           },
           "countByLifecycle": {
             "field": "lifecycleState",
-            "operation": "count",
             "description": "Number of accounts per lifecycleState.",
-            "groupBy": "lifecycleState"
+            "groupBy": [
+              "lifecycleState"
+            ],
+            "metric": "count"
           },
           "emuSaldoByQuarter": {
             "description": "Quarterly EMU-saldo (debit minus credit) grouped by ESA-2010 sector for a given quarter, riding the IV3-base quarterly data per REQ-EMU-003. Filters GLLine rows by period and respects per-line emuInclusionRule (included|partial only; excluded lines are omitted). Partial lines count at 50% contribution. If the declarative engine cannot express the combined multi-sector + emuInclusionRule filter, the guard OCA\\Shillinq\\Guard\\EmuCalculator::computeQuarterlySaldo is invoked per ADR-031 exception path.",
@@ -4158,20 +4162,22 @@
         "x-openregister-aggregations": {
           "totalByCategory": {
             "field": "assetCategory",
-            "operation": "count",
             "description": "Number of active assets per assetCategory.",
-            "groupBy": "assetCategory",
+            "groupBy": [
+              "assetCategory"
+            ],
             "filter": {
               "lifecycleState": "active"
-            }
+            },
+            "metric": "count"
           },
           "totalAcquisitionCost": {
             "field": "acquisitionCost",
-            "operation": "sum",
             "description": "Total gross acquisition cost of all active assets.",
             "filter": {
               "lifecycleState": "active"
-            }
+            },
+            "metric": "sum"
           }
         }
       },
@@ -12640,18 +12646,20 @@
         "x-openregister-aggregations": {
           "countBySource": {
             "field": "source",
-            "operation": "count",
             "description": "Number of FX rate records per source (ecb, manual, internal-policy).",
-            "groupBy": "source"
+            "groupBy": [
+              "source"
+            ],
+            "metric": "count"
           },
           "latestRatePerPair": {
             "field": "date",
-            "operation": "max",
             "description": "Most recent rate date per (transactionCurrency, baseCurrency) pair.",
             "groupBy": [
               "transactionCurrency",
               "baseCurrency"
-            ]
+            ],
+            "metric": "max"
           }
         },
         "x-openregister-rbac": {
@@ -15896,15 +15904,19 @@
         "x-openregister-aggregations": {
           "byTaakveld": {
             "field": "taskField",
-            "operation": "count",
             "description": "Number of accounts mapped per taakveld.",
-            "groupBy": "taskField"
+            "groupBy": [
+              "taskField"
+            ],
+            "metric": "count"
           },
           "byProgramma": {
             "field": "programmeCode",
-            "operation": "count",
             "description": "Number of accounts mapped per programma code.",
-            "groupBy": "programmeCode"
+            "groupBy": [
+              "programmeCode"
+            ],
+            "metric": "count"
           },
           "bbvProgrammaSummary": {
             "description": "Sum of GL debits and credits per programmaCode for BBV reporting (REQ-BBV-004). Joins BbvAccountMapping with GLLine via accountNumber.",
@@ -22118,13 +22130,15 @@
       "x-openregister-aggregations": {
         "childCount": {
           "description": "Number of direct child locations per REQ-LOC-007.",
-          "source": "Location",
           "filter": {
             "parentLocationId": "@self.id"
           },
-          "operation": "count",
           "field": "id",
-          "groupBy": "locationType"
+          "groupBy": [
+            "locationType"
+          ],
+          "metric": "count",
+          "from": "Location"
         },
         "descendantCount": {
           "description": "Total descendant locations at all depth levels (recursive) per REQ-LOC-007.",
