@@ -479,8 +479,19 @@ setup_post '/index.php/apps/shillinq/api/setup/action/seed' '{}'
 # "no thanks" impossible to express. Writing `skipped` is what an operator who
 # declined leaves behind, and it avoids seeding a dataset the specs do not
 # expect. Same fix as buildiq#523.
-if [ -f "${SERVER_DIR}/occ" ]; then
-	if (cd "${SERVER_DIR}" && php occ config:app:set shillinq demo_data_decided --value=skipped); then
+#
+# `./occ`, not "${SERVER_DIR}/occ": SERVER_DIR is never assigned anywhere in
+# this script, and `set -euo pipefail` at the top makes reading it fatal --
+# "line 482: SERVER_DIR: unbound variable", which aborted the whole seed and
+# took the E2E job down BEFORE Playwright ran. A guard meant to stop an
+# overlay covering the SPA instead stopped the suite existing.
+#
+# This is the idiom the rest of the file already uses (see the
+# htaccess.IgnoreFrontController block above): the workflow invokes this
+# script with cwd at the Nextcloud server root, so `./occ` is the reachable
+# path and its presence is the correct guard.
+if [ -f "./occ" ]; then
+	if php ./occ config:app:set shillinq demo_data_decided --value=skipped; then
 		echo "[ci-seed] demo-data step marked decided (skipped)."
 	else
 		echo "::warning::could not set demo_data_decided; the wizard may reopen over the SPA."
