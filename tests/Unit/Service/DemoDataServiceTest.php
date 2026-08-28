@@ -184,6 +184,40 @@ class DemoDataServiceTest extends TestCase {
 		$service->install();
 	}
 
+	/**
+	 * 🔴 UNREADABLE IS NOT THE SAME AS ABSENT, AND NOT THE SAME AS EMPTY.
+	 *
+	 * `is_file()` passes on a descriptor whose contents cannot be read — a
+	 * permission change, a truncated mount — and `file_get_contents()` then
+	 * returns false. Without its own branch that false would flow into
+	 * `json_decode(false)`, which yields null, and the operator would be told
+	 * the dataset "is not valid JSON" when the real fault is that nothing could
+	 * read it. Two different repairs, so two different messages.
+	 *
+	 * Skipped when the process can read anything regardless of mode (root in a
+	 * container), because there the arm would assert nothing.
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableDescriptorSaysSoRatherThanBlamingTheJson(): void {
+		$this->shipDescriptor();
+		$path = $this->appDir . '/lib/Settings/shillinq_mock_register.json';
+
+		if (chmod($path, 0000) === false || is_readable($path) === true) {
+			chmod($path, 0644);
+			self::markTestSkipped('this process reads regardless of mode; the arm would prove nothing');
+		}
+
+		try {
+			$this->expectException(\RuntimeException::class);
+			$this->expectExceptionMessageMatches('/could not be read/');
+			$this->service->install();
+		} finally {
+			chmod($path, 0644);
+		}
+
+	}//end testAnUnreadableDescriptorSaysSoRatherThanBlamingTheJson()
+
 	public function testIsAvailableReflectsWhetherTheDescriptorShips(): void {
 		$this->assertFalse($this->service->isAvailable(), 'no descriptor on disk');
 		$this->shipDescriptor();
