@@ -10419,7 +10419,8 @@
           },
           "reorderQuantity": {
             "type": "number",
-            "exclusiveMinimum": 0,
+            "minimum": 0,
+            "exclusiveMinimum": true,
             "description": "Standard quantity to order on alert. Used as PO line quantity when auto-PO fires. REQ-IRA-006.",
             "example": 100,
             "title": "Reorder Quantity"

@@ -242,7 +242,8 @@
           "quantity": {
             "type": "number",
             "multipleOf": 0.01,
-            "exclusiveMinimum": 0,
+            "minimum": 0,
+            "exclusiveMinimum": true,
             "description": "Quantity transferred. Must be strictly positive; the controller rejects zero or negative.",
             "title": "Quantity"
           },
@@ -301,7 +302,8 @@
           "quantity": {
             "type": "number",
             "multipleOf": 0.01,
-            "exclusiveMinimum": 0,
+            "minimum": 0,
+            "exclusiveMinimum": true,
             "description": "Quantity picked. Must be strictly positive.",
             "title": "Quantity"
           },
