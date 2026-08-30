@@ -157,10 +157,24 @@ final class RetainerBillingFragmentTest extends TestCase {
 		self::assertArrayHasKey('drawdownsByPool', $agg);
 
 		$drawdownsByPool = $agg['drawdownsByPool'];
-		self::assertSame('RetainerDrawdown', $drawdownsByPool['source']);
-		self::assertArrayHasKey('operations', $drawdownsByPool);
-		self::assertArrayHasKey('drawnAmount', $drawdownsByPool['operations']);
-		self::assertSame('sum', $drawdownsByPool['operations']['drawnAmount']['operation']);
+
+		// `from`/`metrics`, not `source`/`operations`. Neither `source` nor
+		// `operations` is read by AggregationRunner, so this computed nothing.
+		self::assertSame('RetainerDrawdown', $drawdownsByPool['from']);
+		self::assertArrayNotHasKey('source', $drawdownsByPool, '`source` is not an engine key');
+		self::assertArrayNotHasKey('operations', $drawdownsByPool, '`operations` is not an engine key');
+
+		self::assertArrayHasKey('metrics', $drawdownsByPool);
+		$byAlias = [];
+		foreach ($drawdownsByPool['metrics'] as $metric) {
+			$byAlias[$metric['as']] = $metric;
+		}
+		self::assertArrayHasKey('drawnAmount', $byAlias);
+		self::assertSame('sum', $byAlias['drawnAmount']['metric']);
+		self::assertSame('drawdownAmount', $byAlias['drawnAmount']['field'], 'field is bare — `from` resolves it');
+
+		// The pool correlation is a groupBy dimension now.
+		self::assertContains('poolId', $drawdownsByPool['groupBy']);
 
 	}//end testDrawdownBalanceIsDeclarativeAggregation()
 

@@ -225,37 +225,45 @@
         "x-openregister-aggregations": {
           "totalsByReturn": {
             "description": "Declarative shape of VATReturnService::deriveTotals (REQ-VAT-011). Sums VATLine.vatAmount grouped by type within the return; collected → totalVATCollected, paid → totalVATPaid, vatBalance = totalVATPaid − totalVATCollected. Reverse-charge lines contribute to totalVATPaid with the operator-liable sign convention (REQ-VAT-010).",
-            "source": "VATLine",
-            "filter": {
-              "returnId": "@self.id"
-            },
+            "filter": {},
             "groupBy": [
+              "returnId",
               "VATLine.type"
             ],
-            "operations": {
-              "totalVATCollected": {
-                "field": "VATLine.vatAmount",
-                "operation": "sum",
-                "condition": "VATLine.type = 'collected'",
-                "target": "totalVATCollected"
+            "from": "VATLine",
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "vatAmount",
+                "condition": {
+                  "type": "collected"
+                },
+                "as": "totalVATCollected"
               },
-              "totalVATPaid": {
-                "field": "VATLine.vatAmount",
-                "operation": "sum",
-                "condition": "VATLine.type IN ('paid','reverse-charge')",
-                "target": "totalVATPaid"
+              {
+                "metric": "sum",
+                "field": "vatAmount",
+                "condition": {
+                  "type": {
+                    "in": [
+                      "paid",
+                      "reverse-charge"
+                    ]
+                  }
+                },
+                "as": "totalVATPaid"
               },
-              "totalTaxableAmount": {
-                "field": "VATLine.taxableAmount",
-                "operation": "sum",
-                "target": "totalTaxableAmount"
+              {
+                "metric": "sum",
+                "field": "taxableAmount",
+                "as": "totalTaxableAmount"
               },
-              "vatBalance": {
-                "operation": "expression",
+              {
+                "metric": "expression",
                 "expression": "totalVATPaid - totalVATCollected",
-                "target": "vatBalance"
+                "as": "vatBalance"
               }
-            }
+            ]
           }
         },
         "x-openregister-rbac": {
@@ -373,26 +381,27 @@
         "x-openregister-aggregations": {
           "linesByDeclaration": {
             "description": "Declarative shape of VATReturnService::deriveDeclaration. Sums VATLine within the declaration and counts the rows.",
-            "source": "VATLine",
-            "filter": {
-              "declarationId": "@self.id"
-            },
-            "operations": {
-              "totalVATAmount": {
-                "field": "VATLine.vatAmount",
-                "operation": "sum",
-                "target": "totalVATAmount"
+            "filter": {},
+            "from": "VATLine",
+            "groupBy": [
+              "declarationId"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "vatAmount",
+                "as": "totalVATAmount"
               },
-              "totalTaxableAmount": {
-                "field": "VATLine.taxableAmount",
-                "operation": "sum",
-                "target": "totalTaxableAmount"
+              {
+                "metric": "sum",
+                "field": "taxableAmount",
+                "as": "totalTaxableAmount"
               },
-              "lineCount": {
-                "operation": "count",
-                "target": "lineCount"
+              {
+                "metric": "count",
+                "as": "lineCount"
               }
-            }
+            ]
           }
         },
         "x-openregister-rbac": {

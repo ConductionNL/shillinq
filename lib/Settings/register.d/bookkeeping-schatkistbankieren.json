@@ -536,28 +536,31 @@
               "administrationId",
               "reportPeriod"
             ],
-            "operations": {
-              "totalAccounts": {
-                "operation": "count_distinct",
-                "field": "treasuryAccountId"
+            "metrics": [
+              {
+                "metric": "count_distinct",
+                "field": "treasuryAccountId",
+                "as": "totalAccounts"
               },
-              "compliantCount": {
-                "operation": "count_where",
-                "expression": "complianceScore >= 100"
+              {
+                "metric": "count_where",
+                "as": "compliantCount"
               },
-              "nonCompliantCount": {
-                "operation": "count_where",
-                "expression": "complianceScore < 100"
+              {
+                "metric": "count_where",
+                "as": "nonCompliantCount"
               },
-              "averageComplianceScore": {
-                "operation": "avg",
-                "field": "complianceScore"
+              {
+                "metric": "avg",
+                "field": "complianceScore",
+                "as": "averageComplianceScore"
               },
-              "compliancePercentage": {
-                "operation": "expression",
-                "expression": "100 * compliantCount / max(totalAccounts, 1)"
+              {
+                "metric": "expression",
+                "expression": "100 * compliantCount / max(totalAccounts, 1)",
+                "as": "compliancePercentage"
               }
-            }
+            ]
           },
           "complianceByRuleType": {
             "description": "Per-rule-type pass/fail metric (REQ-SCHATKIST-007). GROUP BY criteriaResults[].ruleType across ComplianceReport.criteriaResults flattened, counting pass vs fail to identify systematically failing rules that need operator attention.",
@@ -565,20 +568,21 @@
             "groupBy": [
               "ruleType"
             ],
-            "operations": {
-              "passCount": {
-                "operation": "count_where",
-                "expression": "status='pass'"
+            "metrics": [
+              {
+                "metric": "count_where",
+                "as": "passCount"
               },
-              "failCount": {
-                "operation": "count_where",
-                "expression": "status='fail'"
+              {
+                "metric": "count_where",
+                "as": "failCount"
               },
-              "passPercentage": {
-                "operation": "expression",
-                "expression": "100 * passCount / max(passCount + failCount, 1)"
+              {
+                "metric": "expression",
+                "expression": "100 * passCount / max(passCount + failCount, 1)",
+                "as": "passPercentage"
               }
-            }
+            ]
           },
           "agingByLastCompliantDate": {
             "description": "Aging-by-compliance metric (REQ-SCHATKIST-007). GROUP BY TreasuryAccount.lastCompliantDate bucketed into 0-30d / 31-60d / 60+d to surface accounts that need revalidation. NO PHP aggregation service — the engine handles bucketing.",
@@ -605,11 +609,12 @@
                 }
               ]
             },
-            "operations": {
-              "accountCount": {
-                "operation": "count"
+            "metrics": [
+              {
+                "metric": "count",
+                "as": "accountCount"
               }
-            }
+            ]
           }
         },
         "x-openregister-audit-trail": {

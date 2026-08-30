@@ -45,22 +45,29 @@
               "programmeStructure",
               "fiscalYearId"
             ],
-            "operations": {
-              "spent": {
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "amount",
-                "operation": "sum",
-                "condition": "side = 'debit'"
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "spent"
               },
-              "credited": {
+              {
+                "metric": "sum",
                 "field": "amount",
-                "operation": "sum",
-                "condition": "side = 'credit'"
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "credited"
               },
-              "netSpent": {
-                "operation": "expression",
-                "expression": "spent - credited"
+              {
+                "metric": "expression",
+                "expression": "spent - credited",
+                "as": "netSpent"
               }
-            }
+            ]
           }
         }
       },

@@ -227,10 +227,15 @@ final class BankReconciliationSchemaTest extends TestCase {
 	public function testReconciliationAggregations(): void {
 		$schema = $this->fragment['components']['schemas']['BankReconciliation'];
 
+		// `metric`, not `operation`, and `groupBy` as an ARRAY — the engine's
+		// vocabulary. `operation` is read by nothing, and a string `groupBy` is
+		// silently dropped, so the old spelling returned no value and then, with
+		// `metric` alone, an ungrouped total. See #1261.
 		$agg = $schema['x-openregister-aggregations']['countByStatus'];
 		self::assertSame('status', $agg['field']);
-		self::assertSame('count', $agg['operation']);
-		self::assertSame('status', $agg['groupBy']);
+		self::assertSame('count', $agg['metric']);
+		self::assertArrayNotHasKey('operation', $agg);
+		self::assertSame(['status'], $agg['groupBy']);
 
 	}//end testReconciliationAggregations()
 
@@ -372,15 +377,28 @@ final class BankReconciliationSchemaTest extends TestCase {
 		$schema = $this->fragment['components']['schemas']['BankReconciliationMatch'];
 		$agg = $schema['x-openregister-aggregations']['approvedAmountTotal'];
 
-		self::assertSame("matchType = 'approved'", $agg['filter']);
-		self::assertSame('reconciliationId', $agg['groupBy']);
-		self::assertSame('bankTransactionAmount', $agg['operations']['approvedTotal']['field']);
-		self::assertSame('sum', $agg['operations']['approvedTotal']['operation']);
+		// `approvedAmountTotal` IS translated now. Both reasons it was pinned as
+		// untranslatable have been removed: the custom alias `approvedTotal` is
+		// expressible since `as` landed, and the SQL-ish string filter converts
+		// to the filter OBJECT the engine actually reads.
+		self::assertSame(['matchType' => 'approved'], $agg['filter'], 'filter is an object, not a string');
+		self::assertSame(['reconciliationId'], $agg['groupBy'], 'groupBy is an ARRAY — a string is silently dropped');
+		self::assertArrayNotHasKey('operations', $agg, '`operations` is not an engine key');
 
+		$byAlias = [];
+		foreach ($agg['metrics'] as $metric) {
+			$byAlias[$metric['as']] = $metric;
+		}
+		self::assertArrayHasKey('approvedTotal', $byAlias, 'the custom alias survives as `as`');
+		self::assertSame('sum', $byAlias['approvedTotal']['metric']);
+		self::assertSame('bankTransactionAmount', $byAlias['approvedTotal']['field']);
+
+		// `countByType` IS translated — a plain count over its own schema.
 		$countByType = $schema['x-openregister-aggregations']['countByType'];
 		self::assertSame('matchType', $countByType['field']);
-		self::assertSame('count', $countByType['operation']);
-		self::assertSame('matchType', $countByType['groupBy']);
+		self::assertSame('count', $countByType['metric']);
+		self::assertArrayNotHasKey('operation', $countByType);
+		self::assertSame(['matchType'], $countByType['groupBy']);
 
 	}//end testApprovedAmountTotalAggregation()
 

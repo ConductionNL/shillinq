@@ -225,8 +225,8 @@
         "x-openregister-aggregations": {
           "countByStatus": {
             "field": "status",
-            "operation": "count",
-            "groupBy": "status",
+            "metric": "count",
+            "groupBy": ["status"],
             "description": "Number of reconciliation sessions per lifecycle status, for the index status filter and dashboard."
           }
         }
@@ -406,19 +406,24 @@
         "x-openregister-aggregations": {
           "approvedAmountTotal": {
             "description": "Sum of approved match amounts per reconciliation, used as the declarative basis for reconciledBalance = openingBalance + this sum (REQ-BBR-005). The cross-period balance write itself is performed by BankReconciliationGuard per ADR-031 Risk-3.",
-            "filter": "matchType = 'approved'",
-            "groupBy": "reconciliationId",
-            "operations": {
-              "approvedTotal": {
+            "filter": {
+              "matchType": "approved"
+            },
+            "groupBy": [
+              "reconciliationId"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "bankTransactionAmount",
-                "operation": "sum"
+                "as": "approvedTotal"
               }
-            }
+            ]
           },
           "countByType": {
             "field": "matchType",
-            "operation": "count",
-            "groupBy": "matchType",
+            "metric": "count",
+            "groupBy": ["matchType"],
             "description": "Number of matches per matchType, for the detail-page match summary."
           }
         },

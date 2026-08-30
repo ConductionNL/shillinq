@@ -35,6 +35,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Controller;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Service\DemoDataService;
 use OCA\Shillinq\Service\SettingsService;
 use OCA\Shillinq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
@@ -56,6 +57,16 @@ class SetupController extends Controller {
 	 * @var int
 	 */
 	private const SETUP_VERSION = 1;
+	/**
+	 * App-config key recording that the optional demo-data step has been dealt with.
+	 *
+	 * Records a DECISION, not a state: "installed" and "declined" both set it.
+	 * A step that reports itself undone until demo objects exist can never be
+	 * completed by an operator who does not want them.
+	 *
+	 * @var string
+	 */
+	private const DEMO_DATA_DECIDED_KEY = 'demo_data_decided';
 
 	/**
 	 * Construct the setup controller.
@@ -63,12 +74,14 @@ class SetupController extends Controller {
 	 * @param string $appName The app id.
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $appConfig App-config reader/writer.
+	 * @param DemoDataService $demoDataService Demo dataset import (ADR-111 rule 4).
 	 * @param SettingsService $settingsService OR availability + config import + seeders.
 	 */
 	public function __construct(
 		string $appName,
 		IRequest $request,
 		private readonly IAppConfig $appConfig,
+		private readonly DemoDataService $demoDataService,
 		private readonly SettingsService $settingsService,
 	) {
 		parent::__construct($appName, $request);
@@ -88,6 +101,10 @@ class SetupController extends Controller {
 		$rgsDone = $this->config(key: 'rgs_template') !== '';
 		$adminDone = $this->config(key: 'administration_id') !== '';
 		$seedDone = $this->config(key: 'setup_seed_done') === '1';
+		// DEALT WITH, not "demo objects exist". An operator who declines demo
+		// data has finished the step; re-offering it every visit would make
+		// "no thanks" impossible to express.
+		$demoDecided = $this->config(key: self::DEMO_DATA_DECIDED_KEY) !== '';
 		$requiredDone = ($countryDone === true && $regionDone === true && $rgsDone === true && $adminDone === true);
 
 		if ($requiredDone === true) {
@@ -99,6 +116,7 @@ class SetupController extends Controller {
 				'version' => self::SETUP_VERSION,
 				'completed' => $requiredDone,
 				'steps' => [
+					'demo-data' => ['done' => $demoDecided],
 					'country' => ['done' => $countryDone],
 					'organisation' => ['done' => $regionDone],
 					'rgs-template' => ['done' => $rgsDone],
@@ -144,6 +162,14 @@ class SetupController extends Controller {
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function runAction(string $actionId): DataResponse {
+		if ($actionId === 'install-demo-data') {
+			return $this->installDemoData();
+		}
+
+		if ($actionId === 'skip-demo-data') {
+			return $this->skipDemoData();
+		}
+
 		if ($actionId === 'init-administration') {
 			$this->settingsService->loadConfigurationForced();
 			$result = $this->settingsService->seedDefaultAdministration();
@@ -198,6 +224,56 @@ class SetupController extends Controller {
 			Http::STATUS_NOT_FOUND,
 		);
 	}//end runAction()
+
+	/**
+	 * Install the shipped demo dataset (ADR-111 rule 4).
+	 *
+	 * @return DataResponse The outcome, carrying the counts.
+	 *
+	 * @spec exclude Demo-data install action (ADR-111 rule 4); no per-app openspec change yet.
+	 */
+	private function installDemoData(): DataResponse {
+		try {
+			$imported = $this->demoDataService->install();
+		} catch (\Throwable $e) {
+			return new DataResponse(['success' => false, 'message' => $e->getMessage()]);
+		}
+
+		// Recorded only after the import actually returned. Marking it first
+		// would let a failed install present as a finished step.
+		$this->appConfig->setValueString(Application::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'installed');
+
+		// 🔴 THE COUNTS, ALWAYS. "Demo data installed" with no numbers cannot be
+		// told apart from an import that wrote nothing.
+		return new DataResponse(
+			[
+				'success' => true,
+				'message' => sprintf(
+					'Demo data installed: %d objects across %d schemas.',
+					$imported['objects'],
+					$imported['schemas']
+				),
+				'detail'  => $imported,
+			]
+		);
+	}//end installDemoData()
+
+	/**
+	 * Record that the operator declined the demo dataset.
+	 *
+	 * Its own action so "no thanks" is a decision the wizard can record. Without
+	 * it the only way past the step would be to install demo data, which is
+	 * wrong on a production instance.
+	 *
+	 * @return DataResponse The outcome.
+	 *
+	 * @spec exclude Demo-data skip action (ADR-111 rule 4); no per-app openspec change yet.
+	 */
+	private function skipDemoData(): DataResponse {
+		$this->appConfig->setValueString(Application::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'skipped');
+
+		return new DataResponse(['success' => true, 'message' => 'Demo data skipped.']);
+	}//end skipDemoData()
 
 	/**
 	 * Read a shillinq app-config string value.

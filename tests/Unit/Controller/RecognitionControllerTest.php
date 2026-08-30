@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\RecognitionController;
-use OCA\Shillinq\Recognition\RevenueRecognitionService;
+use OCA\Shillinq\Service\RevenueRecognitionService;
 use OCA\Shillinq\Service\AdministrationContextService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;

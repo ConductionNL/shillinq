@@ -203,8 +203,8 @@
         "x-openregister-aggregations": {
           "countByLifecycleState": {
             "field": "lifecycleState",
-            "operation": "count",
-            "groupBy": "lifecycleState",
+            "metric": "count",
+            "groupBy": ["lifecycleState"],
             "description": "Number of horizons per lifecycle state."
           }
         }
@@ -455,20 +455,20 @@
         "x-openregister-aggregations": {
           "inflowsArByWeek": {
             "field": "inflows_ar_geprognosticeerd",
-            "operation": "sum",
-            "groupBy": "weekNumber",
+            "metric": "sum",
+            "groupBy": ["weekNumber"],
             "description": "Projected AR inflows summed per week (REQ-CF-002 weekly aggregation). Feeds the bar chart inflows series."
           },
           "outflowsByWeek": {
             "field": "outflows_total",
-            "operation": "sum",
-            "groupBy": "weekNumber",
+            "metric": "sum",
+            "groupBy": ["weekNumber"],
             "description": "Total outflows summed per week (REQ-CF-006/007). Feeds the bar chart outflows series."
           },
           "countByBufferStatus": {
             "field": "bufferStatus",
-            "operation": "count",
-            "groupBy": "bufferStatus",
+            "metric": "count",
+            "groupBy": ["bufferStatus"],
             "description": "Number of weeks per buffer status, for alert badges (REQ-CF-009)."
           }
         }
@@ -610,8 +610,8 @@
         "x-openregister-aggregations": {
           "projectedReceiptsByWeek": {
             "field": "outstandingAmount",
-            "operation": "sum",
-            "groupBy": "expectedReceiptWeek",
+            "metric": "sum",
+            "groupBy": ["expectedReceiptWeek"],
             "description": "Sum of outstanding AR amounts grouped by projected receipt week (REQ-CF-002/003). This is the source aggregation for CashflowWeek.inflows_ar_geprognosticeerd."
           }
         }
@@ -735,8 +735,8 @@
         "x-openregister-aggregations": {
           "scheduledPaymentsByCategory": {
             "field": "amount",
-            "operation": "sum",
-            "groupBy": "category",
+            "metric": "sum",
+            "groupBy": ["category"],
             "description": "Sum of scheduled AP outflows grouped by category (REQ-CF-006). Feeds CashflowWeek.outflows_ap_geprognosticeerd."
           }
         }
@@ -932,8 +932,8 @@
         "x-openregister-aggregations": {
           "countByCategorie": {
             "field": "category",
-            "operation": "count",
-            "groupBy": "category",
+            "metric": "count",
+            "groupBy": ["category"],
             "description": "Number of recurring items per category (REQ-CF-005)."
           }
         }
@@ -1029,8 +1029,8 @@
         "x-openregister-aggregations": {
           "countByPolicy": {
             "field": "policy",
-            "operation": "count",
-            "groupBy": "policy",
+            "metric": "count",
+            "groupBy": ["policy"],
             "description": "Number of buffer policies per policy type (REQ-CF-009)."
           }
         }
@@ -1244,8 +1244,8 @@
         "x-openregister-aggregations": {
           "countByHorizon": {
             "field": "horizonId",
-            "operation": "count",
-            "groupBy": "horizonId",
+            "metric": "count",
+            "groupBy": ["horizonId"],
             "description": "Number of scenarios per horizon (REQ-CF-011)."
           }
         }
@@ -1400,8 +1400,8 @@
         "x-openregister-aggregations": {
           "avgArMapeByPeriod": {
             "field": "ar_mape",
-            "operation": "avg",
-            "groupBy": "calibrationPeriod",
+            "metric": "avg",
+            "groupBy": ["calibrationPeriod"],
             "description": "Average AR MAPE per calibration period, for the accuracy trend (REQ-CF-013)."
           }
         }

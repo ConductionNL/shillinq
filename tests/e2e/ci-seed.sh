@@ -50,6 +50,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 
+# The Nextcloud server root, where `occ` lives. CI already runs with cwd set
+# there, but derive it from the app's own location so the script also works
+# when run from anywhere else — the same definition buildiq's ci-seed.sh uses.
+SERVER_DIR="$(cd -- "${APP_DIR}/../.." && pwd)"
+
 # ── Target resolution ────────────────────────────────────────────────────────
 # The shared workflow's "Seed test data" step exports BASE_URL / NEXTCLOUD_URL /
 # NC_BASE_URL / ADMIN_USER / ADMIN_PASSWORD / NC_ADMIN_USER / NC_ADMIN_PASS.
@@ -462,6 +467,42 @@ setup_post '/index.php/apps/shillinq/api/setup/config' \
 setup_post '/index.php/apps/shillinq/api/setup/action/init-administration' '{}'
 setup_post '/index.php/apps/shillinq/api/setup/action/seed' '{}'
 
+# The OPTIONAL step too, not just the required ones.
+#
+# `status()` recomputes every step from its own evidence and writes
+# `setup_completed_version` only when the REQUIRED ones are done, so
+# `completed: true` says nothing about `demo-data`. Since nextcloud-vue 2.21 an
+# outstanding OPTIONAL step is enough to open the wizard on its own
+# (nextcloud-vue#806 stopped it short-circuiting on `completed`), so an undone
+# `demo-data` puts the dialog over the SPA and every click lands on the overlay.
+#
+# Measured: 59 failures across 18 unrelated spec files, every one
+# `locator.click: Test timeout`, from the merge of #1295 onward.
+#
+# `demo_data_decided` is the app's own DEALT-WITH flag, not "demo objects
+# exist" -- SetupController says re-offering the import every visit would make
+# "no thanks" impossible to express. Writing `skipped` is what an operator who
+# declined leaves behind, and it avoids seeding a dataset the specs do not
+# expect. Same fix as buildiq#523.
+#
+# `./occ`, not "${SERVER_DIR}/occ": SERVER_DIR is never assigned anywhere in
+# this script, and `set -euo pipefail` at the top makes reading it fatal --
+# "line 482: SERVER_DIR: unbound variable", which aborted the whole seed and
+# took the E2E job down BEFORE Playwright ran. A guard meant to stop an
+# overlay covering the SPA instead stopped the suite existing.
+#
+# This is the idiom the rest of the file already uses (see the
+# htaccess.IgnoreFrontController block above): the workflow invokes this
+# script with cwd at the Nextcloud server root, so `./occ` is the reachable
+# path and its presence is the correct guard.
+if [ -f "./occ" ]; then
+	if php ./occ config:app:set shillinq demo_data_decided --value=skipped; then
+		echo "[ci-seed] demo-data step marked decided (skipped)."
+	else
+		echo "::warning::could not set demo_data_decided; the wizard may reopen over the SPA."
+	fi
+fi
+
 # VERIFY, do not assume. `status()` is also what persists
 # `setup_completed_version`, which is the manifest's `completionConfigKey` —
 # so this call is both the assertion and the last write the wizard needs.
@@ -480,8 +521,12 @@ if code != '200':
     print(raw[:500])
     sys.exit(1)
 body = json.loads(raw)
-if body.get('completed') is not True:
-    undone = [k for k, v in (body.get('steps') or {}).items() if not v.get('done')]
+undone = [k for k, v in (body.get('steps') or {}).items() if not v.get('done')]
+# EVERY step, not just `completed`. `completed` reflects the REQUIRED steps
+# only, so it stayed true while `demo-data` sat undone -- and since
+# nextcloud-vue 2.21 that alone reopens the wizard over the SPA. This guard
+# passed straight through the exact failure it exists to prevent.
+if body.get('completed') is not True or undone:
     print(f'::error::Shillinq first-time setup is NOT complete. Unfinished steps: {undone}')
     print('::error::The SPA will render a "Set up this app" dialog over every page and no spec can reach `main`.')
     sys.exit(1)
