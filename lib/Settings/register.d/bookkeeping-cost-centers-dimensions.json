@@ -276,50 +276,64 @@
         },
         "x-openregister-aggregations": {
           "segmentPnl": {
-            "description": "Segment P&L for this dimension (cost-center rows only): sum of GLLine amounts whose costCenterCode equals this record's code, including child cost-centers rolled up via parentCode per REQ-CC-005. Consumes GLLine.costCenterCode = @self.code with eliminationFlag = false. Scoped dimensionType = cost-center.",
-            "join": {
-              "schema": "GLLine",
-              "condition": "GLLine.costCenterCode = @self.code AND GLLine.eliminationFlag = false"
+            "description": "Segment P&L per cost-center (REQ-CC-005): debit/credit sums of non-eliminated GLLine amounts, grouped by costCenterCode + periodId + accountNumber. Returns EVERY cost-center; narrow to one with the extraFilter query params (?costCenterCode=...). It does not correlate on @self — no caller supplies a parent row. Parent roll-up over the parentCode tree is NOT included here; byCostCenterHierarchy does that through the join.",
+            "from": "GLLine",
+            "where": {
+              "eliminationFlag": false
             },
             "groupBy": [
+              "costCenterCode",
               "GLLine.fiscalYearId",
-              "GLLine.accountNumber"
+              "accountNumber"
             ],
-            "operations": {
-              "totalDebit": {
-                "field": "GLLine.amount",
-                "operation": "sum",
-                "condition": "GLLine.side = 'debit'"
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "totalDebit"
               },
-              "totalCredit": {
-                "field": "GLLine.amount",
-                "operation": "sum",
-                "condition": "GLLine.side = 'credit'"
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "totalCredit"
               }
-            }
+            ]
           },
           "segmentPnlByCostObject": {
-            "description": "Segment P&L for this dimension (cost-object rows only): sum of GLLine amounts whose kostenDragerCode equals this record's code per REQ-CC-005. Replaces the retired KostenDrager.segmentPnl. Scoped dimensionType = cost-object.",
-            "join": {
-              "schema": "GLLine",
-              "condition": "GLLine.kostenDragerCode = @self.code AND GLLine.eliminationFlag = false"
+            "description": "Segment P&L per cost-object (REQ-CC-005): debit/credit sums of non-eliminated GLLine amounts, grouped by costCarrierCode + periodId + accountNumber. Returns EVERY cost-object; narrow to one with the extraFilter query params (?costCarrierCode=...). Replaces the retired KostenDrager.segmentPnl; the field is costCarrierCode — kostenDragerCode is not declared on GLLine and matched nothing.",
+            "from": "GLLine",
+            "where": {
+              "eliminationFlag": false
             },
             "groupBy": [
+              "costCarrierCode",
               "GLLine.fiscalYearId",
-              "GLLine.accountNumber"
+              "accountNumber"
             ],
-            "operations": {
-              "totalDebit": {
-                "field": "GLLine.amount",
-                "operation": "sum",
-                "condition": "GLLine.side = 'debit'"
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "totalDebit"
               },
-              "totalCredit": {
-                "field": "GLLine.amount",
-                "operation": "sum",
-                "condition": "GLLine.side = 'credit'"
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "totalCredit"
               }
-            }
+            ]
           },
           "spentToDate": {
             "description": "Sum of GL debit postings tagged to this cost-center dimension (recursive over descendant cost-centers via parentCode self-relation) per REQ-CPA-106. Excludes eliminated intercompany lines. Scoped dimensionType = cost-center.",
@@ -370,7 +384,8 @@
         "x-openregister-aggregations": {
           "byCostCenter": {
             "description": "Per-cost-center roll-up of posted GL amounts within an administration per REQ-CD-004. Surfaces segment P&L per AnalyticalDimension[dimensionType=cost-center].code (joined to name for drill-down). Declared declaratively per ADR-031 — no PHP SegmentReportService. Re-targeted from CostCenter to AnalyticalDimension per REQ-ADIM-101.",
-            "source": "GLLine",
+            "metric": "sum",
+            "field": "amount",
             "groupBy": [
               "costCenterCode"
             ],
@@ -385,21 +400,21 @@
                 "AnalyticalDimension.name",
                 "AnalyticalDimension.parentCode"
               ]
-            },
-            "sum": [
-              "amount"
-            ]
+            }
           },
           "byCostCenterHierarchy": {
             "description": "Hierarchical roll-up of GL amounts per AnalyticalDimension[dimensionType=cost-center].parentCode tree per REQ-CD-007. Child cost-center sums propagate to parents through the self-relation; drives drill-down navigation. Declarative (ADR-031). Re-targeted from CostCenter to AnalyticalDimension per REQ-ADIM-101.",
-            "source": "GLLine",
             "groupBy": [
               "AnalyticalDimension.parentCode"
             ],
             "filter": {},
+            "metric": "sum",
+            "field": "amount",
             "join": {
               "through": "AnalyticalDimension",
-              "on": "AnalyticalDimension.code",
+              "on": {
+                "costCenterCode": "code"
+              },
               "filter": {
                 "dimensionType": "cost-center"
               },
@@ -414,7 +429,8 @@
           },
           "byCostObject": {
             "description": "Per-cost-object (kostendrager) roll-up of posted GL amounts per REQ-CD-004. Replaces the retired KostenDrager.segmentPnl. Joins GLLine.kostenDragerCode to AnalyticalDimension[dimensionType=cost-object].code. Declarative (ADR-031) per REQ-ADIM-004.",
-            "source": "GLLine",
+            "metric": "sum",
+            "field": "amount",
             "groupBy": [
               "costCarrierCode"
             ],
@@ -429,14 +445,12 @@
                 "AnalyticalDimension.name",
                 "AnalyticalDimension.parentCode"
               ]
-            },
-            "sum": [
-              "amount"
-            ]
+            }
           },
           "byProject": {
             "description": "Per-project roll-up of posted GL amounts within an administration per REQ-CD-004. Surfaces project P&L for consultancy and grant-funded work. Declarative (ADR-031).",
-            "source": "GLLine",
+            "metric": "sum",
+            "field": "amount",
             "groupBy": [
               "projectCode"
             ],
@@ -448,10 +462,7 @@
                 "Project.name",
                 "Project.parentCode"
               ]
-            },
-            "sum": [
-              "amount"
-            ]
+            }
           },
           "byAnalyticalDimension": {
             "description": "Per-custom-dimension roll-up of posted GL amounts per REQ-CD-006. Each registered AnalyticalDimension[dimensionType=custom] contributes a group-by key drawn from GLLine.dimensions[code]. Drives the operator-extensible segment P&L surface; new custom dimensions appear automatically without PHP/Vue edits. Scoped dimensionType = custom per REQ-ADIM-004.",

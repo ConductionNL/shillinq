@@ -11,7 +11,7 @@
  * lib/Settings/shillinq_register.json.
  *
  * @category Lifecycle
- * @package  OCA\Shillinq\Consolidation
+ * @package  OCA\Shillinq\Service
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -27,7 +27,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Shillinq\Consolidation;
+namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;

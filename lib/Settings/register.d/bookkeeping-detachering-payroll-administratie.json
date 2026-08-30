@@ -448,10 +448,10 @@
         "x-openregister-aggregations": {
           "netAmount": {
             "description": "Net amount = grossAmount minus the sum of employee-borne deductions for this payroll (REQ-PAY-002). Employer SV is excluded from net.",
-            "source": "Deduction",
-            "groupBy": [],
+            "groupBy": [
+              "payrollId"
+            ],
             "filter": {
-              "payrollId": "@self.id",
               "deductionType": [
                 "income-tax",
                 "social-security-employee",
@@ -460,22 +460,20 @@
                 "other"
               ]
             },
-            "sum": [
-              "amount"
-            ]
+            "from": "Deduction",
+            "metric": "sum",
+            "field": "amount"
           },
           "annualEmployeeDeductions": {
             "description": "Per-employee annual deduction totals grouped by type for the payroll year, used by the calculate precondition to validate statutory limits and for tax/SV reporting (REQ-PAY-005).",
-            "source": "Deduction",
             "groupBy": [
+              "taxYear",
               "deductionType"
             ],
-            "filter": {
-              "taxYear": "@self.period.year"
-            },
-            "sum": [
-              "amount"
-            ]
+            "filter": {},
+            "from": "Deduction",
+            "metric": "sum",
+            "field": "amount"
           }
         },
         "x-openregister-ubl": {

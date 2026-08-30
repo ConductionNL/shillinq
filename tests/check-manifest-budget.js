@@ -123,7 +123,27 @@ const MANIFEST_D_DIR = path.join(REPO_ROOT, 'src', 'manifest.d')
 // which is the honest consequence of the rule as written; if that is not the
 // intended policy, the fix is to decide a margin deliberately and say why,
 // not to round this constant up here.
-const DEFAULT_BUDGET_BYTES = 1_128_750
+//
+// Re-measured 2026-08-27 (ADR-111 demo-data setup step): 1,128,758 bytes.
+//
+// 🔴 THE HEADROOM WAS ALREADY GONE BEFORE THIS CHANGE. `development` had
+// grown to 1,128,545 on its own, leaving 205 B — 0.018% — against the
+// 0.58-0.88% this file says the ratio should be. So the tripwire was one
+// small edit away from firing for whoever touched the manifest next, and
+// what it caught was not a payload problem but its own exhausted margin.
+//
+// TRIMMED FIRST, then raised, per the note above. ADR-111 rule 4 requires
+// `setup.steps[0]` to be the demo-data offer, so the step itself is not
+// negotiable; its prose is. The body went from 200 characters to 76
+// ("Load example invoices, subscriptions and ledger entries. Skip on
+// production."), recovering 124 B. What is left states the two things an
+// operator needs: what lands, and not to run it on production.
+//
+// Raised to 1,135,500 — 6,742 B of headroom, 0.60%, back inside the ratio
+// this file argues for and close to the 0.58% it ran with two bumps ago.
+// Not more: the point of restating the ratio is that the next change
+// re-measures rather than inheriting slack.
+const DEFAULT_BUDGET_BYTES = 1_135_500
 
 /**
  * Sum the byte size of every regular file in a directory (non-recursive),

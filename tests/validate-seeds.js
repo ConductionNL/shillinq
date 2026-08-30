@@ -159,7 +159,21 @@ function main() {
 		}
 	}
 
-	const schemas = (merged.components && merged.components.schemas) || {}
+	// BOTH shapes, exactly as the seed collector above reads both object
+	// buckets. ImportHandler merges `schemas` and `components.schemas` alike,
+	// and app registers use either — dossiq declares `stufEndpoint`,
+	// `stufMessage` and `zaaksysteemMapping` at the top level.
+	//
+	// Reading only `components.schemas` made this gate narrower than the set it
+	// collects, in both directions: a seed against a top-level schema was
+	// reported as naming a schema "no fragment declares" (a false alarm), and
+	// its `required` list was never checked at all (a false pass — the more
+	// expensive half, because this gate is a ratchet and an unseen class
+	// silently lowers the count it guards).
+	const schemas = {
+		...((merged.components && merged.components.schemas) || {}),
+		...(merged.schemas || {}),
+	}
 	const offenders = new Map()
 	let checked = 0
 	let unknownSchema = 0

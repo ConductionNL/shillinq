@@ -176,6 +176,48 @@ async function markWalkthroughSeen(page: Page): Promise<void> {
 	)
 }
 
+/**
+ * Stand the non-gating setup wizard down for every spec.
+ *
+ * CnAppRoot opens it whenever the server reports an OPTIONAL setup step as
+ * outstanding, and shillinq declares six. It renders as a modal over the
+ * shell, so a click on anything behind it does not fail fast — it waits out
+ * the full timeout. That surfaces as dozens of unrelated specs failing on
+ * their first interaction rather than as one cause.
+ *
+ * Seeded here, alongside the walkthrough, so the key travels with the
+ * storage state into every spec's context. Dismissing it reactively per
+ * test races the dialog's enter transition; seeding the key it reads does
+ * not.
+ *
+ * The key is versioned (`cn-setup-wizard-dismissed:<appId>:<setup.version>`),
+ * so a RANGE is seeded: bumping manifest.setup.version must not silently
+ * re-open the wizard across the whole suite.
+ *
+ * @param page The authenticated page whose storage state is about to be captured.
+ */
+async function markSetupWizardDismissed(page: Page): Promise<void> {
+	const keys = await page.evaluate(() => {
+		const written: string[] = []
+		for (let v = 0; v <= 20; v++) {
+			const key = `cn-setup-wizard-dismissed:shillinq:${v}`
+			window.localStorage.setItem(key, '1')
+			written.push(key)
+		}
+		return written.filter((k) => window.localStorage.getItem(k) === '1')
+	})
+	if (keys.length !== 21) {
+		throw new Error(
+			`Failed to seed the setup-wizard dismissal: wrote 21 keys, read back ${keys.length}. `
+				+ 'The setup wizard would render over the shell and intercept pointer events for the whole run.',
+		)
+	}
+	// eslint-disable-next-line no-console
+	console.log(
+		'[playwright globalSetup] cn-setup-wizard-dismissed:shillinq:0..20 = 1 (setup wizard will not auto-open)',
+	)
+}
+
 async function ensureNextcloudReachable(baseURL: string): Promise<void> {
 	const ctx = await request.newContext()
 	try {
@@ -250,6 +292,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
 	// Seed the walkthrough as already-seen BEFORE the state is captured, so the
 	// key travels with the storage state into every spec's context.
 	await markWalkthroughSeen(page)
+	await markSetupWizardDismissed(page)
 
 	// Persist the storage state so individual specs reuse the session.
 	await context.storageState({ path: STORAGE_STATE })

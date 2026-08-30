@@ -143,7 +143,16 @@ final class ProvinciesBbvFragmentTest extends TestCase {
 		self::assertArrayHasKey('programmeBudgetVsActuals', $glLine['x-openregister-aggregations']);
 		$agg = $glLine['x-openregister-aggregations']['programmeBudgetVsActuals'];
 		self::assertContains('programmeStructure', $agg['groupBy']);
-		self::assertArrayHasKey('spent', $agg['operations']);
+
+		// `metrics`, not `operations`. AggregationRunner never read `operations`,
+		// so none of these figures were produced — the aggregation returned
+		// nothing rather than failing.
+		self::assertArrayNotHasKey('operations', $agg, '`operations` is not an engine key');
+		$byAlias = [];
+		foreach ($agg['metrics'] as $metric) {
+			$byAlias[$metric['as']] = $metric;
+		}
+		self::assertArrayHasKey('spent', $byAlias);
 
 	}//end testGlLineOverlayDeclaresGuardAndAggregation()
 

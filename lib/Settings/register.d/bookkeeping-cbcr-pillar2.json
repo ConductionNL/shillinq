@@ -382,12 +382,13 @@
               "schema": "GroupEntityRegistry",
               "condition": "GroupEntityRegistry.jurisdiction = @self.jurisdiction AND GroupEntityRegistry.cbcrIncluded = true"
             },
-            "operations": {
-              "entityCount": {
+            "metrics": [
+              {
+                "metric": "count",
                 "field": "GroupEntityRegistry.id",
-                "operation": "count"
+                "as": "entityCount"
               }
-            }
+            ]
           }
         },
         "x-openregister-consolidation-source": {

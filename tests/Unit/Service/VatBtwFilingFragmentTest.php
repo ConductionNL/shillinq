@@ -154,23 +154,53 @@ final class VatBtwFilingFragmentTest extends TestCase {
 		self::assertArrayHasKey('totalsByReturn', $aggregations);
 
 		$totals = $aggregations['totalsByReturn'];
-		self::assertSame('VATLine', $totals['source']);
 
-		self::assertArrayHasKey('operations', $totals);
-		self::assertArrayHasKey('totalVATCollected', $totals['operations']);
-		self::assertArrayHasKey('totalVATPaid', $totals['operations']);
+		// `from`, not `source`. AggregationRunner reads `from` and nothing else,
+		// so `source` never switched this onto VATLine at all.
+		self::assertSame('VATLine', $totals['from']);
+		self::assertArrayNotHasKey('source', $totals, '`source` is not an engine key');
 
-		// Sum operations aggregate over a VATLine.* field; the `vatBalance`
-		// operation is an expression op derived from the sum results.
-		foreach ($totals['operations'] as $operation) {
-			self::assertContains(
-				$operation['operation'],
-				['sum', 'expression'],
-				'aggregation operations are sum or expression'
-			);
-			if ($operation['operation'] === 'sum') {
-				self::assertStringStartsWith('VATLine.', $operation['field']);
+		// The per-return correlation is a groupBy DIMENSION now. `returnId:
+		// "@self.id"` needed a parent row that no caller supplies, so it stayed a
+		// literal string and matched nothing.
+		self::assertContains('returnId', $totals['groupBy']);
+		self::assertArrayNotHasKey('returnId', ($totals['filter'] ?? []));
+
+		// NOW TRANSLATED. This was pinned as untranslatable in the previous pass,
+		// for two reasons that have both since been removed: `vatBalance` is an
+		// `expression` op, which the engine had no equivalent for until derived
+		// metrics landed (openregister #2941), and the conditions were SQL-ish
+		// STRINGS where computeMetrics() takes a filter OBJECT.
+		self::assertArrayNotHasKey('operations', $totals, '`operations` is not an engine key');
+		self::assertArrayHasKey('metrics', $totals);
+
+		$byAlias = [];
+		foreach ($totals['metrics'] as $metric) {
+			$byAlias[$metric['as']] = $metric;
+		}
+		self::assertArrayHasKey('totalVATCollected', $byAlias);
+		self::assertArrayHasKey('totalVATPaid', $byAlias);
+
+		// The string condition became a filter OBJECT, and the field lost its
+		// schema prefix — `from` resolves bare names on VATLine.
+		self::assertSame(['type' => 'collected'], $byAlias['totalVATCollected']['condition']);
+		self::assertSame('vatAmount', $byAlias['totalVATCollected']['field']);
+
+		// The derived metric names only aliases declared BEFORE it. Anything
+		// else raises at run time, which validate-registers now refuses at
+		// declaration time.
+		self::assertArrayHasKey('vatBalance', $byAlias);
+		self::assertSame('expression', $byAlias['vatBalance']['metric']);
+		foreach (preg_split('/[^A-Za-z_]+/', $byAlias['vatBalance']['expression']) as $ident) {
+			if ($ident === '' || $ident === 'min' || $ident === 'max') {
+				continue;
 			}
+
+			self::assertArrayHasKey(
+				$ident,
+				$byAlias,
+				'a derived metric may only name aliases this aggregation declares'
+			);
 		}
 	}//end testVatReturnDeclaresReconciliationAggregations()
 

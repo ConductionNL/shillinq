@@ -50,11 +50,21 @@ const SCHEMA_BASENAME = (() => {
 	}
 })()
 
+// THE INSTALLED SCHEMA WINS OVER THE VENDORED COPY.
+//
+// It used to be the other way round, and that ordering is a drift machine: the
+// vendored copy shadows the one the shipped runtime actually enforces, so the
+// check keeps passing against a snapshot of the rules while the rules move.
+// Measured here — the vendored copy sat at 2.25.0 and rejected `type: "flow"`,
+// which the installed package's schema (2.26.0) accepts and the runtime
+// registers. The manifest was right and the check was reading an older grammar.
+//
+// A manifest has to satisfy the schema its own dependency ships. The vendored
+// copy stays as a fallback for a tree with no node_modules — a fresh checkout,
+// a CI leg that skips install — but it no longer gets to overrule what is
+// installed.
 const SCHEMA_CANDIDATES = [
 	process.env.APP_MANIFEST_SCHEMA,
-	// Vendored canonical v2 schema (includes the setup block + metric cacheTtl);
-	// preferred so the gate does not depend on a fresh node_modules copy.
-	path.join(REPO_ROOT, 'tests', 'schemas', 'app-manifest-v2.schema.json'),
 	path.join(
 		REPO_ROOT,
 		'node_modules',
@@ -64,6 +74,7 @@ const SCHEMA_CANDIDATES = [
 		'schemas',
 		SCHEMA_BASENAME,
 	),
+	path.join(REPO_ROOT, 'tests', 'schemas', 'app-manifest-v2.schema.json'),
 	path.join(REPO_ROOT, '..', 'nextcloud-vue', 'src', 'schemas', SCHEMA_BASENAME),
 ].filter(Boolean)
 

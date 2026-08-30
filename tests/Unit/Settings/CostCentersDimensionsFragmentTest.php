@@ -124,11 +124,57 @@ final class CostCentersDimensionsFragmentTest extends TestCase {
 
 		foreach (['byCostCenter', 'byCostCenterHierarchy', 'byProject', 'byAnalyticalDimension'] as $key) {
 			self::assertArrayHasKey($key, $aggs, 'Aggregation ' . $key . ' MUST be declared');
-			self::assertSame('GLLine', $aggs[$key]['source'], 'Aggregation MUST source GLLine');
-			self::assertSame(['amount'], $aggs[$key]['sum'], 'Aggregation MUST sum the amount field');
 			self::assertArrayHasKey('groupBy', $aggs[$key]);
 			self::assertArrayHasKey('filter', $aggs[$key]);
 		}
+
+		// `metric`/`field`, not `source`/`sum`. AggregationRunner reads only
+		// field/filter/from/groupBy/join/metric/metrics/select/where, so `sum`
+		// computed nothing and `source` was inert — it is NOT the engine's
+		// `from`, which switches the runner into its cross-schema path. These
+		// three declare GLLine ON GLLine, so dropping `source` is the whole
+		// translation. Verified live: byCostCenter returns CC-001=5000,
+		// CC-002=10000, null=24200, matching the rows exactly.
+		foreach (['byCostCenter', 'byProject'] as $key) {
+			self::assertSame('sum', $aggs[$key]['metric'], 'Aggregation MUST declare metric=sum');
+			self::assertSame('amount', $aggs[$key]['field'], 'Aggregation MUST sum the amount field');
+			self::assertArrayNotHasKey('source', $aggs[$key], '`source` is not an engine key');
+			self::assertArrayNotHasKey('sum', $aggs[$key], '`sum` is not an engine key; use metric+field');
+		}
+
+		// byCostCenterHierarchy groups by `AnalyticalDimension.parentCode` — a
+		// field that exists only on the JOINED schema. applyJoin() runs AFTER
+		// grouping, so this used to group on a column every row lacks, giving
+		// one null bucket holding everything: a plausible total, not an error.
+		// OpenRegister #2916 projects joined group fields onto the rows first,
+		// which is what makes the declaration computable.
+		self::assertSame('sum', $aggs['byCostCenterHierarchy']['metric']);
+		self::assertSame('amount', $aggs['byCostCenterHierarchy']['field']);
+		self::assertArrayNotHasKey(
+			'source',
+			$aggs['byCostCenterHierarchy'],
+			'`source` is not an engine key'
+		);
+
+		// The `on` SHORTHAND ("AnalyticalDimension.code") is refused by the
+		// joined-field grouping path: it names the joined side only, leaving the
+		// parent key to be inferred — and inferring the JOINED field produced a
+		// single '' bucket rather than one per region. The explicit map states
+		// both sides: parent GLLine.costCenterCode -> joined AnalyticalDimension.code.
+		self::assertSame(
+			['costCenterCode' => 'code'],
+			$aggs['byCostCenterHierarchy']['join']['on'],
+			'`on` MUST be an explicit parent-field => joined-field map'
+		);
+
+		// byAnalyticalDimension is still untranslated: it groups by the wildcard
+		// `dimensions.*`, which no engine key expresses. Tracked in #1261 and
+		// pinned here so the gap stays visible.
+		self::assertArrayNotHasKey(
+			'metric',
+			$aggs['byAnalyticalDimension'],
+			'still untranslated — wildcard groupBy, see #1261'
+		);
 
 		// After the ADIM merge (REQ-ADIM-101), byCostCenter joins through the unified
 		// AnalyticalDimension schema (filtered by dimensionType=cost-center) rather than

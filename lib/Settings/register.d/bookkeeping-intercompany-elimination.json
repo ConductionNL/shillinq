@@ -334,11 +334,9 @@
         "x-openregister-aggregations": {
           "matchByRelationPeriod": {
             "description": "Declarative shape of the per-relation, per-period matching the engine computes (REQ-ICE-003). Groups IntercompanyTransaction by (relationId, periodId) within the consolidation, sums entity-A-side and entity-B-side amounts (debit minus credit per side) into totalAmountA/totalAmountB, and derives mismatchAmount = totalAmountA - totalAmountB. The tolerance evaluation that sets matchStatus runs in the create lifecycle guard. When the OpenRegister aggregation engine cannot express the per-side conditional sum, the same result is computed in PHP from the real ObjectService API (findAll).",
-            "source": "IntercompanyTransaction",
-            "filter": {
-              "relationId": "@self.relationId"
-            },
+            "filter": {},
             "groupBy": [
+              "relationId",
               "IntercompanyTransaction.relationId"
             ],
             "operations": {
@@ -359,7 +357,8 @@
                 "expression": "totalAmountA - totalAmountB",
                 "target": "mismatchAmount"
               }
-            }
+            },
+            "from": "IntercompanyTransaction"
           }
         },
         "x-openregister-lifecycle": {
@@ -758,28 +757,28 @@
               "IntercompanyTransaction.counterpartyEntityId",
               "IntercompanyTransaction.sourceAdministrationId"
             ],
-            "operations": {
-              "totalReceivablesAonB": {
+            "metrics": [
+              {
+                "metric": "sum",
                 "field": "IntercompanyTransaction.debitAmount",
-                "operation": "sum",
-                "target": "totalReceivablesAonB"
+                "as": "totalReceivablesAonB"
               },
-              "totalPayablesAtoB": {
+              {
+                "metric": "sum",
                 "field": "IntercompanyTransaction.creditAmount",
-                "operation": "sum",
-                "target": "totalPayablesAtoB"
+                "as": "totalPayablesAtoB"
               },
-              "netPositionAtoB": {
-                "operation": "expression",
+              {
+                "metric": "expression",
                 "expression": "totalReceivablesAonB - totalPayablesAtoB",
-                "target": "netPositionAtoB"
+                "as": "netPositionAtoB"
               },
-              "transactionCount": {
+              {
+                "metric": "count",
                 "field": "IntercompanyTransaction.id",
-                "operation": "count",
-                "target": "transactionCount"
+                "as": "transactionCount"
               }
-            }
+            ]
           }
         },
         "x-openregister-audit-trail": {
