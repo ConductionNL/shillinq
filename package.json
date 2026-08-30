@@ -73,7 +73,7 @@
     "terser-webpack-plugin": "^5.6.1",
     "vue": "^3.5.41",
     "vue-material-design-icons": "^5.3.1",
-    "vue-router": "^4.5.1"
+    "vue-router": "^5.3.0"
   },
   "overrides": {
     "libxmljs2": "^0.37.0",
