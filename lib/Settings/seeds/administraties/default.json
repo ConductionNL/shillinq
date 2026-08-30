@@ -1,0 +1,30 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "shillinq-default",
+		"variant": "initial",
+		"change": "bookkeeping-multi-administratie",
+		"description": "Default Administration seeded on a fresh install so single-administratie installs have a valid administrationId FK target. Idempotent on administrationCode (REQ-MA-001, REQ-MA-007). The operator overrides name / kvkNumber / legalForm on first login."
+	},
+	"administrations": [
+		{
+			"administrationCode": "ADM-001",
+			"name": "Standaard administratie",
+			"legalForm": "bv",
+			"kvkNumber": null,
+			"fiscalYearStartMonth": 1,
+			"fiscalYearStartDay": 1,
+			"nonCalendarFiscalYear": false,
+			"presentationCurrency": "EUR",
+			"functionalCurrency": "EUR",
+			"vatRegime": "standard",
+			"vatFilingFrequency": "quarter",
+			"consolidationMethod": "niet_consolideren",
+			"status": "actief",
+			"backupSchedule": "dagelijks",
+			"dataRetentionYears": 7,
+			"defaultLanguage": "nl"
+		}
+	]
+}

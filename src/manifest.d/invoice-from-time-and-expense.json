@@ -1,0 +1,59 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "invoice-from-time-and-expense",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Tier-2 invoice-from-time-and-expense UI surface (issue #111). Adds two custom routes — InvoiceList (admin list) and InvoiceGenerate (drafting form) — under a single navigation entry. Detail view InvoiceDetail is parameterised on :id. Pages are kind=custom (the InvoiceGenerator + lookup wizard does not fit any built-in manifest page type — see design.md D1)."
+	},
+	"menu": [
+		{
+			"id": "BillableInvoices",
+			"label": "Invoices",
+			"icon": "ReceiptTextOutline",
+			"order": 36,
+			"children": [
+				{
+					"id": "BillableInvoiceList",
+					"label": "All invoices",
+					"icon": "ReceiptTextOutline",
+					"route": "BillableInvoiceList",
+					"order": 10
+				},
+				{
+					"id": "BillableInvoiceGenerate",
+					"label": "Generate invoice",
+					"icon": "ReceiptTextOutline",
+					"route": "BillableInvoiceGenerate",
+					"order": 20
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "BillableInvoiceList",
+			"route": "/invoice",
+			"type": "custom",
+			"title": "Invoices",
+			"component": "AdminInvoiceList",
+			"_note": "Rows come from the invoiceApi feed (BillableInvoice for the CURRENT administration) rather than the objects API, and each row offers post, export PDF and cancel — service calls that change ledger state and stream a file, not field writes, so `type: index` row actions (view / edit / copy / delete) cannot express them. The table itself is already the shared CnDataTable, so the deviation is the feed and the actions, not the presentation."
+		},
+		{
+			"id": "BillableInvoiceGenerate",
+			"route": "/invoice/generate",
+			"type": "custom",
+			"title": "Generate Invoice",
+			"component": "InvoiceGenerator",
+			"_note": "The form DERIVES an invoice from approved time entries and expense records rather than capturing one: choosing a billing model (T&M, fixed-fee, milestone, retainer, mixed) changes which inputs apply and which rate-card or retainer picker is offered, and the draft lines are computed from the selected date range. It also ends in three different actions on the same input — Save as Draft, Preview PDF, Post to AR. `type: form` posts one object once with a fixed field set, so neither the model-driven field set nor the three terminal actions fit."
+		},
+		{
+			"id": "BillableInvoiceDetail",
+			"route": "/invoice/:invoiceId",
+			"type": "custom",
+			"title": "Invoice",
+			"component": "AdminInvoiceDetail",
+			"_note": "Reads the invoice through the invoiceApi envelope, which returns the header, the line items, the APPLIED rate card and retainer, the GL posting status and the audit trail in one response — the last three are computed at read time, not fields on the object, so `type: detail` (one register/schema/:id fetch plus declared fields) cannot surface them. The line table reuses InvoiceLineItemReview so the drafted and posted views stay identical."
+		}
+	]
+}

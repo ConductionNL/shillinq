@@ -1,0 +1,77 @@
+{
+	"_meta_note": "budget-grid-view REQ-BGV-001..009 — the year-basis begroting grid (verzamelpost rows, any period range, past-period actuals-vs-budget deviation, TOTAAL cumulative column). Nests as a new child under the 'Budgets' top-level group budget-core-schema already created on this branch (proposal.md's Impact section: whichever change lands the group first creates it — budget-core-schema did, here it merges in by menu id via mergeMenuItems()).",
+	"menu": [
+		{
+			"id": "Budgets",
+			"children": [
+				{
+					"id": "BudgetGrid",
+					"label": "Budget Grid",
+					"icon": "TableLarge",
+					"route": "BudgetGrid",
+					"order": 5
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "BudgetGrid",
+			"route": "/begroting/grid",
+			"type": "custom",
+			"title": "Budget Grid",
+			"component": "BudgetGrid",
+			"_note": "Rows are a LedgerGroup TREE (root verzamelposten expandable to child groups or resolved grootboek accounts), not a flat list of one schema's objects, and columns are a caller-selected period range/granularity with a computed TOTAAL cumulative column — `type: index` cannot express nesting or generated columns, `type: dashboard` cannot express row-level drill/expand. Fetches its whole payload once from GET /api/budget-grid; expand/collapse is client-side only (design.md §1c). See BudgetLineCommitments/WbsoChartOfAccountsView for the same type:custom precedent.",
+			"config": {
+				"register": "shillinq",
+				"schema": "LedgerGroup",
+				"endpointSource": "/apps/shillinq/api/budget-grid",
+				"computedRows": [
+					{
+						"code": "bruto-marge",
+						"label": "Bruto Marge",
+						"formula": "omzet - kostprijs-van-de-omzet",
+						"favorableDirection": "higher"
+					},
+					{
+						"code": "kosten",
+						"label": "Kosten",
+						"formula": "personeel + huisvesting + afschrijvingen-op-vaste-activa + exploitatie-en-machinekosten + verkoopkosten + algemene-kosten",
+						"favorableDirection": "lower"
+					},
+					{
+						"code": "bedrijfsresultaat",
+						"label": "Bedrijfsresultaat",
+						"formula": "bruto-marge - kosten",
+						"favorableDirection": "higher"
+					},
+					{
+						"code": "financieel-resultaat",
+						"label": "Financieel resultaat",
+						"formula": "rentebaten - rentelasten",
+						"favorableDirection": "higher"
+					},
+					{
+						"code": "resultaat-voor-belastingen",
+						"label": "Resultaat voor belastingen",
+						"formula": "bedrijfsresultaat + financieel-resultaat",
+						"favorableDirection": "higher"
+					},
+					{
+						"code": "nettoresultaat",
+						"label": "Nettoresultaat",
+						"formula": "resultaat-voor-belastingen - vennootschapsbelasting",
+						"favorableDirection": "higher"
+					},
+					{
+						"code": "nettoresultaat-pct",
+						"label": "% van omzet",
+						"formula": "nettoresultaat / omzet",
+						"asPercent": true
+					}
+				],
+				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/begroting"
+			}
+		}
+	]
+}

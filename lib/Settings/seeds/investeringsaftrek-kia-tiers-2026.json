@@ -1,0 +1,17 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "Wet IB 2001 art. 3.41 (kleinschaligheidsinvesteringsaftrek), geindexeerde tabel 2026",
+		"version": "2026",
+		"description": "2026 KIA tiered lookup table per Wet IB 2001 art. 3.41. Amounts in EUR cents. Tier 1: below drempel, no KIA. Tier 2: 28% of the investment. Tier 3: flat EUR 19.769. Tier 4: EUR 19.769 minus 7,56% of (jaartotaal - EUR 130.744). Tier 5: above plafond, no KIA. Resolved by lib/Guard/KiaSchalenLookup.php (ADR-031 exception). Statutory values; operators must not override.",
+		"imported": "2026-06-05T00:00:00Z"
+	},
+	"kiaTiers": [
+		{"tier": 1, "yearNumber": 2026, "from": 0, "tot": 280000, "percentage": 0, "fixedAmount": 0, "rule": "Onder drempel, geen aftrek"},
+		{"tier": 2, "yearNumber": 2026, "from": 280000, "tot": 7060200, "percentage": 28, "fixedAmount": null, "rule": "28% over investering"},
+		{"tier": 3, "yearNumber": 2026, "from": 7060200, "tot": 13074400, "percentage": null, "fixedAmount": 1976900, "rule": "Vast maximumbedrag EUR 19.769"},
+		{"tier": 4, "yearNumber": 2026, "from": 13074400, "tot": 39223000, "percentage": -7.56, "fixedAmount": 1976900, "rule": "EUR 19.769 minus 7,56% van (jaartotaal - EUR 130.744)"},
+		{"tier": 5, "yearNumber": 2026, "from": 39223000, "tot": null, "percentage": 0, "fixedAmount": 0, "rule": "Boven plafond, geen aftrek"}
+	]
+}

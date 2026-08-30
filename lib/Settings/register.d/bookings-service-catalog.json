@@ -1,0 +1,292 @@
+{
+  "info": {
+    "version": "0.1.0-bookings-service-catalog"
+  },
+  "components": {
+    "schemas": {
+      "Service": {
+        "slug": "Service",
+        "icon": "BriefcaseOutline",
+        "version": "0.2.0",
+        "title": "Service",
+        "description": "A bookable service offering with full catalogue dimensions per bookings-service-catalog (REQ-SC-001..008). Extends the minimal Service declared by bookings-create-appointment with stable per-administration `code` slug, temporal dimensions (`prepareTime`, `bufferBefore`, `bufferAfter`), pricing (`basePrice`, `currency`, `dynamicPricing` flag), categorisation (`serviceCategory`, `resourceTypeRef`), and a three-state lifecycle (`draft` → `active` → `archived`). `dynamicPricing: true` signals to dependent specs (T2+) that base price is a fallback; rule-based pricing must be applied. `resourceTypeRef` is a forward FK to dependent resource-type specs (skill/room/staff specialty/equipment class) and is interpreted by `bookings-resource-calendar` / `bookings-availability-rules` / future resource-allocation specs. Multi-tenant isolation via `administrationId` per ADR-005. Total calendar block per scheduled service = `prepareTime + duration + bufferAfter`; the next allowed slot starts after `bufferBefore + duration + bufferAfter` per REQ-SC-003 worked examples.",
+        "x-schema-org": "schema:Service",
+        "x-openregister-purpose": "dimension",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "serviceId",
+          "code",
+          "name",
+          "duration",
+          "prepareTime",
+          "bufferBefore",
+          "bufferAfter",
+          "basePrice",
+          "currency",
+          "dynamicPricing",
+          "serviceCategory",
+          "status"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Stable slug identifier unique per administration (REQ-SC-008). Once assigned MUST NOT change — dependent specs reference it for reporting, mapping and external integrations.",
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "example": "haircut",
+            "title": "Code"
+          },
+          "prepareTime": {
+            "type": "integer",
+            "description": "Setup/preparation time in minutes applied BEFORE the service window (REQ-SC-003). Total calendar block = prepareTime + duration + bufferAfter.",
+            "minimum": 0,
+            "default": 0,
+            "example": 5,
+            "title": "Prepare Time"
+          },
+          "bufferBefore": {
+            "type": "integer",
+            "description": "Gap in minutes required before this service begins (REQ-SC-003); typically 0 for collocated resources, > 0 for travelling staff.",
+            "minimum": 0,
+            "default": 0,
+            "example": 0,
+            "title": "Buffer Before"
+          },
+          "bufferAfter": {
+            "type": "integer",
+            "description": "Gap in minutes after this service ends for turnover/cleaning (REQ-SC-003). Dutch SMB default: 15 minutes for high-turnover services (salons), 0 for low-turnover (consulting).",
+            "minimum": 0,
+            "default": 0,
+            "example": 15,
+            "title": "Buffer After"
+          },
+          "basePrice": {
+            "type": "number",
+            "description": "Base unit price in the specified currency (REQ-SC-004). Stored as decimal with two-cent precision (multipleOf 0.01). If dynamicPricing = false this is the final price; if dynamicPricing = true this is a fallback / reference only and dependent pricing specs MUST compute actual price via rules.",
+            "minimum": 0,
+            "multipleOf": 0.01,
+            "default": 0,
+            "example": 25.0,
+            "title": "Base Price"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code (REQ-SC-002); default EUR for Dutch organisations.",
+            "pattern": "^[A-Z]{3}$",
+            "default": "EUR",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "dynamicPricing": {
+            "type": "boolean",
+            "description": "If true (REQ-SC-004), dependent pricing specs (T2+) MUST compute actual price via time-of-day, volume, surge or other rules; basePrice MUST NOT be used as the final price. If false, basePrice is the final price and no further pricing lookup is required.",
+            "default": false,
+            "example": false,
+            "title": "Dynamic Pricing"
+          },
+          "serviceCategory": {
+            "type": "string",
+            "description": "Flat category grouping per REQ-SC-006 (e.g. \"Hair Services\", \"Consulting\", \"Catering\", \"Subscriptions\"). Nested hierarchies deferred to T2.",
+            "maxLength": 128,
+            "example": "Hair Services",
+            "title": "Service Category"
+          },
+          "resourceTypeRef": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional forward FK to resource-type concepts (skill, room, staff specialty, equipment class) per REQ-SC-007. Resolved by dependent specs (bookings-resource-calendar, bookings-availability-rules). Null for services with no specific resource requirement (subscriptions, products).",
+            "maxLength": 128,
+            "example": "hairdresser",
+            "title": "Resource Type Ref"
+          },
+          "status": {
+            "type": "string",
+            "description": "Three-state lifecycle per REQ-SC-005. `draft` = under construction, NOT bookable; `active` = live and bookable, visible in catalogs; `archived` = retired, retained for audit, NOT bookable.",
+            "enum": [
+              "draft",
+              "active",
+              "archived"
+            ],
+            "default": "draft",
+            "example": "active",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Service is incomplete or under development; NOT bookable. Excluded from booking catalogs."
+            },
+            "active": {
+              "label": "Active",
+              "description": "Service is live and bookable; visible in catalogs and to the self-service widget."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Service is retired; retained for historical/audit purposes; NOT bookable but still queryable for past bookings."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "draft",
+              "to": "active",
+              "label": "Activate service",
+              "description": "Publish a draft service so it becomes bookable (REQ-SC-005)."
+            },
+            "archive": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archive service",
+              "description": "Retire an active service. Past bookings remain queryable (REQ-SC-005)."
+            },
+            "restore": {
+              "from": "archived",
+              "to": "active",
+              "label": "Restore service",
+              "description": "Re-publish an archived service (REQ-SC-005)."
+            }
+          }
+        },
+        "x-openregister-uniqueness": [
+          {
+            "fields": [
+              "administrationId",
+              "code"
+            ],
+            "description": "Service code MUST be unique per administration (REQ-SC-008). Same code MAY exist in different administrations."
+          }
+        ],
+        "x-openregister-aggregations": {
+          "countByStatus": {
+            "field": "status",
+            "metric": "count",
+            "description": "Number of services per lifecycle state.",
+            "groupBy": ["status"]
+          },
+          "countByCategory": {
+            "field": "serviceCategory",
+            "metric": "count",
+            "description": "Number of services per flat category grouping (REQ-SC-006).",
+            "groupBy": ["serviceCategory"]
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Service",
+        "slug": "bookings-service-catalog-svc-hair-cut"
+      },
+      "administrationId": "adm-1",
+      "serviceId": "svc-hair-cut",
+      "code": "haircut",
+      "name": "Haircut",
+      "description": "Standard men's or women's haircut.",
+      "duration": 30,
+      "prepareTime": 5,
+      "bufferBefore": 0,
+      "bufferAfter": 15,
+      "basePrice": 25.0,
+      "currency": "EUR",
+      "dynamicPricing": false,
+      "serviceCategory": "Hair Services",
+      "resourceTypeRef": "hairdresser",
+      "status": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Service",
+        "slug": "bookings-service-catalog-svc-consult-1h"
+      },
+      "administrationId": "adm-1",
+      "serviceId": "svc-consult-1h",
+      "code": "consult-1h",
+      "name": "Management Consulting — 1 hour",
+      "description": "Strategic business consultation session.",
+      "duration": 60,
+      "prepareTime": 10,
+      "bufferBefore": 15,
+      "bufferAfter": 15,
+      "basePrice": 150.0,
+      "currency": "EUR",
+      "dynamicPricing": true,
+      "serviceCategory": "Consulting",
+      "resourceTypeRef": "consultant",
+      "status": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Service",
+        "slug": "bookings-service-catalog-svc-room-4h"
+      },
+      "administrationId": "adm-1",
+      "serviceId": "svc-room-4h",
+      "code": "room-4h",
+      "name": "Meeting Room Rental — 4 hours",
+      "description": "Large meeting room (capacity 20), projector included.",
+      "duration": 240,
+      "prepareTime": 30,
+      "bufferBefore": 0,
+      "bufferAfter": 30,
+      "basePrice": 200.0,
+      "currency": "EUR",
+      "dynamicPricing": false,
+      "serviceCategory": "Venue",
+      "resourceTypeRef": "meeting-room",
+      "status": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Service",
+        "slug": "bookings-service-catalog-svc-buffet-hot"
+      },
+      "administrationId": "adm-1",
+      "serviceId": "svc-buffet-hot",
+      "code": "buffet-hot",
+      "name": "Catering — Hot Buffet (per person)",
+      "description": "3-course hot buffet service, staff included.",
+      "duration": 120,
+      "prepareTime": 60,
+      "bufferBefore": 0,
+      "bufferAfter": 30,
+      "basePrice": 18.5,
+      "currency": "EUR",
+      "dynamicPricing": true,
+      "serviceCategory": "Catering",
+      "resourceTypeRef": "kitchen-staff",
+      "status": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Service",
+        "slug": "bookings-service-catalog-svc-saas-monthly"
+      },
+      "administrationId": "adm-1",
+      "serviceId": "svc-saas-monthly",
+      "code": "saas-monthly",
+      "name": "Monthly SaaS Subscription",
+      "description": "Standard plan: up to 5 users, email support.",
+      "duration": 0,
+      "prepareTime": 0,
+      "bufferBefore": 0,
+      "bufferAfter": 0,
+      "basePrice": 99.0,
+      "currency": "EUR",
+      "dynamicPricing": false,
+      "serviceCategory": "Subscriptions",
+      "resourceTypeRef": null,
+      "status": "active"
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+{
+  "x-shillinq-fragment": "checks-final-tail",
+  "components": {
+    "schemas": {
+      "ARInvoice": {
+        "version": "0.11.0",
+        "properties": {
+          "invoicingPeriodPresent": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether a document-level invoicing period (BG-14) is used; independent of its dates (BR-CO-19).",
+            "title": "Invoicing Period Present"
+          },
+          "invoicingPeriodStart": {
+            "type": "string",
+            "nullable": true,
+            "description": "Invoicing period start date (BT-73).",
+            "title": "Invoicing Period Start"
+          },
+          "invoicingPeriodEnd": {
+            "type": "string",
+            "nullable": true,
+            "description": "Invoicing period end date (BT-74).",
+            "title": "Invoicing Period End"
+          },
+          "invoiceLines": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "periodPresent": {
+                  "type": "boolean",
+                  "nullable": true,
+                  "description": "Whether the invoice line period (BG-26) is used (BR-CO-20).",
+                  "title": "Period Present"
+                },
+                "periodStart": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Invoice line period start date (BT-134).",
+                  "title": "Period Start"
+                },
+                "periodEnd": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Invoice line period end date (BT-135).",
+                  "title": "Period End"
+                }
+              }
+            },
+            "title": "Invoice Lines",
+            "description": "A list of invoice lines entries."
+          }
+        }
+      },
+      "IossImport": {
+        "version": "0.1.0",
+        "slug": "IossImport",
+        "title": "IOSS Import Consignment",
+        "type": "object",
+        "description": "An import consignment declared under the Import One-Stop-Shop (IOSS): intrinsic value up to EUR 150, every line VAT-charged (the <=EUR 22 exemption is abolished).",
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Administration.",
+            "title": "Administration ID"
+          },
+          "consignmentValue": {
+            "type": "number",
+            "nullable": true,
+            "description": "Intrinsic value of the consignment (excl. transport/insurance), <= EUR 150.",
+            "title": "Consignment Value"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 4217 currency.",
+            "title": "Currency"
+          },
+          "vatAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "VAT charged on the consignment (must be > 0).",
+            "title": "VAT Amount"
+          },
+          "vatRate": {
+            "type": "number",
+            "nullable": true,
+            "description": "VAT rate of the Member State of consumption.",
+            "title": "VAT Rate"
+          },
+          "destinationCountry": {
+            "type": "string",
+            "nullable": true,
+            "description": "Member State of consumption (ISO 3166-1 alpha-2).",
+            "title": "Destination Country"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a IOSS Import Consignment is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "TravelAgentMargin": {
+        "version": "0.1.0",
+        "slug": "TravelAgentMargin",
+        "title": "Travel-Agent Margin (art. 306)",
+        "type": "object",
+        "description": "A supply under the special margin scheme for travel agents (VAT Directive art. 306): taxable amount = the agent's margin (selling - cost), with no input-VAT deduction on the bought-in travel supplies.",
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Administration.",
+            "title": "Administration ID"
+          },
+          "sellingPrice": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total amount charged to the traveller (excl. VAT).",
+            "title": "Selling Price"
+          },
+          "cost": {
+            "type": "number",
+            "nullable": true,
+            "description": "Cost of the bought-in travel supplies.",
+            "title": "Cost"
+          },
+          "margin": {
+            "type": "number",
+            "nullable": true,
+            "description": "Taxable margin = sellingPrice - cost.",
+            "title": "Margin"
+          },
+          "inputVatDeducted": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether input VAT on the supplies was deducted (must be false under the scheme).",
+            "title": "Input VAT Deducted"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 4217 currency.",
+            "title": "Currency"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Travel-Agent Margin (art. 306) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

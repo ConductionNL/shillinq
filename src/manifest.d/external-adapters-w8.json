@@ -1,0 +1,22 @@
+{
+	"$comment": "Shillinq W8/integration-config-to-openconnector — 'External Connections' nav leaf + roster page over the 15 dormant external-API adapter ports. Per ADR-067/ADR-091/ADR-022 (openspec/changes/integration-config-to-openconnector), integration configuration (credentials, endpoints, protocol mapping) belongs to openconnector; this app holds only the source-slug reference. One page renders every family as a row (declared slug, activation summary, dormant/live badge, provisioned-in-openconnector status) sourced from ExternalAdaptersAdminController#index — the 15 per-adapter detail pages this fragment used to declare are gone; there is no per-family route left to deep-link.",
+	"menu": [
+		{
+			"id": "ExternalConnections",
+			"label": "External Connections",
+			"icon": "TransitConnectionVariant",
+			"route": "ExternalAdaptersStatus",
+			"order": 46
+		}
+	],
+	"pages": [
+		{
+			"id": "ExternalAdaptersStatus",
+			"route": "/external-adapters",
+			"type": "custom",
+			"title": "External Connections",
+			"component": "ExternalAdaptersStatus",
+			"_note": "The adapter catalogue is a PHP-side registry served by externalAdaptersAdmin#index (/api/admin/external-adapters), not an OpenRegister register/schema — there is no object collection for `type: index` to bind config.register/config.schema to. Each row also carries a live dormancy verdict and a live openconnector-provisioning verdict computed per request, not a stored field, so a declarative column list cannot express it."
+		}
+	]
+}

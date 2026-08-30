@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-lease-contracts
 
 **Status:** proposed
@@ -5,11 +9,11 @@
 **Tier:** T4-specialized (advanced / specialized lease accounting)
 **Depends on:** bookkeeping-general-ledger (T1)
 
-## Summary
+## Purpose
 
 The lease-contract register is the master record for every lease under IFRS 16 that a shillinq customer owns. It captures the contractual terms (lessor, commencement date, payment terms, extension/termination options, IBR, classification), integrates with docudesk for source contract PDFs, and routes complex contracts through an optional classification wizard.
 
-## ADDED Requirements
+## Requirements
 
 @e2e exclude unbuilt UI: lease register detail via OR API, page not yet implemented
 
@@ -57,6 +61,8 @@ The schema MUST declare:
 - **THEN** validation MUST pass
 
 ### REQ-LC-003: Lease contracts SHALL support a classification wizard workflow
+
+The system SHALL provide a classification wizard workflow for transitioning a lease from draft to active.
 
 A new lease transitions `draft → active` via an optional wizard that walks the operator through the IFRS 16 decision tree:
 
@@ -114,6 +120,8 @@ The `ibr-source-document` field MUST be a FK to a docudesk DigitalDocument. The 
 
 ### REQ-LC-006: Extension and termination options MUST be traceable to reassessment events
 
+The system MUST keep extension and termination options traceable to their reassessment events.
+
 When a lease is reassessed (e.g., an extension option is marked "reasonably certain"), the system creates a `lease-reassessment-event` record with before/after snapshots. The before-snapshot captures the original extension option (e.g., { months: 24, exercise-likelihood: "possible" }) and the after-snapshot shows the updated option (e.g., { months: 24, exercise-likelihood: "reasonably-certain" }).
 
 Auditors can walk from `lease-contract` → `lease-reassessment-event` (filtered by event-type = extension-option-reassessment) → before/after snapshots → GL postings (on the new schedule) to confirm the reassessment was compliant.
@@ -126,6 +134,8 @@ Auditors can walk from `lease-contract` → `lease-reassessment-event` (filtered
 - **AND** the event links to GL postings that adjust the lease liability and RoU asset for the extended term
 
 ### REQ-LC-007: Lease contracts SHALL be immutable after activation, changes trigger reassessment events
+
+The system SHALL make a lease contract immutable after activation, with changes triggering reassessment events.
 
 Once a lease transitions to `active`, direct edits to the contract (e.g., changing `end-date` or `ibr-percent`) are NOT allowed. Instead, the operator initiates a reassessment workflow that:
 
@@ -143,6 +153,8 @@ Once a lease transitions to `active`, direct edits to the contract (e.g., changi
 - **THEN** the lifecycle guard (x-openregister-lifecycle.requires) MUST reject the edit with a message: "Lease is active. To modify, use the Reassessment workflow (Menu > Lease Reassessment > New Event > Modification)."
 
 ### REQ-LC-008: The lease-contract register SHALL support full-text search and filtering
+
+The system SHALL support full-text search and filtering on the lease-contract register.
 
 Operators must be able to filter leases by:
 - Asset class (vehicle, real-estate, IT-hardware, machinery, other)

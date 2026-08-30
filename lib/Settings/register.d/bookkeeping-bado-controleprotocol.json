@@ -1,0 +1,1235 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-bado-controleprotocol",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 3 — BADO (Besluit Accountantscontrole Decentrale Overheden) audit protocol framework. Declares 7 schemas (Controleprotocol, ToleranceMatrix, Materialiteit, AuditSample, AuditFinding, VerklaringDraft, SiSaAssurance) with declarative lifecycle (ADR-031), RBAC (ADR-022), finding aggregation, and BADO-statutory tolerance ceilings. Opinion derivation + severity classification mirror lib/Service/BadoControleprotocolService.php (ADR-031 read-only exception)."
+  },
+  "components": {
+    "schemas": {
+      "Controleprotocol": {
+        "slug": "Controleprotocol",
+        "icon": "ClipboardCheckOutline",
+        "version": "0.1.0",
+        "title": "Controleprotocol",
+        "description": "BADO audit protocol, one per organisation per audit year, immutable after adoption (REQ-001). Carries the materialiteit base, adoption decision (raadsbesluit/statenbesluit/AB-besluit) and the draft → in-review → adopted → superseded lifecycle (REQ-004). x-openregister-lifecycle per ADR-031.",
+        "x-schema-org": "schema:GovernmentService",
+        "type": "object",
+        "required": [
+          "organisationId",
+          "organisationType",
+          "auditYear",
+          "version",
+          "status",
+          "materialityBase",
+          "effectiveFrom",
+          "effectiveTo"
+        ],
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "Protocol version, e.g. 2026.1.",
+            "example": "2026.1",
+            "title": "Version"
+          },
+          "auditYear": {
+            "type": "integer",
+            "description": "Audit year the protocol governs.",
+            "example": 2026,
+            "title": "Audit Year"
+          },
+          "organisationType": {
+            "type": "string",
+            "enum": [
+              "municipality",
+              "province",
+              "waterAuthority",
+              "GR"
+            ],
+            "description": "Type of decentralised government (Gemeentewet 213 / Provinciewet 217 / Waterschapswet 109 / Wgr 35).",
+            "title": "Organisation Type"
+          },
+          "organisationId": {
+            "type": "string",
+            "description": "FK to the audited organisation. Tenant scope.",
+            "example": "adm-gemeente-hoorn",
+            "title": "Organisation ID"
+          },
+          "adoptionDecision": {
+            "type": "object",
+            "nullable": true,
+            "description": "Reference to the raadsbesluit/statenbesluit/AB-besluit that adopts the protocol (REQ-004).",
+            "properties": {
+              "decisionNumber": {
+                "type": "string",
+                "title": "Besluitnummer",
+                "description": "The besluitnummer."
+              },
+              "date": {
+                "type": "string",
+                "format": "date",
+                "title": "Datum",
+                "description": "The date and time for datum."
+              },
+              "decisionType": {
+                "type": "string",
+                "enum": [
+                  "councilResolution",
+                  "statenbesluit",
+                  "ab-decision"
+                ],
+                "title": "Decision Type",
+                "description": "The type or category of decision."
+              }
+            },
+            "title": "Adoption Decision"
+          },
+          "adoptionDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the protocol was adopted by the council.",
+            "title": "Adoption Date"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Protocol effective start date.",
+            "title": "Effective From"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date",
+            "description": "Protocol effective end date.",
+            "title": "Effective To"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "in-review",
+              "adopted",
+              "superseded"
+            ],
+            "default": "draft",
+            "description": "Lifecycle state per REQ-004.",
+            "title": "Status"
+          },
+          "materialityBase": {
+            "type": "string",
+            "enum": [
+              "expenses",
+              "revenue",
+              "balanceSheetTotal"
+            ],
+            "description": "Base used to compute materialiteit (REQ-003).",
+            "title": "Materiality Base"
+          },
+          "materialityAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Frozen materialiteit amount in EUR, set on adoption (REQ-003).",
+            "title": "Materiality Amount"
+          },
+          "referenceFramework": {
+            "type": "string",
+            "nullable": true,
+            "description": "BBV version + Wet Fido + SiSa-regeling reference.",
+            "example": "BBV 2024 / Wet Fido / SiSa 2026",
+            "title": "Reference Framework"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217 currency, default EUR.",
+            "title": "Currency"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "retention": {
+            "rule": "selectielijst:21.1",
+            "period": "P7Y",
+            "description": "Audit protocols retained 7 years (Archiefwet + Selectielijst Gemeenten 2020)."
+          },
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Author mode; tolerantie ceilings + materialiteit editable; no audit activity."
+            },
+            "in-review": {
+              "label": "In review",
+              "description": "Tolerantie + materialiteit locked; awaiting raadsbesluit; CFO + auditor sign-off."
+            },
+            "adopted": {
+              "label": "Vastgesteld",
+              "description": "Raadsbesluit validated; legally binding; immutable; audit activity begins."
+            },
+            "superseded": {
+              "label": "Vervangen",
+              "description": "Replaced by a newer protocol for the same organisation + audit year; archived."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "in-review",
+              "label": "Indienen voor besluit",
+              "description": "Submit for raadsbesluit; locks tolerantie + materialiteit.",
+              "requires": "OCA\\Shillinq\\Service\\BadoControleprotocolService::canSubmitForReview"
+            },
+            "adopt": {
+              "from": "in-review",
+              "to": "adopted",
+              "label": "Vaststellen",
+              "description": "Council adopts; requires valid adoptionDecision (REQ-004); emits audit.protocol.adopted.",
+              "requires": "OCA\\Shillinq\\Service\\BadoControleprotocolService::canAdopt"
+            },
+            "supersede": {
+              "from": "adopted",
+              "to": "superseded",
+              "label": "Vervangen",
+              "description": "A newer protocol supersedes this one for the same organisation + audit year."
+            },
+            "revise": {
+              "from": "in-review",
+              "to": "draft",
+              "label": "Terug naar concept",
+              "description": "Return to draft for further editing before adoption."
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "onAdopted": {
+            "trigger": {
+              "type": "transition",
+              "action": "adopt"
+            },
+            "description": "Notify the concerncontroller when a protocol is adopted.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "concerncontroller"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Controleprotocol {{version}} voor auditjaar {{auditYear}} is vastgesteld",
+              "en": "Audit protocol {{version}} for audit year {{auditYear}} has been adopted"
+            }
+          }
+        },
+        "x-openregister-events": {
+          "audit.protocol.adopted": {
+            "trigger": "lifecycle.adopt",
+            "description": "REQ-009: emitted when a protocol transitions to adopted so bbv-compliance + rekenkamer-audit-pack can lock the audit year.",
+            "payload": {
+              "organisation_id": "@self.organisationId",
+              "audit_year": "@self.auditYear",
+              "effective_from": "@self.effectiveFrom",
+              "effective_to": "@self.effectiveTo"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "concerncontroller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "interne-audit": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "externe-accountant": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "toezichthouder": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Controleprotocol is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "ToleranceMatrix": {
+        "slug": "ToleranceMatrix",
+        "icon": "TableLarge",
+        "version": "0.1.0",
+        "title": "Tolerantiematrix",
+        "description": "Per-programma / per-taakveld / per-SiSa-regeling BADO tolerance ceilings (REQ-002). Defaults from BADO statutory maxima (1% approval, 3% qualification on getrouwheid + rechtmatigheid, 3% onzekerheden); a protocol may tighten but never loosen. Ceiling validation enforced by BadoControleprotocolService::validateCeilings.",
+        "x-schema-org": "schema:Dataset",
+        "type": "object",
+        "required": [
+          "protocol",
+          "topic",
+          "faithfulnessApprovalCeiling",
+          "faithfulnessQualificationCeiling",
+          "lawfulnessApprovalCeiling",
+          "lawfulnessQualificationCeiling",
+          "uncertaintyCeiling"
+        ],
+        "properties": {
+          "protocol": {
+            "type": "string",
+            "description": "FK to the parent Controleprotocol.",
+            "title": "Protocol"
+          },
+          "topic": {
+            "type": "string",
+            "description": "Programma / taakveld / SiSa-regeling code.",
+            "example": "Sociaal Domein",
+            "title": "Topic"
+          },
+          "faithfulnessApprovalCeiling": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 1,
+            "description": "Getrouwheid approval ceiling as percent of materialiteit; statutory max 1%.",
+            "title": "Getrouwheid Approval Ceiling"
+          },
+          "faithfulnessQualificationCeiling": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3,
+            "default": 3,
+            "description": "Getrouwheid qualification ceiling; statutory max 3% (BADO art. 5 lid 2).",
+            "title": "Getrouwheid Qualification Ceiling"
+          },
+          "lawfulnessApprovalCeiling": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 1,
+            "description": "Rechtmatigheid approval ceiling; statutory max 1%.",
+            "title": "Rechtmatigheid Approval Ceiling"
+          },
+          "lawfulnessQualificationCeiling": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3,
+            "default": 3,
+            "description": "Rechtmatigheid qualification ceiling; statutory max 3% (BADO art. 5 lid 2).",
+            "title": "Rechtmatigheid Qualification Ceiling"
+          },
+          "uncertaintyCeiling": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3,
+            "default": 3,
+            "description": "Onzekerheden ceiling; statutory max 3%.",
+            "title": "Uncertainty Ceiling"
+          },
+          "methodologyNote": {
+            "type": "string",
+            "nullable": true,
+            "description": "Auditor notes on methodology / risk-based tightening.",
+            "title": "Methodology Note"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "concerncontroller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "externe-accountant": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "interne-audit": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "toezichthouder": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Tolerantiematrix is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "Materialiteit": {
+        "slug": "Materialiteit",
+        "icon": "Scale",
+        "version": "0.1.0",
+        "title": "Materialiteit",
+        "description": "Materialiteit computed from the adopted begroting (REQ-003): base (lasten/baten/balanstotaal) × percentage. Editable in draft, frozen on protocol adoption. percentage must be <= 1% per Notitie Materialiteit en Tolerantie.",
+        "x-schema-org": "schema:Dataset",
+        "type": "object",
+        "required": [
+          "protocol",
+          "scope",
+          "base",
+          "percentage",
+          "calculatedAmount",
+          "status"
+        ],
+        "properties": {
+          "protocol": {
+            "type": "string",
+            "description": "FK to the parent Controleprotocol.",
+            "title": "Protocol"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "overall",
+              "programme",
+              "taskField",
+              "sisa"
+            ],
+            "description": "Granularity of the materialiteit row.",
+            "title": "Scope"
+          },
+          "base": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Base amount in EUR (lasten/baten/balanstotaal).",
+            "title": "Base"
+          },
+          "percentage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Materialiteit percentage; <= 1% per Notitie Materialiteit en Tolerantie.",
+            "title": "Percentage"
+          },
+          "calculatedAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "base × percentage in EUR (computed).",
+            "title": "Calculated Amount"
+          },
+          "rationale": {
+            "type": "string",
+            "nullable": true,
+            "description": "Explanation of the base + percentage choice.",
+            "title": "Rationale"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "frozen"
+            ],
+            "default": "draft",
+            "description": "draft (editable) → frozen (immutable on protocol adoption).",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Materialiteit can be recalculated."
+            },
+            "frozen": {
+              "label": "Bevroren",
+              "description": "Frozen on protocol adoption; begrotingswijzigingen do not mutate it (REQ-003)."
+            }
+          },
+          "transitions": {
+            "freeze": {
+              "from": "draft",
+              "to": "frozen",
+              "label": "Bevriezen",
+              "description": "Freeze materialiteit on protocol adoption."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "concerncontroller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "externe-accountant": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "interne-audit": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "toezichthouder": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Materialiteit is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "AuditSample": {
+        "slug": "AuditSample",
+        "icon": "Sigma",
+        "version": "0.1.0",
+        "title": "Steekproef",
+        "description": "Reproducible audit sample drawn from the grootboek (REQ-005). Stores the population description, selection method (MUS/random/risk-based), sample size and a reproducible seed so the exact sample can be regenerated for the accountantsdossier.",
+        "x-schema-org": "schema:Dataset",
+        "type": "object",
+        "required": [
+          "protocol",
+          "population",
+          "selectionMethod",
+          "sampleSize",
+          "reproducibleSeed",
+          "extractedAt",
+          "extractedBy"
+        ],
+        "properties": {
+          "protocol": {
+            "type": "string",
+            "description": "FK to the parent Controleprotocol.",
+            "title": "Protocol"
+          },
+          "population": {
+            "type": "string",
+            "description": "Description of the population in scope.",
+            "example": "invoices > €10k in Sociaal Domein, 2026-01-01..2026-12-31",
+            "title": "Population"
+          },
+          "selectionMethod": {
+            "type": "string",
+            "enum": [
+              "monetary-unit-sampling",
+              "random",
+              "risk-based"
+            ],
+            "description": "Sample selection methodology.",
+            "title": "Selection Method"
+          },
+          "sampleSize": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of transactions selected.",
+            "title": "Sample Size"
+          },
+          "reproducibleSeed": {
+            "type": "string",
+            "description": "UUID/hash for deterministic re-extraction (AFM-toetsing).",
+            "title": "Reproducible Seed"
+          },
+          "extractedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of extraction.",
+            "title": "Extracted At"
+          },
+          "extractedBy": {
+            "type": "string",
+            "description": "FK to the Person (auditor) who extracted the sample.",
+            "title": "Extracted By"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "externe-accountant": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "interne-audit": {
+              "permissions": [
+                "create",
+                "read"
+              ]
+            },
+            "concerncontroller": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "toezichthouder": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Steekproef is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "AuditFinding": {
+        "slug": "AuditFinding",
+        "icon": "AlertCircleOutline",
+        "version": "0.1.0",
+        "title": "Bevinding",
+        "description": "Per-transaction audit finding classified on both axes — rechtmatigheid × getrouwheid (REQ-006). Severity (acceptabel/te-corrigeren/materieel) is derived from the exception amount vs the ToleranceMatrix ceilings by BadoControleprotocolService::classifySeverity. Four-eye workflow: controllerResponse + auditorConclusion both required before resolution.",
+        "x-schema-org": "schema:Dataset",
+        "type": "object",
+        "required": [
+          "sample",
+          "transaction",
+          "findingType",
+          "amount",
+          "narrative",
+          "status"
+        ],
+        "properties": {
+          "sample": {
+            "type": "string",
+            "description": "FK to the parent AuditSample.",
+            "title": "Sample"
+          },
+          "transaction": {
+            "type": "string",
+            "description": "FK to the grootboekpost (GLTransaction) under test.",
+            "title": "Transaction"
+          },
+          "topic": {
+            "type": "string",
+            "nullable": true,
+            "description": "Programma / taakveld the finding aggregates under (matches ToleranceMatrix.topic).",
+            "title": "Topic"
+          },
+          "findingType": {
+            "type": "string",
+            "enum": [
+              "lawfulness",
+              "faithfulness",
+              "uncertainty"
+            ],
+            "description": "Which BADO axis the exception concerns.",
+            "title": "Finding Type"
+          },
+          "lawfulness": {
+            "type": "string",
+            "enum": [
+              "compliant",
+              "exception"
+            ],
+            "nullable": true,
+            "description": "Rechtmatigheid axis outcome.",
+            "title": "Rechtmatigheid"
+          },
+          "faithfulness": {
+            "type": "string",
+            "enum": [
+              "faithful",
+              "misstated"
+            ],
+            "nullable": true,
+            "description": "Getrouwheid axis outcome.",
+            "title": "Getrouwheid"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "acceptabel",
+              "te-corrigeren",
+              "materieel"
+            ],
+            "nullable": true,
+            "description": "Computed severity vs ToleranceMatrix ceilings (REQ-006).",
+            "title": "Severity"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Exception amount in EUR.",
+            "title": "Amount"
+          },
+          "narrative": {
+            "type": "string",
+            "description": "Description of the exception / condition.",
+            "title": "Narrative"
+          },
+          "controllerResponse": {
+            "type": "string",
+            "nullable": true,
+            "description": "Controller explanation or proposed correction (four-eye).",
+            "title": "Controller Response"
+          },
+          "auditorConclusion": {
+            "type": "string",
+            "nullable": true,
+            "description": "Auditor assessment of the controller response (four-eye).",
+            "title": "Auditor Conclusion"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "agreed",
+              "disputed",
+              "resolved"
+            ],
+            "default": "open",
+            "description": "Finding lifecycle (REQ-006).",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "open",
+          "states": {
+            "open": {
+              "label": "Open",
+              "description": "Recorded; awaiting controller response."
+            },
+            "agreed": {
+              "label": "Akkoord",
+              "description": "Controller response recorded; auditor accepts; ready to aggregate."
+            },
+            "disputed": {
+              "label": "Betwist",
+              "description": "Controller disputes the classification; awaiting escalation resolution."
+            },
+            "resolved": {
+              "label": "Afgehandeld",
+              "description": "Both controller response + auditor conclusion recorded; contributes to aggregation."
+            }
+          },
+          "transitions": {
+            "agree": {
+              "from": "open",
+              "to": "agreed",
+              "label": "Akkoord",
+              "description": "Controller responds; auditor accepts.",
+              "requires": "OCA\\Shillinq\\Service\\BadoControleprotocolService::hasControllerResponse"
+            },
+            "dispute": {
+              "from": "open",
+              "to": "disputed",
+              "label": "Betwisten",
+              "description": "Controller disputes; escalation task created."
+            },
+            "resolveAgreed": {
+              "from": "agreed",
+              "to": "resolved",
+              "label": "Afhandelen",
+              "description": "Auditor conclusion recorded.",
+              "requires": "OCA\\Shillinq\\Service\\BadoControleprotocolService::isFourEyeComplete"
+            },
+            "resolveDisputed": {
+              "from": "disputed",
+              "to": "resolved",
+              "label": "Escalatie afgehandeld",
+              "description": "Escalation resolved; both axes classified.",
+              "requires": "OCA\\Shillinq\\Service\\BadoControleprotocolService::isFourEyeComplete"
+            }
+          }
+        },
+        "x-openregister-events": {
+          "audit.finding.materieel.detected": {
+            "trigger": "field.severity=materieel",
+            "description": "REQ-009: emitted when a finding is classified materieel so rekenkamer-audit-pack + CFO subscribers can escalate.",
+            "payload": {
+              "finding_id": "@self.id",
+              "transaction_id": "@self.transaction",
+              "amount": "@self.amount",
+              "topic": "@self.topic"
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "findingsByTopic": {
+            "description": "Declarative shape of the per-topic finding roll-up BadoControleprotocolService::computeAggregation computes (REQ-006). Groups agreed/resolved AuditFinding by topic, counts by severity (acceptabel/te-corrigeren/materieel) and sums the rechtmatigheid + getrouwheid exception amounts. The per-topic verdict (acceptable/qualified/adverse) and the derived opinion require the materialiteit-relative ceiling comparison + the BADO decision tree, which the declarative engine cannot yet express, so the service is the engine-side fallback (ADR-031).",
+            "source": "AuditFinding",
+            "groupBy": "topic",
+            "filter": {
+              "AuditFinding.status": [
+                "agreed",
+                "resolved"
+              ]
+            },
+            "targets": {
+              "materieelCount": "count(severity=materieel)",
+              "teCorrigerenCount": "count(severity=te-corrigeren)",
+              "acceptabelCount": "count(severity=acceptabel)",
+              "rechtmatigheidAmount": "sum(amount where findingType=rechtmatigheid)",
+              "getrouwheidAmount": "sum(amount where findingType=getrouwheid)"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "externe-accountant": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "concerncontroller": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "interne-audit": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "toezichthouder": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Bevinding is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "VerklaringDraft": {
+        "slug": "VerklaringDraft",
+        "icon": "FileCertificateOutline",
+        "version": "0.1.0",
+        "title": "Controleverklaring",
+        "description": "Aggregated findings + mechanically-derived proposedOpinion (REQ-007) on the four-point BADO scale. Opinion derivation mirrors BadoControleprotocolService::deriveOpinion. Sign-off carries the auditor identity + AFM-vergunningsnummer. draft → signed → published; cannot sign until all findings are agreed/resolved and all in-scope SiSa-regelingen have a SiSaAssurance child (REQ-008).",
+        "x-schema-org": "schema:GovernmentService",
+        "type": "object",
+        "required": [
+          "protocol",
+          "proposedOpinion",
+          "opinionRationale",
+          "status"
+        ],
+        "properties": {
+          "protocol": {
+            "type": "string",
+            "description": "FK to the parent Controleprotocol.",
+            "title": "Protocol"
+          },
+          "aggregatedFindings": {
+            "type": "object",
+            "nullable": true,
+            "description": "Findings rolled up by topic with counts by severity (computed).",
+            "title": "Aggregated Findings"
+          },
+          "proposedOpinion": {
+            "type": "string",
+            "enum": [
+              "goedkeurend",
+              "met-beperking",
+              "oordeelonthouding",
+              "afkeurend"
+            ],
+            "description": "Opinion derived from the BADO decision tree (REQ-007).",
+            "title": "Proposed Opinion"
+          },
+          "opinionRationale": {
+            "type": "string",
+            "description": "Explanation of the opinion, citing BADO criteria.",
+            "title": "Opinion Rationale"
+          },
+          "opinionOverride": {
+            "type": "boolean",
+            "default": false,
+            "description": "True when the auditor manually overrode the derived opinion; triggers escalation.",
+            "title": "Opinion Override"
+          },
+          "signOff": {
+            "type": "object",
+            "nullable": true,
+            "description": "Auditor sign-off block.",
+            "properties": {
+              "auditor": {
+                "type": "string",
+                "title": "Auditor",
+                "description": "The auditor."
+              },
+              "afmPermitNumber": {
+                "type": "string",
+                "title": "Afm Vergunningsnummer",
+                "description": "The afm vergunningsnummer."
+              },
+              "date": {
+                "type": "string",
+                "format": "date",
+                "title": "Datum",
+                "description": "The date and time for datum."
+              },
+              "place": {
+                "type": "string",
+                "title": "Plaats",
+                "description": "The date and time for plaats."
+              }
+            },
+            "title": "Sign Off"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "signed",
+              "published"
+            ],
+            "default": "draft",
+            "description": "Verklaring lifecycle.",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Opinion derived; awaiting sign-off."
+            },
+            "signed": {
+              "label": "Ondertekend",
+              "description": "Signed by the AFM-vergund accountant; emits audit.verklaring.signed."
+            },
+            "published": {
+              "label": "Gepubliceerd",
+              "description": "Bound to the published jaarrekening PDF/A."
+            }
+          },
+          "transitions": {
+            "sign": {
+              "from": "draft",
+              "to": "signed",
+              "label": "Ondertekenen",
+              "description": "Auditor signs; requires all findings agreed/resolved + all SiSa-regelingen covered (REQ-008).",
+              "requires": "OCA\\Shillinq\\Service\\BadoControleprotocolService::canSignVerklaring"
+            },
+            "publish": {
+              "from": "signed",
+              "to": "published",
+              "label": "Publiceren",
+              "description": "Bind to the published jaarrekening."
+            }
+          }
+        },
+        "x-openregister-events": {
+          "audit.verklaring.signed": {
+            "trigger": "lifecycle.sign",
+            "description": "REQ-009: emitted on sign so jaarrekening-publication can unblock.",
+            "payload": {
+              "protocol_id": "@self.protocol",
+              "opinion": "@self.proposedOpinion"
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "proposedOpinion": {
+            "description": "REQ-007 BADO decision tree (NV COS 700-serie). Mirrors BadoControleprotocolCalculator::deriveOpinion — first match wins: pervasive scope limitation → oordeelonthouding; materieel findings across the majority of topics → afkeurend; any materieel finding → met-beperking; otherwise → goedkeurend. The conditional cross-topic aggregation is not yet expressible declaratively, so the calculator is the engine-side fallback (ADR-031).",
+            "expression": "IF scopeLimitation THEN oordeelonthouding ELSE IF materieelTopics*2 > topicCount THEN afkeurend ELSE IF materieelTopics > 0 THEN met-beperking ELSE goedkeurend",
+            "inputs": {
+              "scopeLimitation": "#/properties/opinionOverride",
+              "findings": "AuditFinding.severity"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "externe-accountant": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "concerncontroller": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "interne-audit": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "toezichthouder": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Controleverklaring is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "SiSaAssurance": {
+        "slug": "SiSaAssurance",
+        "icon": "LinkVariant",
+        "version": "0.1.0",
+        "title": "SiSa-assurance",
+        "description": "Per-SiSa-regeling assurance entry feeding the SiSa-bijlage IIA assurance column (REQ-008). Links a regeling to its auditor procedures and the AuditFinding records classified per regeling. Regeling reference frozen at creation.",
+        "x-schema-org": "schema:GovernmentService",
+        "type": "object",
+        "required": [
+          "protocol",
+          "schemeCode",
+          "accountableParty",
+          "assuranceLevel"
+        ],
+        "properties": {
+          "protocol": {
+            "type": "string",
+            "description": "FK to the parent Controleprotocol.",
+            "title": "Protocol"
+          },
+          "schemeCode": {
+            "type": "string",
+            "description": "SiSa-bijlage regeling code.",
+            "example": "JBI",
+            "title": "Regeling Code"
+          },
+          "accountableParty": {
+            "type": "string",
+            "description": "Entity responsible for the regeling accounting.",
+            "example": "municipality",
+            "title": "Verantwoordingsplichtige"
+          },
+          "specificBenefit": {
+            "type": "string",
+            "nullable": true,
+            "description": "Grant name / description.",
+            "title": "Specifieke Uitkering"
+          },
+          "assuranceLevel": {
+            "type": "string",
+            "enum": [
+              "financial-statement",
+              "sisa-specific"
+            ],
+            "description": "Assurance scope per BADO/SiSa.",
+            "title": "Assurance Level"
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "FKs to AuditFinding records classified for this regeling.",
+            "title": "Findings"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "externe-accountant": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "concerncontroller": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "interne-audit": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "toezichthouder": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a SiSa-assurance is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    },
+    "objects": {
+      "bado-protocol-hoorn-2026": {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Controleprotocol",
+          "slug": "bado-protocol-hoorn-2026"
+        },
+        "version": "2026.1",
+        "auditYear": 2026,
+        "organisationType": "municipality",
+        "organisationId": "adm-gemeente-hoorn",
+        "adoptionDecision": {
+          "decisionNumber": "2026-123",
+          "date": "2026-02-15",
+          "decisionType": "councilResolution"
+        },
+        "adoptionDate": "2026-02-15",
+        "effectiveFrom": "2026-01-01",
+        "effectiveTo": "2026-12-31",
+        "status": "adopted",
+        "materialityBase": "expenses",
+        "materialityAmount": 1200000.0,
+        "referenceFramework": "BBV 2024 / Wet Fido / SiSa 2026",
+        "currency": "EUR"
+      },
+      "bado-tolerance-hoorn-2026-sociaal-domein": {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ToleranceMatrix",
+          "slug": "bado-tolerance-hoorn-2026-sociaal-domein"
+        },
+        "protocol": "bado-protocol-hoorn-2026",
+        "topic": "Sociaal Domein",
+        "faithfulnessApprovalCeiling": 1,
+        "faithfulnessQualificationCeiling": 3,
+        "lawfulnessApprovalCeiling": 1,
+        "lawfulnessQualificationCeiling": 3,
+        "uncertaintyCeiling": 3,
+        "methodologyNote": "Kernrisicogebied; gemengd-gefinancierde regelingen vereisen extra deelwaarneming."
+      },
+      "bado-tolerance-hoorn-2026-ruimtelijke-ordening": {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ToleranceMatrix",
+          "slug": "bado-tolerance-hoorn-2026-ruimtelijke-ordening"
+        },
+        "protocol": "bado-protocol-hoorn-2026",
+        "topic": "Ruimtelijke Ordening",
+        "faithfulnessApprovalCeiling": 1,
+        "faithfulnessQualificationCeiling": 3,
+        "lawfulnessApprovalCeiling": 1,
+        "lawfulnessQualificationCeiling": 3,
+        "uncertaintyCeiling": 3
+      },
+      "bado-materialiteit-hoorn-2026-overall": {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Materialiteit",
+          "slug": "bado-materialiteit-hoorn-2026-overall"
+        },
+        "protocol": "bado-protocol-hoorn-2026",
+        "scope": "overall",
+        "base": 120000000.0,
+        "percentage": 1,
+        "calculatedAmount": 1200000.0,
+        "rationale": "1% van lasten (€120M) per Notitie Materialiteit en Tolerantie.",
+        "status": "frozen"
+      },
+      "bado-sample-hoorn-2026-sociaal-domein": {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AuditSample",
+          "slug": "bado-sample-hoorn-2026-sociaal-domein"
+        },
+        "protocol": "bado-protocol-hoorn-2026",
+        "population": "facturen > €10k in Sociaal Domein, 2026-01-01..2026-12-31",
+        "selectionMethod": "monetary-unit-sampling",
+        "sampleSize": 150,
+        "reproducibleSeed": "8d2f6a1c-3b4e-4f0a-9c7d-1e2f3a4b5c6d",
+        "extractedAt": "2027-01-12T10:00:00+01:00",
+        "extractedBy": "person-accountant-deloitte"
+      },
+      "bado-finding-hoorn-2026-001": {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AuditFinding",
+          "slug": "bado-finding-hoorn-2026-001"
+        },
+        "sample": "bado-sample-hoorn-2026-sociaal-domein",
+        "transaction": "glpost-hoorn-2026-reintegratie-014",
+        "topic": "Sociaal Domein",
+        "findingType": "lawfulness",
+        "lawfulness": "exception",
+        "faithfulness": "faithful",
+        "severity": "te-corrigeren",
+        "amount": 14000.0,
+        "narrative": "Besteding reintegratiebudget niet vooraf geautoriseerd conform mandaat.",
+        "controllerResponse": "Mandaat achteraf bekrachtigd door college; proces aangescherpt.",
+        "auditorConclusion": "Bekrachtiging aanvaard; onder kwalificatiegrens, te-corrigeren bevinding.",
+        "status": "resolved"
+      },
+      "bado-finding-hoorn-2026-002": {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AuditFinding",
+          "slug": "bado-finding-hoorn-2026-002"
+        },
+        "sample": "bado-sample-hoorn-2026-sociaal-domein",
+        "transaction": "glpost-hoorn-2026-subsidie-221",
+        "topic": "Sociaal Domein",
+        "findingType": "faithfulness",
+        "lawfulness": "compliant",
+        "faithfulness": "misstated",
+        "severity": "acceptabel",
+        "amount": 3000.0,
+        "narrative": "Subsidie onjuist verbijzonderd; onderbouwende stukken later aangeleverd.",
+        "controllerResponse": "Boekstukken alsnog aangeleverd; herrubricering doorgevoerd.",
+        "auditorConclusion": "Hersteld; onder goedkeuringsgrens, acceptabel.",
+        "status": "resolved"
+      },
+      "bado-sisa-hoorn-2026-jbi": {
+        "@self": {
+          "register": "shillinq",
+          "schema": "SiSaAssurance",
+          "slug": "bado-sisa-hoorn-2026-jbi"
+        },
+        "protocol": "bado-protocol-hoorn-2026",
+        "schemeCode": "JBI",
+        "accountableParty": "municipality",
+        "specificBenefit": "Jeugdbescherming Integrale Aanpak",
+        "assuranceLevel": "financial-statement",
+        "findings": [
+          "bado-finding-hoorn-2026-001"
+        ]
+      },
+      "bado-verklaring-hoorn-2026": {
+        "@self": {
+          "register": "shillinq",
+          "schema": "VerklaringDraft",
+          "slug": "bado-verklaring-hoorn-2026"
+        },
+        "protocol": "bado-protocol-hoorn-2026",
+        "proposedOpinion": "goedkeurend",
+        "opinionRationale": "Geen materiele bevindingen of onzekerheden boven de tolerantiegrens; goedkeurend oordeel per BADO art. 5 / NV COS 700.",
+        "opinionOverride": false,
+        "status": "draft"
+      }
+    }
+  }
+}

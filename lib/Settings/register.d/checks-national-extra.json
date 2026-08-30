@@ -1,0 +1,203 @@
+{
+  "x-shillinq-fragment": "checks-national-extra",
+  "components": {
+    "schemas": {
+      "FinancialStatement": {
+        "version": "0.2.0",
+        "properties": {
+          "roundedToEuro": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the financial statements are presented in euro rounded to the euro (IT Codice civile art. 2423).",
+            "title": "Rounded To Euro"
+          },
+          "inventoryMeasurementBasis": {
+            "type": "string",
+            "nullable": true,
+            "description": "Inventory measurement basis; must state the lower of cost and net realisable value (IT art. 2426 n.9 / OIC 13 / ES PGC norma 10ª), e.g. 'lower-of-cost-and-nrv'.",
+            "title": "Inventory Measurement Basis"
+          },
+          "inventoryCostFormula": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "weighted-average",
+              "fifo",
+              "lifo"
+            ],
+            "description": "Cost-flow assumption for fungible inventories (IT art. 2426 n.10 / OIC 13 / ES norma 10ª): weighted-average cost, FIFO or LIFO.",
+            "title": "Inventory Cost Formula"
+          },
+          "inventoryCostFormulaDisclosed": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the difference between the inventory cost formula and current cost at year-end is disclosed in the notes (IT art. 2426 n.10).",
+            "title": "Inventory Cost Formula Disclosed"
+          },
+          "oic34Applied": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether OIC 34 (Ricavi) is applied; required for IT statements whose period begins on or after 2024-01-01 (it-oic34-effective-2024).",
+            "title": "Oic34Applied"
+          },
+          "icac2021RevenueApplied": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the ICAC resolution of 10 Feb 2021 (norma 14ª five-step revenue model) is applied; required for ES statements whose period begins on or after 2021-01-01 (es-pgc-norma14-icac-2021).",
+            "title": "Icac2021Revenue Applied"
+          },
+          "statementModel": {
+            "type": "string",
+            "nullable": true,
+            "description": "The annual-accounts model the statement is drawn up on (e.g. 'full', 'normal', 'abbreviated', 'abreviado', 'pymes', 'micro'); must be consistent with the size class (ES PGC parte 3ª, BE NBB/BNB models).",
+            "title": "Statement Model"
+          },
+          "cashFlowStatementPresent": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether a cash-flow statement is included; required for the normal/full model and omitted on the abbreviated model (ES PGC parte 3ª).",
+            "title": "Cash Flow Statement Present"
+          },
+          "equityChangesStatementPresent": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether a statement of changes in equity is included; required for the normal/full model (ES PGC parte 3ª).",
+            "title": "Equity Changes Statement Present"
+          },
+          "retentionYears": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Declared statutory record-retention period in years; must meet the jurisdiction minimum (IT 10y, ES 6y, BE 7y, PT/FR/DE/LU 10y, NL/AT 7y, NO 5y).",
+            "title": "Retention Years"
+          }
+        }
+      },
+      "EInvoiceMandate": {
+        "version": "0.1.0",
+        "slug": "EInvoiceMandate",
+        "title": "E-Invoicing Mandate Profile",
+        "type": "object",
+        "icon": "FileDocumentOutline",
+        "x-openregister-purpose": "configuration",
+        "description": "Per-administration profile recording compliance with a national structured e-invoicing / e-reporting mandate (Italy SdI, Belgium Peppol, France 2026, Germany 2025, Poland KSeF, Romania e-Factura, Hungary RTIR, Greece myDATA, Lithuania i.SAF, Spain VERI*FACTU / TicketBAI / SII, Portugal e-Fatura). Evaluated jurisdiction-gated by the rule engine.",
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this mandate profile for tenant isolation.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether structured e-invoicing / e-reporting is enabled for this administration.",
+            "example": true,
+            "title": "Enabled"
+          },
+          "structuredFormat": {
+            "type": "string",
+            "description": "The structured invoice format(s) supported (e.g. FatturaPA, Factur-X, XRechnung, Peppol-BIS, FA(2), myDATA).",
+            "example": "Factur-X / FatturaPA / XRechnung",
+            "title": "Structured Format"
+          },
+          "transmissionChannel": {
+            "type": "string",
+            "nullable": true,
+            "description": "The clearing/transmission network(s) used (e.g. SdI, Peppol, KSeF, e-Factura, e-Fatura, AEAT, OnlineSzamla, AADE, VMI, PPF).",
+            "example": "SdI / Peppol / KSeF",
+            "title": "Transmission Channel"
+          },
+          "chainedRecords": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether invoice records are tamper-evident and chained (ES VERI*FACTU / TicketBAI).",
+            "example": true,
+            "title": "Chained Records"
+          },
+          "realTime": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether invoice data is reported in near real time (ES SII, HU RTIR).",
+            "example": true,
+            "title": "Real Time"
+          },
+          "qrCode": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether invoices carry a QR code (PT e-Fatura).",
+            "example": true,
+            "title": "Qr Code"
+          },
+          "atcud": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether invoices carry the ATCUD unique document code (PT e-Fatura).",
+            "example": true,
+            "title": "Atcud"
+          },
+          "liveFrom": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "Date from which the profile is operational; must be on or before the statutory go-live (BE 2026-01-01, FR 2026-09-01, DE 2025-01-01).",
+            "example": "2024-01-01",
+            "title": "Live From"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a E-Invoicing Mandate Profile is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "SaftExportProfile": {
+        "version": "0.1.0",
+        "slug": "SaftExportProfile",
+        "title": "SAF-T Export Profile",
+        "type": "object",
+        "icon": "FileExportOutline",
+        "x-openregister-purpose": "configuration",
+        "description": "Per-administration profile recording the system's ability to produce a national standard audit file (SAF-T / FEC / FAIA / JPK / D406 / i.SAF-T) on demand or periodically (Portugal, Romania D406, Lithuania, Norway, Austria, Luxembourg, France, Poland, Denmark, Bulgaria). Evaluated jurisdiction-gated by the rule engine.",
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this export profile for tenant isolation.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "capable": {
+            "type": "boolean",
+            "description": "Whether the bookkeeping system can produce the standard audit file.",
+            "example": true,
+            "title": "Capable"
+          },
+          "standard": {
+            "type": "string",
+            "description": "The standard audit-file format(s) supported (e.g. SAF-T (OECD), FEC, FAIA, JPK, D406, i.SAF-T, financial, accounting).",
+            "example": "SAF-T (OECD) — PT / RO D406 / FAIA / FEC / JPK",
+            "title": "Standard"
+          },
+          "onDemand": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the file can be produced on demand during a tax audit (AT, FR, DK).",
+            "example": true,
+            "title": "On Demand"
+          },
+          "coveredAreas": {
+            "type": "array",
+            "nullable": true,
+            "description": "Data areas the export covers (RO D406 requires general ledger, AR/AP, fixed assets and inventory).",
+            "items": {
+              "type": "string",
+              "example": "general-ledger"
+            },
+            "title": "Covered Areas"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a SAF-T Export Profile is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

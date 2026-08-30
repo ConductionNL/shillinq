@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-iv3-reporting
 
 **Status:** proposed
@@ -5,12 +9,18 @@
 **Tier:** T3 (operations + NL compliance core)
 **Depends on:** bookkeeping-bbv-compliance (T3), bookkeeping-period-close (T2)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping iv3 reporting in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: IV3 reporting pages not yet implemented
 
 
 ### REQ-IV3-001: The system SHALL produce a quarterly Informatie voor Derden (IV3) export to CBS for municipal administrations
+
+The system SHALL satisfy this requirement: The system SHALL produce a quarterly Informatie voor Derden (IV3) export to CBS for municipal administrations.
 
 For administrations of type `gemeente`, `provincie`, or `waterschap`,
 shillinq MUST produce a quarterly IV3 export to CBS per BBV mandate
@@ -41,6 +51,8 @@ IV3-bestand specificaties (current revision).
 - **THEN** the workflow MUST be skipped for that administration.
 
 ### REQ-IV3-002: The `Iv3Export` schema SHALL declare a fixed minimum field set
+
+The system SHALL satisfy this requirement: The `Iv3Export` schema SHALL declare a fixed minimum field set.
 
 Schema.org annotation: `schema:Dataset` (the `Iv3Export` register models
 the IV3 data bestand submitted to CBS, with `buckets` as the aggregated
@@ -123,6 +135,8 @@ shortfall.
 
 ### REQ-IV3-005: The `Iv3Export` lifecycle SHALL be declarative per ADR-031
 
+The system SHALL satisfy this requirement: The `Iv3Export` lifecycle SHALL be declarative per ADR-031.
+
 | From | To | Trigger | Guard |
 |---|---|---|---|
 | (new) | `generated` | scheduled workflow or operator trigger | period MUST be closed (per T2) |
@@ -182,6 +196,8 @@ state, and lifecycle history. Visibility MUST be predicated on
   attachment.
 
 ### REQ-IV3-008: Validation against the CBS schema SHALL be a declarative precondition, not a runtime PHP call
+
+The system SHALL satisfy this requirement: Validation against the CBS schema SHALL be a declarative precondition, not a runtime PHP call.
 
 The XML validation step (REQ-IV3-005 `generated → validated`
 guard) MUST be declared as a precondition on the lifecycle,

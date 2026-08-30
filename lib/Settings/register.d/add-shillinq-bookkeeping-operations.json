@@ -10,7 +10,12 @@
     "schemas": {
       "Account": {
         "properties": {
-          "isSchatkistAccount": {"type": "boolean", "default": false, "description": "REQ-SBK-002: flags this account as a Treasury (schatkist) account so SchatkistPosition aggregates its postings. Additive extension merged onto the T1 Account schema via ADR-037 deep-merge."}
+          "isTreasuryAccount": {
+            "type": "boolean",
+            "default": false,
+            "description": "REQ-SBK-002: flags this account as a Treasury (schatkist) account so SchatkistPosition aggregates its postings. Additive extension merged onto the T1 Account schema via ADR-037 deep-merge.",
+            "title": "Is Schatkist Account"
+          }
         }
       },
       "VatReturn": {
@@ -21,52 +26,230 @@
         "description": "Periodic VAT return (BTW-aangifte) per administration and period. Tracks the draft → submitted → accepted → corrected lifecycle (REQ-VBTW-005), aggregates GL postings by VAT rate into rubrieken (REQ-VBTW-004), and submits via the digipoort-sbr OpenConnector source (REQ-VBTW-010). ADR-022 audit/approval, ADR-031 declarative lifecycle.",
         "x-schema-org": "schema:GovernmentService",
         "type": "object",
-        "required": ["administrationId", "periodType", "periodYear", "state"],
+        "required": [
+          "administrationId",
+          "periodType",
+          "periodYear",
+          "state"
+        ],
         "properties": {
-          "administrationId": {"type": "string", "description": "FK to the administration owning this return.", "example": "adm-gemeente-1"},
-          "periodType": {"type": "string", "enum": ["month", "quarter", "year"], "description": "Filing cadence per Wet OB 1968.", "example": "quarter"},
-          "periodYear": {"type": "integer", "description": "Calendar year of the period.", "example": 2026},
-          "periodMonth": {"type": "integer", "minimum": 1, "maximum": 12, "nullable": true, "description": "Month 1-12; required when periodType=month (REQ-VBTW-002)."},
-          "periodQuarter": {"type": "integer", "minimum": 1, "maximum": 4, "nullable": true, "description": "Quarter 1-4; required when periodType=quarter (REQ-VBTW-002)."},
-          "state": {"type": "string", "enum": ["draft", "submitted", "accepted", "corrected"], "default": "draft", "description": "Lifecycle state per REQ-VBTW-005."},
-          "amount": {"type": "number", "description": "Total VAT liability (MonetaryAmount). Derived from rubrieken.", "example": 4250.5},
-          "currency": {"type": "string", "default": "EUR", "description": "ISO 4217 currency, default EUR."},
-          "approvalThreshold": {"type": "number", "nullable": true, "description": "Operator-configurable liability above which submission needs approval (REQ-VBTW-006)."},
-          "submittedAt": {"type": "string", "format": "date-time", "nullable": true, "description": "Timestamp of SBR/Digipoort submission."},
-          "acceptedAt": {"type": "string", "format": "date-time", "nullable": true, "description": "Timestamp of Digipoort acknowledgement."},
-          "attachmentUri": {"type": "string", "nullable": true, "description": "docudesk reference to the aangifte PDF."},
-          "notes": {"type": "string", "nullable": true, "description": "Operator free text."}
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration owning this return.",
+            "example": "adm-gemeente-1",
+            "title": "Administration ID"
+          },
+          "periodType": {
+            "type": "string",
+            "enum": [
+              "month",
+              "quarter",
+              "year"
+            ],
+            "description": "Filing cadence per Wet OB 1968.",
+            "example": "quarter",
+            "title": "Period Type"
+          },
+          "periodYear": {
+            "type": "integer",
+            "description": "Calendar year of the period.",
+            "example": 2026,
+            "title": "Period Year"
+          },
+          "periodMonth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12,
+            "nullable": true,
+            "description": "Month 1-12; required when periodType=month (REQ-VBTW-002).",
+            "title": "Period Month"
+          },
+          "periodQuarter": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "nullable": true,
+            "description": "Quarter 1-4; required when periodType=quarter (REQ-VBTW-002).",
+            "title": "Period Quarter"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "submitted",
+              "accepted",
+              "corrected"
+            ],
+            "default": "draft",
+            "description": "Lifecycle state per REQ-VBTW-005.",
+            "title": "State"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Total VAT liability (MonetaryAmount). Derived from rubrieken.",
+            "example": 4250.5,
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217 currency, default EUR.",
+            "title": "Currency"
+          },
+          "approvalThreshold": {
+            "type": "number",
+            "nullable": true,
+            "description": "Operator-configurable liability above which submission needs approval (REQ-VBTW-006).",
+            "title": "Approval Threshold"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp of SBR/Digipoort submission.",
+            "title": "Submitted At"
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp of Digipoort acknowledgement.",
+            "title": "Accepted At"
+          },
+          "attachmentUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "docudesk reference to the aangifte PDF.",
+            "title": "Attachment URI"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator free text.",
+            "title": "Notes"
+          }
         },
         "x-openregister-lifecycle": {
           "field": "state",
           "initialState": "draft",
-          "retention": {"rule": "selectielijst:5.1.2", "period": "P7Y", "description": "BTW records retained 7 years per AWR art. 52 + Selectielijst Gemeenten 2020."},
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "BTW records retained 7 years per AWR art. 52 + Selectielijst Gemeenten 2020."
+          },
           "states": {
-            "draft": {"label": "Concept", "description": "Return is being prepared; rubrieken aggregated from GL."},
-            "submitted": {"label": "Ingediend", "description": "Submitted to the Belastingdienst via Digipoort/SBR. Awaiting acknowledgement."},
-            "accepted": {"label": "Geaccepteerd", "description": "Belastingdienst acknowledged receipt. Terminal unless a suppletie correction is filed."},
-            "corrected": {"label": "Gecorrigeerd", "description": "Superseded by a suppletie-aangifte (VatCorrection)."}
+            "draft": {
+              "label": "Concept",
+              "description": "Return is being prepared; rubrieken aggregated from GL."
+            },
+            "submitted": {
+              "label": "Ingediend",
+              "description": "Submitted to the Belastingdienst via Digipoort/SBR. Awaiting acknowledgement."
+            },
+            "accepted": {
+              "label": "Geaccepteerd",
+              "description": "Belastingdienst acknowledged receipt. Terminal unless a suppletie correction is filed."
+            },
+            "corrected": {
+              "label": "Gecorrigeerd",
+              "description": "Superseded by a suppletie-aangifte (VatCorrection)."
+            }
           },
           "transitions": {
-            "submit": {"from": "draft", "to": "submitted", "label": "Indienen via Digipoort", "description": "Operator submits the return; requires approval above approvalThreshold (REQ-VBTW-006).", "requires": "OCA\\Shillinq\\Guard\\VatSubmissionGuard::requireApproval"},
-            "accept": {"from": "submitted", "to": "accepted", "label": "Acceptatie", "description": "Digipoort acknowledgement received (triggered by OpenConnector digipoort-sbr callback)."},
-            "correctAfter": {"from": "accepted", "to": "corrected", "label": "Suppletie", "description": "Operator files a suppletie-aangifte correcting an accepted return."},
-            "correctEarly": {"from": "draft", "to": "corrected", "label": "Vroege correctie", "description": "Operator corrects the return before submission."}
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Indienen via Digipoort",
+              "description": "Operator submits the return; requires approval above approvalThreshold (REQ-VBTW-006).",
+              "requires": "OCA\\Shillinq\\Guard\\VatSubmissionGuard::requireApproval"
+            },
+            "accept": {
+              "from": "submitted",
+              "to": "accepted",
+              "label": "Acceptatie",
+              "description": "Digipoort acknowledgement received (triggered by OpenConnector digipoort-sbr callback)."
+            },
+            "correctAfter": {
+              "from": "accepted",
+              "to": "corrected",
+              "label": "Suppletie",
+              "description": "Operator files a suppletie-aangifte correcting an accepted return."
+            },
+            "correctEarly": {
+              "from": "draft",
+              "to": "corrected",
+              "label": "Vroege correctie",
+              "description": "Operator corrects the return before submission."
+            }
           }
         },
         "x-openregister-aggregations": {
           "rubrieken": {
             "description": "VAT buckets summed per rate (21%, 9%, 0%, verlegd/reverse-charge) over GL postings in the return period per REQ-VBTW-004 and REQ-VBTW-009.",
             "source": "GLLine",
-            "groupBy": ["vatRate", "reverseCharge"],
-            "filter": {"administrationId": "@self.administrationId", "periodYear": "@self.periodYear"},
-            "sum": ["debit", "credit"]
+            "groupBy": [
+              "vatRate",
+              "reverseCharge"
+            ],
+            "filter": {
+              "periodYear": "@self.periodYear"
+            },
+            "sum": [
+              "debit",
+              "credit"
+            ]
           }
         },
         "x-openregister-notifications": {
-          "onSubmitted": {"trigger": "lifecycle.submit", "description": "Notify the vat-administrator when a return is submitted.", "recipients": {"role": "vat-administrator", "scope": "@self.administrationId"}, "title": "BTW-aangifte ingediend", "message": "BTW-aangifte voor @self.periodYear is ingediend via Digipoort."}
+          "onSubmitted": {
+            "trigger": {
+              "type": "transition",
+              "action": "submit"
+            },
+            "description": "Notify the vat-administrator when a return is submitted.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "vat-administrator"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "BTW-aangifte voor {{periodYear}} is ingediend via Digipoort",
+              "en": "VAT return for {{periodYear}} was submitted through Digipoort"
+            }
+          }
         },
-        "x-openregister-rbac": {"roles": {"vat-administrator": {"permissions": ["create", "read", "update"]}, "bookkeeper": {"permissions": ["read"]}, "auditor": {"permissions": ["read"]}}}
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
       },
       "IcpStatement": {
         "slug": "IcpStatement",
@@ -76,35 +259,149 @@
         "description": "Intra-community supplies declaration (opgaaf intracommunautaire prestaties) per REQ-VBTW-007. Tracks draft → submitted → accepted lifecycle and aggregates ICP transactions for the period.",
         "x-schema-org": "schema:GovernmentService",
         "type": "object",
-        "required": ["administrationId", "periodType", "periodYear", "state"],
+        "required": [
+          "administrationId",
+          "periodType",
+          "periodYear",
+          "state"
+        ],
         "properties": {
-          "administrationId": {"type": "string", "description": "FK to the administration.", "example": "adm-mkb-1"},
-          "periodType": {"type": "string", "enum": ["month", "quarter", "year"], "description": "Filing cadence."},
-          "periodYear": {"type": "integer", "description": "Calendar year.", "example": 2026},
-          "periodMonth": {"type": "integer", "minimum": 1, "maximum": 12, "nullable": true, "description": "Month 1-12 if periodType=month."},
-          "periodQuarter": {"type": "integer", "minimum": 1, "maximum": 4, "nullable": true, "description": "Quarter 1-4 if periodType=quarter."},
-          "state": {"type": "string", "enum": ["draft", "submitted", "accepted"], "default": "draft", "description": "Lifecycle state."},
-          "currency": {"type": "string", "default": "EUR", "description": "ISO 4217, default EUR."},
-          "notes": {"type": "string", "nullable": true, "description": "Operator free text."}
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration.",
+            "example": "adm-mkb-1",
+            "title": "Administration ID"
+          },
+          "periodType": {
+            "type": "string",
+            "enum": [
+              "month",
+              "quarter",
+              "year"
+            ],
+            "description": "Filing cadence.",
+            "title": "Period Type"
+          },
+          "periodYear": {
+            "type": "integer",
+            "description": "Calendar year.",
+            "example": 2026,
+            "title": "Period Year"
+          },
+          "periodMonth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12,
+            "nullable": true,
+            "description": "Month 1-12 if periodType=month.",
+            "title": "Period Month"
+          },
+          "periodQuarter": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "nullable": true,
+            "description": "Quarter 1-4 if periodType=quarter.",
+            "title": "Period Quarter"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "submitted",
+              "accepted"
+            ],
+            "default": "draft",
+            "description": "Lifecycle state.",
+            "title": "State"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217, default EUR.",
+            "title": "Currency"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator free text.",
+            "title": "Notes"
+          }
         },
         "x-openregister-lifecycle": {
           "field": "state",
           "initialState": "draft",
-          "retention": {"rule": "selectielijst:5.1.2", "period": "P7Y", "description": "ICP records retained 7 years per AWR art. 52."},
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "ICP records retained 7 years per AWR art. 52."
+          },
           "states": {
-            "draft": {"label": "Concept", "description": "ICP-opgaaf being prepared."},
-            "submitted": {"label": "Ingediend", "description": "Submitted to the Belastingdienst."},
-            "accepted": {"label": "Geaccepteerd", "description": "Acknowledged by the Belastingdienst."}
+            "draft": {
+              "label": "Concept",
+              "description": "ICP-opgaaf being prepared."
+            },
+            "submitted": {
+              "label": "Ingediend",
+              "description": "Submitted to the Belastingdienst."
+            },
+            "accepted": {
+              "label": "Geaccepteerd",
+              "description": "Acknowledged by the Belastingdienst."
+            }
           },
           "transitions": {
-            "submit": {"from": "draft", "to": "submitted", "label": "Indienen", "description": "Operator submits the ICP-opgaaf."},
-            "accept": {"from": "submitted", "to": "accepted", "label": "Acceptatie", "description": "Acknowledgement received."}
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Indienen",
+              "description": "Operator submits the ICP-opgaaf."
+            },
+            "accept": {
+              "from": "submitted",
+              "to": "accepted",
+              "label": "Acceptatie",
+              "description": "Acknowledgement received."
+            }
           }
         },
         "x-openregister-aggregations": {
-          "icpTransactions": {"description": "Intra-community supply lines aggregated per counterparty VAT number for the period (REQ-VBTW-007).", "source": "GLLine", "groupBy": ["counterpartyVatNumber"], "filter": {"administrationId": "@self.administrationId", "icp": true, "periodYear": "@self.periodYear"}, "sum": ["credit"]}
+          "icpTransactions": {
+            "description": "Intra-community supply lines aggregated per counterparty VAT number for the period (REQ-VBTW-007).",
+            "source": "GLLine",
+            "groupBy": [
+              "counterpartyVatNumber"
+            ],
+            "filter": {
+              "icp": true,
+              "periodYear": "@self.periodYear"
+            },
+            "sum": [
+              "credit"
+            ]
+          }
         },
-        "x-openregister-rbac": {"roles": {"vat-administrator": {"permissions": ["create", "read", "update"]}, "bookkeeper": {"permissions": ["read"]}, "auditor": {"permissions": ["read"]}}}
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
       },
       "VatCorrection": {
         "slug": "VatCorrection",
@@ -114,35 +411,157 @@
         "description": "VAT correction submission (suppletie-aangifte) per REQ-VBTW-008. References the original VatReturn and carries an adjustment amount with a correction reason.",
         "x-schema-org": "schema:GovernmentService",
         "type": "object",
-        "required": ["administrationId", "periodType", "periodYear", "state", "correctionReason"],
+        "required": [
+          "administrationId",
+          "periodType",
+          "periodYear",
+          "state",
+          "correctionReason"
+        ],
         "properties": {
-          "administrationId": {"type": "string", "description": "FK to the administration.", "example": "adm-mkb-1"},
-          "periodType": {"type": "string", "enum": ["month", "quarter", "year"], "description": "Cadence of the corrected period."},
-          "periodYear": {"type": "integer", "description": "Calendar year corrected.", "example": 2026},
-          "periodMonth": {"type": "integer", "minimum": 1, "maximum": 12, "nullable": true, "description": "Month if applicable."},
-          "periodQuarter": {"type": "integer", "minimum": 1, "maximum": 4, "nullable": true, "description": "Quarter if applicable."},
-          "correctionReason": {"type": "string", "enum": ["underreporting", "overreporting", "calculation-error", "late-discovery"], "description": "Reason for the suppletie (REQ-VBTW-008)."},
-          "originalReturnId": {"type": "string", "nullable": true, "description": "FK to the VatReturn being corrected."},
-          "adjustmentAmount": {"type": "number", "description": "Net correction amount (MonetaryAmount; positive = additional liability).", "example": 320.0},
-          "currency": {"type": "string", "default": "EUR", "description": "ISO 4217, default EUR."},
-          "state": {"type": "string", "enum": ["draft", "submitted", "accepted"], "default": "draft", "description": "Lifecycle state."},
-          "notes": {"type": "string", "nullable": true, "description": "Operator free text."}
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration.",
+            "example": "adm-mkb-1",
+            "title": "Administration ID"
+          },
+          "periodType": {
+            "type": "string",
+            "enum": [
+              "month",
+              "quarter",
+              "year"
+            ],
+            "description": "Cadence of the corrected period.",
+            "title": "Period Type"
+          },
+          "periodYear": {
+            "type": "integer",
+            "description": "Calendar year corrected.",
+            "example": 2026,
+            "title": "Period Year"
+          },
+          "periodMonth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12,
+            "nullable": true,
+            "description": "Month if applicable.",
+            "title": "Period Month"
+          },
+          "periodQuarter": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "nullable": true,
+            "description": "Quarter if applicable.",
+            "title": "Period Quarter"
+          },
+          "correctionReason": {
+            "type": "string",
+            "enum": [
+              "underreporting",
+              "overreporting",
+              "calculation-error",
+              "late-discovery"
+            ],
+            "description": "Reason for the suppletie (REQ-VBTW-008).",
+            "title": "Correction Reason"
+          },
+          "originalReturnId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the VatReturn being corrected.",
+            "title": "Original Return ID"
+          },
+          "adjustmentAmount": {
+            "type": "number",
+            "description": "Net correction amount (MonetaryAmount; positive = additional liability).",
+            "example": 320.0,
+            "title": "Adjustment Amount"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217, default EUR.",
+            "title": "Currency"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "submitted",
+              "accepted"
+            ],
+            "default": "draft",
+            "description": "Lifecycle state.",
+            "title": "State"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator free text.",
+            "title": "Notes"
+          }
         },
         "x-openregister-lifecycle": {
           "field": "state",
           "initialState": "draft",
-          "retention": {"rule": "selectielijst:5.1.2", "period": "P7Y", "description": "Suppletie records retained 7 years per AWR art. 52."},
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "Suppletie records retained 7 years per AWR art. 52."
+          },
           "states": {
-            "draft": {"label": "Concept", "description": "Suppletie being prepared."},
-            "submitted": {"label": "Ingediend", "description": "Suppletie submitted to the Belastingdienst."},
-            "accepted": {"label": "Geaccepteerd", "description": "Suppletie acknowledged."}
+            "draft": {
+              "label": "Concept",
+              "description": "Suppletie being prepared."
+            },
+            "submitted": {
+              "label": "Ingediend",
+              "description": "Suppletie submitted to the Belastingdienst."
+            },
+            "accepted": {
+              "label": "Geaccepteerd",
+              "description": "Suppletie acknowledged."
+            }
           },
           "transitions": {
-            "submit": {"from": "draft", "to": "submitted", "label": "Indienen", "description": "Operator submits the suppletie."},
-            "accept": {"from": "submitted", "to": "accepted", "label": "Acceptatie", "description": "Acknowledgement received."}
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Indienen",
+              "description": "Operator submits the suppletie."
+            },
+            "accept": {
+              "from": "submitted",
+              "to": "accepted",
+              "label": "Acceptatie",
+              "description": "Acknowledgement received."
+            }
           }
         },
-        "x-openregister-rbac": {"roles": {"vat-administrator": {"permissions": ["create", "read", "update"]}, "bookkeeper": {"permissions": ["read"]}, "auditor": {"permissions": ["read"]}}}
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
       },
       "VatTariff": {
         "slug": "VatTariff",
@@ -152,18 +571,84 @@
         "description": "VAT rate definition (REQ-VBTW-003). Seeded from btw-tariffs-2026.json with the current statutory rates (21%, 9%, 0%, vrijgesteld, verlegd) and RGS account hints per Wet OB 1968.",
         "x-schema-org": "schema:DefinedTerm",
         "type": "object",
-        "required": ["code", "ratePercentage"],
+        "required": [
+          "code",
+          "ratePercentage"
+        ],
         "properties": {
-          "code": {"type": "string", "description": "Tariff code (e.g. high, low, zero, exempt, reverse-charge).", "example": "high"},
-          "label": {"type": "string", "description": "Human-readable label.", "example": "Hoog tarief"},
-          "ratePercentage": {"type": "number", "description": "Statutory percentage (e.g. 21, 9, 0).", "example": 21},
-          "rgsAccountHint": {"type": "string", "nullable": true, "description": "Suggested RGS account for postings at this rate.", "example": "WBeBoB"},
-          "reverseCharge": {"type": "boolean", "default": false, "description": "True for verleggingsregeling rates (REQ-VBTW-009)."},
-          "effectiveFrom": {"type": "string", "format": "date", "nullable": true, "description": "First date this rate is statutory."},
-          "effectiveTo": {"type": "string", "format": "date", "nullable": true, "description": "Last date this rate is statutory (null = current)."},
-          "legalBasis": {"type": "string", "nullable": true, "description": "Citation, e.g. Wet OB 1968 art. 9."}
+          "code": {
+            "type": "string",
+            "description": "Tariff code (e.g. high, low, zero, exempt, reverse-charge).",
+            "example": "high",
+            "title": "Code"
+          },
+          "label": {
+            "type": "string",
+            "description": "Human-readable label.",
+            "example": "Hoog tarief",
+            "title": "Label"
+          },
+          "ratePercentage": {
+            "type": "number",
+            "description": "Statutory percentage (e.g. 21, 9, 0).",
+            "example": 21,
+            "title": "Rate Percentage"
+          },
+          "rgsAccountHint": {
+            "type": "string",
+            "nullable": true,
+            "description": "Suggested RGS account for postings at this rate.",
+            "example": "WBeBoB",
+            "title": "Rgs Account Hint"
+          },
+          "reverseCharge": {
+            "type": "boolean",
+            "default": false,
+            "description": "True for verleggingsregeling rates (REQ-VBTW-009).",
+            "title": "Reverse Charge"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "First date this rate is statutory.",
+            "title": "Effective From"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Last date this rate is statutory (null = current).",
+            "title": "Effective To"
+          },
+          "legalBasis": {
+            "type": "string",
+            "nullable": true,
+            "description": "Citation, e.g. Wet OB 1968 art. 9.",
+            "title": "Legal Basis"
+          }
         },
-        "x-openregister-rbac": {"roles": {"vat-administrator": {"permissions": ["create", "read", "update"]}, "bookkeeper": {"permissions": ["read"]}, "auditor": {"permissions": ["read"]}}}
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
       },
       "BbvAccountMapping": {
         "slug": "BbvAccountMapping",
@@ -173,23 +658,120 @@
         "description": "Maps an RGS account to a BBV taakveld/programma/paragraaf for municipal administrations (REQ-BBV-002). Operator-overrideable per administration; default seeded from rgs-bbv.json. Carries bcfCompensable + compensablePercentage driving BCF claim aggregation (REQ-BCF-003/005) and iv3Bucket driving IV3 export (REQ-BBV-008).",
         "x-schema-org": "schema:PropertyValue",
         "type": "object",
-        "required": ["administrationId", "accountNumber", "taakveld"],
+        "required": [
+          "administrationId",
+          "accountNumber",
+          "taskField"
+        ],
         "properties": {
-          "administrationId": {"type": "string", "description": "FK to the gemeente/provincie/waterschap administration.", "example": "adm-gemeente-1"},
-          "accountNumber": {"type": "string", "description": "FK to Account.accountNumber (T1).", "example": "4250"},
-          "taakveld": {"type": "string", "description": "BBV taakveld code per bbv-taakvelden-2024.json seed.", "example": "0.1"},
-          "programmaCode": {"type": "string", "nullable": true, "description": "Operator-defined programma code.", "example": "1000"},
-          "paragraafCode": {"type": "string", "nullable": true, "description": "Optional paragraaf code.", "example": "1001"},
-          "bcfCompensable": {"type": "boolean", "default": false, "description": "True if postings on this account are BCF-compensable (REQ-BCF-003)."},
-          "compensablePercentage": {"type": "integer", "minimum": 0, "maximum": 100, "default": 0, "description": "Percentage of VAT recoverable from the Compensatiefonds (REQ-BCF-005)."},
-          "iv3Bucket": {"type": "string", "nullable": true, "description": "CBS IV3-bestand bucket name (REQ-BBV-008).", "example": "2.1"},
-          "autorisatieniveau": {"type": "string", "enum": ["I", "II", "III"], "nullable": true, "description": "BBV authorization level."}
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the gemeente/provincie/waterschap administration.",
+            "example": "adm-gemeente-1",
+            "title": "Administration ID"
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": "FK to Account.accountNumber (T1).",
+            "example": "4250",
+            "title": "Account Number"
+          },
+          "taskField": {
+            "type": "string",
+            "description": "BBV taakveld code per bbv-taakvelden-2024.json seed.",
+            "example": "0.1",
+            "title": "Taakveld"
+          },
+          "programmeCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator-defined programma code.",
+            "example": "1000",
+            "title": "Programma Code"
+          },
+          "paragraphCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional paragraaf code.",
+            "example": "1001",
+            "title": "Paragraaf Code"
+          },
+          "bcfCompensable": {
+            "type": "boolean",
+            "default": false,
+            "description": "True if postings on this account are BCF-compensable (REQ-BCF-003).",
+            "title": "Bcf Compensable"
+          },
+          "compensablePercentage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 0,
+            "description": "Percentage of VAT recoverable from the Compensatiefonds (REQ-BCF-005).",
+            "title": "Compensable Percentage"
+          },
+          "iv3Bucket": {
+            "type": "string",
+            "nullable": true,
+            "description": "CBS IV3-bestand bucket name (REQ-BBV-008).",
+            "example": "2.1",
+            "title": "Iv3Bucket"
+          },
+          "autorisatieniveau": {
+            "type": "string",
+            "enum": [
+              "I",
+              "II",
+              "III"
+            ],
+            "nullable": true,
+            "description": "BBV authorization level.",
+            "title": "Autorisatieniveau"
+          }
         },
-        "x-openregister-constraints": {"unique": [["administrationId", "accountNumber"]]},
+        "x-openregister-constraints": {
+          "unique": [
+            [
+              "administrationId",
+              "accountNumber"
+            ]
+          ]
+        },
         "x-openregister-aggregations": {
-          "byTaakveld": {"description": "GL postings grouped by taakveld for programma roll-up reporting (REQ-BBV-007).", "source": "GLLine", "groupBy": ["taakveld"], "filter": {"administrationId": "@self.administrationId"}, "sum": ["debit", "credit"]}
+          "byTaakveld": {
+            "description": "GL postings grouped by taakveld for programma roll-up reporting (REQ-BBV-007).",
+            "source": "GLLine",
+            "groupBy": [
+              "taskField"
+            ],
+            "filter": {},
+            "sum": [
+              "debit",
+              "credit"
+            ]
+          }
         },
-        "x-openregister-rbac": {"roles": {"bbv-controller": {"permissions": ["create", "read", "update"]}, "bookkeeper": {"permissions": ["read"]}, "auditor": {"permissions": ["read"]}}}
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
       },
       "BbvTaakveld": {
         "slug": "BbvTaakveld",
@@ -199,14 +781,56 @@
         "description": "Canonical BBV taakveld catalogue entry per Besluit BBV bijlage IV (REQ-BBV-004). Seeded from bbv-taakvelden-2024.json.",
         "x-schema-org": "schema:DefinedTerm",
         "type": "object",
-        "required": ["code", "description"],
+        "required": [
+          "code",
+          "description"
+        ],
         "properties": {
-          "code": {"type": "string", "description": "Taakveld code.", "example": "0.1"},
-          "description": {"type": "string", "description": "Taakveld name.", "example": "Bestuur"},
-          "programmaFocus": {"type": "string", "nullable": true, "description": "Hint linking the taakveld to a typical programma."},
-          "bbvVersion": {"type": "string", "nullable": true, "description": "BBV catalogue version this entry belongs to.", "example": "2024"}
+          "code": {
+            "type": "string",
+            "description": "Taakveld code.",
+            "example": "0.1",
+            "title": "Code"
+          },
+          "description": {
+            "type": "string",
+            "description": "Taakveld name.",
+            "example": "Bestuur",
+            "title": "Description"
+          },
+          "programmeFocus": {
+            "type": "string",
+            "nullable": true,
+            "description": "Hint linking the taakveld to a typical programma.",
+            "title": "Programma Focus"
+          },
+          "bbvVersion": {
+            "type": "string",
+            "nullable": true,
+            "description": "BBV catalogue version this entry belongs to.",
+            "example": "2024",
+            "title": "BBV Version"
+          }
         },
-        "x-openregister-rbac": {"roles": {"bbv-controller": {"permissions": ["read"]}, "bookkeeper": {"permissions": ["read"]}, "auditor": {"permissions": ["read"]}}}
+        "x-openregister-rbac": {
+          "roles": {
+            "bbv-controller": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
       },
       "BcfClaim": {
         "slug": "BcfClaim",
@@ -216,45 +840,218 @@
         "description": "BTW-Compensatiefonds claim per quarter for municipalities (REQ-BCF-001). Aggregates compensable VAT across BbvAccountMapping entries (REQ-BCF-004), tracks draft → submitted → accepted → settled lifecycle, and submits via the digikoppeling-bcf OpenConnector source (REQ-BCF-007).",
         "x-schema-org": "schema:GovernmentService",
         "type": "object",
-        "required": ["administrationId", "periodYear", "periodQuarter", "state", "claimNumber"],
+        "required": [
+          "administrationId",
+          "periodYear",
+          "periodQuarter",
+          "state",
+          "claimNumber"
+        ],
         "properties": {
-          "administrationId": {"type": "string", "description": "FK to the gemeente administration.", "example": "adm-gemeente-1"},
-          "periodYear": {"type": "integer", "description": "Claim calendar year.", "example": 2026},
-          "periodQuarter": {"type": "integer", "minimum": 1, "maximum": 4, "description": "Claim quarter."},
-          "claimNumber": {"type": "string", "description": "Unique claim identifier (REQ-BCF-002).", "example": "BCF-2026-Q1-0001"},
-          "state": {"type": "string", "enum": ["draft", "submitted", "accepted", "settled"], "default": "draft", "description": "Lifecycle state (REQ-BCF-006)."},
-          "totalClaimAmount": {"type": "number", "description": "Sum of compensable VAT (derived, REQ-BCF-004).", "example": 18250.0},
-          "currency": {"type": "string", "default": "EUR", "description": "ISO 4217, default EUR."},
-          "approvalThreshold": {"type": "number", "nullable": true, "description": "Operator-configurable amount above which submission needs approval (REQ-BCF-009)."},
-          "claimDate": {"type": "string", "format": "date", "nullable": true, "description": "When the claim was prepared."},
-          "submittedDate": {"type": "string", "format": "date", "nullable": true, "description": "When submitted via DigiKoppeling."},
-          "settlementDate": {"type": "string", "format": "date", "nullable": true, "description": "When funds were received."},
-          "attachmentUri": {"type": "string", "nullable": true, "description": "docudesk reference to the claim PDF."},
-          "notes": {"type": "string", "nullable": true, "description": "Operator free text."}
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the gemeente administration.",
+            "example": "adm-gemeente-1",
+            "title": "Administration ID"
+          },
+          "periodYear": {
+            "type": "integer",
+            "description": "Claim calendar year.",
+            "example": 2026,
+            "title": "Period Year"
+          },
+          "periodQuarter": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "description": "Claim quarter.",
+            "title": "Period Quarter"
+          },
+          "claimNumber": {
+            "type": "string",
+            "description": "Unique claim identifier (REQ-BCF-002).",
+            "example": "BCF-2026-Q1-0001",
+            "title": "Claim Number"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "submitted",
+              "accepted",
+              "settled"
+            ],
+            "default": "draft",
+            "description": "Lifecycle state (REQ-BCF-006).",
+            "title": "State"
+          },
+          "totalClaimAmount": {
+            "type": "number",
+            "description": "Sum of compensable VAT (derived, REQ-BCF-004).",
+            "example": 18250.0,
+            "title": "Total Claim Amount"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217, default EUR.",
+            "title": "Currency"
+          },
+          "approvalThreshold": {
+            "type": "number",
+            "nullable": true,
+            "description": "Operator-configurable amount above which submission needs approval (REQ-BCF-009).",
+            "title": "Approval Threshold"
+          },
+          "claimDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "When the claim was prepared.",
+            "title": "Claim Date"
+          },
+          "submittedDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "When submitted via DigiKoppeling.",
+            "title": "Submitted Date"
+          },
+          "settlementDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "When funds were received.",
+            "title": "Settlement Date"
+          },
+          "attachmentUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "docudesk reference to the claim PDF.",
+            "title": "Attachment URI"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator free text.",
+            "title": "Notes"
+          }
         },
         "x-openregister-lifecycle": {
           "field": "state",
           "initialState": "draft",
-          "retention": {"rule": "selectielijst:5.1.4", "period": "P10Y", "description": "BCF verantwoording records retained 10 years per Archiefwet 1995 + Selectielijst Gemeenten 2020."},
+          "retention": {
+            "rule": "selectielijst:5.1.4",
+            "period": "P10Y",
+            "description": "BCF verantwoording records retained 10 years per Archiefwet 1995 + Selectielijst Gemeenten 2020."
+          },
           "states": {
-            "draft": {"label": "Concept", "description": "Claim being prepared; totalClaimAmount aggregated from compensable accounts."},
-            "submitted": {"label": "Ingediend", "description": "Submitted to the Compensatiefonds via DigiKoppeling."},
-            "accepted": {"label": "Geaccepteerd", "description": "Fonds acknowledged receipt."},
-            "settled": {"label": "Afgewikkeld", "description": "Compensation payment received."}
+            "draft": {
+              "label": "Concept",
+              "description": "Claim being prepared; totalClaimAmount aggregated from compensable accounts."
+            },
+            "submitted": {
+              "label": "Ingediend",
+              "description": "Submitted to the Compensatiefonds via DigiKoppeling."
+            },
+            "accepted": {
+              "label": "Geaccepteerd",
+              "description": "Fonds acknowledged receipt."
+            },
+            "settled": {
+              "label": "Afgewikkeld",
+              "description": "Compensation payment received."
+            }
           },
           "transitions": {
-            "submit": {"from": "draft", "to": "submitted", "label": "Indienen via DigiKoppeling", "description": "Operator submits the claim; requires approval above approvalThreshold (REQ-BCF-009).", "requires": "OCA\\Shillinq\\Guard\\BcfSubmissionGuard::requireApproval"},
-            "accept": {"from": "submitted", "to": "accepted", "label": "Acceptatie", "description": "Fonds acknowledgement received."},
-            "settle": {"from": "accepted", "to": "settled", "label": "Afwikkelen", "description": "Compensation payment received."}
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Indienen via DigiKoppeling",
+              "description": "Operator submits the claim; requires approval above approvalThreshold (REQ-BCF-009).",
+              "requires": "OCA\\Shillinq\\Guard\\BcfSubmissionGuard::requireApproval"
+            },
+            "accept": {
+              "from": "submitted",
+              "to": "accepted",
+              "label": "Acceptatie",
+              "description": "Fonds acknowledgement received."
+            },
+            "settle": {
+              "from": "accepted",
+              "to": "settled",
+              "label": "Afwikkelen",
+              "description": "Compensation payment received."
+            }
           }
         },
         "x-openregister-aggregations": {
-          "compensableVatByAccount": {"description": "Sum of GLLine.amount × BbvAccountMapping.compensablePercentage for compensable accounts in the claim quarter (REQ-BCF-004).", "source": "GLLine", "groupBy": ["accountNumber"], "filter": {"administrationId": "@self.administrationId", "periodYear": "@self.periodYear", "periodQuarter": "@self.periodQuarter", "bcfCompensable": true}, "sum": ["amount"]}
+          "compensableVatByAccount": {
+            "description": "Sum of GLLine.amount × BbvAccountMapping.compensablePercentage for compensable accounts in the claim quarter (REQ-BCF-004).",
+            "source": "GLLine",
+            "groupBy": [
+              "accountNumber"
+            ],
+            "filter": {
+              "periodYear": "@self.periodYear",
+              "periodQuarter": "@self.periodQuarter",
+              "bcfCompensable": true
+            },
+            "sum": [
+              "amount"
+            ]
+          }
         },
         "x-openregister-notifications": {
-          "onSubmitted": {"trigger": "lifecycle.submit", "description": "Notify the bcf-administrator when a claim is submitted.", "recipients": {"role": "bcf-administrator", "scope": "@self.administrationId"}, "title": "BCF-claim ingediend", "message": "BCF-claim @self.claimNumber is ingediend bij het Compensatiefonds."}
+          "onSubmitted": {
+            "trigger": {
+              "type": "transition",
+              "action": "submit"
+            },
+            "description": "Notify the bcf-administrator when a claim is submitted.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "bcf-administrator"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "BCF-claim {{claimNumber}} is ingediend bij het BTW-compensatiefonds",
+              "en": "BCF claim {{claimNumber}} was submitted to the VAT compensation fund"
+            }
+          }
         },
-        "x-openregister-rbac": {"roles": {"bcf-administrator": {"permissions": ["create", "read", "update"]}, "bookkeeper": {"permissions": ["read"]}, "auditor": {"permissions": ["read"]}}}
+        "x-openregister-rbac": {
+          "roles": {
+            "bcf-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
       },
       "ZzpDeduction": {
         "slug": "ZzpDeduction",
@@ -264,25 +1061,111 @@
         "description": "ZZP tax deduction eligibility per freelancer per year (REQ-ZZP-004). Derives ytdQualifyingHours from UrenRegistratie (REQ-ZZP-003) and computes zelfstandigenaftrek + startersaftrek + MKB-winstvrijstelling from the zzp-deduction-amounts seed (REQ-ZZP-006).",
         "x-schema-org": "schema:MonetaryAmount",
         "type": "object",
-        "required": ["personId", "administrationId", "year"],
+        "required": [
+          "personId",
+          "administrationId",
+          "year"
+        ],
         "properties": {
-          "personId": {"type": "string", "description": "FK to the freelancer (Nextcloud user / contact).", "example": "user-priya"},
-          "administrationId": {"type": "string", "description": "FK to the administration.", "example": "adm-zzp-1"},
-          "year": {"type": "integer", "description": "Tax year.", "example": 2026},
-          "ytdQualifyingHours": {"type": "number", "description": "YTD hours excluding excluded categories (derived, REQ-ZZP-003). Do not set directly.", "example": 1200},
-          "qualifies1225": {"type": "boolean", "default": false, "description": "True when ytdQualifyingHours ≥ 1225 (REQ-ZZP-004)."},
-          "qualifiesStarters": {"type": "boolean", "default": false, "description": "True for the first 2 years (800-hour threshold)."},
-          "zelfstandigenaftrek": {"type": "number", "default": 0, "description": "Self-employed deduction (MonetaryAmount, from seed)."},
-          "startersaftrek": {"type": "number", "default": 0, "description": "Starters deduction (MonetaryAmount, if qualifiesStarters)."},
-          "mkbWinstvrijstelling": {"type": "number", "default": 0, "description": "MKB profit exemption (MonetaryAmount, from seed)."},
-          "totalAllowableDeduction": {"type": "number", "description": "Sum of allowable deductions (derived, REQ-ZZP-006).", "example": 6900},
-          "currency": {"type": "string", "default": "EUR", "description": "ISO 4217, default EUR."}
+          "personId": {
+            "type": "string",
+            "description": "FK to the freelancer (Nextcloud user / contact).",
+            "example": "user-priya",
+            "title": "Person ID"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration.",
+            "example": "adm-zzp-1",
+            "title": "Administration ID"
+          },
+          "year": {
+            "type": "integer",
+            "description": "Tax year.",
+            "example": 2026,
+            "title": "Year"
+          },
+          "ytdQualifyingHours": {
+            "type": "number",
+            "description": "YTD hours excluding excluded categories (derived, REQ-ZZP-003). Do not set directly.",
+            "example": 1200,
+            "title": "Ytd Qualifying Hours"
+          },
+          "qualifies1225": {
+            "type": "boolean",
+            "default": false,
+            "description": "True when ytdQualifyingHours ≥ 1225 (REQ-ZZP-004).",
+            "title": "Qualifies1225"
+          },
+          "qualifiesStarters": {
+            "type": "boolean",
+            "default": false,
+            "description": "True for the first 2 years (800-hour threshold).",
+            "title": "Qualifies Starters"
+          },
+          "selfEmployedDeduction": {
+            "type": "number",
+            "default": 0,
+            "description": "Self-employed deduction (MonetaryAmount, from seed).",
+            "title": "Zelfstandigenaftrek"
+          },
+          "starterDeduction": {
+            "type": "number",
+            "default": 0,
+            "description": "Starters deduction (MonetaryAmount, if qualifiesStarters).",
+            "title": "Startersaftrek"
+          },
+          "mkbProfitExemption": {
+            "type": "number",
+            "default": 0,
+            "description": "MKB profit exemption (MonetaryAmount, from seed).",
+            "title": "Mkb Winstvrijstelling"
+          },
+          "totalAllowableDeduction": {
+            "type": "number",
+            "description": "Sum of allowable deductions (derived, REQ-ZZP-006).",
+            "example": 6900,
+            "title": "Total Allowable Deduction"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217, default EUR.",
+            "title": "Currency"
+          }
         },
         "x-openregister-calculations": {
-          "ytdQualifyingHours": {"description": "Sum of UrenRegistratie.hours where category != excluded for the year, per personId (REQ-ZZP-003). ADR-031 exception: if OR cannot span fiscal periods, OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours provides the fallback.", "expr": "sum(UrenRegistratie.hours where category != 'excluded' and personId == @self.personId and year(workDate) == @self.year)", "guard": "OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours"},
-          "totalAllowableDeduction": {"description": "zelfstandigenaftrek + (startersaftrek if qualifiesStarters) + mkbWinstvrijstelling (REQ-ZZP-006).", "expr": "@self.zelfstandigenaftrek + (@self.qualifiesStarters ? @self.startersaftrek : 0) + @self.mkbWinstvrijstelling"}
+          "ytdQualifyingHours": {
+            "description": "Sum of UrenRegistratie.hours where category != excluded for the year, per personId (REQ-ZZP-003). ADR-031 exception: if OR cannot span fiscal periods, OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours provides the fallback.",
+            "expr": "sum(UrenRegistratie.hours where category != 'excluded' and personId == @self.personId and year(workDate) == @self.year)",
+            "guard": "OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours"
+          },
+          "totalAllowableDeduction": {
+            "description": "zelfstandigenaftrek + (startersaftrek if qualifiesStarters) + mkbWinstvrijstelling (REQ-ZZP-006).",
+            "expr": "@self.zelfstandigenaftrek + (@self.qualifiesStarters ? @self.startersaftrek : 0) + @self.mkbWinstvrijstelling"
+          }
         },
-        "x-openregister-rbac": {"roles": {"zzp-administrator": {"permissions": ["create", "read", "update"]}, "bookkeeper": {"permissions": ["read"]}, "auditor": {"permissions": ["read"]}}}
+        "x-openregister-rbac": {
+          "roles": {
+            "zzp-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
       },
       "IbAangifteExport": {
         "slug": "IbAangifteExport",
@@ -292,21 +1175,88 @@
         "description": "Inkomstenbelastingaangifte export for a freelancer (REQ-ZZP-007). Prepares the income/deduction/taxable-income fields for the Dutch income tax return and references a generated PDF via docudesk.",
         "x-schema-org": "schema:GovernmentService",
         "type": "object",
-        "required": ["personId", "year"],
+        "required": [
+          "personId",
+          "year"
+        ],
         "properties": {
-          "personId": {"type": "string", "description": "FK to the freelancer.", "example": "user-priya"},
-          "year": {"type": "integer", "description": "Tax year exported.", "example": 2026},
-          "exportDate": {"type": "string", "format": "date", "nullable": true, "description": "When the export was prepared."},
-          "totalIncome": {"type": "number", "description": "Total income from GL revenue aggregation (MonetaryAmount).", "example": 65000},
-          "allowableDeductions": {"type": "number", "description": "Allowable deductions from ZzpDeduction (MonetaryAmount).", "example": 6900},
-          "taxableIncome": {"type": "number", "description": "totalIncome - allowableDeductions (MonetaryAmount).", "example": 58100},
-          "currency": {"type": "string", "default": "EUR", "description": "ISO 4217, default EUR."},
-          "attachmentUri": {"type": "string", "nullable": true, "description": "docudesk reference to the export PDF."}
+          "personId": {
+            "type": "string",
+            "description": "FK to the freelancer.",
+            "example": "user-priya",
+            "title": "Person ID"
+          },
+          "year": {
+            "type": "integer",
+            "description": "Tax year exported.",
+            "example": 2026,
+            "title": "Year"
+          },
+          "exportDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "When the export was prepared.",
+            "title": "Export Date"
+          },
+          "totalIncome": {
+            "type": "number",
+            "description": "Total income from GL revenue aggregation (MonetaryAmount).",
+            "example": 65000,
+            "title": "Total Income"
+          },
+          "allowableDeductions": {
+            "type": "number",
+            "description": "Allowable deductions from ZzpDeduction (MonetaryAmount).",
+            "example": 6900,
+            "title": "Allowable Deductions"
+          },
+          "taxableIncome": {
+            "type": "number",
+            "description": "totalIncome - allowableDeductions (MonetaryAmount).",
+            "example": 58100,
+            "title": "Taxable Income"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217, default EUR.",
+            "title": "Currency"
+          },
+          "attachmentUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "docudesk reference to the export PDF.",
+            "title": "Attachment URI"
+          }
         },
         "x-openregister-calculations": {
-          "taxableIncome": {"description": "totalIncome minus allowableDeductions (REQ-ZZP-007).", "expr": "@self.totalIncome - @self.allowableDeductions"}
+          "taxableIncome": {
+            "description": "totalIncome minus allowableDeductions (REQ-ZZP-007).",
+            "expr": "@self.totalIncome - @self.allowableDeductions"
+          }
         },
-        "x-openregister-rbac": {"roles": {"zzp-administrator": {"permissions": ["create", "read", "update"]}, "bookkeeper": {"permissions": ["read"]}, "auditor": {"permissions": ["read"]}}}
+        "x-openregister-rbac": {
+          "roles": {
+            "zzp-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
       },
       "SchatkistPosition": {
         "slug": "SchatkistPosition",
@@ -316,84 +1266,155 @@
         "description": "Daily aggregated Treasury banking position per administration (REQ-SBK-003). Not a parallel ledger (REQ-SBK-011): position is aggregated from GL postings on accounts flagged isSchatkistAccount (REQ-SBK-004) and compared against the drempelbedrag (REQ-SBK-008).",
         "x-schema-org": "schema:MonetaryAmount",
         "type": "object",
-        "required": ["administrationId", "businessDate"],
+        "required": [
+          "administrationId",
+          "businessDate"
+        ],
         "properties": {
-          "administrationId": {"type": "string", "description": "FK to the gemeente administration.", "example": "adm-gemeente-1"},
-          "businessDate": {"type": "string", "format": "date", "description": "Business day of the position.", "example": "2026-06-03"},
-          "position": {"type": "number", "description": "Aggregated end-of-day position from flagged accounts (derived, REQ-SBK-004).", "example": 1250000},
-          "currency": {"type": "string", "default": "EUR", "description": "ISO 4217, default EUR."},
-          "drempelbedragApplies": {"type": "boolean", "default": false, "description": "Whether the drempelbedrag applies for this administration (REQ-SBK-006)."},
-          "drempelbedragAmount": {"type": "number", "nullable": true, "description": "Threshold amount from schatkist-thresholds seed (e.g. 0.75% of begroting).", "example": 1500000},
-          "aboveThreshold": {"type": "boolean", "default": false, "description": "True when position > drempelbedragAmount (REQ-SBK-008)."}
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the gemeente administration.",
+            "example": "adm-gemeente-1",
+            "title": "Administration ID"
+          },
+          "businessDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Business day of the position.",
+            "example": "2026-06-03",
+            "title": "Business Date"
+          },
+          "position": {
+            "type": "number",
+            "description": "Aggregated end-of-day position from flagged accounts (derived, REQ-SBK-004).",
+            "example": 1250000,
+            "title": "Position"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217, default EUR.",
+            "title": "Currency"
+          },
+          "thresholdAmountApplies": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether the drempelbedrag applies for this administration (REQ-SBK-006).",
+            "title": "Drempelbedrag Applies"
+          },
+          "thresholdAmountAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Threshold amount from schatkist-thresholds seed (e.g. 0.75% of begroting).",
+            "example": 1500000,
+            "title": "Drempelbedrag Amount"
+          },
+          "aboveThreshold": {
+            "type": "boolean",
+            "default": false,
+            "description": "True when position > drempelbedragAmount (REQ-SBK-008).",
+            "title": "Above Threshold"
+          }
         },
         "x-openregister-aggregations": {
-          "position": {"description": "Sum of GLLine net postings on accounts where isSchatkistAccount=true for the business day (REQ-SBK-004).", "source": "GLLine", "filter": {"administrationId": "@self.administrationId", "isSchatkistAccount": true, "postingDate": "@self.businessDate"}, "sum": ["debit", "credit"]}
-        },
-        "x-openregister-notifications": {
-          "onAboveThreshold": {"trigger": "field.aboveThreshold==true", "description": "Alert the treasury-officer when the daily position exceeds the drempelbedrag (REQ-SBK-008).", "recipients": {"role": "treasury-officer", "scope": "@self.administrationId"}, "title": "Schatkist-drempel overschreden", "message": "De schatkist-positie van @self.position EUR op @self.businessDate overschrijdt het drempelbedrag."}
-        },
-        "x-openregister-widgets": {
-          "schatkistPosition": {"id": "schatkist-position", "title": "Schatkist-positie", "description": "Daily Treasury position vs drempelbedrag for gemeente administrations.", "type": "line-with-threshold", "register": "shillinq", "schema": "SchatkistPosition", "visibility": {"field": "administrationType", "in": ["gemeente"]}}
-        },
-        "x-openregister-rbac": {"roles": {"treasury-officer": {"permissions": ["read"]}, "bookkeeper": {"permissions": ["read"]}, "auditor": {"permissions": ["read"]}}}
-      },
-      "Subsidie": {
-        "slug": "Subsidie",
-        "icon": "HandHeartOutline",
-        "version": "0.1.0",
-        "title": "Subsidie",
-        "description": "Grant (subsidie) record following the ASV-model lifecycle per Awb 4.2 (REQ-SUB-001/003). Tracks aanvraag → verleend → … → teruggevorderd → afbetalingsregeling with approval gates (REQ-SUB-004) and a pending disbursement JournalEntry on uitbetaling (REQ-SUB-005).",
-        "x-schema-org": "schema:GovernmentService",
-        "type": "object",
-        "required": ["administrationId", "subsidieName", "awardAmount", "state", "subsidieNumber"],
-        "properties": {
-          "administrationId": {"type": "string", "description": "FK to the administration.", "example": "adm-gemeente-1"},
-          "subsidieNumber": {"type": "string", "description": "Unique identifier (REQ-SUB-002).", "example": "SUB-2026-0001"},
-          "subsidieName": {"type": "string", "description": "Grant program name.", "example": "Cultuursubsidie 2026"},
-          "granteeOrganization": {"type": "string", "nullable": true, "description": "Recipient organization name (REQ-SUB-002)."},
-          "grantProgram": {"type": "string", "nullable": true, "description": "Awb article reference.", "example": "Awb 4.2"},
-          "purposeDescription": {"type": "string", "nullable": true, "description": "What the grant is for."},
-          "awardAmount": {"type": "number", "description": "Awarded amount (MonetaryAmount).", "example": 25000},
-          "budgetYear": {"type": "integer", "nullable": true, "description": "Fiscal year.", "example": 2026},
-          "currency": {"type": "string", "default": "EUR", "description": "ISO 4217, default EUR."},
-          "approvingAuthority": {"type": "string", "nullable": true, "description": "Issuing municipality/ministry."},
-          "state": {"type": "string", "enum": ["aanvraag", "verleend", "ingetrokken", "gewijzigd", "vastgesteld", "uitbetaald", "teruggevorderd", "afbetalingsregeling"], "default": "aanvraag", "description": "ASV-model lifecycle state (REQ-SUB-003)."},
-          "hasRepaymentPlan": {"type": "boolean", "default": false, "description": "Sub-state indicator: a settlement plan exists (REQ-SUB-009)."},
-          "awardDate": {"type": "string", "format": "date", "nullable": true, "description": "When the grant was awarded."},
-          "disbursementDate": {"type": "string", "format": "date", "nullable": true, "description": "When disbursed."},
-          "settlementDate": {"type": "string", "format": "date", "nullable": true, "description": "When settled/vastgesteld."},
-          "attachmentUri": {"type": "string", "nullable": true, "description": "docudesk reference to the beschikking."},
-          "notes": {"type": "string", "nullable": true, "description": "Operator free text."}
-        },
-        "x-openregister-lifecycle": {
-          "field": "state",
-          "initialState": "aanvraag",
-          "retention": {"rule": "selectielijst:5.1.3", "period": "P10Y", "description": "Subsidie verantwoording records retained 10 years after vaststelling per Archiefwet 1995 + Selectielijst Gemeenten 2020."},
-          "states": {
-            "aanvraag": {"label": "Aanvraag", "description": "Grant application received (Awb 4:2)."},
-            "verleend": {"label": "Verleend", "description": "Grant approved (Awb 4:2)."},
-            "ingetrokken": {"label": "Ingetrokken", "description": "Grant revoked before disbursement."},
-            "gewijzigd": {"label": "Gewijzigd", "description": "Terms changed."},
-            "vastgesteld": {"label": "Vastgesteld", "description": "Award confirmed (Awb 4:2)."},
-            "uitbetaald": {"label": "Uitbetaald", "description": "Disbursement executed; pending JournalEntry created."},
-            "teruggevorderd": {"label": "Teruggevorderd", "description": "Repayment demanded."},
-            "afbetalingsregeling": {"label": "Afbetalingsregeling", "description": "Settlement plan agreed; RepaymentInstallment records track instalments."}
-          },
-          "transitions": {
-            "verlenen": {"from": "aanvraag", "to": "verleend", "label": "Verlenen", "description": "Approve the grant; requires approval (REQ-SUB-004).", "requires": "OCA\\Shillinq\\Guard\\SubsidieApprovalGuard::requireApproval"},
-            "intrekken": {"from": "verleend", "to": "ingetrokken", "label": "Intrekken", "description": "Revoke before disbursement."},
-            "wijzigen": {"from": "verleend", "to": "gewijzigd", "label": "Wijzigen", "description": "Change terms."},
-            "vaststellen": {"from": "gewijzigd", "to": "vastgesteld", "label": "Vaststellen", "description": "Confirm changes."},
-            "vaststellenDirect": {"from": "verleend", "to": "vastgesteld", "label": "Vaststellen", "description": "Confirm the award without changes."},
-            "uitbetalen": {"from": "vastgesteld", "to": "uitbetaald", "label": "Uitbetalen", "description": "Disburse; creates a pending JournalEntry (REQ-SUB-005)."},
-            "terugvorderen": {"from": "uitbetaald", "to": "teruggevorderd", "label": "Terugvorderen", "description": "Demand repayment; requires approval (REQ-SUB-004).", "requires": "OCA\\Shillinq\\Guard\\SubsidieApprovalGuard::requireApproval"},
-            "afbetalingsregeling": {"from": "teruggevorderd", "to": "afbetalingsregeling", "label": "Afbetalingsregeling", "description": "Agree a settlement plan (REQ-SUB-009)."}
+          "position": {
+            "description": "Sum of GLLine net postings on accounts where isSchatkistAccount=true for the business day (REQ-SBK-004).",
+            "filter": {
+              "isTreasuryAccount": true,
+              "postingDate": "@self.businessDate"
+            },
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "debit"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "credit"
+              }
+            ],
+            "from": "GLLine"
           }
         },
         "x-openregister-notifications": {
-          "onVerleend": {"trigger": "lifecycle.verlenen", "description": "Notify the subsidie-coordinator when a grant is awarded.", "recipients": {"role": "subsidie-coordinator", "scope": "@self.administrationId"}, "title": "Subsidie verleend", "message": "Subsidie @self.subsidieNumber is verleend."}
+          "onAboveThreshold": {
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "aboveThreshold",
+                "operator": "equals",
+                "value": true
+              }
+            },
+            "description": "Alert the treasury-officer when the daily position exceeds the drempelbedrag (REQ-SBK-008).",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "treasury-officer"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Schatkist-drempel overschreden: positie {{position}} EUR op {{businessDate}}",
+              "en": "Treasury banking threshold exceeded: position {{position}} EUR on {{businessDate}}"
+            }
+          }
         },
-        "x-openregister-rbac": {"roles": {"subsidie-coordinator": {"permissions": ["create", "read", "update"]}, "bookkeeper": {"permissions": ["read"]}, "auditor": {"permissions": ["read"]}}}
+        "x-openregister-widgets": {
+          "schatkistPosition": {
+            "id": "schatkist-position",
+            "title": "Schatkist-positie",
+            "description": "Daily Treasury position vs drempelbedrag for gemeente administrations.",
+            "type": "chart",
+            "dataSource": {
+              "mode": "statistics",
+              "register": "shillinq",
+              "schema": "SchatkistPosition"
+            },
+            "visibility": {
+              "field": "administrationType",
+              "in": [
+                "municipality"
+              ]
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "treasury-officer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
       },
       "RepaymentInstallment": {
         "slug": "RepaymentInstallment",
@@ -403,17 +1424,86 @@
         "description": "Single instalment of a subsidie settlement plan (afbetalingsregeling) per REQ-SUB-007. Child of Subsidie via subsidieId.",
         "x-schema-org": "schema:PaymentChargeSpecification",
         "type": "object",
-        "required": ["subsidieId", "installmentNumber", "dueDate", "amount"],
+        "required": [
+          "subsidyId",
+          "installmentNumber",
+          "dueDate",
+          "amount"
+        ],
         "properties": {
-          "subsidieId": {"type": "string", "description": "FK to the Subsidie being repaid.", "example": "SUB-2026-0001"},
-          "installmentNumber": {"type": "integer", "minimum": 1, "description": "Sequence number (1, 2, 3, …).", "example": 1},
-          "dueDate": {"type": "string", "format": "date", "description": "Payment due date.", "example": "2026-07-01"},
-          "amount": {"type": "number", "description": "Instalment amount (MonetaryAmount).", "example": 2500},
-          "currency": {"type": "string", "default": "EUR", "description": "ISO 4217, default EUR."},
-          "paidDate": {"type": "string", "format": "date", "nullable": true, "description": "When paid, if settled."},
-          "status": {"type": "string", "enum": ["pending", "due", "overdue", "paid"], "default": "pending", "description": "Instalment status (REQ-SUB-007)."}
+          "subsidyId": {
+            "type": "string",
+            "description": "FK to the Subsidie being repaid.",
+            "example": "SUB-2026-0001",
+            "title": "Subsidie ID"
+          },
+          "installmentNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Sequence number (1, 2, 3, …).",
+            "example": 1,
+            "title": "Installment Number"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Payment due date.",
+            "example": "2026-07-01",
+            "title": "Due Date"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Instalment amount (MonetaryAmount).",
+            "example": 2500,
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217, default EUR.",
+            "title": "Currency"
+          },
+          "paidDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "When paid, if settled.",
+            "title": "Paid Date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "due",
+              "overdue",
+              "paid"
+            ],
+            "default": "pending",
+            "description": "Instalment status (REQ-SUB-007).",
+            "title": "Status"
+          }
         },
-        "x-openregister-rbac": {"roles": {"subsidie-coordinator": {"permissions": ["create", "read", "update"]}, "bookkeeper": {"permissions": ["read"]}, "auditor": {"permissions": ["read"]}}}
+        "x-openregister-rbac": {
+          "roles": {
+            "subsidie-coordinator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
       }
     }
   }

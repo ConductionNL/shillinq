@@ -1,0 +1,148 @@
+{
+	"menu": [
+		{
+			"id": "Inventory",
+			"label": "Inventory",
+			"icon": "Warehouse",
+			"order": 22,
+			"children": [
+				{
+					"id": "StockMovements",
+					"label": "Stock Movements",
+					"icon": "SwapHorizontalBold",
+					"route": "StockMovements",
+					"order": 45
+				},
+				{
+					"id": "StockLedger",
+					"label": "Stock Ledger",
+					"icon": "BookOpenVariantOutline",
+					"route": "StockLedger",
+					"order": 46
+				},
+				{
+					"id": "ReservedStock",
+					"label": "Stock reservations (movements)",
+					"icon": "LockOutline",
+					"route": "StockMovements",
+					"query": { "lifecycleState": "draft" },
+					"order": 47
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "StockMovements",
+			"route": "/inventory/stock-movements",
+			"type": "index",
+			"title": "Stock Movements",
+			"config": {
+				"register": "shillinq",
+				"schema": "StockMove",
+				"columns": [
+					{ "key": "movementNumber", "label": "Movement #", "sortable": true },
+					{ "key": "draftedAt", "label": "Drafted", "sortable": true },
+					{ "key": "postedAt", "label": "Posted", "sortable": true },
+					{ "key": "movementType", "label": "Type", "sortable": true },
+					{ "key": "itemId", "label": "Item", "sortable": true },
+					{ "key": "quantity", "label": "Quantity", "sortable": true },
+					{ "key": "sourceLocationId", "label": "From", "sortable": true },
+					{ "key": "destinationLocationId", "label": "To", "sortable": true },
+					{ "key": "lifecycleState", "label": "Status", "sortable": true },
+					{ "key": "movementReason", "label": "Reason", "sortable": true }
+				],
+				"filters": [
+					{ "key": "movementType", "label": "Type", "type": "enum",
+						"options": ["receipt", "transfer", "issue", "manufacture", "repack"] },
+					{ "key": "lifecycleState", "label": "Status", "type": "enum",
+						"options": ["draft", "posted", "cancelled"] },
+					{ "key": "sourceLocationId", "label": "Source Location", "type": "string" },
+					{ "key": "destinationLocationId", "label": "Destination Location", "type": "string" },
+					{ "key": "draftedAt", "label": "Date Range", "type": "dateRange" }
+				],
+				"defaultSort": "draftedAt",
+				"defaultSortDirection": "desc",
+				"detailRoute": "StockMovementDetail",
+				"description": "A permanent record of every receipt, transfer, issue, manufacture and repack. Once posted, a move cannot be edited: cancelling it adds an opposite move instead, so the original stays visible for audit."
+			}
+		},
+		{
+			"id": "StockMovementDetail",
+			"route": "/inventory/stock-movements/:id",
+			"type": "detail",
+			"title": "Stock Movement",
+			"config": {
+				"register": "shillinq",
+				"schema": "StockMove",
+				"_note": "FINANCIAL/TRANSACTION archetype — a stock move is an immutable double-entry ledger row (receipt/transfer/issue/manufacture/repack) that also materialises a GLTransaction. Native shillinq detail contract: config.aggregations[] surface the quantity-moved and unit-cost (currency) KPIs so an operator reads what shifted and its value first; config.fields[] render the move data (number, type, state, item, source/destination, reason, timestamps, locked flag, GL-transaction and offset-of references); lifecycleActions drive draft→posted→cancelled; the sidebar carries a file-references tab for the reference document and an audit-trail tab for the immutable trail (posted moves are locked; cancellation emits an offsetting row, REQ-SM-003). NO comms — a ledger move is not a conversation.",
+				"aggregations": [
+					{ "id": "quantityMoved", "title": "Quantity moved", "field": "quantity", "metric": "value", "format": "number" },
+					{ "id": "unitCost", "title": "Unit cost", "field": "unitCost", "metric": "value", "format": "currency" }
+				],
+				"fields": [
+					{ "key": "movementNumber", "label": "Movement #", "type": "string" },
+					{ "key": "movementType", "label": "Type", "type": "string" },
+					{ "key": "lifecycleState", "label": "Status", "type": "string" },
+					{ "key": "itemId", "label": "Item", "type": "string" },
+					{ "key": "quantity", "label": "Quantity", "type": "number" },
+					{ "key": "unitCost", "label": "Unit Cost", "type": "money" },
+					{ "key": "sourceLocationId", "label": "Source", "type": "string" },
+					{ "key": "destinationLocationId", "label": "Destination", "type": "string" },
+					{ "key": "movementReason", "label": "Reason", "type": "string" },
+					{ "key": "referenceDocumentUri", "label": "Reference Document", "type": "uri" },
+					{ "key": "notes", "label": "Notes", "type": "string" },
+					{ "key": "draftedAt", "label": "Drafted At", "type": "datetime" },
+					{ "key": "postedAt", "label": "Posted At", "type": "datetime" },
+					{ "key": "cancelledAt", "label": "Cancelled At", "type": "datetime" },
+					{ "key": "locked", "label": "Locked", "type": "boolean" },
+					{ "key": "glTransactionId", "label": "GL Transaction", "type": "string" },
+					{ "key": "offsetOfMoveId", "label": "Offset Of", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "documents", "label": "Reference documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "StockMove", "objectId": ":id" } }
+						] },
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
+				"lifecycleActions": true,
+				"indexRoute": "StockMovements",
+				"description": "Detail view per REQ-SM-008. Posted moves show the materialised GLTransaction link; cancellation creates an offsetting move rather than patching the original (REQ-SM-003)."
+			}
+		},
+		{
+			"id": "StockLedger",
+			"route": "/inventory/stock-ledger",
+			"type": "index",
+			"title": "Stock Ledger",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryStock",
+				"columns": [
+					{ "key": "sku", "label": "Item", "sortable": true },
+					{ "key": "locationId", "label": "Location", "sortable": true },
+					{ "key": "quantity", "label": "On Hand", "sortable": true },
+					{ "key": "reservedQuantity", "label": "Reserved", "sortable": true },
+					{ "key": "available", "label": "Available", "sortable": false,
+						"computed": "quantity - reservedQuantity" },
+					{ "key": "lastMovementDate", "label": "Last Movement", "sortable": true }
+				],
+				"filters": [
+					{ "key": "sku", "label": "Item", "type": "string" },
+					{ "key": "locationId", "label": "Location", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"defaultSort": "lastMovementDate",
+				"defaultSortDirection": "desc",
+				"x-drilldown-deferred": "The per-row drill-down to the stock-ledger trace (REQ-SM-005) is NOT WIRED — tracked in ConductionNL/shillinq#508, which carries the full contract analysis. Its page declaration was withdrawn because the manifest was naming a page whose component exists nowhere (registered in neither src/registry.js nor a customComponents.js, which this app does not have), and the route contract does not match stockLedger#trace either: the route supplied an InventoryStock UUID while the endpoint requires administration_id + location_id + sku. The BACKEND HALF IS COMPLETE and untouched (StockLedgerController + StockLedgerService); only the Vue view was never written. Restoring the `StockLedgerTrace` page entry (and a `rowRoute` here, which is the key CnIndexPage actually reads — `detailRoute` is read by nothing) is part of building the view, so the declaration cannot return before the surface does.",
+				"description": "Open any stock line to see the moves behind its current balance, in date order, with a running total that adds up to the quantity on hand."
+			}
+		}
+	]
+}

@@ -1,0 +1,112 @@
+{
+	"_meta": {
+		"description": "Fixture for the waterschappen-bbv slice-02 aggregation integration test. Mirrors the giant's Phase 1 seed: 5 demo programmes (fiscal year 2026), 2 GL accounts with mappings (GL 4100 Personnel split 50/30/20 across 1.1.1/1.2.1/2.4.1; GL 5000 Operations split 25/75 across 2.3.2/2.4.1), and three GL-transaction snapshots representing rising spend on programme 2.3.2 ('Water Quality Monitoring') to drive the ComplianceStatus transition assertions.",
+		"spec": "openspec/changes/bookkeeping-waterschappen-bbv-variant-02-aggregation-compliance/specs/bookkeeping-waterschappen-bbv-variant/spec.md"
+	},
+	"administration": {
+		"administrationId": "adm-waterschap-1",
+		"fiscalYear": 2026,
+		"fiscalYearStart": "2026-01-01"
+	},
+	"programmes": [
+		{ "programmeCode": "1.1.1", "programmeName": "Core Administration", "fiscalYear": 2026, "status": "active", "administrationId": "adm-waterschap-1" },
+		{ "programmeCode": "1.2.1", "programmeName": "HR & Payroll", "fiscalYear": 2026, "status": "active", "administrationId": "adm-waterschap-1" },
+		{ "programmeCode": "2.3.2", "programmeName": "Water Quality Monitoring", "fiscalYear": 2026, "status": "active", "administrationId": "adm-waterschap-1" },
+		{ "programmeCode": "2.4.1", "programmeName": "Infrastructure Maintenance", "fiscalYear": 2026, "status": "active", "administrationId": "adm-waterschap-1" },
+		{ "programmeCode": "3.1.0", "programmeName": "Strategic Planning", "fiscalYear": 2026, "status": "active", "administrationId": "adm-waterschap-1" }
+	],
+	"mappings": [
+		{
+			"glAccountNumber": "4100",
+			"glAccountBudgetCents": 100000000,
+			"programmeCode": "1.1.1",
+			"allocationPercentage": 50,
+			"fiscalYear": 2026,
+			"effectiveFrom": "2026-01-01",
+			"effectiveTo": null,
+			"administrationId": "adm-waterschap-1"
+		},
+		{
+			"glAccountNumber": "4100",
+			"glAccountBudgetCents": 100000000,
+			"programmeCode": "1.2.1",
+			"allocationPercentage": 30,
+			"fiscalYear": 2026,
+			"effectiveFrom": "2026-01-01",
+			"effectiveTo": null,
+			"administrationId": "adm-waterschap-1"
+		},
+		{
+			"glAccountNumber": "4100",
+			"glAccountBudgetCents": 100000000,
+			"programmeCode": "2.4.1",
+			"allocationPercentage": 20,
+			"fiscalYear": 2026,
+			"effectiveFrom": "2026-01-01",
+			"effectiveTo": null,
+			"administrationId": "adm-waterschap-1"
+		},
+		{
+			"glAccountNumber": "5000",
+			"glAccountBudgetCents": 40000000,
+			"programmeCode": "2.3.2",
+			"allocationPercentage": 25,
+			"fiscalYear": 2026,
+			"effectiveFrom": "2026-01-01",
+			"effectiveTo": null,
+			"administrationId": "adm-waterschap-1"
+		},
+		{
+			"glAccountNumber": "5000",
+			"glAccountBudgetCents": 40000000,
+			"programmeCode": "2.4.1",
+			"allocationPercentage": 75,
+			"fiscalYear": 2026,
+			"effectiveFrom": "2026-01-01",
+			"effectiveTo": null,
+			"administrationId": "adm-waterschap-1"
+		}
+	],
+	"_notes": {
+		"expectedTotalBudgetCents": {
+			"1.1.1": 50000000,
+			"1.2.1": 30000000,
+			"2.3.2": 10000000,
+			"2.4.1": 50000000,
+			"3.1.0": 0
+		},
+		"derivation": "TotalBudget(P) = SUM(GL-budget x allocation%) over mappings. GL 4100 (10 000 000 ct budget) splits 50/30/20 -> 5 000 000 / 3 000 000 / 2 000 000 to 1.1.1/1.2.1/2.4.1. GL 5000 (4 000 000 ct budget) splits 25/75 -> 1 000 000 / 3 000 000 to 2.3.2/2.4.1. Programme 2.4.1 sums contributions from both GL accounts: 2 000 000 + 3 000 000 = 5 000 000. Programme 3.1.0 has no mappings -> 0."
+	},
+	"spendSnapshots": {
+		"onTrack": {
+			"description": "GL 5000 spend totals 26 000 000 cents (EUR 260 000) allocated to programme 2.3.2 (25%) -> 6 500 000 ct = EUR 65 000.00 against EUR 100 000.00 budget = 65% utilization, status on-track. Mirrors the giant's spec example (REQ-BBVW-005).",
+			"transactions": [
+				{ "glAccountNumber": "5000", "amountCents": 26000000, "postingDate": "2026-03-15", "administrationId": "adm-waterschap-1" }
+			],
+			"expectedYtdSpendCents": { "2.3.2": 6500000 },
+			"expectedUtilization": { "2.3.2": 0.65 },
+			"expectedComplianceStatus": { "2.3.2": "on-track" }
+		},
+		"atRisk": {
+			"description": "GL 5000 spend totals 34 000 000 ct -> 8 500 000 ct allocated to 2.3.2 = 85% utilization, status at-risk. Spec example (REQ-BBVW-005).",
+			"transactions": [
+				{ "glAccountNumber": "5000", "amountCents": 26000000, "postingDate": "2026-03-15", "administrationId": "adm-waterschap-1" },
+				{ "glAccountNumber": "5000", "amountCents": 8000000, "postingDate": "2026-04-20", "administrationId": "adm-waterschap-1" }
+			],
+			"expectedYtdSpendCents": { "2.3.2": 8500000 },
+			"expectedUtilization": { "2.3.2": 0.85 },
+			"expectedComplianceStatus": { "2.3.2": "at-risk" }
+		},
+		"nonCompliant": {
+			"description": "GL 5000 spend totals 38 400 000 ct -> 9 600 000 ct allocated to 2.3.2 = 96% utilization, status non-compliant. Spec example (REQ-BBVW-005).",
+			"transactions": [
+				{ "glAccountNumber": "5000", "amountCents": 26000000, "postingDate": "2026-03-15", "administrationId": "adm-waterschap-1" },
+				{ "glAccountNumber": "5000", "amountCents": 8000000, "postingDate": "2026-04-20", "administrationId": "adm-waterschap-1" },
+				{ "glAccountNumber": "5000", "amountCents": 4400000, "postingDate": "2026-05-10", "administrationId": "adm-waterschap-1" }
+			],
+			"expectedYtdSpendCents": { "2.3.2": 9600000 },
+			"expectedUtilization": { "2.3.2": 0.96 },
+			"expectedComplianceStatus": { "2.3.2": "non-compliant" }
+		}
+	}
+}

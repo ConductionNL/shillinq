@@ -1,0 +1,45 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "RJ 270 (2026)",
+    "variant": "smb",
+    "statementType": "cash-flow",
+    "description": "RJ 270 / IFRS-for-SMEs kasstroomoverzicht (indirecte methode) voor Nederlandse MKB-administraties. De operationele kasstroom vertrekt vanuit het bedrijfsresultaat en corrigeert voor niet-kasmutaties en werkkapitaalmutaties. Operatoroverschrijvingen blijven behouden bij her-import (imported leeg = template-herkomst).",
+    "imported": "",
+    "presentationStandard": "RJ270-smb",
+    "method": "indirect"
+  },
+  "statement": {
+    "code": "KS",
+    "label": "Kasstroomoverzicht",
+    "aggregationSource": "TrialBalance",
+    "liquidityAccountRange": ["1000", "1199"],
+    "sections": [
+      { "code": "OPS", "label": "Kasstroom uit operationele activiteiten", "group": "operationeel", "level": 1 },
+      { "code": "OPS-BR", "label": "Bedrijfsresultaat", "group": "operationeel", "level": 2, "computed": "pl:BEDR-RES", "sign": "credit" },
+      { "code": "OPS-AFS", "label": "Afschrijvingen (niet-kaslast)", "group": "operationeel", "level": 2, "accountRange": ["4300", "4399"], "sign": "debit", "adjustment": "add-back" },
+      { "code": "OPS-VRZ", "label": "Mutatie voorzieningen", "group": "operationeel", "level": 2, "accountRange": ["0900", "0999"], "sign": "credit", "adjustment": "working-capital" },
+      { "code": "OPS-VRD", "label": "Mutatie voorraden", "group": "operationeel", "level": 2, "accountRange": ["3000", "3999"], "sign": "debit", "adjustment": "working-capital" },
+      { "code": "OPS-DEB", "label": "Mutatie vorderingen (debiteuren)", "group": "operationeel", "level": 2, "accountRange": ["1300", "1499"], "sign": "debit", "adjustment": "working-capital" },
+      { "code": "OPS-CRD", "label": "Mutatie kortlopende schulden (crediteuren)", "group": "operationeel", "level": 2, "accountRange": ["1600", "1799"], "sign": "credit", "adjustment": "working-capital" },
+      { "code": "OPS-REN", "label": "Betaalde/ontvangen rente", "group": "operationeel", "level": 2, "accountRange": ["8400", "8499"], "sign": "credit" },
+      { "code": "OPS-VPB", "label": "Betaalde vennootschapsbelasting", "group": "operationeel", "level": 2, "accountRange": ["8900", "8999"], "sign": "debit" },
+      { "code": "OPS-TOT", "label": "Netto kasstroom uit operationele activiteiten", "group": "operationeel", "level": 0, "computed": "sum-group:operationeel" },
+      { "code": "INV", "label": "Kasstroom uit investeringsactiviteiten", "group": "investment", "level": 1 },
+      { "code": "INV-MVA", "label": "Investeringen in materiële vaste activa", "group": "investment", "level": 2, "accountRange": ["0200", "0599"], "sign": "debit" },
+      { "code": "INV-DES", "label": "Desinvesteringen vaste activa", "group": "investment", "level": 2, "accountRange": ["0600", "0999"], "sign": "credit" },
+      { "code": "INV-TOT", "label": "Netto kasstroom uit investeringsactiviteiten", "group": "investment", "level": 0, "computed": "sum-group:investering" },
+      { "code": "FIN", "label": "Kasstroom uit financieringsactiviteiten", "group": "financiering", "level": 1 },
+      { "code": "FIN-LLS", "label": "Mutatie langlopende schulden", "group": "financiering", "level": 2, "accountRange": ["0700", "0799"], "sign": "credit" },
+      { "code": "FIN-EV", "label": "Mutatie eigen vermogen (kapitaalstortingen/dividend)", "group": "financiering", "level": 2, "accountRange": ["0500", "0579"], "sign": "credit" },
+      { "code": "FIN-TOT", "label": "Netto kasstroom uit financieringsactiviteiten", "group": "financiering", "level": 0, "computed": "sum-group:financiering" },
+      { "code": "NET-KAS", "label": "Netto kasstroom (mutatie liquide middelen)", "group": "total", "level": 0, "computed": "section:OPS-TOT + section:INV-TOT + section:FIN-TOT" },
+      { "code": "LIQ-BEG", "label": "Liquide middelen begin periode", "group": "total", "level": 1, "computed": "opening:liquidity" },
+      { "code": "LIQ-EIN", "label": "Liquide middelen einde periode", "group": "total", "level": 1, "computed": "closing:liquidity" }
+    ],
+    "invariants": [
+      { "code": "cash-reconciles", "label": "Netto kasstroom sluit aan op liquide middelen", "expression": "section:NET-KAS == section:LIQ-EIN - section:LIQ-BEG", "description": "De berekende netto kasstroom moet gelijk zijn aan de mutatie van de liquide middelen tussen begin en einde van de periode." }
+    ]
+  }
+}

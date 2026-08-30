@@ -1,0 +1,137 @@
+{
+  "x-shillinq-fragment": "abstract-arinvoice-types",
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "abstract-arinvoice-types",
+    "description": "Folds dunning (credit-control) and write-off (oninbaar) sub-concepts directly onto the existing ARInvoice schema. Adds an invoiceType discriminator (standard / credit-note / debit-note) plus a 'dunning' summary group (derived from the latest DunningRun for the invoice) and a 'writeOff' group (the full OninbaarAfschrijving field set). This is NOT an inheritance base — ARInvoice stays a primitive schema; these are additive properties only (version bumped). The migration FoldDunningWriteoffIntoArInvoice backfills writeOff/dunning from existing DunningRun and OninbaarAfschrijving rows. Source rows are NOT deleted."
+  },
+  "components": {
+    "schemas": {
+      "ARInvoice": {
+        "version": "0.12.0",
+        "properties": {
+          "invoiceType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "standard",
+              "credit-note",
+              "debit-note"
+            ],
+            "default": "standard",
+            "description": "Type discriminator on the AR invoice: 'standard' (a normal sales invoice), 'credit-note' (a credit correction — negative document referencing a prior invoice via precedingInvoiceReferences) or 'debit-note' (a debit correction). Folds the former separate credit/debit-note concept directly onto ARInvoice rather than a sub-schema.",
+            "title": "Invoice Type"
+          },
+          "dunning": {
+            "type": "object",
+            "nullable": true,
+            "description": "Credit-control dunning summary for this invoice, derived from the latest DunningRun targeting this factuurId. The per-stage DunningRun records remain the canonical history; this group is a denormalised at-a-glance summary maintained additively.",
+            "properties": {
+              "currentStage": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Stage number (1–5 in the default ladder) of the most recent DunningRun executed for this invoice. Source: DunningRun.stageNr.",
+                "title": "Current Stage"
+              },
+              "nextDunningDate": {
+                "type": "string",
+                "nullable": true,
+                "description": "Planned date the next dunning stage is due to be executed (ISO date). Computed by the credit-control scheduler; not carried on a historical DunningRun.",
+                "title": "Next Dunning Date"
+              },
+              "collectionCostAmount": {
+                "type": "number",
+                "nullable": true,
+                "description": "Incasso (collection) costs accrued as at the latest dunning stage (EUR). Source: DunningRun.incassokostenBedrag.",
+                "title": "Incassokosten Bedrag"
+              },
+              "interestAmount": {
+                "type": "number",
+                "nullable": true,
+                "description": "Wettelijke rente (statutory interest) accrued as at the latest dunning stage (EUR). Source: DunningRun.renteBedrag.",
+                "title": "Rente Bedrag"
+              },
+              "activeLadderId": {
+                "type": "string",
+                "nullable": true,
+                "description": "FK to the DunningLadder currently applied to this invoice (after KlantLadderOverride resolution). Source: DunningRun.ladderId.",
+                "title": "Active Ladder ID"
+              }
+            },
+            "title": "Dunning"
+          },
+          "writeOff": {
+            "type": "object",
+            "nullable": true,
+            "description": "Bad-debt write-off (oninbaar afschrijving) group folded from the OninbaarAfschrijving schema. Present once an invoice has been written off; carries the art. 29 OB declaration, the eligible VAT teruggaaf and the materialised write-off GLTransaction. The OninbaarAfschrijving records are NOT deleted by the fold.",
+            "properties": {
+              "isWrittenOff": {
+                "type": "boolean",
+                "nullable": true,
+                "default": false,
+                "description": "Whether this invoice has been written off as uncollectable (oninbaar). True once a write-off has been recorded.",
+                "title": "Is Written Off"
+              },
+              "writtenOffReason": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "Faillissement",
+                  "Schuldsanering",
+                  "1jaar-onbetaald",
+                  "other"
+                ],
+                "description": "Categorised write-off ground, derived from the OninbaarAfschrijving.art29OBVerklaring declaration: bankruptcy (Faillissement), debt restructuring (Schuldsanering), one year unpaid (1jaar-onbetaald) or other (other).",
+                "title": "Written Off Reason"
+              },
+              "art29OBDeclaration": {
+                "type": "string",
+                "nullable": true,
+                "description": "Verbatim reason / declaration text underpinning the write-off (e.g. 'Faillissement vonnis 2026-04-12', 'Schuldsanering WSNP'). Source: OninbaarAfschrijving.art29OBVerklaring.",
+                "title": "Art29Ob Verklaring"
+              },
+              "principalDepreciated": {
+                "type": "number",
+                "nullable": true,
+                "description": "Principal amount written off, excluding VAT (EUR). Source: OninbaarAfschrijving.hoofdsomAfgeschreven.",
+                "title": "Hoofdsom Afgeschreven"
+              },
+              "vatAmount": {
+                "type": "number",
+                "nullable": true,
+                "description": "VAT amount eligible for teruggaaf per art. 29 OB (EUR). Source: OninbaarAfschrijving.btwBedrag.",
+                "title": "BTW Bedrag"
+              },
+              "evidenceRef": {
+                "type": "string",
+                "nullable": true,
+                "description": "FK URI to the supporting docudesk evidence (faillissementsvonnis, schuldsaneringsverklaring, etc.). Source: OninbaarAfschrijving.evidenceRef.",
+                "title": "Evidence Ref"
+              },
+              "writtenOffGLTransactionId": {
+                "type": "string",
+                "nullable": true,
+                "description": "FK to the materialised GLTransaction recording the write-off booking. Source: OninbaarAfschrijving.boekingId.",
+                "title": "Written Off GL Transaction ID"
+              },
+              "vatRefundPeriod": {
+                "type": "string",
+                "nullable": true,
+                "description": "VAT filing period the art. 29 OB teruggaaf has been queued for (e.g. '2026-Q2'). Source: OninbaarAfschrijving.btwAangiftePeriode.",
+                "title": "BTW Teruggaaf Periode"
+              },
+              "administrationId": {
+                "type": "string",
+                "nullable": true,
+                "description": "FK to the owning Administration carried through from the OninbaarAfschrijving record. Source: OninbaarAfschrijving.administrationId.",
+                "title": "Administration ID"
+              }
+            },
+            "title": "Write Off"
+          }
+        }
+      }
+    }
+  }
+}

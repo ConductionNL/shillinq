@@ -1,0 +1,19 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "RvO Milieulijst 2026 per 1 januari (Aanwijzingsregeling willekeurige afschrijving en investeringsaftrek milieu-investeringen, Wet IB 2001 art. 3.42a)",
+		"version": "2026",
+		"description": "Representative baseline of the RvO Milieulijst 2026 (MIA/Vamil). Non-exhaustive starter set covering common MKB categories; operators extend it from the published RvO list for the full ~250 codes. miaPercentage is one of 27/36/45; vamilToegestaan flags whether willekeurige afschrijving applies. Codes are resolved against the opdrachtverleningDatum year (REQ-INV-002).",
+		"imported": "2026-06-05T00:00:00Z"
+	},
+	"milieulijstCodes": [
+		{"code": "A1100", "yearNumber": 2026, "category": "Grondstoffen en water", "description": "Installatie voor hergebruik van proceswater", "miaPercentage": 27, "vamilPermitted": true, "deelpercentage": 100, "maxAmount": null, "effectiveDate": "2026-01-01"},
+		{"code": "B2200", "yearNumber": 2026, "category": "Voedselvoorziening en landbouwproductie", "description": "Emissiearme stalvloer", "miaPercentage": 36, "vamilPermitted": true, "deelpercentage": 100, "maxAmount": null, "effectiveDate": "2026-01-01"},
+		{"code": "F6100", "yearNumber": 2026, "category": "Mobiliteit", "description": "Volledig elektrische bestelauto", "miaPercentage": 36, "vamilPermitted": true, "deelpercentage": 100, "maxAmount": 7500000, "effectiveDate": "2026-01-01"},
+		{"code": "G3110", "yearNumber": 2026, "category": "Circulaire economie", "description": "Recyclemiddel textiel", "miaPercentage": 45, "vamilPermitted": true, "deelpercentage": 100, "maxAmount": null, "effectiveDate": "2026-01-01"},
+		{"code": "G3200", "yearNumber": 2026, "category": "Circulaire economie", "description": "Installatie voor het recyclen van bouw- en sloopafval", "miaPercentage": 45, "vamilPermitted": true, "deelpercentage": 100, "maxAmount": null, "effectiveDate": "2026-01-01"},
+		{"code": "L4220", "yearNumber": 2026, "category": "Duurzame energie", "description": "Zonnepaneel-installatie met circulaire montage", "miaPercentage": 36, "vamilPermitted": true, "deelpercentage": 100, "maxAmount": null, "effectiveDate": "2026-01-01"},
+		{"code": "M5100", "yearNumber": 2026, "category": "Klimaat en lucht", "description": "Warmtepomp op natuurlijk koudemiddel", "miaPercentage": 27, "vamilPermitted": false, "deelpercentage": 100, "maxAmount": null, "effectiveDate": "2026-01-01"}
+	]
+}

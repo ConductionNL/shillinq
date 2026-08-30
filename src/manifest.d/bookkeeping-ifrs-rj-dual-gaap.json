@@ -9,7 +9,7 @@
 				{
 					"id": "AccountingFrameworks",
 					"label": "Framework Configuration",
-					"icon": "Earth",
+					"icon": "CogOutline",
 					"route": "AccountingFrameworks",
 					"order": 10
 				},
@@ -37,7 +37,7 @@
 				{
 					"id": "FrameworkElections",
 					"label": "Framework Election",
-					"icon": "GavelOutline",
+					"icon": "Gavel",
 					"route": "FrameworkElections",
 					"order": 50
 				}
@@ -72,6 +72,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "AccountingFramework",
+				"_note": "CONFIG archetype — an accounting framework (IFRS / RJ / a regulator variant) is reference configuration that every dual-GAAP mapping and election points at. Native shillinq detail contract: config.fields[] render the definition (identifier, version, effective date, regulator, base currency); the sidebar carries an audit-trail tab so an accountant can see who changed a framework version. NO comms/files/aggregation — a framework definition carries no documents or financial totals.",
 				"fields": [
 					{"key": "identifier", "label": "Framework", "type": "string"},
 					{"key": "version", "label": "Version", "type": "string"},
@@ -79,6 +80,14 @@
 					{"key": "regulator", "label": "Regulator", "type": "string"},
 					{"key": "baseCurrencyDefault", "label": "Base currency", "type": "string"}
 				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
 				"indexRoute": "AccountingFrameworks"
 			}
 		},
@@ -109,6 +118,10 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "ChartOfAccountsMapping",
+				"_note": "MAPPING archetype — a COA mapping translates an RJ source account to one or more IFRS target accounts under an allocation rule. Native shillinq detail contract: config.aggregations[] surface the coverage-% KPI so an accountant sees at a glance whether the mapping is complete; config.fields[] render the mapping definition (cardinality, allocation rule/detail, exception justification, approver, validity window); the sidebar carries an audit-trail tab. NO comms/files — it is a translation rule, not a document.",
+				"aggregations": [
+					{"id": "coveragePercent", "title": "Coverage", "field": "coveragePercent", "metric": "value", "format": "percentage"}
+				],
 				"fields": [
 					{"key": "sourceAccount", "label": "Source account (RJ)", "type": "string"},
 					{"key": "mappingType", "label": "Cardinality", "type": "string"},
@@ -120,6 +133,14 @@
 					{"key": "effectiveFrom", "label": "Effective from", "type": "string"},
 					{"key": "effectiveTo", "label": "Effective to", "type": "string"}
 				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
 				"indexRoute": "ChartOfAccountsMappings"
 			}
 		},
@@ -150,6 +171,12 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "ReconciliationBridge",
+				"_note": "REPORT/RECONCILIATION archetype — a bridge reconciles one metric from RJ opening to IFRS closing through temporary and permanent differences. Native shillinq detail contract: config.aggregations[] surface three currency KPIs (opening RJ, closing IFRS, temporary differences) so an auditor reads the reconciliation deltas first; config.fields[] render the full bridge (frameworks, metric, permanent differences, approver, sign-off); the sidebar carries a file-references tab for signed workpapers and an audit-trail tab for the immutable sign-off history. NO comms.",
+				"aggregations": [
+					{"id": "openingBalanceRj", "title": "Opening RJ", "field": "openingBalanceRj", "metric": "value", "format": "currency"},
+					{"id": "closingBalanceIfrs", "title": "Closing IFRS", "field": "closingBalanceIfrs", "metric": "value", "format": "currency"},
+					{"id": "totalTemporaryDifferences", "title": "Temporary differences", "field": "totalTemporaryDifferences", "metric": "value", "format": "currency"}
+				],
 				"fields": [
 					{"key": "period", "label": "Period", "type": "string"},
 					{"key": "fromFramework", "label": "From framework", "type": "string"},
@@ -162,6 +189,17 @@
 					{"key": "approver", "label": "Approver", "type": "string"},
 					{"key": "signoffDate", "label": "Sign-off date", "type": "string"}
 				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Workpapers", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "ReconciliationBridge", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
 				"indexRoute": "ReconciliationBridges"
 			}
 		},
@@ -192,6 +230,11 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "DualTransaction",
+				"_note": "TRANSACTION archetype — a dual-ledger transaction records how one base entry diverges between RJ and IFRS books (divergence amount + deferred-tax effect). Native shillinq detail contract: config.aggregations[] surface the divergence and deferred-tax currency KPIs so the size of the book difference reads first; config.fields[] render the divergence data (base transaction, reason code, classification, override, state, and the parallel rjJournalEntries / ifrsJournalEntries arrays); the sidebar carries an audit-trail tab for the immutable override/classification history. NO comms/files — a ledger entry is not a conversation.",
+				"aggregations": [
+					{"id": "divergenceAmount", "title": "Divergence", "field": "divergenceAmount", "metric": "value", "format": "currency"},
+					{"id": "deferredTaxEffect", "title": "Deferred-tax effect", "field": "deferredTaxEffect", "metric": "value", "format": "currency"}
+				],
 				"fields": [
 					{"key": "baseTransactionId", "label": "Base transaction", "type": "string"},
 					{"key": "divergenceReasonCode", "label": "Reason code", "type": "string"},
@@ -202,6 +245,14 @@
 					{"key": "overrideReason", "label": "Override reason", "type": "string"},
 					{"key": "state", "label": "State", "type": "string"}
 				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
 				"indexRoute": "DualTransactions"
 			}
 		},
@@ -232,19 +283,31 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "FrameworkElection",
+				"_note": "CONFIG/ELECTION archetype — a legal entity's choice of reporting framework, gated by RJ size criteria (balanstotaal, netto-omzet, gemiddeld werknemers) and formalised by an AVA-besluit. Native shillinq detail contract: config.fields[] render the election (entity, framework, RJ variant, comply-or-explain, the three size thresholds, breach years, effective window, state); the sidebar carries a file-references tab for the AVA-besluit and size-test evidence and an audit-trail tab for the immutable election history. NO comms; no money KPI aggregation (the size thresholds are eligibility criteria, not totals to headline).",
 				"fields": [
 					{"key": "legalEntityId", "label": "Legal entity", "type": "string"},
 					{"key": "primaryFramework", "label": "Primary framework", "type": "string"},
 					{"key": "rjVariant", "label": "RJ variant", "type": "string"},
 					{"key": "complyOrExplainMotivation", "label": "Comply-or-explain", "type": "string"},
-					{"key": "sizeCriteriaBalanstotaal", "label": "Balanstotaal", "type": "number"},
-					{"key": "sizeCriteriaNettoOmzet", "label": "Netto-omzet", "type": "number"},
-					{"key": "sizeCriteriaGemiddeldWerknemers", "label": "Gem. werknemers", "type": "number"},
+					{"key": "sizeCriteriaBalanceSheetTotal", "label": "Balanstotaal", "type": "number"},
+					{"key": "sizeCriteriaNetRevenue", "label": "Netto-omzet", "type": "number"},
+					{"key": "sizeCriteriaAverageEmployees", "label": "Gem. werknemers", "type": "number"},
 					{"key": "sizeCriteriaBreachYears", "label": "Breach years", "type": "number"},
-					{"key": "avaBesluitReference", "label": "AVA-besluit", "type": "string"},
+					{"key": "avaDecisionReference", "label": "AVA-besluit", "type": "string"},
 					{"key": "effectiveFrom", "label": "Effective from", "type": "string"},
 					{"key": "state", "label": "State", "type": "string"}
 				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "AVA-besluit & evidence", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "FrameworkElection", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
 				"indexRoute": "FrameworkElections"
 			}
 		}

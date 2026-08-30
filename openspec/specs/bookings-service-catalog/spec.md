@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookings-service-catalog
 
 **Status:** proposed
@@ -5,7 +9,11 @@
 **Tier:** T1 (foundational data model)
 **Depends on:** none
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookings service catalog in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/schema: service catalogue register — not browser-testable
 
@@ -37,6 +45,8 @@ calendar, and resource-allocation specs across the Nextcloud app ecosystem.
   the canonical `Service` register.
 
 ### REQ-SC-002: The `Service` schema SHALL declare a fixed minimum field set
+
+The system SHALL satisfy this requirement: The `Service` schema SHALL declare a fixed minimum field set.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
@@ -165,6 +175,8 @@ Transitions:
 
 ### REQ-SC-006: Categorization SHALL be flat in T1; nesting deferred to T2+
 
+The system SHALL satisfy this requirement: Categorization SHALL be flat in T1; nesting deferred to T2+.
+
 Services are grouped via a flat `serviceCategory` field (string). No hierarchical
 category register exists in T1. Nested/hierarchical category management deferred to T2+.
 
@@ -204,6 +216,8 @@ and validate `resourceTypeRef` according to their own requirements.
 - **THEN** the dependent spec MUST handle null gracefully; no resource matching required.
 
 ### REQ-SC-008: Service code SHALL be unique per administration and stable across time
+
+The system SHALL satisfy this requirement: Service code SHALL be unique per administration and stable across time.
 
 The `code` field uniquely identifies a service within an administration. Once assigned,
 it MUST NOT change, as dependent specs may reference it for mapping, reporting, or

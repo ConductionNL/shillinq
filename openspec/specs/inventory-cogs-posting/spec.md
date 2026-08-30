@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: inventory-cogs-posting
 
 **Status:** proposed
@@ -10,7 +14,11 @@ REQ-GL-003 `subLedgerType`),
 `inventory-valuation-fifo-avg` (provides `InventoryValuation.unitCost`
 for the posting amount)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory cogs posting in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: COGS posting configuration page not yet implemented
 
@@ -64,6 +72,8 @@ Schema.org annotation: `schema:Thing`.
   read from `InventoryGLConfig`.
 
 ### REQ-CG-002: The system SHALL auto-post a COGS + Inventory Asset GLTransaction on every sale/dispatch event
+
+The system SHALL satisfy this requirement: The system SHALL auto-post a COGS + Inventory Asset GLTransaction on every sale/dispatch event.
 
 When an `InventoryValuation` record's quantity is decreased by a
 sale or dispatch event, the lifecycle MUST fire a GL posting action
@@ -120,6 +130,8 @@ no partial GL entry is created.
 
 ### REQ-CG-003: The system SHALL auto-post an Inventory Asset + GR/IR GLTransaction on every goods receipt event
 
+The system SHALL satisfy this requirement: The system SHALL auto-post an Inventory Asset + GR/IR GLTransaction on every goods receipt event.
+
 When an `InventoryValuation` record's quantity is increased by a
 goods receipt event (linked to a `GoodsReceipt` confirmation), the
 lifecycle MUST fire a GL posting action that materialises exactly
@@ -167,6 +179,8 @@ The same skip conditions as REQ-CG-002 apply (absent config, absent
   balance MUST net to zero for this line.
 
 ### REQ-CG-004: The system SHALL auto-post an Inventory Adjustment + Inventory Asset GLTransaction on every count-variance event
+
+The system SHALL satisfy this requirement: The system SHALL auto-post an Inventory Adjustment + Inventory Asset GLTransaction on every count-variance event.
 
 When an inventory count correction produces a non-zero variance
 (`actual_quantity − book_quantity ≠ 0`), the lifecycle MUST fire a
@@ -235,6 +249,8 @@ The same skip conditions as REQ-CG-002 apply.
   the count event with `variance: 0` but no GL reference.
 
 ### REQ-CG-005: Every inventory GL posting SHALL materialise a balanced GLTransaction per the T1 REQ-JE-007 pattern
+
+The system SHALL satisfy this requirement: Every inventory GL posting SHALL materialise a balanced GLTransaction per the T1 REQ-JE-007 pattern.
 
 All `GLTransaction` records created by REQ-CG-002, REQ-CG-003, and
 REQ-CG-004 MUST conform to the T1 general-ledger constraints:

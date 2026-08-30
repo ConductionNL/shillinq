@@ -1,0 +1,644 @@
+{
+  "x-shillinq-fragment": "checks-aml-banking",
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "checks-aml-banking",
+    "description": "AML / cash-handling / bank-integrity rule-engine overlay. Adds the structured fields the AmlBankingChecks provider reads onto the existing GLTransaction (period state / electronic-payment support) and Account (trust/escrow segregation) schemas, and declares the new object types the bookkeeping core does not already model — CashTransaction, AmlReport, SanctionsScreening, CddRecord, FundsTransfer, TrustLedger and CashCount — so the cash-payment-limit, CTR/SAR/Form 8300, sanctions-screening, travel-rule, retention, cash-administration and trust-segregation rules in lib/Standards/rules/banking-aml.json become machine-checkable."
+  },
+  "components": {
+    "schemas": {
+      "GLTransaction": {
+        "version": "0.4.0",
+        "properties": {
+          "periodState": {
+            "type": "string",
+            "enum": [
+              "open",
+              "soft-closed",
+              "closed"
+            ],
+            "nullable": true,
+            "description": "State of the accounting period this entry is posted to. A posted/reversed entry must not target a 'closed' period unless a controlled reopening is recorded (ledger-no-post-to-closed-period).",
+            "title": "Period State"
+          },
+          "reopened": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when a controlled, logged reopening of an otherwise closed period authorised posting this correction (ledger-no-post-to-closed-period).",
+            "title": "Reopened"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "nullable": true,
+            "description": "Settlement method of the posting (e.g. cash, ideal, sepa, card, wire). Electronic payment methods require a supporting bank/payment-service record (ledger-electronic-payment-records).",
+            "title": "Payment Method"
+          },
+          "paymentReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "Bank / payment-service reference supporting an electronic payment posting (ledger-electronic-payment-records).",
+            "title": "Payment Reference"
+          },
+          "counterparty": {
+            "type": "string",
+            "nullable": true,
+            "description": "The counterparty of an electronic payment posting (ledger-electronic-payment-records).",
+            "title": "Counterparty"
+          },
+          "valueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Value date of an electronic payment posting per the bank/payment-service record (ledger-electronic-payment-records).",
+            "title": "Value Date"
+          }
+        }
+      },
+      "Account": {
+        "version": "0.3.0",
+        "properties": {
+          "accountType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Classification of the account (e.g. bank, cash, trust, escrow, iolta, derdengelden). A trust/escrow account is subject to the segregation rules.",
+            "title": "Account Type"
+          },
+          "isTrustAccount": {
+            "type": "boolean",
+            "default": false,
+            "description": "True when this Account holds third-party client monies (derdengelden / trust / IOLTA / escrow). Such an account must be segregated and never commingled (nl-derdengelden-segregation, us-iolta-escrow-segregation).",
+            "title": "Is Trust Account"
+          },
+          "segregated": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when a trust/escrow account is held as a separate account, distinct from the firm's own funds (nl-derdengelden-segregation, us-iolta-escrow-segregation).",
+            "title": "Segregated"
+          },
+          "commingled": {
+            "type": "boolean",
+            "default": false,
+            "description": "True when client monies are commingled with the firm's own funds — a violation for a trust/escrow account (nl-derdengelden-segregation, us-iolta-escrow-segregation).",
+            "title": "Commingled"
+          }
+        }
+      },
+      "CashTransaction": {
+        "version": "0.1.0",
+        "slug": "CashTransaction",
+        "title": "Cash Transaction (AML)",
+        "type": "object",
+        "description": "A cash payment received or made, modelled so the cash-payment-limit, customer-due-diligence-threshold and US Form 8300 cash-reporting rules can be machine-checked against its amount, parties and payment method.",
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The administration / legal entity the cash transaction belongs to.",
+            "title": "Administration ID"
+          },
+          "transactionDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the cash payment was received or made.",
+            "title": "Transaction Date"
+          },
+          "amount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Cash amount of the single transaction.",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 4217 currency code of the amount.",
+            "title": "Currency"
+          },
+          "counterpartyType": {
+            "type": "string",
+            "enum": [
+              "business",
+              "consumer",
+              "private",
+              "natural-person",
+              "government"
+            ],
+            "nullable": true,
+            "description": "Nature of the counterparty.",
+            "title": "Counterparty Type"
+          },
+          "partyCapacity": {
+            "type": "string",
+            "enum": [
+              "professional",
+              "private"
+            ],
+            "nullable": true,
+            "description": "Whether at least one party acts in a professional capacity (the cash-limit applies) or both act privately (EU exemption).",
+            "title": "Party Capacity"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment method; 'cash' for the cash-limit rules.",
+            "title": "Payment Method"
+          },
+          "appliedCashLimit": {
+            "type": "number",
+            "nullable": true,
+            "description": "The effective national/EU cash-payment ceiling applied to this transaction (must be no looser than the EUR 10 000 EU ceiling).",
+            "title": "Applied Cash Limit"
+          },
+          "cddPerformed": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when customer due diligence was performed (required at or above the applicable CDD threshold).",
+            "title": "Cdd Performed"
+          },
+          "goodsCategory": {
+            "type": "string",
+            "nullable": true,
+            "description": "Category of goods/services; 'precious-metals' triggers the lower DE EUR 2 000 CDD threshold.",
+            "title": "Goods Category"
+          },
+          "linkedTransactionsTotal": {
+            "type": "number",
+            "nullable": true,
+            "description": "Combined amount of linked operations, used to test the limit/threshold against the transaction as a whole.",
+            "title": "Linked Transactions Total"
+          },
+          "aggregate12mTotal": {
+            "type": "number",
+            "nullable": true,
+            "description": "Aggregate of related cash payments from the same payer within a 12-month period (US Form 8300 related-transactions).",
+            "title": "Aggregate12M Total"
+          },
+          "form8300Required": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when a Form 8300 was filed for this (or the related-transaction aggregate) cash receipt over USD 10 000.",
+            "title": "Form8300Required"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Cash Transaction (AML) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "AmlReport": {
+        "version": "0.1.0",
+        "slug": "AmlReport",
+        "title": "AML Report (CTR / SAR / 8300 / CMIR / FBAR / unusual)",
+        "type": "object",
+        "description": "A currency- / suspicious- / large-cash-transaction report, modelled so its threshold, filing-window, same-day-aggregation, payer-statement and retention obligations can be machine-checked.",
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The administration / legal entity the report belongs to.",
+            "title": "Administration ID"
+          },
+          "reportType": {
+            "type": "string",
+            "enum": [
+              "CTR",
+              "SAR",
+              "8300",
+              "CMIR",
+              "FBAR",
+              "unusual"
+            ],
+            "nullable": true,
+            "description": "The report type.",
+            "title": "Report Type"
+          },
+          "amount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Reported transaction / account amount.",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 4217 currency code.",
+            "title": "Currency"
+          },
+          "thresholdAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "The reporting threshold that applies to this report type.",
+            "title": "Threshold Amount"
+          },
+          "transactionDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date of the reportable transaction (CTR / 8300 filing-window and payer-statement reference).",
+            "title": "Transaction Date"
+          },
+          "detectionDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date of initial detection of the facts (SAR filing-window reference).",
+            "title": "Detection Date"
+          },
+          "filedDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the report was filed.",
+            "title": "Filed Date"
+          },
+          "eFiled": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the report was filed electronically (CTR BSA E-Filing).",
+            "title": "E Filed"
+          },
+          "sameDayAggregate": {
+            "type": "number",
+            "nullable": true,
+            "description": "Same-business-day aggregate of currency transactions by/for one person (CTR aggregation).",
+            "title": "Same Day Aggregate"
+          },
+          "payerStatementDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the written payer statement was furnished (Form 8300; must be by 31 January of the year after the transaction).",
+            "title": "Payer Statement Date"
+          },
+          "retentionUntil": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date until which the report and its supporting data are retained (at least five years after filedDate; NL Wwft report-retention).",
+            "title": "Retention Until"
+          },
+          "period": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reporting period the report covers.",
+            "title": "Period"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a AML Report (CTR / SAR / 8300 / CMIR / FBAR / unusual) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "SanctionsScreening": {
+        "version": "0.1.0",
+        "slug": "SanctionsScreening",
+        "title": "Sanctions Screening (OFAC / EU / national)",
+        "type": "object",
+        "description": "A sanctions-list screening of a customer/UBO or transaction, modelled so the screening-before-transaction, OFAC SDN-list and match-reporting obligations can be machine-checked.",
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The administration / legal entity the screening belongs to.",
+            "title": "Administration ID"
+          },
+          "subjectType": {
+            "type": "string",
+            "enum": [
+              "customer",
+              "ubo",
+              "counterparty",
+              "transaction"
+            ],
+            "nullable": true,
+            "description": "What was screened.",
+            "title": "Subject Type"
+          },
+          "subjectName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the screened subject.",
+            "title": "Subject Name"
+          },
+          "screenedDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the screening was performed (must be on or before the transaction date).",
+            "title": "Screened Date"
+          },
+          "transactionDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date of the transaction/relationship the screening guards.",
+            "title": "Transaction Date"
+          },
+          "listName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Primary sanctions list screened against (e.g. OFAC-SDN, EU-CFSP, NL-Sanctiewet).",
+            "title": "List Name"
+          },
+          "listsScreened": {
+            "type": "array",
+            "nullable": true,
+            "description": "All sanctions lists screened against (must include OFAC SDN for the US rule).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Lists Screened"
+          },
+          "matched": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the subject matched a sanctioned party.",
+            "title": "Matched"
+          },
+          "reportedDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date a match was reported to the supervisor/OFAC (required when matched).",
+            "title": "Reported Date"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Sanctions Screening (OFAC / EU / national) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "CddRecord": {
+        "version": "0.1.0",
+        "slug": "CddRecord",
+        "title": "Customer Due Diligence Record",
+        "type": "object",
+        "description": "A customer-due-diligence record, modelled so the occasional-transaction CDD threshold, the UBO 25% ownership test and the five-year retention obligation can be machine-checked.",
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The administration / legal entity the record belongs to.",
+            "title": "Administration ID"
+          },
+          "customerId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The customer the CDD record concerns.",
+            "title": "Customer ID"
+          },
+          "cddType": {
+            "type": "string",
+            "enum": [
+              "occasional",
+              "business-relationship",
+              "enhanced"
+            ],
+            "nullable": true,
+            "description": "The CDD context.",
+            "title": "Cdd Type"
+          },
+          "performed": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when CDD was performed (required at or above the threshold).",
+            "title": "Performed"
+          },
+          "transactionAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Amount of the occasional transaction the CDD concerns.",
+            "title": "Transaction Amount"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 4217 currency code.",
+            "title": "Currency"
+          },
+          "uboOwnershipPct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Ownership / voting-rights percentage of the identified beneficial owner.",
+            "title": "Ubo Ownership Pct"
+          },
+          "uboIdentified": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when a beneficial owner at or above the 25% threshold has been identified.",
+            "title": "Ubo Identified"
+          },
+          "recordedDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the CDD record was created (retention reference).",
+            "title": "Recorded Date"
+          },
+          "retentionUntil": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date until which the CDD record is retained (at least five years after recordedDate).",
+            "title": "Retention Until"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Customer Due Diligence Record is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "FundsTransfer": {
+        "version": "0.1.0",
+        "slug": "FundsTransfer",
+        "title": "Funds Transfer (travel rule)",
+        "type": "object",
+        "description": "A transfer of funds, modelled so the travel-rule obligation that payer and payee information accompanies the transfer can be machine-checked.",
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The administration / legal entity the transfer belongs to.",
+            "title": "Administration ID"
+          },
+          "transferDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date of the transfer.",
+            "title": "Transfer Date"
+          },
+          "amount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Transfer amount.",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 4217 currency code.",
+            "title": "Currency"
+          },
+          "originatorName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the payer/originator (travel rule).",
+            "title": "Originator Name"
+          },
+          "originatorAccount": {
+            "type": "string",
+            "nullable": true,
+            "description": "Account/identifier of the payer/originator (travel rule).",
+            "title": "Originator Account"
+          },
+          "beneficiaryName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the payee/beneficiary (travel rule).",
+            "title": "Beneficiary Name"
+          },
+          "beneficiaryAccount": {
+            "type": "string",
+            "nullable": true,
+            "description": "Account/identifier of the payee/beneficiary (travel rule).",
+            "title": "Beneficiary Account"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Funds Transfer (travel rule) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "TrustLedger": {
+        "version": "0.1.0",
+        "slug": "TrustLedger",
+        "title": "Trust / Escrow Ledger",
+        "type": "object",
+        "description": "A pooled trust/escrow account ledger with per-client balances, modelled so the no-overdraw rule (no client funded with another client's money) can be machine-checked.",
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The administration / legal entity the trust ledger belongs to.",
+            "title": "Administration ID"
+          },
+          "accountType": {
+            "type": "string",
+            "enum": [
+              "trust",
+              "escrow",
+              "iolta",
+              "derdengelden"
+            ],
+            "nullable": true,
+            "description": "Type of pooled trust/escrow account.",
+            "title": "Account Type"
+          },
+          "segregated": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the pooled account is segregated from the firm's own funds.",
+            "title": "Segregated"
+          },
+          "asOfDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the per-client balances are stated as of.",
+            "title": "As Of Date"
+          },
+          "clientBalances": {
+            "type": "array",
+            "nullable": true,
+            "description": "Per-client balances within the pooled account; none may be negative.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "clientId": {
+                  "type": "string",
+                  "description": "The client the balance belongs to.",
+                  "title": "Client ID"
+                },
+                "balance": {
+                  "type": "number",
+                  "description": "The client's balance within the pooled account.",
+                  "title": "Balance"
+                }
+              }
+            },
+            "title": "Client Balances"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Trust / Escrow Ledger is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "CashCount": {
+        "version": "0.1.0",
+        "slug": "CashCount",
+        "title": "Cash Count (kasadministratie / Z-report)",
+        "type": "object",
+        "description": "A periodic physical cash count, modelled so the count-to-cash-book reconciliation, non-negative running balance and daily Z-report reconciliation can be machine-checked.",
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The administration / legal entity the cash count belongs to.",
+            "title": "Administration ID"
+          },
+          "countDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date of the physical cash count.",
+            "title": "Count Date"
+          },
+          "countedAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Physically counted cash on hand.",
+            "title": "Counted Amount"
+          },
+          "bookBalance": {
+            "type": "number",
+            "nullable": true,
+            "description": "Cash-book (kasadministratie) balance the count reconciles to.",
+            "title": "Book Balance"
+          },
+          "runningBalance": {
+            "type": "number",
+            "nullable": true,
+            "description": "Running cash-account balance (must never be negative).",
+            "title": "Running Balance"
+          },
+          "zReportTotal": {
+            "type": "number",
+            "nullable": true,
+            "description": "Daily cash-register Z-report closing total.",
+            "title": "Z Report Total"
+          },
+          "recordedTakings": {
+            "type": "number",
+            "nullable": true,
+            "description": "Recorded cash takings the Z-report total reconciles to.",
+            "title": "Recorded Takings"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 4217 currency code.",
+            "title": "Currency"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Cash Count (kasadministratie / Z-report) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

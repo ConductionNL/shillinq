@@ -1,0 +1,24 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "receipt-extraction-consume",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json. Overlays the existing native ReceiptDetail page (mergePages replaces by id, mirrors AfspraakDetail).",
+		"description": "Swaps the native ReceiptDetail (type: detail) for a custom ReceiptCapture component (REQ-RXC-003): per-field docudesk-extraction confidence, correction, and re-request on top of the same fields the native page already showed."
+	},
+	"pages": [
+		{
+			"id": "ReceiptDetail",
+			"route": "/inkoop/receipts/:id",
+			"type": "custom",
+			"title": "Receipt",
+			"component": "ReceiptCapture",
+			"_note": "Overlays the base ReceiptDetail (type: detail) with a bespoke component so per-field docudesk-extraction confidence, correction, and the re-request action can render — none of which the generic field-list detail page supports (REQ-RXC-003/004/005).",
+			"config": {
+				"register": "shillinq",
+				"schema": "Receipt",
+				"indexRoute": "Receipts"
+			}
+		}
+	]
+}

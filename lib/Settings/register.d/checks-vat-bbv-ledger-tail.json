@@ -1,0 +1,464 @@
+{
+  "x-shillinq-fragment": "checks-vat-bbv-ledger-tail",
+  "components": {
+    "schemas": {
+      "ARInvoice": {
+        "version": "0.8.0",
+        "properties": {
+          "triangulation": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether this sale is the intermediary's (B) leg of a triangular intra-Community transaction (arts. 141/197); enables the triangulation-simplification and reverse-charge checks.",
+            "title": "Triangulation"
+          },
+          "intermediaryCountryCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Member State of the intermediary (B) in a triangular transaction (ISO 3166-1 alpha-2); must differ from the seller and final-customer Member States (art. 141).",
+            "title": "Intermediary Country Code"
+          },
+          "finalCustomerCountryCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Member State of the final customer (C) in a triangular transaction (ISO 3166-1 alpha-2); must differ from the seller and intermediary Member States (art. 141).",
+            "title": "Final Customer Country Code"
+          },
+          "finalCustomerVatId": {
+            "type": "string",
+            "nullable": true,
+            "description": "VAT identification number of the final customer (C) who accounts for the VAT under reverse charge in a triangular transaction (art. 141).",
+            "title": "Final Customer VAT ID"
+          },
+          "directDelivery": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the goods are dispatched/transported directly to the final customer (C) in a triangular transaction (art. 141 condition).",
+            "title": "Direct Delivery"
+          },
+          "reverseChargeMention": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the invoice carries the reverse-charge mention required where the customer is liable for the VAT (arts. 197/226(11a)).",
+            "title": "Reverse Charge Mention"
+          },
+          "invoiceNote": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-text invoice note; may carry the reverse-charge wording ('Reverse charge' / 'btw verlegd').",
+            "title": "Invoice Note"
+          },
+          "smeExemptionApplied": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the small-enterprise VAT exemption (art. 282) is applied to this supply; enables the SME turnover-threshold check.",
+            "title": "Sme Exemption Applied"
+          },
+          "annualTurnover": {
+            "type": "number",
+            "nullable": true,
+            "description": "The taxable person's annual turnover, used to test the small-enterprise exemption against the national threshold (art. 282).",
+            "title": "Annual Turnover"
+          },
+          "smeThreshold": {
+            "type": "number",
+            "nullable": true,
+            "description": "The national small-enterprise turnover threshold below which the exemption is available (art. 282).",
+            "title": "Sme Threshold"
+          },
+          "crossBorderSme": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the cross-border Union SME scheme is used; if so the Union-wide turnover must not exceed EUR 100 000 (art. 282).",
+            "title": "Cross Border Sme"
+          },
+          "unionTurnover": {
+            "type": "number",
+            "nullable": true,
+            "description": "The taxable person's Union-wide annual turnover, capped at EUR 100 000 for the cross-border SME scheme (art. 282).",
+            "title": "Union Turnover"
+          }
+        }
+      },
+      "APTransaction": {
+        "version": "0.3.0",
+        "properties": {
+          "mixedUse": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the purchase is used for both deductible and non-deductible transactions, triggering pro-rata deduction (art. 173).",
+            "title": "Mixed Use"
+          },
+          "proRataPercent": {
+            "type": "number",
+            "nullable": true,
+            "description": "Deductible proportion (0..100) of the input VAT under the pro-rata rule (art. 173).",
+            "title": "Pro Rata Percent"
+          },
+          "taxAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Input (purchase) VAT amount on the transaction, the base for the pro-rata deductible amount (art. 173).",
+            "title": "Tax Amount"
+          },
+          "deductibleVatAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "The deductible portion of the input VAT = taxAmount x proRataPercent / 100 (art. 173).",
+            "title": "Deductible VAT Amount"
+          },
+          "deductionAdjusted": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the initial deduction has been adjusted because it was higher or lower than the entitlement (art. 184).",
+            "title": "Deduction Adjusted"
+          },
+          "adjustmentAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "The amount by which the initial deduction is adjusted (art. 184); positive increases, negative decreases the deduction.",
+            "title": "Adjustment Amount"
+          },
+          "capitalGood": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the purchase is a capital good subject to the multi-year deduction-adjustment (revision) period (art. 184).",
+            "title": "Capital Good"
+          },
+          "adjustmentPeriodYears": {
+            "type": "number",
+            "nullable": true,
+            "description": "The capital-goods revision period in whole years over which the deduction is adjusted (art. 184; NL 5y movables, 10y immovable property).",
+            "title": "Adjustment Period Years"
+          }
+        }
+      },
+      "GLTransaction": {
+        "version": "0.3.0",
+        "properties": {
+          "fecExport": {
+            "type": "object",
+            "nullable": true,
+            "description": "FR Fichier des Écritures Comptables (FEC) export descriptor: the technical format and file name of the audit export for this entry's accounting file (fr-fec-format).",
+            "properties": {
+              "fileType": {
+                "type": "string",
+                "description": "Export file type: a flat text file or XML.",
+                "enum": [
+                  "text",
+                  "txt",
+                  "xml"
+                ],
+                "title": "File Type"
+              },
+              "delimiter": {
+                "type": "string",
+                "description": "Field delimiter of the flat file: tab or pipe.",
+                "enum": [
+                  "tab",
+                  "pipe"
+                ],
+                "title": "Delimiter"
+              },
+              "encoding": {
+                "type": "string",
+                "description": "Character encoding of the file (e.g. iso-8859-15, utf-8).",
+                "title": "Encoding"
+              },
+              "fileName": {
+                "type": "string",
+                "description": "File name in the mandated form SIREN (9 digits) + 'FEC' + closing date (YYYYMMDD) + extension, e.g. 123456789FEC20261231.txt.",
+                "title": "File Name"
+              }
+            },
+            "title": "Fec Export"
+          },
+          "nf525Closing": {
+            "type": "object",
+            "nullable": true,
+            "description": "FR NF525 certified-software periodic closing record (grand total perpétuel): the secured, archived closing totals chained as an unbroken sequence (fr-nf525-secured-archive).",
+            "properties": {
+              "period": {
+                "type": "string",
+                "description": "Closing period the total covers: daily, monthly or annual.",
+                "enum": [
+                  "daily",
+                  "monthly",
+                  "annual"
+                ],
+                "title": "Period"
+              },
+              "perpetualTotal": {
+                "type": "number",
+                "description": "The perpetual running total (grand total perpétuel) at this closing.",
+                "title": "Perpetual Total"
+              },
+              "sequenceNumber": {
+                "type": "number",
+                "description": "Gapless sequence number of the closing record, evidencing an unbroken chain.",
+                "title": "Sequence Number"
+              },
+              "signature": {
+                "type": "string",
+                "description": "Integrity signature/hash securing the closing record against alteration.",
+                "title": "Signature"
+              }
+            },
+            "title": "Nf525Closing"
+          },
+          "ptChain": {
+            "type": "object",
+            "nullable": true,
+            "description": "PT certified-invoicing chain link: the ATCUD and chained hash ensuring an unbroken, tamper-evident document sequence (pt-certified-invoicing-software).",
+            "properties": {
+              "atcud": {
+                "type": "string",
+                "description": "ATCUD unique document code issued for the certified document.",
+                "title": "Atcud"
+              },
+              "hash": {
+                "type": "string",
+                "description": "Hash of this document, computed over its content and the previous document's hash.",
+                "title": "Hash"
+              },
+              "previousHash": {
+                "type": "string",
+                "description": "Hash of the previous document in the chain, linking the sequence.",
+                "title": "Previous Hash"
+              }
+            },
+            "title": "Pt Chain"
+          }
+        }
+      },
+      "BbvStatement": {
+        "slug": "BbvStatement",
+        "icon": "BankOutline",
+        "version": "0.1.0",
+        "title": "BBV Statement",
+        "description": "An NL public-sector budget (begroting) or annual-accounts (jaarstukken) statement for one fiscal year of a municipality, province or water authority, used by the public-sector rule domain to evaluate the BBV (Besluit begroting en verantwoording) composition (arts. 7/8/24), the mandatory paragraphs (art. 9), the taakvelden overview and the asset capitalisation/valuation rules (arts. 59/62). Per ADR-022 this is a register object, not an embedded structure.",
+        "type": "object",
+        "x-schema-org": "schema:Report",
+        "required": [
+          "documentType",
+          "jurisdiction",
+          "fiscalYear"
+        ],
+        "properties": {
+          "documentType": {
+            "type": "string",
+            "description": "Which BBV document this statement represents: a budget (begroting) or the annual accounts (jaarstukken).",
+            "enum": [
+              "begroting",
+              "jaarstukken"
+            ],
+            "example": "begroting",
+            "title": "Document Type"
+          },
+          "jurisdiction": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 jurisdiction; BBV applies to NL public bodies.",
+            "example": "NL",
+            "title": "Jurisdiction"
+          },
+          "entityType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Type of NL public body the BBV governs: gemeente (municipality), province (province) or waterAuthority (water authority).",
+            "enum": [
+              "municipality",
+              "province",
+              "waterAuthority"
+            ],
+            "example": "municipality",
+            "title": "Entity Type"
+          },
+          "fiscalYear": {
+            "type": "number",
+            "description": "The fiscal year the budget or annual accounts cover.",
+            "title": "Fiscal Year"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 4217 currency the statement is presented in (EUR for NL public bodies).",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "parts": {
+            "type": "array",
+            "nullable": true,
+            "description": "The top-level component parts present. For a begroting (art. 7): beleidsbegroting + financielebegroting. For jaarstukken (art. 24): jaarverslag + jaarrekening.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Parts"
+          },
+          "programmePlan": {
+            "type": "object",
+            "nullable": true,
+            "description": "The programme plan of a begroting (art. 8 BBV): the programmes plus the algemene dekkingsmiddelen, overhead, VPB charge and the amount for unforeseen expenditure (onvoorzien).",
+            "properties": {
+              "programmes": {
+                "type": "array",
+                "description": "The programmes to be realised.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "description": "Programme code.",
+                      "title": "Code"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Programme name.",
+                      "title": "Name"
+                    }
+                  }
+                },
+                "title": "Programmes"
+              },
+              "generalFundingSources": {
+                "type": "number",
+                "description": "Overview of general cover funds (algemene dekkingsmiddelen).",
+                "title": "Algemene Dekkingsmiddelen"
+              },
+              "overhead": {
+                "type": "number",
+                "description": "Overhead costs.",
+                "title": "Overhead"
+              },
+              "vpbCharge": {
+                "type": "number",
+                "description": "Corporate income tax (VPB) charge.",
+                "title": "VpB Charge"
+              },
+              "unforeseen": {
+                "type": "number",
+                "description": "Amount for unforeseen expenditure (onvoorzien).",
+                "title": "Onvoorzien"
+              }
+            },
+            "title": "Programmaplan"
+          },
+          "paragraphs": {
+            "type": "array",
+            "nullable": true,
+            "description": "The mandatory BBV paragraphs (art. 9): lokale heffingen (local levies), weerstandsvermogen (resilience capacity), onderhoud kapitaalgoederen (maintenance of capital goods), financiering, bedrijfsvoering (operational management), verbonden partijen (related parties), grondbeleid (land policy).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Paragraphs"
+          },
+          "annualAccounts": {
+            "type": "object",
+            "nullable": true,
+            "description": "The financial statements of the jaarstukken (art. 24 BBV): the overview of revenues and expenses, the balance sheet, the lawfulness statement (rechtmatigheidsverantwoording) and the auditor's report (accountantsverklaring).",
+            "properties": {
+              "overviewRevenueExpenses": {
+                "type": "boolean",
+                "description": "Overview of revenues and expenses present.",
+                "title": "Overzicht Baten Lasten"
+              },
+              "balance": {
+                "type": "boolean",
+                "description": "Balance sheet present.",
+                "title": "Balans"
+              },
+              "lawfulnessAccountability": {
+                "type": "boolean",
+                "description": "Lawfulness statement present.",
+                "title": "Rechtmatigheidsverantwoording"
+              },
+              "auditorsStatement": {
+                "type": "boolean",
+                "description": "Auditor's report present.",
+                "title": "Accountantsverklaring"
+              }
+            },
+            "title": "Jaarrekening"
+          },
+          "fixedAssets": {
+            "type": "array",
+            "nullable": true,
+            "description": "Tangible and intangible fixed assets (arts. 59/62 BBV): each meeting the activation criteria is capitalised (geactiveerd) and valued at acquisition or production cost (verkrijgings- of vervaardigingsprijs).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Asset name.",
+                  "title": "Name"
+                },
+                "kind": {
+                  "type": "string",
+                  "description": "Asset kind: tangible (materieel) or intangible (immaterieel).",
+                  "enum": [
+                    "tangible",
+                    "intangible"
+                  ],
+                  "title": "Kind"
+                },
+                "capitalised": {
+                  "type": "boolean",
+                  "description": "True when the asset is capitalised (geactiveerd) on the balance sheet (art. 59).",
+                  "title": "Capitalised"
+                },
+                "acquisitionCost": {
+                  "type": "number",
+                  "description": "Acquisition or production cost (verkrijgings- of vervaardigingsprijs) (art. 62).",
+                  "title": "Acquisition Cost"
+                },
+                "valuationBasis": {
+                  "type": "string",
+                  "description": "Valuation basis: acquisition or production cost.",
+                  "enum": [
+                    "acquisitionCost",
+                    "productionCost"
+                  ],
+                  "title": "Valuation Basis"
+                }
+              }
+            },
+            "title": "Fixed Assets"
+          },
+          "taskFields": {
+            "type": "array",
+            "nullable": true,
+            "description": "Mandatory overview of estimated revenues and expenses per taakveld (task field), enabling inter-municipal comparison (bbv-taakvelden-overview).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "Taakveld code (e.g. 0.1, 2.1).",
+                  "title": "Code"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Taakveld name.",
+                  "title": "Name"
+                },
+                "estimatedRevenue": {
+                  "type": "number",
+                  "description": "Estimated revenue for the taakveld.",
+                  "title": "Estimated Revenue"
+                },
+                "estimatedExpense": {
+                  "type": "number",
+                  "description": "Estimated expense for the taakveld.",
+                  "title": "Estimated Expense"
+                }
+              }
+            },
+            "title": "Taakvelden"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a BBV Statement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

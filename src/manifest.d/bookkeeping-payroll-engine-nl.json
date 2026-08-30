@@ -1,0 +1,460 @@
+{
+	"menu": [
+		{
+			"id": "Loonadministratie",
+			"label": "Payroll",
+			"icon": "CashSync",
+			"order": 80,
+			"children": [
+				{"id": "Werkgevers", "label": "Employers", "icon": "OfficeBuilding", "route": "Werkgevers", "order": 10},
+				{"id": "Werknemers", "label": "Employees", "icon": "AccountTieOutline", "route": "Werknemers", "order": 20},
+				{"id": "Loonperiodes", "label": "Pay periods", "icon": "CalendarRange", "route": "Loonperiodes", "order": 30},
+				{"id": "Loonstroken", "label": "Payslips", "icon": "FileDocumentOutline", "route": "Loonstroken", "order": 40},
+				{"id": "LHAfdrachten", "label": "LH remittances", "icon": "BankTransfer", "route": "LHAfdrachten", "order": 50},
+				{"id": "Loonjournaalposten", "label": "Payroll journal entries", "icon": "CashSync", "route": "Loonjournaalposten", "order": 60}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Werkgevers",
+			"route": "/loonadministratie/werkgevers",
+			"type": "index",
+			"title": "Employers",
+			"config": {
+				"register": "shillinq",
+				"schema": "Werkgever",
+				"columns": [
+					{"key": "name", "label": "Name", "sortable": true},
+					{"key": "payrollTaxNumber", "label": "Payroll tax number", "sortable": true},
+					{"key": "sectorcode", "label": "Sector", "sortable": true},
+					{"key": "awfRate", "label": "AWF", "sortable": true},
+					{"key": "zvwRate", "label": "ZVW", "sortable": true}
+				],
+				"defaultSort": "name",
+				"detailRoute": "WerkgeverDetail"
+			}
+		},
+		{
+			"id": "WerkgeverDetail",
+			"route": "/loonadministratie/werkgevers/:id",
+			"type": "detail",
+			"title": "Employer",
+			"config": {
+				"register": "shillinq",
+				"schema": "Werkgever",
+				"_note": "MASTER record (employer). The body pairs the employer's fiscal/sector data with its two operational child registers — the employees on its payroll and the pay periods run under it — so a payroll officer sees who is employed here and which periods have been processed, right under the sector/AWF/ZVW rates that drive every calculation. No comms leaves: Werkgever declares no email/calendar linkedType (payroll master, not a correspondent). Audit trail sidebar tracks rate/config changes.",
+				"fields": [
+					{"key": "name", "label": "Name", "type": "string"},
+					{"key": "kvk", "label": "KvK", "type": "string"},
+					{"key": "payrollTaxNumber", "label": "Payroll tax number", "type": "string"},
+					{"key": "sectorcode", "label": "Sector code", "type": "number"},
+					{"key": "sectorDescription", "label": "Sector", "type": "string"},
+					{"key": "awfRate", "label": "AWF rate", "type": "string"},
+					{"key": "zvwRate", "label": "ZVW rate", "type": "string"},
+					{"key": "wkrBudget2026", "label": "WKR budget 2026", "type": "number"},
+					{"key": "holidayAllowanceDisbursementMonth", "label": "Holiday pay month", "type": "number"}
+				],
+				"relatedObjects": [
+					{
+						"id": "employees",
+						"label": "Employees",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "Werknemer",
+							"filterField": "werkgeverId",
+							"columns": ["lastName", "initials", "contractType", "hourlyPay", "payrollTaxTable"]
+						}
+					},
+					{
+						"id": "payperiods",
+						"label": "Pay periods",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "LoonPeriode",
+							"filterField": "werkgeverId",
+							"columns": ["year", "periodNr", "periodType", "status", "totalGrossPay"]
+						}
+					}
+				],
+				"indexRoute": "Werkgevers",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "Werknemers",
+			"route": "/loonadministratie/werknemers",
+			"type": "index",
+			"title": "Employees",
+			"config": {
+				"register": "shillinq",
+				"schema": "Werknemer",
+				"columns": [
+					{"key": "lastName", "label": "Surname", "sortable": true},
+					{"key": "initials", "label": "Initials", "sortable": true},
+					{"key": "payrollTaxTable", "label": "Table", "sortable": true},
+					{"key": "contractType", "label": "Contract", "sortable": true},
+					{"key": "is_dga", "label": "DGA", "sortable": true}
+				],
+				"defaultSort": "lastName",
+				"detailRoute": "WerknemerDetail"
+			}
+		},
+		{
+			"id": "WerknemerDetail",
+			"route": "/loonadministratie/werknemers/:id",
+			"type": "detail",
+			"title": "Employee",
+			"config": {
+				"register": "shillinq",
+				"schema": "Werknemer",
+				"_note": "MASTER record (employee). Werknemer is a person, but the payroll schema declares NO email/calendar linkedType — an employee here is a payroll subject, not a correspondent — so no comms leaves. The body pairs the employment/tax-table/salary data with the employee's own payslip history (LoonStrook filtered on werknemerId), the single most-consulted view when answering an employee's pay question. Audit trail sidebar for changes to salary/tax-credit settings.",
+				"fields": [
+					{"key": "initials", "label": "Initials", "type": "string"},
+					{"key": "lastName", "label": "Surname", "type": "string"},
+					{"key": "inDienstSinds", "label": "Employed since", "type": "string"},
+					{"key": "outServicePer", "label": "Employment end", "type": "string"},
+					{"key": "payrollTaxTable", "label": "Payroll tax table", "type": "string"},
+					{"key": "payrollTaxTableDiscount", "label": "Tax credit applied", "type": "boolean"},
+					{"key": "contractType", "label": "Contract type", "type": "string"},
+					{"key": "hourlyPay", "label": "Hourly wage", "type": "number"},
+					{"key": "contracturenPerWeek", "label": "Contract hours/week", "type": "number"},
+					{"key": "annualPayGross", "label": "Gross annual salary", "type": "number"},
+					{"key": "vakantiegeldPct", "label": "Holiday pay %", "type": "number"},
+					{"key": "pensionScheme", "label": "Pension scheme", "type": "string"},
+					{"key": "thuiswerkdagenPerWeek", "label": "Home-working days/week", "type": "number"},
+					{"key": "is_dga", "label": "DGA", "type": "boolean"},
+					{"key": "expat30PctScheme", "label": "30% ruling", "type": "boolean"}
+				],
+				"relatedObjects": [
+					{
+						"id": "payslips",
+						"label": "Payslips",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "LoonStrook",
+							"filterField": "employeeId",
+							"columns": ["periodId", "fiscalPay", "payrollTax", "netPaid"]
+						}
+					}
+				],
+				"indexRoute": "Werknemers",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "Loonperiodes",
+			"route": "/loonadministratie/loonperiodes",
+			"type": "index",
+			"title": "Pay periods",
+			"config": {
+				"register": "shillinq",
+				"schema": "LoonPeriode",
+				"columns": [
+					{"key": "year", "label": "Year", "sortable": true},
+					{"key": "periodNr", "label": "Period", "sortable": true},
+					{"key": "periodType", "label": "Type", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true},
+					{"key": "totalGrossPay", "label": "Total gross", "sortable": true}
+				],
+				"defaultSort": "periodNr",
+				"detailRoute": "LoonperiodeDetail"
+			}
+		},
+		{
+			"id": "LoonperiodeDetail",
+			"route": "/loonadministratie/loonperiodes/:id",
+			"type": "detail",
+			"title": "Pay period",
+			"config": {
+				"register": "shillinq",
+				"schema": "LoonPeriode",
+				"_note": "PERIOD run (the container that gets calculated + closed). The header totals (gross/net/LH) sit above the three things a period produces: the payslips generated in it, the LH remittance derived from it, and the payroll journal entries booked from it — each an object-list filtered on periodeId. This is the run-review view a payroll officer uses before closing/approving a period. No comms leaves. Audit trail sidebar records status transitions (open → calculated → closed).",
+				"fields": [
+					{"key": "periodType", "label": "Type", "type": "string"},
+					{"key": "year", "label": "Year", "type": "number"},
+					{"key": "periodNr", "label": "Period number", "type": "number"},
+					{"key": "periodStart", "label": "Start", "type": "string"},
+					{"key": "periodEnd", "label": "End", "type": "string"},
+					{"key": "paymentDate", "label": "Payment date", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "payrollTaxTableVersion", "label": "Table version", "type": "string"},
+					{"key": "totalGrossPay", "label": "Total gross", "type": "number"},
+					{"key": "totalNetPaid", "label": "Total net", "type": "number"},
+					{"key": "totalPayrollTaxRemittance", "label": "Total LH", "type": "number"}
+				],
+				"relatedObjects": [
+					{
+						"id": "payslips",
+						"label": "Payslips",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "LoonStrook",
+							"filterField": "periodId",
+							"columns": ["employeeId", "fiscalPay", "payrollTax", "netPaid"]
+						}
+					},
+					{
+						"id": "remittances",
+						"label": "LH remittances",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "LHAfdracht",
+							"filterField": "periodId",
+							"columns": ["totalPayrollTax", "totalSocialInsuranceContributions", "totalRemittance", "status"]
+						}
+					},
+					{
+						"id": "journalentries",
+						"label": "Payroll journal entries",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "Loonjournaalpost",
+							"filterField": "periodId",
+							"columns": ["date", "balanced"]
+						}
+					}
+				],
+				"indexRoute": "Loonperiodes",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "Loonstroken",
+			"route": "/loonadministratie/loonstroken",
+			"type": "index",
+			"title": "Payslips",
+			"config": {
+				"register": "shillinq",
+				"schema": "LoonStrook",
+				"columns": [
+					{"key": "employeeId", "label": "Employee", "sortable": true},
+					{"key": "periodId", "label": "Period", "sortable": true},
+					{"key": "fiscalPay", "label": "Taxable pay", "sortable": true},
+					{"key": "payrollTax", "label": "Payroll tax", "sortable": true},
+					{"key": "netPaid", "label": "Net", "sortable": true}
+				],
+				"defaultSort": "employeeId",
+				"detailRoute": "LoonstrookDetail"
+			}
+		},
+		{
+			"id": "LoonstrookDetail",
+			"route": "/loonadministratie/loonstroken/:id",
+			"type": "detail",
+			"title": "Payslip",
+			"config": {
+				"register": "shillinq",
+				"schema": "LoonStrook",
+				"_note": "DOCUMENT (payslip) — a financial statement, not a correspondence: NO email/calendar even though it concerns a person. It is a leaf with no child schema, so the body is the full gross-to-net breakdown (taxable pay, SV base, payroll tax, net paid) that reconciles the payslip. Audit trail sidebar is the compliance record for a recalculated/corrected slip; a payslip is retained, not deleted, so history matters.",
+				"fields": [
+					{"key": "employeeId", "label": "Employee", "type": "string"},
+					{"key": "periodId", "label": "Period", "type": "string"},
+					{"key": "fiscalPay", "label": "Taxable pay", "type": "number"},
+					{"key": "contribution_pay_sv", "label": "SV contribution base", "type": "number"},
+					{"key": "payrollTax", "label": "Payroll tax", "type": "number"},
+					{"key": "netPaid", "label": "Net paid", "type": "number"}
+				],
+				"indexRoute": "Loonstroken",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "LHAfdrachten",
+			"route": "/loonadministratie/lh-afdrachten",
+			"type": "index",
+			"title": "LH remittances",
+			"config": {
+				"register": "shillinq",
+				"schema": "LHAfdracht",
+				"columns": [
+					{"key": "periodId", "label": "Period", "sortable": true},
+					{"key": "totalPayrollTax", "label": "Payroll tax", "sortable": true},
+					{"key": "totalSocialInsuranceContributions", "label": "SV contributions", "sortable": true},
+					{"key": "totalRemittance", "label": "Total remittance", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "periodId",
+				"detailRoute": "LHAfdrachtDetail"
+			}
+		},
+		{
+			"id": "LHAfdrachtDetail",
+			"route": "/loonadministratie/lh-afdrachten/:id",
+			"type": "detail",
+			"title": "LH remittance",
+			"config": {
+				"register": "shillinq",
+				"schema": "LHAfdracht",
+				"_note": "TAX REMITTANCE (aangifte loonheffingen) — the amount owed to the Belastingdienst for a period. It aggregates the period's payslips, so the body is the component breakdown (payroll tax, WKR final levies, SV contributions, ZVW, total) plus the due date and filing status — the exact figures submitted. It has no child schema of its own. No comms leaves. Audit trail sidebar is the filing/payment record.",
+				"fields": [
+					{"key": "periodId", "label": "Period", "type": "string"},
+					{"key": "totalPayrollTax", "label": "Payroll tax", "type": "number"},
+					{"key": "totalFinalLeviesWorkRelatedCosts", "label": "WKR final levies", "type": "number"},
+					{"key": "totalSocialInsuranceContributions", "label": "SV contributions", "type": "number"},
+					{"key": "totalHealthInsurance", "label": "ZVW", "type": "number"},
+					{"key": "totalRemittance", "label": "Total remittance", "type": "number"},
+					{"key": "dueDateRemittance", "label": "Due date", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"}
+				],
+				"indexRoute": "LHAfdrachten",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "Loonjournaalposten",
+			"route": "/loonadministratie/loonjournaalposten",
+			"type": "index",
+			"title": "Payroll journal entries",
+			"config": {
+				"register": "shillinq",
+				"schema": "Loonjournaalpost",
+				"columns": [
+					{"key": "periodId", "label": "Period", "sortable": true},
+					{"key": "date", "label": "Date", "sortable": true},
+					{"key": "balanced", "label": "Balanced", "sortable": true}
+				],
+				"defaultSort": "date",
+				"detailRoute": "LoonjournaalpostDetail"
+			}
+		},
+		{
+			"id": "LoonjournaalpostDetail",
+			"route": "/loonadministratie/loonjournaalposten/:id",
+			"type": "detail",
+			"title": "Payroll journal entry",
+			"config": {
+				"register": "shillinq",
+				"schema": "Loonjournaalpost",
+				"_note": "JOURNAL ENTRY (the GL booking that posts a period's payroll to the ledger). The body shows the entry header (period, date, whether debits equal credits) — the balanced flag is the one thing an accountant checks before posting. No child line schema is declared in this register, so lines live inside the entry; no comms leaves. Audit trail sidebar is the posting/reversal record.",
+				"fields": [
+					{"key": "periodId", "label": "Period", "type": "string"},
+					{"key": "date", "label": "Date", "type": "string"},
+					{"key": "balanced", "label": "Balanced", "type": "boolean"}
+				],
+				"indexRoute": "Loonjournaalposten",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}

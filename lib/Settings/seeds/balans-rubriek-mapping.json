@@ -8,17 +8,17 @@
     "url": "https://wetten.overheid.nl/BWBR0003045/"
   },
   "rubriekCatalogus": [
-    { "rubrieckCode": "B.I", "rubrieckLabel": "Immateriële vaste activa", "zijde": "activa" },
-    { "rubrieckCode": "B.II", "rubrieckLabel": "Materiële vaste activa", "zijde": "activa" },
-    { "rubrieckCode": "B.III", "rubrieckLabel": "Financiële vaste activa", "zijde": "activa" },
-    { "rubrieckCode": "C.I", "rubrieckLabel": "Voorraden", "zijde": "activa" },
-    { "rubrieckCode": "C.II", "rubrieckLabel": "Vorderingen", "zijde": "activa" },
-    { "rubrieckCode": "C.III", "rubrieckLabel": "Effecten", "zijde": "activa" },
-    { "rubrieckCode": "C.IV", "rubrieckLabel": "Liquide middelen", "zijde": "activa" },
-    { "rubrieckCode": "A", "rubrieckLabel": "Eigen vermogen", "zijde": "passiva" },
-    { "rubrieckCode": "B", "rubrieckLabel": "Voorzieningen", "zijde": "passiva" },
-    { "rubrieckCode": "C", "rubrieckLabel": "Langlopende schulden", "zijde": "passiva" },
-    { "rubrieckCode": "D", "rubrieckLabel": "Kortlopende schulden", "zijde": "passiva" }
+    { "rubrieckCode": "B.I", "rubrieckLabel": "Immateriële vaste activa", "side": "assets" },
+    { "rubrieckCode": "B.II", "rubrieckLabel": "Materiële vaste activa", "side": "assets" },
+    { "rubrieckCode": "B.III", "rubrieckLabel": "Financiële vaste activa", "side": "assets" },
+    { "rubrieckCode": "C.I", "rubrieckLabel": "Voorraden", "side": "assets" },
+    { "rubrieckCode": "C.II", "rubrieckLabel": "Vorderingen", "side": "assets" },
+    { "rubrieckCode": "C.III", "rubrieckLabel": "Effecten", "side": "assets" },
+    { "rubrieckCode": "C.IV", "rubrieckLabel": "Liquide middelen", "side": "assets" },
+    { "rubrieckCode": "A", "rubrieckLabel": "Eigen vermogen", "side": "liabilities" },
+    { "rubrieckCode": "B", "rubrieckLabel": "Voorzieningen", "side": "liabilities" },
+    { "rubrieckCode": "C", "rubrieckLabel": "Langlopende schulden", "side": "liabilities" },
+    { "rubrieckCode": "D", "rubrieckLabel": "Kortlopende schulden", "side": "liabilities" }
   ],
   "variants": [
     {

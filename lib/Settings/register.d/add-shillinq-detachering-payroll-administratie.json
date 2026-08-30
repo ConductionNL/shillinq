@@ -1,0 +1,664 @@
+{
+  "components": {
+    "schemas": {
+      "SalarisFeed": {
+        "slug": "SalarisFeed",
+        "icon": "FileImportOutline",
+        "version": "0.1.0",
+        "title": "Salaris Feed",
+        "description": "Raw salarisbureau import batch materialised before mapping to balanced JournalEntry records per REQ-DPA-001 and REQ-DPA-002. Decouples 'what came in' from 'what got booked' and provides an audit trail for reconciliation when a batch fails halfway.",
+        "type": "object",
+        "x-schema-org": "schema:DataFeed",
+        "required": [
+          "salarisbureauSlug",
+          "payrollPeriod",
+          "employeeId",
+          "rawPayload",
+          "administrationId",
+          "importState"
+        ],
+        "properties": {
+          "salarisbureauSlug": {
+            "type": "string",
+            "description": "FK to the openconnector source slug that delivered this batch. One of adp-salaris-nl, loket-salaris-nl, visma-salaris-nl, nmbrs-salaris-nl.",
+            "enum": [
+              "adp-salaris-nl",
+              "loket-salaris-nl",
+              "visma-salaris-nl",
+              "nmbrs-salaris-nl"
+            ],
+            "example": "adp-salaris-nl",
+            "title": "Salarisbureau Slug"
+          },
+          "payrollPeriod": {
+            "type": "string",
+            "description": "Payroll period identifier (YYYY-MM format). Each batch covers one loontijdvak per employee.",
+            "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$",
+            "example": "2026-06",
+            "title": "Loontijdvak"
+          },
+          "employeeId": {
+            "type": "string",
+            "description": "External employee identifier as supplied by the salarisbureau.",
+            "example": "EMP-001",
+            "title": "Employee ID"
+          },
+          "employeeName": {
+            "type": "string",
+            "description": "Employee display name for reconciliation reference.",
+            "nullable": true,
+            "example": "Jan Jansen",
+            "title": "Employee Name"
+          },
+          "payrollCost": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Total loonkosten (gross wage cost) for this employee in this loontijdvak in EUR. This is the DR side of the journal entry.",
+            "example": 4000.0,
+            "title": "Loonkosten"
+          },
+          "netPay": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Net salary to be paid to the employee (CR side).",
+            "example": 2700.0,
+            "title": "Nettoloon"
+          },
+          "socialePremies": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Employer social premiums (WW, ZW, WAO/WIA etc.) — CR side.",
+            "example": 600.0,
+            "title": "Sociale Premies"
+          },
+          "payrollTax": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Wage tax withheld (loonbelasting + premie volksverzekeringen) — CR side.",
+            "example": 500.0,
+            "title": "Loonheffing"
+          },
+          "pensioen": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Employer pension contribution — CR side.",
+            "example": 200.0,
+            "title": "Pensioen"
+          },
+          "rawPayload": {
+            "type": "object",
+            "description": "Raw feed payload as received from the salarisbureau. Stored verbatim for audit and reconciliation.",
+            "additionalProperties": true,
+            "title": "Raw Payload"
+          },
+          "importState": {
+            "type": "string",
+            "description": "Processing state of this salaris-feed record.",
+            "enum": [
+              "received",
+              "mapped",
+              "failed"
+            ],
+            "default": "received",
+            "example": "received",
+            "title": "Import State"
+          },
+          "journalEntryId": {
+            "type": "string",
+            "description": "Back-reference to the JournalEntry materialised from this feed record after mapping.",
+            "nullable": true,
+            "example": "je-2026-001",
+            "title": "Journal Entry ID",
+            "$ref": "JournalEntry"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this import batch.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "importState",
+          "initialState": "received",
+          "states": {
+            "received": {
+              "label": "Received",
+              "description": "Raw feed payload received from the salarisbureau; not yet mapped to JournalEntry."
+            },
+            "mapped": {
+              "label": "Mapped",
+              "description": "Balanced JournalEntry of subtype loonkosten successfully materialised from this feed record."
+            },
+            "failed": {
+              "label": "Failed",
+              "description": "Mapping failed; see rawPayload for diagnostic. Operator must review before retry."
+            }
+          },
+          "transitions": {
+            "map": {
+              "from": "received",
+              "to": "mapped",
+              "label": "Map to journal entry",
+              "description": "Mapping engine materialised a balanced JournalEntry of subtype loonkosten per REQ-DPA-002."
+            },
+            "fail": {
+              "from": "received",
+              "to": "failed",
+              "label": "Mark as failed",
+              "description": "Mapping failed; requires operator review."
+            },
+            "retry": {
+              "from": "failed",
+              "to": "received",
+              "label": "Retry mapping",
+              "description": "Reset to received state for a fresh mapping attempt."
+            }
+          }
+        },
+        "x-openregister-mappings": {
+          "toJournalEntryLoonkosten": {
+            "description": "Declarative mapping from SalarisFeed to a balanced JournalEntry of subtype loonkosten. Produces loonkosten DR = nettoloon CR + socialePremies CR + loonheffing CR + pensioen CR per employee per loontijdvak. Satisfies REQ-DPA-002 and REQ-GL-001 balance invariant. No PHP mapper service per ADR-031.",
+            "target": {
+              "register": "shillinq",
+              "schema": "JournalEntry"
+            },
+            "fields": {
+              "subtype": {
+                "value": "payrollCost"
+              },
+              "description": {
+                "expression": "'Loonkosten ' + @source.employeeName + ' ' + @source.loontijdvak"
+              },
+              "postingDate": {
+                "expression": "lastDayOfMonth(@source.loontijdvak)"
+              },
+              "administrationId": {
+                "field": "administrationId"
+              },
+              "lines": {
+                "expression": [
+                  {
+                    "accountNumber": "4100",
+                    "side": "debit",
+                    "amount": "@source.loonkosten",
+                    "description": "Loonkosten"
+                  },
+                  {
+                    "accountNumber": "4520",
+                    "side": "credit",
+                    "amount": "@source.nettoloon",
+                    "description": "Nettoloon"
+                  },
+                  {
+                    "accountNumber": "4530",
+                    "side": "credit",
+                    "amount": "@source.socialePremies",
+                    "description": "Sociale premies werkgever"
+                  },
+                  {
+                    "accountNumber": "4540",
+                    "side": "credit",
+                    "amount": "@source.loonheffing",
+                    "description": "Loonheffing"
+                  },
+                  {
+                    "accountNumber": "4550",
+                    "side": "credit",
+                    "amount": "@source.pensioen",
+                    "description": "Pensioen werkgever"
+                  }
+                ]
+              }
+            },
+            "balanceInvariant": {
+              "check": "debitTotal = creditTotal",
+              "diagnostic": "SalarisFeed mapping produced unbalanced JournalEntry: debit={{debitTotal}} credit={{creditTotal}} (€0 tolerance per REQ-DPA-002 + REQ-GL-001)"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "payroll-officer": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Salaris Feed is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "OpdrachtgeversVerklaring": {
+        "slug": "OpdrachtgeversVerklaring",
+        "icon": "FileSign",
+        "version": "0.1.0",
+        "title": "Opdrachtgevers Verklaring",
+        "description": "Wet DBA (Deregulering Beoordeling Arbeidsrelaties) position record per ZZP assignment. Declares the opdrachtgever-opdrachtnemer relationship and risicobeoordeling per REQ-DPA-003. No PHP DBA service — lifecycle and document rendering are declarative per ADR-031.",
+        "type": "object",
+        "x-schema-org": "schema:DigitalDocument",
+        "required": [
+          "zzpId",
+          "freelancerName",
+          "assignmentDescription",
+          "termStart",
+          "termEnd",
+          "declarationStatus",
+          "riskAssessment",
+          "administrationId"
+        ],
+        "properties": {
+          "zzpId": {
+            "type": "string",
+            "description": "External identifier for the ZZP-er (self-employed contractor).",
+            "example": "zzp-001",
+            "title": "ZZP ID"
+          },
+          "freelancerName": {
+            "type": "string",
+            "description": "Full name of the ZZP-er.",
+            "example": "Maria de Vries",
+            "title": "ZZP Naam"
+          },
+          "assignmentDescription": {
+            "type": "string",
+            "description": "Description of the assignment (opdracht) that this verklaring covers.",
+            "example": "IT-consultancy voor ERP-migratie project Q3-2026",
+            "title": "Opdracht Beschrijving"
+          },
+          "termStart": {
+            "type": "string",
+            "format": "date",
+            "description": "Assignment start date.",
+            "example": "2026-07-01",
+            "title": "Looptijd Start"
+          },
+          "termEnd": {
+            "type": "string",
+            "format": "date",
+            "description": "Assignment end date.",
+            "example": "2026-09-30",
+            "title": "Looptijd Eind"
+          },
+          "declarationStatus": {
+            "type": "string",
+            "description": "Current lifecycle status of the opdrachtgeversverklaring per REQ-DPA-003.",
+            "enum": [
+              "draft",
+              "overeengekomen",
+              "beëindigd"
+            ],
+            "default": "draft",
+            "example": "draft",
+            "title": "Verklaring Status"
+          },
+          "modelAgreement": {
+            "type": "string",
+            "description": "URI to the Belastingdienst model overeenkomst used as the basis for this verklaring. Optional when a non-model-contract variant applies.",
+            "nullable": true,
+            "example": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/zakelijk/bijzondere_situaties/freelance/modelovereenkomsten/overeenkomst-van-opdracht-001",
+            "title": "Model Overeenkomst"
+          },
+          "declarationDocumentUri": {
+            "type": "string",
+            "description": "docudesk attachment URI of the generated opdrachtgeversverklaring document. Populated after the 'generate document' action triggers the docudesk template render.",
+            "nullable": true,
+            "example": "docudesk://attachments/shillinq/opdrachtgeversverklaring-2026-001.pdf",
+            "title": "Verklaring Document URI"
+          },
+          "riskAssessment": {
+            "type": "string",
+            "description": "Wet DBA risk classification. Operator-classified per REQ-DPA-003. The docudesk template renders the chosen risico.",
+            "enum": [
+              "none",
+              "low",
+              "midden",
+              "high"
+            ],
+            "example": "low",
+            "title": "Risico Beoordeling"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration that owns this opdrachtgeversverklaring.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "declarationStatus",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Verklaring is being drafted; not yet agreed upon by both parties."
+            },
+            "overeengekomen": {
+              "label": "Overeengekomen",
+              "description": "Both parties have agreed on the assignment terms and Wet DBA position."
+            },
+            "beëindigd": {
+              "label": "Beëindigd",
+              "description": "Assignment has ended; verklaring is archived."
+            }
+          },
+          "transitions": {
+            "overeenkomen": {
+              "from": "draft",
+              "to": "overeengekomen",
+              "label": "Overeenkomst bevestigen",
+              "description": "Both parties confirm agreement. Triggers document generation via docudesk template per REQ-DPA-004."
+            },
+            "beëindigen": {
+              "from": "overeengekomen",
+              "to": "beëindigd",
+              "label": "Verklaring beëindigen",
+              "description": "Assignment has ended; marks the verklaring as beëindigd."
+            }
+          },
+          "hooks": {
+            "onOvereenkomen": {
+              "trigger": "lifecycle:overeenkomen",
+              "description": "Trigger docudesk template render of the standaard opdrachtgeversverklaring per REQ-DPA-004. The generated document URI is written back to verklaringDocumentUri.",
+              "action": "x-openregister-docudesk-render",
+              "actionParameters": {
+                "templateSlug": "shillinq-opdrachtgeversverklaring",
+                "outputField": "declarationDocumentUri"
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "payroll-officer": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Opdrachtgevers Verklaring is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "IB47Record": {
+        "slug": "IB47Record",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "IB47 Record",
+        "description": "Annual IB47 form payload per recipient for submission to the Belastingdienst. BSN is stored encrypted at-rest and RBAC-restricted to the payroll-officer role per REQ-DPA-005 and Risk 3. Aggregation over a tax year is declarative via x-openregister-aggregations per (belastingjaar, opdrachtgeverId). Every BSN access logs to audit-trail-immutable per ADR-022.",
+        "type": "object",
+        "x-schema-org": "schema:TaxForm",
+        "required": [
+          "taxYear",
+          "clientId",
+          "recipientName",
+          "recipientBSN",
+          "recipientAddress",
+          "paymentsTotal",
+          "paymentTypeCode",
+          "administrationId"
+        ],
+        "properties": {
+          "taxYear": {
+            "type": "integer",
+            "description": "Tax year this IB47 record covers.",
+            "minimum": 2000,
+            "example": 2026,
+            "title": "Belastingjaar"
+          },
+          "clientId": {
+            "type": "string",
+            "description": "FK to the Administration (opdrachtgever) that made the betalingen.",
+            "example": "adm-1",
+            "title": "Opdrachtgever ID"
+          },
+          "recipientName": {
+            "type": "string",
+            "description": "Full name of the payment recipient (ontvanger).",
+            "example": "Maria de Vries",
+            "title": "Ontvanger Naam"
+          },
+          "recipientBSN": {
+            "type": "string",
+            "description": "Burger Service Nummer of the recipient. Stored encrypted at-rest per x-openregister-encryption. Read restricted to payroll-officer role per RBAC and ADR-022. Every read access is logged to audit-trail-immutable.",
+            "x-openregister-encryption": {
+              "algorithm": "AES-256-GCM",
+              "keyRef": "payroll-bsn-key",
+              "auditOnRead": true,
+              "auditTrail": "immutable"
+            },
+            "x-openregister-rbac-field": {
+              "read": [
+                "payroll-officer"
+              ],
+              "write": [
+                "payroll-officer"
+              ]
+            },
+            "example": "[ENCRYPTED]",
+            "title": "Ontvanger BSN"
+          },
+          "recipientAddress": {
+            "type": "string",
+            "description": "Full postal address of the recipient as required by the IB47 form.",
+            "example": "Voorbeeldstraat 1, 1234 AB Amsterdam",
+            "title": "Ontvanger Adres"
+          },
+          "paymentsTotal": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Total payments made to this recipient in the belastingjaar (EUR ≥ 0).",
+            "example": 15000.0,
+            "title": "Betalingen Totaal"
+          },
+          "paymentTypeCode": {
+            "type": "string",
+            "description": "Belastingdienst IB47 payment type code per the IB47 schema 2026.",
+            "enum": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "example": "1",
+            "title": "Betaling Type Code"
+          },
+          "isDryRun": {
+            "type": "boolean",
+            "description": "When true this is a monthly dry-run record. When false this contributes to the final yearly batch. The aggregation invariant requires that the final yearly batch totals equal the sum of 12 monthly dry-runs (€0 tolerance) per REQ-DPA-005.",
+            "default": false,
+            "example": false,
+            "title": "Is Dry Run"
+          },
+          "dryRunMonth": {
+            "type": "integer",
+            "description": "Month number (1-12) this dry-run covers. Only meaningful when isDryRun = true.",
+            "minimum": 1,
+            "maximum": 12,
+            "nullable": true,
+            "example": 6,
+            "title": "Dry Run Month"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this IB47 record.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-aggregations": {
+          "ib47TotalsPerTaxYear": {
+            "description": "Per-tax-year IB47 aggregation grouping IB47Record by (belastingjaar, opdrachtgeverId). Produces betalingenTotaal per recipient per year. Used for the final yearly batch assembly and for the dry-run vs final reconciliation invariant per REQ-DPA-005: final totals MUST equal sum of 12 monthly dry-runs (€0 tolerance).",
+            "filter": {
+              "isDryRun": false
+            },
+            "groupBy": [
+              "taxYear",
+              "clientId",
+              "recipientName",
+              "paymentTypeCode"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "paymentsTotal",
+                "as": "totalBetalingen"
+              },
+              {
+                "metric": "count",
+                "field": "id",
+                "as": "recordCount"
+              }
+            ]
+          },
+          "ib47DryRunTotalsPerMonth": {
+            "description": "Monthly dry-run aggregation for the reconciliation invariant check. Must equal the final yearly batch totals per recipient (€0 tolerance) per REQ-DPA-005.",
+            "filter": {
+              "isDryRun": true
+            },
+            "groupBy": [
+              "taxYear",
+              "clientId",
+              "recipientName",
+              "dryRunMonth",
+              "paymentTypeCode"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "paymentsTotal",
+                "as": "maandTotaalBetalingen"
+              }
+            ]
+          },
+          "ib47ReconciliationCheck": {
+            "description": "Invariant check: final yearly batch totals per recipient MUST equal the sum of 12 monthly dry-run totals (€0 tolerance) per REQ-DPA-005. Surfaced as a non-blocking warning when the invariant is violated before submission.",
+            "groupBy": [
+              "taxYear",
+              "clientId",
+              "recipientName"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "paymentsTotal",
+                "condition": {
+                  "isDryRun": false
+                },
+                "as": "finalTotal"
+              },
+              {
+                "metric": "sum",
+                "field": "paymentsTotal",
+                "condition": {
+                  "isDryRun": true
+                },
+                "as": "dryRunSumTotal"
+              },
+              {
+                "metric": "check",
+                "as": "reconciled"
+              }
+            ]
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "payroll-officer": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ],
+              "fieldOverrides": {
+                "recipientBSN": {
+                  "permissions": [
+                    "read",
+                    "write"
+                  ]
+                }
+              }
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ],
+              "fieldOverrides": {
+                "recipientBSN": {
+                  "permissions": []
+                }
+              }
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ],
+              "fieldOverrides": {
+                "recipientBSN": {
+                  "permissions": []
+                }
+              }
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "onIb47BatchSubmitted": {
+            "trigger": "ib47.submitted",
+            "recipients": [
+              {
+                "kind": "expression",
+                "resolver": "OCA\\Shillinq\\Notification\\RoleFallbackResolver::payrollOfficer"
+              }
+            ],
+            "channels": [
+              "in-app"
+            ],
+            "subject": "IB47 batch submitted",
+            "template": "ib47-batch-submitted",
+            "description": "Notify the payroll-officer when the IB47 yearly batch has been transmitted to the Belastingdienst via openconnector. Declarative fan-out per ADR-031. KNOWN GAP (migrate-legacy-notification-dialect): trigger is still the bare-string legacy shape — IB47Record has no status/lifecycle field for a canonical `transition` trigger to hook into; the batch-submitted event is fired by the openconnector transmission step, not an object state change. Needs a schema decision (add a submission-status field, or a new non-transition trigger type) before this rule can dispatch through the declarative engine; tracked as follow-up, not fixed by this change."
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a IB47 Record is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "info": {
+    "version": "0.1.0-inventory-sales-issue-cogs-trigger"
+  },
+  "components": {
+    "schemas": {
+      "Delivery": {
+        "properties": {
+          "sourceLocationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to Location.id — the warehouse a stock-tracked line is issued from on confirm (inventory-sales-issue-cogs-trigger REQ-003). Per-line override supported via `lines[].sourceLocationId`. When unset anywhere, the SalesDispatchStockIssueService falls back to the InventoryStock row with the largest available quantity for the SKU.",
+            "example": "loc-w01-z01-b100",
+            "title": "Source Location ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "states": {
+            "cancelled": {
+              "label": "Cancelled",
+              "labelNl": "Geannuleerd",
+              "description": "Terminal. Cancelled before shipment — any StockMove issued by this delivery on confirm is reversed via the existing StockMove.cancel transition (inventory-sales-issue-cogs-trigger REQ-006)."
+            }
+          },
+          "transitions": {
+            "cancel": {
+              "from": [
+                "draft",
+                "confirmed"
+              ],
+              "to": "cancelled",
+              "label": "Cancel delivery",
+              "labelNl": "Levering annuleren",
+              "description": "Cancel a delivery that has not yet shipped. Reverses any StockMove already issued on confirm per REQ-006. Not permitted once shipped.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\QuoteOrderInvoiceGuard::canCancelDelivery"
+            }
+          }
+        }
+      },
+      "InventoryGLConfig": {
+        "properties": {
+          "allowNegativeStockOnDispatch": {
+            "type": "boolean",
+            "default": false,
+            "description": "Per-administration policy toggle (inventory-sales-issue-cogs-trigger REQ-005): when false (default), confirming a Delivery whose stock-tracked line exceeds available InventoryStock quantity at the resolved warehouse is denied. When true, confirmation proceeds and the resulting negative on-hand condition is logged as a structured warning instead of blocking. Matches the block-by-default intent already documented in inventory-stock-tracking REQ-IST-013.",
+            "title": "Allow Negative Stock On Dispatch"
+          }
+        }
+      }
+    }
+  }
+}

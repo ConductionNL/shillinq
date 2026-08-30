@@ -1,0 +1,1489 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-voorzieningen-claims",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 3 — IAS 37 / RJ 252 Provisions, Contingent Liabilities and Contingent Assets. Nine new schemas (Provision, ProvisionMovement, ContingentLiability, PensioenvoorzieningDetail, JubileumvoorzieningDetail, HerstructureringsvoorzieningDetail, GarantievoorzieningDetail, MilieuvoorzieningDetail, ClaimsVoorzieningDetail) declaring the recognition, measurement (best-estimate + range, discontering), period roll-forward, type-specific extensions and jaarrekening disclosure surface entirely as declarative metadata per ADR-031: schema fields + x-openregister-lifecycle (draft → active on Provision with materiality + three-criteria gating; open → closed on ProvisionMovement; draft → published on ContingentLiability) + x-openregister-aggregations (provisionRollForward roll-forward, provisionDisclosureGeneration disclosure-table) + x-openregister-calculations (discountedValue, unwindingOfDiscount). Lifecycle preconditions that the declarative requires: clause cannot yet express are referenced as OCA\\Shillinq\\Lifecycle\\ProvisionGuard::<method> (ADR-031 exception path; fail-closed; real OpenRegister ObjectService API per ADR-022). REQ-PROV-001 enforces three-criteria recognition at the schema validator level (legalOrConstructiveObligation enum, obligatingEvent text, probabilityOfOutflow ≥ 0.5, bestEstimate + bestEstimateRationale). REQ-PROV-005 blocks Herstructureringsvoorziening recognition when detailedPlanDate post-dates balansdatum. REQ-PROV-006 blocks Claims-voorziening when legalAdviceMemo FK is missing. REQ-PROV-018 + REQ-PROV-010 require peer-reviewer + CFO sign-off above EUR 100K / 1 % balanstotaal. Seeds ship three Provision specimen records (garantie, milieu, claims), two ContingentLiability specimen records (fiscaal geschil, borgstelling) and one ProvisionMovement template per design.md; operators customise per administration on first use. No PHP valuation service is authored."
+  },
+  "components": {
+    "schemas": {
+      "Provision": {
+        "slug": "Provision",
+        "icon": "ShieldAlertOutline",
+        "version": "0.1.0",
+        "title": "Provision",
+        "description": "Core polymorphic IAS 37 / RJ 252 voorziening record (REQ-PROV-001, REQ-PROV-002, REQ-PROV-003, REQ-PROV-007, REQ-PROV-010, REQ-PROV-018). Carries the three-criteria recognition (legal/constructive obligation + obligating event + probabilityOfOutflow > 0.5 + bestEstimate), the sensitivity range (rangeLow / rangeHigh), the expectedTiming horizon split, the disconteringsvoet + discounted value when material future timing applies, the linkedAccount FK into the chart of accounts, the peer-review + CFO audit trail and the optional FK into one of six type-specific detail registers (pensioen, jubileum, herstructurering, garantie, milieu, claims). probabilityOfOutflow ≤ 0.5 routes to ContingentLiability instead.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md",
+        "type": "object",
+        "required": [
+          "provisionType",
+          "description",
+          "recognitionDate",
+          "recognitionRationale",
+          "legalOrConstructiveObligation",
+          "obligatingEvent",
+          "probabilityOfOutflow",
+          "bestEstimate",
+          "bestEstimateRationale",
+          "expectedTiming",
+          "presentationOnBalanceSheet",
+          "linkedAccount",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "provisionType": {
+            "type": "string",
+            "description": "Discriminator selecting which type-specific detail register applies (REQ-PROV-001).",
+            "enum": [
+              "pension",
+              "anniversary",
+              "restructuring",
+              "guarantee",
+              "environment",
+              "claims",
+              "maintenance",
+              "other"
+            ],
+            "example": "guarantee",
+            "title": "Provision Type"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable provision description (REQ-PROV-001).",
+            "example": "Waarborg op verkochte goederen 2026",
+            "title": "Description"
+          },
+          "recognitionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the provision was first recognised (REQ-PROV-001).",
+            "example": "2026-01-01",
+            "title": "Recognition Date"
+          },
+          "recognitionRationale": {
+            "type": "string",
+            "description": "Narrative explaining why the three IAS 37 / RJ 252 criteria are satisfied (REQ-PROV-001).",
+            "example": "Garantieclausule in algemene voorwaarden + 1.5% historische claim-rate",
+            "title": "Recognition Rationale"
+          },
+          "legalOrConstructiveObligation": {
+            "type": "string",
+            "description": "Obligation classification per IAS 37 §10 (REQ-PROV-001).",
+            "enum": [
+              "legal",
+              "constructive"
+            ],
+            "example": "constructive",
+            "title": "Legal Or Constructive Obligation"
+          },
+          "obligatingEvent": {
+            "type": "string",
+            "description": "Past event that created the obligation (IAS 37 §17, REQ-PROV-001).",
+            "example": "Verkoop goederen met waarborg 12 maanden per contractvoorwaarden",
+            "title": "Obligating Event"
+          },
+          "probabilityOfOutflow": {
+            "type": "number",
+            "description": "Decimal 0–1 probability of outflow of economic resources (IAS 37 §23, REQ-PROV-001, REQ-PROV-007). Must be > 0.5 for balance-sheet recognition; 0.05–0.5 routes to ContingentLiability; ≤ 0.05 is remote.",
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.8,
+            "title": "Probability Of Outflow"
+          },
+          "bestEstimate": {
+            "type": "number",
+            "description": "Management's best estimate of the outflow in EUR (IAS 37 §36, REQ-PROV-002). REQ-PROV-018 triggers peer-review when > EUR 100K or > 1% of prior-year balance total.",
+            "example": 120000.0,
+            "title": "Best Estimate"
+          },
+          "bestEstimateRationale": {
+            "type": "string",
+            "description": "Narrative documenting the methodology and sources used to arrive at bestEstimate (REQ-PROV-002).",
+            "example": "EUR 12M omzet × 1.5% historische claim-rate (5-jaar gemiddelde) - reeds geleverde claims",
+            "title": "Best Estimate Rationale"
+          },
+          "rangeLow": {
+            "type": "number",
+            "description": "Lower bound of the sensitivity range in EUR (IAS 37 §39, REQ-PROV-002).",
+            "nullable": true,
+            "example": 80000.0,
+            "title": "Range Low"
+          },
+          "rangeHigh": {
+            "type": "number",
+            "description": "Upper bound of the sensitivity range in EUR (IAS 37 §39, REQ-PROV-002).",
+            "nullable": true,
+            "example": 150000.0,
+            "title": "Range High"
+          },
+          "expectedTiming": {
+            "type": "object",
+            "description": "Horizon split of expected outflows (REQ-PROV-003, REQ-PROV-017). longTerm > 0 triggers REQ-PROV-003 disconteringsvoet.",
+            "required": [
+              "shortTerm",
+              "mediumTerm",
+              "longTerm"
+            ],
+            "properties": {
+              "shortTerm": {
+                "type": "number",
+                "description": "Expected outflow within 1 year in EUR.",
+                "title": "Short Term"
+              },
+              "mediumTerm": {
+                "type": "number",
+                "description": "Expected outflow 1–5 years in EUR.",
+                "title": "Medium Term"
+              },
+              "longTerm": {
+                "type": "number",
+                "description": "Expected outflow > 5 years in EUR.",
+                "title": "Long Term"
+              }
+            },
+            "title": "Expected Timing"
+          },
+          "discountRateApplied": {
+            "type": "number",
+            "description": "Risk-adjusted disconteringsvoet applied when expected timing > 1 year is material (IAS 37 §45, REQ-PROV-003). Pre-tax rate reflecting current market assessments + risk specific to the liability.",
+            "nullable": true,
+            "example": 0.03,
+            "title": "Discount Rate Applied"
+          },
+          "discountedValue": {
+            "type": "number",
+            "description": "Present value of bestEstimate after disconteringsvoet (REQ-PROV-003, REQ-PROV-017). Computed via x-openregister-calculations.discountedValue.",
+            "nullable": true,
+            "example": 731000.0,
+            "title": "Discounted Value"
+          },
+          "presentationOnBalanceSheet": {
+            "type": "string",
+            "description": "Balance-sheet presentation (REQ-PROV-008).",
+            "enum": [
+              "current",
+              "non-current",
+              "split"
+            ],
+            "example": "current",
+            "title": "Presentation On Balance Sheet"
+          },
+          "linkedAccount": {
+            "type": "string",
+            "description": "FK to balance-sheet account code in bookkeeping-chart-of-accounts (REQ-PROV-016).",
+            "example": "1900",
+            "title": "Linked Account"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle state (REQ-PROV-001 / REQ-PROV-009 / REQ-PROV-010).",
+            "enum": [
+              "draft",
+              "under-review",
+              "active",
+              "released"
+            ],
+            "default": "draft",
+            "example": "draft",
+            "title": "Status"
+          },
+          "expert": {
+            "type": "string",
+            "description": "External expert (actuary, environmental bureau, legal counsel) consulted (REQ-PROV-006, REQ-PROV-013).",
+            "nullable": true,
+            "example": "Bureau Milieutechniek B.V.",
+            "title": "Expert"
+          },
+          "peerReviewer": {
+            "type": "string",
+            "description": "FK to peer-reviewer person (other than recognition author) (REQ-PROV-010, REQ-PROV-018).",
+            "nullable": true,
+            "example": "user-cfo",
+            "title": "Peer Reviewer"
+          },
+          "peerReviewDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date peer-reviewer signed off (REQ-PROV-010).",
+            "nullable": true,
+            "example": "2026-01-15",
+            "title": "Peer Review Date"
+          },
+          "cfoApprover": {
+            "type": "string",
+            "description": "FK to CFO / audit-committee approver for material provisions (REQ-PROV-018).",
+            "nullable": true,
+            "example": "user-cfo",
+            "title": "Cfo Approver"
+          },
+          "cfoApprovalDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date CFO / audit committee approved the recognition (REQ-PROV-018).",
+            "nullable": true,
+            "title": "Cfo Approval Date"
+          },
+          "priorYearBalanceTotal": {
+            "type": "number",
+            "description": "Prior-year balanstotaal in EUR used by the schema validator to apply the 1% materiality test (REQ-PROV-018).",
+            "nullable": true,
+            "example": 70000000.0,
+            "title": "Prior Year Balance Total"
+          },
+          "linkedPensionProvisionDetail": {
+            "type": "string",
+            "description": "FK to the PensioenvoorzieningDetail when provisionType=pensioen (REQ-PROV-014).",
+            "nullable": true,
+            "title": "Linked Pensioenvoorziening Detail"
+          },
+          "linkedAnniversaryProvisionDetail": {
+            "type": "string",
+            "description": "FK to the JubileumvoorzieningDetail when provisionType=jubileum (REQ-PROV-011).",
+            "nullable": true,
+            "title": "Linked Jubileumvoorziening Detail"
+          },
+          "linkedRestructuringProvisionDetail": {
+            "type": "string",
+            "description": "FK to the HerstructureringsvoorzieningDetail when provisionType=herstructurering (REQ-PROV-005).",
+            "nullable": true,
+            "title": "Linked Herstructureringsvoorziening Detail"
+          },
+          "linkedGuaranteeProvisionDetail": {
+            "type": "string",
+            "description": "FK to the GarantievoorzieningDetail when provisionType=garantie (REQ-PROV-012).",
+            "nullable": true,
+            "title": "Linked Garantievoorziening Detail"
+          },
+          "linkedEnvironmentProvisionDetail": {
+            "type": "string",
+            "description": "FK to the MilieuvoorzieningDetail when provisionType=milieu (REQ-PROV-013).",
+            "nullable": true,
+            "title": "Linked Milieuvoorziening Detail"
+          },
+          "linkedClaimsProvisionDetail": {
+            "type": "string",
+            "description": "FK to the ClaimsVoorzieningDetail when provisionType=claims (REQ-PROV-006).",
+            "nullable": true,
+            "title": "Linked Claims Voorziening Detail"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-calculations": {
+          "discountedValue": {
+            "description": "Present value of bestEstimate per IAS 37 §45 (REQ-PROV-003). discountedValue = bestEstimate / (1 + discountRateApplied)^yearsToOutflow. Computed only when discountRateApplied > 0; nullable otherwise.",
+            "expression": "discountRateApplied > 0 ? bestEstimate / pow(1 + discountRateApplied, yearsToOutflow) : null",
+            "target": "discountedValue"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Editable. Provision being recognised; three-criteria and peer review under review."
+            },
+            "under-review": {
+              "label": "Under herwaardering",
+              "description": "Annual herwaardering at balansdatum (REQ-PROV-009)."
+            },
+            "active": {
+              "label": "Active",
+              "description": "Recognised on balance sheet; movements tracked per period (REQ-PROV-004)."
+            },
+            "released": {
+              "label": "Released",
+              "description": "Provision fully used or released; no further movements expected."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "draft",
+              "to": "active",
+              "label": "Activate provision",
+              "description": "Recognise on balance sheet once three criteria + peer review (and CFO sign-off when material) are complete (REQ-PROV-001, REQ-PROV-005, REQ-PROV-006, REQ-PROV-010, REQ-PROV-018).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\ProvisionGuard::canActivateProvision"
+            },
+            "startHerwaardering": {
+              "from": "active",
+              "to": "under-review",
+              "label": "Start annual herwaardering",
+              "description": "Open the provision for annual balansdatum herwaardering (REQ-PROV-009)."
+            },
+            "completeHerwaardering": {
+              "from": "under-review",
+              "to": "active",
+              "label": "Complete herwaardering",
+              "description": "Lock the herwaardering; any estimate change recorded prospectively as effectOfChangeInEstimate on the next ProvisionMovement (REQ-PROV-009, REQ-PROV-019)."
+            },
+            "release": {
+              "from": "active",
+              "to": "released",
+              "label": "Release provision",
+              "description": "Provision fully utilised or released; no further movements expected."
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Provision is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "ProvisionMovement": {
+        "slug": "ProvisionMovement",
+        "icon": "TableArrowRight",
+        "version": "0.1.0",
+        "title": "Provision Movement",
+        "description": "Per-period roll-forward of a single Provision per IAS 37 §84 (REQ-PROV-004, REQ-PROV-016, REQ-PROV-017, REQ-PROV-019). Carries the opening balance, dotation, onttrekking, vrijval, unwinding of discount, effect of change in discount rate, effect of change in estimate, translation differences and the computed closing balance. Once status=closed the record is immutable; corrections are recorded as prospective effectOfChangeInEstimate on the next open period (REQ-PROV-019 / IAS 8). linkedJournalEntries connect every bucket to the GL journal entries that posted it.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md",
+        "type": "object",
+        "required": [
+          "provision",
+          "period",
+          "openingBalance",
+          "additions",
+          "usedDuringPeriod",
+          "releasedUnused",
+          "unwindingOfDiscount",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "provision": {
+            "type": "string",
+            "description": "FK to the parent Provision (REQ-PROV-004).",
+            "example": "provision-garantie-2026",
+            "title": "Provision"
+          },
+          "period": {
+            "type": "string",
+            "description": "Period identifier in YYYY-MM or YYYY format (REQ-PROV-004).",
+            "example": "2026-12",
+            "title": "Period"
+          },
+          "openingBalance": {
+            "type": "number",
+            "description": "Carrying amount at the start of the period in EUR (REQ-PROV-004).",
+            "example": 320000.0,
+            "title": "Opening Balance"
+          },
+          "additions": {
+            "type": "number",
+            "description": "Dotaties charged to the P&L this period in EUR (REQ-PROV-004).",
+            "default": 0,
+            "example": 180000.0,
+            "title": "Additions"
+          },
+          "additionsAcquired": {
+            "type": "number",
+            "description": "Additions acquired via business combination in EUR (IAS 37 §84(b)).",
+            "default": 0,
+            "nullable": true,
+            "title": "Additions Acquired"
+          },
+          "usedDuringPeriod": {
+            "type": "number",
+            "description": "Amount used (paid / settled) during the period in EUR (REQ-PROV-004).",
+            "default": 0,
+            "example": 95000.0,
+            "title": "Used During Period"
+          },
+          "releasedUnused": {
+            "type": "number",
+            "description": "Vrijval — amount released because the obligation no longer exists or has been reduced (REQ-PROV-004).",
+            "default": 0,
+            "example": 25000.0,
+            "title": "Released Unused"
+          },
+          "unwindingOfDiscount": {
+            "type": "number",
+            "description": "Unwinding of discount as rente bijgeboekt in EUR (REQ-PROV-017). unwindingOfDiscount = max(0, priorDiscountedValue * discountRateApplied).",
+            "default": 0,
+            "example": 0.0,
+            "title": "Unwinding Of Discount"
+          },
+          "effectOfChangeInDiscountRate": {
+            "type": "number",
+            "description": "P&L / discountedValue effect of changing the disconteringsvoet (REQ-PROV-003).",
+            "default": 0,
+            "nullable": true,
+            "title": "Effect Of Change In Discount Rate"
+          },
+          "effectOfChangeInEstimate": {
+            "type": "number",
+            "description": "Prospective schattingswijziging per IAS 8 (REQ-PROV-019). Corrections to closed periods are recorded here in the next open period rather than retroactively adjusted.",
+            "default": 0,
+            "nullable": true,
+            "example": 0.0,
+            "title": "Effect Of Change In Estimate"
+          },
+          "translationDifferences": {
+            "type": "number",
+            "description": "FX translation differences for foreign-currency provisions (out of scope of v1, kept for parity with IAS 37 §84(e)).",
+            "default": 0,
+            "nullable": true,
+            "title": "Translation Differences"
+          },
+          "closingBalance": {
+            "type": "number",
+            "description": "Carrying amount at the end of the period in EUR (REQ-PROV-004). closingBalance = openingBalance + additions + additionsAcquired - usedDuringPeriod - releasedUnused + unwindingOfDiscount + effectOfChangeInDiscountRate + effectOfChangeInEstimate + translationDifferences.",
+            "example": 380000.0,
+            "title": "Closing Balance"
+          },
+          "linkedJournalEntries": {
+            "type": "array",
+            "description": "FKs into the GL journal entries that posted every bucket of this movement (REQ-PROV-016).",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "title": "Linked Journal Entries"
+          },
+          "narrative": {
+            "type": "string",
+            "description": "Free-form explanation of the period's mutation (e.g. why effectOfChangeInEstimate is non-zero) (REQ-PROV-019).",
+            "nullable": true,
+            "title": "Narrative"
+          },
+          "status": {
+            "type": "string",
+            "description": "Movement lifecycle. Once status=closed the record is immutable per REQ-PROV-004 / REQ-PROV-019.",
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "default": "open",
+            "example": "open",
+            "title": "Status"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-calculations": {
+          "closingBalance": {
+            "description": "Roll-forward closing balance per IAS 37 §84 (REQ-PROV-004). Sums every movement bucket; immutable once status=closed.",
+            "expression": "openingBalance + additions + additionsAcquired - usedDuringPeriod - releasedUnused + unwindingOfDiscount + effectOfChangeInDiscountRate + effectOfChangeInEstimate + translationDifferences",
+            "target": "closingBalance"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "open",
+          "states": {
+            "open": {
+              "label": "Open",
+              "description": "Editable during the period; buckets accept dotaties, onttrekkingen, vrijvallen, unwinding."
+            },
+            "closed": {
+              "label": "Closed",
+              "description": "Period closed; record is immutable. Corrections recorded as prospective effectOfChangeInEstimate on the next open period (REQ-PROV-019)."
+            }
+          },
+          "transitions": {
+            "close": {
+              "from": "open",
+              "to": "closed",
+              "label": "Close period",
+              "description": "Lock the movement once the period close is reconciled to GL (REQ-PROV-004, REQ-PROV-016).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\ProvisionGuard::canCloseMovement"
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "provisionRollForward": {
+            "description": "Declarative roll-forward emitting ProvisionMovement records per Provision per period (REQ-PROV-004). Closing of period N is the opening of period N+1. When the OpenRegister aggregation engine cannot express the prior-period carry, the same arithmetic is recomputed from the prior ProvisionMovement closing balance via the real ObjectService API.",
+            "source": "ProvisionMovement",
+            "groupBy": [
+              "ProvisionMovement.provision",
+              "ProvisionMovement.period"
+            ],
+            "operations": {
+              "closingBalance": {
+                "operation": "expression",
+                "expression": "openingBalance + additions + additionsAcquired - usedDuringPeriod - releasedUnused + unwindingOfDiscount + effectOfChangeInDiscountRate + effectOfChangeInEstimate + translationDifferences",
+                "target": "closingBalance"
+              }
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Provision Movement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "ContingentLiability": {
+        "slug": "ContingentLiability",
+        "icon": "AlertOctagonOutline",
+        "version": "0.1.0",
+        "title": "Contingent Liability",
+        "description": "Disclosure-only record for niet-uit-de-balans-blijkende verplichtingen per IAS 37 §27–30 / RJ 252 §297–300 (REQ-PROV-007, REQ-PROV-015). Used when probability of outflow is between 5% and 50% (`possible`) or when probability exceeds 50% but no reliable estimate is available. probability ≤ 5% (`remote`) is kept here for completeness but excluded from jaarrekening notes per IAS 37 §86.",
+        "x-schema-org": "schema:Thing",
+        "x-spec": "openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md",
+        "type": "object",
+        "required": [
+          "description",
+          "obligationType",
+          "nature",
+          "probabilityCategory",
+          "disclosureNarrative",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the contingent liability (REQ-PROV-015).",
+            "example": "Geschil belastingdienst n.a.v. aftrekpostbepaling jaren 2022–2023",
+            "title": "Description"
+          },
+          "obligationType": {
+            "type": "string",
+            "description": "Obligation classification per IAS 37 §10 (REQ-PROV-015).",
+            "enum": [
+              "legal",
+              "constructive"
+            ],
+            "example": "legal",
+            "title": "Obligation Type"
+          },
+          "nature": {
+            "type": "string",
+            "description": "Type / category of the contingency (REQ-PROV-015).",
+            "example": "Fiscaal geschil belastingdienst",
+            "title": "Nature"
+          },
+          "estimatedAmount": {
+            "type": "number",
+            "description": "Estimated amount when available; null when no reliable estimate (IAS 37 §86, REQ-PROV-015).",
+            "nullable": true,
+            "example": 400000.0,
+            "title": "Estimated Amount"
+          },
+          "probabilityCategory": {
+            "type": "string",
+            "description": "Probability bucket per IAS 37 (REQ-PROV-007, REQ-PROV-015). possible = 5%–50%; probable-but-no-reliable-estimate = > 50% but estimate unreliable; remote = ≤ 5% (not disclosed).",
+            "enum": [
+              "remote",
+              "possible",
+              "probable-but-no-reliable-estimate"
+            ],
+            "example": "possible",
+            "title": "Probability Category"
+          },
+          "expectedTiming": {
+            "type": "string",
+            "description": "Expected timing of the outflow as free-form text (REQ-PROV-015).",
+            "nullable": true,
+            "example": "Uitspraak hoger beroep verwacht Q4 2026",
+            "title": "Expected Timing"
+          },
+          "disclosureNarrative": {
+            "type": "string",
+            "description": "Narrative for the jaarrekening note 'Niet uit de balans blijkende verplichtingen' (IAS 37 §86, RJ 252 §407, REQ-PROV-008, REQ-PROV-015).",
+            "example": "Het belastingdienst heeft een voorstellingscorrectie opgelegd. Naar schatting van onze belastingadviseur is er 30% kans dat deze in hoger beroep zal worden gehandhaafd. Geen reliable estimate beschikbaar.",
+            "title": "Disclosure Narrative"
+          },
+          "relatedParty": {
+            "type": "string",
+            "description": "FK to the related party / organisation, when applicable (REQ-PROV-015).",
+            "nullable": true,
+            "title": "Related Party"
+          },
+          "linkedExpertReport": {
+            "type": "string",
+            "description": "FK into docudesk for the expert / legal report supporting the disclosure.",
+            "nullable": true,
+            "title": "Linked Expert Report"
+          },
+          "status": {
+            "type": "string",
+            "description": "Disclosure lifecycle (REQ-PROV-008).",
+            "enum": [
+              "draft",
+              "published"
+            ],
+            "default": "draft",
+            "example": "draft",
+            "title": "Status"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Editable. Contingent liability under review."
+            },
+            "published": {
+              "label": "Published",
+              "description": "Included in jaarrekening toelichting 'Niet uit de balans blijkende verplichtingen'."
+            }
+          },
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published",
+              "label": "Publish to jaarrekening",
+              "description": "Publish the contingent liability into the jaarrekening notes (REQ-PROV-015)."
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Contingent Liability is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "PensioenvoorzieningDetail": {
+        "slug": "PensioenvoorzieningDetail",
+        "icon": "AccountCashOutline",
+        "version": "0.1.0",
+        "title": "Pensioenvoorziening Detail",
+        "description": "Type-specific detail register for eigen-beheer pensioenvoorzieningen (REQ-PROV-014). FK back to a Provision with provisionType=pensioen. Detailed actuariële measurement (PUC, mortality, deelnemerstelling) is handled by bookkeeping-pension-ias19; this register captures the cross-reference and the high-level assumptions visible from the IAS 37 perspective.",
+        "x-schema-org": "schema:Thing",
+        "x-spec": "openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md",
+        "type": "object",
+        "required": [
+          "provision",
+          "pensionScheme",
+          "actuarialMethod",
+          "discountRate",
+          "mortalityTable",
+          "participantCount",
+          "administrationId"
+        ],
+        "properties": {
+          "provision": {
+            "type": "string",
+            "description": "FK to the parent Provision (REQ-PROV-014).",
+            "example": "provision-pensioen-1",
+            "title": "Provision"
+          },
+          "pensionScheme": {
+            "type": "string",
+            "description": "Free-form regeling description (e.g. 'DB eigen beheer').",
+            "example": "DB eigen beheer",
+            "title": "Pension Scheme"
+          },
+          "actuarialMethod": {
+            "type": "string",
+            "description": "Actuarial method (PUC mandatory for DB plans per IAS 19, REQ-PROV-014).",
+            "enum": [
+              "PUC"
+            ],
+            "example": "PUC",
+            "title": "Actuarial Method"
+          },
+          "discountRate": {
+            "type": "number",
+            "description": "Disconteringsvoet per IAS 19 (market-based, AA corporates) (REQ-PROV-014).",
+            "example": 0.0203,
+            "title": "Discount Rate"
+          },
+          "salaryGrowthAssumption": {
+            "type": "number",
+            "description": "Salary growth assumption used in the actuariële berekening.",
+            "nullable": true,
+            "title": "Salary Growth Assumption"
+          },
+          "mortalityTable": {
+            "type": "string",
+            "description": "Mortality table reference (e.g. AG-Prognosetafel year) (REQ-PROV-014).",
+            "example": "AG-Prognosetafel 2026",
+            "title": "Mortality Table"
+          },
+          "participantCount": {
+            "type": "integer",
+            "description": "Number of active deelnemers (REQ-PROV-014).",
+            "minimum": 0,
+            "example": 10,
+            "title": "Participant Count"
+          },
+          "linkedActuaryReport": {
+            "type": "string",
+            "description": "FK into docudesk for the actuariële rapport.",
+            "nullable": true,
+            "title": "Linked Actuary Report"
+          },
+          "linkedPensionPlan": {
+            "type": "string",
+            "description": "FK to a PensionPlan in bookkeeping-pension-ias19 when the entity uses both registers.",
+            "nullable": true,
+            "title": "Linked Pension Plan"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Pensioenvoorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "JubileumvoorzieningDetail": {
+        "slug": "JubileumvoorzieningDetail",
+        "icon": "TrophyOutline",
+        "version": "0.1.0",
+        "title": "Jubileumvoorziening Detail",
+        "description": "Type-specific detail register for CAO-jubileumuitkeringen (25- en 40-jaars) per RJ 252 §360 (REQ-PROV-011). FK back to a Provision with provisionType=jubileum. Records the CAO reference + populatie + turnover-gecorrigeerde milestone probability.",
+        "x-schema-org": "schema:Thing",
+        "x-spec": "openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md",
+        "type": "object",
+        "required": [
+          "provision",
+          "caoReference",
+          "eligibleEmployees",
+          "averageServiceYears",
+          "probabilityOfReachingMilestone",
+          "actuarialModel",
+          "administrationId"
+        ],
+        "properties": {
+          "provision": {
+            "type": "string",
+            "description": "FK to the parent Provision (REQ-PROV-011).",
+            "example": "provision-jubileum-1",
+            "title": "Provision"
+          },
+          "caoReference": {
+            "type": "string",
+            "description": "CAO reference text (sector + article) (REQ-PROV-011).",
+            "example": "CAO Metaal & Techniek art. 8.3 jubileumuitkering",
+            "title": "Cao Reference"
+          },
+          "eligibleEmployees": {
+            "type": "integer",
+            "description": "Number of employees eligible for a jubileumuitkering (REQ-PROV-011).",
+            "minimum": 0,
+            "example": 145,
+            "title": "Eligible Employees"
+          },
+          "averageServiceYears": {
+            "type": "number",
+            "description": "Average service years across the eligible population (REQ-PROV-011).",
+            "example": 18.0,
+            "title": "Average Service Years"
+          },
+          "probabilityOfReachingMilestone": {
+            "type": "number",
+            "description": "Turnover-gecorrigeerde probability of reaching the milestone (REQ-PROV-011).",
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.75,
+            "title": "Probability Of Reaching Milestone"
+          },
+          "actuarialModel": {
+            "type": "string",
+            "description": "Methodology used to derive the best estimate (e.g. 'Simplified: active × accrual rate × avg-salary' or 'PUC') (REQ-PROV-011).",
+            "example": "Simplified: active × accrual rate × avg-salary",
+            "title": "Actuarial Model"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Jubileumvoorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "HerstructureringsvoorzieningDetail": {
+        "slug": "HerstructureringsvoorzieningDetail",
+        "icon": "OfficeBuildingMarkerOutline",
+        "version": "0.1.0",
+        "title": "Herstructureringsvoorziening Detail",
+        "description": "Type-specific detail register for herstructureringsvoorzieningen (IAS 37 §72–83 / RJ 252 §327–336, REQ-PROV-005). FK back to a Provision with provisionType=herstructurering. detailedPlanDate MUST be on or before balansdatum and planCommunicatedTo MUST list the affected parties; the activation guard enforces both before status=active.",
+        "x-schema-org": "schema:Thing",
+        "x-spec": "openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md",
+        "type": "object",
+        "required": [
+          "provision",
+          "detailedPlanDate",
+          "planCommunicatedTo",
+          "affectedEmployees",
+          "expectedRedundancyPayments",
+          "administrationId"
+        ],
+        "properties": {
+          "provision": {
+            "type": "string",
+            "description": "FK to the parent Provision (REQ-PROV-005).",
+            "example": "provision-herstructurering-1",
+            "title": "Provision"
+          },
+          "detailedPlanDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the detailed plan was finalised. MUST be ≤ balansdatum per IAS 37 §72 (REQ-PROV-005).",
+            "example": "2025-09-15",
+            "title": "Detailed Plan Date"
+          },
+          "balanceDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Balansdatum against which the §72 timeliness criterion is evaluated (REQ-PROV-005). The activation guard compares detailedPlanDate against this date.",
+            "nullable": true,
+            "example": "2025-12-31",
+            "title": "Balance Date"
+          },
+          "planCommunicatedTo": {
+            "type": "array",
+            "description": "List of affected parties to whom the plan has been communicated (HR, unions, employee reps) (REQ-PROV-005).",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "HR",
+              "ondernemingsraad",
+              "vakbonden"
+            ],
+            "title": "Plan Communicated To"
+          },
+          "affectedEmployees": {
+            "type": "integer",
+            "description": "Number of employees affected by the restructuring (REQ-PROV-005).",
+            "minimum": 0,
+            "example": 38,
+            "title": "Affected Employees"
+          },
+          "expectedRedundancyPayments": {
+            "type": "number",
+            "description": "Expected redundancy / severance payments in EUR (REQ-PROV-005).",
+            "example": 500000.0,
+            "title": "Expected Redundancy Payments"
+          },
+          "expectedLeaseExitCosts": {
+            "type": "number",
+            "description": "Expected onerous-lease exit costs in EUR (IFRS 16, REQ-PROV-005).",
+            "nullable": true,
+            "default": 0,
+            "title": "Expected Lease Exit Costs"
+          },
+          "expectedOnerousContractCosts": {
+            "type": "number",
+            "description": "Expected onerous-contract costs (non-lease) in EUR (REQ-PROV-005).",
+            "nullable": true,
+            "default": 0,
+            "title": "Expected Onerous Contract Costs"
+          },
+          "reorganisationPlanDocument": {
+            "type": "string",
+            "description": "FK into docudesk for the reorganisatieplan document (REQ-PROV-005).",
+            "nullable": true,
+            "title": "Reorganisatieplan Document"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Herstructureringsvoorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "GarantievoorzieningDetail": {
+        "slug": "GarantievoorzieningDetail",
+        "icon": "ShieldCheckOutline",
+        "version": "0.1.0",
+        "title": "Garantievoorziening Detail",
+        "description": "Type-specific detail register for garantievoorzieningen (REQ-PROV-012). FK back to a Provision with provisionType=garantie. Best estimate is derived from historical claim rates × revenue base per product category.",
+        "x-schema-org": "schema:Thing",
+        "x-spec": "openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md",
+        "type": "object",
+        "required": [
+          "provision",
+          "productCategories",
+          "historicalClaimRate",
+          "warrantyPeriodMonths",
+          "revenueBaseInPeriod",
+          "administrationId"
+        ],
+        "properties": {
+          "provision": {
+            "type": "string",
+            "description": "FK to the parent Provision (REQ-PROV-012).",
+            "example": "provision-garantie-1",
+            "title": "Provision"
+          },
+          "productCategories": {
+            "type": "array",
+            "description": "Product categories covered by the warranty provision (REQ-PROV-012).",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "consumer-electronics",
+              "appliances"
+            ],
+            "title": "Product Categories"
+          },
+          "historicalClaimRate": {
+            "type": "number",
+            "description": "Historical claim rate as a decimal fraction of revenue (REQ-PROV-012).",
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.015,
+            "title": "Historical Claim Rate"
+          },
+          "averageClaimAmount": {
+            "type": "number",
+            "description": "Average claim amount in EUR (REQ-PROV-012).",
+            "nullable": true,
+            "title": "Average Claim Amount"
+          },
+          "warrantyPeriodMonths": {
+            "type": "integer",
+            "description": "Warranty period in months (REQ-PROV-012).",
+            "minimum": 0,
+            "example": 12,
+            "title": "Warranty Period Months"
+          },
+          "revenueBaseInPeriod": {
+            "type": "number",
+            "description": "Revenue base in EUR over which the historical claim rate applies (REQ-PROV-012).",
+            "example": 12000000.0,
+            "title": "Revenue Base In Period"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Garantievoorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "MilieuvoorzieningDetail": {
+        "slug": "MilieuvoorzieningDetail",
+        "icon": "LeafCircleOutline",
+        "version": "0.1.0",
+        "title": "Milieuvoorziening Detail",
+        "description": "Type-specific detail register for milieuvoorzieningen (REQ-PROV-013). FK back to a Provision with provisionType=milieu. Captures contamination location, regulatory framework (Wbb / Wm / EU-IED), expert consultant, legally required completion date and whether the obligation includes an ontmantelingsverplichting for IAS 16 §16(c) component activation.",
+        "x-schema-org": "schema:Thing",
+        "x-spec": "openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md",
+        "type": "object",
+        "required": [
+          "provision",
+          "contaminationLocation",
+          "regulatoryFramework",
+          "cleanupEstimate",
+          "expertConsultant",
+          "legallyRequiredCompletionDate",
+          "decommissioningCommitment",
+          "administrationId"
+        ],
+        "properties": {
+          "provision": {
+            "type": "string",
+            "description": "FK to the parent Provision (REQ-PROV-013).",
+            "example": "provision-milieu-1",
+            "title": "Provision"
+          },
+          "contaminationLocation": {
+            "type": "string",
+            "description": "Location of the contamination (REQ-PROV-013).",
+            "example": "Rijnmond facility",
+            "title": "Contamination Location"
+          },
+          "regulatoryFramework": {
+            "type": "string",
+            "description": "Governing regulatory framework (REQ-PROV-013).",
+            "enum": [
+              "Wbb",
+              "Wm",
+              "EU-IED"
+            ],
+            "example": "Wbb",
+            "title": "Regulatory Framework"
+          },
+          "cleanupEstimate": {
+            "type": "number",
+            "description": "Cleanup estimate in EUR per the expert report (REQ-PROV-013).",
+            "example": 800000.0,
+            "title": "Cleanup Estimate"
+          },
+          "expertConsultant": {
+            "type": "string",
+            "description": "Expert consultant / bureau name (REQ-PROV-013).",
+            "example": "Bureau Milieutechniek B.V.",
+            "title": "Expert Consultant"
+          },
+          "legallyRequiredCompletionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Legally required completion date for the remediation (REQ-PROV-013).",
+            "example": "2026-12-31",
+            "title": "Legally Required Completion Date"
+          },
+          "phasedExecutionPlan": {
+            "type": "string",
+            "description": "Free-form description of the phased execution plan (REQ-PROV-013).",
+            "nullable": true,
+            "title": "Phased Execution Plan"
+          },
+          "decommissioningCommitment": {
+            "type": "boolean",
+            "description": "Whether the obligation includes an ontmantelingsverplichting, in which case the cost is capitalised as a component of MVA per IAS 16 §16(c) / IFRS 16 (REQ-PROV-013).",
+            "default": false,
+            "example": false,
+            "title": "Ontmantelings Verplichting"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Milieuvoorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "ClaimsVoorzieningDetail": {
+        "slug": "ClaimsVoorzieningDetail",
+        "icon": "Gavel",
+        "version": "0.1.0",
+        "title": "Claims Voorziening Detail",
+        "description": "Type-specific detail register for claims- en geschillen-voorzieningen (IAS 37 §37, REQ-PROV-006). FK back to a Provision with provisionType=claims. legalAdviceMemo is mandatory and stored under restricted access (CFO / audit committee / accountant only) to preserve legal privilege. The activation guard blocks status=active when the memo FK is missing.",
+        "x-schema-org": "schema:LegalAction",
+        "x-spec": "openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md",
+        "type": "object",
+        "required": [
+          "provision",
+          "caseReference",
+          "court",
+          "legalCounsel",
+          "claimType",
+          "plaintiffOrClaimant",
+          "amountClaimed",
+          "bestEstimateSettlement",
+          "legalAdviceMemo",
+          "administrationId"
+        ],
+        "properties": {
+          "provision": {
+            "type": "string",
+            "description": "FK to the parent Provision (REQ-PROV-006).",
+            "example": "provision-claims-1",
+            "title": "Provision"
+          },
+          "caseReference": {
+            "type": "string",
+            "description": "Court docket / rolnummer (REQ-PROV-006).",
+            "example": "2025/12345",
+            "title": "Case Reference"
+          },
+          "court": {
+            "type": "string",
+            "description": "Court / tribunal hearing the case (REQ-PROV-006).",
+            "example": "Rechtbank Rotterdam",
+            "title": "Court"
+          },
+          "legalCounsel": {
+            "type": "string",
+            "description": "Legal counsel firm or advocate (REQ-PROV-006).",
+            "example": "Advocatenkantoor De Vrieze",
+            "title": "Legal Counsel"
+          },
+          "claimType": {
+            "type": "string",
+            "description": "Type of claim (REQ-PROV-006).",
+            "enum": [
+              "contractbreuk",
+              "productaansprakelijkheid",
+              "arbeidsrecht",
+              "IE-inbreuk",
+              "belasting",
+              "other"
+            ],
+            "example": "productaansprakelijkheid",
+            "title": "Claim Type"
+          },
+          "plaintiffOrClaimant": {
+            "type": "string",
+            "description": "Plaintiff / claimant name (REQ-PROV-006).",
+            "example": "Klant X",
+            "title": "Plaintiff Or Claimant"
+          },
+          "amountClaimed": {
+            "type": "number",
+            "description": "Amount claimed by the plaintiff in EUR (REQ-PROV-006).",
+            "example": 1500000.0,
+            "title": "Amount Claimed"
+          },
+          "bestEstimateSettlement": {
+            "type": "number",
+            "description": "Best estimate of the settlement amount in EUR per the legal advice memo (REQ-PROV-006).",
+            "example": 700000.0,
+            "title": "Best Estimate Settlement"
+          },
+          "legalAdviceMemo": {
+            "type": "string",
+            "description": "FK into docudesk for the legal advice memo. Stored under restricted access (CFO, audit committee, accountant only) per attorney-client privilege (REQ-PROV-006). Required: the activation guard blocks status=active when missing.",
+            "example": "docudesk-file-legal-memo-001",
+            "title": "Legal Advice Memo"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Claims Voorziening Detail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "ProvisionDisclosureTabel": {
+        "slug": "ProvisionDisclosureTabel",
+        "icon": "TableLarge",
+        "version": "0.1.0",
+        "title": "Provision Disclosure Table",
+        "description": "Auto-generated jaarrekening disclosure table per IAS 37 §85 / RJ 252 §408 (REQ-PROV-008). Aggregates Provision + ProvisionMovement + ContingentLiability records into a single structured record per period per provisionType (header: count + total opening; movement table per Provision; contingent-liability section; materiality narrative > EUR 100K / > 1% balanstotaal; sensitivity narrative from rangeLow / rangeHigh).",
+        "x-schema-org": "schema:Table",
+        "x-spec": "openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md",
+        "type": "object",
+        "required": [
+          "period",
+          "provisionType",
+          "count",
+          "openingBalance",
+          "additions",
+          "used",
+          "released",
+          "unwinding",
+          "estimatesChange",
+          "closingBalance",
+          "narrative",
+          "administrationId"
+        ],
+        "properties": {
+          "period": {
+            "type": "string",
+            "description": "Period identifier (REQ-PROV-008).",
+            "example": "2026-12",
+            "title": "Period"
+          },
+          "provisionType": {
+            "type": "string",
+            "description": "Aggregation key — provision type (REQ-PROV-008).",
+            "example": "guarantee",
+            "title": "Provision Type"
+          },
+          "count": {
+            "type": "integer",
+            "description": "Number of provisions of this type in the period (REQ-PROV-008).",
+            "minimum": 0,
+            "example": 1,
+            "title": "Count"
+          },
+          "openingBalance": {
+            "type": "number",
+            "description": "Sum of openingBalance across all ProvisionMovement records of this type (REQ-PROV-008).",
+            "example": 0.0,
+            "title": "Opening Balance"
+          },
+          "additions": {
+            "type": "number",
+            "description": "Sum of additions across all ProvisionMovement records of this type (REQ-PROV-008).",
+            "example": 120000.0,
+            "title": "Additions"
+          },
+          "used": {
+            "type": "number",
+            "description": "Sum of usedDuringPeriod across all ProvisionMovement records of this type (REQ-PROV-008).",
+            "example": 45000.0,
+            "title": "Used"
+          },
+          "released": {
+            "type": "number",
+            "description": "Sum of releasedUnused across all ProvisionMovement records of this type (REQ-PROV-008).",
+            "example": 0.0,
+            "title": "Released"
+          },
+          "unwinding": {
+            "type": "number",
+            "description": "Sum of unwindingOfDiscount across all ProvisionMovement records of this type (REQ-PROV-008).",
+            "example": 0.0,
+            "title": "Unwinding"
+          },
+          "estimatesChange": {
+            "type": "number",
+            "description": "Sum of effectOfChangeInEstimate across all ProvisionMovement records of this type (REQ-PROV-008, REQ-PROV-019).",
+            "example": 0.0,
+            "title": "Estimates Change"
+          },
+          "closingBalance": {
+            "type": "number",
+            "description": "Sum of closingBalance across all ProvisionMovement records of this type (REQ-PROV-008).",
+            "example": 75000.0,
+            "title": "Closing Balance"
+          },
+          "narrative": {
+            "type": "string",
+            "description": "Materiality + sensitivity narrative for the jaarrekening note (REQ-PROV-002, REQ-PROV-008, REQ-PROV-018).",
+            "example": "Garantievoorziening EUR 75K per 31 december 2026, waarvan EUR 45K in 2026 is gebruikt voor reparaties. Sensitivity EUR 80K–150K op basis van 1.0%–2.5% claim-rate variantie.",
+            "title": "Narrative"
+          },
+          "contingentLiabilitySection": {
+            "type": "string",
+            "description": "Narrative covering ContingentLiability disclosures for this type (REQ-PROV-015).",
+            "nullable": true,
+            "title": "Contingent Liability Section"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-aggregations": {
+          "provisionDisclosureGeneration": {
+            "description": "Declarative shape of the disclosure-table generation (REQ-PROV-008). Joins ProvisionMovement records per provisionType per period, computes the sum buckets and emits one ProvisionDisclosureTabel per (period, provisionType). When the engine cannot template the merge, the same arithmetic is rebuilt from ProvisionMovement + ContingentLiability via the real ObjectService API.",
+            "join": {
+              "from": "ProvisionMovement.provision",
+              "through": "Provision",
+              "on": "Provision.provisionType",
+              "select": [
+                "Provision.provisionType",
+                "Provision.rangeLow",
+                "Provision.rangeHigh"
+              ]
+            },
+            "groupBy": [
+              "Provision.provisionType",
+              "ProvisionMovement.period"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "openingBalance",
+                "as": "openingBalance"
+              },
+              {
+                "metric": "sum",
+                "field": "additions",
+                "as": "additions"
+              },
+              {
+                "metric": "sum",
+                "field": "usedDuringPeriod",
+                "as": "used"
+              },
+              {
+                "metric": "sum",
+                "field": "releasedUnused",
+                "as": "released"
+              },
+              {
+                "metric": "sum",
+                "field": "unwindingOfDiscount",
+                "as": "unwinding"
+              },
+              {
+                "metric": "sum",
+                "field": "effectOfChangeInEstimate",
+                "as": "estimatesChange"
+              },
+              {
+                "metric": "sum",
+                "field": "closingBalance",
+                "as": "closingBalance"
+              },
+              {
+                "metric": "count",
+                "field": "provision",
+                "as": "count"
+              }
+            ],
+            "from": "ProvisionMovement"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Provision Disclosure Table is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Provision",
+          "slug": "provision-garantie-standaard-2026"
+        },
+        "provisionType": "guarantee",
+        "description": "Waarborg op verkochte goederen 2026",
+        "recognitionDate": "2026-01-01",
+        "recognitionRationale": "Garantieclausule in algemene voorwaarden + 1.5% historische claim-rate (5-jaar gemiddelde)",
+        "legalOrConstructiveObligation": "constructive",
+        "obligatingEvent": "Verkoop goederen met waarborg 12 maanden per contractvoorwaarden",
+        "probabilityOfOutflow": 0.8,
+        "bestEstimate": 120000.0,
+        "bestEstimateRationale": "EUR 12M omzet × 1.5% historische claim-rate = EUR 180K, minus reeds geleverde reparaties YTD",
+        "rangeLow": 80000.0,
+        "rangeHigh": 150000.0,
+        "expectedTiming": {
+          "shortTerm": 120000.0,
+          "mediumTerm": 0.0,
+          "longTerm": 0.0
+        },
+        "discountRateApplied": null,
+        "presentationOnBalanceSheet": "current",
+        "linkedAccount": "1900",
+        "status": "draft",
+        "administrationId": "adm-template"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Provision",
+          "slug": "provision-milieu-bodemsanering-rijnmond"
+        },
+        "provisionType": "environment",
+        "description": "Bodemsanering verontreinigde locatie Rijnmond per Wbb",
+        "recognitionDate": "2025-01-01",
+        "recognitionRationale": "Bodemsaneringsrapport Wbb fase 2 vastgesteld; saneringsplicht onbetwist",
+        "legalOrConstructiveObligation": "legal",
+        "obligatingEvent": "Bodemsaneringsrapport d.d. 2024-09-15 door Bureau Milieutechniek B.V. stelt verplichting vast",
+        "probabilityOfOutflow": 0.95,
+        "bestEstimate": 800000.0,
+        "bestEstimateRationale": "Expert-rapport Bureau Milieutechniek B.V. fase 2 saneringskostenraming EUR 800K (range EUR 600K–1.4M)",
+        "rangeLow": 600000.0,
+        "rangeHigh": 1400000.0,
+        "expectedTiming": {
+          "shortTerm": 150000.0,
+          "mediumTerm": 350000.0,
+          "longTerm": 300000.0
+        },
+        "discountRateApplied": 0.03,
+        "discountedValue": 731000.0,
+        "presentationOnBalanceSheet": "split",
+        "linkedAccount": "1901",
+        "status": "draft",
+        "expert": "Bureau Milieutechniek B.V.",
+        "priorYearBalanceTotal": 70000000.0,
+        "administrationId": "adm-template"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Provision",
+          "slug": "provision-claims-productaansprakelijkheid-x"
+        },
+        "provisionType": "claims",
+        "description": "Rechtszaak: klant vs ons n.a.v. productschade",
+        "recognitionDate": "2025-06-01",
+        "recognitionRationale": "Lopende rechtszaak met 60% kans op uitkering per legal advice memo",
+        "legalOrConstructiveObligation": "legal",
+        "obligatingEvent": "Rechtsvordering ingesteld 2025-05-15, rolnummer 2025/12345",
+        "probabilityOfOutflow": 0.6,
+        "bestEstimate": 500000.0,
+        "bestEstimateRationale": "Legal advice memo Advocatenkantoor De Vrieze 2025-07-15: beste schatting EUR 500K (range EUR 300K–700K)",
+        "rangeLow": 300000.0,
+        "rangeHigh": 700000.0,
+        "expectedTiming": {
+          "shortTerm": 0.0,
+          "mediumTerm": 500000.0,
+          "longTerm": 0.0
+        },
+        "discountRateApplied": null,
+        "presentationOnBalanceSheet": "current",
+        "linkedAccount": "1902",
+        "status": "draft",
+        "expert": "Advocatenkantoor De Vrieze",
+        "priorYearBalanceTotal": 70000000.0,
+        "administrationId": "adm-template"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ContingentLiability",
+          "slug": "contingent-liability-fiscaal-geschil-ib"
+        },
+        "description": "Geschil belastingdienst n.a.v. aftrekpostbepaling jaren 2022–2023",
+        "obligationType": "legal",
+        "nature": "Fiscaal geschil belastingdienst",
+        "estimatedAmount": 400000.0,
+        "probabilityCategory": "possible",
+        "expectedTiming": "Uitspraak hoger beroep verwacht Q4 2026",
+        "disclosureNarrative": "Het belastingdienst heeft een voorstellingscorrectie vóór belasting opgelegd. Naar schatting van onze belastingadviseur is er 30% kans dat deze in hoger beroep zal worden gehandhaafd. Geen reliable estimate beschikbaar.",
+        "status": "draft",
+        "administrationId": "adm-template"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ContingentLiability",
+          "slug": "contingent-liability-borgstelling-dochter"
+        },
+        "description": "Onherroepelijke borgtocht voor bankkrediet dochtermaatschappij NV B.V.",
+        "obligationType": "legal",
+        "nature": "Borgstelling",
+        "estimatedAmount": null,
+        "probabilityCategory": "remote",
+        "expectedTiming": "Lening vervaldag 2027",
+        "disclosureNarrative": "Wij hebben als borgtocht opgefungeerd voor een bankkrediet van EUR 2.5M van dochtermaatschappij. Op balansdatum geen aanwijzingen voor default; waarschijnlijkheid remote.",
+        "status": "draft",
+        "administrationId": "adm-template"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ProvisionMovement",
+          "slug": "provision-movement-garantie-2026-12"
+        },
+        "provision": "provision-garantie-standaard-2026",
+        "period": "2026-12",
+        "openingBalance": 0.0,
+        "additions": 120000.0,
+        "additionsAcquired": 0.0,
+        "usedDuringPeriod": 45000.0,
+        "releasedUnused": 0.0,
+        "unwindingOfDiscount": 0.0,
+        "effectOfChangeInDiscountRate": 0.0,
+        "effectOfChangeInEstimate": 0.0,
+        "translationDifferences": 0.0,
+        "closingBalance": 75000.0,
+        "linkedJournalEntries": [],
+        "narrative": "Sjabloon: vul de GL-journaalposten in voor dotatie EUR 120K en gebruikt EUR 45K. Pas closingBalance aan na herwaardering eind 2026.",
+        "status": "open",
+        "administrationId": "adm-template"
+      }
+    ]
+  }
+}

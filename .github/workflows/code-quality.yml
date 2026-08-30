@@ -2,10 +2,150 @@ name: Code Quality
 
 on:
   push:
-    branches: [main, development, feature/**, bugfix/**, hotfix/**]
+    # DEFAULT BRANCHES ONLY. `pull_request` below carries every other branch.
+    #
+    # This was an allow-list of branch prefixes, and that was a gate with a
+    # SILENT hole: a branch matching nothing got no CI at all, and its last
+    # visible status was whatever it inherited — indistinguishable, on every
+    # dashboard, from a branch that passed. Two live examples, both found
+    # 2026-08-14: `perf/**` was uncovered in openconnector, where a merge
+    # carrying unresolved conflict markers and 84 failing tests was pushed and
+    # nothing ran; and `feat/**` was uncovered in openregister, because the
+    # list said `feature/**`.
+    #
+    # The comment that stood here said adding prefixes was not the durable fix,
+    # and that the durable fix was to let the pull_request trigger gate it.
+    # THIS IS THAT CHANGE.
+    #
+    # What forced it now: a push to a branch with an open PR ran the SAME 34
+    # jobs TWICE on the same commit. `concurrency` cannot dedupe them — the
+    # group is suffixed by event name deliberately (.github#540: a
+    # default-branch push carries jobs a PR run does not, and a dispatch must
+    # not be cancellable by a standing release PR), so the two events sit in
+    # different lanes BY DESIGN and both run to completion. Measured fleet-wide
+    # 2026-08-25..27, 659 of 2,106 Code Quality runs were that duplicate — 31%
+    # of the fleet's most expensive workflow, re-deciding a commit another run
+    # was already deciding. The account ceiling is 60 concurrent jobs (Team
+    # plan); the fleet was measured at 53 running with 1,528 jobs queued behind
+    # them, the oldest run 7 hours old and not yet started.
+    #
+    # NO BRANCH LOSES ITS FLOOR. merge-hygiene.yml runs on `'**'` — every
+    # branch anyone pushes, no prefix list to forget — and it is the check
+    # `development` actually requires. That is the smoke alarm; this workflow
+    # is the fire brigade and belongs on the PR. Of 668 feature-branch push
+    # runs in that window, only NINE were on a branch with no PR run beside
+    # them.
+    #
+    # The default branches STAY: their push runs are not duplicates, they are
+    # the only carrier of Coverage Baseline Check, SBOM and Features Extract,
+    # none of which run on a pull_request event.
+    branches:
+      - main
+      - development
   pull_request:
     branches: [main, master, development, beta]
   workflow_dispatch:
+
+# Deduplicating a `push` run against the `pull_request` run for the SAME head
+# ref is the point of this block, and for a feature branch it is exactly right:
+# two runs of identical jobs, one of them wasted.
+#
+# It is wrong for `main` and `development`, because the push run there is NOT a
+# duplicate — it is the only carrier of the push-only jobs: "Coverage Baseline
+# Check" (`github.event_name == 'push'`), "SBOM" and "Features Extract". And
+# those two branches always have an open PR whose `head_ref` IS the branch
+# name: the standing "Release: merge development into beta" (#63 here).
+# `github.head_ref` on that PR run and `github.ref_name` on the push run both
+# render `development`, so both landed in the identical group
+# `quality-development`, and `cancel-in-progress` killed whichever started
+# first — always the push run, by a few seconds.
+#
+# Measured on this repo: 3 of the last 20 `development` push runs were
+# cancelled within ~80s of starting — 31045614488 (79s), 30880585906 (37s),
+# 30822103065 (51s). That duration is the discriminator: the shared workflow's
+# `timeout-minutes: 45` cancellation lands at 45m16s–45m28s, so these are
+# concurrency kills.
+#
+# On the surviving PR run "Coverage Baseline Check" reports `skipped`, which is
+# CORRECT for a pull_request event and renders exactly like a pass. So the gate
+# appears on both runs and executes on neither — a dead gate of the
+# permanently-pending shape.
+#
+# Suffixing only the default-branch push keeps feature-branch dedup untouched
+# (`quality-feature/x` for both events, exactly as before) and gives the two
+# default branches' push runs a lane of their own.
+#
+# Proven in openconnector#1158: its first-ever completed `development` push run
+# (31048998594) executed Coverage Baseline Check, SBOM and Features Extract.
+concurrency:
+  # SUFFIXED BY EVENT NAME, not just by `-push`.
+  #
+  # The previous expression gave a push on `development` its own lane
+  # (`-push`) but left EVERYTHING ELSE sharing `quality-development`. On this
+  # repo that is not a quiet lane: `Sync to Beta` keeps a PR open whose
+  # head_ref IS `development`, so its run computes `quality-development` too
+  # and is re-triggered on every merge.
+  #
+  # A `workflow_dispatch` therefore landed in the same group as that PR and
+  # was cancelled by it. Observed 2026-08-21: dispatch 32487948678 on
+  # `development` cancelled by pull_request run 32490160836, head_branch
+  # `development`, 25 minutes later. A run someone deliberately asked for
+  # could essentially never complete on this repo.
+  #
+  # That matters beyond ad-hoc verification: the fleet gate-drift sweep
+  # (.github#523) dispatches per app with `--ref development`, so under the
+  # old group its runs would be cancelled here and report neither pass nor
+  # fail — a routine that produces no verdict is indistinguishable from one
+  # that never ran.
+  #
+  # This is hermiq's form, already in use there. Pull requests keep the bare
+  # group (so a PR still supersedes its own earlier run); push, dispatch and
+  # schedule each get their own lane.
+  #
+  # THE BRANCH RESTRICTION IS GONE, because it contradicted the sentence above.
+  #
+  # The suffix used to apply only when `ref_name` was `main` or `development`,
+  # so on every OTHER branch push and pull_request computed the SAME group —
+  # and `cancel-in-progress` made them kill each other. That became reachable
+  # when the push allow-list widened on 2026-08-14 to include `feat/**`,
+  # `fix/**`, `perf/**`, `refactor/**` and `chore/**`: those branches now get
+  # both a push run and a pull_request run for one commit.
+  #
+  # `quality / Quality Report` is a `needs:`-gated aggregator and reports
+  # FAILURE when its dependencies are CANCELLED, so the collision shows up as a
+  # red gate on a PR that was never actually evaluated — and re-running collides
+  # the same way. Measured on openregister#2821: a push run left queued and a
+  # pull_request run cancelled, 18 seconds apart, on one commit.
+  #
+  # A branch name is not a unique lane when two event types can each produce a
+  # run for it, so the event is now always part of the key.
+  group: quality-${{ github.head_ref || github.ref_name }}${{ github.event_name != 'pull_request' && format('-{0}', github.event_name) || '' }}
+
+  # PUSH RUNS ARE NOT CANCELLED — and this has to be said HERE, not only in the
+  # shared workflow. .github#597 set `cancel-in-progress` on quality.yml itself,
+  # but a caller's own concurrency cancels the whole run before the called
+  # workflow's setting can apply, so that fix reached only the apps that declare
+  # no concurrency of their own. Measured 2026-08-28 over push runs on
+  # `development` since #597: 0 of 11 cancelled where the caller was silent, 7 of
+  # 13 (54%) cancelled where the caller still said `true`.
+  #
+  # An integration branch needs a verdict per commit: the run being cancelled is
+  # the only thing that would have said whether what just landed is sound, and
+  # its replacement is cancelled too. `pull_request` keeps cancelling, where
+  # superseding really is correct.
+  cancel-in-progress: ${{ github.event_name != 'push' }}
+
+# Permission CEILING for the called quality pipeline. GitHub statically
+# validates the called workflow's declared job permissions against this
+# grant — even for jobs that are disabled — so it must cover the maximum
+# any nested job declares: journeydoc-capture (contents+actions write),
+# update-baseline / features-extract (contents write), and the Quality
+# Report PR comment (issues / pull-requests write).
+permissions:
+  contents: write
+  actions: write
+  issues: write
+  pull-requests: write
 
 jobs:
   quality:
@@ -14,14 +154,284 @@ jobs:
       app-name: shillinq
       php-version: "8.3"
       php-test-versions: '["8.3", "8.4"]'
-      nextcloud-test-refs: '["stable31", "stable32", "stable33"]'
+      # stable31 is REMOVED, not "dropped for coverage". `additional-apps` below
+      # installs openregister, which declares min-version="32" and therefore
+      # cannot install on NC31 — `occ app:enable openregister` fails with only a
+      # ::warning::, so the run continued WITHOUT its data layer and every
+      # /apps/openregister/... call returned Nextcloud's HTML 404 page. A stable31
+      # leg was testing an impossible configuration, so its red said nothing.
+      #
+      # Order mattered as much as membership: newman, playwright and
+      # journeydoc-capture all pin `fromJSON(inputs.nextcloud-test-refs)[0]`, so
+      # stable31 sitting FIRST meant all three ran entirely on the version
+      # openregister cannot load.
+      #
+      # THE LIST IS THE WHOLE DECLARED RANGE. appinfo/info.xml declares
+      # <nextcloud min-version="32" max-version="34"/>, so 32, 33 and 34 each get
+      # a leg. Adopting NC 34 by REPLACING the list left 32 and 33 advertised to
+      # the App Store with no job touching them — the declared floor became the
+      # untested end, which is the same drift as never testing 34, reversed.
+      nextcloud-test-refs: '["stable34", "stable32", "stable33"]'
       enable-psalm: true
       enable-phpstan: true
       enable-phpmetrics: true
       enable-frontend: true
       enable-eslint: true
       enable-phpunit: true
+
+      # ── E2E browser tests ────────────────────────────────────────────────
+      # `enable-playwright` / `playwright-test-path` are set ONCE, further down
+      # next to `playwright-seed-command` — the three belong together. They
+      # were briefly declared here as well; YAML allows no duplicate keys, and
+      # GitHub rejected the whole file for it (see the note on that block).
+
       enable-newman: true
-      # additional-apps: '[]'  # Add app dependencies here if needed, e.g.:
-      # additional-apps: '[{"repo":"Conduction/openregister","app":"openregister","ref":"main"}]'
+      # Shillinq delegates ALL object CRUD to OpenRegister (@conduction/nextcloud-vue
+      # store factories hit /apps/openregister/api/objects), so a Nextcloud without
+      # OpenRegister answers every integration request with a 404. That is why the
+      # Newman leg failed 48 of its 51 assertions the first time this workflow was
+      # able to resolve at all. NOTE: the example this replaced named the org
+      # `Conduction`, which does not exist — the same wrong-org bug that kept the
+      # whole workflow from resolving, hiding in a comment where a `uses:` grep
+      # could not see it.
+      #
+      # `ref` MUST be `development`, not `main`. shillinq's appinfo/routes.php
+      # is `return \OCA\OpenRegister\AppHost\Routes::standard(...)` — an
+      # unguarded static call to a class that lives ONLY on OpenRegister
+      # `development`. OpenRegister `main` is 0.2.19 and ships no `lib/AppHost`
+      # at all, so Nextcloud's router fataled while *including* routes.php and
+      # answered EVERY shillinq endpoint with 500 — "Class
+      # \"OCA\\OpenRegister\\AppHost\\Routes\" not found", thrown from
+      # appinfo/routes.php:39. That is the whole of the 45-of-51 Newman failure
+      # in run 30896861325: not one of those endpoints was ever reached.
+      # `development` is also what the rest of the fleet pins (opencatalogi,
+      # openconnector, procest, softwarecatalog, scholiq, pipelinq).
+      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"}]'
       enable-sbom: true
+
+      # ── E2E browser tests ────────────────────────────────────────────────
+      # `enable-playwright` was not present in this block at all, so it took
+      # its `false` default and "E2E Tests (Playwright)" has reported `skipped`
+      # on every run this repo has ever produced — rendered in the Quality
+      # Report identically to a pass. Meanwhile the repo ships 53 *.spec.ts
+      # files under tests/e2e/ and a root playwright.config.ts. None of it had
+      # ever executed in CI. There was no recorded reason; it was simply never
+      # wired.
+      #
+      # `playwright-test-path` does double duty in the shared workflow:
+      #   1. it is the directory the "Validate Playwright tests exist" step
+      #      counts *.spec.ts in;
+      #   2. it is the FIRST place the run step looks for a config —
+      #      `${playwright-test-path}/playwright.config.ts`, falling back to
+      #      the repo root only if that file is absent.
+      # We ship tests/e2e/playwright.config.ts precisely so lookup (2) hits it.
+      # The run step passes no `--project`, so the ROOT config would run all
+      # three of its projects — including `visual` (pixel baselines whose own
+      # header says a CI Linux runner cannot byte-match a dev-container
+      # baseline) and `docs-capture` (screenshot re-shoots, which have their
+      # own dedicated Journeydoc job). The tests/e2e config declares only the
+      # regression project. Its report/output stay under `tests/e2e/`, which the
+      # shared workflow's upload steps list explicitly
+      # (`server/apps/<app>/tests/e2e/playwright-report/` and
+      # `.../tests/e2e/test-results/`) alongside the app-root paths, so both are
+      # downloadable from the run.
+      #
+      # `additional-apps` above already pins OpenRegister @ development, which
+      # these specs need for the same reason the Newman leg does: shillinq
+      # delegates all object CRUD to /apps/openregister/api/objects.
+      #
+      # ⚠️ SET EXACTLY ONCE — here, and nowhere else in this file.
+      #
+      # These two keys have now been lost twice in one day, in opposite
+      # directions, by changes that could not see each other:
+      #
+      #   1. #564 and #440 each ADDED them to this block independently. YAML
+      #      forbids duplicate keys, so GitHub could not parse the file at all:
+      #      it created a run, marked it `failure`, and ran ZERO jobs. Fixed by
+      #      #856, which removed the copy further up.
+      #   2. #853 had branched before that fix, hit the same duplicate, and
+      #      resolved it by removing THIS copy instead. Net result: zero
+      #      declarations, `enable-playwright` fell back to its `false` default,
+      #      and `E2E Tests (Playwright)` reported **skipped** on development.
+      #
+      # Case 2 is the more dangerous one. A workflow that will not parse is at
+      # least loudly red; a skipped job renders in the Quality Report exactly
+      # like a passing one, so the 53 specs silently stopped running again with
+      # nothing on any dashboard to say so.
+      #
+      # `playwright-test-path` does double duty in the shared workflow: it is
+      # both the spec directory AND the first place the run step looks for a
+      # config (`${playwright-test-path}/playwright.config.ts`, falling back to
+      # the repo root). We ship tests/e2e/playwright.config.ts precisely so that
+      # lookup hits it — the run step passes no `--project`, so the ROOT config
+      # would additionally run `visual` (pixel baselines a CI runner cannot
+      # byte-match) and `docs-capture` (screenshot re-shoots with their own job).
+      enable-playwright: true
+      playwright-test-path: tests/e2e
+      # Runs after `php -S` is up and before the first spec, with cwd set to the
+      # Nextcloud server ROOT (hence the `apps/shillinq/` prefix).
+      #
+      # It is not optional decoration. Three things are broken on a freshly
+      # installed CI instance and each of them presents as "the specs are just
+      # failing", not as a setup fault:
+      #
+      #  1. NO REGISTER. `occ app:enable shillinq` runs an IRepairStep, which
+      #     has NO user session, so OpenRegister's RBAC denies the import
+      #     ("User 'Anonymous' does not have permission to 'create' objects").
+      #     `InitializeSettings::run()` catches \Throwable and downgrades it to
+      #     a warning, so `app:enable` still exits 0 with no register. The seed
+      #     forces the import over `POST /apps/shillinq/api/settings/load` as
+      #     the admin, then VERIFIES the register + schema slugs are readable
+      #     rather than trusting the 200.
+      #  2. NO PRETTY URLS. Without `htaccess.IgnoreFrontController=true` the
+      #     SPA's vue-router base is `/index.php/apps/shillinq` while the specs
+      #     navigate to `/apps/shillinq/…`; every deep link then falls through
+      #     `src/main.js`'s `/:pathMatch(.*)*` catch-all and silently lands on
+      #     the DASHBOARD. Nothing 404s, so the specs assert against the wrong
+      #     page and pass or fail for reasons unrelated to what they name.
+      #  3. THE FIRST-TIME SETUP WIZARD. `src/manifest.json` declares
+      #     `setup.enabled: true`; on a virgin instance the SPA renders a
+      #     "Set up this app" dialog OVER every page, so no spec can reach
+      #     `main`. It appeared in 138 of the 166 error contexts of run
+      #     30858234537. The specs' own `dismissWizard()` only closes
+      #     Nextcloud's `#firstrunwizard`, which is a DIFFERENT dialog. The seed
+      #     completes shillinq's wizard over its own admin API and gates on
+      #     `setup/status` reporting `completed: true`.
+      #
+      # ⚠️ The verification deliberately checks PascalCase schema slugs
+      # (`Account`, `GLTransaction`, …). All 493 shillinq schema slugs are
+      # PascalCase and OpenRegister matches on `LOWER(slug)`; kebab-casing them
+      # would be wrong.
+      playwright-seed-command: 'bash apps/shillinq/tests/e2e/ci-seed.sh'
+
+      # ── Frontend Check legs ──────────────────────────────────────────────
+      # `frontend-checks` defaults to `[]`, and an empty list means the shared
+      # workflow emits NO "Frontend Check" job at all — so this repo's five
+      # validators ran nowhere while the run still looked complete. All are
+      # self-contained `node` scripts, which is what a leg has to be (each leg
+      # is a fresh job with its own checkout + `npm ci`).
+      # Measured on this tree before enabling:
+      #   check:manifest-budget  PASSES (1090951B against a 1100000B budget —
+      #                          9049 bytes of headroom, which is itself worth
+      #                          having a gate on)
+      #   test:l10n              PASSES
+      #   check:markers          FAILS — a bare/malformed x-schema-org marker in
+      #                          lib/Settings/register.d/60-bookings-depth.json
+      #                          (AppointmentSeries: "https://schema.org/Schedule")
+      #   check:registers        FAILS — a schema fragment missing its
+      #                          x-openregister-audit-trail declaration
+      #   check:manifest         passed locally only through its no-Ajv
+      #                          structural fallback ("Ajv not installed in
+      #                          node_modules"); CI runs `npm ci` first, so CI is
+      #                          the first place the real schema validation
+      #                          happens. Its verdict there may differ.
+      # `test:unit` is NOT listed: "Frontend Tests (unit)" already runs it.
+      #   check:seeds            NEW. Ratchet on seed/schema integrity: every
+      #                          object shipped as register seed data must
+      #                          satisfy the `required` list of the schema it
+      #                          names. OpenRegister's ImportHandler only WARNS
+      #                          on a violation and `occ app:enable` still exits
+      #                          0, so a broken seed is invisible until an
+      #                          endpoint returns an empty list or a 404 and
+      #                          looks like an application bug. Measured at 89
+      #                          before this commit, 81 after; the baseline is
+      #                          a hard ceiling that may only be lowered.
+      #   check:fragment-required  NEW. Ratchet on the CAUSE that check:seeds
+      #                          measures the damage of. ADR-037 merges register
+      #                          fragments by schema key and CONCATENATES list
+      #                          values, so two fragments declaring `required`
+      #                          for one schema make the effective list the
+      #                          UNION of both — and no payload of either model
+      #                          can then satisfy it. Measured at 47 conflicting
+      #                          schema keys on `development` (plus 16 that
+      #                          declare the SAME set twice, which is malformed
+      #                          per JSON Schema but still satisfiable and is
+      #                          reported without failing). Compares as SETS,
+      #                          not sequences: an order-sensitive compare
+      #                          reports 49 here, and the 2 extra are schemas
+      #                          declaring the same names in a different order,
+      #                          which merge fine. The baseline is a hard
+      #                          ceiling that may only be lowered.
+      #   check:manifest-shell   NEW. `src/manifest.d.shell.json` is GENERATED
+      #                          by `scripts/generate-manifest-shell.js` and yet
+      #                          COMMITTED, and every local consumer regenerates
+      #                          it first (`prebuild`, `predev`, `prewatch`,
+      #                          `pretest:unit`), so the committed copy could
+      #                          drift arbitrarily far from `src/manifest.d/*`
+      #                          with NOTHING going red. The regeneration that
+      #                          keeps the build correct is exactly what made
+      #                          the drift invisible. Observed twice on
+      #                          2026-08-20: `feat/budget-known-costs` shipped a
+      #                          shell with ZERO occurrences of
+      #                          `BudgetLineDerivations`/`AnnualBudgets` while
+      #                          both fragments were on the branch, and
+      #                          `development` itself was stale by +77 lines — a
+      #                          whole `Budgets` menu group plus 6
+      #                          `budget-core-schema` pages. It is load-bearing:
+      #                          `src/main.js` builds the vue-router table AND
+      #                          the sidebar from `manifestShell.fragments`, and
+      #                          the lazy `require.context` only backfills each
+      #                          page's `config` — it never adds a page or a
+      #                          menu entry. The check runs the REAL generator
+      #                          CLI in a throwaway sandbox (never the working
+      #                          tree) and compares byte-for-byte; it FAILS
+      #                          rather than passes if the regenerated document
+      #                          is empty or covers fewer fragments than
+      #                          `src/manifest.d/` holds, so a generator that
+      #                          stopped seeing its subject cannot report
+      #                          success. Measured on this branch: FAILS on the
+      #                          inherited `development` shell, PASSES after
+      #                          regenerating it (the +77 lines are in this
+      #                          commit).
+      #
+      # `format` (prettier --check) is listed because the shared workflow has NO
+      # prettier job of its own — `quality.yml` runs eslint and stylelint and
+      # mentions prettier ZERO times. This repo already carries
+      # `@nextcloud/prettier-config` and a `format` script, so without this leg
+      # `npm run format` never runs outside a developer's editor and the tree
+      # drifts straight back out of format between merges — the same inert-
+      # formatter failure mode that made the old `.prettierrc` worth deleting.
+      # Centralising the config never stopped drift; the gate does.
+      # Measured on this tree before enabling: PASSES, 216 of 222 tracked
+      # frontend files in scope (docs/ excluded via .prettierignore; build
+      # output via .gitignore, which prettier 3 also reads).
+      # `check:l10n-js` regenerates l10n/<locale>.js from the JSON catalogue and
+      # fails when the committed file is stale. Nextcloud serves ONLY the JS half
+      # to a browser — raw JSON out of an app directory is a 404 — so a catalogue
+      # that exists only as JSON renders English in the entire UI while every
+      # server-rendered string is translated, with no error anywhere.
+      # `check:schema-l10n` is a RATCHET, not a gate. Every string inside a form
+      # comes from the schema and is a key in THIS app's catalogue; an absent key
+      # renders the English source inside an otherwise translated form, silently.
+      # The fleet had 30,459 such strings, so this records the current count and
+      # fails only when it GROWS — burning it down stays an ordinary PR.
+      frontend-checks: '["check:manifest", "check:manifest-shell", "check:manifest-budget", "check:markers", "check:registers", "check:seeds", "check:fragment-required", "check:nav-reachability", "check:job-registration", "test:l10n", "format", "check:l10n-js", "check:schema-l10n"]'
+
+      # ── Coverage ratchet ─────────────────────────────────────────────────
+      # `enable-coverage-guard` defaults to FALSE, which is why both
+      # "Coverage Baseline Protection" and "Coverage Baseline Check" have only
+      # ever reported `skipped`. It needs two inputs this repo did not have,
+      # both added in this commit: `scripts/coverage-guard.php` (byte-identical
+      # to openregister's) and `.coverage-baseline` = 57.71, this repo's own
+      # measured coverage (38189 of 66179 statements) read from clover.xml in
+      # the `coverage-report` artifact of run 30912740193.
+      enable-coverage-guard: true
+
+      # ── Hydra mechanical gates ───────────────────────────────────────────
+      # `enable-hydra-gates` defaults to FALSE, so this tier had never executed
+      # here — the job reported `skipped`, which the Quality Report renders
+      # identically to a pass.
+      # `enable-axe` deliberately NOT set: a vanilla Nextcloud 34 already carries
+      # serious/critical violations from core's own UI.
+      enable-hydra-gates: true
+      # No `hydra-gates-ref` here on purpose. The shared workflow defaults it
+      # to @main, and this workflow is itself consumed at @main, so the two
+      # sides move together and a gate fix reaches this repo without a commit
+      # in this repo. A pin is a silent expiry date: 22 repos sat on v1.0.1 and
+      # 16 gates were dead fleet-wide while every one reported PASS (.github#159),
+      # and a default flipped at @main later reached those old runners and made
+      # them red on gates they had no subject matter for (.github#173) — this
+      # repo felt both, the second one blocking #441.
+      # To hold this repo still for a specific reason, set the input explicitly
+      # and say why — it is still honoured. To roll back for everyone, revert on
+      # ConductionNL/.github main.

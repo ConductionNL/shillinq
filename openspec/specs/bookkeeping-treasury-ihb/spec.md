@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-treasury-ihb
 
 **Status:** proposed
@@ -10,7 +14,11 @@
 `../add-shillinq-accounts-receivable-core/spec.md` (T2 AR ageing),
 `../add-shillinq-financial-statements/specs/bookkeeping-financial-statements/spec.md` (T3 IFRS disclosure)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping treasury ihb in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: treasury IHB entries page not yet implemented
 
@@ -123,6 +131,8 @@ System MUST:
 
 ### REQ-IHB-005: Inter-company transactions MUST produce balanced double-entry postings in both administraties simultaneously and prevent posting if offsetting administratie is closed for the period
 
+The system SHALL satisfy this requirement: Inter-company transactions MUST produce balanced double-entry postings in both administraties simultaneously and prevent posting if offsetting administratie is closed for the period.
+
 `IntercompanyTransaction` register (sweep, loan drawdown, interest accrual, settlement movements):
 - Pool or loan reference (FK)
 - Movement type: sweep | loan-drawdown | interest-accrual | settlement | other
@@ -225,6 +235,8 @@ System MUST surface forecast and variance on CFO dashboard.
 - **THEN** new Week 7 forecast shows EUR 380K, **AND** system MUST raise alert "Week 7 cash forecast variance: EUR 70K below prior estimate. Review AR collections and AP timing."
 
 ### REQ-IHB-009: Bank reconciliation MUST work across all pool participants in one workflow, allowing operator to match single bank line to journal entries from multiple administraties (typical for shared-service-centre payments)
+
+The system SHALL satisfy this requirement: Bank reconciliation MUST work across all pool participants in one workflow, allowing operator to match single bank line to journal entries from multiple administraties (typical for shared-service-centre payments).
 
 `BankReconciliationGroup` register (extends existing bank-reconciliation module):
 - Multiple participating administraties (array of FK to Administration)

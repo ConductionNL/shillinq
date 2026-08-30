@@ -1,120 +1,37 @@
 {
-  "spec": "openspec/changes/expense-capture-core",
+  "spec": "openspec/changes/bookkeeping-multi-currency",
   "verified": [
-    {
-      "task": "1",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "size": 344153
-    },
-    {
-      "task": "5-8",
-      "file": "lib/Settings/shillinq_register.json",
-      "ok": true,
-      "size": 344153
-    },
-    {
-      "task": "9",
-      "file": "lib/Lifecycle/ExpenseClaimGuard.php",
-      "ok": true,
-      "size": 10439
-    },
-    {
-      "task": "11",
-      "file": "lib/Validation/PhotoValidator.php",
-      "ok": true,
-      "size": 2541
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json",
-      "ok": true,
-      "size": 117716
-    },
-    {
-      "task": "18",
-      "file": "openspec/architecture/adr-000-data-model.md",
-      "ok": true,
-      "size": 301720
-    },
-    {
-      "task": "test-11",
-      "file": "tests/Unit/Validation/PhotoValidatorTest.php",
-      "ok": true,
-      "size": 5529
-    },
-    {
-      "task": "test-9",
-      "file": "tests/Unit/Lifecycle/ExpenseClaimGuardTest.php",
-      "ok": true,
-      "size": 14622
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::Receipt",
-      "ok": true
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::MileageEntry",
-      "ok": true
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::PerDiem",
-      "ok": true
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::ExpenseClaimEntry",
-      "ok": true
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::MileageRate",
-      "ok": true
-    },
-    {
-      "task": "5-16",
-      "file": "shillinq_register.json::PerDiemRate",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::Receipts",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::ReceiptDetail",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::ExpenseClaims",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::ExpenseClaimDetail",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::MileageLog",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::MileageLogDetail",
-      "ok": true
-    },
-    {
-      "task": "17",
-      "file": "src/manifest.json::Inkoop menu",
-      "ok": true
-    }
+    {"task": "1", "file": "lib/Settings/shillinq_register.json + openspec/specs/ + adr-000-data-model.md", "ok": true, "note": "Confirmed: no CurrencyBalance schema in lib/Settings/shillinq_register.json (51 schemas pre-existing, none named CurrencyBalance) and no multi-currency capability declared elsewhere. ADR-000 already had stub BankAccount + CurrencyBalance entries (no Primary spec citation, minimal fields) — refined in task 11. T3 treasury alignment per ADR-001."},
+    {"task": "2", "file": "lib/Settings/register.d/*.json + lib/Settings/shillinq_register.json", "ok": true, "note": "Confirmed: no pre-existing BankAccount schema in any fragment or the monolith — only 'bankAccount' as a string-typed property on treasury-ihb schemas. Zero conflict — declared BankAccount + primaryCurrency freshly in the new fragment with required=[accountName,iban] and primaryCurrency optional (REQ-MC-002 backward-compat)."},
+    {"task": "3", "file": "openspec/changes/bookkeeping-multi-currency/spec.md + openspec/changes/bookkeeping-multi-currency/specs/bookkeeping-multi-currency/spec.md", "ok": true, "note": "Existing spec.md at change root retained verbatim (REQ-MC-001..005 with #### Scenario blocks); mirrored into specs/bookkeeping-multi-currency/spec.md for the openspec delta-discovery path (5 requirements, 11 scenarios, RFC 2119 keywords, ADR-022 / ADR-031 citations)."},
+    {"task": "4", "file": "openspec/changes/bookkeeping-multi-currency/proposal.md", "ok": true, "note": "Existing proposal (150 lines) carries Affected Projects + Scope (in/out) + Approach + New Dependencies + Impact + Cross-Project Dependencies + Risks (stale snapshots, missing primaryCurrency, balance timing) + Rollback Strategy + Open Questions (single-vs-multi snapshot, auto-capture cadence, aggregation layer). Cites nextcloud-app shared spec."},
+    {"task": "5", "file": "openspec/changes/bookkeeping-multi-currency/design.md", "ok": true, "note": "Existing design (155 lines) carries Context + Goals + Non-Goals + Decisions D1-D5 (BankAccount.primaryCurrency declaration, snapshot-based CurrencyBalance, optional field, no-balance-calculation, manifest navigation) + Reuse Analysis table + Seed Data (EUR/USD/GBP) + Architectural Alignment + Migration + Rollback."},
+    {"task": "6", "file": "lib/Settings/register.d/bookkeeping-multi-currency.json:components.schemas.BankAccount", "ok": true, "note": "BankAccount declared with required=[accountName,iban]; primaryCurrency optional string with pattern=^[A-Z]{3}$ (ISO 4217); REQ-MC-001 backward-compat preserved (primaryCurrency NOT in required); x-openregister-audit-trail enabled."},
+    {"task": "7", "file": "lib/Settings/register.d/bookkeeping-multi-currency.json:components.schemas.CurrencyBalance", "ok": true, "note": "CurrencyBalance declared with all 6 REQ-MC-003 fields (balanceId, accountId FK->BankAccount.slug, currency ISO 4217 pattern, balance, previousBalance optional, lastUpdated); required=[balanceId,accountId,currency,balance,lastUpdated]; (accountId, currency) uniqueness invariant documented in description; x-openregister-audit-trail enabled with audit-trail-immutable rationale recorded."},
+    {"task": "8", "file": "lib/Settings/register.d/bookkeeping-multi-currency.json:components.schemas.CurrencyBalance.x-openregister-aggregations + src/manifest.d/bookkeeping-multi-currency.json filters", "ok": true, "note": "REQ-MC-004 filters ride the native OpenRegister _filter engine (no custom PHP). Manifest CurrencyBalances index declares accountId + currency filters; balance-range gte/lte are native to the OR query engine (?balance[gte]=20000) so no schema-level wiring needed. Multi-account aggregation across currencies is declared as x-openregister-aggregations.balanceByCurrency (groupBy=[currency], sum(balance)->totalBalance, count->accountCount) — declarative replacement for a custom PHP aggregator (ADR-031)."},
+    {"task": "9", "file": "lib/Settings/register.d/bookkeeping-multi-currency.json:components.objects", "ok": true, "note": "6 seed objects: 3 BankAccount (bank-eur-op EUR ABN AMRO NL23ABNA0123456789, bank-usd-exp USD Rabobank NL45RABO9876543210, bank-gbp-trd GBP Bunq NL67BUNQ1234567890) + 3 CurrencyBalance snapshots (bal-eur-2026-05-21 EUR 45230.50, bal-usd-2026-05-21 USD 18750.00, bal-gbp-2026-05-21 GBP 12340.75) — exactly matches design.md Seed Data tables. @self envelope with register=shillinq, schema=BankAccount|CurrencyBalance, slug-keyed for ADR-001 idempotency."},
+    {"task": "10", "file": "src/manifest.d/bookkeeping-multi-currency.json", "ok": true, "note": "Manifest fragment adds 4 pages — BankAccounts (index), BankAccountDetail (detail), CurrencyBalances (index: columns account/currency/balance/previousBalance/lastUpdated, sortable + filterable by accountId + currency), CurrencyBalanceDetail (detail). Two menu entries under Bookkeeping (Bank Accounts + Currency Balances) — closest existing top-level to the spec's 'Cash & Bank' label. Pre-existing src/manifest.json baseline already fails validate-manifest.js (154 Ajv errors fleet-wide); our fragment adds 4 unique page ids with no new validation errors when measured against the merged result."},
+    {"task": "11", "file": "openspec/architecture/adr-000-data-model.md", "ok": true, "note": "BankAccount section refined: declares the optional additive primaryCurrency field (REQ-MC-002, nullable with default-EUR semantics per REQ-MC-001), adds administrationId / lifecycleState / notes properties, Primary spec citation to bookkeeping-multi-currency. CurrencyBalance section refined: explicit accountId FK to BankAccount.slug, (accountId, currency) uniqueness, audit-trail-immutable rationale (REQ-AT-001), notes property, declarative aggregation note for REQ-MC-004. Relation: BankAccount -> CurrencyBalance (one-to-many)."},
+    {"task": "12", "file": "l10n/en.json + l10n/nl.json", "ok": true, "note": "16 nl + en translation keys per ADR-007: Currency Balances / Wisselkoersen-saldi, Currency Balance / Wisselkoers-saldo, Bank Accounts / Bankrekeningen, Bank Account / Bankrekening, Account / Rekening, Currency / Valuta, Balance / Saldo, Previous Balance / Vorig saldo, Last Updated / Laatst bijgewerkt, Change / Mutatie, Liquidity Low Warning / Waarschuwing lage liquiditeit, EUR / USD / GBP (verbatim), Primary Currency / Primaire valuta, Multi-currency Account / Multi-valuta rekening. Both l10n files now hold 1007 keys (parity)."}
   ],
-  "stubs": [],
-  "missing_routes": []
+  "tests": {
+    "unit": {
+      "file": "tests/Unit/Service/MultiCurrencyFragmentTest.php",
+      "tests": 8,
+      "assertions": 73,
+      "passing": true,
+      "note": "Runs green in NC container PHP 8.3 PHPUnit 10.5. Covers fragment JSON validity, BankAccount.primaryCurrency optionality + ISO 4217 pattern, CurrencyBalance REQ-MC-003 field set + (accountId, currency) required-set, both schemas enable x-openregister-audit-trail, balanceByCurrency aggregation shape, additive merge over the full register.d chain keeps sibling + monolith schemas, seed coverage of EUR / USD / GBP + FK-resolution to seeded BankAccount slugs, and (accountId, currency) seed uniqueness."
+    }
+  },
+  "hydra_gates": {
+    "result": "ALL 16 GATES GREEN",
+    "post_build": true,
+    "pre_build": true
+  },
+  "preexisting_issues_observed": [
+    "openspec validate is non-zero on every shillinq change folder — fleet-wide condition (uses ### REQ-XX-NNN: instead of ### Requirement:); not in scope to fix in this change.",
+    "tests/validate-manifest.js reports 154 Ajv errors on the pre-existing src/manifest.json (additionalProperties on menu entries, enum mismatches on field types) — pre-existing fleet condition; our manifest fragment introduces no new errors when measured against the merged manifest.",
+    "tests/validate-registers.js reports 193 schemas missing x-openregister-audit-trail.enabled=true — pre-existing fleet condition; our two new schemas DO carry audit-trail.",
+    "13 phpunit failures + 2 errors on the development-branch baseline (VatBtwFilingFragmentTest, WidgetServiceTest, AdministrationMigrationService, CashflowForecastFragment, PipelinqTimelineAuth, RetainerBilling, BookingsConfirmFlow) — orthogonal to multi-currency; each requires a dedicated investigation in its own change."
+  ]
 }

@@ -9,26 +9,23 @@
 					id="register"
 					v-model="form.register"
 					type="text"
-					:placeholder="t('shillinq', 'OpenRegister register ID')">
+					:placeholder="t('shillinq', 'OpenRegister register ID')" />
 			</div>
 
 			<div v-if="successMessage" class="success-message">
 				{{ successMessage }}
 			</div>
 
-			<NcButton
-				type="primary"
-				native-type="submit"
-				:disabled="saving">
-				{{ saving ? t('shillinq', 'Saving...') : t('shillinq', 'Save') }}
+			<NcButton variant="primary" type="submit" :disabled="saving">
+				{{ saving ? t('shillinq', 'Saving…') : t('shillinq', 'Save') }}
 			</NcButton>
 		</form>
 	</CnSettingsSection>
 </template>
 
 <script>
-import { NcButton } from '@nextcloud/vue'
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
+import { NcButton } from '@nextcloud/vue'
 import { useSettingsStore } from '../../store/modules/settings.js'
 
 export default {
@@ -37,15 +34,18 @@ export default {
 		NcButton,
 		CnSettingsSection,
 	},
+
 	data() {
 		return {
 			form: {
 				register: '',
 			},
+
 			saving: false,
 			successMessage: '',
 		}
 	},
+
 	/**
 	 * Prefill the register form field from the loaded settings store.
 	 *
@@ -56,6 +56,7 @@ export default {
 		const settingsStore = useSettingsStore()
 		this.form.register = settingsStore.settings?.register || ''
 	},
+
 	methods: {
 		/**
 		 * Persist the configuration form via the settings store and show a

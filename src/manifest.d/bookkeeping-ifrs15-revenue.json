@@ -1,0 +1,225 @@
+{
+	"menu": [
+		{
+			"id": "Ifrs15Revenue",
+			"label": "Revenue Recognition (IFRS 15)",
+			"icon": "CurrencyEur",
+			"order": 85,
+			"children": [
+				{
+					"id": "RevenueContracts",
+					"label": "Revenue Contracts",
+					"icon": "FileSign",
+					"route": "RevenueContracts",
+					"order": 10
+				},
+				{
+					"id": "PerformanceObligations",
+					"label": "Performance Obligations",
+					"icon": "FormatListChecks",
+					"route": "PerformanceObligations",
+					"order": 20
+				},
+				{
+					"id": "RevenueWaterfall",
+					"label": "Revenue Waterfall",
+					"icon": "CurrencyEur",
+					"route": "RevenueWaterfall",
+					"order": 30
+				},
+				{
+					"id": "ContractBalances",
+					"label": "Contract Balances",
+					"icon": "FileSign",
+					"route": "ContractBalances",
+					"order": 40
+				},
+				{
+					"id": "ContractModifications",
+					"label": "Contract Modifications",
+					"icon": "FileSign",
+					"route": "ContractModifications",
+					"order": 50
+				},
+				{
+					"id": "ContractCostAssets",
+					"label": "Contract Cost Assets",
+					"icon": "FileSign",
+					"route": "ContractCostAssets",
+					"order": 60
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "RevenueContracts",
+			"route": "/ifrs-15/contracts",
+			"type": "index",
+			"title": "Revenue Contracts",
+			"config": {
+				"register": "shillinq",
+				"schema": "RevenueContract",
+				"columns": [
+					{ "key": "contractNumber", "label": "Contract Number", "sortable": true },
+					{ "key": "customerId", "label": "Customer", "sortable": false },
+					{ "key": "signedAt", "label": "Signed", "sortable": true },
+					{ "key": "startDate", "label": "Start", "sortable": true },
+					{ "key": "endDate", "label": "End", "sortable": true },
+					{ "key": "fixedConsideration", "label": "Fixed Consideration", "sortable": true },
+					{ "key": "currency", "label": "Currency", "sortable": true },
+					{ "key": "lifecycleState", "label": "State", "sortable": true }
+				],
+				"defaultSort": "contractNumber",
+				"detailRoute": "ContractDetail"
+			}
+		},
+		{
+			"id": "ContractDetail",
+			"route": "/ifrs-15/contracts/:id",
+			"type": "detail",
+			"title": "Contract",
+			"config": {
+				"register": "shillinq",
+				"schema": "RevenueContract",
+				"_note": "FINANCIAL/MASTER archetype — an IFRS-15 revenue contract is the header for the five-step revenue model; its substance is the performance obligations that decompose the transaction price. Native shillinq detail contract: config.aggregations[] surface the fixed + variable consideration currency KPIs so an accountant reads the deal size first; config.fields[] render the contract header (number, customer, dates, currency, sales-order/group references, state); config.relatedCollections[] show the performance obligations (PerformanceObligation, FK contractId=@object.contractNumber) — the allocation lines. KEY+TOKEN: the prop is `relatedCollections` (a `relatedLists` block lands in $attrs and renders nothing), and the token is `@object.contractNumber`, NOT `@self.id` — `@self.id` is not a token resolveFilterTokens.js knows, so it never resolved. PerformanceObligation.contractId carries the schema example 'C-2026-001', which is exactly RevenueContract.contractNumber's example, i.e. the child references the contract by its flat business key, not by UUID. ⚠️ MEDIUM CONFIDENCE: no PHP writes PerformanceObligation (it is UI-created), so this rests on the matching schema examples rather than on an observed writer; the sidebar carries a file-references tab for the signed contract PDF and an audit-trail tab for the immutable modification/lifecycle history. NO email/calendar — a revenue contract is a financial artefact, not a conversation.",
+				"aggregations": [
+					{ "id": "fixedConsideration", "title": "Fixed consideration", "field": "fixedConsideration", "metric": "value", "format": "currency" },
+					{ "id": "variableConsideration", "title": "Variable consideration", "field": "variableConsideration", "metric": "value", "format": "currency" }
+				],
+				"fields": [
+					{ "key": "contractNumber", "label": "Contract Number", "type": "string" },
+					{ "key": "customerId", "label": "Customer", "type": "string" },
+					{ "key": "signedAt", "label": "Signed", "type": "string" },
+					{ "key": "startDate", "label": "Start", "type": "string" },
+					{ "key": "endDate", "label": "End", "type": "string" },
+					{ "key": "fixedConsideration", "label": "Fixed Consideration", "type": "number" },
+					{ "key": "variableConsideration", "label": "Variable Consideration", "type": "number" },
+					{ "key": "currency", "label": "Currency", "type": "string" },
+					{ "key": "quoteOrderReference", "label": "Sales Order", "type": "string" },
+					{ "key": "contractGroupId", "label": "Contract Group", "type": "string" },
+					{ "key": "lifecycleState", "label": "State", "type": "string" }
+				],
+				"relatedCollections": [
+					{ "title": "Performance obligations", "register": "shillinq", "schema": "PerformanceObligation", "filter": { "contractId": "@object.contractNumber" }, "columns": [
+						{ "key": "description", "label": "Description" },
+						{ "key": "satisfactionPattern", "label": "Satisfaction" },
+						{ "key": "sspAmount", "label": "SSP" },
+						{ "key": "allocatedPrice", "label": "Allocated price" },
+						{ "key": "percentageComplete", "label": "% complete" },
+						{ "key": "statusAtPeriodEnd", "label": "Status" }
+					] }
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "documents", "label": "Signed contract", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "RevenueContract", "objectId": ":id" } }
+						] },
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
+				"indexRoute": "RevenueContracts"
+			}
+		},
+		{
+			"id": "PerformanceObligations",
+			"route": "/ifrs-15/performance-obligations",
+			"type": "index",
+			"title": "Performance Obligations",
+			"config": {
+				"register": "shillinq",
+				"schema": "PerformanceObligation",
+				"columns": [
+					{ "key": "contractId", "label": "Contract", "sortable": true },
+					{ "key": "description", "label": "Description", "sortable": false },
+					{ "key": "satisfactionPattern", "label": "Satisfaction Pattern", "sortable": true },
+					{ "key": "outputMethod", "label": "Output Method", "sortable": true },
+					{ "key": "inputMethod", "label": "Input Method", "sortable": true },
+					{ "key": "sspAmount", "label": "SSP", "sortable": true },
+					{ "key": "allocatedPrice", "label": "Allocated Price", "sortable": true },
+					{ "key": "percentageComplete", "label": "% Complete", "sortable": true },
+					{ "key": "statusAtPeriodEnd", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "contractId"
+			}
+		},
+		{
+			"id": "RevenueWaterfall",
+			"route": "/ifrs-15/revenue-waterfall",
+			"type": "index",
+			"title": "Revenue Waterfall",
+			"config": {
+				"register": "shillinq",
+				"schema": "RevenueWaterfall",
+				"columns": [
+					{ "key": "contractId", "label": "Contract", "sortable": true },
+					{ "key": "periodEnd", "label": "Period", "sortable": true },
+					{ "key": "transactionPriceAllocated", "label": "Allocated", "sortable": true },
+					{ "key": "periodRecognised", "label": "Recognised (period)", "sortable": true },
+					{ "key": "cumulativeRecognised", "label": "Recognised (cumulative)", "sortable": true },
+					{ "key": "remainingAmount", "label": "Remaining", "sortable": true },
+					{ "key": "remainingMonths", "label": "Remaining Months", "sortable": true }
+				],
+				"defaultSort": "periodEnd"
+			}
+		},
+		{
+			"id": "ContractBalances",
+			"route": "/ifrs-15/contract-balances",
+			"type": "index",
+			"title": "Contract Balances",
+			"config": {
+				"register": "shillinq",
+				"schema": "ContractAsset",
+				"columns": [
+					{ "key": "contractId", "label": "Contract", "sortable": true },
+					{ "key": "periodEnd", "label": "Period", "sortable": true },
+					{ "key": "assetAmount", "label": "Contract Asset", "sortable": true },
+					{ "key": "accrualAmount", "label": "Accrued Revenue", "sortable": true },
+					{ "key": "currentPeriodMovement", "label": "Period Movement", "sortable": true }
+				],
+				"defaultSort": "periodEnd"
+			}
+		},
+		{
+			"id": "ContractModifications",
+			"route": "/ifrs-15/contract-modifications",
+			"type": "index",
+			"title": "Contract Modifications",
+			"config": {
+				"register": "shillinq",
+				"schema": "ContractModification",
+				"columns": [
+					{ "key": "parentContractId", "label": "Parent Contract", "sortable": true },
+					{ "key": "modificationDate", "label": "Date", "sortable": true },
+					{ "key": "modificationType", "label": "Type", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "newTransactionPrice", "label": "New Price", "sortable": true }
+				],
+				"defaultSort": "modificationDate"
+			}
+		},
+		{
+			"id": "ContractCostAssets",
+			"route": "/ifrs-15/contract-cost-assets",
+			"type": "index",
+			"title": "Contract Cost Assets",
+			"config": {
+				"register": "shillinq",
+				"schema": "ContractCostAsset",
+				"columns": [
+					{ "key": "contractId", "label": "Contract", "sortable": true },
+					{ "key": "costType", "label": "Cost Type", "sortable": true },
+					{ "key": "description", "label": "Description", "sortable": false },
+					{ "key": "initialCapitalisation", "label": "Capitalised", "sortable": true },
+					{ "key": "amortisedToDate", "label": "Amortised", "sortable": true },
+					{ "key": "carriedAmount", "label": "Carried Amount", "sortable": true }
+				],
+				"defaultSort": "contractId"
+			}
+		}
+	]
+}

@@ -12,18 +12,49 @@
 -->
 <template>
 	<CnAppRoot
+		:aiCompanion="true"
 		:manifest="manifest"
-		:page-types="pageTypes"
+		:pageTypes="pageTypes"
+		:customComponents="customComponents"
 		:registry="registry"
-		app-id="shillinq"
+		appId="shillinq"
 		:translate="translateForApp"
-		:permissions="permissions" />
+		:permissions="permissions">
+		<!--
+		 Per-object integration sidebar (Files / Contacts / Audit trail / …).
+		 CnDetailPage publishes the active object's coordinates into
+		 `objectSidebarState` when a detail page enables `config.sidebar`; this
+		 slot renders the tabs. Mirrors the decidesk / procest shell pattern.
+		-->
+		<template #sidebar="{ pageSidebarComponent }">
+			<CnObjectSidebar
+				v-if="objectSidebarState.active"
+				:title="objectSidebarState.title"
+				:subtitle="objectSidebarState.subtitle"
+				:objectType="objectSidebarState.objectType"
+				:objectId="objectSidebarState.objectId"
+				:register="objectSidebarState.register"
+				:schema="objectSidebarState.schema"
+				:hiddenTabs="objectSidebarState.hiddenTabs"
+				:tabs="objectSidebarState.tabs"
+				:useRegistry="objectSidebarState.useRegistry"
+				:excludeIntegrations="objectSidebarState.excludeIntegrations"
+				:requestedTab="objectSidebarState.requestedTab"
+				:registry="registry"
+				:open="objectSidebarState.open"
+				@update:open="objectSidebarState.open = $event" />
+			<!-- The manifest page's own sidebar (pages[].sidebarComponent). Passed in
+			     as a slot prop because filling this slot suppresses CnAppRoot's
+			     fallback, which is what hid the flow sidebar. -->
+			<component :is="pageSidebarComponent" v-if="pageSidebarComponent" />
+		</template>
+	</CnAppRoot>
 </template>
 
 <script>
-import Vue from 'vue'
+import { CnAppRoot, CnObjectSidebar } from '@conduction/nextcloud-vue'
 import { translate as ncT } from '@nextcloud/l10n'
-import { CnAppRoot } from '@conduction/nextcloud-vue'
+import { reactive } from 'vue'
 import { initializeStores } from './store/store.js'
 
 export default {
@@ -31,6 +62,7 @@ export default {
 
 	components: {
 		CnAppRoot,
+		CnObjectSidebar,
 	},
 
 	/**
@@ -59,6 +91,7 @@ export default {
 			type: Object,
 			required: true,
 		},
+
 		/**
 		 * Page-type registry — `{ index, detail, dashboard, settings, ... }`.
 		 * Wired through to descendant `CnPageRenderer` instances.
@@ -67,6 +100,7 @@ export default {
 			type: Object,
 			default: () => ({}),
 		},
+
 		/**
 		 * V2 kind-tagged component registry (ADR-036). Each entry is
 		 * `{ kind: "page" | "widget" | "sidebarTab" | "modal" | "settingsSection",
@@ -79,11 +113,26 @@ export default {
 			type: Object,
 			default: () => ({}),
 		},
+
+		/**
+		 * Flat `{ name: component }` map of every registry component (pages,
+		 * widgets, …), derived from the kind-tagged `registry` in main.js. The
+		 * published `@conduction/nextcloud-vue` beta resolves a page's
+		 * `component` / `headerComponent` / `actionsComponent` and a custom
+		 * dashboard widget against this `customComponents` prop (not the
+		 * kind-tagged `registry`), so without it every custom page renders an
+		 * empty `cn-page` shell and custom action/widget components disappear.
+		 * Mirrors the procest / docudesk / opencatalogi wiring. See main.js.
+		 */
+		customComponents: {
+			type: Object,
+			default: () => ({}),
+		},
 	},
 
 	data() {
 		return {
-			objectSidebarState: Vue.observable({
+			objectSidebarState: reactive({
 				active: false,
 				open: true,
 				schema: null,

@@ -1,0 +1,19 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-purchase-order-3way-05-supplier-invoice-ingestion",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Slice 05 of the bookkeeping-purchase-order-3way chain wires the rich SupplierInvoiceDetail Vue view onto the SupplierInvoiceDetail manifest page. The plain generated detail page lives in slice 01's fragment; this fragment overlays a kind=page custom component that adds the OCR-confidence indicator, Peppol/UBL provenance block and the related ThreeWayMatch placeholder. Registered as kind=page custom component in src/registry.js."
+	},
+	"pages": [
+		{
+			"id": "SupplierInvoiceDetail",
+			"route": "/inkoop/supplier-invoices/:id",
+			"type": "custom",
+			"title": "Supplier Invoice",
+			"component": "SupplierInvoiceDetail",
+			"_note": "`type: detail` renders declared fields of ONE object. This page must additionally render (a) the parsed `lines[]` embedded in the invoice — a nested array, not a related collection with a foreign key, so config.relatedCollections cannot fetch it; (b) an OCR-confidence indicator that only exists when the invoice arrived through the PDF/OCR ingest path; and (c) the UBL/Peppol provenance block, present only on Peppol-ingested invoices. Both (b) and (c) are conditional on HOW the record was ingested, which no declarative field list expresses."
+		}
+	]
+}

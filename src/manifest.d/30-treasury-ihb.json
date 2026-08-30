@@ -1,0 +1,360 @@
+{
+	"menu": [
+		{
+			"id": "Treasury",
+			"label": "Treasury",
+			"icon": "BankOutline",
+			"order": 38,
+			"children": [
+				{
+					"id": "CashPools",
+					"label": "Cash Pools",
+					"icon": "BankTransfer",
+					"route": "CashPools",
+					"order": 10
+				},
+				{
+					"id": "IntercompanyLoans",
+					"label": "Intercompany Loans",
+					"icon": "HandCoinOutline",
+					"route": "IntercompanyLoans",
+					"order": 20
+				},
+				{
+					"id": "FXHedges",
+					"label": "FX Hedges",
+					"icon": "CurrencyUsd",
+					"route": "FXHedges",
+					"order": 30
+				},
+				{
+					"id": "CashflowForecast",
+					"label": "Cashflow Forecast",
+					"icon": "ChartTimelineVariant",
+					"route": "CashflowForecast",
+					"order": 40
+				},
+				{
+					"id": "GroupLiquidityDashboard",
+					"label": "Group Liquidity Dashboard",
+					"icon": "ViewDashboardOutline",
+					"route": "GroupLiquidityDashboard",
+					"order": 50
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "CashPools",
+			"route": "/treasury/cash-pools",
+			"type": "index",
+			"title": "Cash Pools",
+			"config": {
+				"register": "shillinq",
+				"schema": "CashPool",
+				"columns": [
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "type", "label": "Type", "sortable": true },
+					{ "key": "masterAccount", "label": "Master account", "sortable": true },
+					{ "key": "currency", "label": "Currency", "sortable": true },
+					{ "key": "interestAllocationMethod", "label": "Allocation", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "name",
+				"detailRoute": "CashPoolDetail"
+			}
+		},
+		{
+			"id": "CashPoolDetail",
+			"route": "/treasury/cash-pools/:id",
+			"type": "detail",
+			"title": "Cash Pool",
+			"config": {
+				"register": "shillinq",
+				"schema": "CashPool",
+				"_note": "MASTER archetype — a cash pool is the header record for a notional/zero-balancing sweep structure; its real substance is the member accounts. Native shillinq detail contract: config.aggregations[] surface the minimum-cash-policy currency KPI; config.fields[] render the pool configuration (type, master account, interest rate/allocation, sweep frequency/time); config.relatedCollections[] show the participating accounts (CashPoolMembership, FK poolId=@objectId) — the pool's line items. KEY+TOKEN: the prop is `relatedCollections` (a `relatedLists` block lands in $attrs and renders nothing), and the token is `@objectId`, NOT `@self.id` — `@self.id` is not a token the resolver knows (see nextcloud-vue utils/resolveFilterTokens.js), so it passed through unresolved and the widget skipped the query entirely. CashPool has no flat business key in its payload, so poolId holds the pool's OpenRegister UUID; and the sidebar carries an audit-trail tab for the immutable sweep-config history. NO comms/files — a cash pool is treasury plumbing, not correspondence.",
+				"aggregations": [
+					{ "id": "minimumCashPolicy", "title": "Minimum cash policy", "field": "minimumCashPolicy", "metric": "value", "format": "currency" }
+				],
+				"fields": [
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "type", "label": "Type", "type": "string" },
+					{ "key": "masterAccount", "label": "Master account", "type": "string" },
+					{ "key": "currency", "label": "Currency", "type": "string" },
+					{ "key": "dailyInterestRate", "label": "Daily interest rate", "type": "number" },
+					{ "key": "interestAllocationMethod", "label": "Interest allocation", "type": "string" },
+					{ "key": "sweepFrequency", "label": "Sweep frequency", "type": "string" },
+					{ "key": "sweepTime", "label": "Sweep time", "type": "string" },
+					{ "key": "minimumCashPolicy", "label": "Minimum cash policy", "type": "number" },
+					{ "key": "state", "label": "Status", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" },
+					{ "key": "notes", "label": "Notes", "type": "string" }
+				],
+				"relatedCollections": [
+					{ "title": "Member accounts", "register": "shillinq", "schema": "CashPoolMembership", "filter": { "poolId": "@objectId" }, "columns": [
+						{ "key": "bankAccount", "label": "Bank account" },
+						{ "key": "sweepDirection", "label": "Sweep" },
+						{ "key": "targetBalance", "label": "Target balance" },
+						{ "key": "priority", "label": "Priority" },
+						{ "key": "state", "label": "State" }
+					] }
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
+				"indexRoute": "CashPools"
+			}
+		},
+		{
+			"id": "IntercompanyLoans",
+			"route": "/treasury/intercompany-loans",
+			"type": "index",
+			"title": "Intercompany Loans",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntercompanyLoan",
+				"columns": [
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "lenderAdministrationId", "label": "Lender", "sortable": true },
+					{ "key": "borrowerAdministrationId", "label": "Borrower", "sortable": true },
+					{ "key": "principal", "label": "Principal", "sortable": true },
+					{ "key": "rateType", "label": "Rate type", "sortable": true },
+					{ "key": "maturityDate", "label": "Maturity", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "maturityDate",
+				"detailRoute": "IntercompanyLoanDetail"
+			}
+		},
+		{
+			"id": "IntercompanyLoanDetail",
+			"route": "/treasury/intercompany-loans/:id",
+			"type": "detail",
+			"title": "Intercompany Loan",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntercompanyLoan",
+				"_note": "TRANSACTION/instrument archetype — an intercompany loan is a principal-bearing agreement between two group administrations with a transfer-pricing basis. Native shillinq detail contract: config.aggregations[] surface the principal currency KPI so the exposure reads first; config.fields[] render the loan terms (lender/borrower, rate type/fixed rate/reference+spread, dates, IFRS classification, TP document); config.relatedCollections[] show the drawdowns/repayments (IntercompanyTransaction, FK loanId=@objectId — the prop is `relatedCollections`, and `@self.id` is not a resolver token so it never resolved; IntercompanyLoan carries no flat business key, so loanId holds the loan's OpenRegister UUID); the sidebar carries a file-references tab for the transfer-pricing documentation and an audit-trail tab for the immutable term/state history. NO comms.",
+				"aggregations": [
+					{ "id": "principal", "title": "Principal", "field": "principal", "metric": "value", "format": "currency" }
+				],
+				"fields": [
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "lenderAdministrationId", "label": "Lender", "type": "string" },
+					{ "key": "borrowerAdministrationId", "label": "Borrower", "type": "string" },
+					{ "key": "principal", "label": "Principal", "type": "number" },
+					{ "key": "currency", "label": "Currency", "type": "string" },
+					{ "key": "rateType", "label": "Rate type", "type": "string" },
+					{ "key": "fixedRate", "label": "Fixed rate", "type": "number" },
+					{ "key": "referenceRate", "label": "Reference rate", "type": "string" },
+					{ "key": "spread", "label": "Spread", "type": "number" },
+					{ "key": "startDate", "label": "Start date", "type": "string" },
+					{ "key": "maturityDate", "label": "Maturity date", "type": "string" },
+					{ "key": "transferPricingDocumentReference", "label": "Transfer pricing document", "type": "string" },
+					{ "key": "ifrsClassification", "label": "IFRS classification", "type": "string" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"relatedCollections": [
+					{ "title": "Loan movements", "register": "shillinq", "schema": "IntercompanyTransaction", "filter": { "loanId": "@objectId" }, "columns": [
+						{ "key": "movementType", "label": "Type" },
+						{ "key": "amount", "label": "Amount" },
+						{ "key": "currency", "label": "Ccy" },
+						{ "key": "postingDate", "label": "Posting date" },
+						{ "key": "state", "label": "State" }
+					] }
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "documents", "label": "Transfer pricing docs", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "IntercompanyLoan", "objectId": ":id" } }
+						] },
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
+				"indexRoute": "IntercompanyLoans"
+			}
+		},
+		{
+			"id": "FXHedges",
+			"route": "/treasury/fx-hedges",
+			"type": "index",
+			"title": "FX Hedges",
+			"config": {
+				"register": "shillinq",
+				"schema": "FXContract",
+				"columns": [
+					{ "key": "counterpartyBank", "label": "Counterparty", "sortable": true },
+					{ "key": "instrumentType", "label": "Instrument", "sortable": true },
+					{ "key": "buyCurrency", "label": "Buy", "sortable": true },
+					{ "key": "sellCurrency", "label": "Sell", "sortable": true },
+					{ "key": "settlementDate", "label": "Settlement", "sortable": true },
+					{ "key": "hedgeDesignation", "label": "Hedge designation", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "settlementDate",
+				"detailRoute": "FXHedgeDetail"
+			}
+		},
+		{
+			"id": "FXHedgeDetail",
+			"route": "/treasury/fx-hedges/:id",
+			"type": "detail",
+			"title": "FX Hedge",
+			"config": {
+				"register": "shillinq",
+				"schema": "FXContract",
+				"_note": "TRANSACTION/instrument archetype — an FX contract is a single forward/swap deal with a counterparty bank and a hedge designation. Native shillinq detail contract: config.aggregations[] surface the buy-amount and sell-amount currency KPIs so the two legs read first; config.fields[] render the deal terms (counterparty, instrument, currencies/amounts, trade/value/settlement dates, contract rate, hedge designation, state); the sidebar carries a file-references tab for signed confirmations and an audit-trail tab for the immutable state/designation history. NO comms — a deal ticket is not a conversation.",
+				"aggregations": [
+					{ "id": "buyAmount", "title": "Buy amount", "field": "buyAmount", "metric": "value", "format": "currency" },
+					{ "id": "sellAmount", "title": "Sell amount", "field": "sellAmount", "metric": "value", "format": "currency" }
+				],
+				"fields": [
+					{ "key": "counterpartyBank", "label": "Counterparty bank", "type": "string" },
+					{ "key": "counterpartyReference", "label": "Counterparty reference", "type": "string" },
+					{ "key": "instrumentType", "label": "Instrument type", "type": "string" },
+					{ "key": "buyCurrency", "label": "Buy currency", "type": "string" },
+					{ "key": "buyAmount", "label": "Buy amount", "type": "number" },
+					{ "key": "sellCurrency", "label": "Sell currency", "type": "string" },
+					{ "key": "sellAmount", "label": "Sell amount", "type": "number" },
+					{ "key": "tradeDate", "label": "Trade date", "type": "string" },
+					{ "key": "valueDate", "label": "Value date", "type": "string" },
+					{ "key": "settlementDate", "label": "Settlement date", "type": "string" },
+					{ "key": "contractRate", "label": "Contract rate", "type": "number" },
+					{ "key": "hedgeDesignation", "label": "Hedge designation", "type": "string" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "documents", "label": "Confirmations", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "FXContract", "objectId": ":id" } }
+						] },
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
+				"indexRoute": "FXHedges"
+			}
+		},
+		{
+			"id": "CashflowForecast",
+			"route": "/treasury/cashflow-forecast",
+			"type": "dashboard",
+			"title": "Cashflow Forecast",
+			"config": {
+				"widgets": [
+					{
+						"id": "forecast-base",
+						"title": "Base scenario closing cash",
+						"type": "stats-block",
+						"iconClass": "icon-calendar",
+						"props": { "count": 0, "countLabel": "EUR (week 13)", "variant": "primary" }
+					},
+					{
+						"id": "forecast-downside",
+						"title": "Downside scenario",
+						"type": "stats-block",
+						"iconClass": "icon-calendar",
+						"props": { "count": 0, "countLabel": "EUR (week 13)", "variant": "warning" }
+					},
+					{
+						"id": "forecast-stress",
+						"title": "Stress scenario",
+						"type": "stats-block",
+						"iconClass": "icon-calendar",
+						"props": { "count": 0, "countLabel": "EUR (week 13)", "variant": "error" }
+					},
+					{
+						"id": "forecast-alerts",
+						"title": "Variance alerts",
+						"type": "stats-block",
+						"iconClass": "icon-error",
+						"props": { "count": 0, "countLabel": "weeks below policy", "variant": "default" }
+					},
+					{
+						"id": "forecast-weeks",
+						"title": "13-week rolling forecast",
+						"type": "list-block",
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "CashForecast",
+							"sort": "forecastWeek"
+						}
+					}
+				],
+				"layout": [
+					{ "id": "lf-base", "widgetId": "forecast-base", "gridX": 0, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
+					{ "id": "lf-downside", "widgetId": "forecast-downside", "gridX": 3, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
+					{ "id": "lf-stress", "widgetId": "forecast-stress", "gridX": 6, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
+					{ "id": "lf-alerts", "widgetId": "forecast-alerts", "gridX": 9, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
+					{ "id": "lf-weeks", "widgetId": "forecast-weeks", "gridX": 0, "gridY": 2, "gridWidth": 12, "gridHeight": 4 }
+				]
+			}
+		},
+		{
+			"id": "GroupLiquidityDashboard",
+			"route": "/treasury/group-liquidity",
+			"type": "dashboard",
+			"title": "Group Liquidity Dashboard",
+			"config": {
+				"widgets": [
+					{
+						"id": "group-cash-position",
+						"title": "Group cash position",
+						"type": "stats-block",
+						"iconClass": "icon-folder",
+						"props": { "count": 0, "countLabel": "EUR (net of pending sweeps)", "variant": "primary" }
+					},
+					{
+						"id": "fx-exposure",
+						"title": "FX exposure",
+						"type": "stats-block",
+						"iconClass": "icon-category-monitoring",
+						"props": { "count": 0, "countLabel": "EUR unrealised", "variant": "warning" }
+					},
+					{
+						"id": "liquidity-runway",
+						"title": "Liquidity runway",
+						"type": "stats-block",
+						"iconClass": "icon-calendar",
+						"props": { "count": 0, "countLabel": "weeks of cash", "variant": "success" }
+					},
+					{
+						"id": "days-cash-on-hand",
+						"title": "Days cash on hand",
+						"type": "stats-block",
+						"iconClass": "icon-checkmark",
+						"props": { "count": 0, "countLabel": "days", "variant": "default" }
+					},
+					{
+						"id": "fx-positions",
+						"title": "FX positions by currency",
+						"type": "list-block",
+						"dataSource": {
+							"register": "shillinq",
+							"schema": "FXPosition",
+							"sort": "foreignCurrency"
+						}
+					}
+				],
+				"layout": [
+					{ "id": "lg-cash", "widgetId": "group-cash-position", "gridX": 0, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
+					{ "id": "lg-fx", "widgetId": "fx-exposure", "gridX": 3, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
+					{ "id": "lg-runway", "widgetId": "liquidity-runway", "gridX": 6, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
+					{ "id": "lg-dcoh", "widgetId": "days-cash-on-hand", "gridX": 9, "gridY": 0, "gridWidth": 3, "gridHeight": 2 },
+					{ "id": "lg-positions", "widgetId": "fx-positions", "gridX": 0, "gridY": 2, "gridWidth": 12, "gridHeight": 4 }
+				]
+			}
+		}
+	]
+}

@@ -1,0 +1,56 @@
+{
+	"_meta": {
+		"source": "openspec/changes/bookkeeping-tenderned-integratie/design.md (Seed Data §2 / Test Fixtures)",
+		"variant": "sample-tenderned-aanbiedingen",
+		"description": "Sample TenderNed tender records used by unit/integration test fixtures to mock TenderNed API responses. NOT auto-imported into live databases (design D2 / Task 3.2).",
+		"license": "EUPL-1.2",
+		"copyright": "2026 Conduction B.V."
+	},
+	"aanbiedingen": [
+		{
+			"tenderId": "TN-SAMPLE-UTRECHT-001",
+			"tenderNedUrl": "https://www.tenderned.nl/aankondigingen/overzicht/TN-SAMPLE-UTRECHT-001",
+			"title": "Schoonmaak Gemeentehuis Utrecht",
+			"description": "Doorlopende schoonmaakdienstverlening gemeentehuis, looptijd 1 jaar.",
+			"cpvCodes": ["90910000-9"],
+			"contractingService": "30280353 Gemeente Utrecht",
+			"awardDate": "2026-01-15",
+			"contractValue": 50000.0,
+			"termStart": "2026-02-01",
+			"termEnd": "2027-01-31",
+			"awardedSupplier": "76741850 Conduction B.V.",
+			"assignmentType": "service-provision-continuous",
+			"status": "gegund"
+		},
+		{
+			"tenderId": "TN-SAMPLE-BRABANT-002",
+			"tenderNedUrl": "https://www.tenderned.nl/aankondigingen/overzicht/TN-SAMPLE-BRABANT-002",
+			"title": "IT-dienstverlening Provincie Brabant",
+			"description": "Gefaseerde levering IT-infrastructuur en beheer, looptijd 2 jaar.",
+			"cpvCodes": ["72000000-5", "30200000-1"],
+			"contractingService": "17278718 Provincie Noord-Brabant",
+			"awardDate": "2026-02-10",
+			"contractValue": 250000.0,
+			"termStart": "2026-03-01",
+			"termEnd": "2028-02-29",
+			"awardedSupplier": "76741850 Conduction B.V.",
+			"assignmentType": "delivery-in-phases",
+			"status": "gegund"
+		},
+		{
+			"tenderId": "TN-SAMPLE-MKB-003",
+			"tenderNedUrl": "https://www.tenderned.nl/aankondigingen/overzicht/TN-SAMPLE-MKB-003",
+			"title": "Webontwikkeling gemeenteportaal",
+			"description": "MKB-leverancier-test: kleine opdracht voor leverancier-perspectief (REQ-008).",
+			"cpvCodes": ["72413000-8"],
+			"contractingService": "30280353 Gemeente Utrecht",
+			"awardDate": "2026-03-05",
+			"contractValue": 15000.0,
+			"termStart": "2026-04-01",
+			"termEnd": "2026-09-30",
+			"awardedSupplier": "76741850 Conduction B.V.",
+			"assignmentType": "other",
+			"status": "gegund"
+		}
+	]
+}

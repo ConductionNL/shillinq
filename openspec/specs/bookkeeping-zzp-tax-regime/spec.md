@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-zzp-tax-regime
 
 **Status:** proposed
@@ -6,7 +10,11 @@
 **Depends on:** `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-general-ledger/spec.md` (T1 GL),
 `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-chart-of-accounts/spec.md` (account hierarchy)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping zzp tax regime in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: tax filing dashboard pages not yet implemented
 
@@ -51,6 +59,8 @@ table); per ADR-031, no `TaxCalculationService.php`. Posting a
 
 ### REQ-TAX-002: The `TaxRegimeConfiguration` schema SHALL declare regime parameters and GL-to-category mappings
 
+The system SHALL satisfy this requirement: The `TaxRegimeConfiguration` schema SHALL declare regime parameters and GL-to-category mappings.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `administrationId` | string | Yes | FK to administration |
@@ -90,6 +100,8 @@ Schema.org annotation: `schema:Thing` (configuration metadata).
   trail.
 
 ### REQ-TAX-003: The `TaxSummaryReport` schema SHALL declare GL-aggregated income/expense summaries by statutory category and period
+
+The system SHALL satisfy this requirement: The `TaxSummaryReport` schema SHALL declare GL-aggregated income/expense summaries by statutory category and period.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -131,6 +143,8 @@ Schema.org annotation: `schema:Table` (report data).
   UUID + old/new amounts).
 
 ### REQ-TAX-004: The `TaxEstimate` schema SHALL declare real-time annual tax liability projection consuming GL YTD + configuration
+
+The system SHALL satisfy this requirement: The `TaxEstimate` schema SHALL declare real-time annual tax liability projection consuming GL YTD + configuration.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -264,6 +278,8 @@ components; all rendering via `@conduction/nextcloud-vue`.
 
 ### REQ-TAX-007: Tax summary updates SHALL be triggered by GL transaction posting, reflecting changes automatically
 
+The system SHALL satisfy this requirement: Tax summary updates SHALL be triggered by GL transaction posting, reflecting changes automatically.
+
 When a `GLTransaction` is posted, amended, or reversed (per
 `bookkeeping-general-ledger` REQ-GL-*, the aggregation engine MUST:
 
@@ -290,6 +306,8 @@ No operator action needed; aggregation is automatic on GL mutation.
   the GL transaction UUID.
 
 ### REQ-TAX-008: Annual tax estimates SHALL be computed on-read from GL YTD + configuration, enabling forward projection
+
+The system SHALL satisfy this requirement: Annual tax estimates SHALL be computed on-read from GL YTD + configuration, enabling forward projection.
 
 `TaxEstimate` is declared as a **materialized view** (computed on
 query or via scheduled refresh):

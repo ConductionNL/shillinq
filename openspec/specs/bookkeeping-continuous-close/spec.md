@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-continuous-close
 
 **Status:** proposed
@@ -10,7 +14,11 @@
 `../bookkeeping-accounts-payable/spec.md` (AP cut-off),
 `../bookkeeping-accounts-receivable/spec.md` (AR cut-off)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping continuous close in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend: soft-close flux logic — not browser-testable
 
@@ -232,6 +240,8 @@ Materiality thresholds per `MaterialityPolicy` register:
 
 ### REQ-CLS-006: Material flux items above materiality threshold SHALL receive rule-based auto-explanation or owner escalation with 24-hour SLA
 
+The system SHALL satisfy this requirement: Material flux items above materiality threshold SHALL receive rule-based auto-explanation or owner escalation with 24-hour SLA.
+
 For each `FluxItem` classified as "material" or above:
 
 1. **Attempt auto-explanation** via driver decomposition:
@@ -272,6 +282,8 @@ For each `FluxItem` classified as "material" or above:
 
 ### REQ-CLS-007: Flux narrative SHALL aggregate owner-explained variances, ranked by absolute variance, exportable to PDF/Markdown/JSON
 
+The system SHALL satisfy this requirement: Flux narrative SHALL aggregate owner-explained variances, ranked by absolute variance, exportable to PDF/Markdown/JSON.
+
 After all `FluxItem` records are marked (auto-explained, owner-explained,
 or unexplained), the system MUST generate a `FluxNarrative` that:
 
@@ -306,6 +318,12 @@ The system MUST provide dashboards (to be implemented; spec defines contract):
 
 Metrics: absolute variance, percentage variance, materiality flag, explanation status.
 
+#### Scenario: Drill-down from administratie to underlying transactions
+
+- **GIVEN** the comparative dashboard showing an administratie with an adverse COGS variance vs budget
+- **WHEN** the operator drills from administratie to segment to GL account
+- **THEN** the system MUST reach the underlying transactions within two clicks and display absolute variance, percentage variance, materiality flag and explanation status
+
 ### REQ-CLS-009: Close-quality KPIs SHALL track time-to-close, post-close adjustments, audit-correction ratio, and SLA compliance over 12 periods
 
 The system MUST collect and publish `CloseMetrics` per administratie, tracked over 12 periods:
@@ -330,6 +348,8 @@ Trend over 12 months; dashboard to be implemented separately.
 
 ### REQ-CLS-010: All automated postings (accruals, reversals, FX, depreciation) SHALL be auditable to rule, source data, user, timestamp, and reversible
 
+The system SHALL satisfy this requirement: All automated postings (accruals, reversals, FX, depreciation) SHALL be auditable to rule, source data, user, timestamp, and reversible.
+
 Every `AutoAccrualPosting`, FX revaluation posting, depreciation
 posting, and generated JournalEntry MUST carry:
 
@@ -339,6 +359,13 @@ posting, and generated JournalEntry MUST carry:
 - Timestamp (creation + modification)
 - Audit trail immutable per ADR-022
 - Reversal/correction workflow: original entry preserved; reversal posted as separate entry with audit link
+
+#### Scenario: Automated accrual posting is auditable and reversible
+
+- **GIVEN** a soft-close run posts an automated accrual via `SoftCloseExecutor`
+- **WHEN** an auditor inspects the resulting `AutoAccrualPosting`
+- **THEN** it MUST link to the source rule (ID + version), source data, posting user "SYSTEM:SoftCloseExecutor" and timestamps
+- **AND** any correction MUST preserve the original entry and post a separate reversal with an audit link
 
 ## MODIFIED Requirements (if amending existing specs)
 

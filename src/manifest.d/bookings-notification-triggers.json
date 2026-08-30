@@ -1,0 +1,200 @@
+{
+	"menu": [
+		{
+			"id": "Communicatie",
+			"label": "Communication",
+			"icon": "CommentOutline",
+			"order": 36,
+			"children": [
+				{
+					"id": "NotificationTriggers",
+					"label": "Notification Triggers",
+					"icon": "BellOutline",
+					"route": "NotificationTriggers",
+					"order": 10
+				},
+				{
+					"id": "NotificationMonitor",
+					"label": "Notification Monitor",
+					"icon": "BellOutline",
+					"route": "NotificationMonitor",
+					"order": 50
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "NotificationTriggers",
+			"route": "/communication/notification-triggers",
+			"type": "index",
+			"title": "Notification Triggers",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingNotificationTrigger",
+				"columns": [
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "triggerType", "label": "Event", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "channelCount", "label": "Channels", "sortable": false },
+					{ "key": "recipientRuleCount", "label": "Recipients", "sortable": false },
+					{ "key": "rateLimitSummary", "label": "Rate limit", "sortable": false },
+					{ "key": "lastDispatchedAt", "label": "Last sent", "sortable": true }
+				],
+				"defaultSort": "name",
+				"detailRoute": "NotificationTriggerDetail"
+			}
+		},
+		{
+			"id": "NotificationTriggerDetail",
+			"route": "/communication/notification-triggers/:id",
+			"type": "detail",
+			"title": "Notification Trigger",
+			"config": {
+				"_note": "A notification trigger is a CONFIG rule: it binds a booking lifecycle event to an ordered channel-fallback list, recipient rules, rate limits, a dedupe window, opt-out policy and an optional template override. Body leads with the rule fields and their computed summaries; there is NO email leaf — this configures dispatch, it is not a mailbox. The deliveries this rule produced and the template it overrides are listed as related for verification, and the audit trail sits in a sidebar tab (rule changes to customer messaging must be evidenced under AVG).",
+				"register": "shillinq",
+				"schema": "BookingNotificationTrigger",
+				"fields": [
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "triggerType", "label": "Event type", "type": "string", "help": "Which booking lifecycle event fires this trigger (booking.created / changed / cancelled / reminder)." },
+					{
+						"key": "reminderHoursBeforeStart",
+						"label": "Hours before start",
+						"type": "number",
+						"help": "Only used when triggerType = booking.reminder. The notification engine schedules dispatch at bookingStart − this value (±15 min tolerance)."
+					},
+					{ "key": "channels", "label": "Channels (priority order)", "type": "array", "help": "Fallback list — engine tries channel[0]; on adapter failure advances to channel[1], …" },
+					{ "key": "recipients", "label": "Recipient rules", "type": "array", "help": "Ordered list of {role, channels, condition} rules. Rules with a false condition are skipped (audited as 'condition-false')." },
+					{ "key": "rateLimitPerBookingPerHour", "label": "Rate limit (per booking / hour)", "type": "number" },
+					{ "key": "rateLimitPerOrganizerPerDay", "label": "Rate limit (per organizer / day)", "type": "number" },
+					{ "key": "deduplicationWindowMinutes", "label": "Dedupe window (minutes)", "type": "number" },
+					{ "key": "respectOptOut", "label": "Respect recipient opt-out", "type": "boolean", "help": "When on (default), recipients that opted out of this trigger type are skipped (REQ-BNT-009). AVG / GDPR mandates honouring opt-out for non-transactional channels." },
+					{ "key": "templateOverrideSlug", "label": "Template override (slug)", "type": "string", "help": "Optional per-trigger override. When empty, the engine picks the locale-matched published template from bookings-email-templates." },
+					{ "key": "appliesToBookingSlug", "label": "Limits to one booking (slug)", "type": "string", "help": "When set, this trigger only fires for that single booking — used by the per-booking modal overrides." },
+					{ "key": "channelCount", "label": "Channel count", "type": "calculated" },
+					{ "key": "recipientRuleCount", "label": "Recipient-rule count", "type": "calculated" },
+					{ "key": "isReminder", "label": "Is reminder", "type": "calculated" },
+					{ "key": "rateLimitSummary", "label": "Rate-limit summary", "type": "calculated" },
+					{ "key": "lastDispatchedAt", "label": "Last dispatched", "type": "date-time" },
+					{ "key": "activatedAt", "label": "First enabled", "type": "date-time" }
+				],
+				"lifecycleActions": true,
+				"relatedCollections": [
+					{"title": "Recent deliveries", "register": "shillinq", "schema": "NotificationDelivery", "filter": {"triggerName": "@object.name"}, "columns": [
+						{"key": "sentAt", "label": "Sent"},
+						{"key": "channel", "label": "Channel"},
+						{"key": "status", "label": "Status"},
+						{"key": "skipReason", "label": "Reason"}
+					], "rowRoute": "NotificationDeliveryDetail"}
+				],
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`; a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing while every gate stays green. TOKEN for deliveries: `@object.name`, NOT `@objectId` — OCA\\Shillinq\\Service\\BookingNotificationService writes `'triggerName' => $trigger['name']` on every delivery it records, i.e. the child denormalises the trigger's flat `name` payload field (deliberately, for audit immutability), so a UUID filter would match zero rows.",
+				"_relatedListsExclude": "The 'Overridden template' section is NOT convertible and was removed rather than faked. BookingNotificationTrigger.templateOverrideSlug stores a template SLUG (schema example 'default-confirmation-nl'), but BookingConfirmationTemplate has no flat `slug` payload field — only `name` ('Default Booking Confirmation'), which is a different value. The slug lives at `@self.slug`, which `@object.<field>` cannot reach (it reads flat payload fields only), and `@objectId` would yield the trigger's UUID, which nothing stores. No PHP resolves templateOverrideSlug either, so there is no writer to confirm an alternative. Restoring this section needs a flat slug/key field on the template schemas (or a `@self.slug` token in nextcloud-vue) — see the relatedLists sweep report.",
+				"auditTrail": true,
+				"indexRoute": "NotificationTriggers",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
+			}
+		},
+		{
+			"id": "NotificationMonitor",
+			"route": "/communication/notification-monitor",
+			"type": "index",
+			"title": "Notification Monitor",
+			"config": {
+				"register": "shillinq",
+				"schema": "NotificationDelivery",
+				"columns": [
+					{ "key": "sentAt", "label": "Sent", "sortable": true },
+					{ "key": "triggerName", "label": "Trigger", "sortable": true },
+					{ "key": "triggerType", "label": "Event", "sortable": true },
+					{ "key": "bookingId", "label": "Booking", "sortable": true },
+					{ "key": "maskedRecipient", "label": "Recipient", "sortable": false },
+					{ "key": "channel", "label": "Channel", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "skipReason", "label": "Reason", "sortable": false },
+					{ "key": "retryCount", "label": "Retries", "sortable": true }
+				],
+				"defaultSort": "sentAt",
+				"detailRoute": "NotificationDeliveryDetail",
+				"refreshIntervalSeconds": 300,
+				"emergencyActions": [
+					{
+						"id": "disable-all-triggers",
+						"label": "Disable all triggers",
+						"description": "Emergency off-switch. Disables every active trigger at once. No notifications are sent until an administrator turns them back on.",
+						"icon": "BellOffOutline",
+						"confirm": true
+					},
+					{
+						"id": "reset-rate-limits",
+						"label": "Reset rate-limit counters",
+						"description": "Clears the per-booking-hour and per-organizer-day counters. Use after the cause of a runaway loop has been fixed.",
+						"icon": "Refresh",
+						"confirm": true
+					}
+				]
+			}
+		},
+		{
+			"id": "NotificationDeliveryDetail",
+			"route": "/communication/notification-monitor/:id",
+			"type": "detail",
+			"title": "Notification Delivery",
+			"config": {
+				"_note": "A notification delivery is an immutable LOG record: one dispatch attempt for one recipient on one channel, with its status, skip/failure reason, retry count and dispatch-group id linking fallback attempts. Body leads with the delivery outcome; the other attempts in the same dispatch group are listed as related so an operator can follow a fallback chain. NO email leaf — this is a delivery log, not a mailbox; the audit trail sidebar tab evidences the immutable record.",
+				"register": "shillinq",
+				"schema": "NotificationDelivery",
+				"fields": [
+					{ "key": "triggerName", "label": "Trigger", "type": "string" },
+					{ "key": "triggerType", "label": "Event type", "type": "string" },
+					{ "key": "bookingId", "label": "Booking", "type": "string" },
+					{ "key": "recipient", "label": "Recipient", "type": "string", "help": "Raw recipient address. Auditor role only — non-auditor list view shows the masked variant." },
+					{ "key": "maskedRecipient", "label": "Recipient (masked)", "type": "calculated" },
+					{ "key": "channel", "label": "Channel", "type": "string" },
+					{ "key": "templateName", "label": "Template", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "skipReason", "label": "Skip / failure reason", "type": "string" },
+					{ "key": "failureReason", "label": "Adapter / render error", "type": "string" },
+					{ "key": "retryCount", "label": "Retries before this attempt", "type": "number" },
+					{ "key": "dispatchGroupId", "label": "Dispatch group id", "type": "string", "help": "Cross-links fallback attempts for the same logical dispatch." },
+					{ "key": "isDelivered", "label": "Delivered", "type": "calculated" },
+					{ "key": "sentAt", "label": "Sent at", "type": "date-time" }
+				],
+				"lifecycleActions": false,
+				"relatedCollections": [
+					{"title": "Attempts in this dispatch group", "register": "shillinq", "schema": "NotificationDelivery", "filter": {"dispatchGroupId": "@object.dispatchGroupId"}, "columns": [
+						{"key": "channel", "label": "Channel"},
+						{"key": "status", "label": "Status"},
+						{"key": "retryCount", "label": "Retries"},
+						{"key": "sentAt", "label": "Sent"}
+					], "rowRoute": "NotificationDeliveryDetail"}
+				],
+				"_relatedCollectionsNote": "KEY: `relatedCollections`, not `relatedLists` (the latter is not a prop on any Cn page component and renders nothing). TOKEN: `@object.dispatchGroupId` — this is a SIBLING list (NotificationDelivery filtered against NotificationDelivery), and dispatchGroupId is a flat payload field on both sides, reused across fallback channels by the dispatch engine. `@objectId` would resolve to THIS delivery's own UUID and match at most itself.",
+				"auditTrail": true,
+				"indexRoute": "NotificationMonitor",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
+			}
+		}
+	],
+	"bookingDetailActions": [
+		{
+			"id": "configure-notifications",
+			"label": "Notifications",
+			"icon": "BellOutline",
+			"modal": "BookingNotificationConfigModal",
+			"description": "Open per-booking notification configuration. Loads triggers whose triggerType matches one of the booking lifecycle events plus any triggers scoped to this booking; lets the organiser toggle each on/off and pick its channels (REQ-BNT-007)."
+		}
+	]
+}

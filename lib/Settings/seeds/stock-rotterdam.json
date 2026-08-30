@@ -1,0 +1,67 @@
+{
+	"_meta": {
+		"description": "InventoryStock seed for Rotterdam Warehouse (regional logistics hub). Same five demo SKUs as Amsterdam but different quantities and reservation / in-transit ratios — demonstrates that multi-location stock is independent per (productSku, locationCode) per REQ-IST-005 + REQ-IST-009. Idempotent dedupe per REQ-IST-002.",
+		"spec": "openspec/changes/inventory-stock-tracking/specs/inventory-stock-tracking/spec.md",
+		"req": "REQ-IST-009",
+		"source": "Nextcloud Inventory",
+		"location": "Rotterdam Warehouse",
+		"version": "1.0"
+	},
+	"stock": [
+		{
+			"productSku": "LAPTOP-DELL-XPS13",
+			"locationCode": "WH-RTM-001",
+			"locationName": "Rotterdam Warehouse",
+			"quantityOnHand": 8,
+			"quantityReserved": 2,
+			"quantityInTransit": 0,
+			"unitCost": 1899.00,
+			"lastRestockDate": "2026-05-12T00:00:00Z",
+			"status": "active"
+		},
+		{
+			"productSku": "TONER-HP-CF283A",
+			"locationCode": "WH-RTM-001",
+			"locationName": "Rotterdam Warehouse",
+			"quantityOnHand": 75,
+			"quantityReserved": 10,
+			"quantityInTransit": 50,
+			"unitCost": 45.00,
+			"lastRestockDate": "2026-04-28T00:00:00Z",
+			"status": "active"
+		},
+		{
+			"productSku": "BOX-CARDBOARD-S",
+			"locationCode": "WH-RTM-001",
+			"locationName": "Rotterdam Warehouse",
+			"quantityOnHand": 2400,
+			"quantityReserved": 300,
+			"quantityInTransit": 0,
+			"unitCost": 0.75,
+			"lastRestockDate": "2026-05-08T00:00:00Z",
+			"status": "active"
+		},
+		{
+			"productSku": "NOTEBOOK-A4-100",
+			"locationCode": "WH-RTM-001",
+			"locationName": "Rotterdam Warehouse",
+			"quantityOnHand": 45,
+			"quantityReserved": 0,
+			"quantityInTransit": 100,
+			"unitCost": 3.50,
+			"lastRestockDate": "2026-04-22T00:00:00Z",
+			"status": "active"
+		},
+		{
+			"productSku": "USB-DRIVE-32GB",
+			"locationCode": "WH-RTM-001",
+			"locationName": "Rotterdam Warehouse",
+			"quantityOnHand": 30,
+			"quantityReserved": 4,
+			"quantityInTransit": 0,
+			"unitCost": 12.00,
+			"lastRestockDate": "2026-05-09T00:00:00Z",
+			"status": "active"
+		}
+	]
+}

@@ -1,0 +1,38 @@
+{
+	"_meta": {
+		"description": "Companion seed: three Dutch warehouse / retail Locations referenced by stock-amsterdam / stock-rotterdam / stock-utrecht. Shipped here as fall-back master data for installs where budget-planning-control has not yet seeded Location records (Task 19). Idempotent dedupe on (administrationId, code).",
+		"spec": "openspec/changes/inventory-stock-tracking/specs/inventory-stock-tracking/spec.md",
+		"req": "REQ-IST-005",
+		"source": "Nextcloud Inventory",
+		"version": "1.0"
+	},
+	"locations": [
+		{
+			"code": "WH-AMS-001",
+			"name": "Amsterdam Warehouse",
+			"address": "Hoofddorpweg 10A, 1131 PA Amsterdam",
+			"region": "Noord-Holland",
+			"capacity": 5000,
+			"manager": "Jan de Vries",
+			"locationType": "warehouse"
+		},
+		{
+			"code": "WH-RTM-001",
+			"name": "Rotterdam Warehouse",
+			"address": "Betuweweg 45, 3196 KE Rotterdam-Pernis",
+			"region": "Zuid-Holland",
+			"capacity": 8000,
+			"manager": "Maria González",
+			"locationType": "distribution_center"
+		},
+		{
+			"code": "ST-UTR-001",
+			"name": "Utrecht Store",
+			"address": "Neude 3, 3512 AD Utrecht",
+			"region": "Utrecht",
+			"capacity": 500,
+			"manager": "Erik Vermeulen",
+			"locationType": "retail"
+		}
+	]
+}

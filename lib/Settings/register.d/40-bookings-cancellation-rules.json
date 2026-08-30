@@ -1,0 +1,517 @@
+{
+  "components": {
+    "schemas": {
+      "CancellationPolicy": {
+        "slug": "CancellationPolicy",
+        "icon": "CalendarRemoveOutline",
+        "version": "0.1.0",
+        "title": "Cancellation Policy",
+        "description": "Operator-defined booking cancellation policy: minimum notice for free cancellation, reschedule window, late-cancellation fee brackets, no-show fee, card-hold requirement, and refund method. Resolved at appointment-creation time and snapshot onto the appointment so historical bookings keep their original terms (design D2). Per REQ-BCR-001.",
+        "x-schema-org": "schema:Service",
+        "type": "object",
+        "required": [
+          "policyId",
+          "name",
+          "minNoticeDays",
+          "rescheduleWindowDays",
+          "lateFeeBrackets",
+          "noShowFee",
+          "refundPolicy",
+          "lifecycleState",
+          "administrationId"
+        ],
+        "properties": {
+          "policyId": {
+            "type": "string",
+            "description": "Stable operator-facing policy identifier, unique per administration.",
+            "example": "policy-yoga-standard",
+            "title": "Policy ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable policy name shown in the admin policy list.",
+            "example": "Yoga Classes — Standard",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Policy description shown to customers at booking and cancellation time.",
+            "nullable": true,
+            "example": "48-hour cancellation notice, 20% late fee after 48h, 100% no-show fee.",
+            "title": "Description"
+          },
+          "minNoticeDays": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Minimum whole days of notice for a free cancellation (0 = same-day allowed). Per REQ-BCR-001.",
+            "example": 2,
+            "title": "Min Notice Days"
+          },
+          "rescheduleWindowDays": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of days after the original start time within which a cancelled appointment MAY be rescheduled (T2 enforcement).",
+            "example": 14,
+            "title": "Reschedule Window Days"
+          },
+          "lateFeeBrackets": {
+            "type": "array",
+            "description": "Ordered fee brackets. The matching bracket is the one with the largest daysBeforeStart that is still <= the actual whole days until start (design D3). feeType is percentage or fixed; feeAmount is a percentage (0-100) or a fixed amount in integer cents.",
+            "items": {
+              "type": "object",
+              "required": [
+                "daysBeforeStart",
+                "feeType",
+                "feeAmount"
+              ],
+              "properties": {
+                "daysBeforeStart": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Whole-day threshold; bracket applies when daysUntilStart >= daysBeforeStart.",
+                  "title": "Days Before Start"
+                },
+                "feeType": {
+                  "type": "string",
+                  "enum": [
+                    "percentage",
+                    "fixed"
+                  ],
+                  "description": "percentage = feeAmount is a 0-100 percentage of the appointment cost; fixed = feeAmount is an amount in integer cents.",
+                  "title": "Fee Type"
+                },
+                "feeAmount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Percentage (0-100) when feeType=percentage, or amount in integer cents when feeType=fixed.",
+                  "title": "Fee Amount"
+                }
+              }
+            },
+            "example": [
+              {
+                "daysBeforeStart": 2,
+                "feeType": "percentage",
+                "feeAmount": 0
+              },
+              {
+                "daysBeforeStart": 0,
+                "feeType": "percentage",
+                "feeAmount": 20
+              }
+            ],
+            "title": "Late Fee Brackets"
+          },
+          "noShowFee": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Fee applied when the customer does not show. Percentage (0-100) of appointment cost; interpreted by the policy's no-show feeType convention. Per REQ-BCR-001.",
+            "example": 100,
+            "title": "No Show Fee"
+          },
+          "cardHoldRequired": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether a card hold is required at booking (declared in phase 2; enforced in phase 3 payment integration).",
+            "title": "Card Hold Required"
+          },
+          "refundPolicy": {
+            "type": "string",
+            "enum": [
+              "card_reversal",
+              "store_credit",
+              "none"
+            ],
+            "description": "How refunds are issued. Recorded in phase 2; executed by phase 3 payment integration.",
+            "example": "card_reversal",
+            "title": "Refund Policy"
+          },
+          "linkedService": {
+            "type": "string",
+            "description": "Optional FK to Service.serviceId (bookings-service-catalog). Declared for T2 service-specific policy selection; phase 2 ships global policy resolution (design D7).",
+            "nullable": true,
+            "example": "svc-yoga-60",
+            "title": "Linked Service"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived"
+            ],
+            "default": "active",
+            "description": "Policy lifecycle. Archived policies are hidden from new-appointment resolution but kept for audit and historical snapshots.",
+            "title": "Lifecycle State"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Tenant/administration scope for IDOR-safe filtering (ADR-005).",
+            "example": "adm-consultancy-nl",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Policy is available for resolution onto new appointments."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Policy is retired; not offered for new appointments. Existing snapshots are unaffected."
+            }
+          },
+          "transitions": {
+            "archive": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archive policy",
+              "description": "Soft-delete the policy. Historical appointments retain their snapshot of the policy terms."
+            },
+            "reactivate": {
+              "from": "archived",
+              "to": "active",
+              "label": "Reactivate policy",
+              "description": "Return an archived policy to active so it can be resolved onto new appointments again."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "operator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ],
+              "description": "Operators manage cancellation policies for their administration."
+            },
+            "customer": {
+              "permissions": [
+                "read"
+              ],
+              "description": "Customers may read the policy terms applicable to their bookings."
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Cancellation Policy is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "BookingCancellation": {
+        "slug": "BookingCancellation",
+        "icon": "CalendarRemoveOutline",
+        "version": "0.1.0",
+        "title": "Booking Cancellation",
+        "description": "Immutable cancellation record for an appointment. Captures the cancellation timestamp, reason, the policy snapshot that applied, the calculated refund amount, and the refund lifecycle. One per cancelled appointment; a second cancellation of the same appointment MUST be rejected (REQ-BCR-008 immutability). The appointmentId FK targets the Appointment register declared by the bookings-create-appointment fragment (10-bookings-create-appointment.json); the x-openregister-relation below resolves it.",
+        "x-schema-org": "schema:Action",
+        "type": "object",
+        "required": [
+          "appointmentId",
+          "cancelledAt",
+          "cancelledReason",
+          "appliedPolicy",
+          "refundAmount",
+          "refundStatus",
+          "administrationId"
+        ],
+        "properties": {
+          "appointmentId": {
+            "type": "string",
+            "description": "Identifier of the cancelled appointment (FK to Appointment.appointmentId).",
+            "example": "apt-12345",
+            "title": "Appointment ID"
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 UTC timestamp the cancellation was recorded (design D8). Immutable once set.",
+            "example": "2026-05-27T10:00:00Z",
+            "title": "Cancelled At"
+          },
+          "cancelledReason": {
+            "type": "string",
+            "enum": [
+              "customer_request",
+              "double_booked",
+              "schedule_conflict",
+              "payment_issue",
+              "no_show",
+              "other"
+            ],
+            "description": "Reason enum (design D5). Immutable; set at cancellation time.",
+            "title": "Cancelled Reason"
+          },
+          "cancelledBy": {
+            "type": "string",
+            "description": "Actor that initiated the cancellation (admin user id or 'customer:<email>'). Recorded for audit (REQ-BCR-007).",
+            "nullable": true,
+            "example": "customer:jane@example.com",
+            "title": "Cancelled By"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Optional free-text note supplied at cancellation time.",
+            "nullable": true,
+            "title": "Notes"
+          },
+          "appliedPolicy": {
+            "type": "object",
+            "description": "Snapshot of the CancellationPolicy terms in force at appointment creation time (design D2): policyId, minNoticeDays, lateFeeBrackets, noShowFee, refundPolicy. Used for fee calculation so later policy edits do not alter historical bookings.",
+            "x-openregister-inversedBy": null,
+            "title": "Applied Policy"
+          },
+          "appointmentCost": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Appointment cost in integer cents at cancellation time, used as the base for fee calculation.",
+            "example": 10000,
+            "title": "Appointment Cost"
+          },
+          "cancellationFeeApplied": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Fee withheld in integer cents (appointmentCost - refundAmount).",
+            "example": 2000,
+            "title": "Cancellation Fee Applied"
+          },
+          "refundAmount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Amount eligible for refund in integer cents = appointmentCost - fee, never negative (design D4).",
+            "example": 8000,
+            "title": "Refund Amount"
+          },
+          "refundStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processed",
+              "failed",
+              "cancelled"
+            ],
+            "default": "pending",
+            "description": "Refund lifecycle (design D6). Set to pending on cancellation; transitioned by phase 3 payment integration.",
+            "title": "Refund Status"
+          },
+          "refundedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 UTC timestamp the refund completed (set in phase 3).",
+            "nullable": true,
+            "title": "Refunded At"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Tenant/administration scope for IDOR-safe filtering (ADR-005).",
+            "example": "adm-consultancy-nl",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "refundStatus",
+          "initialState": "pending",
+          "states": {
+            "pending": {
+              "label": "Pending",
+              "description": "Cancellation recorded; refund not yet processed."
+            },
+            "processed": {
+              "label": "Processed",
+              "description": "Refund completed; refundedAt set (phase 3)."
+            },
+            "failed": {
+              "label": "Failed",
+              "description": "Refund attempt failed; customer must contact support (phase 3)."
+            },
+            "cancelled": {
+              "label": "Cancelled",
+              "description": "Refund cancelled (edge case)."
+            }
+          },
+          "transitions": {
+            "process": {
+              "from": "pending",
+              "to": "processed",
+              "label": "Mark refund processed",
+              "description": "Phase 3 payment integration completed the refund."
+            },
+            "fail": {
+              "from": "pending",
+              "to": "failed",
+              "label": "Mark refund failed",
+              "description": "Phase 3 payment integration could not complete the refund."
+            },
+            "cancelRefund": {
+              "from": "pending",
+              "to": "cancelled",
+              "label": "Cancel refund",
+              "description": "Refund was cancelled before processing (edge case)."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "operator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ],
+              "description": "Operators record and view cancellations. No delete: cancellation records are immutable (REQ-BCR-008)."
+            },
+            "customer": {
+              "permissions": [
+                "create",
+                "read"
+              ],
+              "description": "Customers may self-cancel their own appointments and read the resulting record."
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Booking Cancellation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "Appointment": {
+        "slug": "Appointment",
+        "description": "Partial overlay (ADR-037 additive merge) onto the Appointment register owned by the bookings-create-appointment fragment (10-bookings-create-appointment.json). Adds the phase-2 cancellation fields the cancellation flow snapshots onto an appointment when it is cancelled (REQ-BCR Appointment Schema Extensions). These fields are all optional — set only at cancellation time — so they are deliberately NOT added to the base schema's required list. The base schema already declares cancelledAt and cancelledReason.",
+        "properties": {
+          "appliedPolicy": {
+            "type": "object",
+            "nullable": true,
+            "description": "Snapshot of the CancellationPolicy terms in force at appointment-creation time (design D2): policyId, minNoticeDays, lateFeeBrackets, noShowFee, refundPolicy. Used for fee calculation so later policy edits do not alter historical bookings.",
+            "title": "Applied Policy"
+          },
+          "appointmentCost": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Appointment cost in integer cents, used as the base for cancellation-fee calculation (design D4).",
+            "title": "Appointment Cost"
+          },
+          "refundAmount": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Amount eligible for refund in integer cents = appointmentCost - fee, never negative (design D4). Set at cancellation.",
+            "title": "Refund Amount"
+          },
+          "refundStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processed",
+              "failed",
+              "cancelled"
+            ],
+            "nullable": true,
+            "description": "Refund lifecycle (design D6). Set to pending on cancellation; transitioned by phase 3 payment integration.",
+            "title": "Refund Status"
+          },
+          "refundedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "ISO 8601 UTC timestamp the refund completed (set in phase 3).",
+            "title": "Refunded At"
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CancellationPolicy",
+        "slug": "policy-yoga-standard"
+      },
+      "policyId": "policy-yoga-standard",
+      "name": "Yoga Classes — Standard",
+      "description": "48-hour cancellation notice, 20% late fee after 48h, 100% no-show fee.",
+      "minNoticeDays": 2,
+      "rescheduleWindowDays": 14,
+      "lateFeeBrackets": [
+        {
+          "daysBeforeStart": 2,
+          "feeType": "percentage",
+          "feeAmount": 0
+        },
+        {
+          "daysBeforeStart": 0,
+          "feeType": "percentage",
+          "feeAmount": 20
+        }
+      ],
+      "noShowFee": 100,
+      "cardHoldRequired": false,
+      "refundPolicy": "card_reversal",
+      "lifecycleState": "active",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CancellationPolicy",
+        "slug": "policy-coaching-premium"
+      },
+      "policyId": "policy-coaching-premium",
+      "name": "Personal Coaching — Premium",
+      "description": "24-hour cancellation notice, 50% late fee after 24h, card hold required.",
+      "minNoticeDays": 1,
+      "rescheduleWindowDays": 30,
+      "lateFeeBrackets": [
+        {
+          "daysBeforeStart": 1,
+          "feeType": "percentage",
+          "feeAmount": 0
+        },
+        {
+          "daysBeforeStart": 0,
+          "feeType": "percentage",
+          "feeAmount": 50
+        }
+      ],
+      "noShowFee": 100,
+      "cardHoldRequired": true,
+      "refundPolicy": "card_reversal",
+      "lifecycleState": "active",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CancellationPolicy",
+        "slug": "policy-consult-standard"
+      },
+      "policyId": "policy-consult-standard",
+      "name": "Consultations — Standard",
+      "description": "Free cancellation up to 24h, €50 fixed late-cancellation fee after 24h.",
+      "minNoticeDays": 1,
+      "rescheduleWindowDays": 90,
+      "lateFeeBrackets": [
+        {
+          "daysBeforeStart": 1,
+          "feeType": "fixed",
+          "feeAmount": 0
+        },
+        {
+          "daysBeforeStart": 0,
+          "feeType": "fixed",
+          "feeAmount": 5000
+        }
+      ],
+      "noShowFee": 50,
+      "cardHoldRequired": false,
+      "refundPolicy": "store_credit",
+      "lifecycleState": "active",
+      "administrationId": "adm-consultancy-nl"
+    }
+  ]
+}

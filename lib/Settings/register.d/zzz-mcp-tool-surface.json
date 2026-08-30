@@ -1,0 +1,253 @@
+{
+  "x-shillinq-fragment": "mcp-tool-surface",
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "shillinq-mcp-adoption",
+    "description": "ADR-063 read-only x-openregister-mcp dialect on the 12 curated schemas (design.md D2). Adds only configuration[\"x-openregister-mcp\"] per schema via ADR-037 key-union merge -- no property, lifecycle, or required-list is restated or altered. search+get only, scope:read, readOnlyHint:true. Zero write verbs (REQ-MCP-003). Sorts last of all fragments (zzz- prefix) so nothing merged afterwards can overwrite the declaration."
+  },
+  "components": {
+    "schemas": {
+      "ARInvoice": {
+        "configuration": {
+          "x-openregister-mcp": {
+            "enabled": true,
+            "tools": {
+              "search": {
+                "description": "Search accounts-receivable invoices (the AR sub-ledger record of account -- the only place amountDue/paidAmount/dunning live). Use for 'which invoices are overdue?' and similar debtor/AR questions.",
+                "scope": "read",
+                "readOnlyHint": true,
+                "filters": ["customerId", "invoiceNumber", "lifecycleState", "invoiceType", "administrationId"]
+              },
+              "get": {
+                "description": "Get a single AR invoice by id, including amountDue, paidAmount, and dunning state.",
+                "scope": "read",
+                "readOnlyHint": true
+              }
+            }
+          }
+        }
+      },
+      "SupplierInvoice": {
+        "configuration": {
+          "x-openregister-mcp": {
+            "enabled": true,
+            "tools": {
+              "search": {
+                "description": "Search accounts-payable invoices. Use for 'what do we still owe?' and to find invoices stuck unmatched against a purchase order.",
+                "scope": "read",
+                "readOnlyHint": true,
+                "filters": ["supplierId", "invoiceNumber", "statusCode", "administrationId"]
+              },
+              "get": {
+                "description": "Get a single supplier (AP) invoice by id, including its matching and extraction status.",
+                "scope": "read",
+                "readOnlyHint": true
+              }
+            }
+          }
+        }
+      },
+      "CustomerMaster": {
+        "configuration": {
+          "x-openregister-mcp": {
+            "enabled": true,
+            "tools": {
+              "search": {
+                "description": "Search the debtor master. Use to resolve which customer an invoice or payment question is about, by name, KvK number, or VAT id.",
+                "scope": "read",
+                "readOnlyHint": true,
+                "filters": ["customerId", "legalName", "kvkNumber", "vatId", "lifecycleState"]
+              },
+              "get": {
+                "description": "Get a single customer (debtor) master record by id.",
+                "scope": "read",
+                "readOnlyHint": true
+              }
+            }
+          }
+        }
+      },
+      "Payment": {
+        "configuration": {
+          "x-openregister-mcp": {
+            "enabled": true,
+            "tools": {
+              "search": {
+                "description": "Search payments. Use to answer 'has invoice X been paid?' -- the read that closes the loop on an AR or AP invoice.",
+                "scope": "read",
+                "readOnlyHint": true,
+                "filters": ["linkedInvoiceId", "status", "paymentType", "paymentDate", "administrationId"]
+              },
+              "get": {
+                "description": "Get a single payment by id.",
+                "scope": "read",
+                "readOnlyHint": true
+              }
+            }
+          }
+        }
+      },
+      "Account": {
+        "configuration": {
+          "x-openregister-mcp": {
+            "enabled": true,
+            "tools": {
+              "search": {
+                "description": "Search the RGS chart of accounts. Required to resolve any ledger account before reasoning about a posting.",
+                "scope": "read",
+                "readOnlyHint": true,
+                "filters": ["accountNumber", "accountType", "rgsCode", "lifecycleState", "administrationId"]
+              },
+              "get": {
+                "description": "Get a single chart-of-accounts entry by id.",
+                "scope": "read",
+                "readOnlyHint": true
+              }
+            }
+          }
+        }
+      },
+      "GLTransaction": {
+        "configuration": {
+          "x-openregister-mcp": {
+            "enabled": true,
+            "tools": {
+              "search": {
+                "description": "Search general-ledger transactions -- the double-entry posting of record. Use for 'what was booked in period 6?' and similar posting-history questions.",
+                "scope": "read",
+                "readOnlyHint": true,
+                "filters": ["transactionNumber", "state", "journalType", "fiscalYearId", "periodId"]
+              },
+              "get": {
+                "description": "Get a single GL transaction by id.",
+                "scope": "read",
+                "readOnlyHint": true
+              }
+            }
+          }
+        }
+      },
+      "UrenRegistratie": {
+        "configuration": {
+          "x-openregister-mcp": {
+            "enabled": true,
+            "tools": {
+              "search": {
+                "description": "Search booked hours. Use for 'how many hours did I book on project Y this month?' -- the top ZZP/consultancy question and the urencriterium input.",
+                "scope": "read",
+                "readOnlyHint": true,
+                "filters": ["personId", "projectId", "date", "taskId", "administrationId"]
+              },
+              "get": {
+                "description": "Get a single hours-registration entry by id.",
+                "scope": "read",
+                "readOnlyHint": true
+              }
+            }
+          }
+        }
+      },
+      "ExpenseClaimEntry": {
+        "configuration": {
+          "x-openregister-mcp": {
+            "enabled": true,
+            "tools": {
+              "search": {
+                "description": "Search expense claim headers. Use for 'which expense claims are waiting on approval?'. Line-level Receipt rows are reachable through the header and are not separately exposed.",
+                "scope": "read",
+                "readOnlyHint": true,
+                "filters": ["employeeId", "state", "claimNumber", "approvalState"]
+              },
+              "get": {
+                "description": "Get a single expense claim entry by id.",
+                "scope": "read",
+                "readOnlyHint": true
+              }
+            }
+          }
+        }
+      },
+      "Project": {
+        "configuration": {
+          "x-openregister-mcp": {
+            "enabled": true,
+            "tools": {
+              "search": {
+                "description": "Search projects, including percentageComplete, wipBalance, and recognisedRevenue -- the RJ 270 / IFRS 15 revenue-recognition answers.",
+                "scope": "read",
+                "readOnlyHint": true,
+                "filters": ["customerId", "state", "projectNumber", "code", "administrationId"]
+              },
+              "get": {
+                "description": "Get a single project by id.",
+                "scope": "read",
+                "readOnlyHint": true
+              }
+            }
+          }
+        }
+      },
+      "VatReturn": {
+        "configuration": {
+          "x-openregister-mcp": {
+            "enabled": true,
+            "tools": {
+              "search": {
+                "description": "Search BTW (VAT) returns and their Digipoort submission state. Use for 'is the Q2 BTW-aangifte submitted?'.",
+                "scope": "read",
+                "readOnlyHint": true,
+                "filters": ["periodYear", "periodQuarter", "periodType", "state", "administrationId"]
+              },
+              "get": {
+                "description": "Get a single VAT return by id.",
+                "scope": "read",
+                "readOnlyHint": true
+              }
+            }
+          }
+        }
+      },
+      "TrialBalance": {
+        "configuration": {
+          "x-openregister-mcp": {
+            "enabled": true,
+            "tools": {
+              "search": {
+                "description": "Search trial balances. Use for 'is the trial balance balanced?' -- a closing-check read against isBalanced, totalDebits, totalCredits.",
+                "scope": "read",
+                "readOnlyHint": true,
+                "filters": ["fiscalYearId", "reportDate", "status", "administrationId"]
+              },
+              "get": {
+                "description": "Get a single trial balance by id.",
+                "scope": "read",
+                "readOnlyHint": true
+              }
+            }
+          }
+        }
+      },
+      "BankStatement": {
+        "configuration": {
+          "x-openregister-mcp": {
+            "enabled": true,
+            "tools": {
+              "search": {
+                "description": "Search imported bank statement headers. Use for 'did the January statement import, and is it reconciled?'. Line-level BankStatementLine rows are reachable through the header and are not separately exposed.",
+                "scope": "read",
+                "readOnlyHint": true,
+                "filters": ["bankAccountIban", "statementDate", "lifecycleState", "administrationId"]
+              },
+              "get": {
+                "description": "Get a single bank statement header by id.",
+                "scope": "read",
+                "readOnlyHint": true
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

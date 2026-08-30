@@ -1,0 +1,40 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "shillinq-documentation",
+		"variant": "test-gemeente",
+		"spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
+		"description": "Example IKP record for the zaalverhuur activity Q1 2026. status=voorlopig — the year-end definitief lock comes from the production run on 31 March of the following year."
+	},
+	"ikp": [
+		{
+			"commercialActivityId": "MO-SP-015",
+			"period": "2026-Q1",
+			"calculatedOn": "2026-04-05T03:00:00Z",
+			"status": "voorlopig",
+			"componenten": {
+				"directPayrollCost": 41250.00,
+				"directMaterials": 8730.00,
+				"directDepreciations": 6900.00,
+				"indirecteOverhead": {
+					"huisvesting": 14820.00,
+					"ict": 5260.00,
+					"directieEnStaf": 4070.00,
+					"facilitair": 1990.00
+				},
+				"capitalCost": 1820.00,
+				"profitMarkup": 2550.00
+			},
+			"totalCost": 87390.00,
+			"soldUnits": 312,
+			"unitLabel": "dagdeel-zaalhuur",
+			"costPricePerUnit": 280.10,
+			"appliedRate": 295.00,
+			"marge": 14.90,
+			"margePercentage": 5.32,
+			"compliant": true,
+			"notes": "BBV taakveld 0.4 overhead via personele-fte sleutel; WACC 4.5% op €40,4k inventaris; winstopslag 3% van directe kosten."
+		}
+	]
+}

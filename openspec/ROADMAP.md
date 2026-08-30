@@ -28,9 +28,37 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 
 | Feature | Status | Priority | OpenSpec Change |
 |---------|--------|----------|----------------|
-| Invoice PDF export with embedded UBL 2.1 XML (PDF/A-3 / ZUGFeRD / Factur-X) | planned | must | [add-invoice-pdf-export-with-ubl-peppol-support](changes/add-invoice-pdf-export-with-ubl-peppol-support/) |
+| Invoice PDF export with embedded NLCIUS UBL 2.1 XML (NL/Peppol; not Factur-X/ZUGFeRD) | planned | must | [add-invoice-pdf-export-with-ubl-peppol-support](changes/add-invoice-pdf-export-with-ubl-peppol-support/) |
 | Peppol BIS 3.0 outbound transmission | planned | must | [add-invoice-pdf-export-with-ubl-peppol-support](changes/add-invoice-pdf-export-with-ubl-peppol-support/) |
 | Dutch KvK and BTW number validation for e-invoicing | planned | must | [add-invoice-pdf-export-with-ubl-peppol-support](changes/add-invoice-pdf-export-with-ubl-peppol-support/) |
+| True Factur-X / ZUGFeRD (UN/CEFACT CII) invoice output for DE/FR trading partners — explicitly NOT provided today (REQ-EINV-008); needs a real conformance validator (KoSIT/Mustang for CII, veraPDF for PDF/A) in the loop | planned | could | `facturx-cii-generator` (follow-up — Codeberg issue shillinq#408, pre-migration, not migrated to GitHub) |
+
+## Budget & Commitment Accounting Features
+
+| Feature | Status | Priority | OpenSpec Change |
+|---------|--------|----------|----------------|
+| Auto-record a verplichting (commitment) at PO approval / contract signature | planned | must | [verplichtingen-commitment-accounting](changes/verplichtingen-commitment-accounting/) |
+| Committed-vs-realised reporting per budget line | planned | must | [verplichtingen-commitment-accounting](changes/verplichtingen-commitment-accounting/) |
+| Rechtmatigheid tie-in for system-raised commitments | planned | should | [verplichtingen-commitment-accounting](changes/verplichtingen-commitment-accounting/) |
+
+## Compliance Deadline Calendar Features
+
+| Feature | Status | Priority | OpenSpec Change |
+|---------|--------|----------|----------------|
+| Publish BTW/ICP/VPB filing deadlines to Nextcloud Calendar | planned | must | [compliance-deadline-calendar](changes/compliance-deadline-calendar/) |
+| Payment-run execution dates and (opt-in) AR invoice due dates on calendar | planned | should | [compliance-deadline-calendar](changes/compliance-deadline-calendar/) |
+| Contract renewal / opzegtermijn calendar alerts | planned | must | [compliance-deadline-calendar](changes/compliance-deadline-calendar/) |
+| Deadline reminder notifications with per-user category toggles | planned | should | [compliance-deadline-calendar](changes/compliance-deadline-calendar/) |
+
+## Document Intelligence Features
+
+| Feature | Status | Priority | OpenSpec Change |
+|---------|--------|----------|----------------|
+| Consume docudesk field-extraction to prefill bill import | planned | must | [receipt-extraction-consume](changes/receipt-extraction-consume/) |
+| Receipt/expense capture prefill with per-field confidence | planned | should | [receipt-extraction-consume](changes/receipt-extraction-consume/) |
+| Field correction flow and docudesk re-extraction request | planned | should | [receipt-extraction-consume](changes/receipt-extraction-consume/) |
+| Consume docudesk GL-account booking suggestion with confidence + rationale | done | should | [gl-account-suggestion-consume](changes/archive/2026-07-13-gl-account-suggestion-consume/) |
+| Feed booked GL account back to docudesk as a correction (learning loop) | done | should | [gl-account-suggestion-consume](changes/archive/2026-07-13-gl-account-suggestion-consume/) |
 
 ## Contract Lifecycle Management Features
 
@@ -60,6 +88,18 @@ Features are defined in [`openspec/specs/`](specs/). When a feature reaches `pla
 | Automatic payment reminder emails with configurable escalation schedule | planned | must | [scheduling](changes/scheduling/) |
 | Schedule payments strategically | planned | must | [scheduling](changes/scheduling/) |
 | Schedule payment date | planned | must | [scheduling](changes/scheduling/) |
+
+## Reconciliation (Aansluitingen) Framework Features
+
+| Feature | Status | Priority | OpenSpec Change |
+|---------|--------|----------|----------------|
+| `Aansluiting`/`AansluitingResult` tie-out framework (definition + per-period computed instance, tolerance, drill-down, open/explained/resolved lifecycle) | planned | must | [bookkeeping-aansluitingen](changes/bookkeeping-aansluitingen/) |
+| BTW-ledger -> aangifte tie-out | planned | must | [bookkeeping-aansluitingen](changes/bookkeeping-aansluitingen/) |
+| Subledger (AR/AP) -> GL control-account tie-out | planned | must | [bookkeeping-aansluitingen](changes/bookkeeping-aansluitingen/) |
+| Year-end balance reconciliation pack | planned | should | follow-up (not yet filed) |
+| ICP <-> BTW rubriek 3b tie-out on the shared framework | planned | could | follow-up (not yet filed) |
+| Bank-balance tie-out on the shared framework (extends `bookkeeping-reconciliation-reports`) | planned | could | follow-up (not yet filed) |
+| XAF/auditfile completeness check | planned | could | follow-up (not yet filed) |
 
 ## Phases
 

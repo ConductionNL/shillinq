@@ -1,11 +1,18 @@
+---
+status: done
+---
+
 # Spec: Purchase Order 3-way Match
 
 **Primary spec for:** `bookkeeping-purchase-order-3way`
 
-## Entities
+**Status**: done
+**OpenSpec changes**:
+- [prestatieverklaring-service-receipt](../../changes/archive/2026-07-13-prestatieverklaring-service-receipt/) _(archived 2026-07-13)_
+
+## Purpose
 
 @e2e exclude pure backend/schema: 3-way match purchase order — not browser-testable
-
 
 ### PurchaseOrder
 
@@ -204,10 +211,11 @@ _Monthly supplier scorecard tracking on-time delivery, quantity accuracy, price 
 - → Supplier (many-to-one)
 
 ---
-
 ## Requirements
 
 ### REQ-PO3W-001: Create purchase order with approval chain
+
+The system SHALL satisfy this requirement: Create purchase order with approval chain.
 
 **Demand**: Must implement ordered-list approval routing based on PO amount threshold.
 
@@ -224,6 +232,8 @@ An **Inkoper** (purchasing agent) creates a purchase order for 200 office chairs
 
 ### REQ-PO3W-002: Peppol transmission of approved PO to supplier
 
+The system SHALL satisfy this requirement: Peppol transmission of approved PO to supplier.
+
 **Demand**: Must emit PO as UBL Order via Peppol Access Point with fallback to PDF+email.
 
 **Narrative:**  
@@ -238,6 +248,8 @@ An **Inkoper** sends an approved PO to a Peppol-registered supplier (ErenteSchre
 ---
 
 ### REQ-PO3W-003: Goods receipt note entry with line-level quantities
+
+The system SHALL satisfy this requirement: Goods receipt note entry with line-level quantities.
 
 **Demand**: Magazijn-medewerker must record received quantities per PO line with photographic evidence.
 
@@ -254,6 +266,8 @@ A **magazijn-medewerker** receives a pallet of 180 chairs (out of 200 ordered pe
 
 ### REQ-PO3W-004: Automated 3-way matching within tolerance
 
+The system SHALL satisfy this requirement: Automated 3-way matching within tolerance.
+
 **Demand**: Matching engine must evaluate PO + GRN + Invoice on price, quantity, VAT at line level.
 
 **Narrative:**  
@@ -268,6 +282,8 @@ A **Peppol invoice** arrives from ErenteSchreuders for €18,547 (PO: €18,500,
 ---
 
 ### REQ-PO3W-005: Exception workflow for price deviation
+
+The system SHALL satisfy this requirement: Exception workflow for price deviation.
 
 **Demand**: Out-of-tolerance matches must route to crediteuren-administrateur with decision options.
 
@@ -287,6 +303,8 @@ An invoice arrives for €19,250 (PO: €18,500, delta +€750 = 4.1% deviation)
 
 ### REQ-PO3W-006: Configurable tolerance profiles per supplier/category
 
+The system SHALL satisfy this requirement: Configurable tolerance profiles per supplier/category.
+
 **Demand**: Controller must be able to override global tolerances per supplier or GL category.
 
 **Narrative:**  
@@ -301,6 +319,8 @@ A **controller** onboards a new supplier (NieuweLeverancierBV) with a vendor_sco
 ---
 
 ### REQ-PO3W-007: Multi-PO consolidated invoice matching
+
+The system SHALL satisfy this requirement: Multi-PO consolidated invoice matching.
 
 **Demand**: One invoice can match lines from 10 different POs/GRNs via line-level matching.
 
@@ -317,6 +337,8 @@ A supplier sends one **maand-factuur** (monthly invoice) covering 12 different P
 
 ### REQ-PO3W-008: Vendor performance scoring with auto-review eligibility
 
+The system SHALL satisfy this requirement: Vendor performance scoring with auto-review eligibility.
+
 **Demand**: Suppliers with 96%+ performance score unlock auto-approval; tolerances relax automatically.
 
 **Narrative:**  
@@ -331,6 +353,8 @@ ErenteSchreuders has achieved 12 months of 96%+ on-time delivery, 99% quantity a
 ---
 
 ### REQ-PO3W-009: GR/IR clearing and GL posting on match
+
+The system SHALL satisfy this requirement: GR/IR clearing and GL posting on match.
 
 **Demand**: Balanced GL posting must be created at GRN time (clearing) and at invoice approval time (settlement).
 
@@ -356,6 +380,8 @@ The GL posting preserves cost_center and gl_account from the PO line. The GR/IR 
 
 ### REQ-PO3W-010: Audit trail and compliance export for external auditors
 
+The system SHALL satisfy this requirement: Audit trail and compliance export for external auditors.
+
 **Demand**: Complete lifecycle history must be audit-trailed and exportable per NV COS 230.
 
 **Narrative:**  
@@ -377,6 +403,60 @@ The system exports this as a structured audit package (ZIP: PDF summary + JSON l
 **GIVEN** an external auditor reviews a sample invoice during year-end audit  
 **WHEN** they request the complete audit trail for invoice INV-ERS-2026-00445  
 **THEN** the system generates an immutable audit package containing: PO creation record, approval-chain signatures with timestamps, Peppol transmission metadata, GRN receipt record with photos, invoice receipt metadata, ThreeWayMatch evaluation + divergence details, exception resolution notes (if any), GL posting records, payment record; exports as structured ZIP (PDF summary + JSON + attachments); all records are cryptographically linked and timestamped per NV COS 230 §audit trail
+
+---
+
+### Requirement: REQ-PO3W-011 — Service-entry-sheet (prestatieverklaring) as the third leg for service PO lines
+
+The system SHALL satisfy this requirement: a purchase-order line for a
+service (consultancy, maintenance, subscription, contract labour) MUST be
+able to reach a matched `ThreeWayMatch` state via a **prestatieverklaring**
+(`SvcReceipt`) confirming service delivery, without requiring a
+`GoodsReceiptNote` that would never physically exist for that line.
+
+**Demand**: An approver named on the service PO confirms delivery for a
+period (start/end date), expressed as a percentage complete, a confirmed
+quantity, or a confirmed euro amount; the confirmation may be partial and
+repeated across multiple billing periods (e.g. monthly for a 12-month
+contract). Once a `SvcReceipt` is `accepted`, `ThreeWayMatchingEngine`
+MUST treat it exactly as it treats an accepted `GoodsReceiptNote` — as
+satisfying the matching engine's third leg — so a service invoice can
+reach `auto_approved` / `within_tolerance` instead of being permanently
+stuck in `exception_missing_grn`.
+
+#### Scenario: A monthly consultancy retainer confirms delivery and matches the supplier invoice
+
+@e2e exclude pure backend/service matching logic — not browser-testable
+(mirrors REQ-PO3W-004's own `@e2e exclude`)
+
+- GIVEN a PurchaseOrder for a monthly consultancy retainer with one
+  PurchaseOrderLine (`quantityOrdered: 1`, `unitPrice: 500000`)
+- AND an approver creates a `SvcReceipt` for July, adds a `SvcReceiptLine`
+  against that PO line with `percentageComplete: 10000` (100%), and
+  transitions the receipt `draft → confirmed → accepted`
+- WHEN a SupplierInvoice for the same PO arrives with a matching line and
+  `ThreeWayMatchingEngine::evaluateMatch()` runs
+- THEN the engine resolves the accepted `SvcReceipt` as the third leg (no
+  `GoodsReceiptNote` exists or is required), computes divergence the same
+  way it would for a goods receipt, and the invoice reaches
+  `auto_approved` or `within_tolerance` — a state that was unreachable
+  before this change (the only prior outcome for a service PO was
+  `exception_missing_grn`)
+
+#### Scenario: Partial periodic confirmation accumulates across billing periods
+
+@e2e exclude pure backend/service matching logic — not browser-testable
+
+- GIVEN a 3-month service PO line with `quantityOrdered: 3` (one unit per
+  month)
+- WHEN an approver accepts a `SvcReceipt` confirming month 1
+  (`quantityAccepted: 1`) and later a second `SvcReceipt` confirming month
+  2 (`quantityAccepted: 1`)
+- THEN the originating PurchaseOrder's receipt lifecycle recomputes to
+  `partial_received` (2 of 3 accepted, mirroring
+  `GoodsReceiptNoteService::updatePurchaseOrderReceiptLifecycle()`'s
+  existing partial-goods-receipt behaviour) and transitions to
+  `fully_received` once month 3 is also accepted
 
 ---
 

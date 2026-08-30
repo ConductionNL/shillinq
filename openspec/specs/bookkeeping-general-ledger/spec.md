@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-general-ledger
 
 **Status:** proposed
@@ -5,7 +9,11 @@
 **Tier:** T1 (foundation)
 **Depends on:** bookkeeping-chart-of-accounts
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping general ledger in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: GL index/detail pages not yet implemented
 
@@ -223,6 +231,8 @@ unbalanced postings differing by €0.01 MUST fail.
 
 ### REQ-GL-006: `GLLine.periodId` SHALL be auto-resolved against the active fiscal-period record on the `post` transition, and the resolved value MUST equal the parent's
 
+The system SHALL satisfy this requirement: `GLLine.periodId` SHALL be auto-resolved against the active fiscal-period record on the `post` transition, and the resolved value MUST equal the parent's.
+
 `GLLine.periodId` is owned by the lifecycle engine, not by write-time
 validation. The contract is two-phase:
 
@@ -301,6 +311,8 @@ T2 lands MUST succeed in T1.
 
 ### REQ-GL-009: Posted lines and headers SHALL be immutable; corrections happen through reversing + new postings
 
+The system SHALL satisfy this requirement: Posted lines and headers SHALL be immutable; corrections happen through reversing + new postings.
+
 Once a `GLTransaction` transitions to `posted`, neither the header
 fields nor any child `GLLine` rows MAY be edited or deleted.
 Corrections MUST be made by posting a compensating transaction.
@@ -321,6 +333,8 @@ write attempt against a posted transaction MUST fail with an
 - **THEN** the delete MUST fail; the line remains queryable.
 
 ### REQ-GL-010: Asset repair linked GL transactions SHALL use sub-ledger reference and posting date fields
+
+The system SHALL satisfy this requirement: Asset repair linked GL transactions SHALL use sub-ledger reference and posting date fields.
 
 Asset repair module may link GL transactions using the `subLedgerType: "ar"`
 and `subLedgerRef: <asset-repair-id>` fields. The `postingDate` field

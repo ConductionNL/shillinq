@@ -1,0 +1,142 @@
+{
+	"_meta_nav_six_clusters_note": "nav-six-clusters (2026-08-20, design.md §4 rows 19-22): the DBACompliance top-level group duplicated the Compliance-cluster's existing DBA cards (DBAIntakeWizard/DBAPortfolioDashboard/DBAEvidenceBrowser/DBAModelovereenkomstRegister in src/manifest.json). Confirmed near-identical: DBAOpdrachten/DBAOpdrachtDetail, DBAPortfolioRisicos/DBAPortfolioRisicoDetail, DBAEvidenceDossiers/DBAEvidenceDossierDetail, DBAModelovereenkomsten/DBAModelovereenkomstDetail (both index AND detail pairs — the detail pages' field sets are near-supersets of each other, so both sides of each pair are deleted together rather than risking new nav-reachability orphans) — all 4 pairs deleted, the canonical Compliance-cluster page in each pair survives. `DBAIntakes` (schema DBAIntake — NOT a duplicate of DBAIntakeWizard/DBAOpdracht despite the similar label; design.md did not catch this, it has its own distinct schema) and `DBARisicoflags` (schema DBARisicoflag, genuinely unique, per design.md) are the two DBACompliance children design.md's own row count (4 of 6) undercounted — both survive and fold into ReportingCompliance via menu-layout.json#relocations (DBACompliance -> ReportingCompliance).",
+	"menu": [
+		{
+			"id": "DBACompliance",
+			"label": "DBA Compliance",
+			"icon": "ClipboardCheckOutline",
+			"order": 55,
+			"children": [
+				{
+					"id": "DBAIntakes",
+					"label": "DBA Intake Wizard",
+					"icon": "ClipboardListOutline",
+					"route": "DBAIntakes",
+					"order": 20
+				},
+				{
+					"id": "DBARisicoflags",
+					"label": "Risk Flags",
+					"icon": "FlagVariantOutline",
+					"route": "DBARisicoflags",
+					"order": 60
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "DBAIntakes",
+			"route": "/dba/intakes",
+			"type": "index",
+			"title": "DBA Intake Wizard",
+			"config": {
+				"register": "shillinq",
+				"schema": "DBAIntake",
+				"columns": [
+					{"key": "assignmentId", "label": "Assignment", "sortable": true},
+					{"key": "filledOn", "label": "Filled in", "sortable": true},
+					{"key": "gezagSubtotaal", "label": "Authority", "sortable": true},
+					{"key": "arbeidSubtotaal", "label": "Personal service", "sortable": true},
+					{"key": "financieelSubtotaal", "label": "Financial risk", "sortable": true},
+					{"key": "totalScore", "label": "Total score", "sortable": true},
+					{"key": "interpretatie", "label": "Risk band", "sortable": true}
+				],
+				"defaultSort": "filledOn",
+				"detailRoute": "DBAIntakeDetail"
+			}
+		},
+		{
+			"id": "DBAIntakeDetail",
+			"route": "/dba/intakes/:id",
+			"type": "detail",
+			"title": "DBA Intake",
+			"config": {
+				"_note": "DBA intake is a scored assessment REPORT (gezag / persoonlijke arbeid / financieel risico / Deliveroo criteria) that produces the total risk score and interpretation for one assignment. Body leads with the score fields; KPI surfaces the total score and max, and the parent assignment is linked so the assessor can jump back to the engagement. No comms — a compliance record; audit trail in a sidebar tab.",
+				"register": "shillinq",
+				"schema": "DBAIntake",
+				"aggregations": [
+					{"id": "totalScore", "title": "Total score", "field": "totalScore", "metric": "value"},
+					{"id": "maxScore", "title": "Max score", "field": "maxScore", "metric": "value"}
+				],
+				"fields": [
+					{"key": "assignmentId", "label": "Assignment", "type": "string"},
+					{"key": "filledOn", "label": "Filled in", "type": "string"},
+					{"key": "gezagSubtotaal", "label": "Authority/control", "type": "number"},
+					{"key": "arbeidSubtotaal", "label": "Personal service", "type": "number"},
+					{"key": "financieelSubtotaal", "label": "Financial risk", "type": "number"},
+					{"key": "deliverooSubtotaal", "label": "Deliveroo criteria", "type": "number"},
+					{"key": "totalScore", "label": "Total score", "type": "number"},
+					{"key": "interpretatie", "label": "Risk band", "type": "string"},
+					{"key": "state", "label": "State", "type": "string"}
+				],
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`; a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing while every gate stays green. TOKEN: `@object.assignmentId`, NOT `@objectId` — this is a SIBLING relation, not a parent/child one: both DBAIntake and DBARisicoflag carry a flat `assignmentId` FK onto the same third object (DBAOpdracht, example 'dba-opdr-2026-0042'). `@objectId` would resolve to the intake's own UUID and match zero flags.",
+				"relatedCollections": [
+					{"title": "Risk flags on this assignment", "register": "shillinq", "schema": "DBARisicoflag", "filter": {"assignmentId": "@object.assignmentId"}, "columns": [
+						{"key": "type", "label": "Flag type"},
+						{"key": "ernst", "label": "Severity"},
+						{"key": "status", "label": "Status"}
+					], "rowRoute": "DBARisicoflagDetail"}
+				],
+				"auditTrail": true,
+				"indexRoute": "DBAIntakes",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
+			}
+		},
+		{
+			"id": "DBARisicoflags",
+			"route": "/dba/flags",
+			"type": "index",
+			"title": "Risk Flags",
+			"config": {
+				"register": "shillinq",
+				"schema": "DBARisicoflag",
+				"columns": [
+					{"key": "assignmentId", "label": "Assignment", "sortable": true},
+					{"key": "type", "label": "Flag type", "sortable": true},
+					{"key": "ernst", "label": "Severity", "sortable": true},
+					{"key": "detectieMoment", "label": "Detected", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "detectieMoment",
+				"detailRoute": "DBARisicoflagDetail"
+			}
+		},
+		{
+			"id": "DBARisicoflagDetail",
+			"route": "/dba/flags/:id",
+			"type": "detail",
+			"title": "Risk Flag",
+			"config": {
+				"_note": "Risk flag is a single detected DBA-risk signal against an assignment — its type, severity, detection moment, legal basis (fiscaleBron), suggested action and resolution memo. A compact alert record: the body shows the flag detail and resolution, with a link back to the parent assignment. No comms; the audit trail sidebar tab records who acknowledged/resolved the flag.",
+				"register": "shillinq",
+				"schema": "DBARisicoflag",
+				"fields": [
+					{"key": "assignmentId", "label": "Assignment", "type": "string"},
+					{"key": "type", "label": "Flag type", "type": "string"},
+					{"key": "ernst", "label": "Severity", "type": "string"},
+					{"key": "detectieMoment", "label": "Detected", "type": "string"},
+					{"key": "fiscalSource", "label": "Legal basis", "type": "string"},
+					{"key": "actionSuggestion", "label": "Suggested action", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "resolutieMemo", "label": "Resolution memo", "type": "string"}
+				],
+				"auditTrail": true,
+				"indexRoute": "DBARisicoflags",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
+			}
+		}
+	]
+}

@@ -1,0 +1,437 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "purchase-requisition",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Purchase requisition (aanvraag) capability: an employee raises a Requisition with RequisitionLine items, it is submitted for approval, approved/rejected, and an approved Requisition converts to a PurchaseOrder (member 02 of bookkeeping-purchase-order-3way, unchanged). Approval routing deliberately reuses the existing commitment mandate/budget infrastructure from bookkeeping-verplichtingenadministratie (OCA\\Shillinq\\Lifecycle\\MandateEnforcer, OCA\\Shillinq\\Lifecycle\\BudgetBlocker) rather than inventing a parallel approval system: Requisition carries the same `programma` / `boekjaar` / `totaalbedrag_excl_btw` / `soort` field contract those guards already read (schema-agnostic — they operate on the passed object array, not a hardcoded Commitment lookup, whenever the lifecycle engine supplies the object being transitioned), so BudgetBlocker::canCommit runs unmodified against a Requisition exactly as it does against a Commitment. Money fields are integer euro cents (ADR-022)."
+  },
+  "components": {
+    "schemas": {
+      "Requisition": {
+        "slug": "Requisition",
+        "icon": "ClipboardTextOutline",
+        "version": "0.1.0",
+        "title": "Purchase Requisition",
+        "description": "Internal purchase requisition (aanvraag) raised by an employee before a PurchaseOrder exists (REQ-REQ-001). Lifecycle draft -> submitted -> approved|rejected -> converted. Approval reuses BudgetBlocker (budget availability + override-mandate) and MandateEnforcer (mandate resolution) from bookkeeping-verplichtingenadministratie via a shared field contract (programma/boekjaar/totaalbedrag_excl_btw/soort) — no parallel approval engine is built. An approved Requisition converts to a PurchaseOrder via RequisitionConversionService, which reuses PurchaseOrderService::createPurchaseOrder() unmodified.",
+        "x-schema-org": "schema:OrderAction",
+        "x-spec": "openspec/specs/purchase-requisition/spec.md",
+        "type": "object",
+        "required": [
+          "requisitionNumber",
+          "requester",
+          "programme",
+          "financialYear",
+          "neededByDate",
+          "justification",
+          "kind",
+          "statusCode",
+          "administrationId"
+        ],
+        "properties": {
+          "requisitionNumber": {
+            "type": "string",
+            "description": "Auto-generated requisition number, unique per administration (format REQ-{year}-{administrationId}-{6-digit-sequence}).",
+            "example": "REQ-2026-adm-1-000001",
+            "title": "Requisition Number"
+          },
+          "requester": {
+            "type": "string",
+            "description": "User ID of the employee raising the requisition. Server-authoritative — always derived from the authenticated session, never trusted from the request body (ADR-005).",
+            "example": "employee-01",
+            "title": "Requester"
+          },
+          "programme": {
+            "type": "string",
+            "description": "Cost centre / budget programme code the requisition draws against. Matches Budget.programmaCode and Commitment.programma so BudgetBlocker's budget lookup works unmodified against a Requisition.",
+            "example": "PROG-IT-OPERATIONS",
+            "title": "Cost Centre / Budget Programme"
+          },
+          "financialYear": {
+            "type": "integer",
+            "description": "Fiscal year the requisition's budget impact is checked against. Matches Budget.boekjaar and Commitment.boekjaar (BudgetBlocker field contract).",
+            "example": 2026,
+            "title": "Fiscal Year"
+          },
+          "neededByDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the requested goods/services are needed by.",
+            "example": "2026-08-15",
+            "title": "Needed By Date"
+          },
+          "justification": {
+            "type": "string",
+            "description": "Free-text business justification for the requisition.",
+            "example": "Replacement laptops for the onboarding cohort starting August.",
+            "title": "Justification"
+          },
+          "kind": {
+            "type": "string",
+            "description": "Commitment type used to resolve the applicable Mandaat (MandateEnforcer's soort_verplichting match). Matches the soort vocabulary already used by Commitment (e.g. 'inkoop').",
+            "example": "inkoop",
+            "title": "Commitment Type (Soort)"
+          },
+          "preferredSupplierId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "Payee",
+            "description": "Optional preferred supplier. Required at conversion time — convertToPurchaseOrder() refuses to convert a Requisition with no preferred supplier (a PurchaseOrder always needs one).",
+            "nullable": true,
+            "example": "vendor-001",
+            "title": "Preferred Supplier"
+          },
+          "total_amount_excl_vat": {
+            "type": "integer",
+            "description": "Estimated total requisition amount in euro cents, excluding VAT (sum of RequisitionLine.lineTotal). Integer cents per ADR-022. Computed server-side by RequisitionService when the requisition is created/updated; read by BudgetBlocker's budget check on approve.",
+            "nullable": true,
+            "example": 250000,
+            "title": "Estimated Amount (excl. VAT)"
+          },
+          "convertedPurchaseOrderId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "PurchaseOrder",
+            "description": "FK to the PurchaseOrder materialised by convertToPurchaseOrder(), populated only once statusCode reaches 'converted'. Traceability link (REQ-REQ-005).",
+            "nullable": true,
+            "example": null,
+            "title": "Converted Purchase Order"
+          },
+          "convertedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp the requisition was converted to a purchase order.",
+            "nullable": true,
+            "example": null,
+            "title": "Converted At"
+          },
+          "approvedBy": {
+            "type": "string",
+            "description": "User ID of the approver who approved the requisition.",
+            "nullable": true,
+            "example": null,
+            "title": "Approved By"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp the requisition was approved.",
+            "nullable": true,
+            "example": null,
+            "title": "Approved At"
+          },
+          "rejectedBy": {
+            "type": "string",
+            "description": "User ID of the approver who rejected the requisition.",
+            "nullable": true,
+            "example": null,
+            "title": "Rejected By"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "description": "Free-text reason the requisition was rejected. Required by RequisitionService::rejectRequisition().",
+            "nullable": true,
+            "example": null,
+            "title": "Rejection Reason"
+          },
+          "statusCode": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "submitted",
+              "approved",
+              "rejected",
+              "converted"
+            ],
+            "description": "Lifecycle state per x-openregister-lifecycle (REQ-REQ-002).",
+            "example": "draft",
+            "title": "Status Code"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this requisition belongs to; reads are scoped to the requesting user's administration.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "statusCode",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Requisition is editable by the requester; not yet submitted."
+            },
+            "submitted": {
+              "label": "Ingediend",
+              "description": "Submitted for approval; awaiting a budget/mandate decision."
+            },
+            "approved": {
+              "label": "Goedgekeurd",
+              "description": "Approved — budget available (or override-mandate held). May be converted to a PurchaseOrder."
+            },
+            "rejected": {
+              "label": "Afgewezen",
+              "description": "Rejected by the approver (terminal)."
+            },
+            "converted": {
+              "label": "Omgezet naar inkooporder",
+              "description": "Materialised as a PurchaseOrder (terminal); convertedPurchaseOrderId is populated."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Indienen",
+              "description": "Submit the requisition for approval. Always routed through human approval regardless of mandate sufficiency (REQ-REQ-002) — unlike Commitment, a Requisition never skips straight to approved."
+            },
+            "approve": {
+              "from": "submitted",
+              "to": "approved",
+              "label": "Goedkeuren",
+              "description": "Approve the requisition. Gated by BudgetBlocker::canCommit (budget availability for programma/boekjaar, or a valid override-mandate) reused unmodified from bookkeeping-verplichtingenadministratie (REQ-REQ-003).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\BudgetBlocker::canCommit"
+            },
+            "reject": {
+              "from": "submitted",
+              "to": "rejected",
+              "label": "Afwijzen",
+              "description": "Reject the requisition; rejectionReason MUST be recorded (enforced by RequisitionService::rejectRequisition, REQ-REQ-004)."
+            },
+            "convertToPO": {
+              "from": "approved",
+              "to": "converted",
+              "label": "Omzetten naar inkooporder",
+              "description": "Materialise a PurchaseOrder from the approved requisition via RequisitionConversionService::convertToPurchaseOrder(), which reuses PurchaseOrderService::createPurchaseOrder() unmodified (REQ-REQ-005). Guarded by RequisitionConversionGuard::canConvert (status must be 'approved'); the actual PO creation is imperative (creates a new cross-schema record and writes back its id) and is performed by the service, mirroring how PurchaseOrderService::blockSendUntilApproved() itself mutates lifecycleState outside the generic transition engine.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\RequisitionConversionGuard::canConvert"
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create/update/lifecycle transition of a Requisition (submit/approve/reject/convertToPO) is logged to OR's immutable audit trail, including actor + timestamp (REQ-AT-001)."
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "requester": {
+              "scope": "administration",
+              "capabilities": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "budget-holder": {
+              "scope": "programme",
+              "capabilities": [
+                "read",
+                "update"
+              ]
+            },
+            "finance-director": {
+              "scope": "administration",
+              "capabilities": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "scope": "administration",
+              "capabilities": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "RequisitionLine": {
+        "slug": "RequisitionLine",
+        "icon": "FormatListBulleted",
+        "version": "0.1.0",
+        "title": "Requisition Line",
+        "description": "Line item on a Requisition (REQ-REQ-001). Money fields are integer cents per ADR-022; unitPrice is integer cents so quantity * unitPrice -> lineTotal stays exact. glAccountSuggestion is carried forward as the PurchaseOrderLine.glAccount when the parent Requisition converts.",
+        "x-schema-org": "schema:OrderItem",
+        "x-openregister-purpose": "fact",
+        "x-spec": "openspec/specs/purchase-requisition/spec.md",
+        "type": "object",
+        "required": [
+          "requisitionId",
+          "lineNumber",
+          "description",
+          "quantity",
+          "unitPrice",
+          "glAccountSuggestion",
+          "administrationId"
+        ],
+        "properties": {
+          "requisitionId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "Requisition",
+            "description": "FK to the parent Requisition.",
+            "example": "req-1",
+            "title": "Requisition ID"
+          },
+          "lineNumber": {
+            "type": "integer",
+            "description": "1-based line number within the parent requisition.",
+            "example": 1,
+            "title": "Line Number"
+          },
+          "description": {
+            "type": "string",
+            "description": "Free-text line description.",
+            "example": "ThinkPad T14 Gen 5",
+            "title": "Description"
+          },
+          "quantity": {
+            "type": "number",
+            "multipleOf": 0.001,
+            "description": "Requested quantity. Three-decimal precision supports per-unit and per-litre measures.",
+            "example": 5,
+            "title": "Quantity"
+          },
+          "unitPrice": {
+            "type": "integer",
+            "description": "Estimated unit price in euro cents (integer per ADR-022).",
+            "example": 120000,
+            "title": "Unit Price"
+          },
+          "lineTotal": {
+            "type": "integer",
+            "description": "Computed lineTotal in euro cents: round(quantity x unitPrice). Integer cents.",
+            "nullable": true,
+            "example": 600000,
+            "title": "Line Total"
+          },
+          "glAccountSuggestion": {
+            "type": "string",
+            "description": "Suggested RGS general-ledger account code for this line; carried forward as PurchaseOrderLine.glAccount on conversion (REQ-REQ-005).",
+            "example": "4400",
+            "title": "GL Account Suggestion"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this line belongs to.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-calculations": {
+          "lineTotal": {
+            "operation": "expression",
+            "expression": "round(quantity * unitPrice)",
+            "target": "lineTotal"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create/update/delete of a RequisitionLine is logged to OR's immutable audit trail (REQ-AT-001)."
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Requisition",
+        "slug": "requisition-2026-0001"
+      },
+      "administrationId": "adm-demo",
+      "requisitionNumber": "REQ-2026-adm-demo-000001",
+      "requester": "employee-01",
+      "programme": "5.1",
+      "financialYear": 2026,
+      "neededByDate": "2026-08-15",
+      "justification": "Replacement laptops for the onboarding cohort starting August.",
+      "kind": "inkoop",
+      "total_amount_excl_vat": 150000,
+      "statusCode": "draft"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "RequisitionLine",
+        "slug": "requisition-2026-0001-line-1"
+      },
+      "administrationId": "adm-demo",
+      "requisitionId": "REQ-2026-adm-demo-000001",
+      "lineNumber": 1,
+      "description": "ThinkPad T14 Gen 5",
+      "quantity": 1,
+      "unitPrice": 150000,
+      "lineTotal": 150000,
+      "glAccountSuggestion": "4400"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Requisition",
+        "slug": "requisition-2026-0002"
+      },
+      "administrationId": "adm-demo",
+      "requisitionNumber": "REQ-2026-adm-demo-000002",
+      "requester": "employee-02",
+      "programme": "5.1",
+      "financialYear": 2026,
+      "neededByDate": "2026-09-01",
+      "justification": "Standing desks for the facilities refresh (ergonomics programme).",
+      "kind": "inkoop",
+      "total_amount_excl_vat": 500000,
+      "statusCode": "submitted"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "RequisitionLine",
+        "slug": "requisition-2026-0002-line-1"
+      },
+      "administrationId": "adm-demo",
+      "requisitionId": "REQ-2026-adm-demo-000002",
+      "lineNumber": 1,
+      "description": "Adjustable standing desk",
+      "quantity": 10,
+      "unitPrice": 50000,
+      "lineTotal": 500000,
+      "glAccountSuggestion": "4420"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Requisition",
+        "slug": "requisition-2026-0003"
+      },
+      "administrationId": "adm-demo",
+      "requisitionNumber": "REQ-2026-adm-demo-000003",
+      "requester": "employee-03",
+      "programme": "5.1",
+      "financialYear": 2026,
+      "neededByDate": "2026-07-30",
+      "justification": "Annual software licence renewal for the design team.",
+      "kind": "inkoop",
+      "preferredSupplierId": "vendor-001",
+      "total_amount_excl_vat": 240000,
+      "statusCode": "approved",
+      "approvedBy": "controller-01",
+      "approvedAt": "2026-07-10T09:00:00+00:00"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "RequisitionLine",
+        "slug": "requisition-2026-0003-line-1"
+      },
+      "administrationId": "adm-demo",
+      "requisitionId": "REQ-2026-adm-demo-000003",
+      "lineNumber": 1,
+      "description": "Design suite annual licence (10 seats)",
+      "quantity": 10,
+      "unitPrice": 24000,
+      "lineTotal": 240000,
+      "glAccountSuggestion": "4720"
+    }
+  ]
+}

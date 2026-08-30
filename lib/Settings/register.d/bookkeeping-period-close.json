@@ -1,0 +1,570 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-period-close",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 2 — guided period close. Declares the canonical FiscalPeriod schema (REQ-PC-001, REQ-PC-002) with an open → closing → closed → audit-locked x-openregister-lifecycle (REQ-PC-003): closed is reversible by a period-closer with an audit-trailed close reason, audit-locked is irreversible (auditor only). Additively augments the monolith GLTransaction.post transition with a declarative precondition (REQ-PC-004) referencing OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::periodOpen, which rejects a posting whose periodId resolves to a FiscalPeriod in state closed or audit-locked (backdating prevention, matches Exact/AFAS/Twinfield). The AI close assistant (REQ-PC-007) — open AP/AR transactions, unreconciled bank receipts, outstanding expense claims — is computed on demand by OCA\\Shillinq\\Service\\PeriodCloseAssistantService via the real OpenRegister ObjectService API (find/findAll); flags surface as non-blocking warnings (design D3). Seed objects provide five worked example periods (open, closing, closed, audit-locked, reopened) across realistic Dutch administrations. The schema slug FiscalPeriod is the canonical fleet name referenced by AR / AP / VAT / WIP / ICP / R&D-subsidies sibling schemas. Year-end close (opening-balance journal, retained-earnings rollover) is deferred to T3."
+  },
+  "components": {
+    "schemas": {
+      "FiscalPeriod": {
+        "slug": "FiscalPeriod",
+        "icon": "CalendarLock",
+        "version": "0.3.0",
+        "title": "Fiscal Period",
+        "description": "An accounting period with lifecycle state, close audit-trail, and task checklist for guided month-end / quarter-end close workflows (REQ-PC-001). The open → closing → closed → audit-locked lifecycle freezes the period for audit; postings against a closed or audit-locked period are rejected by the GLTransaction.post precondition (REQ-PC-004). Canonical fleet schema referenced by AR / AP / VAT / WIP / ICP / R&D-subsidies sibling schemas (per add-shillinq-period-close).",
+        "x-schema-org": "schema:DateRange",
+        "x-spec": "openspec/changes/add-shillinq-period-close/specs/bookkeeping-period-close/spec.md",
+        "type": "object",
+        "required": [
+          "periodId",
+          "name",
+          "administrationId",
+          "startDate",
+          "endDate",
+          "fiscalYear",
+          "state"
+        ],
+        "properties": {
+          "periodId": {
+            "type": "string",
+            "description": "Stable identifier for the period within an administration; e.g. `2026-Q1`, `2026-M03`, `2026-W12` (REQ-PC-002). The administration MAY choose calendar quarter, calendar month, broken fiscal month, or 13-period retail.",
+            "example": "2026-Q1",
+            "title": "Period ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name for the period, surfaced in the index page columns and the detail page header (REQ-PC-002).",
+            "example": "Q1 2026",
+            "title": "Name"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration this period belongs to; reads are scoped to the requesting user's administration (REQ-PC-008).",
+            "example": "adm-smb-1",
+            "title": "Administration ID"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "First day of the period (REQ-PC-001).",
+            "example": "2026-01-01",
+            "title": "Start Date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Last day of the period (REQ-PC-001).",
+            "example": "2026-01-31",
+            "title": "End Date"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "description": "Fiscal year the period falls in (REQ-PC-001).",
+            "example": 2026,
+            "title": "Fiscal Year"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closing",
+              "closed",
+              "audit-locked"
+            ],
+            "default": "open",
+            "description": "Lifecycle state. open: postings allowed; closing: close checklist in progress; closed: frozen, postings rejected, reversible by a period-closer; audit-locked: irreversibly frozen by an auditor (REQ-PC-002).",
+            "example": "open",
+            "title": "State"
+          },
+          "closedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp the period was closed; set by the close side effect (REQ-PC-002).",
+            "example": null,
+            "title": "Closed At"
+          },
+          "closedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "UserId who closed the period; set by the close side effect (REQ-PC-002).",
+            "example": null,
+            "title": "Closed By"
+          },
+          "auditLockedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp the period was audit-locked; set by the audit-lock side effect (REQ-PC-002).",
+            "example": null,
+            "title": "Audit Locked At"
+          },
+          "auditLockedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "UserId of the auditor who audit-locked the period (REQ-PC-002).",
+            "example": null,
+            "title": "Audit Locked By"
+          },
+          "closeReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator-supplied reason captured when a closed period is reopened (REQ-PC-006).",
+            "example": null,
+            "title": "Close Reason"
+          },
+          "reopenedHistory": {
+            "type": "array",
+            "description": "Append-only audit trail of close/reopen cycles (REQ-PC-006). Each entry preserves the original close timestamp + actor.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "closedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "title": "Closed At",
+                  "description": "The date and time for closed at."
+                },
+                "closedBy": {
+                  "type": "string",
+                  "title": "Closed By",
+                  "description": "The closed by."
+                },
+                "reopenedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "title": "Reopened At",
+                  "description": "The date and time for reopened at."
+                },
+                "reopenedBy": {
+                  "type": "string",
+                  "title": "Reopened By",
+                  "description": "The reopened by."
+                },
+                "closeReason": {
+                  "type": "string",
+                  "title": "Close Reason",
+                  "description": "The close reason."
+                }
+              }
+            },
+            "default": [],
+            "title": "Reopened History"
+          },
+          "taskChecklistItems": {
+            "type": "array",
+            "description": "Pre-close checklist rows operators mark resolved before closing (REQ-PC-005).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "title": "ID",
+                  "description": "Unique identifier for this checklist item."
+                },
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "ap",
+                    "ar",
+                    "bank",
+                    "expense-claims"
+                  ],
+                  "title": "Category",
+                  "description": "The date and time for category."
+                },
+                "description": {
+                  "type": "string",
+                  "title": "Description",
+                  "description": "A human-readable description or notes."
+                },
+                "resolved": {
+                  "type": "boolean",
+                  "title": "Resolved",
+                  "description": "Indicates whether resolved applies."
+                },
+                "resolvedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "title": "Resolved At",
+                  "description": "The date and time for resolved at."
+                },
+                "resolvedBy": {
+                  "type": "string",
+                  "title": "Resolved By",
+                  "description": "The resolved by."
+                }
+              }
+            },
+            "default": [],
+            "title": "Task Checklist Items"
+          },
+          "aiFlags": {
+            "type": "array",
+            "description": "Close-assistant warnings detected for this period (REQ-PC-004); non-blocking, audit-trailed.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "title": "ID",
+                  "description": "Unique identifier for this AI flag entry."
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "info",
+                    "warning"
+                  ],
+                  "title": "Severity",
+                  "description": "The severity."
+                },
+                "message": {
+                  "type": "string",
+                  "title": "Message",
+                  "description": "The message."
+                },
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "ap",
+                    "ar",
+                    "bank",
+                    "expense-claims"
+                  ],
+                  "title": "Category",
+                  "description": "The date and time for category."
+                },
+                "detectedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "title": "Detected At",
+                  "description": "The date and time for detected at."
+                }
+              }
+            },
+            "default": [],
+            "title": "Ai Flags"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "open",
+          "states": {
+            "open": {
+              "label": "Open",
+              "description": "Postings dated in this period are accepted. The close workflow has not started."
+            },
+            "closing": {
+              "label": "Closing",
+              "description": "The guided close checklist is being worked through. Mandatory items (open AP / AR) must be resolved before the period can transition to closed."
+            },
+            "closed": {
+              "label": "Closed",
+              "description": "Frozen for audit. Postings dated in this period are rejected. Reversible by a period-closer with an audit-trailed close reason."
+            },
+            "audit-locked": {
+              "label": "Audit locked",
+              "description": "Irreversibly frozen by an auditor. Late corrections require a compensating journal in the next open period."
+            }
+          },
+          "transitions": {
+            "startClose": {
+              "from": "open",
+              "to": "closing",
+              "label": "Start close",
+              "description": "Begin the guided close for this period (REQ-PC-002). Requires the period-closer role.",
+              "roles": [
+                "period-closer"
+              ]
+            },
+            "close": {
+              "from": "closing",
+              "to": "closed",
+              "label": "Close period",
+              "description": "Freeze the period after the mandatory checklist items are resolved (REQ-PC-002) and the bank-reconciliation suspense worklist is empty (payment-control-guards REQ-PCG-003). Sets closedAt / closedBy.",
+              "roles": [
+                "period-closer"
+              ],
+              "preconditions": [
+                "OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::mandatoryChecklistResolved",
+                "OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::suspenseAccountDrained"
+              ],
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "set-fields",
+                  "description": "Stamp closedAt=now and closedBy=current user on the close transition (REQ-PC-002).",
+                  "actionParameters": {
+                    "closedAt": "@now",
+                    "closedBy": "@currentUser"
+                  }
+                }
+              ]
+            },
+            "reopen": {
+              "from": "closed",
+              "to": "open",
+              "label": "Reopen period",
+              "description": "Reopen a closed period for corrections (REQ-PC-006). Requires the period-closer role and a non-empty close reason; appends the prior close to reopenedHistory.",
+              "roles": [
+                "period-closer"
+              ],
+              "preconditions": [
+                "OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::closeReasonSupplied"
+              ],
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "OCA\\Shillinq\\Lifecycle\\Action\\AppendReopenHistoryAction",
+                  "description": "Append {closedAt, closedBy, reopenedAt, reopenedBy, closeReason} to reopenedHistory and clear closedAt/closedBy (REQ-PC-006).",
+                  "actionParameters": {
+                    "target": "reopenedHistory"
+                  }
+                }
+              ]
+            },
+            "lockForAudit": {
+              "from": "closed",
+              "to": "audit-locked",
+              "label": "Lock for audit",
+              "description": "Irreversibly freeze a closed period (REQ-PC-002). Requires the auditor role. Sets auditLockedAt / auditLockedBy.",
+              "roles": [
+                "auditor"
+              ],
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "set-fields",
+                  "description": "Stamp auditLockedAt=now and auditLockedBy=current user on the audit-lock transition (REQ-PC-002).",
+                  "actionParameters": {
+                    "auditLockedAt": "@now",
+                    "auditLockedBy": "@currentUser"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "period-closer": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "GLTransaction": {
+        "x-openregister-lifecycle": {
+          "transitions": {
+            "post": {
+              "preconditions": [
+                "OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::periodOpen"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "FiscalPeriod",
+          "slug": "period-close-smb-2026-01"
+        },
+        "periodId": "2026-01",
+        "name": "January 2026",
+        "administrationId": "adm-smb-1",
+        "startDate": "2026-01-01",
+        "endDate": "2026-01-31",
+        "fiscalYear": 2026,
+        "state": "audit-locked",
+        "closedAt": "2026-02-05T17:30:00+01:00",
+        "closedBy": "alice@org.nl",
+        "auditLockedAt": "2026-02-20T11:00:00+01:00",
+        "auditLockedBy": "auditor@org.nl",
+        "closeReason": null,
+        "reopenedHistory": [],
+        "taskChecklistItems": [
+          {
+            "id": "chk-ap-2026-01",
+            "category": "ap",
+            "description": "All open AP invoices paid or accrued",
+            "resolved": true,
+            "resolvedAt": "2026-02-05T16:00:00+01:00",
+            "resolvedBy": "alice@org.nl"
+          },
+          {
+            "id": "chk-ar-2026-01",
+            "category": "ar",
+            "description": "All open AR invoices collected or provisioned",
+            "resolved": true,
+            "resolvedAt": "2026-02-05T16:10:00+01:00",
+            "resolvedBy": "alice@org.nl"
+          }
+        ],
+        "aiFlags": []
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "FiscalPeriod",
+          "slug": "period-close-smb-2026-02"
+        },
+        "periodId": "2026-02",
+        "name": "February 2026",
+        "administrationId": "adm-smb-1",
+        "startDate": "2026-02-01",
+        "endDate": "2026-02-28",
+        "fiscalYear": 2026,
+        "state": "closed",
+        "closedAt": "2026-03-06T15:45:00+01:00",
+        "closedBy": "alice@org.nl",
+        "auditLockedAt": null,
+        "auditLockedBy": null,
+        "closeReason": null,
+        "reopenedHistory": [
+          {
+            "closedAt": "2026-03-05T10:00:00+01:00",
+            "closedBy": "alice@org.nl",
+            "reopenedAt": "2026-03-05T14:20:00+01:00",
+            "reopenedBy": "alice@org.nl",
+            "closeReason": "Posted correction for invoice #2026-0042"
+          }
+        ],
+        "taskChecklistItems": [
+          {
+            "id": "chk-ap-2026-02",
+            "category": "ap",
+            "description": "All open AP invoices paid or accrued",
+            "resolved": true,
+            "resolvedAt": "2026-03-06T15:00:00+01:00",
+            "resolvedBy": "alice@org.nl"
+          },
+          {
+            "id": "chk-ar-2026-02",
+            "category": "ar",
+            "description": "All open AR invoices collected or provisioned",
+            "resolved": true,
+            "resolvedAt": "2026-03-06T15:05:00+01:00",
+            "resolvedBy": "alice@org.nl"
+          }
+        ],
+        "aiFlags": []
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "FiscalPeriod",
+          "slug": "period-close-smb-2026-03"
+        },
+        "periodId": "2026-03",
+        "name": "March 2026",
+        "administrationId": "adm-smb-1",
+        "startDate": "2026-03-01",
+        "endDate": "2026-03-31",
+        "fiscalYear": 2026,
+        "state": "closing",
+        "closedAt": null,
+        "closedBy": null,
+        "auditLockedAt": null,
+        "auditLockedBy": null,
+        "closeReason": null,
+        "reopenedHistory": [],
+        "taskChecklistItems": [
+          {
+            "id": "chk-ap-2026-03",
+            "category": "ap",
+            "description": "All open AP invoices paid or accrued",
+            "resolved": false
+          },
+          {
+            "id": "chk-ar-2026-03",
+            "category": "ar",
+            "description": "All open AR invoices collected or provisioned",
+            "resolved": true,
+            "resolvedAt": "2026-04-02T09:30:00+02:00",
+            "resolvedBy": "alice@org.nl"
+          }
+        ],
+        "aiFlags": [
+          {
+            "id": "flag-ap-2026-03",
+            "severity": "warning",
+            "message": "3 outstanding AP invoices totalling €5,200 require payment or accrual before period close",
+            "category": "ap",
+            "detectedAt": "2026-04-02T09:00:00+02:00"
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "FiscalPeriod",
+          "slug": "period-close-smb-2026-04"
+        },
+        "periodId": "2026-04",
+        "name": "April 2026",
+        "administrationId": "adm-smb-1",
+        "startDate": "2026-04-01",
+        "endDate": "2026-04-30",
+        "fiscalYear": 2026,
+        "state": "open",
+        "closedAt": null,
+        "closedBy": null,
+        "auditLockedAt": null,
+        "auditLockedBy": null,
+        "closeReason": null,
+        "reopenedHistory": [],
+        "taskChecklistItems": [],
+        "aiFlags": []
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "FiscalPeriod",
+          "slug": "period-close-zzp-2026-q1"
+        },
+        "periodId": "2026-Q1",
+        "name": "Q1 2026",
+        "administrationId": "adm-zzp-1",
+        "startDate": "2026-01-01",
+        "endDate": "2026-03-31",
+        "fiscalYear": 2026,
+        "state": "open",
+        "closedAt": null,
+        "closedBy": null,
+        "auditLockedAt": null,
+        "auditLockedBy": null,
+        "closeReason": null,
+        "reopenedHistory": [],
+        "taskChecklistItems": [],
+        "aiFlags": [
+          {
+            "id": "flag-bank-zzp-2026-q1",
+            "severity": "info",
+            "message": "2 bank receipts dated in 2026-Q1 have no matching GL posting",
+            "category": "bank",
+            "detectedAt": "2026-04-01T08:00:00+02:00"
+          }
+        ]
+      }
+    ]
+  }
+}

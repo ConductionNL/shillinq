@@ -1,0 +1,437 @@
+{
+  "x-shillinq-fragment": {
+    "change": "bookkeeping-bank-reconciliation",
+    "tier": "T1",
+    "license": "EUPL-1.2",
+    "copyright": "2026 Conduction B.V. <info@conduction.nl>",
+    "description": "ADR-037 register fragment for the bookkeeping-bank-reconciliation capability — declares the BankReconciliation (session) and BankReconciliationMatch (pairing) schemas with lifecycle, RBAC and aggregations. Restores Tasks 1-5 / hydra-build #50 after the schemas were dropped during a sibling union-merge; the BankReconciliationGuard (lib/Guard/BankReconciliationGuard.php) and its 10 unit tests already reference these slugs. Per ADR-031 derived monetary fields (reconciledBalance, variance) are server-authoritative — recomputed in integer cents by the guard, never trusted from the client."
+  },
+  "components": {
+    "schemas": {
+      "BankReconciliation": {
+        "slug": "BankReconciliation",
+        "icon": "BankOutline",
+        "version": "0.1.0",
+        "title": "Bank Reconciliation",
+        "description": "One bank-account reconciliation session for a fiscal period. Tracks statement opening/closing balance, the server-recomputed reconciled balance, the residual variance, and an auditable status lifecycle (draft → in-progress → reconciled → archived). Per REQ-BBR-001/005/006. All monetary fields are stored as EUR with 2-decimal precision; reconciledBalance and variance are server-authoritative — recomputed by BankReconciliationGuard in integer cents and never trusted from the client.",
+        "x-schema-org": "schema:Invoice",
+        "type": "object",
+        "required": [
+          "name",
+          "bankAccountId",
+          "statementStartDate",
+          "statementEndDate",
+          "openingBalance",
+          "closingBalance",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable session name (e.g. 'Checking Account — May 2026').",
+            "example": "ABC Checking — May 2026",
+            "title": "Name"
+          },
+          "bankAccountId": {
+            "type": "string",
+            "description": "FK to the bank account being reconciled. A plain reference string; the bank-account register is owned by a separate spec (bookkeeping-bank-connectors) and only consumed here.",
+            "example": "bank-acct-abc-checking",
+            "title": "Bank Account ID"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this reconciliation. Scopes per-tenant isolation for IDOR-safe queries per ADR-005.",
+            "nullable": true,
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "statementStartDate": {
+            "type": "string",
+            "format": "date",
+            "description": "First date on the bank statement.",
+            "example": "2026-05-01",
+            "title": "Statement Start Date"
+          },
+          "statementEndDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Last date on the bank statement. Must be on or after statementStartDate (REQ-BBR-001 validation).",
+            "example": "2026-05-31",
+            "title": "Statement End Date"
+          },
+          "openingBalance": {
+            "type": "number",
+            "description": "Balance at statement start, taken from the bank statement (EUR, 2 decimals). Operator-supplied.",
+            "example": 5000.0,
+            "title": "Opening Balance"
+          },
+          "closingBalance": {
+            "type": "number",
+            "description": "Balance at statement end, taken from the bank statement (EUR, 2 decimals). Operator-supplied.",
+            "example": 6250.5,
+            "title": "Closing Balance"
+          },
+          "reconciledBalance": {
+            "type": "number",
+            "description": "Derived: openingBalance + sum(approved match amounts). Server-authoritative — recomputed by BankReconciliationGuard::recalculateBalance in integer cents on every match change; never accepted from the client (REQ-BBR-005).",
+            "nullable": true,
+            "example": 6250.49,
+            "title": "Reconciled Balance"
+          },
+          "variance": {
+            "type": "number",
+            "description": "Derived: closingBalance − reconciledBalance. Server-authoritative; recomputed alongside reconciledBalance (REQ-BBR-005).",
+            "nullable": true,
+            "example": 0.01,
+            "title": "Variance"
+          },
+          "matchedCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Count of approved matches. Server-recomputed.",
+            "nullable": true,
+            "example": 12,
+            "title": "Matched Count"
+          },
+          "unmatchedBankCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Count of bank transactions without an approved journal match. Server-recomputed.",
+            "nullable": true,
+            "example": 0,
+            "title": "Unmatched Bank Count"
+          },
+          "unmatchedJournalCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Count of journal entries without an approved bank match. Server-recomputed.",
+            "nullable": true,
+            "example": 1,
+            "title": "Unmatched Journal Count"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "in-progress",
+              "reconciled",
+              "archived"
+            ],
+            "default": "draft",
+            "description": "Lifecycle state. Driven by x-openregister-lifecycle; do not set directly to reconciled/archived — use the approve/archive transitions (REQ-BBR-006/009).",
+            "title": "Status"
+          },
+          "approvedBy": {
+            "type": "string",
+            "description": "User ID of the operator who approved the reconciliation. Set by the approve transition.",
+            "nullable": true,
+            "example": "user-acc-001",
+            "title": "Approved By"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of approval. Set by the approve transition.",
+            "nullable": true,
+            "example": "2026-06-02T14:30:00Z",
+            "title": "Approved At"
+          },
+          "varianceReason": {
+            "type": "string",
+            "description": "Operator-documented explanation of a non-zero variance, captured at approval for the audit trail (REQ-BBR-006).",
+            "nullable": true,
+            "maxLength": 500,
+            "example": "Bank charged €5.00 monthly fee (posted 2026-06-01, not yet journaled).",
+            "title": "Variance Reason"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Free-text operator notes on discrepancies.",
+            "nullable": true,
+            "maxLength": 500,
+            "title": "Notes"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "audit": true,
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Session created; statement not yet imported. Editable."
+            },
+            "in-progress": {
+              "label": "In progress",
+              "description": "Statement imported and auto-matching has run; operator is resolving exceptions. Editable."
+            },
+            "reconciled": {
+              "label": "Reconciled",
+              "description": "Approved and locked for audit. Immutable — no further match changes (REQ-BBR-006); corrections require a new session."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Closed and moved to the archive view. Queryable for audit, not editable (REQ-BBR-009)."
+            }
+          },
+          "transitions": {
+            "startReconciling": {
+              "from": "draft",
+              "to": "in-progress",
+              "label": "Start reconciling",
+              "description": "Statement imported and auto-matching has run."
+            },
+            "approve": {
+              "from": "in-progress",
+              "to": "reconciled",
+              "label": "Approve reconciliation",
+              "description": "Lock the reconciliation for audit. All pending-review matches must be resolved first; reconciledBalance and variance are recomputed server-side before locking (REQ-BBR-006).",
+              "requires": "OCA\\Shillinq\\Guard\\BankReconciliationGuard::requireResolvedMatches"
+            },
+            "approveFromDraft": {
+              "from": "draft",
+              "to": "reconciled",
+              "label": "Approve reconciliation",
+              "description": "Direct approval for a trivially-empty statement; same resolved-matches precondition applies.",
+              "requires": "OCA\\Shillinq\\Guard\\BankReconciliationGuard::requireResolvedMatches"
+            },
+            "archive": {
+              "from": "reconciled",
+              "to": "archived",
+              "label": "Archive reconciliation",
+              "description": "Move the reconciled session to the archive view (REQ-BBR-009)."
+            }
+          },
+          "preconditions": {
+            "save": "OCA\\Shillinq\\Guard\\BankReconciliationGuard::requireUnlockedAndValidDates"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "countByStatus": {
+            "field": "status",
+            "metric": "count",
+            "groupBy": ["status"],
+            "description": "Number of reconciliation sessions per lifecycle status, for the index status filter and dashboard."
+          }
+        }
+      },
+      "BankReconciliationMatch": {
+        "slug": "BankReconciliationMatch",
+        "icon": "BankTransfer",
+        "version": "0.1.0",
+        "title": "Bank Reconciliation Match",
+        "description": "One paired transaction: a bank-statement line matched to a journal entry (APTransaction, GLLine, or Payment). Auto-matching is deterministic by amount + date ± reference; ambiguous and orphaned items are flagged pending-review for operator resolution. Every decision is timestamped and attributed (REQ-BBR-002/003/004/008). The bank transaction is NOT embedded as a full object — only a reference key + cached amount are stored (design D3).",
+        "x-schema-org": "schema:Action",
+        "type": "object",
+        "required": [
+          "reconciliationId",
+          "bankTransactionRef",
+          "bankTransactionAmount",
+          "matchType",
+          "createdBy"
+        ],
+        "properties": {
+          "reconciliationId": {
+            "type": "string",
+            "description": "FK to the parent BankReconciliation.id.",
+            "example": "reconciliation-2026-05-abc-checking",
+            "title": "Reconciliation ID",
+            "$ref": "BankReconciliation"
+          },
+          "bankTransactionRef": {
+            "type": "string",
+            "description": "Deduplicating bank-transaction key: {bankAccountId}#{statementDate}#{amount}#{externalId}. Stable across re-imports of the same statement.",
+            "example": "bank-acct-abc#2026-05-21#150.00#TXN-2026-05-21-001",
+            "title": "Bank Transaction Ref"
+          },
+          "bankTransactionAmount": {
+            "type": "number",
+            "description": "Amount from the bank statement, cached for display and for the reconciledBalance recomputation (EUR, 2 decimals).",
+            "example": 150.0,
+            "title": "Bank Transaction Amount"
+          },
+          "journalEntryId": {
+            "type": "string",
+            "description": "FK to the matched journal entry (APTransaction, GLLine, or Payment). Null when unmatched/orphaned.",
+            "nullable": true,
+            "example": "apl-tx-uuidABC123",
+            "title": "Journal Entry ID"
+          },
+          "journalEntryDescription": {
+            "type": "string",
+            "description": "Cached description of the matched journal entry for display.",
+            "nullable": true,
+            "example": "Invoice #INV-2026-0521 — Consulting Services",
+            "title": "Journal Entry Description"
+          },
+          "matchType": {
+            "type": "string",
+            "enum": [
+              "auto-matched",
+              "pending-review",
+              "approved",
+              "rejected"
+            ],
+            "default": "pending-review",
+            "description": "Match lifecycle state. Only approved matches contribute to reconciledBalance (REQ-BBR-005).",
+            "title": "Match Type"
+          },
+          "confidenceScore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Auto-match confidence 0–100 (+100 exact amount, +20 reference found, −10 per day past deadline). ≥70 = auto-matched; 30–69 = pending-review; <30 = orphaned (journalEntryId null).",
+            "nullable": true,
+            "example": 95,
+            "title": "Confidence Score"
+          },
+          "operatorNotes": {
+            "type": "string",
+            "description": "Operator comments on the decision.",
+            "nullable": true,
+            "maxLength": 500,
+            "example": "Matched by invoice reference in memo field.",
+            "title": "Operator Notes"
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "User ID of the creator, or 'system-auto-match' for engine-created matches.",
+            "example": "system-auto-match",
+            "title": "Created By"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the operator approved this match.",
+            "nullable": true,
+            "title": "Approved At"
+          },
+          "approvedBy": {
+            "type": "string",
+            "description": "User ID of the approver.",
+            "nullable": true,
+            "title": "Approved By"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "matchType",
+          "initialState": "pending-review",
+          "audit": true,
+          "states": {
+            "auto-matched": {
+              "label": "Auto-matched",
+              "description": "Created by the auto-matching engine with confidence ≥70."
+            },
+            "pending-review": {
+              "label": "Pending review",
+              "description": "Ambiguous (confidence 30–69) or orphaned; awaits operator decision."
+            },
+            "approved": {
+              "label": "Approved",
+              "description": "Operator-confirmed. Contributes to reconciledBalance."
+            },
+            "rejected": {
+              "label": "Rejected",
+              "description": "Operator-rejected; journalEntryId cleared. Remains in the variance report."
+            }
+          },
+          "transitions": {
+            "approve": {
+              "from": "auto-matched",
+              "to": "approved",
+              "label": "Approve match",
+              "description": "Confirm an auto-matched pair (REQ-BBR-003)."
+            },
+            "approvePending": {
+              "from": "pending-review",
+              "to": "approved",
+              "label": "Approve match",
+              "description": "Operator pairs a pending match and approves it (REQ-BBR-003)."
+            },
+            "rejectFromPending": {
+              "from": "pending-review",
+              "to": "rejected",
+              "label": "Reject match",
+              "description": "Operator documents and rejects an orphaned/ambiguous item (REQ-BBR-004)."
+            },
+            "rejectFromAuto": {
+              "from": "auto-matched",
+              "to": "rejected",
+              "label": "Reject match",
+              "description": "Operator overrides an auto-match as incorrect."
+            },
+            "unmatch": {
+              "from": "approved",
+              "to": "pending-review",
+              "label": "Unmatch",
+              "description": "Revert an approved match for re-review (REQ-BBR-008). Blocked when the parent reconciliation is locked."
+            }
+          },
+          "preconditions": {
+            "save": "OCA\\Shillinq\\Guard\\BankReconciliationGuard::requireParentUnlocked"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "approvedAmountTotal": {
+            "description": "Sum of approved match amounts per reconciliation, used as the declarative basis for reconciledBalance = openingBalance + this sum (REQ-BBR-005). The cross-period balance write itself is performed by BankReconciliationGuard per ADR-031 Risk-3.",
+            "filter": {
+              "matchType": "approved"
+            },
+            "groupBy": [
+              "reconciliationId"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "bankTransactionAmount",
+                "as": "approvedTotal"
+              }
+            ]
+          },
+          "countByType": {
+            "field": "matchType",
+            "metric": "count",
+            "groupBy": ["matchType"],
+            "description": "Number of matches per matchType, for the detail-page match summary."
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Bank Reconciliation Match is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

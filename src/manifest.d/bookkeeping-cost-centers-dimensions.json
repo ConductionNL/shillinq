@@ -1,0 +1,102 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-cost-centers-dimensions + unify-analytical-dimensions",
+		"description": "Manifest navigation + index/detail pages for the unified AnalyticalDimension register (REQ-ADIM-103). Three filtered views: CostCenters (dimensionType=cost-center), KostenDragers (dimensionType=cost-object), AnalyticalDimensions (dimensionType=custom). CostCenters / KostenDragers / Projects nav items already live in src/manifest.json; this fragment adds the AnalyticalDimensions (custom) nav leaf + its index/detail pages, plus the SegmentPnLDashboard. Labels unified per EN-primary convention: Cost centers / Kostenplaatsen, Cost objects / Kostendragers, Analytical dimensions / Analytische dimensies."
+	},
+	"menu": [
+		{
+			"id": "Bookkeeping",
+			"label": "Bookkeeping",
+			"icon": "NotebookOutline",
+			"order": 20,
+			"children": [
+				{
+					"id": "AnalyticalDimensions",
+					"label": "Analytical dimensions",
+					"icon": "ChartLineVariant",
+					"route": "AnalyticalDimensions",
+					"order": 92
+				},
+				{
+					"id": "SegmentPnLDashboard",
+					"label": "Segment P&L",
+					"icon": "Poll",
+					"route": "SegmentPnLDashboard",
+					"order": 93
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "AnalyticalDimensions",
+			"route": "/bookkeeping/dimensions/analytical-dimensions",
+			"type": "index",
+			"title": "Analytical dimensions",
+			"config": {
+				"register": "shillinq",
+				"schema": "AnalyticalDimension",
+				"filters": {
+					"dimensionType": "custom"
+				},
+				"columns": [
+					{ "key": "code", "label": "Code", "sortable": true },
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "dataType", "label": "Data type", "sortable": true },
+					{ "key": "isHierarchical", "label": "Hierarchical", "sortable": true },
+					{ "key": "lifecycleState", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "sortOrder",
+				"filterOptions": [
+					{ "key": "lifecycleState", "label": "Status" },
+					{ "key": "dataType", "label": "Data type" }
+				],
+				"detailRoute": "AnalyticalDimensionDetail"
+			}
+		},
+		{
+			"id": "AnalyticalDimensionDetail",
+			"route": "/bookkeeping/dimensions/analytical-dimensions/:id",
+			"type": "detail",
+			"title": "Analytical dimension",
+			"config": {
+				"_note": "An analytical dimension is a MASTER reference record — a bookkeeping axis (cost centre / cost object / custom) that GL transaction lines are tagged against for segment reporting. Body leads with the definition (code, data type, hierarchy, optional reference register/schema for open-list values); the segment-P&L aggregation rolls up the postings that carry this dimension so the accountant sees its financial weight without a fragile per-line filter. No comms — a chart-of-accounts master; audit trail in a sidebar tab to evidence dimension changes.",
+				"register": "shillinq",
+				"schema": "AnalyticalDimension",
+				"fields": [
+					{ "key": "code", "label": "Code", "type": "string" },
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "description", "label": "Description", "type": "text" },
+					{ "key": "dimensionType", "label": "Type", "type": "string" },
+					{ "key": "dataType", "label": "Data type", "type": "string" },
+					{ "key": "isHierarchical", "label": "Hierarchical", "type": "boolean" },
+					{ "key": "referenceRegister", "label": "Reference register", "type": "string" },
+					{ "key": "referenceSchema", "label": "Reference schema", "type": "string" },
+					{ "key": "sortOrder", "label": "Sort order", "type": "integer" },
+					{ "key": "lifecycleState", "label": "Status", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"aggregation": "segmentPnl",
+				"auditTrail": true,
+				"indexRoute": "AnalyticalDimensions",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
+			}
+		},
+		{
+			"id": "SegmentPnLDashboard",
+			"route": "/bookkeeping/dimensions/segment-pnl",
+			"type": "custom",
+			"title": "Segment P&L",
+			"component": "SegmentPnLDashboard",
+			"_note": "The whole page is one table whose GROUPING AXIS is chosen at runtime: selector chips switch the source between the four x-openregister-aggregations on GLLine (byCostCenter, byCostCenterHierarchy, byProject, byAnalyticalDimension), with hierarchical roll-up and a CSV export (REQ-CD-004 / REQ-CD-007). A `type: dashboard` widget binds to ONE fixed aggregation, so expressing this declaratively would need four pages and still lose the shared roll-up state. The page also degrades to a client-side rollup of raw GLLine rows when the aggregation endpoint 404s on older OpenRegister builds."
+		}
+	]
+}

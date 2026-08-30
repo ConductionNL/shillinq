@@ -1,0 +1,331 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-waterschappen-bbv-variant-02-aggregation-compliance",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Member 02 of the bookkeeping-waterschappen-bbv-variant chain. Declares the BBVProgramme + BudgetBBVMapping registers and an x-openregister-aggregations block on BBVProgramme that computes TotalBudget (SUM GL-budget × allocation%), YTDSpend (SUM GL.amount where date ≤ today × allocation%), Utilization (YTDSpend / TotalBudget), and ComplianceStatus (unconfigured | on-track ≤75% | at-risk 75–90% | non-compliant >90%) per REQ-BBVW-005 / giant D3. The compliance status is computed at query time, never persisted as a stored column (ADR-031). This member is kind: config; no controller, service, or UI code lands here. Slice 01 (config-schemas-seed) may not yet be on the integrated branch — this fragment is therefore self-contained and re-declares the two registers safely (ADR-037 deep-merge unions schemas by key, so a coincident slice-01 fragment overlays cleanly)."
+  },
+  "components": {
+    "schemas": {
+      "BBVProgramme": {
+        "slug": "BBVProgramme",
+        "icon": "FormatListChecks",
+        "version": "0.2.0",
+        "title": "BBV Programme",
+        "description": "BBV (Besluit Begroting en Verantwoording) programme record for waterschappen — one row per fiscal-year policy programme code (e.g. '2.3.2'). Admin-maintained governance anchor; never hard-deleted, only archived. The compliance status (unconfigured / on-track / at-risk / non-compliant) is COMPUTED at query time by the x-openregister-aggregations.complianceStatus block declared below — it is NEVER stored on this record (ADR-031 / giant D3 / REQ-BBVW-005).",
+        "x-schema-org": "schema:GovernmentService",
+        "x-spec": "openspec/changes/bookkeeping-waterschappen-bbv-variant-02-aggregation-compliance/specs/bookkeeping-waterschappen-bbv-variant/spec.md",
+        "type": "object",
+        "required": [
+          "programmeCode",
+          "programmeName",
+          "fiscalYear",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "programmeCode": {
+            "type": "string",
+            "description": "BBV programme code per BBV-Waterschappen kostentoedeling (e.g. '2.3.2'). Forms a natural key together with fiscalYear + administrationId.",
+            "example": "2.3.2",
+            "title": "Programme Code"
+          },
+          "programmeName": {
+            "type": "string",
+            "description": "Operator-facing programme name.",
+            "example": "Water Quality Monitoring",
+            "title": "Programme Name"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional long-form description of the programme's policy scope.",
+            "title": "Description"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "minimum": 2000,
+            "maximum": 2100,
+            "description": "Fiscal year the programme applies to. Aggregation runs are scoped to (programme.administrationId, programme.fiscalYear).",
+            "example": 2026,
+            "title": "Fiscal Year"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "archived"
+            ],
+            "description": "Programme lifecycle state. Only 'active' programmes participate in compliance dashboards.",
+            "example": "active",
+            "title": "Status"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration (waterschap).",
+            "example": "adm-waterschap-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-aggregations": {
+          "totalBudget": {
+            "label": "Total budget per programme",
+            "description": "Sum of GL-budget × (allocation% / 100) over every BudgetBBVMapping pointing at this programme. Pure arithmetic — declarative per ADR-031. Carries REQ-BBVW-005 (TotalBudget(P) = Σ GL-budget × allocation%).",
+            "register": "shillinq",
+            "schema": "BudgetBBVMapping",
+            "filter": {
+              "programmeCode": {
+                "equals": "@self.programmeCode"
+              },
+              "fiscalYear": {
+                "equals": "@self.fiscalYear"
+              }
+            },
+            "groupBy": [
+              "programmeCode",
+              "fiscalYear",
+              "administrationId"
+            ],
+            "operations": {
+              "totalBudget": {
+                "type": "expression",
+                "expression": "SUM(glAccountBudgetCents * allocationPercentage / 100)",
+                "unit": "cents",
+                "description": "Integer-cent total budget for the programme. Engine MUST evaluate as integer-cent arithmetic to avoid float drift (ADR-031 money rule)."
+              }
+            }
+          },
+          "ytdSpend": {
+            "label": "YTD spend per programme",
+            "description": "Sum of GL transaction amounts on mapped GL accounts (where postingDate ≤ today AND postingDate ≥ fiscalYear-start) × allocation%, per programme. Pure arithmetic — declarative per ADR-031. Carries REQ-BBVW-005 (YTDSpend(P) = Σ GL.amount × allocation% per mapping).",
+            "register": "shillinq",
+            "schema": "GLTransactionLine",
+            "join": {
+              "register": "shillinq",
+              "schema": "BudgetBBVMapping",
+              "on": {
+                "glAccountNumber": "glAccountNumber",
+                "administrationId": "administrationId"
+              }
+            },
+            "filter": {
+              "programmeCode": {
+                "equals": "@self.programmeCode"
+              },
+              "fiscalYear": {
+                "equals": "@self.fiscalYear"
+              },
+              "postingDate": {
+                "between": [
+                  "@self.fiscalYear-01-01",
+                  "TODAY"
+                ]
+              },
+              "mappingEffectiveFrom": {
+                "lte": "postingDate"
+              },
+              "mappingEffectiveTo": {
+                "gteOrNull": "postingDate"
+              }
+            },
+            "groupBy": [
+              "programmeCode",
+              "fiscalYear",
+              "administrationId"
+            ],
+            "operations": {
+              "ytdSpend": {
+                "type": "expression",
+                "expression": "SUM(GLTransactionLine.amountCents * BudgetBBVMapping.allocationPercentage / 100)",
+                "unit": "cents",
+                "description": "Integer-cent year-to-date spend. Engine MUST evaluate as integer-cent arithmetic to avoid float drift (ADR-031 money rule)."
+              }
+            }
+          },
+          "utilization": {
+            "label": "Utilization ratio",
+            "description": "Ratio of YTD spend to total budget per programme. Pure arithmetic over the two aggregations above. Carries REQ-BBVW-005 (Utilization(P) = YTDSpend / TotalBudget).",
+            "register": "shillinq",
+            "schema": "BBVProgramme",
+            "computedFields": {
+              "utilization": {
+                "type": "expression",
+                "expression": "totalBudget > 0 ? (ytdSpend / totalBudget) : 0",
+                "unit": "ratio",
+                "description": "Dimensionless ratio in [0, ∞). Engine MUST compute as cents/cents to retain precision; the ratio itself is allowed to be a float."
+              },
+              "utilizationPercentage": {
+                "type": "expression",
+                "expression": "utilization * 100",
+                "unit": "percent",
+                "description": "Convenience percentage for dashboards (member 05)."
+              }
+            }
+          },
+          "complianceStatus": {
+            "label": "Compliance status",
+            "description": "Derived enum bucket per REQ-BBVW-005 thresholds. 'unconfigured' if no BudgetBBVMapping exists for the programme; otherwise the threshold against utilization. Computed at query time, NEVER persisted as a stored column (giant D3 / ADR-031).",
+            "register": "shillinq",
+            "schema": "BBVProgramme",
+            "dependsOn": [
+              "totalBudget",
+              "ytdSpend",
+              "utilization"
+            ],
+            "computedFields": {
+              "hasMappings": {
+                "type": "expression",
+                "expression": "totalBudget > 0",
+                "description": "Truthy when at least one BudgetBBVMapping resolves a non-zero allocated budget for this programme."
+              },
+              "complianceStatus": {
+                "type": "expression",
+                "expression": "hasMappings == false ? 'unconfigured' : (utilization <= 0.75 ? 'on-track' : (utilization <= 0.90 ? 'at-risk' : 'non-compliant'))",
+                "enum": [
+                  "unconfigured",
+                  "on-track",
+                  "at-risk",
+                  "non-compliant"
+                ],
+                "description": "Carries REQ-BBVW-005 thresholds: unconfigured | on-track ≤ 75% | at-risk 75–90% | non-compliant > 90%. Boundary semantics (≤ vs <) match the giant — utilization == 0.75 is on-track, utilization == 0.90 is at-risk, utilization > 0.90 is non-compliant."
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "publicRead": true,
+          "adminScope": {
+            "field": "administrationId",
+            "enforce": true
+          }
+        }
+      },
+      "BudgetBBVMapping": {
+        "slug": "BudgetBBVMapping",
+        "icon": "ArrowDecisionOutline",
+        "version": "0.2.0",
+        "title": "Budget BBV Mapping",
+        "description": "Many-to-one mapping from a GL account to a BBVProgramme with an allocation percentage and effective-period guard. Drives both the TotalBudget and YTDSpend aggregations on BBVProgramme. REQ-BBVW-002.",
+        "x-schema-org": "schema:DefinedTerm",
+        "x-spec": "openspec/changes/bookkeeping-waterschappen-bbv-variant-02-aggregation-compliance/specs/bookkeeping-waterschappen-bbv-variant/spec.md",
+        "type": "object",
+        "required": [
+          "glAccountNumber",
+          "programmeCode",
+          "allocationPercentage",
+          "fiscalYear",
+          "effectiveFrom",
+          "administrationId"
+        ],
+        "properties": {
+          "glAccountNumber": {
+            "type": "string",
+            "description": "GL account number contributing to the programme.",
+            "example": "4100",
+            "title": "GL Account Number"
+          },
+          "glAccountBudgetCents": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Annual budget on the GL account, in integer cents (Euro precision). The TotalBudget aggregation multiplies this by allocationPercentage / 100.",
+            "example": 10000000,
+            "title": "GL Account Budget Cents"
+          },
+          "programmeCode": {
+            "type": "string",
+            "description": "BBV programme code targeted by this mapping. Must match a BBVProgramme.programmeCode in the same administration + fiscalYear.",
+            "example": "2.3.2",
+            "title": "Programme Code"
+          },
+          "allocationPercentage": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Share of the GL account's budget + spend allocated to this programme. 100% means the full GL account contributes to this programme; sums across mappings for one (glAccountNumber, fiscalYear, administrationId) MUST not exceed 100% (validated in slice 03).",
+            "example": 50,
+            "title": "Allocation Percentage"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "minimum": 2000,
+            "maximum": 2100,
+            "description": "Fiscal year the mapping applies to.",
+            "example": 2026,
+            "title": "Fiscal Year"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "First date the mapping is in effect. GL transactions before this date are excluded from YTDSpend.",
+            "example": "2026-01-01",
+            "title": "Effective From"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Last date the mapping is in effect (inclusive). Null means open-ended.",
+            "example": "2026-12-31",
+            "title": "Effective To"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration (waterschap).",
+            "example": "adm-waterschap-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "publicRead": true,
+          "adminScope": {
+            "field": "administrationId",
+            "enforce": true
+          }
+        }
+      }
+    }
+  }
+}

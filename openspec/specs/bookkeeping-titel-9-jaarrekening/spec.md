@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-titel-9-jaarrekening
 
 **Status:** proposed  
@@ -7,7 +11,11 @@
 
 ---
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping titel 9 jaarrekening in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: Titel 9 jaarrekening — not browser-testable
 
@@ -164,6 +172,8 @@ DirectorReport entity is mandatory for middelgrote+ entities. The template MUST 
 
 ### REQ-T9-007: The system SHALL support an accountant-review workflow for middelgroot+ (mandatory) or klein (optional)
 
+The system SHALL satisfy this requirement: The system SHALL support an accountant-review workflow for middelgroot+ (mandatory) or klein (optional).
+
 ReviewWorkflow schema orchestrates the progression: `concept` → `in-review` (accountant review) → `vastgesteld` (AV assembly approval) → `gedeponeerd` (KVK filed). For middelgrote+, an accountantsverklaring (audit opinion or compilation statement) is mandatory; for kleine, optional. During `in-review`, the bestuur cannot edit source data without cancelling the review. Review comments are immutable; changes are logged per issue. Accountant attaches their verklaring (NV-COS 700 controle-verklaring, NV-COS 4410 samenstellingsverklaring, or NV-COS 2400 beoordelingsopdracht).
 
 #### Scenario: Concept jaarrekening submitted to accountant for review
@@ -194,6 +204,8 @@ ReviewWorkflow schema orchestrates the progression: `concept` → `in-review` (a
 
 ### REQ-T9-008: The system SHALL convert the final jaarrekening to SBR-XBRL format and support electronic filing at KVK via Digipoort
 
+The system SHALL satisfy this requirement: The system SHALL convert the final jaarrekening to SBR-XBRL format and support electronic filing at KVK via Digipoort.
+
 The jaarrekening, once `vastgesteld` (approved by AV assembly) and ready for `gedeponeerd` status, is converted to SBR-XBRL per the KVK's Nederlandse Taxonomie (NT) entry point (NT16 or later version, selected by groottecategorie: NT-Klein-KVK for klein, NT-Middelgroot-KVK for middelgroot, etc.). The XBRL instance must validate against the entry-point schema (all mandatory contexts and numeric precisions correct, totals balanced, segment reporting consistent). Digipoort submission is automated; status updates (verzonden, ontvangen, formeel verwerkt, openbaar) are captured.
 
 #### Scenario: XBRL generation and validation for klein entity filing
@@ -217,6 +229,8 @@ The jaarrekening, once `vastgesteld` (approved by AV assembly) and ready for `ge
 ---
 
 ### REQ-T9-009: The system SHALL apply wettelijke vrijstellingen (relief rules) for kleine entities
+
+The system SHALL satisfy this requirement: The system SHALL apply wettelijke vrijstellingen (relief rules) for kleine entities.
 
 Kleine rechtspersonen (klein category) benefit from verlichte regels (relief): verkorte balans (no detailed subcategory breakdown), beperkte toelichting (no separate V&W disclosure, minimal notes per RJ 210k — the "RJk" light version), no kasstroomoverzicht verplicht, no bestuursverslag verplicht, no accountantsverklaring verplicht (art. 2:396 lid 7–9 BW). Micro entities benefit from even greater relief: only verkorte balans (no V&W, no toelichting, no bestuursverslag).
 

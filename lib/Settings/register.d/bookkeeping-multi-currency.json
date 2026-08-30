@@ -1,0 +1,267 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-multi-currency",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 3 — Multi-currency bank account management. Declares the BankAccount schema with an additive optional primaryCurrency field (REQ-MC-001 / REQ-MC-002 — ISO 4217 code, nullable, defaults EUR on read) and the CurrencyBalance register that captures point-in-time per-currency balance snapshots per (accountId, currency) pair (REQ-MC-003 — balance, previousBalance, lastUpdated). Per-currency queries (REQ-MC-004) ride on the OpenRegister ObjectService findAll filter engine (no app-local PHP balance calculator), backed by an x-openregister-aggregations declaration on CurrencyBalance for the multi-account aggregation scenario. Seed objects provide three demo BankAccount + CurrencyBalance pairs covering the EUR / USD / GBP scenarios in design.md."
+  },
+  "components": {
+    "schemas": {
+      "BankAccount": {
+        "slug": "BankAccount",
+        "icon": "Bank",
+        "version": "0.1.0",
+        "title": "Bank Account",
+        "titleNl": "Bankrekening",
+        "description": "A bank account held by a Shillinq administration. Holds the IBAN / BIC / bank name plus the optional `primaryCurrency` (ISO 4217, REQ-MC-002) declaration. Existing single-currency deployments may leave `primaryCurrency` null — the system treats null as EUR on read (REQ-MC-001 scenario 'Single-currency account without primaryCurrency declared'). Multi-currency tracking is delegated to CurrencyBalance snapshots keyed on (accountId, currency).",
+        "x-schema-org": "schema:BankAccount",
+        "x-openregister-purpose": "config",
+        "x-spec": "openspec/changes/bookkeeping-multi-currency/spec.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "BankAccount changes (IBAN remapping, primaryCurrency reclassification, lifecycle transitions) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — every change is bookkeeping-relevant (it influences cash-position reporting, reconciliation, FX scope) and is subject to operator + auditor review."
+        },
+        "type": "object",
+        "required": [
+          "accountName",
+          "iban"
+        ],
+        "properties": {
+          "accountName": {
+            "type": "string",
+            "description": "Account display name. Operator-readable label (e.g. 'EUR-operationeel', 'USD-export').",
+            "example": "EUR-operationeel",
+            "title": "Account Name"
+          },
+          "iban": {
+            "type": "string",
+            "description": "IBAN of the bank account (ISO 13616). Used as the natural-key for reconciliation against BankStatement.",
+            "example": "NL23ABNA0123456789",
+            "title": "IBAN"
+          },
+          "bic": {
+            "type": "string",
+            "description": "BIC / SWIFT code of the bank holding the account (ISO 9362). Optional — only required for non-SEPA payments.",
+            "example": "ABNANL2A",
+            "title": "BIC"
+          },
+          "bankName": {
+            "type": "string",
+            "description": "Display name of the bank that issued the account (e.g. ABN AMRO, Rabobank, Bunq).",
+            "example": "ABN AMRO",
+            "title": "Bank Name"
+          },
+          "primaryCurrency": {
+            "type": "string",
+            "description": "ISO 4217 currency code declaring the native currency of the account (REQ-MC-002). Optional; null is treated as 'EUR' on read for backward compatibility (REQ-MC-001 scenario 'Single-currency account without primaryCurrency declared'). MUST be exactly three uppercase letters when set. Examples: EUR, USD, GBP.",
+            "pattern": "^[A-Z]{3}$",
+            "example": "EUR",
+            "title": "Primary Currency"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this bank account. One bank account belongs to exactly one administration.",
+            "example": "adm-default",
+            "title": "Administration ID"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "active",
+              "closed",
+              "frozen"
+            ],
+            "description": "Lifecycle of the bank account: `active` (in normal use), `closed` (no further postings), `frozen` (manual hold). Default `active`.",
+            "example": "active",
+            "title": "Lifecycle State"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Free-text operator notes about the account (purpose, restrictions, mandates).",
+            "example": "Main operational EUR account; used for SEPA payment runs.",
+            "title": "Notes"
+          }
+        }
+      },
+      "CurrencyBalance": {
+        "slug": "CurrencyBalance",
+        "icon": "CurrencyUsd",
+        "version": "0.1.0",
+        "title": "Currency Balance",
+        "titleNl": "Wisselkoers-saldo",
+        "description": "Point-in-time per-currency balance snapshot for a (BankAccount, currency) pair (REQ-MC-003). Snapshots are operator-entered or refreshed by T4 bank-connector synchronisation (no app-local balance calculator — REQ-MC-004). One latest record per (accountId, currency); on duplicate writes the latest timestamp wins (REQ-MC-003 scenario 'Prevent duplicate (accountId, currency) records'). `previousBalance` is captured automatically on update so the detail page can render variance + percentage change without a separate audit query.",
+        "x-schema-org": "schema:Thing",
+        "x-openregister-purpose": "data",
+        "x-spec": "openspec/changes/bookkeeping-multi-currency/spec.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "CurrencyBalance updates MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — each balance change feeds cash-position dashboards and end-of-period reconciliation; operators and auditors MUST see who changed which (accountId, currency) snapshot, when, and from / to which amount (REQ-MC-005 detail-page audit-trail scenario)."
+        },
+        "x-openregister-aggregations": {
+          "balanceByCurrency": {
+            "description": "Group CurrencyBalance records by `currency` and sum `balance`. Powers REQ-MC-004 'Query aggregate balance by currency across accounts' — declarative replacement for a custom PHP aggregator.",
+            "groupBy": [
+              "currency"
+            ],
+            "metrics": [
+              {
+                "field": "balance",
+                "op": "sum",
+                "as": "totalBalance"
+              },
+              {
+                "field": "balanceId",
+                "op": "count",
+                "as": "accountCount"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "balanceId",
+          "accountId",
+          "currency",
+          "balance",
+          "lastUpdated"
+        ],
+        "properties": {
+          "balanceId": {
+            "type": "string",
+            "description": "Stable unique identifier for this snapshot (e.g. `bal-usd-2026-05-21`). MUST be unique across the register; operators may follow `bal-<currency>-<YYYY-MM-DD>` for readability but the format is not enforced.",
+            "example": "bal-usd-2026-05-21",
+            "title": "Balance ID"
+          },
+          "accountId": {
+            "type": "string",
+            "description": "FK to BankAccount.slug (or BankAccount.id) — the bank account this snapshot belongs to. MUST resolve to an existing BankAccount record. Forms one half of the (accountId, currency) uniqueness constraint.",
+            "example": "bank-usd-export",
+            "title": "Account ID"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code (three uppercase letters) the balance is denominated in. Forms the second half of the (accountId, currency) uniqueness constraint. May differ from BankAccount.primaryCurrency for multi-currency clearing accounts (REQ-MC-D3).",
+            "pattern": "^[A-Z]{3}$",
+            "example": "USD",
+            "title": "Currency"
+          },
+          "balance": {
+            "type": "number",
+            "description": "Current balance amount in the specified currency, in the currency's natural unit (e.g. 18750.00 USD = USD 18,750.00). Operators or T4 bank-connector sync write this value; Shillinq does NOT auto-calculate it (REQ-MC-D4).",
+            "example": 18750.0,
+            "title": "Balance"
+          },
+          "previousBalance": {
+            "type": "number",
+            "description": "Previous balance amount, captured automatically on update so detail-page variance and percentage-change rendering does not need to re-query the audit trail. Optional — first-ever snapshot for a (accountId, currency) pair has no previous value.",
+            "example": 20000.0,
+            "title": "Previous Balance"
+          },
+          "lastUpdated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the most recent balance update. Used by REQ-MC-003 'upsert — latest timestamp wins' tiebreaker and by cash-managers to gauge snapshot freshness before relying on the figure for reconciliation.",
+            "example": "2026-05-21T09:00:00Z",
+            "title": "Last Updated"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Free-text operator notes about the snapshot (source statement reference, manual-entry justification, FX rate context).",
+            "example": "Bank statement 2026-05-21 / sync from Wise USD account.",
+            "title": "Notes"
+          }
+        }
+      }
+    },
+    "objects": {
+      "bank-eur-op": {
+        "@self": {
+          "register": "shillinq",
+          "schema": "BankAccount",
+          "slug": "bank-eur-op"
+        },
+        "accountName": "EUR-operationeel",
+        "iban": "NL23ABNA0123456789",
+        "bic": "ABNANL2A",
+        "bankName": "ABN AMRO",
+        "primaryCurrency": "EUR",
+        "administrationId": "adm-default",
+        "lifecycleState": "active",
+        "notes": "Main operational EUR account; used for SEPA payment runs and incoming customer EUR receipts."
+      },
+      "bank-usd-exp": {
+        "@self": {
+          "register": "shillinq",
+          "schema": "BankAccount",
+          "slug": "bank-usd-exp"
+        },
+        "accountName": "USD-export",
+        "iban": "NL45RABO9876543210",
+        "bic": "RABONL2U",
+        "bankName": "Rabobank",
+        "primaryCurrency": "USD",
+        "administrationId": "adm-default",
+        "lifecycleState": "active",
+        "notes": "USD-denominated account for export customers; refreshed from bank statement weekly."
+      },
+      "bank-gbp-trd": {
+        "@self": {
+          "register": "shillinq",
+          "schema": "BankAccount",
+          "slug": "bank-gbp-trd"
+        },
+        "accountName": "GBP-trade",
+        "iban": "NL67BUNQ1234567890",
+        "bic": "BUNQNL2A",
+        "bankName": "Bunq",
+        "primaryCurrency": "GBP",
+        "administrationId": "adm-default",
+        "lifecycleState": "active",
+        "notes": "GBP-denominated trade account for UK subsidiary settlement."
+      },
+      "bal-eur-2026-05-21": {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CurrencyBalance",
+          "slug": "bal-eur-2026-05-21"
+        },
+        "balanceId": "bal-eur-2026-05-21",
+        "accountId": "bank-eur-op",
+        "currency": "EUR",
+        "balance": 45230.5,
+        "previousBalance": 42150.0,
+        "lastUpdated": "2026-05-21T09:00:00Z",
+        "notes": "Statement reference 2026-05-21 ABN AMRO."
+      },
+      "bal-usd-2026-05-21": {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CurrencyBalance",
+          "slug": "bal-usd-2026-05-21"
+        },
+        "balanceId": "bal-usd-2026-05-21",
+        "accountId": "bank-usd-exp",
+        "currency": "USD",
+        "balance": 18750.0,
+        "previousBalance": 20000.0,
+        "lastUpdated": "2026-05-21T09:00:00Z",
+        "notes": "Statement reference 2026-05-21 Rabobank USD."
+      },
+      "bal-gbp-2026-05-21": {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CurrencyBalance",
+          "slug": "bal-gbp-2026-05-21"
+        },
+        "balanceId": "bal-gbp-2026-05-21",
+        "accountId": "bank-gbp-trd",
+        "currency": "GBP",
+        "balance": 12340.75,
+        "previousBalance": 11500.0,
+        "lastUpdated": "2026-05-21T08:30:00Z",
+        "notes": "Statement reference 2026-05-21 Bunq GBP."
+      }
+    }
+  }
+}

@@ -1,0 +1,320 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Conduction consultancy defaults",
+    "description": "Default CostCenter hierarchy templates for a Dutch SMB / consultancy organisation (Sales, Engineering, Operations, Finance, Administration + typical sub-departments). Codes follow CC-NNN / CC-NNN-NN for hierarchy clarity. Operator overrides per administration — these are starting-point defaults only. Money values are in integer cents.",
+    "imported": "2026-06-09T00:00:00Z",
+    "note": "administrationId left null; the repair-step phase stamps it from app config (administration_id) before persistence. Idempotent on code."
+  },
+  "costCenters": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "cc-sales"
+      },
+      "dimensionType": "cost-center",
+      "code": "CC-001",
+      "name": "Sales",
+      "description": "Client acquisition and account management",
+      "status": "active",
+      "budget": 10000000,
+      "organizationId": null,
+      "parentCode": null,
+      "lifecycleState": "active",
+      "administrationId": null,
+      "_meta": {
+        "source": "seeded",
+        "template": "cost-center-templates",
+        "version": "2026"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "cc-sales-account-mgmt"
+      },
+      "dimensionType": "cost-center",
+      "code": "CC-001-01",
+      "name": "Account Management",
+      "description": "Existing customer relationship management",
+      "status": "active",
+      "budget": 5000000,
+      "organizationId": null,
+      "parentCode": "CC-001",
+      "lifecycleState": "active",
+      "administrationId": null,
+      "_meta": {
+        "source": "seeded",
+        "template": "cost-center-templates",
+        "version": "2026"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "cc-sales-new-business"
+      },
+      "dimensionType": "cost-center",
+      "code": "CC-001-02",
+      "name": "New Business",
+      "description": "Outbound lead generation and proposal authoring",
+      "status": "active",
+      "budget": 5000000,
+      "organizationId": null,
+      "parentCode": "CC-001",
+      "lifecycleState": "active",
+      "administrationId": null,
+      "_meta": {
+        "source": "seeded",
+        "template": "cost-center-templates",
+        "version": "2026"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "cc-engineering"
+      },
+      "dimensionType": "cost-center",
+      "code": "CC-002",
+      "name": "Engineering",
+      "description": "Product engineering and software development",
+      "status": "active",
+      "budget": 30000000,
+      "organizationId": null,
+      "parentCode": null,
+      "lifecycleState": "active",
+      "administrationId": null,
+      "_meta": {
+        "source": "seeded",
+        "template": "cost-center-templates",
+        "version": "2026"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "cc-engineering-backend"
+      },
+      "dimensionType": "cost-center",
+      "code": "CC-002-01",
+      "name": "Backend Engineering",
+      "description": "Server-side product engineering",
+      "status": "active",
+      "budget": 15000000,
+      "organizationId": null,
+      "parentCode": "CC-002",
+      "lifecycleState": "active",
+      "administrationId": null,
+      "_meta": {
+        "source": "seeded",
+        "template": "cost-center-templates",
+        "version": "2026"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "cc-engineering-frontend"
+      },
+      "dimensionType": "cost-center",
+      "code": "CC-002-02",
+      "name": "Frontend Engineering",
+      "description": "Client-side and UI engineering",
+      "status": "active",
+      "budget": 10000000,
+      "organizationId": null,
+      "parentCode": "CC-002",
+      "lifecycleState": "active",
+      "administrationId": null,
+      "_meta": {
+        "source": "seeded",
+        "template": "cost-center-templates",
+        "version": "2026"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "cc-engineering-devops"
+      },
+      "dimensionType": "cost-center",
+      "code": "CC-002-03",
+      "name": "DevOps",
+      "description": "Infrastructure and release engineering",
+      "status": "active",
+      "budget": 5000000,
+      "organizationId": null,
+      "parentCode": "CC-002",
+      "lifecycleState": "active",
+      "administrationId": null,
+      "_meta": {
+        "source": "seeded",
+        "template": "cost-center-templates",
+        "version": "2026"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "cc-operations"
+      },
+      "dimensionType": "cost-center",
+      "code": "CC-003",
+      "name": "Operations",
+      "description": "Delivery, support and client services",
+      "status": "active",
+      "budget": 12000000,
+      "organizationId": null,
+      "parentCode": null,
+      "lifecycleState": "active",
+      "administrationId": null,
+      "_meta": {
+        "source": "seeded",
+        "template": "cost-center-templates",
+        "version": "2026"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "cc-operations-support"
+      },
+      "dimensionType": "cost-center",
+      "code": "CC-003-01",
+      "name": "Customer Support",
+      "description": "First and second line client support",
+      "status": "active",
+      "budget": 6000000,
+      "organizationId": null,
+      "parentCode": "CC-003",
+      "lifecycleState": "active",
+      "administrationId": null,
+      "_meta": {
+        "source": "seeded",
+        "template": "cost-center-templates",
+        "version": "2026"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "cc-operations-delivery"
+      },
+      "dimensionType": "cost-center",
+      "code": "CC-003-02",
+      "name": "Delivery",
+      "description": "Project delivery and client onboarding",
+      "status": "active",
+      "budget": 6000000,
+      "organizationId": null,
+      "parentCode": "CC-003",
+      "lifecycleState": "active",
+      "administrationId": null,
+      "_meta": {
+        "source": "seeded",
+        "template": "cost-center-templates",
+        "version": "2026"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "cc-finance"
+      },
+      "dimensionType": "cost-center",
+      "code": "CC-004",
+      "name": "Finance",
+      "description": "Bookkeeping, treasury and reporting",
+      "status": "active",
+      "budget": 4000000,
+      "organizationId": null,
+      "parentCode": null,
+      "lifecycleState": "active",
+      "administrationId": null,
+      "_meta": {
+        "source": "seeded",
+        "template": "cost-center-templates",
+        "version": "2026"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "cc-administration"
+      },
+      "dimensionType": "cost-center",
+      "code": "CC-005",
+      "name": "Administration",
+      "description": "HR, legal and office administration",
+      "status": "active",
+      "budget": 3000000,
+      "organizationId": null,
+      "parentCode": null,
+      "lifecycleState": "active",
+      "administrationId": null,
+      "_meta": {
+        "source": "seeded",
+        "template": "cost-center-templates",
+        "version": "2026"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "cc-administration-hr"
+      },
+      "dimensionType": "cost-center",
+      "code": "CC-005-01",
+      "name": "Human Resources",
+      "description": "Recruitment, onboarding and people operations",
+      "status": "active",
+      "budget": 2000000,
+      "organizationId": null,
+      "parentCode": "CC-005",
+      "lifecycleState": "active",
+      "administrationId": null,
+      "_meta": {
+        "source": "seeded",
+        "template": "cost-center-templates",
+        "version": "2026"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AnalyticalDimension",
+        "slug": "cc-administration-legal"
+      },
+      "dimensionType": "cost-center",
+      "code": "CC-005-02",
+      "name": "Legal and Compliance",
+      "description": "Contract management, privacy, and compliance reporting",
+      "status": "active",
+      "budget": 1000000,
+      "organizationId": null,
+      "parentCode": "CC-005",
+      "lifecycleState": "active",
+      "administrationId": null,
+      "_meta": {
+        "source": "seeded",
+        "template": "cost-center-templates",
+        "version": "2026"
+      }
+    }
+  ]
+}

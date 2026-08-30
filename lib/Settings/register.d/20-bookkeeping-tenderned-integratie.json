@@ -1,0 +1,724 @@
+{
+  "components": {
+    "schemas": {
+      "TenderNedProcurement": {
+        "slug": "TenderNedProcurement",
+        "icon": "Gavel",
+        "version": "0.1.0",
+        "title": "TenderNed Aanbesteding",
+        "description": "A procurement tender imported from TenderNed (Logius central procurement platform). Wraps the public dossier metadata (REQ-001) and links to the materialised Shillinq Commitment. Both the aanbestedende dienst (public buyer) and the inschrijvende leverancier (winning vendor) consume this schema, with role-based visibility filtering (design D6).",
+        "x-schema-org": "schema:Order",
+        "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
+        "type": "object",
+        "required": [
+          "tenderId",
+          "title",
+          "contractingService",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "tenderId": {
+            "type": "string",
+            "description": "TenderNed identifier of the tender dossier — unique per administration (REQ-001).",
+            "example": "TN-2026-0001",
+            "title": "Aanbesteding ID"
+          },
+          "tenderNedUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Deeplink to the public TenderNed dossier for drill-through verantwoording (REQ-007).",
+            "example": "https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0001",
+            "title": "Tender Ned URL"
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable tender title.",
+            "example": "Schoonmaak Gemeentehuis Utrecht",
+            "title": "Titel"
+          },
+          "description": {
+            "type": "string",
+            "description": "Tender description.",
+            "nullable": true,
+            "title": "Beschrijving"
+          },
+          "cpvCodes": {
+            "type": "array",
+            "description": "Common Procurement Vocabulary (CPV 2008) classification codes, stored as-is without reclassification (design D7).",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "90910000-9"
+            ],
+            "title": "Cpv Codes"
+          },
+          "contractingService": {
+            "type": "string",
+            "description": "Contracting authority — KvK number plus name of the public buyer running the procurement.",
+            "example": "30280353 Gemeente Utrecht",
+            "title": "Aanbestedende Dienst"
+          },
+          "awardDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Award date (gunningsbeslissing) — mandatory publication per Aanbestedingswet 2012 artikel 2.135.",
+            "nullable": true,
+            "title": "Gunnings Datum"
+          },
+          "contractValue": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Contract value excluding BTW, in the administration's base currency.",
+            "example": 50000.0,
+            "title": "Contract Waarde"
+          },
+          "termStart": {
+            "type": "string",
+            "format": "date",
+            "description": "Contract term start date — drives milestone-plan generation (REQ-003).",
+            "nullable": true,
+            "title": "Looptijd Start"
+          },
+          "termEnd": {
+            "type": "string",
+            "format": "date",
+            "description": "Contract term end date — drives milestone-plan generation (REQ-003).",
+            "nullable": true,
+            "title": "Looptijd Eind"
+          },
+          "awardedSupplier": {
+            "type": "string",
+            "description": "Awarded supplier — KvK number plus name. Vendor visibility filtering matches this KvK against the tenant organisation (design D6 / REQ-008).",
+            "nullable": true,
+            "example": "76741850 Conduction B.V.",
+            "title": "Gegunde Leverancier"
+          },
+          "assignmentType": {
+            "type": "string",
+            "enum": [
+              "delivery-in-phases",
+              "service-provision-continuous",
+              "other"
+            ],
+            "description": "Contract type used to select the milestone-plan template on activation (REQ-003).",
+            "default": "other",
+            "title": "Opdrachttype"
+          },
+          "commitmentId": {
+            "type": "string",
+            "description": "FK to the materialised Shillinq Commitment (obligation). Null until import promotes the dossier to a concept obligation (REQ-001).",
+            "nullable": true,
+            "title": "Commitment ID",
+            "$ref": "Commitment"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Owning administration — scopes the record for multi-tenant isolation (design Q3).",
+            "title": "Administration ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "aangekondigd",
+              "open",
+              "gegund",
+              "in-uitvoering",
+              "afgerond",
+              "beeindigd"
+            ],
+            "description": "TenderNed dossier lifecycle state (REQ-002). aangekondigd/open: procurement running; gegund: awarded; in-uitvoering: contract being executed; afgerond: completed; beeindigd: terminated.",
+            "default": "aangekondigd",
+            "example": "gegund",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "aangekondigd",
+          "states": {
+            "aangekondigd": {
+              "label": "Aangekondigd",
+              "description": "Tender announced; procurement not yet closed."
+            },
+            "open": {
+              "label": "Open",
+              "description": "Tender open for submissions."
+            },
+            "gegund": {
+              "label": "Gegund",
+              "description": "Awarded. The winning supplier is recorded; if it matches the tenant organisation a concept Commitment is created (REQ-002)."
+            },
+            "in-uitvoering": {
+              "label": "In uitvoering",
+              "description": "Contract under execution; milestones (OrderFulfilment) are tracked (REQ-004)."
+            },
+            "afgerond": {
+              "label": "Afgerond",
+              "description": "Contract completed; eindoplevering approved (REQ-006)."
+            },
+            "beeindigd": {
+              "label": "Beëindigd",
+              "description": "Contract terminated early; remains queryable for audit (REQ-005)."
+            }
+          },
+          "transitions": {
+            "gunnen": {
+              "from": "open",
+              "to": "gegund",
+              "label": "Gunning registreren",
+              "description": "Record the award. Auto-promotion to an active Commitment fires when the winning KvK matches the tenant organisation (REQ-002).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\TenderNedProcurementGuard::canGunnen"
+            },
+            "start-uitvoering": {
+              "from": "gegund",
+              "to": "in-uitvoering",
+              "label": "Uitvoering starten",
+              "description": "Move the awarded tender into execution once the contractmanager activates the Commitment (REQ-002 / REQ-003)."
+            },
+            "afronden": {
+              "from": "in-uitvoering",
+              "to": "afgerond",
+              "label": "Afronden",
+              "description": "Complete the contract once the eindoplevering milestone is approved (REQ-006). Status-sync back to TenderNed is offered to the aanbestedende dienst role.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\TenderNedProcurementGuard::canAfronden"
+            },
+            "beeindigen": {
+              "from": "in-uitvoering",
+              "to": "beeindigd",
+              "label": "Beëindigen",
+              "description": "Terminate the contract early; the record stays queryable for the ENSIA audit-trail (REQ-005)."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "contractmanager": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "inkoper": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "salesmanager": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a TenderNed Aanbesteding is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "Commitment": {
+        "slug": "Commitment",
+        "icon": "FileSign",
+        "version": "0.1.0",
+        "title": "Commitment",
+        "description": "A financial obligation (commitment) that reserves budget. The obligation may originate manually, from an inkooporder, or from a won TenderNed tender (bron field, REQ-001). A concept obligation must be enriched (kostenplaats, grootboekrekening) and activated by a contractmanager before it locks budget (design D2). This fragment is the TenderNed OVERLAY on the Commitment schema: bookkeeping-verplichtingenadministratie.json owns the schema and is the single place its `required` list is declared, because ADR-037's deepMergeConfig() CONCATENATES list values — two `required` declarations become an unsatisfiable union. Everything below is additive: TenderNed provenance (bron, bronReferentie, gegundeLeverancierKvk), the milestone plan, and the concept -> active enrichment lifecycle.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
+        "type": "object",
+        "properties": {
+          "commitmentNumber": {
+            "type": "string",
+            "description": "Sequential obligation number unique per administration, as written by TenderNedAwardDetectedListener and read by CommitmentGuard. This is the camelCase half of a LIVE TWO-SPELLING SPLIT — bookkeeping-verplichtingenadministratie.json owns this schema and declares `verplichtingsnummer` for the commitment-accounting path, which is the spelling in the merged `required` list. Until the two collapse, a record written through the TenderNed path does not satisfy that requirement. Resolving the split belongs to the English domain rename (Commitment -> Commitment), which owns the repair step that migrates stored values; renaming here without one would make every stored value invisible, because OpenRegister's MagicMapper discards undeclared properties.",
+            "example": "VPL-2026-0001",
+            "title": "Commitment Nummer"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the obligation.",
+            "example": "Schoonmaakcontract gemeentehuis 2026",
+            "title": "Omschrijving"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "tenderned",
+              "inkooporder"
+            ],
+            "description": "Origin of this obligation. Existing obligations default to manual for backward compatibility (Task 2.3).",
+            "default": "manual",
+            "title": "Bron"
+          },
+          "sourceReference": {
+            "type": "string",
+            "description": "TenderNed aanbestedingId when bron is tenderned; null otherwise (conditional-required, design validation rules).",
+            "nullable": true,
+            "x-openregister-conditional-required": "bron == 'tenderned'",
+            "title": "Bron Referentie"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Committed amount excluding BTW, in the administration's base currency.",
+            "example": 50000.0,
+            "title": "Bedrag"
+          },
+          "costCentre": {
+            "type": "string",
+            "description": "Cost centre (FK to CostCenter.costCentreCode) — enriched by the contractmanager before activation (design D2).",
+            "nullable": true,
+            "title": "Kostenplaats"
+          },
+          "generalLedgerAccount": {
+            "type": "string",
+            "description": "GL account (FK to Account.accountNumber) — enriched by the contractmanager before activation (design D2).",
+            "nullable": true,
+            "title": "Grootboekrekening"
+          },
+          "termStart": {
+            "type": "string",
+            "format": "date",
+            "description": "Obligation term start date; bounds milestone dates (design validation rules).",
+            "nullable": true,
+            "title": "Looptijd Start"
+          },
+          "termEnd": {
+            "type": "string",
+            "format": "date",
+            "description": "Obligation term end date; bounds milestone dates (design validation rules).",
+            "nullable": true,
+            "title": "Looptijd Eind"
+          },
+          "awardedSupplierKvk": {
+            "type": "string",
+            "description": "KvK number of the awarded supplier — used for vendor visibility filtering of bron=tenderned obligations (REQ-008 / design D6).",
+            "nullable": true,
+            "title": "Gegunde Leverancier KvK"
+          },
+          "milestones": {
+            "type": "array",
+            "description": "Milestone plan generated on activation from the contract template (REQ-003). Value objects embedded on the obligation header; each milestone's proof and approval live on the related OrderFulfilment (design D5).",
+            "items": {
+              "type": "object",
+              "required": [
+                "milestoneId",
+                "date",
+                "description",
+                "percentage",
+                "status"
+              ],
+              "properties": {
+                "milestoneId": {
+                  "type": "string",
+                  "description": "Stable milestone identifier, referenced by OrderFulfilment.mijlpaalId.",
+                  "example": "MS-Q1",
+                  "title": "Mijlpaal ID"
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Planned milestone date; must fall within looptijdStart..looptijdEind (design validation rules).",
+                  "title": "Datum"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Milestone description (Dutch label).",
+                  "example": "Q1 deeloplevering",
+                  "title": "Omschrijving"
+                },
+                "percentage": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "description": "Share of the contract value invoiced at this milestone. Across all milestones the sum should equal 100 (warning, not hard error).",
+                  "title": "Percentage"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "planned",
+                    "in-progress",
+                    "completed",
+                    "cancelled"
+                  ],
+                  "description": "Milestone progress state.",
+                  "default": "planned",
+                  "title": "Status"
+                },
+                "invoiceNumber": {
+                  "type": "string",
+                  "description": "Invoice number once the milestone is invoiced.",
+                  "nullable": true,
+                  "title": "Factuurnummer"
+                }
+              }
+            },
+            "title": "Mijlpalen"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Owning administration — scopes the record for multi-tenant isolation.",
+            "title": "Administration ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "archived"
+            ],
+            "description": "Obligation lifecycle (design D2). draft: imported, awaiting contractmanager enrichment + activation; active: budget locked; archived: closed/rolled back.",
+            "default": "draft",
+            "example": "draft",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Imported obligation awaiting contractmanager enrichment (kostenplaats, grootboekrekening). Does not lock budget (design D2)."
+            },
+            "active": {
+              "label": "Actief",
+              "description": "Activated; budget is locked and the budget-impact widget is notified within the 60s SLA (REQ-007)."
+            },
+            "archived": {
+              "label": "Gearchiveerd",
+              "description": "Closed or rolled back; remains queryable for audit (REQ-005)."
+            }
+          },
+          "transitions": {
+            "activeren": {
+              "from": "draft",
+              "to": "active",
+              "label": "Activeren",
+              "description": "Activate the obligation after enrichment. Requires kostenplaats and grootboekrekening to be set (design D2); generates the milestone plan when an opdrachttype is supplied (REQ-003).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\CommitmentGuard::canActiveren"
+            },
+            "archiveren": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archiveren",
+              "description": "Archive a completed or rolled-back obligation (rollback plan)."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "contractmanager": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "finance-medewerker": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "salesmanager": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Commitment is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "OrderFulfilment": {
+        "slug": "OrderFulfilment",
+        "icon": "ClipboardCheckOutline",
+        "version": "0.1.0",
+        "title": "Opdracht Uitvoering",
+        "description": "Execution ledger for a single contract milestone (design D5). Distinct from the Commitment it belongs to: this is the operational delivery log carrying proof-of-delivery (bewijsstukken) and approval metadata. A milestone cannot be approved (approved false→true) until at least one bewijsstuk is attached (REQ-004).",
+        "x-schema-org": "schema:Action",
+        "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
+        "type": "object",
+        "required": [
+          "commitmentId",
+          "milestoneId",
+          "deliveryType",
+          "administrationId",
+          "status"
+        ],
+        "properties": {
+          "commitmentId": {
+            "type": "string",
+            "description": "FK to the parent Commitment (design D5).",
+            "title": "Commitment ID",
+            "$ref": "Commitment"
+          },
+          "milestoneId": {
+            "type": "string",
+            "description": "Identifier of the milestone within the parent Commitment.mijlpalen array (Task 2.2).",
+            "title": "Mijlpaal ID"
+          },
+          "deliveryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Actual delivery date.",
+            "nullable": true,
+            "title": "Opleverings Datum"
+          },
+          "deliveryType": {
+            "type": "string",
+            "enum": [
+              "deeloplevering",
+              "eindoplevering",
+              "tussentijdse-rapportage"
+            ],
+            "description": "Delivery type. eindoplevering completion triggers the optional status-sync back to TenderNed (REQ-006).",
+            "default": "deeloplevering",
+            "title": "Opleverings Type"
+          },
+          "approved": {
+            "type": "boolean",
+            "description": "Whether the delivery has been approved. Can only transition false→true once at least one bewijsstuk is attached (REQ-004).",
+            "default": false,
+            "title": "Goedgekeurd"
+          },
+          "goedkeurder": {
+            "type": "string",
+            "description": "User who approved the delivery (audit-trail REQ-005).",
+            "nullable": true,
+            "title": "Goedkeurder"
+          },
+          "supportingDocuments": {
+            "type": "array",
+            "description": "Proof-of-delivery file references stored via OpenRegister's file-attachment abstraction in docudesk (ADR-022 / design D4). Each entry is a docudesk document URI.",
+            "items": {
+              "type": "object",
+              "required": [
+                "app",
+                "documentId"
+              ],
+              "properties": {
+                "app": {
+                  "type": "string",
+                  "description": "Owning app of the attachment, normally docudesk.",
+                  "example": "docudesk",
+                  "title": "App"
+                },
+                "documentId": {
+                  "type": "string",
+                  "description": "Document identifier within the owning app.",
+                  "title": "Document ID"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Human-readable label (e.g. opleveringsdocument, acceptatie-protocol).",
+                  "nullable": true,
+                  "title": "Omschrijving"
+                }
+              }
+            },
+            "title": "Bewijsstukken"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Owning administration — scopes the record for multi-tenant isolation.",
+            "title": "Administration ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in-progress",
+              "completed",
+              "cancelled"
+            ],
+            "description": "Execution state. completed unlocks milestone facturatie (design D4).",
+            "default": "in-progress",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "in-progress",
+          "states": {
+            "in-progress": {
+              "label": "In uitvoering",
+              "description": "Delivery being performed; bewijsstukken may still be added."
+            },
+            "completed": {
+              "label": "Voltooid",
+              "description": "Delivery accepted; at least one bewijsstuk is attached and the milestone is approved (REQ-004). Unlocks facturatie."
+            },
+            "cancelled": {
+              "label": "Geannuleerd",
+              "description": "Delivery cancelled; remains queryable for audit (REQ-005)."
+            }
+          },
+          "transitions": {
+            "voltooien": {
+              "from": "in-progress",
+              "to": "completed",
+              "label": "Markeer als voltooid",
+              "description": "Complete the delivery. Blocked until at least one bewijsstuk is attached (REQ-004); on completion the final-milestone status-sync to TenderNed is offered to the aanbestedende dienst (REQ-006).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\OrderFulfilmentGuard::canVoltooien"
+            },
+            "annuleren": {
+              "from": "in-progress",
+              "to": "cancelled",
+              "label": "Annuleren",
+              "description": "Cancel the delivery; record stays in the audit-trail (REQ-005)."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "contractmanager": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "finance-medewerker": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "salesmanager": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Opdracht Uitvoering is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "TenderNedProcurement",
+        "slug": "tn-sample-utrecht-schoonmaak"
+      },
+      "tenderId": "TN-2026-0001",
+      "tenderNedUrl": "https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0001",
+      "title": "Schoonmaak Gemeentehuis Utrecht",
+      "description": "Doorlopende schoonmaakdienstverlening gemeentehuis, looptijd 1 jaar.",
+      "cpvCodes": [
+        "90910000-9"
+      ],
+      "contractingService": "30280353 Gemeente Utrecht",
+      "awardDate": "2026-01-15",
+      "contractValue": 50000.0,
+      "termStart": "2026-02-01",
+      "termEnd": "2027-01-31",
+      "awardedSupplier": "76741850 Conduction B.V.",
+      "assignmentType": "service-provision-continuous",
+      "administrationId": "adm-consultancy-nl",
+      "status": "gegund"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "TenderNedProcurement",
+        "slug": "tn-sample-brabant-it"
+      },
+      "tenderId": "TN-2026-0002",
+      "tenderNedUrl": "https://www.tenderned.nl/aankondigingen/overzicht/TN-2026-0002",
+      "title": "IT-dienstverlening Provincie Brabant",
+      "description": "Gefaseerde levering IT-infrastructuur en beheer, looptijd 2 jaar.",
+      "cpvCodes": [
+        "72000000-5",
+        "30200000-1"
+      ],
+      "contractingService": "17278718 Provincie Noord-Brabant",
+      "awardDate": "2026-02-10",
+      "contractValue": 250000.0,
+      "termStart": "2026-03-01",
+      "termEnd": "2028-02-29",
+      "awardedSupplier": "76741850 Conduction B.V.",
+      "assignmentType": "delivery-in-phases",
+      "administrationId": "adm-consultancy-nl",
+      "status": "gegund"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Commitment",
+        "slug": "vpl-sample-utrecht-schoonmaak"
+      },
+      "commitmentNumber": "VPL-2026-0001",
+      "description": "Schoonmaakcontract gemeentehuis Utrecht 2026",
+      "source": "tenderned",
+      "sourceReference": "TN-2026-0001",
+      "amount": 50000.0,
+      "costCentre": "FAC-001",
+      "generalLedgerAccount": "4500",
+      "termStart": "2026-02-01",
+      "termEnd": "2027-01-31",
+      "awardedSupplierKvk": "76741850",
+      "milestones": [
+        {
+          "milestoneId": "MS-Q1",
+          "date": "2026-05-01",
+          "description": "Q1 deeloplevering",
+          "percentage": 25,
+          "status": "planned",
+          "invoiceNumber": null
+        },
+        {
+          "milestoneId": "MS-Q2",
+          "date": "2026-08-01",
+          "description": "Q2 deeloplevering",
+          "percentage": 25,
+          "status": "planned",
+          "invoiceNumber": null
+        },
+        {
+          "milestoneId": "MS-Q3",
+          "date": "2026-11-01",
+          "description": "Q3 deeloplevering",
+          "percentage": 25,
+          "status": "planned",
+          "invoiceNumber": null
+        },
+        {
+          "milestoneId": "MS-Q4",
+          "date": "2027-01-31",
+          "description": "Q4 eindoplevering",
+          "percentage": 25,
+          "status": "planned",
+          "invoiceNumber": null
+        }
+      ],
+      "administrationId": "adm-consultancy-nl",
+      "status": "active"
+    }
+  ]
+}

@@ -2,17 +2,46 @@
   "_meta": {
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
-    "source": "Wet IB 2001 art. 3.76 (zelfstandigenaftrek), art. 3.76 lid 3 (startersaftrek), art. 3.79a (MKB-winstvrijstelling)",
+    "source": "Wet IB 2001 + Belastingplan 2026",
     "version": "2026",
-    "description": "ZZP deduction amounts for 2026 (REQ-ZZP-005). Values are illustrative defaults aligned to the spec; operators confirm against the actual Belastingdienst tarieven for the tax year. Statutory amounts move per annual Belastingplan.",
-    "imported": "2026-06-01T00:00:00Z"
+    "description": "ZZP aftrekbedragen voor belastingjaar 2026. Zelfstandigenaftrek (art. 3.76), startersaftrek (art. 3.77), MKB-winstvrijstelling percentage (art. 3.79a). Versioned seed: toekomstige wijzigingen shipped als zzp-deduction-amounts-YYYY.json per REQ-ZZP-007.",
+    "imported": "2026-06-03T00:00:00Z"
   },
-  "deductions": {
-    "zelfstandigenaftrek": 5000,
-    "startersaftrek": 1000,
-    "mkbWinstvrijstelling": 900,
-    "currency": "EUR",
-    "fiscalYear": 2026,
-    "thresholds": {"urencriterium": 1225, "starters": 800}
-  }
+  "taxYear": 2026,
+  "amounts": [
+    {
+      "id": "zelfstandigenaftrek-2026",
+      "field": "selfEmployedDeduction",
+      "label": "Zelfstandigenaftrek",
+      "amount": 3750.00,
+      "currency": "EUR",
+      "description": "Zelfstandigenaftrek voor belastingjaar 2026. Geldt voor ZZP-ers die het urencriterium halen (>= 1225 uur). Wet IB 2001 art. 3.76.",
+      "citation": "Wet IB 2001 art. 3.76; Belastingplan 2026",
+      "effectiveFrom": "2026-01-01",
+      "effectiveTo": "2026-12-31"
+    },
+    {
+      "id": "startersaftrek-2026",
+      "field": "starterDeduction",
+      "label": "Startersaftrek",
+      "amount": 2123.00,
+      "currency": "EUR",
+      "description": "Startersaftrek voor belastingjaar 2026. Claimable in maximaal 3 van de eerste 5 jaar van ondernemerschap. Wet IB 2001 art. 3.77.",
+      "citation": "Wet IB 2001 art. 3.77",
+      "startersaftrekMaxYears": 3,
+      "startersaftrekWindowYears": 5,
+      "effectiveFrom": "2026-01-01",
+      "effectiveTo": "2026-12-31"
+    },
+    {
+      "id": "mkb-winstvrijstelling-2026",
+      "field": "mkbProfitExemptionPercentage",
+      "label": "MKB-winstvrijstelling",
+      "percentage": 0.127,
+      "description": "MKB-winstvrijstelling percentage voor belastingjaar 2026 (12.7%). Toegepast op belastbare winst na aftrekposten: (winst - zelfstandigenaftrek - startersaftrek) x 12.7%. Wet IB 2001 art. 3.79a.",
+      "citation": "Wet IB 2001 art. 3.79a; Belastingplan 2026",
+      "effectiveFrom": "2026-01-01",
+      "effectiveTo": "2026-12-31"
+    }
+  ]
 }

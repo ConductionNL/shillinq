@@ -1,0 +1,8 @@
+{
+  "spec_slug": "bookkeeping-credit-control-dunning",
+  "title": "Credit Control & Dunning Ladder",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [],
+  "issue": 124
+}

@@ -2,19 +2,19 @@
   "_meta": {
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
-    "source": "Awb titel 4.2 (subsidies) + VNG ASV-model 2022",
+    "source": "Awb title 4.2 (subsidies) + VNG ASV-model 2022",
     "version": "2022",
     "description": "ASV-model subsidie lifecycle states with their Awb article citations (REQ-SUB-006/010). Seeds the operator-facing labels and legal references behind the Subsidie x-openregister-lifecycle states.",
     "imported": "2026-06-01T00:00:00Z"
   },
   "states": [
-    {"state": "aanvraag", "label": "Aanvraag", "citation": "Awb 4:2 — aanvraag tot subsidieverlening", "order": 1},
-    {"state": "verleend", "label": "Verleend", "citation": "Awb 4:29-4:36 — subsidieverlening", "order": 2},
+    {"state": "request", "label": "Aanvraag", "citation": "Awb 4:2 — aanvraag tot subsidieverlening", "order": 1},
+    {"state": "granted", "label": "Verleend", "citation": "Awb 4:29-4:36 — subsidieverlening", "order": 2},
     {"state": "ingetrokken", "label": "Ingetrokken", "citation": "Awb 4:48-4:50 — intrekking en wijziging subsidieverlening", "order": 3},
     {"state": "gewijzigd", "label": "Gewijzigd", "citation": "Awb 4:48-4:50 — intrekking en wijziging subsidieverlening", "order": 4},
-    {"state": "vastgesteld", "label": "Vastgesteld", "citation": "Awb 4:42-4:47 — subsidievaststelling", "order": 5},
-    {"state": "uitbetaald", "label": "Uitbetaald", "citation": "Awb 4:52-4:57 — betaling en terugvordering", "order": 6},
-    {"state": "teruggevorderd", "label": "Teruggevorderd", "citation": "Awb 4:57 — terugvordering onverschuldigd betaalde subsidiebedragen", "order": 7},
+    {"state": "determined", "label": "Vastgesteld", "citation": "Awb 4:42-4:47 — subsidievaststelling", "order": 5},
+    {"state": "disbursed", "label": "Uitbetaald", "citation": "Awb 4:52-4:57 — betaling en terugvordering", "order": 6},
+    {"state": "reclaimed", "label": "Teruggevorderd", "citation": "Awb 4:57 — terugvordering onverschuldigd betaalde subsidiebedragen", "order": 7},
     {"state": "afbetalingsregeling", "label": "Afbetalingsregeling", "citation": "Awb 4:57 jo. 4:94 — betaling in termijnen", "order": 8}
   ]
 }

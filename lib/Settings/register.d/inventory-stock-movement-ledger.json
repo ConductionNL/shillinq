@@ -1,0 +1,546 @@
+{
+  "info": {
+    "version": "0.1.0-inventory-stock-movement-ledger"
+  },
+  "components": {
+    "schemas": {
+      "StockMove": {
+        "slug": "StockMove",
+        "icon": "SwapHorizontalBold",
+        "version": "0.1.0",
+        "title": "Stock Move",
+        "description": "Immutable double-entry stock-movement ledger entry (Odoo / Tryton Stock Move pattern). One StockMove atomically debits source location and credits destination location for a single (item + quantity + unit cost) tuple. Movement type taxonomy: receipt (null source = goods inbound), transfer (both locations populated = lateral move), issue (null destination = goods outbound), manufacture (assembly), repack (consolidation). Lifecycle draft → posted → cancelled; posting flips `locked = true` and triggers GL materialisation (asset / COGS) via x-openregister-lifecycle-action. Cancellation creates an offsetting StockMove (not patch) so the original posted row remains immutable per IAS 2 + Dutch CTR. No PHP StockMoveService — the lifecycle, GL materialisation and audit trail are declarative per ADR-031 (ADR-031 exception path: StockReservationGuard + StockMoveImmutabilityGuard + StockMoveOffsetCreator for the optimistic-lock CAS, the locked-after-post guard, and the offset-row materialisation that the declarative DSL cannot yet express). Reserved quantity is held against InventoryStock.reservedQuantity on draft and released on post or cancel.",
+        "x-schema-org": "schema:Event",
+        "x-openregister-purpose": "ledger",
+        "x-spec": "openspec/changes/inventory-stock-movement-ledger/specs/inventory-stock-movement-ledger/spec.md",
+        "type": "object",
+        "required": [
+          "movementNumber",
+          "itemId",
+          "quantity",
+          "unitCost",
+          "movementType",
+          "movementReason",
+          "draftedAt",
+          "administrationId",
+          "lifecycleState"
+        ],
+        "properties": {
+          "movementNumber": {
+            "type": "string",
+            "description": "Sequential movement number unique per administration + fiscal year per REQ-SM-002. Operator-visible identifier (SM-YYYY-NNNN).",
+            "example": "SM-2026-0001",
+            "pattern": "^[A-Z0-9][A-Z0-9\\-_]{0,31}$",
+            "title": "Movement Number"
+          },
+          "itemId": {
+            "type": "string",
+            "description": "FK to Product.sku (inventory-product-catalog). Resolves via ?expand=itemId. Spec refers to the catalogue entity as the Item; the live shillinq catalog uses Product.",
+            "example": "LAPTOP-001",
+            "title": "Item ID"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 0,
+            "multipleOf": 0.01,
+            "description": "Units moved per REQ-SM-002. Always non-negative; the direction is encoded by sourceLocationId / destinationLocationId nullability and movementType. Money/quantity discipline: multipleOf 0.01 enforced so reservation CAS comparisons remain bit-exact at integer-cent.",
+            "example": 100.0,
+            "title": "Quantity"
+          },
+          "unitCost": {
+            "type": "number",
+            "minimum": 0,
+            "multipleOf": 0.01,
+            "description": "Cost per unit in the administration's base currency, used to compute GL posting amounts per REQ-SM-006 (amount = quantity * unitCost). Manual entry or auto-filled from referenceDocumentUri (PO). multipleOf 0.01 per the shillinq Money discipline.",
+            "example": 12.5,
+            "title": "Unit Cost"
+          },
+          "movementType": {
+            "type": "string",
+            "enum": [
+              "receipt",
+              "transfer",
+              "issue",
+              "manufacture",
+              "repack"
+            ],
+            "description": "Closed enum of movement types per REQ-SM-002. receipt: goods inbound (null sourceLocationId); transfer: lateral inter-location (both populated, no GL); issue: goods outbound (null destinationLocationId; posts COGS); manufacture: assembly (debits Finished Goods, credits Raw Materials); repack: consolidation (no GL).",
+            "example": "receipt",
+            "title": "Movement Type"
+          },
+          "sourceLocationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to Location.id. Null for `receipt` (goods from supplier). Required for transfer/issue/manufacture/repack. Must differ from destinationLocationId when both are populated per REQ-SM-002.",
+            "example": "loc-w01-z01-b100",
+            "title": "Source Location ID",
+            "$ref": "Location"
+          },
+          "destinationLocationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to Location.id. Null for `issue` (goods to customer/scrap). Required for receipt/transfer/manufacture/repack. Must differ from sourceLocationId when both are populated.",
+            "example": "loc-w02-z01-b200",
+            "title": "Destination Location ID",
+            "$ref": "Location"
+          },
+          "referenceDocumentUri": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Optional FK to the originating business document: PO (receipt), sales order (issue), production plan (manufacture). docudesk:// URIs supported per REQ-JE-006 pattern.",
+            "example": "shillinq://purchase-order/po-2026-0042",
+            "title": "Reference Document URI"
+          },
+          "movementReason": {
+            "type": "string",
+            "description": "Admin-configurable reason code per REQ-SM-007 / REQ-SM-010. Standard codes seeded below (normal, damaged, expired, shrinkage, inter-warehouse, adjustment, sample, demo, theft, loss, cancellation, manufacture, repack); additional codes added per administration. Mandatory on transition to `posted` (StockMoveReasonGuard enforces).",
+            "enum": [
+              "normal",
+              "damaged",
+              "expired",
+              "shrinkage",
+              "inter-warehouse",
+              "adjustment",
+              "sample",
+              "demo",
+              "theft",
+              "loss",
+              "cancellation",
+              "manufacture",
+              "repack"
+            ],
+            "example": "normal",
+            "title": "Movement Reason"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-text operator notes. Used to reference the original move on offset rows (REQ-SM-003): 'Offset for SM-YYYY-NNNN'.",
+            "example": "Pallet 4 of supplier delivery PO-2026-0042",
+            "title": "Notes"
+          },
+          "draftedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the move was created (initialised at draft).",
+            "example": "2026-06-07T09:15:00Z",
+            "title": "Drafted At"
+          },
+          "postedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp when transition draft→posted ran. Null until posting per REQ-SM-002.",
+            "example": "2026-06-07T09:18:00Z",
+            "title": "Posted At"
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp when transition draft→cancelled or posted→cancelled ran. Null unless cancelled per REQ-SM-002.",
+            "example": null,
+            "title": "Cancelled At"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration owning this move. Tenant-scoped per REQ-MA-001 (multi-administratie); cross-org reads/writes are masked 404 per AdministrationContextService.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "locked": {
+            "type": "boolean",
+            "default": false,
+            "description": "Immutability flag set true on transition draft→posted (REQ-SM-003). Once locked, edits to quantity / unitCost / locations / movementType are rejected with HTTP 409 by StockMoveImmutabilityGuard; the operator must instead create an offsetting move via the `cancel` transition.",
+            "example": false,
+            "title": "Locked"
+          },
+          "glTransactionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Back-reference to the materialised GLTransaction for receipt / issue / manufacture posts per REQ-SM-006. Null for transfer / repack (no GL posting) and for cancelled moves.",
+            "example": "gl-txn-2026-sm-0001",
+            "title": "GL Transaction ID",
+            "$ref": "GLTransaction"
+          },
+          "offsetOfMoveId": {
+            "type": "string",
+            "nullable": true,
+            "description": "When this row is an offsetting (cancellation) move generated by StockMoveOffsetCreator, this field FKs to the original posted StockMove.id per REQ-SM-003. Null for non-offset rows. Enables drill-down from original ↔ offset pair in the Stock Movements index.",
+            "example": null,
+            "title": "Offset Of Move ID",
+            "$ref": "StockMove"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "posted",
+              "cancelled"
+            ],
+            "default": "draft",
+            "description": "Lifecycle state per REQ-SM-003. draft: operator can edit, reserves qty against InventoryStock.reservedQuantity; posted: locked, GL materialised, contributes to stock-ledger SUM; cancelled: terminal, releases reservation, excluded from stock-ledger SUM.",
+            "example": "draft",
+            "title": "Lifecycle State"
+          }
+        },
+        "x-openregister-unique": [
+          [
+            "administrationId",
+            "movementNumber"
+          ]
+        ],
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "labelNl": "Concept",
+              "description": "Operator is composing the move. Quantity reserved against source InventoryStock.reservedQuantity. Editable; no GL posting; no immutability lock."
+            },
+            "posted": {
+              "label": "Posted",
+              "labelNl": "Geboekt",
+              "description": "Immutable. locked=true; postedAt set; InventoryStock.quantity updated at source (debit) and destination (credit); GL transaction materialised when movementType is receipt / issue / manufacture. Subsequent edits are rejected with HTTP 409 — cancellation creates an offsetting move."
+            },
+            "cancelled": {
+              "label": "Cancelled",
+              "labelNl": "Geannuleerd",
+              "description": "Terminal. cancelledAt set; reservation released. From draft: no offset row needed (no posting happened). From posted: StockMoveOffsetCreator emits a balanced offsetting StockMove with swapped source/destination, movementReason='cancellation', notes referencing the original, offsetOfMoveId set."
+            }
+          },
+          "transitions": {
+            "post": {
+              "from": "draft",
+              "to": "posted",
+              "label": "Post move",
+              "labelNl": "Boeking voltooien",
+              "description": "Commit the draft. Releases reservation; updates InventoryStock.quantity on both sides; materialises a balanced GLTransaction for receipt / issue / manufacture per REQ-SM-006. Locked thereafter.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\StockMoveReasonGuard::requireReasonOnPost",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "set-field",
+                  "description": "Stamp postedAt and locked=true on transition per REQ-SM-003.",
+                  "actionParameters": {
+                    "set": {
+                      "postedAt": "@now",
+                      "locked": true
+                    }
+                  }
+                },
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "commit-stock-reservation",
+                  "description": "Release reservedQuantity and decrement source / increment destination InventoryStock.quantity per REQ-SM-004 + REQ-SM-005. CAS optimistic-lock on InventoryStock.version; collision surfaces to operator with retry message.",
+                  "actionParameters": {
+                    "register": "shillinq",
+                    "reservationSchema": "InventoryStock",
+                    "sourceLocationField": "sourceLocationId",
+                    "destinationLocationField": "destinationLocationId",
+                    "itemField": "itemId",
+                    "quantityField": "quantity",
+                    "adminScopeField": "administrationId",
+                    "casVersionField": "version",
+                    "reservedField": "reservedQuantity",
+                    "onHandField": "quantity",
+                    "guard": "OCA\\Shillinq\\Lifecycle\\StockReservationGuard::commitReservation"
+                  }
+                },
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "materialise-gl-transaction",
+                  "condition": "@self.movementType IN ('receipt', 'issue', 'manufacture')",
+                  "description": "REQ-SM-006: receipt debits Inventory Asset / credits Goods-in-Transit; issue debits COGS / credits Inventory Asset; manufacture debits Finished Goods / credits Raw Materials. transfer and repack are lateral (no GL). Amount per line = quantity * unitCost, currency = administration base. GL lines carry subLedgerType='inventory', subLedgerRef=<StockMove.id>.",
+                  "actionParameters": {
+                    "register": "shillinq",
+                    "targetSchema": "GLTransaction",
+                    "linesSchema": "GLLine",
+                    "keepBalanced": true,
+                    "backReferenceField": "glTransactionId",
+                    "idempotencyKey": "movementNumber",
+                    "subLedgerType": "inventory",
+                    "subLedgerRefField": "id",
+                    "accountRouting": {
+                      "receipt": {
+                        "debit": "@admin.inventoryAssetAccount|1300",
+                        "credit": "@admin.goodsInTransitAccount|2000"
+                      },
+                      "issue": {
+                        "debit": "@admin.cogsAccount|5100",
+                        "credit": "@admin.inventoryAssetAccount|1300"
+                      },
+                      "manufacture": {
+                        "debit": "@admin.finishedGoodsAccount|1310",
+                        "credit": "@admin.rawMaterialsAccount|1300"
+                      }
+                    },
+                    "metadataFields": [
+                      "movementNumber",
+                      "itemId",
+                      "sourceLocationId",
+                      "destinationLocationId",
+                      "movementType",
+                      "movementReason"
+                    ]
+                  }
+                }
+              ]
+            },
+            "cancel": {
+              "from": [
+                "draft",
+                "posted"
+              ],
+              "to": "cancelled",
+              "label": "Cancel move",
+              "labelNl": "Annuleren",
+              "description": "From draft: release reservation, mark cancelled, no offset row. From posted: emit an offsetting StockMove (StockMoveOffsetCreator) that reverses the on-hand effect with swapped source/destination, then reverse the original GLTransaction per REQ-SM-003 + REQ-SM-006. The original posted row is NOT patched — immutability preserved.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\StockMoveImmutabilityGuard::canCancel",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "set-field",
+                  "description": "Stamp cancelledAt and force movementReason='cancellation' on the cancellation transition per REQ-SM-007.",
+                  "actionParameters": {
+                    "set": {
+                      "cancelledAt": "@now"
+                    }
+                  }
+                },
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "release-stock-reservation",
+                  "condition": "@previous.lifecycleState == 'draft'",
+                  "description": "Draft-cancel path (REQ-SM-004): only the reservation needs releasing; no on-hand change since posting never happened.",
+                  "actionParameters": {
+                    "register": "shillinq",
+                    "reservationSchema": "InventoryStock",
+                    "sourceLocationField": "sourceLocationId",
+                    "itemField": "itemId",
+                    "quantityField": "quantity",
+                    "adminScopeField": "administrationId",
+                    "casVersionField": "version",
+                    "reservedField": "reservedQuantity",
+                    "guard": "OCA\\Shillinq\\Lifecycle\\StockReservationGuard::releaseReservation"
+                  }
+                },
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "create-offset-move",
+                  "condition": "@previous.lifecycleState == 'posted'",
+                  "description": "Posted-cancel path (REQ-SM-003): emit a balanced offsetting StockMove with sourceLocationId / destinationLocationId swapped, quantity preserved, movementReason='cancellation', notes='Offset for <original.movementNumber>', offsetOfMoveId=<original.id>. The original posted row stays immutable; the offset is itself posted (locked) so the InventoryStock.quantity nets to zero and the GLTransaction is reversed by the same materialise-gl-transaction rule applied to the offset.",
+                  "actionParameters": {
+                    "register": "shillinq",
+                    "targetSchema": "StockMove",
+                    "swapFields": {
+                      "sourceLocationId": "destinationLocationId",
+                      "destinationLocationId": "sourceLocationId"
+                    },
+                    "setFields": {
+                      "movementReason": "cancellation",
+                      "offsetOfMoveId": "@original.id",
+                      "notes": "Offset for @original.movementNumber",
+                      "lifecycleState": "posted",
+                      "locked": true,
+                      "postedAt": "@now"
+                    },
+                    "copyFields": [
+                      "itemId",
+                      "quantity",
+                      "unitCost",
+                      "movementType",
+                      "administrationId"
+                    ],
+                    "sequenceField": "movementNumber",
+                    "sequenceSuffix": "-CANCEL",
+                    "guard": "OCA\\Shillinq\\Lifecycle\\StockMoveOffsetCreator::emitOffset"
+                  }
+                }
+              ]
+            }
+          },
+          "validations": {
+            "onCreate": {
+              "receiptHasNoSource": {
+                "condition": "movementType == 'receipt' AND sourceLocationId IS NOT NULL",
+                "message": "Receipt movement requires null sourceLocationId.",
+                "messageNl": "Ontvangst-boeking vereist een leeg sourceLocationId."
+              },
+              "issueHasNoDestination": {
+                "condition": "movementType == 'issue' AND destinationLocationId IS NOT NULL",
+                "message": "Issue movement requires null destinationLocationId.",
+                "messageNl": "Uitgifte-boeking vereist een leeg destinationLocationId."
+              },
+              "transferHasBothLocations": {
+                "condition": "movementType IN ('transfer', 'manufacture', 'repack') AND (sourceLocationId IS NULL OR destinationLocationId IS NULL)",
+                "message": "Transfer / manufacture / repack movements require both sourceLocationId and destinationLocationId.",
+                "messageNl": "Overdracht / productie / herverpakking vereisen zowel een bron- als bestemmingslocatie."
+              },
+              "sourceDifferentFromDestination": {
+                "condition": "sourceLocationId IS NOT NULL AND destinationLocationId IS NOT NULL AND sourceLocationId == destinationLocationId",
+                "message": "Source and destination locations must differ.",
+                "messageNl": "Bron- en bestemmingslocatie moeten verschillen."
+              }
+            },
+            "onUpdate": {
+              "lockedRejectsEdits": {
+                "condition": "@current.locked == true AND (CHANGED(quantity) OR CHANGED(unitCost) OR CHANGED(sourceLocationId) OR CHANGED(destinationLocationId) OR CHANGED(movementType) OR CHANGED(itemId))",
+                "message": "Move is locked; cancellation creates offset.",
+                "messageNl": "Boeking is vergrendeld; annuleren maakt een tegenboeking aan.",
+                "guard": "OCA\\Shillinq\\Lifecycle\\StockMoveImmutabilityGuard::rejectLockedEdit"
+              }
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "netQuantityForLocation": {
+            "description": "Stock-ledger reconciliation per REQ-SM-005: InventoryStock.quantity = initialStock + SUM(destination posted moves) - SUM(source posted moves). Excludes cancelled rows.",
+            "source": "StockMove",
+            "filter": {
+              "lifecycleState": "posted"
+            },
+            "operation": "computed",
+            "expression": "SUM(quantity WHERE destinationLocationId = @location AND itemId = @item) - SUM(quantity WHERE sourceLocationId = @location AND itemId = @item)",
+            "description_long": "Powers the Stock Ledger drill-down view and the InventoryStock reconciliation check."
+          },
+          "reservedQuantityForLocation": {
+            "description": "Reserved-stock visibility per REQ-SM-009: SUM(draft moves whose source is this location for this item). Powers the Reserved Stock index and the Available = quantity - reservedQty breakdown on the InventoryStock detail.",
+            "source": "StockMove",
+            "filter": {
+              "lifecycleState": "draft"
+            },
+            "metric": "sum",
+            "field": "quantity",
+            "groupBy": [
+              "sourceLocationId",
+              "itemId"
+            ]
+          },
+          "movesByType": {
+            "description": "Stock Movements index filter aggregation per REQ-SM-008: count of moves per movementType for the dashboard tile.",
+            "source": "StockMove",
+            "filter": {},
+            "metric": "count",
+            "field": "id",
+            "groupBy": ["movementType"]
+          }
+        },
+        "x-openregister-indexes": [
+          {
+            "fields": [
+              "administrationId",
+              "sourceLocationId",
+              "itemId",
+              "lifecycleState"
+            ],
+            "description": "Reservation + stock-ledger SUM index per REQ-SM-005."
+          },
+          {
+            "fields": [
+              "administrationId",
+              "destinationLocationId",
+              "itemId",
+              "lifecycleState"
+            ],
+            "description": "Destination-side stock-ledger SUM index."
+          },
+          {
+            "fields": [
+              "administrationId",
+              "movementNumber"
+            ],
+            "unique": true,
+            "description": "Sequential movement number unique per administration."
+          }
+        ],
+        "x-openregister-rbac": {
+          "roles": {
+            "warehouse_manager": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "inventory": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "adminScope": {
+            "field": "administrationId",
+            "enforce": true
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "StockMove",
+        "slug": "stockmove-sample-receipt"
+      },
+      "movementNumber": "SM-2026-0001",
+      "itemId": "LAPTOP-001",
+      "quantity": 100.0,
+      "unitCost": 12.5,
+      "movementType": "receipt",
+      "sourceLocationId": null,
+      "destinationLocationId": "loc-w01-z01-b100",
+      "referenceDocumentUri": "shillinq://purchase-order/po-2026-0042",
+      "movementReason": "normal",
+      "notes": "Initial supplier delivery for catalog seed.",
+      "draftedAt": "2026-06-07T09:15:00Z",
+      "postedAt": "2026-06-07T09:18:00Z",
+      "cancelledAt": null,
+      "administrationId": "adm-consultancy-nl",
+      "locked": true,
+      "glTransactionId": null,
+      "offsetOfMoveId": null,
+      "lifecycleState": "posted"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "StockMove",
+        "slug": "stockmove-sample-transfer"
+      },
+      "movementNumber": "SM-2026-0002",
+      "itemId": "LAPTOP-001",
+      "quantity": 20.0,
+      "unitCost": 12.5,
+      "movementType": "transfer",
+      "sourceLocationId": "loc-w01-z01-b100",
+      "destinationLocationId": "loc-w02-z01-b200",
+      "referenceDocumentUri": null,
+      "movementReason": "inter-warehouse",
+      "notes": "Rebalance to W-02.",
+      "draftedAt": "2026-06-07T10:00:00Z",
+      "postedAt": null,
+      "cancelledAt": null,
+      "administrationId": "adm-consultancy-nl",
+      "locked": false,
+      "glTransactionId": null,
+      "offsetOfMoveId": null,
+      "lifecycleState": "draft"
+    }
+  ]
+}

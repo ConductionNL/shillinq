@@ -1,0 +1,323 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookings-sms-reminder-channel",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "kind: config — declarative SMS reminder channel for bookings. Adds one BookingSmsReminderChannel schema (provider config via openconnector, message template with {{variables}}, active → inactive → archived lifecycle per ADR-031, delivery scheduling, retry config, dispatch via OR notification engine per ADR-022) plus two seed channels (MessageBird active, Twilio inactive). No PHP SMS service class — dispatch and rendering are declarative (x-openregister-calculations / x-openregister-notifications). Provider credentials live in the openconnector connector referenced by providerConfig.connectorId, never in this register."
+  },
+  "components": {
+    "schemas": {
+      "BookingSmsReminderChannel": {
+        "slug": "BookingSmsReminderChannel",
+        "icon": "MessageTextOutline",
+        "version": "0.1.0",
+        "title": "SMS-herinneringskanaal",
+        "description": "Configurable SMS reminder channel for booking reminders (REQ-SMS-001). Selects an SMS provider (messagebird, twilio, or a custom openconnector connector), carries a ≤160-char message template with {{variables}}, an active → inactive → archived lifecycle (REQ-SMS-006/007), delivery timing (sendMinutesBefore) and retry config. SMS dispatch is consumed from OpenRegister's notification engine (ADR-022); message rendering and phone/length validation are declarative calculations (ADR-031). Provider API credentials are stored in the referenced openconnector connector (REQ-SMS-013), never in this register.",
+        "x-schema-org": "schema:Service",
+        "type": "object",
+        "required": [
+          "name",
+          "status",
+          "provider",
+          "providerConfig",
+          "messageTemplate",
+          "sendMinutesBefore"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "description": "Human-readable channel name shown in the admin list (REQ-SMS-001).",
+            "example": "SMS Reminders via MessageBird (NL)",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "archived"
+            ],
+            "default": "active",
+            "description": "Lifecycle state (REQ-SMS-006/007). active = SMS enabled and dispatched; inactive = paused; archived = retired for audit, cannot be reactivated.",
+            "title": "Status"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "messagebird",
+              "twilio",
+              "custom"
+            ],
+            "description": "SMS provider (REQ-SMS-002). messagebird / twilio map to built-in openconnector connectors; custom uses an operator-supplied connector.",
+            "example": "messagebird",
+            "title": "Provider"
+          },
+          "providerConfig": {
+            "type": "object",
+            "description": "Provider configuration (REQ-SMS-013). Holds the openconnector connector id; API credentials are stored encrypted inside that connector, not here. Sensitive values are never returned to or logged by Shillinq.",
+            "properties": {
+              "connectorId": {
+                "type": "string",
+                "description": "Slug/id of the openconnector connector that holds the provider API credentials (encrypted, centralized).",
+                "example": "openconnector-messagebird-nl",
+                "title": "Connector ID"
+              },
+              "accountReference": {
+                "type": "string",
+                "nullable": true,
+                "description": "Non-secret provider account reference (e.g. originator pool id). Never an API key.",
+                "example": "acc-9f2",
+                "title": "Account Reference"
+              }
+            },
+            "required": [
+              "connectorId"
+            ],
+            "x-openregister-sensitive": true,
+            "title": "Provider Config"
+          },
+          "messageTemplate": {
+            "type": "string",
+            "maxLength": 160,
+            "description": "SMS message text with {{variables}} (REQ-SMS-003/009). Constrained to ≤160 characters (single SMS). Allowed variables: customerName, bookingRef, bookingDate, bookingTime, bookingLocation, organizationName, bookingUrl.",
+            "example": "Hallo {{customerName}}, herinnering: uw boeking op {{bookingDate}} om {{bookingTime}}. Ref: {{bookingRef}}",
+            "title": "Message Template"
+          },
+          "sendMinutesBefore": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 1440,
+            "description": "Minutes before booking start to dispatch the reminder (REQ-SMS-005). 1440 = 24h. OR's notification engine schedules dispatch at bookingStart - sendMinutesBefore (±15 min tolerance).",
+            "example": 1440,
+            "title": "Send Minutes Before"
+          },
+          "fallbackPhoneNumber": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^(\\+31|06)[0-9]{8,9}$",
+            "description": "Default E.164/NL phone number used when the booking contact has none (REQ-SMS-004/012). Validated against E.164 + NL rules (+31… or 06…).",
+            "example": "+31612345678",
+            "title": "Fallback Phone Number"
+          },
+          "senderId": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 11,
+            "description": "Sender ID/name shown to the recipient (REQ-SMS-011). Provider-dependent; MessageBird and Twilio cap alphanumeric sender IDs at 11 characters.",
+            "example": "Bookings",
+            "title": "Sender ID"
+          },
+          "phoneNumberFormat": {
+            "type": "string",
+            "enum": [
+              "e164",
+              "nl_domestic"
+            ],
+            "default": "e164",
+            "description": "Locale phone format applied when normalizing recipient numbers (REQ-SMS-004).",
+            "title": "Phone Number Format"
+          },
+          "retryCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10,
+            "default": 3,
+            "description": "Number of delivery retry attempts on transient failure (REQ-SMS-008). Executed by OR's notification engine.",
+            "title": "Retry Count"
+          },
+          "retryIntervalSeconds": {
+            "type": "integer",
+            "minimum": 30,
+            "default": 300,
+            "description": "Seconds between retries (REQ-SMS-008).",
+            "title": "Retry Interval Seconds"
+          },
+          "logSmsCost": {
+            "type": "boolean",
+            "default": true,
+            "description": "When true, each dispatch logs timestamp, provider, masked phone, message length and cost (if the provider returns it) for future billing (REQ-SMS-019).",
+            "title": "Log SMS Cost"
+          },
+          "respectOptOut": {
+            "type": "boolean",
+            "default": true,
+            "description": "When true (default), a recipient who has opted out of SMS reminders (contact-level smsOptOut flag, resolved at dispatch time) is skipped and no message is sent (REQ-SMS-021). Phone numbers are personal data (GDPR); honouring opt-out is mandatory unless an operator explicitly disables it for transactional-only channels.",
+            "title": "Respect Opt Out"
+          },
+          "activatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the channel was first activated (set on first transition into active).",
+            "title": "Activated At"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Actief",
+              "description": "SMS reminders are enabled and dispatched from this channel."
+            },
+            "inactive": {
+              "label": "Inactief",
+              "description": "SMS reminders are paused; no dispatch occurs. Can be re-activated."
+            },
+            "archived": {
+              "label": "Gearchiveerd",
+              "description": "Channel retired. Removed from the active list; history retained for audit. Cannot be reactivated (REQ-SMS-007)."
+            }
+          },
+          "transitions": {
+            "deactivate": {
+              "from": "active",
+              "to": "inactive",
+              "label": "Kanaal uitschakelen",
+              "description": "Pause dispatch for maintenance (REQ-SMS-006)."
+            },
+            "activate": {
+              "from": "inactive",
+              "to": "active",
+              "label": "Kanaal activeren",
+              "description": "Resume dispatch (REQ-SMS-006). Stamps activatedAt on first activation."
+            },
+            "archiveActive": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archiveren",
+              "description": "Retire an active channel (REQ-SMS-007). Terminal."
+            },
+            "archiveInactive": {
+              "from": "inactive",
+              "to": "archived",
+              "label": "Archiveren",
+              "description": "Retire an inactive channel (REQ-SMS-007). Terminal."
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "renderedPreview": {
+            "expression": "renderTemplate(@self.messageTemplate, {customerName: 'Jan Jansen', bookingRef: 'BK001', bookingDate: '21 mei', bookingTime: '14:30', bookingLocation: 'Kantoor Amsterdam', organizationName: 'Example BV', bookingUrl: 'https://example.nl/b/ABC'})",
+            "type": "string",
+            "description": "Preview of the SMS rendered with sample variable values (REQ-SMS-009). {{variable}} placeholders are substituted; undefined variables render as empty string; bookingLocation truncated >30 chars and organizationName >20 chars with an ellipsis (REQ-SMS-010)."
+          },
+          "renderedPreviewLength": {
+            "expression": "strlen(@self.renderedPreview)",
+            "type": "integer",
+            "description": "Character count of the rendered preview (REQ-SMS-003). Used by the admin UI to warn when a real send could exceed 160 characters."
+          },
+          "fallbackPhoneValid": {
+            "expression": "matches(@self.fallbackPhoneNumber, '^(\\\\+31|06)[0-9]{8,9}$')",
+            "type": "boolean",
+            "description": "Whether the fallback phone number is a valid E.164/NL number (REQ-SMS-004). Empty/null is treated as valid (number is optional)."
+          }
+        },
+        "x-openregister-notifications": {
+          "onBookingReminderDue": {
+            "trigger": "booking.reminder-due",
+            "channels": [
+              "sms"
+            ],
+            "connector": "{{providerConfig.connectorId}}",
+            "template": "{{messageTemplate}}",
+            "sender": "{{senderId}}",
+            "appliesWhen": {
+              "field": "status",
+              "in": [
+                "active"
+              ]
+            },
+            "skipWhen": {
+              "recipientField": "smsOptOut",
+              "equals": true,
+              "onlyIf": "{{respectOptOut}}"
+            },
+            "retry": {
+              "count": "{{retryCount}}",
+              "intervalSeconds": "{{retryIntervalSeconds}}"
+            },
+            "description": "Declarative SMS dispatch consumed from OR's notification engine (ADR-022, REQ-SMS-005/008/018/021). When a booking.reminder-due event fires, active channels render their template with booking variables and dispatch via the referenced openconnector connector — unless the recipient has opted out (skipWhen, respected when respectOptOut is true). Retries on transient provider error per retryCount/retryIntervalSeconds; failures are logged with a masked phone number. The pure-logic gating/rendering/normalization is implemented in Shillinq's SmsReminderDispatcher helper (provider-adapter interface), keeping the orchestration unit-tested while live dispatch stays in OR's engine."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "sms-channel-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "booking-administrator": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "permissionMap": {
+            "booking:sms-channel:list": "read",
+            "booking:sms-channel:create": "create",
+            "booking:sms-channel:edit": "update",
+            "booking:sms-channel:activate": "update",
+            "booking:sms-channel:delete": "delete"
+          },
+          "description": "Channel management is restricted to the sms-channel-administrator role (full CRUD) and booking-administrator (read/update); auditors read-only (REQ-SMS-020). Permission slugs map onto OR CRUD permissions. Providers credentials are never readable through this schema (they live in openconnector)."
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingSmsReminderChannel",
+        "slug": "sms-messagebird-nl"
+      },
+      "name": "SMS Reminders via MessageBird (NL)",
+      "status": "active",
+      "provider": "messagebird",
+      "providerConfig": {
+        "connectorId": "openconnector-messagebird-nl"
+      },
+      "messageTemplate": "Hallo {{customerName}}, herinnering: uw boeking op {{bookingDate}} om {{bookingTime}}. Ref: {{bookingRef}}",
+      "sendMinutesBefore": 1440,
+      "fallbackPhoneNumber": "+31612345678",
+      "senderId": "Bookings",
+      "phoneNumberFormat": "e164",
+      "retryCount": 3,
+      "retryIntervalSeconds": 300,
+      "logSmsCost": true
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingSmsReminderChannel",
+        "slug": "sms-twilio-nl"
+      },
+      "name": "SMS Reminders via Twilio (NL)",
+      "status": "inactive",
+      "provider": "twilio",
+      "providerConfig": {
+        "connectorId": "openconnector-twilio-nl"
+      },
+      "messageTemplate": "Boeking {{bookingRef}} over 2 uur om {{bookingTime}} in {{bookingLocation}}. Info: {{bookingUrl}}",
+      "sendMinutesBefore": 120,
+      "fallbackPhoneNumber": "+31698765432",
+      "senderId": "BookingApp",
+      "phoneNumberFormat": "e164",
+      "retryCount": 2,
+      "retryIntervalSeconds": 600,
+      "logSmsCost": true
+    }
+  ]
+}

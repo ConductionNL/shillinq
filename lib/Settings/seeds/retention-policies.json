@@ -1,0 +1,31 @@
+{
+    "policies": [
+        {
+            "slug": "default-financial-5yr",
+            "name": "Financial Records — Standard (5 years)",
+            "documentType": "financial-record",
+            "retentionYears": 5,
+            "legalHoldAllowed": true,
+            "exemptionCategories": ["court-order", "regulatory-exception"],
+            "description": "Per Archiefwet 1995 & VAT directive: invoices, receipts, GL entries retained 5 years."
+        },
+        {
+            "slug": "tax-documents-7yr",
+            "name": "Tax Documents (7 years)",
+            "documentType": "tax-record",
+            "retentionYears": 7,
+            "legalHoldAllowed": true,
+            "exemptionCategories": ["court-order", "regulatory-exception", "audit-hold"],
+            "description": "Per Dutch Tax Authority rules (administratie- en bewaarplicht): tax returns and audit workpapers retained 7 years."
+        },
+        {
+            "slug": "general-admin-3yr",
+            "name": "General Administration (3 years)",
+            "documentType": "general-record",
+            "retentionYears": 3,
+            "legalHoldAllowed": false,
+            "exemptionCategories": [],
+            "description": "General office records with no specific legal retention requirement."
+        }
+    ]
+}

@@ -29,121 +29,116 @@ use PHPUnit\Framework\TestCase;
 /**
  * Tests for SettingsController.
  */
-class SettingsControllerTest extends TestCase
-{
+class SettingsControllerTest extends TestCase {
 
-    /**
-     * The controller under test.
-     *
-     * @var SettingsController
-     */
-    private SettingsController $controller;
+	/**
+	 * The controller under test.
+	 *
+	 * @var SettingsController
+	 */
+	private SettingsController $controller;
 
-    /**
-     * Mock IRequest.
-     *
-     * @var IRequest&MockObject
-     */
-    private IRequest&MockObject $request;
+	/**
+	 * Mock IRequest.
+	 *
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /**
-     * Mock SettingsService.
-     *
-     * @var SettingsService&MockObject
-     */
-    private SettingsService&MockObject $settingsService;
+	/**
+	 * Mock SettingsService.
+	 *
+	 * @var SettingsService&MockObject
+	 */
+	private SettingsService&MockObject $settingsService;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $this->request         = $this->createMock(IRequest::class);
-        $this->settingsService = $this->createMock(SettingsService::class);
+		$this->request = $this->createMock(IRequest::class);
+		$this->settingsService = $this->createMock(SettingsService::class);
 
-        $this->controller = new SettingsController(
-            request: $this->request,
-            settingsService: $this->settingsService,
-        );
+		$this->controller = new SettingsController(
+			request: $this->request,
+			settingsService: $this->settingsService,
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * Test that index() returns a JSONResponse containing the settings from the service.
-     *
-     * @return void
-     */
-    public function testIndexReturnsJsonResponseWithSettings(): void
-    {
-        $settings = [
-            'register'      => 'some-uuid',
-            'openregisters' => true,
-            'isAdmin'       => false,
-        ];
+	/**
+	 * Test that index() returns a JSONResponse containing the settings from the service.
+	 *
+	 * @return void
+	 */
+	public function testIndexReturnsJsonResponseWithSettings(): void {
+		$settings = [
+			'register' => 'some-uuid',
+			'openregisters' => true,
+			'isAdmin' => false,
+		];
 
-        $this->settingsService->expects($this->once())
-            ->method('getSettings')
-            ->willReturn($settings);
+		$this->settingsService->expects($this->once())
+			->method('getSettings')
+			->willReturn($settings);
 
-        $result = $this->controller->index();
+		$result = $this->controller->index();
 
-        self::assertInstanceOf(JSONResponse::class, $result);
-        self::assertSame($settings, $result->getData());
+		self::assertInstanceOf(JSONResponse::class, $result);
+		self::assertSame($settings, $result->getData());
 
-    }//end testIndexReturnsJsonResponseWithSettings()
+	}//end testIndexReturnsJsonResponseWithSettings()
 
-    /**
-     * Test that create() calls updateSettings with request params and returns success.
-     *
-     * @return void
-     */
-    public function testCreateCallsUpdateSettingsAndReturnsSuccess(): void
-    {
-        $params  = ['register' => 'new-uuid'];
-        $updated = ['register' => 'new-uuid', 'openregisters' => true, 'isAdmin' => false];
+	/**
+	 * Test that create() calls updateSettings with request params and returns success.
+	 *
+	 * @return void
+	 */
+	public function testCreateCallsUpdateSettingsAndReturnsSuccess(): void {
+		$params = ['register' => 'new-uuid'];
+		$updated = ['register' => 'new-uuid', 'openregisters' => true, 'isAdmin' => false];
 
-        $this->request->expects($this->once())
-            ->method('getParams')
-            ->willReturn($params);
+		$this->request->expects($this->once())
+			->method('getParams')
+			->willReturn($params);
 
-        $this->settingsService->expects($this->once())
-            ->method('updateSettings')
-            ->with($params)
-            ->willReturn($updated);
+		$this->settingsService->expects($this->once())
+			->method('updateSettings')
+			->with($params)
+			->willReturn($updated);
 
-        $result = $this->controller->create();
+		$result = $this->controller->create();
 
-        self::assertInstanceOf(JSONResponse::class, $result);
-        self::assertTrue($result->getData()['success']);
-        self::assertArrayHasKey('config', $result->getData());
+		self::assertInstanceOf(JSONResponse::class, $result);
+		self::assertTrue($result->getData()['success']);
+		self::assertArrayHasKey('config', $result->getData());
 
-    }//end testCreateCallsUpdateSettingsAndReturnsSuccess()
+	}//end testCreateCallsUpdateSettingsAndReturnsSuccess()
 
-    /**
-     * Test that load() returns the result of loadConfigurationForced.
-     *
-     * @return void
-     */
-    public function testLoadReturnsConfigurationResult(): void
-    {
-        $loadResult = [
-            'success' => true,
-            'message' => 'Configuration imported successfully.',
-            'version' => '0.1.0',
-        ];
+	/**
+	 * Test that load() returns the result of loadConfigurationForced.
+	 *
+	 * @return void
+	 */
+	public function testLoadReturnsConfigurationResult(): void {
+		$loadResult = [
+			'success' => true,
+			'message' => 'Configuration imported successfully.',
+			'version' => '0.1.0',
+		];
 
-        $this->settingsService->expects($this->once())
-            ->method('loadConfigurationForced')
-            ->willReturn($loadResult);
+		$this->settingsService->expects($this->once())
+			->method('loadConfigurationForced')
+			->willReturn($loadResult);
 
-        $result = $this->controller->load();
+		$result = $this->controller->load();
 
-        self::assertInstanceOf(JSONResponse::class, $result);
-        self::assertTrue($result->getData()['success']);
+		self::assertInstanceOf(JSONResponse::class, $result);
+		self::assertTrue($result->getData()['success']);
 
-    }//end testLoadReturnsConfigurationResult()
+	}//end testLoadReturnsConfigurationResult()
 }//end class

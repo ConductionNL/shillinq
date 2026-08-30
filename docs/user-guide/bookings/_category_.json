@@ -1,0 +1,11 @@
+{
+  "label": "Bookings",
+  "position": 30,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "generated-index",
+    "title": "Bookings",
+    "description": "Per-resource calendar and booking management for Shillinq. Covers calendar setup, booking creation, and conflict resolution."
+  }
+}

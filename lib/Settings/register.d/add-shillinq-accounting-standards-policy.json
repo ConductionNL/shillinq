@@ -1,0 +1,105 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "add-accounting-standards-policy",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Adds the StandardsPolicy schema (REQ-ASP-001): a per-administration, ordered declaration of which accounting/reporting frameworks the administration follows and in which order of precedence. A single StandardsPolicy object holds a frameworks[] list, each entry carrying a framework key (fixed enum mirroring docs/standards/), an enabled flag and an integer precedence (lower = higher priority). Business logic consults the highest-precedence enabled framework via OCA\\Shillinq\\Service\\StandardsPolicyService.resolve(topic) when frameworks conflict (revenue, leases, inventory, development costs — see docs/standards/comparisons.md). The resolver ships unit-tested but is not yet applied to real posting/valuation paths (out of scope per proposal). No lifecycle/orchestrator is needed: this is configuration data edited via the StandardsPolicyEditor settings page and read by the resolver."
+  },
+  "components": {
+    "schemas": {
+      "StandardsPolicy": {
+        "slug": "StandardsPolicy",
+        "title": "Standards policy",
+        "description": "Per-administration accounting-standards precedence policy (REQ-ASP-001). One object per administration declares which frameworks apply and their order of precedence. Consumed by StandardsPolicyService.resolve(topic).",
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human label for the policy.",
+            "default": "Accounting standards policy",
+            "example": "Accounting standards policy",
+            "title": "Name"
+          },
+          "administrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional administration scope (REQ-ASP-001). Null = the default policy for the register. A future enhancement may key resolution by the active administration.",
+            "example": "adm-001",
+            "title": "Administration ID"
+          },
+          "frameworks": {
+            "type": "array",
+            "description": "Ordered list of frameworks (REQ-ASP-002). Each entry pins a framework key to an enabled flag and an integer precedence; the editor keeps precedence consistent with display order (lower precedence = higher priority).",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "enabled",
+                "precedence"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "Framework identifier — fixed enum mirroring the docs/standards/ pages. Covers bases of accounting (Category A): international (IFRS IASB / EU-endorsed), national GAAPs (Dutch, German, French, Italian, Spanish), tax bases (Dutch, US tax/cash/modified-cash, FRF for SMEs), public sector (IPSAS, Dutch BBV, US GASB/FASAB) and sustainability (ESRS, IFRS S1/S2). Digital-compliance obligations (e-invoicing, SAF-T, VAT) are NOT here — they are additive regulatory facts modelled by the versioned static OCA\\Shillinq\\Standards\\ComplianceCatalogue (code, not OpenRegister).",
+                  "enum": [
+                    "ifrs",
+                    "ifrs-eu",
+                    "dutch-gaap",
+                    "de-hgb",
+                    "fr-pcg",
+                    "it-oic",
+                    "es-pgc",
+                    "dutch-tax",
+                    "us-gaap",
+                    "us-tax-basis",
+                    "us-cash-basis",
+                    "us-modified-cash",
+                    "us-frf-smes",
+                    "ipsas",
+                    "bbv",
+                    "us-gasb",
+                    "us-fasab",
+                    "esrs",
+                    "ifrs-sustainability"
+                  ],
+                  "example": "ifrs",
+                  "title": "Key"
+                },
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Whether this framework applies to the administration. Disabled frameworks are ignored by the resolver.",
+                  "default": false,
+                  "example": true,
+                  "title": "Enabled"
+                },
+                "precedence": {
+                  "type": "integer",
+                  "description": "Order of precedence — lower wins. The highest-priority enabled framework (lowest precedence) is returned by resolve().",
+                  "minimum": 0,
+                  "example": 1,
+                  "title": "Precedence"
+                }
+              }
+            },
+            "title": "Frameworks"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional free-text rationale for the chosen ordering (e.g. statutory basis), surfaced for audit.",
+            "example": "EU-listed group: IFRS consolidated accounts take precedence over Dutch GAAP.",
+            "title": "Notes"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Standards policy is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,135 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed",
+		"description": "Integration-test seed fixture for slice-01 of the bookkeeping-waterschappen-bbv-variant chain. Mirrors the demo seed in lib/Settings/seeds/bbv-waterschappen-programmes-2026-demo.json (5 BBVProgramme records + 5 BudgetBBVMapping records for fiscal year 2026) plus the minimal GLTransaction + GLLine fixture pair the later chain members (02 aggregation, 08 compliance service, 11 testing) consume to assert the rollup result. The single administrationId 'adm-waterschap-1' scopes every record, matching the seed loader's natural-key dedupe behaviour. Money fields are integer euro cents per ADR-022.",
+		"source": "openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/design.md (seed data section)"
+	},
+	"administrationId": "adm-waterschap-1",
+	"fiscalYear": 2026,
+	"BBVProgramme": [
+		{
+			"programmeCode": "1.1.1",
+			"programmeName": "Core Administration",
+			"description": "Core administrative programme covering general administration, board support and shared services.",
+			"fiscalYear": 2026,
+			"status": "active"
+		},
+		{
+			"programmeCode": "1.2.1",
+			"programmeName": "HR & Payroll",
+			"description": "Human resources, payroll, training and personnel administration across the waterboard.",
+			"fiscalYear": 2026,
+			"status": "active"
+		},
+		{
+			"programmeCode": "2.3.2",
+			"programmeName": "Water Quality Monitoring",
+			"description": "Surface- and ground-water quality monitoring, sampling and laboratory analysis aligned with the Kaderrichtlijn Water programme.",
+			"fiscalYear": 2026,
+			"status": "active"
+		},
+		{
+			"programmeCode": "2.4.1",
+			"programmeName": "Infrastructure Maintenance",
+			"description": "Asset maintenance and renewal across pumping stations, weirs, sluices and other water-system infrastructure.",
+			"fiscalYear": 2026,
+			"status": "active"
+		},
+		{
+			"programmeCode": "3.1.0",
+			"programmeName": "Strategic Planning",
+			"description": "Long-range strategic planning, climate-adaptation roadmaps and investment programming.",
+			"fiscalYear": 2026,
+			"status": "active"
+		}
+	],
+	"BudgetBBVMapping": [
+		{
+			"glAccountNumber": "4100",
+			"programmeCode": "1.1.1",
+			"allocationPercentage": 50,
+			"effectiveFrom": "2026-01-01",
+			"effectiveTo": "2026-12-31"
+		},
+		{
+			"glAccountNumber": "4100",
+			"programmeCode": "1.2.1",
+			"allocationPercentage": 30,
+			"effectiveFrom": "2026-01-01",
+			"effectiveTo": "2026-12-31"
+		},
+		{
+			"glAccountNumber": "4100",
+			"programmeCode": "2.4.1",
+			"allocationPercentage": 20,
+			"effectiveFrom": "2026-01-01",
+			"effectiveTo": "2026-12-31"
+		},
+		{
+			"glAccountNumber": "5000",
+			"programmeCode": "2.3.2",
+			"allocationPercentage": 25,
+			"effectiveFrom": "2026-01-01",
+			"effectiveTo": "2026-12-31"
+		},
+		{
+			"glAccountNumber": "5000",
+			"programmeCode": "2.4.1",
+			"allocationPercentage": 75,
+			"effectiveFrom": "2026-01-01",
+			"effectiveTo": "2026-12-31"
+		}
+	],
+	"GLTransaction": [
+		{
+			"transactionNumber": "GL-2026-W01-0001",
+			"transactionDate": "2026-03-31",
+			"description": "March 2026 personnel salaries — waterboard Rijn & IJssel",
+			"sourceReference": "PAYROLL-2026-03",
+			"state": "posted"
+		},
+		{
+			"transactionNumber": "GL-2026-W01-0002",
+			"transactionDate": "2026-04-15",
+			"description": "Q1 2026 operations cost — water quality monitoring + infrastructure maintenance",
+			"sourceReference": "OPS-2026-Q1",
+			"state": "posted"
+		}
+	],
+	"GLLine": [
+		{
+			"transactionNumber": "GL-2026-W01-0001",
+			"accountNumber": "4100",
+			"side": "debit",
+			"amount": 12000000,
+			"lineNumber": 1,
+			"description": "Personnel salaries — gross"
+		},
+		{
+			"transactionNumber": "GL-2026-W01-0001",
+			"accountNumber": "1000",
+			"side": "credit",
+			"amount": 12000000,
+			"lineNumber": 2,
+			"description": "Bank — salary payment"
+		},
+		{
+			"transactionNumber": "GL-2026-W01-0002",
+			"accountNumber": "5000",
+			"side": "debit",
+			"amount": 4000000,
+			"lineNumber": 1,
+			"description": "Operations costs — Q1 2026"
+		},
+		{
+			"transactionNumber": "GL-2026-W01-0002",
+			"accountNumber": "1000",
+			"side": "credit",
+			"amount": 4000000,
+			"lineNumber": 2,
+			"description": "Bank — operations payment"
+		}
+	]
+}

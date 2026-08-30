@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "spec_slug": "bookings-pipelinq-customer-bridge-04-klantbeeld-read",
+  "app": "shillinq",
+  "kind": "code",
+  "depends_on": ["bookings-pipelinq-customer-bridge-03-contact-read"],
+  "status": "applied",
+  "tasks_total": 12,
+  "tasks_done": 12,
+  "branch": "feature/customer-bridge-04/bookings-pipelinq-customer-bridge-04-klantbeeld-read"
+}

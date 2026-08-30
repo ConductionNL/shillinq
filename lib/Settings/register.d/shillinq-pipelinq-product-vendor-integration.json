@@ -1,0 +1,33 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "shillinq-product-vendor-to-pipelinq",
+		"adr": "ADR-019 integration registry cross-app contract"
+	},
+	"x-openregister-integrations": {
+		"pipelinq-product-master": {
+			"targetApp": "pipelinq",
+			"registryKey": "shillinq_pipelinq_product_vendor",
+			"description": "shillinq → pipelinq cross-app contract. Resolves productId → product definition (name/SKU/category/pricing/attributes) and contactsUid → pipelinq Supplier commercial profile via the ADR-019 integration registry. When pipelinq is unavailable, shillinq renders local denormalised caches (productId + unitCost) and flags them stale. Stock-keeping and GL posting MUST NOT block on a remote lookup.",
+			"resolvers": {
+				"getProduct": {
+					"description": "Resolve pipelinq productId → Product definition (name, SKU, category, unitPrice, currency, attributes). Returns cached local data when pipelinq is unreachable.",
+					"input": {"productId": "string"},
+					"output": {"id": "string", "sku": "string", "name": "string", "category": "string", "unitPrice": "number", "currency": "string"},
+					"fallback": "localCache"
+				},
+				"resolveSupplier": {
+					"description": "Resolve NC addressbook contactsUid → pipelinq Supplier commercial profile. Returns null when pipelinq is unreachable; shillinq VendorFinancialProfile serves financial fields independently.",
+					"input": {"contactsUid": "string"},
+					"output": {"contactsUid": "string", "catalogItems": "array", "commercialTerms": "object"},
+					"fallback": "null"
+				}
+			},
+			"ingestExport": {
+				"appConfigKey": "shillinq_pvm_export",
+				"description": "pipelinq ingest reads shillinq's export payload from app-config key shillinq_pvm_export (JSON). Written by MigrateProductVendorMasterToPipelinq repair step. Format: {products: [...], productAttributes: [...], vendorMasterData: [...]}."
+			}
+		}
+	}
+}

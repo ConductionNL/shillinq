@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: inventory-cycle-count
 
 **Status:** proposed
@@ -6,7 +10,11 @@
 **Depends on:** `inventory-stock-tracking` (T2 baseline for `InventoryStock`),
 `cost-accounting-allocation` (T2 GL impact via variance posting)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory cycle count in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/schema: cycle count register — not browser-testable
 
@@ -43,6 +51,8 @@ method.
 
 ### REQ-ICC-002: The `InventoryCycleCount` schema SHALL declare a fixed minimum field set
 
+The system SHALL satisfy this requirement: The `InventoryCycleCount` schema SHALL declare a fixed minimum field set.
+
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
 | `countId` | string | Yes | Unique count identifier, auto-generated (CC-YYYY-MM-NNNNN format) |
@@ -78,6 +88,8 @@ Schema.org annotation: `schema:InventoryCount` (custom extension).
   error.
 
 ### REQ-ICC-003: The `InventoryCycleCountLine` schema SHALL declare expected-vs-counted structure
+
+The system SHALL satisfy this requirement: The `InventoryCycleCountLine` schema SHALL declare expected-vs-counted structure.
 
 | Field | Type | Required | Purpose |
 |-------|------|----------|---------|
@@ -118,6 +130,8 @@ Schema.org annotation: `schema:InventoryCount` (custom extension).
 
 ### REQ-ICC-004: Variance threshold flagging SHALL categorize lines requiring investigation
 
+The system SHALL satisfy this requirement: Variance threshold flagging SHALL categorize lines requiring investigation.
+
 Lines with absolute quantity variance exceeding a configurable threshold OR cost variance 
 exceeding an absolute threshold MUST be auto-flagged with `requiresReason = true`, 
 requiring a reason code before the count can transition to `posted` state.
@@ -155,6 +169,8 @@ requiresReason = true IF (|quantityVariance| > expectedQuantity × quantityVaria
 - **THEN** `requiresReason` MUST be true despite quantity % being low.
 
 ### REQ-ICC-005: The `InventoryVarianceReason` register SHALL provide configurable reason-code taxonomy
+
+The system SHALL satisfy this requirement: The `InventoryVarianceReason` register SHALL provide configurable reason-code taxonomy.
 
 `InventoryVarianceReason` is a configurable register (not a hardcoded enum) allowing 
 organizations to define and customize variance categorization. Each organization (per 
@@ -290,6 +306,8 @@ No bespoke indexing or custom SQL queries are required; standard OR query filter
 - **THEN** line items MUST cover all SKUs in all locations; no filtering applied.
 
 ### REQ-ICC-009: Mobile-scanner integration SHALL be documented as a webhook endpoint (integration deferred to T4)
+
+The system SHALL satisfy this requirement: Mobile-scanner integration SHALL be documented as a webhook endpoint (integration deferred to T4).
 
 The spec documents the webhook shape for future mobile-app integration. Mobile-scanner 
 integration is deferred to T4; the primary path is manual count-line entry.

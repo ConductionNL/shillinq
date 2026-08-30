@@ -1,0 +1,34 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "shillinq-documentation",
+		"variant": "test-waterschap",
+		"spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
+		"description": "Sample waterschap with one commercial slibruim-/biogas-service. lifecycleState=paused — copy and activate when modelling a live administration."
+	},
+	"activities": [
+		{
+			"code": "MO-WS-SLIBRUIM-01",
+			"name": "Commerciële slibruimingsdienst",
+			"governingBody": "Waterschap Voorbeeld",
+			"organisationalUnit": "Afdeling Operations & Services",
+			"description": "Verwerking van slib voor derden (industriële en agrarische klanten) buiten waterschapsverordening om.",
+			"marketSegment": "industriële slibverwerking",
+			"concurrenten": ["Indaver Nederland", "AVR Afvalverwerking", "Renewi Nederland"],
+			"afnemers": ["Cosun Beet Company", "Voorbeeld Industries BV"],
+			"startDate": "2021-04-01",
+			"costPriceMethod": "integral-costprice-art-25i",
+			"costCentreCode": "K-SBV-001",
+			"costObjectCode": "D-MO-SBV-001",
+			"isExempted": false,
+			"acmReport": {
+				"submitted": true,
+				"date": "2021-05-14",
+				"reference": "ACM/UIT/422183"
+			},
+			"annualRevenue": 1240000,
+			"state": "paused"
+		}
+	]
+}

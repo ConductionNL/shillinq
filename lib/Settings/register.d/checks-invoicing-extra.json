@@ -1,0 +1,200 @@
+{
+  "x-shillinq-fragment": "checks-invoicing-extra",
+  "components": {
+    "schemas": {
+      "ARInvoice": {
+        "version": "0.6.0",
+        "properties": {
+          "buyerCountryCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Buyer country code (BT-55), ISO 3166-1 alpha-2 (EN 16931 BR-11 / BR-CL-14).",
+            "title": "Buyer Country Code"
+          },
+          "amountDue": {
+            "type": "number",
+            "nullable": true,
+            "description": "Amount due for payment (BT-115) = total with VAT - paid amount + rounding amount (EN 16931 BR-15 / BR-CO-16).",
+            "title": "Amount Due"
+          },
+          "paidAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Paid amount (BT-113), already settled before issue (EN 16931 BR-DEC-16).",
+            "title": "Paid Amount"
+          },
+          "roundingAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Rounding amount (BT-114) applied to the amount due (EN 16931 BR-DEC-17).",
+            "title": "Rounding Amount"
+          },
+          "taxCurrencyCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "VAT accounting currency code (BT-6), ISO 4217 alpha-3 (EN 16931 BR-CL-05 / BR-53).",
+            "title": "Tax Currency Code"
+          },
+          "taxAmountAccountingCurrency": {
+            "type": "number",
+            "nullable": true,
+            "description": "Invoice total VAT amount in accounting currency (BT-111); required when taxCurrencyCode is present (EN 16931 BR-53 / BR-DEC-15).",
+            "title": "Tax Amount Accounting Currency"
+          },
+          "invoicingPeriodStart": {
+            "type": "string",
+            "nullable": true,
+            "description": "Invoicing period start date (BT-73); end date must be >= start (EN 16931 BR-29).",
+            "title": "Invoicing Period Start"
+          },
+          "invoicingPeriodEnd": {
+            "type": "string",
+            "nullable": true,
+            "description": "Invoicing period end date (BT-74) (EN 16931 BR-29).",
+            "title": "Invoicing Period End"
+          },
+          "actualDeliveryDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Actual delivery date (BT-72); supports the intra-community delivery-info rule (EN 16931 BR-IC-11).",
+            "title": "Actual Delivery Date"
+          },
+          "paymentMeansTypeCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment means type code (BT-81), UNCL4461 (EN 16931 BR-49 / BR-CL-16).",
+            "title": "Payment Means Type Code"
+          },
+          "paymentAccountId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment account identifier (BT-84); required for credit-transfer payment means (EN 16931 BR-50 / BR-61).",
+            "title": "Payment Account ID"
+          },
+          "paymentAccountName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment account name (BT-85).",
+            "title": "Payment Account Name"
+          },
+          "sellerElectronicAddress": {
+            "type": "string",
+            "nullable": true,
+            "description": "Seller electronic address (BT-34).",
+            "title": "Seller Electronic Address"
+          },
+          "sellerElectronicAddressScheme": {
+            "type": "string",
+            "nullable": true,
+            "description": "Seller electronic address scheme identifier (BT-34-1); required when the address is present (EN 16931 BR-62).",
+            "title": "Seller Electronic Address Scheme"
+          },
+          "buyerElectronicAddress": {
+            "type": "string",
+            "nullable": true,
+            "description": "Buyer electronic address (BT-49).",
+            "title": "Buyer Electronic Address"
+          },
+          "buyerElectronicAddressScheme": {
+            "type": "string",
+            "nullable": true,
+            "description": "Buyer electronic address scheme identifier (BT-49-1); required when the address is present (EN 16931 BR-63).",
+            "title": "Buyer Electronic Address Scheme"
+          },
+          "sellerTaxRepName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Seller tax representative name (BT-62) (EN 16931 BR-18).",
+            "title": "Seller Tax Rep Name"
+          },
+          "sellerTaxRepAddress": {
+            "type": "string",
+            "nullable": true,
+            "description": "Seller tax representative postal address (BG-12) (EN 16931 BR-19).",
+            "title": "Seller Tax Rep Address"
+          },
+          "sellerTaxRepCountryCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Seller tax representative country code (BT-69), ISO 3166-1 alpha-2 (EN 16931 BR-20).",
+            "title": "Seller Tax Rep Country Code"
+          },
+          "payeeName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payee name (BT-59); required when a payee different from the seller is given (EN 16931 BR-17).",
+            "title": "Payee Name"
+          },
+          "payeeIdentifier": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payee identifier (BT-60).",
+            "title": "Payee Identifier"
+          },
+          "deliverToAddress": {
+            "type": "string",
+            "nullable": true,
+            "description": "Deliver-to address (BG-15).",
+            "title": "Deliver To Address"
+          },
+          "deliverToCountryCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Deliver-to country code (BT-80); required when a deliver-to address or an intra-community supply is present (EN 16931 BR-57 / BR-IC-12).",
+            "title": "Deliver To Country Code"
+          },
+          "supportingDocuments": {
+            "type": "array",
+            "nullable": true,
+            "description": "Additional supporting documents (BG-24); each carries a supporting document reference (BT-122) (EN 16931 BR-52).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reference": {
+                  "type": "string",
+                  "description": "Supporting document reference (BT-122).",
+                  "title": "Reference"
+                },
+                "description": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Supporting document description (BT-123).",
+                  "title": "Description"
+                },
+                "uri": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "External document location (BT-124).",
+                  "title": "URI"
+                }
+              }
+            },
+            "title": "Supporting Documents"
+          },
+          "precedingInvoiceReferences": {
+            "type": "array",
+            "nullable": true,
+            "description": "Preceding invoice references (BG-3); each carries a preceding invoice reference (BT-25) (EN 16931 BR-55).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reference": {
+                  "type": "string",
+                  "description": "Preceding invoice reference (BT-25).",
+                  "title": "Reference"
+                },
+                "issueDate": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Preceding invoice issue date (BT-26).",
+                  "title": "Issue Date"
+                }
+              }
+            },
+            "title": "Preceding Invoice References"
+          }
+        }
+      }
+    }
+  }
+}

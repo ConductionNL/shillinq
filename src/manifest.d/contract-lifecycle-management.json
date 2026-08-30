@@ -1,0 +1,302 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "contract-lifecycle-management",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Tier 2 — Contract Lifecycle Management navigation per REQ-CLM-008. Adds a 'Contracts' menu group with Contracts (repository index), Contract Obligations (cross-contract deadline overview), and Contract Spend (committed-vs-invoiced dashboard) plus their backing pages bound to the canonical Contract / ContractObligation schemas. The spend dashboard renders an honest empty state until the chained PurchaseOrder / APInvoice / ARInvoice schemas land (REQ-CLM-006). No bespoke router work; modals/dialogs (where added) live under src/modals/ / src/dialogs/ and NcSelect carries inputLabel (ADR-004)."
+	},
+	"menu": [
+		{
+			"id": "Contracts",
+			"label": "Contracts",
+			"icon": "FileSign",
+			"order": 25,
+			"children": [
+				{
+					"id": "Contracts",
+					"label": "Procurement Contracts",
+					"icon": "FileSign",
+					"route": "Contracts",
+					"order": 10
+				},
+				{
+					"id": "ContractObligations",
+					"label": "Obligations",
+					"icon": "ClipboardCheckOutline",
+					"route": "ContractObligations",
+					"order": 20
+				},
+				{
+					"id": "ContractSpend",
+					"label": "Contract Spend",
+					"icon": "FileSign",
+					"route": "ContractSpendDashboard",
+					"order": 30
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Contracts",
+			"route": "/contracts",
+			"type": "index",
+			"title": "Procurement Contracts",
+			"config": {
+				"register": "shillinq",
+				"schema": "Contract",
+				"search": {
+					"enabled": true,
+					"fields": ["contractNumber", "title", "tags"],
+					"description": "Repository search via OR _search over contract number, title, and tags per REQ-CLM-008 (no app-local search endpoint)."
+				},
+				"columns": [
+					{"key": "contractNumber", "label": "Contract #", "sortable": true},
+					{"key": "title", "label": "Title", "sortable": true},
+					{"key": "contractType", "label": "Type", "sortable": true},
+					{"key": "counterpartyReference", "label": "Counterparty", "sortable": false},
+					{"key": "status", "label": "Status", "sortable": true},
+					{"key": "endDate", "label": "End date", "sortable": true},
+					{"key": "renewalDecisionDate", "label": "Renewal decision date", "sortable": true}
+				],
+				"filters": [
+					{"key": "contractType", "label": "Type"},
+					{"key": "status", "label": "Status"},
+					{"key": "contractOwner", "label": "Owner"},
+					{"key": "counterpartyReference", "label": "Counterparty"},
+					{"key": "costCenter", "label": "Cost center"}
+				],
+				"smartFilters": [
+					{
+						"id": "expiringSoon",
+						"label": "Expiring soon",
+						"description": "Default smart filter surfacing contracts inside the renewal-decision window (status in {active, expiring} and renewalDecisionDate within 30 days or past) per REQ-CLM-008.",
+						"filter": {
+							"all": [
+								{"field": "status", "operator": "in", "values": ["active", "expiring"]},
+								{"field": "renewalDecisionDate", "operator": "withinDays", "value": 30}
+							]
+						}
+					}
+				],
+				"defaultSort": "renewalDecisionDate",
+				"detailRoute": "ContractDetail"
+			}
+		},
+		{
+			"id": "ContractDetail",
+			"route": "/contracts/:id",
+			"type": "detail",
+			"title": "Contract",
+			"config": {
+				"register": "shillinq",
+				"schema": "Contract",
+				"_note": "CONTRACT master. Body leads with the terms a reviewer needs (parties, value, currency, dates, the renewal-decision window) and surfaces the contract's obligations register directly on the page — obligations are the operational heart of a contract. Signed documents, committed-vs-invoiced spend and the audit trail sit in the sidebar. Predecessor/successor links model renewals in-place. Financial governance record — no email/calendar leaf.",
+				"fields": [
+					{"key": "contractNumber", "label": "Contract #", "type": "string"},
+					{"key": "title", "label": "Title", "type": "string"},
+					{"key": "description", "label": "Description", "type": "string"},
+					{"key": "contractType", "label": "Type", "type": "string"},
+					{"key": "direction", "label": "Direction", "type": "string"},
+					{"key": "counterpartyReference", "label": "Counterparty", "type": "string"},
+					{"key": "contractOwner", "label": "Owner", "type": "string"},
+					{"key": "startDate", "label": "Start date", "type": "date"},
+					{"key": "endDate", "label": "End date", "type": "date"},
+					{"key": "renewalDecisionDate", "label": "Renewal decision date", "type": "date"},
+					{"key": "renewalTerms", "label": "Renewal terms", "type": "object"},
+					{"key": "totalContractValue", "label": "Total contract value", "type": "number"},
+					{"key": "currency", "label": "Currency", "type": "string"},
+					{"key": "costCenter", "label": "Cost center", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "terminationReason", "label": "Termination reason", "type": "string"},
+					{"key": "predecessorContract", "label": "Predecessor contract", "type": "string"},
+					{"key": "successorContract", "label": "Successor contract", "type": "string"},
+					{"key": "specializationReference", "label": "Lease specialization", "type": "string"},
+					{"key": "tags", "label": "Tags", "type": "array"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "Contracts",
+				"widgets": [
+					{ "id": "contract-decisions", "type": "integration", "integrationId": "decidesk-decisions", "title": "Besluitvorming", "icon": "Gavel" }
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "contract-decisions", "gridX": 0, "gridY": 0, "gridWidth": 12, "gridHeight": 4 }
+				],
+				"relatedObjects": [
+					{
+						"id": "obligations",
+						"label": "Obligations",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "ContractObligation",
+							"filterField": "contractReference",
+							"columns": ["title", "obligationType", "dueDate", "responsible", "status", "taskLinkStatus"],
+							"detailRoute": "ContractObligationDetail",
+							"defaultSort": "dueDate"
+						}
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "spend",
+							"label": "Contract Spend",
+							"icon": "ChartLineVariant",
+							"order": 20,
+							"widgets": [
+								{
+									"type": "note",
+									"componentName": "shillinq-empty-state",
+									"props": {
+										"title": "No linked spend data",
+										"message": "Committed vs invoiced spend is rolled up from purchase orders and AP/AR invoices once those schemas land (REQ-CLM-006, CHAINED). Until then this panel is intentionally empty — no stub figures.",
+										"chained": ["bookkeeping-purchase-order-3way", "add-shillinq-accounts-payable-core", "add-shillinq-accounts-receivable-core"]
+									}
+								}
+							]
+						},
+						{
+							"id": "documents",
+							"label": "Documents",
+							"icon": "FileDocumentMultipleOutline",
+							"order": 30,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"register": "shillinq",
+										"schema": "Contract",
+										"field": "documents",
+										"objectId": ":id",
+										"description": "NC Files references (link, don't store) per REQ-CLM-005; opens in the NC Files viewer."
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ContractObligations",
+			"route": "/contracts/obligations",
+			"type": "index",
+			"title": "Contract Obligations",
+			"config": {
+				"register": "shillinq",
+				"schema": "ContractObligation",
+				"columns": [
+					{"key": "title", "label": "Title", "sortable": true},
+					{"key": "obligationType", "label": "Type", "sortable": true},
+					{"key": "dueDate", "label": "Due date", "sortable": true},
+					{"key": "responsible", "label": "Responsible", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true},
+					{"key": "taskLinkStatus", "label": "Task link", "sortable": true}
+				],
+				"filters": [
+					{"key": "responsible", "label": "Responsible"},
+					{"key": "status", "label": "Status"},
+					{"key": "obligationType", "label": "Type"}
+				],
+				"defaultSort": "dueDate",
+				"detailRoute": "ContractObligationDetail"
+			}
+		},
+		{
+			"id": "ContractObligationDetail",
+			"route": "/contracts/obligations/:id",
+			"type": "detail",
+			"title": "Contract Obligation",
+			"config": {
+				"register": "shillinq",
+				"schema": "ContractObligation",
+				"_note": "OBLIGATION — one clause-level deliverable of a contract. Body shows the parent contract, clause reference, obligation type, due date/recurrence and the responsible party, plus the linked NC-Deck/task URI and its sync status. Evidence files and the audit trail sit in the sidebar. It tracks a deliverable, not a conversation — no comms leaf; the task link is the actionable hook.",
+				"fields": [
+					{"key": "contractReference", "label": "Contract", "type": "string"},
+					{"key": "title", "label": "Title", "type": "string"},
+					{"key": "clauseReference", "label": "Clause", "type": "string"},
+					{"key": "obligationType", "label": "Type", "type": "string"},
+					{"key": "dueDate", "label": "Due date", "type": "date"},
+					{"key": "recurrence", "label": "Recurrence", "type": "string"},
+					{"key": "responsible", "label": "Responsible", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "taskUri", "label": "Linked task", "type": "string"},
+					{"key": "taskLinkStatus", "label": "Task link status", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"lifecycleActions": false,
+				"indexRoute": "ContractObligations",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "evidence",
+							"label": "Evidence",
+							"icon": "FileDocumentMultipleOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"register": "shillinq",
+										"schema": "ContractObligation",
+										"field": "evidence",
+										"objectId": ":id",
+										"description": "NC Files references (link, don't store) per REQ-CLM-005."
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ContractSpendDashboard",
+			"route": "/contracts/spend",
+			"type": "custom",
+			"title": "Contract Spend",
+			"_note": "Placeholder with NO component on purpose, so CnPageRenderer shows its empty state. The intended page rolls purchase orders (committed) and AP/AR invoices (invoiced) up per contract, sliceable by cost center / dimension, with over-commitment and over-invoicing flags (REQ-CLM-006) — figures that are CHAINED behind bookkeeping-purchase-order-3way, add-shillinq-accounts-payable-core and add-shillinq-accounts-receivable-core. Until those schemas land and carry contractReference there is nothing to aggregate, and a `type: dashboard` page would render widgets over absent data as zeroes, which reads as 'no spend' rather than 'not wired yet'. An honest empty state, never stub figures.",
+			"config": {
+				"register": "shillinq",
+				"schema": "Contract"
+			}
+		}
+	]
+}

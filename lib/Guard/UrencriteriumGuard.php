@@ -22,7 +22,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-zzp-tax-regime/spec.md
+ * @spec openspec/specs/bookkeeping-zzp-tax-regime/spec.md
  */
 
 declare(strict_types=1);
@@ -39,57 +39,54 @@ use Psr\Log\LoggerInterface;
  * not "excluded" (sick / parental-leave / vacation / non-billable-admin do not
  * qualify per Wet IB 2001 art. 3.6). Returns the qualifying-hours total.
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-zzp-tax-regime/spec.md
+ * @spec openspec/specs/bookkeeping-zzp-tax-regime/spec.md
  */
-class UrencriteriumGuard
-{
-    /**
-     * Constructor.
-     *
-     * @param LoggerInterface $logger Nextcloud logger for computation diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class UrencriteriumGuard {
+	/**
+	 * Constructor.
+	 *
+	 * @param LoggerInterface $logger Nextcloud logger for computation diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Compute YTD qualifying hours for a freelancer in a calendar year.
-     *
-     * @param array<int,array<string,mixed>> $hourRecords Pre-fetched UrenRegistratie records.
-     * @param string                         $personId    The freelancer whose hours are summed.
-     * @param int                            $year        The calendar year to bound the sum.
-     *
-     * @return float Sum of qualifying hours (category != 'excluded') for personId in year.
-     *
-     * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-zzp-tax-regime/spec.md
-     */
-    public function currentYtdHours(array $hourRecords, string $personId, int $year): float
-    {
-        $this->logger->debug(
-            'UrencriteriumGuard: currentYtdHours',
-            ['personId' => $personId, 'year' => $year, 'records' => count($hourRecords)]
-        );
+	/**
+	 * Compute YTD qualifying hours for a freelancer in a calendar year.
+	 *
+	 * @param array<int,array<string,mixed>> $hourRecords Pre-fetched UrenRegistratie records.
+	 * @param string $personId The freelancer whose hours are summed.
+	 * @param int $year The calendar year to bound the sum.
+	 *
+	 * @return float Sum of qualifying hours (category != 'excluded') for personId in year.
+	 *
+	 * @spec openspec/specs/bookkeeping-zzp-tax-regime/spec.md
+	 */
+	public function currentYtdHours(array $hourRecords, string $personId, int $year): float {
+		$this->logger->debug(
+			'UrencriteriumGuard: currentYtdHours',
+			['personId' => $personId, 'year' => $year, 'records' => count($hourRecords)]
+		);
 
-        $total = 0.0;
-        foreach ($hourRecords as $record) {
-            if (($record['personId'] ?? null) !== $personId) {
-                continue;
-            }
+		$total = 0.0;
+		foreach ($hourRecords as $record) {
+			if (($record['personId'] ?? null) !== $personId) {
+				continue;
+			}
 
-            $workDate = (string) ($record['workDate'] ?? '');
-            if (substr($workDate, 0, 4) !== (string) $year) {
-                continue;
-            }
+			$workDate = (string)($record['workDate'] ?? '');
+			if (substr($workDate, 0, 4) !== (string)$year) {
+				continue;
+			}
 
-            if (($record['category'] ?? '') === 'excluded') {
-                continue;
-            }
+			if (($record['category'] ?? '') === 'excluded') {
+				continue;
+			}
 
-            $total += (float) ($record['hours'] ?? 0);
-        }//end foreach
+			$total += (float)($record['hours'] ?? 0);
+		}//end foreach
 
-        return $total;
-
-    }//end currentYtdHours()
+		return $total;
+	}//end currentYtdHours()
 }//end class

@@ -1,937 +1,1143 @@
 {
-	"_meta": {
-		"spdx-license": "EUPL-1.2",
-		"spdx-copyright": "2026 Conduction B.V.",
-		"change": "bookkeeping-ifrs-rj-dual-gaap",
-		"adr": "ADR-037 modular register fragment — never edit shillinq_register.json; ADR-031 declarative-first; ADR-022 real OpenRegister ObjectService API only",
-		"description": "Tier 3 — Dual GAAP reporting (IFRS naast Nederlandse Richtlijnen voor de Jaarverslaggeving). Adds six declarative schemas: AccountingFramework (REQ-DGAAP-001), ChartOfAccountsMapping (REQ-DGAAP-002), DualTransaction (REQ-DGAAP-003/006), ReconciliationBridge (REQ-DGAAP-005/006), StandardSpecificCalculation (REQ-DGAAP-004/005) and FrameworkElection (REQ-DGAAP-007/010). Parallel-ledger journal materialisation books every transaction under BOTH RJ and IFRS, classifies the divergence per standard (LEASE_IFRS16, PENSION_IAS19, ECL_IFRS9, REVENUE_IFRS15, IMPAIRMENT_IAS36, BORROWING_COST_IAS23, DEFERRED_TAX_IAS12, BUSINESS_COMBINATION_IFRS3), and explodes the RJ-to-IFRS bridge per period. The bulk of the surface is declarative metadata: x-openregister-lifecycle drives DualTransaction (open → classified → reconciled) and FrameworkElection (draft → active → superseded); x-openregister-aggregations documents the reconciliation-bridge roll-up. A single ADR-031 exception-path guard (OCA\\Shillinq\\Lifecycle\\DualGaapGuard) enforces the two cross-field preconditions the declarative DSL cannot yet express: a DualTransaction may only be reconciled once it carries a divergence reason code AND (for temporary differences) a deferred-tax effect, and a FrameworkElection may only activate once its comply-or-explain motivation and AVA-besluit reference are present and the elected variant matches the measured size criteria. Seed objects ship five worked examples (lease IFRS-16, pension IAS-19, ECL IFRS-9, deferred-tax temporary difference and a framework election) per design.md."
-	},
-	"components": {
-		"schemas": {
-			"AccountingFramework": {
-				"slug": "AccountingFramework",
-				"icon": "Earth",
-				"version": "0.1.0",
-				"title": "Accounting Framework",
-				"description": "A financial-reporting framework (IFRS-EU, NL-GAAP-RJ, US-GAAP) with its version, effective date, jurisdictions, regulator, base currency and statement templates (REQ-DGAAP-001). The basis for parallel-ledger materialisation: every GL posting is booked under each active framework.",
-				"x-schema-org": "schema:DefinedTerm",
-				"x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
-				"type": "object",
-				"required": [
-					"identifier",
-					"version",
-					"effectiveDate",
-					"regulator",
-					"administrationId"
-				],
-				"properties": {
-					"identifier": {
-						"type": "string",
-						"description": "Framework identifier (REQ-DGAAP-001).",
-						"enum": [
-							"IFRS-EU",
-							"NL-GAAP-RJ",
-							"US-GAAP"
-						],
-						"example": "IFRS-EU"
-					},
-					"version": {
-						"type": "string",
-						"description": "Framework version year (the standards edition in force).",
-						"example": "2026"
-					},
-					"effectiveDate": {
-						"type": "string",
-						"description": "Date from which this framework version applies (ISO-8601).",
-						"example": "2026-01-01"
-					},
-					"jurisdictions": {
-						"type": "array",
-						"description": "ISO-3166 country codes where this framework applies.",
-						"items": {
-							"type": "string"
-						},
-						"example": ["NL", "BE", "DE"]
-					},
-					"regulator": {
-						"type": "string",
-						"description": "Standard-setter / regulator for this framework.",
-						"enum": [
-							"IASB",
-							"RJ",
-							"FASB"
-						],
-						"example": "IASB"
-					},
-					"baseCurrencyDefault": {
-						"type": "string",
-						"description": "Default ISO-4217 presentation currency.",
-						"default": "EUR",
-						"example": "EUR"
-					},
-					"statementTemplates": {
-						"type": "array",
-						"description": "Identifiers of the financial-statement templates this framework drives (e.g. IAS-1, BW2-model-A).",
-						"items": {
-							"type": "string"
-						},
-						"example": ["IAS-1-presentation"]
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the administration; reads are scoped to the requesting user's administration (REQ-DGAAP-001).",
-						"example": "adm-holding-1"
-					}
-				}
-			},
-			"ChartOfAccountsMapping": {
-				"slug": "ChartOfAccountsMapping",
-				"icon": "SwapHorizontal",
-				"version": "0.1.0",
-				"title": "Chart of Accounts Mapping",
-				"description": "Maps a source (RJ) account to one or more target (IFRS) accounts with an allocation rule (REQ-DGAAP-002). Supports one-to-one, one-to-many, many-to-one and recharacterization cardinalities; activation is blocked until a test-data reconciliation reaches ≥95% coverage or an explicit exception justification is recorded.",
-				"x-schema-org": "schema:PropertyValue",
-				"x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
-				"type": "object",
-				"required": [
-					"sourceAccount",
-					"targetAccounts",
-					"mappingType",
-					"effectiveFrom",
-					"administrationId"
-				],
-				"properties": {
-					"sourceAccount": {
-						"type": "string",
-						"description": "Source RJ account number (FK to Account.accountNumber) (REQ-DGAAP-002).",
-						"example": "1530"
-					},
-					"targetAccounts": {
-						"type": "array",
-						"description": "Target IFRS account numbers this source account maps to (FK to Account.accountNumber).",
-						"items": {
-							"type": "string"
-						},
-						"example": ["1531", "2531", "2532"]
-					},
-					"mappingType": {
-						"type": "string",
-						"description": "Cardinality of the mapping (REQ-DGAAP-002).",
-						"enum": [
-							"one-to-one",
-							"one-to-many",
-							"many-to-one",
-							"recharacterization"
-						],
-						"example": "one-to-many"
-					},
-					"allocationRule": {
-						"type": "string",
-						"description": "How the source amount is split over the target accounts.",
-						"enum": [
-							"percentage",
-							"formula",
-							"ratio_driver"
-						],
-						"example": "formula"
-					},
-					"allocationDetail": {
-						"type": "string",
-						"description": "The concrete allocation (e.g. percentage split or formula expression such as ROU = PV(future_lease_payments, IBR)).",
-						"nullable": true,
-						"example": "ROU = PV(future_lease_payments, IBR); liability_current = next 12 months; liability_noncurrent = remainder"
-					},
-					"effectiveFrom": {
-						"type": "string",
-						"description": "Date from which the mapping applies (ISO-8601).",
-						"example": "2026-01-01"
-					},
-					"effectiveTo": {
-						"type": "string",
-						"description": "Date the mapping ceases to apply; null while open-ended.",
-						"nullable": true,
-						"example": null
-					},
-					"coveragePercent": {
-						"type": "number",
-						"minimum": 0,
-						"maximum": 100,
-						"description": "Percentage of existing RJ mutations the mapping converts successfully on the validation test-run (REQ-DGAAP-002). Activation requires ≥95 unless an exception is documented.",
-						"example": 98.5
-					},
-					"exceptionJustification": {
-						"type": "string",
-						"description": "Approver justification when coverage is below 95% (REQ-DGAAP-002).",
-						"nullable": true,
-						"example": null
-					},
-					"approver": {
-						"type": "string",
-						"description": "User id of the group-accountant who approved the mapping.",
-						"nullable": true,
-						"example": "group-accountant-1"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the administration; reads scoped to the requesting user's administration (REQ-DGAAP-002).",
-						"example": "adm-holding-1"
-					}
-				}
-			},
-			"DualTransaction": {
-				"slug": "DualTransaction",
-				"icon": "ScaleBalance",
-				"version": "0.1.0",
-				"title": "Dual Transaction",
-				"description": "Links one base GL transaction to its parallel RJ and IFRS journal entries, with the divergence amount, reason code and permanence classification (REQ-DGAAP-003, REQ-DGAAP-006). Auto-populated on GL materialisation; the group-accountant may override the classification with an audit-trail reason. Lifecycle: open → classified → reconciled.",
-				"x-schema-org": "schema:MonetaryAmount",
-				"x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
-				"type": "object",
-				"required": [
-					"baseTransactionId",
-					"divergenceAmount",
-					"administrationId"
-				],
-				"properties": {
-					"baseTransactionId": {
-						"type": "string",
-						"description": "FK to the base GLTransaction both ledgers derive from (REQ-DGAAP-003).",
-						"example": "GL-2026-04-0512"
-					},
-					"rjJournalEntries": {
-						"type": "array",
-						"description": "Journal lines booked under the RJ ledger.",
-						"items": {
-							"type": "object"
-						},
-						"example": [
-							{"account": "1530", "debit": 24300, "credit": 0},
-							{"account": "1800", "debit": 0, "credit": 24750}
-						]
-					},
-					"ifrsJournalEntries": {
-						"type": "array",
-						"description": "Journal lines booked under the IFRS ledger.",
-						"items": {
-							"type": "object"
-						},
-						"example": [
-							{"account": "1531", "debit": 24300, "credit": 0},
-							{"account": "2531", "debit": 0, "credit": 9744},
-							{"account": "2532", "debit": 0, "credit": 14556}
-						]
-					},
-					"divergenceAmount": {
-						"type": "number",
-						"description": "Absolute value of the divergence between the RJ and IFRS treatment, in the administration currency (REQ-DGAAP-003).",
-						"example": 24300.0
-					},
-					"divergenceReasonCode": {
-						"type": "string",
-						"description": "Standard-specific reason for the divergence (REQ-DGAAP-003). Empty/absent while the transaction is still being classified.",
-						"enum": [
-							"LEASE_IFRS16",
-							"PENSION_IAS19",
-							"ECL_IFRS9",
-							"REVENUE_IFRS15",
-							"IMPAIRMENT_IAS36",
-							"BORROWING_COST_IAS23",
-							"DEFERRED_TAX_IAS12",
-							"BUSINESS_COMBINATION_IFRS3",
-							"NONE"
-						],
-						"example": "LEASE_IFRS16"
-					},
-					"divergenceClassification": {
-						"type": "string",
-						"description": "Permanence of the divergence; temporary differences drive deferred tax under IAS 12 (REQ-DGAAP-006).",
-						"enum": [
-							"permanent",
-							"temporary",
-							"reclassification"
-						],
-						"example": "temporary"
-					},
-					"deferredTaxEffect": {
-						"type": "number",
-						"description": "Deferred-tax impact of a temporary difference (amount × statutory rate); zero for permanent differences and reclassifications (REQ-DGAAP-006).",
-						"nullable": true,
-						"example": 6075.0
-					},
-					"classificationOverridden": {
-						"type": "boolean",
-						"description": "True when a group-accountant manually overrode the auto-classification (REQ-DGAAP-003).",
-						"default": false,
-						"example": false
-					},
-					"overrideReason": {
-						"type": "string",
-						"description": "Audit-trail reason for a manual classification override (REQ-DGAAP-003).",
-						"nullable": true,
-						"example": null
-					},
-					"state": {
-						"type": "string",
-						"description": "Lifecycle state (REQ-DGAAP-003).",
-						"enum": [
-							"open",
-							"classified",
-							"reconciled"
-						],
-						"default": "open",
-						"example": "classified"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the administration; reads scoped to the requesting user's administration (REQ-DGAAP-003).",
-						"example": "adm-holding-1"
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "state",
-					"initialState": "open",
-					"states": {
-						"open": {
-							"label": "Open",
-							"description": "Materialised under both ledgers; divergence not yet classified."
-						},
-						"classified": {
-							"label": "Classified",
-							"description": "Divergence reason code and permanence assigned (auto or manual override)."
-						},
-						"reconciled": {
-							"label": "Reconciled",
-							"description": "Included in a period ReconciliationBridge; deferred-tax effect recorded where the difference is temporary."
-						}
-					},
-					"transitions": {
-						"classify": {
-							"from": "open",
-							"to": "classified",
-							"label": "Classify divergence",
-							"description": "Assign the divergence reason code and permanence (REQ-DGAAP-003)."
-						},
-						"reconcile": {
-							"from": "classified",
-							"to": "reconciled",
-							"label": "Mark reconciled",
-							"description": "Include in the period bridge; requires a reason code and (for temporary differences) a deferred-tax effect (REQ-DGAAP-006).",
-							"requires": "OCA\\Shillinq\\Lifecycle\\DualGaapGuard::canReconcileTransaction"
-						},
-						"reopen": {
-							"from": "classified",
-							"to": "open",
-							"label": "Reopen for reclassification",
-							"description": "Return to open to revise the divergence classification (REQ-DGAAP-003)."
-						}
-					}
-				}
-			},
-			"ReconciliationBridge": {
-				"slug": "ReconciliationBridge",
-				"icon": "TransitConnectionVariant",
-				"version": "0.1.0",
-				"title": "Reconciliation Bridge",
-				"description": "The RJ-to-IFRS conversion for one period and metric (equity or net result): opening RJ balance, adjustments per standard, tax effect per jurisdiction and closing IFRS balance (REQ-DGAAP-005, REQ-DGAAP-006). A declarative aggregation over the period's reconciled DualTransactions; each adjustment line is drill-down navigable to its StandardSpecificCalculation and GL entries (REQ-DGAAP-008).",
-				"x-schema-org": "schema:MonetaryAmount",
-				"x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
-				"type": "object",
-				"required": [
-					"period",
-					"fromFramework",
-					"toFramework",
-					"metric",
-					"openingBalanceRj",
-					"closingBalanceIfrs",
-					"administrationId"
-				],
-				"properties": {
-					"period": {
-						"type": "string",
-						"description": "Fiscal period the bridge covers (REQ-DGAAP-005).",
-						"example": "2026"
-					},
-					"fromFramework": {
-						"type": "string",
-						"description": "Source framework identifier.",
-						"example": "NL-GAAP-RJ"
-					},
-					"toFramework": {
-						"type": "string",
-						"description": "Target framework identifier.",
-						"example": "IFRS-EU"
-					},
-					"metric": {
-						"type": "string",
-						"description": "Which figure this bridge reconciles (REQ-DGAAP-005).",
-						"enum": [
-							"equity",
-							"net_result"
-						],
-						"example": "equity"
-					},
-					"openingBalanceRj": {
-						"type": "number",
-						"description": "Opening RJ balance for the metric (REQ-DGAAP-005).",
-						"example": 1000000.0
-					},
-					"adjustments": {
-						"type": "array",
-						"description": "Bridging adjustments per IFRS standard (description, amount, account, standardReference, standardCalculationId).",
-						"items": {
-							"type": "object"
-						},
-						"example": [
-							{"description": "IFRS 16 lease right-of-use", "amount": 24300, "account": "1531", "standardReference": "IFRS-16"},
-							{"description": "IAS 19 service cost", "amount": -234000, "account": "2900", "standardReference": "IAS-19"}
-						]
-					},
-					"totalTemporaryDifferences": {
-						"type": "number",
-						"description": "Sum of temporary differences in the period (REQ-DGAAP-006).",
-						"example": 24300.0
-					},
-					"totalPermanentDifferences": {
-						"type": "number",
-						"description": "Sum of permanent differences in the period (REQ-DGAAP-006).",
-						"example": 0.0
-					},
-					"taxEffect": {
-						"type": "array",
-						"description": "Deferred-tax effect per jurisdiction (jurisdiction, amount, statutoryRate) (REQ-DGAAP-006).",
-						"items": {
-							"type": "object"
-						},
-						"example": [
-							{"jurisdiction": "NL", "amount": 6075, "statutoryRate": 0.258}
-						]
-					},
-					"closingBalanceIfrs": {
-						"type": "number",
-						"description": "Closing IFRS balance = openingBalanceRj + sum(adjustments) (REQ-DGAAP-005).",
-						"example": 790300.0
-					},
-					"approver": {
-						"type": "string",
-						"description": "User id who signed off the bridge.",
-						"nullable": true,
-						"example": "controller-1"
-					},
-					"signoffDate": {
-						"type": "string",
-						"description": "Sign-off date (ISO-8601).",
-						"nullable": true,
-						"example": null
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the administration; reads scoped to the requesting user's administration (REQ-DGAAP-005).",
-						"example": "adm-holding-1"
-					}
-				},
-				"x-openregister-aggregations": {
-					"bridgeByPeriodStandard": {
-						"description": "Declarative shape of the reconciliation-bridge roll-up (REQ-DGAAP-005, REQ-DGAAP-006). Groups reconciled DualTransactions by (period, divergenceReasonCode) within an administration and framework pair, sums the divergence amounts per standard into adjustments[], sums temporary vs. permanent differences, and derives closingBalanceIfrs = openingBalanceRj + sum(adjustments). Deferred-tax effect is summed per jurisdiction from each temporary DualTransaction's deferredTaxEffect. When the OpenRegister aggregation engine cannot express the cross-schema join for per-jurisdiction tax effect, the same result is computed from the real ObjectService API (find/findAll).",
-						"source": "DualTransaction",
-						"filter": {
-							"period": "@self.period",
-							"administrationId": "@self.administrationId",
-							"state": "reconciled"
-						},
-						"groupBy": [
-							"DualTransaction.divergenceReasonCode"
-						],
-						"operations": {
-							"adjustmentTotal": {
-								"field": "DualTransaction.divergenceAmount",
-								"operation": "sum",
-								"target": "adjustments"
-							},
-							"totalTemporaryDifferences": {
-								"field": "DualTransaction.divergenceAmount",
-								"operation": "sum",
-								"condition": "DualTransaction.divergenceClassification = 'temporary'",
-								"target": "totalTemporaryDifferences"
-							},
-							"totalPermanentDifferences": {
-								"field": "DualTransaction.divergenceAmount",
-								"operation": "sum",
-								"condition": "DualTransaction.divergenceClassification = 'permanent'",
-								"target": "totalPermanentDifferences"
-							},
-							"closingBalanceIfrs": {
-								"operation": "expression",
-								"expression": "openingBalanceRj + adjustmentTotal",
-								"target": "closingBalanceIfrs"
-							}
-						}
-					}
-				}
-			},
-			"StandardSpecificCalculation": {
-				"slug": "StandardSpecificCalculation",
-				"icon": "Calculator",
-				"version": "0.1.0",
-				"title": "Standard-Specific Calculation",
-				"description": "The supporting calculation behind a divergence: IFRS-16 incremental borrowing rate, IAS-19 projected-unit-credit, IFRS-9 expected-credit-loss staging, IFRS-15 revenue model (REQ-DGAAP-004, REQ-DGAAP-005). Stores inputs, outputs, revaluation frequency, actuary/validator signoff (IAS 19) and an audit-evidence URI to the source document (e.g. an actuarial report in docudesk).",
-				"x-schema-org": "schema:Quantity",
-				"x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
-				"type": "object",
-				"required": [
-					"standardCode",
-					"calculationMethod",
-					"administrationId"
-				],
-				"properties": {
-					"standardCode": {
-						"type": "string",
-						"description": "The standard this calculation supports (REQ-DGAAP-004).",
-						"enum": [
-							"IFRS-16",
-							"IAS-19",
-							"IFRS-9",
-							"IFRS-15",
-							"IAS-36",
-							"IAS-23",
-							"IAS-12",
-							"IFRS-3"
-						],
-						"example": "IFRS-16"
-					},
-					"contractOrPositionReference": {
-						"type": "string",
-						"description": "Reference to the contract / position the calculation concerns (lease ref, plan id, customer segment).",
-						"nullable": true,
-						"example": "Lease-2026-AUTO-001"
-					},
-					"calculationMethod": {
-						"type": "string",
-						"description": "The valuation method applied (REQ-DGAAP-004).",
-						"enum": [
-							"incremental_borrowing_rate",
-							"projected_unit_credit",
-							"expected_credit_loss_stages",
-							"five_step_revenue",
-							"recoverable_amount"
-						],
-						"example": "incremental_borrowing_rate"
-					},
-					"inputs": {
-						"type": "object",
-						"description": "Calculation inputs (free-form JSON: discount rate, demographic tables, future lease payments, aging buckets, macro overlays).",
-						"example": {
-							"future_lease_payments": [450, 450, 450],
-							"lease_commencement_date": "2026-04-15",
-							"lease_term_months": 60,
-							"incremental_borrowing_rate": 0.035
-						}
-					},
-					"outputs": {
-						"type": "object",
-						"description": "Calculation outputs (free-form JSON: ROU asset, liability split, service cost, ECL by stage).",
-						"example": {
-							"rou_asset_initial": 24300,
-							"liability_current": 9744,
-							"liability_noncurrent": 14556
-						}
-					},
-					"revaluationFrequency": {
-						"type": "string",
-						"description": "How often the calculation is re-run (REQ-DGAAP-005).",
-						"enum": [
-							"monthly",
-							"quarterly",
-							"annual"
-						],
-						"default": "annual",
-						"example": "annual"
-					},
-					"lastCalculatedAt": {
-						"type": "string",
-						"description": "Timestamp of the last calculation run (ISO-8601).",
-						"nullable": true,
-						"example": "2026-04-30T00:00:00+00:00"
-					},
-					"actuarySignoff": {
-						"type": "string",
-						"description": "Actuary / validator who signed off the calculation (required for IAS 19) (REQ-DGAAP-004).",
-						"nullable": true,
-						"example": null
-					},
-					"auditEvidenceUri": {
-						"type": "string",
-						"description": "URI to the source evidence document (e.g. docudesk:// actuarial report) (REQ-DGAAP-008).",
-						"nullable": true,
-						"example": "docudesk://lease-contract-2026-AUTO-001.pdf"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the administration; reads scoped to the requesting user's administration (REQ-DGAAP-004).",
-						"example": "adm-holding-1"
-					}
-				}
-			},
-			"FrameworkElection": {
-				"slug": "FrameworkElection",
-				"icon": "GavelOutline",
-				"version": "0.1.0",
-				"title": "Framework Election",
-				"description": "Records a legal entity's primary-framework election with comply-or-explain motivation, RJ variant, measured size criteria and AVA-besluit reference (REQ-DGAAP-007, REQ-DGAAP-010). Lifecycle: draft → active → superseded. Activation requires a motivation, an AVA-besluit reference and a variant consistent with the measured size criteria; the system warns when criteria breach the threshold for two consecutive years.",
-				"x-schema-org": "schema:Action",
-				"x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
-				"type": "object",
-				"required": [
-					"legalEntityId",
-					"primaryFramework",
-					"rjVariant",
-					"administrationId"
-				],
-				"properties": {
-					"legalEntityId": {
-						"type": "string",
-						"description": "FK to the legal entity this election applies to (REQ-DGAAP-010).",
-						"example": "entity-holding-bv"
-					},
-					"primaryFramework": {
-						"type": "string",
-						"description": "The primary reporting framework elected (REQ-DGAAP-010).",
-						"enum": [
-							"IFRS-EU",
-							"NL-GAAP-RJ"
-						],
-						"example": "NL-GAAP-RJ"
-					},
-					"complyOrExplainMotivation": {
-						"type": "string",
-						"description": "Comply-or-explain motivation for the election (e.g. small-entity exemption BW2 art 2:396) (REQ-DGAAP-010).",
-						"nullable": true,
-						"example": "Kleine rechtspersoon op basis van BW2 art 2:396."
-					},
-					"rjVariant": {
-						"type": "string",
-						"description": "RJ variant elected (REQ-DGAAP-010).",
-						"enum": [
-							"RJ-onverkort",
-							"RJk",
-							"IFRS-volledig"
-						],
-						"example": "RJk"
-					},
-					"sizeCriteriaBalanstotaal": {
-						"type": "number",
-						"description": "Measured balance-sheet total used for the size test (REQ-DGAAP-010).",
-						"nullable": true,
-						"example": 5800000.0
-					},
-					"sizeCriteriaNettoOmzet": {
-						"type": "number",
-						"description": "Measured net turnover used for the size test (REQ-DGAAP-010).",
-						"nullable": true,
-						"example": 11200000.0
-					},
-					"sizeCriteriaGemiddeldWerknemers": {
-						"type": "integer",
-						"description": "Measured average headcount used for the size test (REQ-DGAAP-010).",
-						"nullable": true,
-						"example": 42
-					},
-					"sizeCriteriaBreachYears": {
-						"type": "integer",
-						"description": "Number of consecutive years the size criteria have breached the variant threshold; a value ≥2 triggers a warning (REQ-DGAAP-010).",
-						"default": 0,
-						"example": 0
-					},
-					"avaBesluitReference": {
-						"type": "string",
-						"description": "Reference to the AVA (general meeting) resolution recording the election (REQ-DGAAP-010).",
-						"nullable": true,
-						"example": "AVA-2026-03-12-besluit-4"
-					},
-					"effectiveFrom": {
-						"type": "string",
-						"description": "Date from which the election applies (ISO-8601).",
-						"nullable": true,
-						"example": "2026-01-01"
-					},
-					"effectiveTo": {
-						"type": "string",
-						"description": "Date the election ceases to apply; null while active.",
-						"nullable": true,
-						"example": null
-					},
-					"state": {
-						"type": "string",
-						"description": "Lifecycle state (REQ-DGAAP-010).",
-						"enum": [
-							"draft",
-							"active",
-							"superseded"
-						],
-						"default": "draft",
-						"example": "active"
-					},
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the administration; reads scoped to the requesting user's administration (REQ-DGAAP-010).",
-						"example": "adm-holding-1"
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "state",
-					"initialState": "draft",
-					"states": {
-						"draft": {
-							"label": "Draft",
-							"description": "Election being prepared; motivation and AVA reference may be incomplete."
-						},
-						"active": {
-							"label": "Active",
-							"description": "The entity's effective framework election; blocks publication of statements inconsistent with it (REQ-DGAAP-010)."
-						},
-						"superseded": {
-							"label": "Superseded",
-							"description": "Replaced by a later election effective from a new date."
-						}
-					},
-					"transitions": {
-						"activate": {
-							"from": "draft",
-							"to": "active",
-							"label": "Activate election",
-							"description": "Activate once the motivation, AVA-besluit reference and a variant consistent with the measured size criteria are present (REQ-DGAAP-010).",
-							"requires": "OCA\\Shillinq\\Lifecycle\\DualGaapGuard::canActivateElection"
-						},
-						"supersede": {
-							"from": "active",
-							"to": "superseded",
-							"label": "Supersede",
-							"description": "Supersede when a later election takes effect (REQ-DGAAP-007)."
-						}
-					}
-				}
-			}
-		},
-		"objects": [
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "AccountingFramework",
-					"slug": "framework-ifrs-eu-2026"
-				},
-				"identifier": "IFRS-EU",
-				"version": "2026",
-				"effectiveDate": "2026-01-01",
-				"jurisdictions": ["NL", "BE", "DE"],
-				"regulator": "IASB",
-				"baseCurrencyDefault": "EUR",
-				"statementTemplates": ["IAS-1-presentation"],
-				"administrationId": "adm-holding-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "AccountingFramework",
-					"slug": "framework-nl-gaap-rj-2026"
-				},
-				"identifier": "NL-GAAP-RJ",
-				"version": "2026",
-				"effectiveDate": "2026-01-01",
-				"jurisdictions": ["NL"],
-				"regulator": "RJ",
-				"baseCurrencyDefault": "EUR",
-				"statementTemplates": ["BW2-model-A", "BW2-model-B"],
-				"administrationId": "adm-holding-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "ChartOfAccountsMapping",
-					"slug": "coa-lease-1530-to-ifrs16"
-				},
-				"sourceAccount": "1530",
-				"targetAccounts": ["1531", "2531", "2532"],
-				"mappingType": "one-to-many",
-				"allocationRule": "formula",
-				"allocationDetail": "ROU = PV(future_lease_payments, IBR); liability_current = next 12 months; liability_noncurrent = remainder",
-				"effectiveFrom": "2026-01-01",
-				"effectiveTo": null,
-				"coveragePercent": 98.5,
-				"exceptionJustification": null,
-				"approver": "group-accountant-1",
-				"administrationId": "adm-holding-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "DualTransaction",
-					"slug": "dt-lease-2026-04-0512"
-				},
-				"baseTransactionId": "GL-2026-04-0512",
-				"rjJournalEntries": [
-					{"account": "1530", "debit": 24300, "credit": 0},
-					{"account": "4120", "debit": 450, "credit": 0},
-					{"account": "1800", "debit": 0, "credit": 24750}
-				],
-				"ifrsJournalEntries": [
-					{"account": "1531", "debit": 24300, "credit": 0},
-					{"account": "2531", "debit": 0, "credit": 9744},
-					{"account": "2532", "debit": 0, "credit": 14556}
-				],
-				"divergenceAmount": 24300.0,
-				"divergenceReasonCode": "LEASE_IFRS16",
-				"divergenceClassification": "temporary",
-				"deferredTaxEffect": 6075.0,
-				"classificationOverridden": false,
-				"overrideReason": null,
-				"state": "reconciled",
-				"administrationId": "adm-holding-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "DualTransaction",
-					"slug": "dt-pension-2026-12-9001"
-				},
-				"baseTransactionId": "GL-2026-12-9001",
-				"rjJournalEntries": [
-					{"account": "4400", "debit": 180000, "credit": 0},
-					{"account": "1800", "debit": 0, "credit": 180000}
-				],
-				"ifrsJournalEntries": [
-					{"account": "4400", "debit": 234000, "credit": 0},
-					{"account": "2900", "debit": 0, "credit": 234000}
-				],
-				"divergenceAmount": 54000.0,
-				"divergenceReasonCode": "PENSION_IAS19",
-				"divergenceClassification": "temporary",
-				"deferredTaxEffect": 13932.0,
-				"classificationOverridden": false,
-				"overrideReason": null,
-				"state": "reconciled",
-				"administrationId": "adm-holding-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "DualTransaction",
-					"slug": "dt-ecl-2026-06-3300"
-				},
-				"baseTransactionId": "GL-2026-06-3300",
-				"rjJournalEntries": [
-					{"account": "4900", "debit": 42000, "credit": 0},
-					{"account": "1390", "debit": 0, "credit": 42000}
-				],
-				"ifrsJournalEntries": [
-					{"account": "4900", "debit": 67000, "credit": 0},
-					{"account": "1390", "debit": 0, "credit": 67000}
-				],
-				"divergenceAmount": 25000.0,
-				"divergenceReasonCode": "ECL_IFRS9",
-				"divergenceClassification": "temporary",
-				"deferredTaxEffect": 6450.0,
-				"classificationOverridden": false,
-				"overrideReason": null,
-				"state": "classified",
-				"administrationId": "adm-holding-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "ReconciliationBridge",
-					"slug": "bridge-2026-equity"
-				},
-				"period": "2026",
-				"fromFramework": "NL-GAAP-RJ",
-				"toFramework": "IFRS-EU",
-				"metric": "equity",
-				"openingBalanceRj": 1000000.0,
-				"adjustments": [
-					{"description": "IFRS 16 lease right-of-use", "amount": 24300, "account": "1531", "standardReference": "IFRS-16", "standardCalculationId": "calc-ifrs16-lease-001"},
-					{"description": "IAS 19 pension remeasurement", "amount": -54000, "account": "2900", "standardReference": "IAS-19", "standardCalculationId": "calc-ias19-pension-001"}
-				],
-				"totalTemporaryDifferences": 78300.0,
-				"totalPermanentDifferences": 0.0,
-				"taxEffect": [
-					{"jurisdiction": "NL", "amount": 20007, "statutoryRate": 0.258}
-				],
-				"closingBalanceIfrs": 970300.0,
-				"approver": "controller-1",
-				"signoffDate": "2027-03-31",
-				"administrationId": "adm-holding-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "StandardSpecificCalculation",
-					"slug": "calc-ifrs16-lease-001"
-				},
-				"standardCode": "IFRS-16",
-				"contractOrPositionReference": "Lease-2026-AUTO-001",
-				"calculationMethod": "incremental_borrowing_rate",
-				"inputs": {
-					"future_lease_payments": [450, 450, 450, 450, 450],
-					"lease_commencement_date": "2026-04-15",
-					"lease_term_months": 60,
-					"incremental_borrowing_rate": 0.035
-				},
-				"outputs": {
-					"rou_asset_initial": 24300,
-					"liability_current": 9744,
-					"liability_noncurrent": 14556,
-					"interest_expense_year1": 851
-				},
-				"revaluationFrequency": "annual",
-				"lastCalculatedAt": "2026-04-30T00:00:00+00:00",
-				"actuarySignoff": null,
-				"auditEvidenceUri": "docudesk://lease-contract-2026-AUTO-001.pdf",
-				"administrationId": "adm-holding-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "StandardSpecificCalculation",
-					"slug": "calc-ias19-pension-001"
-				},
-				"standardCode": "IAS-19",
-				"contractOrPositionReference": "DB-plan-2026",
-				"calculationMethod": "projected_unit_credit",
-				"inputs": {
-					"active_members": 234,
-					"discount_rate": 0.032,
-					"salary_growth": 0.02,
-					"plan_asset_return": 0.04
-				},
-				"outputs": {
-					"service_cost": 234000,
-					"remeasurement_oci": -54000,
-					"defined_benefit_obligation": 4120000
-				},
-				"revaluationFrequency": "quarterly",
-				"lastCalculatedAt": "2026-12-31T00:00:00+00:00",
-				"actuarySignoff": "actuary-firm-x",
-				"auditEvidenceUri": "docudesk://actuarial-report-2026.pdf",
-				"administrationId": "adm-holding-1"
-			},
-			{
-				"@self": {
-					"register": "shillinq",
-					"schema": "FrameworkElection",
-					"slug": "election-holding-bv-rjk"
-				},
-				"legalEntityId": "entity-holding-bv",
-				"primaryFramework": "NL-GAAP-RJ",
-				"complyOrExplainMotivation": "Kleine rechtspersoon op basis van BW2 art 2:396; geen beursnotering.",
-				"rjVariant": "RJk",
-				"sizeCriteriaBalanstotaal": 5800000.0,
-				"sizeCriteriaNettoOmzet": 11200000.0,
-				"sizeCriteriaGemiddeldWerknemers": 42,
-				"sizeCriteriaBreachYears": 0,
-				"avaBesluitReference": "AVA-2026-03-12-besluit-4",
-				"effectiveFrom": "2026-01-01",
-				"effectiveTo": null,
-				"state": "active",
-				"administrationId": "adm-holding-1"
-			}
-		]
-	}
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-ifrs-rj-dual-gaap",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json; ADR-031 declarative-first; ADR-022 real OpenRegister ObjectService API only",
+    "description": "Tier 3 — Dual GAAP reporting (IFRS naast Nederlandse Richtlijnen voor de Jaarverslaggeving). Adds six declarative schemas: AccountingFramework (REQ-DGAAP-001), ChartOfAccountsMapping (REQ-DGAAP-002), DualTransaction (REQ-DGAAP-003/006), ReconciliationBridge (REQ-DGAAP-005/006), StandardSpecificCalculation (REQ-DGAAP-004/005) and FrameworkElection (REQ-DGAAP-007/010). Parallel-ledger journal materialisation books every transaction under BOTH RJ and IFRS, classifies the divergence per standard (LEASE_IFRS16, PENSION_IAS19, ECL_IFRS9, REVENUE_IFRS15, IMPAIRMENT_IAS36, BORROWING_COST_IAS23, DEFERRED_TAX_IAS12, BUSINESS_COMBINATION_IFRS3), and explodes the RJ-to-IFRS bridge per period. The bulk of the surface is declarative metadata: x-openregister-lifecycle drives DualTransaction (open → classified → reconciled) and FrameworkElection (draft → active → superseded); x-openregister-aggregations documents the reconciliation-bridge roll-up. A single ADR-031 exception-path guard (OCA\\Shillinq\\Lifecycle\\DualGaapGuard) enforces the two cross-field preconditions the declarative DSL cannot yet express: a DualTransaction may only be reconciled once it carries a divergence reason code AND (for temporary differences) a deferred-tax effect, and a FrameworkElection may only activate once its comply-or-explain motivation and AVA-besluit reference are present and the elected variant matches the measured size criteria. Seed objects ship five worked examples (lease IFRS-16, pension IAS-19, ECL IFRS-9, deferred-tax temporary difference and a framework election) per design.md."
+  },
+  "components": {
+    "schemas": {
+      "AccountingFramework": {
+        "slug": "AccountingFramework",
+        "icon": "Earth",
+        "version": "0.1.0",
+        "title": "Accounting Framework",
+        "description": "A financial-reporting framework (IFRS-EU, NL-GAAP-RJ, US-GAAP) with its version, effective date, jurisdictions, regulator, base currency and statement templates (REQ-DGAAP-001). The basis for parallel-ledger materialisation: every GL posting is booked under each active framework.",
+        "x-schema-org": "schema:DefinedTerm",
+        "x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
+        "type": "object",
+        "required": [
+          "identifier",
+          "version",
+          "effectiveDate",
+          "regulator",
+          "administrationId"
+        ],
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "description": "Framework identifier (REQ-DGAAP-001).",
+            "enum": [
+              "IFRS-EU",
+              "NL-GAAP-RJ",
+              "US-GAAP"
+            ],
+            "example": "IFRS-EU",
+            "title": "Identifier"
+          },
+          "version": {
+            "type": "string",
+            "description": "Framework version year (the standards edition in force).",
+            "example": "2026",
+            "title": "Version"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "description": "Date from which this framework version applies (ISO-8601).",
+            "example": "2026-01-01",
+            "title": "Effective Date"
+          },
+          "jurisdictions": {
+            "type": "array",
+            "description": "ISO-3166 country codes where this framework applies.",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "NL",
+              "BE",
+              "DE"
+            ],
+            "title": "Jurisdictions"
+          },
+          "regulator": {
+            "type": "string",
+            "description": "Standard-setter / regulator for this framework.",
+            "enum": [
+              "IASB",
+              "RJ",
+              "FASB"
+            ],
+            "example": "IASB",
+            "title": "Regulator"
+          },
+          "baseCurrencyDefault": {
+            "type": "string",
+            "description": "Default ISO-4217 presentation currency.",
+            "default": "EUR",
+            "example": "EUR",
+            "title": "Base Currency Default"
+          },
+          "statementTemplates": {
+            "type": "array",
+            "description": "Identifiers of the financial-statement templates this framework drives (e.g. IAS-1, BW2-model-A).",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "IAS-1-presentation"
+            ],
+            "title": "Statement Templates"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads are scoped to the requesting user's administration (REQ-DGAAP-001).",
+            "example": "adm-holding-1",
+            "title": "Administration ID"
+          }
+        }
+      },
+      "ChartOfAccountsMapping": {
+        "slug": "ChartOfAccountsMapping",
+        "icon": "SwapHorizontal",
+        "version": "0.1.0",
+        "title": "Chart of Accounts Mapping",
+        "description": "Maps a source (RJ) account to one or more target (IFRS) accounts with an allocation rule (REQ-DGAAP-002). Supports one-to-one, one-to-many, many-to-one and recharacterization cardinalities; activation is blocked until a test-data reconciliation reaches ≥95% coverage or an explicit exception justification is recorded.",
+        "x-schema-org": "schema:PropertyValue",
+        "x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
+        "type": "object",
+        "required": [
+          "sourceAccount",
+          "targetAccounts",
+          "mappingType",
+          "effectiveFrom",
+          "administrationId"
+        ],
+        "properties": {
+          "sourceAccount": {
+            "type": "string",
+            "description": "Source RJ account number (FK to Account.accountNumber) (REQ-DGAAP-002).",
+            "example": "1530",
+            "title": "Source Account"
+          },
+          "targetAccounts": {
+            "type": "array",
+            "description": "Target IFRS account numbers this source account maps to (FK to Account.accountNumber).",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "1531",
+              "2531",
+              "2532"
+            ],
+            "title": "Target Accounts"
+          },
+          "mappingType": {
+            "type": "string",
+            "description": "Cardinality of the mapping (REQ-DGAAP-002).",
+            "enum": [
+              "one-to-one",
+              "one-to-many",
+              "many-to-one",
+              "recharacterization"
+            ],
+            "example": "one-to-many",
+            "title": "Mapping Type"
+          },
+          "allocationRule": {
+            "type": "string",
+            "description": "How the source amount is split over the target accounts.",
+            "enum": [
+              "percentage",
+              "formula",
+              "ratio_driver"
+            ],
+            "example": "formula",
+            "title": "Allocation Rule"
+          },
+          "allocationDetail": {
+            "type": "string",
+            "description": "The concrete allocation (e.g. percentage split or formula expression such as ROU = PV(future_lease_payments, IBR)).",
+            "nullable": true,
+            "example": "ROU = PV(future_lease_payments, IBR); liability_current = next 12 months; liability_noncurrent = remainder",
+            "title": "Allocation Detail"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "description": "Date from which the mapping applies (ISO-8601).",
+            "example": "2026-01-01",
+            "title": "Effective From"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "description": "Date the mapping ceases to apply; null while open-ended.",
+            "nullable": true,
+            "example": null,
+            "title": "Effective To"
+          },
+          "coveragePercent": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Percentage of existing RJ mutations the mapping converts successfully on the validation test-run (REQ-DGAAP-002). Activation requires ≥95 unless an exception is documented.",
+            "example": 98.5,
+            "title": "Coverage Percent"
+          },
+          "exceptionJustification": {
+            "type": "string",
+            "description": "Approver justification when coverage is below 95% (REQ-DGAAP-002).",
+            "nullable": true,
+            "example": null,
+            "title": "Exception Justification"
+          },
+          "approver": {
+            "type": "string",
+            "description": "User id of the group-accountant who approved the mapping.",
+            "nullable": true,
+            "example": "group-accountant-1",
+            "title": "Approver"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration (REQ-DGAAP-002).",
+            "example": "adm-holding-1",
+            "title": "Administration ID"
+          }
+        }
+      },
+      "DualTransaction": {
+        "slug": "DualTransaction",
+        "icon": "ScaleBalance",
+        "version": "0.1.0",
+        "title": "Dual Transaction",
+        "description": "Links one base GL transaction to its parallel RJ and IFRS journal entries, with the divergence amount, reason code and permanence classification (REQ-DGAAP-003, REQ-DGAAP-006). Auto-populated on GL materialisation; the group-accountant may override the classification with an audit-trail reason. Lifecycle: open → classified → reconciled.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
+        "type": "object",
+        "required": [
+          "baseTransactionId",
+          "divergenceAmount",
+          "administrationId"
+        ],
+        "properties": {
+          "baseTransactionId": {
+            "type": "string",
+            "description": "FK to the base GLTransaction both ledgers derive from (REQ-DGAAP-003).",
+            "example": "GL-2026-04-0512",
+            "title": "Base Transaction ID"
+          },
+          "rjJournalEntries": {
+            "type": "array",
+            "description": "Journal lines booked under the RJ ledger.",
+            "items": {
+              "type": "object"
+            },
+            "example": [
+              {
+                "account": "1530",
+                "debit": 24300,
+                "credit": 0
+              },
+              {
+                "account": "1800",
+                "debit": 0,
+                "credit": 24750
+              }
+            ],
+            "title": "Rj Journal Entries"
+          },
+          "ifrsJournalEntries": {
+            "type": "array",
+            "description": "Journal lines booked under the IFRS ledger.",
+            "items": {
+              "type": "object"
+            },
+            "example": [
+              {
+                "account": "1531",
+                "debit": 24300,
+                "credit": 0
+              },
+              {
+                "account": "2531",
+                "debit": 0,
+                "credit": 9744
+              },
+              {
+                "account": "2532",
+                "debit": 0,
+                "credit": 14556
+              }
+            ],
+            "title": "Ifrs Journal Entries"
+          },
+          "divergenceAmount": {
+            "type": "number",
+            "description": "Absolute value of the divergence between the RJ and IFRS treatment, in the administration currency (REQ-DGAAP-003).",
+            "example": 24300.0,
+            "title": "Divergence Amount"
+          },
+          "divergenceReasonCode": {
+            "type": "string",
+            "description": "Standard-specific reason for the divergence (REQ-DGAAP-003). Empty/absent while the transaction is still being classified.",
+            "enum": [
+              "LEASE_IFRS16",
+              "PENSION_IAS19",
+              "ECL_IFRS9",
+              "REVENUE_IFRS15",
+              "IMPAIRMENT_IAS36",
+              "BORROWING_COST_IAS23",
+              "DEFERRED_TAX_IAS12",
+              "BUSINESS_COMBINATION_IFRS3",
+              "NONE"
+            ],
+            "example": "LEASE_IFRS16",
+            "title": "Divergence Reason Code"
+          },
+          "divergenceClassification": {
+            "type": "string",
+            "description": "Permanence of the divergence; temporary differences drive deferred tax under IAS 12 (REQ-DGAAP-006).",
+            "enum": [
+              "permanent",
+              "temporary",
+              "reclassification"
+            ],
+            "example": "temporary",
+            "title": "Divergence Classification"
+          },
+          "deferredTaxEffect": {
+            "type": "number",
+            "description": "Deferred-tax impact of a temporary difference (amount × statutory rate); zero for permanent differences and reclassifications (REQ-DGAAP-006).",
+            "nullable": true,
+            "example": 6075.0,
+            "title": "Deferred Tax Effect"
+          },
+          "classificationOverridden": {
+            "type": "boolean",
+            "description": "True when a group-accountant manually overrode the auto-classification (REQ-DGAAP-003).",
+            "default": false,
+            "example": false,
+            "title": "Classification Overridden"
+          },
+          "overrideReason": {
+            "type": "string",
+            "description": "Audit-trail reason for a manual classification override (REQ-DGAAP-003).",
+            "nullable": true,
+            "example": null,
+            "title": "Override Reason"
+          },
+          "state": {
+            "type": "string",
+            "description": "Lifecycle state (REQ-DGAAP-003).",
+            "enum": [
+              "open",
+              "classified",
+              "reconciled"
+            ],
+            "default": "open",
+            "example": "classified",
+            "title": "State"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration (REQ-DGAAP-003).",
+            "example": "adm-holding-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "open",
+          "states": {
+            "open": {
+              "label": "Open",
+              "description": "Materialised under both ledgers; divergence not yet classified."
+            },
+            "classified": {
+              "label": "Classified",
+              "description": "Divergence reason code and permanence assigned (auto or manual override)."
+            },
+            "reconciled": {
+              "label": "Reconciled",
+              "description": "Included in a period ReconciliationBridge; deferred-tax effect recorded where the difference is temporary."
+            }
+          },
+          "transitions": {
+            "classify": {
+              "from": "open",
+              "to": "classified",
+              "label": "Classify divergence",
+              "description": "Assign the divergence reason code and permanence (REQ-DGAAP-003)."
+            },
+            "reconcile": {
+              "from": "classified",
+              "to": "reconciled",
+              "label": "Mark reconciled",
+              "description": "Include in the period bridge; requires a reason code and (for temporary differences) a deferred-tax effect (REQ-DGAAP-006).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\DualGaapGuard::canReconcileTransaction"
+            },
+            "reopen": {
+              "from": "classified",
+              "to": "open",
+              "label": "Reopen for reclassification",
+              "description": "Return to open to revise the divergence classification (REQ-DGAAP-003)."
+            }
+          }
+        }
+      },
+      "ReconciliationBridge": {
+        "slug": "ReconciliationBridge",
+        "icon": "TransitConnectionVariant",
+        "version": "0.1.0",
+        "title": "Reconciliation Bridge",
+        "description": "The RJ-to-IFRS conversion for one period and metric (equity or net result): opening RJ balance, adjustments per standard, tax effect per jurisdiction and closing IFRS balance (REQ-DGAAP-005, REQ-DGAAP-006). A declarative aggregation over the period's reconciled DualTransactions; each adjustment line is drill-down navigable to its StandardSpecificCalculation and GL entries (REQ-DGAAP-008).",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
+        "type": "object",
+        "required": [
+          "period",
+          "fromFramework",
+          "toFramework",
+          "metric",
+          "openingBalanceRj",
+          "closingBalanceIfrs",
+          "administrationId"
+        ],
+        "properties": {
+          "period": {
+            "type": "string",
+            "description": "Fiscal period the bridge covers (REQ-DGAAP-005).",
+            "example": "2026",
+            "title": "Period"
+          },
+          "fromFramework": {
+            "type": "string",
+            "description": "Source framework identifier.",
+            "example": "NL-GAAP-RJ",
+            "title": "From Framework"
+          },
+          "toFramework": {
+            "type": "string",
+            "description": "Target framework identifier.",
+            "example": "IFRS-EU",
+            "title": "To Framework"
+          },
+          "metric": {
+            "type": "string",
+            "description": "Which figure this bridge reconciles (REQ-DGAAP-005).",
+            "enum": [
+              "equity",
+              "net_result"
+            ],
+            "example": "equity",
+            "title": "Metric"
+          },
+          "openingBalanceRj": {
+            "type": "number",
+            "description": "Opening RJ balance for the metric (REQ-DGAAP-005).",
+            "example": 1000000.0,
+            "title": "Opening Balance Rj"
+          },
+          "adjustments": {
+            "type": "array",
+            "description": "Bridging adjustments per IFRS standard (description, amount, account, standardReference, standardCalculationId).",
+            "items": {
+              "type": "object"
+            },
+            "example": [
+              {
+                "description": "IFRS 16 lease right-of-use",
+                "amount": 24300,
+                "account": "1531",
+                "standardReference": "IFRS-16"
+              },
+              {
+                "description": "IAS 19 service cost",
+                "amount": -234000,
+                "account": "2900",
+                "standardReference": "IAS-19"
+              }
+            ],
+            "title": "Adjustments"
+          },
+          "totalTemporaryDifferences": {
+            "type": "number",
+            "description": "Sum of temporary differences in the period (REQ-DGAAP-006).",
+            "example": 24300.0,
+            "title": "Total Temporary Differences"
+          },
+          "totalPermanentDifferences": {
+            "type": "number",
+            "description": "Sum of permanent differences in the period (REQ-DGAAP-006).",
+            "example": 0.0,
+            "title": "Total Permanent Differences"
+          },
+          "taxEffect": {
+            "type": "array",
+            "description": "Deferred-tax effect per jurisdiction (jurisdiction, amount, statutoryRate) (REQ-DGAAP-006).",
+            "items": {
+              "type": "object"
+            },
+            "example": [
+              {
+                "jurisdiction": "NL",
+                "amount": 6075,
+                "statutoryRate": 0.258
+              }
+            ],
+            "title": "Tax Effect"
+          },
+          "closingBalanceIfrs": {
+            "type": "number",
+            "description": "Closing IFRS balance = openingBalanceRj + sum(adjustments) (REQ-DGAAP-005).",
+            "example": 790300.0,
+            "title": "Closing Balance Ifrs"
+          },
+          "approver": {
+            "type": "string",
+            "description": "User id who signed off the bridge.",
+            "nullable": true,
+            "example": "controller-1",
+            "title": "Approver"
+          },
+          "signoffDate": {
+            "type": "string",
+            "description": "Sign-off date (ISO-8601).",
+            "nullable": true,
+            "example": null,
+            "title": "Signoff Date"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration (REQ-DGAAP-005).",
+            "example": "adm-holding-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-aggregations": {
+          "bridgeByPeriodStandard": {
+            "description": "Declarative shape of the reconciliation-bridge roll-up (REQ-DGAAP-005, REQ-DGAAP-006). Groups reconciled DualTransactions by (period, divergenceReasonCode) within an administration and framework pair, sums the divergence amounts per standard into adjustments[], sums temporary vs. permanent differences, and derives closingBalanceIfrs = openingBalanceRj + sum(adjustments). Deferred-tax effect is summed per jurisdiction from each temporary DualTransaction's deferredTaxEffect. When the OpenRegister aggregation engine cannot express the cross-schema join for per-jurisdiction tax effect, the same result is computed from the real ObjectService API (find/findAll).",
+            "source": "DualTransaction",
+            "filter": {
+              "period": "@self.period",
+              "state": "reconciled"
+            },
+            "groupBy": [
+              "DualTransaction.divergenceReasonCode"
+            ],
+            "operations": {
+              "adjustmentTotal": {
+                "field": "DualTransaction.divergenceAmount",
+                "operation": "sum",
+                "target": "adjustments"
+              },
+              "totalTemporaryDifferences": {
+                "field": "DualTransaction.divergenceAmount",
+                "operation": "sum",
+                "condition": "DualTransaction.divergenceClassification = 'temporary'",
+                "target": "totalTemporaryDifferences"
+              },
+              "totalPermanentDifferences": {
+                "field": "DualTransaction.divergenceAmount",
+                "operation": "sum",
+                "condition": "DualTransaction.divergenceClassification = 'permanent'",
+                "target": "totalPermanentDifferences"
+              },
+              "closingBalanceIfrs": {
+                "operation": "expression",
+                "expression": "openingBalanceRj + adjustmentTotal",
+                "target": "closingBalanceIfrs"
+              }
+            }
+          }
+        }
+      },
+      "StandardSpecificCalculation": {
+        "slug": "StandardSpecificCalculation",
+        "icon": "Calculator",
+        "version": "0.1.0",
+        "title": "Standard-Specific Calculation",
+        "description": "The supporting calculation behind a divergence: IFRS-16 incremental borrowing rate, IAS-19 projected-unit-credit, IFRS-9 expected-credit-loss staging, IFRS-15 revenue model (REQ-DGAAP-004, REQ-DGAAP-005). Stores inputs, outputs, revaluation frequency, actuary/validator signoff (IAS 19) and an audit-evidence URI to the source document (e.g. an actuarial report in docudesk).",
+        "x-schema-org": "schema:Quantity",
+        "x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
+        "type": "object",
+        "required": [
+          "standardCode",
+          "calculationMethod",
+          "administrationId"
+        ],
+        "properties": {
+          "standardCode": {
+            "type": "string",
+            "description": "The standard this calculation supports (REQ-DGAAP-004).",
+            "enum": [
+              "IFRS-16",
+              "IAS-19",
+              "IFRS-9",
+              "IFRS-15",
+              "IAS-36",
+              "IAS-23",
+              "IAS-12",
+              "IFRS-3"
+            ],
+            "example": "IFRS-16",
+            "title": "Standard Code"
+          },
+          "contractOrPositionReference": {
+            "type": "string",
+            "description": "Reference to the contract / position the calculation concerns (lease ref, plan id, customer segment).",
+            "nullable": true,
+            "example": "Lease-2026-AUTO-001",
+            "title": "Contract Or Position Reference"
+          },
+          "calculationMethod": {
+            "type": "string",
+            "description": "The valuation method applied (REQ-DGAAP-004).",
+            "enum": [
+              "incremental_borrowing_rate",
+              "projected_unit_credit",
+              "expected_credit_loss_stages",
+              "five_step_revenue",
+              "recoverable_amount"
+            ],
+            "example": "incremental_borrowing_rate",
+            "title": "Calculation Method"
+          },
+          "inputs": {
+            "type": "object",
+            "description": "Calculation inputs (free-form JSON: discount rate, demographic tables, future lease payments, aging buckets, macro overlays).",
+            "example": {
+              "future_lease_payments": [
+                450,
+                450,
+                450
+              ],
+              "lease_commencement_date": "2026-04-15",
+              "lease_term_months": 60,
+              "incremental_borrowing_rate": 0.035
+            },
+            "title": "Inputs"
+          },
+          "outputs": {
+            "type": "object",
+            "description": "Calculation outputs (free-form JSON: ROU asset, liability split, service cost, ECL by stage).",
+            "example": {
+              "rou_asset_initial": 24300,
+              "liability_current": 9744,
+              "liability_noncurrent": 14556
+            },
+            "title": "Outputs"
+          },
+          "revaluationFrequency": {
+            "type": "string",
+            "description": "How often the calculation is re-run (REQ-DGAAP-005).",
+            "enum": [
+              "monthly",
+              "quarterly",
+              "annual"
+            ],
+            "default": "annual",
+            "example": "annual",
+            "title": "Revaluation Frequency"
+          },
+          "lastCalculatedAt": {
+            "type": "string",
+            "description": "Timestamp of the last calculation run (ISO-8601).",
+            "nullable": true,
+            "example": "2026-04-30T00:00:00+00:00",
+            "title": "Last Calculated At"
+          },
+          "actuarySignoff": {
+            "type": "string",
+            "description": "Actuary / validator who signed off the calculation (required for IAS 19) (REQ-DGAAP-004).",
+            "nullable": true,
+            "example": null,
+            "title": "Actuary Signoff"
+          },
+          "auditEvidenceUri": {
+            "type": "string",
+            "description": "URI to the source evidence document (e.g. docudesk:// actuarial report) (REQ-DGAAP-008).",
+            "nullable": true,
+            "example": "docudesk://lease-contract-2026-AUTO-001.pdf",
+            "title": "Audit Evidence URI"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration (REQ-DGAAP-004).",
+            "example": "adm-holding-1",
+            "title": "Administration ID"
+          }
+        }
+      },
+      "FrameworkElection": {
+        "slug": "FrameworkElection",
+        "icon": "Gavel",
+        "version": "0.1.0",
+        "title": "Framework Election",
+        "description": "Records a legal entity's primary-framework election with comply-or-explain motivation, RJ variant, measured size criteria and AVA-besluit reference (REQ-DGAAP-007, REQ-DGAAP-010). Lifecycle: draft → active → superseded. Activation requires a motivation, an AVA-besluit reference and a variant consistent with the measured size criteria; the system warns when criteria breach the threshold for two consecutive years.",
+        "x-schema-org": "schema:Action",
+        "x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
+        "type": "object",
+        "required": [
+          "legalEntityId",
+          "primaryFramework",
+          "rjVariant",
+          "administrationId"
+        ],
+        "properties": {
+          "legalEntityId": {
+            "type": "string",
+            "description": "FK to the legal entity this election applies to (REQ-DGAAP-010).",
+            "example": "entity-holding-bv",
+            "title": "Legal Entity ID"
+          },
+          "primaryFramework": {
+            "type": "string",
+            "description": "The primary reporting framework elected (REQ-DGAAP-010).",
+            "enum": [
+              "IFRS-EU",
+              "NL-GAAP-RJ"
+            ],
+            "example": "NL-GAAP-RJ",
+            "title": "Primary Framework"
+          },
+          "complyOrExplainMotivation": {
+            "type": "string",
+            "description": "Comply-or-explain motivation for the election (e.g. small-entity exemption BW2 art 2:396) (REQ-DGAAP-010).",
+            "nullable": true,
+            "example": "Kleine rechtspersoon op basis van BW2 art 2:396.",
+            "title": "Comply Or Explain Motivation"
+          },
+          "rjVariant": {
+            "type": "string",
+            "description": "RJ variant elected (REQ-DGAAP-010).",
+            "enum": [
+              "rj-in_full",
+              "RJk",
+              "ifrs-complete"
+            ],
+            "example": "RJk",
+            "title": "Rj Variant"
+          },
+          "sizeCriteriaBalanceSheetTotal": {
+            "type": "number",
+            "description": "Measured balance-sheet total used for the size test (REQ-DGAAP-010).",
+            "nullable": true,
+            "example": 5800000.0,
+            "title": "Size Criteria Balanstotaal"
+          },
+          "sizeCriteriaNetRevenue": {
+            "type": "number",
+            "description": "Measured net turnover used for the size test (REQ-DGAAP-010).",
+            "nullable": true,
+            "example": 11200000.0,
+            "title": "Size Criteria Netto Omzet"
+          },
+          "sizeCriteriaAverageEmployees": {
+            "type": "integer",
+            "description": "Measured average headcount used for the size test (REQ-DGAAP-010).",
+            "nullable": true,
+            "example": 42,
+            "title": "Size Criteria Gemiddeld Werknemers"
+          },
+          "sizeCriteriaBreachYears": {
+            "type": "integer",
+            "description": "Number of consecutive years the size criteria have breached the variant threshold; a value ≥2 triggers a warning (REQ-DGAAP-010).",
+            "default": 0,
+            "example": 0,
+            "title": "Size Criteria Breach Years"
+          },
+          "avaDecisionReference": {
+            "type": "string",
+            "description": "Reference to the AVA (general meeting) resolution recording the election (REQ-DGAAP-010).",
+            "nullable": true,
+            "example": "AVA-2026-03-12-besluit-4",
+            "title": "Ava Besluit Reference"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "description": "Date from which the election applies (ISO-8601).",
+            "nullable": true,
+            "example": "2026-01-01",
+            "title": "Effective From"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "description": "Date the election ceases to apply; null while active.",
+            "nullable": true,
+            "example": null,
+            "title": "Effective To"
+          },
+          "state": {
+            "type": "string",
+            "description": "Lifecycle state (REQ-DGAAP-010).",
+            "enum": [
+              "draft",
+              "active",
+              "superseded"
+            ],
+            "default": "draft",
+            "example": "active",
+            "title": "State"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration (REQ-DGAAP-010).",
+            "example": "adm-holding-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Election being prepared; motivation and AVA reference may be incomplete."
+            },
+            "active": {
+              "label": "Active",
+              "description": "The entity's effective framework election; blocks publication of statements inconsistent with it (REQ-DGAAP-010)."
+            },
+            "superseded": {
+              "label": "Superseded",
+              "description": "Replaced by a later election effective from a new date."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "draft",
+              "to": "active",
+              "label": "Activate election",
+              "description": "Activate once the motivation, AVA-besluit reference and a variant consistent with the measured size criteria are present (REQ-DGAAP-010).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\DualGaapGuard::canActivateElection"
+            },
+            "supersede": {
+              "from": "active",
+              "to": "superseded",
+              "label": "Supersede",
+              "description": "Supersede when a later election takes effect (REQ-DGAAP-007)."
+            }
+          }
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AccountingFramework",
+          "slug": "framework-ifrs-eu-2026"
+        },
+        "identifier": "IFRS-EU",
+        "version": "2026",
+        "effectiveDate": "2026-01-01",
+        "jurisdictions": [
+          "NL",
+          "BE",
+          "DE"
+        ],
+        "regulator": "IASB",
+        "baseCurrencyDefault": "EUR",
+        "statementTemplates": [
+          "IAS-1-presentation"
+        ],
+        "administrationId": "adm-holding-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AccountingFramework",
+          "slug": "framework-nl-gaap-rj-2026"
+        },
+        "identifier": "NL-GAAP-RJ",
+        "version": "2026",
+        "effectiveDate": "2026-01-01",
+        "jurisdictions": [
+          "NL"
+        ],
+        "regulator": "RJ",
+        "baseCurrencyDefault": "EUR",
+        "statementTemplates": [
+          "BW2-model-A",
+          "BW2-model-B"
+        ],
+        "administrationId": "adm-holding-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ChartOfAccountsMapping",
+          "slug": "coa-lease-1530-to-ifrs16"
+        },
+        "sourceAccount": "1530",
+        "targetAccounts": [
+          "1531",
+          "2531",
+          "2532"
+        ],
+        "mappingType": "one-to-many",
+        "allocationRule": "formula",
+        "allocationDetail": "ROU = PV(future_lease_payments, IBR); liability_current = next 12 months; liability_noncurrent = remainder",
+        "effectiveFrom": "2026-01-01",
+        "effectiveTo": null,
+        "coveragePercent": 98.5,
+        "exceptionJustification": null,
+        "approver": "group-accountant-1",
+        "administrationId": "adm-holding-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DualTransaction",
+          "slug": "dt-lease-2026-04-0512"
+        },
+        "baseTransactionId": "GL-2026-04-0512",
+        "rjJournalEntries": [
+          {
+            "account": "1530",
+            "debit": 24300,
+            "credit": 0
+          },
+          {
+            "account": "4120",
+            "debit": 450,
+            "credit": 0
+          },
+          {
+            "account": "1800",
+            "debit": 0,
+            "credit": 24750
+          }
+        ],
+        "ifrsJournalEntries": [
+          {
+            "account": "1531",
+            "debit": 24300,
+            "credit": 0
+          },
+          {
+            "account": "2531",
+            "debit": 0,
+            "credit": 9744
+          },
+          {
+            "account": "2532",
+            "debit": 0,
+            "credit": 14556
+          }
+        ],
+        "divergenceAmount": 24300.0,
+        "divergenceReasonCode": "LEASE_IFRS16",
+        "divergenceClassification": "temporary",
+        "deferredTaxEffect": 6075.0,
+        "classificationOverridden": false,
+        "overrideReason": null,
+        "state": "reconciled",
+        "administrationId": "adm-holding-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DualTransaction",
+          "slug": "dt-pension-2026-12-9001"
+        },
+        "baseTransactionId": "GL-2026-12-9001",
+        "rjJournalEntries": [
+          {
+            "account": "4400",
+            "debit": 180000,
+            "credit": 0
+          },
+          {
+            "account": "1800",
+            "debit": 0,
+            "credit": 180000
+          }
+        ],
+        "ifrsJournalEntries": [
+          {
+            "account": "4400",
+            "debit": 234000,
+            "credit": 0
+          },
+          {
+            "account": "2900",
+            "debit": 0,
+            "credit": 234000
+          }
+        ],
+        "divergenceAmount": 54000.0,
+        "divergenceReasonCode": "PENSION_IAS19",
+        "divergenceClassification": "temporary",
+        "deferredTaxEffect": 13932.0,
+        "classificationOverridden": false,
+        "overrideReason": null,
+        "state": "reconciled",
+        "administrationId": "adm-holding-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DualTransaction",
+          "slug": "dt-ecl-2026-06-3300"
+        },
+        "baseTransactionId": "GL-2026-06-3300",
+        "rjJournalEntries": [
+          {
+            "account": "4900",
+            "debit": 42000,
+            "credit": 0
+          },
+          {
+            "account": "1390",
+            "debit": 0,
+            "credit": 42000
+          }
+        ],
+        "ifrsJournalEntries": [
+          {
+            "account": "4900",
+            "debit": 67000,
+            "credit": 0
+          },
+          {
+            "account": "1390",
+            "debit": 0,
+            "credit": 67000
+          }
+        ],
+        "divergenceAmount": 25000.0,
+        "divergenceReasonCode": "ECL_IFRS9",
+        "divergenceClassification": "temporary",
+        "deferredTaxEffect": 6450.0,
+        "classificationOverridden": false,
+        "overrideReason": null,
+        "state": "classified",
+        "administrationId": "adm-holding-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ReconciliationBridge",
+          "slug": "bridge-2026-equity"
+        },
+        "period": "2026",
+        "fromFramework": "NL-GAAP-RJ",
+        "toFramework": "IFRS-EU",
+        "metric": "equity",
+        "openingBalanceRj": 1000000.0,
+        "adjustments": [
+          {
+            "description": "IFRS 16 lease right-of-use",
+            "amount": 24300,
+            "account": "1531",
+            "standardReference": "IFRS-16",
+            "standardCalculationId": "calc-ifrs16-lease-001"
+          },
+          {
+            "description": "IAS 19 pension remeasurement",
+            "amount": -54000,
+            "account": "2900",
+            "standardReference": "IAS-19",
+            "standardCalculationId": "calc-ias19-pension-001"
+          }
+        ],
+        "totalTemporaryDifferences": 78300.0,
+        "totalPermanentDifferences": 0.0,
+        "taxEffect": [
+          {
+            "jurisdiction": "NL",
+            "amount": 20007,
+            "statutoryRate": 0.258
+          }
+        ],
+        "closingBalanceIfrs": 970300.0,
+        "approver": "controller-1",
+        "signoffDate": "2027-03-31",
+        "administrationId": "adm-holding-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "StandardSpecificCalculation",
+          "slug": "calc-ifrs16-lease-001"
+        },
+        "standardCode": "IFRS-16",
+        "contractOrPositionReference": "Lease-2026-AUTO-001",
+        "calculationMethod": "incremental_borrowing_rate",
+        "inputs": {
+          "future_lease_payments": [
+            450,
+            450,
+            450,
+            450,
+            450
+          ],
+          "lease_commencement_date": "2026-04-15",
+          "lease_term_months": 60,
+          "incremental_borrowing_rate": 0.035
+        },
+        "outputs": {
+          "rou_asset_initial": 24300,
+          "liability_current": 9744,
+          "liability_noncurrent": 14556,
+          "interest_expense_year1": 851
+        },
+        "revaluationFrequency": "annual",
+        "lastCalculatedAt": "2026-04-30T00:00:00+00:00",
+        "actuarySignoff": null,
+        "auditEvidenceUri": "docudesk://lease-contract-2026-AUTO-001.pdf",
+        "administrationId": "adm-holding-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "StandardSpecificCalculation",
+          "slug": "calc-ias19-pension-001"
+        },
+        "standardCode": "IAS-19",
+        "contractOrPositionReference": "DB-plan-2026",
+        "calculationMethod": "projected_unit_credit",
+        "inputs": {
+          "active_members": 234,
+          "discount_rate": 0.032,
+          "salary_growth": 0.02,
+          "plan_asset_return": 0.04
+        },
+        "outputs": {
+          "service_cost": 234000,
+          "remeasurement_oci": -54000,
+          "defined_benefit_obligation": 4120000
+        },
+        "revaluationFrequency": "quarterly",
+        "lastCalculatedAt": "2026-12-31T00:00:00+00:00",
+        "actuarySignoff": "actuary-firm-x",
+        "auditEvidenceUri": "docudesk://actuarial-report-2026.pdf",
+        "administrationId": "adm-holding-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "FrameworkElection",
+          "slug": "election-holding-bv-rjk"
+        },
+        "legalEntityId": "entity-holding-bv",
+        "primaryFramework": "NL-GAAP-RJ",
+        "complyOrExplainMotivation": "Kleine rechtspersoon op basis van BW2 art 2:396; geen beursnotering.",
+        "rjVariant": "RJk",
+        "sizeCriteriaBalanceSheetTotal": 5800000.0,
+        "sizeCriteriaNetRevenue": 11200000.0,
+        "sizeCriteriaAverageEmployees": 42,
+        "sizeCriteriaBreachYears": 0,
+        "avaDecisionReference": "AVA-2026-03-12-besluit-4",
+        "effectiveFrom": "2026-01-01",
+        "effectiveTo": null,
+        "state": "active",
+        "administrationId": "adm-holding-1"
+      }
+    ]
+  }
 }

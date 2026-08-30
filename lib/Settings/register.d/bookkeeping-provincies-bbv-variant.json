@@ -1,0 +1,481 @@
+{
+  "components": {
+    "schemas": {
+      "GLLine": {
+        "properties": {
+          "programmeStructure": {
+            "type": "string",
+            "description": "BBV provincie programma-indeling this GL line is allocated to (REQ-BBL-001). One of the seven canonical provincie programmes per the BBV-provincies handleiding. Null until the line is mapped via the Budget-to-Programme Linker. Distinct from the BBVProgramma.programmaStructure discriminator (taakveld/kostentoedeling); on provincie administrations the seven values below are the canonical programme codes.",
+            "enum": [
+              "ruimte",
+              "mobiliteit",
+              "water",
+              "milieu",
+              "cultuur",
+              "economie",
+              "bestuur"
+            ],
+            "nullable": true,
+            "example": "mobiliteit",
+            "title": "Programma Structure"
+          },
+          "programmeAssignedAt": {
+            "type": "string",
+            "format": "date",
+            "description": "Effective date on which programmaStructure was assigned via the Budget-to-Programme Linker or a manual detail edit (REQ-BBL-001/003). Null when unmapped.",
+            "nullable": true,
+            "example": "2026-05-21",
+            "title": "Programma Assigned At"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "preconditions": {
+            "save": "OCA\\Shillinq\\Guard\\ProgrammaLinkGuard::validateOnSave"
+          }
+        },
+        "x-openregister-aggregations": {
+          "programmeBudgetVsActuals": {
+            "description": "Spend and commitment roll-up per BBV provincie programme, consumed by the BBV Compliance Dashboard (REQ-BBC-001). Groups posted/committed GL lines by programmaStructure and fiscalYearId so the dashboard can compute Spent, Committed and Remaining against the matching Budget records. Lines with a null programmaStructure are excluded (unmapped).",
+            "filter": {
+              "programmeStructure": {
+                "operator": "isNotNull"
+              }
+            },
+            "groupBy": [
+              "programmeStructure",
+              "fiscalYearId"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "debit"
+                },
+                "as": "spent"
+              },
+              {
+                "metric": "sum",
+                "field": "amount",
+                "condition": {
+                  "side": "credit"
+                },
+                "as": "credited"
+              },
+              {
+                "metric": "expression",
+                "expression": "spent - credited",
+                "as": "netSpent"
+              }
+            ]
+          }
+        }
+      },
+      "BbvProgrammeBudget": {
+        "slug": "BbvProgrammeBudget",
+        "icon": "CashMultiple",
+        "version": "0.1.0",
+        "title": "BBV Programme Budget",
+        "description": "A BBV programme budget for a Dutch provincie administration (REQ-BBC-001). Each budget allocates a fiscal-year amount to exactly one of the seven canonical BBV provincie programmes. The BBV Compliance Dashboard aggregates Spent and Committed GL lines (matched on GLLine.programmaStructure + fiscalYear) against the budget Total to derive Remaining and the traffic-light status. Provincie-scoped; gemeente/waterschap administrations use taakveld/kostentoedeling mappings instead.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-provincies-bbv-variant/spec.md",
+        "type": "object",
+        "required": [
+          "budgetName",
+          "totalAmount",
+          "programmeStructure",
+          "status",
+          "fiscalYear",
+          "administrationId"
+        ],
+        "properties": {
+          "budgetName": {
+            "type": "string",
+            "description": "Human-readable budget name or identifier.",
+            "example": "Mobiliteit operationeel 2026",
+            "title": "Budget Name"
+          },
+          "totalAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Total budgeted amount in EUR for the programme + fiscal year (REQ-BBC-001).",
+            "example": 500000,
+            "title": "Total Amount"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code; provincie budgets are EUR.",
+            "default": "EUR",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "programmeStructure": {
+            "type": "string",
+            "description": "The canonical BBV provincie programme this budget allocates to (REQ-BBC-001). Locked to the seven legislated programmes; provinces with local variations map to this taxonomy (design D3).",
+            "enum": [
+              "ruimte",
+              "mobiliteit",
+              "water",
+              "milieu",
+              "cultuur",
+              "economie",
+              "bestuur"
+            ],
+            "example": "mobiliteit",
+            "title": "Programma Structure"
+          },
+          "status": {
+            "type": "string",
+            "description": "Budget approval status used by the dashboard Budget-status filter (REQ-BBC-002).",
+            "enum": [
+              "approved",
+              "provisional",
+              "amended"
+            ],
+            "default": "provisional",
+            "example": "approved",
+            "title": "Status"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "description": "Fiscal year this budget applies to (REQ-BBC-002).",
+            "example": 2026,
+            "title": "Fiscal Year"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date on which the budget becomes effective.",
+            "nullable": true,
+            "example": "2026-01-01",
+            "title": "Start Date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date on which the budget expires.",
+            "nullable": true,
+            "example": "2026-12-31",
+            "title": "End Date"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional purpose or scope description for the budget.",
+            "nullable": true,
+            "title": "Description"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the provincie Administration owning this budget.",
+            "example": "adm-provincie-noord-holland",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeping-approver": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Budget is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BBVProgramma",
+        "slug": "bbv-prov-ruimte"
+      },
+      "code": "ruimte",
+      "name": "Ruimte",
+      "description": "Ruimtelijke ordening, gebiedsontwikkeling en wonen conform de BBV-provincies programma-indeling.",
+      "programmeStructure": "taskField",
+      "bbvVariant": "province",
+      "administrationId": "template"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BBVProgramma",
+        "slug": "bbv-prov-mobiliteit"
+      },
+      "code": "mobiliteit",
+      "name": "Mobiliteit",
+      "description": "Provinciale wegen, openbaar vervoer en bereikbaarheid conform de BBV-provincies programma-indeling.",
+      "programmeStructure": "taskField",
+      "bbvVariant": "province",
+      "administrationId": "template"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BBVProgramma",
+        "slug": "bbv-prov-water"
+      },
+      "code": "water",
+      "name": "Water",
+      "description": "Waterbeheer, waterveiligheid en grondwater conform de BBV-provincies programma-indeling.",
+      "programmeStructure": "taskField",
+      "bbvVariant": "province",
+      "administrationId": "template"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BBVProgramma",
+        "slug": "bbv-prov-milieu"
+      },
+      "code": "milieu",
+      "name": "Milieu",
+      "description": "Milieubeleid, vergunningverlening en handhaving conform de BBV-provincies programma-indeling.",
+      "programmeStructure": "taskField",
+      "bbvVariant": "province",
+      "administrationId": "template"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BBVProgramma",
+        "slug": "bbv-prov-cultuur"
+      },
+      "code": "cultuur",
+      "name": "Cultuur",
+      "description": "Cultuur, erfgoed en monumenten conform de BBV-provincies programma-indeling.",
+      "programmeStructure": "taskField",
+      "bbvVariant": "province",
+      "administrationId": "template"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BBVProgramma",
+        "slug": "bbv-prov-economie"
+      },
+      "code": "economie",
+      "name": "Economie",
+      "description": "Economische ontwikkeling, arbeidsmarkt en innovatie conform de BBV-provincies programma-indeling.",
+      "programmeStructure": "taskField",
+      "bbvVariant": "province",
+      "administrationId": "template"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BBVProgramma",
+        "slug": "bbv-prov-bestuur"
+      },
+      "code": "bestuur",
+      "name": "Bestuur",
+      "description": "Bestuur, organisatie en algemene dekkingsmiddelen conform de BBV-provincies programma-indeling.",
+      "programmeStructure": "taskField",
+      "bbvVariant": "province",
+      "administrationId": "template"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BbvProgrammeBudget",
+        "slug": "example-bbv-prov-budget-mobiliteit-2026"
+      },
+      "budgetName": "Mobiliteit operationeel 2026",
+      "totalAmount": 500000,
+      "currency": "EUR",
+      "programmeStructure": "mobiliteit",
+      "status": "approved",
+      "fiscalYear": 2026,
+      "startDate": "2026-01-01",
+      "endDate": "2026-12-31",
+      "description": "Operationeel budget provinciale mobiliteit en openbaar vervoer.",
+      "administrationId": "adm-provincie-noord-holland"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BbvProgrammeBudget",
+        "slug": "example-bbv-prov-budget-water-2026"
+      },
+      "budgetName": "Water beheer 2026",
+      "totalAmount": 300000,
+      "currency": "EUR",
+      "programmeStructure": "water",
+      "status": "approved",
+      "fiscalYear": 2026,
+      "startDate": "2026-01-01",
+      "endDate": "2026-12-31",
+      "description": "Budget voor provinciaal waterbeheer en waterveiligheid.",
+      "administrationId": "adm-provincie-noord-holland"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BbvProgrammeBudget",
+        "slug": "example-bbv-prov-budget-cultuur-2026"
+      },
+      "budgetName": "Cultuur programmering 2026",
+      "totalAmount": 150000,
+      "currency": "EUR",
+      "programmeStructure": "cultuur",
+      "status": "approved",
+      "fiscalYear": 2026,
+      "startDate": "2026-01-01",
+      "endDate": "2026-12-31",
+      "description": "Budget voor culturele programmering en erfgoed.",
+      "administrationId": "adm-provincie-noord-holland"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BbvProgrammeBudget",
+        "slug": "example-bbv-prov-budget-economie-2026"
+      },
+      "budgetName": "Economie ontwikkeling 2026",
+      "totalAmount": 200000,
+      "currency": "EUR",
+      "programmeStructure": "economie",
+      "status": "provisional",
+      "fiscalYear": 2026,
+      "startDate": "2026-01-01",
+      "endDate": "2026-12-31",
+      "description": "Voorlopig budget voor economische ontwikkeling en innovatie.",
+      "administrationId": "adm-provincie-noord-holland"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BbvProgrammeBudget",
+        "slug": "example-bbv-prov-budget-bestuur-2026"
+      },
+      "budgetName": "Bestuur algemeen 2026",
+      "totalAmount": 100000,
+      "currency": "EUR",
+      "programmeStructure": "bestuur",
+      "status": "approved",
+      "fiscalYear": 2026,
+      "startDate": "2026-01-01",
+      "endDate": "2026-12-31",
+      "description": "Budget voor bestuur en organisatie.",
+      "administrationId": "adm-provincie-noord-holland"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BbvProgrammeBudget",
+        "slug": "example-bbv-prov-budget-ruimte-2026"
+      },
+      "budgetName": "Ruimte gebiedsontwikkeling 2026",
+      "totalAmount": 250000,
+      "currency": "EUR",
+      "programmeStructure": "ruimte",
+      "status": "approved",
+      "fiscalYear": 2026,
+      "startDate": "2026-01-01",
+      "endDate": "2026-12-31",
+      "description": "Budget voor ruimtelijke ordening en gebiedsontwikkeling.",
+      "administrationId": "adm-provincie-noord-holland"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "bbv-prov-glline-mobiliteit-personeel"
+      },
+      "transactionId": "gl-txn-2026-q1-revenue",
+      "lineNumber": 101,
+      "accountNumber": "4100",
+      "side": "debit",
+      "amount": 45000.0,
+      "currency": "EUR",
+      "periodId": "2026-05",
+      "description": "Personeel Mobiliteit",
+      "programmeStructure": "mobiliteit",
+      "programmeAssignedAt": "2026-05-15"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "bbv-prov-glline-water-personeel"
+      },
+      "transactionId": "gl-txn-2026-q1-revenue",
+      "lineNumber": 102,
+      "accountNumber": "4100",
+      "side": "debit",
+      "amount": 28000.0,
+      "currency": "EUR",
+      "periodId": "2026-05",
+      "description": "Personeel Water",
+      "programmeStructure": "water",
+      "programmeAssignedAt": "2026-05-15"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "bbv-prov-glline-cultuur-materialen"
+      },
+      "transactionId": "gl-txn-2026-q1-revenue",
+      "lineNumber": 103,
+      "accountNumber": "6200",
+      "side": "debit",
+      "amount": 12000.0,
+      "currency": "EUR",
+      "periodId": "2026-04",
+      "description": "Materialen Cultuur",
+      "programmeStructure": "cultuur",
+      "programmeAssignedAt": "2026-04-20"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "bbv-prov-glline-economie-contracten"
+      },
+      "transactionId": "gl-txn-2026-q1-revenue",
+      "lineNumber": 104,
+      "accountNumber": "6300",
+      "side": "debit",
+      "amount": 35000.0,
+      "currency": "EUR",
+      "periodId": "2026-05",
+      "description": "Contracten Economie",
+      "programmeStructure": "economie",
+      "programmeAssignedAt": "2026-05-10"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "GLLine",
+        "slug": "bbv-prov-glline-water-onmapped"
+      },
+      "transactionId": "gl-txn-2026-q1-revenue",
+      "lineNumber": 105,
+      "accountNumber": "6300",
+      "side": "debit",
+      "amount": 9000.0,
+      "currency": "EUR",
+      "periodId": "2026-05",
+      "description": "Onderhoud (nog niet toegewezen aan programma)"
+    }
+  ]
+}

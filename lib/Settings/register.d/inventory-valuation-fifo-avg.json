@@ -1,0 +1,237 @@
+{
+  "info": {
+    "version": "0.1.0-inventory-valuation-fifo-avg"
+  },
+  "components": {
+    "schemas": {
+      "InventoryValuation": {
+        "slug": "InventoryValuation",
+        "icon": "ScaleBalance",
+        "version": "0.1.0",
+        "title": "Inventory Valuation",
+        "titleNl": "Voorraadwaardering",
+        "description": "Per-item, per-warehouse inventory valuation snapshot driven by the inventory-stock-movement-ledger StockMove stream. valuationMethod selects FIFO (oldest-lot-first cost layer traversal of open inbound StockMove lots) or average (running weighted moving average recalculated on each inbound receipt). The snapshot stores the current quantity, unitCost and totalValue used by both Cost of Goods Sold (COGS) posting on outbound moves (CogsPosterService -> balanced GLTransaction) and the balance-sheet inventory asset value. Schema.org Product because the snapshot is a Product-scoped measurement. status active|adjusted|obsolete and a methodChange transition (FIFO <-> average) are guarded by InventoryValuationMethodGuard::checkZeroStock(): both transitions to obsolete and any methodChange require on-hand quantity = 0. ADR-031 declarative path; the FIFO traversal, moving-average recalculation and COGS GL posting are imperative services per design.md D4 (cross-schema computed-amount writes outside the current declarative DSL range). REQ-INV-001 / REQ-INV-002 / REQ-INV-005.",
+        "x-schema-org": "schema:Product",
+        "x-openregister-purpose": "snapshot",
+        "x-spec": "openspec/changes/inventory-valuation-fifo-avg/specs/inventory-valuation-fifo-avg/spec.md",
+        "type": "object",
+        "required": [
+          "quantity",
+          "unitCost",
+          "totalValue",
+          "valuationMethod",
+          "date",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "productId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to Product.sku (inventory-product-catalog). One InventoryValuation per (productId + warehouse) with status=active per REQ-INV-005.",
+            "example": "GT-10-2026",
+            "title": "Product ID"
+          },
+          "costCenterId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to AnalyticalDimension.code (dimensionType=cost-center). Optional cost-center dimension on the snapshot per ADR-000 + REQ-ADIM-101. Re-targeted from the retired CostCenter per REQ-ADIM-202.",
+            "example": "CC-MAGAZIJN-001",
+            "title": "Cost Center ID"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 0,
+            "multipleOf": 0.01,
+            "description": "On-hand quantity contributing to this snapshot. multipleOf 0.01 enforces 2-decimal precision (Money / quantity discipline; integer-cent arithmetic).",
+            "example": 50.0,
+            "title": "Quantity"
+          },
+          "unitCost": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Cost per unit under the active valuation method. FIFO: weighted average of remaining open lot costs. Moving-average: running weighted average. Rounded to 4 decimal places for moving-average per design.md D3.",
+            "example": 12.5,
+            "title": "Unit Cost"
+          },
+          "totalValue": {
+            "type": "number",
+            "minimum": 0,
+            "multipleOf": 0.01,
+            "description": "Total inventory value = quantity * unitCost, rounded to 2 decimal places (Money discipline). Recomputed on every StockMove that affects this snapshot.",
+            "example": 625.0,
+            "title": "Total Value"
+          },
+          "valuationMethod": {
+            "type": "string",
+            "enum": [
+              "FIFO",
+              "average"
+            ],
+            "description": "Costing method per REQ-INV-002. FIFO: oldest open StockMove lot consumed first. average: running weighted moving average. LIFO is intentionally excluded per NL GAAP. methodChange transition (FIFO <-> average) blocked when quantity > 0.",
+            "example": "FIFO",
+            "title": "Valuation Method"
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the snapshot or its last update. Stamped from the originating StockMove.postedAt by the valuation services.",
+            "example": "2026-05-01T00:00:00Z",
+            "title": "Date"
+          },
+          "warehouse": {
+            "type": "string",
+            "nullable": true,
+            "description": "Warehouse / storage location identifier (the warehouse role of a Location FK; spec uses 'warehouse'). Together with productId forms the (productId, warehouse, status=active) uniqueness key per REQ-INV-005.",
+            "example": "Magazijn Noord",
+            "title": "Warehouse"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "adjusted",
+              "obsolete"
+            ],
+            "default": "active",
+            "description": "Lifecycle state per REQ-INV-009. active: current snapshot updated on every movement. adjusted: manual correction applied or COGS posting pending (missing GL config flagged by CogsPosterService). obsolete: discontinued or moved-out item; historical only.",
+            "example": "active",
+            "title": "Status"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration owning this snapshot (REQ-MA-001 multi-administratie scope). Cross-administration reads/writes are masked 404 by AdministrationContextService.",
+            "example": "adm-consultancy-nl",
+            "title": "Administration ID"
+          },
+          "lastStockMoveUuid": {
+            "type": "string",
+            "nullable": true,
+            "description": "UUID of the most recent StockMove processed against this snapshot. Used for idempotent retry in FifoValuationService / MovingAverageValuationService (REQ-INV-003 idempotency scenario): if the same StockMove uuid arrives twice the second invocation is a no-op.",
+            "example": "8c4f02e8-9a1b-4d3e-9f0a-1c2b3d4e5f60",
+            "title": "Last Stock Move UUID"
+          },
+          "pendingCogs": {
+            "type": "boolean",
+            "default": false,
+            "description": "True when the most recent outbound move could not post a COGS GLTransaction because GL account numbers are not yet configured (design.md Risks table + REQ-INV-007). Surfaces in the manifest view so operators know to configure the GL accounts.",
+            "title": "Pending COGS"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "labelNl": "Actief",
+              "description": "Current in-use valuation snapshot per REQ-INV-009. unitCost and totalValue are recomputed on every StockMove that affects this (productId, warehouse) pair via FifoValuationService (FIFO) or MovingAverageValuationService (average)."
+            },
+            "adjusted": {
+              "label": "Adjusted",
+              "labelNl": "Aangepast",
+              "description": "Manual correction applied OR COGS posting pending due to missing GL account configuration (CogsPosterService sets adjusted + pendingCogs=true and logs a WARNING per REQ-INV-007). Remains usable for stock tracking; operator returns to active once the correction is confirmed or GL accounts are configured."
+            },
+            "obsolete": {
+              "label": "Obsolete",
+              "labelNl": "Vervallen",
+              "description": "Discontinued or moved-out item per REQ-INV-009. Historical only — no new StockMove processing accepted. Reaching obsolete requires on-hand quantity = 0 (InventoryValuationMethodGuard::checkZeroStock)."
+            }
+          },
+          "transitions": {
+            "adjust": {
+              "from": "active",
+              "to": "adjusted",
+              "label": "Adjust valuation",
+              "labelNl": "Waardering aanpassen",
+              "description": "Operator-initiated manual correction OR system-initiated transition by CogsPosterService when GL accounts are not configured (REQ-INV-007)."
+            },
+            "confirmAdjustment": {
+              "from": "adjusted",
+              "to": "active",
+              "label": "Confirm correction",
+              "labelNl": "Correctie bevestigen",
+              "description": "Operator confirms the adjustment has been resolved (manual correction posted OR GL accounts now configured); snapshot returns to active and is eligible for new StockMove processing."
+            },
+            "obsoleteFromActive": {
+              "from": "active",
+              "to": "obsolete",
+              "label": "Mark obsolete",
+              "labelNl": "Markeer als vervallen",
+              "description": "Move to historical-only state per REQ-INV-009. Guarded by InventoryValuationMethodGuard::checkZeroStock — quantity > 0 blocks the transition with a 'non-zero stock' error.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkZeroStock"
+            },
+            "obsoleteFromAdjusted": {
+              "from": "adjusted",
+              "to": "obsolete",
+              "label": "Mark obsolete (from adjusted)",
+              "labelNl": "Markeer als vervallen (vanaf aangepast)",
+              "description": "Same as obsoleteFromActive but invoked from the adjusted state. Guard semantics identical.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkZeroStock"
+            },
+            "methodChange": {
+              "from": "active",
+              "to": "active",
+              "label": "Change valuation method",
+              "labelNl": "Waarderingsmethode wijzigen",
+              "description": "Self-loop transition that flips valuationMethod between FIFO and average per REQ-INV-006. Blocked by InventoryValuationMethodGuard::checkZeroStock when quantity > 0 so cost layers cannot be re-valued mid-inventory (cost distortion). Operator must run all stock out before switching method.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkZeroStock"
+            }
+          },
+          "validations": {
+            "onCreate": {
+              "uniqueActiveSnapshot": {
+                "condition": "@proposed.status == 'active'",
+                "message": "Duplicate active valuation for productId+warehouse in this administration.",
+                "messageNl": "Dubbele actieve waardering voor productId+magazijn binnen deze administratie.",
+                "guard": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkUniqueActiveSnapshot"
+              }
+            },
+            "onUpdate": {
+              "methodChangeRequiresZeroStock": {
+                "condition": "CHANGED(valuationMethod) AND @current.quantity > 0",
+                "message": "Non-zero stock — cannot change valuation method.",
+                "messageNl": "Voorraad is niet leeg — kan waarderingsmethode niet wijzigen.",
+                "guard": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkZeroStock"
+              },
+              "uniqueActiveSnapshotOnTransitionToActive": {
+                "condition": "CHANGED(status) AND @proposed.status == 'active'",
+                "message": "Duplicate active valuation for productId+warehouse in this administration.",
+                "messageNl": "Dubbele actieve waardering voor productId+magazijn binnen deze administratie.",
+                "guard": "OCA\\Shillinq\\Lifecycle\\InventoryValuationMethodGuard::checkUniqueActiveSnapshot"
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "warehouse_manager": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "adminScope": {
+            "field": "administrationId",
+            "enforce": true
+          }
+        }
+      }
+    }
+  },
+  "objects": []
+}

@@ -1,717 +1,791 @@
 {
-	"info": {
-		"version": "0.1.0-bookings-deposit-to-invoice"
-	},
-	"components": {
-		"schemas": {
-			"Order": {
-				"slug": "Order",
-				"icon": "CalendarCheckOutline",
-				"version": "0.2.0",
-				"title": "Order",
-				"description": "A booking order. Extended by bookings-deposit-to-invoice with the completed → invoiced lifecycle: on completion a final Invoice is materialised in Shillinq and linked back via invoiceId; on cancellation after invoicing a reversing CreditNote is materialised. Part of the booking dependency surface (owned by the booking module / bookings-deposits); the deposit-to-invoice change extends its state machine and adds invoiceId / completedAt per REQ-DI-001/002.",
-				"x-schema-org": "schema:Order",
-				"x-openregister-purpose": "fact",
-				"type": "object",
-				"required": [
-					"administrationId",
-					"orderId",
-					"customerId",
-					"state"
-				],
-				"properties": {
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this order for tenant isolation.",
-						"example": "adm-1"
-					},
-					"orderId": {
-						"type": "string",
-						"description": "Operator-assigned unique order identifier within the administration.",
-						"example": "ord-1001"
-					},
-					"bookingTypeId": {
-						"type": "string",
-						"nullable": true,
-						"description": "FK to the booking type that priced this order.",
-						"example": "bt-001"
-					},
-					"customerId": {
-						"type": "string",
-						"description": "FK identifying the customer. A customer is a Nextcloud contact entity (ADR: contacts are NC entities), not a bespoke schema; this is the shared external reference.",
-						"example": "cust-5432"
-					},
-					"description": {
-						"type": "string",
-						"nullable": true,
-						"description": "Human-readable description of the booked service, used as the service invoice line description.",
-						"example": "Studio Portrait Session (2-hour session)"
-					},
-					"currency": {
-						"type": "string",
-						"description": "ISO 4217 currency code. Final invoicing is EUR-only in this tier (multi-currency is out of scope).",
-						"default": "EUR",
-						"example": "EUR"
-					},
-					"basePrice": {
-						"type": "integer",
-						"description": "Net service price in minor currency units (EUR cents), excluding VAT.",
-						"example": 15000
-					},
-					"taxRate": {
-						"type": "integer",
-						"description": "VAT percentage applied to the service line (21 standard, 9 reduced, 0 exempt) per REQ-DI-004.",
-						"default": 21,
-						"example": 21
-					},
-					"estimatedTotal": {
-						"type": "integer",
-						"nullable": true,
-						"description": "Estimated gross total in minor units at confirmation time. Informational.",
-						"example": 18150
-					},
-					"depositRequired": {
-						"type": "boolean",
-						"description": "Whether a deposit rule applies to this order. When false, the final invoice carries no credit line (REQ-DI-008).",
-						"default": false,
-						"example": true
-					},
-					"depositAmount": {
-						"type": "integer",
-						"nullable": true,
-						"description": "Authorised deposit amount in minor units (EUR cents), credited on the final invoice (REQ-DI-003).",
-						"example": 7500
-					},
-					"depositPaymentId": {
-						"type": "string",
-						"nullable": true,
-						"description": "FK to the DepositPayment that holds the authorised deposit (bookings-deposits T1).",
-						"example": "dp-5001"
-					},
-					"paymentTermsDays": {
-						"type": "integer",
-						"description": "Net payment terms in days used to compute the final invoice due date (REQ-DI-005).",
-						"default": 14,
-						"example": 14
-					},
-					"invoiceId": {
-						"type": "string",
-						"nullable": true,
-						"description": "FK to the final Invoice created on completion. Null until completed; set by the complete transition action (REQ-DI-001/002).",
-						"example": "inv-final-2001"
-					},
-					"completedAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true,
-						"description": "Timestamp the booking was fulfilled/completed. Must be set before invoicing (REQ-DI-002).",
-						"example": "2026-06-15T16:30:00Z"
-					},
-					"state": {
-						"type": "string",
-						"description": "Order lifecycle state.",
-						"enum": [
-							"draft",
-							"pending_payment",
-							"confirmed",
-							"completed",
-							"cancelled"
-						],
-						"default": "draft",
-						"example": "confirmed"
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "state",
-					"initialState": "draft",
-					"states": {
-						"draft": {
-							"label": "Draft",
-							"description": "Order created, not yet priced or confirmed."
-						},
-						"pending_payment": {
-							"label": "Pending payment",
-							"description": "Awaiting deposit authorisation when a deposit rule applies (bookings-deposits)."
-						},
-						"confirmed": {
-							"label": "Confirmed",
-							"description": "Booked and confirmed; deposit (if any) authorised. Awaiting fulfilment."
-						},
-						"completed": {
-							"label": "Completed",
-							"description": "Fulfilled/checked out. A final Invoice has been materialised in Shillinq and linked via invoiceId (REQ-DI-002)."
-						},
-						"cancelled": {
-							"label": "Cancelled",
-							"description": "Cancelled. If a final Invoice was already issued, a reversing CreditNote was materialised (REQ-DI-006). Remains queryable for audit."
-						}
-					},
-					"transitions": {
-						"confirm": {
-							"from": "pending_payment",
-							"to": "confirmed",
-							"label": "Confirm order",
-							"description": "Confirm once the deposit (if required) is authorised."
-						},
-						"confirmDirect": {
-							"from": "draft",
-							"to": "confirmed",
-							"label": "Confirm order (no deposit)",
-							"description": "Confirm an order that requires no deposit."
-						},
-						"complete": {
-							"from": "confirmed",
-							"to": "completed",
-							"label": "Complete order",
-							"description": "Operator confirms fulfilment/checkout. Gated by InvoiceFromBookingGuard (completedAt set, deposit authorised, not already invoiced) then materialises exactly one final Invoice with service + deposit-credit lines, linking Order.invoiceId back (REQ-DI-002, idempotent per REQ-DI-002).",
-							"requires": "OCA\\Shillinq\\Lifecycle\\InvoiceFromBookingGuard::canComplete",
-							"actions": [
-								{
-									"trigger": "x-openregister-lifecycle-action",
-									"action": "materialise-final-invoice",
-									"description": "Materialise exactly one final Invoice (with InvoiceLine children: a service line at the order tax rate and, when a deposit is authorised, a negative 0%-VAT deposit-credit line) and set Order.invoiceId. Declarative outcome per REQ-DI-002/003/004 — line amounts and the deposit credit are computed by InvoiceFromBookingGuard before persistence.",
-									"actionParameters": {
-										"register": "shillinq",
-										"schema": "Invoice",
-										"linesSchema": "InvoiceLine",
-										"backReferenceField": "invoiceId",
-										"idempotencyKey": "sourceDocumentUri"
-									}
-								}
-							]
-						},
-						"cancelConfirmed": {
-							"from": "confirmed",
-							"to": "cancelled",
-							"label": "Cancel order",
-							"description": "Cancel a confirmed order that was never invoiced. No CreditNote needed."
-						},
-						"cancelAfterInvoice": {
-							"from": "completed",
-							"to": "cancelled",
-							"label": "Cancel invoiced order",
-							"description": "Cancel after a final Invoice was issued. Gated by BookingCancellationGuard and materialises exactly one reversing CreditNote against the linked Invoice (REQ-DI-006, idempotent).",
-							"requires": "OCA\\Shillinq\\Lifecycle\\BookingCancellationGuard::canCancel",
-							"actions": [
-								{
-									"trigger": "x-openregister-lifecycle-action",
-									"action": "materialise-reversing-credit-note",
-									"description": "Materialise exactly one CreditNote reversing the linked Invoice for the full invoice gross. Declarative outcome per REQ-DI-006; amounts computed by BookingCancellationGuard. The original Invoice is preserved.",
-									"actionParameters": {
-										"register": "shillinq",
-										"schema": "CreditNote",
-										"backReferenceField": "linkedInvoiceId",
-										"idempotencyKey": "linkedInvoiceId"
-									}
-								}
-							]
-						}
-					}
-				},
-				"x-openregister-relations": {
-					"invoice": {
-						"localField": "invoiceId",
-						"relatedSchema": "Invoice",
-						"relatedField": "invoiceId",
-						"cardinality": "one-to-one",
-						"description": "The final Invoice materialised for this order on completion."
-					},
-					"depositPayment": {
-						"localField": "depositPaymentId",
-						"relatedSchema": "DepositPayment",
-						"relatedField": "depositPaymentId",
-						"cardinality": "many-to-one",
-						"description": "The authorised deposit credited on the final invoice."
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"scheduler": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"customer": {
-							"permissions": [
-								"read"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				},
-				"x-openregister-aggregations": {
-					"countByState": {
-						"field": "state",
-						"operation": "count",
-						"description": "Number of orders per lifecycle state.",
-						"groupBy": "state"
-					}
-				}
-			},
-			"DepositPayment": {
-				"slug": "DepositPayment",
-				"icon": "CashLockOutline",
-				"version": "0.1.0",
-				"title": "Deposit Payment",
-				"description": "An authorised booking deposit (owned by bookings-deposits T1). Declared here as a dimension so deposit-to-invoice can resolve the authorised amount for the credit line (REQ-DI-003) and so cancellation can transition it to refunded (REQ-DI-006). The full collection/state machine lives in bookings-deposits.",
-				"x-schema-org": "schema:PaymentChargeSpecification",
-				"x-openregister-purpose": "dimension",
-				"type": "object",
-				"required": [
-					"administrationId",
-					"depositPaymentId",
-					"amount",
-					"state"
-				],
-				"properties": {
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this deposit for tenant isolation.",
-						"example": "adm-1"
-					},
-					"depositPaymentId": {
-						"type": "string",
-						"description": "Unique deposit payment identifier.",
-						"example": "dp-5001"
-					},
-					"orderId": {
-						"type": "string",
-						"nullable": true,
-						"description": "FK to the Order this deposit was collected for.",
-						"example": "ord-1001"
-					},
-					"amount": {
-						"type": "integer",
-						"description": "Authorised deposit amount in minor currency units (EUR cents).",
-						"example": 7500
-					},
-					"currency": {
-						"type": "string",
-						"default": "EUR",
-						"description": "ISO 4217 currency code.",
-						"example": "EUR"
-					},
-					"arInvoiceId": {
-						"type": "string",
-						"nullable": true,
-						"description": "FK to the deposit AR invoice created at collection time (bookings-deposits T1).",
-						"example": "inv-deposit-1500"
-					},
-					"refundPolicy": {
-						"type": "string",
-						"description": "Whether the deposit is automatically refunded on cancellation.",
-						"enum": [
-							"manual",
-							"automatic_on_cancellation"
-						],
-						"default": "manual",
-						"example": "manual"
-					},
-					"state": {
-						"type": "string",
-						"description": "Deposit payment state.",
-						"enum": [
-							"pending",
-							"authorized",
-							"captured",
-							"refunded",
-							"failed"
-						],
-						"default": "pending",
-						"example": "authorized"
-					}
-				}
-			},
-			"Invoice": {
-				"slug": "Invoice",
-				"icon": "FileDocumentOutline",
-				"version": "0.1.0",
-				"title": "Invoice",
-				"description": "A final customer invoice materialised in Shillinq when a booking order completes. Carries a service line and, when a deposit was authorised, a negative deposit-credit line. Bidirectionally linked to its Order via sourceDocumentUri and to the credited DepositPayment via depositPaymentId (REQ-DI-001). Integrates into Shillinq AR aging with no special handling (REQ-DI-009).",
-				"x-schema-org": "schema:Invoice",
-				"x-openregister-purpose": "fact",
-				"type": "object",
-				"required": [
-					"administrationId",
-					"invoiceId",
-					"invoiceNumber",
-					"customerId",
-					"invoiceDate",
-					"dueDate",
-					"sourceDocumentUri",
-					"netAmount",
-					"vatAmount",
-					"grossAmount",
-					"state"
-				],
-				"properties": {
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this invoice for tenant isolation.",
-						"example": "adm-1"
-					},
-					"invoiceId": {
-						"type": "string",
-						"description": "Unique invoice identifier.",
-						"example": "inv-final-2001"
-					},
-					"invoiceNumber": {
-						"type": "string",
-						"description": "Human-readable invoice number (Dutch: factuurnummer), prefix INV-YYYY-NNNNN.",
-						"example": "INV-2026-0567"
-					},
-					"customerId": {
-						"type": "string",
-						"description": "FK to the customer (Nextcloud contact entity) from the source order.",
-						"example": "cust-5432"
-					},
-					"orderId": {
-						"type": "string",
-						"nullable": true,
-						"description": "FK back to the source Order, mirroring sourceDocumentUri for convenient querying.",
-						"example": "ord-1001"
-					},
-					"invoiceDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Date the invoice was issued (typically the completion date).",
-						"example": "2026-06-15"
-					},
-					"dueDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Payment due date = invoiceDate + paymentTermsDays (REQ-DI-005).",
-						"example": "2026-06-29"
-					},
-					"sourceDocumentUri": {
-						"type": "string",
-						"description": "Reference to the originating Order: urn:nextcloud:booking:order:{orderId} (REQ-DI-001). Also serves as the idempotency key for invoice materialisation (REQ-DI-002).",
-						"example": "urn:nextcloud:booking:order:ord-1001"
-					},
-					"depositPaymentId": {
-						"type": "string",
-						"nullable": true,
-						"description": "FK to the DepositPayment credited on this invoice (REQ-DI-001).",
-						"example": "dp-5001"
-					},
-					"netAmount": {
-						"type": "integer",
-						"description": "Total amount excluding VAT, in minor units. Service net only (the deposit credit is gross, post-VAT).",
-						"example": 15000
-					},
-					"vatAmount": {
-						"type": "integer",
-						"description": "Total VAT in minor units. Charged on the service line only; the deposit credit carries 0% VAT (REQ-DI-004).",
-						"example": 3150
-					},
-					"grossAmount": {
-						"type": "integer",
-						"description": "Total amount due after the deposit credit is applied, in minor units (REQ-DI-003).",
-						"example": 10650
-					},
-					"currency": {
-						"type": "string",
-						"default": "EUR",
-						"description": "ISO 4217 currency code.",
-						"example": "EUR"
-					},
-					"paymentTerms": {
-						"type": "string",
-						"nullable": true,
-						"description": "Human-readable payment conditions.",
-						"example": "Net 14 days"
-					},
-					"state": {
-						"type": "string",
-						"description": "Invoice lifecycle state. Created as issued; AR owns the onward lifecycle.",
-						"enum": [
-							"issued",
-							"partially_paid",
-							"paid",
-							"overdue",
-							"reversed"
-						],
-						"default": "issued",
-						"example": "issued"
-					}
-				},
-				"x-openregister-relations": {
-					"order": {
-						"localField": "orderId",
-						"relatedSchema": "Order",
-						"relatedField": "orderId",
-						"cardinality": "many-to-one",
-						"description": "The source booking order."
-					},
-					"depositPayment": {
-						"localField": "depositPaymentId",
-						"relatedSchema": "DepositPayment",
-						"relatedField": "depositPaymentId",
-						"cardinality": "many-to-one",
-						"description": "The deposit credited on this invoice."
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"scheduler": {
-							"permissions": [
-								"read"
-							]
-						},
-						"accountant": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				},
-				"x-openregister-aggregations": {
-					"countByState": {
-						"field": "state",
-						"operation": "count",
-						"description": "Number of invoices per state for AR aging dashboards (REQ-DI-009).",
-						"groupBy": "state"
-					},
-					"outstandingGross": {
-						"field": "grossAmount",
-						"operation": "sum",
-						"description": "Total outstanding gross by state.",
-						"groupBy": "state"
-					}
-				}
-			},
-			"InvoiceLine": {
-				"slug": "InvoiceLine",
-				"icon": "FormatListBulletedType",
-				"version": "0.1.0",
-				"title": "Invoice Line",
-				"description": "A single line on a final Invoice: either a positive service line (taxed at the order rate) or a negative deposit-credit line (0% VAT, because the deposit was already taxed at collection) per REQ-DI-003/004.",
-				"x-schema-org": "schema:TradeLineItem",
-				"x-openregister-purpose": "fact",
-				"type": "object",
-				"required": [
-					"administrationId",
-					"invoiceId",
-					"lineNumber",
-					"description",
-					"lineAmount",
-					"grossAmount"
-				],
-				"properties": {
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this line for tenant isolation.",
-						"example": "adm-1"
-					},
-					"invoiceId": {
-						"type": "string",
-						"description": "FK to the parent Invoice.",
-						"example": "inv-final-2001"
-					},
-					"lineNumber": {
-						"type": "integer",
-						"description": "Ordinal position of the line on the invoice.",
-						"example": 1
-					},
-					"lineType": {
-						"type": "string",
-						"description": "Whether this is the service line or the deposit credit line.",
-						"enum": [
-							"service",
-							"deposit_credit"
-						],
-						"default": "service",
-						"example": "service"
-					},
-					"description": {
-						"type": "string",
-						"description": "Line description shown to the customer.",
-						"example": "Studio Portrait Session (2-hour session)"
-					},
-					"quantity": {
-						"type": "integer",
-						"default": 1,
-						"description": "Line quantity.",
-						"example": 1
-					},
-					"unitPrice": {
-						"type": "integer",
-						"description": "Net unit price in minor units. Negative for the deposit credit line.",
-						"example": 15000
-					},
-					"lineAmount": {
-						"type": "integer",
-						"description": "Net line amount (quantity * unitPrice) in minor units. Negative for the deposit credit line.",
-						"example": 15000
-					},
-					"taxRate": {
-						"type": "integer",
-						"description": "VAT percentage applied to this line. 0 for the deposit credit line (REQ-DI-004).",
-						"default": 21,
-						"example": 21
-					},
-					"taxAmount": {
-						"type": "integer",
-						"description": "VAT amount in minor units. 0 for the deposit credit line.",
-						"example": 3150
-					},
-					"grossAmount": {
-						"type": "integer",
-						"description": "Gross line amount (lineAmount + taxAmount) in minor units. Negative for the deposit credit line.",
-						"example": 18150
-					}
-				},
-				"x-openregister-relations": {
-					"invoice": {
-						"localField": "invoiceId",
-						"relatedSchema": "Invoice",
-						"relatedField": "invoiceId",
-						"cardinality": "many-to-one",
-						"description": "The parent invoice."
-					}
-				}
-			},
-			"CreditNote": {
-				"slug": "CreditNote",
-				"icon": "FileDocumentMinusOutline",
-				"version": "0.1.0",
-				"title": "Credit Note",
-				"description": "A reversing credit note materialised in Shillinq when a booking is cancelled after its final Invoice was issued. Reverses the full invoice gross while preserving the original invoice for audit (REQ-DI-006). Does not create negative VAT entries.",
-				"x-schema-org": "schema:Invoice",
-				"x-openregister-purpose": "fact",
-				"type": "object",
-				"required": [
-					"administrationId",
-					"creditNoteId",
-					"creditNoteNumber",
-					"linkedInvoiceId",
-					"customerId",
-					"creditDate",
-					"grossAmount",
-					"state"
-				],
-				"properties": {
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this credit note for tenant isolation.",
-						"example": "adm-1"
-					},
-					"creditNoteId": {
-						"type": "string",
-						"description": "Unique credit note identifier.",
-						"example": "cn-0501"
-					},
-					"creditNoteNumber": {
-						"type": "string",
-						"description": "Human-readable credit note number, prefix CN-YYYY-NNNNN.",
-						"example": "CN-2026-0089"
-					},
-					"linkedInvoiceId": {
-						"type": "string",
-						"description": "FK to the Invoice being reversed. Also the idempotency key (one CreditNote per invoice) per REQ-DI-006.",
-						"example": "inv-final-2001"
-					},
-					"customerId": {
-						"type": "string",
-						"description": "FK to the customer (Nextcloud contact entity).",
-						"example": "cust-5432"
-					},
-					"creditDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Date the credit note was issued.",
-						"example": "2026-06-16"
-					},
-					"reason": {
-						"type": "string",
-						"nullable": true,
-						"description": "Reason for the credit.",
-						"example": "Booking cancelled by customer"
-					},
-					"grossAmount": {
-						"type": "integer",
-						"description": "Credit gross in minor units; the full reversal of the linked invoice gross (REQ-DI-006).",
-						"example": 10650
-					},
-					"currency": {
-						"type": "string",
-						"default": "EUR",
-						"description": "ISO 4217 currency code.",
-						"example": "EUR"
-					},
-					"state": {
-						"type": "string",
-						"description": "Credit note state.",
-						"enum": [
-							"issued"
-						],
-						"default": "issued",
-						"example": "issued"
-					}
-				},
-				"x-openregister-relations": {
-					"invoice": {
-						"localField": "linkedInvoiceId",
-						"relatedSchema": "Invoice",
-						"relatedField": "invoiceId",
-						"cardinality": "many-to-one",
-						"description": "The invoice being reversed."
-					}
-				}
-			}
-		}
-	},
-	"objects": [
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "Order",
-				"slug": "bookings-d2i-order-ord-1001"
-			},
-			"administrationId": "adm-1",
-			"orderId": "ord-1001",
-			"bookingTypeId": "bt-001",
-			"customerId": "cust-5432",
-			"description": "Studio Portrait Session (2-hour session)",
-			"currency": "EUR",
-			"basePrice": 15000,
-			"taxRate": 21,
-			"estimatedTotal": 18150,
-			"depositRequired": true,
-			"depositAmount": 7500,
-			"depositPaymentId": "dp-5001",
-			"paymentTermsDays": 14,
-			"invoiceId": null,
-			"completedAt": null,
-			"state": "confirmed"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "DepositPayment",
-				"slug": "bookings-d2i-deposit-dp-5001"
-			},
-			"administrationId": "adm-1",
-			"depositPaymentId": "dp-5001",
-			"orderId": "ord-1001",
-			"amount": 7500,
-			"currency": "EUR",
-			"arInvoiceId": "inv-deposit-1500",
-			"refundPolicy": "manual",
-			"state": "authorized"
-		}
-	]
+  "info": {
+    "version": "0.1.1-bookings-deposit-to-invoice"
+  },
+  "components": {
+    "schemas": {
+      "BookingOrder": {
+        "slug": "BookingOrder",
+        "icon": "CalendarCheckOutline",
+        "version": "0.4.0",
+        "title": "Booking Order",
+        "description": "Base order/agreement primitive. Concrete kinds (booking, sales, purchase, grant, engagement, quote, blanket) discriminate via `orderType` and extend with their own tail; payments (deposits, disbursements) and lines are related objects (Payment / OrderLine), not fields. Booking orders (orderType=booking) keep the completed → invoiced lifecycle: on completion a final Invoice is materialised and linked via invoiceId; on cancellation after invoicing a reversing CreditNote is materialised (REQ-DI-001/002).",
+        "x-schema-org": "schema:Order",
+        "x-openregister-purpose": "fact",
+        "type": "object",
+        "required": [
+          "administrationId"
+        ],
+        "properties": {
+          "orderType": {
+            "type": "string",
+            "enum": [
+              "booking",
+              "sales",
+              "purchase",
+              "grant",
+              "engagement",
+              "quote",
+              "blanket"
+            ],
+            "nullable": true,
+            "description": "Discriminator selecting the order kind + lifecycle. Existing rows default to 'booking'.",
+            "title": "Order Type"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "incoming",
+              "outgoing"
+            ],
+            "nullable": true,
+            "description": "incoming (we receive/are awarded) vs outgoing (we issue/award).",
+            "title": "Direction"
+          },
+          "orderNumber": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human reference (PO / quote / grant / booking number).",
+            "title": "Order Number"
+          },
+          "counterpartyId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Supplier / customer / grantee / contractor party id (generalises customerId).",
+            "title": "Counterparty ID"
+          },
+          "counterpartyName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Counterparty display name (snapshot).",
+            "title": "Counterparty Name"
+          },
+          "paymentTerms": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment terms (universal base field).",
+            "title": "Payment Terms"
+          },
+          "totalAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Headline amount (order total / awarded amount / engagement value).",
+            "title": "Total Amount"
+          },
+          "orderDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Order/agreement date.",
+            "title": "Order Date"
+          },
+          "projectReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional project this order is for.",
+            "title": "Project Reference"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this order for tenant isolation.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "orderId": {
+            "type": "string",
+            "description": "Operator-assigned unique order identifier within the administration.",
+            "example": "ord-1001",
+            "title": "Order ID"
+          },
+          "bookingTypeId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the booking type that priced this order.",
+            "example": "bt-001",
+            "title": "Booking Type ID"
+          },
+          "customerId": {
+            "type": "string",
+            "description": "FK identifying the customer. A customer is a Nextcloud contact entity (ADR: contacts are NC entities), not a bespoke schema; this is the shared external reference.",
+            "example": "cust-5432",
+            "title": "Customer ID"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable description of the booked service, used as the service invoice line description.",
+            "example": "Studio Portrait Session (2-hour session)",
+            "title": "Description"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code. Final invoicing is EUR-only in this tier (multi-currency is out of scope).",
+            "default": "EUR",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "basePrice": {
+            "type": "integer",
+            "description": "Net service price in minor currency units (EUR cents), excluding VAT.",
+            "example": 15000,
+            "title": "Base Price"
+          },
+          "taxRate": {
+            "type": "integer",
+            "description": "VAT percentage applied to the service line (21 standard, 9 reduced, 0 exempt) per REQ-DI-004.",
+            "default": 21,
+            "example": 21,
+            "title": "Tax Rate"
+          },
+          "estimatedTotal": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Estimated gross total in minor units at confirmation time. Informational.",
+            "example": 18150,
+            "title": "Estimated Total"
+          },
+          "depositRequired": {
+            "type": "boolean",
+            "description": "Whether a deposit rule applies to this order. When false, the final invoice carries no credit line (REQ-DI-008).",
+            "default": false,
+            "example": true,
+            "title": "Deposit Required"
+          },
+          "depositAmount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Authorised deposit amount in minor units (EUR cents), credited on the final invoice (REQ-DI-003).",
+            "example": 7500,
+            "title": "Deposit Amount"
+          },
+          "depositPaymentId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the DepositPayment that holds the authorised deposit (bookings-deposits T1).",
+            "example": "dp-5001",
+            "title": "Deposit Payment ID"
+          },
+          "paymentTermsDays": {
+            "type": "integer",
+            "description": "Net payment terms in days used to compute the final invoice due date (REQ-DI-005).",
+            "default": 14,
+            "example": 14,
+            "title": "Payment Terms Days"
+          },
+          "invoiceId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the final Invoice created on completion. Null until completed; set by the complete transition action (REQ-DI-001/002).",
+            "example": "inv-final-2001",
+            "title": "Invoice ID"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp the booking was fulfilled/completed. Must be set before invoicing (REQ-DI-002).",
+            "example": "2026-06-15T16:30:00Z",
+            "title": "Completed At"
+          },
+          "state": {
+            "type": "string",
+            "description": "Order lifecycle state.",
+            "enum": [
+              "draft",
+              "pending_payment",
+              "confirmed",
+              "completed",
+              "cancelled"
+            ],
+            "default": "draft",
+            "example": "confirmed",
+            "title": "State"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Order created, not yet priced or confirmed."
+            },
+            "pending_payment": {
+              "label": "Pending payment",
+              "description": "Awaiting deposit authorisation when a deposit rule applies (bookings-deposits)."
+            },
+            "confirmed": {
+              "label": "Confirmed",
+              "description": "Booked and confirmed; deposit (if any) authorised. Awaiting fulfilment."
+            },
+            "completed": {
+              "label": "Completed",
+              "description": "Fulfilled/checked out. A final Invoice has been materialised in Shillinq and linked via invoiceId (REQ-DI-002)."
+            },
+            "cancelled": {
+              "label": "Cancelled",
+              "description": "Cancelled. If a final Invoice was already issued, a reversing CreditNote was materialised (REQ-DI-006). Remains queryable for audit."
+            }
+          },
+          "transitions": {
+            "confirm": {
+              "from": "pending_payment",
+              "to": "confirmed",
+              "label": "Confirm order",
+              "description": "Confirm once the deposit (if required) is authorised."
+            },
+            "confirmDirect": {
+              "from": "draft",
+              "to": "confirmed",
+              "label": "Confirm order (no deposit)",
+              "description": "Confirm an order that requires no deposit."
+            },
+            "complete": {
+              "from": "confirmed",
+              "to": "completed",
+              "label": "Complete order",
+              "description": "Operator confirms fulfilment/checkout. Gated by InvoiceFromBookingGuard (completedAt set, deposit authorised, not already invoiced) then materialises exactly one final Invoice with service + deposit-credit lines, linking Order.invoiceId back (REQ-DI-002, idempotent per REQ-DI-002).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\InvoiceFromBookingGuard::canComplete",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "materialise-final-invoice",
+                  "description": "Materialise exactly one final Invoice (with InvoiceLine children: a service line at the order tax rate and, when a deposit is authorised, a negative 0%-VAT deposit-credit line) and set Order.invoiceId. Declarative outcome per REQ-DI-002/003/004 — line amounts and the deposit credit are computed by InvoiceFromBookingGuard before persistence.",
+                  "actionParameters": {
+                    "register": "shillinq",
+                    "schema": "Invoice",
+                    "linesSchema": "InvoiceLine",
+                    "backReferenceField": "invoiceId",
+                    "idempotencyKey": "sourceDocumentUri"
+                  }
+                }
+              ]
+            },
+            "cancelConfirmed": {
+              "from": "confirmed",
+              "to": "cancelled",
+              "label": "Cancel order",
+              "description": "Cancel a confirmed order that was never invoiced. No CreditNote needed."
+            },
+            "cancelAfterInvoice": {
+              "from": "completed",
+              "to": "cancelled",
+              "label": "Cancel invoiced order",
+              "description": "Cancel after a final Invoice was issued. Gated by BookingCancellationGuard and materialises exactly one reversing CreditNote against the linked Invoice (REQ-DI-006, idempotent).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\BookingCancellationGuard::canCancel",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "materialise-reversing-credit-note",
+                  "description": "Materialise exactly one CreditNote reversing the linked Invoice for the full invoice gross. Declarative outcome per REQ-DI-006; amounts computed by BookingCancellationGuard. The original Invoice is preserved.",
+                  "actionParameters": {
+                    "register": "shillinq",
+                    "schema": "CreditNote",
+                    "backReferenceField": "linkedInvoiceId",
+                    "idempotencyKey": "linkedInvoiceId"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "scheduler": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "customer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "countByState": {
+            "field": "state",
+            "metric": "count",
+            "description": "Number of orders per lifecycle state.",
+            "groupBy": ["state"]
+          }
+        }
+      },
+      "DepositPayment": {
+        "slug": "DepositPayment",
+        "icon": "CashLock",
+        "version": "0.1.0",
+        "title": "Deposit Payment",
+        "description": "An authorised booking deposit (owned by bookings-deposits T1). Declared here as a dimension so deposit-to-invoice can resolve the authorised amount for the credit line (REQ-DI-003) and so cancellation can transition it to refunded (REQ-DI-006). The full collection/state machine lives in bookings-deposits.",
+        "x-schema-org": "schema:PaymentChargeSpecification",
+        "x-openregister-purpose": "dimension",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "depositPaymentId",
+          "amount",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this deposit for tenant isolation.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "depositPaymentId": {
+            "type": "string",
+            "description": "Unique deposit payment identifier.",
+            "example": "dp-5001",
+            "title": "Deposit Payment ID"
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the Order this deposit was collected for.",
+            "example": "ord-1001",
+            "title": "Order ID"
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Authorised deposit amount in minor currency units (EUR cents).",
+            "example": 7500,
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217 currency code.",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "arInvoiceId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the deposit AR invoice created at collection time (bookings-deposits T1).",
+            "example": "inv-deposit-1500",
+            "title": "AR Invoice ID"
+          },
+          "refundPolicy": {
+            "type": "string",
+            "description": "Whether the deposit is automatically refunded on cancellation.",
+            "enum": [
+              "manual",
+              "automatic_on_cancellation"
+            ],
+            "default": "manual",
+            "example": "manual",
+            "title": "Refund Policy"
+          },
+          "state": {
+            "type": "string",
+            "description": "Deposit payment state.",
+            "enum": [
+              "pending",
+              "authorized",
+              "captured",
+              "refunded",
+              "failed"
+            ],
+            "default": "pending",
+            "example": "authorized",
+            "title": "State"
+          }
+        }
+      },
+      "Invoice": {
+        "slug": "Invoice",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "Invoice",
+        "description": "A final customer invoice materialised in Shillinq when a booking order completes. Carries a service line and, when a deposit was authorised, a negative deposit-credit line. Bidirectionally linked to its Order via sourceDocumentUri and to the credited DepositPayment via depositPaymentId (REQ-DI-001). Integrates into Shillinq AR aging with no special handling (REQ-DI-009).",
+        "x-schema-org": "schema:Invoice",
+        "x-openregister-purpose": "fact",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "invoiceId",
+          "invoiceNumber",
+          "customerId",
+          "invoiceDate",
+          "dueDate",
+          "sourceDocumentUri",
+          "netAmount",
+          "vatAmount",
+          "grossAmount",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this invoice for tenant isolation.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "invoiceId": {
+            "type": "string",
+            "description": "Unique invoice identifier.",
+            "example": "inv-final-2001",
+            "title": "Invoice ID"
+          },
+          "invoiceNumber": {
+            "type": "string",
+            "description": "Human-readable invoice number (Dutch: factuurnummer), prefix INV-YYYY-NNNNN.",
+            "example": "INV-2026-0567",
+            "title": "Invoice Number"
+          },
+          "customerId": {
+            "type": "string",
+            "description": "FK to the customer (Nextcloud contact entity) from the source order.",
+            "example": "cust-5432",
+            "title": "Customer ID"
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK back to the source Order, mirroring sourceDocumentUri for convenient querying.",
+            "example": "ord-1001",
+            "title": "Order ID"
+          },
+          "invoiceDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the invoice was issued (typically the completion date).",
+            "example": "2026-06-15",
+            "title": "Invoice Date"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Payment due date = invoiceDate + paymentTermsDays (REQ-DI-005).",
+            "example": "2026-06-29",
+            "title": "Due Date"
+          },
+          "sourceDocumentUri": {
+            "type": "string",
+            "description": "Reference to the originating Order: urn:nextcloud:booking:order:{orderId} (REQ-DI-001). Also serves as the idempotency key for invoice materialisation (REQ-DI-002).",
+            "example": "urn:nextcloud:booking:order:ord-1001",
+            "title": "Source Document URI"
+          },
+          "depositPaymentId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the DepositPayment credited on this invoice (REQ-DI-001).",
+            "example": "dp-5001",
+            "title": "Deposit Payment ID"
+          },
+          "netAmount": {
+            "type": "integer",
+            "description": "Total amount excluding VAT, in minor units. Service net only (the deposit credit is gross, post-VAT).",
+            "example": 15000,
+            "title": "Net Amount"
+          },
+          "vatAmount": {
+            "type": "integer",
+            "description": "Total VAT in minor units. Charged on the service line only; the deposit credit carries 0% VAT (REQ-DI-004).",
+            "example": 3150,
+            "title": "VAT Amount"
+          },
+          "grossAmount": {
+            "type": "integer",
+            "description": "Total amount due after the deposit credit is applied, in minor units (REQ-DI-003).",
+            "example": 10650,
+            "title": "Gross Amount"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217 currency code.",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "paymentTerms": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable payment conditions.",
+            "example": "Net 14 days",
+            "title": "Payment Terms"
+          },
+          "state": {
+            "type": "string",
+            "description": "Invoice lifecycle state. Created as issued; AR owns the onward lifecycle.",
+            "enum": [
+              "issued",
+              "partially_paid",
+              "paid",
+              "overdue",
+              "reversed"
+            ],
+            "default": "issued",
+            "example": "issued",
+            "title": "State"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "scheduler": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "accountant": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "countByState": {
+            "field": "state",
+            "metric": "count",
+            "description": "Number of invoices per state for AR aging dashboards (REQ-DI-009).",
+            "groupBy": ["state"]
+          },
+          "outstandingGross": {
+            "field": "grossAmount",
+            "metric": "sum",
+            "description": "Total outstanding gross by state.",
+            "groupBy": ["state"]
+          }
+        }
+      },
+      "InvoiceLine": {
+        "slug": "InvoiceLine",
+        "icon": "FormatListBulletedType",
+        "version": "0.1.0",
+        "title": "Invoice Line",
+        "description": "A single line on a final Invoice: either a positive service line (taxed at the order rate) or a negative deposit-credit line (0% VAT, because the deposit was already taxed at collection) per REQ-DI-003/004.",
+        "x-schema-org": "schema:TradeLineItem",
+        "x-openregister-purpose": "fact",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "invoiceId",
+          "lineNumber",
+          "description",
+          "lineAmount",
+          "grossAmount"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this line for tenant isolation.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "invoiceId": {
+            "type": "string",
+            "description": "FK to the parent Invoice.",
+            "example": "inv-final-2001",
+            "title": "Invoice ID"
+          },
+          "lineNumber": {
+            "type": "integer",
+            "description": "Ordinal position of the line on the invoice.",
+            "example": 1,
+            "title": "Line Number"
+          },
+          "lineType": {
+            "type": "string",
+            "description": "Whether this is the service line or the deposit credit line.",
+            "enum": [
+              "service",
+              "deposit_credit"
+            ],
+            "default": "service",
+            "example": "service",
+            "title": "Line Type"
+          },
+          "description": {
+            "type": "string",
+            "description": "Line description shown to the customer.",
+            "example": "Studio Portrait Session (2-hour session)",
+            "title": "Description"
+          },
+          "quantity": {
+            "type": "integer",
+            "default": 1,
+            "description": "Line quantity.",
+            "example": 1,
+            "title": "Quantity"
+          },
+          "unitPrice": {
+            "type": "integer",
+            "description": "Net unit price in minor units. Negative for the deposit credit line.",
+            "example": 15000,
+            "title": "Unit Price"
+          },
+          "lineAmount": {
+            "type": "integer",
+            "description": "Net line amount (quantity * unitPrice) in minor units. Negative for the deposit credit line.",
+            "example": 15000,
+            "title": "Line Amount"
+          },
+          "taxRate": {
+            "type": "integer",
+            "description": "VAT percentage applied to this line. 0 for the deposit credit line (REQ-DI-004).",
+            "default": 21,
+            "example": 21,
+            "title": "Tax Rate"
+          },
+          "taxAmount": {
+            "type": "integer",
+            "description": "VAT amount in minor units. 0 for the deposit credit line.",
+            "example": 3150,
+            "title": "Tax Amount"
+          },
+          "grossAmount": {
+            "type": "integer",
+            "description": "Gross line amount (lineAmount + taxAmount) in minor units. Negative for the deposit credit line.",
+            "example": 18150,
+            "title": "Gross Amount"
+          }
+        }
+      },
+      "CreditNote": {
+        "slug": "CreditNote",
+        "icon": "FileDocumentMinusOutline",
+        "version": "0.1.0",
+        "title": "Credit Note",
+        "description": "A reversing credit note materialised in Shillinq when a booking is cancelled after its final Invoice was issued. Reverses the full invoice gross while preserving the original invoice for audit (REQ-DI-006). Does not create negative VAT entries.",
+        "x-schema-org": "schema:Invoice",
+        "x-openregister-purpose": "fact",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "creditNoteId",
+          "creditNoteNumber",
+          "linkedInvoiceId",
+          "customerId",
+          "creditDate",
+          "grossAmount",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this credit note for tenant isolation.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "creditNoteId": {
+            "type": "string",
+            "description": "Unique credit note identifier.",
+            "example": "cn-0501",
+            "title": "Credit Note ID"
+          },
+          "creditNoteNumber": {
+            "type": "string",
+            "description": "Human-readable credit note number, prefix CN-YYYY-NNNNN.",
+            "example": "CN-2026-0089",
+            "title": "Credit Note Number"
+          },
+          "linkedInvoiceId": {
+            "type": "string",
+            "description": "FK to the Invoice being reversed. Also the idempotency key (one CreditNote per invoice) per REQ-DI-006.",
+            "example": "inv-final-2001",
+            "title": "Linked Invoice ID"
+          },
+          "customerId": {
+            "type": "string",
+            "description": "FK to the customer (Nextcloud contact entity).",
+            "example": "cust-5432",
+            "title": "Customer ID"
+          },
+          "creditDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the credit note was issued.",
+            "example": "2026-06-16",
+            "title": "Credit Date"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reason for the credit.",
+            "example": "Booking cancelled by customer",
+            "title": "Reason"
+          },
+          "grossAmount": {
+            "type": "integer",
+            "description": "Credit gross in minor units; the full reversal of the linked invoice gross (REQ-DI-006).",
+            "example": 10650,
+            "title": "Gross Amount"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217 currency code.",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "state": {
+            "type": "string",
+            "description": "Credit note state.",
+            "enum": [
+              "issued"
+            ],
+            "default": "issued",
+            "example": "issued",
+            "title": "State"
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingOrder",
+        "slug": "bookings-d2i-order-ord-1001"
+      },
+      "administrationId": "adm-1",
+      "orderId": "ord-1001",
+      "bookingTypeId": "bt-001",
+      "customerId": "cust-5432",
+      "description": "Studio Portrait Session (2-hour session)",
+      "currency": "EUR",
+      "basePrice": 15000,
+      "taxRate": 21,
+      "estimatedTotal": 18150,
+      "depositRequired": true,
+      "depositAmount": 7500,
+      "depositPaymentId": "dp-5001",
+      "paymentTermsDays": 14,
+      "invoiceId": null,
+      "completedAt": null,
+      "state": "confirmed"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "DepositPayment",
+        "slug": "bookings-d2i-deposit-dp-5001"
+      },
+      "administrationId": "adm-1",
+      "depositPaymentId": "dp-5001",
+      "orderId": "ord-1001",
+      "amount": 7500,
+      "currency": "EUR",
+      "arInvoiceId": "inv-deposit-1500",
+      "refundPolicy": "manual",
+      "state": "authorized"
+    }
+  ]
 }

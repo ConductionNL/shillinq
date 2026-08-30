@@ -1,0 +1,37 @@
+{
+	"pages": [
+		{
+			"id": "BookingsConfirmationPortal",
+			"route": "/confirm/:appointmentId",
+			"type": "custom",
+			"component": "BookingsConfirmationPortal",
+			"title": "Confirm your appointment",
+			"_note": "Anonymous, token-scoped confirm/decline surface. Every standard page type assumes an authenticated Nextcloud shell and an OpenRegister object the viewer is allowed to read; this page has neither. It resolves one appointment from a single-use token against the #[PublicPage] endpoints in appinfo/routes.php (confirmationApi#lookupByToken / validate-confirmation-token) and offers only confirm or decline. The page's public reachability comes from those #[PublicPage] attributes, NOT from the manifest — the `public: true` key that used to sit here was read by nothing (it appears nowhere in the shipped nc-vue dist, nor in src/main.js or src/registry.js) and has been removed."
+		},
+		{
+			"id": "BookingsPendingConfirmations",
+			"route": "/verkoop/openstaande-bevestigingen",
+			"type": "custom",
+			"component": "BookingsConfirmationPortal",
+			"title": "Pending confirmations",
+			"_note": "Operator-side view of the same BookingsConfirmationPortal component, listing appointments still awaiting a customer response. It renders the identical token-driven confirm/decline widget rather than an OpenRegister object list, so it shares the reason above: no standard page type can express it."
+		}
+	],
+	"menu": [
+		{
+			"id": "Verkoop",
+			"label": "Sales",
+			"icon": "CartOutline",
+			"order": 33,
+			"children": [
+				{
+					"id": "BookingsPendingConfirmations",
+					"label": "Pending confirmations",
+					"icon": "EmailCheckOutline",
+					"route": "BookingsPendingConfirmations",
+					"order": 14
+				}
+			]
+		}
+	]
+}

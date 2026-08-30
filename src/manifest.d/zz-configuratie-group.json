@@ -1,0 +1,12 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "menu-ia-simplification",
+		"adr": "ADR-037 modular manifest fragment — declares the 'General' app-settings entry. It is NOT a normal menu group: menu-layout.json#settingsSection lists its id, so applySettingsSection in main.js lifts it (and all config/master-data pages) into Nextcloud's settings foldout (the bottom-left gear, NcAppNavigationSettings, OUTSIDE the scrollable nav). 'Personal settings' is auto-prepended by CnAppNav.",
+		"description": "The 'General' app-settings entry for the Nextcloud settings foldout (see menu-layout.json#settingsSection). ADR-079 D1: it hands off to the platform admin section at /settings/admin/shillinq (AdminSettings.php → AdminRoot.vue) instead of routing to an in-app type:settings page, which was a second home for the same register configuration."
+	},
+	"menu": [
+		{ "id": "GeneralSettings", "label": "General", "icon": "CogOutline", "href": "/index.php/settings/admin/shillinq", "order": 1 }
+	]
+}

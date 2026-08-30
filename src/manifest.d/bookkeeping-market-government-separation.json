@@ -1,0 +1,623 @@
+{
+	"menu": [
+		{
+			"id": "WmoCompliance",
+			"label": "WMO Compliance",
+			"icon": "ClipboardCheckOutline",
+			"order": 42,
+			"children": [
+				{
+					"id": "CommercialActivities",
+					"label": "Commercial Activities",
+					"icon": "StoreOutline",
+					"route": "CommercialActivities",
+					"order": 10
+				},
+				{
+					"id": "IntegralCostPrices",
+					"label": "Integral Cost Prices",
+					"icon": "CalculatorVariantOutline",
+					"route": "IntegralCostPrices",
+					"order": 20
+				},
+				{
+					"id": "ActivityCostAllocations",
+					"label": "Activity Cost Allocations",
+					"icon": "MapMarkerOutline",
+					"route": "ActivityCostAllocations",
+					"order": 30
+				},
+				{
+					"id": "PublicInterestDecisions",
+					"label": "Public Interest Decisions",
+					"icon": "Gavel",
+					"route": "PublicInterestDecisions",
+					"order": 40
+				},
+				{
+					"id": "AcmReports",
+					"label": "ACM Reports",
+					"icon": "ChartBoxOutline",
+					"route": "AcmReports",
+					"order": 50
+				},
+				{
+					"id": "CrossSubsidyAlerts",
+					"label": "Cross-Subsidy Alerts",
+					"icon": "HandHeartOutline",
+					"route": "CrossSubsidyAlerts",
+					"order": 60
+				},
+				{
+					"id": "WmoAuditLog",
+					"label": "WMO Audit Log",
+					"icon": "History",
+					"route": "WmoAuditLog",
+					"order": 70
+				},
+				{
+					"id": "MarketBenchmarks",
+					"label": "Market Benchmarks",
+					"icon": "ChartLine",
+					"route": "MarketBenchmarks",
+					"order": 80
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "CommercialActivities",
+			"route": "/wmo/commercial-activities",
+			"type": "index",
+			"title": "Commercial Activities",
+			"config": {
+				"register": "shillinq",
+				"schema": "CommercialActivity",
+				"columns": [
+					{ "key": "code", "label": "Code", "sortable": true },
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "governingBody", "label": "Bestuursorgaan", "sortable": true },
+					{ "key": "marktsegment", "label": "Market Segment", "sortable": true },
+					{ "key": "costPriceMethod", "label": "Cost Method", "sortable": true },
+					{ "key": "isExempted", "label": "Exempted", "sortable": true },
+					{ "key": "state", "label": "State", "sortable": true }
+				],
+				"defaultSort": "code",
+				"detailRoute": "CommercialActivityDetail"
+			}
+		},
+		{
+			"id": "CommercialActivityDetail",
+			"route": "/wmo/commercial-activities/:id",
+			"type": "detail",
+			"title": "Commercial Activity",
+			"config": {
+				"register": "shillinq",
+				"schema": "CommercialActivity",
+				"_note": "FINANCIAL / MASTER archetype (native CnDetailPage). A commercial activity is the master record a municipality must ring-fence under the Wet Markt & Overheid. Native contract only: fields[] lead with the activity data (turnover, cost method, exemption). The compliance ledgers hanging off it are surfaced as relatedCollections — IntegralCostPrice, ActivityCostAllocation and AlertLog, all FK commercialActivityId=@object.code (see _relatedCollectionsNote) — so an officer walks from the master to its cost-recovery evidence. NO comms. Sidebar carries a file-references tab (the cost model and exemption ruling are real source documents) and an audit-trail tab for the immutable change log. lifecycleActions on because the activity moves through states (active / exempted / ended).",
+				"fields": [
+					{ "key": "code", "label": "Code", "type": "string" },
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "governingBody", "label": "Bestuursorgaan", "type": "string" },
+					{ "key": "organisatieonderdeel", "label": "Department", "type": "string" },
+					{ "key": "description", "label": "Description", "type": "string" },
+					{ "key": "marktsegment", "label": "Market Segment", "type": "string" },
+					{ "key": "concurrenten", "label": "Competitors", "type": "array" },
+					{ "key": "afnemers", "label": "Customers", "type": "array" },
+					{ "key": "startDate", "label": "Start Date", "type": "string" },
+					{ "key": "endDate", "label": "End Date", "type": "string" },
+					{ "key": "costPriceMethod", "label": "Cost-Price Method", "type": "string" },
+					{ "key": "costCentreCode", "label": "Cost Center", "type": "string" },
+					{ "key": "costObjectCode", "label": "Cost Object", "type": "string" },
+					{ "key": "isExempted", "label": "Is Exempted", "type": "boolean" },
+					{ "key": "exemptionDecisionId", "label": "Exemption Decision", "type": "string" },
+					{ "key": "annualRevenue", "label": "Annual Turnover", "type": "number" },
+					{ "key": "acmReport", "label": "ACM Notification", "type": "object" },
+					{ "key": "lastReviewedAt", "label": "Last Reviewed", "type": "string" },
+					{ "key": "state", "label": "State", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`; a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing while every gate stays green. TOKEN: `@object.code`, NOT `@objectId` — SEED-PROVEN. lib/Settings/seeds/commercial-activities/integral-cost-price-example-q1-2026.json stores `\"commercialActivityId\": \"MO-SP-015\"`, and the activity it points at is seeded in sportaccommodaties-gemeente.json with the flat payload field `\"code\": \"MO-SP-015\"`. So the children reference the activity by its flat `code` business key, and a UUID filter would match zero rows. Note the IntegralCostPrice schema's own `example` ('ca-mo-sp-014') is STALE and disagrees with the seeded data — the seed is authoritative here.",
+				"relatedCollections": [
+					{
+						"title": "Integral cost prices",
+						"register": "shillinq",
+						"schema": "IntegralCostPrice",
+						"filter": { "commercialActivityId": "@object.code" },
+						"columns": [
+							{ "key": "period", "label": "Period" },
+							{ "key": "totalCost", "label": "Total cost" },
+							{ "key": "costPricePerUnit", "label": "Cost / unit" },
+							{ "key": "appliedRate", "label": "Applied tariff" },
+							{ "key": "compliant", "label": "Compliant" },
+							{ "key": "status", "label": "Status" }
+						],
+						"rowRoute": "IntegralCostPriceDetail"
+					},
+					{
+						"title": "Cost allocations",
+						"register": "shillinq",
+						"schema": "ActivityCostAllocation",
+						"filter": { "commercialActivityId": "@object.code" },
+						"columns": [
+							{ "key": "postingDate", "label": "Posting date" },
+							{ "key": "journalEntryId", "label": "Journal entry" },
+							{ "key": "originalAmount", "label": "Amount" },
+							{ "key": "automaticApplied", "label": "Auto" },
+							{ "key": "status", "label": "Status" }
+						],
+						"rowRoute": "ActivityCostAllocationDetail"
+					},
+					{
+						"title": "Cross-subsidy alerts",
+						"register": "shillinq",
+						"schema": "AlertLog",
+						"filter": { "commercialActivityId": "@object.code" },
+						"columns": [
+							{ "key": "alertType", "label": "Type" },
+							{ "key": "severity", "label": "Severity" },
+							{ "key": "generatedAt", "label": "Raised at" },
+							{ "key": "assignedTo", "label": "Assigned to" },
+							{ "key": "status", "label": "Status" }
+						],
+						"rowRoute": "CrossSubsidyAlertDetail"
+					}
+				],
+				"indexRoute": "CommercialActivities",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "documents",
+							"label": "Documents",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "CommercialActivity", "objectId": ":id" } }
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "IntegralCostPrices",
+			"route": "/wmo/integral-cost-prices",
+			"type": "index",
+			"title": "Integral Cost Prices",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntegralCostPrice",
+				"columns": [
+					{ "key": "commercialActivityId", "label": "Activity", "sortable": true },
+					{ "key": "period", "label": "Period", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "totalCost", "label": "Total Cost", "sortable": true },
+					{ "key": "costPricePerUnit", "label": "Cost per Unit", "sortable": true },
+					{ "key": "appliedRate", "label": "Applied Tariff", "sortable": true },
+					{ "key": "compliant", "label": "Compliant", "sortable": true }
+				],
+				"defaultSort": "period",
+				"detailRoute": "IntegralCostPriceDetail"
+			}
+		},
+		{
+			"id": "IntegralCostPriceDetail",
+			"route": "/wmo/integral-cost-prices/:id",
+			"type": "detail",
+			"title": "Integral Cost Price",
+			"config": {
+				"register": "shillinq",
+				"schema": "IntegralCostPrice",
+				"_note": "FINANCIAL / COST-REPORT archetype (native CnDetailPage). An integral cost price is the periodic calculation proving a commercial activity charges at least full cost (no cross-subsidy). Native contract only: fields[] carry the money outcome (total cost, unit cost, margin, applied tariff, compliant flag, sign-off). Sidebar has a file-references tab (the supporting cost model is a real source document) and an audit-trail tab for the sign-off history. lifecycleActions on (draft / signed / final). NO comms, NO relatedLists — a cost calculation is a leaf artefact with no children.",
+				"fields": [
+					{ "key": "commercialActivityId", "label": "Activity", "type": "string" },
+					{ "key": "period", "label": "Period", "type": "string" },
+					{ "key": "calculatedOn", "label": "Calculated At", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "componenten", "label": "Components", "type": "object" },
+					{ "key": "totalCost", "label": "Total Cost", "type": "number" },
+					{ "key": "soldUnits", "label": "Units Sold", "type": "number" },
+					{ "key": "unitLabel", "label": "Unit", "type": "string" },
+					{ "key": "costPricePerUnit", "label": "Cost per Unit", "type": "number" },
+					{ "key": "appliedRate", "label": "Applied Tariff", "type": "number" },
+					{ "key": "marge", "label": "Margin", "type": "number" },
+					{ "key": "margePercentage", "label": "Margin %", "type": "number" },
+					{ "key": "compliant", "label": "Compliant", "type": "boolean" },
+					{ "key": "definitiefSignedBy", "label": "Signed By", "type": "string" },
+					{ "key": "definitiefSignedAt", "label": "Signed At", "type": "string" },
+					{ "key": "notes", "label": "Notes", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "IntegralCostPrices",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "documents",
+							"label": "Documents",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "IntegralCostPrice", "objectId": ":id" } }
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ActivityCostAllocations",
+			"route": "/wmo/activity-cost-allocations",
+			"type": "index",
+			"title": "Activity Cost Allocations",
+			"config": {
+				"register": "shillinq",
+				"schema": "ActivityCostAllocation",
+				"columns": [
+					{ "key": "journalEntryId", "label": "Journal Entry", "sortable": true },
+					{ "key": "commercialActivityId", "label": "Activity", "sortable": true },
+					{ "key": "postingDate", "label": "Posting Date", "sortable": true },
+					{ "key": "originalAmount", "label": "Original Amount", "sortable": true },
+					{ "key": "automaticApplied", "label": "Auto", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "postingDate",
+				"detailRoute": "ActivityCostAllocationDetail"
+			}
+		},
+		{
+			"id": "ActivityCostAllocationDetail",
+			"route": "/wmo/activity-cost-allocations/:id",
+			"type": "detail",
+			"title": "Activity Cost Allocation",
+			"config": {
+				"register": "shillinq",
+				"schema": "ActivityCostAllocation",
+				"_note": "FINANCIAL / TRANSACTION archetype (native CnDetailPage). A cost allocation splits one journal-entry line across commercial activities using a distribution rule — a posting, not a conversation, so NO comms. Native contract only: fields[] carry the split (original amount, splits array, distribution rule, manual-override object, posting date, materialised flag). Audit-trail sidebar tab holds the immutable posting history. lifecycleActions on (proposed / posted). No file-references — an allocation carries no source doc of its own; no relatedLists — it is itself a child line of a journal entry.",
+				"fields": [
+					{ "key": "journalEntryId", "label": "Journal Entry", "type": "string" },
+					{ "key": "commercialActivityId", "label": "Activity", "type": "string" },
+					{ "key": "glLineId", "label": "GL Line", "type": "string" },
+					{ "key": "originalAmount", "label": "Original Amount", "type": "number" },
+					{ "key": "splits", "label": "Splits", "type": "array" },
+					{ "key": "verdeelsleutel", "label": "Distribution Rule", "type": "string" },
+					{ "key": "automaticApplied", "label": "Applied Automatically", "type": "boolean" },
+					{ "key": "handmatigeOverride", "label": "Manual Override", "type": "object" },
+					{ "key": "postingDate", "label": "Posting Date", "type": "string" },
+					{ "key": "materialised", "label": "Posted to Ledger", "type": "boolean" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ActivityCostAllocations",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "PublicInterestDecisions",
+			"route": "/wmo/public-interest-decisions",
+			"type": "index",
+			"title": "Public Interest Decisions",
+			"config": {
+				"register": "shillinq",
+				"schema": "AlgemeenBelangBesluit",
+				"columns": [
+					{ "key": "reference", "label": "Reference", "sortable": true },
+					{ "key": "governingBody", "label": "Bestuursorgaan", "sortable": true },
+					{ "key": "determinationDate", "label": "Adopted On", "sortable": true },
+					{ "key": "publicationDate", "label": "Published", "sortable": true },
+					{ "key": "nextEvaluation", "label": "Next Evaluation", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "determinationDate",
+				"detailRoute": "PublicInterestDecisionDetail"
+			}
+		},
+		{
+			"id": "PublicInterestDecisionDetail",
+			"route": "/wmo/public-interest-decisions/:id",
+			"type": "detail",
+			"title": "Public Interest Decision",
+			"config": {
+				"register": "shillinq",
+				"schema": "AlgemeenBelangBesluit",
+				"_note": "FINANCIAL-ADJACENT / DECISION-DOCUMENT archetype (native CnDetailPage). An algemeen-belangbesluit is the formal council decision that exempts a commercial activity from the Wet Markt & Overheid cost rules — a published document with legal artefacts (DROP verification, ACM notification, Gemeenteblad publication). Native contract only: fields[] carry the decision data; a file-references sidebar tab holds the decision PDF and publication proof; an audit-trail tab records the adoption/publication chain. lifecycleActions on (draft / adopted / published / expired). NO comms — it is a published decision, not a conversation.",
+				"fields": [
+					{ "key": "reference", "label": "Reference", "type": "string" },
+					{ "key": "governingBody", "label": "Bestuursorgaan", "type": "string" },
+					{ "key": "determinationDate", "label": "Adopted On", "type": "string" },
+					{ "key": "publicationMunicipalGazette", "label": "Gemeenteblad Reference", "type": "string" },
+					{ "key": "publicationDate", "label": "Published On", "type": "string" },
+					{ "key": "dropVerification", "label": "DROP Verification", "type": "object" },
+					{ "key": "notificationAcm", "label": "ACM Notification", "type": "object" },
+					{ "key": "betreftActiviteiten", "label": "Activities Covered", "type": "array" },
+					{ "key": "publicInterestCategories", "label": "Public Interest Categories", "type": "array" },
+					{ "key": "rationale", "label": "Reasoning", "type": "string" },
+					{ "key": "evaluationCadence", "label": "Evaluation Cadence", "type": "string" },
+					{ "key": "nextEvaluation", "label": "Next Evaluation", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "objectionTermElapsed", "label": "Bezwaar Period Expired", "type": "boolean" },
+					{ "key": "councilDecisionId", "label": "Raadsbesluit ID", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "PublicInterestDecisions",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "documents",
+							"label": "Documents",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "AlgemeenBelangBesluit", "objectId": ":id" } }
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "AcmReports",
+			"route": "/wmo/acm-reports",
+			"type": "index",
+			"title": "ACM Reports",
+			"config": {
+				"register": "shillinq",
+				"schema": "ACMReport",
+				"columns": [
+					{ "key": "period", "label": "Period", "sortable": true },
+					{ "key": "format", "label": "Format", "sortable": true },
+					{ "key": "generatedAt", "label": "Generated At", "sortable": true },
+					{ "key": "signatory", "label": "Signed By", "sortable": true },
+					{ "key": "sentInAcm", "label": "Submitted", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "period",
+				"detailRoute": "AcmReportDetail"
+			}
+		},
+		{
+			"id": "AcmReportDetail",
+			"route": "/wmo/acm-reports/:id",
+			"type": "detail",
+			"title": "ACM Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "ACMReport",
+				"_note": "FINANCIAL / COMPLIANCE-REPORT archetype (native CnDetailPage). An ACM report is the periodic filing to the competition authority summarising every commercial activity and its cost compliance — a signed, submitted document. Native contract only: fields[] carry the report data (activiteiten and abbList arrays, summary, manual-override count, sign/submit metadata). A file-references sidebar tab holds the signed report and Gemeenteblad publication; an audit-trail tab records the sign/submit chain. lifecycleActions on (draft / signed / submitted). NO comms — the report is submitted to ACM, not discussed.",
+				"fields": [
+					{ "key": "period", "label": "Period", "type": "string" },
+					{ "key": "format", "label": "Format", "type": "string" },
+					{ "key": "generatedAt", "label": "Generated At", "type": "string" },
+					{ "key": "activiteiten", "label": "Activities", "type": "array" },
+					{ "key": "summary", "label": "Summary", "type": "string" },
+					{ "key": "manualOverrides", "label": "Manual Override Count", "type": "number" },
+					{ "key": "abbList", "label": "ABB Decisions", "type": "array" },
+					{ "key": "signatory", "label": "Signed By", "type": "string" },
+					{ "key": "signedOn", "label": "Signed At", "type": "string" },
+					{ "key": "signatureFingerprint", "label": "Signature Fingerprint", "type": "string" },
+					{ "key": "sentInAcm", "label": "Submitted to ACM", "type": "boolean" },
+					{ "key": "sentInAcmOn", "label": "Submitted At", "type": "string" },
+					{ "key": "publicationMunicipalGazette", "label": "Gemeenteblad Publication", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "AcmReports",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "documents",
+							"label": "Documents",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "ACMReport", "objectId": ":id" } }
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "CrossSubsidyAlerts",
+			"route": "/wmo/cross-subsidy-alerts",
+			"type": "index",
+			"title": "Cross-Subsidy Alerts",
+			"config": {
+				"register": "shillinq",
+				"schema": "AlertLog",
+				"columns": [
+					{ "key": "alertType", "label": "Type", "sortable": true },
+					{ "key": "severity", "label": "Severity", "sortable": true },
+					{ "key": "commercialActivityId", "label": "Activity", "sortable": true },
+					{ "key": "generatedAt", "label": "Raised At", "sortable": true },
+					{ "key": "assignedTo", "label": "Assigned To", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "generatedAt",
+				"detailRoute": "CrossSubsidyAlertDetail"
+			}
+		},
+		{
+			"id": "CrossSubsidyAlertDetail",
+			"route": "/wmo/cross-subsidy-alerts/:id",
+			"type": "detail",
+			"title": "Cross-Subsidy Alert",
+			"config": {
+				"register": "shillinq",
+				"schema": "AlertLog",
+				"_note": "FINANCIAL / EXCEPTION archetype (native CnDetailPage). A cross-subsidy alert flags a suspected breach of the cost-recovery rule on a commercial activity — a case-like exception record worked in-app. Native contract only: fields[] carry the finding (type, severity, assignment, escalation, resolution notes, detector context). An audit-trail sidebar tab records escalation/resolution. lifecycleActions on (open / escalated / resolved). NO comms, NO files (system-raised), NO relatedLists — the alert links back to its activity via commercialActivityId which the officer follows from the field.",
+				"fields": [
+					{ "key": "alertType", "label": "Type", "type": "string" },
+					{ "key": "commercialActivityId", "label": "Activity", "type": "string" },
+					{ "key": "severity", "label": "Severity", "type": "string" },
+					{ "key": "generatedAt", "label": "Raised At", "type": "string" },
+					{ "key": "assignedTo", "label": "Assigned To", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "escalatedAt", "label": "Escalated At", "type": "string" },
+					{ "key": "resolutionNotes", "label": "Resolution Notes", "type": "string" },
+					{ "key": "detectionContext", "label": "Detector Context", "type": "object" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "CrossSubsidyAlerts",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "WmoAuditLog",
+			"route": "/wmo/audit-log",
+			"type": "index",
+			"title": "WMO Audit Log",
+			"config": {
+				"register": "shillinq",
+				"schema": "WMOAuditLog",
+				"columns": [
+					{ "key": "timestamp", "label": "Timestamp", "sortable": true },
+					{ "key": "eventType", "label": "Event", "sortable": true },
+					{ "key": "entityType", "label": "Entity Type", "sortable": true },
+					{ "key": "entityId", "label": "Entity ID", "sortable": true },
+					{ "key": "userId", "label": "User", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "timestamp",
+				"detailRoute": "WmoAuditLogDetail"
+			}
+		},
+		{
+			"id": "WmoAuditLogDetail",
+			"route": "/wmo/audit-log/:id",
+			"type": "detail",
+			"title": "WMO Audit Entry",
+			"config": {
+				"register": "shillinq",
+				"schema": "WMOAuditLog",
+				"_note": "FINANCIAL / AUDIT-ENTRY archetype (native CnDetailPage). A WMO audit-log row is itself an immutable change record — the whole page IS the evidence, so it is deliberately fields-only: event fields plus the before/after object payloads. NO KPIs, NO comms, NO files, and NO audit-trail sidebar tab (that would be an audit of the audit). No relatedLists — a single, focused evidentiary read.",
+				"fields": [
+					{ "key": "eventType", "label": "Event Type", "type": "string" },
+					{ "key": "entityId", "label": "Entity ID", "type": "string" },
+					{ "key": "entityType", "label": "Entity Type", "type": "string" },
+					{ "key": "userId", "label": "User", "type": "string" },
+					{ "key": "timestamp", "label": "Timestamp", "type": "string" },
+					{ "key": "beforeValues", "label": "Before", "type": "object" },
+					{ "key": "afterValues", "label": "After", "type": "object" },
+					{ "key": "reason", "label": "Reason", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "WmoAuditLog"
+			}
+		},
+		{
+			"id": "MarketBenchmarks",
+			"route": "/wmo/market-benchmarks",
+			"type": "index",
+			"title": "Market Benchmarks",
+			"config": {
+				"register": "shillinq",
+				"schema": "MarketBenchmark",
+				"columns": [
+					{ "key": "commercialActivityId", "label": "Activity", "sortable": true },
+					{ "key": "referenceDate", "label": "Reference Date", "sortable": true },
+					{ "key": "source", "label": "Source", "sortable": true },
+					{ "key": "amount", "label": "Amount", "sortable": true },
+					{ "key": "unit", "label": "Unit", "sortable": true },
+					{ "key": "competitorName", "label": "Competitor", "sortable": true }
+				],
+				"defaultSort": "referenceDate",
+				"detailRoute": "MarketBenchmarkDetail"
+			}
+		},
+		{
+			"id": "MarketBenchmarkDetail",
+			"route": "/wmo/market-benchmarks/:id",
+			"type": "detail",
+			"title": "Market Benchmark",
+			"config": {
+				"register": "shillinq",
+				"schema": "MarketBenchmark",
+				"_note": "FINANCIAL / REFERENCE-DATA archetype (native CnDetailPage). A market benchmark is a single reference price used to sanity-check a commercial activity's tariff against competitors — a small evidence point. Native contract only: fields[] carry the benchmark (amount, source, competitor, unit, notes) with an audit-trail sidebar tab for provenance. NO comms, NO files, NO relatedLists — a benchmark is a leaf reference row.",
+				"fields": [
+					{ "key": "commercialActivityId", "label": "Activity", "type": "string" },
+					{ "key": "referenceDate", "label": "Reference Date", "type": "string" },
+					{ "key": "source", "label": "Source", "type": "string" },
+					{ "key": "amount", "label": "Amount", "type": "number" },
+					{ "key": "unit", "label": "Unit", "type": "string" },
+					{ "key": "competitorName", "label": "Competitor", "type": "string" },
+					{ "key": "notes", "label": "Notes", "type": "string" }
+				],
+				"indexRoute": "MarketBenchmarks",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}

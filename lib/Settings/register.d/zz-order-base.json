@@ -1,0 +1,178 @@
+{
+  "x-shillinq-fragment": "order-base",
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "abstract-order-primitive",
+    "description": "Payment and OrderLine — generic related objects for attaching payments (deposits/disbursements/reclaims) and line items to any order-like object. NOT currently populated by the abstract-order-primitive fold (FoldIntoOrder keeps each type's amounts on the Order.subsidie/purchase/engagement field group directly, per the shipped design in zz-order-primitive.json) — these remain available for a future related-object refactor (e.g. a Payments widget) without being claimed as wired today."
+  },
+  "components": {
+    "schemas": {
+      "Payment": {
+        "version": "0.1.0",
+        "slug": "Payment",
+        "title": "Payment",
+        "x-schema-org": "schema:PayAction",
+        "type": "object",
+        "description": "A payment related to an Order (or invoice). Generalises the booking DepositPayment and the grant disbursement/reclaim amounts so the order detail can render a Payments widget instead of carrying amount fields. Deposits, installments, grant disbursements and reclaims are all Payment rows.",
+        "required": [
+          "orderId",
+          "paymentType",
+          "amount"
+        ],
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "description": "The Order this payment belongs to.",
+            "title": "Order ID"
+          },
+          "paymentType": {
+            "type": "string",
+            "enum": [
+              "deposit",
+              "installment",
+              "disbursement",
+              "reclaim",
+              "final",
+              "refund"
+            ],
+            "description": "deposit (booking) / installment / disbursement (grant uitbetaald) / reclaim (grant teruggevorderd) / final / refund.",
+            "title": "Payment Type"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Payment amount.",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 4217 currency.",
+            "title": "Currency"
+          },
+          "paymentDate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Date the payment was made/received.",
+            "title": "Payment Date"
+          },
+          "method": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment method (bank, card, …).",
+            "title": "Method"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "pending",
+              "paid",
+              "failed",
+              "refunded"
+            ],
+            "description": "Payment status.",
+            "title": "Status"
+          },
+          "linkedInvoiceId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Invoice this payment settles, if any.",
+            "title": "Linked Invoice ID"
+          },
+          "administrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Owning administration.",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Payment is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "OrderLine": {
+        "version": "0.1.0",
+        "slug": "OrderLine",
+        "title": "Order Line",
+        "type": "object",
+        "description": "A line on an Order — the unified successor of QuoteLine / SalesOrderLine. Related object, not an inline array, so lines are queryable + reusable across order types.",
+        "required": [
+          "orderId"
+        ],
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "description": "The Order this line belongs to.",
+            "title": "Order ID"
+          },
+          "lineNumber": {
+            "type": "integer",
+            "nullable": true,
+            "title": "Line Number",
+            "description": "The count or quantity of li."
+          },
+          "productReference": {
+            "type": "string",
+            "nullable": true,
+            "title": "Product Reference",
+            "description": "The product reference."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "title": "Description",
+            "description": "A human-readable description or notes."
+          },
+          "quantity": {
+            "type": "number",
+            "nullable": true,
+            "title": "Quantity",
+            "description": "The quantity or count."
+          },
+          "unitPrice": {
+            "type": "number",
+            "nullable": true,
+            "title": "Unit Price",
+            "description": "The price per unit."
+          },
+          "discount": {
+            "type": "number",
+            "nullable": true,
+            "title": "Discount",
+            "description": "The count or quantity of dis."
+          },
+          "vatRate": {
+            "type": "number",
+            "nullable": true,
+            "title": "BTW Rate",
+            "description": "The btw rate as a numeric value."
+          },
+          "glAccount": {
+            "type": "string",
+            "nullable": true,
+            "title": "GL Account",
+            "description": "The gl account."
+          },
+          "projectReference": {
+            "type": "string",
+            "nullable": true,
+            "title": "Project Reference",
+            "description": "The project reference."
+          },
+          "lineAmount": {
+            "type": "number",
+            "nullable": true,
+            "title": "Line Amount",
+            "description": "The line amount as a numeric value."
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Order Line is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

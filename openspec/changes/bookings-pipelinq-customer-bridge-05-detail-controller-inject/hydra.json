@@ -1,7 +1,0 @@
-{
-  "schema_version": 2,
-  "spec_slug": "bookings-pipelinq-customer-bridge-05-detail-controller-inject",
-  "app": "shillinq",
-  "kind": "code",
-  "depends_on": ["bookings-pipelinq-customer-bridge-04-klantbeeld-read"]
-}

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: Retainer Billing Management
 
 **Status:** proposed  
@@ -5,7 +9,7 @@
 **Tier:** T2 (billing + operations)  
 **Depends on:** rate-card-engine
 
-## Overview
+## Purpose
 
 The retainer-billing-management capability enables monthly retainer pools
 per client/project with automatic drawdown tracking from time entries,
@@ -194,6 +198,8 @@ WHEN: operator manually triggers true-up for RETN-2026-01-001
 THEN: RetainerTrueUp is created; audit log records "manual trigger by Alice on 2026-02-15"  
 
 ### REQ-RETN-008: Adjustment Invoice Generation
+
+The system SHALL satisfy this requirement: Adjustment Invoice Generation.
 
 Once true-up is approved (status=approved), an optional adjustment invoice
 MUST be generated if overage > 0 or credit < 0 (under-utilization).

@@ -1,0 +1,495 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-fixed-assets-depreciation",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 2 / 3 — fixed-assets capability carrying forward asset management as a core bookkeeping function. Adds the DepreciationSchedule register (per-asset, per-fiscal-year tracking) alongside additive extensions on the existing FixedAsset schema (REQ-FA-002 operator-facing field aliases assetType/usefulLifeYears/purchaseDate/purchaseCost/status/declineRate/productionUnits + capitalization GL account + location + costCenterCode + retirementDate; REQ-FA-009 cost-center / method / status aggregations). Carry-forward note: the FixedAsset schema (assetCategory + usefulLifeMonths + lifecycleState shape) was first declared by `add-shillinq-fixed-assets-depreciation`; this fragment unions REQ-FA-002 field-set aliases on top of it without rename so existing records and DepreciationCalculator math remain valid. The DepreciationCalculator (ADR-031 §exception, single-method) honours the Nextcloud System Settings Float Precision setting at calculation time (REQ-FA-005) and is the deterministic kernel for the lifecycle-driven acquisition (REQ-FA-008), yearly depreciation (REQ-FA-007), internal transfer (REQ-FA-006) and retirement (REQ-FA-008) GL postings.",
+    "spec": "openspec/changes/bookkeeping-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md"
+  },
+  "components": {
+    "schemas": {
+      "FixedAsset": {
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "REQ-FA-002 — Free-form additional asset details (serial number, identifying marks). Optional.",
+            "nullable": true,
+            "example": "License plate ABC-123",
+            "title": "Description"
+          },
+          "accumulatedDepreciationAccountNumber": {
+            "type": "string",
+            "description": "REQ-FA-002 operator-facing alias of accumulatedDepAccountNumber (the contra-asset GL account for accumulated depreciation). When set, MUST equal accumulatedDepAccountNumber; defaults from it.",
+            "nullable": true,
+            "example": "0225",
+            "title": "Accumulated Depreciation Account Number"
+          },
+          "assetType": {
+            "type": "string",
+            "description": "REQ-FA-002 operator-facing alias of assetCategory mapping the spec's tax-vocabulary classification. When set, MUST agree with assetCategory; unset assets inherit assetCategory. Two-way alias for record interoperability with downstream specs that quote REQ-FA-002.",
+            "enum": [
+              "equipment",
+              "vehicle",
+              "property",
+              "building",
+              "leasehold",
+              "other"
+            ],
+            "nullable": true,
+            "example": "vehicle",
+            "title": "Asset Type"
+          },
+          "usefulLifeYears": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "REQ-FA-002 operator-facing alias of usefulLifeMonths/12 (Dutch SMB convention). When set, MUST agree with usefulLifeMonths within 1-month rounding; computed as ceil(usefulLifeMonths/12) when absent.",
+            "nullable": true,
+            "example": 5,
+            "title": "Useful Life Years"
+          },
+          "purchaseDate": {
+            "type": "string",
+            "format": "date",
+            "description": "REQ-FA-002 operator-facing alias of acquisitionDate. Identical semantic — the date the asset entered service.",
+            "nullable": true,
+            "example": "2026-01-15",
+            "title": "Purchase Date"
+          },
+          "purchaseCost": {
+            "type": "number",
+            "minimum": 0,
+            "description": "REQ-FA-002 operator-facing alias of acquisitionCost. Identical semantic — original cost in base currency.",
+            "nullable": true,
+            "example": 25000,
+            "title": "Purchase Cost"
+          },
+          "declineRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "REQ-FA-002 operator-facing alias of degressiveRate. Annual declining-balance percentage (e.g. 0.20 for 20%) for the declining-balance depreciation method.",
+            "nullable": true,
+            "example": 0.4,
+            "title": "Decline Rate"
+          },
+          "productionUnits": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "REQ-FA-002 — for the units-of-production depreciation method, the total estimated production output (e.g. machine hours, kilometres). Actual usage per period is recorded on each DepreciationSchedule record.",
+            "nullable": true,
+            "example": 150000,
+            "title": "Production Units"
+          },
+          "capitalizationAccountNumber": {
+            "type": "string",
+            "description": "REQ-FA-002 — FK to the Account.accountNumber used for asset capitalization. Defaults to assetAccountNumber when unset.",
+            "nullable": true,
+            "example": "0220",
+            "title": "Capitalization Account Number"
+          },
+          "location": {
+            "type": "string",
+            "description": "REQ-FA-002 — Physical location of the asset (building, office, site identifier).",
+            "nullable": true,
+            "example": "HQ Amsterdam",
+            "title": "Location"
+          },
+          "costCenterCode": {
+            "type": "string",
+            "description": "REQ-FA-002 / REQ-FA-006 — Cost-centre / kostendrager code for depreciation allocation. Updated by the internal-transfer lifecycle action without creating a GL posting.",
+            "nullable": true,
+            "example": "HQ",
+            "title": "Cost Center Code"
+          },
+          "status": {
+            "type": "string",
+            "description": "REQ-FA-002 operator-facing alias of lifecycleState restricted to the three operational states. Two-way mirror of lifecycleState; `active`/`inactive`/`retired` map onto `active`/`proposed`/`disposed` for downstream consumers that quote the REQ-FA-002 vocabulary verbatim.",
+            "enum": [
+              "active",
+              "inactive",
+              "retired"
+            ],
+            "nullable": true,
+            "example": "active",
+            "title": "Status"
+          },
+          "retirementDate": {
+            "type": "string",
+            "format": "date",
+            "description": "REQ-FA-002 — Date the asset was retired (when status = retired). Mirrors disposalDate.",
+            "nullable": true,
+            "example": "2030-12-31",
+            "title": "Retirement Date"
+          },
+          "salvageProceeds": {
+            "type": "number",
+            "minimum": 0,
+            "description": "REQ-FA-008 — Cash/receivable proceeds received when the asset is sold or scrapped at retirement; drives the gain/loss-on-disposal GL line.",
+            "nullable": true,
+            "example": 6000,
+            "title": "Salvage Proceeds"
+          },
+          "transferSourceAssetRef": {
+            "type": "string",
+            "description": "REQ-FA-006 — When a FixedAsset record was created by a proportional internal-transfer split, references the originating asset's UUID. Null on natively acquired records.",
+            "nullable": true,
+            "example": "uuid-of-original-asset",
+            "title": "Transfer Source Asset Ref"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration — the tenant scope this asset belongs to. Already written by SettingsService::seedFixedAssetsDemo() and required by the disposal GL posting (revive-gl-tax-capabilities REQ-GLTAX-001) to scope the GLTransaction; declared here so the record shape is honest.",
+            "nullable": true,
+            "example": "adm-1",
+            "title": "Administration Id"
+          },
+          "disposalAccountingTreatment": {
+            "type": "string",
+            "description": "REQ-FA-008 — How the retirement is treated for accounting purposes. `sale` books the proceeds against the clearing account and the difference with the book value as boekwinst/boekverlies; `scrap` and `donation` (typically zero proceeds) book the full residual carrying amount as a loss; `transfer` moves the asset out at book value. Read by DisposalJournalEmitter::emit() when the asset transitions to retired.",
+            "enum": [
+              "sale",
+              "scrap",
+              "donation",
+              "transfer"
+            ],
+            "nullable": true,
+            "example": "sale",
+            "title": "Disposal Accounting Treatment"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "REQ-FA-002 — The asset is in use and depreciating."
+            },
+            "inactive": {
+              "label": "Inactive",
+              "description": "REQ-FA-002 — The asset is registered but not yet (or no longer) in use; no depreciation is scheduled."
+            },
+            "retired": {
+              "label": "Retired",
+              "description": "REQ-FA-002 / REQ-FA-008 — The asset has been disposed of; its carrying amount has been zeroed by the disposal journal."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": [
+                "inactive"
+              ],
+              "to": "active",
+              "label": "Activate",
+              "description": "REQ-FA-008 — Put the asset into service.",
+              "action": {
+                "type": "emit-journal-entry-and-schedule",
+                "subType": "acquisition",
+                "description": "REQ-FA-008 — On acquisition (transition to active), materialise a balanced GLTransaction (debit assetAccountNumber for purchaseCost, credit cash/AP) AND auto-generate the first-year DepreciationSchedule record (REQ-FA-004) using depreciationMethod, usefulLifeYears/usefulLifeMonths, purchaseDate, and the administration's fiscal year. The DepreciationCalculator (ADR-031 exception, Float-Precision-aware per REQ-FA-005) is the deterministic kernel; OR's ScheduledWorkflow continues firing yearly per REQ-FA-007.",
+                "requiredInput": [
+                  "purchaseDate"
+                ]
+              }
+            },
+            "transferInternal": {
+              "from": "active",
+              "to": "active",
+              "label": "Internal transfer",
+              "description": "REQ-FA-006 — Reassign this FixedAsset between cost centres or departments. Updates costCenterCode and propagates to subsequent DepreciationSchedule records; NO GL posting (the asset stays on the same GL account). For proportional splits, see the `splitTransfer` transition which creates a new FixedAsset for the split-off portion.",
+              "action": {
+                "type": "update-cost-center",
+                "description": "Updates costCenterCode and any open-period DepreciationSchedule.costCenterCode in lock-step. Audit-trailed via OR.",
+                "requiredInput": [
+                  "newCostCenterCode"
+                ]
+              }
+            },
+            "splitTransfer": {
+              "from": "active",
+              "to": "active",
+              "label": "Proportional internal transfer (split)",
+              "description": "REQ-FA-006 — Split a percentage of this FixedAsset off to a new FixedAsset record (transferSourceAssetRef pointing back), proportionally reducing the original asset's purchaseCost/accumulatedDepreciation and creating a new DepreciationSchedule for the split-off portion. NO GL posting; both records remain on the same balance-sheet account.",
+              "action": {
+                "type": "split-asset",
+                "description": "Creates a new FixedAsset with transferSourceAssetRef pointing back, allocating the configured percentage of acquisitionCost and accumulatedDepreciation. Audit-trailed.",
+                "requiredInput": [
+                  "splitPercentage",
+                  "newCostCenterCode"
+                ]
+              }
+            },
+            "dispose": {
+              "from": [
+                "active"
+              ],
+              "to": "retired",
+              "label": "Dispose",
+              "description": "REQ-FA-008 — Retire the asset and post its closing journal. Before revive-gl-tax-capabilities this transition declared neither `from` nor `to`, so OpenRegister's TransitionEngine rejected every attempt with \"Transition dispose is not allowed from current state ''\" and no ObjectTransitionedEvent was ever dispatched — the disposal journal could not fire even in principle.",
+              "action": {
+                "type": "emit-journal-entry",
+                "subType": "disposal",
+                "description": "REQ-FA-008 — Materialises a balanced JournalEntry zeroing the asset account and accumulated depreciation; if disposalAccountingTreatment = sale and salvageProceeds > 0, posts the gain or loss (salvageProceeds − currentBookValue) to the configured P&L account; if scrap or donation with zero proceeds, the residual carrying amount books to loss on disposal. Materialised on the ADR-031 exception path by FixedAssetDisposalListener → FixedAssetDisposalService → DisposalJournalEmitter::emit(): the declarative DSL cannot read the sibling DepreciationSchedule rows, do integer-cent arithmetic and write a multi-row GLTransaction."
+              }
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "floatPrecisionAware": {
+            "description": "REQ-FA-005 — Tag indicating the asset's depreciation calculations honour the Nextcloud System Settings Float Precision value. The DepreciationCalculator queries the setting at calculation time via SettingsService::getFloatPrecision(); fallback is 2 decimal places (Dutch accounting standard).",
+            "expression": "true",
+            "dependsOn": []
+          },
+          "yearsElapsed": {
+            "description": "REQ-FA-004 / REQ-FA-007 — Computed years elapsed since acquisitionDate. Drives the yearly auto-fire of depreciation-expense GL postings via the FixedAssets monthly-depreciation ScheduledWorkflow (Phase 4b of InitializeSettings).",
+            "expression": "monthsElapsed(@self.acquisitionDate) / 12",
+            "dependsOn": [
+              "acquisitionDate"
+            ]
+          }
+        },
+        "x-openregister-aggregations": {
+          "depreciationByMethod": {
+            "description": "REQ-FA-009 (1) — count of active assets grouped by depreciationMethod. Drives the Depreciation Expense report method-mix breakdown.",
+            "field": "depreciationMethod",
+            "metric": "count",
+            "groupBy": ["depreciationMethod"],
+            "filter": {
+              "lifecycleState": "active"
+            }
+          },
+          "depreciationByCostCenter": {
+            "description": "REQ-FA-009 (2) — sum of acquisitionCost grouped by costCenterCode (proxy for current-fiscal-year depreciation allocation). Drives the Depreciation Expense cost-center report.",
+            "field": "acquisitionCost",
+            "metric": "sum",
+            "groupBy": ["costCenterCode"],
+            "filter": {
+              "lifecycleState": "active"
+            }
+          },
+          "bookValuesByStatus": {
+            "description": "REQ-FA-009 (4) — count of assets grouped by lifecycleState (proxy for book-value buckets). Drives balance-sheet reporting splits.",
+            "field": "lifecycleState",
+            "metric": "count",
+            "groupBy": ["lifecycleState"]
+          }
+        }
+      },
+      "DepreciationSchedule": {
+        "slug": "DepreciationSchedule",
+        "icon": "ChartLineVariant",
+        "version": "0.1.0",
+        "title": "Depreciation Schedule",
+        "description": "Per-asset, per-fiscal-year depreciation schedule record (REQ-FA-003). Immutable append-only history backing the audit trail for tax-compliance review (Wet Vpb / Wet IB). depreciationAmount is materialised at period close (or on demand by the DepreciationCalculator) using the asset's depreciationMethod, annualRate and the System Settings Float Precision rounding. bookValue is a derived calculation (purchaseCost − accumulatedDepreciation) and not stored separately. status tracks the schedule lifecycle (planned → active → completed).",
+        "x-schema-org": "schema:Thing",
+        "x-spec": "openspec/changes/bookkeeping-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md",
+        "type": "object",
+        "required": [
+          "scheduleNumber",
+          "assetRef",
+          "depreciationMethod",
+          "annualRate",
+          "rateType",
+          "periodStartDate",
+          "periodEndDate",
+          "depreciationAmount",
+          "accumulatedDepreciation",
+          "fiscalYear",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "scheduleNumber": {
+            "type": "string",
+            "description": "Unique identifier within an administration (e.g. SCH-FA-0001-2026).",
+            "example": "SCH-FA-0001-2026",
+            "title": "Schedule Number"
+          },
+          "assetRef": {
+            "type": "string",
+            "description": "FK to FixedAsset UUID — the asset this schedule covers.",
+            "example": "uuid-of-fixed-asset",
+            "title": "Asset Ref",
+            "$ref": "FixedAsset"
+          },
+          "depreciationMethod": {
+            "type": "string",
+            "description": "Depreciation method applied for this schedule. Mirrors the asset's depreciationMethod at schedule-creation time; immutable thereafter.",
+            "enum": [
+              "linear",
+              "declining-balance",
+              "units-of-production"
+            ],
+            "example": "linear",
+            "title": "Depreciation Method"
+          },
+          "annualRate": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Annual depreciation rate (percentage of depreciable base for linear, declining percentage for declining-balance, units/year for units-of-production). Rounded to System Settings Float Precision per REQ-FA-005.",
+            "example": 0.2,
+            "title": "Annual Rate"
+          },
+          "rateType": {
+            "type": "string",
+            "description": "Interpretation of annualRate.",
+            "enum": [
+              "percentage",
+              "fixed-amount",
+              "units-per-year"
+            ],
+            "example": "percentage",
+            "title": "Rate Type"
+          },
+          "periodStartDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Start date of the depreciation period (typically fiscal-year start).",
+            "example": "2026-01-01",
+            "title": "Period Start Date"
+          },
+          "periodEndDate": {
+            "type": "string",
+            "format": "date",
+            "description": "End date of the depreciation period (typically fiscal-year end).",
+            "example": "2026-12-31",
+            "title": "Period End Date"
+          },
+          "depreciationAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Depreciation expense for this period in base currency. Rounded to System Settings Float Precision per REQ-FA-005.",
+            "example": 4600,
+            "title": "Depreciation Amount"
+          },
+          "accumulatedDepreciation": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Total accumulated depreciation across all periods through periodEndDate. Equal to the sum of prior depreciationAmounts plus this period's amount.",
+            "example": 4600,
+            "title": "Accumulated Depreciation"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "description": "Fiscal year this schedule covers (e.g. 2026).",
+            "example": 2026,
+            "title": "Fiscal Year"
+          },
+          "status": {
+            "type": "string",
+            "description": "Schedule lifecycle. planned = generated but not yet within period; active = within period; completed = period has ended.",
+            "enum": [
+              "planned",
+              "active",
+              "completed"
+            ],
+            "example": "active",
+            "title": "Status"
+          },
+          "costCenterCode": {
+            "type": "string",
+            "description": "REQ-FA-006 — Cost-centre allocation at schedule-creation time. Updated by the internal-transfer lifecycle action when a subsequent transfer reallocates depreciation.",
+            "nullable": true,
+            "example": "HQ",
+            "title": "Cost Center Code"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration — scoping field for multi-administratie installs.",
+            "example": "adm-sample",
+            "title": "Administration ID",
+            "$ref": "Administration"
+          },
+          "glTransactionRef": {
+            "type": "string",
+            "description": "When the yearly depreciation-expense posting has been materialised, FK to the resulting GLTransaction UUID. Null until the workflow ticks for the period.",
+            "nullable": true,
+            "example": "uuid-of-gl-transaction",
+            "title": "GL Transaction Ref",
+            "$ref": "GLTransaction"
+          },
+          "calculationFloatPrecision": {
+            "type": "integer",
+            "description": "REQ-FA-005 — the Nextcloud System Settings Float Precision value captured at calculation time. Persisted so re-runs can reproduce the rounding deterministically. Defaults to 2 (Dutch accounting standard) when System Settings is unavailable.",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 8,
+            "example": 2,
+            "title": "Calculation Float Precision"
+          }
+        },
+        "x-openregister-calculations": {
+          "bookValue": {
+            "description": "REQ-FA-003 — Net book value at periodEndDate. Computed as FixedAsset.acquisitionCost − accumulatedDepreciation. Not stored.",
+            "expression": "asset.acquisitionCost - accumulatedDepreciation",
+            "dependsOn": [
+              "assetRef",
+              "accumulatedDepreciation"
+            ]
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "admin": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "depreciationAmountByCostCenter": {
+            "description": "REQ-FA-009 (2) — sum of depreciationAmount grouped by costCenterCode for the current fiscal year. Drives the Depreciation Expense cost-center report.",
+            "field": "depreciationAmount",
+            "metric": "sum",
+            "groupBy": ["costCenterCode"],
+            "filter": {
+              "status": "active"
+            }
+          },
+          "depreciationAmountByMethod": {
+            "description": "REQ-FA-009 (1) — sum of depreciationAmount grouped by depreciationMethod for the current fiscal year. Drives the Depreciation Expense method-mix report.",
+            "field": "depreciationAmount",
+            "metric": "sum",
+            "groupBy": ["depreciationMethod"],
+            "filter": {
+              "status": "active"
+            }
+          },
+          "accumulatedDepreciationByAsset": {
+            "description": "REQ-FA-009 (3) — sum of depreciationAmount grouped by assetRef across all closed periods. Drives the asset-by-asset accumulated-depreciation report.",
+            "field": "depreciationAmount",
+            "metric": "sum",
+            "groupBy": ["assetRef"]
+          }
+        }
+      },
+      "GLLine": {
+        "properties": {
+          "subLedgerType": {
+            "enum": [
+              "fixed-asset"
+            ],
+            "description": "Sub-ledger discriminator. `fixed-asset` added by revive-gl-tax-capabilities REQ-GLTAX-001 (list-concat with the base enum, the same additive mechanism inventory-cogs-posting uses for `inventory`): every line of the disposal journal DisposalJournalEmitter::emit() shapes carries subLedgerType `fixed-asset` with the FixedAsset UUID as subLedgerRef, so the trial balance and the audit trail can trace the closing entry back to the asset. Without this member the disposal lines would be rejected by schema validation.",
+            "title": "Sub Ledger Type"
+          }
+        }
+      }
+    }
+  }
+}

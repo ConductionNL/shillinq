@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-icp-opgaaf
 
 **Status:** proposed
@@ -7,7 +11,11 @@
 `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-chart-of-accounts/spec.md` (zero-rated accounts 8190/8195/8196),
 `../add-shillinq-bookkeeping-vat/specs/bookkeeping-vat-btw-filing/spec.md` (rubriek 3b read for reconciliation)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping icp opgaaf in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: ICP opgaaf pages not yet implemented
 

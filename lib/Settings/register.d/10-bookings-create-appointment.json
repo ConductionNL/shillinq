@@ -1,353 +1,369 @@
 {
-	"info": {
-		"version": "0.1.0-bookings-create-appointment"
-	},
-	"components": {
-		"schemas": {
-			"Service": {
-				"slug": "Service",
-				"icon": "BriefcaseOutline",
-				"version": "0.1.0",
-				"title": "Service",
-				"description": "A bookable service (consultation, class, room rental) with a fixed duration. Referenced by Appointment.serviceId. Part of the bookings-service-catalog dependency surface; declared here so appointment creation can validate duration against the service.",
-				"x-schema-org": "schema:Service",
-				"x-openregister-purpose": "dimension",
-				"type": "object",
-				"required": [
-					"administrationId",
-					"serviceId",
-					"name",
-					"duration",
-					"status"
-				],
-				"properties": {
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this service for tenant isolation.",
-						"example": "adm-1"
-					},
-					"serviceId": {
-						"type": "string",
-						"description": "Operator-assigned unique service identifier within the administration.",
-						"example": "svc-001"
-					},
-					"name": {
-						"type": "string",
-						"description": "Human-readable service name.",
-						"example": "Intake consultation"
-					},
-					"description": {
-						"type": "string",
-						"nullable": true,
-						"description": "Longer description of the service.",
-						"example": "30-minute introductory consultation."
-					},
-					"duration": {
-						"type": "integer",
-						"description": "Service duration in minutes. Appointment endTime - startTime must match this (within tolerance) per REQ-BCA-003.",
-						"example": 30
-					},
-					"price": {
-						"type": "number",
-						"nullable": true,
-						"description": "Service price in the administration's currency. Informational in phase 1; payment is out of scope.",
-						"example": 75.0
-					},
-					"currency": {
-						"type": "string",
-						"nullable": true,
-						"description": "ISO 4217 currency code for the price.",
-						"example": "EUR"
-					},
-					"status": {
-						"type": "string",
-						"description": "Whether the service is bookable.",
-						"enum": [
-							"active",
-							"archived"
-						],
-						"default": "active",
-						"example": "active"
-					}
-				}
-			},
-			"Resource": {
-				"slug": "Resource",
-				"icon": "CalendarOutline",
-				"version": "0.1.0",
-				"title": "Resource",
-				"description": "A physical or virtual bookable resource (staff calendar, room, chair) with operational hours. Referenced by Appointment.resourceId. Part of the bookings-resource-calendar dependency surface; declared here so appointment creation can validate operational hours and detect double-booking.",
-				"x-schema-org": "schema:Thing",
-				"x-openregister-purpose": "dimension",
-				"type": "object",
-				"required": [
-					"administrationId",
-					"resourceId",
-					"name",
-					"status"
-				],
-				"properties": {
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this resource for tenant isolation.",
-						"example": "adm-1"
-					},
-					"resourceId": {
-						"type": "string",
-						"description": "Operator-assigned unique resource identifier within the administration.",
-						"example": "res-001"
-					},
-					"name": {
-						"type": "string",
-						"description": "Human-readable resource name.",
-						"example": "Consultation room A"
-					},
-					"openingTime": {
-						"type": "string",
-						"nullable": true,
-						"description": "Daily operational start time as HH:MM in UTC. Appointments before this are rejected per REQ-BCA-004. Null means no operational-hours restriction.",
-						"example": "09:00"
-					},
-					"closingTime": {
-						"type": "string",
-						"nullable": true,
-						"description": "Daily operational end time as HH:MM in UTC. Appointments after this are rejected per REQ-BCA-004. Null means no operational-hours restriction.",
-						"example": "17:00"
-					},
-					"allowOverlap": {
-						"type": "boolean",
-						"description": "When true, the double-booking check is skipped for this resource (e.g. a trainer coaching multiple people). Defaults to false (single-booking) per design open question 5.",
-						"default": false,
-						"example": false
-					},
-					"status": {
-						"type": "string",
-						"description": "Whether the resource is bookable.",
-						"enum": [
-							"active",
-							"archived"
-						],
-						"default": "active",
-						"example": "active"
-					}
-				}
-			},
-			"Appointment": {
-				"slug": "Appointment",
-				"icon": "CalendarClockOutline",
-				"version": "0.1.0",
-				"title": "Appointment",
-				"description": "A booked appointment linking a customer contact to a Service and Resource at a specific UTC time window. The single source of truth for the bookings create flow (admin, customer self-service, API) per bookings-create-appointment. Validation (duration match, double-booking, operational hours, customer eligibility) runs in the AppointmentGuard save precondition (ADR-031 exception path) per REQ-BCA-003/004/006.",
-				"x-schema-org": "schema:Reservation",
-				"x-openregister-purpose": "transaction",
-				"type": "object",
-				"required": [
-					"administrationId",
-					"appointmentId",
-					"startTime",
-					"endTime",
-					"serviceId",
-					"resourceId",
-					"customerId",
-					"status"
-				],
-				"properties": {
-					"administrationId": {
-						"type": "string",
-						"description": "FK to the Administration owning this appointment for tenant isolation and IDOR-safe scoping.",
-						"example": "adm-1"
-					},
-					"appointmentId": {
-						"type": "string",
-						"description": "Unique appointment identifier within the administration.",
-						"example": "apt-001"
-					},
-					"startTime": {
-						"type": "string",
-						"format": "date-time",
-						"description": "Appointment start time as ISO 8601 UTC per design D6.",
-						"example": "2026-05-22T10:00:00Z"
-					},
-					"endTime": {
-						"type": "string",
-						"format": "date-time",
-						"description": "Appointment end time as ISO 8601 UTC. endTime - startTime must match Service.duration within tolerance per REQ-BCA-003.",
-						"example": "2026-05-22T10:30:00Z"
-					},
-					"serviceId": {
-						"type": "string",
-						"description": "FK to Service.serviceId (bookings-service-catalog).",
-						"example": "svc-001"
-					},
-					"resourceId": {
-						"type": "string",
-						"description": "FK to Resource.resourceId (bookings-resource-calendar).",
-						"example": "res-001"
-					},
-					"customerId": {
-						"type": "string",
-						"description": "FK to the customer contact record (Nextcloud contact / IManager-synced). A customer is a Nextcloud contact entity, not a bespoke schema, per fleet convention.",
-						"example": "cust-001"
-					},
-					"status": {
-						"type": "string",
-						"description": "Appointment lifecycle status. Admin bookings create as confirmed; customer self-service bookings create as pending_confirmation per REQ-BCA-005.",
-						"enum": [
-							"pending_confirmation",
-							"confirmed",
-							"completed",
-							"cancelled"
-						],
-						"default": "pending_confirmation",
-						"example": "confirmed"
-					},
-					"notes": {
-						"type": "string",
-						"nullable": true,
-						"description": "Customer-provided notes or special requests.",
-						"example": "Wheelchair access required."
-					},
-					"cancelledAt": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true,
-						"description": "Timestamp when the appointment was cancelled (set by phase-2 cancellation flow)."
-					},
-					"cancelledReason": {
-						"type": "string",
-						"nullable": true,
-						"description": "Reason for cancellation (set by phase-2 cancellation flow)."
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "status",
-					"initialState": "pending_confirmation",
-					"states": {
-						"pending_confirmation": {
-							"label": "Pending confirmation",
-							"description": "Created via customer self-service; awaits admin approval or auto-confirmation."
-						},
-						"confirmed": {
-							"label": "Confirmed",
-							"description": "Booked and confirmed. Admin bookings start here."
-						},
-						"completed": {
-							"label": "Completed",
-							"description": "The appointment took place."
-						},
-						"cancelled": {
-							"label": "Cancelled",
-							"description": "The appointment was cancelled (phase-2 flow). Remains queryable for audit."
-						}
-					},
-					"preconditions": {
-						"save": "OCA\\Shillinq\\Guard\\AppointmentGuard::validateOnSave"
-					},
-					"transitions": {
-						"confirm": {
-							"from": "pending_confirmation",
-							"to": "confirmed",
-							"label": "Confirm appointment",
-							"description": "Approve a pending customer self-service booking."
-						},
-						"complete": {
-							"from": "confirmed",
-							"to": "completed",
-							"label": "Complete appointment",
-							"description": "Mark a confirmed appointment as having taken place."
-						},
-						"cancel": {
-							"from": "confirmed",
-							"to": "cancelled",
-							"label": "Cancel appointment",
-							"description": "Cancel a confirmed appointment (phase-2 cancellation flow owns the full rules)."
-						},
-						"cancelPending": {
-							"from": "pending_confirmation",
-							"to": "cancelled",
-							"label": "Cancel pending appointment",
-							"description": "Cancel an appointment that was never confirmed."
-						}
-					}
-				},
-				"x-openregister-relations": {
-					"service": {
-						"localField": "serviceId",
-						"relatedSchema": "Service",
-						"relatedField": "serviceId",
-						"cardinality": "many-to-one",
-						"description": "The Service this appointment books."
-					},
-					"resource": {
-						"localField": "resourceId",
-						"relatedSchema": "Resource",
-						"relatedField": "resourceId",
-						"cardinality": "many-to-one",
-						"description": "The Resource this appointment reserves."
-					}
-				},
-				"x-openregister-rbac": {
-					"roles": {
-						"scheduler": {
-							"permissions": [
-								"create",
-								"read",
-								"update"
-							]
-						},
-						"customer": {
-							"permissions": [
-								"create",
-								"read"
-							]
-						},
-						"auditor": {
-							"permissions": [
-								"read"
-							]
-						}
-					}
-				},
-				"x-openregister-aggregations": {
-					"countByStatus": {
-						"field": "status",
-						"operation": "count",
-						"description": "Number of appointments per status.",
-						"groupBy": "status"
-					}
-				}
-			}
-		}
-	},
-	"objects": [
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "Service",
-				"slug": "bookings-service-intake-consultation"
-			},
-			"administrationId": "adm-1",
-			"serviceId": "svc-001",
-			"name": "Intake consultation",
-			"description": "30-minute introductory consultation.",
-			"duration": 30,
-			"price": 75.0,
-			"currency": "EUR",
-			"status": "active"
-		},
-		{
-			"@self": {
-				"register": "shillinq",
-				"schema": "Resource",
-				"slug": "bookings-resource-room-a"
-			},
-			"administrationId": "adm-1",
-			"resourceId": "res-001",
-			"name": "Consultation room A",
-			"openingTime": "09:00",
-			"closingTime": "17:00",
-			"allowOverlap": false,
-			"status": "active"
-		}
-	]
+  "info": {
+    "version": "0.1.0-bookings-create-appointment"
+  },
+  "components": {
+    "schemas": {
+      "Service": {
+        "slug": "Service",
+        "icon": "BriefcaseOutline",
+        "version": "0.1.0",
+        "title": "Service",
+        "description": "A bookable service (consultation, class, room rental) with a fixed duration. Referenced by Appointment.serviceId. Part of the bookings-service-catalog dependency surface; declared here so appointment creation can validate duration against the service.",
+        "x-schema-org": "schema:Service",
+        "x-openregister-purpose": "dimension",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "serviceId",
+          "name",
+          "duration",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this service for tenant isolation.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "serviceId": {
+            "type": "string",
+            "description": "Operator-assigned unique service identifier within the administration.",
+            "example": "svc-001",
+            "title": "Service ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable service name.",
+            "example": "Intake consultation",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Longer description of the service.",
+            "example": "30-minute introductory consultation.",
+            "title": "Description"
+          },
+          "duration": {
+            "type": "integer",
+            "description": "Service duration in minutes. Appointment endTime - startTime must match this (within tolerance) per REQ-BCA-003.",
+            "example": 30,
+            "title": "Duration"
+          },
+          "price": {
+            "type": "number",
+            "nullable": true,
+            "description": "DEPRECATED - superseded by `basePrice` from the canonical bookings-service-catalog fragment. Retained only so pre-existing rows keep resolving; read sites fall back `basePrice ?? price`. Do not use in new seeds. Service price in the administration's currency. Informational in phase 1; payment is out of scope.",
+            "example": 75.0,
+            "title": "Price"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 4217 currency code for the price.",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "status": {
+            "type": "string",
+            "description": "Whether the service is bookable.",
+            "enum": [
+              "active",
+              "archived"
+            ],
+            "default": "active",
+            "example": "active",
+            "title": "Status"
+          }
+        }
+      },
+      "Resource": {
+        "slug": "Resource",
+        "icon": "CalendarOutline",
+        "version": "0.1.0",
+        "title": "Resource",
+        "description": "A physical or virtual bookable resource (staff calendar, room, chair) with operational hours. Referenced by Appointment.resourceId. Part of the bookings-resource-calendar dependency surface; declared here so appointment creation can validate operational hours and detect double-booking.",
+        "x-schema-org": "schema:Thing",
+        "x-openregister-purpose": "dimension",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "resourceId",
+          "name",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this resource for tenant isolation.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "resourceId": {
+            "type": "string",
+            "description": "Operator-assigned unique resource identifier within the administration.",
+            "example": "res-001",
+            "title": "Resource ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable resource name.",
+            "example": "Consultation room A",
+            "title": "Name"
+          },
+          "openingTime": {
+            "type": "string",
+            "nullable": true,
+            "description": "Daily operational start time as HH:MM in UTC. Appointments before this are rejected per REQ-BCA-004. Null means no operational-hours restriction.",
+            "example": "09:00",
+            "title": "Opening Time"
+          },
+          "closingTime": {
+            "type": "string",
+            "nullable": true,
+            "description": "Daily operational end time as HH:MM in UTC. Appointments after this are rejected per REQ-BCA-004. Null means no operational-hours restriction.",
+            "example": "17:00",
+            "title": "Closing Time"
+          },
+          "allowOverlap": {
+            "type": "boolean",
+            "description": "When true, the double-booking check is skipped for this resource (e.g. a trainer coaching multiple people). Defaults to false (single-booking) per design open question 5.",
+            "default": false,
+            "example": false,
+            "title": "Allow Overlap"
+          },
+          "status": {
+            "type": "string",
+            "description": "Whether the resource is bookable.",
+            "enum": [
+              "active",
+              "archived"
+            ],
+            "default": "active",
+            "example": "active",
+            "title": "Status"
+          }
+        }
+      },
+      "Appointment": {
+        "slug": "Appointment",
+        "icon": "CalendarClockOutline",
+        "version": "0.1.0",
+        "title": "Appointment",
+        "description": "A booked appointment linking a customer contact to a Service and Resource at a specific UTC time window. The single source of truth for the bookings create flow (admin, customer self-service, API) per bookings-create-appointment. Validation (duration match, double-booking, operational hours, customer eligibility) runs in the AppointmentGuard save precondition (ADR-031 exception path) per REQ-BCA-003/004/006.",
+        "x-schema-org": "schema:Reservation",
+        "x-openregister-purpose": "transaction",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "appointmentId",
+          "startTime",
+          "endTime",
+          "serviceId",
+          "resourceId",
+          "customerId",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this appointment for tenant isolation and IDOR-safe scoping.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "appointmentId": {
+            "type": "string",
+            "description": "Unique appointment identifier within the administration.",
+            "example": "apt-001",
+            "title": "Appointment ID"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Appointment start time as ISO 8601 UTC per design D6.",
+            "example": "2026-05-22T10:00:00Z",
+            "title": "Start Time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Appointment end time as ISO 8601 UTC. endTime - startTime must match Service.duration within tolerance per REQ-BCA-003.",
+            "example": "2026-05-22T10:30:00Z",
+            "title": "End Time"
+          },
+          "serviceId": {
+            "type": "string",
+            "description": "FK to Service.serviceId (bookings-service-catalog).",
+            "example": "svc-001",
+            "title": "Service ID"
+          },
+          "resourceId": {
+            "type": "string",
+            "description": "FK to Resource.resourceId (bookings-resource-calendar).",
+            "example": "res-001",
+            "title": "Resource ID"
+          },
+          "customerId": {
+            "type": "string",
+            "description": "FK to the customer contact record (Nextcloud contact / IManager-synced). A customer is a Nextcloud contact entity, not a bespoke schema, per fleet convention.",
+            "example": "cust-001",
+            "title": "Customer ID"
+          },
+          "status": {
+            "type": "string",
+            "description": "Appointment lifecycle status. Admin bookings create as confirmed; customer self-service bookings create as pending_confirmation per REQ-BCA-005.",
+            "enum": [
+              "pending_confirmation",
+              "confirmed",
+              "completed",
+              "cancelled"
+            ],
+            "default": "pending_confirmation",
+            "example": "confirmed",
+            "title": "Status"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Customer-provided notes or special requests.",
+            "example": "Wheelchair access required.",
+            "title": "Notes"
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp when the appointment was cancelled (set by phase-2 cancellation flow).",
+            "title": "Cancelled At"
+          },
+          "cancelledReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reason for cancellation (set by phase-2 cancellation flow).",
+            "title": "Cancelled Reason"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "pending_confirmation",
+          "states": {
+            "pending_confirmation": {
+              "label": "Pending confirmation",
+              "description": "Created via customer self-service; awaits admin approval or auto-confirmation."
+            },
+            "confirmed": {
+              "label": "Confirmed",
+              "description": "Booked and confirmed. Admin bookings start here."
+            },
+            "completed": {
+              "label": "Completed",
+              "description": "The appointment took place."
+            },
+            "cancelled": {
+              "label": "Cancelled",
+              "description": "The appointment was cancelled (phase-2 flow). Remains queryable for audit."
+            }
+          },
+          "preconditions": {
+            "save": "OCA\\Shillinq\\Guard\\AppointmentGuard::validateOnSave"
+          },
+          "transitions": {
+            "confirm": {
+              "from": "pending_confirmation",
+              "to": "confirmed",
+              "label": "Confirm appointment",
+              "description": "Approve a pending customer self-service booking."
+            },
+            "complete": {
+              "from": "confirmed",
+              "to": "completed",
+              "label": "Complete appointment",
+              "description": "Mark a confirmed appointment as having taken place."
+            },
+            "cancel": {
+              "from": "confirmed",
+              "to": "cancelled",
+              "label": "Cancel appointment",
+              "description": "Cancel a confirmed appointment (phase-2 cancellation flow owns the full rules)."
+            },
+            "cancelPending": {
+              "from": "pending_confirmation",
+              "to": "cancelled",
+              "label": "Cancel pending appointment",
+              "description": "Cancel an appointment that was never confirmed."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "scheduler": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "customer": {
+              "permissions": [
+                "create",
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "countByStatus": {
+            "field": "status",
+            "metric": "count",
+            "description": "Number of appointments per status.",
+            "groupBy": ["status"]
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Service",
+        "slug": "bookings-service-intake-consultation"
+      },
+      "administrationId": "adm-1",
+      "serviceId": "svc-001",
+      "code": "intake-consult",
+      "name": "Intake consultation",
+      "description": "30-minute introductory consultation.",
+      "duration": 30,
+      "prepareTime": 0,
+      "bufferBefore": 0,
+      "bufferAfter": 0,
+      "basePrice": 75.0,
+      "currency": "EUR",
+      "dynamicPricing": false,
+      "serviceCategory": "Consultation",
+      "status": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Resource",
+        "slug": "bookings-resource-room-a"
+      },
+      "administrationId": "adm-1",
+      "resourceId": "res-001",
+      "name": "Consultation room A",
+      "openingTime": "09:00",
+      "closingTime": "17:00",
+      "allowOverlap": false,
+      "status": "active"
+    }
+  ]
 }

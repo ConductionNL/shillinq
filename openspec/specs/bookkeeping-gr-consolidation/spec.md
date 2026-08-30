@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-gr-consolidation
 
 **Status:** proposed
@@ -5,7 +9,11 @@
 **Tier:** T4-specialized (NL gov sector)
 **Depends on:** bookkeeping-bbv-compliance, bookkeeping-financial-statements
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping gr consolidation in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: GR consolidation — not browser-testable
 
@@ -98,6 +106,8 @@ on the GL data; per ADR-031, no PHP consolidation service.
   expected aandeel-gewogen som.
 
 ### REQ-GRC-005: A doorbelasting SHALL materialise as a balanced `GLTransaction` in the deelnemer's administration when the deelnemer also runs shillinq
+
+The system SHALL satisfy this requirement: A doorbelasting SHALL materialise as a balanced `GLTransaction` in the deelnemer's administration when the deelnemer also runs shillinq.
 
 When a `GRDeelnemer` record has `administrationId` set (i.e. de
 deelnemer draait shillinq), the period-end doorbelasting MUST

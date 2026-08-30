@@ -1,0 +1,242 @@
+{
+	"menu": [
+		{
+			"id": "Communicatie",
+			"label": "Communication",
+			"icon": "CommentOutline",
+			"order": 36,
+			"children": [
+				{
+					"id": "ConfirmationTemplates",
+					"label": "Confirmation Templates",
+					"icon": "FileReplaceOutline",
+					"route": "ConfirmationTemplates",
+					"order": 20
+				},
+				{
+					"id": "ReminderTemplates",
+					"label": "Reminder Templates",
+					"icon": "FileReplaceOutline",
+					"route": "ReminderTemplates",
+					"order": 30
+				},
+				{
+					"id": "CancellationTemplates",
+					"label": "Cancellation Templates",
+					"icon": "FileReplaceOutline",
+					"route": "CancellationTemplates",
+					"order": 40
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "ConfirmationTemplates",
+			"route": "/communication/confirmation-templates",
+			"type": "index",
+			"title": "Confirmation Templates",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingConfirmationTemplate",
+				"columns": [
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "locale", "label": "Locale", "sortable": true },
+					{ "key": "subjectLine", "label": "Subject", "sortable": false },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "activatedAt", "label": "First activated", "sortable": true }
+				],
+				"defaultSort": "name",
+				"detailRoute": "ConfirmationTemplateDetail"
+			}
+		},
+		{
+			"id": "ConfirmationTemplateDetail",
+			"route": "/communication/confirmation-templates/:id",
+			"type": "detail",
+			"title": "Confirmation Template",
+			"config": {
+				"_note": "A booking confirmation template is a CONFIG record — the reusable subject/HTML/plain-text layout the notification engine renders when a booking is confirmed, with branding (logo, accent, footer, sender) and computed validation previews (rendered subject/body, length + size + whitelist checks). Body leads with the editable template fields and their live previews; there is NO email leaf because this is template configuration, not a live mailbox. Notification triggers that select this template are listed as related, and the audit trail sits in a sidebar tab to evidence who changed customer-facing copy.",
+				"register": "shillinq",
+				"schema": "BookingConfirmationTemplate",
+				"fields": [
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "locale", "label": "Locale", "type": "string", "help": "Template language (nl or en). The notification engine selects the locale matching the customer language preference at dispatch." },
+					{
+						"key": "subjectLine",
+						"label": "Subject line",
+						"type": "string",
+						"help": "Email subject. Supports {{customerName}}, {{bookingRef}}, {{bookingDate}}, {{bookingTime}}, {{bookingLocation}}, {{organizationName}}. Max 78 characters after variable substitution."
+					},
+					{
+						"key": "htmlBody",
+						"label": "HTML body",
+						"type": "string",
+						"help": "Inline styles only. Whitelisted elements: div, p, h1-h6, a, img, table, ul, ol, li, br, span, strong, em."
+					},
+					{
+						"key": "plainTextBody",
+						"label": "Plain-text body",
+						"type": "string",
+						"help": "Plain-text fallback for email clients without HTML rendering."
+					},
+					{ "key": "renderedSubjectPreview", "label": "Subject preview (sample data)", "type": "calculated" },
+					{ "key": "renderedBodyPreview", "label": "Body preview (sample data)", "type": "calculated" },
+					{ "key": "subjectLineLength", "label": "Rendered subject length", "type": "calculated", "help": "Warns when ≥78 (NFR-BET-002)." },
+					{ "key": "totalBodySizeBytes", "label": "Body size (bytes)", "type": "calculated", "help": "Combined HTML + plain-text ≤102 KB (NFR-BET-003)." },
+					{ "key": "htmlBodySafe", "label": "HTML whitelist valid", "type": "calculated" },
+					{ "key": "logoUri", "label": "Logo URL", "type": "string", "help": "CDN or document-store URI. Inline base64 not supported (NFR-BET-004)." },
+					{ "key": "accentColor", "label": "Accent colour", "type": "string", "help": "Six-digit hex code (e.g. #0066cc)." },
+					{ "key": "footerText", "label": "Footer text", "type": "string" },
+					{ "key": "senderName", "label": "Sender name", "type": "string" },
+					{ "key": "senderAddress", "label": "Sender address", "type": "string" },
+					{ "key": "activatedAt", "label": "First activated", "type": "date-time" }
+				],
+				"lifecycleActions": true,
+				"_relatedListsExclude": "'Triggers using this template' NOT converted — removed rather than faked. It was declared under `relatedLists`, which is not a prop on any Cn page component (it lands in $attrs and renders nothing), so it has never rendered. It is also not expressible as a `relatedCollections` filter: BookingNotificationTrigger.templateOverrideSlug stores a template SLUG (schema example 'default-confirmation-nl'), but BookingConfirmationTemplate exposes no flat slug field — only `name` ('Default Booking Confirmation'), a different value. A slug lives at `@self.slug`, which `@object.<field>` cannot reach (flat payload fields only), and `@objectId` yields a UUID that nothing stores in that field. No PHP reads or writes templateOverrideSlug, so there is no writer to prove an alternative. Restoring it needs a flat slug/key field on the template schemas, or a `@self.slug` token in nextcloud-vue.",
+				"auditTrail": true,
+				"indexRoute": "ConfirmationTemplates",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
+			}
+		},
+		{
+			"id": "ReminderTemplates",
+			"route": "/communication/reminder-templates",
+			"type": "index",
+			"title": "Reminder Templates",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingReminderTemplate",
+				"columns": [
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "locale", "label": "Locale", "sortable": true },
+					{ "key": "hoursBeforeBooking", "label": "Hours before", "sortable": true },
+					{ "key": "subjectLine", "label": "Subject", "sortable": false },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "hoursBeforeBooking",
+				"detailRoute": "ReminderTemplateDetail"
+			}
+		},
+		{
+			"id": "ReminderTemplateDetail",
+			"route": "/communication/reminder-templates/:id",
+			"type": "detail",
+			"title": "Reminder Template",
+			"config": {
+				"_note": "A booking reminder template is a CONFIG record: the reusable email layout the engine renders N hours before a booking (hoursBeforeBooking 1–720), with branding and computed validation previews. Body leads with the timing + template fields and their live previews; NO email leaf — this is template configuration, not a mailbox. Triggers that select this template are listed as related; audit trail in a sidebar tab.",
+				"register": "shillinq",
+				"schema": "BookingReminderTemplate",
+				"fields": [
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "locale", "label": "Locale", "type": "string" },
+					{
+						"key": "hoursBeforeBooking",
+						"label": "Hours before booking",
+						"type": "number",
+						"help": "Hours before booking start to dispatch the reminder (1–720). Common values: 1, 2, 24, 48, 72."
+					},
+					{ "key": "subjectLine", "label": "Subject line", "type": "string" },
+					{ "key": "htmlBody", "label": "HTML body", "type": "string" },
+					{ "key": "plainTextBody", "label": "Plain-text body", "type": "string" },
+					{ "key": "renderedSubjectPreview", "label": "Subject preview (sample data)", "type": "calculated" },
+					{ "key": "renderedBodyPreview", "label": "Body preview (sample data)", "type": "calculated" },
+					{ "key": "subjectLineLength", "label": "Rendered subject length", "type": "calculated" },
+					{ "key": "totalBodySizeBytes", "label": "Body size (bytes)", "type": "calculated" },
+					{ "key": "htmlBodySafe", "label": "HTML whitelist valid", "type": "calculated" },
+					{ "key": "logoUri", "label": "Logo URL", "type": "string" },
+					{ "key": "accentColor", "label": "Accent colour", "type": "string" },
+					{ "key": "footerText", "label": "Footer text", "type": "string" },
+					{ "key": "senderName", "label": "Sender name", "type": "string" },
+					{ "key": "senderAddress", "label": "Sender address", "type": "string" },
+					{ "key": "activatedAt", "label": "First activated", "type": "date-time" }
+				],
+				"lifecycleActions": true,
+				"_relatedListsExclude": "'Triggers using this template' NOT converted — removed rather than faked. Same cause as ConfirmationTemplateDetail above: it was declared under `relatedLists` (not a prop on any Cn page component, so it never rendered), and BookingNotificationTrigger.templateOverrideSlug stores a template SLUG that BookingReminderTemplate exposes nowhere as a flat payload field. `@object.<field>` cannot reach `@self.slug` and `@objectId` yields a UUID nothing stores. Needs a flat slug/key field on the template schemas, or a `@self.slug` token in nextcloud-vue.",
+				"auditTrail": true,
+				"indexRoute": "ReminderTemplates",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
+			}
+		},
+		{
+			"id": "CancellationTemplates",
+			"route": "/communication/cancellation-templates",
+			"type": "index",
+			"title": "Cancellation Templates",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingCancellationTemplate",
+				"columns": [
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "locale", "label": "Locale", "sortable": true },
+					{ "key": "cancellationReasonRequired", "label": "Reason required", "sortable": true },
+					{ "key": "subjectLine", "label": "Subject", "sortable": false },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "name",
+				"detailRoute": "CancellationTemplateDetail"
+			}
+		},
+		{
+			"id": "CancellationTemplateDetail",
+			"route": "/communication/cancellation-templates/:id",
+			"type": "detail",
+			"title": "Cancellation Template",
+			"config": {
+				"_note": "A booking cancellation template is a CONFIG record: the reusable email layout rendered when a booking is cancelled, optionally injecting {{cancellationReason}} when reason capture is required. Body leads with the template fields and live validation previews; NO email leaf — this is template configuration, not a mailbox. Triggers that select this template are listed as related; audit trail in a sidebar tab.",
+				"register": "shillinq",
+				"schema": "BookingCancellationTemplate",
+				"fields": [
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "locale", "label": "Locale", "type": "string" },
+					{ "key": "subjectLine", "label": "Subject line", "type": "string" },
+					{ "key": "htmlBody", "label": "HTML body", "type": "string" },
+					{ "key": "plainTextBody", "label": "Plain-text body", "type": "string" },
+					{
+						"key": "cancellationReasonRequired",
+						"label": "Include cancellation reason",
+						"type": "boolean",
+						"help": "When on, {{cancellationReason}} is included in the variable map at dispatch (REQ-BET-009)."
+					},
+					{ "key": "renderedSubjectPreview", "label": "Subject preview (sample data)", "type": "calculated" },
+					{ "key": "renderedBodyPreview", "label": "Body preview (sample data)", "type": "calculated" },
+					{ "key": "subjectLineLength", "label": "Rendered subject length", "type": "calculated" },
+					{ "key": "totalBodySizeBytes", "label": "Body size (bytes)", "type": "calculated" },
+					{ "key": "htmlBodySafe", "label": "HTML whitelist valid", "type": "calculated" },
+					{ "key": "logoUri", "label": "Logo URL", "type": "string" },
+					{ "key": "accentColor", "label": "Accent colour", "type": "string" },
+					{ "key": "footerText", "label": "Footer text", "type": "string" },
+					{ "key": "senderName", "label": "Sender name", "type": "string" },
+					{ "key": "senderAddress", "label": "Sender address", "type": "string" },
+					{ "key": "activatedAt", "label": "First activated", "type": "date-time" }
+				],
+				"lifecycleActions": true,
+				"_relatedListsExclude": "'Triggers using this template' NOT converted — removed rather than faked. Same cause as ConfirmationTemplateDetail above: it was declared under `relatedLists` (not a prop on any Cn page component, so it never rendered), and BookingNotificationTrigger.templateOverrideSlug stores a template SLUG that BookingCancellationTemplate exposes nowhere as a flat payload field. `@object.<field>` cannot reach `@self.slug` and `@objectId` yields a UUID nothing stores. Needs a flat slug/key field on the template schemas, or a `@self.slug` token in nextcloud-vue.",
+				"auditTrail": true,
+				"indexRoute": "CancellationTemplates",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
+			}
+		}
+	]
+}

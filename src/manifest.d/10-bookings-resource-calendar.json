@@ -1,0 +1,310 @@
+{
+	"menu": [
+		{
+			"id": "Bookings",
+			"label": "Bookings",
+			"icon": "CalendarClockOutline",
+			"order": 55,
+			"children": [
+				{
+					"id": "Resources",
+					"label": "Resources",
+					"icon": "SourceBranch",
+					"route": "Resources",
+					"order": 10
+				},
+				{
+					"id": "Calendars",
+					"label": "Calendars",
+					"icon": "CalendarOutline",
+					"route": "Calendars",
+					"order": 20
+				},
+				{
+					"id": "BookingList",
+					"label": "Bookings",
+					"icon": "CalendarClockOutline",
+					"route": "BookingList",
+					"order": 30
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Resources",
+			"route": "/bookings/resources",
+			"type": "index",
+			"title": "Resources",
+			"config": {
+				"register": "shillinq",
+				"schema": "Resource",
+				"columns": [
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "type", "label": "Type", "sortable": true },
+					{ "key": "organization", "label": "Organization", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "name",
+				"detailRoute": "ResourceDetail"
+			}
+		},
+		{
+			"id": "ResourceDetail",
+			"route": "/bookings/resources/:id",
+			"type": "detail",
+			"title": "Resource",
+			"config": {
+				"register": "shillinq",
+				"schema": "Resource",
+				"_note": "MASTER archetype — a bookable resource (room, person, asset). Body leads with a full-width Data widget (identity, opening/closing hours, overlap policy) then the two child lists that give a resource meaning as peers side-by-side: calendars scoped to it and bookings placed against it. No Related panel — Resource's only outbound FK is administrationId (tenant-scoping, no display signal) so a related-refs panel would be empty noise; the real relations run INTO Resource from Calendar/Booking and are already the two object-lists. No calendar integration leaf — the Booking/Calendar schemas declare no `calendar` linkedType (verified: no linkedTypes markers on either schema), so scheduling stays within the register's own objects; the dedicated custom BookingsCalendar page already owns the time-grid view. No lifecycle actions — Resource has a plain `status` enum, not an x-openregister-lifecycle definition.",
+				"widgets": [
+					{
+						"id": "resource-data",
+						"type": "data",
+						"title": "Resource details",
+						"icon": "Briefcase",
+						"content": { "columns": 2 }
+					},
+					{
+						"id": "resource-stats",
+						"type": "stats-block",
+						"title": "Utilisation",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{ "title": "Calendars", "register": "shillinq", "schema": "Calendar", "metric": "count", "filter": { "resource": "@objectId" }, "route": "Calendars" },
+								{ "title": "Bookings", "register": "shillinq", "schema": "Booking", "metric": "count", "filter": { "resource": "@objectId" }, "route": "BookingList" }
+							]
+						}
+					},
+					{
+						"id": "resource-calendars",
+						"type": "object-list",
+						"title": "Calendars",
+						"icon": "Calendar",
+						"content": {
+							"register": "shillinq",
+							"schema": "Calendar",
+							"filter": { "resource": "@objectId" },
+							"columns": [
+								{ "key": "calendarId", "label": "Calendar ID" },
+								{ "key": "timeZone", "label": "Time zone" },
+								{ "key": "status", "label": "Status" }
+							],
+							"limit": 20,
+							"rowRoute": "CalendarDetail",
+							"viewAllRoute": "Calendars",
+							"viewAllQuery": { "resource": "@objectId" },
+							"emptyText": "No calendars scheduled on this resource yet."
+						}
+					},
+					{
+						"id": "resource-bookings",
+						"type": "object-list",
+						"title": "Bookings",
+						"icon": "ClipboardList",
+						"content": {
+							"register": "shillinq",
+							"schema": "Booking",
+							"filter": { "resource": "@objectId" },
+							"sort": { "field": "startTime", "dir": "desc" },
+							"columns": [
+								{ "key": "title", "label": "Title" },
+								{ "key": "startTime", "label": "Start" },
+								{ "key": "endTime", "label": "End" },
+								{ "key": "attendee", "label": "Attendee" },
+								{ "key": "status", "label": "Status" }
+							],
+							"limit": 20,
+							"rowRoute": "BookingDetail",
+							"viewAllRoute": "BookingList",
+							"viewAllQuery": { "resource": "@objectId" },
+							"emptyText": "No bookings placed against this resource yet."
+						}
+					}
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "resource-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 6 },
+					{ "id": "2", "widgetId": "resource-stats", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 6 },
+					{ "id": "3", "widgetId": "resource-calendars", "gridX": 0, "gridY": 6, "gridWidth": 6, "gridHeight": 5 },
+					{ "id": "4", "widgetId": "resource-bookings", "gridX": 6, "gridY": 6, "gridWidth": 6, "gridHeight": 5 }
+				],
+				"indexRoute": "Resources",
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{ "id": "audit", "label": "History", "icon": "History", "widgets": [ { "type": "audit" } ] }
+					]
+				}
+			}
+		},
+		{
+			"id": "Calendars",
+			"route": "/bookings/calendars",
+			"type": "index",
+			"title": "Calendars",
+			"config": {
+				"register": "shillinq",
+				"schema": "Calendar",
+				"columns": [
+					{ "key": "resource", "label": "Resource", "sortable": true },
+					{ "key": "timeZone", "label": "Time Zone", "sortable": true },
+					{ "key": "organization", "label": "Organization", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "resource",
+				"detailRoute": "CalendarDetail"
+			}
+		},
+		{
+			"id": "CalendarDetail",
+			"route": "/bookings/calendars/:id",
+			"type": "detail",
+			"title": "Calendar",
+			"config": {
+				"register": "shillinq",
+				"schema": "Calendar",
+				"_note": "CONFIG archetype — a scheduling calendar bound to one resource. Body leads with a Data widget (owning resource, time zone, working-hours window) beside a Related panel for the `resource` outbound FK; the primary child content is the full-width list of bookings placed on this calendar. No calendar integration leaf: the schema declares no `calendar` linkedType, so this stays a register object, not an NC-Calendar mirror. No lifecycle actions — Calendar has a plain `status` enum, not an x-openregister-lifecycle definition.",
+				"widgets": [
+					{
+						"id": "calendar-data",
+						"type": "data",
+						"title": "Calendar details",
+						"icon": "Calendar",
+						"content": { "columns": 2 }
+					},
+					{
+						"id": "calendar-stats",
+						"type": "stats-block",
+						"title": "Utilisation",
+						"icon": "ChartBar",
+						"content": {
+							"entries": [
+								{ "title": "Bookings", "register": "shillinq", "schema": "Booking", "metric": "count", "filter": { "calendar": "@objectId" }, "route": "BookingList" }
+							]
+						}
+					},
+					{
+						"id": "calendar-related",
+						"type": "related",
+						"title": "Resource",
+						"icon": "LinkVariant"
+					},
+					{
+						"id": "calendar-bookings",
+						"type": "object-list",
+						"title": "Bookings",
+						"icon": "ClipboardList",
+						"content": {
+							"register": "shillinq",
+							"schema": "Booking",
+							"filter": { "calendar": "@objectId" },
+							"sort": { "field": "startTime", "dir": "desc" },
+							"columns": [
+								{ "key": "title", "label": "Title" },
+								{ "key": "startTime", "label": "Start" },
+								{ "key": "endTime", "label": "End" },
+								{ "key": "attendee", "label": "Attendee" },
+								{ "key": "status", "label": "Status" }
+							],
+							"limit": 20,
+							"rowRoute": "BookingDetail",
+							"viewAllRoute": "BookingList",
+							"viewAllQuery": { "calendar": "@objectId" },
+							"emptyText": "No bookings placed on this calendar yet."
+						}
+					}
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "calendar-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 5 },
+					{ "id": "2", "widgetId": "calendar-stats", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 3 },
+					{ "id": "3", "widgetId": "calendar-related", "gridX": 8, "gridY": 3, "gridWidth": 4, "gridHeight": 2 },
+					{ "id": "4", "widgetId": "calendar-bookings", "gridX": 0, "gridY": 5, "gridWidth": 12, "gridHeight": 5 }
+				],
+				"indexRoute": "Calendars",
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{ "id": "audit", "label": "History", "icon": "History", "widgets": [ { "type": "audit" } ] }
+					]
+				}
+			}
+		},
+		{
+			"id": "BookingList",
+			"route": "/bookings/list",
+			"type": "index",
+			"title": "Bookings",
+			"config": {
+				"register": "shillinq",
+				"schema": "Booking",
+				"columns": [
+					{ "key": "title", "label": "Title", "sortable": true },
+					{ "key": "resource", "label": "Resource", "sortable": true },
+					{ "key": "startTime", "label": "Start", "sortable": true },
+					{ "key": "endTime", "label": "End", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "startTime",
+				"detailRoute": "BookingDetail"
+			}
+		},
+		{
+			"id": "BookingDetail",
+			"route": "/bookings/list/:id",
+			"type": "detail",
+			"title": "Booking",
+			"config": {
+				"register": "shillinq",
+				"schema": "Booking",
+				"_note": "EVENT archetype — a single booking slot, the leaf of the resource/calendar hierarchy (nothing points at Booking). Body is a Data widget (what/when: title, start/end, attendee, confirmation status, external-system id for round-tripping) beside a Related panel for the `calendar`/`resource` outbound FKs, so a scheduler can jump straight to the slot's context. No calendar integration leaf — the schema declares no `calendar` linkedType and the visual time-grid is the separate custom BookingsCalendarView page. A booking is a scheduling row, not a mailbox, so no email/talk leaf. No lifecycle actions — Booking has a plain `status` enum, not an x-openregister-lifecycle definition.",
+				"widgets": [
+					{
+						"id": "booking-data",
+						"type": "data",
+						"title": "Booking details",
+						"icon": "ClipboardList",
+						"content": { "columns": 2 }
+					},
+					{
+						"id": "booking-related",
+						"type": "related",
+						"title": "Calendar & resource",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "booking-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 6 },
+					{ "id": "2", "widgetId": "booking-related", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 6 }
+				],
+				"indexRoute": "BookingList",
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{ "id": "audit", "label": "History", "icon": "History", "widgets": [ { "type": "audit" } ] }
+					]
+				}
+			}
+		},
+		{
+			"id": "BookingsCalendarView",
+			"route": "/bookings/calendar/:calendarId",
+			"type": "custom",
+			"title": "Calendar View",
+			"component": "BookingsCalendar",
+			"_note": "Per-resource month/week/day calendar grid with conflict highlighting (REQ-006). Custom because the time-grid layout and slot:clicked / booking:selected interaction model do not fit the declarative index/detail page types. Resolved against registry.js kind:page. Page id renamed from BookingsCalendar — that id belongs to the param-less Verkoop calendar page (bookings-resource-calendar.json fragment); the two collided and shadowed each other."
+		},
+		{
+			"id": "BookingsForm",
+			"route": "/bookings/calendar/:calendarId/new",
+			"type": "custom",
+			"title": "New Booking",
+			"component": "BookingsForm",
+			"_note": "Booking creation form with client-side validation and 409 conflict-resolution dialog (REQ-007). Custom because it owns the POST/409-override flow; resolved against registry.js kind:page."
+		}
+	]
+}

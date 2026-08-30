@@ -22,7 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Tests\Unit\Consolidation;
 
-use OCA\Shillinq\Consolidation\ConsolidationGuard;
+use OCA\Shillinq\Service\ConsolidationGuard;
+use OCA\Shillinq\Tests\Unit\Service\Support\DuckObjectServiceAdapter;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -46,348 +47,460 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-financial-statements/tasks.md#task-9
  */
-class ConsolidationGuardTest extends TestCase
-{
+class ConsolidationGuardTest extends TestCase {
 
-    /**
-     * Mock ContainerInterface.
-     *
-     * @var ContainerInterface&MockObject
-     */
-    private ContainerInterface&MockObject $container;
+	/**
+	 * Mock ContainerInterface.
+	 *
+	 * @var ContainerInterface&MockObject
+	 */
+	private ContainerInterface&MockObject $container;
 
-    /**
-     * Mock IAppConfig.
-     *
-     * @var IAppConfig&MockObject
-     */
-    private IAppConfig&MockObject $appConfig;
+	/**
+	 * Mock IAppConfig.
+	 *
+	 * @var IAppConfig&MockObject
+	 */
+	private IAppConfig&MockObject $appConfig;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * The guard under test.
-     *
-     * @var ConsolidationGuard
-     */
-    private ConsolidationGuard $guard;
+	/**
+	 * The guard under test.
+	 *
+	 * @var ConsolidationGuard
+	 */
+	private ConsolidationGuard $guard;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
 
-        $this->container = $this->createMock(originalClassName: ContainerInterface::class);
-        $this->appConfig = $this->createMock(originalClassName: IAppConfig::class);
-        $this->logger    = $this->createMock(originalClassName: LoggerInterface::class);
+		$this->container = $this->createMock(originalClassName: ContainerInterface::class);
+		$this->appConfig = $this->createMock(originalClassName: IAppConfig::class);
+		$this->logger = $this->createMock(originalClassName: LoggerInterface::class);
 
-        $this->appConfig->method('getValueString')->willReturn('shillinq');
+		$this->appConfig->method('getValueString')->willReturn('shillinq');
 
-        $this->guard = new ConsolidationGuard(
-            container: $this->container,
-            appConfig: $this->appConfig,
-            logger: $this->logger,
-        );
+		$this->guard = $this->buildGuard(
+			store: $this->buildObjectServiceStub(findReturn: null, findAllReturn: [])
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    /**
-     * RequireFiscalPeriodClosed denies when fiscalYearId is missing.
-     *
-     * @return void
-     */
-    public function testRequireFiscalPeriodClosedDeniesMissingFiscalYearId(): void
-    {
-        $result = $this->guard->requireFiscalPeriodClosed(
-                [
-                    'id'               => 'bs-001',
-                    'administrationId' => 'adm-1',
-                ]
-                );
+	/**
+	 * Build the guard over a seeded in-memory store.
+	 *
+	 * ADR-084 injects the ObjectService through the constructor, so a test's
+	 * store has to be present when the guard is built — parking it on the
+	 * container after the fact leaves the guard reading an empty world.
+	 *
+	 * @param object $store The duck-typed in-memory ObjectService double.
+	 *
+	 * @return ConsolidationGuard
+	 */
+	private function buildGuard(object $store): ConsolidationGuard {
+		return new ConsolidationGuard(
+			appConfig: $this->appConfig,
+			logger: $this->logger,
+			objectService: new DuckObjectServiceAdapter($store),
+		);
 
-        self::assertFalse(condition: $result, message: 'Missing fiscalYearId must deny finalise');
+	}//end buildGuard()
 
-    }//end testRequireFiscalPeriodClosedDeniesMissingFiscalYearId()
+	/**
+	 * RequireFiscalPeriodClosed denies when fiscalYearId is missing.
+	 *
+	 * @return void
+	 */
+	public function testRequireFiscalPeriodClosedDeniesMissingFiscalYearId(): void {
+		$result = $this->guard->requireFiscalPeriodClosed(
+			[
+				'id' => 'bs-001',
+				'administrationId' => 'adm-1',
+			]
+		);
 
-    /**
-     * RequireFiscalPeriodClosed permits transition when FiscalYear schema is absent (T1/T2 deferral).
-     *
-     * @return void
-     */
-    public function testRequireFiscalPeriodClosedPermitsWhenFiscalYearAbsent(): void
-    {
-        $objectService = $this->buildObjectServiceStub(findObjectReturn: null, findAllReturn: []);
-        $this->container->method('get')->willReturn($objectService);
+		self::assertFalse(condition: $result, message: 'Missing fiscalYearId must deny finalise');
 
-        $result = $this->guard->requireFiscalPeriodClosed(
-                [
-                    'fiscalYearId'     => 'fy-2026',
-                    'administrationId' => 'adm-1',
-                ]
-                );
+	}//end testRequireFiscalPeriodClosedDeniesMissingFiscalYearId()
 
-        self::assertTrue(condition: $result, message: 'FiscalYear absent (T1/T2): finalise must be permitted by default');
+	/**
+	 * RequireFiscalPeriodClosed permits transition when FiscalYear schema is absent (T1/T2 deferral).
+	 *
+	 * @return void
+	 */
+	public function testRequireFiscalPeriodClosedPermitsWhenFiscalYearAbsent(): void {
+		$objectService = $this->buildObjectServiceStub(findReturn: null, findAllReturn: []);
+		$this->guard = $this->buildGuard(store: $objectService);
 
-    }//end testRequireFiscalPeriodClosedPermitsWhenFiscalYearAbsent()
+		$result = $this->guard->requireFiscalPeriodClosed(
+			[
+				'fiscalYearId' => 'fy-2026',
+				'administrationId' => 'adm-1',
+			]
+		);
 
-    /**
-     * RequireFiscalPeriodClosed permits when FiscalYear.isClosed is true.
-     *
-     * @return void
-     */
-    public function testRequireFiscalPeriodClosedPermitsWhenClosed(): void
-    {
-        $fiscalYear    = ['id' => 'fy-2026', 'isClosed' => true];
-        $objectService = $this->buildObjectServiceStub(findObjectReturn: $fiscalYear, findAllReturn: []);
-        $this->container->method('get')->willReturn($objectService);
+		self::assertTrue(condition: $result, message: 'FiscalYear absent (T1/T2): finalise must be permitted by default');
 
-        $result = $this->guard->requireFiscalPeriodClosed(
-                [
-                    'fiscalYearId'     => 'fy-2026',
-                    'administrationId' => 'adm-1',
-                ]
-                );
+	}//end testRequireFiscalPeriodClosedPermitsWhenFiscalYearAbsent()
 
-        self::assertTrue(condition: $result, message: 'Closed FiscalYear must permit finalise');
+	/**
+	 * RequireFiscalPeriodClosed permits when FiscalYear.isClosed is true.
+	 *
+	 * @return void
+	 */
+	public function testRequireFiscalPeriodClosedPermitsWhenClosed(): void {
+		$fiscalYear = ['id' => 'fy-2026', 'isClosed' => true];
+		$objectService = $this->buildObjectServiceStub(findReturn: $fiscalYear, findAllReturn: []);
+		$this->guard = $this->buildGuard(store: $objectService);
 
-    }//end testRequireFiscalPeriodClosedPermitsWhenClosed()
+		$result = $this->guard->requireFiscalPeriodClosed(
+			[
+				'fiscalYearId' => 'fy-2026',
+				'administrationId' => 'adm-1',
+			]
+		);
 
-    /**
-     * RequireFiscalPeriodClosed denies when FiscalYear.isClosed is false.
-     *
-     * @return void
-     */
-    public function testRequireFiscalPeriodClosedDenieswhenOpen(): void
-    {
-        $fiscalYear    = ['id' => 'fy-2026', 'isClosed' => false];
-        $objectService = $this->buildObjectServiceStub(findObjectReturn: $fiscalYear, findAllReturn: []);
-        $this->container->method('get')->willReturn($objectService);
+		self::assertTrue(condition: $result, message: 'Closed FiscalYear must permit finalise');
 
-        $result = $this->guard->requireFiscalPeriodClosed(
-                [
-                    'fiscalYearId'     => 'fy-2026',
-                    'administrationId' => 'adm-1',
-                ]
-                );
+	}//end testRequireFiscalPeriodClosedPermitsWhenClosed()
 
-        self::assertFalse(condition: $result, message: 'Open FiscalYear must deny finalise');
+	/**
+	 * RequireFiscalPeriodClosed denies when FiscalYear.isClosed is false.
+	 *
+	 * @return void
+	 */
+	public function testRequireFiscalPeriodClosedDenieswhenOpen(): void {
+		$fiscalYear = ['id' => 'fy-2026', 'isClosed' => false];
+		$objectService = $this->buildObjectServiceStub(findReturn: $fiscalYear, findAllReturn: []);
+		$this->guard = $this->buildGuard(store: $objectService);
 
-    }//end testRequireFiscalPeriodClosedDenieswhenOpen()
+		$result = $this->guard->requireFiscalPeriodClosed(
+			[
+				'fiscalYearId' => 'fy-2026',
+				'administrationId' => 'adm-1',
+			]
+		);
 
-    /**
-     * RequireFiscalPeriodClosed is fail-closed on exception.
-     *
-     * @return void
-     */
-    public function testRequireFiscalPeriodClosedIsFailClosedOnException(): void
-    {
-        $this->container->method('get')->willThrowException(new \RuntimeException('DB error'));
+		self::assertFalse(condition: $result, message: 'Open FiscalYear must deny finalise');
 
-        $result = $this->guard->requireFiscalPeriodClosed(
-                [
-                    'fiscalYearId'     => 'fy-2026',
-                    'administrationId' => 'adm-1',
-                ]
-                );
+	}//end testRequireFiscalPeriodClosedDenieswhenOpen()
 
-        self::assertFalse(condition: $result, message: 'Exception must deny finalise (fail-closed)');
+	/**
+	 * RequireFiscalPeriodClosed is fail-closed on exception.
+	 *
+	 * @return void
+	 */
+	public function testRequireFiscalPeriodClosedIsFailClosedOnException(): void {
+		$this->guard = $this->buildGuard(store: $this->buildUnavailableObjectServiceStub());
 
-    }//end testRequireFiscalPeriodClosedIsFailClosedOnException()
+		$result = $this->guard->requireFiscalPeriodClosed(
+			[
+				'fiscalYearId' => 'fy-2026',
+				'administrationId' => 'adm-1',
+			]
+		);
 
-    /**
-     * RequireAllMembersFinalised denies when required fields are missing.
-     *
-     * @return void
-     */
-    public function testRequireAllMembersFinalisedDeniesMissingFields(): void
-    {
-        $result = $this->guard->requireAllMembersFinalised(['reportNumber' => 'CR-001']);
+		self::assertFalse(condition: $result, message: 'Exception must deny finalise (fail-closed)');
 
-        self::assertFalse(condition: $result, message: 'Missing consolidationGroupId/fiscalYearId must deny');
+	}//end testRequireFiscalPeriodClosedIsFailClosedOnException()
 
-    }//end testRequireAllMembersFinalisedDeniesMissingFields()
+	/**
+	 * RequireAllMembersFinalised denies when required fields are missing.
+	 *
+	 * @return void
+	 */
+	public function testRequireAllMembersFinalisedDeniesMissingFields(): void {
+		$result = $this->guard->requireAllMembersFinalised(['reportNumber' => 'CR-001']);
 
-    /**
-     * RequireAllMembersFinalised permits when ConsolidationGroup not found (deferral).
-     *
-     * @return void
-     */
-    public function testRequireAllMembersFinalisedPermitsWhenGroupAbsent(): void
-    {
-        $objectService = $this->buildObjectServiceStub(findObjectReturn: null, findAllReturn: []);
-        $this->container->method('get')->willReturn($objectService);
+		self::assertFalse(condition: $result, message: 'Missing consolidationGroupId/fiscalYearId must deny');
 
-        $result = $this->guard->requireAllMembersFinalised(
-                [
-                    'consolidationGroupId' => 'cg-001',
-                    'fiscalYearId'         => 'fy-2026',
-                ]
-                );
+	}//end testRequireAllMembersFinalisedDeniesMissingFields()
 
-        self::assertTrue(condition: $result, message: 'Absent ConsolidationGroup must permit by default (T2 deferral)');
+	/**
+	 * RequireAllMembersFinalised permits when ConsolidationGroup not found (deferral).
+	 *
+	 * @return void
+	 */
+	public function testRequireAllMembersFinalisedPermitsWhenGroupAbsent(): void {
+		$objectService = $this->buildObjectServiceStub(findReturn: null, findAllReturn: []);
+		$this->guard = $this->buildGuard(store: $objectService);
 
-    }//end testRequireAllMembersFinalisedPermitsWhenGroupAbsent()
+		$result = $this->guard->requireAllMembersFinalised(
+			[
+				'consolidationGroupId' => 'cg-001',
+				'fiscalYearId' => 'fy-2026',
+			]
+		);
 
-    /**
-     * RequireAllMembersFinalised permits when all member administrations have a final BalanceSheet.
-     *
-     * @return void
-     */
-    public function testRequireAllMembersFinalisedPermitsWhenAllMembersFinal(): void
-    {
-        $group = [
-            'id'                => 'cg-001',
-            'administrationIds' => ['adm-1', 'adm-2'],
-        ];
-        // Both administrations have a final BalanceSheet.
-        $balanceSheet  = [['id' => 'bs-001', 'status' => 'final']];
-        $objectService = $this->buildObjectServiceStub(findObjectReturn: $group, findAllReturn: $balanceSheet);
-        $this->container->method('get')->willReturn($objectService);
+		self::assertTrue(condition: $result, message: 'Absent ConsolidationGroup must permit by default (T2 deferral)');
 
-        $result = $this->guard->requireAllMembersFinalised(
-                [
-                    'consolidationGroupId' => 'cg-001',
-                    'fiscalYearId'         => 'fy-2026',
-                ]
-                );
+	}//end testRequireAllMembersFinalisedPermitsWhenGroupAbsent()
 
-        self::assertTrue(condition: $result, message: 'All members final must permit consolidated report finalise');
+	/**
+	 * RequireAllMembersFinalised permits when all member administrations have a final BalanceSheet.
+	 *
+	 * @return void
+	 */
+	public function testRequireAllMembersFinalisedPermitsWhenAllMembersFinal(): void {
+		$group = [
+			'id' => 'cg-001',
+			'administrationIds' => ['adm-1', 'adm-2'],
+		];
+		// Both administrations have a final BalanceSheet.
+		$balanceSheet = [['id' => 'bs-001', 'status' => 'final']];
+		$objectService = $this->buildObjectServiceStub(findReturn: $group, findAllReturn: $balanceSheet);
+		$this->guard = $this->buildGuard(store: $objectService);
 
-    }//end testRequireAllMembersFinalisedPermitsWhenAllMembersFinal()
+		$result = $this->guard->requireAllMembersFinalised(
+			[
+				'consolidationGroupId' => 'cg-001',
+				'fiscalYearId' => 'fy-2026',
+			]
+		);
 
-    /**
-     * RequireAllMembersFinalised denies when a member administration lacks a final BalanceSheet.
-     *
-     * @return void
-     */
-    public function testRequireAllMembersFinalisedDeniesWhenMemberNotFinal(): void
-    {
-        $group = [
-            'id'                => 'cg-001',
-            'administrationIds' => ['adm-1'],
-        ];
-        // No final BalanceSheet for adm-1.
-        $objectService = $this->buildObjectServiceStub(findObjectReturn: $group, findAllReturn: []);
-        $this->container->method('get')->willReturn($objectService);
+		self::assertTrue(condition: $result, message: 'All members final must permit consolidated report finalise');
 
-        $result = $this->guard->requireAllMembersFinalised(
-                [
-                    'consolidationGroupId' => 'cg-001',
-                    'fiscalYearId'         => 'fy-2026',
-                ]
-                );
+	}//end testRequireAllMembersFinalisedPermitsWhenAllMembersFinal()
 
-        self::assertFalse(condition: $result, message: 'Member without final BalanceSheet must deny consolidated report finalise');
+	/**
+	 * RequireAllMembersFinalised denies when a member administration lacks a final BalanceSheet.
+	 *
+	 * @return void
+	 */
+	public function testRequireAllMembersFinalisedDeniesWhenMemberNotFinal(): void {
+		$group = [
+			'id' => 'cg-001',
+			'administrationIds' => ['adm-1'],
+		];
+		// No final BalanceSheet for adm-1.
+		$objectService = $this->buildObjectServiceStub(findReturn: $group, findAllReturn: []);
+		$this->guard = $this->buildGuard(store: $objectService);
 
-    }//end testRequireAllMembersFinalisedDeniesWhenMemberNotFinal()
+		$result = $this->guard->requireAllMembersFinalised(
+			[
+				'consolidationGroupId' => 'cg-001',
+				'fiscalYearId' => 'fy-2026',
+			]
+		);
 
-    /**
-     * RequirePublicationApproval always returns true (role enforcement via RBAC layer).
-     *
-     * @return void
-     */
-    public function testRequirePublicationApprovalAlwaysReturnsTrue(): void
-    {
-        $result = $this->guard->requirePublicationApproval(['id' => 'bs-001', 'status' => 'final']);
+		self::assertFalse(condition: $result, message: 'Member without final BalanceSheet must deny consolidated report finalise');
 
-        self::assertTrue(condition: $result, message: 'requirePublicationApproval must always permit (role check is in RBAC layer)');
+	}//end testRequireAllMembersFinalisedDeniesWhenMemberNotFinal()
 
-    }//end testRequirePublicationApprovalAlwaysReturnsTrue()
+	/**
+	 * RequirePublicationApproval always returns true (role enforcement via RBAC layer).
+	 *
+	 * @return void
+	 */
+	public function testRequirePublicationApprovalAlwaysReturnsTrue(): void {
+		$result = $this->guard->requirePublicationApproval(['id' => 'bs-001', 'status' => 'final']);
 
-    /**
-     * Build an anonymous ObjectService stub implementing the fluent setRegister/setSchema interface.
-     *
-     * @param mixed        $findObjectReturn Value to return from findObject().
-     * @param array<mixed> $findAllReturn    Value to return from findAll().
-     *
-     * @return object
-     */
-    private function buildObjectServiceStub(mixed $findObjectReturn, array $findAllReturn): object
-    {
-        return new class($findObjectReturn, $findAllReturn) {
+		self::assertTrue(condition: $result, message: 'requirePublicationApproval must always permit (role check is in RBAC layer)');
 
-            /**
-             * Return value for findObject().
-             *
-             * @var mixed
-             */
-            private mixed $findObjectReturn;
+	}//end testRequirePublicationApprovalAlwaysReturnsTrue()
 
-            /**
-             * Return value for findAll().
-             *
-             * @var array<mixed>
-             */
-            private array $findAllReturn;
+	/**
+	 * Build an anonymous ObjectService stub implementing the fluent setRegister/setSchema interface.
+	 *
+	 * The method under test resolves a single object with find(), which is the
+	 * REAL OpenRegister ObjectService API and returns a ?ObjectEntity — an
+	 * object exposing jsonSerialize(), not a bare array.
+	 *
+	 * This stub used to expose `findObject()` instead, a method OpenRegister
+	 * has never had. That is why the production defect survived: the double
+	 * invented the interface it was asserting against, so the guard passed its
+	 * unit test while raising an Error against the real service (gate-20,
+	 * .github#277). A stub must only offer methods the real collaborator has.
+	 *
+	 * @param array<string,mixed>|null $findReturn Row to wrap and return from find(), or null.
+	 * @param array<mixed> $findAllReturn Value to return from findAll().
+	 *
+	 * @return object
+	 */
+	private function buildObjectServiceStub(?array $findReturn, array $findAllReturn): object {
+		return new class($findReturn, $findAllReturn) {
+			/**
+			 * Row to wrap and return from find().
+			 *
+			 * @var array<string,mixed>|null
+			 */
+			private ?array $findReturn;
 
-            /**
-             * Construct the stub with fixed return values.
-             *
-             * @param mixed        $findObjectReturn Value to return from findObject().
-             * @param array<mixed> $findAllReturn    Value to return from findAll().
-             */
-            public function __construct(mixed $findObjectReturn, array $findAllReturn)
-            {
-                $this->findObjectReturn = $findObjectReturn;
-                $this->findAllReturn    = $findAllReturn;
-            }//end __construct()
+			/**
+			 * Return value for findAll().
+			 *
+			 * @var array<mixed>
+			 */
+			private array $findAllReturn;
 
-            /**
-             * Fluent register setter — returns self.
-             *
-             * @param string $register Register slug.
-             *
-             * @return static
-             */
-            public function setRegister(string $register): static
-            {
-                return $this;
-            }//end setRegister()
+			/**
+			 * Construct the stub with fixed return values.
+			 *
+			 * @param array<string,mixed>|null $findReturn Row to wrap and return from find().
+			 * @param array<mixed> $findAllReturn Value to return from findAll().
+			 */
+			public function __construct(?array $findReturn, array $findAllReturn) {
+				$this->findReturn = $findReturn;
+				$this->findAllReturn = $findAllReturn;
+			}//end __construct()
 
-            /**
-             * Fluent schema setter — returns self.
-             *
-             * @param string $schema Schema name.
-             *
-             * @return static
-             */
-            public function setSchema(string $schema): static
-            {
-                return $this;
-            }//end setSchema()
+			/**
+			 * Fluent register setter — returns self.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
 
-            /**
-             * Return the configured findObject return value.
-             *
-             * @param string $id Object ID.
-             *
-             * @return mixed
-             */
-            public function findObject(string $id): mixed
-            {
-                return $this->findObjectReturn;
-            }//end findObject()
+			/**
+			 * Fluent schema setter — returns self.
+			 *
+			 * @param string $schema Schema name.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
 
-            /**
-             * Return the configured findAll return value.
-             *
-             * @param array<string,mixed> $params Filter params.
-             *
-             * @return array<mixed>
-             */
-            public function findAll(array $params=[]): array
-            {
-                return $this->findAllReturn;
-            }//end findAll()
-        };
-    }//end buildObjectServiceStub()
+			/**
+			 * Resolve one object by id — mirrors ObjectService::find(), which
+			 * returns a ?ObjectEntity (an object with jsonSerialize()).
+			 *
+			 * @param string|int $id Object ID.
+			 * @param array|null $_extend Unused, present to match the real signature.
+			 * @param bool $files Unused, present to match the real signature.
+			 * @param mixed $register Register slug or entity.
+			 * @param mixed $schema Schema slug or entity.
+			 *
+			 * @return object|null
+			 */
+			public function find(
+				string|int $id,
+				?array $_extend = [],
+				bool $files = false,
+				mixed $register = null,
+				mixed $schema = null,
+			): ?object {
+				if ($this->findReturn === null) {
+					return null;
+				}
+
+				return new class($this->findReturn) {
+					/**
+					 * The wrapped row.
+					 *
+					 * @var array<string,mixed>
+					 */
+					private array $row;
+
+					/**
+					 * Wrap a row.
+					 *
+					 * @param array<string,mixed> $row The row.
+					 */
+					public function __construct(array $row) {
+						$this->row = $row;
+					}//end __construct()
+
+					/**
+					 * Serialise the wrapped row.
+					 *
+					 * @return array<string,mixed>
+					 */
+					public function jsonSerialize(): array {
+						return $this->row;
+					}//end jsonSerialize()
+				};
+			}//end find()
+
+			/**
+			 * Return the configured findAll return value.
+			 *
+			 * @param array<string,mixed> $params Filter params.
+			 *
+			 * @return array<mixed>
+			 */
+			public function findAll(array $params = []): array {
+				return $this->findAllReturn;
+			}//end findAll()
+		};
+	}//end buildObjectServiceStub()
+
+	/**
+	 * Build a store that models an unavailable OpenRegister.
+	 *
+	 * Before ADR-084 this scenario was expressed as
+	 * `$container->method('get')->willThrowException(...)`. The container is no
+	 * longer consulted, so the refusal has to come from the store itself; every
+	 * read throws exactly as a downed ObjectService would, which is what the
+	 * guard's fail-closed arm is there to catch.
+	 *
+	 * @return object
+	 */
+	private function buildUnavailableObjectServiceStub(): object {
+		return new class {
+			/**
+			 * Fluent register setter — returns self.
+			 *
+			 * @param string $register Register slug.
+			 *
+			 * @return static
+			 */
+			public function setRegister(string $register): static {
+				return $this;
+			}//end setRegister()
+
+			/**
+			 * Fluent schema setter — returns self.
+			 *
+			 * @param string $schema Schema name.
+			 *
+			 * @return static
+			 */
+			public function setSchema(string $schema): static {
+				return $this;
+			}//end setSchema()
+
+			/**
+			 * Refuse every single-object lookup.
+			 *
+			 * @param string|int $id Object ID.
+			 *
+			 * @return object|null
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function find(string|int $id): ?object {
+				throw new \RuntimeException('DB error');
+			}//end find()
+
+			/**
+			 * Refuse every list query.
+			 *
+			 * @param array<string,mixed> $params Filter params.
+			 *
+			 * @return array<mixed>
+			 *
+			 * @throws \RuntimeException Always.
+			 */
+			public function findAll(array $params = []): array {
+				throw new \RuntimeException('DB error');
+			}//end findAll()
+		};
+	}//end buildUnavailableObjectServiceStub()
 }//end class

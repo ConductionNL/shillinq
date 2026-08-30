@@ -1,6 +1,10 @@
+---
+status: done
+---
+
 # Spec: Inventory Mobile Scanner (PWA, offline)
 
-## Metadata
+## Purpose
 - **Change**: inventory-mobile-scanner
 - **Type**: PWA Feature (Mobile-first app with offline support)
 - **Dependencies**: inventory-stock-tracking, inventory-barcode-sku

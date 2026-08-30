@@ -1,0 +1,162 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-cbs-bestanden-extended",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Declarative manifest-v2 navigation for the CBS bestanden extended capability (REQ-CBS-009). Adds the CBS Submissions menu entry under Bookkeeping with an index page (filterable list) and detail page (header + lines + files/audit tabs). Pages are pure config rendered by the nc-vue manifest shell (createObjectStore against the shillinq register) — no Vue components, no router (ADR-024 / manifest-v2)."
+	},
+	"menu": [
+		{
+			"id": "Bookkeeping",
+			"children": [
+				{
+					"id": "CBSSubmissions",
+					"label": "CBS Submissions",
+					"icon": "FileChartCheckOutline",
+					"route": "CBSSubmissions",
+					"order": 145
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "CBSSubmissions",
+			"route": "/bookkeeping/cbs-submissions",
+			"type": "index",
+			"title": "CBS Submissions",
+			"config": {
+				"register": "shillinq",
+				"schema": "CBSSubmission",
+				"columns": [
+					{ "key": "submissionNumber", "label": "Submission Number", "sortable": true },
+					{ "key": "reportingPeriodStartDate", "label": "Period Start", "sortable": true },
+					{ "key": "reportingPeriodEndDate", "label": "Period End", "sortable": true },
+					{ "key": "organizationLegalName", "label": "Organization", "sortable": true },
+					{ "key": "kvkNumber", "label": "KvK", "sortable": false },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "submissionDate", "label": "Submission Date", "sortable": true }
+				],
+				"defaultSort": "submissionNumber",
+				"filters": [
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "enum",
+						"options": ["draft", "validated", "submitted", "accepted", "rejected"]
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "reportingPeriodStartDate",
+						"label": "Period Start",
+						"type": "date"
+					},
+					{
+						"key": "reportingPeriodEndDate",
+						"label": "Period End",
+						"type": "date"
+					}
+				],
+				"detailRoute": "CBSSubmissionDetail"
+			}
+		},
+		{
+			"id": "CBSSubmissionDetail",
+			"route": "/bookkeeping/cbs-submissions/:id",
+			"type": "detail",
+			"title": "CBS Submission",
+			"config": {
+				"register": "shillinq",
+				"schema": "CBSSubmission",
+				"_note": "STATISTICAL SUBMISSION (a periodic IV3 filing to the CBS). The body pairs the submission header — organisation identity, reporting period, status, submission date, IV3 file URI + checksum and any validation errors — with its CBS Lines (aggregated per classification/account-range, filtered on cbsSubmissionId), which are the substance of what is filed. lifecycleActions/actions drive validate → submit → accept/reject and the export generation. A regulatory filing, not correspondence, so no comms; the audit trail sidebar is the submission-status provenance.",
+				"fields": [
+					{ "key": "submissionNumber", "label": "Submission Number", "type": "string" },
+					{ "key": "reportingPeriodStartDate", "label": "Reporting Period Start", "type": "string" },
+					{ "key": "reportingPeriodEndDate", "label": "Reporting Period End", "type": "string" },
+					{ "key": "organizationLegalName", "label": "Organization Legal Name", "type": "string" },
+					{ "key": "kvkNumber", "label": "KvK Number", "type": "string" },
+					{ "key": "taxIdentificationNumber", "label": "Tax Identification Number", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "submissionDate", "label": "Submission Date", "type": "string" },
+					{ "key": "iv3FileUri", "label": "IV3 File", "type": "string" },
+					{ "key": "iv3Checksum", "label": "IV3 Checksum", "type": "string" },
+					{ "key": "validationErrors", "label": "Validation Errors", "type": "array" },
+					{ "key": "description", "label": "Description", "type": "string" },
+					{ "key": "currency", "label": "Currency", "type": "string" }
+				],
+				"relatedObjects": [
+					{
+						"id": "cbs-lines",
+						"label": "CBS Lines",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "CBSLine",
+							"filterField": "cbsSubmissionId",
+							"columns": ["cbsLineNumber", "cbsLineClassification", "accountRangeStart", "accountRangeEnd", "aggregatedAmount", "glLineCount", "currency"]
+						}
+					}
+				],
+				"actions": [
+					{
+						"id": "validate",
+						"label": "Validate",
+						"transition": "validate",
+						"requiresStatus": "draft"
+					},
+					{
+						"id": "submit",
+						"label": "Submit",
+						"transition": "submit",
+						"requiresStatus": "validated"
+					},
+					{
+						"id": "accept",
+						"label": "Accept",
+						"transition": "accept",
+						"requiresStatus": "submitted"
+					},
+					{
+						"id": "reject",
+						"label": "Reject",
+						"transition": "reject",
+						"requiresStatus": "submitted"
+					},
+					{
+						"id": "generate",
+						"label": "Generate Export",
+						"action": "POST /api/cbs-submissions/{id}/generate",
+						"requiresStatus": "draft"
+					}
+				],
+				"indexRoute": "CBSSubmissions",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}

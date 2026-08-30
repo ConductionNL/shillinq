@@ -1,0 +1,425 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-vpb-corporate-tax",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 2 — vennootschapsbelasting (Vpb) corporate-tax administration for Dutch government enterprises. Adds two operator-authored schemas (TaxDeadline tracking Vpb filing/payment deadlines; TaxPaymentTracking recording provisional/final/adjustment payments linked to a GL account) plus one read-only computed schema (QuarterlyTaxStatement) whose x-openregister-aggregations block documents the per-fiscal-period revenue/expenses/net-taxable-income roll-up that OCA\\Shillinq\\Service\\TaxReportService materialises on demand from existing GLTransaction + GLLine data via the real OpenRegister ObjectService API (find/findAll). The fragment ALSO additively extends the monolith GLLine schema with a taxTreatment classification property (normal/deductible/nonDeductible/special) through the loader's additive key-union merge (SettingsService::deepMergeConfig) — the monolith is never edited. Seed objects provide three representative FY-2025 deadlines and two sample payments per design.md."
+  },
+  "components": {
+    "schemas": {
+      "GLLine": {
+        "properties": {
+          "taxTreatment": {
+            "type": "string",
+            "description": "Vpb tax-treatment classification of this posting (REQ-VPB-004). Additively merged onto the monolith GLLine schema via the ADR-037 fragment loader. normal = ordinary deductible business expense/revenue; deductible = tax-benefit item (R&D, green investment); nonDeductible = disallowed (gifts, entertainment, personal use); special = subject to special rules (dividend received, transfer-pricing). Defaults to normal when omitted.",
+            "enum": [
+              "normal",
+              "deductible",
+              "nonDeductible",
+              "special"
+            ],
+            "default": "normal",
+            "example": "deductible",
+            "title": "Tax Treatment"
+          }
+        }
+      },
+      "TaxDeadline": {
+        "slug": "TaxDeadline",
+        "icon": "CalendarClock",
+        "version": "0.1.0",
+        "title": "Tax Deadline",
+        "description": "A vennootschapsbelasting (Vpb) filing or payment deadline for one administration (REQ-VPB-001). Tracks the deadline date, type (provisional payment, final return, extension request), the fiscal year/quarter it covers, and a lifecycle status (pending → submitted → filed → archived). Operator-authored; CRUD is served by OpenRegister's generic object API.",
+        "x-schema-org": "schema:Event",
+        "x-spec": "openspec/changes/bookkeeping-vpb-corporate-tax/specs/bookkeeping-vpb-corporate-tax/spec.md",
+        "type": "object",
+        "required": [
+          "deadlineDate",
+          "deadlineType",
+          "fiscalYear",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "deadlineDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Calendar date the deadline falls due (REQ-VPB-001).",
+            "example": "2025-04-20",
+            "title": "Deadline Date"
+          },
+          "deadlineType": {
+            "type": "string",
+            "description": "Kind of Vpb deadline (REQ-VPB-001).",
+            "enum": [
+              "provisional-payment",
+              "final-return",
+              "extension-request"
+            ],
+            "example": "provisional-payment",
+            "title": "Deadline Type"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the deadline.",
+            "nullable": true,
+            "example": "First provisional Vpb payment for FY 2025",
+            "title": "Description"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "description": "Fiscal year the deadline relates to (REQ-VPB-001).",
+            "example": 2025,
+            "title": "Fiscal Year"
+          },
+          "quarter": {
+            "type": "integer",
+            "description": "Quarter (1-4) for quarterly deadlines; null for annual deadlines (REQ-VPB-001).",
+            "minimum": 1,
+            "maximum": 4,
+            "nullable": true,
+            "example": 1,
+            "title": "Quarter"
+          },
+          "status": {
+            "type": "string",
+            "description": "Deadline lifecycle status (REQ-VPB-005).",
+            "enum": [
+              "pending",
+              "submitted",
+              "filed",
+              "archived"
+            ],
+            "default": "pending",
+            "example": "pending",
+            "title": "Status"
+          },
+          "relatedPeriodId": {
+            "type": "string",
+            "description": "FK to the fiscal period this deadline covers (string identifier for T1 compatibility).",
+            "nullable": true,
+            "example": "2025-q1",
+            "title": "Related Period ID"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this deadline belongs to; reads are scoped to the requesting user's administration (REQ-VPB-001).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "statusField": "status",
+          "initial": "pending",
+          "transitions": {
+            "pending": [
+              "submitted",
+              "archived"
+            ],
+            "submitted": [
+              "filed",
+              "archived"
+            ],
+            "filed": [
+              "archived"
+            ],
+            "archived": []
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Tax Deadline is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "TaxPaymentTracking": {
+        "slug": "TaxPaymentTracking",
+        "icon": "CashMultiple",
+        "version": "0.1.0",
+        "title": "Tax Payment Tracking",
+        "description": "A recorded Vpb payment (provisional, final, or adjustment) linked to a GL account by accountNumber (REQ-VPB-002). Reconciliation matches the record to GL postings by account + amount + date (design.md D2); GL is authoritative and these records index payments for deadline tracking. Operator-authored; CRUD via OpenRegister's generic object API.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-vpb-corporate-tax/specs/bookkeeping-vpb-corporate-tax/spec.md",
+        "type": "object",
+        "required": [
+          "paymentDate",
+          "paymentType",
+          "amount",
+          "status",
+          "linkedGLAccount",
+          "administrationId"
+        ],
+        "properties": {
+          "paymentDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the payment was made (REQ-VPB-002).",
+            "example": "2025-04-20T00:00:00+00:00",
+            "title": "Payment Date"
+          },
+          "paymentType": {
+            "type": "string",
+            "description": "Kind of Vpb payment (REQ-VPB-002).",
+            "enum": [
+              "provisional",
+              "final",
+              "adjustment"
+            ],
+            "example": "provisional",
+            "title": "Payment Type"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Payment amount in the stated currency (REQ-VPB-002).",
+            "minimum": 0,
+            "example": 15000.0,
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO-4217 currency of the payment.",
+            "default": "EUR",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "status": {
+            "type": "string",
+            "description": "Payment status (REQ-VPB-002, REQ-VPB-008).",
+            "enum": [
+              "pending",
+              "paid",
+              "reconciled"
+            ],
+            "default": "pending",
+            "example": "paid",
+            "title": "Status"
+          },
+          "linkedGLAccount": {
+            "type": "string",
+            "description": "FK to Account.accountNumber the payment is posted against (REQ-VPB-008).",
+            "example": "1200",
+            "title": "Linked GL Account"
+          },
+          "relatedDeadlineId": {
+            "type": "string",
+            "description": "FK to the TaxDeadline this payment satisfies (slug or id).",
+            "nullable": true,
+            "example": "2025-provisional-q1-payment",
+            "title": "Related Deadline ID"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the payment.",
+            "nullable": true,
+            "example": "Provisional Vpb payment Q1 2025",
+            "title": "Description"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this payment belongs to; reads are scoped to the requesting user's administration (REQ-VPB-002).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Tax Payment Tracking is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "QuarterlyTaxStatement": {
+        "slug": "QuarterlyTaxStatement",
+        "icon": "FileChartOutline",
+        "version": "0.1.0",
+        "title": "Quarterly Tax Statement",
+        "description": "Read-only computed Vpb quarterly income statement (REQ-VPB-003, REQ-VPB-009). Materialised on demand by OCA\\Shillinq\\Service\\TaxReportService from GLTransaction + GLLine via the real OpenRegister ObjectService API (find/findAll) — never authored by operators. The x-openregister-aggregations block documents the equivalent declarative roll-up: GLLine filtered by administration + fiscal period, grouped by account type and taxTreatment, producing revenue, operating expenses, non-operating items, special deductions and net taxable income, plus an untagged-posting warning count (REQ-VPB-010).",
+        "x-schema-org": "schema:Dataset",
+        "x-spec": "openspec/changes/bookkeeping-vpb-corporate-tax/specs/bookkeeping-vpb-corporate-tax/spec.md",
+        "x-openregister": {
+          "readonly": true
+        },
+        "readonly": true,
+        "type": "object",
+        "required": [
+          "administrationId",
+          "fiscalYear",
+          "quarter",
+          "revenue",
+          "operatingExpenses",
+          "nonOperating",
+          "specialDeductions",
+          "netTaxableIncome"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "Administration the statement is scoped to (REQ-VPB-003).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "description": "Fiscal year of the statement.",
+            "example": 2025,
+            "title": "Fiscal Year"
+          },
+          "quarter": {
+            "type": "integer",
+            "description": "Quarter (1-4) of the statement.",
+            "minimum": 1,
+            "maximum": 4,
+            "example": 1,
+            "title": "Quarter"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "Fiscal period identifier the statement covers.",
+            "example": "2025-Q1",
+            "title": "Period ID"
+          },
+          "revenue": {
+            "type": "number",
+            "description": "Total revenue for the period (REQ-VPB-009).",
+            "example": 120000.0,
+            "title": "Revenue"
+          },
+          "operatingExpenses": {
+            "type": "number",
+            "description": "Total deductible operating expenses (taxTreatment normal/deductible) (REQ-VPB-009).",
+            "example": 80000.0,
+            "title": "Operating Expenses"
+          },
+          "nonOperating": {
+            "type": "number",
+            "description": "Non-deductible items (taxTreatment nonDeductible), added back to taxable income (REQ-VPB-009).",
+            "example": 5000.0,
+            "title": "Non Operating"
+          },
+          "specialDeductions": {
+            "type": "number",
+            "description": "Special-rule adjustments (taxTreatment special) (REQ-VPB-009).",
+            "example": 2000.0,
+            "title": "Special Deductions"
+          },
+          "netTaxableIncome": {
+            "type": "number",
+            "description": "Computed net taxable income = revenue - operatingExpenses + nonOperating - specialDeductions (REQ-VPB-009).",
+            "example": 33000.0,
+            "title": "Net Taxable Income"
+          },
+          "untaggedCount": {
+            "type": "integer",
+            "description": "Count of tax-relevant GL postings lacking a taxTreatment tag (REQ-VPB-010).",
+            "minimum": 0,
+            "example": 0,
+            "title": "Untagged Count"
+          }
+        },
+        "x-openregister-aggregations": {
+          "quarterlyTaxStatement": {
+            "description": "Declarative shape of the quarterly Vpb statement TaxReportService computes (REQ-VPB-003, REQ-VPB-009). Filters GLLine by administrationId + periodId, joins Account for accountType, groups by accountType and taxTreatment, sums amounts, and derives netTaxableIncome = revenue - operatingExpenses + nonOperating - specialDeductions. When the aggregation engine cannot express the GLLine→Account join + tax-treatment grouping, TaxReportService computes the same result in PHP via the real ObjectService API.",
+            "join": {
+              "from": "GLLine.accountNumber",
+              "through": "Account",
+              "on": "Account.accountNumber",
+              "select": [
+                "Account.accountType"
+              ]
+            },
+            "filter": {},
+            "group": [
+              "Account.accountType",
+              "GLLine.taxTreatment"
+            ],
+            "from": "GLLine",
+            "groupBy": [
+              "periodId"
+            ]
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Quarterly Tax Statement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "TaxDeadline",
+          "slug": "2025-provisional-q1-payment"
+        },
+        "deadlineDate": "2025-04-20",
+        "deadlineType": "provisional-payment",
+        "description": "First provisional Vpb payment for FY 2025",
+        "fiscalYear": 2025,
+        "quarter": 1,
+        "status": "pending",
+        "relatedPeriodId": "2025-q1",
+        "administrationId": "adm-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "TaxDeadline",
+          "slug": "2025-provisional-q3-payment"
+        },
+        "deadlineDate": "2025-10-20",
+        "deadlineType": "provisional-payment",
+        "description": "Third provisional Vpb payment for FY 2025",
+        "fiscalYear": 2025,
+        "quarter": 3,
+        "status": "pending",
+        "relatedPeriodId": "2025-q3",
+        "administrationId": "adm-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "TaxDeadline",
+          "slug": "2025-final-return-filing"
+        },
+        "deadlineDate": "2026-05-01",
+        "deadlineType": "final-return",
+        "description": "Final Vpb return filing deadline for FY 2025",
+        "fiscalYear": 2025,
+        "quarter": null,
+        "status": "pending",
+        "relatedPeriodId": "2025-full",
+        "administrationId": "adm-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "TaxPaymentTracking",
+          "slug": "2025-provisional-payment-001"
+        },
+        "paymentDate": "2025-04-20T00:00:00+00:00",
+        "paymentType": "provisional",
+        "amount": 15000.0,
+        "currency": "EUR",
+        "status": "paid",
+        "linkedGLAccount": "1200",
+        "relatedDeadlineId": "2025-provisional-q1-payment",
+        "description": "Provisional Vpb payment Q1 2025",
+        "administrationId": "adm-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "TaxPaymentTracking",
+          "slug": "2025-final-payment-001"
+        },
+        "paymentDate": "2026-06-15T00:00:00+00:00",
+        "paymentType": "final",
+        "amount": 18500.0,
+        "currency": "EUR",
+        "status": "pending",
+        "linkedGLAccount": "1200",
+        "relatedDeadlineId": "2025-final-return-filing",
+        "description": "Final Vpb payment FY 2025",
+        "administrationId": "adm-1"
+      }
+    ]
+  }
+}

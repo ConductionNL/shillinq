@@ -1,0 +1,417 @@
+{
+  "info": {
+    "version": "0.1.0-inventory-mobile-scanner"
+  },
+  "components": {
+    "schemas": {
+      "MobileScannerSyncBatch": {
+        "slug": "MobileScannerSyncBatch",
+        "icon": "BarcodeScan",
+        "version": "0.1.0",
+        "title": "Mobile Scanner Sync Batch",
+        "description": "Server-side record of a single POST /api/v1/inventory/sync upload from the warehouse mobile PWA. Stores the (transactionId, operationType, userId, occurredAt) tuple so the server can deduplicate retried uploads within the 24h dedup window per REQ-SYNC-001 / REQ-SYNC-002. One MobileScannerSyncBatch row is written per accepted pendingOp; replays of the same transactionId return the original ACK without re-applying mutations. Purged on the 24h+ dedup cron.",
+        "x-schema-org": "schema:Action",
+        "x-openregister-purpose": "audit",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "transactionId",
+          "operationType",
+          "userId",
+          "occurredAt"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration that owns this sync batch. Tenant-scoped for IDOR-safe deduplication.",
+            "title": "Administration ID"
+          },
+          "transactionId": {
+            "type": "string",
+            "description": "Client-generated UUID (RFC 4122) used as the dedup key. Re-uploads of the same transactionId return the original ACK without re-applying the mutation.",
+            "example": "8a1f3d62-8b9a-4f88-9d6f-2c66b9c87fbe",
+            "title": "Transaction ID"
+          },
+          "operationType": {
+            "type": "string",
+            "description": "Type of warehouse operation this batch executed.",
+            "enum": [
+              "receive",
+              "transfer",
+              "pick",
+              "count"
+            ],
+            "title": "Operation Type"
+          },
+          "sku": {
+            "type": "string",
+            "nullable": true,
+            "description": "SKU touched by the operation (informational; the canonical mutation lives in InventoryStock).",
+            "title": "SKU"
+          },
+          "location": {
+            "type": "string",
+            "nullable": true,
+            "description": "Primary location for the operation (source for transfers).",
+            "title": "Location"
+          },
+          "toLocation": {
+            "type": "string",
+            "nullable": true,
+            "description": "Destination location for transfer operations.",
+            "title": "To Location"
+          },
+          "quantityDelta": {
+            "type": "number",
+            "nullable": true,
+            "multipleOf": 0.01,
+            "description": "Quantity change applied. Positive for receive/transfer-to/count-up, negative for pick/transfer-from.",
+            "title": "Quantity Delta"
+          },
+          "userId": {
+            "type": "string",
+            "description": "Nextcloud user id of the warehouse operator that submitted the batch.",
+            "title": "User ID"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Client-reported timestamp at which the operation was completed locally (ISO 8601 UTC).",
+            "title": "Occurred At"
+          },
+          "ackedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Server timestamp at which the ACK was issued.",
+            "title": "Acked At"
+          },
+          "status": {
+            "type": "string",
+            "description": "Server-side disposition of the batch.",
+            "enum": [
+              "accepted",
+              "duplicate",
+              "rejected_permission",
+              "rejected_validation"
+            ],
+            "default": "accepted",
+            "title": "Status"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable rejection reason when status is rejected_*.",
+            "title": "Rejection Reason"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "warehouse_manager": {
+              "permissions": [
+                "create",
+                "read"
+              ]
+            },
+            "inventory_operator": {
+              "permissions": [
+                "create",
+                "read"
+              ]
+            },
+            "counter": {
+              "permissions": [
+                "create",
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "GoodsReceipt": {
+        "slug": "GoodsReceipt",
+        "icon": "PackageVariantClosed",
+        "version": "0.1.0",
+        "title": "Goods Receipt",
+        "description": "Audit record produced by the warehouse receive operation. Captures (sku, location, quantity, occurredAt, userId) so receiving history is auditable independently of the mutable InventoryStock ledger. One GoodsReceipt row per accepted receive sync batch.",
+        "x-schema-org": "schema:DeliveryEvent",
+        "x-openregister-purpose": "audit",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "sku",
+          "location",
+          "quantity",
+          "userId",
+          "occurredAt"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration that owns the receipt.",
+            "title": "Administration ID"
+          },
+          "sku": {
+            "type": "string",
+            "description": "Stock-keeping unit identifier received.",
+            "title": "SKU"
+          },
+          "location": {
+            "type": "string",
+            "description": "Location code at which the goods were received (e.g. WH-A1).",
+            "title": "Location"
+          },
+          "quantity": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "description": "Quantity received. Always positive (decrements are modelled as InventoryTransfer or OrderPick).",
+            "title": "Quantity"
+          },
+          "userId": {
+            "type": "string",
+            "description": "Nextcloud user id of the warehouse manager that recorded the receipt.",
+            "title": "User ID"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the receive operation was completed (ISO 8601 UTC).",
+            "title": "Occurred At"
+          },
+          "transactionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Client transactionId that produced this receipt (for cross-referencing the sync batch).",
+            "title": "Transaction ID"
+          }
+        }
+      },
+      "InventoryTransfer": {
+        "slug": "InventoryTransfer",
+        "icon": "TransferRight",
+        "version": "0.1.0",
+        "title": "Inventory Transfer",
+        "description": "Atomic record of a warehouse transfer operation: one row captures the source location, destination location and quantity moved. Mirrors the (-qty at source, +qty at destination) pair of InventoryStock mutations that the transfer batch applied per REQ-INVENTORY-002.",
+        "x-schema-org": "schema:MoveAction",
+        "x-openregister-purpose": "audit",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "sku",
+          "fromLocation",
+          "toLocation",
+          "quantity",
+          "userId",
+          "occurredAt"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration that owns the transfer.",
+            "title": "Administration ID"
+          },
+          "sku": {
+            "type": "string",
+            "description": "Stock-keeping unit identifier transferred.",
+            "title": "SKU"
+          },
+          "fromLocation": {
+            "type": "string",
+            "description": "Source location code.",
+            "title": "From Location"
+          },
+          "toLocation": {
+            "type": "string",
+            "description": "Destination location code.",
+            "title": "To Location"
+          },
+          "quantity": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "Quantity transferred. Must be strictly positive; the controller rejects zero or negative.",
+            "title": "Quantity"
+          },
+          "userId": {
+            "type": "string",
+            "description": "Nextcloud user id of the operator that recorded the transfer.",
+            "title": "User ID"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the transfer was completed (ISO 8601 UTC).",
+            "title": "Occurred At"
+          },
+          "transactionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Client transactionId that produced this transfer.",
+            "title": "Transaction ID"
+          }
+        }
+      },
+      "OrderPick": {
+        "slug": "OrderPick",
+        "icon": "ClipboardArrowDownOutline",
+        "version": "0.1.0",
+        "title": "Order Pick",
+        "description": "Record of a pick operation: an InventoryStock decrement plus the order line item marked as picked. Captures (sku, location, quantity, userId, orderLineId?, occurredAt). Idempotent against the same transactionId per REQ-SYNC-001.",
+        "x-schema-org": "schema:OrderAction",
+        "x-openregister-purpose": "audit",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "sku",
+          "location",
+          "quantity",
+          "userId",
+          "occurredAt"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration that owns the pick record.",
+            "title": "Administration ID"
+          },
+          "sku": {
+            "type": "string",
+            "description": "Stock-keeping unit identifier picked.",
+            "title": "SKU"
+          },
+          "location": {
+            "type": "string",
+            "description": "Location code from which the stock was picked.",
+            "title": "Location"
+          },
+          "quantity": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "Quantity picked. Must be strictly positive.",
+            "title": "Quantity"
+          },
+          "orderLineId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional FK to the order line that this pick fulfils.",
+            "title": "Order Line ID"
+          },
+          "userId": {
+            "type": "string",
+            "description": "Nextcloud user id of the operator that recorded the pick.",
+            "title": "User ID"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the pick was completed (ISO 8601 UTC).",
+            "title": "Occurred At"
+          },
+          "transactionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Client transactionId that produced this pick.",
+            "title": "Transaction ID"
+          }
+        }
+      },
+      "InventoryCount": {
+        "slug": "InventoryCount",
+        "icon": "ClipboardCheckMultipleOutline",
+        "version": "0.1.0",
+        "title": "Inventory Count",
+        "description": "Record of a physical inventory count against system quantity, capturing variance for reconciliation. Counts are reference points and never auto-correct InventoryStock; operators approve a reconcile mutation separately per REQ-INVENTORY-004.",
+        "x-schema-org": "schema:Action",
+        "x-openregister-purpose": "audit",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "sku",
+          "location",
+          "systemQuantity",
+          "physicalQuantity",
+          "variance",
+          "userId",
+          "occurredAt"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration that owns the count.",
+            "title": "Administration ID"
+          },
+          "sku": {
+            "type": "string",
+            "description": "Stock-keeping unit identifier counted.",
+            "title": "SKU"
+          },
+          "location": {
+            "type": "string",
+            "description": "Location code at which the physical count was performed.",
+            "title": "Location"
+          },
+          "systemQuantity": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "description": "Quantity reported by InventoryStock at the moment the count was recorded.",
+            "title": "System Quantity"
+          },
+          "physicalQuantity": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "description": "Physical quantity entered by the counter.",
+            "title": "Physical Quantity"
+          },
+          "variance": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "description": "physicalQuantity - systemQuantity. Negative variance = system overstates.",
+            "title": "Variance"
+          },
+          "reconciled": {
+            "type": "boolean",
+            "default": false,
+            "description": "True when the operator approved updating InventoryStock to physicalQuantity. False = variance recorded only.",
+            "title": "Reconciled"
+          },
+          "userId": {
+            "type": "string",
+            "description": "Nextcloud user id of the counter that recorded the count.",
+            "title": "User ID"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the count was performed (ISO 8601 UTC).",
+            "title": "Occurred At"
+          },
+          "transactionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Client transactionId that produced this count.",
+            "title": "Transaction ID"
+          }
+        }
+      }
+    }
+  },
+  "objects": []
+}

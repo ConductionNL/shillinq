@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-programmabegroting
 
 **Status:** proposed
@@ -5,7 +9,11 @@
 **Tier:** T2 (compliance + operations)
 **Depends on:** `bookkeeping-bbv-compliance` (BBVTaakveldCatalogus lookup), `bookkeeping-budget-forecast` (forecast cijfers), `bookkeeping-general-ledger` (budget-overrun validation)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping programmabegroting in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: programmabegroting — not browser-testable
 

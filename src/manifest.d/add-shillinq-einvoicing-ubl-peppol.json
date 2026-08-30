@@ -1,0 +1,305 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "add-invoice-pdf-export-with-ubl-peppol-support",
+    "adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+    "description": "REQ-EINV-007 — adds the 'Send e-invoice' action + Peppol delivery-status indicator to the existing ARInvoiceDetail page (owned by bookkeeping-accounts-receivable-core). CAUTION for future editors: buildManifest()'s mergePages() replaces a page WHOLESALE by id (no deep merge, see nextcloud-vue/src/utils/buildManifest.js) — this fragment therefore carries a FULL COPY of ARInvoiceDetail's base definition from src/manifest.json plus two additive changes: (1) 'actionsComponent': 'AREInvoiceActions' resolves the Send action + status chip into the page header's actions slot (registry.js, kind:'widget', any kind is eligible for actionsComponent resolution per ADR-036); (2) the delivery-status fields (deliveryStatus/transmissionId/payloadFileUri/deliveryDetail) are appended to the 'invoice-document' data widget's include list so they render read-only alongside the rest of the invoice. If bookkeeping-accounts-receivable-core's owning fragment/base page changes, this copy MUST be re-synced or the later-wins overlay will silently drop those changes."
+  },
+  "menu": [],
+  "pages": [
+    {
+      "id": "ARInvoiceDetail",
+      "route": "/bookkeeping/accounts-receivable/:id",
+      "type": "detail",
+      "title": "AR Invoice",
+      "actionsComponent": "AREInvoiceActions",
+      "config": {
+        "register": "shillinq",
+        "schema": "ARInvoice",
+        "documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices",
+        "indexRoute": "AccountsReceivable",
+        "_note": "Billing-document archetype — a receivable invoice sent to a customer. Body leads with the invoice's own fields (schema-driven Data widget: number, type, dates, EN 16931 party/tax fields, the folded dunning/writeOff summary groups, GL link, and — added by add-invoice-pdf-export-with-ubl-peppol-support — the Peppol deliveryStatus/transmissionId/payloadFileUri/deliveryDetail fields) beside a Related panel for the customerId FK. Dunning history uses the real credit-control schema DunningRun (filter factuurId=@objectId, rowRoute to the existing DunningRunDetail page). Totals surface as summaryAggregates KPI chips (gross/due/paid, all sums over the invoice's own field via filter id=@objectId, the established self-value idiom) plus a dunning-run count. The header actionsComponent (AREInvoiceActions) renders the Send e-invoice action + delivery-status chip (REQ-EINV-007).",
+        "widgets": [
+          {
+            "id": "invoice-document",
+            "type": "data",
+            "title": "Document",
+            "icon": "FileDocument",
+            "content": {
+              "columns": 2,
+              "include": [
+                "invoiceNumber",
+                "customerId",
+                "invoiceDate",
+                "dueDate",
+                "currency",
+                "periodId",
+                "lifecycleState",
+                "ublRef",
+                "sourceDocumentUri",
+                "deliveryStatus",
+                "transmissionId",
+                "payloadFileUri",
+                "deliveryDetail"
+              ]
+            }
+          },
+          {
+            "id": "invoice-stats-gross-amount",
+            "type": "stats-block",
+            "title": "Gross amount",
+            "icon": "ChartBar",
+            "content": {
+              "entries": [
+                {
+                  "title": "Gross amount",
+                  "register": "shillinq",
+                  "schema": "ARInvoice",
+                  "metric": "sum",
+                  "field": "grossAmount",
+                  "filter": {
+                    "id": "@objectId"
+                  },
+                  "format": "currency"
+                }
+              ]
+            }
+          },
+          {
+            "id": "invoice-stats-amount-due",
+            "type": "stats-block",
+            "title": "Amount due",
+            "icon": "ChartBar",
+            "content": {
+              "entries": [
+                {
+                  "title": "Amount due",
+                  "register": "shillinq",
+                  "schema": "ARInvoice",
+                  "metric": "sum",
+                  "field": "amountDue",
+                  "filter": {
+                    "id": "@objectId"
+                  },
+                  "format": "currency"
+                }
+              ]
+            }
+          },
+          {
+            "id": "invoice-stats-paid-amount",
+            "type": "stats-block",
+            "title": "Paid amount",
+            "icon": "ChartBar",
+            "content": {
+              "entries": [
+                {
+                  "title": "Paid amount",
+                  "register": "shillinq",
+                  "schema": "ARInvoice",
+                  "metric": "sum",
+                  "field": "paidAmount",
+                  "filter": {
+                    "id": "@objectId"
+                  },
+                  "format": "currency"
+                }
+              ]
+            }
+          },
+          {
+            "id": "invoice-stats-dunning-runs",
+            "type": "stats-block",
+            "title": "Dunning runs",
+            "icon": "ChartBar",
+            "content": {
+              "entries": [
+                {
+                  "title": "Dunning runs",
+                  "register": "shillinq",
+                  "schema": "DunningRun",
+                  "metric": "count",
+                  "filter": {
+                    "invoiceId": "@objectId"
+                  },
+                  "route": "DunningRuns"
+                }
+              ]
+            }
+          },
+          {
+            "id": "invoice-money",
+            "type": "data",
+            "title": "Money",
+            "icon": "CurrencyEur",
+            "content": {
+              "columns": 2,
+              "include": [
+                "grossAmount",
+                "vatAmount",
+                "netAmount",
+                "amountDue",
+                "paidAmount",
+                "glTransactionId",
+                "matchedBankLineId",
+                "administrationId"
+              ]
+            }
+          },
+          {
+            "id": "invoice-related",
+            "type": "related",
+            "title": "Customer",
+            "icon": "LinkVariant"
+          },
+          {
+            "id": "invoice-dunning",
+            "type": "object-list",
+            "title": "Dunning history",
+            "icon": "Bell",
+            "content": {
+              "register": "shillinq",
+              "schema": "DunningRun",
+              "filter": {
+                "invoiceId": "@objectId"
+              },
+              "sort": {
+                "field": "stageNr",
+                "dir": "asc"
+              },
+              "limit": 20,
+              "columns": [
+                {
+                  "key": "stageNr",
+                  "label": "Stage"
+                },
+                {
+                  "key": "executedOn",
+                  "label": "Executed"
+                },
+                {
+                  "key": "channel",
+                  "label": "Channel"
+                },
+                {
+                  "key": "deliveryStatus",
+                  "label": "Delivery status"
+                },
+                {
+                  "key": "collectionCostAmount",
+                  "label": "Collection costs"
+                }
+              ],
+              "rowRoute": "DunningRunDetail",
+              "viewAllRoute": "DunningRuns",
+              "viewAllQuery": {
+                "invoiceId": "@objectId"
+              },
+              "emptyText": "No dunning runs have been triggered for this invoice.",
+              "allowCreate": false
+            }
+          },
+          {
+            "id": "invoice-files",
+            "type": "integration",
+            "integrationId": "files",
+            "title": "Invoice PDF & attachments",
+            "icon": "FileDocument"
+          }
+        ],
+        "layout": [
+          {
+            "id": "1",
+            "widgetId": "invoice-document",
+            "gridX": 0,
+            "gridY": 0,
+            "gridWidth": 8,
+            "gridHeight": 6
+          },
+          {
+            "id": "2-1",
+            "widgetId": "invoice-stats-gross-amount",
+            "gridX": 8,
+            "gridY": 0,
+            "gridWidth": 4,
+            "gridHeight": 2
+          },
+          {
+            "id": "2-2",
+            "widgetId": "invoice-stats-amount-due",
+            "gridX": 8,
+            "gridY": 2,
+            "gridWidth": 4,
+            "gridHeight": 2
+          },
+          {
+            "id": "2-3",
+            "widgetId": "invoice-stats-paid-amount",
+            "gridX": 8,
+            "gridY": 4,
+            "gridWidth": 4,
+            "gridHeight": 2
+          },
+          {
+            "id": "2-4",
+            "widgetId": "invoice-stats-dunning-runs",
+            "gridX": 8,
+            "gridY": 6,
+            "gridWidth": 4,
+            "gridHeight": 2
+          },
+          {
+            "id": "3",
+            "widgetId": "invoice-money",
+            "gridX": 0,
+            "gridY": 8,
+            "gridWidth": 8,
+            "gridHeight": 4
+          },
+          {
+            "id": "4",
+            "widgetId": "invoice-related",
+            "gridX": 8,
+            "gridY": 8,
+            "gridWidth": 4,
+            "gridHeight": 4
+          },
+          {
+            "id": "5",
+            "widgetId": "invoice-dunning",
+            "gridX": 0,
+            "gridY": 12,
+            "gridWidth": 12,
+            "gridHeight": 4
+          },
+          {
+            "id": "6",
+            "widgetId": "invoice-files",
+            "gridX": 0,
+            "gridY": 16,
+            "gridWidth": 12,
+            "gridHeight": 3
+          }
+        ],
+        "lifecycleActions": true,
+        "sidebar": {
+          "enabled": true,
+          "showMetadata": true,
+          "tabs": [
+            {
+              "id": "audit",
+              "label": "History",
+              "icon": "History",
+              "widgets": [
+                {
+                  "type": "audit"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

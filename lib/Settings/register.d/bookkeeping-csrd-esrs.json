@@ -1,681 +1,1946 @@
 {
-	"_meta": {
-		"spdx-license": "EUPL-1.2",
-		"spdx-copyright": "2026 Conduction B.V.",
-		"change": "bookkeeping-csrd-esrs",
-		"adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-		"description": "Tier 3 — CSRD/ESRS sustainability reporting. Ten new schemas (MaterialityAssessment, IroRecord, EsrsDataPoint, GhgInventory, EmissionSource, ValueChainActor, EsrsPolicy, EsrsAction, EsrsTarget, AssuranceEngagement) plus an additive FixedAsset extension (E1/E4 climate + biodiversity tagging). All quantitative logic is declarative (x-openregister-calculations / x-openregister-aggregations) per ADR-031 — no GHGCalculator.php / ImpactScorer.php services. Lifecycle automation per x-openregister-lifecycle; cross-schema/aggregation preconditions delegated to OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard (ADR-031 exception path). Seed data pre-loads the ESRS topical taxonomy and a worked FY2025 sample set. Extensions to journal-entry-line and organisations are DEFERRED to the bookkeeping-general-ledger / organisations dependency apps (those schemas are not yet present in shillinq) — see tasks.md."
-	},
-	"components": {
-		"schemas": {
-			"MaterialityAssessment": {
-				"slug": "MaterialityAssessment",
-				"icon": "ScaleBalance",
-				"version": "0.1.0",
-				"title": "Materiality Assessment",
-				"description": "Root governance record for the CSRD double-materiality determination per reporting period (REQ-CSR-001). Enumerates the ESRS topical taxonomy, captures impact + financial materiality scores, stakeholder-consultation evidence, and the locked double-materiality matrix. Mandatory before any topical disclosure is published (design D2). One per period; restatement via supersededBy self-FK.",
-				"x-schema-org": "schema:GovernmentService",
-				"x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
-				"type": "object",
-				"required": [
-					"reportingPeriod",
-					"assessmentScope",
-					"thresholdImpact",
-					"thresholdFinancial",
-					"state"
-				],
-				"properties": {
-					"reportingPeriod": {
-						"type": "string",
-						"description": "Fiscal reporting period, e.g. FY2025 (REQ-CSR-001).",
-						"example": "FY2025"
-					},
-					"methodologyVersion": {
-						"type": "string",
-						"description": "Materiality methodology version (EFRAG IG-1 reference).",
-						"example": "EFRAG-IG-1-2024"
-					},
-					"assessmentScope": {
-						"type": "string",
-						"enum": ["legal-entity", "consolidated-group"],
-						"description": "Consolidation boundary the assessment applies to (design D1 / open question 3 — manual scope declaration)."
-					},
-					"responsibleOwner": {
-						"type": "string",
-						"description": "Nextcloud user id of the responsible owner (FK to NC user directory — a person is an NC entity, never an invented schema)."
-					},
-					"stakeholderGroupsConsulted": {
-						"type": "array",
-						"description": "Stakeholder consultation evidence. At least one method per consulted group is mandatory before approval (REQ-CSR-001).",
-						"items": {
-							"type": "object",
-							"required": ["group", "consultationMethod", "date"],
-							"properties": {
-								"group": {
-									"type": "string",
-									"enum": ["employees", "customers", "suppliers", "investors", "communities", "civil-society"],
-									"description": "Consulted stakeholder group."
-								},
-								"consultationMethod": {
-									"type": "string",
-									"enum": ["survey", "interview", "workshop", "email"],
-									"description": "How the group was consulted."
-								},
-								"date": {
-									"type": "string",
-									"format": "date",
-									"description": "Date of consultation."
-								},
-								"participants": {
-									"type": "integer",
-									"minimum": 0,
-									"description": "Number of participants/respondents.",
-									"nullable": true
-								},
-								"keyOutputs": {
-									"type": "string",
-									"description": "Summary of key outputs from the consultation.",
-									"nullable": true
-								}
-							}
-						}
-					},
-					"thresholdImpact": {
-						"type": "integer",
-						"minimum": 1,
-						"maximum": 5,
-						"description": "Impact-materiality threshold (1-5 scale). A topic is impact-material when its impact score is at or above this threshold (REQ-CSR-001).",
-						"example": 3
-					},
-					"thresholdFinancial": {
-						"type": "integer",
-						"minimum": 1,
-						"maximum": 5,
-						"description": "Financial-materiality threshold (1-5 scale). A topic is financially material when its financial score is at or above this threshold.",
-						"example": 2
-					},
-					"doubleMaterialityMatrixSnapshot": {
-						"type": "object",
-						"description": "Locked snapshot keyed by ESRS topic → {impactScore, financialScore, material, rationale}. Built from the IroRecord children at sign-off (REQ-CSR-001).",
-						"additionalProperties": true
-					},
-					"approvalDate": {
-						"type": "string",
-						"format": "date",
-						"description": "Date the board/CFO approver signed off.",
-						"nullable": true
-					},
-					"approver": {
-						"type": "string",
-						"description": "Nextcloud user id of the board-level approver (CFO/chair).",
-						"nullable": true
-					},
-					"supportingDocuments": {
-						"type": "array",
-						"description": "Evidence document references (docudesk file ids / URIs).",
-						"items": {"type": "string"}
-					},
-					"supersededBy": {
-						"type": "string",
-						"description": "Self-FK (slug/uuid) to the assessment that supersedes this one on restatement.",
-						"nullable": true
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "state",
-					"initialState": "draft",
-					"states": {
-						"draft": {"label": "Draft", "description": "Editable. Topics being scored; consultation in progress."},
-						"in-review": {"label": "In review", "description": "Stakeholder consultation complete; awaiting board sign-off."},
-						"approved": {"label": "Approved", "description": "Board-signed-off. Matrix frozen; material topics drive topical-module activation (REQ-CSR-001)."},
-						"locked": {"label": "Locked", "description": "Published with the period's ESRS report. Immutable; restatement requires a superseding assessment."}
-					},
-					"transitions": {
-						"submit": {
-							"from": "draft",
-							"to": "in-review",
-							"label": "Submit for board review",
-							"description": "Submit once every topic is scored and at least one stakeholder group is consulted (REQ-CSR-001).",
-							"requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canSubmitMateriality"
-						},
-						"approve": {
-							"from": "in-review",
-							"to": "approved",
-							"label": "Board sign-off",
-							"description": "Board approver signs off. Non-material topics must carry a written rationale (REQ-CSR-001).",
-							"requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canApproveMateriality"
-						},
-						"publish": {
-							"from": "approved",
-							"to": "locked",
-							"label": "Lock and publish",
-							"description": "Lock the matrix and publish it with the ESRS report (design D2)."
-						},
-						"reopen": {
-							"from": "in-review",
-							"to": "draft",
-							"label": "Return to draft",
-							"description": "Return to draft for further scoring or consultation."
-						}
-					}
-				}
-			},
-			"IroRecord": {
-				"slug": "IroRecord",
-				"icon": "Sitemap",
-				"version": "0.1.0",
-				"title": "IRO Record",
-				"description": "Per-topic Impact / Risk / Opportunity entry feeding a MaterialityAssessment (REQ-CSR-001, design D1). impactScore and financialMaterialityScore are computed declaratively; material is derived from the parent assessment thresholds.",
-				"x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
-				"type": "object",
-				"required": ["assessment", "esrsTopicCode", "type"],
-				"properties": {
-					"assessment": {"type": "string", "description": "FK (slug/uuid) to the parent MaterialityAssessment."},
-					"esrsTopicCode": {"type": "string", "description": "ESRS topic / sub-topic code, e.g. E1, E1-1, S1, S1-1, G1.", "example": "E1"},
-					"type": {"type": "string", "enum": ["impact-positive", "impact-negative", "risk", "opportunity"], "description": "IRO classification."},
-					"description": {"type": "string", "description": "Free-text description of the impact/risk/opportunity.", "nullable": true},
-					"valueChainLocation": {"type": "string", "enum": ["own-operations", "upstream", "downstream", "financial"], "description": "Where in the value chain the IRO sits (EFRAG IG-2).", "nullable": true},
-					"timeHorizon": {"type": "string", "enum": ["short", "medium", "long"], "description": "Time horizon per ESRS-1.", "nullable": true},
-					"likelihood": {"type": "integer", "minimum": 1, "maximum": 5, "description": "Likelihood score (1-5).", "nullable": true},
-					"severityOrMagnitude": {"type": "integer", "minimum": 1, "maximum": 5, "description": "Severity/scale score (1-5).", "nullable": true},
-					"scope": {"type": "integer", "minimum": 1, "maximum": 5, "description": "Scope-of-operations score (1-5).", "nullable": true},
-					"irremediableCharacter": {"type": "boolean", "description": "Whether the impact is irremediable.", "default": false},
-					"grossOrNet": {"type": "string", "enum": ["gross-before-mitigation", "net-after-mitigation"], "description": "Whether the score is before or after mitigation.", "nullable": true},
-					"financialEffectEstimateCurrency": {"type": "string", "description": "Currency of the financial-effect estimate.", "example": "EUR", "nullable": true},
-					"financialEffectEstimateLow": {"type": "number", "description": "Low bound of the financial-effect estimate.", "nullable": true},
-					"financialEffectEstimateHigh": {"type": "number", "description": "High bound of the financial-effect estimate.", "nullable": true},
-					"material": {"type": "boolean", "description": "Computed at assessment sign-off: true when impactScore >= thresholdImpact OR financialMaterialityScore >= thresholdFinancial.", "default": false},
-					"mitigationActions": {
-						"type": "array",
-						"description": "Mitigation actions for the IRO.",
-						"items": {
-							"type": "object",
-							"properties": {
-								"action": {"type": "string", "description": "Action description."},
-								"owner": {"type": "string", "description": "NC user id of the owner."},
-								"dueDate": {"type": "string", "format": "date", "description": "Due date.", "nullable": true}
-							}
-						}
-					},
-					"rationale": {"type": "string", "description": "Mandatory rationale for non-material determinations (REQ-CSR-001).", "nullable": true}
-				},
-				"x-openregister-calculations": {
-					"impactScore": {
-						"type": "number",
-						"description": "Composite impact-materiality score: (severityOrMagnitude + scope + likelihood) weighted by irremediable character (REQ-CSR-001, design D1). Declarative formula per ADR-031 — no ImpactScorer.php.",
-						"expr": "(@self.severityOrMagnitude + @self.scope + @self.likelihood) * (@self.irremediableCharacter ? 1.0 : 0.8)"
-					},
-					"financialMaterialityScore": {
-						"type": "number",
-						"description": "Financial-materiality composite. Average of severity and likelihood as financial proxies until the per-dimension financial inputs are split out (REQ-CSR-001).",
-						"expr": "(@self.severityOrMagnitude + @self.likelihood) / 2"
-					}
-				}
-			},
-			"EsrsDataPoint": {
-				"slug": "EsrsDataPoint",
-				"icon": "TableLarge",
-				"version": "0.1.0",
-				"title": "ESRS Data Point",
-				"description": "One row per ESRS-mandated data point per period (~1,100 per period across the 12 standards) (REQ-CSR-002, design D3). Configurable source + progressive approval lifecycle. No transition to approved without a source reference (assurance-critical control).",
-				"x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
-				"type": "object",
-				"required": ["period", "esrsDataPointId", "valueSource", "status"],
-				"properties": {
-					"period": {"type": "string", "description": "Reporting period, e.g. FY2025.", "example": "FY2025"},
-					"esrsDataPointId": {"type": "string", "description": "EFRAG IG-3 data-point id.", "example": "E1-6_GrossScope1GHGEmissions_tCO2eq"},
-					"valueType": {"type": "string", "enum": ["numeric", "text", "boolean", "monetary", "quantity"], "description": "Type of the recorded value.", "nullable": true},
-					"valueNumeric": {"type": "number", "description": "Numeric/monetary/quantity value when valueType is numeric/monetary/quantity.", "nullable": true},
-					"valueText": {"type": "string", "description": "Text value when valueType is text.", "nullable": true},
-					"valueBoolean": {"type": "boolean", "description": "Boolean value when valueType is boolean.", "nullable": true},
-					"unit": {"type": "string", "description": "UN/CEFACT unit code (e.g. tCO2e, H87, EUR).", "nullable": true, "example": "tCO2e"},
-					"valueSource": {
-						"type": "string",
-						"enum": ["manual", "openconnector-pull", "calculation", "imported-from-bookkeeping", "supplier-survey", "proxy-estimate"],
-						"description": "Configured source of the value (REQ-CSR-002, design D3)."
-					},
-					"sourceReference": {"type": "string", "description": "URI / docudesk reference / GL line reference evidencing the value. Mandatory before approval.", "nullable": true},
-					"preparer": {"type": "string", "description": "NC user id of the preparer.", "nullable": true},
-					"preparerTimestamp": {"type": "string", "format": "date-time", "description": "When the preparer entered/submitted the value.", "nullable": true},
-					"reviewer": {"type": "string", "description": "NC user id of the reviewer.", "nullable": true},
-					"reviewerTimestamp": {"type": "string", "format": "date-time", "description": "When the reviewer approved the value.", "nullable": true},
-					"status": {
-						"type": "string",
-						"enum": ["draft", "in-review", "approved", "locked-for-assurance", "assured", "published"],
-						"description": "Progressive approval status (design D9). Mirrors the lifecycle field.",
-						"default": "draft"
-					},
-					"assuranceEvidence": {"type": "array", "description": "Assurance evidence file references.", "items": {"type": "string"}},
-					"restatedFrom": {"type": "string", "description": "Self-FK to the prior-period data point this value restates (REQ-CSR-002, design D8).", "nullable": true},
-					"restatementRationale": {"type": "string", "description": "Mandatory rationale when restatedFrom is set (design D8).", "nullable": true},
-					"narrativeComment": {"type": "string", "description": "Narrative / preparer comment.", "nullable": true}
-				},
-				"x-openregister-lifecycle": {
-					"field": "status",
-					"initialState": "draft",
-					"states": {
-						"draft": {"label": "Draft", "description": "Preparer is entering the value."},
-						"in-review": {"label": "In review", "description": "Submitted; awaiting reviewer approval."},
-						"approved": {"label": "Approved", "description": "Reviewer approved. Source reference present (control)."},
-						"locked-for-assurance": {"label": "Locked for assurance", "description": "Read-only to the entity; auditor may annotate but not change the value (REQ-CSR-004, design D5)."},
-						"assured": {"label": "Assured", "description": "Auditor signed off. Ready for XBRL mapping (REQ-CSR-005)."},
-						"published": {"label": "Published", "description": "Filed with KvK/AFM. Immutable; changes flow through restatement (design D8)."}
-					},
-					"transitions": {
-						"submit": {"from": "draft", "to": "in-review", "label": "Submit for review", "description": "Preparer submits the value for review (REQ-CSR-002)."},
-						"approve": {
-							"from": "in-review",
-							"to": "approved",
-							"label": "Approve",
-							"description": "Reviewer approves. Blocked unless a source reference is present (REQ-CSR-002 assurance control).",
-							"requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canApproveDataPoint"
-						},
-						"reject": {"from": "in-review", "to": "draft", "label": "Reject", "description": "Reviewer returns the data point to draft."},
-						"lockForAssurance": {"from": "approved", "to": "locked-for-assurance", "label": "Lock for assurance", "description": "Freeze the value for the auditor; entity edits forbidden (design D5)."},
-						"assure": {"from": "locked-for-assurance", "to": "assured", "label": "Auditor sign-off", "description": "Auditor signs off the data point (REQ-CSR-004)."},
-						"publish": {"from": "assured", "to": "published", "label": "Publish", "description": "Publish with the filed report (REQ-CSR-005)."},
-						"restate": {
-							"from": "published",
-							"to": "approved",
-							"label": "Restate",
-							"description": "Create a corrected value in a subsequent period with restatedFrom + rationale (design D8).",
-							"requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canRestateDataPoint"
-						}
-					}
-				}
-			},
-			"GhgInventory": {
-				"slug": "GhgInventory",
-				"icon": "Molecule",
-				"version": "0.1.0",
-				"title": "GHG Inventory",
-				"description": "GHG Protocol Scope 1/2/3 calculation engine per period (REQ-CSR-003, design D4). Totals are declarative aggregations over the period's EmissionSource rows — no GHGCalculator.php (ADR-031). Base-year recalculation flagged at the >=5% boundary-change threshold.",
-				"x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
-				"type": "object",
-				"required": ["period", "methodology", "consolidationApproach", "state"],
-				"properties": {
-					"period": {"type": "string", "description": "Reporting period.", "example": "FY2025"},
-					"methodology": {"type": "string", "enum": ["GHG-Protocol-Corporate-Standard", "GHG-Protocol-Value-Chain-Standard"], "description": "GHG Protocol methodology."},
-					"consolidationApproach": {"type": "string", "enum": ["equity-share", "financial-control", "operational-control"], "description": "Consolidation approach (REQ-CSR-003)."},
-					"gasesIncluded": {"type": "array", "description": "Gases included.", "items": {"type": "string", "enum": ["CO2", "CH4", "N2O", "HFCs", "PFCs", "SF6", "NF3"]}},
-					"boundaryNarrative": {"type": "string", "description": "Organisational/operational boundary narrative.", "nullable": true},
-					"baseYear": {"type": "string", "description": "Base year (YYYY).", "example": "2023", "nullable": true},
-					"baseYearRecalculationPolicy": {"type": "string", "description": "Base-year recalculation policy text.", "nullable": true},
-					"esrsTaxonomyVersion": {"type": "string", "description": "Pinned EFRAG ESRS XBRL taxonomy version for this period (REQ-CSR-005, design D7).", "example": "EFRAG-ESRS-2024-01", "nullable": true},
-					"baseYearRecalculationFlag": {"type": "boolean", "description": "True when a >=5% boundary change has triggered base-year recalculation (REQ-CSR-003, design D4).", "default": false},
-					"intensityHeadcount": {"type": "number", "description": "FTE headcount denominator for the per-FTE intensity metric.", "nullable": true},
-					"intensityTurnover": {"type": "number", "description": "Turnover denominator (EUR) for the per-turnover intensity metric.", "nullable": true},
-					"intensityFloorAreaM2": {"type": "number", "description": "Floor-area denominator (m2) for the per-m2 intensity metric.", "nullable": true},
-					"intensityUnitsProduced": {"type": "number", "description": "Units-produced denominator for the per-unit intensity metric.", "nullable": true},
-					"methodologyChangesVsPriorPeriod": {"type": "string", "description": "Methodology changes vs prior period.", "nullable": true},
-					"state": {
-						"type": "string",
-						"enum": ["draft", "calculated", "approved", "locked-for-assurance", "assured", "published"],
-						"description": "Inventory lifecycle state (design D9).",
-						"default": "draft"
-					}
-				},
-				"x-openregister-aggregations": {
-					"scope1Total": {
-						"description": "total-Scope-1 = SUM(EmissionSource.co2eResult) for scope=1 rows of this inventory (REQ-CSR-003 / design D4).",
-						"join": {"schema": "EmissionSource", "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope = '1'"},
-						"operations": {"totalScope1": {"field": "EmissionSource.co2eResult", "operation": "sum"}}
-					},
-					"scope2LocationBasedTotal": {
-						"description": "total-Scope-2-location-based = SUM(co2eResult) for scope=2 rows using grid-average factors (REQ-CSR-003).",
-						"join": {"schema": "EmissionSource", "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope = '2' AND EmissionSource.scope2Method = 'location-based'"},
-						"operations": {"totalScope2LocationBased": {"field": "EmissionSource.co2eResult", "operation": "sum"}}
-					},
-					"scope2MarketBasedTotal": {
-						"description": "total-Scope-2-market-based = SUM(co2eResult) for scope=2 rows using contract-specific factors (REQ-CSR-003).",
-						"join": {"schema": "EmissionSource", "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope = '2' AND EmissionSource.scope2Method = 'market-based'"},
-						"operations": {"totalScope2MarketBased": {"field": "EmissionSource.co2eResult", "operation": "sum"}}
-					},
-					"scope3ByCategory": {
-						"description": "total-Scope-3 broken down by the 15 GHG Protocol categories: SUM(co2eResult) grouped by category for scope LIKE '3-cat-%' rows (REQ-CSR-003).",
-						"join": {"schema": "EmissionSource", "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope LIKE '3-cat-%'"},
-						"groupBy": "EmissionSource.scope",
-						"operations": {"totalScope3": {"field": "EmissionSource.co2eResult", "operation": "sum"}}
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "state",
-					"initialState": "draft",
-					"states": {
-						"draft": {"label": "Draft", "description": "Emission sources being entered."},
-						"calculated": {"label": "Calculated", "description": "On-demand aggregation rolled up Scope 1/2/3 totals (design D4)."},
-						"approved": {"label": "Approved", "description": "Reviewer approved the inventory."},
-						"locked-for-assurance": {"label": "Locked for assurance", "description": "Frozen for the auditor (design D5)."},
-						"assured": {"label": "Assured", "description": "Auditor signed off."},
-						"published": {"label": "Published", "description": "Published with the filed report."}
-					},
-					"transitions": {
-						"calculate": {"from": "draft", "to": "calculated", "label": "Roll up inventory", "description": "Run the on-demand Scope 1/2/3 aggregation (REQ-CSR-003)."},
-						"approve": {"from": "calculated", "to": "approved", "label": "Approve", "description": "Reviewer approves the rolled-up inventory."},
-						"reopen": {"from": "calculated", "to": "draft", "label": "Reopen", "description": "Return to draft to adjust emission sources."},
-						"lockForAssurance": {"from": "approved", "to": "locked-for-assurance", "label": "Lock for assurance", "description": "Freeze for the auditor (design D5)."},
-						"assure": {"from": "locked-for-assurance", "to": "assured", "label": "Auditor sign-off", "description": "Auditor signs off."},
-						"publish": {"from": "assured", "to": "published", "label": "Publish", "description": "Publish with the filed report."}
-					}
-				}
-			},
-			"EmissionSource": {
-				"slug": "EmissionSource",
-				"icon": "Factory",
-				"version": "0.1.0",
-				"title": "Emission Source",
-				"description": "Per-activity row feeding a GhgInventory (REQ-CSR-003, design D4). co2eResult is a declarative calculation (activityData x emissionFactor) — no PHP service.",
-				"x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
-				"type": "object",
-				"required": ["inventory", "scope", "activityData", "emissionFactor"],
-				"properties": {
-					"inventory": {"type": "string", "description": "FK (slug/uuid) to the parent GhgInventory."},
-					"scope": {
-						"type": "string",
-						"enum": ["1", "2", "3-cat-01", "3-cat-02", "3-cat-03", "3-cat-04", "3-cat-05", "3-cat-06", "3-cat-07", "3-cat-08", "3-cat-09", "3-cat-10", "3-cat-11", "3-cat-12", "3-cat-13", "3-cat-14", "3-cat-15"],
-						"description": "GHG Protocol scope / Scope 3 category (REQ-CSR-003)."
-					},
-					"category": {"type": "string", "description": "Activity category, e.g. mobile-combustion, purchased-electricity, employee-commuting.", "nullable": true},
-					"scope2Method": {"type": "string", "enum": ["location-based", "market-based"], "description": "For scope=2 rows: which Scope-2 accounting method this row contributes to (REQ-CSR-003).", "nullable": true},
-					"activityData": {"type": "number", "minimum": 0, "description": "Activity quantity in standard units (litres, kWh, km, EUR spend)."},
-					"activityUnit": {"type": "string", "description": "UN/CEFACT activity unit code.", "example": "LTR", "nullable": true},
-					"activitySourceDocument": {"type": "string", "description": "File / openconnector reference evidencing the activity data.", "nullable": true},
-					"emissionFactor": {"type": "number", "minimum": 0, "description": "Emission factor (tCO2e per activity unit)."},
-					"emissionFactorSource": {"type": "string", "enum": ["DEFRA", "EPA", "IEA", "supplier-specific", "spend-based-EEIO"], "description": "Provenance of the emission factor.", "nullable": true},
-					"emissionFactorVersion": {"type": "string", "description": "Versioned factor identifier.", "example": "DEFRA-2025-Q1", "nullable": true},
-					"gwpVersion": {"type": "string", "enum": ["AR5", "AR6"], "description": "IPCC GWP version for comparability (REQ-CSR-003).", "nullable": true},
-					"uncertaintyRating": {"type": "string", "enum": ["high", "medium", "low"], "description": "Uncertainty rating; spend-based proxies are typically high (REQ-CSR-003).", "nullable": true},
-					"recalculationFlag": {"type": "boolean", "description": "True when this row restates prior base-year emissions (M&A / divestiture / methodology change).", "default": false}
-				},
-				"x-openregister-calculations": {
-					"co2eResult": {
-						"type": "number",
-						"description": "co2eResult = activityData x emissionFactor (tCO2e). Declarative per ADR-031 / design D4 — no GHGCalculator.php.",
-						"expr": "@self.activityData * @self.emissionFactor"
-					}
-				}
-			},
-			"ValueChainActor": {
-				"slug": "ValueChainActor",
-				"icon": "Truck",
-				"version": "0.1.0",
-				"title": "Value Chain Actor",
-				"description": "Supplier / customer / portfolio-company in the reporting boundary (REQ-CSR-002, design D1). counterparty references the organisations entity master (FK by slug/uuid) — that schema lives in the organisations dependency app, never re-invented here.",
-				"x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
-				"type": "object",
-				"required": ["role"],
-				"properties": {
-					"counterparty": {"type": "string", "description": "FK (slug/uuid) to an organisations record (entity master in the organisations dependency app).", "nullable": true},
-					"counterpartyName": {"type": "string", "description": "Denormalised counterparty name for display until the organisations FK resolves.", "nullable": true},
-					"role": {"type": "string", "enum": ["supplier", "customer", "financial-investee", "franchisee"], "description": "Role in the value chain."},
-					"tier": {"type": "string", "enum": ["1", "2", "3+"], "description": "Supply-chain tier.", "nullable": true},
-					"country": {"type": "string", "description": "ISO 3166 country code.", "example": "NL", "nullable": true},
-					"sectorNaceCode": {"type": "string", "description": "NACE sector code.", "example": "20", "nullable": true},
-					"inScopeFor": {"type": "array", "description": "ESRS standard codes this actor is in scope for.", "items": {"type": "string"}},
-					"dataCollectionMethod": {"type": "string", "enum": ["direct-survey", "industry-average", "supplier-LCA", "regulatory-disclosure"], "description": "How data is collected from this actor.", "nullable": true},
-					"engagementStatus": {"type": "string", "enum": ["not-contacted", "contacted", "responded", "partial-response", "verified"], "description": "Engagement status.", "default": "not-contacted"},
-					"lastEngagementDate": {"type": "string", "format": "date", "description": "Last engagement date.", "nullable": true},
-					"dataQualityScore": {"type": "integer", "minimum": 1, "maximum": 5, "description": "Data-quality score (1-5).", "nullable": true}
-				}
-			},
-			"EsrsPolicy": {
-				"slug": "EsrsPolicy",
-				"icon": "FileDocumentOutline",
-				"version": "0.1.0",
-				"title": "ESRS Policy",
-				"description": "ESRS-2 governance triad — policy declaration on a material topic (design D1).",
-				"x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
-				"type": "object",
-				"required": ["topic"],
-				"properties": {
-					"owner": {"type": "string", "description": "NC user id of the policy owner.", "nullable": true},
-					"topic": {"type": "string", "description": "ESRS topic code.", "example": "E1"},
-					"policyType": {"type": "string", "enum": ["governance", "risk-management", "due-diligence"], "description": "Policy type.", "nullable": true},
-					"scope": {"type": "string", "enum": ["own", "upstream", "downstream", "financial"], "description": "Policy scope.", "nullable": true},
-					"timeHorizon": {"type": "string", "enum": ["short", "medium", "long"], "description": "Time horizon.", "nullable": true},
-					"measurementMetric": {"type": "string", "description": "FK (slug/uuid) to the EsrsDataPoint that measures this policy.", "nullable": true},
-					"baselineValue": {"type": "number", "description": "Baseline value.", "nullable": true},
-					"targetValue": {"type": "number", "description": "Target value.", "nullable": true},
-					"currentValue": {"type": "number", "description": "Current value.", "nullable": true},
-					"progressNarrative": {"type": "string", "description": "Progress narrative.", "nullable": true},
-					"linkedIroRecords": {"type": "array", "description": "FK list (slug/uuid) to justifying IroRecords.", "items": {"type": "string"}}
-				}
-			},
-			"EsrsAction": {
-				"slug": "EsrsAction",
-				"icon": "RunFast",
-				"version": "0.1.0",
-				"title": "ESRS Action",
-				"description": "ESRS-2 governance triad — concrete time-bound intervention on a material topic (design D1).",
-				"x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
-				"type": "object",
-				"required": ["topic"],
-				"properties": {
-					"owner": {"type": "string", "description": "NC user id of the action owner.", "nullable": true},
-					"topic": {"type": "string", "description": "ESRS topic code.", "example": "E1"},
-					"scope": {"type": "string", "enum": ["own", "upstream", "downstream", "financial"], "description": "Action scope.", "nullable": true},
-					"timeHorizon": {"type": "string", "enum": ["short", "medium", "long"], "description": "Time horizon.", "nullable": true},
-					"measurementMetric": {"type": "string", "description": "FK (slug/uuid) to the EsrsDataPoint that measures this action.", "nullable": true},
-					"baselineValue": {"type": "number", "description": "Baseline value.", "nullable": true},
-					"targetValue": {"type": "number", "description": "Target value.", "nullable": true},
-					"currentValue": {"type": "number", "description": "Current value.", "nullable": true},
-					"progressNarrative": {"type": "string", "description": "Progress narrative.", "nullable": true},
-					"status": {"type": "string", "enum": ["pending", "in-progress", "completed", "off-track"], "description": "Action status.", "default": "pending"},
-					"completionDate": {"type": "string", "format": "date", "description": "Completion date.", "nullable": true},
-					"linkedIroRecords": {"type": "array", "description": "FK list (slug/uuid) to justifying IroRecords.", "items": {"type": "string"}}
-				}
-			},
-			"EsrsTarget": {
-				"slug": "EsrsTarget",
-				"icon": "BullseyeArrow",
-				"version": "0.1.0",
-				"title": "ESRS Target",
-				"description": "ESRS-2 governance triad — measurable, preferably science-based goal on a material topic (design D1).",
-				"x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
-				"type": "object",
-				"required": ["topic"],
-				"properties": {
-					"owner": {"type": "string", "description": "NC user id of the target owner.", "nullable": true},
-					"topic": {"type": "string", "description": "ESRS topic code.", "example": "E1"},
-					"scope": {"type": "string", "enum": ["own", "upstream", "downstream", "financial"], "description": "Target scope.", "nullable": true},
-					"timeHorizon": {"type": "string", "enum": ["short", "medium", "long"], "description": "Time horizon.", "nullable": true},
-					"measurementMetric": {"type": "string", "description": "FK (slug/uuid) to the EsrsDataPoint that measures this target.", "nullable": true},
-					"baselineValue": {"type": "number", "description": "Baseline value.", "nullable": true},
-					"targetValue": {"type": "number", "description": "Target value.", "nullable": true},
-					"currentValue": {"type": "number", "description": "Current value.", "nullable": true},
-					"progressNarrative": {"type": "string", "description": "Progress narrative.", "nullable": true},
-					"scienceBased": {"type": "boolean", "description": "Whether the target is science-based (SBTi).", "default": false},
-					"status": {"type": "string", "enum": ["on-track", "at-risk", "off-track"], "description": "Target status.", "default": "on-track"},
-					"linkedIroRecords": {"type": "array", "description": "FK list (slug/uuid) to justifying IroRecords.", "items": {"type": "string"}},
-					"linkedActions": {"type": "array", "description": "FK list (slug/uuid) to EsrsActions.", "items": {"type": "string"}}
-				}
-			},
-			"AssuranceEngagement": {
-				"slug": "AssuranceEngagement",
-				"icon": "ClipboardCheckOutline",
-				"version": "0.1.0",
-				"title": "Assurance Engagement",
-				"description": "External-auditor assurance engagement per period (REQ-CSR-004, design D5). Limited assurance (year 1) escalating to reasonable assurance (FY2028+). Findings tracked to management response; submission confirmation captured for XBRL/KvK deposition.",
-				"x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
-				"type": "object",
-				"required": ["period", "engagementLevel", "state"],
-				"properties": {
-					"period": {"type": "string", "description": "Reporting period.", "example": "FY2025"},
-					"auditFirm": {"type": "string", "description": "Audit firm name.", "nullable": true},
-					"leadPartner": {"type": "string", "description": "Lead partner name.", "nullable": true},
-					"engagementLevel": {"type": "string", "enum": ["limited", "reasonable"], "description": "Assurance level (REQ-CSR-004)."},
-					"scopeStatement": {"type": "string", "description": "Scope statement.", "nullable": true},
-					"materialityThresholdQuantitative": {"type": "string", "description": "Quantitative materiality threshold (EUR or tCO2e).", "nullable": true},
-					"materialityThresholdQualitative": {"type": "string", "description": "Qualitative materiality threshold.", "nullable": true},
-					"walkthroughRecords": {"type": "array", "description": "Walkthrough document references.", "items": {"type": "string"}},
-					"testOfControlsResults": {
-						"type": "array",
-						"description": "Test-of-controls results.",
-						"items": {"type": "object", "properties": {"description": {"type": "string"}, "objective": {"type": "string"}, "controlTested": {"type": "string"}, "result": {"type": "string"}, "findingIfAny": {"type": "string", "nullable": true}}}
-					},
-					"substantiveTestResults": {
-						"type": "array",
-						"description": "Substantive test results.",
-						"items": {"type": "object", "properties": {"esrsDataPointId": {"type": "string"}, "objective": {"type": "string"}, "sampleSize": {"type": "integer"}, "sampleMethod": {"type": "string"}, "result": {"type": "string"}, "findingIfAny": {"type": "string", "nullable": true}}}
-					},
-					"findings": {
-						"type": "array",
-						"description": "Auditor findings tracked to management response (REQ-CSR-004).",
-						"items": {"type": "object", "required": ["esrsArea", "severity", "description"], "properties": {"esrsArea": {"type": "string"}, "severity": {"type": "string", "enum": ["critical", "high", "medium", "low"]}, "description": {"type": "string"}, "managementResponse": {"type": "string", "nullable": true}, "status": {"type": "string", "enum": ["open", "resolved", "accepted-risk"], "default": "open"}}}
-					},
-					"assuranceReport": {"type": "string", "description": "Assurance-report PDF reference (docudesk).", "nullable": true},
-					"opinionDate": {"type": "string", "format": "date", "description": "Date the partner signed the opinion.", "nullable": true},
-					"submissionKvkReceiptId": {"type": "string", "description": "KvK ESEF submission receipt id (REQ-CSR-005).", "nullable": true},
-					"submissionDate": {"type": "string", "format": "date", "description": "Submission date.", "nullable": true},
-					"submissionStatus": {"type": "string", "enum": ["pending", "accepted", "rejected"], "description": "Submission status.", "nullable": true},
-					"state": {
-						"type": "string",
-						"enum": ["draft", "fieldwork", "findings-open", "opinion-issued", "submitted"],
-						"description": "Engagement lifecycle state.",
-						"default": "draft"
-					}
-				},
-				"x-openregister-lifecycle": {
-					"field": "state",
-					"initialState": "draft",
-					"states": {
-						"draft": {"label": "Draft", "description": "Engagement set up; scope and materiality being agreed."},
-						"fieldwork": {"label": "Fieldwork", "description": "Auditor performing controls + substantive testing on locked data points (REQ-CSR-004)."},
-						"findings-open": {"label": "Findings open", "description": "Findings raised; awaiting management response."},
-						"opinion-issued": {"label": "Opinion issued", "description": "All findings resolved/accepted; partner signed the opinion."},
-						"submitted": {"label": "Submitted", "description": "iXBRL report deposited with KvK/AFM (REQ-CSR-005)."}
-					},
-					"transitions": {
-						"startFieldwork": {"from": "draft", "to": "fieldwork", "label": "Start fieldwork", "description": "Begin walkthrough once data points are locked-for-assurance (REQ-CSR-004)."},
-						"raiseFindings": {"from": "fieldwork", "to": "findings-open", "label": "Raise findings", "description": "Record findings for management response."},
-						"issueOpinion": {
-							"from": "findings-open",
-							"to": "opinion-issued",
-							"label": "Issue opinion",
-							"description": "Partner issues the opinion once all findings are resolved/accepted (REQ-CSR-004).",
-							"requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canIssueOpinion"
-						},
-						"issueOpinionNoFindings": {"from": "fieldwork", "to": "opinion-issued", "label": "Issue opinion (no findings)", "description": "Issue the opinion directly when fieldwork raised no findings."},
-						"submit": {"from": "opinion-issued", "to": "submitted", "label": "Submit to KvK/AFM", "description": "Deposit the validated iXBRL report (REQ-CSR-005)."}
-					}
-				}
-			},
-			"FixedAsset": {
-				"properties": {
-					"isBiodiversitySensitiveAreaOverlap": {
-						"type": "boolean",
-						"default": false,
-						"description": "REQ-CSR ESRS E4 — whether the asset's location overlaps a Natura 2000 / Key Biodiversity Area (computed from geolocation against the WDPA overlay, or manual override). Additive ADR-037 extension merged onto the monolith FixedAsset schema (design D6)."
-					},
-					"physicalClimateRiskRating": {
-						"type": "integer",
-						"minimum": 1,
-						"maximum": 5,
-						"description": "REQ-CSR ESRS E1 — physical-climate-risk rating (1-5) for the asset's site, manually assessed from flood/fire/drought exposure (design D6). Additive ADR-037 extension.",
-						"nullable": true
-					}
-				}
-			}
-		},
-		"objects": [
-			{
-				"@self": {"register": "shillinq", "schema": "MaterialityAssessment", "slug": "csrd-sample-materiality-fy2025"},
-				"reportingPeriod": "FY2025",
-				"methodologyVersion": "EFRAG-IG-1-2024",
-				"assessmentScope": "consolidated-group",
-				"thresholdImpact": 3,
-				"thresholdFinancial": 2,
-				"stakeholderGroupsConsulted": [
-					{"group": "employees", "consultationMethod": "survey", "date": "2025-09-15", "participants": 150, "keyOutputs": "Water and waste flagged as top concerns."},
-					{"group": "suppliers", "consultationMethod": "email", "date": "2025-10-01", "participants": 8, "keyOutputs": "Pay-on-time prioritised."}
-				],
-				"doubleMaterialityMatrixSnapshot": {
-					"E1": {"impactScore": 12, "financialScore": 3, "material": true, "rationale": "Material climate impact and transition risk."},
-					"E3": {"impactScore": 9, "financialScore": 2, "material": true, "rationale": "Water-stress exposure at warehouse site."},
-					"S1": {"impactScore": 10, "financialScore": 3, "material": true, "rationale": "Own-workforce health-and-safety and pay equity."},
-					"G1": {"impactScore": 8, "financialScore": 3, "material": true, "rationale": "Business conduct and pay-on-time KPI."},
-					"S4": {"impactScore": 2, "financialScore": 1, "material": false, "rationale": "Niche B2B chemical distribution; no end-consumer health/safety events in past 3 years."}
-				},
-				"state": "draft"
-			},
-			{
-				"@self": {"register": "shillinq", "schema": "IroRecord", "slug": "csrd-sample-iro-e1-climate"},
-				"assessment": "csrd-sample-materiality-fy2025",
-				"esrsTopicCode": "E1",
-				"type": "impact-negative",
-				"description": "Scope 1/2/3 GHG emissions from operations and supply chain.",
-				"valueChainLocation": "own-operations",
-				"timeHorizon": "medium",
-				"likelihood": 5,
-				"severityOrMagnitude": 4,
-				"scope": 4,
-				"irremediableCharacter": true,
-				"grossOrNet": "gross-before-mitigation",
-				"financialEffectEstimateCurrency": "EUR",
-				"financialEffectEstimateLow": 100000,
-				"financialEffectEstimateHigh": 500000,
-				"material": true,
-				"rationale": "Climate change is material on both impact and financial dimensions."
-			},
-			{
-				"@self": {"register": "shillinq", "schema": "GhgInventory", "slug": "csrd-sample-ghg-inventory-fy2025"},
-				"period": "FY2025",
-				"methodology": "GHG-Protocol-Corporate-Standard",
-				"consolidationApproach": "operational-control",
-				"gasesIncluded": ["CO2", "CH4", "N2O"],
-				"boundaryNarrative": "Three sites: Amsterdam office, Eindhoven office, warehouse.",
-				"baseYear": "2023",
-				"esrsTaxonomyVersion": "EFRAG-ESRS-2024-01",
-				"intensityHeadcount": 250,
-				"intensityTurnover": 75000000,
-				"state": "draft"
-			},
-			{
-				"@self": {"register": "shillinq", "schema": "EmissionSource", "slug": "csrd-sample-emission-scope1-fuel"},
-				"inventory": "csrd-sample-ghg-inventory-fy2025",
-				"scope": "1",
-				"category": "mobile-combustion",
-				"activityData": 9.6,
-				"activityUnit": "KL",
-				"emissionFactor": 2.32,
-				"emissionFactorSource": "DEFRA",
-				"emissionFactorVersion": "DEFRA-2025-Q1",
-				"gwpVersion": "AR6",
-				"uncertaintyRating": "low"
-			},
-			{
-				"@self": {"register": "shillinq", "schema": "EmissionSource", "slug": "csrd-sample-emission-scope3-goods"},
-				"inventory": "csrd-sample-ghg-inventory-fy2025",
-				"scope": "3-cat-01",
-				"category": "purchased-goods-and-services",
-				"activityData": 8200000,
-				"activityUnit": "EUR",
-				"emissionFactor": 0.00018,
-				"emissionFactorSource": "spend-based-EEIO",
-				"emissionFactorVersion": "Exiobase-3.8",
-				"gwpVersion": "AR6",
-				"uncertaintyRating": "high"
-			},
-			{
-				"@self": {"register": "shillinq", "schema": "EsrsDataPoint", "slug": "csrd-sample-datapoint-e1-6-scope1"},
-				"period": "FY2025",
-				"esrsDataPointId": "E1-6_GrossScope1GHGEmissions_tCO2eq",
-				"valueType": "numeric",
-				"valueNumeric": 22.32,
-				"unit": "tCO2e",
-				"valueSource": "calculation",
-				"sourceReference": "ghg-inventory:csrd-sample-ghg-inventory-fy2025",
-				"status": "draft"
-			},
-			{
-				"@self": {"register": "shillinq", "schema": "AssuranceEngagement", "slug": "csrd-sample-assurance-fy2025"},
-				"period": "FY2025",
-				"auditFirm": "Sample Assurance B.V.",
-				"engagementLevel": "limited",
-				"scopeStatement": "Limited assurance of ESRS E1 (GHG Scope 1/2/3) and S1 (headcount) per ISSA 5000.",
-				"materialityThresholdQuantitative": "EUR 1M or 5% of Scope 1+2 GHG",
-				"state": "draft"
-			}
-		]
-	}
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-csrd-esrs",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 3 — CSRD/ESRS sustainability reporting. Ten new schemas (MaterialityAssessment, IroRecord, EsrsDataPoint, GhgInventory, EmissionSource, ValueChainActor, EsrsPolicy, EsrsAction, EsrsTarget, AssuranceEngagement) plus an additive FixedAsset extension (E1/E4 climate + biodiversity tagging). All quantitative logic is declarative (x-openregister-calculations / x-openregister-aggregations) per ADR-031 — no GHGCalculator.php / ImpactScorer.php services. Lifecycle automation per x-openregister-lifecycle; cross-schema/aggregation preconditions delegated to OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard (ADR-031 exception path). Seed data pre-loads the ESRS topical taxonomy and a worked FY2025 sample set. Extensions to journal-entry-line and organisations are DEFERRED to the bookkeeping-general-ledger / organisations dependency apps (those schemas are not yet present in shillinq) — see tasks.md."
+  },
+  "components": {
+    "schemas": {
+      "MaterialityAssessment": {
+        "slug": "MaterialityAssessment",
+        "icon": "ScaleBalance",
+        "version": "0.1.0",
+        "title": "Materiality Assessment",
+        "description": "Root governance record for the CSRD double-materiality determination per reporting period (REQ-CSR-001). Enumerates the ESRS topical taxonomy, captures impact + financial materiality scores, stakeholder-consultation evidence, and the locked double-materiality matrix. Mandatory before any topical disclosure is published (design D2). One per period; restatement via supersededBy self-FK.",
+        "x-schema-org": "schema:GovernmentService",
+        "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
+        "type": "object",
+        "required": [
+          "reportingPeriod",
+          "assessmentScope",
+          "thresholdImpact",
+          "thresholdFinancial",
+          "state"
+        ],
+        "properties": {
+          "reportingPeriod": {
+            "type": "string",
+            "description": "Fiscal reporting period, e.g. FY2025 (REQ-CSR-001).",
+            "example": "FY2025",
+            "title": "Reporting Period"
+          },
+          "methodologyVersion": {
+            "type": "string",
+            "description": "Materiality methodology version (EFRAG IG-1 reference).",
+            "example": "EFRAG-IG-1-2024",
+            "title": "Methodology Version"
+          },
+          "assessmentScope": {
+            "type": "string",
+            "enum": [
+              "legal-entity",
+              "consolidated-group"
+            ],
+            "description": "Consolidation boundary the assessment applies to (design D1 / open question 3 — manual scope declaration).",
+            "title": "Assessment Scope"
+          },
+          "responsibleOwner": {
+            "type": "string",
+            "description": "Nextcloud user id of the responsible owner (FK to NC user directory — a person is an NC entity, never an invented schema).",
+            "title": "Responsible Owner"
+          },
+          "stakeholderGroupsConsulted": {
+            "type": "array",
+            "description": "Stakeholder consultation evidence. At least one method per consulted group is mandatory before approval (REQ-CSR-001).",
+            "items": {
+              "type": "object",
+              "required": [
+                "group",
+                "consultationMethod",
+                "date"
+              ],
+              "properties": {
+                "group": {
+                  "type": "string",
+                  "enum": [
+                    "employees",
+                    "customers",
+                    "suppliers",
+                    "investors",
+                    "communities",
+                    "civil-society"
+                  ],
+                  "description": "Consulted stakeholder group.",
+                  "title": "Group"
+                },
+                "consultationMethod": {
+                  "type": "string",
+                  "enum": [
+                    "survey",
+                    "interview",
+                    "workshop",
+                    "email"
+                  ],
+                  "description": "How the group was consulted.",
+                  "title": "Consultation Method"
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Date of consultation.",
+                  "title": "Date"
+                },
+                "participants": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Number of participants/respondents.",
+                  "nullable": true,
+                  "title": "Participants"
+                },
+                "keyOutputs": {
+                  "type": "string",
+                  "description": "Summary of key outputs from the consultation.",
+                  "nullable": true,
+                  "title": "Key Outputs"
+                }
+              }
+            },
+            "title": "Stakeholder Groups Consulted"
+          },
+          "thresholdImpact": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Impact-materiality threshold (1-5 scale). A topic is impact-material when its impact score is at or above this threshold (REQ-CSR-001).",
+            "example": 3,
+            "title": "Threshold Impact"
+          },
+          "thresholdFinancial": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Financial-materiality threshold (1-5 scale). A topic is financially material when its financial score is at or above this threshold.",
+            "example": 2,
+            "title": "Threshold Financial"
+          },
+          "doubleMaterialityMatrixSnapshot": {
+            "type": "object",
+            "description": "Locked snapshot keyed by ESRS topic → {impactScore, financialScore, material, rationale}. Built from the IroRecord children at sign-off (REQ-CSR-001).",
+            "additionalProperties": true,
+            "title": "Double Materiality Matrix Snapshot"
+          },
+          "approvalDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the board/CFO approver signed off.",
+            "nullable": true,
+            "title": "Approval Date"
+          },
+          "approver": {
+            "type": "string",
+            "description": "Nextcloud user id of the board-level approver (CFO/chair).",
+            "nullable": true,
+            "title": "Approver"
+          },
+          "supportingDocuments": {
+            "type": "array",
+            "description": "Evidence document references (docudesk file ids / URIs).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Supporting Documents"
+          },
+          "supersededBy": {
+            "type": "string",
+            "description": "Self-FK (slug/uuid) to the assessment that supersedes this one on restatement.",
+            "nullable": true,
+            "title": "Superseded By"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Editable. Topics being scored; consultation in progress."
+            },
+            "in-review": {
+              "label": "In review",
+              "description": "Stakeholder consultation complete; awaiting board sign-off."
+            },
+            "approved": {
+              "label": "Approved",
+              "description": "Board-signed-off. Matrix frozen; material topics drive topical-module activation (REQ-CSR-001)."
+            },
+            "locked": {
+              "label": "Locked",
+              "description": "Published with the period's ESRS report. Immutable; restatement requires a superseding assessment."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "in-review",
+              "label": "Submit for board review",
+              "description": "Submit once every topic is scored and at least one stakeholder group is consulted (REQ-CSR-001).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canSubmitMateriality"
+            },
+            "approve": {
+              "from": "in-review",
+              "to": "approved",
+              "label": "Board sign-off",
+              "description": "Board approver signs off. Non-material topics must carry a written rationale (REQ-CSR-001).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canApproveMateriality"
+            },
+            "publish": {
+              "from": "approved",
+              "to": "locked",
+              "label": "Lock and publish",
+              "description": "Lock the matrix and publish it with the ESRS report (design D2)."
+            },
+            "reopen": {
+              "from": "in-review",
+              "to": "draft",
+              "label": "Return to draft",
+              "description": "Return to draft for further scoring or consultation."
+            }
+          }
+        }
+      },
+      "IroRecord": {
+        "slug": "IroRecord",
+        "icon": "Sitemap",
+        "version": "0.1.0",
+        "title": "IRO Record",
+        "description": "Per-topic Impact / Risk / Opportunity entry feeding a MaterialityAssessment (REQ-CSR-001, design D1). impactScore and financialMaterialityScore are computed declaratively; material is derived from the parent assessment thresholds.",
+        "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
+        "type": "object",
+        "required": [
+          "assessment",
+          "esrsTopicCode",
+          "type"
+        ],
+        "properties": {
+          "assessment": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the parent MaterialityAssessment.",
+            "title": "Assessment"
+          },
+          "esrsTopicCode": {
+            "type": "string",
+            "description": "ESRS topic / sub-topic code, e.g. E1, E1-1, S1, S1-1, G1.",
+            "example": "E1",
+            "title": "Esrs Topic Code"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "impact-positive",
+              "impact-negative",
+              "risk",
+              "opportunity"
+            ],
+            "description": "IRO classification.",
+            "title": "Type"
+          },
+          "description": {
+            "type": "string",
+            "description": "Free-text description of the impact/risk/opportunity.",
+            "nullable": true,
+            "title": "Description"
+          },
+          "valueChainLocation": {
+            "type": "string",
+            "enum": [
+              "own-operations",
+              "upstream",
+              "downstream",
+              "financial"
+            ],
+            "description": "Where in the value chain the IRO sits (EFRAG IG-2).",
+            "nullable": true,
+            "title": "Value Chain Location"
+          },
+          "timeHorizon": {
+            "type": "string",
+            "enum": [
+              "short",
+              "medium",
+              "long"
+            ],
+            "description": "Time horizon per ESRS-1.",
+            "nullable": true,
+            "title": "Time Horizon"
+          },
+          "likelihood": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Likelihood score (1-5).",
+            "nullable": true,
+            "title": "Likelihood"
+          },
+          "severityOrMagnitude": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Severity/scale score (1-5).",
+            "nullable": true,
+            "title": "Severity Or Magnitude"
+          },
+          "scope": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Scope-of-operations score (1-5).",
+            "nullable": true,
+            "title": "Scope"
+          },
+          "irremediableCharacter": {
+            "type": "boolean",
+            "description": "Whether the impact is irremediable.",
+            "default": false,
+            "title": "Irremediable Character"
+          },
+          "grossOrNet": {
+            "type": "string",
+            "enum": [
+              "gross-before-mitigation",
+              "net-after-mitigation"
+            ],
+            "description": "Whether the score is before or after mitigation.",
+            "nullable": true,
+            "title": "Gross Or Net"
+          },
+          "financialEffectEstimateCurrency": {
+            "type": "string",
+            "description": "Currency of the financial-effect estimate.",
+            "example": "EUR",
+            "nullable": true,
+            "title": "Financial Effect Estimate Currency"
+          },
+          "financialEffectEstimateLow": {
+            "type": "number",
+            "description": "Low bound of the financial-effect estimate.",
+            "nullable": true,
+            "title": "Financial Effect Estimate Low"
+          },
+          "financialEffectEstimateHigh": {
+            "type": "number",
+            "description": "High bound of the financial-effect estimate.",
+            "nullable": true,
+            "title": "Financial Effect Estimate High"
+          },
+          "material": {
+            "type": "boolean",
+            "description": "Computed at assessment sign-off: true when impactScore >= thresholdImpact OR financialMaterialityScore >= thresholdFinancial.",
+            "default": false,
+            "title": "Material"
+          },
+          "mitigationActions": {
+            "type": "array",
+            "description": "Mitigation actions for the IRO.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "description": "Action description.",
+                  "title": "Action"
+                },
+                "owner": {
+                  "type": "string",
+                  "description": "NC user id of the owner.",
+                  "title": "Owner"
+                },
+                "dueDate": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Due date.",
+                  "nullable": true,
+                  "title": "Due Date"
+                }
+              }
+            },
+            "title": "Mitigation Actions"
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Mandatory rationale for non-material determinations (REQ-CSR-001).",
+            "nullable": true,
+            "title": "Rationale"
+          }
+        },
+        "x-openregister-calculations": {
+          "impactScore": {
+            "type": "number",
+            "description": "Composite impact-materiality score: (severityOrMagnitude + scope + likelihood) weighted by irremediable character (REQ-CSR-001, design D1). Declarative formula per ADR-031 — no ImpactScorer.php.",
+            "expr": "(@self.severityOrMagnitude + @self.scope + @self.likelihood) * (@self.irremediableCharacter ? 1.0 : 0.8)"
+          },
+          "financialMaterialityScore": {
+            "type": "number",
+            "description": "Financial-materiality composite. Average of severity and likelihood as financial proxies until the per-dimension financial inputs are split out (REQ-CSR-001).",
+            "expr": "(@self.severityOrMagnitude + @self.likelihood) / 2"
+          }
+        }
+      },
+      "EsrsDataPoint": {
+        "slug": "EsrsDataPoint",
+        "icon": "TableLarge",
+        "version": "0.1.0",
+        "title": "ESRS Data Point",
+        "description": "One row per ESRS-mandated data point per period (~1,100 per period across the 12 standards) (REQ-CSR-002, design D3). Configurable source + progressive approval lifecycle. No transition to approved without a source reference (assurance-critical control).",
+        "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
+        "type": "object",
+        "required": [
+          "period",
+          "esrsDataPointId",
+          "valueSource",
+          "status"
+        ],
+        "properties": {
+          "period": {
+            "type": "string",
+            "description": "Reporting period, e.g. FY2025.",
+            "example": "FY2025",
+            "title": "Period"
+          },
+          "esrsDataPointId": {
+            "type": "string",
+            "description": "EFRAG IG-3 data-point id.",
+            "example": "E1-6_GrossScope1GHGEmissions_tCO2eq",
+            "title": "Esrs Data Point ID"
+          },
+          "valueType": {
+            "type": "string",
+            "enum": [
+              "numeric",
+              "text",
+              "boolean",
+              "monetary",
+              "quantity"
+            ],
+            "description": "Type of the recorded value.",
+            "nullable": true,
+            "title": "Value Type"
+          },
+          "valueNumeric": {
+            "type": "number",
+            "description": "Numeric/monetary/quantity value when valueType is numeric/monetary/quantity.",
+            "nullable": true,
+            "title": "Value Numeric"
+          },
+          "valueText": {
+            "type": "string",
+            "description": "Text value when valueType is text.",
+            "nullable": true,
+            "title": "Value Text"
+          },
+          "valueBoolean": {
+            "type": "boolean",
+            "description": "Boolean value when valueType is boolean.",
+            "nullable": true,
+            "title": "Value Boolean"
+          },
+          "unit": {
+            "type": "string",
+            "description": "UN/CEFACT unit code (e.g. tCO2e, H87, EUR).",
+            "nullable": true,
+            "example": "tCO2e",
+            "title": "Unit"
+          },
+          "valueSource": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "openconnector-pull",
+              "calculation",
+              "imported-from-bookkeeping",
+              "supplier-survey",
+              "proxy-estimate"
+            ],
+            "description": "Configured source of the value (REQ-CSR-002, design D3).",
+            "title": "Value Source"
+          },
+          "sourceReference": {
+            "type": "string",
+            "description": "URI / docudesk reference / GL line reference evidencing the value. Mandatory before approval.",
+            "nullable": true,
+            "title": "Source Reference"
+          },
+          "preparer": {
+            "type": "string",
+            "description": "NC user id of the preparer.",
+            "nullable": true,
+            "title": "Preparer"
+          },
+          "preparerTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the preparer entered/submitted the value.",
+            "nullable": true,
+            "title": "Preparer Timestamp"
+          },
+          "reviewer": {
+            "type": "string",
+            "description": "NC user id of the reviewer.",
+            "nullable": true,
+            "title": "Reviewer"
+          },
+          "reviewerTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the reviewer approved the value.",
+            "nullable": true,
+            "title": "Reviewer Timestamp"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "in-review",
+              "approved",
+              "locked-for-assurance",
+              "assured",
+              "published"
+            ],
+            "description": "Progressive approval status (design D9). Mirrors the lifecycle field.",
+            "default": "draft",
+            "title": "Status"
+          },
+          "assuranceEvidence": {
+            "type": "array",
+            "description": "Assurance evidence file references.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Assurance Evidence"
+          },
+          "restatedFrom": {
+            "type": "string",
+            "description": "Self-FK to the prior-period data point this value restates (REQ-CSR-002, design D8).",
+            "nullable": true,
+            "title": "Restated From"
+          },
+          "restatementRationale": {
+            "type": "string",
+            "description": "Mandatory rationale when restatedFrom is set (design D8).",
+            "nullable": true,
+            "title": "Restatement Rationale"
+          },
+          "narrativeComment": {
+            "type": "string",
+            "description": "Narrative / preparer comment.",
+            "nullable": true,
+            "title": "Narrative Comment"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Preparer is entering the value."
+            },
+            "in-review": {
+              "label": "In review",
+              "description": "Submitted; awaiting reviewer approval."
+            },
+            "approved": {
+              "label": "Approved",
+              "description": "Reviewer approved. Source reference present (control)."
+            },
+            "locked-for-assurance": {
+              "label": "Locked for assurance",
+              "description": "Read-only to the entity; auditor may annotate but not change the value (REQ-CSR-004, design D5)."
+            },
+            "assured": {
+              "label": "Assured",
+              "description": "Auditor signed off. Ready for XBRL mapping (REQ-CSR-005)."
+            },
+            "published": {
+              "label": "Published",
+              "description": "Filed with KvK/AFM. Immutable; changes flow through restatement (design D8)."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "in-review",
+              "label": "Submit for review",
+              "description": "Preparer submits the value for review (REQ-CSR-002)."
+            },
+            "approve": {
+              "from": "in-review",
+              "to": "approved",
+              "label": "Approve",
+              "description": "Reviewer approves. Blocked unless a source reference is present (REQ-CSR-002 assurance control).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canApproveDataPoint"
+            },
+            "reject": {
+              "from": "in-review",
+              "to": "draft",
+              "label": "Reject",
+              "description": "Reviewer returns the data point to draft."
+            },
+            "lockForAssurance": {
+              "from": "approved",
+              "to": "locked-for-assurance",
+              "label": "Lock for assurance",
+              "description": "Freeze the value for the auditor; entity edits forbidden (design D5)."
+            },
+            "assure": {
+              "from": "locked-for-assurance",
+              "to": "assured",
+              "label": "Auditor sign-off",
+              "description": "Auditor signs off the data point (REQ-CSR-004)."
+            },
+            "publish": {
+              "from": "assured",
+              "to": "published",
+              "label": "Publish",
+              "description": "Publish with the filed report (REQ-CSR-005)."
+            },
+            "restate": {
+              "from": "published",
+              "to": "approved",
+              "label": "Restate",
+              "description": "Create a corrected value in a subsequent period with restatedFrom + rationale (design D8).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canRestateDataPoint"
+            }
+          }
+        }
+      },
+      "GhgInventory": {
+        "slug": "GhgInventory",
+        "icon": "Molecule",
+        "version": "0.1.0",
+        "title": "GHG Inventory",
+        "description": "GHG Protocol Scope 1/2/3 calculation engine per period (REQ-CSR-003, design D4). Totals are declarative aggregations over the period's EmissionSource rows — no GHGCalculator.php (ADR-031). Base-year recalculation flagged at the >=5% boundary-change threshold.",
+        "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
+        "type": "object",
+        "required": [
+          "period",
+          "methodology",
+          "consolidationApproach",
+          "state"
+        ],
+        "properties": {
+          "period": {
+            "type": "string",
+            "description": "Reporting period.",
+            "example": "FY2025",
+            "title": "Period"
+          },
+          "methodology": {
+            "type": "string",
+            "enum": [
+              "GHG-Protocol-Corporate-Standard",
+              "GHG-Protocol-Value-Chain-Standard"
+            ],
+            "description": "GHG Protocol methodology.",
+            "title": "Methodology"
+          },
+          "consolidationApproach": {
+            "type": "string",
+            "enum": [
+              "equity-share",
+              "financial-control",
+              "operational-control"
+            ],
+            "description": "Consolidation approach (REQ-CSR-003).",
+            "title": "Consolidation Approach"
+          },
+          "gasesIncluded": {
+            "type": "array",
+            "description": "Gases included.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "CO2",
+                "CH4",
+                "N2O",
+                "HFCs",
+                "PFCs",
+                "SF6",
+                "NF3"
+              ]
+            },
+            "title": "Gases Included"
+          },
+          "boundaryNarrative": {
+            "type": "string",
+            "description": "Organisational/operational boundary narrative.",
+            "nullable": true,
+            "title": "Boundary Narrative"
+          },
+          "baseYear": {
+            "type": "string",
+            "description": "Base year (YYYY).",
+            "example": "2023",
+            "nullable": true,
+            "title": "Base Year"
+          },
+          "baseYearRecalculationPolicy": {
+            "type": "string",
+            "description": "Base-year recalculation policy text.",
+            "nullable": true,
+            "title": "Base Year Recalculation Policy"
+          },
+          "esrsTaxonomyVersion": {
+            "type": "string",
+            "description": "Pinned EFRAG ESRS XBRL taxonomy version for this period (REQ-CSR-005, design D7).",
+            "example": "EFRAG-ESRS-2024-01",
+            "nullable": true,
+            "title": "Esrs Taxonomy Version"
+          },
+          "baseYearRecalculationFlag": {
+            "type": "boolean",
+            "description": "True when a >=5% boundary change has triggered base-year recalculation (REQ-CSR-003, design D4).",
+            "default": false,
+            "title": "Base Year Recalculation Flag"
+          },
+          "intensityHeadcount": {
+            "type": "number",
+            "description": "FTE headcount denominator for the per-FTE intensity metric.",
+            "nullable": true,
+            "title": "Intensity Headcount"
+          },
+          "intensityTurnover": {
+            "type": "number",
+            "description": "Turnover denominator (EUR) for the per-turnover intensity metric.",
+            "nullable": true,
+            "title": "Intensity Turnover"
+          },
+          "intensityFloorAreaM2": {
+            "type": "number",
+            "description": "Floor-area denominator (m2) for the per-m2 intensity metric.",
+            "nullable": true,
+            "title": "Intensity Floor Area M2"
+          },
+          "intensityUnitsProduced": {
+            "type": "number",
+            "description": "Units-produced denominator for the per-unit intensity metric.",
+            "nullable": true,
+            "title": "Intensity Units Produced"
+          },
+          "methodologyChangesVsPriorPeriod": {
+            "type": "string",
+            "description": "Methodology changes vs prior period.",
+            "nullable": true,
+            "title": "Methodology Changes Vs Prior Period"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "calculated",
+              "approved",
+              "locked-for-assurance",
+              "assured",
+              "published"
+            ],
+            "description": "Inventory lifecycle state (design D9).",
+            "default": "draft",
+            "title": "State"
+          }
+        },
+        "x-openregister-aggregations": {
+          "scope1Total": {
+            "description": "total-Scope-1 = SUM(EmissionSource.co2eResult) for scope=1 rows of this inventory (REQ-CSR-003 / design D4).",
+            "join": {
+              "schema": "EmissionSource",
+              "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope = '1'"
+            },
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "EmissionSource.co2eResult",
+                "as": "totalScope1"
+              }
+            ]
+          },
+          "scope2LocationBasedTotal": {
+            "description": "total-Scope-2-location-based = SUM(co2eResult) for scope=2 rows using grid-average factors (REQ-CSR-003).",
+            "join": {
+              "schema": "EmissionSource",
+              "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope = '2' AND EmissionSource.scope2Method = 'location-based'"
+            },
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "EmissionSource.co2eResult",
+                "as": "totalScope2LocationBased"
+              }
+            ]
+          },
+          "scope2MarketBasedTotal": {
+            "description": "total-Scope-2-market-based = SUM(co2eResult) for scope=2 rows using contract-specific factors (REQ-CSR-003).",
+            "join": {
+              "schema": "EmissionSource",
+              "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope = '2' AND EmissionSource.scope2Method = 'market-based'"
+            },
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "EmissionSource.co2eResult",
+                "as": "totalScope2MarketBased"
+              }
+            ]
+          },
+          "scope3ByCategory": {
+            "description": "total-Scope-3 broken down by the 15 GHG Protocol categories: SUM(co2eResult) grouped by category for scope LIKE '3-cat-%' rows (REQ-CSR-003).",
+            "join": {
+              "schema": "EmissionSource",
+              "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope LIKE '3-cat-%'"
+            },
+            "groupBy": [
+              "EmissionSource.scope"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "EmissionSource.co2eResult",
+                "as": "totalScope3"
+              }
+            ]
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Emission sources being entered."
+            },
+            "calculated": {
+              "label": "Calculated",
+              "description": "On-demand aggregation rolled up Scope 1/2/3 totals (design D4)."
+            },
+            "approved": {
+              "label": "Approved",
+              "description": "Reviewer approved the inventory."
+            },
+            "locked-for-assurance": {
+              "label": "Locked for assurance",
+              "description": "Frozen for the auditor (design D5)."
+            },
+            "assured": {
+              "label": "Assured",
+              "description": "Auditor signed off."
+            },
+            "published": {
+              "label": "Published",
+              "description": "Published with the filed report."
+            }
+          },
+          "transitions": {
+            "calculate": {
+              "from": "draft",
+              "to": "calculated",
+              "label": "Roll up inventory",
+              "description": "Run the on-demand Scope 1/2/3 aggregation (REQ-CSR-003)."
+            },
+            "approve": {
+              "from": "calculated",
+              "to": "approved",
+              "label": "Approve",
+              "description": "Reviewer approves the rolled-up inventory."
+            },
+            "reopen": {
+              "from": "calculated",
+              "to": "draft",
+              "label": "Reopen",
+              "description": "Return to draft to adjust emission sources."
+            },
+            "lockForAssurance": {
+              "from": "approved",
+              "to": "locked-for-assurance",
+              "label": "Lock for assurance",
+              "description": "Freeze for the auditor (design D5)."
+            },
+            "assure": {
+              "from": "locked-for-assurance",
+              "to": "assured",
+              "label": "Auditor sign-off",
+              "description": "Auditor signs off."
+            },
+            "publish": {
+              "from": "assured",
+              "to": "published",
+              "label": "Publish",
+              "description": "Publish with the filed report."
+            }
+          }
+        }
+      },
+      "EmissionSource": {
+        "slug": "EmissionSource",
+        "icon": "Factory",
+        "version": "0.1.0",
+        "title": "Emission Source",
+        "description": "Per-activity row feeding a GhgInventory (REQ-CSR-003, design D4). co2eResult is a declarative calculation (activityData x emissionFactor) — no PHP service.",
+        "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
+        "type": "object",
+        "required": [
+          "inventory",
+          "scope",
+          "activityData",
+          "emissionFactor"
+        ],
+        "properties": {
+          "inventory": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the parent GhgInventory.",
+            "title": "Inventory"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "1",
+              "2",
+              "3-cat-01",
+              "3-cat-02",
+              "3-cat-03",
+              "3-cat-04",
+              "3-cat-05",
+              "3-cat-06",
+              "3-cat-07",
+              "3-cat-08",
+              "3-cat-09",
+              "3-cat-10",
+              "3-cat-11",
+              "3-cat-12",
+              "3-cat-13",
+              "3-cat-14",
+              "3-cat-15"
+            ],
+            "description": "GHG Protocol scope / Scope 3 category (REQ-CSR-003).",
+            "title": "Scope"
+          },
+          "category": {
+            "type": "string",
+            "description": "Activity category, e.g. mobile-combustion, purchased-electricity, employee-commuting.",
+            "nullable": true,
+            "title": "Category"
+          },
+          "scope2Method": {
+            "type": "string",
+            "enum": [
+              "location-based",
+              "market-based"
+            ],
+            "description": "For scope=2 rows: which Scope-2 accounting method this row contributes to (REQ-CSR-003).",
+            "nullable": true,
+            "title": "Scope2Method"
+          },
+          "activityData": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Activity quantity in standard units (litres, kWh, km, EUR spend).",
+            "title": "Activity Data"
+          },
+          "activityUnit": {
+            "type": "string",
+            "description": "UN/CEFACT activity unit code.",
+            "example": "LTR",
+            "nullable": true,
+            "title": "Activity Unit"
+          },
+          "activitySourceDocument": {
+            "type": "string",
+            "description": "File / openconnector reference evidencing the activity data.",
+            "nullable": true,
+            "title": "Activity Source Document"
+          },
+          "emissionFactor": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Emission factor (tCO2e per activity unit).",
+            "title": "Emission Factor"
+          },
+          "emissionFactorSource": {
+            "type": "string",
+            "enum": [
+              "DEFRA",
+              "EPA",
+              "IEA",
+              "supplier-specific",
+              "spend-based-EEIO"
+            ],
+            "description": "Provenance of the emission factor.",
+            "nullable": true,
+            "title": "Emission Factor Source"
+          },
+          "emissionFactorVersion": {
+            "type": "string",
+            "description": "Versioned factor identifier.",
+            "example": "DEFRA-2025-Q1",
+            "nullable": true,
+            "title": "Emission Factor Version"
+          },
+          "gwpVersion": {
+            "type": "string",
+            "enum": [
+              "AR5",
+              "AR6"
+            ],
+            "description": "IPCC GWP version for comparability (REQ-CSR-003).",
+            "nullable": true,
+            "title": "Gwp Version"
+          },
+          "uncertaintyRating": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "description": "Uncertainty rating; spend-based proxies are typically high (REQ-CSR-003).",
+            "nullable": true,
+            "title": "Uncertainty Rating"
+          },
+          "recalculationFlag": {
+            "type": "boolean",
+            "description": "True when this row restates prior base-year emissions (M&A / divestiture / methodology change).",
+            "default": false,
+            "title": "Recalculation Flag"
+          }
+        },
+        "x-openregister-calculations": {
+          "co2eResult": {
+            "type": "number",
+            "description": "co2eResult = activityData x emissionFactor (tCO2e). Declarative per ADR-031 / design D4 — no GHGCalculator.php.",
+            "expr": "@self.activityData * @self.emissionFactor"
+          }
+        }
+      },
+      "ValueChainActor": {
+        "slug": "ValueChainActor",
+        "icon": "Truck",
+        "version": "0.1.0",
+        "title": "Value Chain Actor",
+        "description": "Supplier / customer / portfolio-company in the reporting boundary (REQ-CSR-002, design D1). counterparty references the organisations entity master (FK by slug/uuid) — that schema lives in the organisations dependency app, never re-invented here.",
+        "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
+        "type": "object",
+        "required": [
+          "role"
+        ],
+        "properties": {
+          "counterparty": {
+            "type": "string",
+            "description": "FK (slug/uuid) to an organisations record (entity master in the organisations dependency app).",
+            "nullable": true,
+            "title": "Counterparty"
+          },
+          "counterpartyName": {
+            "type": "string",
+            "description": "Denormalised counterparty name for display until the organisations FK resolves.",
+            "nullable": true,
+            "title": "Counterparty Name"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "supplier",
+              "customer",
+              "financial-investee",
+              "franchisee"
+            ],
+            "description": "Role in the value chain.",
+            "title": "Role"
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "1",
+              "2",
+              "3+"
+            ],
+            "description": "Supply-chain tier.",
+            "nullable": true,
+            "title": "Tier"
+          },
+          "country": {
+            "type": "string",
+            "description": "ISO 3166 country code.",
+            "example": "NL",
+            "nullable": true,
+            "title": "Country"
+          },
+          "sectorNaceCode": {
+            "type": "string",
+            "description": "NACE sector code.",
+            "example": "20",
+            "nullable": true,
+            "title": "Sector Nace Code"
+          },
+          "inScopeFor": {
+            "type": "array",
+            "description": "ESRS standard codes this actor is in scope for.",
+            "items": {
+              "type": "string"
+            },
+            "title": "In Scope For"
+          },
+          "dataCollectionMethod": {
+            "type": "string",
+            "enum": [
+              "direct-survey",
+              "industry-average",
+              "supplier-LCA",
+              "regulatory-disclosure"
+            ],
+            "description": "How data is collected from this actor.",
+            "nullable": true,
+            "title": "Data Collection Method"
+          },
+          "engagementStatus": {
+            "type": "string",
+            "enum": [
+              "not-contacted",
+              "contacted",
+              "responded",
+              "partial-response",
+              "verified"
+            ],
+            "description": "Engagement status.",
+            "default": "not-contacted",
+            "title": "Engagement Status"
+          },
+          "lastEngagementDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Last engagement date.",
+            "nullable": true,
+            "title": "Last Engagement Date"
+          },
+          "dataQualityScore": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Data-quality score (1-5).",
+            "nullable": true,
+            "title": "Data Quality Score"
+          }
+        }
+      },
+      "EsrsPolicy": {
+        "slug": "EsrsPolicy",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "ESRS Policy",
+        "description": "ESRS-2 governance triad — policy declaration on a material topic (design D1).",
+        "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
+        "type": "object",
+        "required": [
+          "topic"
+        ],
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "NC user id of the policy owner.",
+            "nullable": true,
+            "title": "Owner"
+          },
+          "topic": {
+            "type": "string",
+            "description": "ESRS topic code.",
+            "example": "E1",
+            "title": "Topic"
+          },
+          "policyType": {
+            "type": "string",
+            "enum": [
+              "governance",
+              "risk-management",
+              "due-diligence"
+            ],
+            "description": "Policy type.",
+            "nullable": true,
+            "title": "Policy Type"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "own",
+              "upstream",
+              "downstream",
+              "financial"
+            ],
+            "description": "Policy scope.",
+            "nullable": true,
+            "title": "Scope"
+          },
+          "timeHorizon": {
+            "type": "string",
+            "enum": [
+              "short",
+              "medium",
+              "long"
+            ],
+            "description": "Time horizon.",
+            "nullable": true,
+            "title": "Time Horizon"
+          },
+          "measurementMetric": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the EsrsDataPoint that measures this policy.",
+            "nullable": true,
+            "title": "Measurement Metric"
+          },
+          "baselineValue": {
+            "type": "number",
+            "description": "Baseline value.",
+            "nullable": true,
+            "title": "Baseline Value"
+          },
+          "targetValue": {
+            "type": "number",
+            "description": "Target value.",
+            "nullable": true,
+            "title": "Target Value"
+          },
+          "currentValue": {
+            "type": "number",
+            "description": "Current value.",
+            "nullable": true,
+            "title": "Current Value"
+          },
+          "progressNarrative": {
+            "type": "string",
+            "description": "Progress narrative.",
+            "nullable": true,
+            "title": "Progress Narrative"
+          },
+          "linkedIroRecords": {
+            "type": "array",
+            "description": "FK list (slug/uuid) to justifying IroRecords.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Linked Iro Records"
+          }
+        }
+      },
+      "EsrsAction": {
+        "slug": "EsrsAction",
+        "icon": "RunFast",
+        "version": "0.1.0",
+        "title": "ESRS Action",
+        "description": "ESRS-2 governance triad — concrete time-bound intervention on a material topic (design D1).",
+        "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
+        "type": "object",
+        "required": [
+          "topic"
+        ],
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "NC user id of the action owner.",
+            "nullable": true,
+            "title": "Owner"
+          },
+          "topic": {
+            "type": "string",
+            "description": "ESRS topic code.",
+            "example": "E1",
+            "title": "Topic"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "own",
+              "upstream",
+              "downstream",
+              "financial"
+            ],
+            "description": "Action scope.",
+            "nullable": true,
+            "title": "Scope"
+          },
+          "timeHorizon": {
+            "type": "string",
+            "enum": [
+              "short",
+              "medium",
+              "long"
+            ],
+            "description": "Time horizon.",
+            "nullable": true,
+            "title": "Time Horizon"
+          },
+          "measurementMetric": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the EsrsDataPoint that measures this action.",
+            "nullable": true,
+            "title": "Measurement Metric"
+          },
+          "baselineValue": {
+            "type": "number",
+            "description": "Baseline value.",
+            "nullable": true,
+            "title": "Baseline Value"
+          },
+          "targetValue": {
+            "type": "number",
+            "description": "Target value.",
+            "nullable": true,
+            "title": "Target Value"
+          },
+          "currentValue": {
+            "type": "number",
+            "description": "Current value.",
+            "nullable": true,
+            "title": "Current Value"
+          },
+          "progressNarrative": {
+            "type": "string",
+            "description": "Progress narrative.",
+            "nullable": true,
+            "title": "Progress Narrative"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "in-progress",
+              "completed",
+              "off-track"
+            ],
+            "description": "Action status.",
+            "default": "pending",
+            "title": "Status"
+          },
+          "completionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Completion date.",
+            "nullable": true,
+            "title": "Completion Date"
+          },
+          "linkedIroRecords": {
+            "type": "array",
+            "description": "FK list (slug/uuid) to justifying IroRecords.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Linked Iro Records"
+          }
+        }
+      },
+      "EsrsTarget": {
+        "slug": "EsrsTarget",
+        "icon": "BullseyeArrow",
+        "version": "0.1.0",
+        "title": "ESRS Target",
+        "description": "ESRS-2 governance triad — measurable, preferably science-based goal on a material topic (design D1).",
+        "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
+        "type": "object",
+        "required": [
+          "topic"
+        ],
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "NC user id of the target owner.",
+            "nullable": true,
+            "title": "Owner"
+          },
+          "topic": {
+            "type": "string",
+            "description": "ESRS topic code.",
+            "example": "E1",
+            "title": "Topic"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "own",
+              "upstream",
+              "downstream",
+              "financial"
+            ],
+            "description": "Target scope.",
+            "nullable": true,
+            "title": "Scope"
+          },
+          "timeHorizon": {
+            "type": "string",
+            "enum": [
+              "short",
+              "medium",
+              "long"
+            ],
+            "description": "Time horizon.",
+            "nullable": true,
+            "title": "Time Horizon"
+          },
+          "measurementMetric": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the EsrsDataPoint that measures this target.",
+            "nullable": true,
+            "title": "Measurement Metric"
+          },
+          "baselineValue": {
+            "type": "number",
+            "description": "Baseline value.",
+            "nullable": true,
+            "title": "Baseline Value"
+          },
+          "targetValue": {
+            "type": "number",
+            "description": "Target value.",
+            "nullable": true,
+            "title": "Target Value"
+          },
+          "currentValue": {
+            "type": "number",
+            "description": "Current value.",
+            "nullable": true,
+            "title": "Current Value"
+          },
+          "progressNarrative": {
+            "type": "string",
+            "description": "Progress narrative.",
+            "nullable": true,
+            "title": "Progress Narrative"
+          },
+          "scienceBased": {
+            "type": "boolean",
+            "description": "Whether the target is science-based (SBTi).",
+            "default": false,
+            "title": "Science Based"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "on-track",
+              "at-risk",
+              "off-track"
+            ],
+            "description": "Target status.",
+            "default": "on-track",
+            "title": "Status"
+          },
+          "linkedIroRecords": {
+            "type": "array",
+            "description": "FK list (slug/uuid) to justifying IroRecords.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Linked Iro Records"
+          },
+          "linkedActions": {
+            "type": "array",
+            "description": "FK list (slug/uuid) to EsrsActions.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Linked Actions"
+          }
+        }
+      },
+      "AssuranceEngagement": {
+        "slug": "AssuranceEngagement",
+        "icon": "ClipboardCheckOutline",
+        "version": "0.1.0",
+        "title": "Assurance Engagement",
+        "description": "External-auditor assurance engagement per period (REQ-CSR-004, design D5). Limited assurance (year 1) escalating to reasonable assurance (FY2028+). Findings tracked to management response; submission confirmation captured for XBRL/KvK deposition.",
+        "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
+        "type": "object",
+        "required": [
+          "period",
+          "engagementLevel",
+          "state"
+        ],
+        "properties": {
+          "period": {
+            "type": "string",
+            "description": "Reporting period.",
+            "example": "FY2025",
+            "title": "Period"
+          },
+          "auditFirm": {
+            "type": "string",
+            "description": "Audit firm name.",
+            "nullable": true,
+            "title": "Audit Firm"
+          },
+          "leadPartner": {
+            "type": "string",
+            "description": "Lead partner name.",
+            "nullable": true,
+            "title": "Lead Partner"
+          },
+          "engagementLevel": {
+            "type": "string",
+            "enum": [
+              "limited",
+              "reasonable"
+            ],
+            "description": "Assurance level (REQ-CSR-004).",
+            "title": "Engagement Level"
+          },
+          "scopeStatement": {
+            "type": "string",
+            "description": "Scope statement.",
+            "nullable": true,
+            "title": "Scope Statement"
+          },
+          "materialityThresholdQuantitative": {
+            "type": "string",
+            "description": "Quantitative materiality threshold (EUR or tCO2e).",
+            "nullable": true,
+            "title": "Materiality Threshold Quantitative"
+          },
+          "materialityThresholdQualitative": {
+            "type": "string",
+            "description": "Qualitative materiality threshold.",
+            "nullable": true,
+            "title": "Materiality Threshold Qualitative"
+          },
+          "walkthroughRecords": {
+            "type": "array",
+            "description": "Walkthrough document references.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Walkthrough Records"
+          },
+          "testOfControlsResults": {
+            "type": "array",
+            "description": "Test-of-controls results.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "title": "Description",
+                  "description": "A human-readable description or notes."
+                },
+                "objective": {
+                  "type": "string",
+                  "title": "Objective",
+                  "description": "The objective."
+                },
+                "controlTested": {
+                  "type": "string",
+                  "title": "Control Tested",
+                  "description": "The control tested."
+                },
+                "result": {
+                  "type": "string",
+                  "title": "Result",
+                  "description": "The result."
+                },
+                "findingIfAny": {
+                  "type": "string",
+                  "nullable": true,
+                  "title": "Finding If Any",
+                  "description": "The finding if any."
+                }
+              }
+            },
+            "title": "Test Of Controls Results"
+          },
+          "substantiveTestResults": {
+            "type": "array",
+            "description": "Substantive test results.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "esrsDataPointId": {
+                  "type": "string",
+                  "title": "Esrs Data Point ID",
+                  "description": "The date and time for esrs data point id."
+                },
+                "objective": {
+                  "type": "string",
+                  "title": "Objective",
+                  "description": "The objective."
+                },
+                "sampleSize": {
+                  "type": "integer",
+                  "title": "Sample Size",
+                  "description": "The numeric value for sample size."
+                },
+                "sampleMethod": {
+                  "type": "string",
+                  "title": "Sample Method",
+                  "description": "The sample method."
+                },
+                "result": {
+                  "type": "string",
+                  "title": "Result",
+                  "description": "The result."
+                },
+                "findingIfAny": {
+                  "type": "string",
+                  "nullable": true,
+                  "title": "Finding If Any",
+                  "description": "The finding if any."
+                }
+              }
+            },
+            "title": "Substantive Test Results"
+          },
+          "findings": {
+            "type": "array",
+            "description": "Auditor findings tracked to management response (REQ-CSR-004).",
+            "items": {
+              "type": "object",
+              "required": [
+                "esrsArea",
+                "severity",
+                "description"
+              ],
+              "properties": {
+                "esrsArea": {
+                  "type": "string",
+                  "title": "Esrs Area",
+                  "description": "The esrs area."
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "critical",
+                    "high",
+                    "medium",
+                    "low"
+                  ],
+                  "title": "Severity",
+                  "description": "The severity."
+                },
+                "description": {
+                  "type": "string",
+                  "title": "Description",
+                  "description": "A human-readable description or notes."
+                },
+                "managementResponse": {
+                  "type": "string",
+                  "nullable": true,
+                  "title": "Management Response",
+                  "description": "The management response."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "open",
+                    "resolved",
+                    "accepted-risk"
+                  ],
+                  "default": "open",
+                  "title": "Status",
+                  "description": "The current status of this record."
+                }
+              }
+            },
+            "title": "Findings"
+          },
+          "assuranceReport": {
+            "type": "string",
+            "description": "Assurance-report PDF reference (docudesk).",
+            "nullable": true,
+            "title": "Assurance Report"
+          },
+          "opinionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the partner signed the opinion.",
+            "nullable": true,
+            "title": "Opinion Date"
+          },
+          "submissionKvkReceiptId": {
+            "type": "string",
+            "description": "KvK ESEF submission receipt id (REQ-CSR-005).",
+            "nullable": true,
+            "title": "Submission KvK Receipt ID"
+          },
+          "submissionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Submission date.",
+            "nullable": true,
+            "title": "Submission Date"
+          },
+          "submissionStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "rejected"
+            ],
+            "description": "Submission status.",
+            "nullable": true,
+            "title": "Submission Status"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "fieldwork",
+              "findings-open",
+              "opinion-issued",
+              "submitted"
+            ],
+            "description": "Engagement lifecycle state.",
+            "default": "draft",
+            "title": "State"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Engagement set up; scope and materiality being agreed."
+            },
+            "fieldwork": {
+              "label": "Fieldwork",
+              "description": "Auditor performing controls + substantive testing on locked data points (REQ-CSR-004)."
+            },
+            "findings-open": {
+              "label": "Findings open",
+              "description": "Findings raised; awaiting management response."
+            },
+            "opinion-issued": {
+              "label": "Opinion issued",
+              "description": "All findings resolved/accepted; partner signed the opinion."
+            },
+            "submitted": {
+              "label": "Submitted",
+              "description": "iXBRL report deposited with KvK/AFM (REQ-CSR-005)."
+            }
+          },
+          "transitions": {
+            "startFieldwork": {
+              "from": "draft",
+              "to": "fieldwork",
+              "label": "Start fieldwork",
+              "description": "Begin walkthrough once data points are locked-for-assurance (REQ-CSR-004)."
+            },
+            "raiseFindings": {
+              "from": "fieldwork",
+              "to": "findings-open",
+              "label": "Raise findings",
+              "description": "Record findings for management response."
+            },
+            "issueOpinion": {
+              "from": "findings-open",
+              "to": "opinion-issued",
+              "label": "Issue opinion",
+              "description": "Partner issues the opinion once all findings are resolved/accepted (REQ-CSR-004).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canIssueOpinion"
+            },
+            "issueOpinionNoFindings": {
+              "from": "fieldwork",
+              "to": "opinion-issued",
+              "label": "Issue opinion (no findings)",
+              "description": "Issue the opinion directly when fieldwork raised no findings."
+            },
+            "submit": {
+              "from": "opinion-issued",
+              "to": "submitted",
+              "label": "Submit to KvK/AFM",
+              "description": "Deposit the validated iXBRL report (REQ-CSR-005)."
+            }
+          }
+        }
+      },
+      "FixedAsset": {
+        "properties": {
+          "isBiodiversitySensitiveAreaOverlap": {
+            "type": "boolean",
+            "default": false,
+            "description": "REQ-CSR ESRS E4 — whether the asset's location overlaps a Natura 2000 / Key Biodiversity Area (computed from geolocation against the WDPA overlay, or manual override). Additive ADR-037 extension merged onto the monolith FixedAsset schema (design D6).",
+            "title": "Is Biodiversity Sensitive Area Overlap"
+          },
+          "physicalClimateRiskRating": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "REQ-CSR ESRS E1 — physical-climate-risk rating (1-5) for the asset's site, manually assessed from flood/fire/drought exposure (design D6). Additive ADR-037 extension.",
+            "nullable": true,
+            "title": "Physical Climate Risk Rating"
+          }
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "MaterialityAssessment",
+          "slug": "csrd-sample-materiality-fy2025"
+        },
+        "reportingPeriod": "FY2025",
+        "methodologyVersion": "EFRAG-IG-1-2024",
+        "assessmentScope": "consolidated-group",
+        "thresholdImpact": 3,
+        "thresholdFinancial": 2,
+        "stakeholderGroupsConsulted": [
+          {
+            "group": "employees",
+            "consultationMethod": "survey",
+            "date": "2025-09-15",
+            "participants": 150,
+            "keyOutputs": "Water and waste flagged as top concerns."
+          },
+          {
+            "group": "suppliers",
+            "consultationMethod": "email",
+            "date": "2025-10-01",
+            "participants": 8,
+            "keyOutputs": "Pay-on-time prioritised."
+          }
+        ],
+        "doubleMaterialityMatrixSnapshot": {
+          "E1": {
+            "impactScore": 12,
+            "financialScore": 3,
+            "material": true,
+            "rationale": "Material climate impact and transition risk."
+          },
+          "E3": {
+            "impactScore": 9,
+            "financialScore": 2,
+            "material": true,
+            "rationale": "Water-stress exposure at warehouse site."
+          },
+          "S1": {
+            "impactScore": 10,
+            "financialScore": 3,
+            "material": true,
+            "rationale": "Own-workforce health-and-safety and pay equity."
+          },
+          "G1": {
+            "impactScore": 8,
+            "financialScore": 3,
+            "material": true,
+            "rationale": "Business conduct and pay-on-time KPI."
+          },
+          "S4": {
+            "impactScore": 2,
+            "financialScore": 1,
+            "material": false,
+            "rationale": "Niche B2B chemical distribution; no end-consumer health/safety events in past 3 years."
+          }
+        },
+        "state": "draft"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IroRecord",
+          "slug": "csrd-sample-iro-e1-climate"
+        },
+        "assessment": "csrd-sample-materiality-fy2025",
+        "esrsTopicCode": "E1",
+        "type": "impact-negative",
+        "description": "Scope 1/2/3 GHG emissions from operations and supply chain.",
+        "valueChainLocation": "own-operations",
+        "timeHorizon": "medium",
+        "likelihood": 5,
+        "severityOrMagnitude": 4,
+        "scope": 4,
+        "irremediableCharacter": true,
+        "grossOrNet": "gross-before-mitigation",
+        "financialEffectEstimateCurrency": "EUR",
+        "financialEffectEstimateLow": 100000,
+        "financialEffectEstimateHigh": 500000,
+        "material": true,
+        "rationale": "Climate change is material on both impact and financial dimensions."
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "GhgInventory",
+          "slug": "csrd-sample-ghg-inventory-fy2025"
+        },
+        "period": "FY2025",
+        "methodology": "GHG-Protocol-Corporate-Standard",
+        "consolidationApproach": "operational-control",
+        "gasesIncluded": [
+          "CO2",
+          "CH4",
+          "N2O"
+        ],
+        "boundaryNarrative": "Three sites: Amsterdam office, Eindhoven office, warehouse.",
+        "baseYear": "2023",
+        "esrsTaxonomyVersion": "EFRAG-ESRS-2024-01",
+        "intensityHeadcount": 250,
+        "intensityTurnover": 75000000,
+        "state": "draft"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EmissionSource",
+          "slug": "csrd-sample-emission-scope1-fuel"
+        },
+        "inventory": "csrd-sample-ghg-inventory-fy2025",
+        "scope": "1",
+        "category": "mobile-combustion",
+        "activityData": 9.6,
+        "activityUnit": "KL",
+        "emissionFactor": 2.32,
+        "emissionFactorSource": "DEFRA",
+        "emissionFactorVersion": "DEFRA-2025-Q1",
+        "gwpVersion": "AR6",
+        "uncertaintyRating": "low"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EmissionSource",
+          "slug": "csrd-sample-emission-scope3-goods"
+        },
+        "inventory": "csrd-sample-ghg-inventory-fy2025",
+        "scope": "3-cat-01",
+        "category": "purchased-goods-and-services",
+        "activityData": 8200000,
+        "activityUnit": "EUR",
+        "emissionFactor": 0.00018,
+        "emissionFactorSource": "spend-based-EEIO",
+        "emissionFactorVersion": "Exiobase-3.8",
+        "gwpVersion": "AR6",
+        "uncertaintyRating": "high"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EsrsDataPoint",
+          "slug": "csrd-sample-datapoint-e1-6-scope1"
+        },
+        "period": "FY2025",
+        "esrsDataPointId": "E1-6_GrossScope1GHGEmissions_tCO2eq",
+        "valueType": "numeric",
+        "valueNumeric": 22.32,
+        "unit": "tCO2e",
+        "valueSource": "calculation",
+        "sourceReference": "ghg-inventory:csrd-sample-ghg-inventory-fy2025",
+        "status": "draft"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AssuranceEngagement",
+          "slug": "csrd-sample-assurance-fy2025"
+        },
+        "period": "FY2025",
+        "auditFirm": "Sample Assurance B.V.",
+        "engagementLevel": "limited",
+        "scopeStatement": "Limited assurance of ESRS E1 (GHG Scope 1/2/3) and S1 (headcount) per ISSA 5000.",
+        "materialityThresholdQuantitative": "EUR 1M or 5% of Scope 1+2 GHG",
+        "state": "draft"
+      }
+    ]
+  }
 }

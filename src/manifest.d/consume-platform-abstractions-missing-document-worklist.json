@@ -1,0 +1,34 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "consume-platform-abstractions",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json. ADR-022: consumes OpenRegister's declarative `IS NULL` filter operator (zoeken-filteren spec, `<field>_isnull`) instead of a bespoke worklist service.",
+		"description": "Missing-document worklist (routing-audit-2026-07-14.md item 2): two `type:\"index\"` pages filtering on `sourceDocumentUri: null` — the exact `filter: {\"field\": null}` idiom already used by the existing UnmatchedItems page (`src/manifest.json`, filter `{\"resolutionStatus\": null}`). `sourceDocumentUri` was added to both SupplierInvoice and Receipt by receipt-extraction-consume.json; no schema change needed here. Sorted oldest-invoice/receipt-date-first so the most aged gaps surface at the top of the list — no hard date cutoff is declared (OR's simple index-page `filter` does not support relative-date bindings; that is an aggregation-only capability), so \"aged\" is expressed as default sort order rather than a filtered threshold. No PHP: OpenRegister's REST layer already resolves the `_isnull` predicate against the register's search backend."
+	},
+	"_meta_nav_six_clusters_note": "nav-six-clusters (2026-08-20, design.md §4 rows 14/16): both index pages here were confirmed duplicates of the canonical Purchasing-cluster SupplierInvoices/Receipts pages (same schema, filtered `sourceDocumentUri IS NULL`) — deleted, replaced by menu[].query presets pointing at the canonical pages. The canonical pages already carry `rowRoute` (design.md §10's carry-forward checklist is already satisfied — nothing to move). The query key uses the `<field>_isnull` convention this fragment's own description names for the backend predicate, since a menu[].query value cannot be JSON `null` (app-manifest-v2.schema.json restricts query values to string/number/boolean).",
+	"menu": [
+		{
+			"id": "Purchasing",
+			"children": [
+				{
+					"id": "SupplierInvoicesMissingDocument",
+					"label": "Missing Supplier Documents",
+					"icon": "FileDocumentMultipleOutline",
+					"route": "SupplierInvoices",
+					"query": { "sourceDocumentUri_isnull": "true" },
+					"order": 29
+				},
+				{
+					"id": "ReceiptsMissingDocument",
+					"label": "Missing Receipt Photos",
+					"icon": "FileAlertOutline",
+					"route": "Receipts",
+					"query": { "sourceDocumentUri_isnull": "true" },
+					"order": 29
+				}
+			]
+		}
+	],
+	"pages": []
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "spec_slug": "bookings-pipelinq-customer-bridge-05-detail-controller-inject",
+  "app": "shillinq",
+  "kind": "code",
+  "depends_on": ["bookings-pipelinq-customer-bridge-04-klantbeeld-read"],
+  "status": "applied",
+  "tasks_total": 10,
+  "tasks_done": 10,
+  "branch": "feature/customer-bridge-05/bookings-pipelinq-customer-bridge-05-detail-controller-inject"
+}

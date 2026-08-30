@@ -1,0 +1,190 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookings-pipelinq-customer-bridge-09-async-retry",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "kind: code — member 9 of 11 in the bookings-pipelinq-customer-bridge chain (ADR-032). Declares the two persistent registers the async-retry pipeline needs: TimelinePublishRetryEntry (events queued for retry after a synchronous publish failure) and TimelineDeadLetter (events that exhausted their retry budget, parked for admin follow-up). The retry queue (PersistentTimelineRetryQueue) writes a TimelinePublishRetryEntry and adds a PipelinqTimelineRetryJob to the Nextcloud IJobList; the job re-attempts publish on each tick with exponential backoff (1m, 5m, 30m) and dead-letters on max retries (D3 — sync publish, async fallback). Additive merge via SettingsService::deepMergeConfig (ADR-037). Both schemas are write-only operator-facing: humans never edit these in the UI, but the DeadLetter admin view (member 09) lists + manual-retries records."
+  },
+  "info": {
+    "version": "0.1.0-bookings-pipelinq-customer-bridge-09"
+  },
+  "components": {
+    "schemas": {
+      "TimelinePublishRetryEntry": {
+        "slug": "TimelinePublishRetryEntry",
+        "icon": "TimerSandEmpty",
+        "version": "0.1.0",
+        "title": "Timeline Publish Retry Entry",
+        "description": "Persisted async-retry record for a single timeline event whose synchronous publish failed (slice 07/08 → slice 09). Owned by PersistentTimelineRetryQueue: created on enqueue, mutated on each retry tick by PipelinqTimelineRetryJob (retryCount++, nextRetryAt advances per exponential backoff 1m / 5m / 30m), deleted on success. Moves to TimelineDeadLetter once retryCount exceeds maxRetries. Payload mirrors the TimelineEventDto fields the publish call needs to be reconstructed exactly (type, externalId, contactId, timestampIso, metadata) so the retry job can re-issue the identical POST /api/v1/timeline call. lastError captures the most recent failure reason (for operator triage) and lastAttemptAt the most recent run timestamp.",
+        "x-schema-org": "schema:Action",
+        "x-spec": "openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/specs/bookings-pipelinq-integration/spec.md",
+        "type": "object",
+        "required": [
+          "type",
+          "externalId",
+          "contactId",
+          "timestampIso",
+          "retryCount",
+          "maxRetries",
+          "nextRetryAt"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Timeline event type (e.g. booking.created, booking.confirmed). Mirrors TimelineEventDto::type().",
+            "example": "booking.created",
+            "title": "Type"
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Booking externalId (UUID) the event references. Mirrors TimelineEventDto::externalId().",
+            "example": "booking-abc-123",
+            "title": "External ID"
+          },
+          "contactId": {
+            "type": "string",
+            "description": "Linked pipelinq Contact id. Mirrors TimelineEventDto::contactId().",
+            "example": "org-kvk-12345678",
+            "title": "Contact ID"
+          },
+          "timestampIso": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Original event timestamp in ISO-8601 UTC. Re-rendered as the timestamp field of the retried payload so deduplication downstream is stable (cloud-event id is type:externalId:timestamp).",
+            "example": "2026-06-07T12:34:56Z",
+            "title": "Timestamp ISO"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Caller-supplied event metadata (scalar fields). Never contains secrets per ADR-005.",
+            "nullable": true,
+            "example": {
+              "bookingNumber": "booking-abc-123",
+              "service": "haircut",
+              "startTime": "2026-06-07T10:00:00Z",
+              "endTime": "2026-06-07T11:00:00Z",
+              "resourceId": "chair-1",
+              "status": "pending_confirmation"
+            },
+            "title": "Metadata"
+          },
+          "retryCount": {
+            "type": "integer",
+            "description": "Number of retry attempts performed so far. 0 on first enqueue, incremented on every PipelinqTimelineRetryJob tick that fails.",
+            "example": 0,
+            "title": "Retry Count"
+          },
+          "maxRetries": {
+            "type": "integer",
+            "description": "Maximum retry attempts before the entry moves to TimelineDeadLetter. Defaults to 3 (D3 in the giant).",
+            "example": 3,
+            "title": "Max Retries"
+          },
+          "nextRetryAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Earliest ISO-8601 UTC timestamp the retry job may attempt this entry again. Initialised to now() on enqueue, then advanced per exponential backoff (now + 1m / 5m / 30m) on each failed retry.",
+            "example": "2026-06-07T12:35:56Z",
+            "title": "Next Retry At"
+          },
+          "lastError": {
+            "type": "string",
+            "description": "Most recent failure reason (safe-to-log: transport / breaker_open / publish_failed / max_retries_exhausted). Captured by PipelinqTimelineRetryJob for operator triage; never carries the bearer token (ADR-005).",
+            "nullable": true,
+            "example": null,
+            "title": "Last Error"
+          },
+          "lastAttemptAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp of the most recent retry job tick that touched this entry. NULL until the job runs at least once.",
+            "nullable": true,
+            "example": null,
+            "title": "Last Attempt At"
+          }
+        }
+      },
+      "TimelineDeadLetter": {
+        "slug": "TimelineDeadLetter",
+        "icon": "EmailAlertOutline",
+        "version": "0.1.0",
+        "title": "Timeline Dead-Letter Entry",
+        "description": "Terminal parking lot for timeline events that exhausted their async-retry budget (retryCount > maxRetries on TimelinePublishRetryEntry). Populated by PipelinqTimelineRetryJob, listed by the TimelineDeadLetterController admin view, and re-queued via the controller's `retry` action which copies the entry back into TimelinePublishRetryEntry (retryCount reset to 0, fresh nextRetryAt). lastError captures the final failure reason recorded by the retry job. dispatchedAt is set when an admin manually re-queues — supports the audit trail of admin intervention without deleting the dead-letter row immediately (kept for post-mortem).",
+        "x-schema-org": "schema:Action",
+        "x-spec": "openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/specs/bookings-pipelinq-integration/spec.md",
+        "type": "object",
+        "required": [
+          "type",
+          "externalId",
+          "contactId",
+          "timestampIso",
+          "failedAt"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Timeline event type (e.g. booking.created).",
+            "example": "booking.created",
+            "title": "Type"
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Booking externalId (UUID) the dead event references.",
+            "example": "booking-abc-123",
+            "title": "External ID"
+          },
+          "contactId": {
+            "type": "string",
+            "description": "Linked pipelinq Contact id from the original event.",
+            "example": "org-kvk-12345678",
+            "title": "Contact ID"
+          },
+          "timestampIso": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Original event timestamp in ISO-8601 UTC — preserved so a manual re-queue rebuilds an identical timeline entry (idempotent deduplication downstream).",
+            "example": "2026-06-07T12:34:56Z",
+            "title": "Timestamp ISO"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Original event metadata snapshot.",
+            "nullable": true,
+            "example": null,
+            "title": "Metadata"
+          },
+          "retryCount": {
+            "type": "integer",
+            "description": "Final retry count reached before the entry was dead-lettered (typically maxRetries).",
+            "nullable": true,
+            "example": 3,
+            "title": "Retry Count"
+          },
+          "lastError": {
+            "type": "string",
+            "description": "Most recent failure reason captured before dead-lettering (safe-to-log; never the bearer token).",
+            "nullable": true,
+            "example": "transport",
+            "title": "Last Error"
+          },
+          "failedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp the entry was moved to the dead-letter queue.",
+            "example": "2026-06-07T13:11:56Z",
+            "title": "Failed At"
+          },
+          "dispatchedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 UTC timestamp an admin manually re-queued this entry. NULL until the operator triggers the retry action; once set, the entry SHOULD be considered handled (downstream audit pulls it as a closed case).",
+            "nullable": true,
+            "example": null,
+            "title": "Dispatched At"
+          }
+        }
+      }
+    }
+  }
+}

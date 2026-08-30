@@ -26,6 +26,16 @@
  *
  * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-1
  *
+ * KNOWINGLY DANGLING — do not repoint this tag until shillinq#500 is answered.
+ * `#task-3-1` cannot resolve (`- [x] Task 3.1:` makes the checker read `Task`
+ * as the item id), but no canonical target is honest: REQ-TB-001 forbids this
+ * very class by name ("MUST NOT introduce a `TrialBalanceService.php`"), and
+ * the archived change's REQ-TB-008, which mandates it, was never canonical —
+ * that change was archived with `--skip-specs` as having no spec delta. The
+ * prohibition predates this file by nine days. A tag that resolves to a
+ * requirement the code violates reports conformance; a dangling one reports
+ * work to do.
+ *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  */
@@ -36,7 +46,7 @@ namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Computes a period-scoped, per-account trial balance from the general ledger.
@@ -49,224 +59,278 @@ use Psr\Container\ContainerInterface;
  * (REQ-TB-002); the closing balance is opening + (debit - credit) (REQ-TB-003).
  *
  * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-1
+ *
+ * KNOWINGLY DANGLING — do not repoint this tag until shillinq#500 is answered.
+ * `#task-3-1` cannot resolve (`- [x] Task 3.1:` makes the checker read `Task`
+ * as the item id), but no canonical target is honest: REQ-TB-001 forbids this
+ * very class by name ("MUST NOT introduce a `TrialBalanceService.php`"), and
+ * the archived change's REQ-TB-008, which mandates it, was never canonical —
+ * that change was archived with `--skip-specs` as having no spec delta. The
+ * prohibition predates this file by nine days. A tag that resolves to a
+ * requirement the code violates reports conformance; a dangling one reports
+ * work to do.
  */
-class TrialBalanceService
-{
-    /**
-     * Construct the service with lazy DI of OpenRegister's ObjectService.
-     *
-     * @param ContainerInterface     $container  DI container — OR's ObjectService is fetched lazily.
-     * @param IAppConfig             $appConfig  App config for the register slug.
-     * @param TrialBalanceCalculator $calculator Pure-logic arithmetic helper.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly TrialBalanceCalculator $calculator,
-    ) {
-    }//end __construct()
+class TrialBalanceService {
+	/**
+	 * Construct the service with lazy DI of OpenRegister's ObjectService.
+	 *
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param TrialBalanceCalculator $calculator Pure-logic arithmetic helper.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly TrialBalanceCalculator $calculator,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    /**
-     * Compute the trial balance for one administration + period (REQ-TB-008).
-     *
-     * Returns a sorted list of per-account rows plus aggregate totals. Each row
-     * carries periodId, accountNumber, accountName, accountType, openingBalance,
-     * debitMovement, creditMovement, closingBalance, currency, parentAccountNumber.
-     *
-     * @param string              $administrationId Administration scope (server-resolved, REQ-TB-016).
-     * @param string              $periodId         Fiscal period to report (REQ-TB-004).
-     * @param array<string,mixed> $filters          Optional filters; supports 'priorPeriodId'
-     *                                              to source opening balances (REQ-TB-002).
-     *
-     * @return array{data: array<int,array<string,mixed>>, total: int, totals: array<string,float>, isBalanced: bool}
-     *
-     * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-1
-     */
-    public function compute(string $administrationId, string $periodId, array $filters=[]): array
-    {
-        $accounts = $this->fetchAccounts(administrationId: $administrationId);
+	/**
+	 * Compute the trial balance for one administration + period (REQ-TB-008).
+	 *
+	 * Returns a sorted list of per-account rows plus aggregate totals. Each row
+	 * carries periodId, accountNumber, accountName, accountType, openingBalance,
+	 * debitMovement, creditMovement, closingBalance, currency, parentAccountNumber.
+	 *
+	 * @param string $administrationId Administration scope (server-resolved, REQ-TB-016).
+	 * @param string $periodId Fiscal period to report (REQ-TB-004).
+	 * @param array<string,mixed> $filters Optional filters; supports 'priorPeriodId'
+	 *                                     to source opening balances (REQ-TB-002).
+	 *
+	 * @return array{data: array<int,array<string,mixed>>, total: int, totals: array<string,float>, isBalanced: bool}
+	 *
+	 * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-3-1
+	 *
+	 * KNOWINGLY DANGLING — do not repoint this tag until shillinq#500 is answered.
+	 * `#task-3-1` cannot resolve (`- [x] Task 3.1:` makes the checker read `Task`
+	 * as the item id), but no canonical target is honest: REQ-TB-001 forbids this
+	 * very class by name ("MUST NOT introduce a `TrialBalanceService.php`"), and
+	 * the archived change's REQ-TB-008, which mandates it, was never canonical —
+	 * that change was archived with `--skip-specs` as having no spec delta. The
+	 * prohibition predates this file by nine days. A tag that resolves to a
+	 * requirement the code violates reports conformance; a dangling one reports
+	 * work to do.
+	 */
+	public function compute(string $administrationId, string $periodId, array $filters = []): array {
+		$accounts = $this->fetchAccounts(administrationId: $administrationId);
 
-        // Period movements per account (cents), and the prior-period closing
-        // balances used as opening balances (REQ-TB-002).
-        $movements    = $this->movementsByAccount(administrationId: $administrationId, periodId: $periodId);
-        $priorPeriod  = (string) ($filters['priorPeriodId'] ?? '');
-        $openingCents = [];
-        if ($priorPeriod !== '') {
-            $priorMovements = $this->movementsByAccount(administrationId: $administrationId, periodId: $priorPeriod);
-            foreach ($priorMovements as $account => $mv) {
-                // Prior closing = prior opening (assumed 0 at first period) + net.
-                $openingCents[$account] = ($mv['debit'] - $mv['credit']);
-            }
-        }
+		// Period movements per account (cents), and the prior-period closing
+		// balances used as opening balances (REQ-TB-002).
+		$movements = $this->movementsByAccount(administrationId: $administrationId, periodId: $periodId);
+		$priorPeriod = (string)($filters['priorPeriodId'] ?? '');
+		$openingCents = [];
+		if ($priorPeriod !== '') {
+			$priorMovements = $this->movementsByAccount(administrationId: $administrationId, periodId: $priorPeriod);
+			foreach ($priorMovements as $account => $mv) {
+				// Prior closing = prior opening (assumed 0 at first period) + net.
+				$openingCents[$account] = ($mv['debit'] - $mv['credit']);
+			}
+		}
 
-        $rows = [];
-        // Union of accounts that exist and accounts that have movements.
-        $accountNumbers = array_unique(array_merge(array_keys($accounts), array_keys($movements)));
-        sort($accountNumbers);
-        foreach ($accountNumbers as $accountNumber) {
-            $account = ($accounts[$accountNumber] ?? []);
-            $mv      = ($movements[$accountNumber] ?? ['debit' => 0, 'credit' => 0]);
-            $opening = (int) ($openingCents[$accountNumber] ?? 0);
-            $closing = $this->calculator->closingCents(
-                openingCents: $opening,
-                debitCents: $mv['debit'],
-                creditCents: $mv['credit']
-            );
-            $rows[]  = [
-                'periodId'            => $periodId,
-                'accountNumber'       => (string) $accountNumber,
-                'accountName'         => ($account['name'] ?? null),
-                'accountType'         => (string) ($account['accountType'] ?? ''),
-                'openingBalance'      => $this->calculator->fromCents(cents: $opening),
-                'debitMovement'       => $this->calculator->fromCents(cents: $mv['debit']),
-                'creditMovement'      => $this->calculator->fromCents(cents: $mv['credit']),
-                'closingBalance'      => $this->calculator->fromCents(cents: $closing),
-                'currency'            => (string) ($account['currency'] ?? 'EUR'),
-                'parentAccountNumber' => ($account['parentAccountNumber'] ?? null),
-                'administrationId'    => $administrationId,
-            ];
-        }//end foreach
+		$rows = [];
+		// Union of accounts that exist and accounts that have movements.
+		$accountNumbers = array_unique(array_merge(array_keys($accounts), array_keys($movements)));
+		sort($accountNumbers);
+		foreach ($accountNumbers as $accountNumber) {
+			$account = ($accounts[$accountNumber] ?? []);
+			$mv = ($movements[$accountNumber] ?? ['debit' => 0, 'credit' => 0]);
+			$opening = (int)($openingCents[$accountNumber] ?? 0);
+			$closing = $this->calculator->closingCents(
+				openingCents: $opening,
+				debitCents: $mv['debit'],
+				creditCents: $mv['credit']
+			);
+			$rows[] = [
+				'periodId' => $periodId,
+				'accountNumber' => (string)$accountNumber,
+				'accountName' => ($account['name'] ?? null),
+				'accountType' => (string)($account['accountType'] ?? ''),
+				'openingBalance' => $this->calculator->fromCents(cents: $opening),
+				'debitMovement' => $this->calculator->fromCents(cents: $mv['debit']),
+				'creditMovement' => $this->calculator->fromCents(cents: $mv['credit']),
+				'closingBalance' => $this->calculator->fromCents(cents: $closing),
+				'currency' => (string)($account['currency'] ?? 'EUR'),
+				'parentAccountNumber' => ($account['parentAccountNumber'] ?? null),
+				'administrationId' => $administrationId,
+			];
+		}//end foreach
 
-        $totals = $this->calculator->totals(rows: $rows);
+		$totals = $this->calculator->totals(rows: $rows);
 
-        return [
-            'data'       => $rows,
-            'total'      => count($rows),
-            'totals'     => $totals,
-            'isBalanced' => $this->calculator->isBalanced(rows: $rows),
-        ];
+		// Expose short `debit`/`credit` aliases alongside the canonical
+		// `totalDebit`/`totalCredit` keys (REQ-TB-002) so consumers that read the
+		// movement footing under either name resolve the same value.
+		$totals['debit'] = ($totals['totalDebit'] ?? 0);
+		$totals['credit'] = ($totals['totalCredit'] ?? 0);
 
-    }//end compute()
+		return [
+			'data' => $rows,
+			'total' => count($rows),
+			'totals' => $totals,
+			'isBalanced' => $this->calculator->isBalanced(rows: $rows),
+		];
 
-    /**
-     * Sum debit and credit movements per account for an administration + period.
-     *
-     * Resolves the administration's GLTransactions for the period, then sums the
-     * amounts of their non-eliminated GLLine children grouped by accountNumber and
-     * side. All arithmetic is in integer cents.
-     *
-     * @param string $administrationId Administration scope.
-     * @param string $periodId         Fiscal period.
-     *
-     * @return array<string,array{debit:int,credit:int}> accountNumber => debit/credit cents.
-     */
-    private function movementsByAccount(string $administrationId, string $periodId): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $register      = $this->register();
+	}//end compute()
 
-        // Transactions that belong to this administration + period (REQ-TB-017 scoping).
-        $transactions = $objectService
-            ->setRegister($register)
-            ->setSchema('GLTransaction')
-            ->findAll(
-                ['filters' => ['administrationId' => $administrationId, 'periodId' => $periodId]]
-            );
+	/**
+	 * Sum debit and credit movements per account for an administration + period.
+	 *
+	 * Resolves the administration's GLTransactions for the period, then sums the
+	 * amounts of their non-eliminated GLLine children grouped by accountNumber and
+	 * side. All arithmetic is in integer cents.
+	 *
+	 * @param string $administrationId Administration scope.
+	 * @param string $periodId Fiscal period.
+	 *
+	 * @return array<string,array{debit:int,credit:int}> accountNumber => debit/credit cents.
+	 */
+	private function movementsByAccount(string $administrationId, string $periodId): array {
+		$register = $this->register();
 
-        $transactionIds = [];
-        foreach ($transactions as $transaction) {
-            $id = ($transaction['id'] ?? ($transaction['@self']['id'] ?? null));
-            if ($id !== null) {
-                $transactionIds[(string) $id] = true;
-            }
-        }
+		// Transactions that belong to this administration + period (REQ-TB-017 scoping).
+		$transactions = $this->objectService
+			->setRegister($register)
+			->setSchema('GLTransaction')
+			->findAll(
+				['filters' => ['administrationId' => $administrationId, 'periodId' => $periodId]]
+			);
 
-        // GLLines for the period; cross-check the parent transaction is in scope.
-        $lines = $objectService
-            ->setRegister($register)
-            ->setSchema('GLLine')
-            ->findAll(['filters' => ['periodId' => $periodId]]);
+		$transactionIds = [];
+		foreach ($transactions as $rawTransaction) {
+			// OpenRegister's findAll() returns ObjectEntity instances; normalise.
+			$transaction = $this->asArray(row: $rawTransaction);
+			$id = ($transaction['id'] ?? ($transaction['@self']['id'] ?? null));
+			if ($id !== null) {
+				$transactionIds[(string)$id] = true;
+			}
+		}
 
-        $byAccount = [];
-        foreach ($lines as $line) {
-            if ($this->lineInScope(line: $line, transactionIds: $transactionIds) === false) {
-                continue;
-            }
+		// GLLines for the period; cross-check the parent transaction is in scope.
+		$lines = $this->objectService
+			->setRegister($register)
+			->setSchema('GLLine')
+			->findAll(['filters' => ['periodId' => $periodId]]);
 
-            $account = (string) ($line['accountNumber'] ?? '');
-            if (isset($byAccount[$account]) === false) {
-                $byAccount[$account] = ['debit' => 0, 'credit' => 0];
-            }
+		$byAccount = [];
+		foreach ($lines as $rawLine) {
+			// OpenRegister's findAll() returns ObjectEntity instances; normalise.
+			$line = $this->asArray(row: $rawLine);
+			if ($this->lineInScope(line: $line, transactionIds: $transactionIds) === false) {
+				continue;
+			}
 
-            $cents = $this->calculator->toCents(amount: ($line['amount'] ?? 0));
-            $side  = 'credit';
-            if (($line['side'] ?? '') === 'debit') {
-                $side = 'debit';
-            }
+			$account = (string)($line['accountNumber'] ?? '');
+			if (isset($byAccount[$account]) === false) {
+				$byAccount[$account] = ['debit' => 0, 'credit' => 0];
+			}
 
-            $byAccount[$account][$side] += $cents;
-        }//end foreach
+			$cents = $this->calculator->toCents(amount: ($line['amount'] ?? 0));
+			$side = 'credit';
+			if (($line['side'] ?? '') === 'debit') {
+				$side = 'debit';
+			}
 
-        return $byAccount;
+			$byAccount[$account][$side] += $cents;
+		}//end foreach
 
-    }//end movementsByAccount()
+		return $byAccount;
+	}//end movementsByAccount()
 
-    /**
-     * Decide whether a GLLine counts toward the period trial balance.
-     *
-     * Excludes eliminated lines, lines whose parent transaction is out of the
-     * administration/period scope (REQ-TB-017), and lines without an account.
-     *
-     * @param array<string,mixed> $line           The GLLine record.
-     * @param array<string,bool>  $transactionIds In-scope transaction ids (set membership).
-     *
-     * @return bool True when the line should be summed.
-     */
-    private function lineInScope(array $line, array $transactionIds): bool
-    {
-        if (($line['eliminationFlag'] ?? false) === true) {
-            return false;
-        }
+	/**
+	 * Decide whether a GLLine counts toward the period trial balance.
+	 *
+	 * Excludes eliminated lines, lines whose parent transaction is out of the
+	 * administration/period scope (REQ-TB-017), and lines without an account.
+	 *
+	 * @param array<string,mixed> $line The GLLine record.
+	 * @param array<string,bool> $transactionIds In-scope transaction ids (set membership).
+	 *
+	 * @return bool True when the line should be summed.
+	 */
+	private function lineInScope(array $line, array $transactionIds): bool {
+		if (($line['eliminationFlag'] ?? false) === true) {
+			return false;
+		}
 
-        $transactionId = (string) ($line['transactionId'] ?? '');
-        if ($transactionIds !== [] && isset($transactionIds[$transactionId]) === false) {
-            return false;
-        }
+		$transactionId = (string)($line['transactionId'] ?? '');
+		if ($transactionIds !== [] && isset($transactionIds[$transactionId]) === false) {
+			return false;
+		}
 
-        return ((string) ($line['accountNumber'] ?? '') !== '');
+		return ((string)($line['accountNumber'] ?? '') !== '');
+	}//end lineInScope()
 
-    }//end lineInScope()
+	/**
+	 * Fetch the administration's chart-of-accounts keyed by accountNumber (REQ-TB-006, REQ-TB-020).
+	 *
+	 * @param string $administrationId Administration scope.
+	 *
+	 * @return array<string,array<string,mixed>> accountNumber => Account object.
+	 */
+	private function fetchAccounts(string $administrationId): array {
+		$accounts = $this->objectService
+			->setRegister($this->register())
+			->setSchema('Account')
+			->findAll(['filters' => ['administrationId' => $administrationId]]);
 
-    /**
-     * Fetch the administration's chart-of-accounts keyed by accountNumber (REQ-TB-006, REQ-TB-020).
-     *
-     * @param string $administrationId Administration scope.
-     *
-     * @return array<string,array<string,mixed>> accountNumber => Account object.
-     */
-    private function fetchAccounts(string $administrationId): array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $accounts      = $objectService
-            ->setRegister($this->register())
-            ->setSchema('Account')
-            ->findAll(['filters' => ['administrationId' => $administrationId]]);
+		$byNumber = [];
+		foreach ($accounts as $rawAccount) {
+			// OpenRegister's findAll() returns ObjectEntity instances; normalise.
+			$account = $this->asArray(row: $rawAccount);
+			$number = (string)($account['accountNumber'] ?? '');
+			if ($number !== '') {
+				$byNumber[$number] = $account;
+			}
+		}
 
-        $byNumber = [];
-        foreach ($accounts as $account) {
-            $number = (string) ($account['accountNumber'] ?? '');
-            if ($number !== '') {
-                $byNumber[$number] = $account;
-            }
-        }
+		return $byNumber;
+	}//end fetchAccounts()
 
-        return $byNumber;
+	/**
+	 * Normalise an OpenRegister ObjectService row (ObjectEntity or array) to a
+	 * plain array<string,mixed>.
+	 *
+	 * @param mixed $row Raw row from ObjectService::findAll()/find().
+	 *
+	 * @return array<string,mixed> The object as an array (empty array when unusable).
+	 */
+	private function asArray(mixed $row): array {
+		if (is_array($row) === true) {
+			return $row;
+		}
 
-    }//end fetchAccounts()
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			$out = $row->jsonSerialize();
+			if (is_array($out) === true) {
+				return $out;
+			}
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
-     *
-     * @return string The register slug.
-     */
-    private function register(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+			return [];
+		}
 
-        return $register;
+		if (is_object($row) === true && method_exists($row, 'getObject') === true) {
+			$out = $row->getObject();
+			if (is_array($out) === true) {
+				return $out;
+			}
 
-    }//end register()
+			return [];
+		}
+
+		return [];
+	}//end asArray()
+
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to 'shillinq'.
+	 *
+	 * @return string The register slug.
+	 */
+	private function register(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
+
+		return $register;
+	}//end register()
 }//end class

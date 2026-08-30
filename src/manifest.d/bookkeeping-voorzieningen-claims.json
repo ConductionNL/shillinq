@@ -1,0 +1,111 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-voorzieningen-claims",
+		"description": "Manifest navigation + index pages for IAS 37 / RJ 252 Provisions, Movements and Contingent Liabilities (REQ-PROV-008). Adds three children under Bookkeeping that list the Provision, ProvisionMovement and ContingentLiability registers declared in lib/Settings/register.d/bookkeeping-voorzieningen-claims.json."
+	},
+	"menu": [
+		{
+			"id": "Bookkeeping",
+			"label": "Bookkeeping",
+			"icon": "NotebookOutline",
+			"order": 20,
+			"children": [
+				{
+					"id": "Provisions",
+					"label": "Provisions",
+					"icon": "ShieldAlertOutline",
+					"route": "Provisions",
+					"order": 80
+				},
+				{
+					"id": "ProvisionMovements",
+					"label": "Provision Movements",
+					"icon": "TableArrowRight",
+					"route": "ProvisionMovements",
+					"order": 81
+				},
+				{
+					"id": "ContingentLiabilities",
+					"label": "Contingent Liabilities",
+					"icon": "AlertOctagonOutline",
+					"route": "ContingentLiabilities",
+					"order": 82
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Provisions",
+			"route": "/bookkeeping/provisions",
+			"type": "index",
+			"title": "Provisions",
+			"config": {
+				"register": "shillinq",
+				"schema": "Provision",
+				"columns": [
+					{ "key": "description", "label": "Description", "sortable": true },
+					{ "key": "provisionType", "label": "Type", "sortable": true },
+					{ "key": "bestEstimate", "label": "Best estimate", "sortable": true },
+					{ "key": "probabilityOfOutflow", "label": "Probability", "sortable": true },
+					{ "key": "presentationOnBalanceSheet", "label": "Presentation", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "recognitionDate",
+				"filters": [
+					{ "key": "provisionType", "label": "Type" },
+					{ "key": "status", "label": "Status" }
+				]
+			}
+		},
+		{
+			"id": "ProvisionMovements",
+			"route": "/bookkeeping/provision-movements",
+			"type": "index",
+			"title": "Provision Movements",
+			"config": {
+				"register": "shillinq",
+				"schema": "ProvisionMovement",
+				"columns": [
+					{ "key": "provision", "label": "Provision", "sortable": true },
+					{ "key": "period", "label": "Period", "sortable": true },
+					{ "key": "openingBalance", "label": "Opening", "sortable": true },
+					{ "key": "additions", "label": "Dotatie", "sortable": true },
+					{ "key": "usedDuringPeriod", "label": "Used", "sortable": true },
+					{ "key": "releasedUnused", "label": "Released", "sortable": true },
+					{ "key": "closingBalance", "label": "Closing", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "period",
+				"filters": [
+					{ "key": "period", "label": "Period" },
+					{ "key": "status", "label": "Status" }
+				]
+			}
+		},
+		{
+			"id": "ContingentLiabilities",
+			"route": "/bookkeeping/contingent-liabilities",
+			"type": "index",
+			"title": "Contingent Liabilities",
+			"config": {
+				"register": "shillinq",
+				"schema": "ContingentLiability",
+				"columns": [
+					{ "key": "description", "label": "Description", "sortable": true },
+					{ "key": "nature", "label": "Nature", "sortable": true },
+					{ "key": "probabilityCategory", "label": "Probability", "sortable": true },
+					{ "key": "estimatedAmount", "label": "Estimated amount", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "description",
+				"filters": [
+					{ "key": "probabilityCategory", "label": "Probability" },
+					{ "key": "status", "label": "Status" }
+				]
+			}
+		}
+	]
+}

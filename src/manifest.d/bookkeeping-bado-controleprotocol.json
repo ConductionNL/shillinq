@@ -1,0 +1,259 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-bado-controleprotocol",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json. ADR-024/ADR-029: every menu.route below points at a pages[].id defined in this same fragment."
+	},
+	"menu": [
+		{
+			"id": "BadoAudit",
+			"label": "BADO Audit",
+			"icon": "ClipboardCheckOutline",
+			"order": 70,
+			"children": [
+				{
+					"id": "AuditProtocols",
+					"label": "Audit Protocols",
+					"icon": "ClipboardCheckOutline",
+					"route": "AuditProtocols",
+					"order": 10
+				},
+				{
+					"id": "ToleranceMatrices",
+					"label": "Tolerance Matrices",
+					"icon": "TableLarge",
+					"route": "ToleranceMatrices",
+					"order": 20
+				},
+				{
+					"id": "AuditFindings",
+					"label": "Audit Samples & Findings",
+					"icon": "AlertCircleOutline",
+					"route": "AuditFindings",
+					"order": 30
+				},
+				{
+					"id": "AuditVerklaringen",
+					"label": "Audit statements",
+					"icon": "FileCertificateOutline",
+					"route": "AuditVerklaringen",
+					"order": 40
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "AuditProtocols",
+			"route": "/bado/protocols",
+			"type": "index",
+			"title": "Audit Protocols",
+			"config": {
+				"register": "shillinq",
+				"schema": "Controleprotocol",
+				"columns": [
+					{ "key": "version", "label": "Version", "sortable": true },
+					{ "key": "auditYear", "label": "Audit Year", "sortable": true },
+					{ "key": "organisationType", "label": "Organisation Type", "sortable": true },
+					{ "key": "materialityBase", "label": "Materiality Base", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "auditYear",
+				"detailRoute": "AuditProtocolDetail"
+			}
+		},
+		{
+			"id": "AuditProtocolDetail",
+			"route": "/bado/protocols/:id",
+			"type": "detail",
+			"title": "Audit Protocol",
+			"config": {
+				"register": "shillinq",
+				"schema": "Controleprotocol",
+				"_note": "CONFIG archetype — the controleprotocol is the governing audit framework (materiality base/amount, reference framework, adoption decision, validity window) that tolerance matrices and audit statements hang off. Native shillinq detail contract: config.aggregations[] surface the materiality-amount currency KPI so an auditor sees the threshold first; config.fields[] render the protocol data; config.relatedCollections[] list the tolerance matrices defined under this protocol (ToleranceMatrix, FK protocol=@objectId). KEY+TOKEN: the prop is `relatedCollections` (a `relatedLists` block lands in $attrs and renders nothing), and the token is `@objectId`, NOT `@self.id` — `@self.id` is not a token resolveFilterTokens.js knows, so it passed through unresolved and the widget skipped the query. Controleprotocol has no flat business key in its payload and OCA\\Shillinq\\Service\\BadoControleprotocolService resolves `protocol` by object identity, so the child holds the protocol's UUID; and the sidebar carries an audit-trail tab. NO comms/files — a protocol is a policy record, not correspondence.",
+				"aggregations": [
+					{ "id": "materialityAmount", "title": "Materiality amount", "field": "materialityAmount", "metric": "value", "format": "currency" }
+				],
+				"fields": [
+					{ "key": "version", "label": "Version", "type": "string" },
+					{ "key": "auditYear", "label": "Audit Year", "type": "number" },
+					{ "key": "organisationType", "label": "Organisation Type", "type": "string" },
+					{ "key": "organisationId", "label": "Organisation", "type": "string" },
+					{ "key": "materialityBase", "label": "Materiality Base", "type": "string" },
+					{ "key": "materialityAmount", "label": "Materiality Amount", "type": "number" },
+					{ "key": "effectiveFrom", "label": "Effective From", "type": "string" },
+					{ "key": "effectiveTo", "label": "Effective To", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"relatedCollections": [
+					{ "title": "Tolerance matrices", "register": "shillinq", "schema": "ToleranceMatrix", "filter": { "protocol": "@objectId" }, "columns": [
+						{ "key": "topic", "label": "Topic" },
+						{ "key": "faithfulnessApprovalCeiling", "label": "Fair pres. approval %" },
+						{ "key": "lawfulnessApprovalCeiling", "label": "Lawfulness approval %" },
+						{ "key": "uncertaintyCeiling", "label": "Uncertainty %" }
+					] }
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
+				"indexRoute": "AuditProtocols"
+			}
+		},
+		{
+			"id": "ToleranceMatrices",
+			"route": "/bado/tolerance-matrices",
+			"type": "index",
+			"title": "Tolerance Matrices",
+			"config": {
+				"register": "shillinq",
+				"schema": "ToleranceMatrix",
+				"columns": [
+					{ "key": "topic", "label": "Topic", "sortable": true },
+					{ "key": "faithfulnessApprovalCeiling", "label": "Fair presentation Approval %", "sortable": true },
+					{ "key": "faithfulnessQualificationCeiling", "label": "Fair presentation Qual. %", "sortable": true },
+					{ "key": "lawfulnessApprovalCeiling", "label": "Lawfulness Approval %", "sortable": true },
+					{ "key": "lawfulnessQualificationCeiling", "label": "Lawfulness Qual. %", "sortable": true }
+				],
+				"defaultSort": "topic",
+				"detailRoute": "ToleranceMatrixDetail"
+			}
+		},
+		{
+			"id": "ToleranceMatrixDetail",
+			"route": "/bado/tolerance-matrices/:id",
+			"type": "detail",
+			"title": "Tolerance Matrix",
+			"config": {
+				"register": "shillinq",
+				"schema": "ToleranceMatrix",
+				"_note": "CONFIG archetype — a tolerance matrix defines the fair-presentation and lawfulness approval/qualification ceilings for one audit topic under a protocol. Native shillinq detail contract: config.fields[] render the ceiling data; the sidebar carries an audit-trail tab so an auditor can see who changed a tolerance. Pure threshold configuration — NO comms/files, and no money aggregation (the values are percentages, not currency totals).",
+				"fields": [
+					{ "key": "topic", "label": "Topic", "type": "string" },
+					{ "key": "faithfulnessApprovalCeiling", "label": "Fair presentation Approval %", "type": "number" },
+					{ "key": "faithfulnessQualificationCeiling", "label": "Fair presentation Qualification %", "type": "number" },
+					{ "key": "lawfulnessApprovalCeiling", "label": "Lawfulness Approval %", "type": "number" },
+					{ "key": "lawfulnessQualificationCeiling", "label": "Lawfulness Qualification %", "type": "number" },
+					{ "key": "uncertaintyCeiling", "label": "Uncertainty %", "type": "number" },
+					{ "key": "methodologyNote", "label": "Methodology Note", "type": "string" }
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
+				"indexRoute": "ToleranceMatrices"
+			}
+		},
+		{
+			"id": "AuditFindings",
+			"route": "/bado/findings",
+			"type": "index",
+			"title": "Audit Samples & Findings",
+			"config": {
+				"register": "shillinq",
+				"schema": "AuditFinding",
+				"columns": [
+					{ "key": "topic", "label": "Topic", "sortable": true },
+					{ "key": "findingType", "label": "Type", "sortable": true },
+					{ "key": "severity", "label": "Severity", "sortable": true },
+					{ "key": "amount", "label": "Amount", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "topic",
+				"detailRoute": "AuditFindingDetail"
+			}
+		},
+		{
+			"id": "AuditFindingDetail",
+			"route": "/bado/findings/:id",
+			"type": "detail",
+			"title": "Audit Finding",
+			"config": {
+				"register": "shillinq",
+				"schema": "AuditFinding",
+				"_note": "FINDING/CASE archetype — an audit finding pairs a sampled transaction with a lawfulness/fair-presentation classification, a monetary error and an auditor conclusion. Native shillinq detail contract: config.aggregations[] surface the finding-amount currency KPI so its financial impact reads first; config.fields[] render the finding narrative (topic, type, classifications, severity, controller response, auditor conclusion, status); the sidebar carries a file-references tab for supporting evidence and an audit-trail tab for the immutable status history. NO comms.",
+				"aggregations": [
+					{ "id": "findingAmount", "title": "Finding amount", "field": "amount", "metric": "value", "format": "currency" }
+				],
+				"fields": [
+					{ "key": "topic", "label": "Topic", "type": "string" },
+					{ "key": "findingType", "label": "Finding Type", "type": "string" },
+					{ "key": "lawfulness", "label": "Lawfulness", "type": "string" },
+					{ "key": "faithfulness", "label": "Fair presentation", "type": "string" },
+					{ "key": "severity", "label": "Severity", "type": "string" },
+					{ "key": "amount", "label": "Amount", "type": "number" },
+					{ "key": "narrative", "label": "Narrative", "type": "string" },
+					{ "key": "controllerResponse", "label": "Controller Response", "type": "string" },
+					{ "key": "auditorConclusion", "label": "Auditor Conclusion", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "documents", "label": "Evidence", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "AuditFinding", "objectId": ":id" } }
+						] },
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
+				"indexRoute": "AuditFindings"
+			}
+		},
+		{
+			"id": "AuditVerklaringen",
+			"route": "/bado/verklaringen",
+			"type": "index",
+			"title": "Audit statements",
+			"config": {
+				"register": "shillinq",
+				"schema": "VerklaringDraft",
+				"columns": [
+					{ "key": "proposedOpinion", "label": "Proposed Opinion", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "status",
+				"detailRoute": "AuditVerklaringDetail"
+			}
+		},
+		{
+			"id": "AuditVerklaringDetail",
+			"route": "/bado/verklaringen/:id",
+			"type": "detail",
+			"title": "Audit statement",
+			"config": {
+				"register": "shillinq",
+				"schema": "VerklaringDraft",
+				"_note": "REPORT/DOCUMENT archetype — a verklaring draft is the auditor's opinion (goedkeurend / met beperking / etc.), aggregating findings under a protocol toward sign-off. Native shillinq detail contract: config.fields[] render the opinion data (proposed opinion, rationale, override, status); the sidebar carries a file-references tab for the signed statement PDF and an audit-trail tab for the immutable sign-off / opinion-change history — critical assurance evidence. NO comms; no money aggregation of its own (amounts live on the aggregated findings).",
+				"fields": [
+					{ "key": "proposedOpinion", "label": "Proposed Opinion", "type": "string" },
+					{ "key": "opinionRationale", "label": "Opinion Rationale", "type": "string" },
+					{ "key": "opinionOverride", "label": "Opinion Override", "type": "boolean" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "documents", "label": "Signed statement", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "VerklaringDraft", "objectId": ":id" } }
+						] },
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
+				"indexRoute": "AuditVerklaringen"
+			}
+		}
+	]
+}

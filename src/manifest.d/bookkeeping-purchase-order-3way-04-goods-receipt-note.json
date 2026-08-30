@@ -1,0 +1,43 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-purchase-order-3way-04-goods-receipt-note",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Slice 04 of the bookkeeping-purchase-order-3way chain wires the two GRN Vue views (mobile-optimised create form + detail) onto custom manifest pages. The form captures multi-PO receipts with per-line received/accepted/rejected quantities + rejection reason + carrier + delivery-note ref + delivery-condition photos. The detail view drives the quality-check and accept transitions — the latter posts a StockMove credit for every accepted line (movementType=receipt, movementReason=normal, referenceDocumentUri=shillinq://purchase-order/<poId>) and updates the originating PO(s) lifecycle to partial_received / fully_received. Registered as kind=page custom components in src/registry.js. NOTE: GoodsReceiptNoteDetail is intentionally absent from the menu children — detail pages are not nav leaves; the index page detailRoute binding drives list→detail navigation. Adding it as a nav child caused a duplicate-active-state defect (REQ-NAVIA-004/005 fix)."
+	},
+	"menu": [
+		{
+			"id": "Purchasing",
+			"children": [
+				{
+					"id": "GoodsReceiptNotes",
+					"label": "Goods Receipt Notes",
+					"icon": "PackageVariantClosed",
+					"order": 92,
+					"children": [
+						{"id": "GoodsReceiptNoteForm", "label": "Receive goods", "icon": "PlusCircle", "route": "GoodsReceiptNoteForm", "order": 10}
+					]
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "GoodsReceiptNoteForm",
+			"route": "/inkoop/goods-receipt-notes/new",
+			"type": "custom",
+			"title": "Receive goods",
+			"component": "GoodsReceiptNoteForm",
+			"_note": "Warehouse capture form that writes MORE THAN ONE object per submit: it creates the GoodsReceiptNote, then POSTs every line (received / accepted / rejected quantity + rejection reason) in sequence, and uploads the delivery-condition photos, before navigating to the detail view. `type: form` submits ONE object against one schema and has no notion of a line array whose rows are derived from the purchase orders the operator picks first. The layout is also deliberately mobile-first (single column, large touch targets, picker-style carrier and reason lists) because it is used on the warehouse floor."
+		},
+		{
+			"id": "GoodsReceiptNoteDetail",
+			"route": "/inkoop/goods-receipt-notes/:id",
+			"type": "custom",
+			"title": "Goods Receipt Note",
+			"component": "GoodsReceiptNoteDetail",
+			"_note": "Beyond the GRN header and lines this page renders the delivery-photo gallery and links to every ThreeWayMatch whose `grnIds` ARRAY contains this GRN — a many-to-many join that config.relatedCollections, which filters a related schema by one foreign-key field, cannot express. Its two transitions also POST to bespoke endpoints (/api/goods-receipt-notes/{id}/quality-check and /accept) with per-status visibility, and the accept call is what posts the StockMove credit and advances the originating purchase orders (REQ-PO3W-003) — not a field write on this object."
+		}
+	]
+}

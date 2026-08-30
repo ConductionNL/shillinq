@@ -1,0 +1,44 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "RJ 270 (2026)",
+    "variant": "smb",
+    "statementType": "profit-and-loss",
+    "description": "RJ 270 / IFRS-for-SMEs winst-en-verliesrekening (categorale indeling) voor Nederlandse MKB-administraties. Secties zijn gekoppeld aan RGS 3.5 rekeningreeksen. Operatoroverschrijvingen blijven behouden bij her-import (imported leeg = template-herkomst).",
+    "imported": "",
+    "presentationStandard": "RJ270-smb"
+  },
+  "statement": {
+    "code": "WV",
+    "label": "Winst-en-verliesrekening",
+    "aggregationSource": "TrialBalance",
+    "sections": [
+      { "code": "NETO", "label": "Netto-omzet", "group": "opbrengsten", "level": 1, "accountRange": ["8000", "8099"], "sign": "credit" },
+      { "code": "WVPV", "label": "Wijziging voorraden gereed product en onderhanden werk", "group": "opbrengsten", "level": 1, "accountRange": ["8100", "8199"], "sign": "credit" },
+      { "code": "GEAC", "label": "Geactiveerde productie eigen bedrijf", "group": "opbrengsten", "level": 1, "accountRange": ["8200", "8299"], "sign": "credit" },
+      { "code": "OVOP", "label": "Overige bedrijfsopbrengsten", "group": "opbrengsten", "level": 1, "accountRange": ["8300", "8399"], "sign": "credit" },
+      { "code": "SOM-OPB", "label": "Som der bedrijfsopbrengsten", "group": "opbrengsten", "level": 0, "computed": "sum-group:opbrengsten", "sign": "credit" },
+      { "code": "KPVO", "label": "Kostprijs van de omzet", "group": "kosten", "level": 1, "accountRange": ["7000", "7099"], "sign": "debit" },
+      { "code": "INKW", "label": "Inkoopwaarde van de omzet", "group": "kosten", "level": 1, "accountRange": ["7100", "7199"], "sign": "debit" },
+      { "code": "LONE", "label": "Lonen en salarissen", "group": "kosten", "level": 1, "accountRange": ["4000", "4099"], "sign": "debit" },
+      { "code": "SOCL", "label": "Sociale lasten en pensioenlasten", "group": "kosten", "level": 1, "accountRange": ["4100", "4199"], "sign": "debit" },
+      { "code": "AFSC", "label": "Afschrijvingen op vaste activa", "group": "kosten", "level": 1, "accountRange": ["4300", "4399"], "sign": "debit" },
+      { "code": "HUIS", "label": "Huisvestingskosten", "group": "kosten", "level": 1, "accountRange": ["4400", "4499"], "sign": "debit" },
+      { "code": "EXPL", "label": "Exploitatie- en machinekosten", "group": "kosten", "level": 1, "accountRange": ["4500", "4599"], "sign": "debit" },
+      { "code": "VKKO", "label": "Verkoopkosten", "group": "kosten", "level": 1, "accountRange": ["4600", "4699"], "sign": "debit" },
+      { "code": "ALGK", "label": "Algemene kosten", "group": "kosten", "level": 1, "accountRange": ["4700", "4899"], "sign": "debit" },
+      { "code": "SOM-KOS", "label": "Som der bedrijfskosten", "group": "kosten", "level": 0, "computed": "sum-group:kosten", "sign": "debit" },
+      { "code": "BEDR-RES", "label": "Bedrijfsresultaat", "group": "result", "level": 0, "computed": "section:SOM-OPB - section:SOM-KOS", "sign": "credit" },
+      { "code": "RBAT", "label": "Rentebaten", "group": "financieel", "level": 1, "accountRange": ["8400", "8449"], "sign": "credit" },
+      { "code": "RLST", "label": "Rentelasten", "group": "financieel", "level": 1, "accountRange": ["8450", "8499"], "sign": "debit" },
+      { "code": "FIN-RES", "label": "Financieel resultaat", "group": "financieel", "level": 0, "computed": "section:RBAT - section:RLST", "sign": "credit" },
+      { "code": "RES-VBB", "label": "Resultaat voor belastingen", "group": "result", "level": 0, "computed": "section:BEDR-RES + section:FIN-RES", "sign": "credit" },
+      { "code": "VPB", "label": "Vennootschapsbelasting", "group": "belasting", "level": 1, "accountRange": ["8900", "8999"], "sign": "debit" },
+      { "code": "NET-RES", "label": "Nettoresultaat", "group": "result", "level": 0, "computed": "section:RES-VBB - section:VPB", "sign": "credit" }
+    ],
+    "invariants": [
+      { "code": "result-ties-balance", "label": "Nettoresultaat sluit aan op de balans", "expression": "section:NET-RES == balance-sheet:EV-RES", "description": "Het nettoresultaat uit de W&V moet aansluiten op de post Resultaat boekjaar in het eigen vermogen op de balans." }
+    ]
+  }
+}

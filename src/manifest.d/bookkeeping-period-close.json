@@ -1,0 +1,233 @@
+{
+	"menu": [
+		{
+			"id": "Bookkeeping",
+			"label": "Bookkeeping",
+			"icon": "NotebookOutline",
+			"order": 20,
+			"children": [
+				{
+					"id": "PeriodClose",
+					"label": "Period Close",
+					"icon": "CalendarLock",
+					"route": "PeriodClose",
+					"order": 65
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "PeriodClose",
+			"route": "/bookkeeping/period-close",
+			"type": "index",
+			"title": "Period Close",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalPeriod",
+				"columns": [
+					{
+						"key": "periodId",
+						"label": "Period",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"sortable": true
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal year",
+						"sortable": true
+					},
+					{
+						"key": "startDate",
+						"label": "Start",
+						"sortable": true
+					},
+					{
+						"key": "endDate",
+						"label": "End",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"sortable": true
+					},
+					{
+						"key": "closedAt",
+						"label": "Closed",
+						"sortable": true
+					}
+				],
+				"defaultSort": "periodId",
+				"detailRoute": "PeriodCloseDetail",
+				"_note_rowRoute": "`detailRoute` is inert — the library never reads it. PeriodCloseDetail is a `type:\"custom\"` page, so CnPageRenderer's register+schema detail lookup finds nothing and rows do not open without `rowRoute`.",
+				"rowRoute": "PeriodCloseDetail"
+			}
+		},
+		{
+			"id": "PeriodCloseDetail",
+			"route": "/bookkeeping/period-close/:id",
+			"type": "custom",
+			"component": "PeriodCloseDetail",
+			"_note": "Period-close cockpit, not a record view. Beyond the FiscalPeriod fields it drives a four-step close workflow through /api/period-close/:id/{start-close,close,reopen,lock-audit} with per-transition role gates (period-closer, auditor) and a reopen reason prompt, and renders the close checklist and assistant flags. `type: detail` renders declared fields plus lifecycle transitions on the OBJECT; it cannot host the endpoint-driven checklist and audit-lock cockpit this page is. Its config is retained so the field/lifecycle/link declarations stay manifest-owned.",
+			"title": "Period Close",
+			"config": {
+				"register": "shillinq",
+				"schema": "FiscalPeriod",
+				"fields": [
+					{
+						"key": "periodId",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "fiscalYear",
+						"label": "Fiscal year",
+						"type": "number"
+					},
+					{
+						"key": "startDate",
+						"label": "Start date",
+						"type": "string"
+					},
+					{
+						"key": "endDate",
+						"label": "End date",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"type": "string"
+					},
+					{
+						"key": "closedAt",
+						"label": "Closed at",
+						"type": "string"
+					},
+					{
+						"key": "closedBy",
+						"label": "Closed by",
+						"type": "string"
+					},
+					{
+						"key": "auditLockedAt",
+						"label": "Audit locked at",
+						"type": "string"
+					},
+					{
+						"key": "auditLockedBy",
+						"label": "Audit locked by",
+						"type": "string"
+					},
+					{
+						"key": "closeReason",
+						"label": "Close reason",
+						"type": "string"
+					},
+					{
+						"key": "taskChecklistItems",
+						"label": "Close checklist",
+						"type": "array"
+					},
+					{
+						"key": "aiFlags",
+						"label": "Close assistant flags",
+						"type": "array"
+					},
+					{
+						"key": "reopenedHistory",
+						"label": "Reopen history",
+						"type": "array"
+					}
+				],
+				"lifecycle": {
+					"field": "state",
+					"transitions": [
+						{
+							"action": "startClose",
+							"label": "Start close",
+							"endpoint": "/api/period-close/:id/start-close",
+							"method": "POST",
+							"visibleWhen": {
+								"state": "open"
+							},
+							"requiresRole": "period-closer"
+						},
+						{
+							"action": "close",
+							"label": "Close period",
+							"endpoint": "/api/period-close/:id/close",
+							"method": "POST",
+							"visibleWhen": {
+								"state": "closing"
+							},
+							"requiresRole": "period-closer"
+						},
+						{
+							"action": "reopen",
+							"label": "Reopen",
+							"endpoint": "/api/period-close/:id/reopen",
+							"method": "POST",
+							"visibleWhen": {
+								"state": "closed"
+							},
+							"requiresRole": "period-closer",
+							"prompt": {
+								"field": "closeReason",
+								"label": "Close reason",
+								"required": true
+							}
+						},
+						{
+							"action": "lockAudit",
+							"label": "Lock for audit",
+							"endpoint": "/api/period-close/:id/lock-audit",
+							"method": "POST",
+							"visibleWhen": {
+								"state": "closed"
+							},
+							"requiresRole": "auditor"
+						}
+					]
+				},
+				"links": [
+					{
+						"id": "trial-balance-preview",
+						"label": "Trial balance preview",
+						"description": "Open the trial balance filtered to this period; surfaces as the operator pre-close preview link per REQ-PC-007.",
+						"route": "/bookkeeping/trial-balance?periodId=:periodId",
+						"target": "TrialBalance",
+						"visibleWhen": {
+							"state": [
+								"open",
+								"closing",
+								"closed"
+							]
+						}
+					}
+				],
+				"indexRoute": "PeriodClose"
+			}
+		}
+	]
+}

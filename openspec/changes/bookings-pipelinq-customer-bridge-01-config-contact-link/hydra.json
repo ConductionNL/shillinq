@@ -1,7 +1,0 @@
-{
-  "schema_version": 2,
-  "spec_slug": "bookings-pipelinq-customer-bridge-01-config-contact-link",
-  "app": "shillinq",
-  "kind": "config",
-  "depends_on": []
-}

@@ -1,0 +1,586 @@
+{
+  "x-shillinq-fragment": "checks-sustainability",
+  "components": {
+    "schemas": {
+      "EsrsStatement": {
+        "slug": "EsrsStatement",
+        "icon": "LeafCircleOutline",
+        "version": "0.1.0",
+        "title": "ESRS Statement",
+        "description": "A flat, self-contained CSRD/ESRS sustainability statement for one reporting period, capturing the period's quantitative ESRS datapoints (GHG Scope 1/2/3 + arithmetic total and intensity, energy mix, pollution, water, biodiversity, circular-economy, own-workforce, business-conduct metrics) and the cross-cutting targets[] set, plus the IFRS S2 climate-risk/opportunity exposures. Used by the sustainability rule domain to evaluate presence, sum, enumeration and threshold obligations of the ESRS (Commission Delegated Regulation (EU) 2023/2772) and IFRS S2. Per ADR-022 this is a register object, not an embedded structure; it is the auditable reporting summary that sits above the granular GhgInventory / EmissionSource / EsrsDataPoint model.",
+        "type": "object",
+        "x-schema-org": "schema:Report",
+        "required": [
+          "reportingPeriod",
+          "netRevenue"
+        ],
+        "properties": {
+          "reportingPeriod": {
+            "type": "string",
+            "description": "Fiscal reporting period this statement covers, e.g. FY2025.",
+            "example": "FY2025",
+            "title": "Reporting Period"
+          },
+          "entityName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the reporting undertaking.",
+            "title": "Entity Name"
+          },
+          "netRevenue": {
+            "type": "number",
+            "description": "Net revenue (turnover) for the period in EUR, the denominator for all intensity datapoints (GHG, energy, water).",
+            "example": 75000000,
+            "title": "Net Revenue"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 4217 presentation currency of the monetary datapoints.",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "materialityAssessmentDone": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the double-materiality assessment underpinning this statement has been completed (ESRS 1 / IRO-1).",
+            "title": "Materiality Assessment Done"
+          },
+          "datapointsTagged": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the reported datapoints are tagged against the ESRS XBRL taxonomy (ESRS 2 IRO-2).",
+            "title": "Datapoints Tagged"
+          },
+          "disclosureRequirementsCovered": {
+            "type": "array",
+            "nullable": true,
+            "description": "List of ESRS disclosure-requirement codes this statement covers, e.g. E1-6, S1-6, G1-4 (ESRS 2 IRO-2).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Disclosure Requirements Covered"
+          },
+          "highClimateImpactSector": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the undertaking operates in a high-climate-impact sector, which makes the ESRS E1-5 energy-intensity disclosure mandatory.",
+            "title": "High Climate Impact Sector"
+          },
+          "financialSectorEntity": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True for asset-management/banking/insurance entities, which makes the IFRS S2 financed-emissions disclosure mandatory.",
+            "title": "Financial Sector Entity"
+          },
+          "ghgScope1": {
+            "type": "number",
+            "nullable": true,
+            "description": "Gross Scope 1 GHG emissions in metric tonnes CO2-equivalent (ESRS E1-6 / IFRS S2).",
+            "title": "Ghg Scope1"
+          },
+          "ghgScope1EtsCoveredPct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Percentage (0-100) of Scope 1 emissions covered by a regulated emission-trading scheme (ESRS E1-6).",
+            "title": "Ghg Scope1Ets Covered Pct"
+          },
+          "ghgScope2LocationBased": {
+            "type": "number",
+            "nullable": true,
+            "description": "Gross Scope 2 GHG emissions, location-based, in tCO2e (ESRS E1-6 / IFRS S2).",
+            "title": "Ghg Scope2Location Based"
+          },
+          "ghgScope2MarketBased": {
+            "type": "number",
+            "nullable": true,
+            "description": "Gross Scope 2 GHG emissions, market-based, in tCO2e (ESRS E1-6).",
+            "title": "Ghg Scope2Market Based"
+          },
+          "ghgScope3": {
+            "type": "number",
+            "nullable": true,
+            "description": "Gross Scope 3 GHG emissions in tCO2e (ESRS E1-6 / IFRS S2). Equals the sum of scope3Categories[].value.",
+            "title": "Ghg Scope3"
+          },
+          "scope3Categories": {
+            "type": "array",
+            "nullable": true,
+            "description": "Scope 3 emissions broken down by GHG-Protocol value-chain category. The values sum to ghgScope3 (ESRS E1-6).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "description": "GHG-Protocol Scope 3 category code 3-cat-01 .. 3-cat-15.",
+                  "example": "3-cat-01",
+                  "title": "Category"
+                },
+                "value": {
+                  "type": "number",
+                  "description": "Category emissions in tCO2e.",
+                  "title": "Value"
+                }
+              }
+            },
+            "title": "Scope3Categories"
+          },
+          "ghgTotal": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total GHG emissions in tCO2e = ghgScope1 + ghgScope2LocationBased + ghgScope3 (ESRS E1-6).",
+            "title": "Ghg Total"
+          },
+          "ghgIntensity": {
+            "type": "number",
+            "nullable": true,
+            "description": "GHG intensity = ghgTotal / netRevenue (tCO2e per EUR) (ESRS E1-6).",
+            "title": "Ghg Intensity"
+          },
+          "ghgRemovals": {
+            "type": "number",
+            "nullable": true,
+            "description": "GHG removals and storage in own operations and value chain, in tCO2e (ESRS E1-7).",
+            "title": "Ghg Removals"
+          },
+          "carbonCreditsCancelled": {
+            "type": "number",
+            "nullable": true,
+            "description": "Carbon credits cancelled or planned to be cancelled, in tCO2e (ESRS E1-7).",
+            "title": "Carbon Credits Cancelled"
+          },
+          "internalCarbonPricingApplied": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the undertaking applies an internal carbon price in decision-making (ESRS E1-8 / IFRS S2).",
+            "title": "Internal Carbon Pricing Applied"
+          },
+          "internalCarbonPrice": {
+            "type": "number",
+            "nullable": true,
+            "description": "Internal carbon price applied per tCO2e; positive when internalCarbonPricingApplied is true (ESRS E1-8 / IFRS S2).",
+            "title": "Internal Carbon Price"
+          },
+          "energyConsumption": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total energy consumption in MWh (ESRS E1-5). Equals energyFossil + energyNuclear + energyRenewable.",
+            "title": "Energy Consumption"
+          },
+          "energyFossil": {
+            "type": "number",
+            "nullable": true,
+            "description": "Energy consumption from fossil sources in MWh (ESRS E1-5).",
+            "title": "Energy Fossil"
+          },
+          "energyNuclear": {
+            "type": "number",
+            "nullable": true,
+            "description": "Energy consumption from nuclear sources in MWh (ESRS E1-5).",
+            "title": "Energy Nuclear"
+          },
+          "energyRenewable": {
+            "type": "number",
+            "nullable": true,
+            "description": "Energy consumption from renewable sources in MWh (ESRS E1-5).",
+            "title": "Energy Renewable"
+          },
+          "renewableEnergySharePct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Share of renewable energy in total consumption (0-100) = energyRenewable / energyConsumption * 100 (ESRS E1-5).",
+            "title": "Renewable Energy Share Pct"
+          },
+          "energyIntensity": {
+            "type": "number",
+            "nullable": true,
+            "description": "Energy intensity = energyConsumption / netRevenue (MWh per EUR); mandatory in high-climate-impact sectors (ESRS E1-5).",
+            "title": "Energy Intensity"
+          },
+          "pollutantsToAir": {
+            "type": "number",
+            "nullable": true,
+            "description": "Amount of pollutants emitted to air in tonnes (ESRS E2-4).",
+            "title": "Pollutants To Air"
+          },
+          "pollutantsToWater": {
+            "type": "number",
+            "nullable": true,
+            "description": "Amount of pollutants emitted to water in tonnes (ESRS E2-4).",
+            "title": "Pollutants To Water"
+          },
+          "pollutantsToSoil": {
+            "type": "number",
+            "nullable": true,
+            "description": "Amount of pollutants emitted to soil in tonnes (ESRS E2-4).",
+            "title": "Pollutants To Soil"
+          },
+          "substancesOfConcern": {
+            "type": "number",
+            "nullable": true,
+            "description": "Quantity of substances of concern generated/used in tonnes (ESRS E2-5).",
+            "title": "Substances Of Concern"
+          },
+          "substancesOfVeryHighConcern": {
+            "type": "number",
+            "nullable": true,
+            "description": "Quantity of substances of very high concern in tonnes (ESRS E2-5).",
+            "title": "Substances Of Very High Concern"
+          },
+          "waterConsumption": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total water consumption in cubic metres (ESRS E3-4).",
+            "title": "Water Consumption"
+          },
+          "waterConsumptionAtRiskPct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Share of water consumption in areas at water risk (0-100) (ESRS E3-4).",
+            "title": "Water Consumption At Risk Pct"
+          },
+          "waterIntensity": {
+            "type": "number",
+            "nullable": true,
+            "description": "Water intensity = waterConsumption / netRevenue (m3 per EUR) (ESRS E3-4).",
+            "title": "Water Intensity"
+          },
+          "landUseChangeHectares": {
+            "type": "number",
+            "nullable": true,
+            "description": "Land-use change in hectares (ESRS E4-5).",
+            "title": "Land Use Change Hectares"
+          },
+          "sitesNearBiodiversitySensitiveAreas": {
+            "type": "number",
+            "nullable": true,
+            "description": "Number of own sites located in or near biodiversity-sensitive areas (ESRS E4-5).",
+            "title": "Sites Near Biodiversity Sensitive Areas"
+          },
+          "materialsTotalWeight": {
+            "type": "number",
+            "nullable": true,
+            "description": "Overall total weight of products and materials used (resource inflows) in tonnes (ESRS E5-4).",
+            "title": "Materials Total Weight"
+          },
+          "biologicalMaterialsSharePct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Share of biological materials in resource inflows (0-100) (ESRS E5-4).",
+            "title": "Biological Materials Share Pct"
+          },
+          "secondaryMaterialsSharePct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Share of secondary (recycled) materials in resource inflows (0-100) (ESRS E5-4).",
+            "title": "Secondary Materials Share Pct"
+          },
+          "wasteTotalTonnes": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total waste generated in tonnes (ESRS E5-5).",
+            "title": "Waste Total Tonnes"
+          },
+          "wasteDivertedFromDisposalPct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Share of waste diverted from disposal (0-100); together with wasteDirectedToDisposalPct sums to 100 (ESRS E5-5).",
+            "title": "Waste Diverted From Disposal Pct"
+          },
+          "wasteDirectedToDisposalPct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Share of waste directed to disposal (0-100) (ESRS E5-5).",
+            "title": "Waste Directed To Disposal Pct"
+          },
+          "employeeHeadcount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total number of employees by head count (ESRS S1-6). Equals the sum of the gender breakdown.",
+            "title": "Employee Headcount"
+          },
+          "employeeHeadcountMale": {
+            "type": "number",
+            "nullable": true,
+            "description": "Number of male employees (ESRS S1-6).",
+            "title": "Employee Headcount Male"
+          },
+          "employeeHeadcountFemale": {
+            "type": "number",
+            "nullable": true,
+            "description": "Number of female employees (ESRS S1-6).",
+            "title": "Employee Headcount Female"
+          },
+          "employeeHeadcountOther": {
+            "type": "number",
+            "nullable": true,
+            "description": "Number of employees of other/not-disclosed gender (ESRS S1-6).",
+            "title": "Employee Headcount Other"
+          },
+          "nonEmployees": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total number of non-employees in own workforce (self-employed and agency workers) (ESRS S1-7).",
+            "title": "Non Employees"
+          },
+          "collectiveBargainingCoveragePct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Percentage of employees covered by collective bargaining agreements (0-100) (ESRS S1-8).",
+            "title": "Collective Bargaining Coverage Pct"
+          },
+          "topManagementFemalePct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Share of women at top-management level (0-100) (ESRS S1-9).",
+            "title": "Top Management Female Pct"
+          },
+          "employeeAgeBands": {
+            "type": "array",
+            "nullable": true,
+            "description": "Distribution of employees by age band; the counts sum to employeeHeadcount (ESRS S1-9).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "band": {
+                  "type": "string",
+                  "description": "Age band label, e.g. under-30, 30-50, over-50.",
+                  "example": "30-50",
+                  "title": "Band"
+                },
+                "count": {
+                  "type": "number",
+                  "description": "Number of employees in the band.",
+                  "title": "Count"
+                }
+              }
+            },
+            "title": "Employee Age Bands"
+          },
+          "healthSafetyCoveragePct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Percentage of own workforce covered by the health-and-safety system (0-100) (ESRS S1-14).",
+            "title": "Health Safety Coverage Pct"
+          },
+          "recordableAccidents": {
+            "type": "number",
+            "nullable": true,
+            "description": "Number of recordable work-related accidents (ESRS S1-14).",
+            "title": "Recordable Accidents"
+          },
+          "workRelatedFatalities": {
+            "type": "number",
+            "nullable": true,
+            "description": "Number of work-related fatalities; cannot exceed recordableAccidents (ESRS S1-14).",
+            "title": "Work Related Fatalities"
+          },
+          "genderPayGapPct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Gender pay gap as a percentage (may be negative) (ESRS S1-16).",
+            "title": "Gender Pay Gap Pct"
+          },
+          "ceoPayRatio": {
+            "type": "number",
+            "nullable": true,
+            "description": "Ratio of the highest-paid individual's total remuneration to the median total remuneration (ESRS S1-16).",
+            "title": "Ceo Pay Ratio"
+          },
+          "discriminationIncidents": {
+            "type": "number",
+            "nullable": true,
+            "description": "Number of work-related incidents of discrimination (ESRS S1-17).",
+            "title": "Discrimination Incidents"
+          },
+          "discriminationFines": {
+            "type": "number",
+            "nullable": true,
+            "description": "Fines, penalties and compensation related to discrimination incidents, in EUR (ESRS S1-17).",
+            "title": "Discrimination Fines"
+          },
+          "corruptionIncidents": {
+            "type": "number",
+            "nullable": true,
+            "description": "Number of confirmed incidents of corruption or bribery (ESRS G1-4).",
+            "title": "Corruption Incidents"
+          },
+          "corruptionConvictions": {
+            "type": "number",
+            "nullable": true,
+            "description": "Number of convictions for corruption/bribery; cannot exceed corruptionIncidents (ESRS G1-4).",
+            "title": "Corruption Convictions"
+          },
+          "corruptionFines": {
+            "type": "number",
+            "nullable": true,
+            "description": "Fines for violation of anti-corruption/anti-bribery laws, in EUR (ESRS G1-4).",
+            "title": "Corruption Fines"
+          },
+          "averageDaysToPay": {
+            "type": "number",
+            "nullable": true,
+            "description": "Average number of days to pay an invoice (ESRS G1-6).",
+            "title": "Average Days To Pay"
+          },
+          "standardPaymentTermDays": {
+            "type": "number",
+            "nullable": true,
+            "description": "Standard contractual payment term in days (ESRS G1-6).",
+            "title": "Standard Payment Term Days"
+          },
+          "latePaymentProceedings": {
+            "type": "number",
+            "nullable": true,
+            "description": "Number of legal proceedings for late payment (ESRS G1-6).",
+            "title": "Late Payment Proceedings"
+          },
+          "financedEmissions": {
+            "type": "number",
+            "nullable": true,
+            "description": "Financed emissions in tCO2e (additional Scope 3); mandatory for financial-sector entities (IFRS S2).",
+            "title": "Financed Emissions"
+          },
+          "transitionRiskAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Amount of assets/business activities vulnerable to climate-related transition risk, in EUR (IFRS S2).",
+            "title": "Transition Risk Amount"
+          },
+          "transitionRiskPct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Percentage of assets/activities vulnerable to transition risk (0-100) (IFRS S2).",
+            "title": "Transition Risk Pct"
+          },
+          "physicalRiskAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Amount of assets/activities vulnerable to climate-related physical risk, in EUR (IFRS S2).",
+            "title": "Physical Risk Amount"
+          },
+          "physicalRiskPct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Percentage of assets/activities vulnerable to physical risk (0-100) (IFRS S2).",
+            "title": "Physical Risk Pct"
+          },
+          "climateOpportunityAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Amount of assets/activities aligned with climate-related opportunities, in EUR (IFRS S2).",
+            "title": "Climate Opportunity Amount"
+          },
+          "climateOpportunityPct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Percentage of assets/activities aligned with climate opportunities (0-100) (IFRS S2).",
+            "title": "Climate Opportunity Pct"
+          },
+          "climateCapitalDeployed": {
+            "type": "number",
+            "nullable": true,
+            "description": "Capital expenditure, financing or investment deployed towards climate risks/opportunities, in EUR (IFRS S2).",
+            "title": "Climate Capital Deployed"
+          },
+          "remunerationLinkedToClimatePct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Percentage of executive remuneration linked to climate considerations (0-100) (IFRS S2).",
+            "title": "Remuneration Linked To Climate Pct"
+          },
+          "industryMetrics": {
+            "type": "array",
+            "nullable": true,
+            "description": "List of disclosed industry-based (SASB) metric codes (IFRS S2).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Industry Metrics"
+          },
+          "targets": {
+            "type": "array",
+            "nullable": true,
+            "description": "Cross-cutting measurable, outcome-oriented sustainability targets, one or more per material matter (ESRS 2 MDR-T; per-topic E1-4/E2-3/E3-3/E4-4/E5-3/S2-5/S3-5/S4-5).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "matter": {
+                  "type": "string",
+                  "description": "ESRS material matter code the target relates to (E1-E5, S1-S4, G1).",
+                  "enum": [
+                    "E1",
+                    "E2",
+                    "E3",
+                    "E4",
+                    "E5",
+                    "S1",
+                    "S2",
+                    "S3",
+                    "S4",
+                    "G1"
+                  ],
+                  "example": "E1",
+                  "title": "Matter"
+                },
+                "baseYear": {
+                  "type": "integer",
+                  "description": "Baseline year of the target.",
+                  "title": "Base Year"
+                },
+                "targetYear": {
+                  "type": "integer",
+                  "description": "Year the target is to be achieved; must be >= baseYear.",
+                  "title": "Target Year"
+                },
+                "value": {
+                  "type": "number",
+                  "description": "Target value to reach.",
+                  "title": "Value"
+                },
+                "baseline": {
+                  "type": "number",
+                  "description": "Baseline value the target is measured against.",
+                  "title": "Baseline"
+                },
+                "metric": {
+                  "type": "string",
+                  "description": "Unit/metric of the target, e.g. tCO2e, m3, percent.",
+                  "nullable": true,
+                  "title": "Metric"
+                },
+                "targetType": {
+                  "type": "string",
+                  "enum": [
+                    "absolute",
+                    "intensity"
+                  ],
+                  "description": "Whether the target is absolute or intensity-based.",
+                  "nullable": true,
+                  "title": "Target Type"
+                },
+                "scienceBased": {
+                  "type": "boolean",
+                  "description": "Whether the target is science-based (SBTi).",
+                  "nullable": true,
+                  "title": "Science Based"
+                },
+                "progressPct": {
+                  "type": "number",
+                  "description": "Progress against the target so far (0-100).",
+                  "nullable": true,
+                  "title": "Progress Pct"
+                }
+              }
+            },
+            "title": "Targets"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a ESRS Statement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

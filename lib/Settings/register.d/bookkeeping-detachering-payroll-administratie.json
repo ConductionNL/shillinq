@@ -1,0 +1,944 @@
+{
+  "_meta": {
+    "change": "bookkeeping-detachering-payroll-administratie",
+    "spec": "openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md",
+    "tier": "T2",
+    "description": "Payroll + detachering bridge. ADR-037 register fragment: declares Employee, Payroll, Deduction and DeterminationLetter schemas plus their lifecycle, aggregations, relations and RBAC. Merged additively into shillinq_register.json at load (SettingsService::deepMergeConfig)."
+  },
+  "components": {
+    "schemas": {
+      "Employee": {
+        "slug": "Employee",
+        "icon": "AccountTie",
+        "version": "0.1.0",
+        "title": "Employee",
+        "description": "Employee / detached worker / freelancer master record (REQ-PAY-001). Carries legal name, BSN (11-proef validated, masked on display per ADR-005), contract classification and onboarding/exit dates. A contact/person is a Nextcloud entity; this register holds the payroll-administration projection only.",
+        "x-schema-org": "schema:Person",
+        "x-spec": "openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md",
+        "type": "object",
+        "required": [
+          "employeeNumber",
+          "legalName",
+          "contractType",
+          "taxClassification",
+          "onboardingDate",
+          "administrationId",
+          "state"
+        ],
+        "properties": {
+          "employeeNumber": {
+            "type": "string",
+            "description": "Employee number, unique per administration (REQ-PAY-001).",
+            "example": "EMP-001",
+            "title": "Employee Number"
+          },
+          "legalName": {
+            "type": "string",
+            "description": "Legal name of the employee or contracting entity.",
+            "example": "John Smith",
+            "title": "Legal Name"
+          },
+          "bsn": {
+            "type": "string",
+            "description": "Burgerservicenummer. Special-category PII (ADR-005): validated by 11-proef on write, masked as ***<last4> on display, never written to the audit trail. Null for B2B contractors (REQ-PAY-012). The 11-proef checksum is not expressible declaratively — ADR-031 exception guard OCA\\Shillinq\\Validation\\BsnValidator::isValid is invoked on write.",
+            "nullable": true,
+            "pii": true,
+            "x-pii": "bsn",
+            "x-mask": "trailing4",
+            "pattern": "^[0-9]{9}$",
+            "guard": "OCA\\Shillinq\\Validation\\BsnValidator::isValid",
+            "example": "123456782",
+            "title": "BSN"
+          },
+          "contractType": {
+            "type": "string",
+            "enum": [
+              "employee",
+              "freelancer",
+              "detached"
+            ],
+            "description": "Employment relationship type (REQ-PAY-001). detached = gedetacheerde werknemer placed via an agency.",
+            "default": "employee",
+            "example": "detached",
+            "title": "Contract Type"
+          },
+          "taxClassification": {
+            "type": "string",
+            "enum": [
+              "employee",
+              "detached-worker",
+              "b2b-contractor"
+            ],
+            "description": "Fiscal classification driving deduction treatment (REQ-PAY-001).",
+            "default": "employee",
+            "example": "detached-worker",
+            "title": "Tax Classification"
+          },
+          "taxNumber": {
+            "type": "string",
+            "description": "Loonheffingennummer / BTW-nummer for B2B contractors.",
+            "nullable": true,
+            "example": "119999999",
+            "title": "Tax Number"
+          },
+          "onboardingDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the employee started (REQ-PAY-007).",
+            "example": "2026-05-01",
+            "title": "Onboarding Date"
+          },
+          "exitDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Exit date; once set, no payroll may be created with a period after it (REQ-PAY-001 / REQ-PAY-007).",
+            "nullable": true,
+            "example": "2026-12-31",
+            "title": "Exit Date"
+          },
+          "salaryScale": {
+            "type": "string",
+            "description": "Reference to the applicable salary scale.",
+            "nullable": true,
+            "example": "scale-b",
+            "title": "Salary Scale"
+          },
+          "placementAgencyId": {
+            "type": "string",
+            "description": "FK to the placement agency supplier (detached workers only). Used for placement-fee AP materialisation (REQ-PAY-007).",
+            "nullable": true,
+            "example": "supplier-staffing-001",
+            "title": "Placement Agency ID"
+          },
+          "salaryExpenseAccount": {
+            "type": "string",
+            "description": "GL salary-expense account derived from contractType when omitted: employee->4100, detached->4110, freelancer->4120 (REQ-PAY-008).",
+            "nullable": true,
+            "example": "4110",
+            "title": "Salary Expense Account"
+          },
+          "contactEmail": {
+            "type": "string",
+            "format": "email",
+            "description": "Primary contact email.",
+            "nullable": true,
+            "example": "john.smith@example.com",
+            "title": "Contact Email"
+          },
+          "contactPhone": {
+            "type": "string",
+            "description": "Primary contact phone.",
+            "nullable": true,
+            "example": "+31612345678",
+            "title": "Contact Phone"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this employee.",
+            "example": "adm-consultancy-nl",
+            "title": "Administration ID"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ],
+            "description": "Employment lifecycle (REQ-PAY-001). Setting exitDate transitions to inactive; records are never deleted.",
+            "default": "active",
+            "example": "active",
+            "title": "State"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "active",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "Payroll-administration records retained 7 years per AWR art. 52 + Archiefwet."
+          },
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "In service. Payroll records may be created."
+            },
+            "inactive": {
+              "label": "Inactive",
+              "description": "Exited. Payroll records before exitDate remain queryable; new payroll after exitDate is rejected (REQ-PAY-001)."
+            }
+          },
+          "transitions": {
+            "exit": {
+              "from": "active",
+              "to": "inactive",
+              "label": "Exit employee",
+              "description": "Mark the employee as exited. Requires exitDate set (REQ-PAY-007)."
+            },
+            "reinstate": {
+              "from": "inactive",
+              "to": "active",
+              "label": "Reinstate",
+              "description": "Reactivate a returning employee."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "payroll-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Employee is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "Payroll": {
+        "slug": "Payroll",
+        "icon": "CashMultiple",
+        "version": "0.1.0",
+        "title": "Payroll",
+        "description": "Payroll period sub-ledger record (REQ-PAY-002). Captures gross input and aggregated deduction totals; on issue it materialises a balanced GLTransaction (REQ-PAY-008) per the T1 JournalEntry pattern. UBL Peppol BIS 30 field shape is declared for T4 passthrough but NOT computed here (REQ-PAY-010).",
+        "x-schema-org": "schema:Invoice",
+        "x-spec": "openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md",
+        "type": "object",
+        "required": [
+          "payrollNumber",
+          "employeeId",
+          "period",
+          "periodStartDate",
+          "periodEndDate",
+          "grossAmount",
+          "currency",
+          "administrationId",
+          "status"
+        ],
+        "properties": {
+          "payrollNumber": {
+            "type": "string",
+            "description": "Payroll number, unique per administration (REQ-PAY-002). Maps to UBL cbc:ID for T4 (REQ-PAY-010).",
+            "example": "PAY-2026-05-001",
+            "title": "Payroll Number"
+          },
+          "employeeId": {
+            "type": "string",
+            "description": "FK to Employee.",
+            "example": "employee-001-john-smith",
+            "title": "Employee ID",
+            "$ref": "Employee"
+          },
+          "period": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}$",
+            "description": "Payroll period YYYY-MM.",
+            "example": "2026-05",
+            "title": "Period"
+          },
+          "periodStartDate": {
+            "type": "string",
+            "format": "date",
+            "description": "First day of the payroll period.",
+            "example": "2026-05-01",
+            "title": "Period Start Date"
+          },
+          "periodEndDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Last day of the payroll period.",
+            "example": "2026-05-31",
+            "title": "Period End Date"
+          },
+          "grossAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Gross salary/wage in the administration's base currency (REQ-PAY-002).",
+            "example": 3500.0,
+            "title": "Gross Amount"
+          },
+          "netAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Net amount = grossAmount - SUM(employee-borne deductions). Computed via aggregation (REQ-PAY-002); no PHP math service.",
+            "nullable": true,
+            "example": 2500.0,
+            "title": "Net Amount"
+          },
+          "placementFeeAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Placement fee owed to the staffing agency for detached workers only (REQ-PAY-007). Materialises a separate AP posting on issue.",
+            "nullable": true,
+            "example": 350.0,
+            "title": "Placement Fee Amount"
+          },
+          "placementAgencyId": {
+            "type": "string",
+            "description": "FK to the placement agency supplier (detached workers only).",
+            "nullable": true,
+            "example": "supplier-staffing-001",
+            "title": "Placement Agency ID"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency, default EUR.",
+            "default": "EUR",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "payDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Scheduled pay date. Maps to UBL invoiceDate for T4.",
+            "nullable": true,
+            "example": "2026-06-15",
+            "title": "Pay Date"
+          },
+          "glTransactionId": {
+            "type": "string",
+            "description": "Back-reference to the materialised salary-expense GLTransaction once issued (REQ-PAY-008).",
+            "nullable": true,
+            "example": "gl-2026-05-payroll-001",
+            "title": "GL Transaction ID",
+            "$ref": "GLTransaction"
+          },
+          "placementGlTransactionId": {
+            "type": "string",
+            "description": "Back-reference to the placement-fee AP GLTransaction (detached workers only, REQ-PAY-008).",
+            "nullable": true,
+            "title": "Placement GL Transaction ID"
+          },
+          "externalReference": {
+            "type": "string",
+            "description": "Idempotency / source reference from external payroll software webhooks (REQ-PAY-009).",
+            "nullable": true,
+            "example": "ext-payroll-2026-05-001",
+            "title": "External Reference"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this payroll.",
+            "example": "adm-consultancy-nl",
+            "title": "Administration ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "calculated",
+              "issued",
+              "paid"
+            ],
+            "description": "Payroll lifecycle (REQ-PAY-004). calculated and later are immutable except status. issued materialises GL + loonstrookje.",
+            "default": "draft",
+            "example": "draft",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "Payroll records retained 7 years per AWR art. 52."
+          },
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Editable. Deductions may be assigned."
+            },
+            "calculated": {
+              "label": "Calculated",
+              "description": "Deductions assigned and net computed (REQ-PAY-004). Immutable; awaiting issuance."
+            },
+            "issued": {
+              "label": "Issued",
+              "description": "GLTransaction materialised, loonstrookje generated, payroll-issued event published (REQ-PAY-004 / REQ-PAY-008)."
+            },
+            "paid": {
+              "label": "Paid",
+              "description": "Confirmed paid via bank reconciliation; payroll-paid event published (REQ-PAY-004)."
+            }
+          },
+          "transitions": {
+            "calculate": {
+              "from": "draft",
+              "to": "calculated",
+              "label": "Calculate",
+              "description": "Aggregate deductions, compute net and validate annual statutory totals before issuance (REQ-PAY-004 / REQ-PAY-005).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\PayrollGuard::canCalculate"
+            },
+            "issue": {
+              "from": "calculated",
+              "to": "issued",
+              "label": "Issue payroll",
+              "description": "Materialise the salary-expense GLTransaction, generate the loonstrookje and publish payroll-issued (REQ-PAY-004 / REQ-PAY-006 / REQ-PAY-008).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\PayrollGuard::canIssue",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "materialise-gl-transaction",
+                  "description": "Materialise one balanced salary-expense GLTransaction (debit salary-expense account by contractType, credit payroll-liability) and set glTransactionId (REQ-PAY-008).",
+                  "actionParameters": {
+                    "register": "shillinq",
+                    "schema": "GLTransaction",
+                    "linesSchema": "GLLine",
+                    "keepBalanced": true,
+                    "backReferenceField": "payrollId",
+                    "idempotencyKey": "payrollNumber"
+                  }
+                },
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "generate-determination-letter",
+                  "description": "Generate a loonstrookje DeterminationLetter record with 7-year retention (REQ-PAY-006). PDF rendering is delegated to an external service; no template engine in Shillinq.",
+                  "actionParameters": {
+                    "register": "shillinq",
+                    "schema": "DeterminationLetter",
+                    "letterType": "loonstrookje",
+                    "backReferenceField": "payrollId"
+                  }
+                },
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "publish-cloudevent",
+                  "description": "Publish the nl.conduction.payroll.issued CloudEvent to the configured external endpoint (REQ-PAY-009).",
+                  "actionParameters": {
+                    "eventType": "nl.conduction.payroll.issued",
+                    "source": "shillinq/payroll"
+                  }
+                }
+              ]
+            },
+            "pay": {
+              "from": "issued",
+              "to": "paid",
+              "label": "Confirm paid",
+              "description": "Mark the payroll paid after bank reconciliation; publish payroll-paid (REQ-PAY-004 / REQ-PAY-009).",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "publish-cloudevent",
+                  "description": "Publish the nl.conduction.payroll.paid CloudEvent (REQ-PAY-009).",
+                  "actionParameters": {
+                    "eventType": "nl.conduction.payroll.paid",
+                    "source": "shillinq/payroll"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "netAmount": {
+            "description": "Net amount = grossAmount minus the sum of employee-borne deductions for this payroll (REQ-PAY-002). Employer SV is excluded from net.",
+            "groupBy": [
+              "payrollId"
+            ],
+            "filter": {
+              "deductionType": [
+                "income-tax",
+                "social-security-employee",
+                "pension",
+                "garnishment",
+                "other"
+              ]
+            },
+            "from": "Deduction",
+            "metric": "sum",
+            "field": "amount"
+          },
+          "annualEmployeeDeductions": {
+            "description": "Per-employee annual deduction totals grouped by type for the payroll year, used by the calculate precondition to validate statutory limits and for tax/SV reporting (REQ-PAY-005).",
+            "groupBy": [
+              "taxYear",
+              "deductionType"
+            ],
+            "filter": {},
+            "from": "Deduction",
+            "metric": "sum",
+            "field": "amount"
+          }
+        },
+        "x-openregister-ubl": {
+          "profile": "peppol-bis-30",
+          "computed": false,
+          "description": "Declared field shape for T4 payroll-disbursement passthrough; NOT emitted in T2 (REQ-PAY-010).",
+          "mapping": {
+            "cbc:ID": "payrollNumber",
+            "cbc:IssueDate": "payDate",
+            "cac:AccountingCustomerParty": "administrationId",
+            "cac:AccountingSupplierParty": "employeeId",
+            "cac:InvoiceLine": "@relation.deductions",
+            "cbc:LegalMonetaryTotal/cbc:PayableAmount": "netAmount"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "payroll-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Payroll is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "Deduction": {
+        "slug": "Deduction",
+        "icon": "CashMinus",
+        "version": "0.1.0",
+        "title": "Deduction",
+        "description": "Granular, auditable payroll deduction line item (REQ-PAY-003): loonbelasting, employee/employer SV, pension, garnishment. Each carries its statutory rate reference and taxYear for annual aggregation (REQ-PAY-005).",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md",
+        "type": "object",
+        "required": [
+          "payrollId",
+          "deductionType",
+          "deductionName",
+          "amount",
+          "taxYear",
+          "administrationId"
+        ],
+        "properties": {
+          "payrollId": {
+            "type": "string",
+            "description": "FK to the parent Payroll.",
+            "example": "payroll-2026-05-emp-001",
+            "title": "Payroll ID",
+            "$ref": "Payroll"
+          },
+          "deductionType": {
+            "type": "string",
+            "enum": [
+              "income-tax",
+              "social-security-employee",
+              "social-security-employer",
+              "pension",
+              "garnishment",
+              "other"
+            ],
+            "description": "Deduction category (REQ-PAY-003). social-security-employer is an employer cost, NOT deducted from employee net.",
+            "example": "income-tax",
+            "title": "Deduction Type"
+          },
+          "deductionName": {
+            "type": "string",
+            "description": "Human-readable display name.",
+            "example": "Loonbelasting",
+            "title": "Deduction Name"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Non-negative deduction amount in base currency.",
+            "example": 420.0,
+            "title": "Amount"
+          },
+          "rate": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Applied rate as a percentage (e.g. 12.0).",
+            "nullable": true,
+            "example": 12.0,
+            "title": "Rate"
+          },
+          "rateSource": {
+            "type": "string",
+            "description": "Statutory table or court-order reference (REQ-PAY-003).",
+            "nullable": true,
+            "example": "statutory-2026",
+            "title": "Rate Source"
+          },
+          "taxYear": {
+            "type": "integer",
+            "description": "Calendar year for annual aggregation (REQ-PAY-005).",
+            "example": 2026,
+            "title": "Tax Year"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration.",
+            "example": "adm-consultancy-nl",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "payroll-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Deduction is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "DeterminationLetter": {
+        "slug": "DeterminationLetter",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "Determination Letter",
+        "description": "Immutable archival payroll document (REQ-PAY-006): loonstrookje, werkgeversverklaring or salary certificate. Generated on payroll issue; PDF rendering delegated to an external service and attached via OR files relation. 7-year retention per Archiefwet.",
+        "x-schema-org": "schema:DigitalDocument",
+        "x-spec": "openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md",
+        "type": "object",
+        "required": [
+          "payrollId",
+          "letterType",
+          "generatedDate",
+          "administrationId",
+          "archiveStatus"
+        ],
+        "properties": {
+          "payrollId": {
+            "type": "string",
+            "description": "FK to the source Payroll.",
+            "example": "payroll-2026-05-emp-001",
+            "title": "Payroll ID",
+            "$ref": "Payroll"
+          },
+          "letterType": {
+            "type": "string",
+            "enum": [
+              "loonstrookje",
+              "werkgeversverklaring",
+              "salary-certificate"
+            ],
+            "description": "Letter type (REQ-PAY-006).",
+            "example": "loonstrookje",
+            "title": "Letter Type"
+          },
+          "generatedDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Generation date.",
+            "example": "2026-05-15",
+            "title": "Generated Date"
+          },
+          "year": {
+            "type": "integer",
+            "description": "Reporting year for werkgeversverklaring / annual certificates.",
+            "nullable": true,
+            "example": 2026,
+            "title": "Year"
+          },
+          "content": {
+            "type": "string",
+            "description": "Human-readable summary (gross, deductions, net, tax details). No raw BSN (ADR-005).",
+            "nullable": true,
+            "example": "Loonstrookje mei 2026 — bruto 3500,00 / netto 2500,00.",
+            "title": "Content"
+          },
+          "fileUri": {
+            "type": "string",
+            "format": "uri",
+            "description": "URI of the attached rendered PDF (OR files relation). Content lives outside this record (ADR-022).",
+            "nullable": true,
+            "title": "File URI"
+          },
+          "archiveStatus": {
+            "type": "string",
+            "enum": [
+              "current",
+              "archived"
+            ],
+            "description": "Archival state (REQ-PAY-006).",
+            "default": "current",
+            "example": "current",
+            "title": "Archive Status"
+          },
+          "retentionExpiryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "7 years after generation; eligible for destruction afterwards (Archiefwet).",
+            "nullable": true,
+            "example": "2033-05-15",
+            "title": "Retention Expiry Date"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration.",
+            "example": "adm-consultancy-nl",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "archiveStatus",
+          "initialState": "current",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "Determination letters retained 7 years per Archiefwet."
+          },
+          "states": {
+            "current": {
+              "label": "Current",
+              "description": "Active determination letter."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Read-only after the retention review (REQ-PAY-006)."
+            }
+          },
+          "transitions": {
+            "archive": {
+              "from": "current",
+              "to": "archived",
+              "label": "Archive",
+              "description": "Transition to read-only archival after the active period."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "payroll-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Determination Letter is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Employee",
+        "slug": "employee-001-john-smith"
+      },
+      "employeeNumber": "EMP-001",
+      "legalName": "John Smith",
+      "bsn": "123456782",
+      "contractType": "employee",
+      "taxClassification": "employee",
+      "taxNumber": "119999999",
+      "onboardingDate": "2024-01-15",
+      "exitDate": null,
+      "salaryScale": "scale-a",
+      "salaryExpenseAccount": "4100",
+      "contactEmail": "john.smith@example.com",
+      "contactPhone": "+31612345678",
+      "administrationId": "adm-consultancy-nl",
+      "state": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Employee",
+        "slug": "employee-002-maria-garcia"
+      },
+      "employeeNumber": "EMP-002",
+      "legalName": "Maria Garcia",
+      "bsn": "111222333",
+      "contractType": "detached",
+      "taxClassification": "detached-worker",
+      "taxNumber": "119999998",
+      "onboardingDate": "2024-03-01",
+      "exitDate": null,
+      "salaryScale": "scale-b",
+      "salaryExpenseAccount": "4110",
+      "placementAgencyId": "supplier-staffing-001",
+      "contactEmail": "maria.garcia@example.com",
+      "administrationId": "adm-consultancy-nl",
+      "state": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Employee",
+        "slug": "employee-003-freelancer-tech"
+      },
+      "employeeNumber": "EMP-003",
+      "legalName": "Tech Solutions BV",
+      "bsn": null,
+      "contractType": "freelancer",
+      "taxClassification": "b2b-contractor",
+      "taxNumber": "NL002345678B01",
+      "onboardingDate": "2024-02-01",
+      "exitDate": null,
+      "salaryScale": null,
+      "salaryExpenseAccount": "4120",
+      "contactEmail": "contact@techsolutions.nl",
+      "administrationId": "adm-consultancy-nl",
+      "state": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Payroll",
+        "slug": "payroll-2026-05-emp-001"
+      },
+      "payrollNumber": "PAY-2026-05-001",
+      "employeeId": "employee-001-john-smith",
+      "period": "2026-05",
+      "periodStartDate": "2026-05-01",
+      "periodEndDate": "2026-05-31",
+      "grossAmount": 3500.0,
+      "netAmount": 2500.0,
+      "currency": "EUR",
+      "payDate": "2026-06-15",
+      "administrationId": "adm-consultancy-nl",
+      "status": "draft"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Payroll",
+        "slug": "payroll-2026-05-emp-002"
+      },
+      "payrollNumber": "PAY-2026-05-002",
+      "employeeId": "employee-002-maria-garcia",
+      "period": "2026-05",
+      "periodStartDate": "2026-05-01",
+      "periodEndDate": "2026-05-31",
+      "grossAmount": 2800.0,
+      "netAmount": 2200.0,
+      "placementFeeAmount": 350.0,
+      "placementAgencyId": "supplier-staffing-001",
+      "currency": "EUR",
+      "payDate": "2026-06-15",
+      "administrationId": "adm-consultancy-nl",
+      "status": "draft"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Deduction",
+        "slug": "deduction-2026-05-emp-001-tax"
+      },
+      "payrollId": "payroll-2026-05-emp-001",
+      "deductionType": "income-tax",
+      "deductionName": "Loonbelasting",
+      "amount": 420.0,
+      "rate": 12.0,
+      "rateSource": "statutory-2026",
+      "taxYear": 2026,
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Deduction",
+        "slug": "deduction-2026-05-emp-001-sv"
+      },
+      "payrollId": "payroll-2026-05-emp-001",
+      "deductionType": "social-security-employee",
+      "deductionName": "SV bijdrage werknemer",
+      "amount": 430.0,
+      "rate": 12.3,
+      "rateSource": "statutory-2026",
+      "taxYear": 2026,
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Deduction",
+        "slug": "deduction-2026-05-emp-001-pension"
+      },
+      "payrollId": "payroll-2026-05-emp-001",
+      "deductionType": "pension",
+      "deductionName": "Pensioenpremie werknemer",
+      "amount": 150.0,
+      "rate": 2.5,
+      "rateSource": "statutory-2026",
+      "taxYear": 2026,
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Deduction",
+        "slug": "deduction-2026-05-emp-001-sv-employer"
+      },
+      "payrollId": "payroll-2026-05-emp-001",
+      "deductionType": "social-security-employer",
+      "deductionName": "SV bijdrage werkgever",
+      "amount": 280.0,
+      "rate": 8.0,
+      "rateSource": "statutory-2026",
+      "taxYear": 2026,
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "DeterminationLetter",
+        "slug": "letter-2026-05-emp-001-loonstrookje"
+      },
+      "payrollId": "payroll-2026-05-emp-001",
+      "letterType": "loonstrookje",
+      "generatedDate": "2026-05-15",
+      "content": "Loonstrookje mei 2026 — bruto 3500,00 / inhoudingen 1000,00 / netto 2500,00.",
+      "archiveStatus": "current",
+      "retentionExpiryDate": "2033-05-15",
+      "administrationId": "adm-consultancy-nl"
+    }
+  ]
+}

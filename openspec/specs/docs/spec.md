@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # docs Specification
 
 **Status**: in-progress
@@ -9,7 +13,7 @@
 
 Defines the canonical structure, configuration, and content requirements for shillinq's product documentation site, built on `@conduction/docusaurus-preset` (ADR-030). The spec ensures the docs site conforms to the fleet-wide product-pages layout, exposes an API documentation endpoint, and ships with both English and Dutch locale support.
 
-## ADDED Requirements
+## Requirements
 
 @e2e exclude non-Playwright: documentation site reachability checks (HTTP, not Shillinq app browser session)
 

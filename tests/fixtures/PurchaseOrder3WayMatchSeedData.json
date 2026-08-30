@@ -1,0 +1,307 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-purchase-order-3way-01-schemas-and-registers",
+		"description": "Seed fixtures for slice-01 of the bookkeeping-purchase-order-3way chain. Records exemplify the eight registers (PurchaseOrder, PurchaseOrderLine, GoodsReceiptNote, GoodsReceiptLine, SupplierInvoice, ThreeWayMatch, ToleranceProfile, VendorPerformance) and their lifecycle states. Money fields are integer euro cents per ADR-022; tax rates are basis points (1/10000). costCenter + projectCode propagate from each PO down through its lines, GRN and invoice. Used by tests/Integration/PurchaseOrder3WaySchemasIntegrationTest.php to verify the materialised registers + dimensional round-trip.",
+		"source": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/design.md (seed-data section)"
+	},
+	"administrationId": "adm-1",
+	"PurchaseOrder": [
+		{
+			"poNumber": "PO-2026-0001",
+			"supplierId": "vendor-nieuw-2026-05",
+			"supplierReference": null,
+			"requester": "ap-clerk-01",
+			"costCenter": "CC-IT-OPERATIONS",
+			"projectCode": "PRJ-OFFICE-REFRESH-2026",
+			"currency": "EUR",
+			"paymentTerms": "30 days net",
+			"deliveryAddress": "Conduction B.V., Nieuwe Donk 3, 4879 AC Etten-Leur, NL",
+			"expectedDeliveryDate": "2026-07-15",
+			"totalExclVat": 4000000,
+			"totalVat": 840000,
+			"totalInclVat": 4840000,
+			"approvalChain": [
+				{ "userId": "ap-clerk-01", "decision": "approved", "decidedAt": "2026-06-01T09:00:00Z" },
+				{ "userId": "finance-controller", "decision": "approved", "decidedAt": "2026-06-01T11:00:00Z" }
+			],
+			"statusCode": "approved",
+			"administrationId": "adm-1"
+		},
+		{
+			"poNumber": "PO-2026-0002",
+			"supplierId": "vendor-ers-2026-05",
+			"supplierReference": "ERS-ACK-0997",
+			"requester": "ap-clerk-02",
+			"costCenter": "CC-FACILITIES",
+			"projectCode": "PRJ-CATERING-2026",
+			"currency": "EUR",
+			"paymentTerms": "14 days net",
+			"deliveryAddress": "Conduction B.V., Nieuwe Donk 3, 4879 AC Etten-Leur, NL",
+			"expectedDeliveryDate": "2026-07-08",
+			"totalExclVat": 250000,
+			"totalVat": 22500,
+			"totalInclVat": 272500,
+			"peppolSentAt": "2026-06-15T10:00:00Z",
+			"peppolMessageId": "peppol-msg-9914",
+			"statusCode": "sent",
+			"administrationId": "adm-1"
+		},
+		{
+			"poNumber": "PO-2026-0003",
+			"supplierId": "vendor-nieuw-2026-05",
+			"requester": "ap-clerk-01",
+			"costCenter": "CC-WAREHOUSE",
+			"projectCode": "PRJ-RESTOCK-Q3",
+			"currency": "EUR",
+			"paymentTerms": "30 days net",
+			"deliveryAddress": "Conduction B.V., Nieuwe Donk 3, 4879 AC Etten-Leur, NL",
+			"expectedDeliveryDate": "2026-07-20",
+			"totalExclVat": 9000000,
+			"totalVat": 1890000,
+			"totalInclVat": 10890000,
+			"statusCode": "partial_received",
+			"administrationId": "adm-1"
+		}
+	],
+	"PurchaseOrderLine": [
+		{
+			"poId": "PO-2026-0001",
+			"lineNumber": 1,
+			"productOrServiceCode": "PROD-LAPTOP-T14",
+			"description": "ThinkPad T14 Gen 5",
+			"quantityOrdered": 10,
+			"unitOfMeasure": "EA",
+			"unitPrice": 400000,
+			"currency": "EUR",
+			"lineTotal": 4000000,
+			"vatRate": 2100,
+			"vatAmount": 840000,
+			"expectedDeliveryDate": "2026-07-15",
+			"glAccount": "0210",
+			"costCenter": "CC-IT-OPERATIONS",
+			"projectCode": "PRJ-OFFICE-REFRESH-2026",
+			"administrationId": "adm-1"
+		},
+		{
+			"poId": "PO-2026-0002",
+			"lineNumber": 1,
+			"productOrServiceCode": "SVC-CATERING-LUNCH",
+			"description": "Lunch catering 50 personen",
+			"quantityOrdered": 50,
+			"unitOfMeasure": "EA",
+			"unitPrice": 5000,
+			"currency": "EUR",
+			"lineTotal": 250000,
+			"vatRate": 900,
+			"vatAmount": 22500,
+			"expectedDeliveryDate": "2026-07-08",
+			"glAccount": "4250",
+			"costCenter": "CC-FACILITIES",
+			"projectCode": "PRJ-CATERING-2026",
+			"administrationId": "adm-1"
+		},
+		{
+			"poId": "PO-2026-0003",
+			"lineNumber": 1,
+			"productOrServiceCode": "PROD-PALLET-WATER",
+			"description": "Pallet bronwater 0.5L",
+			"quantityOrdered": 200,
+			"unitOfMeasure": "EA",
+			"unitPrice": 45000,
+			"currency": "EUR",
+			"lineTotal": 9000000,
+			"vatRate": 2100,
+			"vatAmount": 1890000,
+			"expectedDeliveryDate": "2026-07-20",
+			"glAccount": "7000",
+			"costCenter": "CC-WAREHOUSE",
+			"projectCode": "PRJ-RESTOCK-Q3",
+			"administrationId": "adm-1"
+		}
+	],
+	"GoodsReceiptNote": [
+		{
+			"grnNumber": "GRN-2026-0011",
+			"poIds": ["PO-2026-0001"],
+			"receivedAt": "2026-07-15T10:30:00Z",
+			"receivedBy": "warehouse-01",
+			"deliveryNoteReference": "DN-NW-2026-7791",
+			"carrier": "PostNL",
+			"qualityCheckPassed": true,
+			"costCenter": "CC-IT-OPERATIONS",
+			"projectCode": "PRJ-OFFICE-REFRESH-2026",
+			"statusCode": "accepted",
+			"administrationId": "adm-1"
+		},
+		{
+			"grnNumber": "GRN-2026-0012",
+			"poIds": ["PO-2026-0003"],
+			"receivedAt": "2026-07-20T14:00:00Z",
+			"receivedBy": "warehouse-02",
+			"deliveryNoteReference": "DN-NW-2026-7812",
+			"carrier": "DHL",
+			"qualityCheckPassed": true,
+			"costCenter": "CC-WAREHOUSE",
+			"projectCode": "PRJ-RESTOCK-Q3",
+			"statusCode": "accepted",
+			"administrationId": "adm-1"
+		}
+	],
+	"GoodsReceiptLine": [
+		{
+			"grnId": "GRN-2026-0011",
+			"poLineId": "PO-2026-0001:1",
+			"quantityReceived": 10,
+			"quantityAccepted": 10,
+			"quantityRejected": 0,
+			"inspector": "qa-01",
+			"batchReference": "BATCH-T14-2026-7791",
+			"administrationId": "adm-1"
+		},
+		{
+			"grnId": "GRN-2026-0012",
+			"poLineId": "PO-2026-0003:1",
+			"quantityReceived": 180,
+			"quantityAccepted": 180,
+			"quantityRejected": 0,
+			"rejectionReason": null,
+			"inspector": "qa-02",
+			"batchReference": "BATCH-WATER-2026-7812",
+			"administrationId": "adm-1"
+		}
+	],
+	"SupplierInvoice": [
+		{
+			"invoiceNumber": "INV-ERS-2026-00445",
+			"supplierId": "vendor-ers-2026-05",
+			"invoiceDate": "2026-07-09",
+			"dueDate": "2026-07-23",
+			"currency": "EUR",
+			"totalExclVat": 250000,
+			"totalVat": 22500,
+			"totalInclVat": 272500,
+			"paymentReference": "REF-ERS-9914",
+			"peppolReceivedAt": "2026-07-09T09:30:00Z",
+			"costCenter": "CC-FACILITIES",
+			"projectCode": "PRJ-CATERING-2026",
+			"statusCode": "matched",
+			"administrationId": "adm-1"
+		},
+		{
+			"invoiceNumber": "INV-NL-2026-18547",
+			"supplierId": "vendor-nieuw-2026-05",
+			"invoiceDate": "2026-07-16",
+			"dueDate": "2026-08-15",
+			"currency": "EUR",
+			"totalExclVat": 4000000,
+			"totalVat": 840000,
+			"totalInclVat": 4840000,
+			"paymentReference": "REF-NW-1001",
+			"ublSourceUri": "file://ubl-inbox/2026/INV-NL-2026-18547.xml",
+			"costCenter": "CC-IT-OPERATIONS",
+			"projectCode": "PRJ-OFFICE-REFRESH-2026",
+			"statusCode": "matched",
+			"administrationId": "adm-1"
+		}
+	],
+	"ThreeWayMatch": [
+		{
+			"invoiceId": "INV-ERS-2026-00445",
+			"matchedPoIds": ["PO-2026-0002"],
+			"matchedGrnIds": [],
+			"matchStatus": "auto_approved",
+			"createdAt": "2026-07-09T10:00:00Z",
+			"resolvedAt": "2026-07-09T10:00:00Z",
+			"costCenter": "CC-FACILITIES",
+			"projectCode": "PRJ-CATERING-2026",
+			"administrationId": "adm-1"
+		},
+		{
+			"invoiceId": "INV-NL-2026-18547",
+			"matchedPoIds": ["PO-2026-0001"],
+			"matchedGrnIds": ["GRN-2026-0011"],
+			"matchStatus": "within_tolerance",
+			"divergenceDetails": [
+				{ "field": "unitPrice", "expected": 400000, "actual": 400500, "deltaCents": 500, "deltaPercentage": 12, "toleranceProfileId": "TP-GLOBAL-DEFAULT" }
+			],
+			"createdAt": "2026-07-16T11:00:00Z",
+			"resolvedAt": "2026-07-16T11:00:00Z",
+			"costCenter": "CC-IT-OPERATIONS",
+			"projectCode": "PRJ-OFFICE-REFRESH-2026",
+			"administrationId": "adm-1"
+		}
+	],
+	"ToleranceProfile": [
+		{
+			"profileId": "TP-GLOBAL-DEFAULT",
+			"scope": "global",
+			"scopeReference": null,
+			"priceToleranceAmount": 1000,
+			"priceTolerancePercentage": 250,
+			"quantityTolerancePercentage": 100,
+			"dateToleranceDays": 3,
+			"currencyRoundingTolerance": 1,
+			"exceptionRouting": "ap-team",
+			"status": "active",
+			"administrationId": "adm-1"
+		},
+		{
+			"profileId": "TP-SUPPLIER-NieuweLeverancierBV",
+			"scope": "supplier",
+			"scopeReference": "vendor-nieuw-2026-05",
+			"priceToleranceAmount": 0,
+			"priceTolerancePercentage": 0,
+			"quantityTolerancePercentage": 0,
+			"dateToleranceDays": 0,
+			"currencyRoundingTolerance": 1,
+			"exceptionRouting": "controller-approval",
+			"status": "active",
+			"administrationId": "adm-1"
+		},
+		{
+			"profileId": "TP-CATEGORY-ElectricalEquipment",
+			"scope": "category",
+			"scopeReference": "CAT-ELECTRICAL-EQUIPMENT",
+			"priceToleranceAmount": 5000,
+			"priceTolerancePercentage": 500,
+			"quantityTolerancePercentage": 200,
+			"dateToleranceDays": 7,
+			"currencyRoundingTolerance": 1,
+			"exceptionRouting": "ap-team",
+			"status": "active",
+			"administrationId": "adm-1"
+		}
+	],
+	"VendorPerformance": [
+		{
+			"supplierId": "vendor-ers-2026-05",
+			"period": "2026-Q2",
+			"onTimeDeliveryRate": 9800,
+			"quantityAccuracyRate": 9950,
+			"priceAccuracyRate": 10000,
+			"invoiceAccuracyRate": 9900,
+			"disputeCount": 0,
+			"averageResolutionDays": 0,
+			"overallScore": 9913,
+			"scoreTrend": "improving",
+			"automatedReviewEligible": true,
+			"administrationId": "adm-1"
+		},
+		{
+			"supplierId": "vendor-nieuw-2026-05",
+			"period": "2026-Q2",
+			"onTimeDeliveryRate": 8500,
+			"quantityAccuracyRate": 9000,
+			"priceAccuracyRate": 9500,
+			"invoiceAccuracyRate": 9200,
+			"disputeCount": 1,
+			"averageResolutionDays": 4,
+			"overallScore": 9050,
+			"scoreTrend": "stable",
+			"automatedReviewEligible": false,
+			"administrationId": "adm-1"
+		}
+	]
+}

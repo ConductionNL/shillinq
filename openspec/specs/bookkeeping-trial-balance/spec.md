@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-trial-balance
 
 **Status:** proposed
@@ -5,10 +9,11 @@
 **Tier:** T2 (compliance + operations)
 **Depends on:** `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-general-ledger/spec.md` (T1 GL)
 
-## ADDED Requirements
+## Purpose
 
-@e2e exclude unbuilt UI: trial balance drill-through page not yet implemented
+This specification defines the requirements for bookkeeping trial balance in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
 
+## Requirements
 
 ### REQ-TB-001: The system SHALL produce a trial balance as a declarative aggregation over `GLLine`, not a PHP report builder
 
@@ -92,6 +97,8 @@ canonical four-column shape: opening Dr / opening Cr / movement Dr
   account `4100` MUST be `-€100` credit.
 
 ### REQ-TB-003: The trial balance output SHALL satisfy the debit-credit balance invariant as a schema-declared assertion
+
+The system SHALL satisfy this requirement: The trial balance output SHALL satisfy the debit-credit balance invariant as a schema-declared assertion.
 
 The sum of all `closing.debit` across all accounts in the requested
 period MUST equal the sum of all `closing.credit`. This invariant
@@ -193,6 +200,8 @@ MUST default to the currently-open `FiscalPeriod` from the
 - **THEN** the page MUST default to `period=2026-Q2`.
 
 ### REQ-TB-006: The trial balance SHALL support multi-period comparison via repeated aggregation calls, not a separate report-builder
+
+The system SHALL satisfy this requirement: The trial balance SHALL support multi-period comparison via repeated aggregation calls, not a separate report-builder.
 
 When a consumer requests N periods of comparative trial balance
 data, the renderer MUST issue N independent aggregation calls (or

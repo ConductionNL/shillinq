@@ -44,70 +44,68 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/bookkeeping-general-ledger/tasks.md#task-7
  */
-class BalanceGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for register slug.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class BalanceGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param ContainerInterface $container DI container for lazy ObjectService resolution.
+	 * @param IAppConfig $appConfig App config for register slug.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Returns true iff the GLTransaction's child lines are balanced (debit = credit).
-     *
-     * Queries all GLLine records for the given transactionId and computes
-     * SUM(amount WHERE side='debit') == SUM(amount WHERE side='credit') using
-     * integer-cent arithmetic to avoid IEEE-754 float equality issues.
-     *
-     * Fail-closed: returns false on any exception (REQ-GL-005 / CWE-863).
-     *
-     * @param string $transactionId The GLTransaction.id to check.
-     *
-     * @return bool True when the transaction is balanced and may be posted.
-     *
-     * @spec openspec/changes/bookkeeping-general-ledger/tasks.md#task-7
-     */
-    public function isBalanced(string $transactionId): bool
-    {
-        try {
-            $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-            $register      = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-            if ($register === '') {
-                $register = 'shillinq';
-            }
+	/**
+	 * Returns true iff the GLTransaction's child lines are balanced (debit = credit).
+	 *
+	 * Queries all GLLine records for the given transactionId and computes
+	 * SUM(amount WHERE side='debit') == SUM(amount WHERE side='credit') using
+	 * integer-cent arithmetic to avoid IEEE-754 float equality issues.
+	 *
+	 * Fail-closed: returns false on any exception (REQ-GL-005 / CWE-863).
+	 *
+	 * @param string $transactionId The GLTransaction.id to check.
+	 *
+	 * @return bool True when the transaction is balanced and may be posted.
+	 *
+	 * @spec openspec/changes/bookkeeping-general-ledger/tasks.md#task-7
+	 */
+	public function isBalanced(string $transactionId): bool {
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+			if ($register === '') {
+				$register = 'shillinq';
+			}
 
-            $lines = $objectService
-                ->setRegister($register)
-                ->setSchema('GLLine')
-                ->findAll(['filters' => ['transactionId' => $transactionId]]);
+			$lines = $objectService
+				->setRegister($register)
+				->setSchema('GLLine')
+				->findAll(['filters' => ['transactionId' => $transactionId]]);
 
-            $debitCents  = 0;
-            $creditCents = 0;
-            foreach ($lines as $line) {
-                $cents = (int) round((float) ($line['amount'] ?? 0) * 100);
-                if (($line['side'] ?? '') === 'debit') {
-                    $debitCents += $cents;
-                    continue;
-                }
+			$debitCents = 0;
+			$creditCents = 0;
+			foreach ($lines as $line) {
+				$cents = (int)round((float)($line['amount'] ?? 0) * 100);
+				if (($line['side'] ?? '') === 'debit') {
+					$debitCents += $cents;
+					continue;
+				}
 
-                $creditCents += $cents;
-            }
+				$creditCents += $cents;
+			}
 
-            return $debitCents === $creditCents;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'BalanceGuard: balance check failed — denying post transition (fail-closed)',
-                ['transactionId' => $transactionId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end isBalanced()
+			return $debitCents === $creditCents;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'BalanceGuard: balance check failed — denying post transition (fail-closed)',
+				['transactionId' => $transactionId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end isBalanced()
 }//end class

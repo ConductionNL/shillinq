@@ -1,0 +1,223 @@
+{
+  "components": {
+    "schemas": {
+      "Service": {
+        "properties": {
+          "isPublic": {
+            "type": "boolean",
+            "description": "Whether this service is bookable via the public self-service widget (REQ-WSW-001). Services with isPublic=false are never returned by the widget API. Additive widget extension of the canonical bookings-service-catalog Service schema.",
+            "default": false,
+            "title": "Is Public"
+          },
+          "priceVisible": {
+            "type": "boolean",
+            "description": "Whether the price is exposed via the public widget API (design D6). Additive widget extension.",
+            "default": true,
+            "title": "Price Visible"
+          },
+          "resourceId": {
+            "type": "string",
+            "description": "Default Resource.resourceId this service is performed on for widget bookings. Slot availability is computed against this resource (REQ-WSW-002). Additive widget extension; the canonical Appointment still carries its own resourceId per booking.",
+            "nullable": true,
+            "example": "wsw-res-001",
+            "title": "Resource ID"
+          }
+        }
+      },
+      "Resource": {
+        "properties": {
+          "timezone": {
+            "type": "string",
+            "description": "IANA timezone the operational hours are expressed in (e.g. Europe/Amsterdam). Used to convert widget slots to/from UTC (REQ-WSW-007). Additive widget extension of the canonical bookings-resource-calendar Resource schema.",
+            "default": "Europe/Amsterdam",
+            "example": "Europe/Amsterdam",
+            "title": "Timezone"
+          }
+        }
+      },
+      "Appointment": {
+        "properties": {
+          "customerName": {
+            "type": "string",
+            "description": "Customer full name captured by the public widget at booking time (1-255 chars). Write-only via the public widget API; never returned by widget read endpoints (design D6). Additive widget extension of the canonical bookings-create-appointment Appointment schema; the canonical customerId FK is still set to a generated guest identifier.",
+            "nullable": true,
+            "example": "Alice Smith",
+            "title": "Customer Name"
+          },
+          "customerEmail": {
+            "type": "string",
+            "format": "email",
+            "description": "Customer email (RFC 5322) captured by the public widget. Write-only; never returned by widget read endpoints.",
+            "nullable": true,
+            "example": "alice@example.com",
+            "title": "Customer Email"
+          },
+          "customerPhone": {
+            "type": "string",
+            "description": "Optional customer phone (E.164) captured by the public widget. Write-only.",
+            "nullable": true,
+            "example": "+31612345678",
+            "title": "Customer Phone"
+          },
+          "source": {
+            "type": "string",
+            "description": "Channel the appointment originated from. 'widget' marks self-service public bookings (REQ-WSW-003). Additive widget extension.",
+            "nullable": true,
+            "example": "widget",
+            "title": "Source"
+          }
+        }
+      },
+      "WidgetAccessKey": {
+        "slug": "WidgetAccessKey",
+        "icon": "KeyOutline",
+        "version": "0.1.0",
+        "title": "Widget Access Key",
+        "description": "A per-business API access key for the public self-service widget (REQ-WSW-009). Only the password_hash() of the key is stored; the plaintext key is shown once on generation and never persisted.",
+        "x-schema-org": "schema:DigitalDocument",
+        "type": "object",
+        "required": [
+          "businessId",
+          "apiKeyHash",
+          "isActive",
+          "administrationId"
+        ],
+        "properties": {
+          "businessId": {
+            "type": "string",
+            "description": "Stable public business identifier embedded by partners in the widget (e.g. 'salon-demo'). Unique per administration.",
+            "example": "salon-demo",
+            "title": "Business ID"
+          },
+          "apiKeyHash": {
+            "type": "string",
+            "description": "password_hash() hash of the plaintext API key. Plaintext is never stored. Compared with password_verify() (REQ-WSW-009).",
+            "example": "$2y$10$...",
+            "title": "API Key Hash"
+          },
+          "previousApiKeyHash": {
+            "type": "string",
+            "description": "Hash of the prior key during the 7-day rotation grace window (REQ-WSW-009). Null outside the grace window.",
+            "nullable": true,
+            "example": null,
+            "title": "Previous API Key Hash"
+          },
+          "rateLimitPerMinute": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Maximum widget API requests per minute for this business (REQ-WSW-001).",
+            "default": 100,
+            "title": "Rate Limit Per Minute"
+          },
+          "allowedOrigins": {
+            "type": "array",
+            "description": "Explicit list of CORS origins permitted for cross-origin (iframe/script) embeds. Wildcard '*' is never allowed.",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "title": "Allowed Origins"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "UTC timestamp the key was first created.",
+            "nullable": true,
+            "title": "Created At"
+          },
+          "rotatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "UTC timestamp of the most recent rotation. Drives the 7-day grace-window expiry.",
+            "nullable": true,
+            "title": "Rotated At"
+          },
+          "revokedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "UTC timestamp the key was revoked. Null while active.",
+            "nullable": true,
+            "title": "Revoked At"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the key currently authorises widget API requests.",
+            "default": true,
+            "title": "Is Active"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning administration.",
+            "example": "salon-demo",
+            "title": "Administration ID"
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Resource",
+        "slug": "bookings-widget-resource-chair-1"
+      },
+      "administrationId": "salon-demo",
+      "resourceId": "wsw-res-001",
+      "name": "Chair 1",
+      "openingTime": "09:00",
+      "closingTime": "18:00",
+      "allowOverlap": false,
+      "timezone": "Europe/Amsterdam",
+      "status": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Service",
+        "slug": "bookings-widget-service-haircut"
+      },
+      "administrationId": "salon-demo",
+      "serviceId": "wsw-svc-001",
+      "code": "wsw-haircut",
+      "name": "Haircut",
+      "description": "Wash, cut and style for all hair lengths.",
+      "duration": 45,
+      "prepareTime": 0,
+      "bufferBefore": 0,
+      "bufferAfter": 0,
+      "basePrice": 35.0,
+      "currency": "EUR",
+      "dynamicPricing": false,
+      "serviceCategory": "Hair Services",
+      "status": "active",
+      "isPublic": true,
+      "priceVisible": true,
+      "resourceId": "wsw-res-001"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Service",
+        "slug": "bookings-widget-service-manicure"
+      },
+      "administrationId": "salon-demo",
+      "serviceId": "wsw-svc-002",
+      "code": "wsw-manicure",
+      "name": "Manicure",
+      "description": "Classic manicure with shaping and polish.",
+      "duration": 30,
+      "prepareTime": 0,
+      "bufferBefore": 0,
+      "bufferAfter": 0,
+      "basePrice": 25.0,
+      "currency": "EUR",
+      "dynamicPricing": false,
+      "serviceCategory": "Nail Services",
+      "status": "active",
+      "isPublic": true,
+      "priceVisible": true,
+      "resourceId": "wsw-res-001"
+    }
+  ]
+}

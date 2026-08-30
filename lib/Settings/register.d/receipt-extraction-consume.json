@@ -1,0 +1,204 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "receipt-extraction-consume",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json. ADR-022 consumes docudesk's financial-document-field-extraction contract over the NC event bus (event + one outbound HTTP request); no OCR engine in shillinq.",
+    "description": "Adds the extraction-draft field set (REQ-RXC-001) to SupplierInvoice and Receipt: fieldConfidence (per-field 0..1 map), overallConfidence (aggregate 0..1), extractedFieldsOriginal (immutable snapshot of the docudesk-extracted values + confidence, kept even after a correction so the original is never silently lost, REQ-RXC-004), humanCorrected (list of field names the operator overrode), extractionStatus (pending-review | confirmed), and sourceDocumentUri (docudesk FK URI, REQ-DA-002 shape). Seeds two SupplierInvoice extraction drafts (high- and low-confidence) and one Receipt extraction draft per design.md."
+  },
+  "info": {
+    "version": "0.1.0-receipt-extraction-consume"
+  },
+  "components": {
+    "schemas": {
+      "SupplierInvoice": {
+        "properties": {
+          "fieldConfidence": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "description": "Per-field extraction confidence (0..1), keyed by field name, as reported by docudesk's nl.conduction.docudesk.extraction.completed event (REQ-RXC-001). Null/absent for records not created from an extraction.",
+            "nullable": true,
+            "example": { "invoiceNumber": 0.97, "totalInclVat": 0.9 },
+            "title": "Field Confidence"
+          },
+          "overallConfidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Aggregate extraction confidence (0..1) reported by docudesk. Gates whether BillImportModal offers one-click commit or requires explicit review (REQ-RXC-002); never bypasses human confirmation (REQ-RXC-006).",
+            "nullable": true,
+            "example": 0.93,
+            "title": "Overall Confidence"
+          },
+          "extractedFieldsOriginal": {
+            "type": "object",
+            "description": "Immutable snapshot of the field values + fieldConfidence as first extracted by docudesk. Set once when the draft is created (or refreshed by a re-request); a later operator correction MUST NOT overwrite this snapshot, so the original extracted value and its confidence are always retrievable (REQ-RXC-004).",
+            "nullable": true,
+            "example": { "fields": { "invoiceNumber": "F-2026-88" }, "fieldConfidence": { "invoiceNumber": 0.97 } },
+            "title": "Extracted Fields (Original)"
+          },
+          "humanCorrected": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Names of fields the operator edited before commit, overriding the extracted value (REQ-RXC-004). Computed server-side by ExtractionPrefillService::recordCorrection so the provenance cannot be spoofed or silently dropped by the client.",
+            "nullable": true,
+            "example": ["glAccount"],
+            "title": "Human-corrected Fields"
+          },
+          "extractionStatus": {
+            "type": "string",
+            "enum": ["pending-review", "confirmed"],
+            "description": "pending-review = an uncommitted extraction draft awaiting operator confirmation (REQ-RXC-001); confirmed = the operator has reviewed/corrected and committed it. Absent for records never created from an extraction.",
+            "nullable": true,
+            "example": "pending-review",
+            "title": "Extraction Status"
+          },
+          "sourceDocumentUri": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^docudesk://attachments/[a-f0-9-]{36}/.+$",
+            "description": "FK URI to the docudesk source document this invoice was extracted from (bookkeeping-document-attachment-integration REQ-DA-002). No file bytes are stored in shillinq.",
+            "nullable": true,
+            "example": "docudesk://attachments/0d4e9c7f-1234-4567-89ab-cdef01234567/invoice.pdf",
+            "title": "Source Document URI"
+          }
+        }
+      },
+      "Receipt": {
+        "properties": {
+          "fieldConfidence": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "description": "Per-field extraction confidence (0..1), keyed by field name, as reported by docudesk's nl.conduction.docudesk.extraction.completed event (REQ-RXC-001). Null/absent for records not created from an extraction.",
+            "nullable": true,
+            "example": { "amount": 0.88, "receiptDate": 0.8 },
+            "title": "Field Confidence"
+          },
+          "overallConfidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Aggregate extraction confidence (0..1) reported by docudesk (REQ-RXC-003).",
+            "nullable": true,
+            "example": 0.88,
+            "title": "Overall Confidence"
+          },
+          "extractedFieldsOriginal": {
+            "type": "object",
+            "description": "Immutable snapshot of the field values + fieldConfidence as first extracted by docudesk; never overwritten by an operator correction (REQ-RXC-004).",
+            "nullable": true,
+            "example": { "fields": { "totalIncl": 45.0 }, "fieldConfidence": { "totalIncl": 0.88 } },
+            "title": "Extracted Fields (Original)"
+          },
+          "humanCorrected": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Names of fields the operator edited before commit, overriding the extracted value (REQ-RXC-004).",
+            "nullable": true,
+            "example": ["category"],
+            "title": "Human-corrected Fields"
+          },
+          "extractionStatus": {
+            "type": "string",
+            "enum": ["pending-review", "confirmed"],
+            "description": "pending-review = an uncommitted extraction draft awaiting operator confirmation (REQ-RXC-001); confirmed = reviewed/corrected and committed.",
+            "nullable": true,
+            "example": "pending-review",
+            "title": "Extraction Status"
+          },
+          "sourceDocumentUri": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^docudesk://attachments/[a-f0-9-]{36}/.+$",
+            "description": "FK URI to the docudesk source document (photo) this receipt was extracted from (bookkeeping-document-attachment-integration REQ-DA-002); mirrors photoUri.",
+            "nullable": true,
+            "example": "docudesk://attachments/00000000-0000-0000-0000-000000000002/receipt.jpg",
+            "title": "Source Document URI"
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "SupplierInvoice",
+        "slug": "supplier-invoice-draft-0001"
+      },
+      "invoiceNumber": "F-2026-88",
+      "supplierId": "ACME Consultancy B.V.",
+      "invoiceDate": "2026-02-05",
+      "currency": "EUR",
+      "totalExclVat": 100000,
+      "totalVat": 21000,
+      "totalInclVat": 121000,
+      "statusCode": "received",
+      "administrationId": "adm-consultancy-nl",
+      "sourceDocumentUri": "docudesk://attachments/00000000-0000-0000-0000-000000000000/invoice.pdf",
+      "overallConfidence": 0.93,
+      "fieldConfidence": { "invoiceNumber": 0.97, "totalInclVat": 0.9, "glAccount": 0.55 },
+      "extractedFieldsOriginal": {
+        "fields": { "invoiceNumber": "F-2026-88", "totalIncl": 1210.0 },
+        "fieldConfidence": { "invoiceNumber": 0.97, "totalInclVat": 0.9, "glAccount": 0.55 }
+      },
+      "extractionStatus": "pending-review"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "SupplierInvoice",
+        "slug": "supplier-invoice-draft-0002"
+      },
+      "invoiceNumber": "UNVERIFIED-0002",
+      "supplierId": "Onbekende leverancier",
+      "invoiceDate": "2026-02-11",
+      "currency": "EUR",
+      "totalExclVat": 37355,
+      "totalVat": 7845,
+      "totalInclVat": 45200,
+      "statusCode": "received",
+      "administrationId": "adm-consultancy-nl",
+      "sourceDocumentUri": "docudesk://attachments/00000000-0000-0000-0000-000000000001/bon.pdf",
+      "overallConfidence": 0.61,
+      "fieldConfidence": { "totalInclVat": 0.62, "invoiceNumber": 0.4 },
+      "extractedFieldsOriginal": {
+        "fields": { "invoiceNumber": "UNVERIFIED-0002", "totalIncl": 452.0 },
+        "fieldConfidence": { "totalInclVat": 0.62, "invoiceNumber": 0.4 }
+      },
+      "extractionStatus": "pending-review"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Receipt",
+        "slug": "receipt-draft-0001"
+      },
+      "receiptNumber": "REC-2026-EXTRACT-0001",
+      "photoUri": "docudesk://attachments/00000000-0000-0000-0000-000000000002/receipt.jpg",
+      "extractedText": "LUNCH CAFE DE JONG ... TOTAAL 45,00",
+      "amount": 45.0,
+      "currency": "EUR",
+      "amountInBaseCurrency": 45.0,
+      "receiptDate": "2026-02-10",
+      "category": "meals",
+      "administrationId": "adm-consultancy-nl",
+      "sourceDocumentUri": "docudesk://attachments/00000000-0000-0000-0000-000000000002/receipt.jpg",
+      "overallConfidence": 0.88,
+      "fieldConfidence": { "amount": 0.9, "receiptDate": 0.85, "currency": 0.95 },
+      "extractedFieldsOriginal": {
+        "fields": { "totalIncl": 45.0, "issueDate": "2026-02-10", "currency": "EUR" },
+        "fieldConfidence": { "amount": 0.9, "receiptDate": 0.85, "currency": 0.95 }
+      },
+      "extractionStatus": "pending-review"
+    }
+  ]
+}

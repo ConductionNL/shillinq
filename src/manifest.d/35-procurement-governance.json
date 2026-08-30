@@ -1,0 +1,168 @@
+{
+	"menu": [
+		{
+			"id": "Purchasing",
+			"label": "Purchasing & Inventory",
+			"icon": "CartArrowDown",
+			"order": 35,
+			"children": [
+				{
+					"id": "SupplierQualifications",
+					"label": "Supplier Qualifications",
+					"icon": "AccountCheckOutline",
+					"route": "SupplierQualifications",
+					"order": 3
+				},
+				{
+					"id": "FrameworkAgreements",
+					"label": "Framework Agreements",
+					"icon": "FileSign",
+					"route": "FrameworkAgreements",
+					"order": 9
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "SupplierQualifications",
+			"route": "/inkoop/supplier-qualifications",
+			"type": "index",
+			"title": "Supplier Qualifications",
+			"config": {
+				"register": "shillinq",
+				"_note": "Generic supplier qualification (abstracted from purchaseq's supplier-onboarding slug). A supplier must be qualified — all required documents provided and unexpired — before its first PurchaseOrder when the require_supplier_qualification_for_po policy is on (SupplierQualificationGuard). Registration rejects a duplicate supplier on taxId or IBAN.",
+				"schema": "SupplierQualification",
+				"columns": [
+					{ "key": "supplierName", "label": "Supplier", "sortable": true },
+					{ "key": "supplierId", "label": "Supplier ID", "sortable": true },
+					{ "key": "taxId", "label": "Tax / VAT ID", "sortable": true },
+					{ "key": "iban", "label": "IBAN", "sortable": true },
+					{ "key": "statusCode", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "supplierName",
+				"detailRoute": "SupplierQualificationDetail",
+				"description": "Suppliers onboarded for qualification; a qualified supplier with valid documents may receive purchase orders."
+			}
+		},
+		{
+			"id": "SupplierQualificationDetail",
+			"route": "/inkoop/supplier-qualifications/:id",
+			"type": "detail",
+			"title": "Supplier Qualification",
+			"config": {
+				"register": "shillinq",
+				"auditTrail": true,
+				"schema": "SupplierQualification",
+				"_note": "Supplier qualification detail. statusCode moves draft -> qualified once every required document is provided and unexpired (SupplierQualificationService::qualify). The required-documents list drives the first-PO gate.",
+				"fields": [
+					{ "key": "supplierName", "label": "Supplier Name", "type": "string" },
+					{ "key": "supplierId", "label": "Supplier ID", "type": "string" },
+					{ "key": "taxId", "label": "Tax / VAT ID", "type": "string" },
+					{ "key": "iban", "label": "IBAN", "type": "string" },
+					{ "key": "requiredDocuments", "label": "Required Documents", "type": "array" },
+					{ "key": "statusCode", "label": "Status", "type": "string" },
+					{ "key": "qualifiedAt", "label": "Qualified At", "type": "datetime" },
+					{ "key": "qualifiedBy", "label": "Qualified By", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "SupplierQualifications",
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{ "id": "audit", "label": "History", "icon": "History", "widgets": [ { "type": "audit" } ] }
+					]
+				}
+			}
+		},
+		{
+			"id": "FrameworkAgreements",
+			"route": "/inkoop/framework-agreements",
+			"type": "index",
+			"title": "Framework Agreements",
+			"config": {
+				"register": "shillinq",
+				"_note": "Generic framework agreement (raamovereenkomst abstracted): a supplier contract with a spend ceiling that PurchaseOrder call-offs draw down against. A call-off exceeding the remaining ceiling is blocked by FrameworkAgreementDrawdownGuard.",
+				"schema": "FrameworkAgreement",
+				"columns": [
+					{ "key": "agreementNumber", "label": "Agreement #", "sortable": true },
+					{ "key": "title", "label": "Title", "sortable": true },
+					{ "key": "supplierId", "label": "Supplier", "sortable": true },
+					{ "key": "ceilingAmount", "label": "Ceiling (cents)", "sortable": true },
+					{ "key": "drawnAmount", "label": "Drawn (cents)", "sortable": true },
+					{ "key": "statusCode", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "-agreementNumber",
+				"detailRoute": "FrameworkAgreementDetail",
+				"description": "Framework agreements with a spend ceiling; purchase-order call-offs draw down against the remaining ceiling."
+			}
+		},
+		{
+			"id": "FrameworkAgreementDetail",
+			"route": "/inkoop/framework-agreements/:id",
+			"type": "detail",
+			"title": "Framework Agreement",
+			"config": {
+				"register": "shillinq",
+				"auditTrail": true,
+				"schema": "FrameworkAgreement",
+				"_note": "LEDGER archetype — a framework agreement with a spend ceiling. Body leads with a ceiling KPI, a schema-driven Data widget, and the PurchaseOrders drawn against it (object-list filtered frameworkAgreementId=@objectId). Each call-off increments drawnAmount server-side via PurchaseOrderService; a call-off past the ceiling is blocked (FrameworkAgreementDrawdownGuard).",
+				"widgets": [
+					{
+						"id": "framework-data",
+						"type": "data",
+						"title": "Agreement details",
+						"icon": "FileSign",
+						"content": { "columns": 2 }
+					},
+					{
+						"id": "framework-ceiling",
+						"type": "stats-block",
+						"title": "Ceiling",
+						"icon": "CurrencyEur",
+						"content": {
+							"entries": [
+								{ "title": "Ceiling", "register": "shillinq", "schema": "FrameworkAgreement", "metric": "sum", "field": "ceilingAmount", "filter": { "id": "@objectId" }, "format": "number" }
+							]
+						}
+					},
+					{
+						"id": "framework-calloffs",
+						"type": "object-list",
+						"title": "Call-offs (purchase orders)",
+						"icon": "ClipboardList",
+						"content": {
+							"register": "shillinq",
+							"schema": "PurchaseOrder",
+							"filter": { "frameworkAgreementId": "@objectId" },
+							"columns": [
+								{ "key": "poNumber", "label": "PO #" },
+								{ "key": "supplierId", "label": "Supplier" },
+								{ "key": "totalAmount", "label": "Amount" }
+							],
+							"limit": 20,
+							"rowRoute": "PurchaseOrderDetail",
+							"emptyText": "No purchase orders have been called off against this agreement yet.",
+							"allowCreate": false
+						}
+					}
+				],
+				"layout": [
+					{ "id": "1", "widgetId": "framework-data", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 7 },
+					{ "id": "2", "widgetId": "framework-ceiling", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 3 },
+					{ "id": "3", "widgetId": "framework-calloffs", "gridX": 0, "gridY": 7, "gridWidth": 12, "gridHeight": 4 }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "FrameworkAgreements",
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{ "id": "audit", "label": "History", "icon": "History", "widgets": [ { "type": "audit" } ] }
+					]
+				}
+			}
+		}
+	]
+}

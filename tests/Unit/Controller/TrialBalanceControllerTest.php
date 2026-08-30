@@ -13,6 +13,7 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/bookkeeping-trial-balance/tasks.md#task-4-2
+ * KNOWINGLY DANGLING until shillinq#500 — see TrialBalanceService.
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -23,6 +24,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Tests\Unit\Controller;
 
 use OCA\Shillinq\Controller\TrialBalanceController;
+use OCA\Shillinq\Service\AdministrationContextService;
 use OCA\Shillinq\Service\TrialBalanceService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -39,164 +41,214 @@ use Psr\Log\LoggerInterface;
  *
  * phpcs:disable CustomSniffs.Functions.NamedParameters
  */
-final class TrialBalanceControllerTest extends TestCase
-{
+final class TrialBalanceControllerTest extends TestCase {
 
-    /**
-     * Mock IRequest.
-     *
-     * @var IRequest&MockObject
-     */
-    private IRequest&MockObject $request;
+	/**
+	 * Mock IRequest.
+	 *
+	 * @var IRequest&MockObject
+	 */
+	private IRequest&MockObject $request;
 
-    /**
-     * Mock TrialBalanceService.
-     *
-     * @var TrialBalanceService&MockObject
-     */
-    private TrialBalanceService&MockObject $service;
+	/**
+	 * Mock TrialBalanceService.
+	 *
+	 * @var TrialBalanceService&MockObject
+	 */
+	private TrialBalanceService&MockObject $service;
 
-    /**
-     * Mock LoggerInterface.
-     *
-     * @var LoggerInterface&MockObject
-     */
-    private LoggerInterface&MockObject $logger;
+	/**
+	 * Mock AdministrationContextService.
+	 *
+	 * @var AdministrationContextService&MockObject
+	 */
+	private AdministrationContextService&MockObject $context;
 
-    /**
-     * The controller under test.
-     *
-     * @var TrialBalanceController
-     */
-    private TrialBalanceController $controller;
+	/**
+	 * Mock LoggerInterface.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface&MockObject $logger;
 
-    /**
-     * Set up test fixtures.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->request    = $this->createMock(IRequest::class);
-        $this->service    = $this->createMock(TrialBalanceService::class);
-        $this->logger     = $this->createMock(LoggerInterface::class);
-        $this->controller = new TrialBalanceController(
-            request: $this->request,
-            trialBalanceService: $this->service,
-            logger: $this->logger,
-        );
+	/**
+	 * The controller under test.
+	 *
+	 * @var TrialBalanceController
+	 */
+	private TrialBalanceController $controller;
 
-    }//end setUp()
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->request = $this->createMock(IRequest::class);
+		$this->service = $this->createMock(TrialBalanceService::class);
+		$this->context = $this->createMock(AdministrationContextService::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
-    /**
-     * Configure request params (period_id, administration_id, prior_period_id).
-     *
-     * @param string $period String period_id param.
-     * @param string $admin  String administration_id param.
-     * @param string $prior  String prior_period_id param.
-     *
-     * @return void
-     */
-    private function withParams(string $period, string $admin, string $prior=''): void
-    {
-        $this->request->method('getParam')->willReturnCallback(
-            static function (string $key, mixed $default=null) use ($period, $admin, $prior): mixed {
-                return match ($key) {
-                    'period_id' => $period,
-                    'administration_id' => $admin,
-                    'prior_period_id' => $prior,
-                    default => $default,
-                };
-            }
-        );
+		// Default: an authenticated user with access to 'adm-1'.
+		$this->context->method('currentUserId')->willReturn('alice');
+		$this->context->method('canAccess')->willReturnCallback(
+			static fn (string $administrationId): bool => $administrationId === 'adm-1'
+		);
 
-    }//end withParams()
+		$this->controller = new TrialBalanceController(
+			request: $this->request,
+			trialBalanceService: $this->service,
+			context: $this->context,
+			logger: $this->logger,
+		);
 
-    /**
-     * A missing period_id yields HTTP 400 (REQ-TB-015).
-     *
-     * @return void
-     */
-    public function testMissingPeriodReturns400(): void
-    {
-        $this->withParams('', 'adm-1');
-        $response = $this->controller->index();
+	}//end setUp()
 
-        self::assertInstanceOf(JSONResponse::class, $response);
-        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+	/**
+	 * Configure request params (period_id, administration_id, prior_period_id).
+	 *
+	 * @param string $period String period_id param.
+	 * @param string $admin String administration_id param.
+	 * @param string $prior String prior_period_id param.
+	 *
+	 * @return void
+	 */
+	private function withParams(string $period, string $admin, string $prior = ''): void {
+		$this->request->method('getParam')->willReturnCallback(
+			static function (string $key, mixed $default = null) use ($period, $admin, $prior): mixed {
+				return match ($key) {
+					'period_id' => $period,
+					'administration_id' => $admin,
+					'prior_period_id' => $prior,
+					default => $default,
+				};
+			}
+		);
 
-    }//end testMissingPeriodReturns400()
+	}//end withParams()
 
-    /**
-     * A missing administration_id yields HTTP 400 (REQ-TB-016).
-     *
-     * @return void
-     */
-    public function testMissingAdministrationReturns400(): void
-    {
-        $this->withParams('2026-Q1', '');
-        $response = $this->controller->index();
+	/**
+	 * A missing period_id yields HTTP 400 (REQ-TB-015).
+	 *
+	 * @return void
+	 */
+	public function testMissingPeriodReturns400(): void {
+		$this->withParams('', 'adm-1');
+		$response = $this->controller->index();
 
-        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertInstanceOf(JSONResponse::class, $response);
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
-    }//end testMissingAdministrationReturns400()
+	}//end testMissingPeriodReturns400()
 
-    /**
-     * A malformed period_id (path-traversal attempt) yields HTTP 400 (REQ-TB-015).
-     *
-     * @return void
-     */
-    public function testMalformedPeriodReturns400(): void
-    {
-        $this->withParams('../../etc', 'adm-1');
-        $response = $this->controller->index();
+	/**
+	 * A missing administration_id yields HTTP 400 (REQ-TB-016).
+	 *
+	 * @return void
+	 */
+	public function testMissingAdministrationReturns400(): void {
+		$this->withParams('2026-Q1', '');
+		$response = $this->controller->index();
 
-        self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
-    }//end testMalformedPeriodReturns400()
+	}//end testMissingAdministrationReturns400()
 
-    /**
-     * A valid request returns HTTP 200 with the service result (REQ-TB-009).
-     *
-     * @return void
-     */
-    public function testValidRequestReturns200WithData(): void
-    {
-        $this->withParams('2026-Q1', 'adm-1', '2025-Q4');
-        $payload = [
-            'data'       => [['accountNumber' => '1000', 'closingBalance' => 55000.0]],
-            'total'      => 1,
-            'totals'     => ['totalDebit' => 10000.0, 'totalCredit' => 5000.0],
-            'isBalanced' => false,
-        ];
-        $this->service->expects($this->once())
-            ->method('compute')
-            ->with('adm-1', '2026-Q1', ['priorPeriodId' => '2025-Q4'])
-            ->willReturn($payload);
+	/**
+	 * A malformed period_id (path-traversal attempt) yields HTTP 400 (REQ-TB-015).
+	 *
+	 * @return void
+	 */
+	public function testMalformedPeriodReturns400(): void {
+		$this->withParams('../../etc', 'adm-1');
+		$response = $this->controller->index();
 
-        $response = $this->controller->index();
+		self::assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 
-        self::assertSame(Http::STATUS_OK, $response->getStatus());
-        self::assertSame($payload, $response->getData());
+	}//end testMalformedPeriodReturns400()
 
-    }//end testValidRequestReturns200WithData()
+	/**
+	 * A valid request returns HTTP 200 with the service result (REQ-TB-009).
+	 *
+	 * @return void
+	 */
+	public function testValidRequestReturns200WithData(): void {
+		$this->withParams('2026-Q1', 'adm-1', '2025-Q4');
+		$payload = [
+			'data' => [['accountNumber' => '1000', 'closingBalance' => 55000.0]],
+			'total' => 1,
+			'totals' => ['totalDebit' => 10000.0, 'totalCredit' => 5000.0],
+			'isBalanced' => false,
+		];
+		$this->service->expects($this->once())
+			->method('compute')
+			->with('adm-1', '2026-Q1', ['priorPeriodId' => '2025-Q4'])
+			->willReturn($payload);
 
-    /**
-     * A service exception yields HTTP 500 with no stack trace leaked (ADR-005).
-     *
-     * @return void
-     */
-    public function testServiceFailureReturns500WithoutStackTrace(): void
-    {
-        $this->withParams('2026-Q1', 'adm-1');
-        $this->service->method('compute')->willThrowException(new \RuntimeException('boom'));
-        $this->logger->expects($this->once())->method('error');
+		$response = $this->controller->index();
 
-        $response = $this->controller->index();
+		self::assertSame(Http::STATUS_OK, $response->getStatus());
+		self::assertSame($payload, $response->getData());
 
-        self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
-        self::assertSame(['error' => 'Failed to compute trial balance'], $response->getData());
+	}//end testValidRequestReturns200WithData()
 
-    }//end testServiceFailureReturns500WithoutStackTrace()
+	/**
+	 * A service exception yields HTTP 500 with no stack trace leaked (ADR-005).
+	 *
+	 * @return void
+	 */
+	public function testServiceFailureReturns500WithoutStackTrace(): void {
+		$this->withParams('2026-Q1', 'adm-1');
+		$this->service->method('compute')->willThrowException(new \RuntimeException('boom'));
+		$this->logger->expects($this->once())->method('error');
+
+		$response = $this->controller->index();
+
+		self::assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		self::assertSame(['error' => 'Failed to compute trial balance'], $response->getData());
+
+	}//end testServiceFailureReturns500WithoutStackTrace()
+
+	/**
+	 * An unauthenticated request yields HTTP 401 before any data access (REQ-TB-016).
+	 *
+	 * @return void
+	 */
+	public function testUnauthenticatedReturns401(): void {
+		$request = $this->createMock(IRequest::class);
+		$service = $this->createMock(TrialBalanceService::class);
+		$context = $this->createMock(AdministrationContextService::class);
+		$logger = $this->createMock(LoggerInterface::class);
+		$context->method('currentUserId')->willReturn(null);
+		$service->expects($this->never())->method('compute');
+
+		$controller = new TrialBalanceController(
+			request: $request,
+			trialBalanceService: $service,
+			context: $context,
+			logger: $logger,
+		);
+
+		$response = $controller->index();
+
+		self::assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+
+	}//end testUnauthenticatedReturns401()
+
+	/**
+	 * A foreign administrationId is masked as HTTP 404 (REQ-TB-016, REQ-TB-017 IDOR guard).
+	 *
+	 * @return void
+	 */
+	public function testForeignAdministrationIsMaskedAs404(): void {
+		$this->withParams('2026-Q1', 'adm-other');
+		$this->service->expects($this->never())->method('compute');
+
+		$response = $this->controller->index();
+
+		self::assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		self::assertSame(['error' => 'Administration not found'], $response->getData());
+
+	}//end testForeignAdministrationIsMaskedAs404()
 }//end class

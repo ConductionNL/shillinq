@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-tenderned-integratie
 
 **Status:** proposed  
@@ -5,7 +9,7 @@
 **Tier:** cross-cutting integration (not in canonical 5-tier roadmap; see ADR-001)  
 **Depends on:** bookkeeping-obligation-financial-administration (T2), supplier-performance-management  
 
-## Summary
+## Purpose
 
 TenderNed Integratie enables Shillinq to automatically import publicly awarded procurement contracts from TenderNed (Dutch central platform, Logius) and manifest them as financial obligations (Verplichting) with real-time budget-impact visibility and milestone-based execution tracking. The integration supports two roles: aanbestedende dienst (public buyer organization) and inschrijvende leverancier (private vendor organization), each with role-specific workflows and visibility constraints.
 
@@ -15,6 +19,8 @@ TenderNed Integratie enables Shillinq to automatically import publicly awarded p
 
 
 ### REQ-001: Manual TenderNed dossier import
+
+The system SHALL satisfy this requirement: Manual TenderNed dossier import.
 
 **GIVEN** a contractmanager user with role `tenderned:import`  
 **WHEN** the user navigates to Procurement > TenderNed Import and enters a valid TenderNed aanbestedingId, then clicks "Import"  
@@ -26,9 +32,17 @@ TenderNed Integratie enables Shillinq to automatically import publicly awarded p
 - `Verplichting.status = concept` until contractmanager clicks "Activate"
 - Audit-trail entry recorded (user, timestamp, action: import, source: TenderNed, dossierReference)
 
+#### Scenario: Import a TenderNed dossier as a concept obligation
+
+- **GIVEN** a contractmanager with role `tenderned:import` and a valid TenderNed `aanbestedingId`
+- **WHEN** the user enters the id on Procurement > TenderNed Import and clicks "Import"
+- **THEN** the system fetches and validates the dossier via the openconnector source and creates a Verplichting with `status: concept`, `bron: tenderned`, and `bronReferentie: <aanbestedingId>`, leaving the budget widget unaffected until the contractmanager activates it.
+
 ---
 
 ### REQ-002: Automatic gunning trigger on status change
+
+The system SHALL satisfy this requirement: Automatic gunning trigger on status change.
 
 **GIVEN** a TenderNedAanbesteding record with `status: open` and the organization is listed as the winning leverancier (inschrijver) OR as the aanbestedende dienst  
 **WHEN** the openconnector polling job detects that the TenderNed dossier status has changed to `gegund` (awarded) and the contract value is ≥ €1  
@@ -41,9 +55,17 @@ TenderNed Integratie enables Shillinq to automatically import publicly awarded p
 - Idempotency: if the Verplichting already exists (e.g., from REQ-001 manual import), do not duplicate; update the existing record's status to `active` instead
 - Audit-trail entry recorded (system user: openconnector, action: auto-promote, from-status: concept, to-status: active)
 
+#### Scenario: Auto-promote an obligation on detected award
+
+- **GIVEN** a TenderNedAanbesteding with `status: open` where the organization is the winning leverancier or the aanbestedende dienst
+- **WHEN** the openconnector polling job detects the dossier status change to `gegund` with contract value ≥ €1
+- **THEN** the system idempotently creates (or updates the existing) Verplichting to `status: active`, notifies all `inkoop`-role contractmanagers in real time, and sets the TenderNedAanbesteding to `status: in-uitvoering`.
+
 ---
 
 ### REQ-003: Milestone-planning generation
+
+The system SHALL satisfy this requirement: Milestone-planning generation.
 
 **GIVEN** a newly activated Verplichting with `bron: tenderned` and fields `looptijdStart`, `looptijdEind`, and an opdrachttype (inferred from TenderNed's CPV codes or user selection)  
 **WHEN** the contractmanager activates the obligation (or the system auto-promotes per REQ-002)  
@@ -56,9 +78,17 @@ TenderNed Integratie enables Shillinq to automatically import publicly awarded p
 - Contractmanager can edit/delete/add milestones in a detail view before confirmation
 - Audit-trail entry recorded (action: milestone-plan-generated, template-id: <id>, interval-count: <N>)
 
+#### Scenario: Generate a milestone plan on activation
+
+- **GIVEN** a newly activated Verplichting with `bron: tenderned`, `looptijdStart`, `looptijdEind`, and an opdrachttype
+- **WHEN** the contractmanager activates the obligation (or REQ-002 auto-promotes it)
+- **THEN** the system populates `Verplichting.mijlpalen[]` from the opdrachttype template with `{ datum, omschrijving, percentage, status: planned }` entries whose dates fall within the contract duration and whose percentages sum to 100% (or less if configured partial), editable before confirmation.
+
 ---
 
 ### REQ-004: Proof-of-delivery (bewijsstuk) enforcement
+
+The system SHALL satisfy this requirement: Proof-of-delivery (bewijsstuk) enforcement.
 
 **GIVEN** an OpdrachtUitvoering record for a milestone that is marked as `status: in-progress` or `goedgekeurd: true`  
 **WHEN** the contractmanager attempts to mark the milestone as `status: completed` (endpoint: PATCH OpdrachtUitvoering/{id}, body: { status: "completed" })  
@@ -70,9 +100,17 @@ TenderNed Integratie enables Shillinq to automatically import publicly awarded p
 - File attachment uses docudesk API (per ADR-022); files are stored in docudesk, not locally
 - Audit-trail entry recorded (action: delivery-marked-complete, bewijsstuk-count: <N>, bewijsstuk-ids: […])
 
+#### Scenario: Block delivery completion without a proof document
+
+- **GIVEN** an OpdrachtUitvoering for a milestone with `status: in-progress` and no attached bewijsstukken
+- **WHEN** the contractmanager PATCHes the record to `status: completed`
+- **THEN** the system enforces `bewijsstukken.length > 0` via `x-openregister-lifecycle.requires` and rejects the request with HTTP 422 and a Dutch error until at least one docudesk proof document (PDF, DOCX, XLS, JPG, PNG) is attached.
+
 ---
 
 ### REQ-005: ENSIA-compliant audit-trail
+
+The system SHALL satisfy this requirement: ENSIA-compliant audit-trail.
 
 **GIVEN** any state transition on a TenderNedAanbesteding, Verplichting, or OpdrachtUitvoering record  
 **WHEN** the record is saved (POST / PATCH)  
@@ -93,9 +131,17 @@ An ENSIA auditor querying the audit-trail can reconstruct the full lineage: awar
 - Audit-trail cannot be tampered with (OR's guarantee, not this app's responsibility)
 - Test: ENSIA auditor can retrieve full chain for a sample obligation in <10 seconds
 
+#### Scenario: Record an immutable audit entry on state transition
+
+- **GIVEN** any state transition on a TenderNedAanbesteding, Verplichting, or OpdrachtUitvoering record
+- **WHEN** the record is saved via POST or PATCH
+- **THEN** the system writes an immutable OR audit-trail entry containing `timestamp`, `user`, `action`, `oldValue`/`newValue`, `tenderNedDossierReference`, and `kostenplaats`/`budgetCode`, so an ENSIA auditor can reconstruct the full lineage from award to payment.
+
 ---
 
 ### REQ-006: Status-sync back to TenderNed
+
+The system SHALL satisfy this requirement: Status-sync back to TenderNed.
 
 **GIVEN** a Verplichting with `bron: tenderned` that has reached a final milestone status (e.g., `status: completed` on the last OpdrachtUitvoering where `opleveringsType: eindoplevering`)  
 **WHEN** the contractmanager marks the final milestone as complete and the organization is the aanbestedende dienst (only the buyer can write status, not the vendor)  
@@ -108,24 +154,40 @@ An ENSIA auditor querying the audit-trail can reconstruct the full lineage: awar
 - If TenderNed API is unreachable, the system logs a warning but does NOT fail the milestone-completion. User sees a tooltip: "Bewijsstuk opgeslagen; status-sync naar TenderNed niet verzonden (herprob over 5 min)."
 - Audit-trail entry recorded (action: status-sync-to-tenderned, status: afgerond, success: true/false)
 
+#### Scenario: Sync final status back to TenderNed as the buyer
+
+- **GIVEN** a Verplichting with `bron: tenderned` whose final `eindoplevering` milestone is completed and whose organization is the aanbestedende dienst
+- **WHEN** an `inkoper` marks the final milestone complete
+- **THEN** the system sends a status-update to TenderNed via the openconnector source (POST /api/dossiers/{aanbestedingId}/status, status `afgerond`); vendors cannot trigger it, and if TenderNed is unreachable the milestone completion still succeeds with a logged warning.
+
 ---
 
 ### REQ-007: Real-time budget-impact widget update (60-second SLA)
 
+The system SHALL satisfy this requirement: Real-time budget-impact widget update (60-second SLA).
+
 **GIVEN** a Verplichting with `bron: tenderned` that is activated (status: active)  
-**WHEN** the obligation is created or status-changed, a CloudEvent is emitted to the mydash event stream with payload: { event: "obligation-activated", contractWaarde: <amount>, periode: <FY>, kostenplaats: <code>, tenderNedDossierUrl: <url> }  
-**THEN** the mydash budget-widget listener receives the event and re-calculates the budget-utilization percentage for the relevant cost centre. The widget refreshes within 60 seconds, showing the new obligation as a committed expense.
+**WHEN** the obligation is created or status-changed, a CloudEvent is emitted to the launchpad event stream with payload: { event: "obligation-activated", contractWaarde: <amount>, periode: <FY>, kostenplaats: <code>, tenderNedDossierUrl: <url> }  
+**THEN** the launchpad budget-widget listener receives the event and re-calculates the budget-utilization percentage for the relevant cost centre. The widget refreshes within 60 seconds, showing the new obligation as a committed expense.
 
 **Acceptance Criteria:**
 - CloudEvent is emitted asynchronously (does NOT block obligation creation)
 - Event payload includes contract value, period, cost centre, and TenderNed dossier URL
 - Widget update SLA is 60 seconds from event emit to re-render
 - Test: Import 10 obligations in parallel; verify all 10 appear in widget within 60s
-- Failure mode: if mydash is unreachable, log warning but continue (graceful degradation)
+- Failure mode: if launchpad is unreachable, log warning but continue (graceful degradation)
+
+#### Scenario: Refresh the budget widget within the SLA
+
+- **GIVEN** a Verplichting with `bron: tenderned` that becomes `status: active`
+- **WHEN** the obligation is created or status-changed and an `obligation-activated` CloudEvent is emitted asynchronously to the launchpad event stream
+- **THEN** the launchpad budget-widget listener recalculates the cost-centre budget utilization and re-renders within 60 seconds, degrading gracefully with a logged warning if launchpad is unreachable.
 
 ---
 
 ### REQ-008: Vendor cashflow-forecast integration (omzet-prognose)
+
+The system SHALL satisfy this requirement: Vendor cashflow-forecast integration (omzet-prognose).
 
 **GIVEN** an MKB-leverancier tenant that has won one or more TenderNed contracts  
 **WHEN** the vendor's Shillinq instance syncs Verplichting records where `bron: tenderned` and `gegundeLeverancier.kvkNumber == organization.kvkNumber`  
@@ -136,6 +198,12 @@ An ENSIA auditor querying the audit-trail can reconstruct the full lineage: awar
 - Revenue forecast values sum to contractWaarde (no double-counting, no rounding errors >€0.01)
 - Forecast is live-updated when milestones are completed (OpdrachtUitvoering.status → completed)
 - Test with 5 overlapping contracts (different durations, payment schedules); verify forecast aggregation is correct
+
+#### Scenario: Populate a vendor revenue forecast from won contracts
+
+- **GIVEN** an MKB-leverancier tenant whose `organization.kvkNumber` matches `gegundeLeverancier.kvkNumber` on one or more TenderNed Verplichtingen
+- **WHEN** the vendor's Shillinq instance syncs those `bron: tenderned` Verplichtingen
+- **THEN** the system populates a read-only omzet-prognose entry per Verplichting, distributing `contractWaarde` across milestone dates as `contractWaarde × milestone-percentage`, visible only for the vendor's own contracts and live-updated as milestones complete.
 
 ---
 
@@ -269,7 +337,7 @@ Then the system returns a complete chain:
 
 - **openconnector**: Consumes TenderNed source polling (5-min cadence) and emits CloudEvents on status change
 - **openregister**: Uses audit-trail-immutable (REQ-005) and file-attachment (REQ-004, bewijsstukken via docudesk)
-- **mydash**: Listens for obligation-activated events and updates budget-widget (REQ-007)
+- **launchpad**: Listens for obligation-activated events and updates budget-widget (REQ-007)
 - **docudesk**: Stores bewijsstukken (proof documents) via ADR-022 file-attachment mechanism
 
 ---
@@ -296,5 +364,5 @@ Then the system returns a complete chain:
 
 - [ ] Spec reviewed by procurement domain expert (inkoper or contractmanager persona)
 - [ ] Spec reviewed by ENSIA auditor or compliance officer
-- [ ] Cross-app dependencies verified with openconnector, mydash, docudesk teams
+- [ ] Cross-app dependencies verified with openconnector, launchpad, docudesk teams
 - [ ] Design.md Q1–Q3 open questions resolved

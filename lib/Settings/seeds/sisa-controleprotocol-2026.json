@@ -1,0 +1,1108 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "BZK SiSa-controleprotocol",
+		"year": 2026,
+		"description": "BZK SiSa controleprotocol 2026 — indicatoren per specifieke uitkering regeling. Loaded via ConfigurationService::importFromApp() in the repair step; idempotent. Missing verplicht: true indicatoren surface as warnings in the SiSa-rapportage audit preview per REQ-SISA-003.",
+		"imported": "2026-06-03T00:00:00Z"
+	},
+	"indicatoren": [
+		{
+			"schemeCode": "C17",
+			"indicatorCode": "C17.01",
+			"indicatorDescription": "Totaal aantal inwoners van 18 jaar en ouder op 1 januari van het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "personen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "C17",
+			"indicatorCode": "C17.02",
+			"indicatorDescription": "Besteed bedrag aan de decentralisatie-uitkering klimaat en energie",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "C17",
+			"indicatorCode": "C17.03",
+			"indicatorDescription": "Percentage inwoners bereikt met informatieactiviteiten over energiebesparing",
+			"indicatorType": "percentage",
+			"indicatorUnit": "%",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "D1",
+			"indicatorCode": "D1.01",
+			"indicatorDescription": "Aantal geregistreerde voorzieningen in het LRK op 31 december van het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "voorzieningen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D1",
+			"indicatorCode": "D1.02",
+			"indicatorDescription": "Aantal inspecties gastouderbureau uitgevoerd in het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "inspecties",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D1",
+			"indicatorCode": "D1.03",
+			"indicatorDescription": "Aantal inspecties kinderdagverblijven uitgevoerd in het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "inspecties",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D1",
+			"indicatorCode": "D1.04",
+			"indicatorDescription": "Aantal inspecties peuterspeelzalen uitgevoerd in het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "inspecties",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D1",
+			"indicatorCode": "D1.05",
+			"indicatorDescription": "Besteed bedrag aan toezicht en handhaving kinderopvang",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D2",
+			"indicatorCode": "D2.01",
+			"indicatorDescription": "Besteed bedrag aan activiteiten voor lokaal onderwijsbeleid",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D2",
+			"indicatorCode": "D2.02",
+			"indicatorDescription": "Aantal leerlingen bereikt met programma's voor lokaal onderwijsbeleid",
+			"indicatorType": "integer",
+			"indicatorUnit": "leerlingen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D2",
+			"indicatorCode": "D2.03",
+			"indicatorDescription": "Besteed bedrag aan voor- en vroegschoolse educatie",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "D3",
+			"indicatorCode": "D3.01",
+			"indicatorDescription": "Besteed bedrag aan programma's ter bestrijding van onderwijsachterstanden",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D3",
+			"indicatorCode": "D3.02",
+			"indicatorDescription": "Aantal deelnemende kinderen aan VVE-programma (voor- en vroegschoolse educatie)",
+			"indicatorType": "integer",
+			"indicatorUnit": "kinderen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D3",
+			"indicatorCode": "D3.03",
+			"indicatorDescription": "Percentage doelgroepkinderen dat deelneemt aan VVE",
+			"indicatorType": "percentage",
+			"indicatorUnit": "%",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D3",
+			"indicatorCode": "D3.04",
+			"indicatorDescription": "Aantal uren VVE per week voor doelgroepkinderen",
+			"indicatorType": "integer",
+			"indicatorUnit": "hours",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "D4",
+			"indicatorCode": "D4.01",
+			"indicatorDescription": "Besteed bedrag aan vrouwenopvang",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D4",
+			"indicatorCode": "D4.02",
+			"indicatorDescription": "Aantal opvangplaatsen vrouwenopvang op 31 december van het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "plaatsen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D4",
+			"indicatorCode": "D4.03",
+			"indicatorDescription": "Aantal cliënten in vrouwenopvang gedurende het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "cliënten",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D4",
+			"indicatorCode": "D4.04",
+			"indicatorDescription": "Percentage vrouwen met kinderen van het totaal aantal cliënten",
+			"indicatorType": "percentage",
+			"indicatorUnit": "%",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "D5",
+			"indicatorCode": "D5.01",
+			"indicatorDescription": "Besteed bedrag aan maatschappelijke opvang",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D5",
+			"indicatorCode": "D5.02",
+			"indicatorDescription": "Besteed bedrag aan verslavingszorg",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D5",
+			"indicatorCode": "D5.03",
+			"indicatorDescription": "Aantal opvangplaatsen maatschappelijke opvang op 31 december van het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "plaatsen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D5",
+			"indicatorCode": "D5.04",
+			"indicatorDescription": "Aantal cliënten maatschappelijke opvang gedurende het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "cliënten",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "D5",
+			"indicatorCode": "D5.05",
+			"indicatorDescription": "Aantal ambulante contacten verslavingszorg gedurende het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "contacten",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "D6",
+			"indicatorCode": "D6.01",
+			"indicatorDescription": "Besteed bedrag aan toegankelijkheid wonen voor mensen met een beperking",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D6",
+			"indicatorCode": "D6.02",
+			"indicatorDescription": "Aantal woningaanpassingen gerealiseerd in het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "aanpassingen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D6",
+			"indicatorCode": "D6.03",
+			"indicatorDescription": "Gemiddelde doorlooptijd aanvraag tot oplevering woningaanpassing in dagen",
+			"indicatorType": "integer",
+			"indicatorUnit": "days",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "D7",
+			"indicatorCode": "D7.01",
+			"indicatorDescription": "Besteed bedrag aan Wmo 2015 maatwerkvoorzieningen",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D7",
+			"indicatorCode": "D7.02",
+			"indicatorDescription": "Aantal cliënten met een maatwerkvoorziening in natura op 31 december van het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "cliënten",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D7",
+			"indicatorCode": "D7.03",
+			"indicatorDescription": "Aantal cliënten met een persoonsgebonden budget op 31 december van het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "cliënten",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D7",
+			"indicatorCode": "D7.04",
+			"indicatorDescription": "Besteed bedrag aan jeugdhulp in het gedwongen kader",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D7",
+			"indicatorCode": "D7.05",
+			"indicatorDescription": "Aantal jeugdigen met jeugdhulp in het gedwongen kader op 31 december van het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "jeugdigen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D8",
+			"indicatorCode": "D8.01",
+			"indicatorDescription": "Aantal personen met een bijstandsuitkering per 31 december van het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "personen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D8",
+			"indicatorCode": "D8.02",
+			"indicatorDescription": "Besteed bedrag aan participatiebudget (Participatiewet inclusief IOAW en IOAZ)",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D8",
+			"indicatorCode": "D8.03",
+			"indicatorDescription": "Aantal re-integratietrajecten gestart in het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "trajecten",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D8",
+			"indicatorCode": "D8.04",
+			"indicatorDescription": "Percentage uitstroom naar betaald werk van totaal aantal beëindigde uitkeringen",
+			"indicatorType": "percentage",
+			"indicatorUnit": "%",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "D8",
+			"indicatorCode": "D8.05",
+			"indicatorDescription": "Besteed bedrag aan beschut werk (art. 10b Participatiewet)",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "D9",
+			"indicatorCode": "D9.01",
+			"indicatorDescription": "Besteed bedrag aan jeugdhulp exclusief jeugdhulp in gedwongen kader",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D9",
+			"indicatorCode": "D9.02",
+			"indicatorDescription": "Aantal jeugdigen met jeugdhulp exclusief gedwongen kader op 31 december van het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "jeugdigen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D9",
+			"indicatorCode": "D9.03",
+			"indicatorDescription": "Aantal jeugdigen in jeugdbescherming op 31 december van het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "jeugdigen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D9",
+			"indicatorCode": "D9.04",
+			"indicatorDescription": "Aantal jeugdigen in jeugdreclassering op 31 december van het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "jeugdigen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "D9",
+			"indicatorCode": "D9.05",
+			"indicatorDescription": "Besteed bedrag aan jeugdbescherming en jeugdreclassering",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "E3",
+			"indicatorCode": "E3.01",
+			"indicatorDescription": "Besteed bedrag aan Regionaal Meld- en Coördinatiepunt (RMC) voortijdig schoolverlaten",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "E3",
+			"indicatorCode": "E3.02",
+			"indicatorDescription": "Aantal nieuwe voortijdig schoolverlaters in de RMC-regio in het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "personen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "E3",
+			"indicatorCode": "E3.03",
+			"indicatorDescription": "Percentage nieuwe vsv'ers dat een startkwalificatie alsnog haalt binnen twee jaar",
+			"indicatorType": "percentage",
+			"indicatorUnit": "%",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "E27",
+			"indicatorCode": "E27.01",
+			"indicatorDescription": "Besteed bedrag aan educatie (art. 2.3.6 Wet educatie en beroepsonderwijs)",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "E27",
+			"indicatorCode": "E27.02",
+			"indicatorDescription": "Besteed bedrag ingezet voor taalschakeltrajecten inburgeraars",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "E27",
+			"indicatorCode": "E27.03",
+			"indicatorDescription": "Aantal deelnemers educatietrajecten gedurende het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "deelnemers",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "F1",
+			"indicatorCode": "F1.01",
+			"indicatorDescription": "Besteed bedrag aan brede doeluitkering sociale integratie en veiligheid (BDU SIV)",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "F1",
+			"indicatorCode": "F1.02",
+			"indicatorDescription": "Besteed bedrag voor activiteiten inburgering",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "F1",
+			"indicatorCode": "F1.03",
+			"indicatorDescription": "Aantal inburgeringsplichtige deelnemers aan inburgeringsvoorziening",
+			"indicatorType": "integer",
+			"indicatorUnit": "personen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "F1",
+			"indicatorCode": "F1.04",
+			"indicatorDescription": "Aantal niet-inburgeringsplichtige deelnemers aan inburgeringsvoorziening",
+			"indicatorType": "integer",
+			"indicatorUnit": "personen",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "G1",
+			"indicatorCode": "G1.01",
+			"indicatorDescription": "Besteed bedrag aan specifieke uitkering voor verkeer en vervoer",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "G1",
+			"indicatorCode": "G1.02",
+			"indicatorDescription": "Lengte nieuw aangelegde of verbeterde infrastructuur in km",
+			"indicatorType": "number",
+			"indicatorUnit": "km",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "G1",
+			"indicatorCode": "G1.03",
+			"indicatorDescription": "Aantal projecten afgerond in het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "projecten",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "G5",
+			"indicatorCode": "G5.01",
+			"indicatorDescription": "Besteed bedrag aan schoon en emissievrij vervoer",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "G5",
+			"indicatorCode": "G5.02",
+			"indicatorDescription": "Aantal zero-emissie voertuigen aangeschaft of geleasd met bijdrage",
+			"indicatorType": "integer",
+			"indicatorUnit": "voertuigen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "G5",
+			"indicatorCode": "G5.03",
+			"indicatorDescription": "Aantal laadpunten voor elektrisch vervoer gerealiseerd",
+			"indicatorType": "integer",
+			"indicatorUnit": "laadpunten",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "H1",
+			"indicatorCode": "H1.01",
+			"indicatorDescription": "Besteed bedrag aan specifieke uitkering bodemsanering",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "H1",
+			"indicatorCode": "H1.02",
+			"indicatorDescription": "Oppervlakte gesaneerde bodem in m²",
+			"indicatorType": "number",
+			"indicatorUnit": "m²",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "H1",
+			"indicatorCode": "H1.03",
+			"indicatorDescription": "Aantal bodemsaneringslocaties gereed gemeld bij bevoegd gezag",
+			"indicatorType": "integer",
+			"indicatorUnit": "locaties",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "I1",
+			"indicatorCode": "I1.01",
+			"indicatorDescription": "Besteed bedrag aan specifieke uitkering natuur en biodiversiteit",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "I1",
+			"indicatorCode": "I1.02",
+			"indicatorDescription": "Oppervlakte nieuw ingericht natuur in hectare",
+			"indicatorType": "number",
+			"indicatorUnit": "hectare",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "I1",
+			"indicatorCode": "I1.03",
+			"indicatorDescription": "Lengte ecologische verbindingszones aangelegd in km",
+			"indicatorType": "number",
+			"indicatorUnit": "km",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "J1",
+			"indicatorCode": "J1.01",
+			"indicatorDescription": "Besteed bedrag aan specifieke uitkering impulsaanpak winkelgebieden",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "J1",
+			"indicatorCode": "J1.02",
+			"indicatorDescription": "Aantal winkelgebieden getransformeerd of herontwikkeld",
+			"indicatorType": "integer",
+			"indicatorUnit": "gebieden",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "J1",
+			"indicatorCode": "J1.03",
+			"indicatorDescription": "Oppervlakte leegstaand vastgoed omgezet naar andere functie in m²",
+			"indicatorType": "number",
+			"indicatorUnit": "m²",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "K1",
+			"indicatorCode": "K1.01",
+			"indicatorDescription": "Besteed bedrag aan specifieke uitkering regiodeals",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "K1",
+			"indicatorCode": "K1.02",
+			"indicatorDescription": "Cofinancieringsratio gerealiseerd (eigen middelen en derden ten opzichte van rijksbijdrage)",
+			"indicatorType": "number",
+			"indicatorUnit": "ratio",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "K1",
+			"indicatorCode": "K1.03",
+			"indicatorDescription": "Aantal projecten gefinancierd vanuit de regiedeal",
+			"indicatorType": "integer",
+			"indicatorUnit": "projecten",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "L1",
+			"indicatorCode": "L1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering aanpak stikstof natuur",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "L1",
+			"indicatorCode": "L1.02",
+			"indicatorDescription": "Oppervlakte Natura 2000-gebied waarvoor herstelmaatregelen zijn getroffen in hectare",
+			"indicatorType": "number",
+			"indicatorUnit": "hectare",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "L1",
+			"indicatorCode": "L1.03",
+			"indicatorDescription": "Reductie stikstofdepositie behaald in mol N/ha/jaar",
+			"indicatorType": "number",
+			"indicatorUnit": "mol N/ha/jaar",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "M1",
+			"indicatorCode": "M1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering woningbouw impuls",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "M1",
+			"indicatorCode": "M1.02",
+			"indicatorDescription": "Aantal gerealiseerde woningen (opgeleverd) gefinancierd vanuit de regeling",
+			"indicatorType": "integer",
+			"indicatorUnit": "woningen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "M1",
+			"indicatorCode": "M1.03",
+			"indicatorDescription": "Waarvan aantal sociale huurwoningen (huur < liberalisatiegrens)",
+			"indicatorType": "integer",
+			"indicatorUnit": "woningen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "M1",
+			"indicatorCode": "M1.04",
+			"indicatorDescription": "Waarvan aantal middenhuurwoningen (huur liberalisatiegrens tot €1.100)",
+			"indicatorType": "integer",
+			"indicatorUnit": "woningen",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "M1",
+			"indicatorCode": "M1.05",
+			"indicatorDescription": "Aantal in aanbouw genomen woningen in het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "woningen",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "N1",
+			"indicatorCode": "N1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering ventilatie in scholen (SUVIS)",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "N1",
+			"indicatorCode": "N1.02",
+			"indicatorDescription": "Aantal schoolgebouwen met verbeterde ventilatie gefinancierd vanuit SUVIS",
+			"indicatorType": "integer",
+			"indicatorUnit": "gebouwen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "N1",
+			"indicatorCode": "N1.03",
+			"indicatorDescription": "Percentage schoolgebouwen in gemeente dat voldoet aan ventilatie-norm",
+			"indicatorType": "percentage",
+			"indicatorUnit": "%",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "O1",
+			"indicatorCode": "O1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering brede aanpak dak- en thuisloosheid",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "O1",
+			"indicatorCode": "O1.02",
+			"indicatorDescription": "Aantal personen uitgestroomd uit dak- en thuisloosheid naar stabiele woonoplossing",
+			"indicatorType": "integer",
+			"indicatorUnit": "personen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "O1",
+			"indicatorCode": "O1.03",
+			"indicatorDescription": "Aantal nieuwe preventieve interventies voorkomen dak- en thuisloosheid",
+			"indicatorType": "integer",
+			"indicatorUnit": "interventies",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "P1",
+			"indicatorCode": "P1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering aanpak geluid",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "P1",
+			"indicatorCode": "P1.02",
+			"indicatorDescription": "Aantal woningen gesaneerd van geluidshinder in het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "woningen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "P1",
+			"indicatorCode": "P1.03",
+			"indicatorDescription": "Lengte geluidsschermen en -wallen aangebracht in meters",
+			"indicatorType": "number",
+			"indicatorUnit": "meters",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "Q1",
+			"indicatorCode": "Q1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering digitale infrastructuur gemeenten",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "Q1",
+			"indicatorCode": "Q1.02",
+			"indicatorDescription": "Aantal digitale dienstverleningsprocessen gedigitaliseerd of verbeterd",
+			"indicatorType": "integer",
+			"indicatorUnit": "processen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "Q1",
+			"indicatorCode": "Q1.03",
+			"indicatorDescription": "Percentage inwoners dat digitale overheidsdiensten gebruikt (meting via eigen enquête)",
+			"indicatorType": "percentage",
+			"indicatorUnit": "%",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "R1",
+			"indicatorCode": "R1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering Nationaal Programma Rotterdam Zuid (NPRZ)",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "R1",
+			"indicatorCode": "R1.02",
+			"indicatorDescription": "Aantal bewoners bereikt met sociale activerings- en participatieprogramma's",
+			"indicatorType": "integer",
+			"indicatorUnit": "bewoners",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "R1",
+			"indicatorCode": "R1.03",
+			"indicatorDescription": "Aantal scholen deelnemend aan programma's kansengelijkheid en leerachterstanden",
+			"indicatorType": "integer",
+			"indicatorUnit": "scholen",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "S1",
+			"indicatorCode": "S1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering aanpak problematische schulden",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "S1",
+			"indicatorCode": "S1.02",
+			"indicatorDescription": "Aantal huishoudens bereikt met schuldhulpverlening in het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "huishoudens",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "S1",
+			"indicatorCode": "S1.03",
+			"indicatorDescription": "Aantal huishoudens met afgesloten schuldregelingsovereenkomst",
+			"indicatorType": "integer",
+			"indicatorUnit": "huishoudens",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "S1",
+			"indicatorCode": "S1.04",
+			"indicatorDescription": "Gemiddelde schuldhoogte bij aanvang schuldhulpverleningstraject in euro",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "T1",
+			"indicatorCode": "T1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering volksgezondheid",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "T1",
+			"indicatorCode": "T1.02",
+			"indicatorDescription": "Besteed bedrag aan openbare geestelijke gezondheidszorg (OGGZ)",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "T1",
+			"indicatorCode": "T1.03",
+			"indicatorDescription": "Aantal inwoners bereikt met preventieprogramma's gecombineerde leefstijlinterventie",
+			"indicatorType": "integer",
+			"indicatorUnit": "inwoners",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "U1",
+			"indicatorCode": "U1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering erfgoed en monumenten",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "U1",
+			"indicatorCode": "U1.02",
+			"indicatorDescription": "Aantal gerestaureerde gemeentelijke monumenten in het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "monumenten",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "U1",
+			"indicatorCode": "U1.03",
+			"indicatorDescription": "Aantal rijksmonumenten ondersteund via gemeentelijke bijdrage erfgoedregeling",
+			"indicatorType": "integer",
+			"indicatorUnit": "monumenten",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "V1",
+			"indicatorCode": "V1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering stedelijke vernieuwing",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "V1",
+			"indicatorCode": "V1.02",
+			"indicatorDescription": "Aantal woningen gesloopt in het kader van stedelijke vernieuwing",
+			"indicatorType": "integer",
+			"indicatorUnit": "woningen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "V1",
+			"indicatorCode": "V1.03",
+			"indicatorDescription": "Aantal woningen gebouwd of teruggebracht na sloop in het kader van stedelijke vernieuwing",
+			"indicatorType": "integer",
+			"indicatorUnit": "woningen",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "W1",
+			"indicatorCode": "W1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering waterveiligheid en klimaatadaptatie",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "W1",
+			"indicatorCode": "W1.02",
+			"indicatorDescription": "Oppervlakte vergroend stedelijk gebied (m²) in het kader van klimaatadaptatie",
+			"indicatorType": "number",
+			"indicatorUnit": "m²",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "W1",
+			"indicatorCode": "W1.03",
+			"indicatorDescription": "Volume waterberging gerealiseerd in m³",
+			"indicatorType": "number",
+			"indicatorUnit": "m³",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "X1",
+			"indicatorCode": "X1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering armoedebestrijding kinderen",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "X1",
+			"indicatorCode": "X1.02",
+			"indicatorDescription": "Aantal kinderen in armoede bereikt met extra ondersteuning",
+			"indicatorType": "integer",
+			"indicatorUnit": "kinderen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "X1",
+			"indicatorCode": "X1.03",
+			"indicatorDescription": "Besteed bedrag aan kindpakketten (sport, cultuur, school)",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "X1",
+			"indicatorCode": "X1.04",
+			"indicatorDescription": "Percentage kinderen in armoede ten opzichte van totaal aantal kinderen in gemeente",
+			"indicatorType": "percentage",
+			"indicatorUnit": "%",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "Y1",
+			"indicatorCode": "Y1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering energietoeslag lagere inkomens",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "Y1",
+			"indicatorCode": "Y1.02",
+			"indicatorDescription": "Aantal huishoudens dat energietoeslag heeft ontvangen",
+			"indicatorType": "integer",
+			"indicatorUnit": "huishoudens",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "Y1",
+			"indicatorCode": "Y1.03",
+			"indicatorDescription": "Gemiddelde hoogte energietoeslag per huishouden in euro",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "Z1",
+			"indicatorCode": "Z1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering zorginfrastructuur thuiswonende ouderen",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "Z1",
+			"indicatorCode": "Z1.02",
+			"indicatorDescription": "Aantal deelnemers aan valpreventie en beweegprogramma's voor ouderen",
+			"indicatorType": "integer",
+			"indicatorUnit": "deelnemers",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "Z1",
+			"indicatorCode": "Z1.03",
+			"indicatorDescription": "Aantal gerealiseerde extra zorggeschikte woningen voor ouderen",
+			"indicatorType": "integer",
+			"indicatorUnit": "woningen",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "AA1",
+			"indicatorCode": "AA1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering sportakkoord",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "AA1",
+			"indicatorCode": "AA1.02",
+			"indicatorDescription": "Aantal sportbuurtwerkteams actief in de gemeente op 31 december van het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "teams",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "AA1",
+			"indicatorCode": "AA1.03",
+			"indicatorDescription": "Aantal sportclubs ondersteund bij verduurzaming accommodaties",
+			"indicatorType": "integer",
+			"indicatorUnit": "clubs",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "BB1",
+			"indicatorCode": "BB1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering bibliotheekwerk",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "BB1",
+			"indicatorCode": "BB1.02",
+			"indicatorDescription": "Aantal bibliotheekvestigingen ondersteund vanuit de regeling",
+			"indicatorType": "integer",
+			"indicatorUnit": "vestigingen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "BB1",
+			"indicatorCode": "BB1.03",
+			"indicatorDescription": "Aantal actieve bibliotheekleden op 31 december van het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "leden",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "CC1",
+			"indicatorCode": "CC1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering programma aanpak stikstof (PAS) leefgebiedherstel",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "CC1",
+			"indicatorCode": "CC1.02",
+			"indicatorDescription": "Oppervlakte leefgebied hersteld voor prioritaire diersoorten in hectare",
+			"indicatorType": "number",
+			"indicatorUnit": "hectare",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "CC1",
+			"indicatorCode": "CC1.03",
+			"indicatorDescription": "Aantal hydrologische maatregelen uitgevoerd in veengebieden",
+			"indicatorType": "integer",
+			"indicatorUnit": "maatregelen",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "DD1",
+			"indicatorCode": "DD1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering transitievisie warmte en warmtenetten",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "DD1",
+			"indicatorCode": "DD1.02",
+			"indicatorDescription": "Aantal woningen aangesloten op warmtenet gefinancierd vanuit de regeling",
+			"indicatorType": "integer",
+			"indicatorUnit": "woningen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "DD1",
+			"indicatorCode": "DD1.03",
+			"indicatorDescription": "Percentage wijk waarvoor transitievisie warmte is vastgesteld",
+			"indicatorType": "percentage",
+			"indicatorUnit": "%",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "EE1",
+			"indicatorCode": "EE1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering preventieve jeugdzorg (vroegsignalering)",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "EE1",
+			"indicatorCode": "EE1.02",
+			"indicatorDescription": "Aantal gezinnen bereikt via vroegsignalering en outreachend werken",
+			"indicatorType": "integer",
+			"indicatorUnit": "gezinnen",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "EE1",
+			"indicatorCode": "EE1.03",
+			"indicatorDescription": "Percentage gezinnen waarbij vroegsignalering leidde tot overdracht specialistische zorg",
+			"indicatorType": "percentage",
+			"indicatorUnit": "%",
+			"mandatory": false
+		},
+		{
+			"schemeCode": "FF1",
+			"indicatorCode": "FF1.01",
+			"indicatorDescription": "Besteed bedrag specifieke uitkering mantelzorg en respijtzorg",
+			"indicatorType": "amount",
+			"indicatorUnit": "euro",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "FF1",
+			"indicatorCode": "FF1.02",
+			"indicatorDescription": "Aantal mantelzorgers ondersteund via respijtzorgaanbod",
+			"indicatorType": "integer",
+			"indicatorUnit": "mantelzorgers",
+			"mandatory": true
+		},
+		{
+			"schemeCode": "FF1",
+			"indicatorCode": "FF1.03",
+			"indicatorDescription": "Aantal beschikbare respijtzorgplaatsen per 31 december van het verantwoordingsjaar",
+			"indicatorType": "integer",
+			"indicatorUnit": "plaatsen",
+			"mandatory": false
+		}
+	]
+}

@@ -1,0 +1,242 @@
+{
+	"menu": [
+		{
+			"id": "Vpb",
+			"label": "Corporate tax (Vpb)",
+			"icon": "PercentOutline",
+			"order": 35,
+			"children": [
+				{
+					"id": "VpbDeadlines",
+					"label": "Tax deadlines",
+					"icon": "ClockAlertOutline",
+					"route": "VpbDeadlines",
+					"order": 10
+				},
+				{
+					"id": "VpbPayments",
+					"label": "Tax payments",
+					"icon": "CreditCardOutline",
+					"route": "VpbPayments",
+					"order": 20
+				},
+				{
+					"id": "VpbReports",
+					"label": "Quarterly statement",
+					"icon": "FileChartOutline",
+					"route": "VpbReports",
+					"order": 30
+				},
+				{
+					"id": "VpbSettings",
+					"label": "Vpb settings",
+					"icon": "CogOutline",
+					"route": "VpbSettings",
+					"order": 40
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "VpbDeadlines",
+			"route": "/bookkeeping/vpb/deadlines",
+			"type": "index",
+			"title": "Tax deadlines",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxDeadline",
+				"columns": [
+					{ "key": "deadlineDate", "label": "Deadline date", "sortable": true },
+					{ "key": "deadlineType", "label": "Deadline type", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "fiscalYear", "label": "Fiscal year", "sortable": true },
+					{ "key": "quarter", "label": "Quarter", "sortable": true },
+					{ "key": "relatedPeriodId", "label": "Related period", "sortable": true }
+				],
+				"search": true,
+				"filters": [
+					{ "key": "deadlineType", "label": "Deadline type" },
+					{ "key": "status", "label": "Status" },
+					{ "key": "fiscalYear", "label": "Fiscal year" },
+					{ "key": "quarter", "label": "Quarter" }
+				],
+				"defaultSort": "deadlineDate",
+				"detailRoute": "VpbDeadlineDetail"
+			}
+		},
+		{
+			"id": "VpbDeadlineDetail",
+			"route": "/bookkeeping/vpb/deadlines/:id",
+			"type": "detail",
+			"title": "Tax deadline",
+			"config": {
+				"_note": "A Vpb tax deadline is a compliance calendar record: a dated filing/payment obligation for a fiscal year and quarter with its status. Body leads with the deadline data; the payments booked against this deadline (TaxPaymentTracking.relatedDeadlineId) are listed as related so a controller sees whether the obligation is met, and the audit trail sits in a sidebar tab. No comms — a compliance record.",
+				"register": "shillinq",
+				"schema": "TaxDeadline",
+				"fields": [
+					{ "key": "deadlineDate", "label": "Deadline date", "type": "string" },
+					{ "key": "deadlineType", "label": "Deadline type", "type": "string" },
+					{ "key": "description", "label": "Description", "type": "string" },
+					{ "key": "fiscalYear", "label": "Fiscal year", "type": "number" },
+					{ "key": "quarter", "label": "Quarter", "type": "number" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "relatedPeriodId", "label": "Related period", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`; a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing while every gate stays green. TOKEN: `@objectId`. ⚠️ TaxPaymentTracking.relatedDeadlineId is documented as 'slug or id' — a slug lives at `@self.slug`, which `@object.<field>` cannot reach, and TaxDeadline exposes no flat deadline-key field (deadlineDate/deadlineType/relatedPeriodId are different values). `@objectId` is the only reachable half of that either/or; rows written with the slug spelling will not appear here until the FK is normalised to the id.",
+				"relatedCollections": [
+					{"title": "Payments for this deadline", "register": "shillinq", "schema": "TaxPaymentTracking", "filter": {"relatedDeadlineId": "@objectId"}, "columns": [
+						{"key": "paymentDate", "label": "Paid"},
+						{"key": "paymentType", "label": "Type"},
+						{"key": "amount", "label": "Amount"},
+						{"key": "status", "label": "Status"}
+					], "rowRoute": "VpbPaymentDetail"}
+				],
+				"auditTrail": true,
+				"indexRoute": "VpbDeadlines",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
+			}
+		},
+		{
+			"id": "VpbPayments",
+			"route": "/bookkeeping/vpb/payments",
+			"type": "index",
+			"title": "Tax payments",
+			"config": {
+				"register": "shillinq",
+				"schema": "TaxPaymentTracking",
+				"columns": [
+					{ "key": "paymentDate", "label": "Payment date", "sortable": true },
+					{ "key": "paymentType", "label": "Payment type", "sortable": true },
+					{ "key": "amount", "label": "Amount", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "linkedGLAccount", "label": "Linked account", "sortable": true }
+				],
+				"search": true,
+				"filters": [
+					{ "key": "paymentType", "label": "Payment type" },
+					{ "key": "status", "label": "Status" }
+				],
+				"defaultSort": "paymentDate",
+				"detailRoute": "VpbPaymentDetail"
+			}
+		},
+		{
+			"id": "VpbPaymentDetail",
+			"route": "/bookkeeping/vpb/payments/:id",
+			"type": "detail",
+			"title": "Tax payment",
+			"config": {
+				"_note": "A Vpb tax payment is a financial TRANSACTION: an amount paid to (or refunded from) the Belastingdienst, posted to a GL account and linked to the deadline it settles. Body leads with the payment data and an amount KPI; the deadline it settles is listed as related for traceability, and the payment proof + audit trail sit in a sidebar tab. No comms — a payment ledger record.",
+				"register": "shillinq",
+				"schema": "TaxPaymentTracking",
+				"aggregations": [
+					{"id": "amount", "title": "Payment amount", "field": "amount", "metric": "value", "format": "currency"}
+				],
+				"fields": [
+					{ "key": "paymentDate", "label": "Payment date", "type": "string" },
+					{ "key": "paymentType", "label": "Payment type", "type": "string" },
+					{ "key": "amount", "label": "Amount", "type": "number" },
+					{ "key": "currency", "label": "Currency", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "linkedGLAccount", "label": "Linked account", "type": "string" },
+					{ "key": "relatedDeadlineId", "label": "Related deadline", "type": "string" },
+					{ "key": "description", "label": "Description", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"_relatedListsExclude": "'Settled deadline' NOT converted — removed rather than faked. It was declared under `relatedLists` (not a prop on any Cn page component, so it never rendered) as an INVERSE lookup: `foreignKey: 'id', join: 'relatedDeadlineId'`, i.e. 'show the ONE TaxDeadline whose identity equals this payment's relatedDeadlineId'. `relatedCollections` cannot express that: its filter matches CHILD PAYLOAD fields, and `id` is not a payload property on TaxDeadline (its properties are deadlineDate/deadlineType/description/fiscalYear/quarter/status/relatedPeriodId/administrationId) — object identity lives at `@self.id`, which the filter path does not address. This is a parent lookup, not a child collection; it belongs in a relationLinks/FK-resolve cell (CnFkResolveCell) rather than a related-collection section. See the relatedLists sweep report.",
+				"auditTrail": true,
+				"indexRoute": "VpbPayments",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Payment proof", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "TaxPaymentTracking", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
+			}
+		},
+		{
+			"id": "VpbReports",
+			"route": "/bookkeeping/vpb/reports",
+			"type": "index",
+			"title": "Quarterly statement",
+			"config": {
+				"register": "shillinq",
+				"schema": "QuarterlyTaxStatement",
+				"columns": [
+					{ "key": "fiscalYear", "label": "Fiscal year", "sortable": true },
+					{ "key": "quarter", "label": "Quarter", "sortable": true },
+					{ "key": "revenue", "label": "Revenue", "sortable": true },
+					{ "key": "operatingExpenses", "label": "Operating expenses", "sortable": true },
+					{ "key": "netTaxableIncome", "label": "Net taxable income", "sortable": true },
+					{ "key": "untaggedCount", "label": "Untagged postings", "sortable": true }
+				],
+				"defaultSort": "fiscalYear"
+			}
+		},
+		{
+			"id": "VpbSettings",
+			"route": "/bookkeeping/vpb/settings",
+			"type": "settings",
+			"title": "Vpb settings",
+			"config": {
+				"saveEndpoint": "/index.php/apps/shillinq/api/settings",
+				"sections": [
+					{
+						"id": "vpb-reminders",
+						"title": "Deadline reminders",
+						"fields": [
+							{
+								"key": "vpb_reminder_days",
+								"label": "Reminder windows (days before)",
+								"type": "string",
+								"help": "Comma-separated days before a deadline to send a reminder. Defaults to 7,1."
+							}
+						]
+					},
+					{
+						"id": "vpb-tax-treatment",
+						"title": "Tax treatment categories",
+						"fields": [
+							{
+								"key": "vpb_treatment_normal",
+								"label": "Normal",
+								"type": "string",
+								"help": "Ordinary deductible business expense or revenue."
+							},
+							{
+								"key": "vpb_treatment_deductible",
+								"label": "Deductible",
+								"type": "string",
+								"help": "Tax-benefit item (R&D, green investment)."
+							},
+							{
+								"key": "vpb_treatment_non_deductible",
+								"label": "Non-deductible",
+								"type": "string",
+								"help": "Disallowed expense (gifts, entertainment, personal use)."
+							},
+							{
+								"key": "vpb_treatment_special",
+								"label": "Special",
+								"type": "string",
+								"help": "Subject to special rules (dividend received, transfer pricing)."
+							}
+						]
+					}
+				]
+			}
+		}
+	]
+}

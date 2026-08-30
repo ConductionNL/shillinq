@@ -1,0 +1,381 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "ar-invoice-payment-links",
+    "adr": "ADR-037 modular register fragment + ADR-031 declarative business logic + ADR-022 OR notification engine — never edit shillinq_register.json",
+    "description": "Tier 2 — AR Invoice Payment Links (EXPECTED-GAP 2 of 2026-06-11 re-evaluation). Adds the PaymentRequest schema: an online payment link (iDEAL via Mollie, cards via Stripe) on every AR invoice, reconciled back to ARInvoice.paid automatically. Generalizes the bookings-deposits payment plumbing (REQ-DP-001/005/006/007) to ARInvoice records WITHOUT forking it — the shared PaymentReconciliationService + PaymentRequestWebhookController handle BOTH DepositPayment and PaymentRequest through one code path (REQ-APL-004). Stores NO PCI data: OpenConnector (PCI-certified) owns card details, tokens, hosted payment UI and refunds; the register stores only opaque references (paymentIntentId, settlementReference), mirroring DepositPayment REQ-DP-001. The paymentLink is a declarative x-openregister-calculations field resolving to OpenConnector's hosted payment UI with a short-lived signed token — no Mollie/Stripe URL is ever constructed in app code (REQ-APL-002). On capture the linked ARInvoice settles through its existing matchPaid lifecycle transition (AR core owns GL posting); a capture that cannot apply lands in captured_unapplied — surfaced, never silently dropped (REQ-APL-005). Settlement by other means voids open requests; capture records the gateway payout reference for bank-reconciliation auto-matching (REQ-APL-006). Two declarative x-openregister-notifications rules (paymentReceived / paymentFailed) per REQ-APL-007 — no imperative dispatch (gate-18). Seed data ships 3 demo PaymentRequest records spanning pending / captured / failed."
+  },
+  "components": {
+    "schemas": {
+      "PaymentRequest": {
+        "slug": "PaymentRequest",
+        "icon": "CreditCardOutline",
+        "version": "0.1.1",
+        "title": "Payment Request",
+        "description": "An online payment attempt against an AR invoice per REQ-APL-001. One AR invoice can carry several payment requests over its life (link expired and regenerated, a failed attempt then a new link, a link voided after partial credit) — each request has its own lifecycle, gateway identity and audit needs, so payment state lives here and never folds onto ARInvoice (design D1). Mirrors the proven DepositPayment shape minus booking fields, FK'd to ARInvoice. STORES NO PCI DATA: no card number, CVV, PAN, IBAN credential, or authorization token is ever persisted — OpenConnector (PCI-certified) handles all sensitive payment data and only opaque references (paymentIntentId, settlementReference) are stored here, identical to DepositPayment REQ-DP-001. v0.1.1 (portal-payment-initiation, REQ-SPPI-005) adds confirmationSummary — a subject-safe settlement receipt written on capture and surfaced through the customer portal's read-only paymentRequests collection.",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Payment-attempt register; every create / update / lifecycle transition (authorize / capture / markUnapplied / fail / expire / void) is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. The captured PaymentRequest is the canonical payment-evidence chain linked to the settled ARInvoice (REQ-APL-005)."
+        },
+        "x-schema-org": "schema:Invoice",
+        "x-spec": "openspec/changes/ar-invoice-payment-links/specs/ar-invoice-payment-links/spec.md",
+        "type": "object",
+        "required": [
+          "invoiceReference",
+          "amount",
+          "currency",
+          "paymentGateway",
+          "state"
+        ],
+        "properties": {
+          "invoiceReference": {
+            "type": "string",
+            "description": "FK to the ARInvoice (UUID or slug) being paid. The capture transition settles this invoice through its existing matchPaid lifecycle transition (REQ-APL-005).",
+            "example": "ar-invoice-c-2026-0042",
+            "title": "Invoice Reference"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "The invoice's outstanding amount at request creation, in the invoice currency. v1 links carry the full outstanding amount; if the outstanding changes (partial credit) the pending request is voided and a new one is created for the new amount (REQ-APL-006 / design D5).",
+            "example": 1210.0,
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "description": "ISO 4217 currency code, mirrors the invoice currency.",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "paymentGateway": {
+            "type": "string",
+            "enum": [
+              "mollie",
+              "stripe"
+            ],
+            "description": "The gateway routing this request via the OpenConnector payment adapter. iDEAL via Mollie, cards via Stripe. The gateway set is owned by the OpenConnector adapter (no Mollie/Stripe SDK enters Shillinq).",
+            "example": "mollie",
+            "title": "Payment Gateway"
+          },
+          "paymentIntentId": {
+            "type": "string",
+            "nullable": true,
+            "description": "OPAQUE gateway/OpenConnector payment-intent reference. NOT a PCI field — no card data, no token, just the opaque correlation id the webhook + polling fallback resolve the record by. Mirrors DepositPayment.paymentIntentId (REQ-DP-001).",
+            "example": "tr_WDqYK6vllg",
+            "title": "Payment Intent ID"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "authorized",
+              "captured",
+              "captured_unapplied",
+              "failed",
+              "expired",
+              "voided"
+            ],
+            "default": "pending",
+            "description": "Payment-request lifecycle state per REQ-APL-001. captured_unapplied is the exception state for a capture that could not settle its invoice — surfaced, never silently dropped (REQ-APL-005).",
+            "example": "pending",
+            "title": "State"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "TTL boundary (per-administration config). A pending request expires at min(configured TTL, invoice settlement); the shared polling job flips pending → expired (design D7).",
+            "example": "2026-07-15T23:59:59Z",
+            "title": "Expires At"
+          },
+          "failureReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Last gateway error, operator-readable. The gateway error code/message only — never raw card data (mirrors DepositPayment REQ-DP-011). Required on the fail transition.",
+            "example": "Payment failed at gateway.",
+            "title": "Failure Reason"
+          },
+          "settlementReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "Gateway payout/batch reference recorded on capture (or enriched by the polling job where the gateway exposes payout data asynchronously). Feeds bookkeeping-bank-reconciliation auto-matching (REQ-BBR-002) so the Mollie/Stripe payout statement line matches the batch of captured requests (REQ-APL-006).",
+            "example": "po_2026_0613",
+            "title": "Settlement Reference"
+          },
+          "gatewayFeeAmount": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Gateway fee (gross − net) surfaced on the bank-reconciliation match for operator posting per REQ-APL-006. Automatic fee journals are out of scope (v1 surfaces, does not auto-post).",
+            "example": 0.35,
+            "title": "Gateway Fee Amount"
+          },
+          "capturedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Capture timestamp, set on the capture transition (REQ-APL-005).",
+            "example": "2026-06-13T10:22:00Z",
+            "title": "Captured At"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration owning this payment request. Scopes the payment-requests overview per-administration (REQ-APL-008).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "paymentLink": {
+            "type": "string",
+            "x-openconnector-resolved": true,
+            "description": "COMPUTED (REQ-APL-002): the customer-facing payment URL embedding the payment-request id, the invoice id, and a short-lived signed token, resolving to the OpenConnector hosted payment UI — resolved by the shared payment adapter (the REQ-DP-005 pattern). The app MUST NOT construct a direct Mollie/Stripe URL anywhere. Null unless state=pending AND the invoice is unsettled (visibleWhen); following a link for a non-pending request shows a friendly already-paid/expired page from the hosted UI, never a second charge.",
+            "title": "Payment Link"
+          },
+          "confirmationSummary": {
+            "type": "string",
+            "nullable": true,
+            "description": "Subject-safe, plain-language settlement receipt written by PaymentReconciliationService on capture (portal-payment-initiation, REQ-SPPI-005) — e.g. 'Invoice INV-2026-014 paid on 2026-07-23, reference tr_xxx'. Surfaced through the customer portal's read-only paymentRequests collection so the debtor sees a receipt without a dedicated portal inbox. Never overwritten by a replayed/idempotent webhook.",
+            "example": "Invoice INV-2026-0042 paid on 2026-07-23, reference tr_WDqYK6vllg.",
+            "title": "Confirmation Summary"
+          }
+        },
+        "x-openregister-calculations": {
+          "paymentLink": {
+            "type": "string",
+            "x-openconnector-resolved": true,
+            "description": "OpenConnector hosted payment UI URL with a short-lived signed token (REQ-APL-002), resolved by the shared payment adapter following the bookings-deposits REQ-DP-005 pattern. Embeds the payment-request id + invoice id + signed token; resolves to OpenConnector's hosted payment UI. NO Mollie/Stripe URL is constructed in app PHP/JS — the calculation delegates to OpenConnector. Null unless state=pending and the invoice unsettled.",
+            "visibleWhen": {
+              "all": [
+                {
+                  "field": "state",
+                  "operator": "equals",
+                  "value": "pending"
+                }
+              ]
+            }
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "pending",
+          "states": {
+            "pending": {
+              "label": "Pending",
+              "description": "Payment link issued and valid; awaiting the customer's payment. The paymentLink calculation resolves only in this state and while the invoice is unsettled (REQ-APL-002)."
+            },
+            "authorized": {
+              "label": "Authorized",
+              "description": "The gateway authorized the payment; funds reserved, awaiting capture. Card flows may authorize then capture; iDEAL captures directly (pending → captured)."
+            },
+            "captured": {
+              "label": "Captured",
+              "description": "Payment captured at the gateway. The linked ARInvoice is settled via its existing matchPaid lifecycle transition (AR core owns GL posting); settlementReference + gatewayFeeAmount recorded for bank-reconciliation auto-matching (REQ-APL-005 / REQ-APL-006). Terminal happy-path state."
+            },
+            "captured_unapplied": {
+              "label": "Captured (unapplied)",
+              "description": "Capture succeeded at the gateway but the invoice could not be settled (already credited / written-off / paid by other means). EXCEPTION state — surfaced prominently on the payment-requests overview's exceptions filter, never silently dropped, and refundable via the adapter's existing refund call (REQ-APL-005)."
+            },
+            "failed": {
+              "label": "Failed",
+              "description": "The gateway rejected the payment. failureReason carries the operator-readable gateway error. The customer may be offered a fresh link (regeneration creates a new request, history preserved)."
+            },
+            "expired": {
+              "label": "Expired",
+              "description": "The link's TTL elapsed before payment (time-based on expiresAt). An operator can regenerate, creating a new pending request (REQ-APL-008)."
+            },
+            "voided": {
+              "label": "Voided",
+              "description": "The invoice was settled by other means (bank match, credit note, write-off) or its outstanding amount changed — open pending requests are voided immediately so the link stops resolving to a payable session (REQ-APL-006 / design D5)."
+            }
+          },
+          "transitions": {
+            "authorize": {
+              "from": "pending",
+              "to": "authorized",
+              "label": "Authorize payment",
+              "description": "The gateway authorized the payment (card flows). Reached idempotently from the shared PaymentReconciliationService on the gateway authorize event (REQ-APL-004)."
+            },
+            "capture": {
+              "from": [
+                "authorized",
+                "pending"
+              ],
+              "to": "captured",
+              "label": "Capture payment",
+              "description": "Payment captured at the gateway. Settles the linked ARInvoice through its existing matchPaid lifecycle transition (AR core REQ-AR-004 owns GL settlement posting, dunning stop, ageing — this change posts nothing) with the PaymentRequest as payment evidence; records capturedAt, settlementReference and gatewayFeeAmount for bank-reconciliation auto-matching (REQ-APL-005 / REQ-APL-006). Idempotent: a replayed capture webhook is a no-op (REQ-APL-004)."
+            },
+            "markUnapplied": {
+              "from": "captured",
+              "to": "captured_unapplied",
+              "label": "Mark captured but unapplied",
+              "description": "The capture succeeded but the linked ARInvoice settlement transition was impossible (already credited / written-off / paid by other means). The request is surfaced as an exception — never silently dropped — and offers a refund via the adapter's existing refund call (REQ-APL-005)."
+            },
+            "fail": {
+              "from": [
+                "pending",
+                "authorized"
+              ],
+              "to": "failed",
+              "label": "Fail payment",
+              "description": "The gateway rejected the payment. Requires failureReason (the gateway error code/message — never raw card data).",
+              "requires": "failureReason"
+            },
+            "expire": {
+              "from": "pending",
+              "to": "expired",
+              "label": "Expire link",
+              "description": "Time-based transition fired when now > expiresAt and no payment captured. The shared polling job already wakes for pending requests (design D7) — no app-local cron."
+            },
+            "void": {
+              "from": [
+                "pending",
+                "authorized"
+              ],
+              "to": "voided",
+              "label": "Void request",
+              "description": "The invoice was settled by other means (bank match, credit note, write-off) or its outstanding amount changed — open requests are voided immediately so the link stops resolving (REQ-APL-006). The voiding hook rides the invoice lifecycle transitions declaratively (design D5)."
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "paymentReceived": {
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "state",
+                "operator": "equals",
+                "value": "captured"
+              }
+            },
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "shillinq-finance"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Betaling ontvangen voor factuur {{invoiceReference}}",
+              "en": "Payment received for invoice {{invoiceReference}}"
+            }
+          },
+          "paymentFailed": {
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "state",
+                "operator": "equals",
+                "value": "failed"
+              }
+            },
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "shillinq-finance"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Betaling mislukt voor factuur {{invoiceReference}}",
+              "en": "Payment failed for invoice {{invoiceReference}}"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "PaymentRequest",
+          "slug": "payment-request-2026-0042-pending"
+        },
+        "invoiceReference": "ar-invoice-c-2026-0042",
+        "amount": 1210.0,
+        "currency": "EUR",
+        "paymentGateway": "mollie",
+        "paymentIntentId": "tr_WDqYK6vllg",
+        "state": "pending",
+        "expiresAt": "2026-07-15T23:59:59Z",
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "PaymentRequest",
+          "slug": "payment-request-2026-0039-captured"
+        },
+        "invoiceReference": "ar-invoice-c-2026-0039",
+        "amount": 847.0,
+        "currency": "EUR",
+        "paymentGateway": "stripe",
+        "paymentIntentId": "pi_3PqYK6Lkdfg2",
+        "state": "captured",
+        "settlementReference": "po_2026_0613",
+        "gatewayFeeAmount": 0.35,
+        "capturedAt": "2026-06-13T10:22:00Z",
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "PaymentRequest",
+          "slug": "payment-request-2026-0041-failed"
+        },
+        "invoiceReference": "ar-invoice-c-2026-0041",
+        "amount": 363.0,
+        "currency": "EUR",
+        "paymentGateway": "stripe",
+        "paymentIntentId": "pi_3PqYK6Lkdf99",
+        "state": "failed",
+        "failureReason": "Payment failed at gateway.",
+        "administrationId": "adm-shillinq-demo"
+      }
+    ]
+  }
+}

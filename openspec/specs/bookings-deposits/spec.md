@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Capability Spec: Booking Deposits at Booking Time
 
 **Status:** proposed  
@@ -8,7 +12,7 @@
 
 ---
 
-## Overview
+## Purpose
 
 This spec defines the capability to collect partial or full deposits from customers at booking confirmation via Mollie or Stripe (routed through OpenConnector). Deposits are materialized as Shillinq `ARInvoice` records for accounting and tax compliance. The feature is declarative per ADR-031: all deposit rules, payment-link generation, and invoice creation logic are `x-openregister-lifecycle` and `x-openregister-calculations` metadata, not PHP code.
 
@@ -103,17 +107,12 @@ New nested object:
 
 **Requirement:** DepositPayment records MUST NOT store payment card details, CVV, or authorization tokens. All sensitive payment data is handled by OpenConnector (PCI-certified).
 
-**Scenario:**
-```
-GIVEN a booking confirmation request with payment method "credit card"
-WHEN the system routes payment to OpenConnector
-THEN the DepositPayment stores only:
-  - paymentIntentId (opaque reference from gateway)
-  - paymentGateway (mollie|stripe)
-  - paymentMethod (ideal|card|etc)
-  - authorization status (not token)
-AND no card number, expiry, or CVV is logged anywhere
-```
+#### Scenario: Only opaque references stored
+
+- **GIVEN** a booking confirmation request with payment method "credit card"
+- **WHEN** the system routes payment to OpenConnector
+- **THEN** the DepositPayment stores only paymentIntentId (opaque reference from gateway), paymentGateway (mollie|stripe), paymentMethod (ideal|card|etc), and authorization status (not token)
+- **AND** no card number, expiry, or CVV is logged anywhere
 
 ### REQ-DP-002: Deposit Rule Validation
 
@@ -126,65 +125,56 @@ AND no card number, expiry, or CVV is logged anywhere
 - If booking's event date is within `dueOffsetDays` from now, deposit is due immediately
 - Deposit amount (after tax) MUST NOT exceed booking's total price
 
-**Scenario:**
-```
-GIVEN a booking-type with depositRule.type=percentage, percentage=50, dueOffsetDays=14
-WHEN a booking is created for event date 2026-06-15 (today is 2026-05-21, 25 days away)
-THEN depositRequired=true, dueDate=2026-06-01 (14 days before event)
+#### Scenario: Deposit due-date validation
 
-WHEN a booking is created for event date 2026-05-30 (9 days away)
-THEN depositRequired=true, dueDate=immediately (event is within 14 days)
-```
+- **GIVEN** a booking-type with depositRule.type=percentage, percentage=50, dueOffsetDays=14
+- **WHEN** a booking is created for event date 2026-06-15 (today is 2026-05-21, 25 days away)
+- **THEN** depositRequired=true, dueDate=2026-06-01 (14 days before event)
+- **WHEN** a booking is created for event date 2026-05-30 (9 days away)
+- **THEN** depositRequired=true, dueDate=immediately (event is within 14 days)
 
 ### REQ-DP-003: Automatic ARInvoice Creation
 
 **Requirement:** When a DepositPayment transitions to `authorized` state, an `ARInvoice` MUST be automatically created in Shillinq, linking back to the DepositPayment.
 
-**Scenario:**
-```
-GIVEN a DepositPayment with state=pending, orderId=ord-123, amount=7500 (€75)
-WHEN a webhook event from Mollie confirms payment authorization
-THEN DepositPayment.state transitions to authorized
-AND an ARInvoice is created with:
-  - customerId (from Order.customerId)
-  - lineItem: "Studio Portrait Session - Deposit (50%)", amount=7500, taxRate=21%
-  - dueDate (from DepositPayment's rule: event date minus dueOffsetDays)
-  - sourceDocumentUri: "urn:nextcloud:booking:deposit-payment:dp-XXXXX"
-  - state: "issued"
-AND ARInvoice.id is stored in DepositPayment.arInvoiceId
-```
+#### Scenario: ARInvoice created on authorization
+
+- **GIVEN** a DepositPayment with state=pending, orderId=ord-123, amount=7500 (€75)
+- **WHEN** a webhook event from Mollie confirms payment authorization
+- **THEN** DepositPayment.state transitions to authorized
+- **AND** an ARInvoice is created with customerId (from Order.customerId), lineItem: "Studio Portrait Session - Deposit (50%)", amount=7500, taxRate=21%, dueDate (from DepositPayment's rule: event date minus dueOffsetDays), sourceDocumentUri: "urn:nextcloud:booking:deposit-payment:dp-XXXXX", state: "issued"
+- **AND** ARInvoice.id is stored in DepositPayment.arInvoiceId
 
 ### REQ-DP-004: Booking State Transition on Payment Authorization
 
 **Requirement:** Order (booking) state MUST transition from `pending_payment` to `confirmed` only after successful payment authorization.
 
-**Scenario:**
-```
-GIVEN an Order with state=pending_payment, depositPaymentId=dp-001
-WHEN DepositPayment.state transitions to authorized
-THEN Order.state automatically transitions to confirmed
-AND booking confirmation email is sent (existing booking flow)
+#### Scenario: Order confirmed on authorization
 
-GIVEN an Order with state=pending_payment, depositPaymentId=dp-002
-WHEN DepositPayment.state transitions to failed (after 3 failed attempts)
-THEN Order.state automatically transitions to cancelled
-AND cancellation email is sent to customer
-```
+- **GIVEN** an Order with state=pending_payment, depositPaymentId=dp-001
+- **WHEN** DepositPayment.state transitions to authorized
+- **THEN** Order.state automatically transitions to confirmed
+- **AND** booking confirmation email is sent (existing booking flow)
+
+#### Scenario: Order cancelled on payment failure
+
+- **GIVEN** an Order with state=pending_payment, depositPaymentId=dp-002
+- **WHEN** DepositPayment.state transitions to failed (after 3 failed attempts)
+- **THEN** Order.state automatically transitions to cancelled
+- **AND** cancellation email is sent to customer
 
 ### REQ-DP-005: Payment-Link Generation
 
 **Requirement:** DepositPayment MUST have a calculated `paymentLink` field (per `x-openregister-calculations`) that generates a customer-facing payment URL.
 
-**Scenario:**
-```
-GIVEN a DepositPayment with state=pending, depositPaymentId=dp-123
-AND an ARInvoice has been created (inv-ar-5001)
-WHEN the deposit-payment confirmation email is being rendered
-THEN DepositPayment.paymentLink evaluates to a URL, e.g.:
-  https://nextcloud.example/apps/booking/pay?deposit=dp-123&invoice=inv-ar-5001&token=JWT
-AND the link is embedded in the email as "Complete Payment"
-AND clicking the link opens OpenConnector's payment UI (Mollie iDEAL, Stripe Checkout)
-```
+#### Scenario: Payment-link generation
+
+- **GIVEN** a DepositPayment with state=pending, depositPaymentId=dp-123
+- **AND** an ARInvoice has been created (inv-ar-5001)
+- **WHEN** the deposit-payment confirmation email is being rendered
+- **THEN** DepositPayment.paymentLink evaluates to a URL, e.g.: https://nextcloud.example/apps/booking/pay?deposit=dp-123&invoice=inv-ar-5001&token=JWT
+- **AND** the link is embedded in the email as "Complete Payment"
+- **AND** clicking the link opens OpenConnector's payment UI (Mollie iDEAL, Stripe Checkout)
 
 ### REQ-DP-006: Webhook Reconciliation (Mollie, Stripe)
 
@@ -194,33 +184,26 @@ AND clicking the link opens OpenConnector's payment UI (Mollie iDEAL, Stripe Che
 - **Mollie `payment.paid`**: `payment` object contains `id` (payment intent), amount, status
 - **Stripe `payment_intent.succeeded`**: `payment_intent` object contains `id`, amount, status
 
-**Scenario:**
-```
-GIVEN a DepositPayment with paymentIntentId=pi_XXXXX, state=pending
-WHEN a Stripe webhook event {event_type: "payment_intent.succeeded", ...} arrives
-THEN webhook listener:
-  1. Looks up DepositPayment by paymentIntentId
-  2. Checks current state (if already authorized, idempotent: no-op)
-  3. Transitions state to authorized
-  4. Triggers ARInvoice creation lifecycle action
-  5. Responds with HTTP 200 OK (success) or 202 (queued) per Stripe best practices
-AND if the webhook arrives twice (replay), step 2 prevents double-booking of ARInvoice
-```
+#### Scenario: Idempotent webhook reconciliation
+
+- **GIVEN** a DepositPayment with paymentIntentId=pi_XXXXX, state=pending
+- **WHEN** a Stripe webhook event {event_type: "payment_intent.succeeded", ...} arrives
+- **THEN** webhook listener looks up DepositPayment by paymentIntentId, checks current state (if already authorized, idempotent: no-op), transitions state to authorized, triggers ARInvoice creation lifecycle action, and responds with HTTP 200 OK (success) or 202 (queued) per Stripe best practices
+- **AND** if the webhook arrives twice (replay), the state check prevents double-booking of ARInvoice
 
 ### REQ-DP-007: Polling Fallback for Missed Webhooks
 
 **Requirement:** A background job (T4 async worker) MUST poll OpenConnector for pending DepositPayments to ensure webhook loss doesn't cause indefinite `pending` state.
 
-**Scenario:**
-```
-GIVEN a DepositPayment with state=pending, paymentIntentId=mollie_tr_12345
-AND no webhook event has arrived for 5+ minutes
-WHEN the background job runs (every 5 minutes)
-THEN it calls OpenConnector.getPaymentStatus(paymentIntentId)
-AND receives status: {status: "authorized", amount: 7500, ...}
-THEN DepositPayment.state is updated to authorized (if not already)
-AND the webhook listener's ARInvoice creation is triggered
-```
+#### Scenario: Polling fallback reconciles state
+
+- **GIVEN** a DepositPayment with state=pending, paymentIntentId=mollie_tr_12345
+- **AND** no webhook event has arrived for 5+ minutes
+- **WHEN** the background job runs (every 5 minutes)
+- **THEN** it calls OpenConnector.getPaymentStatus(paymentIntentId)
+- **AND** receives status: {status: "authorized", amount: 7500, ...}
+- **AND** DepositPayment.state is updated to authorized (if not already)
+- **AND** the webhook listener's ARInvoice creation is triggered
 
 ### REQ-DP-008: Refund on Booking Cancellation
 
@@ -230,65 +213,53 @@ AND the webhook listener's ARInvoice creation is triggered
 - `automatic_on_cancellation`: Refund is immediately initiated via OpenConnector
 - `operator_approval`: A refund request is created for operator review (future feature, T3+)
 
-**Scenario:**
-```
-GIVEN a booking (Order.id=ord-500) with state=confirmed
-AND a DepositPayment (depositPaymentId=dp-500) with state=captured, amount=7500
-AND BookingType.depositRule.refundPolicy=automatic_on_cancellation
-WHEN operator clicks "Cancel Booking"
-THEN Order.state transitions to cancelled
-AND DepositPayment.state transitions to voided
-AND a refund request is sent to OpenConnector:
-  {refund: {paymentIntentId: mollie_tr_XXX, amount: 7500}}
-AND a CR (credit note) is automatically created in Shillinq
-  (reversing the ARInvoice, per AR module's own lifecycle)
-AND refund confirmation email is sent to customer
-```
+#### Scenario: Automatic refund on cancellation
+
+- **GIVEN** a booking (Order.id=ord-500) with state=confirmed
+- **AND** a DepositPayment (depositPaymentId=dp-500) with state=captured, amount=7500
+- **AND** BookingType.depositRule.refundPolicy=automatic_on_cancellation
+- **WHEN** operator clicks "Cancel Booking"
+- **THEN** Order.state transitions to cancelled
+- **AND** DepositPayment.state transitions to voided
+- **AND** a refund request is sent to OpenConnector: {refund: {paymentIntentId: mollie_tr_XXX, amount: 7500}}
+- **AND** a CR (credit note) is automatically created in Shillinq (reversing the ARInvoice, per AR module's own lifecycle)
+- **AND** refund confirmation email is sent to customer
 
 ### REQ-DP-009: Multi-Currency Preparation (T5)
 
 **Requirement:** DepositPayment.currencyCode MUST be a separate field, initialized to EUR for now, with no hardcoded currency assumptions in logic.
 
-**Scenario:**
-```
-GIVEN a future T5 multi-currency feature enables customer-home-currency invoicing
-WHEN a customer selects USD payment (in future)
-THEN DepositPayment.currencyCode=USD, amount is converted at spot rate
-AND no existing T2 code breaks because currencyCode is a declared field
-```
+#### Scenario: Currency code as a declared field
+
+- **GIVEN** a future T5 multi-currency feature enables customer-home-currency invoicing
+- **WHEN** a customer selects USD payment (in future)
+- **THEN** DepositPayment.currencyCode=USD, amount is converted at spot rate
+- **AND** no existing T2 code breaks because currencyCode is a declared field
 
 ### REQ-DP-010: Booking-Detail Widget & Deposits Overview
 
 **Requirement:** The booking-detail manifest page MUST include a deposit widget showing DepositPayment state + payment-link. A separate `Deposits` overview page MUST list all pending/failed deposits for operator management.
 
-**Widget on booking-detail:**
-```
-Deposit Status: Pending (⏱ expires in 12 hours)
-Amount: €75.00
-[Complete Payment Button → paymentLink]
-[View Invoice Link → ARInvoice.uri]
-```
+#### Scenario: Booking-detail widget and deposits overview
 
-**Deposits overview page (manifest entry `type: index`):**
-```
-Columns: Customer | Booking | Amount | State | Due Date | Action
-Filters: State (pending, authorized, captured, failed), Date Range
-Bulk action: [Void Selected], [Resend Payment Link]
-```
+- **GIVEN** a booking with a DepositPayment in pending state
+- **WHEN** the operator opens the booking-detail manifest page
+- **THEN** a deposit widget shows the deposit status (e.g., "Pending (⏱ expires in 12 hours)"), amount (e.g., €75.00), a "Complete Payment" button linked to paymentLink, and a "View Invoice" link to ARInvoice.uri
+- **WHEN** the operator opens the separate `Deposits` overview page (manifest entry `type: index`)
+- **THEN** it lists all deposits with columns Customer | Booking | Amount | State | Due Date | Action, filters for State (pending, authorized, captured, failed) and Date Range, and bulk actions [Void Selected] and [Resend Payment Link]
 
 ### REQ-DP-011: Error Handling & Logging
 
 **Requirement:** Payment failures MUST be logged with error code and message, visible in both DepositPayment record and operator UI.
 
-**Scenario:**
-```
-GIVEN a payment authorization attempt fails with error code insufficient_funds
-WHEN the webhook (or polling job) receives the failure response
-THEN DepositPayment.state=failed, lastErrorCode=insufficient_funds
-AND DepositPayment.lastErrorMessage="Insufficient funds. Please use a different card."
-AND customer receives an email: "Payment failed. Please try again or contact support."
-AND operator sees the error in the booking-detail widget for manual follow-up
-```
+#### Scenario: Payment failure logging
+
+- **GIVEN** a payment authorization attempt fails with error code insufficient_funds
+- **WHEN** the webhook (or polling job) receives the failure response
+- **THEN** DepositPayment.state=failed, lastErrorCode=insufficient_funds
+- **AND** DepositPayment.lastErrorMessage="Insufficient funds. Please use a different card."
+- **AND** customer receives an email: "Payment failed. Please try again or contact support."
+- **AND** operator sees the error in the booking-detail widget for manual follow-up
 
 ---
 

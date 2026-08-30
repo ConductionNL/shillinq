@@ -1,0 +1,147 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-kor-kleine-ondernemersregeling",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Declarative manifest-v2 navigation for the Tier-2 KOR capability (Task 22). Adds four entries under the existing Belastingen menu: KorAanmelding (opt-in flow as an index of draft KORRegistrations), KorDashboard (drempel-benutting + alerts overview), KorDrempelMonitor (KORAnnualTurnover detail with monthly breakdown, prognose, alert-history), and KorOpzegging (opt-out flow as an index of ACTIEF KORRegistrations past their vroegsteOpzegDatum). All four are pure config rendered by the nc-vue manifest-v2 shell (createObjectStore against the shillinq register) — no Vue components, no router (ADR-024 / manifest-v2). The pre-existing KorStatus + KorStatusDetail entries (driven by the legacy KorRegime schema) are deliberately untouched and co-exist."
+	},
+	"menu": [
+		{
+			"id": "Taxes",
+			"children": [
+				{
+					"id": "KorAanmelding",
+					"label": "KOR registration",
+					"icon": "ShieldPlusOutline",
+					"route": "KorDashboard",
+					"query": { "status": "draft" },
+					"order": 11
+				},
+				{
+					"id": "KorDashboard",
+					"label": "KOR dashboard",
+					"icon": "ViewDashboardOutline",
+					"route": "KorDashboard",
+					"order": 12
+				},
+				{
+					"id": "KorOpzegging",
+					"label": "KOR cancellation",
+					"icon": "ShieldRemoveOutline",
+					"route": "KorDashboard",
+					"query": { "status": "ACTIEF" },
+					"order": 14
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "KorDashboard",
+			"route": "/belastingen/kor-dashboard",
+			"type": "index",
+			"title": "KOR dashboard",
+			"config": {
+				"register": "shillinq",
+				"schema": "KORRegistration",
+				"visibility": {
+					"field": "administrationType",
+					"in": [
+						"mkb",
+						"zzp"
+					]
+				},
+				"filters": [
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "enum",
+						"defaultValue": "ACTIEF",
+						"options": [
+							{ "value": "ACTIEF", "label": "Active" },
+							{ "value": "GEEINDIGD_OVERSCHRIJDING", "label": "Ended (exceeded threshold)" },
+							{ "value": "GEEINDIGD_VRIJWILLIG", "label": "Ended (voluntary)" }
+						]
+					}
+				],
+				"columns": [
+					{ "key": "enterpriseId", "label": "Business", "sortable": true },
+					{ "key": "regime", "label": "Regime" },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "effectiveDate", "label": "Start date", "sortable": true },
+					{ "key": "lockInEndDate", "label": "Lock-in end", "sortable": true },
+					{ "key": "thresholdYear", "label": "Threshold (EUR)" }
+				],
+				"defaultSort": "-ingangsDatum",
+				"detailRoute": "KorDrempelMonitor",
+				"_note_rowRoute": "`detailRoute` is inert; the implicit fallback matches a `type:\"detail\"` page by register+schema and KorDrempelMonitor is bound to a different schema. The helpText below promises a click-through that did nothing without `rowRoute`.",
+				"rowRoute": "KorDrempelMonitor",
+				"helpText": "Overview of all KOR registrations for this administration. Click through to the Threshold monitor to view real-time threshold utilization, monthly forecast and alert history (REQ-KOR-002, REQ-KOR-003)."
+			}
+		},
+		{
+			"id": "KorDrempelMonitor",
+			"route": "/belastingen/kor-drempel/:id",
+			"type": "detail",
+			"title": "Threshold monitor",
+			"config": {
+				"register": "shillinq",
+				"schema": "KORAnnualTurnover",
+				"_note": "REPORT/MONITOR archetype — a KOR annual-turnover record tracks a registration's running turnover against the small-business threshold in real time. Native shillinq detail contract: config.aggregations[] surface the three money/utilization KPIs (running turnover, year-end forecast, threshold utilization) so a bookkeeper instantly sees whether the threshold is at risk; config.fields[] render the full turnover data (year, threshold, per-month breakdown, excluded items, forecast status); and the bespoke KOR sidebarProps (alert-history list filtered by registrationId + audit trail) is preserved verbatim — the correct home for the threshold-alert log. NO comms/files — this is a computed monitor, not a document.",
+				"aggregations": [
+					{ "id": "runningTurnover", "title": "Running turnover", "field": "currentRevenue", "metric": "value", "format": "currency" },
+					{ "id": "yearEndForecast", "title": "Year-end forecast", "field": "forecastYearEnd", "metric": "value", "format": "currency" },
+					{ "id": "thresholdUtilization", "title": "Threshold utilization", "field": "thresholdUtilisation", "metric": "value", "format": "percentage" }
+				],
+				"fields": [
+					{ "key": "registrationId", "label": "Registration", "type": "string" },
+					{ "key": "year", "label": "Calendar year", "type": "integer" },
+					{ "key": "currentRevenue", "label": "Running turnover (EUR)", "type": "money" },
+					{ "key": "threshold", "label": "Threshold (EUR)", "type": "money" },
+					{ "key": "thresholdUtilisation", "label": "Utilization", "type": "number" },
+					{ "key": "perMonth", "label": "Turnover per month", "type": "json" },
+					{ "key": "uitgeslotenPosten", "label": "Excluded items", "type": "array" },
+					{ "key": "forecastYearEnd", "label": "Year-end forecast (EUR)", "type": "money" },
+					{ "key": "prognoseStatus", "label": "Forecast status", "type": "string" }
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "alerts",
+							"label": "Alert history",
+							"icon": "AlertOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"id": "kor-alerts",
+									"type": "list",
+									"register": "shillinq",
+									"schema": "KORThresholdAlert",
+									"filter": {
+										"field": "registrationId",
+										"op": "eq",
+										"valueFromField": "registrationId"
+									},
+									"columns": [
+										{ "key": "dischargedOn", "label": "Timestamp" },
+										{ "key": "trigger", "label": "Bracket" },
+										{ "key": "ernst", "label": "Severity" },
+										{ "key": "thresholdUtilisation", "label": "Utilization" }
+									]
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90
+						}
+					]
+				}
+			}
+		}
+	]
+}

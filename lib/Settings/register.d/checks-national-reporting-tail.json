@@ -1,0 +1,475 @@
+{
+  "x-shillinq-fragment": "checks-national-reporting-tail",
+  "components": {
+    "schemas": {
+      "FinancialStatement": {
+        "slug": "FinancialStatement",
+        "version": "0.2.0",
+        "type": "object",
+        "properties": {
+          "fixedAssetClasses": {
+            "type": "object",
+            "nullable": true,
+            "description": "NL BW 2:365 subdivision of vaste activa into intangible, tangible and financial fixed assets; the three sum to the balanceSheet.fixedAssets total.",
+            "properties": {
+              "intangible": {
+                "type": "number",
+                "description": "Immateriële vaste activa total.",
+                "title": "Intangible"
+              },
+              "tangible": {
+                "type": "number",
+                "description": "Materiële vaste activa total.",
+                "title": "Tangible"
+              },
+              "financial": {
+                "type": "number",
+                "description": "Financiële vaste activa total.",
+                "title": "Financial"
+              }
+            },
+            "title": "Fixed Asset Classes"
+          },
+          "intangibleAssetClasses": {
+            "type": "object",
+            "nullable": true,
+            "description": "NL BW 2:365(1) separate disclosure of intangible fixed assets: development costs, concessions/licences/IP, goodwill paid and prepayments on intangibles.",
+            "properties": {
+              "development": {
+                "type": "number",
+                "description": "Capitalised costs of development.",
+                "title": "Development"
+              },
+              "concessions": {
+                "type": "number",
+                "description": "Concessions, licences and intellectual property.",
+                "title": "Concessions"
+              },
+              "goodwill": {
+                "type": "number",
+                "description": "Goodwill paid.",
+                "title": "Goodwill"
+              },
+              "prepayments": {
+                "type": "number",
+                "description": "Prepayments on intangibles.",
+                "title": "Prepayments"
+              }
+            },
+            "title": "Intangible Asset Classes"
+          },
+          "tangibleAssetClasses": {
+            "type": "object",
+            "nullable": true,
+            "description": "NL BW 2:366 subdivision of tangible fixed assets: land and buildings, plant and machinery, other operating assets, assets under construction / prepayments.",
+            "properties": {
+              "landAndBuildings": {
+                "type": "number",
+                "description": "Land and buildings.",
+                "title": "Land And Buildings"
+              },
+              "plantAndMachinery": {
+                "type": "number",
+                "description": "Plant and machinery.",
+                "title": "Plant And Machinery"
+              },
+              "otherOperating": {
+                "type": "number",
+                "description": "Other operating assets.",
+                "title": "Other Operating"
+              },
+              "underConstruction": {
+                "type": "number",
+                "description": "Assets under construction / prepayments.",
+                "title": "Under Construction"
+              }
+            },
+            "title": "Tangible Asset Classes"
+          },
+          "financialFixedAssetClasses": {
+            "type": "object",
+            "nullable": true,
+            "description": "NL BW 2:367 disclosure of financial fixed assets: participating interests, group/participation receivables, other securities, other receivables.",
+            "properties": {
+              "participations": {
+                "type": "number",
+                "description": "Participating interests.",
+                "title": "Participations"
+              },
+              "groupReceivables": {
+                "type": "number",
+                "description": "Receivables from group companies and participations.",
+                "title": "Group Receivables"
+              },
+              "otherSecurities": {
+                "type": "number",
+                "description": "Other securities.",
+                "title": "Other Securities"
+              },
+              "otherReceivables": {
+                "type": "number",
+                "description": "Other receivables.",
+                "title": "Other Receivables"
+              }
+            },
+            "title": "Financial Fixed Asset Classes"
+          },
+          "currentAssetClasses": {
+            "type": "object",
+            "nullable": true,
+            "description": "NL BW 2:369 subdivision of vlottende activa into inventories, receivables, securities and cash; the four sum to the balanceSheet.currentAssets total.",
+            "properties": {
+              "inventories": {
+                "type": "number",
+                "description": "Voorraden (inventories).",
+                "title": "Inventories"
+              },
+              "receivables": {
+                "type": "number",
+                "description": "Vorderingen (receivables).",
+                "title": "Receivables"
+              },
+              "securities": {
+                "type": "number",
+                "description": "Effecten (securities).",
+                "title": "Securities"
+              },
+              "cash": {
+                "type": "number",
+                "description": "Liquide middelen (cash).",
+                "title": "Cash"
+              }
+            },
+            "title": "Current Asset Classes"
+          },
+          "equityComponents": {
+            "type": "object",
+            "nullable": true,
+            "description": "NL BW 2:373 split of eigen vermogen into issued capital, share premium (agio), revaluation reserve, statutory/articles reserves and retained result; the five sum to the balanceSheet.equity total.",
+            "properties": {
+              "issuedCapital": {
+                "type": "number",
+                "description": "Issued (geplaatst) capital.",
+                "title": "Issued Capital"
+              },
+              "sharePremium": {
+                "type": "number",
+                "description": "Share premium (agio).",
+                "title": "Share Premium"
+              },
+              "revaluationReserve": {
+                "type": "number",
+                "description": "Revaluation reserve (herwaarderingsreserve).",
+                "title": "Revaluation Reserve"
+              },
+              "statutoryReserves": {
+                "type": "number",
+                "description": "Other statutory and articles-of-association reserves.",
+                "title": "Statutory Reserves"
+              },
+              "retainedResult": {
+                "type": "number",
+                "description": "Retained / undistributed result.",
+                "title": "Retained Result"
+              }
+            },
+            "title": "Equity Components"
+          },
+          "liabilitiesMaturity": {
+            "type": "object",
+            "nullable": true,
+            "description": "NL BW 2:375 maturity split of schulden: the short-term and long-term (over one year) portions sum to the balanceSheet.liabilities total, and the over-five-years portion is a subset of the long-term portion.",
+            "properties": {
+              "shortTerm": {
+                "type": "number",
+                "description": "Portion with a remaining term up to one year.",
+                "title": "Short Term"
+              },
+              "longTerm": {
+                "type": "number",
+                "description": "Portion with a remaining term over one year.",
+                "title": "Long Term"
+              },
+              "overFiveYears": {
+                "type": "number",
+                "description": "Portion (of the long-term) with a remaining term over five years.",
+                "title": "Over Five Years"
+              }
+            },
+            "title": "Liabilities Maturity"
+          },
+          "capitalisedDevelopmentCosts": {
+            "type": "number",
+            "nullable": true,
+            "description": "RJ 210 — the unamortised carrying amount of capitalised development costs. When positive a legal reserve of at least this amount must be maintained within equity.",
+            "title": "Capitalised Development Costs"
+          },
+          "developmentLegalReserve": {
+            "type": "number",
+            "nullable": true,
+            "description": "RJ 210 — the non-distributable legal reserve (wettelijke reserve) held within equity for capitalised development costs.",
+            "title": "Development Legal Reserve"
+          },
+          "intangibleAmortisationYears": {
+            "type": "number",
+            "nullable": true,
+            "description": "RJ 210 — the estimated useful life over which an intangible fixed asset is amortised; shall not exceed twenty years.",
+            "title": "Intangible Amortisation Years"
+          },
+          "sbrFiled": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the statutory KvK deposit was performed via an SBR (XBRL) instance on the RGS/NT taxonomy (required for micro/small entities).",
+            "title": "SBR Filed"
+          },
+          "balanceDetailLevel": {
+            "type": "string",
+            "nullable": true,
+            "description": "DE HGB 266 balance-sheet detail level. 'abridged' (only lettered/Roman-numeral items) is permitted for micro/small corporations; 'full' otherwise.",
+            "enum": [
+              "abridged",
+              "full"
+            ],
+            "example": "abridged",
+            "title": "Balance Detail Level"
+          },
+          "equityComponentsHgb": {
+            "type": "object",
+            "nullable": true,
+            "description": "DE HGB 268 breakdown of Eigenkapital: subscribed capital, capital reserve, revenue reserves, retained earnings carried forward and net income/loss for the year.",
+            "properties": {
+              "subscribedCapital": {
+                "type": "number",
+                "description": "Gezeichnetes Kapital (subscribed capital).",
+                "title": "Subscribed Capital"
+              },
+              "capitalReserve": {
+                "type": "number",
+                "description": "Kapitalrücklage (capital reserve).",
+                "title": "Capital Reserve"
+              },
+              "revenueReserves": {
+                "type": "number",
+                "description": "Gewinnrücklagen (revenue reserves).",
+                "title": "Revenue Reserves"
+              },
+              "retainedEarnings": {
+                "type": "number",
+                "description": "Retained earnings / loss carried forward.",
+                "title": "Retained Earnings"
+              },
+              "netIncomeForYear": {
+                "type": "number",
+                "description": "Jahresüberschuss/-fehlbetrag (net income/loss for the year).",
+                "title": "Net Income For Year"
+              }
+            },
+            "title": "Equity Components Hgb"
+          },
+          "pnlNatureBreakdown": {
+            "type": "object",
+            "nullable": true,
+            "description": "DE HGB 275 total-cost method (Gesamtkostenverfahren) expense breakdown by nature, with the change in inventory and own work capitalised shown separately. Required when the categorical P&L model is applied.",
+            "properties": {
+              "materialExpense": {
+                "type": "number",
+                "description": "Material expense (Materialaufwand).",
+                "title": "Material Expense"
+              },
+              "personnelExpense": {
+                "type": "number",
+                "description": "Personnel expense (Personalaufwand).",
+                "title": "Personnel Expense"
+              },
+              "depreciation": {
+                "type": "number",
+                "description": "Depreciation and amortisation (Abschreibungen).",
+                "title": "Depreciation"
+              },
+              "inventoryChange": {
+                "type": "number",
+                "description": "Change in finished/unfinished goods inventory.",
+                "title": "Inventory Change"
+              },
+              "ownWorkCapitalised": {
+                "type": "number",
+                "description": "Own work capitalised (andere aktivierte Eigenleistungen).",
+                "title": "Own Work Capitalised"
+              }
+            },
+            "title": "Pnl Nature Breakdown"
+          },
+          "pnlFunctionBreakdown": {
+            "type": "object",
+            "nullable": true,
+            "description": "DE HGB 275 cost-of-sales method (Umsatzkostenverfahren) expense breakdown by function. Required when the functional P&L model is applied.",
+            "properties": {
+              "costOfGoodsSold": {
+                "type": "number",
+                "description": "Cost of goods sold (Herstellungskosten).",
+                "title": "Cost Of Goods Sold"
+              },
+              "distributionCosts": {
+                "type": "number",
+                "description": "Distribution costs (Vertriebskosten).",
+                "title": "Distribution Costs"
+              },
+              "administrativeExpenses": {
+                "type": "number",
+                "description": "General administrative expenses (Verwaltungskosten).",
+                "title": "Administrative Expenses"
+              }
+            },
+            "title": "Pnl Function Breakdown"
+          },
+          "retentionYearsAccounts": {
+            "type": "number",
+            "nullable": true,
+            "description": "Retention period in years for books, inventories, opening balance sheets and annual accounts (DE HGB 257 and FR PCG require at least 10 years).",
+            "title": "Retention Years Accounts"
+          },
+          "retentionYearsCorrespondence": {
+            "type": "number",
+            "nullable": true,
+            "description": "Retention period in years for commercial correspondence (DE HGB 257 requires at least 6 years).",
+            "title": "Retention Years Correspondence"
+          },
+          "balancePresentation": {
+            "type": "string",
+            "nullable": true,
+            "description": "FR PCG balance-sheet (bilan) presentation. The base system presents the balance sheet in table form.",
+            "enum": [
+              "table",
+              "list"
+            ],
+            "example": "table",
+            "title": "Balance Presentation"
+          },
+          "pnlResultBreakdown": {
+            "type": "object",
+            "nullable": true,
+            "description": "FR PCG income-statement (compte de résultat) result breakdown distinguishing operating, financial and exceptional result.",
+            "properties": {
+              "operatingResult": {
+                "type": "number",
+                "description": "Résultat d'exploitation (operating result).",
+                "title": "Operating Result"
+              },
+              "financialResult": {
+                "type": "number",
+                "description": "Résultat financier (financial result).",
+                "title": "Financial Result"
+              },
+              "exceptionalResult": {
+                "type": "number",
+                "description": "Résultat exceptionnel (exceptional result).",
+                "title": "Exceptional Result"
+              }
+            },
+            "title": "Pnl Result Breakdown"
+          },
+          "pnlPresentation": {
+            "type": "string",
+            "nullable": true,
+            "description": "FR PCG income-statement presentation. The compte de résultat is presented in list form.",
+            "enum": [
+              "list",
+              "table"
+            ],
+            "example": "list",
+            "title": "Pnl Presentation"
+          },
+          "accountingSystem": {
+            "type": "string",
+            "nullable": true,
+            "description": "FR PCG accounting system. 'abrege' (système abrégé) is permitted within the small/micro thresholds; 'base' (système de base) is required above them; 'developpe' is the developed system.",
+            "enum": [
+              "abrege",
+              "base",
+              "developpe"
+            ],
+            "example": "abrege",
+            "title": "Accounting System"
+          },
+          "confidentialFiling": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "FR — true when the small/micro company has requested that its filed accounts remain confidential and not be made public.",
+            "title": "Confidential Filing"
+          },
+          "fecExportAvailable": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "FR — true when the entity (keeping computerised accounts) can produce the FEC (Fichier des Écritures Comptables) on a tax audit.",
+            "title": "Fec Export Available"
+          },
+          "fecStructuredEntries": {
+            "type": "array",
+            "nullable": true,
+            "description": "FR FEC entries presented with the full prescribed per-entry structural fields (JournalCode, EcritureNum, EcritureDate, CompteNum, PieceRef, Debit, Credit) — the field-complete view used to evaluate fec-field-structure, distinct from the balance-only fecEntries.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entryNum": {
+                  "type": "string",
+                  "description": "EcritureNum — sequential entry number.",
+                  "title": "Entry Num"
+                },
+                "journalCode": {
+                  "type": "string",
+                  "description": "JournalCode — the journal the entry belongs to.",
+                  "title": "Journal Code"
+                },
+                "ecritureDate": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "EcritureDate — the accounting date of the entry.",
+                  "title": "Ecriture Date"
+                },
+                "compteNum": {
+                  "type": "string",
+                  "description": "CompteNum — the ledger account number.",
+                  "title": "Compte Num"
+                },
+                "pieceRef": {
+                  "type": "string",
+                  "description": "PieceRef — the source-document reference.",
+                  "title": "Piece Ref"
+                },
+                "debit": {
+                  "type": "number",
+                  "description": "Debit amount of the entry.",
+                  "title": "Debit"
+                },
+                "credit": {
+                  "type": "number",
+                  "description": "Credit amount of the entry.",
+                  "title": "Credit"
+                }
+              }
+            },
+            "title": "Fec Structured Entries"
+          },
+          "notesBlockTagged": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "EU ESEF — true when the notes to the IFRS consolidated statements are block-tagged at section level. Required for listed issuers.",
+            "title": "Notes Block Tagged"
+          },
+          "taxonomyExtensionsUsed": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "EU ESEF — true when the issuer uses extension (custom) taxonomy elements for disclosures with no matching core element.",
+            "title": "Taxonomy Extensions Used"
+          },
+          "extensionsAnchored": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "EU ESEF — true when every extension element is anchored to the closest standard taxonomy element(s). Required whenever extensions are used.",
+            "title": "Extensions Anchored"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "x-shillinq-fragment": "abstract-gltransaction-types",
+  "components": {
+    "schemas": {
+      "GLTransaction": {
+        "version": "0.5.0",
+        "properties": {
+          "journalType": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "ar-invoice",
+              "ap-invoice",
+              "bank",
+              "closing",
+              "intercompany"
+            ],
+            "default": "manual",
+            "description": "Discriminator folding the former dedicated journal-entry families into this single GLTransaction schema. 'manual' is the default general-journal entry; 'ar-invoice'/'ap-invoice' are sales/purchase journal postings; 'bank' is a bank-statement-derived posting; 'closing' carries the folded ClosingEntry fields (year-end closing); 'intercompany' carries the folded IntercompanyTransaction detection fields.",
+            "title": "Journal Type"
+          },
+          "closingEntryType": {
+            "type": "string",
+            "enum": [
+              "revenue-closing",
+              "expense-closing",
+              "accrual-reversal",
+              "depreciation",
+              "retained-earnings",
+              "opening-balance",
+              "manual"
+            ],
+            "nullable": true,
+            "description": "Closing group (journalType='closing'): classification of the closing entry, folded from ClosingEntry.entryType. Per REQ-YEC-001.",
+            "example": "revenue-closing",
+            "title": "Closing Entry Type"
+          },
+          "fiscalYearId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Closing group (journalType='closing'): FK to the FiscalYear this closing entry belongs to, folded from ClosingEntry.fiscalYearId. Per REQ-YEC-001.",
+            "example": "fy-2026-nl",
+            "title": "Fiscal Year ID"
+          },
+          "approvalStatus": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "pending-approval",
+              "approved",
+              "posted",
+              "reversed"
+            ],
+            "nullable": true,
+            "description": "Closing group (journalType='closing'): lifecycle state of the closing entry, folded from ClosingEntry.approvalStatus. draft -> pending-approval -> approved -> posted; or posted -> reversed. Per REQ-YEC-001 / REQ-YEC-009.",
+            "title": "Approval Status"
+          },
+          "sourceAdministrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Intercompany group (journalType='intercompany'): FK to the source administration the transaction was booked in, folded from IntercompanyTransaction.sourceAdministrationId.",
+            "title": "Source Administration ID"
+          },
+          "counterpartyEntityId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Intercompany group (journalType='intercompany'): FK to the detected or asserted counterparty entity (administration), folded from IntercompanyTransaction.counterpartyEntityId.",
+            "title": "Counterparty Entity ID"
+          },
+          "detectionMethod": {
+            "type": "string",
+            "enum": [
+              "account-based",
+              "label-based",
+              "explicitly-marked"
+            ],
+            "nullable": true,
+            "description": "Intercompany group (journalType='intercompany'): how the transaction was identified as intercompany, folded from IntercompanyTransaction.detectionMethod.",
+            "title": "Detection Method"
+          },
+          "detectionConfidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "description": "Intercompany group (journalType='intercompany'): confidence of the detection; label-based defaults to medium pending operator confirmation. Folded from IntercompanyTransaction.detectionConfidence.",
+            "title": "Detection Confidence"
+          },
+          "isMatched": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Intercompany group (journalType='intercompany'): whether the transaction has been included in a match, folded from IntercompanyTransaction.isMatched.",
+            "title": "Is Matched"
+          },
+          "matchId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Intercompany group (journalType='intercompany'): FK to the IntercompanyMatch the transaction belongs to, folded from IntercompanyTransaction.matchId.",
+            "title": "Match ID"
+          }
+        }
+      }
+    }
+  }
+}

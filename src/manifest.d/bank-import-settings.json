@@ -1,0 +1,32 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "menu-ia-simplification",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Moves bank-statement import off the Financial overview dashboard (it was a prominent NcButton in FinancialDashboardActions.vue) into the top-level 'Configuratie' group as a custom page. The page (kind:page BankImportPage in src/registry.js) hosts the BankStatementWizard behind a launch button so importing statements lives with the other one-time setup tasks. The menu leaf is merged into the existing 'Configuratie' group by id (mergeMenuItems in main.js)."
+	},
+	"menu": [
+		{
+			"id": "BankImportPage",
+			"label": "Import bank statements",
+			"icon": "DatabaseImportOutline",
+			"route": "BankImportPage",
+			"order": 40
+		}
+	],
+	"pages": [
+		{
+			"id": "BankImportPage",
+			"route": "/configuratie/bank-import",
+			"type": "custom",
+			"title": "Import bank statements",
+			"component": "BankImportPage",
+			"_note": "Launcher for the multi-step BankStatementWizard modal (upload CAMT.053 / MT940 / CSV, then parse, preview and reconcile against invoices and bills). The wizard writes transactions but the page itself edits no object: `type: form` renders one flat field set against one schema and has no notion of an upload-parse-preview-commit sequence, and `type: index` would LIST statements rather than import them. Grouping into 'Configuratie' comes from the menu leaf above, not from the page.",
+			"config": {
+				"register": "shillinq",
+				"icon": "BankTransferIn"
+			}
+		}
+	]
+}

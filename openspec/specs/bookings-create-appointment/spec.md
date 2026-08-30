@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookings-create-appointment
 
 **Status:** proposed
@@ -5,7 +9,11 @@
 **Tier:** T1 (core feature)
 **Depends on:** bookings-resource-calendar, bookings-service-catalog
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookings create appointment in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: appointment creation pages not yet implemented
 
@@ -104,6 +112,8 @@ Before persisting an appointment, the system MUST verify that:
 - **THEN** the creation MUST fail with error "Outside operational hours"
 
 ### REQ-BCA-005: Appointment creation SHALL support two pathways with different initial statuses
+
+The system SHALL satisfy this requirement: Appointment creation SHALL support two pathways with different initial statuses.
 
 Appointments can be created in two states, depending on the caller and business rules:
 

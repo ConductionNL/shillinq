@@ -1,0 +1,156 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "ar-invoice-payment-links",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Tier 2 — AR Invoice Payment Links UI per REQ-APL-008. Adds a Payment Requests overview (index over PaymentRequest with a state filter incl. an exceptions filter for failed / captured_unapplied, per-administration scope) + a Payment Request detail page (state badge, the paymentLink with copy + QR, expiry, regenerate action, failure reason, request history). One menu entry under the existing AR / Bookkeeping group (order 24). NOTE: the invoice-detail payment panel itself is described here as a sidebarProps tab note — the AR invoice detail page is owned by bookkeeping-accounts-receivable-core, so the panel is additive/deferred to that page; this fragment ships the standalone overview + detail pages and the menu entry."
+	},
+	"menu": [
+		{
+			"id": "PaymentRequests",
+			"label": "Payment requests",
+			"icon": "CreditCardOutline",
+			"route": "PaymentRequests",
+			"order": 24
+		}
+	],
+	"pages": [
+		{
+			"id": "PaymentRequests",
+			"route": "/bookkeeping/payment-requests",
+			"type": "index",
+			"title": "Payment requests",
+			"config": {
+				"register": "shillinq",
+				"schema": "PaymentRequest",
+				"columns": [
+					{"key": "invoiceReference", "label": "Invoice", "sortable": true},
+					{"key": "amount", "label": "Amount", "sortable": true},
+					{"key": "paymentGateway", "label": "Gateway", "sortable": true},
+					{"key": "state", "label": "State", "sortable": true},
+					{"key": "capturedAt", "label": "Captured", "sortable": true}
+				],
+				"defaultSort": "capturedAt",
+				"detailRoute": "PaymentRequestDetail",
+				"filters": [
+					{
+						"key": "state",
+						"label": "State",
+						"inputLabel": "Filter by state",
+						"type": "select",
+						"options": [
+							{"value": "pending", "label": "Pending"},
+							{"value": "authorized", "label": "Authorized"},
+							{"value": "captured", "label": "Captured"},
+							{"value": "captured_unapplied", "label": "Captured (unapplied)"},
+							{"value": "failed", "label": "Failed"},
+							{"value": "expired", "label": "Expired"},
+							{"value": "voided", "label": "Voided"}
+						]
+					},
+					{
+						"key": "exceptions",
+						"label": "Exceptions only",
+						"inputLabel": "Show exceptions only",
+						"type": "preset",
+						"description": "Per REQ-APL-008: surface failed + captured_unapplied payment requests for operator action.",
+						"filter": {"state": {"in": ["failed", "captured_unapplied"]}}
+					}
+				]
+			}
+		},
+		{
+			"id": "PaymentRequestDetail",
+			"route": "/bookkeeping/payment-requests/:id",
+			"type": "detail",
+			"title": "Payment request",
+			"config": {
+				"_note": "A payment request is a payment-gateway TRANSACTION against an AR invoice: a hosted payment link with a state machine (pending → authorized → captured / failed / expired), captured amount, gateway fee and settlement reference. Body leads with the invoice/amount data, the copyable payment link with QR, and an amount KPI; the Regenerate action mints a NEW request (history preserved). Prior attempts for the same invoice live in the Request-history sidebar tab and the immutable audit trail sits beside it. No email/calendar leaf — a financial transaction, not a comms surface.",
+				"register": "shillinq",
+				"schema": "PaymentRequest",
+				"aggregations": [
+					{"id": "amount", "title": "Requested amount", "field": "amount", "metric": "value", "format": "currency"},
+					{"id": "gatewayFee", "title": "Gateway fee", "field": "gatewayFeeAmount", "metric": "value", "format": "currency"}
+				],
+				"fields": [
+					{"key": "invoiceReference", "label": "Invoice", "type": "string"},
+					{"key": "amount", "label": "Amount", "type": "number"},
+					{"key": "currency", "label": "Currency", "type": "string"},
+					{"key": "paymentGateway", "label": "Gateway", "type": "string"},
+					{"key": "state", "label": "State", "type": "string"},
+					{"key": "paymentLink", "label": "Payment link", "type": "string", "computed": true, "copyable": true, "qr": true},
+					{"key": "expiresAt", "label": "Expires", "type": "datetime"},
+					{"key": "capturedAt", "label": "Captured", "type": "datetime"},
+					{"key": "settlementReference", "label": "Settlement reference", "type": "string"},
+					{"key": "gatewayFeeAmount", "label": "Gateway fee", "type": "number"},
+					{"key": "failureReason", "label": "Failure reason", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "PaymentRequests",
+				"actions": [
+					{
+						"id": "regenerate",
+						"label": "Regenerate payment link",
+						"icon": "Refresh",
+						"description": "Per REQ-APL-008: creates a NEW pending payment request with the current outstanding amount; the panel shows its link and the expired request remains visible in history. History is preserved (a new record, not a mutation)."
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "history",
+							"label": "Request history",
+							"icon": "History",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-related-objects",
+									"props": {
+										"register": "shillinq",
+										"schema": "PaymentRequest",
+										"filter": {"invoiceReference": ":invoiceReference"},
+										"description": "Every payment request raised for this invoice. Expired and failed attempts are kept, so the history stays complete."
+									}
+								}
+							]
+						},
+						{
+							"id": "invoicePanelNote",
+							"label": "Invoice payment panel",
+							"icon": "ReceiptTextOutline",
+							"order": 20,
+							"widgets": [
+								{
+									"type": "note",
+									"componentName": "openregister-note",
+									"props": {
+										"text": "The invoice-detail payment panel (state badge, link + copy + QR, expiry, regenerate, failure reason) is additive to the AR invoice detail page owned by bookkeeping-accounts-receivable-core and is deferred to that page. This fragment ships the standalone Payment Requests overview + this detail page. See REQ-APL-008."
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}

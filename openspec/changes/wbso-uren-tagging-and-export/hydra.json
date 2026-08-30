@@ -1,8 +1,0 @@
-{
-  "spec_slug": "wbso-uren-tagging-and-export",
-  "title": "WBSO Uren Tagging + RVO Export",
-  "app": "shillinq",
-  "repo": "https://github.com/ConductionNL/shillinq",
-  "depends_on": [],
-  "issue": null
-}

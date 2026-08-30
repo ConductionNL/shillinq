@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: inventory-lot-batch-expiry
 
 **Status:** proposed  
@@ -5,7 +9,11 @@
 **Tier:** T2 (inventory operations)  
 **Depends on:** inventory-stock-movement-ledger
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory lot batch expiry in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: lot/batch expiry pages not yet implemented
 
@@ -105,6 +113,8 @@ per `adr-000-data-model.md`'s top-of-file note.
   resolvable error message naming the missing `InventoryItem`.
 
 ### REQ-LOT-004: The `InventoryLot` schema SHALL carry a Schema.org type annotation
+
+The system SHALL satisfy this requirement: The `InventoryLot` schema SHALL carry a Schema.org type annotation.
 
 For interoperability with shared catalogues and the MCP discovery
 endpoint, the schema MUST carry:
@@ -246,6 +256,8 @@ The `ExpiryAlert` schema MUST declare the following fields:
   created with `status: pending` linked to that lot.
 
 ### REQ-LOT-008: `InventoryItem` SHALL have an additive `requiresLotTracking` boolean field
+
+The system SHALL satisfy this requirement: `InventoryItem` SHALL have an additive `requiresLotTracking` boolean field.
 
 The existing `InventoryItem` schema in `lib/Settings/shillinq_register.json`
 MUST be patched with one additive optional field:

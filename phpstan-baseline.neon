@@ -1,16 +1,6 @@
-# Tracked phpstan debt entries surfaced when shillinq synced to the fleet canonical.
-# All entries are tracked in https://github.com/ConductionNL/shillinq/issues/299
-# (Phase 2 fleet rollout lint-debt cleanup). Regenerate with:
-#     ./vendor/bin/phpstan analyse --generate-baseline
+# PHPStan baseline — only irreducible violations that cannot be fixed in code.
+# Regenerate with: ./vendor/bin/phpstan analyse --generate-baseline
 # Entries removed as the underlying code is refactored.
 
 parameters:
 	ignoreErrors:
-		-
-			message: "#^Parameter \\#1 \\$settings of attribute class OCP\\\\AppFramework\\\\Http\\\\Attribute\\\\AuthorizedAdminSetting constructor expects class\\-string\\<OCP\\\\Settings\\\\IDelegatedSettings\\>, string given\\.$#"
-			count: 1
-			path: lib/Controller/MetricsController.php
-		-
-			message: "#^Parameter \\#1 \\$settings of attribute class OCP\\\\AppFramework\\\\Http\\\\Attribute\\\\AuthorizedAdminSetting constructor expects class\\-string\\<OCP\\\\Settings\\\\IDelegatedSettings\\>, string given\\.$#"
-			count: 3
-			path: lib/Controller/SettingsController.php

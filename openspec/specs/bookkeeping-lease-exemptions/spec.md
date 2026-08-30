@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-lease-exemptions
 
 **Status:** proposed
@@ -5,16 +9,18 @@
 **Tier:** T4-specialized (advanced / specialized lease accounting)
 **Depends on:** bookkeeping-lease-contracts
 
-## Summary
+## Purpose
 
 IFRS 16 provides exemptions for short-term leases (≤12 months at commencement) and low-value leases (asset fair value ≤ ~USD 5,000). Leases eligible for exemption are expensed straight-line over the lease term instead of being capitalized. This spec defines the policy elections, contract-by-contract application, and expense posting.
 
-## ADDED Requirements
+## Requirements
 
 @e2e exclude pure backend/compliance: lease exemptions — not browser-testable
 
 
 ### REQ-LE-001: Entities SHALL elect portfolio-wide exemption policies
+
+The system SHALL satisfy this requirement: Entities SHALL elect portfolio-wide exemption policies.
 
 The `lease-portfolio-exemption` register records an entity's policy elections:
 
@@ -41,6 +47,8 @@ The policy is portfolio-wide: all leases of a given class follow the same exempt
   - The CFO approves and signs
 
 ### REQ-LE-002: Short-term exemption (IFRS 16.5) applies to leases with non-cancellable term ≤ 12 months
+
+The system SHALL satisfy this requirement: Short-term exemption (IFRS 16.5) applies to leases with non-cancellable term ≤ 12 months.
 
 A lease qualifies for short-term exemption if:
 - Non-cancellable term at commencement is ≤ 12 months (IFRS 16.5)
@@ -69,6 +77,8 @@ No fixed-asset record is created; the GL posting is:
 
 ### REQ-LE-003: Low-value exemption (IFRS 16.6) applies to leases of assets with fair value when new ≤ threshold
 
+The system SHALL satisfy this requirement: Low-value exemption (IFRS 16.6) applies to leases of assets with fair value when new ≤ threshold.
+
 A lease qualifies for low-value exemption if:
 - The asset's fair value when new is ≤ the entity's elected low-value-threshold (e.g., EUR 5,000)
 - The entity's portfolio exemption policy elects to apply the exemption for the lease's asset class
@@ -89,6 +99,8 @@ Once a lease is classified as `low-value-exempt`, all contractual payments are e
 - **AND** no RoU asset or liability is recognized
 
 ### REQ-LE-004: The system SHALL distinguish short-term and low-value exemptsexpensed on a straight-line basis
+
+The system SHALL satisfy this requirement: The system SHALL distinguish short-term and low-value exemptsexpensed on a straight-line basis.
 
 Both short-term and low-value exempt leases are expensed straight-line, but the IFRS 16 disclosure tables distinguish them (IFRS 16.53(d) and 16.53(e)):
 
@@ -111,6 +123,8 @@ This allows auditors and users to understand the mix of exempted vs. capitalized
 
 ### REQ-LE-005: Policy changes and overrides are auditable
 
+The system SHALL satisfy this requirement: Policy changes and overrides are auditable.
+
 If an exemption policy is changed (e.g., the low-value threshold is raised from EUR 5,000 to EUR 7,000), the change is recorded as a new `lease-portfolio-exemption` record with:
 - policy-effective-date = new date
 - superseded-by = self-FK to prior policy
@@ -132,6 +146,8 @@ If an individual lease is classified contrary to the portfolio policy (e.g., a v
 
 ### REQ-LE-006: Exempt lease GL postings SHALL use dedicated account subtypes
 
+The system SHALL satisfy this requirement: Exempt lease GL postings SHALL use dedicated account subtypes.
+
 To allow disclosure-table aggregation without app-level logic, GL accounts used for exempt leases are flagged:
 
 | Subtype | Purpose |
@@ -151,6 +167,8 @@ When a lease is classified as exempt and the first monthly posting is made, the 
 - **AND** if no such account exists, the posting fails with an error: "GL account for short-term lease expense not found. Operator action required: create account in Chart of Accounts with `is-lease-account=true`, subtype=`short-term-lease-expense`."
 
 ### REQ-LE-007: Exempt leases DO NOT have fixed-asset records or payment schedules
+
+The system SHALL satisfy this requirement: Exempt leases DO NOT have fixed-asset records or payment schedules.
 
 Short-term and low-value exempt leases are expensed; they are not capitalized and do not have:
 - A `fixed-asset` record (no depreciation schedule)

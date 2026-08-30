@@ -1,0 +1,29 @@
+{
+  "_meta": {
+    "spdx-license": "CC0-1.0",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "BZK Iv3-informatievoorschrift bijlage A",
+    "iv3Version": "2025-1.0",
+    "effectiveDate": "2025-01-01",
+    "description": "Iv3 economische categorieen (kostensoorten, hoofdgroepen 1-8). Representatieve subset van de ca. 150 codes; de volledige catalogus wordt via openconnector geimporteerd (REQ-BBV-002, REQ-BBV-006).",
+    "url": "https://www.cbs.nl/iv3"
+  },
+  "economischeCategorieen": [
+    {"code": "1.1", "name": "Salarissen en sociale lasten", "level": 2, "parentCode": "1", "revenueOfExpenses": "expenses", "iv3Mandatory": true},
+    {"code": "1.2", "name": "Sociale uitkeringen personeel", "level": 2, "parentCode": "1", "revenueOfExpenses": "expenses", "iv3Mandatory": true},
+    {"code": "1.2.1", "name": "Personeel van derden", "level": 3, "parentCode": "1.2", "revenueOfExpenses": "expenses", "iv3Mandatory": true},
+    {"code": "2.1", "name": "Rente", "level": 2, "parentCode": "2", "revenueOfExpenses": "expenses", "iv3Mandatory": true},
+    {"code": "3.1", "name": "Duurzame goederen", "level": 2, "parentCode": "3", "revenueOfExpenses": "expenses", "iv3Mandatory": true},
+    {"code": "3.4", "name": "Belastingen", "level": 2, "parentCode": "3", "revenueOfExpenses": "expenses", "iv3Mandatory": true},
+    {"code": "3.4.3", "name": "Betaalde belastingen", "level": 3, "parentCode": "3.4", "revenueOfExpenses": "expenses", "iv3Mandatory": true},
+    {"code": "3.5.1", "name": "Ingeleend personeel", "level": 3, "parentCode": "3.5", "revenueOfExpenses": "expenses", "iv3Mandatory": false},
+    {"code": "4.1", "name": "Inkomensoverdrachten aan het Rijk", "level": 2, "parentCode": "4", "revenueOfExpenses": "expenses", "iv3Mandatory": true},
+    {"code": "4.3", "name": "Inkomensoverdrachten overige overheden", "level": 2, "parentCode": "4", "revenueOfExpenses": "expenses", "iv3Mandatory": true},
+    {"code": "6.1", "name": "Afschrijvingen", "level": 2, "parentCode": "6", "revenueOfExpenses": "expenses", "iv3Mandatory": true},
+    {"code": "7.1", "name": "Mutaties voorzieningen", "level": 2, "parentCode": "7", "revenueOfExpenses": "expenses", "iv3Mandatory": true},
+    {"code": "8.1", "name": "Belastingopbrengsten", "level": 2, "parentCode": "8", "revenueOfExpenses": "revenue", "iv3Mandatory": true},
+    {"code": "8.2", "name": "Rente-opbrengsten", "level": 2, "parentCode": "8", "revenueOfExpenses": "revenue", "iv3Mandatory": true},
+    {"code": "8.3", "name": "Goederen en diensten (baten)", "level": 2, "parentCode": "8", "revenueOfExpenses": "revenue", "iv3Mandatory": true},
+    {"code": "8.5", "name": "Inkomensoverdrachten van het Rijk", "level": 2, "parentCode": "8", "revenueOfExpenses": "revenue", "iv3Mandatory": true}
+  ]
+}

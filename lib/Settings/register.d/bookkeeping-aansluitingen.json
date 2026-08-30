@@ -1,0 +1,566 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-aansluitingen",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json; ADR-031 declarative-first (schemas + lifecycle + aggregations); ADR-024 generic-renderer manifest pages",
+    "description": "The Aansluiting (tie-out) framework (demand 9 — the market-gap sweep found SIX separate reconciliation gaps that are all the same capability: tie source A to source B, flag the difference, drill down, and record a per-period status). Adds two new schemas: `Aansluiting` (the declarative definition of one tie-out — source A, source B, expected relationship, tolerance) and `AansluitingResult` (the per-period computed instance — totals, difference, bucket-level drill-down, and an open/explained/resolved lifecycle with an audit-trailed explanation). This change ships the framework plus its two highest-value instances: BTW-ledger-to-aangifte (reuses VATReturnService's GL-derivation, the same engine btw-suppletie-detection already diffs) and subledger-to-GL-control-account (AR debiteuren 1300 and AP crediteuren 1600 against their open-item subledger totals — the exact comparison PeriodCloseAssistantService::detectOpenSubLedger() never makes; it only counts draft/unposted transactions, it never sums a control-account balance against a subledger total). The other four aansluitingen the gap sweep found (year-end balance reconciliation pack, ICP<->rubriek 3b, bank-balance tie-out — which MUST extend bookkeeping-reconciliation-reports rather than duplicate BankReconciliation/ReconciliationMatch, and XAF/auditfile completeness) are explicitly deferred to a named follow-up (see proposal.md). Per ADR-031, source-total resolution is declared as x-openregister-aggregations shapes for documentation, but computed via AansluitingService using the real ObjectService API — the same engine-side-fallback pattern already used by TrialBalanceService, FluxService, and IcpService, because (a) the BTW-ledger side needs the same non-aggregatable per-line vatRate/reverseCharge derivation already documented as broken for declarative aggregation in bookkeeping-vat-btw-filing, and (b) the subledger-open-item filter needs a status-enum check that differs per schema (ARInvoice.lifecycleState vs APTransaction.state) — a cross-schema polymorphism the aggregation engine cannot express. AansluitingResolutionGuard is the single-method ADR-031 exception gating explained -> resolved."
+  },
+  "components": {
+    "schemas": {
+      "Aansluiting": {
+        "slug": "Aansluiting",
+        "icon": "ScaleBalance",
+        "version": "0.1.0",
+        "title": "Aansluiting",
+        "description": "The declarative definition of one tie-out: source A, source B, the expected relationship between them, and the tolerance within which a difference is not considered drift. One Aansluiting definition is computed once per fiscal period, producing an AansluitingResult. Master data — created once per tie-out, not per period.",
+        "x-schema-org": "schema:DefinedTerm",
+        "x-spec": "openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md",
+        "type": "object",
+        "x-openregister-audit": true,
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "REQ-AT-001: changes to the declarative tie-out definition (tolerance, expected relationship, source resolvers) are audit-trailed — this is master data that governs how every AansluitingResult for this tie-out is computed."
+        },
+        "required": [
+          "name",
+          "reconciliationType",
+          "toleranceCents",
+          "expectedRelationship",
+          "administrationId"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable name of the tie-out (REQ-AANS-001).",
+            "example": "BTW-grootboek naar aangifte",
+            "title": "Name"
+          },
+          "reconciliationType": {
+            "type": "string",
+            "description": "The resolver AansluitingService dispatches to for source A / source B totals (REQ-AANS-002). Only two are implemented in this change; additional types are a named follow-up (see proposal.md).",
+            "enum": [
+              "vat-ledger-return",
+              "subledger-gl-control"
+            ],
+            "example": "vat-ledger-return",
+            "title": "Aansluiting Type"
+          },
+          "sourceALabel": {
+            "type": "string",
+            "description": "Display label for source A (e.g. 'BTW-grootboek (huidig)' or 'Debiteuren subgrootboek').",
+            "nullable": true,
+            "example": "BTW-grootboek (huidig)",
+            "title": "Source A Label"
+          },
+          "sourceBLabel": {
+            "type": "string",
+            "description": "Display label for source B (e.g. 'Ingediende BTW-aangifte' or 'Grootboekrekening 1300 Debiteuren').",
+            "nullable": true,
+            "example": "Ingediende BTW-aangifte",
+            "title": "Source B Label"
+          },
+          "toleranceCents": {
+            "type": "integer",
+            "description": "Maximum absolute difference (whole cents) still considered within tolerance (REQ-AANS-003). Below or equal: AansluitingResult.withinTolerance = true and status defaults to resolved. Above: status = open.",
+            "default": 100,
+            "example": 100,
+            "title": "Tolerance Cents"
+          },
+          "expectedRelationship": {
+            "type": "string",
+            "description": "How source A and source B are expected to relate (REQ-AANS-003). 'equal': sourceATotal - sourceBTotal should be ~0. 'equal-with-sign-flip': sourceATotal + sourceBTotal should be ~0 (a GL control account carries the opposite sign convention from its subledger total, e.g. a liability control account).",
+            "enum": [
+              "equal",
+              "equal-with-sign-flip"
+            ],
+            "default": "equal",
+            "example": "equal",
+            "title": "Expected Relationship"
+          },
+          "controlAccountNumber": {
+            "type": "string",
+            "description": "For aansluitingType=subledger-gl-control: the GL control-account number source A resolves against (e.g. 1300 Debiteuren, 1600 Crediteuren). Unused for btw-ledger-aangifte.",
+            "nullable": true,
+            "example": "1300",
+            "title": "Control Account Number"
+          },
+          "subLedgerType": {
+            "type": "string",
+            "description": "For aansluitingType=subledger-gl-control: which subledger source B sums (REQ-AANS-005). Unused for btw-ledger-aangifte.",
+            "enum": [
+              "ar",
+              "ap"
+            ],
+            "nullable": true,
+            "example": "ar",
+            "title": "Sub Ledger Type"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "False retires the definition from the recurring compute list without deleting its history.",
+            "default": true,
+            "example": true,
+            "title": "Active"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
+            "example": "adm-smb-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "AansluitingResult": {
+        "slug": "AansluitingResult",
+        "icon": "FileCompare",
+        "version": "0.1.0",
+        "title": "Aansluiting Resultaat",
+        "description": "One per-period computed instance of an Aansluiting (REQ-AANS-004): the resolved source A / source B totals, the difference, whether it is within tolerance, a bucket-level drill-down (lineDeltas), and the open -> explained -> resolved lifecycle with an audit-trailed explanation (who explained what, REQ-AANS-006). Computed by AansluitingService::compute(); one result per (aansluitingId, periodId) — recomputing replaces the totals/lineDeltas of an `open` result in place but never a result already `explained` or `resolved` (must reopen first).",
+        "x-schema-org": "schema:Report",
+        "x-spec": "openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md",
+        "type": "object",
+        "x-openregister-audit": true,
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "REQ-AANS-006: every lifecycle transition (explain/resolve/reopen) and the explainedBy/explainedReasonText fields are audit-trailed."
+        },
+        "required": [
+          "reconciliationId",
+          "periodId",
+          "administrationId",
+          "status"
+        ],
+        "properties": {
+          "reconciliationId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "Aansluiting",
+            "description": "FK to the Aansluiting definition this result was computed for.",
+            "example": "aansl-btw-ledger-aangifte-smb",
+            "title": "Aansluiting ID"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "Fiscal period this result was computed for (REQ-AANS-004).",
+            "example": "2026-Q2",
+            "title": "Period ID"
+          },
+          "computedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp AansluitingService::compute() last (re)computed this result.",
+            "nullable": true,
+            "example": "2026-07-13T09:00:00+00:00",
+            "title": "Computed At"
+          },
+          "sourceATotal": {
+            "type": "number",
+            "description": "Resolved source A total in EUR (REQ-AANS-004).",
+            "example": 4600.0,
+            "title": "Source A Total"
+          },
+          "sourceBTotal": {
+            "type": "number",
+            "description": "Resolved source B total in EUR (REQ-AANS-004).",
+            "example": 4450.0,
+            "title": "Source B Total"
+          },
+          "differenceCents": {
+            "type": "integer",
+            "description": "The signed difference in whole cents, computed per the parent Aansluiting's expectedRelationship (REQ-AANS-003).",
+            "example": 15000,
+            "title": "Difference Cents"
+          },
+          "withinTolerance": {
+            "type": "boolean",
+            "description": "True when abs(differenceCents) <= the parent Aansluiting's toleranceCents.",
+            "example": false,
+            "title": "Within Tolerance"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle state (REQ-AANS-006). open: drift detected, unexplained. explained: an operator recorded a reason but has not confirmed resolution. resolved: closed out, either because it was within tolerance or an operator confirmed the explained drift is settled.",
+            "enum": [
+              "open",
+              "explained",
+              "resolved"
+            ],
+            "default": "open",
+            "example": "open",
+            "title": "Status"
+          },
+          "lineDeltas": {
+            "type": "array",
+            "description": "Bucket-level drill-down (REQ-AANS-005). Always carries a 'TOTAL' summary row; aansluitingType=btw-ledger-aangifte additionally carries one row per (type, taxRate) rubriek bucket; aansluitingType=subledger-gl-control additionally carries one row per open subledger item contributing to sourceBTotal.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bucketKey": {
+                  "type": "string",
+                  "title": "Bucket Key",
+                  "description": "TOTAL, a type:taxRate rubriek key, or an open-item id."
+                },
+                "sourceAAmount": {
+                  "type": "number",
+                  "nullable": true,
+                  "title": "Source A Amount",
+                  "description": "The bucket's contribution to source A (null when source A does not decompose to this bucket)."
+                },
+                "sourceBAmount": {
+                  "type": "number",
+                  "nullable": true,
+                  "title": "Source B Amount",
+                  "description": "The bucket's contribution to source B (null when source B does not decompose to this bucket)."
+                },
+                "deltaAmount": {
+                  "type": "number",
+                  "title": "Delta Amount",
+                  "description": "sourceAAmount - sourceBAmount for this bucket (sign-flip relationships already normalised)."
+                }
+              }
+            },
+            "title": "Line Deltas"
+          },
+          "explainedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "Actor (user id) who recorded the explanation (REQ-AANS-006).",
+            "example": null,
+            "title": "Explained By"
+          },
+          "explainedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "ISO 8601 timestamp at which the explanation was recorded (REQ-AANS-006). Null while the difference is unexplained. An explanation documents why a tie-out difference exists; it does not clear it — resolvedAt does that.",
+            "example": null,
+            "title": "Explained At"
+          },
+          "explanationReasonCode": {
+            "type": "string",
+            "description": "Classification of the explanation (REQ-AANS-006), mirroring the T4 bank-reconciliation resolutionStatus vocabulary (bookkeeping-reconciliation-reports REQ-REC-004) for a consistent operator vocabulary across all tie-out UIs.",
+            "enum": [
+              "timing",
+              "error",
+              "adjustment",
+              "other"
+            ],
+            "nullable": true,
+            "example": null,
+            "title": "Explanation Reason Code"
+          },
+          "explanationReasonText": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator-supplied free-text reason (REQ-AANS-006). Required before a resolve transition is permitted.",
+            "example": null,
+            "title": "Explanation Reason Text"
+          },
+          "resolvedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "Nextcloud user id of the actor who closed this tie-out difference — i.e. who confirmed the two sources now reconcile, or that the remaining difference has been corrected in the ledger. Null while the difference is still open. Distinct from explainedBy, which only documents the cause.",
+            "example": null,
+            "title": "Resolved By"
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "ISO 8601 timestamp at which the tie-out difference was closed. Null while the difference is still open; a non-null value is what takes this result out of the operator's open-differences worklist.",
+            "example": null,
+            "title": "Resolved At"
+          },
+          "relatedVatCorrectionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "For aansluitingType=btw-ledger-aangifte: FK to the VatCorrection the btw-suppletie-detection flow already created for the same drift, if any (REQ-AANS-007 integration, not duplication). Null when no correction has been prepared yet or the aansluiting is not BTW-typed.",
+            "example": null,
+            "title": "Related Vat Correction ID"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
+            "example": "adm-smb-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "open",
+          "states": {
+            "open": {
+              "label": "Open",
+              "description": "Drift detected (or first computation) and not yet explained."
+            },
+            "explained": {
+              "label": "Explained",
+              "description": "An operator recorded a reason for the drift but has not confirmed it is fully resolved."
+            },
+            "resolved": {
+              "label": "Resolved",
+              "description": "Closed out — either the drift was within tolerance, or an operator confirmed the explained drift is settled."
+            }
+          },
+          "transitions": {
+            "explain": {
+              "from": "open",
+              "to": "explained",
+              "label": "Explain difference",
+              "description": "Operator records explanationReasonCode + explanationReasonText (REQ-AANS-006). Requires non-empty explanationReasonText."
+            },
+            "resolve": {
+              "from": "explained",
+              "to": "resolved",
+              "label": "Resolve",
+              "description": "Operator confirms the explained drift is settled (REQ-AANS-006).",
+              "guard": "OCA\\Shillinq\\Lifecycle\\AansluitingResolutionGuard::canResolve"
+            },
+            "resolve-within-tolerance": {
+              "from": "open",
+              "to": "resolved",
+              "label": "Auto-resolve (within tolerance)",
+              "description": "System-driven: a compute() finding withinTolerance=true resolves automatically without requiring an explanation (REQ-AANS-004)."
+            },
+            "reopen": {
+              "from": "explained",
+              "to": "open",
+              "label": "Reopen",
+              "description": "Operator or a later recompute reopens an explained-but-not-yet-resolved result, e.g. because the underlying drift changed."
+            },
+            "reopen-resolved": {
+              "from": "resolved",
+              "to": "open",
+              "label": "Reopen resolved",
+              "description": "A later recompute finds fresh drift on a previously resolved result and reopens it, audit-trailing the reason."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "openCountByAdministration": {
+            "field": "id",
+            "metric": "count",
+            "description": "REQ-AANS-008: count of open AansluitingResult rows per administration, for a dashboard tile / period-close flag surface.",
+            "groupBy": ["administrationId"],
+            "filter": {
+              "status": "open"
+            }
+          },
+          "openCountByAansluiting": {
+            "field": "id",
+            "metric": "count",
+            "description": "Count of open results per Aansluiting definition, across all computed periods.",
+            "groupBy": ["reconciliationId"],
+            "filter": {
+              "status": "open"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "controller": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Aansluiting",
+          "slug": "aansl-btw-ledger-aangifte-smb"
+        },
+        "name": "BTW-grootboek naar aangifte",
+        "reconciliationType": "vat-ledger-return",
+        "sourceALabel": "BTW-grootboek (huidig)",
+        "sourceBLabel": "Ingediende BTW-aangifte",
+        "toleranceCents": 100,
+        "expectedRelationship": "equal",
+        "controlAccountNumber": null,
+        "subLedgerType": null,
+        "active": true,
+        "administrationId": "adm-smb-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Aansluiting",
+          "slug": "aansl-ar-subledger-1300-smb"
+        },
+        "name": "Debiteuren subgrootboek naar 1300",
+        "reconciliationType": "subledger-gl-control",
+        "sourceALabel": "Grootboekrekening 1300 Debiteuren",
+        "sourceBLabel": "Openstaande debiteuren (subgrootboek)",
+        "toleranceCents": 100,
+        "expectedRelationship": "equal",
+        "controlAccountNumber": "1300",
+        "subLedgerType": "ar",
+        "active": true,
+        "administrationId": "adm-smb-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Aansluiting",
+          "slug": "aansl-ap-subledger-1600-smb"
+        },
+        "name": "Crediteuren subgrootboek naar 1600",
+        "reconciliationType": "subledger-gl-control",
+        "sourceALabel": "Grootboekrekening 1600 Crediteuren",
+        "sourceBLabel": "Openstaande crediteuren (subgrootboek)",
+        "toleranceCents": 100,
+        "expectedRelationship": "equal-with-sign-flip",
+        "controlAccountNumber": "1600",
+        "subLedgerType": "ap",
+        "active": true,
+        "administrationId": "adm-smb-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AansluitingResult",
+          "slug": "aanslres-btw-2026q2-smb"
+        },
+        "reconciliationId": "aansl-btw-ledger-aangifte-smb",
+        "periodId": "2026-Q2",
+        "computedAt": "2026-07-13T09:00:00+00:00",
+        "sourceATotal": 4600.0,
+        "sourceBTotal": 4450.0,
+        "differenceCents": 15000,
+        "withinTolerance": false,
+        "status": "open",
+        "lineDeltas": [
+          {
+            "bucketKey": "TOTAL",
+            "sourceAAmount": 4600.0,
+            "sourceBAmount": 4450.0,
+            "deltaAmount": 150.0
+          },
+          {
+            "bucketKey": "collected:21.00",
+            "sourceAAmount": 4600.0,
+            "sourceBAmount": 4450.0,
+            "deltaAmount": 150.0
+          }
+        ],
+        "explainedBy": null,
+        "explainedAt": null,
+        "explanationReasonCode": null,
+        "explanationReasonText": null,
+        "resolvedBy": null,
+        "resolvedAt": null,
+        "relatedVatCorrectionId": null,
+        "administrationId": "adm-smb-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AansluitingResult",
+          "slug": "aanslres-ar-2026q2-smb"
+        },
+        "reconciliationId": "aansl-ar-subledger-1300-smb",
+        "periodId": "2026-Q2",
+        "computedAt": "2026-07-13T09:05:00+00:00",
+        "sourceATotal": 18500.0,
+        "sourceBTotal": 18500.0,
+        "differenceCents": 0,
+        "withinTolerance": true,
+        "status": "resolved",
+        "lineDeltas": [
+          {
+            "bucketKey": "TOTAL",
+            "sourceAAmount": 18500.0,
+            "sourceBAmount": 18500.0,
+            "deltaAmount": 0.0
+          }
+        ],
+        "explainedBy": null,
+        "explainedAt": null,
+        "explanationReasonCode": null,
+        "explanationReasonText": null,
+        "resolvedBy": null,
+        "resolvedAt": "2026-07-13T09:05:00+00:00",
+        "relatedVatCorrectionId": null,
+        "administrationId": "adm-smb-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AansluitingResult",
+          "slug": "aanslres-ap-2026q2-smb"
+        },
+        "reconciliationId": "aansl-ap-subledger-1600-smb",
+        "periodId": "2026-Q2",
+        "computedAt": "2026-07-13T09:10:00+00:00",
+        "sourceATotal": -9200.0,
+        "sourceBTotal": 9350.0,
+        "differenceCents": 15000,
+        "withinTolerance": false,
+        "status": "explained",
+        "lineDeltas": [
+          {
+            "bucketKey": "TOTAL",
+            "sourceAAmount": -9200.0,
+            "sourceBAmount": 9350.0,
+            "deltaAmount": 150.0
+          },
+          {
+            "bucketKey": "aptx-2026-0088",
+            "sourceAAmount": null,
+            "sourceBAmount": 9350.0,
+            "deltaAmount": 9350.0
+          }
+        ],
+        "explainedBy": "bookkeeper-1",
+        "explainedAt": "2026-07-13T10:00:00+00:00",
+        "explanationReasonCode": "timing",
+        "explanationReasonText": "Crediteurenfactuur AP-2026-0088 is geboekt na de subgrootboek-export van vanochtend; volgt vanzelf bij de volgende recompute.",
+        "resolvedBy": null,
+        "resolvedAt": null,
+        "relatedVatCorrectionId": null,
+        "administrationId": "adm-smb-1"
+      }
+    ]
+  }
+}

@@ -1,0 +1,146 @@
+{
+	"pages": [
+		{
+			"id": "Deposits",
+			"route": "/sales/deposits",
+			"type": "index",
+			"title": "Deposits",
+			"config": {
+				"register": "shillinq",
+				"schema": "DepositPayment",
+				"columns": [
+					{
+						"key": "orderId",
+						"label": "Booking",
+						"sortable": true
+					},
+					{
+						"key": "amount",
+						"label": "Amount",
+						"sortable": true
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"sortable": true
+					},
+					{
+						"key": "dueDate",
+						"label": "Due Date",
+						"sortable": true
+					},
+					{
+						"key": "paymentGateway",
+						"label": "Gateway",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "state",
+						"label": "State",
+						"options": [
+							"draft",
+							"pending",
+							"authorized",
+							"captured",
+							"failed",
+							"voided"
+						]
+					}
+				],
+				"defaultSort": "dueDate",
+				"detailRoute": "DepositDetail"
+			}
+		},
+		{
+			"id": "DepositDetail",
+			"route": "/sales/deposits/:id",
+			"type": "detail",
+			"title": "Deposit",
+			"config": {
+				"register": "shillinq",
+				"schema": "DepositPayment",
+				"_note": "FINANCIAL/PAYMENT archetype — a deposit is a captured/authorised payment against a booking, treated as a money record. Native shillinq detail contract: config.aggregations[] surface the deposit-amount currency KPI so the sum reads first; config.fields[] render the payment data (booking, booking type, currency, state, due date, gateway/method, linked AR invoice, refund policy, last error); the sidebar carries a file-references tab for the gateway receipt and an audit-trail tab for the immutable state transitions (authorized/captured/voided). NO calendar/email/talk — DepositPayment declares no comms linkedType; the booking's own calendar lives on the booking, not the payment.",
+				"aggregations": [
+					{ "id": "depositAmount", "title": "Deposit amount", "field": "amount", "metric": "value", "format": "currency" }
+				],
+				"fields": [
+					{
+						"key": "orderId",
+						"label": "Booking",
+						"type": "string"
+					},
+					{
+						"key": "bookingTypeId",
+						"label": "Booking Type",
+						"type": "string"
+					},
+					{
+						"key": "amount",
+						"label": "Amount",
+						"type": "number"
+					},
+					{
+						"key": "currencyCode",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "state",
+						"label": "State",
+						"type": "string"
+					},
+					{
+						"key": "dueDate",
+						"label": "Due Date",
+						"type": "string"
+					},
+					{
+						"key": "paymentGateway",
+						"label": "Gateway",
+						"type": "string"
+					},
+					{
+						"key": "paymentMethod",
+						"label": "Method",
+						"type": "string"
+					},
+					{
+						"key": "arInvoiceId",
+						"label": "Invoice",
+						"type": "string"
+					},
+					{
+						"key": "refundPolicy",
+						"label": "Refund Policy",
+						"type": "string"
+					},
+					{
+						"key": "lastErrorCode",
+						"label": "Error Code",
+						"type": "string"
+					},
+					{
+						"key": "lastErrorMessage",
+						"label": "Error Message",
+						"type": "string"
+					}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "documents", "label": "Receipts", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "DepositPayment", "objectId": ":id" } }
+						] },
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				},
+				"indexRoute": "Deposits"
+			}
+		}
+	],
+	"menu": []
+}

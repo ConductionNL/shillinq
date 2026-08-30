@@ -8,10 +8,12 @@
 `./bookkeeping-document-attachment-integration/spec.md` (docudesk FK contract),
 `./bookkeeping-bank-reconciliation/spec.md` (payment matching)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping accounts payable core in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+## Requirements
 
 @e2e exclude pure backend/schema: AP register declarations, schema constraints, SEPA XML generation — not browser-testable
-
 
 ### REQ-AP-001: Accounts payable SHALL be declared as `Payee` + `APTransaction` + `DunningNotice` registers, not duplicates of GL
 
@@ -52,6 +54,8 @@ upload (PDF/attachment) is the T2 intake path.
 
 ### REQ-AP-002: The `Payee` schema SHALL declare a fixed minimum field set
 
+The system SHALL satisfy this requirement: The `Payee` schema SHALL declare a fixed minimum field set.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `vendorNumber` | string | Yes | Stable identifier per administration |
@@ -86,6 +90,8 @@ Schema.org annotation: `schema:Organization`.
 - **THEN** validation MUST pass (valid Dutch IBAN format).
 
 ### REQ-AP-003: The `APTransaction` schema SHALL declare a fixed minimum field set with line breakdown
+
+The system SHALL satisfy this requirement: The `APTransaction` schema SHALL declare a fixed minimum field set with line breakdown.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -294,6 +300,8 @@ RETURN {
 
 ### REQ-AP-009: Payment matching SHALL transition AP invoices from issued → paid via bank-reconciliation confirmation
 
+The system SHALL satisfy this requirement: Payment matching SHALL transition AP invoices from issued → paid via bank-reconciliation confirmation.
+
 When `bookkeeping-bank-reconciliation` emits a `ReconciliationMatch` candidate
 matching an `APTransaction`, the operator MUST be able to confirm the match via
 the AP detail page. Confirmation triggers an `issued → paid` lifecycle
@@ -361,3 +369,149 @@ with `force: false` MUST skip existing objects matched by slug.
 - **WHEN** the repair step runs `ConfigurationService::importFromApp('shillinq', ...)`
 - **THEN** 3 vendors and 5–8 AP invoices MUST be created with realistic Dutch
   details; **AND** re-running the same repair step MUST NOT create duplicates.
+
+### Requirement: REQ-AP-012: Payee SHALL be the canonical payee master with `payeeType`, a `bankAccount` object, and folded financial fields
+
+The `Payee` schema SHALL be the single canonical master for any party the
+administration pays. It SHALL carry a `payeeType` enum
+`[supplier, vendor, freelancer, contractor, government, other]`, and the
+financial fields folded in from the retired `VendorFinancialProfile` as
+top-level fields: `creditLimit` (number) and `apBalance` (number). Its
+`bankAccount` field SHALL be a structured object
+`{ iban (string), bic (string), accountHolderName (string) }` into which the
+retired profile's `iban`/`bic` fold — these SHALL NOT be added as separate
+top-level `Payee` fields. The `bic` field is the bank's ISO 9362 identifier;
+because a "SWIFT code" IS a BIC, no separate `swift` field SHALL be added.
+Schema.org annotation: `schema:Organization`.
+
+True non-SEPA / cross-border international payments (non-IBAN account numbers,
+intermediary/correspondent banks) are out of scope — a future capability; the
+`bankAccount` object models SEPA IBAN/BIC only.
+
+#### Scenario: Payee validates a freelancer
+
+- **GIVEN** the `Payee` schema
+- **WHEN** `{vendorNumber:"V-010", name:"Jan de Vries", payeeType:"freelancer", paymentTermDays:14, administrationId:"adm-1", lifecycleState:"active"}` is saved
+- **THEN** validation MUST pass.
+
+#### Scenario: bankAccount object and folded financial fields validate
+
+- **GIVEN** a `Payee` with `bankAccount:{iban:"NL00BANK0123456789", bic:"<BANKNL2A>", accountHolderName:"Jan de Vries"}`, top-level `creditLimit:5000` and `apBalance:1250`
+- **WHEN** the record is saved
+- **THEN** validation MUST pass and the `bankAccount` object plus both top-level financial fields persist
+- **AND** no separate top-level `iban`, `bic`, or `swift` field is required or present.
+
+### Requirement: REQ-AP-013: A `PaymentRun` schema SHALL declare a batch of approved Payee payments with a declarative lifecycle
+
+The system SHALL define a `PaymentRun` schema under the core AP fragment. It
+SHALL declare its state machine as `x-openregister-lifecycle` with states
+`draft → approved → exported → reconciled` (no PHP state-machine service per
+ADR-031). It SHALL carry `runNumber`, `administrationId`, `executionDate`,
+`debtorAccountIban`, `status`, `totalAmount`, `currency`, `paymentLines[]`,
+`exportedFileRef`, `exportedAt`, `reconciledAt`, and `lifecycleState`. Each
+`paymentLines[]` entry SHALL carry `payeeId`, `payeeName`, `creditorIban`,
+`amount`, `remittanceInfo`, and `apTransactionRef`. Schema.org annotation:
+`schema:PaymentService`.
+
+#### Scenario: PaymentRun lifecycle enforces approval before export
+
+- **GIVEN** a `PaymentRun` in state `draft`
+- **WHEN** a `draft → exported` transition is attempted
+- **THEN** the lifecycle SHALL reject it; the run MUST first be `approved`.
+
+#### Scenario: PaymentRun lines reference payees and AP invoices
+
+- **GIVEN** a `PaymentRun` with two `paymentLines[]`
+- **WHEN** the object is saved
+- **THEN** each line carries `payeeId`, `creditorIban`, `amount`, and `apTransactionRef`
+- **AND** `totalAmount` equals the sum of the line `amount`s.
+
+### Requirement: REQ-AP-014: The AP menu SHALL collapse to a single group with clean leaf labels
+
+The Accounts-Payable navigation SHALL present exactly one group, with the
+"(T2)" suffix removed, and leaf labels: Payees, AP Invoices, AP Aging,
+Dunning Notices, Payment Runs. The legacy base `src/manifest.json` AP leaves
+(`Vendors`, `AccountsPayable`, `APAging`, `PaymentRuns`) SHALL be removed, AND
+the now-orphaned legacy base-AP **page definitions** of the same names SHALL
+also be deleted from `src/manifest.json` in this change (the base
+`AccountsPayable`/`APAging` page defs used the legacy `APTransaction` schema);
+the consolidated module's own pages replace them. This uses the
+`IInitialState`-provided manifest consumed by `CnAppRoot` per ADR-024; no
+per-leaf route registration is added.
+
+#### Scenario: Single AP group with clean labels
+
+- **WHEN** an operator opens the Bookkeeping menu
+- **THEN** exactly one "Accounts Payable" group is shown (no "(T2)" suffix)
+- **AND** its leaves are Payees, AP Invoices, AP Aging, Dunning Notices, Payment Runs
+- **AND** no legacy `Vendors` / `AccountsPayable` / `APAging` / `PaymentRuns` base leaves appear.
+
+#### Scenario: Orphaned legacy AP page definitions removed
+
+- **WHEN** `src/manifest.json` is inspected after this change
+- **THEN** the legacy `Vendors`, `AccountsPayable`, `APAging`, and `PaymentRuns` page definitions are absent
+- **AND** no orphaned legacy base-AP page definition remains for a follow-up cleanup.
+
+### Requirement: REQ-AP-012 — `APTransaction` SHALL declare web-push notification rules using the title-vs-body content model
+
+The `APTransaction` schema SHALL declare an `x-openregister-notifications` block (ADR-031
+dialect) with two rules — `approvalNeeded` and `overdue` — each delivered on the
+`nc-notification` AND `web-push` channels, each carrying `originApp: shillinq`, each declaring
+a bilingual `subject` (resolved as the notification TITLE) and a bilingual `message` (resolved
+as the notification BODY, distinct from the title), and each declaring exactly one primary
+`actions[]` entry whose `target` is `{ kind: object-detail }` so the action deeplinks to the
+triggering AP invoice.
+
+shillinq SHALL register a deeplink for the `APTransaction` schema with OpenRegister's
+deeplink registry (`DeepLinkRegistrationListener`) targeting the existing `APInvoiceDetail`
+manifest route (`/bookkeeping/accounts-payable/:id`), using the admin-configured register slug
+(L3) rather than a hardcoded register, so the `object-detail` action target resolves to a real
+shillinq URL.
+
+The `approvalNeeded` rule SHALL fire when an AP invoice enters the approval queue. Because
+`APTransaction` declares no approver, assignee, or `approvalState` field, the rule keys on the
+lifecycle `state` field (`updated` trigger, condition `state == received`, the documented
+"awaiting approval/posting" state) and recipients fall back to the `shillinq-finance` group —
+mirroring the AR/PO notification rules — rather than a per-invoice approver. The `overdue` rule
+SHALL be a daily `scheduled` rule (`intervalSec 86400`) filtering `state notIn [paid,
+written-off, voided]` AND `dueDate before now`, mirroring the AR overdue filter shape.
+
+No existing notification rule SHALL be clobbered (the schema declared none before this change).
+
+#### Scenario: AP invoice enters the approval queue raises an approvalNeeded push
+
+- **WHEN** an `APTransaction` is updated so its `state` becomes `received`
+- **THEN** the engine dispatches a notification on `nc-notification` and `web-push` with
+  `originApp: shillinq`, TITLE "Approval needed: {{invoiceNumber}}" / "Goedkeuring nodig:
+  {{invoiceNumber}}" and BODY "This supplier invoice is in Shillinq. Open it?" / "Deze
+  inkoopfactuur staat in Shillinq. Openen?", to the `shillinq-finance` group
+
+#### Scenario: Title and body are distinct (title-vs-body content model)
+
+- **WHEN** the `approvalNeeded` or `overdue` rule fires
+- **THEN** the notification title is the resolved `subject` and the notification body is the
+  resolved `message`, and the two are not forced to be identical
+
+#### Scenario: Open invoice action deeplinks to the AP invoice detail
+
+- **WHEN** a recipient clicks the primary "Open invoice" / "Factuur openen" action on either
+  rule's notification
+- **THEN** the engine resolves the `object-detail` target to the triggering `APTransaction`
+  via shillinq's registered deeplink and opens `/apps/shillinq/bookkeeping/accounts-payable/{uuid}`
+
+#### Scenario: Background web-push delivery when all tabs are closed
+
+- **WHEN** the `approvalNeeded` or `overdue` rule fires for a finance-group recipient who has
+  an active push subscription but no open Nextcloud tab
+- **THEN** the encrypted web-push is delivered and the Service Worker shows the rich
+  notification in the background, and a click opens the resolved AP invoice deeplink
+
+#### Scenario: Overdue sweep notifies on unpaid past-due invoices
+
+- **WHEN** the daily `overdue` scheduled rule (`intervalSec 86400`) runs and an `APTransaction`
+  has `dueDate` before now and `state` not in `[paid, written-off, voided]`
+- **THEN** the engine dispatches a notification to the `shillinq-finance` group with TITLE
+  "Invoice overdue: {{invoiceNumber}}" / "Factuur over de vervaldatum: {{invoiceNumber}}" and
+  BODY "This invoice is overdue in Shillinq. Open it?" / "Deze factuur is vervallen in
+  Shillinq. Openen?"
+

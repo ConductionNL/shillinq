@@ -1,0 +1,104 @@
+{
+	"menu": [
+		{
+			"id": "Verkoop",
+			"label": "Sales",
+			"icon": "CartOutline",
+			"order": 33,
+			"children": [
+				{
+					"id": "AvailabilityRules",
+					"label": "Availability Rules",
+					"icon": "CalendarClockOutline",
+					"route": "AvailabilityRules",
+					"order": 14
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "AvailabilityRules",
+			"route": "/verkoop/beschikbaarheidsregels",
+			"type": "index",
+			"title": "Availability Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "AvailabilityRule",
+				"columns": [
+					{ "key": "availabilityRuleId", "label": "Rule ID", "sortable": true },
+					{ "key": "resource", "label": "Resource", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "effectiveFrom", "label": "Effective from", "sortable": true },
+					{ "key": "effectiveUntil", "label": "Effective until", "sortable": true },
+					{ "key": "description", "label": "Description", "sortable": false }
+				],
+				"defaultSort": "availabilityRuleId",
+				"detailRoute": "AvailabilityRuleDetail"
+			}
+		},
+		{
+			"id": "AvailabilityRuleDetail",
+			"route": "/verkoop/beschikbaarheidsregels/:id",
+			"type": "detail",
+			"title": "Availability Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "AvailabilityRule",
+				"_note": "CONFIG — the availability rule for a bookable resource. Body pairs the rule scope (resource, effective-from/until window, status) with its two child collections rendered inline: the recurring breaks that block time and the booking constraints (notice windows, buffers, cancellation deadline) that shape valid slots. Pure scheduling configuration — no files, KPIs or comms leaves; lifecycle actions drive activate/archive.",
+				"fields": [
+					{ "key": "availabilityRuleId", "label": "Rule ID", "type": "string" },
+					{ "key": "resource", "label": "Resource", "type": "string", "help": "FK to Resource.resourceId (REQ-BAR-006)." },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "effectiveFrom", "label": "Effective from", "type": "date", "help": "Date the rule begins to apply (REQ-BAR-005). null = applies immediately on activation." },
+					{ "key": "effectiveUntil", "label": "Effective until", "type": "date", "help": "Date the rule stops applying. null = permanent until archived." },
+					{ "key": "description", "label": "Description", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"sections": [
+					{
+						"id": "breaks",
+						"label": "Breaks",
+						"type": "related",
+						"config": {
+							"register": "shillinq",
+							"schema": "ResourceBreak",
+							"foreignKey": "availabilityRule",
+							"columns": [
+								{ "key": "resourceBreakId", "label": "Break ID", "sortable": true },
+								{ "key": "breakType", "label": "Type", "sortable": true },
+								{ "key": "dayOfWeek", "label": "Day", "sortable": true },
+								{ "key": "startTime", "label": "Start", "sortable": true },
+								{ "key": "endTime", "label": "End", "sortable": true },
+								{ "key": "isRecurring", "label": "Recurring", "sortable": false },
+								{ "key": "status", "label": "Status", "sortable": true }
+							],
+							"defaultSort": "dayOfWeek"
+						}
+					},
+					{
+						"id": "constraints",
+						"label": "Booking rules",
+						"type": "related",
+						"config": {
+							"register": "shillinq",
+							"schema": "BookingConstraint",
+							"foreignKey": "availabilityRule",
+							"columns": [
+								{ "key": "bookingConstraintId", "label": "Constraint ID", "sortable": true },
+								{ "key": "minAdvanceNoticeDays", "label": "Min advance (days)", "sortable": true },
+								{ "key": "maxAdvanceNoticeDays", "label": "Max advance (days)", "sortable": true },
+								{ "key": "preBufferMinutes", "label": "Pre-buffer (min)", "sortable": false },
+								{ "key": "postBufferMinutes", "label": "Post-buffer (min)", "sortable": false },
+								{ "key": "cancellationDeadlineHours", "label": "Cancel deadline (h)", "sortable": false },
+								{ "key": "status", "label": "Status", "sortable": true }
+							],
+							"defaultSort": "bookingConstraintId"
+						}
+					}
+				],
+				"indexRoute": "AvailabilityRules"
+			}
+		}
+	]
+}

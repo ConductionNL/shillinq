@@ -1,0 +1,52 @@
+{
+	"name": "@conduction/bookings-widget",
+	"version": "0.1.0",
+	"description": "Embeddable booking widget for Shillinq / Conduction bookings (REQ-WSW-004).",
+	"license": "EUPL-1.2",
+	"author": "Conduction B.V. <info@conduction.nl>",
+	"homepage": "https://conduction.nl",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ConductionNL/shillinq"
+	},
+	"main": "index.js",
+	"module": "index.js",
+	"types": "index.d.ts",
+	"exports": {
+		".": {
+			"import": "./index.js",
+			"require": "./index.js",
+			"types": "./index.d.ts"
+		},
+		"./vue": {
+			"import": "./vue.js",
+			"types": "./vue.d.ts"
+		},
+		"./web-component": {
+			"import": "./web-component.js",
+			"types": "./web-component.d.ts"
+		}
+	},
+	"keywords": [
+		"nextcloud",
+		"shillinq",
+		"booking",
+		"widget",
+		"embed"
+	],
+	"peerDependencies": {
+		"vue": "^2.7.0 || ^3.0.0"
+	},
+	"files": [
+		"index.js",
+		"vue.js",
+		"web-component.js",
+		"index.d.ts",
+		"vue.d.ts",
+		"web-component.d.ts",
+		"README.md"
+	],
+	"scripts": {
+		"build": "echo 'Run `npm run build` from the parent app; webpack emits the bundle into js/.'"
+	}
+}

@@ -1,0 +1,416 @@
+{
+	"menu": [
+		{
+			"id": "Bookkeeping",
+			"children": [
+				{
+					"id": "SalarisFeed",
+					"label": "Salary feeds",
+					"icon": "FileImportOutline",
+					"route": "SalarisFeed",
+					"order": 45
+				},
+				{
+					"id": "OpdrachtgeversVerklaringen",
+					"label": "Client statements",
+					"icon": "AccountStarOutline",
+					"route": "OpdrachtgeversVerklaringen",
+					"order": 46
+				},
+				{
+					"id": "IB47Jaarbatch",
+					"label": "IB47 annual batch",
+					"icon": "FileDocumentOutline",
+					"route": "IB47Jaarbatch",
+					"order": 47
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "SalarisFeed",
+			"route": "/bookkeeping/detachering-payroll/salaris-feeds",
+			"type": "index",
+			"title": "Salary feeds",			"config": {
+				"register": "shillinq",
+				"schema": "SalarisFeed",				"columns": [
+					{
+						"key": "salarisbureauSlug",
+						"label": "Payroll bureau",
+						"sortable": true
+					},
+					{
+						"key": "payrollPeriod",
+						"label": "Pay period",
+						"sortable": true
+					},
+					{
+						"key": "employeeName",
+						"label": "Employee",
+						"sortable": true
+					},
+					{
+						"key": "payrollCost",
+						"label": "Labour costs (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "importState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-loontijdvak",
+				"detailRoute": "SalarisFeedDetail"
+			}
+		},
+		{
+			"id": "SalarisFeedDetail",
+			"route": "/bookkeeping/detachering-payroll/salaris-feeds/:id",
+			"type": "detail",
+			"title": "Salary feed",			"config": {
+				"register": "shillinq",
+				"schema": "SalarisFeed",				"_note": "IMPORT TRANSACTION (one employee's payroll line imported from an external salarisbureau, ready to book). The body is the cost breakdown that gets posted — labour cost, net pay, social contributions, payroll tax, pension — with the import status and the resulting journal-entry reference. lifecycleActions drive the import → booked transition. No child schema and no comms (a feed line is data, not a person to email). Audit trail sidebar is the import/booking provenance.",
+				"fields": [
+					{
+						"key": "salarisbureauSlug",
+						"label": "Payroll bureau",
+						"type": "string"
+					},
+					{
+						"key": "payrollPeriod",
+						"label": "Pay period",
+						"type": "string"
+					},
+					{
+						"key": "employeeId",
+						"label": "Employee ID",
+						"type": "string"
+					},
+					{
+						"key": "employeeName",
+						"label": "Employee",
+						"type": "string"
+					},
+					{
+						"key": "payrollCost",
+						"label": "Labour costs (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "netPay",
+						"label": "Net pay (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "socialePremies",
+						"label": "Social contributions (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "payrollTax",
+						"label": "Payroll tax (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "pensioen",
+						"label": "Pension (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "importState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "journalEntryId",
+						"label": "Journal entry",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "SalarisFeed",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "OpdrachtgeversVerklaringen",
+			"route": "/bookkeeping/detachering-payroll/opdrachtgeversverklaringen",
+			"type": "index",
+			"title": "Client statements",			"config": {
+				"register": "shillinq",
+				"schema": "OpdrachtgeversVerklaring",				"columns": [
+					{
+						"key": "freelancerName",
+						"label": "Freelancer",
+						"sortable": true
+					},
+					{
+						"key": "termStart",
+						"label": "Start date",
+						"sortable": true
+					},
+					{
+						"key": "termEnd",
+						"label": "End date",
+						"sortable": true
+					},
+					{
+						"key": "declarationStatus",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "riskAssessment",
+						"label": "Risk assessment",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-looptijdStart",
+				"detailRoute": "OpdrachtgeversVerklaringDetail"
+			}
+		},
+		{
+			"id": "OpdrachtgeversVerklaringDetail",
+			"route": "/bookkeeping/detachering-payroll/opdrachtgeversverklaringen/:id",
+			"type": "detail",
+			"title": "Client statement",			"config": {
+				"register": "shillinq",
+				"schema": "OpdrachtgeversVerklaring",				"_note": "DBA CLIENT STATEMENT (the opdrachtgeversverklaring that fixes the freelancer relationship and its false-self-employment risk). The body carries the assignment, term, model agreement, risk assessment and the generated statement-document link. The existing generate-document action + lifecycleActions confirm the agreement and produce the doc via docudesk. It is a compliance artefact, not correspondence, so no email/calendar; the audit trail sidebar is the who-signed-off record for a labour-law document.",
+				"fields": [
+					{
+						"key": "zzpId",
+						"label": "Freelancer ID",
+						"type": "string"
+					},
+					{
+						"key": "freelancerName",
+						"label": "Freelancer name",
+						"type": "string"
+					},
+					{
+						"key": "assignmentDescription",
+						"label": "Assignment description",
+						"type": "string"
+					},
+					{
+						"key": "termStart",
+						"label": "Start date",
+						"type": "date"
+					},
+					{
+						"key": "termEnd",
+						"label": "End date",
+						"type": "date"
+					},
+					{
+						"key": "declarationStatus",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "modelOvereenkomst",
+						"label": "Model agreement",
+						"type": "string"
+					},
+					{
+						"key": "declarationDocumentUri",
+						"label": "Statement document",
+						"type": "link"
+					},
+					{
+						"key": "riskAssessment",
+						"label": "Risk assessment",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"lifecycleActions": true,
+				"actions": [
+					{
+						"id": "generate-verklaring",
+						"label": "Generate document",
+						"icon": "FileDocumentEditOutline",
+						"visibleWhen": {
+							"field": "declarationStatus",
+							"in": ["concept"]
+						},
+						"type": "lifecycle-transition",
+						"transition": "overeenkomen",
+						"description": "Confirm the agreement and generate the client statement document via docudesk."
+					}
+				],
+				"indexRoute": "OpdrachtgeversVerklaringen",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "IB47Jaarbatch",
+			"route": "/bookkeeping/detachering-payroll/ib47",
+			"type": "index",
+			"title": "IB47 annual batch",			"config": {
+				"register": "shillinq",
+				"schema": "IB47Record",				"columns": [
+					{
+						"key": "taxYear",
+						"label": "Tax year",
+						"sortable": true
+					},
+					{
+						"key": "recipientName",
+						"label": "Recipient",
+						"sortable": true
+					},
+					{
+						"key": "paymentsTotal",
+						"label": "Total payments (EUR)",
+						"sortable": true
+					},
+					{
+						"key": "paymentTypeCode",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "isDryRun",
+						"label": "Dry run",
+						"sortable": true
+					}
+				],
+				"defaultSort": "-belastingjaar",
+				"detailRoute": "IB47RecordDetail"
+			}
+		},
+		{
+			"id": "IB47RecordDetail",
+			"route": "/bookkeeping/detachering-payroll/ib47/:id",
+			"type": "detail",
+			"title": "IB47 record",			"config": {
+				"register": "shillinq",
+				"schema": "IB47Record",				"_note": "IB47 TAX RECORD (a single third-party payment reported annually to the Belastingdienst — opgaaf van betalingen aan derden). The body is the reportable data: tax year, client, recipient (with encrypted BSN readable only to the payroll-officer role), address, total payments, type code and the dry-run flag/month used to validate before the real submission. A statutory record, not a correspondence, so no comms; the audit trail sidebar is the submission/dry-run history for a privacy-sensitive filing.",
+				"fields": [
+					{
+						"key": "taxYear",
+						"label": "Tax year",
+						"type": "integer"
+					},
+					{
+						"key": "clientId",
+						"label": "Client",
+						"type": "string"
+					},
+					{
+						"key": "recipientName",
+						"label": "Recipient name",
+						"type": "string"
+					},
+					{
+						"key": "ontvangerBSN",
+						"label": "BSN (encrypted)",
+						"type": "string",
+						"help": "Encrypted and only readable for the payroll-officer role."
+					},
+					{
+						"key": "ontvangerAdres",
+						"label": "Recipient address",
+						"type": "string"
+					},
+					{
+						"key": "paymentsTotal",
+						"label": "Total payments (EUR)",
+						"type": "number"
+					},
+					{
+						"key": "paymentTypeCode",
+						"label": "Payment type code",
+						"type": "string"
+					},
+					{
+						"key": "isDryRun",
+						"label": "Dry run",
+						"type": "boolean"
+					},
+					{
+						"key": "dryRunMonth",
+						"label": "Dry run month",
+						"type": "integer"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "IB47Jaarbatch",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}

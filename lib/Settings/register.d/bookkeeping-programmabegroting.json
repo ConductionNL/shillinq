@@ -1,0 +1,1294 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-programmabegroting",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 2 — BBV programmabegroting & meerjarenraming. Adds ten registers (Programmabegroting, Programma, Taakveld, Indicator, Investering, Reserve, Voorziening, Paragraaf, Meerjarenraming, Begrotingswijziging) that operationalise the complete Dutch municipal/provincial/waterschap begrotingsproces (opstellen → behandeling → vaststelling → wijzigingen → exports) per the Besluit begroting en verantwoording. The Programmabegroting carries a declarative x-openregister-lifecycle (draft → in-behandeling → vastgesteld → superseded) whose behandel- and vaststellings-transitions are gated by OCA\\Shillinq\\Lifecycle\\ProgrammabegrotingGuard (ADR-031 exception path: cross-schema paragraaf/meerjarenraming aggregation is not yet expressible in the declarative requires clause). The Begrotingswijziging carries a draft → vastgesteld lifecycle gated by OCA\\Shillinq\\Lifecycle\\BegrotingswijzigingGuard (raadsbesluit FK required). Computations (sluitend-criterium struktureel/reëel flags, toezichtRegime, Programma roll-up from child Taakvelden, Investering kapitaallastenschedule, Begrotingswijziging delta stacking, iv3/EMU/JSON exports) are pure integer-cent PHP calculators in OCA\\Shillinq\\Service, tested in isolation; the x-openregister-aggregations blocks document the equivalent declarative shape. Seed objects provide a worked gemeente example (Programmabegroting 2027 with two Programma's, their Taakvelden, paragrafen, meerjarenraming and one begrotingswijziging) per design.md."
+  },
+  "components": {
+    "schemas": {
+      "Programmabegroting": {
+        "slug": "Programmabegroting",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "Programmabegroting",
+        "description": "BBV master budget authorisation document adopted annually by the raad / staten / algemeen bestuur (REQ-001). Carries the begrotingsjaar, organisationType, the unified draft → in-behandeling → vastgesteld → superseded lifecycle, and the computed sluitendStructureel / sluitendReëel / toezichtRegime flags set on vaststelling.",
+        "x-schema-org": "schema:Plan",
+        "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
+        "type": "object",
+        "required": [
+          "version",
+          "organisationId",
+          "organisationType",
+          "budgetYear",
+          "meerjarenHorizon",
+          "status",
+          "structurallyBalanced",
+          "sluitendReëel",
+          "administrationId"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1,
+            "description": "Begroting version number (1 for initial vaststelling, incremented per major herziening). REQ-001.",
+            "title": "Version"
+          },
+          "organisationId": {
+            "type": "string",
+            "description": "FK to the gemeente / provincie / waterschap this begroting belongs to. REQ-001.",
+            "example": "gemeente-1",
+            "title": "Organisation ID"
+          },
+          "organisationType": {
+            "type": "string",
+            "enum": [
+              "municipality",
+              "province",
+              "waterAuthority"
+            ],
+            "description": "Organisation type determining the financieel toezichthouder. REQ-001.",
+            "example": "municipality",
+            "title": "Organisation Type"
+          },
+          "budgetYear": {
+            "type": "integer",
+            "minimum": 2000,
+            "description": "Fiscal year the begroting covers (e.g. 2027). REQ-001.",
+            "example": 2027,
+            "title": "Begrotingsjaar"
+          },
+          "meerjarenHorizon": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 4,
+            "description": "Number of meerjarenraming jaren T+1..T+N (default 4). REQ-001.",
+            "example": 4,
+            "title": "Meerjaren Horizon"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "in-behandeling",
+              "determined",
+              "superseded"
+            ],
+            "default": "draft",
+            "description": "Lifecycle status (REQ-011). Set by x-openregister-lifecycle.",
+            "example": "draft",
+            "title": "Status"
+          },
+          "determinationDecision": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the raadsbesluit / statenbesluit / AB-besluit for audit traceability (required before vastgesteld). REQ-001 / REQ-011.",
+            "example": "raadsbesluit-2026-114",
+            "title": "Vaststellings Besluit"
+          },
+          "determinationDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the raad adopted the begroting. REQ-001.",
+            "example": "2026-11-09",
+            "title": "Vaststellings Datum"
+          },
+          "structurallyBalanced": {
+            "type": "boolean",
+            "default": false,
+            "description": "Computed flag: recurring lasten ≤ recurring baten for all jaren T+1..T+4 (REQ-008 / REQ-011). Set by SluitendCalculator on vaststelling.",
+            "example": true,
+            "title": "Sluitend Structureel"
+          },
+          "sluitendReëel": {
+            "type": "boolean",
+            "default": false,
+            "description": "Computed flag: saldoReëel ≥ 0 (after nominale-ontwikkeling correction) for all jaren T+1..T+4 (REQ-008 / REQ-011). Set by SluitendCalculator on vaststelling.",
+            "example": true,
+            "title": "Sluitend Reëel"
+          },
+          "supervisionRegime": {
+            "type": "string",
+            "enum": [
+              "repressief",
+              "preventief",
+              "artikel-12"
+            ],
+            "nullable": true,
+            "description": "Computed supervision regime (REQ-011, design D5): repressief only when both sluitend-flags hold and the 4-year history shows no sustained tekort.",
+            "example": "repressief",
+            "title": "Toezicht Regime"
+          },
+          "nominalDevelopment": {
+            "type": "number",
+            "nullable": true,
+            "default": 2.0,
+            "description": "Loon- en prijsindexatie percentage used to correct reëel-sluitend (user-configured annually per administration; default 2% per IPO). REQ-001 / design D7.",
+            "example": 2.0,
+            "title": "Nominale Ontwikkeling"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads are scoped to the requesting user's administration (REQ-001).",
+            "example": "adm-gov-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "retention": {
+            "rule": "selectielijst:bbv-begroting",
+            "period": "P10Y",
+            "description": "Begrotingsstukken retained 10 years per Selectielijst Gemeenten 2020 (categorie begroting & verantwoording)."
+          },
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Begroting is being prepared; programma's, taakvelden, paragrafen and meerjarenraming are authored. The seven paragrafen are auto-created on first draft."
+            },
+            "in-behandeling": {
+              "label": "In behandeling",
+              "description": "Begroting submitted to the raad for behandeling; sluitend-criterium is being evaluated."
+            },
+            "determined": {
+              "label": "Vastgesteld",
+              "description": "Adopted by raadsbesluit. Immutable — mutaties only via vastgestelde Begrotingswijzigingen."
+            },
+            "superseded": {
+              "label": "Vervangen",
+              "description": "Superseded by a newer begroting for the same begrotingsjaar (audit trail retained)."
+            }
+          },
+          "transitions": {
+            "behandelen": {
+              "from": "draft",
+              "to": "in-behandeling",
+              "label": "In behandeling nemen",
+              "description": "Operator submits the draft to the raad; requires all seven paragrafen created and nominaleOntwikkeling set (REQ-007 / REQ-011 / design D7).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\ProgrammabegrotingGuard::canBehandelen"
+            },
+            "vaststellen": {
+              "from": "in-behandeling",
+              "to": "determined",
+              "label": "Vaststellen",
+              "description": "Raad adopts the begroting; requires every paragraaf narrative non-empty and the raadsbesluit FK set. On success SluitendCalculator computes the sluitend-flags and toezichtRegime (REQ-008 / REQ-011).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\ProgrammabegrotingGuard::canVaststellen"
+            },
+            "vervangen": {
+              "from": "determined",
+              "to": "superseded",
+              "label": "Vervangen",
+              "description": "A newer begroting for the same begrotingsjaar is adopted; the prior begroting is marked superseded (REQ-011)."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "sluitendByBegroting": {
+            "description": "Declarative shape of the sluitend-criterium SluitendCalculator computes (REQ-008, REQ-011). Walks the Meerjarenraming records for jaren T+1..T+4 of this begroting and sets sluitendStructureel = (every jaar has lastenStructureel ≤ batenStructureel) and sluitendReëel = (every jaar has saldoReëel ≥ 0 after nominaleOntwikkeling correction). When the aggregation engine cannot express the per-year all-quantifier with the cross-schema nominale correction, SluitendCalculator computes the same result in PHP from the real ObjectService API.",
+            "filter": {},
+            "from": "Meerjarenraming",
+            "groupBy": [
+              "budgetId"
+            ],
+            "metrics": [
+              {
+                "metric": "all",
+                "as": "sluitendStructureel"
+              },
+              {
+                "metric": "all",
+                "as": "sluitendReëel"
+              }
+            ]
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Programmabegroting is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "Programma": {
+        "slug": "Programma",
+        "icon": "ViewDashboardOutline",
+        "version": "0.1.0",
+        "title": "Programma",
+        "description": "Locally-chosen political budget structure (REQ-002). batenTotaal / lastenTotaal / saldoVoorMutaties / saldoNaMutaties are roll-up sums computed by ProgrammaAggregator from the child Taakvelden (no rounding drift, design D1).",
+        "x-schema-org": "schema:Plan",
+        "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
+        "type": "object",
+        "required": [
+          "budgetId",
+          "number",
+          "name",
+          "revenueTotal",
+          "expensesTotal",
+          "balanceBeforeMovements",
+          "balanceAfterMovements",
+          "administrationId"
+        ],
+        "properties": {
+          "budgetId": {
+            "type": "string",
+            "description": "FK to Programmabegroting. REQ-002.",
+            "example": "pb-gem-2027",
+            "title": "Begroting ID"
+          },
+          "number": {
+            "type": "string",
+            "description": "Sequential program number (e.g. \"1\", \"2\"). REQ-002.",
+            "example": "1",
+            "title": "Nummer"
+          },
+          "name": {
+            "type": "string",
+            "description": "Program name (e.g. \"Veiligheid & Handhaving\"). REQ-002.",
+            "example": "Veiligheid & Handhaving",
+            "title": "Naam"
+          },
+          "portfolioHolder": {
+            "type": "string",
+            "nullable": true,
+            "description": "Assigned wethouder / gedeputeerde responsible. REQ-002.",
+            "example": "Wethouder Veiligheid",
+            "title": "Portefeuillehouder"
+          },
+          "doelstellingen": {
+            "type": "string",
+            "nullable": true,
+            "description": "Rich-text narrative of program objectives and outcomes. REQ-002.",
+            "example": "Handhaving van openbare orde en veiligheid in de gemeente.",
+            "title": "Doelstellingen"
+          },
+          "revenueTotal": {
+            "type": "number",
+            "description": "Aggregated Σ(child Taakveld.baten) — computed by ProgrammaAggregator (REQ-002).",
+            "example": 250000.0,
+            "title": "Baten Totaal"
+          },
+          "expensesTotal": {
+            "type": "number",
+            "description": "Aggregated Σ(child Taakveld.lasten) — computed (REQ-002).",
+            "example": 2500000.0,
+            "title": "Lasten Totaal"
+          },
+          "balanceBeforeMovements": {
+            "type": "number",
+            "description": "batenTotaal - lastenTotaal — computed (REQ-002).",
+            "example": -2250000.0,
+            "title": "Saldo Voor Mutaties"
+          },
+          "movementsReserves": {
+            "type": "number",
+            "nullable": true,
+            "default": 0,
+            "description": "Reserve mutations (positive = toevoeging, negative = onttrekking). REQ-002.",
+            "example": 0.0,
+            "title": "Mutaties Reserves"
+          },
+          "balanceAfterMovements": {
+            "type": "number",
+            "description": "saldoVoorMutaties + mutatiesReserves — computed (REQ-002).",
+            "example": -2250000.0,
+            "title": "Saldo Na Mutaties"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration. REQ-002.",
+            "example": "adm-gov-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-aggregations": {
+          "programmaRollup": {
+            "description": "Declarative shape of the Programma roll-up ProgrammaAggregator computes (REQ-002, design D1). Sums child Taakveld.baten and Taakveld.lasten (in integer cents to avoid drift), derives saldoVoorMutaties = batenTotaal - lastenTotaal and saldoNaMutaties = saldoVoorMutaties + mutatiesReserves.",
+            "filter": {},
+            "operations": {
+              "revenueTotal": {
+                "field": "Taakveld.baten",
+                "operation": "sum",
+                "target": "revenueTotal"
+              },
+              "expensesTotal": {
+                "field": "Taakveld.lasten",
+                "operation": "sum",
+                "target": "expensesTotal"
+              },
+              "balanceBeforeMovements": {
+                "operation": "expression",
+                "expression": "batenTotaal - lastenTotaal",
+                "target": "balanceBeforeMovements"
+              },
+              "balanceAfterMovements": {
+                "operation": "expression",
+                "expression": "saldoVoorMutaties + mutatiesReserves",
+                "target": "balanceAfterMovements"
+              }
+            },
+            "from": "Taakveld",
+            "groupBy": [
+              "programmeId"
+            ]
+          }
+        }
+      },
+      "Taakveld": {
+        "slug": "Taakveld",
+        "icon": "TagOutline",
+        "version": "0.1.0",
+        "title": "Taakveld",
+        "description": "BBV-mandated field indeling (REQ-003). taakveldCode must match the BBVTaakveldCatalogus from bookkeeping-bbv-compliance; a taakveldCode must not span multiple programma's within one begroting (uniqueness on begrotingId + taakveldCode).",
+        "x-schema-org": "schema:DefinedTerm",
+        "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
+        "type": "object",
+        "required": [
+          "budgetId",
+          "programmeId",
+          "taskFieldCode",
+          "taskFieldName",
+          "revenue",
+          "expenses",
+          "administrationId"
+        ],
+        "properties": {
+          "budgetId": {
+            "type": "string",
+            "description": "FK to Programmabegroting (carried for the uniqueness constraint). REQ-003.",
+            "example": "pb-gem-2027",
+            "title": "Begroting ID"
+          },
+          "programmeId": {
+            "type": "string",
+            "description": "FK to Programma. REQ-003.",
+            "example": "prog-veiligheid",
+            "title": "Programma ID"
+          },
+          "taskFieldCode": {
+            "type": "string",
+            "description": "BBV taakveld code (e.g. \"6.71\" = Brandweer); must match the BBVTaakveldCatalogus. REQ-003.",
+            "example": "1.1",
+            "title": "Taakveld Code"
+          },
+          "taskFieldName": {
+            "type": "string",
+            "description": "Display name (looked up from catalogue; user-overrideable). REQ-003.",
+            "example": "Crisisbeheersing en brandweer",
+            "title": "Taakveld Naam"
+          },
+          "revenue": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Revenue/income for this taakveld. REQ-003.",
+            "example": 50000.0,
+            "title": "Baten"
+          },
+          "expenses": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Expenses/expenditure for this taakveld. REQ-003.",
+            "example": 450000.0,
+            "title": "Lasten"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration. REQ-003.",
+            "example": "adm-gov-1",
+            "title": "Administration ID"
+          }
+        }
+      },
+      "Indicator": {
+        "slug": "Indicator",
+        "icon": "ChartLineVariant",
+        "version": "0.1.0",
+        "title": "Beleidsindicator",
+        "description": "Beleidsindicatoren per programma per jaar with realisatie tracking (REQ-004, BBV Article 25).",
+        "x-schema-org": "schema:PropertyValue",
+        "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
+        "type": "object",
+        "required": [
+          "programmeId",
+          "code",
+          "description",
+          "unit",
+          "administrationId"
+        ],
+        "properties": {
+          "programmeId": {
+            "type": "string",
+            "description": "FK to Programma. REQ-004.",
+            "example": "prog-veiligheid",
+            "title": "Programma ID"
+          },
+          "code": {
+            "type": "string",
+            "description": "Indicator code (e.g. \"VEI-001\"). REQ-004.",
+            "example": "VEI-001",
+            "title": "Code"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of what the indicator measures. REQ-004.",
+            "example": "Aantal misdrijven per 1.000 inwoners",
+            "title": "Omschrijving"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit (e.g. \"aantal\", \"percentage\", \"euro\"). REQ-004.",
+            "example": "aantal",
+            "title": "Eenheid"
+          },
+          "baseValue": {
+            "type": "number",
+            "nullable": true,
+            "description": "Baseline value for comparison. REQ-004.",
+            "example": 52.0,
+            "title": "Nulwaarde"
+          },
+          "targetValue": {
+            "type": "number",
+            "nullable": true,
+            "description": "Target value. REQ-004.",
+            "example": 45.0,
+            "title": "Streefwaarde"
+          },
+          "actuals": {
+            "type": "number",
+            "nullable": true,
+            "description": "Actual achieved value (updated post-jaarrekening). REQ-004.",
+            "example": null,
+            "title": "Realisatie"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true,
+            "description": "Data source reference or dataset URL. REQ-004.",
+            "example": "https://www.cbs.nl/misdrijven-gemeente",
+            "title": "Bron"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration. REQ-004.",
+            "example": "adm-gov-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Beleidsindicator is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "Investering": {
+        "slug": "Investering",
+        "icon": "OfficeBuildingOutline",
+        "version": "0.1.0",
+        "title": "Investering",
+        "description": "Capital investment with dekking-type and afschrijvingstermijn (REQ-005). kapitaallastenSchedule is the per-year depreciation breakdown computed by KapitaallastenCalculator.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
+        "type": "object",
+        "required": [
+          "programmeId",
+          "description",
+          "gross",
+          "coverage",
+          "depreciationTerm",
+          "firstDepreciationYear",
+          "capitalChargesSchedule",
+          "administrationId"
+        ],
+        "properties": {
+          "programmeId": {
+            "type": "string",
+            "description": "FK to Programma. REQ-005.",
+            "example": "prog-veiligheid",
+            "title": "Programma ID"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the investment. REQ-005.",
+            "example": "Renovatie brandweerkazerne",
+            "title": "Omschrijving"
+          },
+          "gross": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Gross investment amount. REQ-005.",
+            "example": 400000.0,
+            "title": "Bruto"
+          },
+          "coverage": {
+            "type": "string",
+            "enum": [
+              "eigen-middelen",
+              "lening",
+              "bijdragen-derden",
+              "subsidy"
+            ],
+            "description": "Funding source. REQ-005.",
+            "example": "lening",
+            "title": "Dekking"
+          },
+          "depreciationTerm": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Depreciation period in years. REQ-005.",
+            "example": 20,
+            "title": "Afschrijvingstermijn"
+          },
+          "firstDepreciationYear": {
+            "type": "integer",
+            "description": "First year depreciation is recognised. REQ-005.",
+            "example": 2027,
+            "title": "Eerste Afschrijvingsjaar"
+          },
+          "capitalChargesSchedule": {
+            "type": "object",
+            "description": "Per-year depreciation/capital cost breakdown {year: amount} — computed by KapitaallastenCalculator (REQ-005).",
+            "example": {
+              "2027": 20000.0,
+              "2028": 20000.0
+            },
+            "title": "Kapitaallasten Schedule"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration. REQ-005.",
+            "example": "adm-gov-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Investering is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "Reserve": {
+        "slug": "Reserve",
+        "icon": "PiggyBankOutline",
+        "version": "0.1.0",
+        "title": "Reserve",
+        "description": "Reserve balance and mutations per BBV Article 44 (REQ-006). eindsaldo = beginsaldo + toevoegingen - onttrekkingen.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
+        "type": "object",
+        "required": [
+          "budgetId",
+          "type",
+          "name",
+          "openingBalance",
+          "closingBalance",
+          "administrationId"
+        ],
+        "properties": {
+          "budgetId": {
+            "type": "string",
+            "description": "FK to Programmabegroting. REQ-006.",
+            "example": "pb-gem-2027",
+            "title": "Begroting ID"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "algemene-reserve",
+              "bestemmingsreserve"
+            ],
+            "description": "Reserve type. REQ-006.",
+            "example": "algemene-reserve",
+            "title": "Type"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the reserve. REQ-006.",
+            "example": "Algemene reserve",
+            "title": "Naam"
+          },
+          "openingBalance": {
+            "type": "number",
+            "description": "Opening balance from prior year. REQ-006.",
+            "example": 50000.0,
+            "title": "Beginsaldo"
+          },
+          "toevoegingen": {
+            "type": "number",
+            "nullable": true,
+            "default": 0,
+            "description": "Additions in this year. REQ-006.",
+            "example": 10000.0,
+            "title": "Toevoegingen"
+          },
+          "onttrekkingen": {
+            "type": "number",
+            "nullable": true,
+            "default": 0,
+            "description": "Withdrawals in this year. REQ-006.",
+            "example": 5000.0,
+            "title": "Onttrekkingen"
+          },
+          "closingBalance": {
+            "type": "number",
+            "description": "Closing balance = beginsaldo + toevoegingen - onttrekkingen. REQ-006.",
+            "example": 55000.0,
+            "title": "Eindsaldo"
+          },
+          "designatedPurpose": {
+            "type": "string",
+            "nullable": true,
+            "description": "Purpose statement (required for bestemmingsreserve). REQ-006.",
+            "example": null,
+            "title": "Bestemmingsdoel"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration. REQ-006.",
+            "example": "adm-gov-1",
+            "title": "Administration ID"
+          }
+        }
+      },
+      "Voorziening": {
+        "slug": "Voorziening",
+        "icon": "ShieldHalfFull",
+        "version": "0.1.0",
+        "title": "Voorziening",
+        "description": "Provision balance and mutations per BBV Article 44 (REQ-006). eindsaldo = beginsaldo + dotaties - vrijval - aanwendingen.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
+        "type": "object",
+        "required": [
+          "budgetId",
+          "name",
+          "basis",
+          "openingBalance",
+          "closingBalance",
+          "administrationId"
+        ],
+        "properties": {
+          "budgetId": {
+            "type": "string",
+            "description": "FK to Programmabegroting. REQ-006.",
+            "example": "pb-gem-2027",
+            "title": "Begroting ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the provision. REQ-006.",
+            "example": "Voorziening onderhoud gebouwen",
+            "title": "Naam"
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "a",
+              "b",
+              "c",
+              "d"
+            ],
+            "description": "Legal basis per BBV Article 44 lid 1/2. REQ-006.",
+            "example": "c",
+            "title": "Grondslag"
+          },
+          "openingBalance": {
+            "type": "number",
+            "description": "Opening balance. REQ-006.",
+            "example": 80000.0,
+            "title": "Beginsaldo"
+          },
+          "additions": {
+            "type": "number",
+            "nullable": true,
+            "default": 0,
+            "description": "Additions in this year. REQ-006.",
+            "example": 20000.0,
+            "title": "Dotaties"
+          },
+          "release": {
+            "type": "number",
+            "nullable": true,
+            "default": 0,
+            "description": "Release when obligation ends. REQ-006.",
+            "example": 0.0,
+            "title": "Vrijval"
+          },
+          "utilisations": {
+            "type": "number",
+            "nullable": true,
+            "default": 0,
+            "description": "Usage of the provision. REQ-006.",
+            "example": 15000.0,
+            "title": "Aanwendingen"
+          },
+          "closingBalance": {
+            "type": "number",
+            "description": "Closing balance = beginsaldo + dotaties - vrijval - aanwendingen. REQ-006.",
+            "example": 85000.0,
+            "title": "Eindsaldo"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration. REQ-006.",
+            "example": "adm-gov-1",
+            "title": "Administration ID"
+          }
+        }
+      },
+      "Paragraaf": {
+        "slug": "Paragraaf",
+        "icon": "TextBoxOutline",
+        "version": "0.1.0",
+        "title": "Paragraaf",
+        "description": "One of the seven mandated BBV paragrafen with narrative and structured kerncijfers (REQ-007). All seven are auto-created on first Programmabegroting draft; narrative must be non-empty before vaststelling.",
+        "x-schema-org": "schema:Report",
+        "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
+        "type": "object",
+        "required": [
+          "budgetId",
+          "type",
+          "keyFigures",
+          "administrationId"
+        ],
+        "properties": {
+          "budgetId": {
+            "type": "string",
+            "description": "FK to Programmabegroting. REQ-007.",
+            "example": "pb-gem-2027",
+            "title": "Begroting ID"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "lokaleHeffingen",
+              "weerstandsvermogenRisicobeheersing",
+              "onderhoudKapitaalgoederen",
+              "financiering",
+              "bedrijfsvoering",
+              "verbondenPartijen",
+              "grondbeleid"
+            ],
+            "description": "Paragraaftype (one of the seven verplichte paragrafen). REQ-007.",
+            "example": "weerstandsvermogenRisicobeheersing",
+            "title": "Type"
+          },
+          "narrative": {
+            "type": "string",
+            "nullable": true,
+            "description": "Rich-text narrative content (required non-empty on vastgesteld). REQ-007.",
+            "example": "",
+            "title": "Narrative"
+          },
+          "keyFigures": {
+            "type": "object",
+            "description": "Structured key metrics; the field set depends on the paragraaftype (see spec REQ-007 sub-tables). REQ-007.",
+            "example": {},
+            "title": "Kerncijfers"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration. REQ-007.",
+            "example": "adm-gov-1",
+            "title": "Administration ID"
+          }
+        }
+      },
+      "Meerjarenraming": {
+        "slug": "Meerjarenraming",
+        "icon": "ChartTimelineVariant",
+        "version": "0.1.0",
+        "title": "Meerjarenraming",
+        "description": "4-year outlook with per-year sluitend-criteria (REQ-008). saldoStructureel / saldoIncidenteel / saldoReëel / sluitend are computed by SluitendCalculator; seeded from bookkeeping-budget-forecast.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
+        "type": "object",
+        "required": [
+          "budgetId",
+          "year",
+          "revenueStructural",
+          "expensesStructural",
+          "balanceStructural",
+          "saldoReëel",
+          "sluitend",
+          "administrationId"
+        ],
+        "properties": {
+          "budgetId": {
+            "type": "string",
+            "description": "FK to Programmabegroting. REQ-008.",
+            "example": "pb-gem-2027",
+            "title": "Begroting ID"
+          },
+          "year": {
+            "type": "integer",
+            "description": "Year within the meerjarenraming (T+1..T+4 relative to begrotingsjaar). REQ-008.",
+            "example": 2028,
+            "title": "Jaar"
+          },
+          "revenueStructural": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Recurring revenue/income for the year. REQ-008.",
+            "example": 1000000.0,
+            "title": "Baten Structureel"
+          },
+          "revenueIncidental": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "default": 0,
+            "description": "One-time/extraordinary revenue. REQ-008.",
+            "example": 0.0,
+            "title": "Baten Incidenteel"
+          },
+          "expensesStructural": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Recurring expenditure. REQ-008.",
+            "example": 900000.0,
+            "title": "Lasten Structureel"
+          },
+          "expensesIncidental": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "default": 0,
+            "description": "One-time/extraordinary expenditure. REQ-008.",
+            "example": 0.0,
+            "title": "Lasten Incidenteel"
+          },
+          "balanceStructural": {
+            "type": "number",
+            "description": "batenStructureel - lastenStructureel — computed (REQ-008).",
+            "example": 100000.0,
+            "title": "Saldo Structureel"
+          },
+          "balanceIncidental": {
+            "type": "number",
+            "nullable": true,
+            "description": "batenIncidenteel - lastenIncidenteel — computed (REQ-008).",
+            "example": 0.0,
+            "title": "Saldo Incidenteel"
+          },
+          "saldoReëel": {
+            "type": "number",
+            "description": "(saldoStructureel + saldoIncidenteel) corrected for nominaleOntwikkeling — computed (REQ-008).",
+            "example": 100000.0,
+            "title": "Saldo Reëel"
+          },
+          "sluitend": {
+            "type": "boolean",
+            "default": false,
+            "description": "Computed: true iff struktureel AND reëel balance hold for this year (REQ-008).",
+            "example": true,
+            "title": "Sluitend"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration. REQ-008.",
+            "example": "adm-gov-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Meerjarenraming is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "Begrotingswijziging": {
+        "slug": "Begrotingswijziging",
+        "icon": "FileDocumentEditOutline",
+        "version": "0.1.0",
+        "title": "Begrotingswijziging",
+        "description": "Event-sourced delta amendment to a vastgestelde begroting (REQ-009). Carries a draft → vastgesteld lifecycle gated by BegrotingswijzigingGuard (raadsbesluit FK required). The current stand = vastgestelde basis + Σ(vastgestelde wijzigingen), stacked by BegrotingswijzigingStacker.",
+        "x-schema-org": "schema:Action",
+        "x-spec": "openspec/changes/bookkeeping-programmabegroting/specs/bookkeeping-programmabegroting/spec.md",
+        "type": "object",
+        "required": [
+          "budgetId",
+          "changeNumber",
+          "description",
+          "movements",
+          "effectiveFrom",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "budgetId": {
+            "type": "string",
+            "description": "FK to a vastgestelde Programmabegroting. REQ-009.",
+            "example": "pb-gem-2027",
+            "title": "Begroting ID"
+          },
+          "changeNumber": {
+            "type": "string",
+            "description": "Sequential identifier (e.g. \"W-001\") per begroting. REQ-009.",
+            "example": "W-001",
+            "title": "Wijzigingsnummer"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the change. REQ-009.",
+            "example": "Extra middelen handhaving evenementen",
+            "title": "Omschrijving"
+          },
+          "movements": {
+            "type": "array",
+            "description": "Delta rows: per-programma per-taakveld {taakveldCode, baten_delta, lasten_delta}. REQ-009.",
+            "items": {
+              "type": "object"
+            },
+            "example": [
+              {
+                "taskFieldCode": "1.1",
+                "baten_delta": 50000.0,
+                "lasten_delta": -100000.0
+              }
+            ],
+            "title": "Mutaties"
+          },
+          "councilResolution": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to raadsbesluit (required before vastgesteld). REQ-009.",
+            "example": null,
+            "title": "Raadsbesluit"
+          },
+          "determinationDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the raad approved the wijziging. REQ-009.",
+            "example": null,
+            "title": "Vaststellings Datum"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Effective date of the change (may be retroactive). REQ-009.",
+            "example": "2027-03-01",
+            "title": "Effectief Vanaf"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "determined"
+            ],
+            "default": "draft",
+            "description": "Lifecycle status. REQ-009.",
+            "example": "draft",
+            "title": "Status"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration. REQ-009.",
+            "example": "adm-gov-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Wijziging is being prepared; mutaties have no effect on the begroting stand yet."
+            },
+            "determined": {
+              "label": "Vastgesteld",
+              "description": "Adopted by raadsbesluit; the mutaties now stack onto the begroting stand."
+            }
+          },
+          "transitions": {
+            "vaststellen": {
+              "from": "draft",
+              "to": "determined",
+              "label": "Vaststellen",
+              "description": "Raad approves the wijziging; requires the raadsbesluit FK set (REQ-009).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\BegrotingswijzigingGuard::canVaststellen"
+            }
+          }
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Programmabegroting",
+          "slug": "pb-gem-2027"
+        },
+        "version": 1,
+        "organisationId": "gemeente-voorbeeld",
+        "organisationType": "municipality",
+        "budgetYear": 2027,
+        "meerjarenHorizon": 4,
+        "status": "determined",
+        "determinationDecision": "raadsbesluit-2026-114",
+        "determinationDate": "2026-11-09",
+        "structurallyBalanced": true,
+        "sluitendReëel": true,
+        "supervisionRegime": "repressief",
+        "nominalDevelopment": 2.0,
+        "administrationId": "adm-gov-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Programma",
+          "slug": "prog-veiligheid"
+        },
+        "budgetId": "pb-gem-2027",
+        "financialYear": 2027,
+        "number": "1",
+        "name": "Veiligheid & Handhaving",
+        "portfolioHolder": "Wethouder Veiligheid",
+        "doelstellingen": "Handhaving van openbare orde en veiligheid in de gemeente.",
+        "revenueTotal": 80000.0,
+        "expensesTotal": 650000.0,
+        "balanceBeforeMovements": -570000.0,
+        "movementsReserves": 0.0,
+        "balanceAfterMovements": -570000.0,
+        "administrationId": "adm-gov-1",
+        "lifecycleState": "published"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Programma",
+          "slug": "prog-sociaal"
+        },
+        "budgetId": "pb-gem-2027",
+        "financialYear": 2027,
+        "number": "2",
+        "name": "Sociaal Domein",
+        "portfolioHolder": "Wethouder Zorg",
+        "doelstellingen": "Toegankelijke zorg en ondersteuning voor inwoners.",
+        "revenueTotal": 120000.0,
+        "expensesTotal": 1300000.0,
+        "balanceBeforeMovements": -1180000.0,
+        "movementsReserves": 0.0,
+        "balanceAfterMovements": -1180000.0,
+        "administrationId": "adm-gov-1",
+        "lifecycleState": "published"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Taakveld",
+          "slug": "tv-2027-1.1"
+        },
+        "budgetId": "pb-gem-2027",
+        "programmeId": "prog-veiligheid",
+        "taskFieldCode": "1.1",
+        "taskFieldName": "Crisisbeheersing en brandweer",
+        "revenue": 50000.0,
+        "expenses": 450000.0,
+        "administrationId": "adm-gov-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Taakveld",
+          "slug": "tv-2027-1.2"
+        },
+        "budgetId": "pb-gem-2027",
+        "programmeId": "prog-veiligheid",
+        "taskFieldCode": "1.2",
+        "taskFieldName": "Openbare orde en veiligheid",
+        "revenue": 30000.0,
+        "expenses": 200000.0,
+        "administrationId": "adm-gov-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Taakveld",
+          "slug": "tv-2027-6.1"
+        },
+        "budgetId": "pb-gem-2027",
+        "programmeId": "prog-sociaal",
+        "taskFieldCode": "6.1",
+        "taskFieldName": "Samenkracht en burgerparticipatie",
+        "revenue": 120000.0,
+        "expenses": 1300000.0,
+        "administrationId": "adm-gov-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Indicator",
+          "slug": "ind-vei-001"
+        },
+        "programmeId": "prog-veiligheid",
+        "code": "VEI-001",
+        "description": "Aantal misdrijven per 1.000 inwoners",
+        "unit": "aantal",
+        "baseValue": 52.0,
+        "targetValue": 45.0,
+        "actuals": null,
+        "source": "https://www.cbs.nl/misdrijven-gemeente",
+        "administrationId": "adm-gov-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Investering",
+          "slug": "inv-kazerne"
+        },
+        "programmeId": "prog-veiligheid",
+        "description": "Renovatie brandweerkazerne",
+        "gross": 400000.0,
+        "coverage": "lening",
+        "depreciationTerm": 20,
+        "firstDepreciationYear": 2027,
+        "capitalChargesSchedule": {
+          "2027": 20000.0,
+          "2028": 20000.0,
+          "2029": 20000.0,
+          "2030": 20000.0,
+          "2031": 20000.0,
+          "2032": 20000.0,
+          "2033": 20000.0,
+          "2034": 20000.0,
+          "2035": 20000.0,
+          "2036": 20000.0,
+          "2037": 20000.0,
+          "2038": 20000.0,
+          "2039": 20000.0,
+          "2040": 20000.0,
+          "2041": 20000.0,
+          "2042": 20000.0,
+          "2043": 20000.0,
+          "2044": 20000.0,
+          "2045": 20000.0,
+          "2046": 20000.0
+        },
+        "administrationId": "adm-gov-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Reserve",
+          "slug": "res-algemeen"
+        },
+        "budgetId": "pb-gem-2027",
+        "type": "algemene-reserve",
+        "name": "Algemene reserve",
+        "openingBalance": 50000.0,
+        "toevoegingen": 10000.0,
+        "onttrekkingen": 5000.0,
+        "closingBalance": 55000.0,
+        "designatedPurpose": null,
+        "administrationId": "adm-gov-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Voorziening",
+          "slug": "vz-onderhoud"
+        },
+        "budgetId": "pb-gem-2027",
+        "name": "Voorziening onderhoud gebouwen",
+        "basis": "c",
+        "openingBalance": 80000.0,
+        "additions": 20000.0,
+        "release": 0.0,
+        "utilisations": 15000.0,
+        "closingBalance": 85000.0,
+        "administrationId": "adm-gov-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Paragraaf",
+          "slug": "par-2027-lokaleHeffingen"
+        },
+        "budgetId": "pb-gem-2027",
+        "financialYear": 2027,
+        "type": "lokaleHeffingen",
+        "narrative": "De lokale heffingen bestaan uit de OZB, afvalstoffenheffing en rioolheffing. De tarieven stijgen met de nominale ontwikkeling van 2%.",
+        "keyFigures": {
+          "totaalOpbrengsten": 3500000.0,
+          "percentageTotaleInkomsten": 18.0
+        },
+        "administrationId": "adm-gov-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Paragraaf",
+          "slug": "par-2027-weerstandsvermogen"
+        },
+        "budgetId": "pb-gem-2027",
+        "financialYear": 2027,
+        "type": "weerstandsvermogenRisicobeheersing",
+        "narrative": "Het weerstandsvermogen is toereikend: de weerstandsverhouding bedraagt 1,4 (ruim voldoende per IPO-kader).",
+        "keyFigures": {
+          "weerstandsverhouding": 1.4,
+          "algemeneReserve": 55000.0
+        },
+        "administrationId": "adm-gov-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Meerjarenraming",
+          "slug": "mjr-2027-2028"
+        },
+        "budgetId": "pb-gem-2027",
+        "year": 2028,
+        "revenueStructural": 1000000.0,
+        "revenueIncidental": 0.0,
+        "expensesStructural": 900000.0,
+        "expensesIncidental": 0.0,
+        "balanceStructural": 100000.0,
+        "balanceIncidental": 0.0,
+        "saldoReëel": 80000.0,
+        "sluitend": true,
+        "administrationId": "adm-gov-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Meerjarenraming",
+          "slug": "mjr-2027-2029"
+        },
+        "budgetId": "pb-gem-2027",
+        "year": 2029,
+        "revenueStructural": 1020000.0,
+        "revenueIncidental": 0.0,
+        "expensesStructural": 950000.0,
+        "expensesIncidental": 0.0,
+        "balanceStructural": 70000.0,
+        "balanceIncidental": 0.0,
+        "saldoReëel": 49600.0,
+        "sluitend": true,
+        "administrationId": "adm-gov-1"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Begrotingswijziging",
+          "slug": "bw-2027-w001"
+        },
+        "budgetId": "pb-gem-2027",
+        "changeNumber": "W-001",
+        "description": "Extra middelen handhaving evenementen",
+        "movements": [
+          {
+            "taskFieldCode": "1.2",
+            "baten_delta": 0.0,
+            "lasten_delta": 25000.0
+          }
+        ],
+        "councilResolution": "raadsbesluit-2027-031",
+        "determinationDate": "2027-03-15",
+        "effectiveFrom": "2027-04-01",
+        "status": "determined",
+        "administrationId": "adm-gov-1"
+      }
+    ]
+  }
+}

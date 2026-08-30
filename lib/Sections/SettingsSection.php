@@ -1,20 +1,24 @@
 <?php
 
 /**
- * Shillinq Settings Section
+ * Shillinq Admin Settings Section.
  *
- * Defines the Shillinq section in the Nextcloud admin settings.
+ * Registers the Shillinq section in the Nextcloud admin settings, referenced by
+ * appinfo/info.xml's <admin-section>. Hosts the AdminSettings form.
  *
- * @category Sections
+ * @category Settings
  * @package  OCA\Shillinq\Sections
  *
- * @author    Conduction Development Team <dev@conductio.nl>
- * @copyright 2024 Conduction B.V.
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  *
  * @version GIT: <git-id>
  *
- * @link https://conduction.nl
+ * @link https://shillinq.nl
  */
 
 declare(strict_types=1);
@@ -28,59 +32,52 @@ use OCP\Settings\IIconSection;
 /**
  * Defines the Shillinq section in the Nextcloud admin settings.
  */
-class SettingsSection implements IIconSection
-{
-    /**
-     * Constructor for SettingsSection.
-     *
-     * @param IL10N         $l            The localization service
-     * @param IURLGenerator $urlGenerator The URL generator service
-     *
-     * @return void
-     */
-    public function __construct(
-        private IL10N $l,
-        private IURLGenerator $urlGenerator,
-    ) {
-    }//end __construct()
+class SettingsSection implements IIconSection {
+	/**
+	 * Constructor for SettingsSection.
+	 *
+	 * @param IL10N $l The localization service.
+	 * @param IURLGenerator $urlGenerator The URL generator service.
+	 */
+	public function __construct(
+		private IL10N $l,
+		private IURLGenerator $urlGenerator,
+	) {
+	}//end __construct()
 
-    /**
-     * Get the section identifier.
-     *
-     * @return string
-     */
-    public function getID(): string
-    {
-        return 'shillinq';
-    }//end getID()
+	/**
+	 * Get the section identifier.
+	 *
+	 * @return string
+	 */
+	public function getID(): string {
+		return 'shillinq';
+	}//end getID()
 
-    /**
-     * Get the display name of this section.
-     *
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->l->t('Shillinq');
-    }//end getName()
+	/**
+	 * Get the display name of this section.
+	 *
+	 * @return string
+	 */
+	public function getName(): string {
+		return $this->l->t('Shillinq');
+	}//end getName()
 
-    /**
-     * Get the priority for ordering this section.
-     *
-     * @return int
-     */
-    public function getPriority(): int
-    {
-        return 75;
-    }//end getPriority()
+	/**
+	 * Get the priority for ordering this section.
+	 *
+	 * @return int
+	 */
+	public function getPriority(): int {
+		return 75;
+	}//end getPriority()
 
-    /**
-     * Get the icon path for this section.
-     *
-     * @return string
-     */
-    public function getIcon(): string
-    {
-        return $this->urlGenerator->imagePath(appName: 'shillinq', file: 'app-dark.svg');
-    }//end getIcon()
+	/**
+	 * Get the section icon path.
+	 *
+	 * @return string
+	 */
+	public function getIcon(): string {
+		return $this->urlGenerator->imagePath(appName: 'shillinq', file: 'app-dark.svg');
+	}//end getIcon()
 }//end class

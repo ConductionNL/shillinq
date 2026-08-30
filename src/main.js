@@ -1,40 +1,87 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 
-import Vue from 'vue'
-import VueRouter from 'vue-router'
-import { PiniaVuePlugin } from 'pinia'
-import { translate as t, translatePlural as n, loadTranslations } from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
 import {
+	buildManifest,
 	CnPageRenderer,
 	defaultPageTypes,
+	installIntegrationRegistry,
+	registerBuiltinDashboardWidgets,
+	registerBuiltinIntegrations,
 	registerIcons,
+	registerLeafIntegrations,
 	registerTranslations,
 } from '@conduction/nextcloud-vue'
-import pinia from './pinia.js'
+import {
+	loadTranslations,
+	translatePlural as n,
+	translate as t,
+} from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import { createApp, h, reactive } from 'vue'
+import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
+import appIcons from './icons.js'
+import manifestShell from './manifest.d.shell.json'
 import bundledManifest from './manifest.json'
+import menuLayout from './menu-layout.json'
+import pinia from './pinia.js'
 import registry from './registry.js'
+import {
+	buildPageFragmentIndex,
+	mergeFullFragmentIntoManifest,
+} from './utils/mergeFragmentIntoManifest.js'
 
+// Must stay first: sets __webpack_public_path__ / __webpack_nonce__ before any
+// other module evaluates — see src/setPublicPath.js.
+import './setPublicPath.js'
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
-
+// gridstack v12 is a required peerDependency of @conduction/nextcloud-vue and
+// backs every `type: "dashboard"` page (12 of them here). Its CSS sizes items
+// with `width: var(--gs-column-width)`; without the stylesheet every widget
+// renders 0 px wide with NO console error.
+import 'gridstack/dist/gridstack.min.css'
 // Global (unscoped) app styles
 import './assets/app.css'
 
-Vue.mixin({ methods: { t, n } })
-Vue.use(PiniaVuePlugin)
-Vue.use(VueRouter)
+// Populate the shared `window.OCA.OpenRegister.integrations` registry from
+// shillinq's OWN bundle. OpenRegister's main.js calls the same three
+// functions at ITS bootstrap, but Nextcloud only loads an app's JS bundle
+// when a route under that app is active — so on /apps/shillinq routes
+// OpenRegister's bootstrap never runs and the registry stays empty unless a
+// consuming app populates it itself (mirrors decidesk / pipelinq). This is
+// what surfaces the `flow` (NC Flow) and `talk` (NC Talk) — plus every other
+// leaf — sidebar tab and widget on shillinq's object detail pages; per
+// CnObjectSidebar's `useRegistry` default, no per-page manifest change is
+// needed for pages that don't already declare a bespoke `sidebarProps.tabs`.
+installIntegrationRegistry()
+registerBuiltinIntegrations()
+registerLeafIntegrations()
 
-// Register library-side icon set + lib translations once at bootstrap.
-registerIcons()
+// Register the app's MDI icon set + lib translations once at bootstrap.
+// registerIcons() merges the given map into the lib's ICON_MAP registry;
+// calling it without arguments registers nothing, which left every
+// MDI-named menu icon rendering blank.
+registerIcons(appIcons)
+
+// Register the library's built-in dashboard widgets. nc-vue declares
+// `sideEffects: ["**/*.css"]`, so webpack is free to drop the bare
+// registration imports for the `stat` and `object-table` widgets — they then
+// render "Widget not available" at runtime while the build stays clean.
+// `chart` survives because it registers inline; that asymmetry is the tell.
+// Shillinq's 12 dashboard pages use stat (6), object-table (2) and chart (4).
+registerBuiltinDashboardWidgets()
+
 try {
 	registerTranslations()
 } catch (e) {
 	// Non-fatal — lib translations fall back to English source.
 	// eslint-disable-next-line no-console
-	console.warn('[shillinq] registerTranslations failed; falling back to English', e)
+	console.warn(
+		'[shillinq] registerTranslations failed; falling back to English',
+		e,
+	)
 }
 
 // Fire-and-forget translation load. Some Nextcloud installs (including
@@ -45,11 +92,17 @@ try {
 // callback meant boot silently failed when translations couldn't load.
 // Strings just fall back to their English source on miss; boot MUST NOT
 // depend on this resolving.
+/**
+ *
+ */
 function tryLoadTranslations() {
 	try {
 		const result = loadTranslations('shillinq', () => {})
 		if (result && typeof result.then === 'function') {
-			result.then(() => {}, () => {})
+			result.then(
+				() => {},
+				() => {},
+			)
 		}
 	} catch {
 		// no-op
@@ -57,49 +110,98 @@ function tryLoadTranslations() {
 }
 
 // Shallow-clone CnPageRenderer because the lib's barrel exports are
-// non-extensible (webpack ESM module records). Vue 2's `Vue.extend()`
-// adds an internal `_Ctor` cache to the component definition; mutating a
-// non-extensible export throws "Cannot add property _Ctor, object is not
-// extensible". Cloning gives Vue Router an extensible component-options
-// object without altering the lib's internals.
+// non-extensible (webpack ESM module records) and Vue caches resolved
+// component metadata on the definition object it is handed. Cloning gives
+// vue-router an extensible component-options object without altering the
+// lib's internals.
 const RoutePageRenderer = { ...CnPageRenderer }
 
-/**
- * ADR-037: merge modular manifest fragments from src/manifest.d/*.json onto the
- * bundled base manifest. Each OpenSpec change drops its own fragment (pages/menu)
- * instead of editing the monolith src/manifest.json, so concurrent builds touch
- * disjoint files. `pages` and `menu` arrays are concatenated.
- *
- * @param {object} base The bundled base manifest.
- * @return {object} The manifest with all fragment pages/menu appended.
- */
-function mergeManifestFragments(base) {
-	const merged = { ...base, pages: [...(base.pages || [])], menu: [...(base.menu || [])] }
-	// require.context is resolved at build time; src/manifest.d/ must exist (it
-	// ships with a .gitkeep). It is a no-op when the directory holds no fragments.
-	const ctx = require.context('./manifest.d/', false, /\.json$/)
-	ctx.keys().sort().forEach((key) => {
-		const frag = ctx(key)
-		if (Array.isArray(frag.pages)) {
-			merged.pages.push(...frag.pages)
-		}
-		if (Array.isArray(frag.menu)) {
-			merged.menu.push(...frag.menu)
-		}
-	})
-	return merged
-}
+// shillinq-manifest-boot-payload-reduction REQ-MBP-001: `manifest.d.shell.json`
+// (generated by scripts/generate-manifest-shell.js, wired as a `pre*` npm
+// hook — see package.json) is a SLIM projection of every `manifest.d/*.json`
+// fragment: just enough (`id`/`route`/`type`/`title` + the full `menu` tree)
+// to register every route and render the sidebar navigation correctly at
+// boot, WITHOUT bundling each fragment's `config` (columns/widgets/forms/
+// actions — ~85% of a fragment's bytes) into the `main` webpack chunk. A
+// fragment's full page data is fetched lazily, once, the first time the
+// router navigates into one of its pages — see the `router.beforeEach` guard
+// below. `mergedManifest` is wrapped in `reactive()` so that the later
+// in-place merge (mergeFullFragmentIntoManifest) is picked up by
+// CnPageRenderer's reactive `resolvedProps` computed (it reads
+// `currentPage.config`; Vue 3's Proxy tracks the brand-new key too — see
+// src/utils/mergeFragmentIntoManifest.js for the full contract).
+const mergedManifest = reactive(
+	buildManifest(bundledManifest, manifestShell.fragments, menuLayout),
+)
 
-const mergedManifest = mergeManifestFragments(bundledManifest)
+// pageId → fragment filename stem, built once from the shell-derived slim
+// pages (each carries `_fragment`; base-manifest pages carry none and are
+// therefore never lazy-loaded — they already ship with full `config`).
+const pageFragmentIndex = buildPageFragmentIndex(mergedManifest.pages)
+
+// webpack code-splits each matched file into its OWN chunk in `lazy` mode —
+// `fragmentCtx(key)` returns a Promise instead of eagerly bundling every
+// fragment's full content into `main` (contrast the shell generator above,
+// which reads the SAME directory at build time via plain `fs`, not webpack).
+// `require.context` is a WEBPACK build-time API, not CommonJS `require`: the
+// bundler rewrites this call at compile time and no `require` exists at
+// runtime. eslint's browser globals therefore report `no-undef` correctly —
+// the code is right and the linter is right. Scoped to this one identifier so
+// a genuinely undefined name elsewhere in the file still fails.
+/* global require */
+const lazyFragmentCtx = require.context('./manifest.d/', false, /\.json$/, 'lazy')
+const loadedFragments = new Set()
+
+/**
+ * Dynamically import one fragment's full JSON (if not already loaded) and
+ * merge its pages into `mergedManifest` in place. Idempotent — repeat calls
+ * for an already-loaded fragment resolve immediately without re-fetching.
+ * Network/parse failures are logged and swallowed: per the proposal's
+ * BREAKING caveat, a fragment load hiccup must be masked, not surfaced as a
+ * hard navigation error — the route still resolves, just with the slim page
+ * data (title/type) until the next successful load.
+ *
+ * @param {string} fragmentStem The fragment's filename stem (no extension).
+ * @return {Promise<void>} Resolves once the fragment is loaded and merged (or the failure is logged).
+ */
+async function loadFragment(fragmentStem) {
+	if (loadedFragments.has(fragmentStem)) {
+		return
+	}
+
+	try {
+		const imported = await lazyFragmentCtx('./' + fragmentStem + '.json')
+		// webpack's async `import()` interop for a CommonJS/JSON module can
+		// resolve to either the plain object or an ES module namespace
+		// wrapping it in `.default`, depending on loader/mode configuration.
+		// Unwrap defensively rather than assume one shape.
+		const fullFragment =
+			imported && typeof imported === 'object' && Array.isArray(imported.pages)
+				? imported
+				: imported?.default
+		mergeFullFragmentIntoManifest(mergedManifest, fullFragment)
+		loadedFragments.add(fragmentStem)
+	} catch (e) {
+		// eslint-disable-next-line no-console
+		console.warn(
+			`[shillinq] failed to lazy-load manifest fragment "${fragmentStem}"; navigating with slim page data.`,
+			e,
+		)
+	}
+}
 
 /**
  * Build the vue-router config from the manifest. Each manifest page becomes
  * one route; the route's `name` IS `page.id` (per the lib's manifest contract).
  * Routes whose path declares a `:` parameter receive `props: true` so the
- * underlying detail/custom component receives the route param.
+ * underlying detail/custom component receives the route param. Built from the
+ * shell-merged manifest, so EVERY route (including pages whose fragment has
+ * not been lazy-loaded yet) is registered upfront — deep links and
+ * `<router-link>` navigation always resolve; only the page's `config` is
+ * deferred, never its reachability.
  *
  * @param {object} manifest The bundled manifest (with `pages[]`).
- * @return {Array<object>} vue-router 3 routes config.
+ * @return {Array<object>} vue-router 4 routes config.
  */
 function routesFromManifest(manifest) {
 	const routes = manifest.pages.map((page) => ({
@@ -109,35 +211,79 @@ function routesFromManifest(manifest) {
 		props: page.route.includes(':'),
 	}))
 	// Catch-all redirect to the dashboard, preserving prior router behaviour.
-	routes.push({ path: '*', redirect: '/' })
+	// vue-router 4 REMOVED the bare `*` wildcard — it no longer matches
+	// anything and no longer warns, so an unknown path would render the shell
+	// with an empty <main> and no error. The named param-matcher below is the
+	// v4 spelling of the same catch-all.
+	routes.push({ path: '/:pathMatch(.*)*', redirect: '/' })
 	return routes
 }
 
-const router = new VueRouter({
-	mode: 'history',
-	base: generateUrl('/apps/shillinq'),
+const router = createRouter({
+	history: createWebHistory(generateUrl('/apps/shillinq')),
 	routes: routesFromManifest(mergedManifest),
+})
+
+// Lazy-load the target route's owning fragment (if any) BEFORE completing
+// navigation. vue-router holds the CURRENT view mounted until `next()` is
+// called, so this naturally masks the round-trip — no bespoke loading-state
+// component is needed for the common case (webpack chunk fetch is fast; a
+// slow/failed fetch still resolves via the catch in loadFragment, so
+// navigation is never blocked indefinitely).
+router.beforeEach((to, from, next) => {
+	const fragmentStem = pageFragmentIndex.get(to.name)
+	if (!fragmentStem || loadedFragments.has(fragmentStem)) {
+		next()
+		return
+	}
+
+	loadFragment(fragmentStem).then(() => next())
 })
 
 tryLoadTranslations()
 
 // Pass shallow copies of the registry maps to CnAppRoot. The lib exports
 // `defaultPageTypes` and `registry` as frozen module objects in some bundle
-// shapes — Vue 2's `Vue.extend()` mutates component definitions to attach an
-// internal `_Ctor` cache, which throws "Cannot add property _Ctor, object is
-// not extensible" against a frozen source map. Cloning yields extensible
-// objects without changing the resolved values.
+// shapes, and Vue caches resolved component metadata on the object it is
+// handed — which throws against a frozen source map. Cloning yields
+// extensible objects without changing the resolved values.
 const pageTypesProp = { ...defaultPageTypes }
 const registryProp = { ...registry }
 
-new Vue({
-	pinia,
-	router,
-	render: (h) => h(App, {
-		props: {
+// Flat `{ name: component }` map of every registry component, derived from
+// the kind-tagged `registry`. The published `@conduction/nextcloud-vue` beta
+// resolves a page's `component` / `headerComponent` / `actionsComponent` and a
+// dashboard widget's custom `widgetKey` against the `customComponents` prop,
+// NOT the kind-tagged `registry`. Without this map every custom page (the
+// bookings calendar, the confirmation portal, the WBSO views, …) renders an
+// empty `cn-page` shell AND custom action/widget components (e.g. the Dashboard
+// `actionsComponent: FinancialDashboardActions`) silently disappear. Flatten
+// ALL kinds (page + widget + …) so every name a manifest can reference resolves.
+// Mirrors the procest / docudesk / opencatalogi wiring.
+const customComponentsProp = Object.fromEntries(
+	Object.entries(registry)
+		.filter(([, entry]) => entry && entry.component)
+		.map(([name, entry]) => [name, entry.component]),
+)
+
+// Vue 3 `mount()` renders INSIDE the matched element; Vue 2's `$mount()`
+// REPLACED it. The old host was `#content`, which is ALSO the id of
+// Nextcloud's own `layout.user.php` wrapper — under Vue 2 the app replaced
+// core's outer div so the duplication never showed. The host element is
+// renamed to `#shillinq-app` (templates/index.php) rather than reasoning
+// about which of the two divs wins.
+const app = createApp({
+	render: () =>
+		h(App, {
 			manifest: mergedManifest,
 			pageTypes: pageTypesProp,
 			registry: registryProp,
-		},
-	}),
-}).$mount('#content')
+			customComponents: customComponentsProp,
+		}),
+})
+
+// Vue 3 has no global `Vue.mixin` / `Vue.use` — everything is per-app.
+app.mixin({ methods: { t, n } })
+app.use(pinia)
+app.use(router)
+app.mount('#shillinq-app')

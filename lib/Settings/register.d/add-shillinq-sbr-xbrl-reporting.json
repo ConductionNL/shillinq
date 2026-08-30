@@ -1,0 +1,315 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "add-shillinq-sbr-xbrl-reporting",
+    "spec": "openspec/changes/add-shillinq-sbr-xbrl-reporting/specs/bookkeeping-sbr-xbrl-reporting/spec.md",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json; ADR-031 declarative-first (lifecycle on the schema, no XbrlReportService); ADR-022 cross-system integration via openconnector (Digipoort by source slug, no embedded SOAP/WS-Security client)",
+    "description": "Tier-4 umbrella SBR/XBRL annual reporting capability for Shillinq (REQ-SBR-001..REQ-SBR-007). Declares a single XbrlInstance schema with a declarative draft → validated → submitted → accepted/rejected lifecycle (x-openregister-lifecycle, ADR-031); the schema is the transformation-result store for the FinancialStatement (T3) → NL-taxonomie XBRL mapping. The five canonical SBR entry points (kvk-jaarrekening, belastingdienst-vpb, belastingdienst-ib, sbr-banken-kredietrapportage, sbr-wonen) are enumerated on entryPoint per REQ-SBR-005. Digipoort submission is consumed from openconnector by source slug `digipoort-prod` (REQ-SBR-004); no Digipoort HTTP client, no WS-Security certificate handling, no SBR SOAP code ships in shillinq. The line → NL-taxonomie concept mapping consumes the OpenRegister Mapping abstraction (REQ-SBR-006); mapping seed templates ship under lib/Settings/seeds/sbr-mappings/ per entry point + taxonomy version and are imported idempotently by the OCA\\Shillinq\\Repair\\InitializeSettings repair step. Sibling T3 changes (bookkeeping-vpb-mkb, bookkeeping-bcf-vat-compensation, bookkeeping-emu-reporting, bookkeeping-icp-opgaaf, bookkeeping-ib-aangifte-zzp) already declare entry-point-specific submission lifecycles; the XbrlInstance umbrella stores the canonicalised XBRL payload + Digipoort receipt + tamper-evidence hash for those flows.",
+    "imported": "2026-06-09T00:00:00Z"
+  },
+  "components": {
+    "schemas": {
+      "XbrlInstance": {
+        "slug": "XbrlInstance",
+        "icon": "FileXmlBox",
+        "version": "0.1.0",
+        "title": "XBRL Instance",
+        "description": "An NL-taxonomie XBRL instance document derived from a posted T3 FinancialStatement (REQ-SBR-001/002). One record per filing event per administration + reporting period + entry point. Carries the canonicalised XML payload, its SHA-256 tamper-evidence hash, the resolved Mapping FK (REQ-SBR-006), the Digipoort acknowledgement receipt id when submitted (REQ-SBR-004), and the declarative draft → validated → submitted → accepted/rejected lifecycle (REQ-SBR-003 / ADR-031). No re-aggregation of ledger lines; the instance is a pure transformation on top of FinancialStatement (D1 in design.md).",
+        "x-schema-org": "schema:Report",
+        "x-spec": "openspec/changes/add-shillinq-sbr-xbrl-reporting/specs/bookkeeping-sbr-xbrl-reporting/spec.md",
+        "type": "object",
+        "x-openregister-unique": [
+          [
+            "administrationId",
+            "entryPoint",
+            "reportingPeriodEnd",
+            "instanceNumber"
+          ]
+        ],
+        "required": [
+          "administrationId",
+          "instanceNumber",
+          "entryPoint",
+          "taxonomyVersion",
+          "reportingPeriodStart",
+          "reportingPeriodEnd",
+          "sourceStatementId",
+          "mappingId",
+          "instanceXml",
+          "instanceHash",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration (tenant) owning this filing. IDOR scope key.",
+            "example": "adm-001",
+            "title": "Administration ID"
+          },
+          "instanceNumber": {
+            "type": "string",
+            "description": "Sequential reference unique per administration + entry point + reporting period (REQ-SBR-002).",
+            "example": "KVK-2026-0001",
+            "title": "Instance Number"
+          },
+          "entryPoint": {
+            "type": "string",
+            "enum": [
+              "kvk-jaarrekening",
+              "belastingdienst-vpb",
+              "belastingdienst-ib",
+              "sbr-banken-kredietrapportage",
+              "sbr-wonen"
+            ],
+            "description": "Canonical SBR entry point (REQ-SBR-005). Each pins a Logius-published NL-taxonomie version.",
+            "example": "kvk-jaarrekening",
+            "title": "Entry Point"
+          },
+          "taxonomyVersion": {
+            "type": "string",
+            "description": "NL-taxonomie version pinned at generation (REQ-SBR-002, REQ-SBR-006). Stored on the instance so historical filings remain reproducible when a new taxonomy ships.",
+            "example": "nt18",
+            "title": "Taxonomy Version"
+          },
+          "reportingPeriodStart": {
+            "type": "string",
+            "format": "date",
+            "description": "Start of the reporting period covered by this filing (REQ-SBR-002).",
+            "example": "2026-01-01",
+            "title": "Reporting Period Start"
+          },
+          "reportingPeriodEnd": {
+            "type": "string",
+            "format": "date",
+            "description": "End of the reporting period covered by this filing (REQ-SBR-002).",
+            "example": "2026-12-31",
+            "title": "Reporting Period End"
+          },
+          "sourceStatementId": {
+            "type": "string",
+            "description": "FK to the posted FinancialStatement (T3) record this XBRL instance derives from (REQ-SBR-001/002).",
+            "example": "fin-stmt-adm-001-2026",
+            "title": "Source Statement ID"
+          },
+          "mappingId": {
+            "type": "string",
+            "description": "FK to the OR Mapping record that resolves each FinancialStatement line to its NL-taxonomie concept (REQ-SBR-006).",
+            "example": "map-kvk-jaarrekening-nt18",
+            "title": "Mapping ID"
+          },
+          "instanceXml": {
+            "type": "string",
+            "description": "Canonicalised XBRL instance document, stored as a UTF-8 string. Validates against the published NL-taxonomie schema for the entry point + reporting period (REQ-SBR-001/003).",
+            "example": "<xbrl xmlns=\"http://www.xbrl.org/2003/instance\">...</xbrl>",
+            "title": "Instance XML"
+          },
+          "instanceHash": {
+            "type": "string",
+            "description": "SHA-256 of the canonicalised XML for tamper-evidence (REQ-SBR-002, REQ-SBR-006 — historical instances stay verifiable after mapping evolution).",
+            "example": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+            "title": "Instance Hash"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "validated",
+              "submitted",
+              "accepted",
+              "rejected"
+            ],
+            "default": "draft",
+            "description": "Lifecycle state (REQ-SBR-003). Transitions are declared in x-openregister-lifecycle below; no PHP XbrlReportService authors transitions (ADR-031).",
+            "title": "State"
+          },
+          "digipoortReceiptId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Receipt id returned by Digipoort on submission acknowledgement (REQ-SBR-002, REQ-SBR-004). Required for the accepted state.",
+            "example": "DGP-2026-Q4-9F2A1",
+            "title": "Digipoort Receipt ID"
+          },
+          "digipoortSourceSlug": {
+            "type": "string",
+            "nullable": true,
+            "default": "digipoort-prod",
+            "description": "Slug of the openconnector Source record that fronts the Digipoort gateway for this filing (REQ-SBR-004). No HTTP/SOAP code in shillinq — the source carries the WS-Security stack.",
+            "example": "digipoort-prod",
+            "title": "Digipoort Source Slug"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp the submit transition succeeded (REQ-SBR-003).",
+            "title": "Submitted At"
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp Digipoort acknowledged with status=accepted (REQ-SBR-003).",
+            "title": "Accepted At"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Digipoort rejection text recorded when the submission moves to rejected (REQ-SBR-003).",
+            "title": "Rejection Reason"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "retention": {
+            "rule": "selectielijst:5.1.4",
+            "period": "P10Y",
+            "description": "SBR/XBRL filings retained 10 years per Archiefwet 1995 + fiscal bewaarplicht (Wet OB / Wet Vpb)."
+          },
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Operator-editable draft; the XBRL XML has been generated from the FinancialStatement + Mapping but not yet schema-validated (REQ-SBR-003)."
+            },
+            "validated": {
+              "label": "Gevalideerd",
+              "description": "XML validated against the published NL-taxonomie schema for the entry point + reporting period (REQ-SBR-003 guard)."
+            },
+            "submitted": {
+              "label": "Ingediend",
+              "description": "Submitted to Digipoort via the openconnector source identified by digipoortSourceSlug (REQ-SBR-004). Awaiting acknowledgement."
+            },
+            "accepted": {
+              "label": "Geaccepteerd",
+              "description": "Digipoort returned status=accepted; the digipoortReceiptId is stored (REQ-SBR-002, REQ-SBR-003)."
+            },
+            "rejected": {
+              "label": "Afgewezen",
+              "description": "Digipoort returned status=rejected with a rejectionReason; the operator may amend and re-submit (REQ-SBR-003)."
+            }
+          },
+          "transitions": {
+            "validate": {
+              "from": "draft",
+              "to": "validated",
+              "trigger": "operator",
+              "label": "Valideer XBRL",
+              "description": "Validate the canonicalised XML against the NL-taxonomie schema for the entry point + reporting period (REQ-SBR-003)."
+            },
+            "submit": {
+              "from": "validated",
+              "to": "submitted",
+              "trigger": "operator",
+              "label": "Indienen bij Digipoort",
+              "description": "Call the openconnector source by slug, attach instanceXml as the request body, persist the response receipt id (REQ-SBR-004). No Digipoort credentials are read from shillinq AppConfig."
+            },
+            "accept": {
+              "from": "submitted",
+              "to": "accepted",
+              "trigger": "inbound",
+              "label": "Digipoort accepteert",
+              "description": "Inbound Digipoort acknowledgement with status=accepted; sets digipoortReceiptId + acceptedAt (REQ-SBR-002, REQ-SBR-003)."
+            },
+            "reject": {
+              "from": "submitted",
+              "to": "rejected",
+              "trigger": "inbound",
+              "label": "Digipoort wijst af",
+              "description": "Inbound Digipoort error; sets rejectionReason for operator amendment (REQ-SBR-003)."
+            },
+            "reopen": {
+              "from": "rejected",
+              "to": "draft",
+              "trigger": "operator",
+              "label": "Heropen voor correctie",
+              "description": "Operator reopens a rejected instance for editing + resubmission; audit-trail captures both submission attempts (REQ-SBR-003)."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "sbr-submitter": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "onSubmitted": {
+            "trigger": {
+              "type": "transition",
+              "action": "submit"
+            },
+            "description": "Notify the bookkeeper when a filing is successfully submitted (REQ-SBR-003).",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "bookkeeper"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "SBR/XBRL ingediend: instance {{instanceNumber}} ({{entryPoint}}) is verstuurd naar Digipoort",
+              "en": "SBR/XBRL submitted: instance {{instanceNumber}} ({{entryPoint}}) was filed with Digipoort"
+            }
+          },
+          "onRejected": {
+            "trigger": {
+              "type": "transition",
+              "action": "reject"
+            },
+            "description": "Notify the bookkeeper when Digipoort rejects a submission (REQ-SBR-003).",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "bookkeeper"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "SBR/XBRL afgewezen: instance {{instanceNumber}} ({{entryPoint}}) is afgewezen door Digipoort — {{rejectionReason}}",
+              "en": "SBR/XBRL rejected: instance {{instanceNumber}} ({{entryPoint}}) was rejected by Digipoort — {{rejectionReason}}"
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a XBRL Instance is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

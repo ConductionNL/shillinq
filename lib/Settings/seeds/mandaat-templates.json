@@ -1,0 +1,144 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Mandaatregeling Gemeentewet art. 168 e.v., VNG Handreiking mandatering, common MKB/ZZP delegation practice",
+    "version": "2026",
+    "description": "Common mandaat (signing-authority) templates for verplichtingenadministratie (REQ-VPL-002). Loaded per-administration as a starting point; operators add/edit afterwards. Amounts are in minor units (EUR cents).",
+    "imported": "2026-06-01T00:00:00Z"
+  },
+  "mandaatTemplates": [
+    {
+      "mandateCode": "M-GEM-MEDEWERKER-10K",
+      "name": "Medewerker inkoop tot 10.000 EUR",
+      "holder_type": "role",
+      "maximumAmount": 1000000,
+      "kind_commitment": ["purchase_order"],
+      "is_override": false,
+      "required_second_signature_above": null,
+      "determined_at": "Mandaatregeling Gemeentewet 168 e.v.",
+      "doelgroep": "municipality"
+    },
+    {
+      "mandateCode": "M-GEM-BUDGETHOUDER-50K",
+      "name": "Budgethouder tot 50.000 EUR",
+      "holder_type": "role",
+      "maximumAmount": 5000000,
+      "kind_commitment": ["purchase_order", "frameworkAgreement"],
+      "is_override": false,
+      "required_second_signature_above": 2500000,
+      "determined_at": "Mandaatregeling Gemeentewet 168 e.v.",
+      "doelgroep": "municipality"
+    },
+    {
+      "mandateCode": "M-GEM-AFDELINGSHOOFD-100K",
+      "name": "Afdelingshoofd tot 100.000 EUR",
+      "holder_type": "role",
+      "maximumAmount": 10000000,
+      "kind_commitment": ["purchase_order", "frameworkAgreement", "lease_agreement", "leasing"],
+      "is_override": false,
+      "required_second_signature_above": 5000000,
+      "determined_at": "Mandaatregeling Gemeentewet 168 e.v.",
+      "doelgroep": "municipality"
+    },
+    {
+      "mandateCode": "M-GEM-DIRECTEUR-250K",
+      "name": "Directeur tot 250.000 EUR",
+      "holder_type": "role",
+      "maximumAmount": 25000000,
+      "kind_commitment": ["purchase_order", "frameworkAgreement", "employment_contract", "grant_decision", "lease_agreement", "leasing"],
+      "is_override": false,
+      "required_second_signature_above": null,
+      "determined_at": "Mandaatregeling Gemeentewet 168 e.v.",
+      "doelgroep": "municipality"
+    },
+    {
+      "mandateCode": "M-GEM-CONCERNCONTROLLER-OVERRIDE",
+      "name": "Concerncontroller override-mandaat",
+      "holder_type": "role",
+      "maximumAmount": 1000000000,
+      "kind_commitment": ["purchase_order", "frameworkAgreement", "employment_contract", "grant_decision", "lease_agreement", "leasing", "other"],
+      "is_override": true,
+      "required_second_signature_above": null,
+      "determined_at": "Mandaatregeling 2026 (override budgetoverschrijding)",
+      "doelgroep": "municipality"
+    },
+    {
+      "mandateCode": "M-PROV-GEDEPUTEERDE-500K",
+      "name": "Gedeputeerde tot 500.000 EUR",
+      "holder_type": "role",
+      "maximumAmount": 50000000,
+      "kind_commitment": ["purchase_order", "frameworkAgreement", "grant_decision"],
+      "is_override": false,
+      "required_second_signature_above": 25000000,
+      "determined_at": "Mandaatregeling Provinciewet",
+      "doelgroep": "provincie"
+    },
+    {
+      "mandateCode": "M-WS-DAGELIJKS-BESTUUR-200K",
+      "name": "Dagelijks bestuur waterschap tot 200.000 EUR",
+      "holder_type": "role",
+      "maximumAmount": 20000000,
+      "kind_commitment": ["purchase_order", "frameworkAgreement", "leasing"],
+      "is_override": false,
+      "required_second_signature_above": 10000000,
+      "determined_at": "Mandaatregeling Waterschapswet",
+      "doelgroep": "waterschap"
+    },
+    {
+      "mandateCode": "M-MKB-INKOPER-25K",
+      "name": "Inkoper tot 25.000 EUR",
+      "holder_type": "user",
+      "maximumAmount": 2500000,
+      "kind_commitment": ["purchase_order"],
+      "is_override": false,
+      "required_second_signature_above": null,
+      "determined_at": "Interne procuratieregeling",
+      "doelgroep": "mkb"
+    },
+    {
+      "mandateCode": "M-MKB-MANAGER-100K",
+      "name": "Manager tot 100.000 EUR",
+      "holder_type": "user",
+      "maximumAmount": 10000000,
+      "kind_commitment": ["purchase_order", "frameworkAgreement", "lease_agreement", "leasing", "employment_contract"],
+      "is_override": false,
+      "required_second_signature_above": 5000000,
+      "determined_at": "Interne procuratieregeling",
+      "doelgroep": "mkb"
+    },
+    {
+      "mandateCode": "M-MKB-CFO-250K",
+      "name": "CFO tot 250.000 EUR",
+      "holder_type": "user",
+      "maximumAmount": 25000000,
+      "kind_commitment": ["purchase_order", "frameworkAgreement", "employment_contract", "lease_agreement", "leasing", "other"],
+      "is_override": false,
+      "required_second_signature_above": null,
+      "determined_at": "Interne procuratieregeling",
+      "doelgroep": "mkb"
+    },
+    {
+      "mandateCode": "M-MKB-CFO-OVERRIDE",
+      "name": "CFO override-mandaat (budgetoverschrijding)",
+      "holder_type": "user",
+      "maximumAmount": 1000000000,
+      "kind_commitment": ["purchase_order", "frameworkAgreement", "employment_contract", "grant_decision", "lease_agreement", "leasing", "other"],
+      "is_override": true,
+      "required_second_signature_above": null,
+      "determined_at": "Interne procuratieregeling (override)",
+      "doelgroep": "mkb"
+    },
+    {
+      "mandateCode": "M-ZZP-EIGENAAR-ONBEPERKT",
+      "name": "Eigenaar (onbeperkt)",
+      "holder_type": "user",
+      "maximumAmount": 1000000000,
+      "kind_commitment": ["purchase_order", "frameworkAgreement", "lease_agreement", "leasing", "other"],
+      "is_override": true,
+      "required_second_signature_above": null,
+      "determined_at": "Eenmanszaak — volledige tekenbevoegdheid",
+      "doelgroep": "zzp"
+    }
+  ]
+}

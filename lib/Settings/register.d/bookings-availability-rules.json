@@ -1,0 +1,600 @@
+{
+  "info": {
+    "version": "0.1.0-bookings-availability-rules"
+  },
+  "components": {
+    "schemas": {
+      "AvailabilityRule": {
+        "slug": "AvailabilityRule",
+        "icon": "CalendarClockOutline",
+        "version": "0.1.0",
+        "title": "Availability Rule",
+        "description": "Per-resource availability rule header introduced by bookings-availability-rules (REQ-BAR-001). Owns the resource FK, status lifecycle (draft → active → archived, reactivate to draft), and the effective-date window (effectiveFrom / effectiveUntil). Child ResourceBreak and BookingConstraint records reference this entity via availabilityRule. Multi-tenant isolation via administrationId per ADR-005. Lifecycle is fully declarative per ADR-031.",
+        "x-schema-org": "schema:OpeningHoursSpecification",
+        "x-openregister-purpose": "dimension",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "availabilityRuleId",
+          "resource",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this availability rule for tenant isolation (ADR-005).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "availabilityRuleId": {
+            "type": "string",
+            "description": "Operator-assigned unique availability-rule identifier within the administration.",
+            "example": "rule-001",
+            "title": "Availability Rule ID"
+          },
+          "resource": {
+            "type": "string",
+            "description": "FK to Resource.resourceId — the resource this rule applies to (REQ-BAR-006). Declared by bookings-resource-calendar.",
+            "example": "res-001",
+            "title": "Resource"
+          },
+          "status": {
+            "type": "string",
+            "description": "Availability rule lifecycle state (REQ-BAR-004). draft = under construction, active = applies to availability lookups within its effective window, archived = soft-deleted.",
+            "enum": [
+              "draft",
+              "active",
+              "archived"
+            ],
+            "default": "draft",
+            "example": "active",
+            "title": "Status"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the rule begins to apply (REQ-BAR-005). null = applies immediately on activation.",
+            "example": "2026-01-01",
+            "title": "Effective From"
+          },
+          "effectiveUntil": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the rule stops applying (REQ-BAR-005). null = permanent until archived.",
+            "example": null,
+            "title": "Effective Until"
+          },
+          "description": {
+            "type": "string",
+            "description": "Administrator notes for this rule (e.g. \"Standaard beschikbaarheid\", \"Zomervakantie\").",
+            "maxLength": 500,
+            "example": "Standaard beschikbaarheid kapper Jan",
+            "title": "Description"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Rule is under construction; does not yet constrain bookings."
+            },
+            "active": {
+              "label": "Active",
+              "description": "Rule applies to availability lookups within its effective-date window."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Rule is soft-deleted; historical bookings keep the FK for audit."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "draft",
+              "to": "active",
+              "label": "Activate rule",
+              "description": "Promote a draft rule into active state."
+            },
+            "archive": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archive rule",
+              "description": "Soft-delete an active rule."
+            },
+            "reactivate": {
+              "from": "archived",
+              "to": "draft",
+              "label": "Reactivate rule",
+              "description": "Move an archived rule back to draft so it can be edited and re-activated."
+            }
+          }
+        }
+      },
+      "ResourceBreak": {
+        "slug": "ResourceBreak",
+        "icon": "CoffeeOutline",
+        "version": "0.1.0",
+        "title": "Resource Break",
+        "description": "Recurring break window inside an AvailabilityRule (REQ-BAR-002). Captures the day-of-week + start/end time + break type (lunch, coffee, prep, other). isRecurring defaults to true (weekly). endTime MUST be strictly greater than startTime. Lifecycle is declarative per ADR-031: active → archived.",
+        "x-schema-org": "schema:Action",
+        "x-openregister-purpose": "dimension",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "resourceBreakId",
+          "availabilityRule",
+          "breakType",
+          "dayOfWeek",
+          "startTime",
+          "endTime",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this break for tenant isolation (ADR-005).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "resourceBreakId": {
+            "type": "string",
+            "description": "Operator-assigned unique break identifier within the administration.",
+            "example": "break-001",
+            "title": "Resource Break ID"
+          },
+          "availabilityRule": {
+            "type": "string",
+            "description": "FK to AvailabilityRule.availabilityRuleId (REQ-BAR-006).",
+            "example": "rule-001",
+            "title": "Availability Rule"
+          },
+          "breakType": {
+            "type": "string",
+            "description": "Break classifier. lunch = standard midday pause; coffee = short rest; prep = setup or cleanup window; other = catch-all.",
+            "enum": [
+              "lunch",
+              "coffee",
+              "prep",
+              "other"
+            ],
+            "default": "lunch",
+            "example": "lunch",
+            "title": "Break Type"
+          },
+          "dayOfWeek": {
+            "type": "string",
+            "description": "Day of the week the break applies to. daily = every weekday Mon–Sun.",
+            "enum": [
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday",
+              "saturday",
+              "sunday",
+              "daily"
+            ],
+            "example": "monday",
+            "title": "Day Of Week"
+          },
+          "startTime": {
+            "type": "string",
+            "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+            "description": "Break start time in the resource's calendar zone (HH:MM, 24-hour).",
+            "example": "12:00",
+            "title": "Start Time"
+          },
+          "endTime": {
+            "type": "string",
+            "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+            "description": "Break end time (HH:MM, 24-hour). MUST be strictly greater than startTime; enforced via x-openregister-calculations cross-field validator.",
+            "example": "13:00",
+            "title": "End Time"
+          },
+          "isRecurring": {
+            "type": "boolean",
+            "description": "True when the break repeats weekly. Default true; future tiers may flip this to false for one-off blocks.",
+            "default": true,
+            "example": true,
+            "title": "Is Recurring"
+          },
+          "status": {
+            "type": "string",
+            "description": "Break lifecycle state.",
+            "enum": [
+              "active",
+              "archived"
+            ],
+            "default": "active",
+            "example": "active",
+            "title": "Status"
+          },
+          "description": {
+            "type": "string",
+            "description": "Free-text notes (e.g. \"Lunchpauze\", \"Koffiepauze\").",
+            "maxLength": 255,
+            "example": "Lunchpauze",
+            "title": "Description"
+          }
+        },
+        "x-openregister-calculations": {
+          "endTimeAfterStartValidator": {
+            "description": "Cross-field validator (REQ-BAR-002): rejects records where endTime is not strictly greater than startTime. Returns a validation error string when invalid, null when valid.",
+            "expression": "compareTimes(@self.endTime, @self.startTime) > 0 ? null : 'endTime must be strictly greater than startTime'"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Break applies inside its parent rule's effective window."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Break is soft-deleted."
+            }
+          },
+          "transitions": {
+            "archive": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archive break",
+              "description": "Soft-delete the break."
+            }
+          }
+        }
+      },
+      "BookingConstraint": {
+        "slug": "BookingConstraint",
+        "icon": "ClockAlertOutline",
+        "version": "0.1.0",
+        "title": "Booking Constraint",
+        "description": "Booking-policy constraints attached to an AvailabilityRule (REQ-BAR-003). Carries the advance-notice window, pre/post buffer minutes, cancellation deadline hours, and the blackoutDates array of {startDate, endDate, reason} ranges. All numeric fields MUST be >= 0; maxAdvanceNoticeDays MUST be >= minAdvanceNoticeDays when set. Lifecycle is declarative per ADR-031: active → archived.",
+        "x-schema-org": "schema:Restriction",
+        "x-openregister-purpose": "dimension",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "bookingConstraintId",
+          "availabilityRule",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this constraint for tenant isolation (ADR-005).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "bookingConstraintId": {
+            "type": "string",
+            "description": "Operator-assigned unique constraint identifier within the administration.",
+            "example": "constraint-001",
+            "title": "Booking Constraint ID"
+          },
+          "availabilityRule": {
+            "type": "string",
+            "description": "FK to AvailabilityRule.availabilityRuleId (REQ-BAR-006).",
+            "example": "rule-001",
+            "title": "Availability Rule"
+          },
+          "minAdvanceNoticeDays": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Minimum days in advance a booking may be made (REQ-BAR-003). 0 = same-day allowed.",
+            "default": 0,
+            "example": 1,
+            "title": "Min Advance Notice Days"
+          },
+          "maxAdvanceNoticeDays": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Maximum days in advance a booking may be made. null = unlimited. When set MUST be >= minAdvanceNoticeDays.",
+            "default": null,
+            "example": 30,
+            "title": "Max Advance Notice Days"
+          },
+          "preBufferMinutes": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Prep time required before each booking, in minutes.",
+            "default": 0,
+            "example": 15,
+            "title": "Pre Buffer Minutes"
+          },
+          "postBufferMinutes": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Cleanup time required after each booking, in minutes.",
+            "default": 0,
+            "example": 15,
+            "title": "Post Buffer Minutes"
+          },
+          "cancellationDeadlineHours": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Minimum hours before a booking starts that a cancellation is still allowed without late fee.",
+            "default": 0,
+            "example": 24,
+            "title": "Cancellation Deadline Hours"
+          },
+          "blackoutDates": {
+            "type": "array",
+            "description": "List of date ranges during which no booking is allowed (holidays, vacation, maintenance). Each entry is a {startDate, endDate, reason} object; endDate MUST be >= startDate.",
+            "default": [],
+            "items": {
+              "type": "object",
+              "required": [
+                "startDate",
+                "endDate"
+              ],
+              "properties": {
+                "startDate": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Inclusive start of the blackout span.",
+                  "example": "2026-07-15",
+                  "title": "Start Date"
+                },
+                "endDate": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Inclusive end of the blackout span. MUST be >= startDate.",
+                  "example": "2026-07-29",
+                  "title": "End Date"
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Administrator-supplied reason (e.g. \"Zomervakantie\", \"Kerst\").",
+                  "maxLength": 255,
+                  "example": "Zomervakantie",
+                  "title": "Reason"
+                }
+              }
+            },
+            "title": "Blackout Dates"
+          },
+          "status": {
+            "type": "string",
+            "description": "Booking constraint lifecycle state.",
+            "enum": [
+              "active",
+              "archived"
+            ],
+            "default": "active",
+            "example": "active",
+            "title": "Status"
+          }
+        },
+        "x-openregister-calculations": {
+          "maxAdvanceNoticeBoundsValidator": {
+            "description": "Cross-field validator (REQ-BAR-003): rejects records where maxAdvanceNoticeDays is set and is less than minAdvanceNoticeDays. Returns null when valid.",
+            "expression": "@self.maxAdvanceNoticeDays == null || @self.maxAdvanceNoticeDays >= @self.minAdvanceNoticeDays ? null : 'maxAdvanceNoticeDays must be >= minAdvanceNoticeDays'"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Constraint applies inside its parent rule's effective window."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Constraint is soft-deleted."
+            }
+          },
+          "transitions": {
+            "archive": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archive constraint",
+              "description": "Soft-delete the constraint."
+            }
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AvailabilityRule",
+        "slug": "bookings-availability-rules-rule-001"
+      },
+      "administrationId": "adm-1",
+      "availabilityRuleId": "rule-001",
+      "resource": "res-001",
+      "status": "active",
+      "effectiveFrom": "2026-01-01",
+      "effectiveUntil": null,
+      "description": "Standaard beschikbaarheid kapper Jan Peeters"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AvailabilityRule",
+        "slug": "bookings-availability-rules-rule-002"
+      },
+      "administrationId": "adm-1",
+      "availabilityRuleId": "rule-002",
+      "resource": "res-001",
+      "status": "draft",
+      "effectiveFrom": "2026-07-15",
+      "effectiveUntil": "2026-07-29",
+      "description": "Zomervakantie Jan Peeters"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AvailabilityRule",
+        "slug": "bookings-availability-rules-rule-003"
+      },
+      "administrationId": "adm-1",
+      "availabilityRuleId": "rule-003",
+      "resource": "res-003",
+      "status": "active",
+      "effectiveFrom": "2026-01-01",
+      "effectiveUntil": null,
+      "description": "Standaard beschikbaarheid Vergaderruimte A"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "AvailabilityRule",
+        "slug": "bookings-availability-rules-rule-004"
+      },
+      "administrationId": "adm-1",
+      "availabilityRuleId": "rule-004",
+      "resource": "res-004",
+      "status": "active",
+      "effectiveFrom": "2026-01-01",
+      "effectiveUntil": null,
+      "description": "Behandelstoel 1 — standaardrooster"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ResourceBreak",
+        "slug": "bookings-availability-rules-break-001"
+      },
+      "administrationId": "adm-1",
+      "resourceBreakId": "break-001",
+      "availabilityRule": "rule-001",
+      "breakType": "lunch",
+      "dayOfWeek": "monday",
+      "startTime": "12:00",
+      "endTime": "13:00",
+      "isRecurring": true,
+      "status": "active",
+      "description": "Lunchpauze maandag"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ResourceBreak",
+        "slug": "bookings-availability-rules-break-002"
+      },
+      "administrationId": "adm-1",
+      "resourceBreakId": "break-002",
+      "availabilityRule": "rule-001",
+      "breakType": "lunch",
+      "dayOfWeek": "tuesday",
+      "startTime": "12:00",
+      "endTime": "13:00",
+      "isRecurring": true,
+      "status": "active",
+      "description": "Lunchpauze dinsdag"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ResourceBreak",
+        "slug": "bookings-availability-rules-break-003"
+      },
+      "administrationId": "adm-1",
+      "resourceBreakId": "break-003",
+      "availabilityRule": "rule-001",
+      "breakType": "coffee",
+      "dayOfWeek": "daily",
+      "startTime": "15:30",
+      "endTime": "15:45",
+      "isRecurring": true,
+      "status": "active",
+      "description": "Koffiepauze"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ResourceBreak",
+        "slug": "bookings-availability-rules-break-004"
+      },
+      "administrationId": "adm-1",
+      "resourceBreakId": "break-004",
+      "availabilityRule": "rule-003",
+      "breakType": "prep",
+      "dayOfWeek": "daily",
+      "startTime": "08:00",
+      "endTime": "08:15",
+      "isRecurring": true,
+      "status": "active",
+      "description": "Voorbereiding vergaderruimte"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingConstraint",
+        "slug": "bookings-availability-rules-constraint-001"
+      },
+      "administrationId": "adm-1",
+      "bookingConstraintId": "constraint-001",
+      "availabilityRule": "rule-001",
+      "minAdvanceNoticeDays": 1,
+      "maxAdvanceNoticeDays": 30,
+      "preBufferMinutes": 15,
+      "postBufferMinutes": 15,
+      "cancellationDeadlineHours": 24,
+      "blackoutDates": [
+        {
+          "startDate": "2026-07-15",
+          "endDate": "2026-07-29",
+          "reason": "Zomervakantie"
+        },
+        {
+          "startDate": "2026-12-25",
+          "endDate": "2026-12-31",
+          "reason": "Wintervakantie"
+        }
+      ],
+      "status": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingConstraint",
+        "slug": "bookings-availability-rules-constraint-002"
+      },
+      "administrationId": "adm-1",
+      "bookingConstraintId": "constraint-002",
+      "availabilityRule": "rule-003",
+      "minAdvanceNoticeDays": 0,
+      "maxAdvanceNoticeDays": 90,
+      "preBufferMinutes": 10,
+      "postBufferMinutes": 10,
+      "cancellationDeadlineHours": 4,
+      "blackoutDates": [],
+      "status": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingConstraint",
+        "slug": "bookings-availability-rules-constraint-003"
+      },
+      "administrationId": "adm-1",
+      "bookingConstraintId": "constraint-003",
+      "availabilityRule": "rule-004",
+      "minAdvanceNoticeDays": 1,
+      "maxAdvanceNoticeDays": 60,
+      "preBufferMinutes": 15,
+      "postBufferMinutes": 15,
+      "cancellationDeadlineHours": 24,
+      "blackoutDates": [
+        {
+          "startDate": "2026-12-24",
+          "endDate": "2026-12-26",
+          "reason": "Kerst"
+        }
+      ],
+      "status": "active"
+    }
+  ]
+}

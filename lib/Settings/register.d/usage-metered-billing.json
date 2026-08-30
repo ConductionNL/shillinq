@@ -1,0 +1,314 @@
+{
+    "_meta": {
+        "spdx-license": "EUPL-1.2",
+        "spdx-copyright": "2026 Conduction B.V.",
+        "change": "ar-billing-completeness",
+        "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+        "description": "Declares the two schemas for consumption-based (usage) billing: UsageRatePlan (the flat or graduated-tier price book) and MeterReading (a metered quantity over a period). OCA\\Shillinq\\Service\\UsageRatingCalculator rates a reading against its plan, and OCA\\Shillinq\\Service\\InvoiceGenerationService drives the new 'usage' billing model through the EXISTING draftInvoice/postInvoice pipeline (BillingModelEngine::calculateUsage) — no fork of invoicing. Extends shillinq's flat recurring + retainer billing to metered/usage billing (REQ-UMB-001..004)."
+    },
+    "components": {
+        "schemas": {
+            "UsageRatePlan": {
+                "x-openregister-audit-trail": {
+                    "enabled": true,
+                    "description": "Every create, update and delete of a Usage Rate Plan is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+                },
+                "slug": "UsageRatePlan",
+                "icon": "Gauge",
+                "version": "0.1.0",
+                "title": "Usage Rate Plan",
+                "description": "Price book for consumption-based billing (REQ-UMB-001). A plan rates a metered resource either `flat` (quantity x unitPriceCents) or `graduated` (the quantity is split across ascending tiers, each slice priced at its tier unitPriceCents; the final tier's upTo is null and catches all remaining volume). Declares the VAT rate and revenue account so a rated line flows straight into the existing invoice pipeline.",
+                "x-schema-org": "schema:PriceSpecification",
+                "x-openregister-purpose": "config",
+                "x-spec": "openspec/changes/ar-billing-completeness/specs/usage-metered-billing/spec.md",
+                "type": "object",
+                "required": [
+                    "administrationId",
+                    "name",
+                    "resourceType",
+                    "unit",
+                    "ratingMethod"
+                ],
+                "properties": {
+                    "administrationId": {
+                        "type": "string",
+                        "description": "Administration the plan belongs to (REQ-UMB-001).",
+                        "example": "adm-holding-nl",
+                        "title": "Administration ID"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Operator-facing plan name.",
+                        "example": "API Calls — Standard",
+                        "title": "Name"
+                    },
+                    "resourceType": {
+                        "type": "string",
+                        "description": "The metered resource this plan prices (e.g. api_calls, kwh, storage_gb).",
+                        "example": "api_calls",
+                        "title": "Resource Type"
+                    },
+                    "unit": {
+                        "type": "string",
+                        "description": "Unit of measure the quantity is expressed in.",
+                        "example": "calls",
+                        "title": "Unit"
+                    },
+                    "ratingMethod": {
+                        "type": "string",
+                        "enum": [
+                            "flat",
+                            "graduated"
+                        ],
+                        "description": "flat = quantity x unitPriceCents; graduated = tiered slices priced per tier.",
+                        "example": "graduated",
+                        "title": "Rating Method"
+                    },
+                    "unitPriceCents": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "nullable": true,
+                        "description": "Flat price per unit in integer cents. Required when ratingMethod=flat; ignored for graduated.",
+                        "example": 5,
+                        "title": "Unit Price Cents"
+                    },
+                    "tiers": {
+                        "type": "array",
+                        "nullable": true,
+                        "description": "Graduated pricing tiers, ascending by upTo. Each tier prices the slice of quantity between the previous tier cap and its own upTo (null upTo = unbounded final tier).",
+                        "title": "Tiers",
+                        "items": {
+                            "type": "object",
+                            "title": "Tier",
+                            "properties": {
+                                "upTo": {
+                                    "type": "integer",
+                                    "nullable": true,
+                                    "description": "Upper bound (inclusive cap) of this tier in units; null for the unbounded final tier.",
+                                    "example": 1000,
+                                    "title": "Up To"
+                                },
+                                "unitPriceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "Price per unit within this tier, integer cents.",
+                                    "example": 3,
+                                    "title": "Unit Price Cents"
+                                }
+                            }
+                        }
+                    },
+                    "vatRate": {
+                        "type": "number",
+                        "description": "VAT percentage applied to rated lines (Dutch statutory rate; default 21).",
+                        "example": 21,
+                        "title": "VAT Rate"
+                    },
+                    "glRevenueAccount": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Optional revenue account override; usage revenue defaults to 4500.",
+                        "example": "4500",
+                        "title": "GL Revenue Account"
+                    },
+                    "currency": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{3}$",
+                        "nullable": true,
+                        "description": "ISO 4217 plan currency (defaults to the administration functional currency).",
+                        "example": "EUR",
+                        "title": "Currency"
+                    },
+                    "effectiveFrom": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true,
+                        "description": "ISO date the plan becomes effective.",
+                        "example": "2026-01-01",
+                        "title": "Effective From"
+                    }
+                }
+            },
+            "MeterReading": {
+                "x-openregister-audit-trail": {
+                    "enabled": true,
+                    "description": "Every create, update and delete of a Meter Reading is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+                },
+                "slug": "MeterReading",
+                "icon": "Counter",
+                "version": "0.1.0",
+                "title": "Meter Reading",
+                "description": "A metered quantity of a resource consumed by a customer over a billing period (REQ-UMB-002). Rated by UsageRatingCalculator against its UsageRatePlan into a BillableInvoiceLine through the existing invoice pipeline. Lifecycle: unrated -> rated -> invoiced (REQ-UMB-004) so a reading is never double-billed.",
+                "x-schema-org": "schema:QuantitativeValue",
+                "x-spec": "openspec/changes/ar-billing-completeness/specs/usage-metered-billing/spec.md",
+                "type": "object",
+                "required": [
+                    "administrationId",
+                    "customerId",
+                    "resourceType",
+                    "quantity",
+                    "periodStart",
+                    "periodEnd"
+                ],
+                "properties": {
+                    "administrationId": {
+                        "type": "string",
+                        "description": "Administration the reading belongs to (REQ-UMB-002).",
+                        "example": "adm-holding-nl",
+                        "title": "Administration ID"
+                    },
+                    "meterId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Stable identifier of the meter/subscription the reading came from.",
+                        "example": "meter-api-cust-42",
+                        "title": "Meter ID"
+                    },
+                    "customerId": {
+                        "type": "string",
+                        "description": "FK to the customer being billed for this usage.",
+                        "example": "cust-42",
+                        "title": "Customer ID"
+                    },
+                    "resourceType": {
+                        "type": "string",
+                        "description": "The metered resource (matches UsageRatePlan.resourceType).",
+                        "example": "api_calls",
+                        "title": "Resource Type"
+                    },
+                    "quantity": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "Metered quantity in the plan's unit.",
+                        "example": 12500,
+                        "title": "Quantity"
+                    },
+                    "unit": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Unit of measure (redundant with the plan; kept for readability).",
+                        "example": "calls",
+                        "title": "Unit"
+                    },
+                    "ratePlanId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "FK to the UsageRatePlan this reading is rated against; falls back to the request default.",
+                        "example": "urp-api-standard",
+                        "title": "Rate Plan ID"
+                    },
+                    "periodStart": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "ISO start of the metered period.",
+                        "example": "2026-03-01",
+                        "title": "Period Start"
+                    },
+                    "periodEnd": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "ISO end of the metered period.",
+                        "example": "2026-03-31",
+                        "title": "Period End"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Optional line description override; a readable default is synthesised when absent.",
+                        "example": "API calls — March 2026",
+                        "title": "Description"
+                    },
+                    "invoiceId": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "FK to the BillableInvoice this reading was billed on (set on transition to invoiced).",
+                        "example": "bil-2026-0042",
+                        "title": "Invoice ID"
+                    }
+                },
+                "x-openregister-lifecycle": {
+                    "field": "status",
+                    "initialState": "unrated",
+                    "states": {
+                        "unrated": {
+                            "label": "Unrated",
+                            "description": "Captured meter quantity awaiting rating."
+                        },
+                        "rated": {
+                            "label": "Rated",
+                            "description": "Priced against its UsageRatePlan; ready to invoice."
+                        },
+                        "invoiced": {
+                            "label": "Invoiced",
+                            "description": "Billed onto a BillableInvoice; invoiceId set (REQ-UMB-004)."
+                        }
+                    },
+                    "transitions": {
+                        "rate": {
+                            "from": "unrated",
+                            "to": "rated",
+                            "label": "Rate reading",
+                            "description": "Price the reading against its UsageRatePlan."
+                        },
+                        "invoice": {
+                            "from": "rated",
+                            "to": "invoiced",
+                            "label": "Add to invoice",
+                            "description": "Attach the rated line to a BillableInvoice."
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "objects": [
+        {
+            "@self": {
+                "register": "shillinq",
+                "schema": "UsageRatePlan",
+                "slug": "urp-api-standard"
+            },
+            "administrationId": "adm-holding-nl",
+            "name": "API Calls — Standard",
+            "resourceType": "api_calls",
+            "unit": "calls",
+            "ratingMethod": "graduated",
+            "tiers": [
+                {
+                    "upTo": 1000,
+                    "unitPriceCents": 5
+                },
+                {
+                    "upTo": 10000,
+                    "unitPriceCents": 3
+                },
+                {
+                    "upTo": null,
+                    "unitPriceCents": 2
+                }
+            ],
+            "vatRate": 21,
+            "glRevenueAccount": "4500",
+            "currency": "EUR",
+            "effectiveFrom": "2026-01-01"
+        },
+        {
+            "@self": {
+                "register": "shillinq",
+                "schema": "MeterReading",
+                "slug": "meter-seed-api-march"
+            },
+            "administrationId": "adm-holding-nl",
+            "meterId": "meter-api-cust-42",
+            "customerId": "cust-42",
+            "resourceType": "api_calls",
+            "quantity": 12500,
+            "unit": "calls",
+            "ratePlanId": "urp-api-standard",
+            "periodStart": "2026-03-01",
+            "periodEnd": "2026-03-31",
+            "description": "API calls — March 2026",
+            "status": "unrated"
+        }
+    ]
+}

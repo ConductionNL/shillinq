@@ -1,0 +1,154 @@
+{
+	"menu": [
+		{
+			"id": "Verkoop",
+			"label": "Sales",
+			"icon": "CartOutline",
+			"order": 33,
+			"children": [
+				{
+					"id": "Annuleringsbeleid",
+					"label": "Cancellation policy",
+					"icon": "ShieldCheckOutline",
+					"route": "Annuleringsbeleid",
+					"order": 20
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Annuleringsbeleid",
+			"route": "/verkoop/annuleringsbeleid",
+			"type": "index",
+			"title": "Cancellation policy",
+			"config": {
+				"register": "shillinq",
+				"schema": "CancellationPolicy",
+				"columns": [
+					{
+						"key": "policyId",
+						"label": "Reference",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"sortable": true
+					},
+					{
+						"key": "minNoticeDays",
+						"label": "Min. notice (days)",
+						"sortable": true
+					},
+					{
+						"key": "noShowFee",
+						"label": "No-show fee",
+						"sortable": true
+					},
+					{
+						"key": "refundPolicy",
+						"label": "Refund method",
+						"sortable": true
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "name",
+				"detailRoute": "AnnuleringsbeleidDetail"
+			}
+		},
+		{
+			"id": "AnnuleringsbeleidDetail",
+			"route": "/verkoop/annuleringsbeleid/:id",
+			"type": "detail",
+			"title": "Cancellation policy",
+			"config": {
+				"register": "shillinq",
+				"schema": "CancellationPolicy",
+				"_note": "CONFIG/rule record (the cancellation policy that governs notice periods, reschedule windows and fees for a bookable service). The body is the rule definition — minimum notice, reschedule window, no-show fee, card-hold requirement, refund method and the service it is linked to. It is a policy, not an appointment: no calendar or email leaf is declared or appropriate here. The audit trail sidebar records fee/notice changes, which is what a customer disputes later.",
+				"fields": [
+					{
+						"key": "policyId",
+						"label": "Reference",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Name",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "minNoticeDays",
+						"label": "Minimum notice (days)",
+						"type": "number"
+					},
+					{
+						"key": "rescheduleWindowDays",
+						"label": "Reschedule window (days)",
+						"type": "number"
+					},
+					{
+						"key": "noShowFee",
+						"label": "No-show fee",
+						"type": "number"
+					},
+					{
+						"key": "cardHoldRequired",
+						"label": "Card hold required",
+						"type": "boolean"
+					},
+					{
+						"key": "refundPolicy",
+						"label": "Refund method",
+						"type": "string"
+					},
+					{
+						"key": "linkedService",
+						"label": "Linked service",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "Annuleringsbeleid",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}
