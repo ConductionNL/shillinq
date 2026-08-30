@@ -102,7 +102,16 @@ webpackConfig.resolve = {
 		// Deduplicate shared packages so the aliased library source uses
 		// the same instances as the app (prevents dual-Pinia / dual-Vue bugs).
 		vue$: path.resolve(__dirname, 'node_modules/vue'),
-		pinia$: path.resolve(__dirname, 'node_modules/pinia'),
+		// pinia@4 dropped `main` AND `module`, leaving only an `exports` map
+		// (`{".": "./dist/pinia.js"}`) — the same shape as @nextcloud/vue and
+		// @nextcloud/dialogs below. pinia@3 still had `main: index.cjs` /
+		// `module: dist/pinia.mjs`, which is why the Vue-2-era alias to the
+		// package DIRECTORY worked until now: a directory alias bypasses
+		// `exports` entirely and then looks for a main/index.js that no longer
+		// exists, so every `import { … } from 'pinia'` failed with
+		// "Can't resolve 'pinia'". Alias to the absolute FILE; the `$`
+		// (exact-match) form keeps deep imports going through the exports map.
+		pinia$: path.resolve(__dirname, 'node_modules/pinia/dist/pinia.js'),
 		// @nextcloud/vue@9, @nextcloud/dialogs@7 and vue-router@5 are ESM-only:
 		// their package.json has NO `main` and NO `module`, only an `exports`
 		// map. A Vue-2-era alias to the package DIRECTORY bypasses `exports`
