@@ -8,10 +8,10 @@
     "imported": "2026-06-01T00:00:00Z"
   },
   "tariffs": [
-    {"code": "high", "label": "Hoog tarief", "ratePercentage": 21, "rgsAccountHint": "WBeBoB", "reverseCharge": false, "effectiveFrom": "2012-10-01", "effectiveTo": null, "legalBasis": "Wet OB 1968 art. 9 lid 1"},
-    {"code": "low", "label": "Laag tarief", "ratePercentage": 9, "rgsAccountHint": "WBeBoL", "reverseCharge": false, "effectiveFrom": "2019-01-01", "effectiveTo": null, "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel a + Tabel I"},
-    {"code": "zero", "label": "Nultarief", "ratePercentage": 0, "rgsAccountHint": "WBeBoN", "reverseCharge": false, "effectiveFrom": "1969-01-01", "effectiveTo": null, "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II"},
-    {"code": "exempt", "label": "Vrijgesteld", "ratePercentage": 0, "rgsAccountHint": null, "reverseCharge": false, "effectiveFrom": "1969-01-01", "effectiveTo": null, "legalBasis": "Wet OB 1968 art. 11 (vrijstellingen)"},
-    {"code": "reverse-charge", "label": "Verlegd", "ratePercentage": 0, "rgsAccountHint": "WBeBoV", "reverseCharge": true, "effectiveFrom": "1969-01-01", "effectiveTo": null, "legalBasis": "Wet OB 1968 art. 12 lid 5 (verleggingsregeling)"}
+    {"code": "high", "label": "Hoog tarief", "rate": 0.21, "description": "Hoog tarief (21%)", "category": "standard", "ratePercentage": 21, "rgsAccountHint": "WBeBoB", "reverseCharge": false, "effectiveFrom": "2012-10-01", "effectiveTo": null, "legalBasis": "Wet OB 1968 art. 9 lid 1"},
+    {"code": "low", "label": "Laag tarief", "rate": 0.09, "description": "Laag tarief (9%)", "category": "verlaagd", "ratePercentage": 9, "rgsAccountHint": "WBeBoL", "reverseCharge": false, "effectiveFrom": "2019-01-01", "effectiveTo": null, "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel a + Tabel I"},
+    {"code": "zero", "label": "Nultarief", "rate": 0, "description": "Nultarief (0%)", "category": "nul", "ratePercentage": 0, "rgsAccountHint": "WBeBoN", "reverseCharge": false, "effectiveFrom": "1969-01-01", "effectiveTo": null, "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II"},
+    {"code": "exempt", "label": "Vrijgesteld", "rate": 0, "description": "Vrijgesteld van BTW", "category": "exempt", "ratePercentage": 0, "rgsAccountHint": null, "reverseCharge": false, "effectiveFrom": "1969-01-01", "effectiveTo": null, "legalBasis": "Wet OB 1968 art. 11 (vrijstellingen)"},
+    {"code": "reverse-charge", "label": "Verlegd", "rate": 0, "description": "BTW verlegd naar de afnemer (verleggingsregeling)", "category": "verleggingsregeling", "ratePercentage": 0, "rgsAccountHint": "WBeBoV", "reverseCharge": true, "effectiveFrom": "1969-01-01", "effectiveTo": null, "legalBasis": "Wet OB 1968 art. 12 lid 5 (verleggingsregeling)"}
   ]
 }

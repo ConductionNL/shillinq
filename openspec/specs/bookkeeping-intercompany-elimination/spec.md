@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-intercompany-elimination
 
 **Status:** proposed
@@ -7,12 +11,18 @@
 `bookkeeping-multi-administratie` (bron-administratie GL-access),
 `bookkeeping-grootboek` (transactie-query)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping intercompany elimination in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: intercompany elimination — not browser-testable
 
 
 ### REQ-ICE-001: Intercompany-relatie definitie en onderhoud
+
+The system SHALL satisfy this requirement: Intercompany-relatie definitie en onderhoud.
 
 Het systeem MOET een gebruiker (consolidatie-controller of accountant) in staat stellen intercompany-relaties expliciet te definiëren tussen entiteiten in een consolidatie-groep, inclusief de relevante grootboekrekeningen aan beide zijden, relatie-type, en tolerantie-instellingen, zodat de matching-engine weet welke transacties bij elkaar horen.
 
@@ -49,6 +59,8 @@ Schema.org annotation: `schema:FinancialProduct` (IC-relatie als transactie-type
 - **THEN** het systeem detecteert het dubbel, weigert de tweede aan te maken, en verwijst naar de bestaande relatie ter wijziging.
 
 ### REQ-ICE-002: Auto-detectie intercompany-transacties
+
+The system SHALL satisfy this requirement: Auto-detectie intercompany-transacties.
 
 Het systeem MOET in alle entiteit-administraties van een consolidatie-groep periodiek scannen op transacties die intercompany zijn — op basis van geregistreerde IC-grootboekrekeningen, op basis van counterparty-naam-matching, of op basis van transactie-label — en deze als `IntercompanyTransaction` registreren met counterparty-aanduiding en detectie-confidence.
 
@@ -96,6 +108,8 @@ Schema.org annotation: `schema:FinancialProduct` (transactie).
 
 ### REQ-ICE-003: Periodieke matching auto-run
 
+The system SHALL satisfy this requirement: Periodieke matching auto-run.
+
 Het systeem MOET periodiek (per maand, kwartaal of jaareinde, configureerbaar) automatisch alle intercompany-transacties van een periode matchen door per `IntercompanyRelation` de A-zijde te aggregeren, de B-zijde te aggregeren, en het netto-saldo te bepalen via `x-openregister-aggregations`.
 
 `IntercompanyMatch` MOET als persistente register gedeclareerd worden met:
@@ -138,6 +152,8 @@ Schema.org annotation: `schema:Thing` (match-record).
 
 ### REQ-ICE-004: Tolerantie-gebaseerde auto-resolve
 
+The system SHALL satisfy this requirement: Tolerantie-gebaseerde auto-resolve.
+
 Het systeem MOET configureerbare tolerantie-regels toepassen op gedetecteerde mismatches via `x-openregister-lifecycle.requires` guards. Mismatches binnen tolerantie worden automatisch geaccepteerd, mismatches buiten tolerantie blijven in de exception-queue voor handmatige resolutie.
 
 `ToleranceRule` MOET als persistente register gedeclareerd worden met:
@@ -176,6 +192,8 @@ Schema.org annotation: `schema:Thing` (rule).
 - **THEN** periode-specifieke rule overschrijft de default; matching voor december gebruikt de strengere tolerantie.
 
 ### REQ-ICE-005: Mismatch-classificatie en resolutie
+
+The system SHALL satisfy this requirement: Mismatch-classificatie en resolutie.
 
 Het systeem MOET een gebruiker in staat stellen mismatches te classificeren op oorzaak, en per classificatie een semi-geautomatiseerde resolutie-pad aan te bieden.
 
@@ -219,6 +237,8 @@ Schema.org annotation: `schema:Thing` (exception-record).
 
 ### REQ-ICE-006: Eliminatie-journaalpost generatie
 
+The system SHALL satisfy this requirement: Eliminatie-journaalpost generatie.
+
 Het systeem MOET voor elke geslaagde match (perfecte match of binnen-tolerantie) automatisch een eliminatie-journaalpost genereren in de consolidatie-laag — niet in de bron-administraties — met de juiste debet/credit-regels per grootboekrekening en verwijzing naar de match en bron-transacties.
 
 `EliminationJournal` MOET als persistente register gedeclareerd worden met:
@@ -260,6 +280,8 @@ Schema.org annotation: `schema:Thing` (journal-entry).
 
 ### REQ-ICE-007: Counterparty-saldo overzicht
 
+The system SHALL satisfy this requirement: Counterparty-saldo overzicht.
+
 Het systeem MOET per intercompany-paartje (twee groepsentiteiten) per consolidatie-periode een geaggregeerd overzicht bieden van alle openstaande saldi, stromen, en mismatches.
 
 `CounterpartyBalance` MOET als persistente aggregatie-register gedeclareerd worden met:
@@ -297,6 +319,8 @@ Schema.org annotation: `schema:FinancialProduct` (balance-view).
 
 ### REQ-ICE-008: Cross-period roll-forward en historische audit
 
+The system SHALL satisfy this requirement: Cross-period roll-forward en historische audit.
+
 Het systeem MOET intercompany-saldi van periode tot periode roll-forward consistentie bewaken. Bij wijziging van vorige periodes MOET het systeem backdated-impact detecteren en cascading-impact wizard aanbieden.
 
 #### Scenario: Roll-forward verificatie
@@ -313,6 +337,8 @@ Het systeem MOET intercompany-saldi van periode tot periode roll-forward consist
 
 ### REQ-ICE-009: Multi-currency intercompany matching
 
+The system SHALL satisfy this requirement: Multi-currency intercompany matching.
+
 Het systeem MOET intercompany-transacties tussen entiteiten met verschillende functionele valuta correct matchen door beide zijden naar gemeenschappelijke rapportage-valuta te converteren, en translatie-verschillen als CTA (niet als P&L-verschil) boeken.
 
 #### Scenario: EUR-USD matching op transactie-datum-koers
@@ -328,6 +354,8 @@ Het systeem MOET intercompany-transacties tussen entiteiten met verschillende fu
 - **THEN** US-zijde wordt vertaald naar EUR (USD 27.100 × 0,925 = €25.067), mismatchAmount €67 wordt als **fx-translation** gevangen en naar CTA-EV-restpost geboekt per IFRS 21.
 
 ### REQ-ICE-010: Performance en schaalbaarheid
+
+The system SHALL satisfy this requirement: Performance en schaalbaarheid.
 
 Het systeem MOET matching kunnen uitvoeren voor groepen tot 50 entiteiten en 100.000 intercompany-transacties per periode binnen acceptabele tijd (target: <5 minuten voor typische maand-matching van 10-entiteiten-groep met 5.000 IC-transacties).
 

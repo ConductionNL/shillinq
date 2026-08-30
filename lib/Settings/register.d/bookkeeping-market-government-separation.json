@@ -1,0 +1,2265 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-market-government-separation",
+    "spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
+    "tier": "T4",
+    "adr": "ADR-037 fragment — declarative WMO (Wet Markt en Overheid, Mededingingswet ch. 4b) compliance: CommercialActivity, IntegralCostPrice, ActivityCostAllocation, AlgemeenBelangBesluit, ACMReport, AlertLog (cross-subsidy detector), WMOAuditLog (immutable), MarketBenchmark. Merged additively into shillinq_register.json at load (SettingsService::deepMergeConfig).",
+    "description": "Phase 1+2 WMO compliance engine. Declares 8 schemas plus their x-openregister-lifecycle, x-openregister-aggregations and x-openregister-rbac blocks; relations are property-level $ref. Per-period IKP records are immutable (status=voorlopig|definitief); ActivityCostAllocation splits are reversible audit records; ACMReport is write-once after digital signature; WMOAuditLog has 7-year retention per Mededingingswet bewaartermijn."
+  },
+  "components": {
+    "schemas": {
+      "CommercialActivity": {
+        "slug": "CommercialActivity",
+        "x-openregister-purpose": "fact",
+        "icon": "StoreOutline",
+        "version": "0.1.0",
+        "title": "Commercial Activity",
+        "description": "Per-bestuursorgaan commercial activity register (REQ-WMO-001). First-class record (not a free-form GL tag) so ACM meldingstatus, ABB exemption, kostprijsmethode, kostenplaats/kostendrager coupling, marktcontext and audit trail attach declaratively. An annual review-task is auto-generated when lastReviewedAt is > 365 days old (REQ-WMO-001 §c).",
+        "x-schema-org": "schema:Service",
+        "x-spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "governingBody",
+          "organisationalUnit",
+          "description",
+          "marketSegment",
+          "concurrenten",
+          "startDate",
+          "costPriceMethod",
+          "costCentreCode",
+          "costObjectCode",
+          "isExempted",
+          "administrationId",
+          "state"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Operator-assigned activity code, unique per administration (REQ-WMO-001).",
+            "example": "MO-SP-014",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable activity name.",
+            "example": "Dansschool de Maten",
+            "title": "Naam"
+          },
+          "governingBody": {
+            "type": "string",
+            "description": "Bestuursorgaan responsible for the activity (gemeente / provincie / waterschap / GR / RUD).",
+            "example": "Gemeente Apeldoorn",
+            "title": "Bestuursorgaan"
+          },
+          "organisationalUnit": {
+            "type": "string",
+            "description": "Department / section responsible.",
+            "example": "Afdeling Cultuur & Erfgoed",
+            "title": "Organisatieonderdeel"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of goods/services offered on market.",
+            "example": "Verhuur zaalruimte voor commerciële danslessen",
+            "title": "Beschrijving"
+          },
+          "marketSegment": {
+            "type": "string",
+            "description": "Relevant market segment.",
+            "example": "privédansscholen Apeldoorn",
+            "title": "Marktsegment"
+          },
+          "concurrenten": {
+            "type": "array",
+            "description": "Named private competitors (REQ-WMO-001).",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Dansacademie Sint-Hubert"
+            ],
+            "title": "Concurrenten"
+          },
+          "afnemers": {
+            "type": "array",
+            "description": "Known customers / buyers (optional).",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "title": "Afnemers"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Effective start date of the commercial activity.",
+            "example": "2024-01-15",
+            "title": "Start Datum"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Closure date if the activity has ended.",
+            "nullable": true,
+            "title": "Eind Datum"
+          },
+          "costPriceMethod": {
+            "type": "string",
+            "enum": [
+              "integral-costprice-art-25i",
+              "costprice-monitor-without-profit-markup"
+            ],
+            "description": "Cost-price method. integral-costprice-art-25i is the default; the monitor variant is only valid for ABB-exempted activities.",
+            "default": "integral-costprice-art-25i",
+            "title": "Kostprijs Methode"
+          },
+          "costCentreCode": {
+            "type": "string",
+            "description": "FK to CostCenter.code (bookkeeping-cost-centers-dimensions).",
+            "example": "K-SP-014",
+            "title": "Kostenplaats Code"
+          },
+          "costObjectCode": {
+            "type": "string",
+            "description": "FK to KostenDrager.code (bookkeeping-cost-centers-dimensions).",
+            "example": "D-MO-SP-014",
+            "title": "Kostendrager Code"
+          },
+          "isExempted": {
+            "type": "boolean",
+            "description": "True when exempted via an AlgemeenBelangBesluit.",
+            "default": false,
+            "title": "Is Exempted"
+          },
+          "exemptionDecisionId": {
+            "type": "string",
+            "description": "FK to AlgemeenBelangBesluit.id when isExempted=true.",
+            "nullable": true,
+            "title": "Exemption Besluit ID",
+            "$ref": "AlgemeenBelangBesluit"
+          },
+          "annualRevenue": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Last-known annual turnover in EUR (informational; not authoritative).",
+            "nullable": true,
+            "title": "Jaaromzet"
+          },
+          "acmReport": {
+            "type": "object",
+            "description": "ACM meldingstatus (REQ-WMO-001).",
+            "properties": {
+              "submitted": {
+                "type": "boolean",
+                "description": "Whether reported to ACM.",
+                "title": "Ingediend"
+              },
+              "date": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "ACM submission date.",
+                "title": "Datum"
+              },
+              "reference": {
+                "type": "string",
+                "nullable": true,
+                "description": "ACM reference number.",
+                "example": "ACM/UIT/498321",
+                "title": "Kenmerk"
+              }
+            },
+            "required": [
+              "submitted"
+            ],
+            "title": "Acm Melding"
+          },
+          "deelnemers": {
+            "type": "array",
+            "description": "Multi-bestuursorgaan participants (REQ-WMO-011, Phase 3). Empty for single-deelnemer activities.",
+            "items": {
+              "type": "object",
+              "required": [
+                "organisation",
+                "sharePercentage",
+                "administrationId"
+              ],
+              "properties": {
+                "organisation": {
+                  "type": "string",
+                  "description": "Deelnemer organisation name.",
+                  "title": "Organisatie"
+                },
+                "sharePercentage": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100,
+                  "description": "Deelnemer share percentage (sum across deelnemers SHOULD equal 100).",
+                  "title": "Aandeel Percentage"
+                },
+                "costCentreCode": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Deelnemer-specific cost-center.",
+                  "title": "Kostenplaats Code"
+                },
+                "costObjectCode": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Deelnemer-specific kostendrager.",
+                  "title": "Kostendrager Code"
+                },
+                "administrationId": {
+                  "type": "string",
+                  "description": "Deelnemer administration FK.",
+                  "title": "Administration ID"
+                },
+                "exemptionDecisionId": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Per-deelnemer ABB FK; null for non-exempted deelnemers.",
+                  "title": "Exemption Besluit ID"
+                }
+              }
+            },
+            "default": [],
+            "title": "Deelnemers"
+          },
+          "lastReviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of last annual compliance review (REQ-WMO-001 §c).",
+            "nullable": true,
+            "title": "Last Reviewed At"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration owning the activity.",
+            "example": "adm-gemeente-apeldoorn",
+            "title": "Administration ID"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "paused",
+              "closed"
+            ],
+            "description": "Activity state. closed is set when eindDatum is recorded; records are never deleted.",
+            "default": "active",
+            "title": "State"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "active",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "WMO records retained 7 years per Mededingingswet bewaartermijn."
+          },
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Operating commercial activity. IKP calc + transaction splits + alerts apply."
+            },
+            "paused": {
+              "label": "Paused",
+              "description": "Temporarily inactive; IKP calc skipped but record remains for audit."
+            },
+            "closed": {
+              "label": "Closed",
+              "description": "Activity ended (eindDatum recorded). Historical reporting only."
+            }
+          },
+          "transitions": {
+            "pause": {
+              "from": "active",
+              "to": "paused",
+              "label": "Pause activity"
+            },
+            "resume": {
+              "from": "paused",
+              "to": "active",
+              "label": "Resume activity"
+            },
+            "close": {
+              "from": "active",
+              "to": "closed",
+              "label": "Close activity",
+              "description": "Requires eindDatum to be set."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "lastIntegralCostPricePeriod": {
+            "description": "Most-recent IKP period (REQ-WMO-002). Drives the cross-subsidy 'omzet spike without IKP update' alert.",
+            "groupBy": [
+              "commercialActivityId"
+            ],
+            "filter": {},
+            "max": [
+              "period"
+            ],
+            "from": "IntegralCostPrice"
+          },
+          "totalManualOverrides": {
+            "description": "Cumulative count of handmatige overrides for this activity, used by REQ-WMO-007 detector scenario 5.",
+            "groupBy": [
+              "commercialActivityId"
+            ],
+            "filter": {
+              "automaticApplied": false
+            },
+            "count": true,
+            "from": "ActivityCostAllocation"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "concerncontroller": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "finansieel-beleidsadviseur": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "griffier": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-scheduled-workflows": {
+          "wmo-annual-review-detector": {
+            "name": "Annual review-task generator",
+            "description": "Daily walker over all active CommercialActivity records. Emits a 'wmo-annual-review' task whenever lastReviewedAt is > 365 days old (REQ-WMO-001 §c). Composed by CommercialActivityReviewService and dispatched via the Nextcloud notification + IJobList task surface.",
+            "cron": "0 6 * * *",
+            "register": "shillinq",
+            "schema": "CommercialActivity",
+            "enabled": true,
+            "filter": {
+              "state": [
+                "active"
+              ]
+            },
+            "handler": "OCA\\Shillinq\\Service\\CommercialActivityReviewService::composeReviewTask"
+          },
+          "wmo-cross-subsidy-detector": {
+            "name": "Cross-subsidy detector",
+            "description": "Monthly walker per CommercialActivity, evaluating the 6 REQ-WMO-007 cross-subsidy risk scenarios (loss-financing, omzet-spike-no-IKP-update, overhead-under-allocation, ABB-stale, manual-override-accumulation, potentiele-overhead-onderschatting) plus the REQ-WMO-012 Phase-3 bevoordeling-risk scenario. Emits AlertLog records via CrossSubsidyDetector for any match. Runs the 1st of the month at 02:00 UTC.",
+            "cron": "0 2 1 * *",
+            "register": "shillinq",
+            "schema": "CommercialActivity",
+            "enabled": true,
+            "filter": {
+              "state": [
+                "active"
+              ]
+            },
+            "handler": "OCA\\Shillinq\\Service\\CrossSubsidyDetector::composeAlert"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Commercial Activity is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "IntegralCostPrice": {
+        "slug": "IntegralCostPrice",
+        "x-openregister-purpose": "fact",
+        "icon": "CalculatorVariantOutline",
+        "version": "0.1.0",
+        "title": "Integral Cost Price",
+        "description": "Time-versioned integrale-kostprijs (IKP) record per commercial activity per period (REQ-WMO-002). Monthly records are status=voorlopig; the year-end roll-up is signed off as status=definitief on 31 March of the following year. Records are immutable after creation; restatements create a new periode-restatement record rather than mutating prior values.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
+        "type": "object",
+        "required": [
+          "commercialActivityId",
+          "period",
+          "calculatedOn",
+          "status",
+          "componenten",
+          "totalCost",
+          "compliant",
+          "administrationId"
+        ],
+        "properties": {
+          "commercialActivityId": {
+            "type": "string",
+            "description": "FK to CommercialActivity.id.",
+            "example": "ca-mo-sp-014",
+            "title": "Commercial Activity ID",
+            "$ref": "CommercialActivity"
+          },
+          "period": {
+            "type": "string",
+            "description": "Period identifier YYYY-MM (monthly), YYYY-Qn (quarterly) or YYYY-YTD (annual).",
+            "pattern": "^[0-9]{4}-(0[1-9]|1[0-2]|Q[1-4]|YTD)(-restatement)?$",
+            "example": "2026-Q1",
+            "title": "Periode"
+          },
+          "calculatedOn": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp the calculation was run.",
+            "title": "Berekend Op"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "voorlopig",
+              "final"
+            ],
+            "description": "voorlopig = monthly provisional; final = year-end accountant-signed lock.",
+            "default": "voorlopig",
+            "title": "Status"
+          },
+          "componenten": {
+            "type": "object",
+            "description": "Component breakdown of integrale kostprijs in EUR (REQ-WMO-002).",
+            "required": [
+              "directPayrollCost",
+              "directMaterials",
+              "directDepreciations",
+              "indirecteOverhead",
+              "capitalCost",
+              "profitMarkup"
+            ],
+            "properties": {
+              "directPayrollCost": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Direct labour costs from GL accounts tagged with the activity's kostenplaatsCode.",
+                "title": "Directe Loonkosten"
+              },
+              "directMaterials": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Direct materials costs from the activity's GL lines.",
+                "title": "Directe Materialen"
+              },
+              "directDepreciations": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Direct depreciation costs (FixedAsset.monthlyDepreciation × period) for assets dedicated to the activity.",
+                "title": "Directe Afschrijvingen"
+              },
+              "indirecteOverhead": {
+                "type": "object",
+                "description": "Indirect overhead allocated via the geldende OverheadDistributionRule (BBV taakveld 0.4 sleutel). Sub-keys are buckets (huisvesting, ict, directieEnStaf, facilitair, plus operator-custom).",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "title": "Indirecte Overhead"
+              },
+              "capitalCost": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Capital cost via WACC (default 4.5%, configurable per administration) on the activity's invested book value.",
+                "title": "Vermogenskosten"
+              },
+              "profitMarkup": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Profit mark-up (default 2-5%, configurable per activity and per period).",
+                "title": "Winstopslag"
+              }
+            },
+            "title": "Componenten"
+          },
+          "totalCost": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Sum of all components in EUR.",
+            "title": "Totale Kosten"
+          },
+          "soldUnits": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Units sold/delivered in period (e.g. 312 dagdelen-zaalhuur).",
+            "title": "Verkochte Eenheden"
+          },
+          "unitLabel": {
+            "type": "string",
+            "nullable": true,
+            "description": "Unit name (e.g. 'dagdeel-zaalhuur').",
+            "example": "dagdeel-zaalhuur",
+            "title": "Eenheid Label"
+          },
+          "costPricePerUnit": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "description": "totaleKosten / verkochteEenheden (when units are tracked).",
+            "title": "Kostprijs Per Eenheid"
+          },
+          "appliedRate": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Actual price charged per unit (Art. 25i compliance check input).",
+            "title": "Gehanteerd Tarief"
+          },
+          "marge": {
+            "type": "number",
+            "nullable": true,
+            "description": "gehanteerdTarief - kostprijsPerEenheid (or totaleKosten when no units).",
+            "title": "Marge"
+          },
+          "margePercentage": {
+            "type": "number",
+            "nullable": true,
+            "description": "marge / (kostprijsPerEenheid or totaleKosten) × 100.",
+            "title": "Marge Percentage"
+          },
+          "compliant": {
+            "type": "boolean",
+            "description": "True when gehanteerdTarief >= kostprijsPerEenheid (or totaleKosten if no units).",
+            "title": "Compliant"
+          },
+          "finalSignedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "Nextcloud user-id of accountant who signed off on a definitief record (REQ-WMO-002 §year-end lock).",
+            "title": "Definitief Signed By"
+          },
+          "finalSignedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp of the year-end definitief sign-off.",
+            "title": "Definitief Signed At"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cost-center notes, allocation method, assumptions.",
+            "title": "Toelichting"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration.",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "concerncontroller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "finansieel-beleidsadviseur": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-scheduled-workflows": {
+          "wmo-ikp-monthly-calculation": {
+            "name": "Monthly IKP calculation",
+            "description": "Monthly calculation of IntegralCostPrice voorlopig per active CommercialActivity (REQ-WMO-002). Pulls GL lines tagged with the activity's kostenplaats / kostendrager, applies the geldende OverheadDistributionRule (BBV taakveld 0.4 sleutel), the WACC vermogenskosten rate, and the per-period winstopslag. Persists one IKP record per (commercialActivityId, periode). Runs the 1st of the month at 03:00 UTC.",
+            "cron": "0 3 1 * *",
+            "register": "shillinq",
+            "schema": "IntegralCostPrice",
+            "enabled": true,
+            "handler": "OCA\\Shillinq\\Service\\IntegralCostPriceCalculator::compose"
+          },
+          "wmo-ikp-year-end-lock": {
+            "name": "Year-end IKP definitief lock",
+            "description": "On 31 March of the following fiscal year, aggregates all monthly voorlopig IKP records for the closed FY into a single definitief IKP-YTD record, locked by accountant digital signature (REQ-WMO-002 §year-end lock).",
+            "cron": "0 4 31 3 *",
+            "register": "shillinq",
+            "schema": "IntegralCostPrice",
+            "enabled": true,
+            "handler": "OCA\\Shillinq\\Service\\IntegralCostPriceLockService::lock"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Integral Cost Price is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "ActivityCostAllocation": {
+        "slug": "ActivityCostAllocation",
+        "x-openregister-purpose": "fact",
+        "icon": "CallSplit",
+        "version": "0.1.0",
+        "title": "Activity Cost Allocation",
+        "description": "Immutable, reversible split record (REQ-WMO-003). A JournalEntry posted on a GL account linked to a CommercialActivity (via kostenplaats/kostendrager) triggers an automatic split using the geldende OverheadDistributionRule for the posting date. Handmatige overrides require 4-ogen-akkoord (two approver ids) and a motivering; the original record is marked status=overridden and a new record replaces it.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
+        "type": "object",
+        "required": [
+          "journalEntryId",
+          "commercialActivityId",
+          "originalAmount",
+          "splits",
+          "allocationKey",
+          "automaticApplied",
+          "postingDate",
+          "administrationId",
+          "status"
+        ],
+        "properties": {
+          "journalEntryId": {
+            "type": "string",
+            "description": "FK to the JournalEntry / GLTransaction being split (REQ-WMO-003).",
+            "title": "Journal Entry ID",
+            "$ref": "JournalEntry"
+          },
+          "commercialActivityId": {
+            "type": "string",
+            "description": "FK to the CommercialActivity matched on kostenplaats/kostendrager.",
+            "title": "Commercial Activity ID",
+            "$ref": "CommercialActivity"
+          },
+          "glLineId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the specific GLLine within the journal entry (when a line-level match).",
+            "title": "GL Line ID"
+          },
+          "originalAmount": {
+            "type": "number",
+            "description": "Total transaction amount being split (EUR; can be negative for credit memos).",
+            "title": "Original Amount"
+          },
+          "splits": {
+            "type": "array",
+            "description": "Split lines; sum of amounts equals originalAmount.",
+            "items": {
+              "type": "object",
+              "required": [
+                "costObject",
+                "ratio",
+                "amount",
+                "dimension"
+              ],
+              "properties": {
+                "costObject": {
+                  "type": "string",
+                  "description": "Destination kostendrager code (e.g. D-PUBL-NM-100 or D-MO-NM-001).",
+                  "title": "Kostendrager"
+                },
+                "ratio": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Fractional share of originalAmount.",
+                  "title": "Ratio"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "Calculated EUR amount (originalAmount × ratio, rounded to cents).",
+                  "title": "Amount"
+                },
+                "generalLedger": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Optional materialised GL account number when the operator runs 'post splits to ledger' mode.",
+                  "title": "Grootboek"
+                },
+                "dimension": {
+                  "type": "string",
+                  "enum": [
+                    "PUBL",
+                    "MO"
+                  ],
+                  "description": "Sub-administratie dimension. PUBL = publieke; MO = markt/commerciële.",
+                  "title": "Dimensie"
+                }
+              }
+            },
+            "title": "Splits"
+          },
+          "allocationKey": {
+            "type": "string",
+            "description": "FK to OverheadDistributionRule.id used for this split.",
+            "title": "Verdeelsleutel"
+          },
+          "automaticApplied": {
+            "type": "boolean",
+            "description": "True for automatic split via the splitter; false for handmatige overrides.",
+            "title": "Automatisch Toegepast"
+          },
+          "handmatigeOverride": {
+            "type": "object",
+            "description": "Override record when automatischToegepast=false. Requires 2-eye sign-off (REQ-WMO-003 §override).",
+            "nullable": true,
+            "properties": {
+              "approvedBy": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 2,
+                "maxItems": 2,
+                "description": "Exactly two Nextcloud user-ids that approved the override.",
+                "title": "Approved By"
+              },
+              "reason": {
+                "type": "string",
+                "description": "Motivering for the override.",
+                "title": "Reason"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Override timestamp.",
+                "title": "Timestamp"
+              },
+              "replacesId": {
+                "type": "string",
+                "description": "FK to the original (now status=overridden) ActivityCostAllocation.",
+                "title": "Replaces ID"
+              }
+            },
+            "required": [
+              "approvedBy",
+              "reason",
+              "timestamp"
+            ],
+            "title": "Handmatige Override"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Posting date of the source journal entry — drives geldende-OverheadDistributionRule selection.",
+            "title": "Posting Date"
+          },
+          "materialised": {
+            "type": "boolean",
+            "description": "True when the split was posted to the ledger as balanced GL lines (REQ-WMO-003 §materialise mode).",
+            "default": false,
+            "title": "Materialised"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration.",
+            "title": "Administration ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "overridden",
+              "reversed"
+            ],
+            "description": "Lifecycle. overridden = a newer ActivityCostAllocation replaces it; reversed = source journal entry was reversed.",
+            "default": "active",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "active",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "ActivityCostAllocation records retained 7 years per Mededingingswet bewaartermijn."
+          },
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Authoritative split for reporting."
+            },
+            "overridden": {
+              "label": "Overridden",
+              "description": "Superseded by a handmatige override; preserved for audit trail."
+            },
+            "reversed": {
+              "label": "Reversed",
+              "description": "Source journal entry reversed; allocation no longer in effect."
+            }
+          },
+          "transitions": {
+            "override": {
+              "from": "active",
+              "to": "overridden",
+              "label": "Override"
+            },
+            "reverse": {
+              "from": "active",
+              "to": "reversed",
+              "label": "Reverse"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "concerncontroller": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-event-listeners": {
+          "journal-entry-posted": {
+            "name": "Activity cost allocation splitter",
+            "description": "On JournalEntry.created / .transitioned to status=posted, resolve the geldende OverheadDistributionRule for the posting date, match the CommercialActivity by kostenplaats/kostendrager, and persist an ActivityCostAllocation record carrying the PUBL / MO splits (REQ-WMO-003). Materialise mode (post splits as additional balanced GL lines) is operator-configurable per administration.",
+            "sourceSchema": "JournalEntry",
+            "trigger": "transitioned",
+            "toState": "posted",
+            "handler": "OCA\\Shillinq\\Service\\ActivityCostAllocationSplitter::compose"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Activity Cost Allocation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "AlgemeenBelangBesluit": {
+        "slug": "AlgemeenBelangBesluit",
+        "icon": "Gavel",
+        "version": "0.1.0",
+        "title": "Public Interest Decision",
+        "description": "AlgemeenBelangBesluit (ABB) lifecycle record (REQ-WMO-005). Workflow: concept → raadsvoorstel → raadsbesluit → publicatie → acm-notified → bezwaar → geldig → evaluatie-due → herziening/intrekking. State transitions enforce preconditions (raadsbesluit requires kenmerk; geldig requires publicatieDatum + ACM-kenmerk). Automatic tasks are generated on raadsbesluit (publish gemeenteblad +14d), publicatie (notify ACM +7d), acm-notified (review bezwaarschriften +42d), and when volgendeEvaluatie is reached.",
+        "x-schema-org": "schema:LegislationObject",
+        "x-spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
+        "type": "object",
+        "required": [
+          "reference",
+          "governingBody",
+          "determinationDate",
+          "notificationAcm",
+          "concernsActivities",
+          "publicInterestCategories",
+          "rationale",
+          "nextEvaluation",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "reference": {
+            "type": "string",
+            "description": "Raadsbesluit reference.",
+            "example": "Raadsbesluit 2025-184",
+            "title": "Kenmerk"
+          },
+          "governingBody": {
+            "type": "string",
+            "description": "Bestuursorgaan that passed the ABB.",
+            "title": "Bestuursorgaan"
+          },
+          "determinationDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Raad-vote date.",
+            "title": "Vaststellingsdatum"
+          },
+          "publicationMunicipalGazette": {
+            "type": "string",
+            "nullable": true,
+            "description": "Gemeenteblad reference (e.g. gmb-2021-401892).",
+            "title": "Publicatie Gemeenteblad"
+          },
+          "publicationDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Publication date in gemeenteblad / provinciaalblad.",
+            "title": "Publicatie Datum"
+          },
+          "dropVerification": {
+            "type": "object",
+            "nullable": true,
+            "description": "DROP-API verification record (REQ-WMO-005 §automatic publication verification).",
+            "properties": {
+              "verifiedAt": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Verified At",
+                "description": "The date and time for verified at."
+              },
+              "success": {
+                "type": "boolean",
+                "title": "Success",
+                "description": "Indicates whether success applies."
+              },
+              "message": {
+                "type": "string",
+                "nullable": true,
+                "title": "Message",
+                "description": "The message."
+              }
+            },
+            "title": "Drop Verification"
+          },
+          "notificationAcm": {
+            "type": "object",
+            "description": "ACM notification status.",
+            "required": [
+              "submitted"
+            ],
+            "properties": {
+              "submitted": {
+                "type": "boolean",
+                "default": false,
+                "title": "Ingediend",
+                "description": "Indicates whether ngediend applies."
+              },
+              "date": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "title": "Datum",
+                "description": "The date and time for datum."
+              },
+              "reference": {
+                "type": "string",
+                "nullable": true,
+                "example": "ACM/IN/621004",
+                "title": "Kenmerk",
+                "description": "The kenmerk."
+              }
+            },
+            "title": "Kennisgeving Acm"
+          },
+          "concernsActivities": {
+            "type": "array",
+            "description": "FK array of CommercialActivity.id records exempted by this ABB.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Betreft Activiteiten"
+          },
+          "publicInterestCategories": {
+            "type": "array",
+            "description": "Public-interest categories per VNG handreiking.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "arbeidsparticipatie",
+                "duurzaamheid",
+                "armoedebestrijding",
+                "gezondheid",
+                "cultuur",
+                "onderwijs",
+                "onderzoek",
+                "innovatie",
+                "sociaaleconomische-cohesie",
+                "custom"
+              ]
+            },
+            "title": "Publiek Belang Categorieen"
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Reasoned justification for public interest (VNG-format).",
+            "title": "Motivering"
+          },
+          "evaluationCadence": {
+            "type": "string",
+            "enum": [
+              "jaarlijks",
+              "tweejaarlijks",
+              "driejaarlijks"
+            ],
+            "description": "Evaluation frequency.",
+            "default": "tweejaarlijks",
+            "title": "Evaluatie Ritme"
+          },
+          "nextEvaluation": {
+            "type": "string",
+            "format": "date",
+            "description": "Next scheduled evaluation date (auto-calculated from vaststellingsdatum + evaluatieRitme).",
+            "title": "Volgende Evaluatie"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "raadsvoorstel",
+              "councilResolution",
+              "publicatie",
+              "acm-notified",
+              "bezwaar",
+              "geldig",
+              "evaluatie-due",
+              "herziening",
+              "intrekking"
+            ],
+            "description": "Workflow state. Geldig requires publicatieDatum + kennisgevingAcm.ingediend.",
+            "default": "draft",
+            "title": "Status"
+          },
+          "objectionTermElapsed": {
+            "type": "boolean",
+            "description": "True when the 6-week bezwaarschrift period has expired.",
+            "default": false,
+            "title": "Bezwaar Termijn Verstreken"
+          },
+          "administrativeLawProcedures": {
+            "type": "array",
+            "description": "References to bezwaarschrift / administratief beroep records.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reference": {
+                  "type": "string",
+                  "title": "Kenmerk",
+                  "description": "The kenmerk."
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "title": "Datum",
+                  "description": "The date and time for datum."
+                },
+                "description": {
+                  "type": "string",
+                  "title": "Omschrijving",
+                  "description": "The omschrijving."
+                }
+              }
+            },
+            "default": [],
+            "title": "Bestuursrechtelijke Procedures"
+          },
+          "councilDecisionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional FK or freeform reference to bookkeeping-governance raads-besluit (Phase 3).",
+            "title": "Raads Besluit ID"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration.",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "ABB retained 7 years per Mededingingswet bewaartermijn."
+          },
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Draft ABB."
+            },
+            "raadsvoorstel": {
+              "label": "Raadsvoorstel",
+              "description": "Submitted as raadsvoorstel."
+            },
+            "councilResolution": {
+              "label": "Raadsbesluit",
+              "description": "Passed by raad / Provinciale Staten."
+            },
+            "publicatie": {
+              "label": "Publicatie",
+              "description": "Published in gemeenteblad."
+            },
+            "acm-notified": {
+              "label": "ACM notified",
+              "description": "Notification submitted to ACM."
+            },
+            "bezwaar": {
+              "label": "Bezwaar",
+              "description": "Within 6-week bezwaarschrift period."
+            },
+            "geldig": {
+              "label": "Geldig",
+              "description": "Effective; exempts linked activities."
+            },
+            "evaluatie-due": {
+              "label": "Evaluation due",
+              "description": "volgendeEvaluatie date reached."
+            },
+            "herziening": {
+              "label": "Herziening",
+              "description": "Under revision."
+            },
+            "intrekking": {
+              "label": "Intrekking",
+              "description": "Withdrawn."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "raadsvoorstel",
+              "label": "Submit raadsvoorstel"
+            },
+            "pass": {
+              "from": "raadsvoorstel",
+              "to": "councilResolution",
+              "label": "Pass raadsbesluit"
+            },
+            "publish": {
+              "from": "councilResolution",
+              "to": "publicatie",
+              "label": "Publish in gemeenteblad"
+            },
+            "notifyAcm": {
+              "from": "publicatie",
+              "to": "acm-notified",
+              "label": "Notify ACM"
+            },
+            "openBezwaar": {
+              "from": "acm-notified",
+              "to": "bezwaar",
+              "label": "Open bezwaarschrift period"
+            },
+            "makeEffective": {
+              "from": "bezwaar",
+              "to": "geldig",
+              "label": "Make effective"
+            },
+            "scheduleEvaluation": {
+              "from": "geldig",
+              "to": "evaluatie-due",
+              "label": "Schedule evaluation"
+            },
+            "revise": {
+              "from": "evaluatie-due",
+              "to": "herziening",
+              "label": "Revise"
+            },
+            "withdraw": {
+              "from": "geldig",
+              "to": "intrekking",
+              "label": "Withdraw"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "juridisch-beleidsadviseur": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "griffier": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "concerncontroller": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-lifecycle-actions": {
+          "validateTransition": {
+            "trigger": "beforeTransition",
+            "description": "Validate ABB status transition preconditions (e.g. publicatie requires gemeenteblad + datum; geldig requires ACM kenmerk). Implemented by AbbLifecycleService::canTransition.",
+            "handler": "OCA\\Shillinq\\Service\\AbbLifecycleService::canTransition"
+          },
+          "generateTasks": {
+            "trigger": "afterTransition",
+            "description": "Emit the auto-generated task envelope (publish-gemeenteblad, notify-acm, review-bezwaarschriften, evaluate-abb) per REQ-WMO-005 §c.",
+            "handler": "OCA\\Shillinq\\Service\\AbbLifecycleService::generateTasks"
+          },
+          "verifyDrop": {
+            "trigger": "afterTransition",
+            "transitions": [
+              "publicatie"
+            ],
+            "description": "On publicatie, look up the gemeenteblad reference via the DROP API (openconnector OC-source) and write the verification envelope back onto dropVerification (REQ-WMO-005 §automatic verification). Fail-soft: an unavailable DROP API logs a verification record with success=false but does NOT block the transition.",
+            "handler": "OCA\\Shillinq\\Service\\DropApiVerificationService::composeLookupRequest"
+          },
+          "flagDependentActivities": {
+            "trigger": "afterTransition",
+            "transitions": [
+              "intrekking",
+              "herziening"
+            ],
+            "description": "When an ABB enters intrekking or herziening, flag dependent CommercialActivity records (those whose exemptionBesluitId points at this ABB) for operator review (REQ-WMO-005 §dependents).",
+            "handler": "OCA\\Shillinq\\Service\\AbbLifecycleService::flagDependentActivities"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Public Interest Decision is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "ACMReport": {
+        "slug": "ACMReport",
+        "icon": "FileDocumentMultipleOutline",
+        "version": "0.1.0",
+        "title": "ACM Report",
+        "description": "Quarterly / annual ACM rapportage in the official ACM-standaardformulier-mo-2024 format (REQ-WMO-006). Reports are write-once after the concerncontroller signs them off; submission flips status to verzonden and starts the 7-year retention countdown per Mededingingswet bewaartermijn.",
+        "x-schema-org": "schema:Report",
+        "x-spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
+        "type": "object",
+        "required": [
+          "period",
+          "format",
+          "generatedAt",
+          "activities",
+          "administrationId",
+          "status"
+        ],
+        "properties": {
+          "period": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-(Q[1-4]|YTD)$",
+            "description": "Reporting period (quarterly or annual).",
+            "example": "2026-Q1",
+            "title": "Period"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "acm-standard_form-mo-2024"
+            ],
+            "description": "Report format version (REQ-WMO-006).",
+            "default": "acm-standard_form-mo-2024",
+            "title": "Format"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At",
+            "description": "The date and time for generated at."
+          },
+          "activities": {
+            "type": "array",
+            "description": "Per-activity reporting line.",
+            "items": {
+              "type": "object",
+              "required": [
+                "commercialActivityId",
+                "code",
+                "revenue",
+                "integralCostPrice",
+                "costRecoveryRatio",
+                "compliant"
+              ],
+              "properties": {
+                "commercialActivityId": {
+                  "type": "string",
+                  "title": "Commercial Activity ID",
+                  "description": "The identifier of the associated commercial activity."
+                },
+                "code": {
+                  "type": "string",
+                  "title": "Code",
+                  "description": "The classification or reference code."
+                },
+                "name": {
+                  "type": "string",
+                  "title": "Naam",
+                  "description": "The naam."
+                },
+                "revenue": {
+                  "type": "number",
+                  "minimum": 0,
+                  "title": "Omzet",
+                  "description": "The numeric value for omzet."
+                },
+                "integralCostPrice": {
+                  "type": "number",
+                  "minimum": 0,
+                  "title": "Integrale Kostprijs",
+                  "description": "The numeric value for integrale kostprijs."
+                },
+                "costRecoveryRatio": {
+                  "type": "number",
+                  "description": "omzet / integraleKostprijs.",
+                  "title": "Kostendekkingsratio"
+                },
+                "compliant": {
+                  "type": "boolean",
+                  "title": "Compliant",
+                  "description": "Indicates whether compliant applies."
+                },
+                "abbReference": {
+                  "type": "string",
+                  "nullable": true,
+                  "title": "Abb Referentie",
+                  "description": "The abb referentie."
+                }
+              }
+            },
+            "title": "Activiteiten"
+          },
+          "summary": {
+            "type": "string",
+            "nullable": true,
+            "description": "Narrative summary appended to the report.",
+            "title": "Samenvatting"
+          },
+          "manualOverrides": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Count of handmatige ActivityCostAllocation overrides during the period.",
+            "title": "Manual Overrides"
+          },
+          "abbList": {
+            "type": "array",
+            "description": "ABB-besluiten effective during the period (kenmerk + motivering excerpt).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reference": {
+                  "type": "string",
+                  "title": "Kenmerk",
+                  "description": "The kenmerk."
+                },
+                "rationaleExcerpt": {
+                  "type": "string",
+                  "title": "Motivering Excerpt",
+                  "description": "The motivering excerpt."
+                }
+              }
+            },
+            "title": "Abb List"
+          },
+          "signatory": {
+            "type": "string",
+            "nullable": true,
+            "description": "Nextcloud user-id of the concerncontroller who signed.",
+            "title": "Ondertekenaar"
+          },
+          "signedOn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Signature timestamp.",
+            "title": "Ondertekend Op"
+          },
+          "signatureFingerprint": {
+            "type": "string",
+            "nullable": true,
+            "description": "Deprecated — retained for legacy provenance (REQ-SIGN-009). Superseded by signingRequestRef / signingStatus.",
+            "x-delegated-to": "docudesk",
+            "deprecated": true,
+            "title": "Signature Fingerprint"
+          },
+          "signingRequestRef": {
+            "type": "string",
+            "nullable": true,
+            "description": "Docudesk signingRequest id. Written only by the docudesk registry callback (REQ-SIGN-001). Format: `legacy-local:<fingerprint>` for pre-delegation records (REQ-SIGN-009).",
+            "title": "Signing Request Ref"
+          },
+          "signingStatus": {
+            "type": "string",
+            "enum": [
+              "requested",
+              "in-progress",
+              "signed",
+              "declined",
+              "expired"
+            ],
+            "nullable": true,
+            "description": "Mirror of the docudesk signing status (REQ-SIGN-001). Written only by the registry callback.",
+            "title": "Signing Status"
+          },
+          "signingProvider": {
+            "type": "string",
+            "nullable": true,
+            "description": "eIDAS provider, read back from docudesk for the dossier.",
+            "title": "Signing Provider"
+          },
+          "signingLevel": {
+            "type": "string",
+            "enum": [
+              "simple",
+              "advanced",
+              "qualified"
+            ],
+            "nullable": true,
+            "description": "eIDAS level, read back from docudesk.",
+            "title": "Signing Level"
+          },
+          "signedDocumentRef": {
+            "type": "string",
+            "nullable": true,
+            "description": "NC Files reference to the signed artifact produced by docudesk (link, not re-stored).",
+            "title": "Signed Document Ref"
+          },
+          "decisionRef": {
+            "type": "string",
+            "nullable": true,
+            "description": "Decidesk Decision id for the concerncontroller sign-off (REQ-SIGN-002). Written only by the decidesk registry callback.",
+            "title": "Decision Ref"
+          },
+          "decisionOutcome": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "nullable": true,
+            "description": "Mirror of the decidesk decision outcome (REQ-SIGN-002).",
+            "title": "Decision Outcome"
+          },
+          "sentInAcm": {
+            "type": "boolean",
+            "default": false,
+            "description": "True after submission to ACM (or generation of submission-ready package).",
+            "title": "Verzonden Aan Acm"
+          },
+          "sentInAcmOn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Verzonden Aan Acm Op",
+            "description": "The verzonden aan acm op."
+          },
+          "publicationMunicipalGazette": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional gemeenteblad publication reference for the report itself.",
+            "title": "Publicatie Gemeenteblad"
+          },
+          "administrationId": {
+            "type": "string",
+            "title": "Administration ID",
+            "description": "The date and time for administration id.",
+            "$ref": "Administration"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "ready-for-submission",
+              "verzonden",
+              "archived"
+            ],
+            "default": "draft",
+            "description": "Lifecycle. archived marks the 7-year-old immutable retention state.",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "ACM rapportages retained 7 years per Mededingingswet."
+          },
+          "states": {
+            "draft": {
+              "label": "Draft"
+            },
+            "ready-for-submission": {
+              "label": "Ready for submission",
+              "description": "Concerncontroller signed; awaiting ACM submission."
+            },
+            "verzonden": {
+              "label": "Submitted"
+            },
+            "archived": {
+              "label": "Archived"
+            }
+          },
+          "transitions": {
+            "sign": {
+              "from": "draft",
+              "to": "ready-for-submission",
+              "label": "Sign report"
+            },
+            "submit": {
+              "from": "ready-for-submission",
+              "to": "verzonden",
+              "label": "Submit to ACM"
+            },
+            "archive": {
+              "from": "verzonden",
+              "to": "archived",
+              "label": "Archive"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "concerncontroller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-lifecycle-actions": {
+          "signReport": {
+            "trigger": "beforeTransition",
+            "transitions": [
+              "ready-for-submission"
+            ],
+            "description": "On transition draft -> ready-for-submission, raises a docudesk signingRequest via the ADR-019 integration registry (REQ-SIGN-001). No PKI signing is performed in shillinq. The transition is OUTCOME-DRIVEN: it fires only when signingStatus==signed and/or decisionOutcome==approved (REQ-SIGN-003).",
+            "handler": "OCA\\Shillinq\\Service\\Signing\\SigningDelegationService::requestSignature"
+          },
+          "submitReport": {
+            "trigger": "afterTransition",
+            "transitions": [
+              "verzonden"
+            ],
+            "description": "On transition ready-for-submission -> verzonden, set verzondenAanAcm=true, optionally publish to gemeenteblad via openconnector, copy to write-once archive store, begin 7-year retention countdown (REQ-WMO-006 §submission + immutability).",
+            "handler": "OCA\\Shillinq\\Service\\AcmReportGenerator::submit"
+          },
+          "jaarrekeningWiring": {
+            "trigger": "afterCreate",
+            "description": "Wire annual ACM-rapport generation into the bookkeeping-financial-reporting T4 jaarrekening-generator: when an annual ACMReport (period ending in -YTD) is created, the financial-reporting export pipeline includes the WMO-bijlage produced by WmoJaarrekeningBijlageService (REQ-WMO-004 wiring, P1-15).",
+            "handler": "OCA\\Shillinq\\Service\\WmoJaarrekeningBijlageService::compose"
+          }
+        },
+        "x-openregister-notifications": {
+          "signingStatusSigned": {
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "signingStatus",
+                "operator": "equals",
+                "value": "signed"
+              }
+            },
+            "recipients": [
+              {
+                "kind": "field",
+                "field": "owner"
+              },
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              }
+            ],
+            "subject": {
+              "nl": "ACM-rapport ondertekend door docudesk",
+              "en": "ACM report signed via docudesk"
+            },
+            "body": {
+              "nl": "Het ACM-rapport voor periode {{period}} is ondertekend.",
+              "en": "The ACM report for period {{period}} has been signed."
+            },
+            "metadataOnly": true
+          },
+          "signingStatusDeclined": {
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "signingStatus",
+                "operator": "equals",
+                "value": "declined"
+              }
+            },
+            "recipients": [
+              {
+                "kind": "field",
+                "field": "owner"
+              },
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              }
+            ],
+            "subject": {
+              "nl": "Ondertekening ACM-rapport geweigerd",
+              "en": "ACM report signing declined"
+            },
+            "body": {
+              "nl": "De handtekening voor het ACM-rapport periode {{period}} is geweigerd.",
+              "en": "The signature request for ACM report period {{period}} was declined."
+            },
+            "metadataOnly": true
+          },
+          "decisionOutcomeApproved": {
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "decisionOutcome",
+                "operator": "equals",
+                "value": "approved"
+              }
+            },
+            "recipients": [
+              {
+                "kind": "field",
+                "field": "owner"
+              },
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              }
+            ],
+            "subject": {
+              "nl": "ACM-rapport approved door concerncontroller",
+              "en": "ACM report approved by concerncontroller"
+            },
+            "body": {
+              "nl": "Het ACM-rapport voor periode {{period}} is approved via decidesk.",
+              "en": "The ACM report for period {{period}} was approved via decidesk."
+            },
+            "metadataOnly": true
+          },
+          "decisionOutcomeRejected": {
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "decisionOutcome",
+                "operator": "equals",
+                "value": "rejected"
+              }
+            },
+            "recipients": [
+              {
+                "kind": "field",
+                "field": "owner"
+              },
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              }
+            ],
+            "subject": {
+              "nl": "ACM-rapport afgewezen door concerncontroller",
+              "en": "ACM report rejected by concerncontroller"
+            },
+            "body": {
+              "nl": "Het ACM-rapport voor periode {{period}} is afgewezen via decidesk.",
+              "en": "The ACM report for period {{period}} was rejected via decidesk."
+            },
+            "metadataOnly": true
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a ACM Report is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "AlertLog": {
+        "slug": "AlertLog",
+        "icon": "AlertOctagonOutline",
+        "version": "0.1.0",
+        "title": "Cross-Subsidy Alert",
+        "description": "Cross-subsidy detector alert (REQ-WMO-007). Generated monthly by the CrossSubsidyDetector ScheduledWorkflow for the 6 risk scenarios. Alerts default to assignedTo concerncontroller; if status=open for > 4 weeks the alert escalates to escalation-due assigned to gemeentesecretaris.",
+        "x-schema-org": "schema:Action",
+        "x-spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
+        "type": "object",
+        "required": [
+          "alertType",
+          "commercialActivityId",
+          "severity",
+          "generatedAt",
+          "assignedTo",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "alertType": {
+            "type": "string",
+            "enum": [
+              "loss-financing",
+              "omzet-spike-no-ikp-update",
+              "overhead-under-allocation",
+              "abb-stale",
+              "manual-override-accumulation",
+              "potentiele-overhead-onderschatting",
+              "bevoordeling-risk"
+            ],
+            "description": "One of the 6 REQ-WMO-007 scenarios plus REQ-WMO-012 bevoordeling-risk (Phase 3).",
+            "title": "Alert Type"
+          },
+          "commercialActivityId": {
+            "type": "string",
+            "description": "FK to the affected CommercialActivity.",
+            "title": "Commercial Activity ID",
+            "$ref": "CommercialActivity"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH"
+            ],
+            "title": "Severity",
+            "description": "The severity."
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At",
+            "description": "The date and time for generated at."
+          },
+          "assignedTo": {
+            "type": "string",
+            "description": "Nextcloud user-id (concerncontroller by default).",
+            "title": "Assigned To"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "reviewed-no-action",
+              "remediated",
+              "escalated",
+              "escalation-due"
+            ],
+            "default": "open",
+            "title": "Status",
+            "description": "The current status of this record."
+          },
+          "escalatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Escalated At",
+            "description": "The date and time for escalated at."
+          },
+          "resolutionNotes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator's motivation when marking reviewed-no-action / remediated.",
+            "title": "Resolution Notes"
+          },
+          "detectionContext": {
+            "type": "object",
+            "nullable": true,
+            "description": "Detector-supplied context (e.g. {periode: '2026-02', kostprijs: 295, tarief: 280}).",
+            "additionalProperties": true,
+            "title": "Detection Context"
+          },
+          "administrationId": {
+            "type": "string",
+            "title": "Administration ID",
+            "description": "The date and time for administration id."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "open",
+          "states": {
+            "open": {
+              "label": "Open"
+            },
+            "reviewed-no-action": {
+              "label": "Reviewed (no action)"
+            },
+            "remediated": {
+              "label": "Remediated"
+            },
+            "escalation-due": {
+              "label": "Escalation due",
+              "description": "Open > 4 weeks; assign to gemeentesecretaris."
+            },
+            "escalated": {
+              "label": "Escalated"
+            }
+          },
+          "transitions": {
+            "review": {
+              "from": "open",
+              "to": "reviewed-no-action",
+              "label": "Mark reviewed"
+            },
+            "remediate": {
+              "from": "open",
+              "to": "remediated",
+              "label": "Mark remediated"
+            },
+            "escalateDue": {
+              "from": "open",
+              "to": "escalation-due",
+              "label": "Mark for escalation"
+            },
+            "escalate": {
+              "from": "escalation-due",
+              "to": "escalated",
+              "label": "Escalate"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "concerncontroller": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "gemeentesecretaris": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-scheduled-workflows": {
+          "wmo-alert-escalation": {
+            "name": "Cross-subsidy alert escalation",
+            "description": "Weekly walker over open AlertLog records. Any alert older than 4 weeks transitions status open -> escalation-due, is reassigned to gemeentesecretaris, and emits an escalation notification (REQ-WMO-007 §escalation).",
+            "cron": "0 5 * * 1",
+            "register": "shillinq",
+            "schema": "AlertLog",
+            "enabled": true,
+            "filter": {
+              "status": [
+                "open"
+              ]
+            },
+            "handler": "OCA\\Shillinq\\Service\\CrossSubsidyDetector::escalate"
+          }
+        },
+        "x-openregister-lifecycle-actions": {
+          "resolveAlert": {
+            "trigger": "beforeTransition",
+            "transitions": [
+              "reviewed-no-action",
+              "remediated"
+            ],
+            "description": "Validate resolution notes are non-empty and write the operator's motivation onto resolutionNotes (REQ-WMO-007 §resolution).",
+            "handler": "OCA\\Shillinq\\Service\\CrossSubsidyDetector::resolve"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Cross-Subsidy Alert is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "WMOAuditLog": {
+        "slug": "WMOAuditLog",
+        "icon": "ClipboardTextClockOutline",
+        "version": "0.1.0",
+        "title": "WMO Audit Log",
+        "description": "Immutable audit-trail entry for any WMO entity-mutation (REQ-WMO-010). Append-only; entries are never updated except for the lifecycle transition to status=archived after the 7-year Mededingingswet bewaartermijn elapses. Sourced for the CSV export and the ACM handhavings-pakket.",
+        "x-schema-org": "schema:Event",
+        "x-spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
+        "type": "object",
+        "required": [
+          "eventType",
+          "entityId",
+          "entityType",
+          "userId",
+          "timestamp",
+          "afterValues",
+          "administrationId",
+          "status"
+        ],
+        "properties": {
+          "eventType": {
+            "type": "string",
+            "enum": [
+              "activity-created",
+              "activity-updated",
+              "ikp-calculated",
+              "ikp-final-signed",
+              "split-applied",
+              "split-overridden",
+              "abb-status-change",
+              "acm-report-generated",
+              "acm-report-signed",
+              "acm-report-submitted",
+              "alert-created",
+              "alert-resolved",
+              "benchmark-created"
+            ],
+            "title": "Event Type",
+            "description": "The type or category of even."
+          },
+          "entityId": {
+            "type": "string",
+            "title": "Entity ID",
+            "description": "The identifier of the associated entity."
+          },
+          "entityType": {
+            "type": "string",
+            "enum": [
+              "CommercialActivity",
+              "IntegralCostPrice",
+              "ActivityCostAllocation",
+              "GeneralInterestDecision",
+              "ACMReport",
+              "AlertLog",
+              "MarketBenchmark"
+            ],
+            "title": "Entity Type",
+            "description": "The type or category of enti."
+          },
+          "userId": {
+            "type": "string",
+            "description": "Nextcloud user-id (pseudonymised per ADR-005 GDPR).",
+            "title": "User ID"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "UTC timestamp with ms precision.",
+            "title": "Timestamp"
+          },
+          "beforeValues": {
+            "type": "object",
+            "nullable": true,
+            "description": "JSON snapshot of the record before mutation (null for creates).",
+            "additionalProperties": true,
+            "title": "Before Values"
+          },
+          "afterValues": {
+            "type": "object",
+            "description": "JSON snapshot of the record after mutation (or alert/report payload for events without before-state).",
+            "additionalProperties": true,
+            "title": "After Values"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Motivation; verplicht for overrides, recommended otherwise.",
+            "title": "Reason"
+          },
+          "administrationId": {
+            "type": "string",
+            "title": "Administration ID",
+            "description": "The date and time for administration id."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "logged",
+              "archived"
+            ],
+            "default": "logged",
+            "description": "archived after the 7-year retention boundary; entries may then be purged per archival policy.",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "logged",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "WMO audit log retained 7 years per Mededingingswet."
+          },
+          "states": {
+            "logged": {
+              "label": "Logged"
+            },
+            "archived": {
+              "label": "Archived"
+            }
+          },
+          "transitions": {
+            "archive": {
+              "from": "logged",
+              "to": "archived",
+              "label": "Archive (7-year boundary)"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "concerncontroller": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "system": {
+              "permissions": [
+                "create",
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-scheduled-workflows": {
+          "wmo-audit-log-retention-archival": {
+            "name": "WMO audit-log retention archival",
+            "description": "Daily walker over logged WMOAuditLog entries. Entries crossing the 7-year retention boundary transition status logged -> archived; entries may then be purged per Mededingingswet bewaartermijn (REQ-WMO-010 §retention).",
+            "cron": "30 4 * * *",
+            "register": "shillinq",
+            "schema": "WMOAuditLog",
+            "enabled": true,
+            "filter": {
+              "status": [
+                "logged"
+              ]
+            },
+            "handler": "OCA\\Shillinq\\Service\\WmoAuditLogService::retentionExpiredState"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a WMO Audit Log is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "MarketBenchmark": {
+        "slug": "MarketBenchmark",
+        "icon": "ChartLine",
+        "version": "0.1.0",
+        "title": "Market Benchmark",
+        "description": "Market-benchmark observation for tariff validation and Art. 25j bevoordeling-risk detection (REQ-WMO-012, Phase 3). The IKP calculation step retrieves benchmarks within last 12 months, computes a median, and raises a bevoordeling-risk alert when gehanteerdTarief < median × 0.85 despite gehanteerdTarief >= kostprijsPerEenheid.",
+        "x-schema-org": "schema:PriceSpecification",
+        "x-spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
+        "type": "object",
+        "required": [
+          "commercialActivityId",
+          "referenceDate",
+          "source",
+          "amount",
+          "unit",
+          "administrationId"
+        ],
+        "properties": {
+          "commercialActivityId": {
+            "type": "string",
+            "title": "Commercial Activity ID",
+            "description": "The identifier of the associated commercial activity.",
+            "$ref": "CommercialActivity"
+          },
+          "referenceDate": {
+            "type": "string",
+            "format": "date",
+            "title": "Peildatum",
+            "description": "The date and time for peildatum."
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "offerte",
+              "prijslijst",
+              "brancheRapport",
+              "bdoBenchmark",
+              "coelo",
+              "custom"
+            ],
+            "title": "Bron",
+            "description": "The bron."
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Benchmark price in EUR.",
+            "title": "Bedrag"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit (must match IKP eenheidLabel for comparability).",
+            "title": "Eenheid"
+          },
+          "competitorName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the competing provider (for offerte/prijslijst).",
+            "title": "Concurrent Naam"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "title": "Toelichting",
+            "description": "The toelichting."
+          },
+          "administrationId": {
+            "type": "string",
+            "title": "Administration ID",
+            "description": "The date and time for administration id."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "concerncontroller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "finansieel-beleidsadviseur": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-lifecycle-actions": {
+          "detectBevoordelingRisk": {
+            "trigger": "afterCreate",
+            "description": "Phase 3 (REQ-WMO-012): when a MarketBenchmark is created, recompute the bevoordeling-risk for the linked CommercialActivity's most recent IKP. If gehanteerdTarief < benchmark median × 0.85 while gehanteerdTarief >= kostprijsPerEenheid, emit a HIGH-severity bevoordeling-risk AlertLog (Art. 25j Mededingingswet).",
+            "handler": "OCA\\Shillinq\\Service\\CrossSubsidyDetector::detectBevoordelingRisk"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Market Benchmark is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CommercialActivity"
+      },
+      "_meta": {
+        "lifecycleState": "archived"
+      },
+      "code": "MO-SP-014",
+      "name": "Dansschool de Maten",
+      "governingBody": "Gemeente Apeldoorn",
+      "organisationalUnit": "Afdeling Cultuur & Erfgoed",
+      "description": "Verhuur zaalruimte voor commerciële danslessen",
+      "marketSegment": "privédansscholen Apeldoorn",
+      "concurrenten": [
+        "Dansacademie Sint-Hubert"
+      ],
+      "startDate": "2024-01-15",
+      "endDate": "2025-12-31",
+      "costPriceMethod": "integral-costprice-art-25i",
+      "costCentreCode": "K-SP-014",
+      "costObjectCode": "D-MO-SP-014",
+      "isExempted": false,
+      "acmReport": {
+        "submitted": true,
+        "date": "2024-02-01",
+        "reference": "ACM/UIT/498321"
+      },
+      "administrationId": "adm-gemeente-apeldoorn",
+      "state": "closed"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "IntegralCostPrice"
+      },
+      "_meta": {
+        "lifecycleState": "archived"
+      },
+      "commercialActivityId": "ca-mo-sp-014",
+      "period": "2024-YTD",
+      "calculatedOn": "2025-03-31T04:00:00Z",
+      "status": "final",
+      "componenten": {
+        "directPayrollCost": 42000,
+        "directMaterials": 8500,
+        "directDepreciations": 6200,
+        "indirecteOverhead": {
+          "huisvesting": 9100,
+          "ict": 1800,
+          "directieEnStaf": 3400,
+          "facilitair": 1200
+        },
+        "capitalCost": 2700,
+        "profitMarkup": 3100
+      },
+      "totalCost": 78000,
+      "soldUnits": 312,
+      "unitLabel": "dagdeel-zaalhuur",
+      "costPricePerUnit": 250,
+      "appliedRate": 280,
+      "marge": 30,
+      "margePercentage": 12,
+      "compliant": true,
+      "finalSignedBy": "concerncontroller",
+      "finalSignedAt": "2025-03-31T04:00:00Z",
+      "administrationId": "adm-gemeente-apeldoorn"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "ActivityCostAllocation"
+      },
+      "_meta": {
+        "lifecycleState": "archived"
+      },
+      "journalEntryId": "je-2024-09-00187",
+      "commercialActivityId": "ca-mo-sp-014",
+      "originalAmount": 12000,
+      "splits": [
+        {
+          "costObject": "D-PUBL-NM-100",
+          "ratio": 0.6,
+          "amount": 7200,
+          "dimension": "PUBL"
+        },
+        {
+          "costObject": "D-MO-SP-014",
+          "ratio": 0.4,
+          "amount": 4800,
+          "dimension": "MO"
+        }
+      ],
+      "allocationKey": "odr-bbv-taakveld-0-4-2024",
+      "automaticApplied": true,
+      "postingDate": "2024-09-30",
+      "materialised": false,
+      "administrationId": "adm-gemeente-apeldoorn",
+      "status": "active"
+    }
+  ]
+}

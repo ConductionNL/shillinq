@@ -1,0 +1,11 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-purchase-order-3way-02-purchase-order-core",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Slice 02 of the bookkeeping-purchase-order-3way chain. The bespoke top-level Purchase Order create-form + detail PAGES and their Inkoop/PurchaseOrders menu entry were REMOVED: purchase orders are now composed onto the unified Order workspace (order-workspace.json), so the standalone PurchaseOrderForm/PurchaseOrderDetail nav surfaces are superseded. The PurchaseOrder SCHEMA and its lifecycle stay intact — only the folded PAGE + MENU definitions were retired. Related artefacts (three-way matching index in slice 06, vendor performance in slice 10) remain their own pages."
+	},
+	"menu": [],
+	"pages": []
+}

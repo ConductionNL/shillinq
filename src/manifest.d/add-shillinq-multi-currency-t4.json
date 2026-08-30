@@ -1,0 +1,111 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "add-shillinq-multi-currency",
+		"description": "T4 envelope manifest fragment per REQ-MC-006: adds the FXRates child entry to the existing BookkeepingMultiCurrency menu (BankAccounts + CurrencyBalances were shipped by the T3 sibling fragment) plus the FXRates index + FXRateDetail detail page pair binding to the FxRate register declared in lib/Settings/register.d/add-shillinq-multi-currency-t4.json."
+	},
+	"menu": [
+		{
+			"id": "BookkeepingMultiCurrency",
+			"label": "Multi-currency",
+			"icon": "CurrencyEur",
+			"order": 11,
+			"children": [
+				{
+					"id": "FXRates",
+					"label": "FX Rates",
+					"icon": "CurrencyUsd",
+					"route": "FXRates",
+					"order": 28
+				},
+				{
+					"id": "FxRatesAdmin",
+					"label": "FX Rates (Admin)",
+					"icon": "CogOutline",
+					"route": "FxRatesAdmin",
+					"order": 29
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "FXRates",
+			"route": "/bookkeeping/multi-currency/fx-rates",
+			"type": "index",
+			"title": "FX Rates",
+			"config": {
+				"register": "shillinq",
+				"schema": "FxRate",
+				"columns": [
+					{ "key": "transactionCurrency", "label": "From", "sortable": true },
+					{ "key": "baseCurrency", "label": "To", "sortable": true },
+					{ "key": "date", "label": "Date", "sortable": true },
+					{ "key": "source", "label": "Source", "sortable": true },
+					{ "key": "rate", "label": "Rate", "sortable": true },
+					{ "key": "inverseRate", "label": "Inverse rate", "sortable": false }
+				],
+				"defaultSort": "date",
+				"defaultSortDirection": "desc",
+				"filters": [
+					{ "key": "transactionCurrency", "label": "From currency" },
+					{ "key": "baseCurrency", "label": "To currency" },
+					{ "key": "source", "label": "Source" }
+				],
+				"detailRoute": "FXRateDetail"
+			}
+		},
+		{
+			"id": "FXRateDetail",
+			"route": "/bookkeeping/multi-currency/fx-rates/:id",
+			"type": "detail",
+			"title": "FX Rate",
+			"config": {
+				"register": "shillinq",
+				"schema": "FxRate",
+				"_note": "REFERENCE-DATA record (one FX rate observation: a currency pair on an effective date). The body is the full provenance of the rate — pair, effective date, source, rate and inverse rate, plus any manual-override reason and the ingestion timestamp — because in multi-currency accounting every conversion must be defensible against a specific, dated, sourced rate. A leaf with no children and no comms. The audit trail sidebar is decisive for a manually overridden rate: it records who changed a number that revalues balances.",
+				"fields": [
+					{ "key": "transactionCurrency", "label": "Transaction currency", "type": "string" },
+					{ "key": "baseCurrency", "label": "Base currency", "type": "string" },
+					{ "key": "date", "label": "Effective date", "type": "date" },
+					{ "key": "source", "label": "Source", "type": "string" },
+					{ "key": "rate", "label": "Rate (transaction → base)", "type": "number" },
+					{ "key": "inverseRate", "label": "Inverse rate (base → transaction)", "type": "number" },
+					{ "key": "manualOverrideReason", "label": "Manual override reason", "type": "text" },
+					{ "key": "ingestedAt", "label": "Ingested at", "type": "date-time" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"indexRoute": "FXRates",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "FxRatesAdmin",
+			"route": "/bookkeeping/multi-currency/fx-rates/admin",
+			"type": "custom",
+			"title": "FX Rates (Admin)",
+			"component": "FxRatesAdmin",
+			"_note": "Operator overlay on top of the declarative FxRate grid: an import-status strip that reads /api/admin/fx-rate-import-status for the last FxRateImportJob run timestamp and the TreasuryRateAdapter dormancy flag. Those two values come from job/adapter state, not from any FxRate object, so `type: index` — whose whole surface is rows of one register/schema — has nowhere to put them. The rate list itself stays declarative on the FxRates page; this page exists only for the cron-health header."
+		}
+	]
+}

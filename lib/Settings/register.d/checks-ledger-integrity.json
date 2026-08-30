@@ -1,0 +1,95 @@
+{
+  "x-shillinq-fragment": "checks-ledger-integrity",
+  "components": {
+    "schemas": {
+      "GLTransaction": {
+        "version": "0.2.0",
+        "properties": {
+          "retentionUntil": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date until which this transaction and its supporting documents are retained. Must be at least the jurisdiction's minimum retention period after postingDate (NL 7y AWR 52 / BW 2:10, DE 8y AO 147 / HGB 257, FR 10y / 6y Code de commerce / LPF, BE 10y BTW, ES 6y / 4y, IT 10y, US 3y/4y/5y/6y/7y).",
+            "title": "Retention Until"
+          },
+          "postingLocked": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the posted entry is locked against in-place editing; corrections are made only by an offsetting reversal entry (immutability / no-deletion principle, GoBD Unveränderbarkeit, §239(3) HGB, §146(4) AO).",
+            "title": "Posting Locked"
+          },
+          "periodLocked": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the accounting period of this transaction is closed/locked, so no further postings are made to it without a controlled, logged reopening (period-close integrity).",
+            "title": "Period Locked"
+          },
+          "irreversible": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the validated entry has been made irreversible: it can no longer be deleted or modified, only corrected by an offsetting entry (FR PCG art. 911-3/921, NF525 inalterability, FEC validated entries).",
+            "title": "Irreversible"
+          },
+          "integrityVerified": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the authenticity of origin and integrity of content of the record/invoice are ensured from issue until the end of the storage period (VAT Directive 2006/112/EC art. 233; IT conservazione sostitutiva).",
+            "title": "Integrity Verified"
+          },
+          "archiveAvailable": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when an archived copy stays readable, reproducible and available to the tax authority without undue delay (VAT Directive art. 248a; IRS Rev. Proc. 98-25 machine-sensible retrieval).",
+            "title": "Archive Available"
+          },
+          "saftExportable": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the tax-relevant data of this entry is exportable in a machine-evaluable audit-file format on request (OECD SAF-T, DE GoBD Datenzugriff Z3, FR FEC, PT SAF-T (PT), PL JPK_VAT, RO D406).",
+            "title": "Saft Exportable"
+          },
+          "validationDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date on which the entry was definitively validated (closed), after which it can no longer be modified or deleted (FR FEC validation date; IT conservazione timestamp).",
+            "title": "Validation Date"
+          },
+          "auditTrail": {
+            "type": "array",
+            "nullable": true,
+            "description": "Change audit trail (audit-trail principle / GoBD): every change to the recorded transaction is logged. Each entry carries user, timestamp and action so the full history of the entry is reconstructable.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "user": {
+                  "type": "string",
+                  "description": "The user who made the change.",
+                  "title": "User"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the change was made.",
+                  "title": "Timestamp"
+                },
+                "action": {
+                  "type": "string",
+                  "description": "The change performed (e.g. post, reverse, correct).",
+                  "title": "Action"
+                },
+                "priorValue": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "The prior value, where the change mutated a field.",
+                  "title": "Prior Value"
+                }
+              }
+            },
+            "title": "Audit Trail"
+          }
+        }
+      }
+    }
+  }
+}

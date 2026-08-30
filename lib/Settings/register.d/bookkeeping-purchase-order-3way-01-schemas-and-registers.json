@@ -1,0 +1,1416 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-purchase-order-3way-01-schemas-and-registers",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Member 1 of 11 in the bookkeeping-purchase-order-3way chain. Declares the eight registers (PurchaseOrder, PurchaseOrderLine, GoodsReceiptNote, GoodsReceiptLine, SupplierInvoice, ThreeWayMatch, ToleranceProfile, VendorPerformance) the whole 3-way-match feature rests on. PurchaseOrder, GoodsReceiptNote, SupplierInvoice and ThreeWayMatch carry x-openregister-lifecycle state machines (ADR-031). Money fields use integer-cent arithmetic (ADR-022): unitPrice, lineTotal, vatAmount, totalExclVat, totalVat, totalInclVat. Tax rates use basis points (1/10000). Every order, line, receipt, invoice and match record carries costCenter + projectCode for dimensional reporting. No imperative code — downstream chain members (02-11) own the controllers, services and guards. Slugs are concise to stay inside the 30-character magic-table cap (longest = SupplierInvoice → oc_openregister_shillinq_supplierinvoice)."
+  },
+  "components": {
+    "schemas": {
+      "PurchaseOrder": {
+        "slug": "PurchaseOrder",
+        "icon": "ClipboardListOutline",
+        "version": "0.1.0",
+        "title": "Purchase Order",
+        "description": "Purchase order issued to a supplier (REQ-PO-001). Lifecycle draft → approved → sent → partial_received → fully_received → invoiced → closed, with cancelled terminal state (REQ-PO-002). Approval chain is operator-driven; Peppol metadata is populated by the transmission engine in member 03. cost_center + project_code propagate to lines, receipts, invoices and matches for dimensional reporting (REQ-PO-010).",
+        "x-schema-org": "schema:Order",
+        "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
+        "type": "object",
+        "required": [
+          "poNumber",
+          "supplierId",
+          "currency",
+          "statusCode",
+          "administrationId"
+        ],
+        "properties": {
+          "poNumber": {
+            "type": "string",
+            "description": "Auto-generated CBS-conform purchase-order number, unique per administration (REQ-PO-001).",
+            "example": "PO-2026-0001",
+            "title": "PO Number"
+          },
+          "supplierId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "Payee",
+            "description": "FK to the Vendor (supplier) the order is issued to.",
+            "example": "vendor-001",
+            "title": "Supplier ID"
+          },
+          "supplierReference": {
+            "type": "string",
+            "description": "Supplier's own reference for the order (optional, populated on acknowledgement).",
+            "nullable": true,
+            "example": "ACK-NW-9914",
+            "title": "Supplier Reference"
+          },
+          "requester": {
+            "type": "string",
+            "description": "User ID of the requester who raised the order.",
+            "nullable": true,
+            "example": "admin",
+            "title": "Requester"
+          },
+          "requisitionId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "Requisition",
+            "description": "FK to the Requisition (purchase-requisition change, REQ-REQ-005) this order was materialised from, when it was created via requisition conversion rather than directly. Blank for orders created by the pre-existing direct-create flow. When app config `require_approved_requisition_for_po` is enabled, PurchaseOrderService requires this to reference an approved/converted Requisition.",
+            "nullable": true,
+            "example": null,
+            "title": "Requisition ID"
+          },
+          "costCenter": {
+            "type": "string",
+            "description": "Dimensional cost-centre tag propagated to all lines, GRNs, invoices and matches that descend from this PO (REQ-PO-010).",
+            "nullable": true,
+            "example": "CC-IT-OPERATIONS",
+            "title": "Cost Center"
+          },
+          "projectCode": {
+            "type": "string",
+            "description": "Dimensional project tag propagated to all lines, GRNs, invoices and matches that descend from this PO (REQ-PO-010).",
+            "nullable": true,
+            "example": "PRJ-OFFICE-REFRESH-2026",
+            "title": "Project Code"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code (EUR for NL administrations).",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "paymentTerms": {
+            "type": "string",
+            "description": "Free-form payment terms description (e.g. '30 days net').",
+            "nullable": true,
+            "example": "30 days net",
+            "title": "Payment Terms"
+          },
+          "deliveryAddress": {
+            "type": "string",
+            "description": "Delivery address text, single string for declarative simplicity.",
+            "nullable": true,
+            "example": "Conduction B.V., Nieuwe Donk 3, 4879 AC Etten-Leur, NL",
+            "title": "Delivery Address"
+          },
+          "expectedDeliveryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Expected delivery date for the order overall (lines may carry their own dates).",
+            "nullable": true,
+            "example": "2026-07-15",
+            "title": "Expected Delivery Date"
+          },
+          "totalExclVat": {
+            "type": "integer",
+            "description": "Order total excluding VAT in euro cents (sum of PurchaseOrderLine.lineTotal). Integer cents per ADR-022 money rule.",
+            "nullable": true,
+            "example": 4000000,
+            "title": "Total Excl VAT"
+          },
+          "totalVat": {
+            "type": "integer",
+            "description": "Order VAT total in euro cents (sum of PurchaseOrderLine.vatAmount). Integer cents.",
+            "nullable": true,
+            "example": 840000,
+            "title": "Total VAT"
+          },
+          "totalInclVat": {
+            "type": "integer",
+            "description": "Order total including VAT in euro cents (totalExclVat + totalVat). Integer cents.",
+            "nullable": true,
+            "example": 4840000,
+            "title": "Total Incl VAT"
+          },
+          "approvalChain": {
+            "type": "array",
+            "description": "Ordered list of approvers traversed for this order (REQ-PO-002). Operator-driven; downstream members 02 wire the routing.",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "required": [
+                "userId",
+                "decision"
+              ],
+              "properties": {
+                "userId": {
+                  "type": "string",
+                  "description": "User ID of the approver in the chain.",
+                  "title": "User ID"
+                },
+                "decision": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "approved",
+                    "rejected",
+                    "delegated"
+                  ],
+                  "description": "Decision recorded by the approver.",
+                  "title": "Decision"
+                },
+                "decidedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Timestamp of the decision.",
+                  "nullable": true,
+                  "title": "Decided At"
+                },
+                "comment": {
+                  "type": "string",
+                  "description": "Optional comment from the approver.",
+                  "nullable": true,
+                  "title": "Comment"
+                }
+              }
+            },
+            "example": [],
+            "title": "Approval Chain"
+          },
+          "peppolSentAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp the order was successfully transmitted to the supplier via Peppol (populated by member 03).",
+            "nullable": true,
+            "example": null,
+            "title": "Peppol Sent At"
+          },
+          "peppolMessageId": {
+            "type": "string",
+            "description": "Peppol message identifier returned by the access point.",
+            "nullable": true,
+            "example": null,
+            "title": "Peppol Message ID"
+          },
+          "peppolFallbackReason": {
+            "type": "string",
+            "description": "If Peppol transmission failed and a manual fallback (email/portal) was used, this records the reason.",
+            "nullable": true,
+            "example": null,
+            "title": "Peppol Fallback Reason"
+          },
+          "statusCode": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "approved",
+              "sent",
+              "partial_received",
+              "fully_received",
+              "invoiced",
+              "closed",
+              "cancelled"
+            ],
+            "description": "Lifecycle state per x-openregister-lifecycle (REQ-PO-002).",
+            "example": "draft",
+            "title": "Status Code"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this order belongs to; reads are scoped to the requesting user's administration.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "statusCode",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Order is editable; not yet submitted for approval."
+            },
+            "approved": {
+              "label": "Goedgekeurd",
+              "description": "Approval chain complete; order may now be sent."
+            },
+            "sent": {
+              "label": "Verzonden",
+              "description": "Order transmitted to supplier (Peppol or fallback)."
+            },
+            "partial_received": {
+              "label": "Deels ontvangen",
+              "description": "Some but not all line quantities have been receipted via GRN."
+            },
+            "fully_received": {
+              "label": "Volledig ontvangen",
+              "description": "All line quantities have been receipted (within tolerance)."
+            },
+            "invoiced": {
+              "label": "Gefactureerd",
+              "description": "Supplier invoice has been matched and approved against this order."
+            },
+            "closed": {
+              "label": "Afgesloten",
+              "description": "Order is closed; no further activity expected."
+            },
+            "cancelled": {
+              "label": "Geannuleerd",
+              "description": "Order cancelled before completion (terminal state)."
+            }
+          },
+          "transitions": {
+            "approve": {
+              "from": "draft",
+              "to": "approved",
+              "label": "Goedkeuren"
+            },
+            "send": {
+              "from": "approved",
+              "to": "sent",
+              "label": "Verzenden"
+            },
+            "receivePartial": {
+              "from": "sent",
+              "to": "partial_received",
+              "label": "Deels ontvangen"
+            },
+            "receiveAll": {
+              "from": "partial_received",
+              "to": "fully_received",
+              "label": "Volledig ontvangen"
+            },
+            "receiveAllDirect": {
+              "from": "sent",
+              "to": "fully_received",
+              "label": "Volledig ontvangen"
+            },
+            "invoice": {
+              "from": "fully_received",
+              "to": "invoiced",
+              "label": "Factureren"
+            },
+            "close": {
+              "from": "invoiced",
+              "to": "closed",
+              "label": "Afsluiten"
+            },
+            "cancelDraft": {
+              "from": "draft",
+              "to": "cancelled",
+              "label": "Annuleren"
+            },
+            "cancelApproved": {
+              "from": "approved",
+              "to": "cancelled",
+              "label": "Annuleren"
+            },
+            "cancelSent": {
+              "from": "sent",
+              "to": "cancelled",
+              "label": "Annuleren"
+            }
+          }
+        }
+      },
+      "PurchaseOrderLine": {
+        "slug": "PurchaseOrderLine",
+        "icon": "FormatListBulleted",
+        "version": "0.1.0",
+        "title": "Purchase Order Line",
+        "description": "Line item on a PurchaseOrder (REQ-PO-001). Money fields are integer cents per ADR-022; unitPrice is also integer cents to keep arithmetic exact across quantity × price → lineTotal. VAT rate is stored in basis points (1/10000). cost_center + project_code inherit from the parent order and may be overridden per line for granular dimensional reporting.",
+        "x-schema-org": "schema:OrderItem",
+        "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
+        "type": "object",
+        "required": [
+          "poId",
+          "lineNumber",
+          "description",
+          "quantityOrdered",
+          "unitPrice",
+          "administrationId"
+        ],
+        "properties": {
+          "poId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "PurchaseOrder",
+            "description": "FK to the parent PurchaseOrder.",
+            "example": "po-1",
+            "title": "PO ID"
+          },
+          "lineNumber": {
+            "type": "integer",
+            "description": "1-based line number within the parent order.",
+            "example": 1,
+            "title": "Line Number"
+          },
+          "productOrServiceCode": {
+            "type": "string",
+            "description": "Product or service catalogue code (FK to Product when known).",
+            "nullable": true,
+            "example": "PROD-LAPTOP-001",
+            "title": "Product Or Service Code"
+          },
+          "description": {
+            "type": "string",
+            "description": "Free-text line description (always populated even when productOrServiceCode is set).",
+            "example": "ThinkPad T14 Gen 5",
+            "title": "Description"
+          },
+          "quantityOrdered": {
+            "type": "number",
+            "multipleOf": 0.001,
+            "description": "Ordered quantity in the declared unitOfMeasure. Three-decimal precision supports per-unit and per-litre measures.",
+            "example": 10,
+            "title": "Quantity Ordered"
+          },
+          "unitOfMeasure": {
+            "type": "string",
+            "description": "UN/ECE Recommendation 20 unit code (e.g. EA, KGM, LTR, HUR).",
+            "nullable": true,
+            "example": "EA",
+            "title": "Unit Of Measure"
+          },
+          "unitPrice": {
+            "type": "integer",
+            "description": "Unit price in euro cents (integer per ADR-022). Net of VAT.",
+            "example": 120000,
+            "title": "Unit Price"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code (inherits from order when null).",
+            "nullable": true,
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "lineTotal": {
+            "type": "integer",
+            "description": "Computed lineTotal in euro cents: round(quantityOrdered × unitPrice). Integer cents.",
+            "nullable": true,
+            "example": 1200000,
+            "title": "Line Total"
+          },
+          "vatRate": {
+            "type": "integer",
+            "description": "VAT rate in basis points (1/10000). 2100 = 21%; 900 = 9%; 0 = exempt/zero.",
+            "nullable": true,
+            "example": 2100,
+            "title": "VAT Rate"
+          },
+          "vatAmount": {
+            "type": "integer",
+            "description": "VAT amount in euro cents: round(lineTotal × vatRate / 10000). Integer cents.",
+            "nullable": true,
+            "example": 252000,
+            "title": "VAT Amount"
+          },
+          "expectedDeliveryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Line-level expected delivery date (overrides order-level when set).",
+            "nullable": true,
+            "example": "2026-07-15",
+            "title": "Expected Delivery Date"
+          },
+          "glAccount": {
+            "type": "string",
+            "description": "RGS general-ledger account code for this line (drives auto-coding at invoice match).",
+            "nullable": true,
+            "example": "4400",
+            "title": "GL Account"
+          },
+          "toleranceOverride": {
+            "type": "string",
+            "description": "FK to a ToleranceProfile that overrides the default/supplier/category profile for this line.",
+            "nullable": true,
+            "example": null,
+            "title": "Tolerance Override"
+          },
+          "costCenter": {
+            "type": "string",
+            "description": "Dimensional cost-centre tag (inherits from parent PO when null).",
+            "nullable": true,
+            "example": "CC-IT-OPERATIONS",
+            "title": "Cost Center"
+          },
+          "projectCode": {
+            "type": "string",
+            "description": "Dimensional project tag (inherits from parent PO when null).",
+            "nullable": true,
+            "example": "PRJ-OFFICE-REFRESH-2026",
+            "title": "Project Code"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this line belongs to.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-calculations": {
+          "lineTotal": {
+            "operation": "expression",
+            "expression": "round(quantityOrdered * unitPrice)",
+            "target": "lineTotal"
+          },
+          "vatAmount": {
+            "operation": "expression",
+            "expression": "round(lineTotal * vatRate / 10000)",
+            "target": "vatAmount"
+          }
+        }
+      },
+      "GoodsReceiptNote": {
+        "slug": "GoodsReceiptNote",
+        "icon": "PackageVariantClosed",
+        "version": "0.1.0",
+        "title": "Goods Receipt Note",
+        "description": "Goods Receipt Note (GRN) recording physical receipt of goods against one or more purchase orders (REQ-GRN-001). Multi-PO receipt is allowed (po_ids is an array). Lifecycle draft → received → quality_checked → accepted → rejected (REQ-GRN-002). Photos and temperatureLog support cold-chain quality evidence. cost_center + project_code propagate from the originating PO(s).",
+        "x-schema-org": "schema:ReceiveAction",
+        "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
+        "type": "object",
+        "required": [
+          "grnNumber",
+          "poIds",
+          "receivedAt",
+          "statusCode",
+          "administrationId"
+        ],
+        "properties": {
+          "grnNumber": {
+            "type": "string",
+            "description": "Unique GRN identifier per administration.",
+            "example": "GRN-2026-0011",
+            "title": "Grn Number"
+          },
+          "poIds": {
+            "type": "array",
+            "description": "FK references to PurchaseOrder records this GRN receipts against (multi-PO supported, REQ-GRN-001).",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "$ref": "PurchaseOrder"
+            },
+            "example": [
+              "po-1"
+            ],
+            "title": "PO Ids"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp the goods were received at the delivery location.",
+            "example": "2026-07-15T10:30:00Z",
+            "title": "Received At"
+          },
+          "receivedBy": {
+            "type": "string",
+            "description": "User ID of the receiver who signed for the goods.",
+            "nullable": true,
+            "example": "warehouse-01",
+            "title": "Received By"
+          },
+          "deliveryNoteReference": {
+            "type": "string",
+            "description": "Carrier delivery-note reference (pakbon nummer).",
+            "nullable": true,
+            "example": "DN-NW-2026-7791",
+            "title": "Delivery Note Reference"
+          },
+          "carrier": {
+            "type": "string",
+            "description": "Carrier or transporter name.",
+            "nullable": true,
+            "example": "PostNL",
+            "title": "Carrier"
+          },
+          "lotNumbers": {
+            "type": "array",
+            "description": "Lot/batch numbers received (food + pharma traceability).",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "example": [],
+            "title": "Lot Numbers"
+          },
+          "serialNumbers": {
+            "type": "array",
+            "description": "Serial numbers received (IT hardware traceability).",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "example": [],
+            "title": "Serial Numbers"
+          },
+          "temperatureLog": {
+            "type": "array",
+            "description": "Cold-chain temperature readings during transit (Celsius, ISO timestamp).",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "required": [
+                "recordedAt",
+                "temperatureC"
+              ],
+              "properties": {
+                "recordedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "title": "Recorded At",
+                  "description": "The date and time for recorded at."
+                },
+                "temperatureC": {
+                  "type": "number",
+                  "title": "Temperature C",
+                  "description": "The numeric value for temperature c."
+                }
+              }
+            },
+            "example": [],
+            "title": "Temperature Log"
+          },
+          "qualityCheckPassed": {
+            "type": "boolean",
+            "description": "Whether the post-receipt quality check passed (REQ-GRN-002).",
+            "nullable": true,
+            "example": true,
+            "title": "Quality Check Passed"
+          },
+          "photos": {
+            "type": "array",
+            "description": "References to attached photos (file IDs).",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "example": [],
+            "title": "Photos"
+          },
+          "costCenter": {
+            "type": "string",
+            "description": "Dimensional cost-centre tag inherited from the originating PO(s).",
+            "nullable": true,
+            "example": "CC-IT-OPERATIONS",
+            "title": "Cost Center"
+          },
+          "projectCode": {
+            "type": "string",
+            "description": "Dimensional project tag inherited from the originating PO(s).",
+            "nullable": true,
+            "example": "PRJ-OFFICE-REFRESH-2026",
+            "title": "Project Code"
+          },
+          "statusCode": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "received",
+              "quality_checked",
+              "accepted",
+              "rejected"
+            ],
+            "description": "Lifecycle state per x-openregister-lifecycle (REQ-GRN-002).",
+            "example": "draft",
+            "title": "Status Code"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this GRN belongs to.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "statusCode",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Receipt is being captured; not yet finalised."
+            },
+            "received": {
+              "label": "Ontvangen",
+              "description": "Physical goods receipted; awaiting quality check."
+            },
+            "quality_checked": {
+              "label": "Kwaliteitscontrole",
+              "description": "Quality inspection complete; awaiting accept/reject decision."
+            },
+            "accepted": {
+              "label": "Geaccepteerd",
+              "description": "Goods accepted; PO line quantities updated."
+            },
+            "rejected": {
+              "label": "Afgekeurd",
+              "description": "Goods rejected; lines flagged for supplier return (terminal)."
+            }
+          },
+          "transitions": {
+            "receive": {
+              "from": "draft",
+              "to": "received",
+              "label": "Ontvangen"
+            },
+            "qualityCheck": {
+              "from": "received",
+              "to": "quality_checked",
+              "label": "Kwaliteitscontrole"
+            },
+            "accept": {
+              "from": "quality_checked",
+              "to": "accepted",
+              "label": "Accepteren"
+            },
+            "reject": {
+              "from": "quality_checked",
+              "to": "rejected",
+              "label": "Afkeuren"
+            }
+          }
+        }
+      },
+      "GoodsReceiptLine": {
+        "slug": "GoodsReceiptLine",
+        "icon": "FormatListNumbered",
+        "version": "0.1.0",
+        "title": "Goods Receipt Line",
+        "description": "Per-PO-line breakdown of a GoodsReceiptNote (REQ-GRN-003). Captures the quantities received, accepted and rejected against each PurchaseOrderLine plus the inspector identity and batch reference for traceability.",
+        "x-schema-org": "schema:OrderItem",
+        "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
+        "type": "object",
+        "required": [
+          "grnId",
+          "poLineId",
+          "quantityReceived",
+          "administrationId"
+        ],
+        "properties": {
+          "grnId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "GoodsReceiptNote",
+            "description": "FK to the parent GoodsReceiptNote.",
+            "example": "grn-1",
+            "title": "Grn ID"
+          },
+          "poLineId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "PurchaseOrderLine",
+            "description": "FK to the PurchaseOrderLine this receipt line settles against.",
+            "example": "poline-1",
+            "title": "PO Line ID"
+          },
+          "quantityReceived": {
+            "type": "number",
+            "multipleOf": 0.001,
+            "description": "Quantity physically received (REQ-GRN-003). Three-decimal precision.",
+            "example": 10,
+            "title": "Quantity Received"
+          },
+          "quantityAccepted": {
+            "type": "number",
+            "multipleOf": 0.001,
+            "description": "Quantity accepted after quality check.",
+            "nullable": true,
+            "example": 10,
+            "title": "Quantity Accepted"
+          },
+          "quantityRejected": {
+            "type": "number",
+            "multipleOf": 0.001,
+            "description": "Quantity rejected after quality check.",
+            "nullable": true,
+            "example": 0,
+            "title": "Quantity Rejected"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "description": "Free-text rejection reason (mandatory when quantityRejected > 0).",
+            "nullable": true,
+            "example": null,
+            "title": "Rejection Reason"
+          },
+          "inspector": {
+            "type": "string",
+            "description": "User ID of the quality inspector.",
+            "nullable": true,
+            "example": "qa-01",
+            "title": "Inspector"
+          },
+          "batchReference": {
+            "type": "string",
+            "description": "Batch/lot reference for the received units (traceability).",
+            "nullable": true,
+            "example": "BATCH-NW-2026-072",
+            "title": "Batch Reference"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this receipt line belongs to.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        }
+      },
+      "SupplierInvoice": {
+        "slug": "SupplierInvoice",
+        "icon": "FileDocumentMultipleOutline",
+        "version": "0.1.0",
+        "title": "Supplier Invoice",
+        "description": "Inbound supplier invoice (REQ-SI-001). At slice-01 this is a read-only stub register: downstream members 05 (ingestion) and 06 (matching) own the population and lifecycle transitions. Lifecycle received → matching → matched → exception → approved → paid → rejected (REQ-SI-002). UBL / OCR / Peppol metadata records the ingestion provenance. Money fields are integer euro cents per ADR-022; multipleOf 0.01 not used because cents are integers by construction.",
+        "x-schema-org": "schema:Invoice",
+        "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
+        "type": "object",
+        "required": [
+          "invoiceNumber",
+          "supplierId",
+          "invoiceDate",
+          "currency",
+          "statusCode",
+          "administrationId"
+        ],
+        "properties": {
+          "invoiceNumber": {
+            "type": "string",
+            "description": "Supplier-issued invoice number.",
+            "example": "INV-ERS-2026-00445",
+            "title": "Invoice Number"
+          },
+          "supplierId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "Payee",
+            "description": "FK to the Vendor (supplier) that issued the invoice.",
+            "example": "vendor-001",
+            "title": "Supplier ID"
+          },
+          "invoiceDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Invoice date as stated on the document.",
+            "example": "2026-07-20",
+            "title": "Invoice Date"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Payment due date.",
+            "nullable": true,
+            "example": "2026-08-19",
+            "title": "Due Date"
+          },
+          "totalExclVat": {
+            "type": "integer",
+            "description": "Invoice total excluding VAT in euro cents (integer per ADR-022).",
+            "nullable": true,
+            "example": 4000000,
+            "title": "Total Excl VAT"
+          },
+          "totalVat": {
+            "type": "integer",
+            "description": "Invoice VAT total in euro cents.",
+            "nullable": true,
+            "example": 840000,
+            "title": "Total VAT"
+          },
+          "totalInclVat": {
+            "type": "integer",
+            "description": "Invoice total including VAT in euro cents.",
+            "nullable": true,
+            "example": 4840000,
+            "title": "Total Incl VAT"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code.",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "paymentReference": {
+            "type": "string",
+            "description": "Payment reference (e.g. 16-digit Belastingdienst betalingskenmerk or supplier reference).",
+            "nullable": true,
+            "example": "REF-001-9914",
+            "title": "Payment Reference"
+          },
+          "ublSourceUri": {
+            "type": "string",
+            "description": "URI of the UBL source document when the invoice was received as UBL.",
+            "nullable": true,
+            "example": null,
+            "title": "Ubl Source URI"
+          },
+          "peppolReceivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp the invoice was received via Peppol.",
+            "nullable": true,
+            "example": null,
+            "title": "Peppol Received At"
+          },
+          "ocrConfidenceScore": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "description": "OCR confidence score (0.00 - 1.00) when the invoice was ingested via OCR.",
+            "nullable": true,
+            "example": null,
+            "title": "Ocr Confidence Score"
+          },
+          "costCenter": {
+            "type": "string",
+            "description": "Dimensional cost-centre tag inherited from the matched PO.",
+            "nullable": true,
+            "example": null,
+            "title": "Cost Center"
+          },
+          "projectCode": {
+            "type": "string",
+            "description": "Dimensional project tag inherited from the matched PO.",
+            "nullable": true,
+            "example": null,
+            "title": "Project Code"
+          },
+          "statusCode": {
+            "type": "string",
+            "enum": [
+              "received",
+              "matching",
+              "matched",
+              "exception",
+              "approved",
+              "paid",
+              "rejected"
+            ],
+            "description": "Lifecycle state per x-openregister-lifecycle (REQ-SI-002).",
+            "example": "received",
+            "title": "Status Code"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this invoice belongs to.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "statusCode",
+          "initialState": "received",
+          "states": {
+            "received": {
+              "label": "Ontvangen",
+              "description": "Invoice ingested via UBL / Peppol / OCR; awaiting matching."
+            },
+            "matching": {
+              "label": "In afstemming",
+              "description": "Matching engine actively comparing against PO + GRN."
+            },
+            "matched": {
+              "label": "Gematched",
+              "description": "3-way match successful within tolerance; awaiting approval."
+            },
+            "exception": {
+              "label": "Uitzondering",
+              "description": "Match diverged beyond tolerance; routed to exception workflow."
+            },
+            "approved": {
+              "label": "Goedgekeurd",
+              "description": "Approved for payment."
+            },
+            "paid": {
+              "label": "Betaald",
+              "description": "Payment posted; invoice closed."
+            },
+            "rejected": {
+              "label": "Afgewezen",
+              "description": "Invoice rejected (duplicate, fraud, etc.); terminal."
+            }
+          },
+          "transitions": {
+            "startMatching": {
+              "from": "received",
+              "to": "matching",
+              "label": "Match starten"
+            },
+            "matchSuccess": {
+              "from": "matching",
+              "to": "matched",
+              "label": "Match gelukt"
+            },
+            "matchException": {
+              "from": "matching",
+              "to": "exception",
+              "label": "Uitzondering"
+            },
+            "approveMatched": {
+              "from": "matched",
+              "to": "approved",
+              "label": "Goedkeuren"
+            },
+            "approveException": {
+              "from": "exception",
+              "to": "approved",
+              "label": "Handmatig goedkeuren"
+            },
+            "pay": {
+              "from": "approved",
+              "to": "paid",
+              "label": "Betalen"
+            },
+            "rejectReceived": {
+              "from": "received",
+              "to": "rejected",
+              "label": "Afwijzen"
+            },
+            "rejectException": {
+              "from": "exception",
+              "to": "rejected",
+              "label": "Afwijzen"
+            }
+          }
+        }
+      },
+      "ThreeWayMatch": {
+        "slug": "ThreeWayMatch",
+        "icon": "VectorIntersection",
+        "version": "0.1.0",
+        "title": "3-way Match",
+        "description": "Result of a 3-way match between SupplierInvoice, PurchaseOrder(s), and GoodsReceiptNote(s) (REQ-MATCH-001). matchStatus enumerates auto-approval, within-tolerance success, the four exception types and a fraud alert (REQ-MATCH-002). divergenceDetails capture per-field price / quantity / date deltas for the exception workflow in member 08.",
+        "x-schema-org": "schema:AssessAction",
+        "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
+        "type": "object",
+        "required": [
+          "invoiceId",
+          "matchStatus",
+          "createdAt",
+          "administrationId"
+        ],
+        "properties": {
+          "invoiceId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "SupplierInvoice",
+            "description": "FK to the SupplierInvoice being matched.",
+            "example": "inv-1",
+            "title": "Invoice ID"
+          },
+          "matchedPoIds": {
+            "type": "array",
+            "description": "FK references to PurchaseOrder records the invoice matched against.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "$ref": "PurchaseOrder"
+            },
+            "example": [
+              "po-1"
+            ],
+            "title": "Matched PO Ids"
+          },
+          "matchedGrnIds": {
+            "type": "array",
+            "description": "FK references to GoodsReceiptNote records the invoice matched against.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "$ref": "GoodsReceiptNote"
+            },
+            "example": [
+              "grn-1"
+            ],
+            "title": "Matched Grn Ids"
+          },
+          "matchStatus": {
+            "type": "string",
+            "enum": [
+              "auto_approved",
+              "within_tolerance",
+              "exception_price",
+              "exception_quantity",
+              "exception_missing_grn",
+              "exception_missing_po",
+              "fraud_alert"
+            ],
+            "description": "Match outcome (REQ-MATCH-002). exception_* and fraud_alert route to the exception workflow.",
+            "example": "auto_approved",
+            "title": "Match Status"
+          },
+          "divergenceDetails": {
+            "type": "array",
+            "description": "Per-field divergence breakdown (price, quantity, date) used by the exception workflow (REQ-MATCH-003).",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "required": [
+                "field",
+                "expected",
+                "actual"
+              ],
+              "properties": {
+                "field": {
+                  "type": "string",
+                  "description": "Field name (e.g. unitPrice, quantity, deliveryDate).",
+                  "title": "Field"
+                },
+                "expected": {
+                  "type": "string",
+                  "description": "Expected value from PO/GRN, serialised as string (monetary deltas in euro cents live in deltaCents; proportional deltas in deltaPercentage).",
+                  "title": "Expected"
+                },
+                "actual": {
+                  "type": "string",
+                  "description": "Actual value from invoice, serialised as string (monetary deltas in euro cents live in deltaCents; proportional deltas in deltaPercentage).",
+                  "title": "Actual"
+                },
+                "deltaCents": {
+                  "type": "integer",
+                  "description": "Signed delta in euro cents for monetary fields.",
+                  "nullable": true,
+                  "title": "Delta Cents"
+                },
+                "deltaPercentage": {
+                  "type": "integer",
+                  "description": "Signed delta in basis points (1/10000) for proportional comparisons.",
+                  "nullable": true,
+                  "title": "Delta Percentage"
+                },
+                "toleranceProfileId": {
+                  "type": "string",
+                  "description": "FK to the ToleranceProfile applied.",
+                  "nullable": true,
+                  "title": "Tolerance Profile ID"
+                }
+              }
+            },
+            "example": [],
+            "title": "Divergence Details"
+          },
+          "resolvedBy": {
+            "type": "string",
+            "description": "User ID of the operator that resolved an exception match.",
+            "nullable": true,
+            "example": null,
+            "title": "Resolved By"
+          },
+          "resolutionAction": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "rejected",
+              "credit_note_requested",
+              "supplier_contacted",
+              "po_adjusted",
+              "tolerance_override"
+            ],
+            "description": "Action taken to resolve an exception match.",
+            "nullable": true,
+            "example": null,
+            "title": "Resolution Action"
+          },
+          "resolutionNotes": {
+            "type": "string",
+            "description": "Free-text resolution notes.",
+            "nullable": true,
+            "example": null,
+            "title": "Resolution Notes"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp the match record was created.",
+            "example": "2026-07-21T08:00:00Z",
+            "title": "Created At"
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp the match was resolved (when exception → resolved).",
+            "nullable": true,
+            "example": null,
+            "title": "Resolved At"
+          },
+          "costCenter": {
+            "type": "string",
+            "description": "Dimensional cost-centre tag inherited from the matched PO.",
+            "nullable": true,
+            "example": "CC-IT-OPERATIONS",
+            "title": "Cost Center"
+          },
+          "projectCode": {
+            "type": "string",
+            "description": "Dimensional project tag inherited from the matched PO.",
+            "nullable": true,
+            "example": "PRJ-OFFICE-REFRESH-2026",
+            "title": "Project Code"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this match belongs to.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "matchStatus",
+          "initialState": "auto_approved",
+          "states": {
+            "auto_approved": {
+              "label": "Auto-approved",
+              "description": "Exact 3-way match; no operator action needed."
+            },
+            "within_tolerance": {
+              "label": "Binnen tolerantie",
+              "description": "Match diverged within tolerance; auto-approved with audit trail."
+            },
+            "exception_price": {
+              "label": "Prijsuitzondering",
+              "description": "Price diverged beyond tolerance."
+            },
+            "exception_quantity": {
+              "label": "Hoeveelheidsuitzondering",
+              "description": "Quantity diverged beyond tolerance."
+            },
+            "exception_missing_grn": {
+              "label": "GRN ontbreekt",
+              "description": "Invoice has no matching GRN (services or pre-receipt invoice)."
+            },
+            "exception_missing_po": {
+              "label": "PO ontbreekt",
+              "description": "Invoice has no matching PO (off-contract spend)."
+            },
+            "fraud_alert": {
+              "label": "Fraudemelding",
+              "description": "Likely duplicate or fraudulent invoice; routed to security review."
+            }
+          },
+          "transitions": {
+            "reclassifyPrice": {
+              "from": "auto_approved",
+              "to": "exception_price",
+              "label": "Heropenen (prijs)"
+            },
+            "reclassifyQuantity": {
+              "from": "auto_approved",
+              "to": "exception_quantity",
+              "label": "Heropenen (hoeveelheid)"
+            },
+            "escalateFraud": {
+              "from": "exception_price",
+              "to": "fraud_alert",
+              "label": "Fraude melden"
+            }
+          }
+        }
+      },
+      "ToleranceProfile": {
+        "slug": "ToleranceProfile",
+        "icon": "TuneVariant",
+        "version": "0.1.0",
+        "title": "Tolerance Profile",
+        "description": "Config record defining the price / quantity / date tolerances a 3-way match must satisfy to auto-approve (REQ-TOL-001). Scope is global, per-supplier or per-category. Exception routing names a downstream queue. Status enum allows operators to retire old profiles without deleting historical references.",
+        "x-schema-org": "schema:DefinedTerm",
+        "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
+        "type": "object",
+        "required": [
+          "profileId",
+          "scope",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "profileId": {
+            "type": "string",
+            "description": "Unique profile identifier.",
+            "example": "TP-GLOBAL-DEFAULT",
+            "title": "Profile ID"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "global",
+              "supplier",
+              "category"
+            ],
+            "description": "Scope at which the tolerance applies (REQ-TOL-001).",
+            "title": "Scope"
+          },
+          "scopeReference": {
+            "type": "string",
+            "description": "FK to the supplier or category when scope ≠ global.",
+            "nullable": true,
+            "example": null,
+            "title": "Scope Reference"
+          },
+          "priceToleranceAmount": {
+            "type": "integer",
+            "description": "Absolute price-tolerance in euro cents (integer). Either of priceToleranceAmount or priceTolerancePercentage may be set.",
+            "nullable": true,
+            "example": 1000,
+            "title": "Price Tolerance Amount"
+          },
+          "priceTolerancePercentage": {
+            "type": "integer",
+            "description": "Proportional price-tolerance in basis points (1/10000). 250 = 2.5%.",
+            "nullable": true,
+            "example": 250,
+            "title": "Price Tolerance Percentage"
+          },
+          "quantityTolerancePercentage": {
+            "type": "integer",
+            "description": "Proportional quantity-tolerance in basis points (1/10000).",
+            "nullable": true,
+            "example": 100,
+            "title": "Quantity Tolerance Percentage"
+          },
+          "dateToleranceDays": {
+            "type": "integer",
+            "description": "Number of days an actual delivery date may diverge from the expected date.",
+            "nullable": true,
+            "example": 3,
+            "title": "Date Tolerance Days"
+          },
+          "currencyRoundingTolerance": {
+            "type": "integer",
+            "description": "Absolute currency-rounding tolerance in euro cents (REQ-TOL-001).",
+            "nullable": true,
+            "example": 1,
+            "title": "Currency Rounding Tolerance"
+          },
+          "exceptionRouting": {
+            "type": "string",
+            "description": "Routing tag for exceptions raised under this profile (e.g. 'ap-team', 'controller-approval').",
+            "nullable": true,
+            "example": "ap-team",
+            "title": "Exception Routing"
+          },
+          "grIrClearingAccount": {
+            "type": "string",
+            "description": "Optional per-profile override of the GR/IR clearing account code (REQ-PO3W-009). When set, GRIRClearingService uses this account for both the GRN-accept clearing posting and the match-approval settlement instead of the administration-wide default. Leaving this empty falls back to app config gr_ir_clearing_account (default 2910).",
+            "nullable": true,
+            "example": "2911",
+            "title": "Gr Ir Clearing Account"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "retired"
+            ],
+            "description": "Profile lifecycle. Retired profiles remain historically referenced but no longer apply to new matches.",
+            "title": "Status"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this profile belongs to.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        }
+      },
+      "VendorPerformance": {
+        "slug": "VendorPerformance",
+        "icon": "ChartTimelineVariant",
+        "version": "0.1.0",
+        "title": "Vendor Performance",
+        "description": "Vendor performance scorecard per supplier per period (REQ-VP-001). Rates are basis points (1/10000) so onTimeDeliveryRate of 9800 = 98.00 %. overallScore is a 0-10000 basis-point composite. score_trend reflects the period-over-period delta. automatedReviewEligible marks suppliers that may be auto-renewed without manual review (REQ-VP-005). Populated by member 10.",
+        "x-schema-org": "schema:AggregateRating",
+        "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
+        "type": "object",
+        "required": [
+          "supplierId",
+          "period",
+          "administrationId"
+        ],
+        "properties": {
+          "supplierId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "Payee",
+            "description": "FK to the Vendor (supplier) the scorecard belongs to.",
+            "example": "vendor-001",
+            "title": "Supplier ID"
+          },
+          "period": {
+            "type": "string",
+            "description": "Reporting period (e.g. 2026-Q2 or 2026-05).",
+            "example": "2026-Q2",
+            "title": "Period"
+          },
+          "onTimeDeliveryRate": {
+            "type": "integer",
+            "description": "On-time-delivery rate in basis points (1/10000).",
+            "nullable": true,
+            "example": 9800,
+            "title": "On Time Delivery Rate"
+          },
+          "quantityAccuracyRate": {
+            "type": "integer",
+            "description": "Quantity-accuracy rate in basis points (1/10000).",
+            "nullable": true,
+            "example": 9950,
+            "title": "Quantity Accuracy Rate"
+          },
+          "priceAccuracyRate": {
+            "type": "integer",
+            "description": "Price-accuracy rate in basis points (1/10000).",
+            "nullable": true,
+            "example": 10000,
+            "title": "Price Accuracy Rate"
+          },
+          "invoiceAccuracyRate": {
+            "type": "integer",
+            "description": "Invoice-accuracy rate in basis points (1/10000).",
+            "nullable": true,
+            "example": 9900,
+            "title": "Invoice Accuracy Rate"
+          },
+          "disputeCount": {
+            "type": "integer",
+            "description": "Number of disputes raised during the period.",
+            "nullable": true,
+            "example": 0,
+            "title": "Dispute Count"
+          },
+          "averageResolutionDays": {
+            "type": "integer",
+            "description": "Average resolution time for raised exceptions in days.",
+            "nullable": true,
+            "example": 0,
+            "title": "Average Resolution Days"
+          },
+          "overallScore": {
+            "type": "integer",
+            "description": "Composite vendor score in basis points (1/10000). 0-10000.",
+            "nullable": true,
+            "example": 9913,
+            "title": "Overall Score"
+          },
+          "scoreTrend": {
+            "type": "string",
+            "enum": [
+              "improving",
+              "stable",
+              "declining"
+            ],
+            "description": "Period-over-period trend.",
+            "nullable": true,
+            "example": "improving",
+            "title": "Score Trend"
+          },
+          "automatedReviewEligible": {
+            "type": "boolean",
+            "description": "Whether the supplier may be auto-renewed without manual review (REQ-VP-005).",
+            "nullable": true,
+            "example": true,
+            "title": "Automated Review Eligible"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this scorecard belongs to.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        }
+      }
+    }
+  }
+}

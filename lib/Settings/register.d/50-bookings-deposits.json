@@ -1,0 +1,636 @@
+{
+  "components": {
+    "schemas": {
+      "DepositPayment": {
+        "slug": "DepositPayment",
+        "icon": "CashClock",
+        "version": "0.1.0",
+        "title": "Deposit Payment",
+        "description": "A deposit (partial or full prepayment) collected at booking time via Mollie or Stripe, routed through OpenConnector. On authorization a Shillinq AR invoice is materialised; on void an AR credit note reverses it. Payment routing, tokenization and gateway selection are OpenConnector's responsibility — this register never stores card data (REQ-DP-001).",
+        "x-schema-org": "schema:PaymentMethod",
+        "type": "object",
+        "required": [
+          "orderId",
+          "bookingTypeId",
+          "amount",
+          "currencyCode",
+          "state",
+          "refundPolicy"
+        ],
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "description": "FK to the booking Order this deposit secures. Cross-app reference into the booking module; not resolved inside Shillinq.",
+            "example": "ord-1001",
+            "title": "Order ID"
+          },
+          "bookingTypeId": {
+            "type": "string",
+            "description": "FK to the BookingType whose depositRule produced this deposit (cross-app reference for rule lookup).",
+            "example": "bt-001",
+            "title": "Booking Type ID"
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Deposit amount in minor units (EUR cents). 7500 = EUR 75.00.",
+            "minimum": 1,
+            "example": 7500,
+            "title": "Amount"
+          },
+          "currencyCode": {
+            "type": "string",
+            "description": "ISO 4217 currency code. Always EUR for now; a distinct field so T5 multi-currency does not break T2 logic (REQ-DP-009).",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "example": "EUR",
+            "title": "Currency Code"
+          },
+          "taxRate": {
+            "type": "number",
+            "description": "VAT rate (percent) applied when materialising the AR invoice. Defaults to the Dutch standard rate.",
+            "default": 21,
+            "example": 21,
+            "title": "Tax Rate"
+          },
+          "eventDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of the booked event. Used together with dueOffsetDays to compute the deposit due date (REQ-DP-002, REQ-DP-003).",
+            "nullable": true,
+            "example": "2026-06-15",
+            "title": "Event Date"
+          },
+          "dueOffsetDays": {
+            "type": "integer",
+            "description": "Days before eventDate that the deposit is due, copied from the BookingType depositRule at creation. Range [0, 365] (REQ-DP-002).",
+            "minimum": 0,
+            "maximum": 365,
+            "default": 0,
+            "example": 14,
+            "title": "Due Offset Days"
+          },
+          "lineDescription": {
+            "type": "string",
+            "description": "Human-readable description used for the AR invoice line item.",
+            "nullable": true,
+            "example": "Studio Portrait Session - Deposit (50%)",
+            "title": "Line Description"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "pending",
+              "authorized",
+              "captured",
+              "failed",
+              "voided"
+            ],
+            "description": "Lifecycle state. draft: created, no payment intent yet; pending: payment intent created, awaiting gateway confirmation; authorized: funds reserved, AR invoice materialised; captured: funds settled; failed: authorization rejected; voided: refunded/cancelled, AR credit note created.",
+            "default": "draft",
+            "example": "pending",
+            "title": "State"
+          },
+          "paymentIntentId": {
+            "type": "string",
+            "description": "Opaque payment intent reference from the gateway (Mollie tr_XXXX or Stripe pi_XXXX). NOT a token; carries no card data (REQ-DP-001).",
+            "nullable": true,
+            "example": "tr_9h8g7f6e5d",
+            "title": "Payment Intent ID"
+          },
+          "paymentGateway": {
+            "type": "string",
+            "enum": [
+              "mollie",
+              "stripe"
+            ],
+            "description": "Gateway selected by OpenConnector from customer preference.",
+            "nullable": true,
+            "example": "mollie",
+            "title": "Payment Gateway"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "ideal",
+              "card",
+              "banktransfer",
+              "bancontact",
+              "sofort"
+            ],
+            "description": "Concrete payment method chosen at the gateway.",
+            "nullable": true,
+            "example": "ideal",
+            "title": "Payment Method"
+          },
+          "arInvoiceId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "ARInvoice",
+            "description": "FK to the Shillinq AR invoice materialised on authorization (one-to-one). Populated by the authorize-transition action (REQ-DP-003).",
+            "nullable": true,
+            "example": "inv-ar-9002",
+            "title": "AR Invoice ID"
+          },
+          "creditNoteId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "CreditNote",
+            "description": "FK to the Shillinq AR credit note materialised on void (REQ-DP-008).",
+            "nullable": true,
+            "example": "cn-ar-9050",
+            "title": "Credit Note ID"
+          },
+          "refundPolicy": {
+            "type": "string",
+            "enum": [
+              "automatic_on_cancellation",
+              "operator_approval"
+            ],
+            "description": "How a refund is handled on booking cancellation: automatic via OpenConnector, or queued for operator approval (REQ-DP-008).",
+            "default": "automatic_on_cancellation",
+            "example": "automatic_on_cancellation",
+            "title": "Refund Policy"
+          },
+          "lastErrorCode": {
+            "type": "string",
+            "description": "Machine error code from the last failed authorization (e.g. insufficient_funds) (REQ-DP-011).",
+            "nullable": true,
+            "example": "insufficient_funds",
+            "title": "Last Error Code"
+          },
+          "lastErrorMessage": {
+            "type": "string",
+            "description": "Human-readable error message for the last failure, surfaced in the operator UI (REQ-DP-011). Never contains card data.",
+            "nullable": true,
+            "example": "Insufficient funds. Please use a different card.",
+            "title": "Last Error Message"
+          },
+          "lastWebhookAttempt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the last gateway webhook event received for this deposit. Used by the polling fallback to detect stalled deposits (REQ-DP-007).",
+            "nullable": true,
+            "example": "2026-05-21T10:05:30Z",
+            "title": "Last Webhook Attempt"
+          },
+          "authorizedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the payment was authorized.",
+            "nullable": true,
+            "example": "2026-05-21T10:05:30Z",
+            "title": "Authorized At"
+          },
+          "capturedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the payment was captured/settled.",
+            "nullable": true,
+            "title": "Captured At"
+          },
+          "voidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the deposit was voided/refunded.",
+            "nullable": true,
+            "title": "Voided At"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Created. No payment intent yet; amount and rule are being validated."
+            },
+            "pending": {
+              "label": "Pending",
+              "description": "Payment intent created at the gateway via OpenConnector; awaiting async confirmation (iDEAL/checkout)."
+            },
+            "authorized": {
+              "label": "Authorized",
+              "description": "Funds reserved. An AR invoice has been materialised and the booking Order may advance to confirmed."
+            },
+            "captured": {
+              "label": "Captured",
+              "description": "Funds settled into the merchant account."
+            },
+            "failed": {
+              "label": "Failed",
+              "description": "Authorization rejected by the gateway. lastErrorCode/lastErrorMessage carry the reason."
+            },
+            "voided": {
+              "label": "Voided",
+              "description": "Deposit refunded or cancelled. An AR credit note reverses the invoice."
+            }
+          },
+          "transitions": {
+            "requestPayment": {
+              "from": "draft",
+              "to": "pending",
+              "label": "Request payment",
+              "description": "Create the payment intent at the gateway through OpenConnector and present the customer payment link. Validates the deposit rule preconditions (REQ-DP-002) before allowing the transition.",
+              "guard": {
+                "type": "precondition",
+                "description": "Deposit rule must be valid: amount > 0, dueOffsetDays in [0,365], currencyCode is a 3-letter ISO code.",
+                "conditions": [
+                  {
+                    "expression": "amount > 0",
+                    "message": "Deposit amount must be greater than zero."
+                  },
+                  {
+                    "expression": "dueOffsetDays >= 0 && dueOffsetDays <= 365",
+                    "message": "dueOffsetDays must be between 0 and 365."
+                  }
+                ]
+              },
+              "action": {
+                "type": "create-payment-intent",
+                "description": "Calls OpenConnector.createPaymentIntent(amount, currencyCode, orderId) and stores the returned paymentIntentId, paymentGateway and paymentMethod. No card data is stored (REQ-DP-001).",
+                "connector": "openconnector",
+                "operation": "createPaymentIntent",
+                "requiredInput": [
+                  "amount",
+                  "currencyCode",
+                  "orderId"
+                ]
+              }
+            },
+            "authorize": {
+              "from": "pending",
+              "to": "authorized",
+              "label": "Authorize",
+              "description": "Idempotently mark the deposit authorized when the gateway confirms (webhook or polling fallback). Materialises the AR invoice (REQ-DP-003).",
+              "idempotent": true,
+              "setsTimestamp": "authorizedAt",
+              "action": {
+                "type": "materialize-ar-invoice",
+                "subType": "deposit",
+                "description": "Creates a Shillinq AR invoice for this deposit: customer derived from the Order, one line item (lineDescription, amount, taxRate), dueDate = eventDate minus dueOffsetDays, sourceDocumentUri = urn:nextcloud:booking:deposit-payment:@self.id. Stores the new invoice id in arInvoiceId (REQ-DP-003).",
+                "targetSchema": "ARInvoice",
+                "writesBack": "arInvoiceId"
+              }
+            },
+            "capture": {
+              "from": "authorized",
+              "to": "captured",
+              "label": "Capture",
+              "description": "Mark settled funds as captured.",
+              "setsTimestamp": "capturedAt"
+            },
+            "fail": {
+              "from": "pending",
+              "to": "failed",
+              "label": "Fail",
+              "description": "Record an authorization failure. lastErrorCode/lastErrorMessage are set from the gateway response (REQ-DP-011). The booking Order is cancelled by the booking module.",
+              "requiredInput": [
+                "lastErrorCode",
+                "lastErrorMessage"
+              ]
+            },
+            "voidFromAuthorized": {
+              "from": "authorized",
+              "to": "voided",
+              "label": "Void (refund)",
+              "description": "Void an authorized deposit on booking cancellation. If refundPolicy = automatic_on_cancellation, initiate a refund via OpenConnector and create an AR credit note (REQ-DP-008).",
+              "setsTimestamp": "voidedAt",
+              "action": {
+                "type": "materialize-ar-credit-note",
+                "description": "Initiates OpenConnector.initiateRefund(paymentIntentId, amount) when refundPolicy is automatic_on_cancellation, then creates a Shillinq AR credit note reversing arInvoiceId and stores it in creditNoteId (REQ-DP-008).",
+                "connector": "openconnector",
+                "operation": "initiateRefund",
+                "targetSchema": "CreditNote",
+                "writesBack": "creditNoteId",
+                "guard": {
+                  "expression": "refundPolicy == 'automatic_on_cancellation'",
+                  "elseAction": "queue-operator-refund-request"
+                }
+              }
+            },
+            "voidFromCaptured": {
+              "from": "captured",
+              "to": "voided",
+              "label": "Void (refund captured)",
+              "description": "Void a captured deposit; same refund + credit-note behaviour as voidFromAuthorized (REQ-DP-008).",
+              "setsTimestamp": "voidedAt",
+              "action": {
+                "type": "materialize-ar-credit-note",
+                "description": "Refund via OpenConnector and create the reversing AR credit note (REQ-DP-008).",
+                "connector": "openconnector",
+                "operation": "initiateRefund",
+                "targetSchema": "CreditNote",
+                "writesBack": "creditNoteId"
+              }
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "dueDate": {
+            "description": "The date the deposit invoice is due: eventDate minus dueOffsetDays. If the event is within dueOffsetDays from today, the deposit is due immediately (REQ-DP-002).",
+            "expression": "(eventDate == null) ? null : addDays(@self.eventDate, -1 * dueOffsetDays)",
+            "dependsOn": [
+              "eventDate",
+              "dueOffsetDays"
+            ]
+          },
+          "vatAmount": {
+            "description": "VAT portion of the gross deposit amount, computed inclusive: amount - (amount / (1 + taxRate/100)).",
+            "expression": "round(amount - (amount / (1 + (taxRate / 100))))",
+            "dependsOn": [
+              "amount",
+              "taxRate"
+            ]
+          },
+          "netAmount": {
+            "description": "Net (ex-VAT) portion of the gross deposit amount.",
+            "expression": "round(amount / (1 + (taxRate / 100)))",
+            "dependsOn": [
+              "amount",
+              "taxRate"
+            ]
+          },
+          "paymentLink": {
+            "description": "Customer-facing payment URL embedded in the confirmation email. Embeds the deposit id, the AR invoice id and a short-lived signed token; clicking opens OpenConnector's hosted payment UI (REQ-DP-005). Only meaningful while state is pending.",
+            "expression": "appUrl('/apps/booking/pay') + '?deposit=' + @self.id + '&invoice=' + arInvoiceId + '&token=' + signedToken(@self.id, 'deposit-pay', 3600)",
+            "dependsOn": [
+              "arInvoiceId",
+              "state"
+            ]
+          },
+          "isOverdue": {
+            "description": "True when the deposit is still pending and its due date has passed.",
+            "expression": "(state == 'pending') && (dueDate != null) && (dueDate < today())",
+            "dependsOn": [
+              "state",
+              "eventDate",
+              "dueOffsetDays"
+            ]
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "booking-operator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "admin": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "byState": {
+            "field": "state",
+            "metric": "count",
+            "description": "Number of deposits per lifecycle state — drives the Deposits overview state filter (REQ-DP-010).",
+            "groupBy": ["state"]
+          },
+          "pendingByDueDate": {
+            "field": "amount",
+            "metric": "sum",
+            "description": "Total pending deposit value grouped by due date, for the operator follow-up worklist (REQ-DP-010).",
+            "groupBy": ["dueDate"],
+            "filter": {
+              "state": "pending"
+            }
+          },
+          "failedCount": {
+            "field": "state",
+            "metric": "count",
+            "description": "Count of failed deposits requiring operator follow-up (REQ-DP-011).",
+            "filter": {
+              "state": "failed"
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "onAuthorized": {
+            "trigger": {
+              "type": "transition",
+              "action": "authorize"
+            },
+            "description": "Confirm to the booking-operator that the deposit was authorized and the invoice was created.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "booking-operator"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Aanbetaling geautoriseerd: {{amount}} cent voor boeking {{orderId}}; factuur {{arInvoiceId}} aangemaakt",
+              "en": "Deposit authorized: {{amount}} cents for booking {{orderId}}; invoice {{arInvoiceId}} created"
+            }
+          },
+          "onFailed": {
+            "trigger": {
+              "type": "transition",
+              "action": "fail"
+            },
+            "description": "Alert the booking-operator that a deposit authorization failed and needs follow-up.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "booking-operator"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Aanbetaling mislukt voor boeking {{orderId}}: {{lastErrorMessage}} ({{lastErrorCode}})",
+              "en": "Deposit payment failed for booking {{orderId}}: {{lastErrorMessage}} ({{lastErrorCode}})"
+            }
+          },
+          "onVoided": {
+            "trigger": {
+              "type": "transition",
+              "action": [
+                "voidFromAuthorized",
+                "voidFromCaptured"
+              ]
+            },
+            "description": "Confirm a refund was initiated and a credit note created.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "booking-operator"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Aanbetaling teruggeboekt voor boeking {{orderId}}; creditnota {{creditNoteId}} aangemaakt",
+              "en": "Deposit refunded for booking {{orderId}}; credit note {{creditNoteId}} created"
+            }
+          }
+        },
+        "x-openregister-scheduled-workflows": {
+          "shillinq-deposit-polling-fallback": {
+            "name": "Deposit polling fallback",
+            "description": "Every 5 minutes, queries all DepositPayment records with state=pending and reconciles them against OpenConnector.getPaymentStatus(paymentIntentId), so a lost or delayed gateway webhook never leaves a deposit pending indefinitely (REQ-DP-007). No app-local BackgroundJob extends TimedJob; reconciliation is idempotent (REQ-DP-006).",
+            "cron": "*/5 * * * *",
+            "source": "openconnector",
+            "operation": "getPaymentStatus",
+            "register": "shillinq",
+            "schema": "DepositPayment",
+            "enabled": true,
+            "filter": {
+              "state": "pending"
+            }
+          }
+        },
+        "x-openregister-widgets": {
+          "depositStatus": {
+            "id": "deposit-status",
+            "title": "Deposit",
+            "description": "Booking-detail widget showing deposit state, amount, payment link and the linked AR invoice (REQ-DP-010).",
+            "type": "tile",
+            "dataSource": {
+              "mode": "statistics",
+              "register": "shillinq",
+              "schema": "DepositPayment"
+            },
+            "fields": {
+              "state": {
+                "label": "Deposit status",
+                "type": "lifecycle-badge"
+              },
+              "amount": {
+                "label": "Amount",
+                "type": "currency",
+                "currency": "EUR"
+              },
+              "dueDate": {
+                "label": "Due date",
+                "type": "date"
+              },
+              "paymentLink": {
+                "label": "Complete payment",
+                "type": "action-link",
+                "visibleWhen": "state == 'pending'"
+              },
+              "arInvoiceId": {
+                "label": "Invoice",
+                "type": "relation-link",
+                "relation": "arInvoice"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "DepositPayment",
+        "slug": "deposit-portrait-2026-06-15-authorized"
+      },
+      "orderId": "ord-1001",
+      "bookingTypeId": "bt-001",
+      "amount": 7500,
+      "currencyCode": "EUR",
+      "taxRate": 21,
+      "eventDate": "2026-06-15",
+      "dueOffsetDays": 14,
+      "lineDescription": "Studio Portrait Session - Deposit (50%)",
+      "state": "authorized",
+      "paymentIntentId": "tr_9h8g7f6e5d",
+      "paymentGateway": "mollie",
+      "paymentMethod": "ideal",
+      "arInvoiceId": "inv-ar-9002",
+      "refundPolicy": "automatic_on_cancellation",
+      "authorizedAt": "2026-05-21T10:05:30Z"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "DepositPayment",
+        "slug": "deposit-wedding-2026-08-02-pending"
+      },
+      "orderId": "ord-1042",
+      "bookingTypeId": "bt-007",
+      "amount": 25000,
+      "currencyCode": "EUR",
+      "taxRate": 21,
+      "eventDate": "2026-08-02",
+      "dueOffsetDays": 30,
+      "lineDescription": "Wedding Reportage - Deposit (fixed)",
+      "state": "pending",
+      "paymentIntentId": "tr_aa11bb22cc",
+      "paymentGateway": "mollie",
+      "paymentMethod": "ideal",
+      "refundPolicy": "operator_approval"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "DepositPayment",
+        "slug": "deposit-event-2026-05-30-failed"
+      },
+      "orderId": "ord-1099",
+      "bookingTypeId": "bt-003",
+      "amount": 5000,
+      "currencyCode": "EUR",
+      "taxRate": 21,
+      "eventDate": "2026-05-30",
+      "dueOffsetDays": 7,
+      "lineDescription": "Outdoor Session - Deposit (50%)",
+      "state": "failed",
+      "paymentIntentId": "pi_zz99yy88",
+      "paymentGateway": "stripe",
+      "paymentMethod": "card",
+      "refundPolicy": "automatic_on_cancellation",
+      "lastErrorCode": "insufficient_funds",
+      "lastErrorMessage": "Insufficient funds. Please use a different card."
+    }
+  ]
+}

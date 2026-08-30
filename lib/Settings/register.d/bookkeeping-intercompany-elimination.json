@@ -1,0 +1,1025 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-intercompany-elimination",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 2 — intercompany elimination engine. Adds seven schemas (IntercompanyRelation, IntercompanyTransaction, IntercompanyMatch, IntercompanyMismatch, ToleranceRule, CounterpartyBalance, EliminationJournal) implementing REQ-ICE-001..010. Matching (REQ-ICE-003) and counterparty roll-up (REQ-ICE-007) are declared as x-openregister-aggregations per ADR-031; tolerance evaluation (REQ-ICE-004), elimination-journal balance (REQ-ICE-006) and cross-period roll-forward (REQ-ICE-008) are enforced via x-openregister-lifecycle.requires guards on the ADR-031 exception path (cross-schema aggregation cannot yet be expressed in the declarative lifecycle DSL), implemented in lib/Lifecycle against the real OpenRegister ObjectService API (find/findAll/saveObject). Five default ToleranceRule template objects are seeded (sales-of-goods, sales-of-services, interest-on-loan, dividend, management-fee). Depends on bookkeeping-consolidation-commercial (ConsolidationGroup), bookkeeping-multi-administratie (Administration GL) and bookkeeping-grootboek (GLTransaction/GLLine)."
+  },
+  "components": {
+    "schemas": {
+      "IntercompanyRelation": {
+        "slug": "IntercompanyRelation",
+        "icon": "LinkVariant",
+        "version": "0.1.0",
+        "title": "Intercompany Relation",
+        "description": "Persistent registration of an intercompany relation between two entities in a consolidation group, including the relevant general-ledger accounts on both sides, the relation type, and tolerance settings the matching engine uses to pair transactions (REQ-ICE-001).",
+        "x-schema-org": "schema:FinancialProduct",
+        "x-spec": "openspec/changes/bookkeeping-intercompany-elimination/specs/bookkeeping-intercompany-elimination/spec.md#req-ice-001",
+        "type": "object",
+        "required": [
+          "relationId",
+          "groupId",
+          "entityAId",
+          "entityBId",
+          "relationType",
+          "defaultAccountA",
+          "defaultAccountB",
+          "activeFrom",
+          "administrationId"
+        ],
+        "properties": {
+          "relationId": {
+            "type": "string",
+            "description": "Unique identifier of the relation within the consolidation group.",
+            "example": "icr-werk-holding-services",
+            "title": "Relation ID"
+          },
+          "groupId": {
+            "type": "string",
+            "description": "FK to ConsolidationGroup (bookkeeping-consolidation-commercial).",
+            "title": "Group ID"
+          },
+          "entityAId": {
+            "type": "string",
+            "description": "FK to the first entity (administration) of the relation.",
+            "title": "Entity A ID"
+          },
+          "entityBId": {
+            "type": "string",
+            "description": "FK to the second entity (administration) of the relation.",
+            "title": "Entity B ID"
+          },
+          "relationType": {
+            "type": "string",
+            "enum": [
+              "sales-of-goods",
+              "sales-of-services",
+              "royalty",
+              "licensing",
+              "management-fee",
+              "interest-on-loan",
+              "dividend",
+              "capital-contribution",
+              "expense-recharge"
+            ],
+            "description": "Economic nature of the intercompany relation; drives default tolerance and elimination treatment.",
+            "title": "Relation Type"
+          },
+          "defaultAccountA": {
+            "type": "string",
+            "description": "Default GL account on entity A's side (e.g. '8200 - IC revenue').",
+            "example": "8200",
+            "title": "Default Account A"
+          },
+          "defaultAccountB": {
+            "type": "string",
+            "description": "Default GL account on entity B's side (e.g. '4400 - IC purchases').",
+            "example": "4400",
+            "title": "Default Account B"
+          },
+          "toleranceAbsolute": {
+            "type": "number",
+            "minimum": 0,
+            "default": 10,
+            "description": "Absolute mismatch threshold in EUR (default EUR 10).",
+            "title": "Tolerance Absolute"
+          },
+          "toleranceRelative": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0.5,
+            "description": "Relative mismatch threshold in percent (default 0.5%).",
+            "title": "Tolerance Relative"
+          },
+          "toleranceFallbackAccount": {
+            "type": "string",
+            "description": "Rounding-difference fallback GL account for within-tolerance residuals (e.g. '9999 - Elimination rounding').",
+            "example": "9999",
+            "title": "Tolerance Fallback Account"
+          },
+          "activeFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Start date of the relation.",
+            "title": "Active From"
+          },
+          "activeTo": {
+            "type": "string",
+            "format": "date",
+            "description": "End date of the relation; null means currently active.",
+            "title": "Active To"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration (tenant scope).",
+            "title": "Administration ID"
+          }
+        }
+      },
+      "IntercompanyTransaction": {
+        "slug": "IntercompanyTransaction",
+        "icon": "SwapHorizontal",
+        "version": "0.1.0",
+        "title": "Intercompany Transaction",
+        "description": "An auto-detected or explicitly-marked intercompany transaction sourced from a group entity's general ledger, carrying counterparty identification and detection confidence (REQ-ICE-002).",
+        "x-schema-org": "schema:FinancialProduct",
+        "x-spec": "openspec/changes/bookkeeping-intercompany-elimination/specs/bookkeeping-intercompany-elimination/spec.md#req-ice-002",
+        "type": "object",
+        "required": [
+          "sourceAdministrationId",
+          "sourceJournalEntryId",
+          "sourceLineNumber",
+          "bookingDate",
+          "glAccount",
+          "currency",
+          "detectionMethod",
+          "detectionConfidence",
+          "administrationId"
+        ],
+        "properties": {
+          "sourceAdministrationId": {
+            "type": "string",
+            "description": "FK to the source administration the transaction was booked in.",
+            "title": "Source Administration ID"
+          },
+          "sourceJournalEntryId": {
+            "type": "string",
+            "description": "FK to the source journal entry (T1 JournalEntry/GLTransaction).",
+            "title": "Source Journal Entry ID"
+          },
+          "sourceLineNumber": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Line number within the source journal entry.",
+            "title": "Source Line Number"
+          },
+          "bookingDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Booking date of the source line.",
+            "title": "Booking Date"
+          },
+          "glAccount": {
+            "type": "string",
+            "description": "General-ledger account in the source administration.",
+            "title": "GL Account"
+          },
+          "debitAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Debit amount (non-negative).",
+            "title": "Debit Amount"
+          },
+          "creditAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Credit amount (non-negative).",
+            "title": "Credit Amount"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code.",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description copied from the source journal line.",
+            "title": "Description"
+          },
+          "counterpartyEntityId": {
+            "type": "string",
+            "description": "FK to the detected or asserted counterparty entity (administration).",
+            "title": "Counterparty Entity ID"
+          },
+          "relationId": {
+            "type": "string",
+            "description": "FK to the matched IntercompanyRelation, when known.",
+            "title": "Relation ID"
+          },
+          "detectionMethod": {
+            "type": "string",
+            "enum": [
+              "account-based",
+              "label-based",
+              "explicitly-marked"
+            ],
+            "description": "How the transaction was identified as intercompany.",
+            "title": "Detection Method"
+          },
+          "detectionConfidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "description": "Confidence of the detection; label-based defaults to medium pending operator confirmation.",
+            "title": "Detection Confidence"
+          },
+          "isMatched": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether the transaction has been included in a match.",
+            "title": "Is Matched"
+          },
+          "matchId": {
+            "type": "string",
+            "description": "FK to the IntercompanyMatch the transaction belongs to.",
+            "title": "Match ID"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration (tenant scope).",
+            "title": "Administration ID"
+          }
+        }
+      },
+      "IntercompanyMatch": {
+        "slug": "IntercompanyMatch",
+        "icon": "Compare",
+        "version": "0.1.0",
+        "title": "Intercompany Match",
+        "description": "A paired set of intercompany transactions from two entities for one relation and period, with the aggregated A/B totals, the mismatch delta, and the tolerance-evaluated match status (REQ-ICE-003). Created via the matching aggregation; the create transition is guarded by IntercompanyToleranceGuard (REQ-ICE-004) and the roll-forward consistency check (REQ-ICE-008).",
+        "x-schema-org": "schema:Thing",
+        "x-spec": "openspec/changes/bookkeeping-intercompany-elimination/specs/bookkeeping-intercompany-elimination/spec.md#req-ice-003",
+        "type": "object",
+        "required": [
+          "matchId",
+          "periodId",
+          "relationId",
+          "entityATransactionIds",
+          "entityBTransactionIds",
+          "totalAmountA",
+          "totalAmountB",
+          "matchStatus",
+          "administrationId"
+        ],
+        "properties": {
+          "matchId": {
+            "type": "string",
+            "description": "Unique match identifier.",
+            "title": "Match ID"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "FK to the consolidation period.",
+            "title": "Period ID"
+          },
+          "relationId": {
+            "type": "string",
+            "description": "FK to the IntercompanyRelation.",
+            "title": "Relation ID"
+          },
+          "entityATransactionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "UUIDs of the IntercompanyTransaction rows on entity A's side.",
+            "title": "Entity A Transaction Ids"
+          },
+          "entityBTransactionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "UUIDs of the IntercompanyTransaction rows on entity B's side.",
+            "title": "Entity B Transaction Ids"
+          },
+          "totalAmountA": {
+            "type": "number",
+            "description": "Aggregated amount on entity A's side, in group reporting currency.",
+            "title": "Total Amount A"
+          },
+          "totalAmountB": {
+            "type": "number",
+            "description": "Aggregated amount on entity B's side, in group reporting currency.",
+            "title": "Total Amount B"
+          },
+          "mismatchAmount": {
+            "type": "number",
+            "description": "Delta (totalAmountA - totalAmountB).",
+            "title": "Mismatch Amount"
+          },
+          "mismatchPercentage": {
+            "type": "number",
+            "description": "Relative difference in percent of the larger side.",
+            "title": "Mismatch Percentage"
+          },
+          "matchStatus": {
+            "type": "string",
+            "enum": [
+              "perfect-match",
+              "within-tolerance",
+              "outside-tolerance",
+              "one-sided-A",
+              "one-sided-B"
+            ],
+            "description": "Tolerance-evaluated match outcome.",
+            "title": "Match Status"
+          },
+          "generatedEliminationId": {
+            "type": "string",
+            "description": "FK to the generated EliminationJournal, when an elimination was produced.",
+            "title": "Generated Elimination ID"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration (tenant scope).",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-aggregations": {
+          "matchByRelationPeriod": {
+            "description": "Declarative shape of the per-relation, per-period matching the engine computes (REQ-ICE-003). Groups IntercompanyTransaction by (relationId, periodId) within the consolidation, sums entity-A-side and entity-B-side amounts (debit minus credit per side) into totalAmountA/totalAmountB, and derives mismatchAmount = totalAmountA - totalAmountB. The tolerance evaluation that sets matchStatus runs in the create lifecycle guard. When the OpenRegister aggregation engine cannot express the per-side conditional sum, the same result is computed in PHP from the real ObjectService API (findAll).",
+            "filter": {},
+            "groupBy": [
+              "relationId",
+              "IntercompanyTransaction.relationId"
+            ],
+            "operations": {
+              "totalAmountA": {
+                "field": "IntercompanyTransaction.debitAmount",
+                "operation": "sum",
+                "condition": "IntercompanyTransaction.sourceAdministrationId = @self.entityATransactionIds",
+                "target": "totalAmountA"
+              },
+              "totalAmountB": {
+                "field": "IntercompanyTransaction.creditAmount",
+                "operation": "sum",
+                "condition": "IntercompanyTransaction.sourceAdministrationId = @self.entityBTransactionIds",
+                "target": "totalAmountB"
+              },
+              "mismatchAmount": {
+                "operation": "expression",
+                "expression": "totalAmountA - totalAmountB",
+                "target": "mismatchAmount"
+              }
+            },
+            "from": "IntercompanyTransaction"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "matchStatus",
+          "initialState": "outside-tolerance",
+          "states": {
+            "perfect-match": {
+              "label": "Perfect match",
+              "description": "A and B sides are equal; elimination may be generated."
+            },
+            "within-tolerance": {
+              "label": "Within tolerance",
+              "description": "Mismatch is within the configured ToleranceRule; residual posts to the fallback account."
+            },
+            "outside-tolerance": {
+              "label": "Outside tolerance",
+              "description": "Mismatch exceeds tolerance; escalated to the exception queue, no auto-elimination."
+            },
+            "one-sided-A": {
+              "label": "One-sided (A)",
+              "description": "Only entity A booked the transaction; awaiting the counterparty booking."
+            },
+            "one-sided-B": {
+              "label": "One-sided (B)",
+              "description": "Only entity B booked the transaction; awaiting the counterparty booking."
+            }
+          },
+          "transitions": {
+            "create": {
+              "from": "outside-tolerance",
+              "to": "within-tolerance",
+              "label": "Evaluate tolerance",
+              "description": "On match creation, evaluate the mismatch against the configured ToleranceRule (REQ-ICE-004) and verify cross-period roll-forward consistency (REQ-ICE-008). Implemented on the ADR-031 exception path because cross-schema aggregation is not yet expressible in the declarative lifecycle DSL.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\IntercompanyToleranceGuard::isWithinTolerance"
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Intercompany Match is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "IntercompanyMismatch": {
+        "slug": "IntercompanyMismatch",
+        "icon": "AlertCircleOutline",
+        "version": "0.1.0",
+        "title": "Intercompany Mismatch",
+        "description": "An exception record for a discrepancy that fell outside tolerance, classified by cause and tracked through a semi-automated resolution path (REQ-ICE-005).",
+        "x-schema-org": "schema:Thing",
+        "x-spec": "openspec/changes/bookkeeping-intercompany-elimination/specs/bookkeeping-intercompany-elimination/spec.md#req-ice-005",
+        "type": "object",
+        "required": [
+          "mismatchId",
+          "periodId",
+          "relationId",
+          "causeClassification",
+          "amount",
+          "currency",
+          "description",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "mismatchId": {
+            "type": "string",
+            "description": "Unique mismatch identifier.",
+            "title": "Mismatch ID"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "FK to the consolidation period.",
+            "title": "Period ID"
+          },
+          "relationId": {
+            "type": "string",
+            "description": "FK to the IntercompanyRelation.",
+            "title": "Relation ID"
+          },
+          "matchId": {
+            "type": "string",
+            "description": "FK to the IntercompanyMatch the mismatch belongs to, when part of a match.",
+            "title": "Match ID"
+          },
+          "causeClassification": {
+            "type": "string",
+            "enum": [
+              "timing-difference",
+              "fx-translation",
+              "transfer-pricing-adjustment",
+              "missing-booking",
+              "classification-error",
+              "unknown"
+            ],
+            "description": "Operator-assigned cause of the discrepancy; drives the resolution path.",
+            "title": "Cause Classification"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Mismatch amount in EUR or source currency.",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency of the mismatch amount.",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "description": {
+            "type": "string",
+            "description": "Summary of the discrepancy.",
+            "title": "Description"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "investigating",
+              "resolved",
+              "accepted-as-difference"
+            ],
+            "default": "open",
+            "description": "Resolution status of the exception.",
+            "title": "Status"
+          },
+          "assigneeId": {
+            "type": "string",
+            "description": "FK to the Nextcloud user investigating the mismatch.",
+            "title": "Assignee ID"
+          },
+          "resolutionAction": {
+            "type": "string",
+            "enum": [
+              "manual-gl-correction",
+              "interim-elimination-with-reversal",
+              "post-to-cta",
+              "source-correction-booking-wizard",
+              "accept-as-difference"
+            ],
+            "description": "Chosen resolution path for the mismatch.",
+            "title": "Resolution Action"
+          },
+          "resolutionNotes": {
+            "type": "string",
+            "description": "Free-text explanation of the chosen resolution.",
+            "title": "Resolution Notes"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration (tenant scope).",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "open",
+          "states": {
+            "open": {
+              "label": "Open",
+              "description": "Awaiting triage."
+            },
+            "investigating": {
+              "label": "Investigating",
+              "description": "Assigned and under investigation."
+            },
+            "resolved": {
+              "label": "Resolved",
+              "description": "A resolution action was applied."
+            },
+            "accepted-as-difference": {
+              "label": "Accepted as difference",
+              "description": "Difference accepted and booked to the fallback/CTA account."
+            }
+          },
+          "transitions": {
+            "investigate": {
+              "from": "open",
+              "to": "investigating",
+              "label": "Assign and investigate"
+            },
+            "resolve": {
+              "from": "investigating",
+              "to": "resolved",
+              "label": "Apply resolution"
+            },
+            "accept": {
+              "from": "investigating",
+              "to": "accepted-as-difference",
+              "label": "Accept as difference"
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Intercompany Mismatch is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "ToleranceRule": {
+        "slug": "ToleranceRule",
+        "icon": "Tune",
+        "version": "0.1.0",
+        "title": "Tolerance Rule",
+        "description": "A configurable mismatch-acceptance rule (absolute + relative thresholds combined via a tolerance method) optionally scoped to a relation type, with an auto-resolve flag (REQ-ICE-004).",
+        "x-schema-org": "schema:Thing",
+        "x-spec": "openspec/changes/bookkeeping-intercompany-elimination/specs/bookkeeping-intercompany-elimination/spec.md#req-ice-004",
+        "type": "object",
+        "required": [
+          "ruleId",
+          "groupId",
+          "toleranceAbsolute",
+          "toleranceRelative",
+          "toleranceMethod",
+          "fallbackAccount",
+          "autoResolve",
+          "administrationId"
+        ],
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "description": "Unique rule identifier.",
+            "title": "Rule ID"
+          },
+          "groupId": {
+            "type": "string",
+            "description": "FK to ConsolidationGroup; a group-wide default rule.",
+            "title": "Group ID"
+          },
+          "relationTypeFilter": {
+            "type": "string",
+            "enum": [
+              "sales-of-goods",
+              "sales-of-services",
+              "royalty",
+              "licensing",
+              "management-fee",
+              "interest-on-loan",
+              "dividend",
+              "capital-contribution",
+              "expense-recharge"
+            ],
+            "description": "Relation type the rule applies to; null means all relation types.",
+            "title": "Relation Type Filter"
+          },
+          "toleranceAbsolute": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Absolute mismatch threshold in EUR.",
+            "title": "Tolerance Absolute"
+          },
+          "toleranceRelative": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Relative mismatch threshold in percent.",
+            "title": "Tolerance Relative"
+          },
+          "toleranceMethod": {
+            "type": "string",
+            "enum": [
+              "max-of-absolute-relative",
+              "min-of-absolute-relative",
+              "absolute-only"
+            ],
+            "description": "How the absolute and relative thresholds are combined: max-of (either passes), min-of (both must pass), or absolute-only.",
+            "title": "Tolerance Method"
+          },
+          "fallbackAccount": {
+            "type": "string",
+            "description": "GL account the within-tolerance residual posts to.",
+            "example": "9999",
+            "title": "Fallback Account"
+          },
+          "autoResolve": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether within-tolerance mismatches are accepted automatically.",
+            "title": "Auto Resolve"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration (tenant scope).",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Tolerance Rule is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "CounterpartyBalance": {
+        "slug": "CounterpartyBalance",
+        "icon": "ScaleBalance",
+        "version": "0.1.0",
+        "title": "Counterparty Balance",
+        "description": "An aggregated per-counterparty-pair, per-period view of outstanding intercompany receivables, payables, net position, flows and mismatch count (REQ-ICE-007). Read-only; refreshed by each matching run.",
+        "x-schema-org": "schema:FinancialProduct",
+        "x-spec": "openspec/changes/bookkeeping-intercompany-elimination/specs/bookkeeping-intercompany-elimination/spec.md#req-ice-007",
+        "readonly": true,
+        "x-openregister": {
+          "readonly": true
+        },
+        "type": "object",
+        "required": [
+          "balanceId",
+          "groupId",
+          "entityAId",
+          "entityBId",
+          "periodId",
+          "totalReceivablesAonB",
+          "totalPayablesAtoB",
+          "netPositionAtoB",
+          "lastUpdated",
+          "administrationId"
+        ],
+        "properties": {
+          "balanceId": {
+            "type": "string",
+            "description": "Unique identifier per pair + period.",
+            "title": "Balance ID"
+          },
+          "groupId": {
+            "type": "string",
+            "description": "FK to ConsolidationGroup.",
+            "title": "Group ID"
+          },
+          "entityAId": {
+            "type": "string",
+            "description": "FK to entity A.",
+            "title": "Entity A ID"
+          },
+          "entityBId": {
+            "type": "string",
+            "description": "FK to entity B.",
+            "title": "Entity B ID"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "FK to the consolidation period.",
+            "title": "Period ID"
+          },
+          "totalReceivablesAonB": {
+            "type": "number",
+            "description": "Total outstanding receivables of A on B.",
+            "title": "Total Receivables Aon B"
+          },
+          "totalPayablesAtoB": {
+            "type": "number",
+            "description": "Total outstanding payables of A to B.",
+            "title": "Total Payables Ato B"
+          },
+          "netPositionAtoB": {
+            "type": "number",
+            "description": "Net position of A versus B (receivables - payables).",
+            "title": "Net Position Ato B"
+          },
+          "totalSalesAtoB": {
+            "type": "number",
+            "description": "Total sales flow A to B in the period.",
+            "title": "Total Sales Ato B"
+          },
+          "totalPurchasesAtoB": {
+            "type": "number",
+            "description": "Total purchase flow A from B in the period.",
+            "title": "Total Purchases Ato B"
+          },
+          "transactionCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of intercompany transactions in the period.",
+            "title": "Transaction Count"
+          },
+          "mismatchCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of reported mismatches in the period.",
+            "title": "Mismatch Count"
+          },
+          "lastUpdated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the last refresh.",
+            "title": "Last Updated"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration (tenant scope).",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-aggregations": {
+          "counterpartyBalanceByPair": {
+            "description": "Declarative shape of the per-pair, per-period counterparty roll-up the engine computes (REQ-ICE-007). Groups IntercompanyTransaction by (entityAId, entityBId, periodId) within the consolidation and sums receivables, payables, sales and purchase flows, counting transactions and related mismatches. When the OpenRegister aggregation engine cannot express the multi-source roll-up, the same result is computed in PHP from the real ObjectService API (findAll).",
+            "source": "IntercompanyTransaction",
+            "filter": {
+              "periodId": "@self.periodId"
+            },
+            "groupBy": [
+              "IntercompanyTransaction.counterpartyEntityId",
+              "IntercompanyTransaction.sourceAdministrationId"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "IntercompanyTransaction.debitAmount",
+                "as": "totalReceivablesAonB"
+              },
+              {
+                "metric": "sum",
+                "field": "IntercompanyTransaction.creditAmount",
+                "as": "totalPayablesAtoB"
+              },
+              {
+                "metric": "expression",
+                "expression": "totalReceivablesAonB - totalPayablesAtoB",
+                "as": "netPositionAtoB"
+              },
+              {
+                "metric": "count",
+                "field": "IntercompanyTransaction.id",
+                "as": "transactionCount"
+              }
+            ]
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Counterparty Balance is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "EliminationJournal": {
+        "slug": "EliminationJournal",
+        "icon": "BookRemoveOutline",
+        "version": "0.1.0",
+        "title": "Elimination Journal",
+        "description": "A generated elimination journal entry living in the consolidation layer (never in the source administrations), with balanced debit/credit lines per matched transaction pair and an audit reference back to the triggering match (REQ-ICE-006). Lines MUST balance: totalDebit equals totalCredit, enforced by the EliminationBalanceGuard on the create transition.",
+        "x-schema-org": "schema:Thing",
+        "x-spec": "openspec/changes/bookkeeping-intercompany-elimination/specs/bookkeeping-intercompany-elimination/spec.md#req-ice-006",
+        "type": "object",
+        "required": [
+          "eliminationId",
+          "consolidationPeriodId",
+          "matchId",
+          "bookingDate",
+          "description",
+          "lines",
+          "totalDebit",
+          "totalCredit",
+          "generatedBy",
+          "administrationId"
+        ],
+        "properties": {
+          "eliminationId": {
+            "type": "string",
+            "description": "Unique journal identifier.",
+            "title": "Elimination ID"
+          },
+          "consolidationPeriodId": {
+            "type": "string",
+            "description": "FK to the consolidation period.",
+            "title": "Consolidation Period ID"
+          },
+          "matchId": {
+            "type": "string",
+            "description": "FK to the triggering IntercompanyMatch.",
+            "title": "Match ID"
+          },
+          "bookingDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Journal entry date.",
+            "title": "Booking Date"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the elimination.",
+            "title": "Description"
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 2,
+            "description": "Balanced debit/credit lines. The sum of debitAmount MUST equal the sum of creditAmount (REQ-ICE-006).",
+            "items": {
+              "type": "object",
+              "required": [
+                "glAccount",
+                "debitAmount",
+                "creditAmount"
+              ],
+              "properties": {
+                "glAccount": {
+                  "type": "string",
+                  "description": "GL account of the elimination line.",
+                  "title": "GL Account"
+                },
+                "debitAmount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Non-negative debit amount.",
+                  "title": "Debit Amount"
+                },
+                "creditAmount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Non-negative credit amount.",
+                  "title": "Credit Amount"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Line description.",
+                  "title": "Description"
+                }
+              }
+            },
+            "title": "Lines"
+          },
+          "totalDebit": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Sum of debit amounts; MUST equal totalCredit.",
+            "title": "Total Debit"
+          },
+          "totalCredit": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Sum of credit amounts; MUST equal totalDebit.",
+            "title": "Total Credit"
+          },
+          "generatedBy": {
+            "type": "string",
+            "enum": [
+              "system",
+              "operator"
+            ],
+            "description": "Whether the journal was auto-generated by the matching run or entered manually.",
+            "title": "Generated By"
+          },
+          "approvedBy": {
+            "type": "string",
+            "description": "FK to the Nextcloud user who approved the elimination.",
+            "title": "Approved By"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the elimination was approved.",
+            "title": "Approved At"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration (tenant scope).",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "generatedBy",
+          "initialState": "system",
+          "states": {
+            "system": {
+              "label": "System-generated",
+              "description": "Materialised automatically by the matching run."
+            },
+            "operator": {
+              "label": "Operator-entered",
+              "description": "Entered manually by an operator."
+            }
+          },
+          "transitions": {
+            "create": {
+              "from": "system",
+              "to": "system",
+              "label": "Verify balance",
+              "description": "On creation, verify the elimination lines balance (sum of debits equals sum of credits) before persisting (REQ-ICE-006). ADR-031 exception path: cross-line aggregation is not yet expressible in the declarative lifecycle DSL.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\EliminationBalanceGuard::isBalanced"
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Elimination Journal is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ToleranceRule",
+          "slug": "tolerance-rule-sales-of-goods"
+        },
+        "ruleId": "tr-sales-of-goods",
+        "groupId": "__template__",
+        "relationTypeFilter": "sales-of-goods",
+        "toleranceAbsolute": 25,
+        "toleranceRelative": 0.5,
+        "toleranceMethod": "max-of-absolute-relative",
+        "fallbackAccount": "9999",
+        "autoResolve": true,
+        "administrationId": "__template__"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ToleranceRule",
+          "slug": "tolerance-rule-sales-of-services"
+        },
+        "ruleId": "tr-sales-of-services",
+        "groupId": "__template__",
+        "relationTypeFilter": "sales-of-services",
+        "toleranceAbsolute": 10,
+        "toleranceRelative": 0.25,
+        "toleranceMethod": "max-of-absolute-relative",
+        "fallbackAccount": "9999",
+        "autoResolve": true,
+        "administrationId": "__template__"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ToleranceRule",
+          "slug": "tolerance-rule-interest-on-loan"
+        },
+        "ruleId": "tr-interest-on-loan",
+        "groupId": "__template__",
+        "relationTypeFilter": "interest-on-loan",
+        "toleranceAbsolute": 100,
+        "toleranceRelative": 0.1,
+        "toleranceMethod": "max-of-absolute-relative",
+        "fallbackAccount": "9999",
+        "autoResolve": true,
+        "administrationId": "__template__"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ToleranceRule",
+          "slug": "tolerance-rule-dividend"
+        },
+        "ruleId": "tr-dividend",
+        "groupId": "__template__",
+        "relationTypeFilter": "dividend",
+        "toleranceAbsolute": 5000,
+        "toleranceRelative": 0.01,
+        "toleranceMethod": "min-of-absolute-relative",
+        "fallbackAccount": "9999",
+        "autoResolve": false,
+        "administrationId": "__template__"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ToleranceRule",
+          "slug": "tolerance-rule-management-fee"
+        },
+        "ruleId": "tr-management-fee",
+        "groupId": "__template__",
+        "relationTypeFilter": "management-fee",
+        "toleranceAbsolute": 20,
+        "toleranceRelative": 0.5,
+        "toleranceMethod": "max-of-absolute-relative",
+        "fallbackAccount": "9999",
+        "autoResolve": true,
+        "administrationId": "__template__"
+      }
+    ]
+  }
+}

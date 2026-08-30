@@ -20,6 +20,7 @@
 
 /coverage/
 /coverage-frontend/
+/coverage-vitest/
 
 # Quality reports
 /quality-reports/
@@ -54,6 +55,19 @@ phpqa_output.log
 **/update*Settings*
 **/rebase*
 **/setup*
+
+# The mistake-filename globs above are broad enough to also match legitimate
+# openspec change/spec slugs (e.g. "model-or-references-pilot" contains
+# "references"), silently swallowing real archived changes from git status.
+# Never let them exclude anything under openspec/.
+!openspec/**
+
+# `**/setup*` above is broad enough to also swallow a legitimate e2e spec
+# named for the feature it tests (setup-wizard-english's own
+# tests/e2e/setup-wizard-english.spec.ts, REQ-SWE-005) — `git status`
+# silently reported it as untracked-but-ignored rather than untracked.
+# Same failure mode as the openspec carve-out above.
+!tests/e2e/setup-wizard-english.spec.ts
 
 # Temporary test files that shouldn't be committed
 simple-solr-test.php
@@ -109,3 +123,9 @@ bom-npm.cdx.json
 
 # Hydra builder internal state — emitted by run-hydra-gates.sh
 task-audit.json
+
+# Agent/test scratch and tool caches — generated, never source.
+# Added by the 2026-08-25 fleet hygiene sweep (ADR-100 Decision 2).
+.stale/
+/.e2e-state/
+.phpunit.result.cache

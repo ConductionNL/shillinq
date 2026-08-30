@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookings-self-service-widget
 
 **Status:** proposed
@@ -5,7 +9,11 @@
 **Tier:** T1 (core feature)
 **Depends on:** bookings-create-appointment, bookings-resource-calendar, bookings-service-catalog
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookings self service widget in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: self-service booking widget not yet implemented
 

@@ -1,0 +1,540 @@
+{
+  "components": {
+    "schemas": {
+      "RecurringInvoiceProfile": {
+        "slug": "RecurringInvoiceProfile",
+        "icon": "CalendarSync",
+        "version": "0.1.0",
+        "title": "Recurring Invoice Profile",
+        "description": "A recurring (periodic) billing definition — the template Shillinq uses to generate ordinary ARInvoice records on a schedule (REQ-RIN-001). The customer is a Nextcloud addressbook contact (customerReference), never an invented party schema. Generation produces standard ARInvoice records carrying recurringProfileId + billingPeriod provenance; there is no parallel invoice type. Numbering, per-line BTW and Peppol delivery are owned by bookkeeping-quote-order-invoice (CHAINED); SEPA collection is owned by bookkeeping-sepa-direct-debit (CHAINED).",
+        "x-schema-org": "schema:Invoice",
+        "x-openregister-audit": true,
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create/update/delete of a RecurringInvoiceProfile is logged to OpenRegister's immutable audit trail (REQ-AT-001 / REQ-RIN-001)."
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "customerReference",
+          "lines",
+          "frequency",
+          "interval",
+          "startDate",
+          "invoiceDay",
+          "issueMode",
+          "deliveryChannel",
+          "paymentTermsDays",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Operator-facing profile name.",
+            "example": "Hosting Acme",
+            "title": "Name"
+          },
+          "customerReference": {
+            "type": "string",
+            "description": "FK to the customer: a Nextcloud addressbook contact reference (UID/URI). A customer is a Nextcloud contact entity, not a bespoke schema (fleet convention). The financial CustomerMaster is resolved per AR conventions for terms/limits; no party schema is invented here.",
+            "example": "contact:acme-bv",
+            "title": "Customer Reference"
+          },
+          "lines": {
+            "type": "array",
+            "description": "Embedded recurring line items. Period tokens ({period}/{month}/{year}) in description are expanded at generation, localized to the customer document language (REQ-RIN-002).",
+            "items": {
+              "type": "object",
+              "required": [
+                "description",
+                "quantity",
+                "unitPrice",
+                "vatCode"
+              ],
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "Line description; may contain {period}/{month}/{year} tokens.",
+                  "example": "Hosting {month} {year}",
+                  "title": "Description"
+                },
+                "quantity": {
+                  "type": "number",
+                  "description": "Quantity.",
+                  "default": 1,
+                  "example": 1,
+                  "title": "Quantity"
+                },
+                "unitPrice": {
+                  "type": "number",
+                  "description": "Unit price in the document currency (ex VAT).",
+                  "example": 99.0,
+                  "title": "Unit Price"
+                },
+                "vatCode": {
+                  "type": "integer",
+                  "description": "Dutch BTW rate percentage (21, 9, 0).",
+                  "example": 21,
+                  "title": "VAT Code"
+                },
+                "revenueAccount": {
+                  "type": "string",
+                  "description": "FK to the revenue GL Account (chart of accounts).",
+                  "nullable": true,
+                  "title": "Revenue Account"
+                },
+                "costCenter": {
+                  "type": "string",
+                  "description": "FK to a cost center / dimension (bookkeeping-cost-centers-dimensions).",
+                  "nullable": true,
+                  "title": "Cost Center"
+                }
+              }
+            },
+            "title": "Lines"
+          },
+          "frequency": {
+            "type": "string",
+            "enum": [
+              "weekly",
+              "monthly",
+              "quarterly",
+              "semi-annually",
+              "annually"
+            ],
+            "description": "Billing cadence (REQ-RIN-001).",
+            "default": "monthly",
+            "title": "Frequency"
+          },
+          "interval": {
+            "type": "integer",
+            "description": "Cadence multiplier — frequency=monthly, interval=2 means every 2 months (REQ-RIN-001).",
+            "minimum": 1,
+            "default": 1,
+            "title": "Interval"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "First billing period start (civil date, administration timezone).",
+            "title": "Start Date"
+          },
+          "endCondition": {
+            "type": "object",
+            "description": "Termination rule: { endDate } or { occurrenceCount }; absent = open-ended (REQ-RIN-005).",
+            "nullable": true,
+            "properties": {
+              "endDate": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "title": "End Date",
+                "description": "The date on which this record expires or ends."
+              },
+              "occurrenceCount": {
+                "type": "integer",
+                "minimum": 1,
+                "nullable": true,
+                "title": "Occurrence Count",
+                "description": "Total number of invoices this profile generates before it ends. Counted from the first generated period; when it is reached the profile transitions to ended (REQ-RIN-005)."
+              }
+            },
+            "title": "End Condition"
+          },
+          "invoiceDay": {
+            "type": "integer",
+            "description": "Day of the period on which to invoice (1-31). Clamped to month length per REQ-RIN-003.",
+            "minimum": 1,
+            "maximum": 31,
+            "default": 1,
+            "title": "Invoice Day"
+          },
+          "nextRunDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Computed: the next civil date a generation run is due (REQ-RIN-003).",
+            "nullable": true,
+            "title": "Next Run Date"
+          },
+          "lastBillingPeriod": {
+            "type": "string",
+            "description": "The most recently generated billing period key (YYYY-MM or YYYY-Www). Drives nextRunDate and idempotency (REQ-RIN-004).",
+            "nullable": true,
+            "title": "Last Billing Period"
+          },
+          "remainingOccurrences": {
+            "type": "integer",
+            "description": "When endCondition.occurrenceCount is set, the count still to generate. Decremented per generated period (REQ-RIN-005).",
+            "nullable": true,
+            "title": "Remaining Occurrences"
+          },
+          "issueMode": {
+            "type": "string",
+            "enum": [
+              "draft-for-review",
+              "auto-issue"
+            ],
+            "description": "draft-for-review (default) creates drafts; auto-issue issues immediately and catches up at most one missed period (REQ-RIN-004).",
+            "default": "draft-for-review",
+            "title": "Issue Mode"
+          },
+          "deliveryChannel": {
+            "type": "string",
+            "enum": [
+              "email",
+              "peppol",
+              "none"
+            ],
+            "description": "Delivery channel for issued invoices. peppol selectable only once bookkeeping-quote-order-invoice lands (CHAINED).",
+            "default": "email",
+            "title": "Delivery Channel"
+          },
+          "paymentTermsDays": {
+            "type": "integer",
+            "description": "Due-date offset (days) applied to generated invoices.",
+            "minimum": 0,
+            "default": 30,
+            "title": "Payment Terms Days"
+          },
+          "indexationPercent": {
+            "type": "number",
+            "description": "Annual price indexation percentage applied once per startDate anniversary (REQ-RIN-006).",
+            "nullable": true,
+            "title": "Indexation Percent"
+          },
+          "indexationHistory": {
+            "type": "array",
+            "description": "Applied indexations (date, percent, per-line old->new). Never retroactive; idempotent per anniversary year (REQ-RIN-006).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "title": "Date",
+                  "description": "The relevant date."
+                },
+                "percent": {
+                  "type": "number",
+                  "title": "Percent",
+                  "description": "The numeric value for percent."
+                },
+                "lineDeltas": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  },
+                  "title": "Line Deltas",
+                  "description": "A list of line deltas entries."
+                }
+              }
+            },
+            "title": "Indexation History"
+          },
+          "sepaCollection": {
+            "type": "boolean",
+            "description": "Route generated invoices into the SEPA direct-debit batch flow (CHAINED: bookkeeping-sepa-direct-debit). No DD logic in this change.",
+            "default": false,
+            "title": "SEPA Collection"
+          },
+          "contractReference": {
+            "type": "string",
+            "description": "Soft FK to a Contract (contract-lifecycle-management) backing this billing.",
+            "nullable": true,
+            "title": "Contract Reference"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code.",
+            "default": "EUR",
+            "title": "Currency"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Tenant administration scope (ADR-005).",
+            "nullable": true,
+            "title": "Administration ID"
+          },
+          "lastRunStatus": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "failed",
+              "skipped"
+            ],
+            "description": "Outcome of the last generation run; a field-change to failed triggers a notification (REQ-RIN-007).",
+            "nullable": true,
+            "title": "Last Run Status"
+          },
+          "lastRunError": {
+            "type": "string",
+            "description": "Human-readable reason when lastRunStatus = failed (no sensitive payloads).",
+            "nullable": true,
+            "title": "Last Run Error"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "paused",
+              "ended"
+            ],
+            "description": "Profile lifecycle state (REQ-RIN-005).",
+            "default": "draft",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Defined but not generating. Being completed/validated."
+            },
+            "active": {
+              "label": "Active",
+              "description": "Generating on schedule. nextRunDate is honoured by the scheduled workflow."
+            },
+            "paused": {
+              "label": "Paused",
+              "description": "Generation frozen. nextRunDate is not advanced while paused; resume recomputes forward and lists skipped periods (REQ-RIN-005)."
+            },
+            "ended": {
+              "label": "Ended",
+              "description": "Terminal. Reached endDate / occurrenceCount, or ended manually."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "draft",
+              "to": "active",
+              "label": "Activate",
+              "description": "Begin generating. Requires at least one line and a valid customer; auto-issue profiles additionally require the next-invoice preview to have been rendered and acknowledged (REQ-RIN-005/008).",
+              "guard": {
+                "type": "precondition",
+                "description": "Profile must be complete before it can generate.",
+                "conditions": [
+                  {
+                    "expression": "lines != null && size(lines) > 0",
+                    "message": "A recurring profile needs at least one line item."
+                  },
+                  {
+                    "expression": "customerReference != null && customerReference != ''",
+                    "message": "A recurring profile needs a customer."
+                  }
+                ]
+              }
+            },
+            "pause": {
+              "from": "active",
+              "to": "paused",
+              "label": "Pause",
+              "description": "Freeze generation; nextRunDate stops advancing."
+            },
+            "resume": {
+              "from": "paused",
+              "to": "active",
+              "label": "Resume",
+              "description": "Resume generation; recompute nextRunDate forward and surface skipped periods (REQ-RIN-005)."
+            },
+            "endFromActive": {
+              "from": "active",
+              "to": "ended",
+              "label": "End",
+              "description": "Terminate the profile (manual, endDate reached, or occurrenceCount exhausted)."
+            },
+            "endFromPaused": {
+              "from": "paused",
+              "to": "ended",
+              "label": "End",
+              "description": "Terminate a paused profile."
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "perPeriodNetAmount": {
+            "description": "Net (ex-VAT) total of all lines for one period: sum(quantity * unitPrice).",
+            "expression": "sum(map(lines, 'quantity * unitPrice'))",
+            "dependsOn": [
+              "lines"
+            ]
+          },
+          "nextRunDate": {
+            "description": "The next civil date a generation run is due, derived from frequency * interval, invoiceDay (clamped to month length) and the last generated billing period. Feb-29 anniversaries fall to Feb-28 in non-leap years; arithmetic is on civil dates in the administration timezone, never UTC (REQ-RIN-003).",
+            "expression": "recurringNextRunDate(@self.frequency, @self.interval, @self.invoiceDay, @self.startDate, @self.lastBillingPeriod)",
+            "dependsOn": [
+              "frequency",
+              "interval",
+              "invoiceDay",
+              "startDate",
+              "lastBillingPeriod"
+            ]
+          },
+          "isDue": {
+            "description": "True when the profile is active and its nextRunDate is today or in the past.",
+            "expression": "(status == 'active') && (nextRunDate != null) && (nextRunDate <= today())",
+            "dependsOn": [
+              "status",
+              "nextRunDate"
+            ]
+          },
+          "isEndingSoon": {
+            "description": "True when an active profile is within 30 days of its endCondition.endDate, or has 1 occurrence left of an endCondition.occurrenceCount run (REQ-RIN-005). An open-ended profile (no endCondition) and an already-ended profile both resolve false. Materialised so the onProfileEndingSoon scheduled notification can filter on it.",
+            "expression": "(status == 'active') && (((endCondition.endDate != null) && (endCondition.endDate <= addDays(today(), 30))) || ((endCondition.occurrenceCount != null) && (remainingOccurrences != null) && (remainingOccurrences <= 1)))",
+            "materialise": true,
+            "dependsOn": [
+              "status",
+              "endCondition",
+              "remainingOccurrences"
+            ]
+          }
+        },
+        "x-openregister-scheduled-workflows": {
+          "shillinq-recurring-invoice-generation": {
+            "name": "Recurring invoice generation",
+            "description": "Evaluated at least daily by OpenRegister's scheduled machinery. Selects RecurringInvoiceProfile records with status=active AND nextRunDate<=today and asks the RecurringInvoiceGenerator to generate the due period's ordinary ARInvoice (REQ-RIN-002). No app-local TimedJob/cron and no invalid IRegistrationContext::registerJob registration; generation is idempotent on the (profile, billingPeriod) key (REQ-RIN-004).",
+            "cron": "0 6 * * *",
+            "register": "shillinq",
+            "schema": "RecurringInvoiceProfile",
+            "enabled": true,
+            "handler": "OCA\\Shillinq\\Service\\RecurringInvoiceGenerator::runScheduled",
+            "filter": {
+              "status": "active"
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "onDraftGenerated": {
+            "trigger": "generation.draft",
+            "description": "A recurring draft invoice was generated and is awaiting review.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "bookkeeper"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Conceptfactuur voor terugkerend profiel {{name}} ({{lastBillingPeriod}}) staat klaar voor beoordeling",
+              "en": "Draft invoice for recurring profile {{name}} ({{lastBillingPeriod}}) is ready for review"
+            }
+          },
+          "onGenerationFailed": {
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "lastRunStatus",
+                "operator": "equals",
+                "value": "failed"
+              }
+            },
+            "description": "A recurring generation run failed and needs operator attention.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "bookkeeper"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Generatie van terugkerend profiel {{name}} is mislukt: {{lastRunError}}",
+              "en": "Generation for recurring profile {{name}} failed: {{lastRunError}}"
+            }
+          },
+          "onProfileEndingSoon": {
+            "trigger": {
+              "type": "scheduled",
+              "intervalSec": 86400,
+              "filter": {
+                "isEndingSoon": true
+              }
+            },
+            "description": "A recurring profile is approaching its end condition. The scheduled trigger re-checks daily and matches on the materialised isEndingSoon calculation, so an open-ended or already-ended profile never fires.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "bookkeeper"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Terugkerend profiel {{name}} nadert zijn einddatum of laatste termijn",
+              "en": "Recurring profile {{name}} is approaching its end condition"
+            }
+          },
+          "onIndexationApplied": {
+            "trigger": "generation.indexation",
+            "description": "Annual price indexation was applied to a recurring profile.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "bookkeeper"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Indexering van {{indexationPercent}}% toegepast op terugkerend profiel {{name}}",
+              "en": "Indexation of {{indexationPercent}}% was applied to recurring profile {{name}}"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "finance-viewer": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "objects": []
+}

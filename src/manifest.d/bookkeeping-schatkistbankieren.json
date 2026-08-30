@@ -1,0 +1,271 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-schatkistbankieren",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json. ADR-024 reachability gate satisfied: every menu.route points at an existing pages[].id within this fragment.",
+		"description": "T2 schatkistbankieren — Governance menu group with Treasury Accounts / Banking Rules / Compliance Reports. Three index/detail page pairs dispatch to the manifest-v2 Cn{Index,Detail}Page renderers against the shillinq register; route names equal page ids per the manifest contract. Per ADR-024 Tier 4 / REQ-SCHATKIST-009 rendering uses generic @conduction/nextcloud-vue components — no bespoke Vue files."
+	},
+	"menu": [
+		{
+			"id": "Governance",
+			"label": "Governance",
+			"icon": "ShieldCrownOutline",
+			"order": 75,
+			"children": [
+				{
+					"id": "TreasuryAccounts",
+					"label": "Treasury Accounts",
+					"icon": "BankOutline",
+					"route": "TreasuryAccounts",
+					"order": 10
+				},
+				{
+					"id": "BankingRules",
+					"label": "Banking Rules",
+					"icon": "BankOutline",
+					"route": "BankingRules",
+					"order": 20
+				},
+				{
+					"id": "ComplianceReports",
+					"label": "Compliance Reports",
+					"icon": "ChartBoxOutline",
+					"route": "ComplianceReports",
+					"order": 30
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "TreasuryAccounts",
+			"route": "/governance/treasury-accounts",
+			"type": "index",
+			"title": "Treasury Accounts",
+			"config": {
+				"register": "shillinq",
+				"schema": "TreasuryAccount",
+				"columns": [
+					{ "key": "accountNumber", "label": "Account #", "sortable": true },
+					{ "key": "iban", "label": "IBAN", "sortable": true },
+					{ "key": "accountName", "label": "Account name", "sortable": true },
+					{ "key": "complianceClassification", "label": "Classification", "sortable": true },
+					{ "key": "masterListStatus", "label": "Master list", "sortable": true },
+					{ "key": "lifecycleState", "label": "Lifecycle state", "sortable": true },
+					{ "key": "administrationId", "label": "Administration", "sortable": true }
+				],
+				"defaultSort": "accountNumber",
+				"detailRoute": "TreasuryAccountDetail"
+			}
+		},
+		{
+			"id": "TreasuryAccountDetail",
+			"route": "/governance/treasury-accounts/:id",
+			"type": "detail",
+			"title": "Treasury Account",
+			"config": {
+				"register": "shillinq",
+				"schema": "TreasuryAccount",
+				"fields": [
+					{ "key": "accountNumber", "label": "Account #", "type": "string" },
+					{ "key": "iban", "label": "IBAN", "type": "string" },
+					{ "key": "bic", "label": "BIC", "type": "string" },
+					{ "key": "bankName", "label": "Bank", "type": "string" },
+					{ "key": "accountName", "label": "Account name", "type": "string" },
+					{ "key": "description", "label": "Description", "type": "string" },
+					{ "key": "complianceClassification", "label": "Classification", "type": "string" },
+					{ "key": "masterListStatus", "label": "Master list", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" },
+					{ "key": "linkedAccountNumber", "label": "GL account", "type": "string" },
+					{ "key": "requiresApproval", "label": "Requires approval", "type": "boolean" },
+					{ "key": "approvalStatus", "label": "Approval status", "type": "string" },
+					{ "key": "lifecycleState", "label": "Lifecycle state", "type": "string" },
+					{ "key": "lastCompliantDate", "label": "Last compliant", "type": "string" }
+				],
+				"_note": "MASTER — a treasury (schatkistbankieren) bank account. Body pairs the account identity (IBAN/BIC/bank) with the compliance state: classification, master-list status, approval workflow and last-compliant date. Its compliance reports are the primary related content on the body; the audit trail sits in the sidebar. A treasury master record does not correspond — no comms leaves.",
+				"indexRoute": "TreasuryAccounts",
+				"relatedObjects": [
+					{
+						"id": "compliance-reports",
+						"label": "Compliance reports",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "ComplianceReport",
+							"filterField": "treasuryAccountId",
+							"columns": ["reportNumber", "reportPeriod", "complianceScore", "status", "generatedAt"],
+							"detailRoute": "ComplianceReportDetail",
+							"defaultSort": "generatedAt"
+						}
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "BankingRules",
+			"route": "/governance/banking-rules",
+			"type": "index",
+			"title": "Banking Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankingRule",
+				"columns": [
+					{ "key": "ruleNumber", "label": "Rule #", "sortable": true },
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "ruleType", "label": "Type", "sortable": true },
+					{ "key": "severity", "label": "Severity", "sortable": true },
+					{ "key": "isActive", "label": "Active", "sortable": true },
+					{ "key": "administrationId", "label": "Administration", "sortable": true }
+				],
+				"defaultSort": "ruleNumber",
+				"detailRoute": "BankingRuleDetail"
+			}
+		},
+		{
+			"id": "BankingRuleDetail",
+			"route": "/governance/banking-rules/:id",
+			"type": "detail",
+			"title": "Banking Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "BankingRule",
+				"fields": [
+					{ "key": "ruleNumber", "label": "Rule #", "type": "string" },
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "description", "label": "Description", "type": "string" },
+					{ "key": "ruleType", "label": "Type", "type": "string" },
+					{ "key": "evaluationCriteria", "label": "Evaluation criteria", "type": "object" },
+					{ "key": "severity", "label": "Severity", "type": "string" },
+					{ "key": "isActive", "label": "Active", "type": "boolean" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"_note": "CONFIG — a compliance rule evaluated against treasury accounts. Body shows the rule type, its structured evaluation criteria, severity and active flag; the audit trail (who edited the rule and when) is the sidebar tab. A rule definition has no documents or correspondence — only data + audit.",
+				"indexRoute": "BankingRules",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ComplianceReports",
+			"route": "/governance/compliance-reports",
+			"type": "index",
+			"title": "Compliance Reports",
+			"config": {
+				"register": "shillinq",
+				"schema": "ComplianceReport",
+				"columns": [
+					{ "key": "reportNumber", "label": "Report #", "sortable": true },
+					{ "key": "reportPeriod", "label": "Period", "sortable": true },
+					{ "key": "administrationId", "label": "Administration", "sortable": true },
+					{ "key": "complianceScore", "label": "Score", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true },
+					{ "key": "generatedAt", "label": "Generated", "sortable": true }
+				],
+				"defaultSort": "generatedAt",
+				"detailRoute": "ComplianceReportDetail"
+			}
+		},
+		{
+			"id": "ComplianceReportDetail",
+			"route": "/governance/compliance-reports/:id",
+			"type": "detail",
+			"title": "Compliance Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "ComplianceReport",
+				"fields": [
+					{ "key": "reportNumber", "label": "Report #", "type": "string" },
+					{ "key": "reportPeriod", "label": "Period", "type": "string" },
+					{ "key": "generatedAt", "label": "Generated", "type": "string" },
+					{ "key": "treasuryAccountId", "label": "Treasury account", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" },
+					{ "key": "complianceScore", "label": "Compliance score", "type": "number" },
+					{ "key": "criteriaResults", "label": "Per-rule results", "type": "array" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "regulatoryExportFormat", "label": "Export format", "type": "string" },
+					{ "key": "regulatoryExportUri", "label": "Export URI", "type": "string" }
+				],
+				"_note": "REPORT — a periodic schatkistbankieren compliance report for one treasury account. Body shows the overall compliance score, the per-rule criteria results and the regulatory export format; the generated regulatory export file and the audit trail sit in the sidebar. It is a generated statement, not correspondence — no comms leaves.",
+				"indexRoute": "ComplianceReports",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "export",
+							"label": "Regulatory export",
+							"icon": "FileExportOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"register": "shillinq",
+										"schema": "ComplianceReport",
+										"field": "regulatoryExportUri",
+										"objectId": ":id",
+										"description": "Generated regulatory export file referenced from NC Files."
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}

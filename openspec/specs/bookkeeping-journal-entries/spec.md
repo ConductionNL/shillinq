@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-journal-entries
 
 **Status:** proposed
@@ -5,7 +9,11 @@
 **Tier:** T1 (foundation)
 **Depends on:** bookkeeping-general-ledger (which depends on bookkeeping-chart-of-accounts)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping journal entries in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: journal entry index/detail pages not yet implemented
 
@@ -32,6 +40,8 @@ abstraction per ADR-022; no app-local audit table.
   per ADR-022.
 
 ### REQ-JE-002: The `JournalEntry` schema SHALL declare a fixed minimum field set
+
+The system SHALL satisfy this requirement: The `JournalEntry` schema SHALL declare a fixed minimum field set.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -67,6 +77,8 @@ config.yaml `rules.specs`).
   recurring journals" error per REQ-JE-005.
 
 ### REQ-JE-003: The `journalType` field SHALL be a closed enum of `manual`, `recurring`, `reversing`
+
+The system SHALL satisfy this requirement: The `journalType` field SHALL be a closed enum of `manual`, `recurring`, `reversing`.
 
 T1 supports exactly three journal sub-types. Adding a new sub-type
 (e.g. `closing` for T3 period close) MUST go through a future

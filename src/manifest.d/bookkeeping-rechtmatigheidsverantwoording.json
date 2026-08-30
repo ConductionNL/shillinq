@@ -1,0 +1,332 @@
+{
+	"menu": [
+		{
+			"id": "Rechtmatigheid",
+			"label": "Lawfulness",
+			"icon": "ClipboardCheckOutline",
+			"order": 41,
+			"children": [
+				{
+					"id": "Rechtmatigheidstoetsing",
+					"label": "Lawfulness assessment",
+					"icon": "ClipboardCheckOutline",
+					"route": "Rechtmatigheidstoetsing",
+					"order": 10
+				},
+				{
+					"id": "Bevindingen",
+					"label": "Findings",
+					"icon": "AlertCircleOutline",
+					"route": "Bevindingen",
+					"order": 20
+				},
+				{
+					"id": "Toleranties",
+					"label": "Tolerances",
+					"icon": "PercentOutline",
+					"route": "Toleranties",
+					"order": 30
+				},
+				{
+					"id": "Rechtmatigheidsparagraaf",
+					"label": "Lawfulness paragraph",
+					"icon": "ClipboardCheckOutline",
+					"route": "Rechtmatigheidsparagraaf",
+					"order": 40
+				},
+				{
+					"id": "RechtmatigheidAuditExport",
+					"label": "Audit Export",
+					"icon": "DatabaseExportOutline",
+					"route": "RechtmatigheidAuditExport",
+					"order": 50
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Rechtmatigheidstoetsing",
+			"route": "/rechtmatigheid/toetsing",
+			"type": "index",
+			"title": "Lawfulness assessment",
+			"config": {
+				"register": "shillinq",
+				"schema": "Rechtmatigheidstoets",
+				"columns": [
+					{ "key": "journalEntry", "label": "Journal entry", "sortable": true },
+					{ "key": "criterium", "label": "Criterion", "sortable": true },
+					{ "key": "uitkomst", "label": "Outcome", "sortable": true },
+					{ "key": "toetstype", "label": "Assessment type", "sortable": true },
+					{ "key": "testDate", "label": "Assessment date", "sortable": true },
+					{ "key": "amount_involved", "label": "Amount", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "testDate",
+				"detailRoute": "RechtmatigheidstoetsDetail"
+			}
+		},
+		{
+			"id": "RechtmatigheidstoetsDetail",
+			"route": "/rechtmatigheid/toetsing/:id",
+			"type": "detail",
+			"title": "Lawfulness assessment",
+			"config": {
+				"register": "shillinq",
+				"schema": "Rechtmatigheidstoets",
+				"_note": "ASSESSMENT record (a single lawfulness test against one journal entry/criterion). The body is the test itself — criterion, outcome, assessor, substantiation, the amount at stake, the rule reference and any finding it produced — everything a reviewer needs to defend the judgement, with the supporting-documents reference (bewijsstukken) inline. No comms leaves (a compliance test is not correspondence); the audit trail sidebar is the who-tested-what record that underpins the accountant's opinion.",
+				"fields": [
+					{ "key": "journalEntry", "label": "Journal entry", "type": "string" },
+					{ "key": "criterium", "label": "Criterion", "type": "string" },
+					{ "key": "uitkomst", "label": "Outcome", "type": "string" },
+					{ "key": "toetstype", "label": "Assessment type", "type": "string" },
+					{ "key": "testDate", "label": "Assessment date", "type": "string" },
+					{ "key": "toetser", "label": "Assessor", "type": "string" },
+					{ "key": "substantiation", "label": "Substantiation", "type": "string" },
+					{ "key": "amount_involved", "label": "Amount", "type": "string" },
+					{ "key": "supportingDocuments", "label": "Supporting documents", "type": "string" },
+					{ "key": "ruleReference", "label": "Rule reference", "type": "string" },
+					{ "key": "lawfulnessFinding", "label": "Finding", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "Rechtmatigheidstoetsing",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "Bevindingen",
+			"route": "/rechtmatigheid/bevindingen",
+			"type": "index",
+			"title": "Findings",
+			"config": {
+				"register": "shillinq",
+				"schema": "Rechtmatigheidsbevinding",
+				"columns": [
+					{ "key": "findingNumber", "label": "Finding number", "sortable": true },
+					{ "key": "kind", "label": "Kind", "sortable": true },
+					{ "key": "criterium", "label": "Criterion", "sortable": true },
+					{ "key": "amount_error", "label": "Error amount", "sortable": true },
+					{ "key": "amount_uncertainty", "label": "Uncertainty amount", "sortable": true },
+					{ "key": "financialYear", "label": "Financial year", "sortable": true },
+					{ "key": "programme", "label": "Programme", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "reportDate",
+				"detailRoute": "BevindingDetail"
+			}
+		},
+		{
+			"id": "BevindingDetail",
+			"route": "/rechtmatigheid/bevindingen/:id",
+			"type": "detail",
+			"title": "Finding",
+			"config": {
+				"register": "shillinq",
+				"schema": "Rechtmatigheidsbevinding",
+				"_note": "FINDING (a booked error or uncertainty that rolls up into the lawfulness paragraph). The body quantifies the finding — error vs uncertainty amount, criterion, programme, financial year — and captures cause, measure and the responsible portfolio holder, plus the linked correction entry that resolves it. This is the remediation view. No comms leaves; the audit trail sidebar tracks status from open to resolved.",
+				"fields": [
+					{ "key": "findingNumber", "label": "Finding number", "type": "string" },
+					{ "key": "kind", "label": "Kind", "type": "string" },
+					{ "key": "criterium", "label": "Criterion", "type": "string" },
+					{ "key": "amount_error", "label": "Error amount", "type": "string" },
+					{ "key": "amount_uncertainty", "label": "Uncertainty amount", "type": "string" },
+					{ "key": "financialYear", "label": "Financial year", "type": "string" },
+					{ "key": "programme", "label": "Programme", "type": "string" },
+					{ "key": "description", "label": "Description", "type": "string" },
+					{ "key": "cause", "label": "Cause", "type": "string" },
+					{ "key": "measure", "label": "Measure", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "responsible_portfolio_holder", "label": "Portfolio holder", "type": "string" },
+					{ "key": "correction_entry_id", "label": "Linked correction entry", "type": "string" }
+				],
+				"indexRoute": "Bevindingen",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "Toleranties",
+			"route": "/rechtmatigheid/toleranties",
+			"type": "index",
+			"title": "Tolerances",
+			"config": {
+				"register": "shillinq",
+				"schema": "Tolerantiegrens",
+				"columns": [
+					{ "key": "financialYear", "label": "Financial year", "sortable": true },
+					{ "key": "fout_percentage", "label": "Error %", "sortable": true },
+					{ "key": "uncertainty_percentage", "label": "Uncertainty %", "sortable": true },
+					{ "key": "determined_at_council_resolution", "label": "Council decision", "sortable": true },
+					{ "key": "determined_on", "label": "Adopted on", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "financialYear",
+				"detailRoute": "TolerantieDetail"
+			}
+		},
+		{
+			"id": "TolerantieDetail",
+			"route": "/rechtmatigheid/toleranties/:id",
+			"type": "detail",
+			"title": "Tolerance threshold",
+			"config": {
+				"register": "shillinq",
+				"schema": "Tolerantiegrens",
+				"_note": "CONFIG threshold (the council-adopted error/uncertainty tolerance for a financial year — the pass/fail line for the whole lawfulness paragraph). The body is the definition: percentages, calculation basis, the council decision that adopted it and its validity window. No transactions, no comms. The audit trail sidebar matters because the threshold is politically adopted; changing it retroactively alters whether a year passes.",
+				"fields": [
+					{ "key": "financialYear", "label": "Financial year", "type": "string" },
+					{ "key": "fout_percentage", "label": "Error %", "type": "string" },
+					{ "key": "uncertainty_percentage", "label": "Uncertainty %", "type": "string" },
+					{ "key": "determined_at_council_resolution", "label": "Council decision", "type": "string" },
+					{ "key": "determined_on", "label": "Adopted on", "type": "string" },
+					{ "key": "valid_from", "label": "Valid from", "type": "string" },
+					{ "key": "valid_to", "label": "Valid until", "type": "string" },
+					{ "key": "calculationBasis", "label": "Calculation basis", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "Toleranties",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "Rechtmatigheidsparagraaf",
+			"route": "/rechtmatigheid/paragraaf",
+			"type": "index",
+			"title": "Lawfulness paragraph",
+			"config": {
+				"register": "shillinq",
+				"schema": "Rechtmatigheidsparagraaf",
+				"columns": [
+					{ "key": "financialYear", "label": "Financial year", "sortable": true },
+					{ "key": "total_identified_errors", "label": "Errors", "sortable": true },
+					{ "key": "total_identified_uncertainties", "label": "Uncertainties", "sortable": true },
+					{ "key": "within_tolerance", "label": "Within tolerance", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "financialYear",
+				"detailRoute": "ParagraafDetail"
+			}
+		},
+		{
+			"id": "ParagraafDetail",
+			"route": "/rechtmatigheid/paragraaf/:id",
+			"type": "detail",
+			"title": "Lawfulness paragraph",
+			"config": {
+				"register": "shillinq",
+				"schema": "Rechtmatigheidsparagraaf",
+				"_note": "REPORT (the year-end lawfulness paragraph adopted by the executive and handled by the council — the formal statement that summed errors/uncertainties stayed within tolerance). The body is the roll-up: total expenses base, tolerance thresholds, total identified errors and uncertainties, the within-tolerance verdict, the executive statement text, and the adoption/handling dates. It is a computed summary of the findings, so no child object-list. No comms. The audit trail sidebar is the adoption record.",
+				"fields": [
+					{ "key": "financialYear", "label": "Financial year", "type": "string" },
+					{ "key": "total_expenses_including_reserve_movements", "label": "Total expenses incl. reserve movements", "type": "string" },
+					{ "key": "tolerance_error_amount", "label": "Tolerance threshold error (amount)", "type": "string" },
+					{ "key": "tolerance_uncertainty_amount", "label": "Tolerance threshold uncertainty (amount)", "type": "string" },
+					{ "key": "total_identified_errors", "label": "Total identified errors", "type": "string" },
+					{ "key": "total_identified_uncertainties", "label": "Total identified uncertainties", "type": "string" },
+					{ "key": "within_tolerance", "label": "Within tolerance", "type": "string" },
+					{ "key": "declaration_college", "label": "Executive statement", "type": "string" },
+					{ "key": "determined_by_college_on", "label": "Adopted by executive on", "type": "string" },
+					{ "key": "handled_in_council_on", "label": "Handled by council on", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"indexRoute": "Rechtmatigheidsparagraaf",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "RechtmatigheidAuditExport",
+			"route": "/rechtmatigheid/audit-export",
+			"type": "index",
+			"title": "Audit Export",
+			"config": {
+				"register": "shillinq",
+				"schema": "Rechtmatigheidstoets",
+				"columns": [
+					{ "key": "journalEntry", "label": "Journal entry", "sortable": true },
+					{ "key": "criterium", "label": "Criterion", "sortable": true },
+					{ "key": "uitkomst", "label": "Outcome", "sortable": true },
+					{ "key": "testDate", "label": "Assessment date", "sortable": true },
+					{ "key": "toetser", "label": "Assessor", "sortable": true },
+					{ "key": "amount_involved", "label": "Amount", "sortable": true }
+				],
+				"defaultSort": "testDate",
+				"detailRoute": "RechtmatigheidstoetsDetail"
+			}
+		}
+	]
+}

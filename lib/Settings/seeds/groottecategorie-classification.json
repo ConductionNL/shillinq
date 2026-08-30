@@ -11,69 +11,69 @@
   "categories": [
     {
       "name": "micro",
-      "wettelijkeBasis": "art. 2:395a BW",
+      "statutoryBasis": "art. 2:395a BW",
       "thresholds": {
-        "balansTotaal": 450000,
-        "nettoOmzet": 900000,
-        "gemiddeldAantalWerknemers": 10
+        "balanceSheetTotal": 450000,
+        "netRevenue": 900000,
+        "averageCountEmployees": 10
       }
     },
     {
       "name": "klein",
-      "wettelijkeBasis": "art. 2:396 BW",
+      "statutoryBasis": "art. 2:396 BW",
       "thresholds": {
-        "balansTotaal": 12000000,
-        "nettoOmzet": 24000000,
-        "gemiddeldAantalWerknemers": 50
+        "balanceSheetTotal": 12000000,
+        "netRevenue": 24000000,
+        "averageCountEmployees": 50
       }
     },
     {
       "name": "middelgroot",
-      "wettelijkeBasis": "art. 2:397 BW",
+      "statutoryBasis": "art. 2:397 BW",
       "thresholds": {
-        "balansTotaal": 25000000,
-        "nettoOmzet": 50000000,
-        "gemiddeldAantalWerknemers": 250
+        "balanceSheetTotal": 25000000,
+        "netRevenue": 50000000,
+        "averageCountEmployees": 250
       }
     },
     {
       "name": "groot",
-      "wettelijkeBasis": "art. 2:398 BW",
+      "statutoryBasis": "art. 2:398 BW",
       "thresholds": null
     }
   ],
   "templateMatrix": {
     "micro": {
-      "balans": "verkort",
+      "balance": "verkort",
       "winstEnVerlies": false,
-      "toelichting": "minimaal",
+      "notes": "minimaal",
       "kasstroomoverzicht": false,
       "bestuursverslag": false,
-      "accountantsverklaring": false
+      "auditorsStatement": false
     },
     "klein": {
-      "balans": "verkort",
+      "balance": "verkort",
       "winstEnVerlies": "niet-gedeponeerd",
-      "toelichting": "beperkt",
+      "notes": "beperkt",
       "kasstroomoverzicht": false,
       "bestuursverslag": false,
-      "accountantsverklaring": "optioneel"
+      "auditorsStatement": "optioneel"
     },
     "middelgroot": {
-      "balans": "volledig",
+      "balance": "volledig",
       "winstEnVerlies": true,
-      "toelichting": "volledig",
+      "notes": "volledig",
       "kasstroomoverzicht": true,
       "bestuursverslag": true,
-      "accountantsverklaring": true
+      "auditorsStatement": true
     },
     "groot": {
-      "balans": "volledig",
+      "balance": "volledig",
       "winstEnVerlies": true,
-      "toelichting": "volledig",
+      "notes": "volledig",
       "kasstroomoverzicht": true,
       "bestuursverslag": true,
-      "accountantsverklaring": true,
+      "auditorsStatement": true,
       "esg": "csrd-ready"
     }
   }

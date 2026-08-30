@@ -1,0 +1,296 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"description": "Openconnector source registry for Shillinq. Sources are referenced by slug from docudesk template output-channel declarations per ADR-019, and by the 15 external-adapter families declared in ExternalAdaptersAdminController::ADAPTERS (openspec/changes/integration-config-to-openconnector). Credentials and protocol mapping are managed entirely in openconnector; Shillinq holds only the source slug reference.",
+		"imported": "2026-08-20T00:00:00Z"
+	},
+	"sources": [
+		{
+			"slug": "bzk-sisa-upload-2026",
+			"title": "BZK SiSa Upload 2026",
+			"description": "Openconnector source for BZK SiSa-bijlage annual submission. Auth and protocol mapping (OAuth or PKI-cert per BZK specifiek) are openconnector-side. Shillinq references this source by slug from the sisa-bijlage-2026 docudesk template output-channel per REQ-SISA-004. No app-local HTTP client per ADR-019. NOTE (openspec/changes/integration-config-to-openconnector/design.md §6.1): the controller's `bzk-sisa` family entry declares `sourceSlug: 'bzk-sisa'`, one word short of this file's `bzk-sisa-upload-2026`. Neither slug was found provisioned against the live openconnector instance checked for this change (0/262 seeded sources matched either string) — per the resolution recorded in design.md, this pre-existing entry's slug is kept as-is rather than renamed blind; renaming a slug nobody can yet confirm as live risks breaking a future operator's already-wired reference in either direction.",
+			"version": "1.0.0",
+			"featureFlag": "gov-sisa",
+			"type": "rest",
+			"configuration": {
+				"description": "Connection parameters are managed in openconnector's Source admin UI. Shillinq holds this stub to register the source slug in the OR source registry on app install. Operators configure the BZK endpoint URL, authentication method (OAuth 2.0 client credentials or PKI-cert mutual TLS per BZK specifiek), and retry policy via the openconnector admin panel.",
+				"authMethod": "oauth2-or-pki-cert",
+				"endpointPlaceholder": "https://sisa.rijksoverheid.nl/api/v1/bijlage",
+				"protocol": "HTTPS",
+				"contentType": "application/json"
+			},
+			"capabilities": [
+				"submit-sisa-bijlage",
+				"query-submission-status"
+			],
+			"auditEvent": {
+				"onSubmit": "sisa.submitted",
+				"description": "Every submission attempt triggers the sisa.submitted audit event written by the docudesk template's output-channel on response receipt per REQ-SISA-005."
+			}
+		},
+		{
+			"slug": "digipoort-sbr",
+			"title": "Digipoort / SBR",
+			"description": "Openconnector source for SBR/XBRL filings (BTW-aangifte, jaarrekening, CSRD pack) submitted to the Belastingdienst Digipoort WUS gateway. Auth and protocol mapping are openconnector-side. Shillinq references this source by slug from DigipoortSbrAdapterInterface's activation recipe per REQ-SBR-002; the log-only default (LogDigipoortSbrAdapter) keeps the filing lifecycle observable until a real binding is provisioned. No app-local HTTP client per ADR-019.",
+			"version": "1.0.0",
+			"featureFlag": "gov-sbr",
+			"type": "rest",
+			"configuration": {
+				"description": "Connection parameters are managed in openconnector's Source admin UI. Operators configure the Digipoort WUS endpoint URL, the PKIoverheid services-certificate alias, and the SBR message-type mapping via the openconnector admin panel.",
+				"authMethod": "pki-cert-mutual-tls",
+				"endpointPlaceholder": "https://digipoort.overheid.nl/wus/v20051201/gateway",
+				"protocol": "HTTPS",
+				"contentType": "application/soap+xml"
+			},
+			"capabilities": [
+				"submit-sbr-filing",
+				"query-submission-status"
+			]
+		},
+		{
+			"slug": "salarisbureau",
+			"title": "Salarisbureau (payroll bureau)",
+			"description": "Openconnector source for posting payroll-run results to an external payroll bureau (Nmbrs, Visma, Loket). Auth and protocol mapping are openconnector-side. Shillinq references this source by slug from SalarisbureauAdapterInterface's activation recipe per REQ-PAYROLL-004; the log-only default keeps the LoonComponent lifecycle observable until a real binding is provisioned. No app-local HTTP client per ADR-019.",
+			"version": "1.0.0",
+			"featureFlag": "payroll-salarisbureau",
+			"type": "rest",
+			"configuration": {
+				"description": "Connection parameters are managed in openconnector's Source admin UI. Operators configure the payroll bureau's API endpoint and the `payroll.write`-scoped API key via the openconnector admin panel.",
+				"authMethod": "bearer-api-key",
+				"endpointPlaceholder": "https://api.payroll-bureau.example/v1/payroll-runs",
+				"protocol": "HTTPS",
+				"contentType": "application/json"
+			},
+			"capabilities": [
+				"submit-payroll-run",
+				"query-run-status"
+			]
+		},
+		{
+			"slug": "rvo-aanvraag",
+			"title": "RvO (subsidy / WBSO)",
+			"description": "Openconnector source for submitting WBSO / SNO / investeringsaftrek aanvragen to the Rijksdienst voor Ondernemend Nederland portal. Auth and protocol mapping are openconnector-side. Shillinq references this source by slug from RvOAanvraagAdapterInterface's activation recipe per REQ-WBSO-008; the log-only default keeps the Aanvraag register lifecycle observable until a real binding is provisioned. No app-local HTTP client per ADR-019.",
+			"version": "1.0.0",
+			"featureFlag": "gov-rvo",
+			"type": "rest",
+			"configuration": {
+				"description": "Connection parameters are managed in openconnector's Source admin UI. Operators configure the RvO API endpoint and the OAuth 2.0 client id/secret issued to the tenant organisation via the openconnector admin panel.",
+				"authMethod": "oauth2-client-credentials",
+				"endpointPlaceholder": "https://api.rvo.nl/v1/aanvragen",
+				"protocol": "HTTPS",
+				"contentType": "application/json"
+			},
+			"capabilities": [
+				"submit-aanvraag",
+				"query-aanvraag-status"
+			]
+		},
+		{
+			"slug": "ib47",
+			"title": "Belastingdienst IB47",
+			"description": "Openconnector source for submitting the annual IB47 opgaaf (uitbetalingen aan derden) to the Belastingdienst. Auth and protocol mapping are openconnector-side. Shillinq references this source by slug from Ib47AdapterInterface's activation recipe per REQ-IB47-002; the log-only default keeps the Ib47Submission lifecycle observable until a real binding is provisioned. No app-local HTTP client per ADR-019.",
+			"version": "1.0.0",
+			"featureFlag": "gov-ib47",
+			"type": "rest",
+			"configuration": {
+				"description": "Connection parameters are managed in openconnector's Source admin UI. Operators configure the Belastingdienst IB47 endpoint URL and the PKIoverheid certificate alias authorised for IB47 via the openconnector admin panel.",
+				"authMethod": "pki-cert-mutual-tls",
+				"endpointPlaceholder": "https://aangifte.belastingdienst.nl/ib47/api/v1/opgaaf",
+				"protocol": "HTTPS",
+				"contentType": "application/xml"
+			},
+			"capabilities": [
+				"submit-ib47-opgaaf",
+				"query-submission-status"
+			]
+		},
+		{
+			"slug": "cbs-bestanden",
+			"title": "CBS Bestanden",
+			"description": "Openconnector source for uploading CBS statistical bestanden (productie, ICT, R&D, finance enquetes). Auth and protocol mapping are openconnector-side. Shillinq references this source by slug from CbsBestandenAdapterInterface's activation recipe per REQ-CBS-003; the log-only default keeps submissions observable until a real binding is provisioned. No app-local HTTP client per ADR-019.",
+			"version": "1.0.0",
+			"featureFlag": "gov-cbs",
+			"type": "rest",
+			"configuration": {
+				"description": "Connection parameters are managed in openconnector's Source admin UI. Operators configure the CBS Bestanden endpoint/SFTP target and the tenant's CBS account credentials via the openconnector admin panel.",
+				"authMethod": "api-key",
+				"endpointPlaceholder": "https://dataportaal.cbs.nl/api/v1/bestanden",
+				"protocol": "HTTPS",
+				"contentType": "multipart/form-data"
+			},
+			"capabilities": [
+				"upload-bestand",
+				"query-upload-status"
+			]
+		},
+		{
+			"slug": "cbs-iv3",
+			"title": "CBS Iv3",
+			"description": "Openconnector source for the quarterly Iv3 (Informatie voor derden) report for gemeenten / provincies / waterschappen / GRs to CBS. Auth and protocol mapping are openconnector-side. Shillinq references this source by slug from CbsIv3AdapterInterface's activation recipe per REQ-IV3-002; the log-only default keeps submissions observable until a real binding is provisioned. No app-local HTTP client per ADR-019.",
+			"version": "1.0.0",
+			"featureFlag": "gov-iv3",
+			"type": "rest",
+			"configuration": {
+				"description": "Connection parameters are managed in openconnector's Source admin UI. Operators configure the CBS Iv3 endpoint and the tenant's CBS Iv3 account credentials via the openconnector admin panel.",
+				"authMethod": "api-key",
+				"endpointPlaceholder": "https://iv3.cbs.nl/api/v1/report",
+				"protocol": "HTTPS",
+				"contentType": "application/xml"
+			},
+			"capabilities": [
+				"submit-iv3-report",
+				"query-submission-status"
+			]
+		},
+		{
+			"slug": "mollie-payments",
+			"title": "Mollie Payments",
+			"description": "Openconnector source for creating deposit-payment intents (iDEAL / Bancontact / SEPA) via Mollie. Auth and protocol mapping are openconnector-side. Shillinq references this source by slug from MolliePaymentAdapterInterface's activation recipe per REQ-DP-001; the log-only default keeps DepositReconciliationService's lifecycle observable until a real binding is provisioned. Inbound webhook callbacks stay verified by the fail-closed HMAC gate on the webhook controllers, never this source. No app-local HTTP client per ADR-019.",
+			"version": "1.0.0",
+			"featureFlag": "payments-mollie",
+			"type": "rest",
+			"configuration": {
+				"description": "Connection parameters are managed in openconnector's Source admin UI. Operators configure the Mollie API endpoint, the live API key, and the webhook secret via the openconnector admin panel.",
+				"authMethod": "bearer-api-key",
+				"endpointPlaceholder": "https://api.mollie.com/v2/payments",
+				"protocol": "HTTPS",
+				"contentType": "application/json"
+			},
+			"capabilities": [
+				"create-payment-intent",
+				"query-payment-status"
+			]
+		},
+		{
+			"slug": "bunq-bank",
+			"title": "Bunq Bank Connector",
+			"description": "Openconnector source for pulling CAMT.053 statements per BankConnection and handling SCA consent-renewal with Bunq. Auth and protocol mapping are openconnector-side. Shillinq references this source by slug from BunqBankConnectorAdapterInterface's activation recipe per REQ-BC-003; the log-only default keeps BankConnection polling observable until a real binding is provisioned. No app-local HTTP client per ADR-019.",
+			"version": "1.0.0",
+			"featureFlag": "bank-bunq",
+			"type": "rest",
+			"configuration": {
+				"description": "Connection parameters are managed in openconnector's Source admin UI. Operators configure the Bunq API endpoint, the sandbox or production API key, and the installation context via the openconnector admin panel.",
+				"authMethod": "api-key-installation-context",
+				"endpointPlaceholder": "https://api.bunq.com/v1",
+				"protocol": "HTTPS",
+				"contentType": "application/json"
+			},
+			"capabilities": [
+				"pull-camt053-statement",
+				"renew-sca-consent"
+			]
+		},
+		{
+			"slug": "kvk-handelsregister",
+			"title": "KvK Handelsregister",
+			"description": "Openconnector source for looking up KvK Handelsregister entries for debtor/creditor enrichment, multi-administratie onboarding, and deelnemingen-graaf walks. Auth and protocol mapping are openconnector-side. Shillinq references this source by slug from KvkHandelsregisterAdapterInterface's activation recipe per REQ-MA-007; the log-only default keeps lookups observable until a real binding is provisioned. No app-local HTTP client per ADR-019.",
+			"version": "1.0.0",
+			"featureFlag": "registry-kvk",
+			"type": "rest",
+			"configuration": {
+				"description": "Connection parameters are managed in openconnector's Source admin UI. Operators configure the KvK Handelsregister Dataservice endpoint and the subscription API key via the openconnector admin panel.",
+				"authMethod": "api-key",
+				"endpointPlaceholder": "https://api.kvk.nl/api/v1/nhr-data-hersteltrust",
+				"protocol": "HTTPS",
+				"contentType": "application/json"
+			},
+			"capabilities": [
+				"lookup-handelsregister-entry"
+			]
+		},
+		{
+			"slug": "uwv-loonaangifte",
+			"title": "UWV Loonaangifte",
+			"description": "Openconnector source for pulling LH-afdracht acceptance status + werkgever-setup sectorindeling validation from UWV. Auth and protocol mapping are openconnector-side. Shillinq references this source by slug from UwvLoonaangifteAdapterInterface's activation recipe per REQ-PAYROLL-009; the log-only default keeps the payroll lifecycle observable until a real binding is provisioned. No app-local HTTP client per ADR-019.",
+			"version": "1.0.0",
+			"featureFlag": "gov-uwv",
+			"type": "rest",
+			"configuration": {
+				"description": "Connection parameters are managed in openconnector's Source admin UI. Operators configure the UWV Digipoort loonaangifte endpoint and the PKIoverheid certificate alias authorised for UWV via the openconnector admin panel.",
+				"authMethod": "pki-cert-mutual-tls",
+				"endpointPlaceholder": "https://digipoort.uwv.nl/loonaangifte/api/v1",
+				"protocol": "HTTPS",
+				"contentType": "application/xml"
+			},
+			"capabilities": [
+				"query-loonaangifte-status",
+				"query-sectorindeling"
+			]
+		},
+		{
+			"slug": "treasury-rates",
+			"title": "Treasury Rates (ECB / SDMX)",
+			"description": "Openconnector source for fetching daily reference rates (EURIBOR-3M / SOFR / SARON / ESTR) + FX spots from ECB SDMX (or Bloomberg / Refinitiv). Auth and protocol mapping are openconnector-side. Shillinq references this source by slug from TreasuryRateAdapterInterface's activation recipe per REQ-IHB-003; the log-only default keeps interest-accrual + FX-revaluation aggregations observable until a real binding is provisioned. Manual IntercompanyLoan.interestRate remains the v1 fallback per REQ-IHB-004. No app-local HTTP client per ADR-019.",
+			"version": "1.0.0",
+			"featureFlag": "treasury-rates",
+			"type": "rest",
+			"configuration": {
+				"description": "Connection parameters are managed in openconnector's Source admin UI. Operators configure the reference-rate provider's endpoint (ECB SDMX is free; Bloomberg / Refinitiv require a market-data subscription key) via the openconnector admin panel.",
+				"authMethod": "api-key-or-none",
+				"endpointPlaceholder": "https://sdw-wsrest.ecb.europa.eu/service/data",
+				"protocol": "HTTPS",
+				"contentType": "application/json"
+			},
+			"capabilities": [
+				"fetch-reference-rate-snapshot"
+			]
+		},
+		{
+			"slug": "ccm-rule-engine",
+			"title": "CCM Rule Engine",
+			"description": "Openconnector source for delegating CCM v1 sync/async DSL evaluation to a third-party rule evaluator (or the future OpenRegister native rule engine). Auth and protocol mapping are openconnector-side. Shillinq references this source by slug from CcmRuleEngineAdapterInterface's activation recipe per REQ-CCM-002; the log-only default fails soft (DEFERRED, fired=false) so binding never raises a false finding until a real binding is provisioned. No app-local HTTP client per ADR-019.",
+			"version": "1.0.0",
+			"featureFlag": "ccm-external-engine",
+			"type": "rest",
+			"configuration": {
+				"description": "Connection parameters are managed in openconnector's Source admin UI. Operators configure the target rule engine's endpoint (Drools, OPA, or another evaluator) and its API key via the openconnector admin panel. Leaving the `ccm-external-engine` feature flag OFF keeps the in-process v1 evaluator.",
+				"authMethod": "api-key",
+				"endpointPlaceholder": "https://rule-engine.example/api/v1/evaluate",
+				"protocol": "HTTPS",
+				"contentType": "application/json"
+			},
+			"capabilities": [
+				"evaluate-ccm-rule"
+			]
+		},
+		{
+			"slug": "csrd-esrs-xbrl",
+			"title": "CSRD / ESRS XBRL",
+			"description": "Openconnector source for EFRAG ESRS XBRL taxonomy mapping + mandatory-data-point validation + iXBRL instance build. Auth and protocol mapping are openconnector-side. Shillinq references this source by slug from CsrdEsrsXbrlAdapterInterface's activation recipe per REQ-CSR-006. SAFETY-CRITICAL: the log-only default's validateMandatoryDataPoints() always returns VALIDATION_BLOCKED so an unvalidated CSRD report cannot slip past EFRAG IG-3 before a real binding is provisioned. No app-local HTTP client per ADR-019.",
+			"version": "1.0.0",
+			"featureFlag": "csrd-xbrl",
+			"type": "rest",
+			"configuration": {
+				"description": "Connection parameters are managed in openconnector's Source admin UI. Operators configure the EFRAG taxonomy version (2024-01 baseline at v1) and the XBRL instance-build service endpoint via the openconnector admin panel.",
+				"authMethod": "api-key",
+				"endpointPlaceholder": "https://xbrl-processor.example/api/v1/instances",
+				"protocol": "HTTPS",
+				"contentType": "application/xml"
+			},
+			"capabilities": [
+				"validate-mandatory-data-points",
+				"build-ixbrl-instance"
+			]
+		},
+		{
+			"slug": "deposit-payment",
+			"title": "Deposit Payment lifecycle",
+			"description": "Openconnector source for the lifecycle layer sitting one layer above the Mollie source: the lifecycle code never sees a Mollie vs. Stripe branch, only the projected DepositPayment state. Auth and protocol mapping are openconnector-side, and per DepositPaymentAdapterInterface's activation recipe this source delegates to `mollie-payments` under the hood per REQ-DP-001. The log-only default returns pending / PAYMENT_DEFERRED with dormant=true so DepositReconciliationService::pollPending() must inspect the dormant flag before advancing. No app-local HTTP client per ADR-019.",
+			"version": "1.0.0",
+			"featureFlag": "payments-deposit",
+			"type": "rest",
+			"configuration": {
+				"description": "Connection parameters are managed in openconnector's Source admin UI. Bind the Mollie source first (see the `mollie-payments` entry above); this source's provider mapping is then configured via the openconnector admin panel.",
+				"authMethod": "delegates-to-mollie-payments",
+				"endpointPlaceholder": "https://api.mollie.com/v2/payments",
+				"protocol": "HTTPS",
+				"contentType": "application/json"
+			},
+			"capabilities": [
+				"create-deposit-payment-intent",
+				"query-deposit-payment-status"
+			]
+		}
+	]
+}

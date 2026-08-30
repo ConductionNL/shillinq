@@ -1,0 +1,1629 @@
+{
+  "x-shillinq-fragment": {
+    "change": "add-shillinq-bookkeeping-compliance",
+    "tier": "T2",
+    "license": "EUPL-1.2",
+    "copyright": "2026 Conduction B.V. <info@conduction.nl>",
+    "description": "ADR-037 register fragment for the Bookkeeping Compliance + Operations (T2) change. Declares the genuinely-new compliance/operations schemas (FiscalPeriod, CustomerMaster, ARInvoice, DunningRecord, BankStatementLine, MatchingRule, ReconciliationMatch) plus an additive overlay on the existing BankStatement schema (reconciliation fields + lifecycle). AP-core (VendorMaster/APInvoice/PaymentRun), TrialBalance, and BalanceSheet are already shipped in shillinq_register.json by prior changes and are NOT redeclared here per ADR-037."
+  },
+  "components": {
+    "schemas": {
+      "FiscalPeriod": {
+        "slug": "FiscalPeriod",
+        "icon": "CalendarRangeOutline",
+        "version": "0.1.0",
+        "title": "Fiscal Period",
+        "description": "A monthly/quarterly accounting period. Promotes T1's GLLine.periodId stub-string to a real register with an open -> closing -> closed -> audit-locked lifecycle per REQ-PC-001/REQ-PC-003. Postings against a closed period are rejected (REQ-PC-004). Year-end close is deferred to T3. Per ADR-022 the audit trail and per ADR-031 the lifecycle are consumed/declared, not reimplemented.",
+        "x-schema-org": "schema:Duration",
+        "type": "object",
+        "x-openregister-audit": true,
+        "required": [
+          "periodId",
+          "name",
+          "startDate",
+          "endDate",
+          "fiscalYear",
+          "administrationId",
+          "state"
+        ],
+        "properties": {
+          "periodId": {
+            "type": "string",
+            "description": "Unique period code (e.g. 2026-01, 2026-Q1).",
+            "example": "2026-01",
+            "title": "Period ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable label.",
+            "example": "Januari 2026",
+            "title": "Name"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "First day of the period.",
+            "example": "2026-01-01",
+            "title": "Start Date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Last day of the period.",
+            "example": "2026-01-31",
+            "title": "End Date"
+          },
+          "fiscalYear": {
+            "type": "string",
+            "description": "Fiscal year this period belongs to.",
+            "example": "2026",
+            "title": "Fiscal Year"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration.",
+            "example": "adm-consultancy-nl",
+            "title": "Administration ID"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closing",
+              "closed",
+              "audit-locked"
+            ],
+            "default": "open",
+            "description": "Lifecycle state per REQ-PC-003. audit-locked is terminal.",
+            "example": "open",
+            "title": "State"
+          },
+          "closedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp when state transitioned to closed.",
+            "title": "Closed At"
+          },
+          "closedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "UUID of the user who closed the period.",
+            "title": "Closed By"
+          },
+          "auditLockedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp when state transitioned to audit-locked.",
+            "title": "Audit Locked At"
+          },
+          "auditLockedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "UUID of the auditor who locked the period.",
+            "title": "Audit Locked By"
+          },
+          "closeReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator-provided reason for closing.",
+            "title": "Close Reason"
+          },
+          "reopenedHistory": {
+            "type": "array",
+            "description": "Audit trail of each reopen: {reopenedAt, reopenedBy, reason}.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reopenedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "title": "Reopened At",
+                  "description": "The date and time for reopened at."
+                },
+                "reopenedBy": {
+                  "type": "string",
+                  "title": "Reopened By",
+                  "description": "The reopened by."
+                },
+                "reason": {
+                  "type": "string",
+                  "title": "Reason",
+                  "description": "The reason or justification for this state or action."
+                }
+              }
+            },
+            "title": "Reopened History"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "open",
+          "states": {
+            "open": {
+              "label": "Open",
+              "description": "Postings may be created and posted against this period."
+            },
+            "closing": {
+              "label": "Closing",
+              "description": "Close in progress; trial-balance invariant being verified (REQ-TB-003)."
+            },
+            "closed": {
+              "label": "Closed",
+              "description": "Postings rejected (REQ-PC-004); reopenable by an elevated period-closer role with an audited reason."
+            },
+            "audit-locked": {
+              "label": "Audit Locked",
+              "description": "Terminal. Frozen after auditor sign-off; no further transitions permitted (REQ-PC-003)."
+            }
+          },
+          "transitions": {
+            "start-close": {
+              "from": "open",
+              "to": "closing",
+              "label": "Start close",
+              "description": "Operator starts the close; trial-balance invariant must verify per REQ-TB-003.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::trialBalanceVerifies"
+            },
+            "confirm-close": {
+              "from": "closing",
+              "to": "closed",
+              "label": "Confirm close",
+              "description": "Operator confirms close; all open AP/AR invoices in the period are settled or explicitly acknowledged. Writes closedAt + closedBy per REQ-PC-003."
+            },
+            "reopen": {
+              "from": "closed",
+              "to": "open",
+              "label": "Reopen period",
+              "description": "Elevated period-closer role only; records the audited reopen reason in reopenedHistory per REQ-PC-003.",
+              "x-openregister-rbac-required-role": "period-closer"
+            },
+            "audit-lock": {
+              "from": "closed",
+              "to": "audit-locked",
+              "label": "Audit lock",
+              "description": "Auditor action. Irreversible; writes auditLockedAt + auditLockedBy per REQ-PC-003.",
+              "x-openregister-rbac-required-role": "auditor"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "period-closer": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            }
+          }
+        }
+      },
+      "CustomerMaster": {
+        "slug": "CustomerMaster",
+        "icon": "AccountTieOutline",
+        "version": "0.1.0",
+        "title": "Customer Master",
+        "description": "A customer/debtor master record carrying invoice-delivery, dunning-policy, and credit-limit fields per REQ-AR-002. Carries forward the original Shillinq invoicing scope. A contact/person remains a Nextcloud entity per ADR-022; this register is the bookkeeping-side debtor view keyed by customerId.",
+        "x-schema-org": "schema:Organization",
+        "type": "object",
+        "x-openregister-audit": true,
+        "required": [
+          "customerId",
+          "legalName",
+          "email",
+          "administrationId",
+          "lifecycleState"
+        ],
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "description": "Internal customer code.",
+            "example": "DEB-0001",
+            "title": "Customer ID"
+          },
+          "legalName": {
+            "type": "string",
+            "description": "Official registered business name.",
+            "example": "Acme Gemeente B.V.",
+            "title": "Legal Name"
+          },
+          "tradeName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Trade name if different.",
+            "title": "Trade Name"
+          },
+          "kvkNumber": {
+            "type": "string",
+            "nullable": true,
+            "description": "Dutch KvK registration number.",
+            "title": "KvK Number"
+          },
+          "vatID": {
+            "type": "string",
+            "nullable": true,
+            "description": "Dutch VAT number (BTW-nummer).",
+            "title": "VAT ID"
+          },
+          "email": {
+            "type": "string",
+            "description": "Contact email for invoice delivery.",
+            "example": "facturen@acme.nl",
+            "title": "Email"
+          },
+          "telephone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Contact telephone.",
+            "title": "Telephone"
+          },
+          "iban": {
+            "type": "string",
+            "nullable": true,
+            "description": "Customer IBAN for SEPA direct debit.",
+            "title": "IBAN"
+          },
+          "creditLimit": {
+            "type": "number",
+            "nullable": true,
+            "description": "Maximum outstanding AR balance allowed (EUR).",
+            "title": "Credit Limit"
+          },
+          "dunningPolicyRef": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to OR dunning-policy record (REQ-AR-005).",
+            "title": "Dunning Policy Ref"
+          },
+          "defaultGlAccount": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to Account.accountNumber for default AR posting.",
+            "title": "Default GL Account"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration.",
+            "example": "adm-consultancy-nl",
+            "title": "Administration ID"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "active",
+              "blocked",
+              "archived"
+            ],
+            "default": "active",
+            "description": "Customer lifecycle state.",
+            "title": "Lifecycle State"
+          },
+          "ublDebtorRef": {
+            "type": "string",
+            "nullable": true,
+            "description": "UBL 2.1 AccountingCustomerParty ID, declared for T4 Peppol outbound.",
+            "title": "Ubl Debtor Ref"
+          },
+          "invoices": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "$ref": "ARInvoice"
+            },
+            "description": "Inverse of ARInvoice.customerId; back-reference populated by OpenRegister.",
+            "title": "Invoices"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Customer may be invoiced."
+            },
+            "blocked": {
+              "label": "Blocked",
+              "description": "Credit hold; new invoices blocked."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "No longer in use; retained for audit."
+            }
+          },
+          "transitions": {
+            "block": {
+              "from": "active",
+              "to": "blocked",
+              "label": "Block customer"
+            },
+            "unblock": {
+              "from": "blocked",
+              "to": "active",
+              "label": "Unblock customer"
+            },
+            "archive": {
+              "from": "active",
+              "to": "archived",
+              "label": "Archive customer"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "ar-controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Customer Master is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "ARInvoice": {
+        "slug": "ARInvoice",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "AR Invoice",
+        "description": "A customer (accounts-receivable) invoice sub-ledger record per REQ-AR-003. On issue it materialises a balanced GLTransaction (T1 REQ-JE-007 pattern) and is subject to a credit-limit check (REQ-AR-006). Dunning is consumed from OR's dunning-workflow per REQ-AR-005 (DunningGuard fallback per ADR-031). Payment matching links to a BankStatementLine from bank-reconciliation.",
+        "x-schema-org": "schema:Invoice",
+        "type": "object",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Bookkeeping sub-ledger register; every lifecycle transition (issue / overdue / match / dispute / write-off / void) and every header / line edit is recorded on the OR audit-trail-immutable channel per REQ-RAP-001 / REQ-AT-001 + ADR-022."
+        },
+        "required": [
+          "invoiceNumber",
+          "customerId",
+          "administrationId",
+          "invoiceDate",
+          "dueDate",
+          "grossAmount",
+          "netAmount",
+          "currency",
+          "periodId",
+          "lifecycleState"
+        ],
+        "properties": {
+          "invoiceNumber": {
+            "type": "string",
+            "description": "Sequential invoice number.",
+            "example": "2026-0042",
+            "title": "Invoice Number"
+          },
+          "customerId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "CustomerMaster",
+            "inversedBy": "invoices",
+            "description": "Reference to the CustomerMaster this invoice is billed to (holds its object UUID, NOT the per-administration customer code CustomerMaster.customerId). PortalContributionProvider scopes a debtor's visible invoices on this field against the customerMasterId claim, and its cross-administration isolation argument depends on the value being the globally-unique object UUID.",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "title": "Customer ID"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration.",
+            "title": "Administration ID"
+          },
+          "invoiceDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the invoice was issued.",
+            "title": "Invoice Date"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Payment due date.",
+            "title": "Due Date"
+          },
+          "grossAmount": {
+            "type": "number",
+            "description": "Total amount including VAT.",
+            "example": 1210.0,
+            "title": "Gross Amount"
+          },
+          "vatAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "VAT portion.",
+            "title": "VAT Amount"
+          },
+          "netAmount": {
+            "type": "number",
+            "description": "Net amount excluding VAT.",
+            "example": 1000.0,
+            "title": "Net Amount"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "description": "ISO 4217 currency code.",
+            "title": "Currency"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "FK to FiscalPeriod.periodId.",
+            "title": "Period ID"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "issued",
+              "paid",
+              "overdue",
+              "disputed",
+              "written-off"
+            ],
+            "default": "draft",
+            "description": "AR invoice lifecycle state per REQ-AR-004.",
+            "title": "Lifecycle State"
+          },
+          "glTransactionId": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "GLTransaction",
+            "nullable": true,
+            "description": "Reference to the GLTransaction materialised on issue (holds its object UUID).",
+            "example": "00000000-0000-0000-0000-000000000000",
+            "title": "GL Transaction ID"
+          },
+          "sourceDocumentUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "Docudesk FK URI (PDF invoice) per bookkeeping-document-attachment-integration.",
+            "title": "Source Document URI"
+          },
+          "matchedBankLineId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to BankStatementLine.lineId once payment is matched.",
+            "title": "Matched Bank Line ID"
+          },
+          "ublRef": {
+            "type": "string",
+            "nullable": true,
+            "description": "UBL 2.1 document reference, declared for T4 Peppol BIS 3.0 outbound.",
+            "title": "Ubl Ref"
+          },
+          "writeOffReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator-authored, audit-trailed reason for declaring this invoice uncollectible. Read by WriteOffReasonGuard::requireReason, which blocks both write-off transitions until it is non-empty (REQ-AR-007).",
+            "example": "Customer insolvency, court-confirmed uncollectible per ruling 2026-04-22.",
+            "title": "Write-Off Reason"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Under construction."
+            },
+            "issued": {
+              "label": "Issued",
+              "description": "Credit-limit checked; balanced GLTransaction materialised; glTransactionId written."
+            },
+            "paid": {
+              "label": "Paid",
+              "description": "Payment matched from bank-rec; matchedBankLineId set; payment GLTransaction posted."
+            },
+            "overdue": {
+              "label": "Overdue",
+              "description": "Due date passed (OR isOverdue calculation); dunning workflow triggers."
+            },
+            "disputed": {
+              "label": "Disputed",
+              "description": "Customer disputes the invoice; dunning paused."
+            },
+            "written-off": {
+              "label": "Written off",
+              "description": "Bad-debt write-off; compensating GLTransaction posted (debit bad-debt expense, credit AR control)."
+            }
+          },
+          "transitions": {
+            "issue": {
+              "from": "draft",
+              "to": "issued",
+              "label": "Issue invoice",
+              "description": "Credit-limit check (REQ-AR-006); materialises a balanced GLTransaction and writes glTransactionId."
+            },
+            "mark-paid": {
+              "from": "issued",
+              "to": "paid",
+              "label": "Mark paid",
+              "description": "Payment matched from bank reconciliation."
+            },
+            "mark-overdue": {
+              "from": "issued",
+              "to": "overdue",
+              "label": "Mark overdue",
+              "description": "Automated when due date passes."
+            },
+            "dispute": {
+              "from": "issued",
+              "to": "disputed",
+              "label": "Mark disputed"
+            },
+            "pay-overdue": {
+              "from": "overdue",
+              "to": "paid",
+              "label": "Mark overdue paid"
+            },
+            "write-off-issued": {
+              "from": "issued",
+              "to": "written-off",
+              "label": "Write off",
+              "description": "Posts compensating GLTransaction; requires period-closer or ar-controller role. Blocked until writeOffReason is set (REQ-AR-007).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\WriteOffReasonGuard::requireReason",
+              "x-openregister-rbac-required-role": "ar-controller"
+            },
+            "write-off-overdue": {
+              "from": "overdue",
+              "to": "written-off",
+              "label": "Write off overdue",
+              "description": "Posts compensating GLTransaction; requires period-closer or ar-controller role. Blocked until writeOffReason is set (REQ-AR-007).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\WriteOffReasonGuard::requireReason",
+              "x-openregister-rbac-required-role": "ar-controller"
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "isOverdue": {
+            "expression": "dueDate < today() && lifecycleState != 'paid' && lifecycleState != 'written-off'",
+            "description": "Derived overdue flag per REQ-AR-004; drives the automated overdue transition and dunning workflow."
+          }
+        },
+        "x-openregister-aggregations": {
+          "arAging": {
+            "label": "AR Aging",
+            "description": "Groups open AR invoices by customer and aging bucket per REQ-AR-008. Excludes paid and written-off invoices.",
+            "register": "shillinq",
+            "schema": "ARInvoice",
+            "filter": {
+              "lifecycleState": {
+                "not-in": [
+                  "paid",
+                  "written-off"
+                ]
+              }
+            },
+            "groupBy": [
+              "customerId",
+              "agingBucket"
+            ],
+            "computedFields": {
+              "agingBucket": {
+                "type": "date-bucket",
+                "field": "dueDate",
+                "referenceDate": "today",
+                "direction": "past",
+                "buckets": [
+                  {
+                    "label": "current",
+                    "maxDaysOverdue": 0
+                  },
+                  {
+                    "label": "1-30",
+                    "maxDaysOverdue": 30
+                  },
+                  {
+                    "label": "31-60",
+                    "maxDaysOverdue": 60
+                  },
+                  {
+                    "label": "61-90",
+                    "maxDaysOverdue": 90
+                  },
+                  {
+                    "label": "90+",
+                    "maxDaysOverdue": null
+                  }
+                ]
+              },
+              "outstandingTotal": {
+                "type": "sum",
+                "field": "grossAmount"
+              }
+            }
+          },
+          "creditExposure": {
+            "label": "Customer Credit Exposure",
+            "description": "Sums grossAmount of all non-paid, non-written-off AR invoices per customer for the credit-limit check on issuance per REQ-AR-006.",
+            "register": "shillinq",
+            "schema": "ARInvoice",
+            "filter": {
+              "lifecycleState": {
+                "not-in": [
+                  "paid",
+                  "written-off"
+                ]
+              }
+            },
+            "groupBy": [
+              "customerId"
+            ],
+            "computedFields": {
+              "exposure": {
+                "type": "sum",
+                "field": "grossAmount"
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "ar-controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "DunningRecord": {
+        "slug": "DunningRecord",
+        "icon": "EmailAlertOutline",
+        "version": "0.1.0",
+        "title": "Dunning Record",
+        "description": "A single dunning (aanmaning) communication issued against an overdue AR invoice per REQ-AR-007. DunningRecord objects are written declaratively by OR's dunning-workflow (REQ-AR-005); shillinq carries no app-local dunning service or table per ADR-022.",
+        "x-schema-org": "schema:Message",
+        "type": "object",
+        "x-openregister-audit": true,
+        "required": [
+          "dunningId",
+          "arInvoiceId",
+          "dunningLevel",
+          "issuedDate",
+          "dueDate",
+          "amount",
+          "administrationId",
+          "status"
+        ],
+        "properties": {
+          "dunningId": {
+            "type": "string",
+            "description": "Unique dunning record identifier.",
+            "title": "Dunning ID"
+          },
+          "arInvoiceId": {
+            "type": "string",
+            "description": "FK to ARInvoice.invoiceNumber.",
+            "title": "AR Invoice ID"
+          },
+          "dunningLevel": {
+            "type": "string",
+            "enum": [
+              "reminder1",
+              "reminder2",
+              "formal-notice",
+              "collection"
+            ],
+            "description": "Escalation level.",
+            "title": "Dunning Level"
+          },
+          "issuedDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the dunning communication was issued.",
+            "title": "Issued Date"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "New payment deadline in the notice.",
+            "title": "Due Date"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Outstanding amount stated in the notice.",
+            "title": "Amount"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration.",
+            "title": "Administration ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "sent",
+              "responded",
+              "escalated",
+              "withdrawn"
+            ],
+            "default": "pending",
+            "description": "Dunning record status.",
+            "title": "Status"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "ar-controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Dunning Record is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "BankStatement": {
+        "x-openregister-audit": true,
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "REQ-AT-001: BankStatement carries an immutable audit trail per ADR-022. Import, lifecycle transitions, and operator actions append audit events."
+        },
+        "properties": {
+          "statementId": {
+            "type": "string",
+            "description": "Unique statement identifier (e.g. BS-2026-001) per REQ-BR-002. Additive overlay field for the reconciliation flow.",
+            "example": "BS-2026-001",
+            "title": "Statement ID"
+          },
+          "bankAccountIban": {
+            "type": "string",
+            "description": "IBAN of the reconciled bank account per REQ-BR-002.",
+            "title": "Bank Account IBAN"
+          },
+          "periodStart": {
+            "type": "string",
+            "format": "date",
+            "description": "First date covered by the statement per REQ-BR-002.",
+            "title": "Period Start"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date",
+            "description": "Last date covered by the statement per REQ-BR-002.",
+            "title": "Period End"
+          },
+          "openingBalance": {
+            "type": "number",
+            "description": "Opening balance per the bank (EUR) per REQ-BR-002.",
+            "title": "Opening Balance"
+          },
+          "closingBalance": {
+            "type": "number",
+            "description": "Closing balance per the bank (EUR) per REQ-BR-002.",
+            "title": "Closing Balance"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "description": "ISO 4217 currency code.",
+            "title": "Currency"
+          },
+          "importFormat": {
+            "type": "string",
+            "enum": [
+              "camt053",
+              "mt940",
+              "csv",
+              "manual"
+            ],
+            "description": "Import format per REQ-BR-002/REQ-BR-003.",
+            "title": "Import Format"
+          },
+          "importedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp the operator uploaded the file per REQ-BR-002.",
+            "title": "Imported At"
+          },
+          "importedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "UUID of the user who uploaded the statement per REQ-BR-002.",
+            "title": "Imported By"
+          },
+          "fileChecksum": {
+            "type": "string",
+            "description": "SHA-256 hash of the imported file for duplicate-import rejection per REQ-BR-009.",
+            "title": "File Checksum"
+          },
+          "transactionCount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Number of BankStatementLine rows parsed from this statement.",
+            "title": "Transaction Count"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "imported",
+              "in-progress",
+              "reconciled",
+              "audit-locked"
+            ],
+            "default": "imported",
+            "description": "Bank-statement reconciliation lifecycle state per REQ-BR-008.",
+            "title": "Lifecycle State"
+          },
+          "sourceDocumentUri": {
+            "type": "string",
+            "nullable": true,
+            "description": "Docudesk FK URI for the original bank-statement file per REQ-BR-002 (consume bookkeeping-document-attachment-integration).",
+            "title": "Source Document URI"
+          }
+        },
+        "x-openregister-uniqueness": {
+          "duplicateChecksum": {
+            "fields": [
+              "administrationId",
+              "fileChecksum"
+            ],
+            "scope": "administration",
+            "description": "REQ-BR-009: re-uploading the identical statement file (same SHA-256) within the same administration is rejected as a duplicate import."
+          },
+          "overlappingPeriod": {
+            "fields": [
+              "administrationId",
+              "bankAccountIban",
+              "periodStart",
+              "periodEnd"
+            ],
+            "rangeOverlap": true,
+            "description": "REQ-BR-009: a second statement covering an overlapping [periodStart, periodEnd] window for the same bank account is rejected as a duplicate import."
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "imported",
+          "states": {
+            "imported": {
+              "label": "Imported",
+              "description": "Statement imported; lines parsed; not yet reconciled."
+            },
+            "in-progress": {
+              "label": "In progress",
+              "description": "Operator is reconciling lines against AR/AP."
+            },
+            "reconciled": {
+              "label": "Reconciled",
+              "description": "All lines matched or routed to suspense; no unmatched lines remain (REQ-BR-008)."
+            },
+            "audit-locked": {
+              "label": "Audit Locked",
+              "description": "Terminal. Frozen after auditor sign-off (REQ-BR-008)."
+            }
+          },
+          "transitions": {
+            "open-reconciliation": {
+              "from": "imported",
+              "to": "in-progress",
+              "label": "Open for reconciliation"
+            },
+            "complete-reconciliation": {
+              "from": "in-progress",
+              "to": "reconciled",
+              "label": "Confirm reconciliation",
+              "description": "All lines MUST be matched or routed-to-suspense; no unmatched lines remain per REQ-BR-008.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\StatementParser::allLinesResolved"
+            },
+            "audit-lock": {
+              "from": "reconciled",
+              "to": "audit-locked",
+              "label": "Audit lock",
+              "description": "Auditor action; irreversible (REQ-BR-008).",
+              "x-openregister-rbac-required-role": "auditor"
+            },
+            "reopen": {
+              "from": "reconciled",
+              "to": "in-progress",
+              "label": "Reopen reconciliation",
+              "description": "Elevated role required; records reopen in audit trail.",
+              "x-openregister-rbac-required-role": "period-closer"
+            }
+          }
+        }
+      },
+      "BankStatementLine": {
+        "slug": "BankStatementLine",
+        "icon": "BankTransfer",
+        "version": "0.1.0",
+        "title": "Bank Statement Line",
+        "description": "A single transaction line within a BankStatement per REQ-BR-003. Parsed from CAMT.053, MT940, or manual CSV import. Matched against AR/AP via MatchingRule predicates (REQ-BR-004/REQ-BR-005/REQ-BR-006); unmatched lines route to a suspense account (REQ-BR-007).",
+        "x-schema-org": "schema:MonetaryAmount",
+        "type": "object",
+        "x-openregister-audit": true,
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "REQ-AT-001: BankStatementLine carries an immutable audit trail per ADR-022. Match-state transitions, suspense routings, and operator confirmations append audit events."
+        },
+        "required": [
+          "lineId",
+          "statementId",
+          "valueDate",
+          "amount",
+          "currency",
+          "status"
+        ],
+        "properties": {
+          "lineId": {
+            "type": "string",
+            "description": "Unique line identifier within the statement.",
+            "title": "Line ID"
+          },
+          "statementId": {
+            "type": "string",
+            "description": "FK to BankStatement.statementId.",
+            "title": "Statement ID"
+          },
+          "lineNumber": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Ordinal position of the line within the statement (1-based), preserved from the source file.",
+            "title": "Line Number"
+          },
+          "valueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Value date (boekingsdatum) of the transaction.",
+            "title": "Value Date"
+          },
+          "transactionDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Transaction date if different from value date.",
+            "title": "Transaction Date"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Transaction amount (positive = credit, negative = debit, EUR).",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "EUR",
+            "description": "ISO 4217 currency code.",
+            "title": "Currency"
+          },
+          "remittanceInfo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment reference / omschrijving.",
+            "title": "Remittance Info"
+          },
+          "narrative": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-form bank-side description (e.g. CAMT.053 AddtlNtryInf or MT940 :86: subfield). Distinct from remittanceInfo: narrative is the bank's text, remittanceInfo is the operator/counterparty reference.",
+            "title": "Narrative"
+          },
+          "counterpartyName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name of counterparty.",
+            "title": "Counterparty Name"
+          },
+          "counterpartyIban": {
+            "type": "string",
+            "nullable": true,
+            "description": "IBAN of counterparty.",
+            "title": "Counterparty IBAN"
+          },
+          "endToEndRef": {
+            "type": "string",
+            "nullable": true,
+            "description": "SEPA end-to-end reference.",
+            "title": "End To End Ref"
+          },
+          "rawPayload": {
+            "type": "string",
+            "nullable": true,
+            "description": "Raw source-line text (CAMT.053 <Ntry> fragment, MT940 :61:+:86: pair, or CSV row) preserved for auditor traceability. May be null on legacy imports.",
+            "title": "Raw Payload"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "unmatched",
+              "matched",
+              "routed-to-suspense"
+            ],
+            "default": "unmatched",
+            "description": "Match state per REQ-BR-003.",
+            "title": "Status"
+          },
+          "reconciliationMatchId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to ReconciliationMatch.matchId once matched.",
+            "title": "Reconciliation Match ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "unmatched",
+          "states": {
+            "unmatched": {
+              "label": "Unmatched",
+              "description": "Awaiting candidate match emission or operator action."
+            },
+            "matched": {
+              "label": "Matched",
+              "description": "A confirmed ReconciliationMatch covers this line (REQ-BR-006)."
+            },
+            "routed-to-suspense": {
+              "label": "Routed to suspense",
+              "description": "Operator marked the line unmatched-final; a balanced GLTransaction materialised against the designated Account.isSuspenseAccount per REQ-BR-007."
+            }
+          },
+          "transitions": {
+            "mark-matched": {
+              "from": "unmatched",
+              "to": "matched",
+              "label": "Mark matched",
+              "description": "Set when a ReconciliationMatch covering this line transitions to status=confirmed (REQ-BR-006)."
+            },
+            "route-to-suspense": {
+              "from": "unmatched",
+              "to": "routed-to-suspense",
+              "label": "Route to suspense",
+              "description": "Operator action per REQ-BR-007: materialises a balanced GLTransaction debiting (or crediting) the designated suspense Account against the bank-account GL. Declarative per the T1 REQ-JE-007 materialisation pattern; no PHP suspense-routing service."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "treasurer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "MatchingRule": {
+        "slug": "MatchingRule",
+        "icon": "FilterCogOutline",
+        "version": "0.1.0",
+        "title": "Matching Rule",
+        "description": "A predicate-based rule that matches bank statement lines against AR/AP invoices or journals per REQ-BR-004/REQ-BR-005. Rule predicates are declared as schema metadata (ADR-031); an x-openregister-aggregations query consumes them to emit ReconciliationMatch candidates. No PHP rule-engine.",
+        "x-schema-org": "schema:Action",
+        "type": "object",
+        "x-openregister-audit": true,
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "REQ-AT-001: MatchingRule carries an immutable audit trail per ADR-022. Rule authoring, predicate edits, priority changes, and active/disabled flips append audit events."
+        },
+        "required": [
+          "ruleId",
+          "name",
+          "administrationId",
+          "priority",
+          "isActive",
+          "targetType",
+          "predicates"
+        ],
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "description": "Unique rule identifier.",
+            "title": "Rule ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable rule name.",
+            "example": "Exacte factuurreferentie",
+            "title": "Name"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration.",
+            "title": "Administration ID"
+          },
+          "priority": {
+            "type": "integer",
+            "description": "Lower number = higher priority (evaluated in order) per REQ-BR-004.",
+            "title": "Priority"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether the rule is active.",
+            "title": "Is Active"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "active",
+              "disabled",
+              "archived"
+            ],
+            "default": "active",
+            "description": "Rule lifecycle state per REQ-BR-004.",
+            "title": "Lifecycle State"
+          },
+          "targetType": {
+            "type": "string",
+            "enum": [
+              "ar-invoice",
+              "ap-invoice",
+              "gl-transaction",
+              "customer",
+              "vendor"
+            ],
+            "description": "Which register the rule matches against per REQ-BR-004.",
+            "title": "Target Type"
+          },
+          "autoConfirm": {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, candidate matches are auto-confirmed; else operator-confirmed per REQ-BR-004/REQ-BR-006. Default false: bookkeeper trust is built first; auto-confirm is a future enhancement once rule packs are mature.",
+            "title": "Auto Confirm"
+          },
+          "confidenceScore": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "nullable": true,
+            "description": "Per-rule confidence score in [0,1] surfaced on emitted ReconciliationMatch candidates per REQ-BR-005. Used by the UI to rank suggestions.",
+            "title": "Confidence Score"
+          },
+          "predicates": {
+            "type": "array",
+            "description": "Ordered array of predicate objects per REQ-BR-005. Predicates in the same rule MUST be combined with logical AND; cross-rule combinations are handled by priority ordering (REQ-BR-004).",
+            "items": {
+              "type": "object",
+              "required": [
+                "op"
+              ],
+              "properties": {
+                "op": {
+                  "type": "string",
+                  "enum": [
+                    "exact-amount",
+                    "amount-range",
+                    "reference-match",
+                    "counterparty-fuzzy",
+                    "date-window",
+                    "exact",
+                    "contains",
+                    "regex"
+                  ],
+                  "description": "Predicate operator per REQ-BR-005. T2 baseline: exact-amount, amount-range, reference-match, counterparty-fuzzy, date-window. Legacy ops (exact/contains/regex) retained for backwards compatibility with rules authored before REQ-BR-005 was finalised.",
+                  "title": "Op"
+                },
+                "field": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Which BankStatementLine field to match on (e.g. remittanceInfo, amount, counterpartyIban, counterpartyName). Optional when op carries an implicit field (e.g. exact-amount → amount).",
+                  "title": "Field"
+                },
+                "amount": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "Predicate amount for exact-amount per REQ-BR-005.",
+                  "title": "Amount"
+                },
+                "min": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "Lower bound for amount-range per REQ-BR-005.",
+                  "title": "Min"
+                },
+                "max": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "Upper bound for amount-range per REQ-BR-005.",
+                  "title": "Max"
+                },
+                "pattern": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Regex pattern for reference-match per REQ-BR-005.",
+                  "title": "Pattern"
+                },
+                "name": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Counterparty name for counterparty-fuzzy per REQ-BR-005.",
+                  "title": "Name"
+                },
+                "threshold": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "nullable": true,
+                  "description": "Levenshtein similarity threshold for counterparty-fuzzy in [0,1] per REQ-BR-005.",
+                  "title": "Threshold"
+                },
+                "days": {
+                  "type": "integer",
+                  "nullable": true,
+                  "description": "Day window for date-window: line date MUST be within ±days of the target object's invoiceDate or dueDate per REQ-BR-005.",
+                  "title": "Days"
+                },
+                "value": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Legacy match target or pattern for op=exact/contains/regex. Declared as a string: OpenRegister rejects a property with no `type` outright (\"Property at '/predicates/items/properties/value' must have a 'type' field\"), which failed the whole MatchingRule schema and — because ImportHandler's PASS 1 empties schemasMap around each importSchema() call and only restores it on the success path — silently dropped every schema imported BEFORE it from the register, 74 of them. Numeric legacy values are carried as their string form; the typed successors (amount/min/max/days/threshold) are the non-legacy path.",
+                  "title": "Value"
+                },
+                "matchTarget": {
+                  "type": "string",
+                  "nullable": true,
+                  "enum": [
+                    "ar-invoice",
+                    "ap-invoice",
+                    "journal"
+                  ],
+                  "description": "Legacy per-predicate match target; superseded by the top-level targetType field (REQ-BR-004).",
+                  "title": "Match Target"
+                }
+              }
+            },
+            "title": "Predicates"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "treasurer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "ReconciliationMatch": {
+        "slug": "ReconciliationMatch",
+        "icon": "LinkVariant",
+        "version": "0.1.0",
+        "title": "Reconciliation Match",
+        "description": "A candidate or confirmed match between a bank statement line and an AR/AP invoice, journal, or suspense routing per REQ-BR-006. Emitted by the matching aggregation (confidence=auto) or operator-created (confidence=manual); the operator confirms or rejects. Confirmed matches emit a `reconciliation-match-confirmed` event consumed by AR/AP invoice lifecycles per REQ-BR-006.",
+        "x-schema-org": "schema:Action",
+        "type": "object",
+        "x-openregister-audit": true,
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "REQ-AT-001: ReconciliationMatch carries an immutable audit trail per ADR-022. Candidate emission, operator confirm/reject, and downstream invoice transitions append audit events."
+        },
+        "required": [
+          "matchId",
+          "bankStatementLineId",
+          "matchType",
+          "matchedObjectId",
+          "matchedAmount",
+          "confidence",
+          "status"
+        ],
+        "properties": {
+          "matchId": {
+            "type": "string",
+            "description": "Unique match identifier.",
+            "title": "Match ID"
+          },
+          "bankStatementLineId": {
+            "type": "string",
+            "description": "FK to BankStatementLine.lineId for the single-line case. For multi-line matches use bankLineRefs.",
+            "title": "Bank Statement Line ID"
+          },
+          "bankLineRefs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "N×M multi-line support per REQ-BR-006: one bank line covering multiple invoices, or multiple bank lines covering one invoice. When set, the array supersedes bankStatementLineId.",
+            "title": "Bank Line Refs"
+          },
+          "targetRefs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "description": "N×M multi-line support per REQ-BR-006: array of matched AR/AP/GL object UUIDs. When set, the array supersedes matchedObjectId.",
+            "title": "Target Refs"
+          },
+          "matchType": {
+            "type": "string",
+            "enum": [
+              "ar-invoice",
+              "ap-invoice",
+              "journal",
+              "gl-transaction",
+              "suspense"
+            ],
+            "description": "What the line matched against (alias: candidateType in legacy tasks docs).",
+            "title": "Match Type"
+          },
+          "matchedObjectId": {
+            "type": "string",
+            "description": "UUID of the matched AR/AP invoice, GLTransaction, or journal (alias: candidateId in legacy tasks docs). For multi-target matches use targetRefs.",
+            "title": "Matched Object ID"
+          },
+          "matchedAmount": {
+            "type": "number",
+            "description": "Amount matched (EUR). For partial matches this is less than the target invoice total.",
+            "title": "Matched Amount"
+          },
+          "partial": {
+            "type": "boolean",
+            "default": false,
+            "description": "REQ-BR-006: when true the match covers part of the target invoice total; AR transitions to partially-paid, AP appends a partial-payment audit event.",
+            "title": "Partial"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "manual"
+            ],
+            "description": "auto = rule-matched; manual = operator-created.",
+            "title": "Confidence"
+          },
+          "confidenceScore": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "nullable": true,
+            "description": "Confidence score in [0,1] copied from the emitting MatchingRule per REQ-BR-005.",
+            "title": "Confidence Score"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "confirmed",
+              "rejected"
+            ],
+            "default": "pending",
+            "description": "Operator confirmation status (alias: state in legacy tasks docs). REQ-BR-006 lifecycle: candidate → confirmed / candidate → rejected.",
+            "title": "Status"
+          },
+          "confirmedBy": {
+            "type": "string",
+            "nullable": true,
+            "description": "UUID of confirming operator.",
+            "title": "Confirmed By"
+          },
+          "confirmedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Confirmation timestamp.",
+            "title": "Confirmed At"
+          },
+          "rejectedReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator-supplied reason when status=rejected (e.g. 'not the right invoice', 'amount mismatch').",
+            "title": "Rejected Reason"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "pending",
+          "states": {
+            "pending": {
+              "label": "Pending",
+              "description": "Candidate emitted by the matching aggregation (REQ-BR-006); awaiting operator confirmation."
+            },
+            "confirmed": {
+              "label": "Confirmed",
+              "description": "Operator confirmed (or autoConfirm=true rule); emits reconciliation-match-confirmed event consumed by AR/AP invoice lifecycles."
+            },
+            "rejected": {
+              "label": "Rejected",
+              "description": "Operator rejected the candidate; line returns to unmatched for further matching attempts."
+            }
+          },
+          "transitions": {
+            "confirm": {
+              "from": "pending",
+              "to": "confirmed",
+              "label": "Confirm match",
+              "description": "Emit reconciliation-match-confirmed event per REQ-BR-006; AR/AP invoice lifecycles consume it."
+            },
+            "reject": {
+              "from": "pending",
+              "to": "rejected",
+              "label": "Reject candidate",
+              "description": "Rejects the candidate; bank line remains unmatched per REQ-BR-006."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "matchCandidates": {
+            "label": "Reconciliation Match Candidates",
+            "description": "Consumes active MatchingRule predicates and emits ReconciliationMatch candidates for unmatched BankStatementLine rows per REQ-BR-006. Per REQ-BR-004, the first matching rule by priority (lowest number first) emits the candidate; lower-priority rules MUST NOT produce a duplicate candidate for the same line. Predicates within a rule combine with logical AND. No PHP rule-engine.",
+            "register": "shillinq",
+            "schema": "BankStatementLine",
+            "filter": {
+              "status": "unmatched"
+            },
+            "appliesRules": {
+              "register": "shillinq",
+              "schema": "MatchingRule",
+              "filter": {
+                "isActive": true,
+                "lifecycleState": "active"
+              },
+              "orderBy": "priority",
+              "dedupe": "first-match-wins"
+            },
+            "targets": {
+              "ar-invoice": {
+                "register": "shillinq",
+                "schema": "ARInvoice",
+                "matchOn": [
+                  "invoiceNumber",
+                  "totalAmount",
+                  "customerId"
+                ]
+              },
+              "ap-invoice": {
+                "register": "shillinq",
+                "schema": "APInvoice",
+                "matchOn": [
+                  "invoiceNumber",
+                  "totalAmount",
+                  "vendorId"
+                ]
+              },
+              "gl-transaction": {
+                "register": "shillinq",
+                "schema": "GLTransaction",
+                "matchOn": [
+                  "transactionDate",
+                  "amount"
+                ]
+              },
+              "customer": {
+                "register": "shillinq",
+                "schema": "CustomerMaster",
+                "matchOn": [
+                  "name",
+                  "iban"
+                ]
+              },
+              "vendor": {
+                "register": "shillinq",
+                "schema": "Payee",
+                "matchOn": [
+                  "name",
+                  "bankAccount.iban"
+                ]
+              }
+            },
+            "emits": {
+              "register": "shillinq",
+              "schema": "ReconciliationMatch",
+              "status": "pending",
+              "autoConfirmWhen": "MatchingRule.autoConfirm == true",
+              "description": "When autoConfirm is true the emitted ReconciliationMatch is created with status=confirmed directly, triggering the reconciliation-match-confirmed event consumed by AR/AP invoice lifecycles per REQ-BR-006."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "treasurer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

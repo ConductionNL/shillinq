@@ -1,0 +1,38 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-purchase-order-3way-10-vendor-performance",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Slice 10 of the bookkeeping-purchase-order-3way chain adds the Vendor Performance index + detail surfaces — the visible artefact of the monthly aggregation cron. Both pages render the basis-point rates (on-time delivery, quantity accuracy, price accuracy, invoice accuracy), the weighted overall score, the trend pill (improving / stable / declining) and the auto-review eligibility badge. The detail view also links back to the supplier's POs and SupplierInvoices for drill-through. Registered as kind=page custom components in src/registry.js because the standard generated index does not render basis-point rates as percentage pills or a colour-coded trend indicator, and the detail view adds the bespoke score breakdown."
+	},
+	"menu": [
+		{
+			"id": "POMatching",
+			"label": "PO Matching",
+			"icon": "ClipboardListOutline",
+			"order": 90,
+			"children": [
+				{"id": "VendorPerformanceIndex", "label": "Vendor performance", "icon": "ChartTimelineVariant", "route": "VendorPerformanceIndex", "order": 50}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "VendorPerformanceIndex",
+			"route": "/inkoop/vendor-performance",
+			"type": "custom",
+			"title": "Vendor performance",
+			"component": "VendorPerformanceIndex",
+			"_note": "VendorPerformance stores one scorecard per (supplierId, period); this page shows ONE ROW PER SUPPLIER — the latest period only. That per-group latest-row reduction happens after the fetch and has no declarative equivalent: `type: index` renders the rows the query returns, so it would list every historical period per supplier. Decompose this page once the shared index gains a latest-per-group source; the rest of it (columns, eligibility facet, drill-through) is already ordinary index behaviour."
+		},
+		{
+			"id": "VendorPerformanceDetail",
+			"route": "/inkoop/vendor-performance/:id",
+			"type": "custom",
+			"title": "Vendor performance",
+			"component": "VendorPerformanceDetail",
+			"_note": "The four component rates (onTimeDelivery, quantityAccuracy, priceAccuracy, invoiceAccuracy) are stored in BASIS POINTS and must render as percentage pills, and the period-over-period trend is computed against the previous period's scorecard — a second object the page fetches itself. `type: detail` renders the fields of the one object it resolved, with no basis-point formatter and no access to the previous period. Decompose this page once a basis-point/percentage formatter and a previous-period comparison exist in the shared library; the 'Related' drill-through to the supplier's purchase orders, supplier invoices and three-way matches is already expressible as config.relatedCollections."
+		}
+	]
+}

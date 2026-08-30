@@ -1,0 +1,376 @@
+{
+	"menu": [
+		{
+			"id": "ContinuousControlsMonitoring",
+			"label": "Continuous Controls Monitoring",
+			"icon": "ShieldSearch",
+			"order": 80,
+			"children": [
+				{
+					"id": "CcmFindings",
+					"label": "Findings",
+					"icon": "AlertCircleOutline",
+					"route": "CcmFindings",
+					"order": 10
+				},
+				{
+					"id": "CcmRules",
+					"label": "Rule Library",
+					"icon": "ShieldSearch",
+					"route": "CcmRules",
+					"order": 20
+				},
+				{
+					"id": "CcmSegregationMatrix",
+					"label": "Segregation Matrix",
+					"icon": "AccountSwitch",
+					"route": "CcmSegregationMatrix",
+					"order": 30
+				},
+				{
+					"id": "CcmUserFunctionAssignments",
+					"label": "Function Assignments",
+					"icon": "AccountKey",
+					"route": "CcmUserFunctionAssignments",
+					"order": 40
+				},
+				{
+					"id": "CcmBaselines",
+					"label": "Baselines",
+					"icon": "ChartBellCurve",
+					"route": "CcmBaselines",
+					"order": 50
+				},
+				{
+					"id": "CcmAuditCommitteeReports",
+					"label": "Audit Committee Reports",
+					"icon": "AccountGroupOutline",
+					"route": "CcmAuditCommitteeReports",
+					"order": 60
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "CcmFindings",
+			"route": "/ccm/findings",
+			"type": "index",
+			"title": "Findings",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmFinding",
+				"columns": [
+					{"key": "ruleCode", "label": "Rule", "sortable": true},
+					{"key": "title", "label": "Title", "sortable": true},
+					{"key": "severity", "label": "Severity", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true},
+					{"key": "assignee", "label": "Assignee", "sortable": true},
+					{"key": "fireTimestamp", "label": "Fired", "sortable": true}
+				],
+				"defaultSort": "fireTimestamp",
+				"detailRoute": "CcmFindingDetail"
+			}
+		},
+		{
+			"id": "CcmFindingDetail",
+			"route": "/ccm/findings/:id",
+			"type": "detail",
+			"title": "Finding",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmFinding",
+				"_note": "CONTROL/CASE archetype — a Continuous Controls Monitoring finding is an investigation case, not a conversation. Native shillinq detail contract: config.fields[] render the workflow (rule, severity, status, assignee, triggering event, resolution) so an investigator reads the state-of-play first; the sidebar carries a file-references tab for source evidence and an audit-trail tab for the immutable statusHistory / investigationNotes — the correct home for a control finding's change log. NO email/calendar/talk (CcmFinding declares no comms linkedType); no money aggregation (a finding is a case, not a monetary total).",
+				"fields": [
+					{"key": "ruleCode", "label": "Rule", "type": "string"},
+					{"key": "title", "label": "Title", "type": "string"},
+					{"key": "severity", "label": "Severity", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "assignee", "label": "Assignee", "type": "string"},
+					{"key": "triggeringEventType", "label": "Event type", "type": "string"},
+					{"key": "triggeringEventId", "label": "Event id", "type": "string"},
+					{"key": "fireTimestamp", "label": "Fired", "type": "string"},
+					{"key": "resolutionRationale", "label": "Resolution rationale", "type": "string"},
+					{"key": "resolvedBy", "label": "Resolved by", "type": "string"},
+					{"key": "resolvedAt", "label": "Resolved at", "type": "string"},
+					{"key": "escalated", "label": "Escalated", "type": "boolean"}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Evidence", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "CcmFinding", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
+				"indexRoute": "CcmFindings"
+			}
+		},
+		{
+			"id": "CcmRules",
+			"route": "/ccm/rules",
+			"type": "index",
+			"title": "Rule Library",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmRule",
+				"columns": [
+					{"key": "ruleCode", "label": "Code", "sortable": true},
+					{"key": "name", "label": "Name", "sortable": true},
+					{"key": "controlFamily", "label": "Family", "sortable": true},
+					{"key": "severity", "label": "Severity", "sortable": true},
+					{"key": "evaluationMode", "label": "Mode", "sortable": true},
+					{"key": "enabled", "label": "Enabled", "sortable": true}
+				],
+				"defaultSort": "ruleCode",
+				"detailRoute": "CcmRuleDetail"
+			}
+		},
+		{
+			"id": "CcmRuleDetail",
+			"route": "/ccm/rules/:id",
+			"type": "detail",
+			"title": "Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmRule",
+				"_note": "CONFIG archetype — a CCM rule is a control definition (logic, schedule, COSO assertion, owner/reviewer, SOX key-control flag). Native shillinq detail contract: config.fields[] render the definition (review cadence and versionHistory included); config.relatedCollections[] show the findings this rule has fired (CcmFinding, FK ruleCode=@object.ruleCode) so a control owner immediately sees the rule's real-world impact. KEY+TOKEN: the prop is `relatedCollections` (a `relatedLists` block lands in $attrs and renders nothing), and the token is `@object.ruleCode`, NOT `@self.ruleCode` — `@self.*` is not a token resolveFilterTokens.js knows, so it never resolved. CcmFinding.ruleCode is a DENORMALISED copy of CcmRule's flat `ruleCode` payload field (e.g. SoD-01), so `@objectId` would match zero rows; the sidebar carries an audit-trail tab. NO comms/files — a rule carries no source documents or conversation.",
+				"fields": [
+					{"key": "ruleCode", "label": "Code", "type": "string"},
+					{"key": "name", "label": "Name", "type": "string"},
+					{"key": "description", "label": "Description", "type": "string"},
+					{"key": "controlFamily", "label": "Family", "type": "string"},
+					{"key": "controlObjective", "label": "Objective", "type": "string"},
+					{"key": "cosoAssertion", "label": "COSO assertion", "type": "string"},
+					{"key": "severity", "label": "Severity", "type": "string"},
+					{"key": "evaluationMode", "label": "Mode", "type": "string"},
+					{"key": "enabled", "label": "Enabled", "type": "boolean"},
+					{"key": "ruleOwner", "label": "Owner", "type": "string"},
+					{"key": "soxKeyControl", "label": "SOX key control", "type": "boolean"}
+				],
+				"relatedCollections": [
+					{"title": "Findings from this rule", "register": "shillinq", "schema": "CcmFinding", "filter": {"ruleCode": "@object.ruleCode"}, "columns": [
+						{"key": "title", "label": "Title"},
+						{"key": "severity", "label": "Severity"},
+						{"key": "status", "label": "Status"},
+						{"key": "assignee", "label": "Assignee"},
+						{"key": "fireTimestamp", "label": "Fired"}
+					]}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
+				"indexRoute": "CcmRules"
+			}
+		},
+		{
+			"id": "CcmSegregationMatrix",
+			"route": "/ccm/segregation-matrix",
+			"type": "index",
+			"title": "Segregation Matrix",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmSegregationMatrix",
+				"columns": [
+					{"key": "functionCode", "label": "Function code", "sortable": true},
+					{"key": "label", "label": "Label", "sortable": true},
+					{"key": "conflictSeverity", "label": "Conflict severity", "sortable": true}
+				],
+				"defaultSort": "functionCode",
+				"detailRoute": "CcmSegregationMatrixDetail"
+			}
+		},
+		{
+			"id": "CcmSegregationMatrixDetail",
+			"route": "/ccm/segregation-matrix/:id",
+			"type": "detail",
+			"title": "Function Code",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmSegregationMatrix",
+				"_note": "CONFIG archetype — a segregation-of-duties matrix row defines which business functions conflict with this one and the allowed compensating controls. Native shillinq detail contract: config.fields[] render the definition (function code, label, conflicting functions, severity, rationale); the sidebar carries an audit-trail tab so an auditor can see who changed a conflict rule. Pure policy metadata — NO comms/files/aggregation. Live conflicts surface via the Function Assignments screen; this page is the authoritative rule definition.",
+				"fields": [
+					{"key": "functionCode", "label": "Function code", "type": "string"},
+					{"key": "label", "label": "Label", "type": "string"},
+					{"key": "conflictSeverity", "label": "Conflict severity", "type": "string"},
+					{"key": "rationale", "label": "Rationale", "type": "string"}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
+				"indexRoute": "CcmSegregationMatrix"
+			}
+		},
+		{
+			"id": "CcmUserFunctionAssignments",
+			"route": "/ccm/function-assignments",
+			"type": "index",
+			"title": "Function Assignments",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmUserFunctionAssignment",
+				"columns": [
+					{"key": "user", "label": "User", "sortable": true},
+					{"key": "functionCode", "label": "Function code", "sortable": true},
+					{"key": "source", "label": "Source", "sortable": true},
+					{"key": "expiresAt", "label": "Expires", "sortable": true}
+				],
+				"defaultSort": "user",
+				"detailRoute": "CcmUserFunctionAssignmentDetail"
+			}
+		},
+		{
+			"id": "CcmUserFunctionAssignmentDetail",
+			"route": "/ccm/function-assignments/:id",
+			"type": "detail",
+			"title": "Function Assignment",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmUserFunctionAssignment",
+				"_note": "MAPPING archetype — a user↔function grant is the join between a person and a controlled function, with a provenance and expiry. Native shillinq detail contract: config.fields[] render the grant (user, function, source, granted/expires, granting authority, and the conflictWith array where SoD violations show up); the sidebar carries an audit-trail tab so an auditor can trace who granted and when. NO comms/files/aggregation — a grant carries no documents or conversation.",
+				"fields": [
+					{"key": "user", "label": "User", "type": "string"},
+					{"key": "functionCode", "label": "Function code", "type": "string"},
+					{"key": "source", "label": "Source", "type": "string"},
+					{"key": "grantedAt", "label": "Granted at", "type": "string"},
+					{"key": "grantedBy", "label": "Granted by", "type": "string"},
+					{"key": "expiresAt", "label": "Expires at", "type": "string"}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
+				"indexRoute": "CcmUserFunctionAssignments"
+			}
+		},
+		{
+			"id": "CcmBaselines",
+			"route": "/ccm/baselines",
+			"type": "index",
+			"title": "Baselines",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmBaseline",
+				"columns": [
+					{"key": "baselineScope", "label": "Scope", "sortable": true},
+					{"key": "scopeKey", "label": "Scope key", "sortable": true},
+					{"key": "baselineMetric", "label": "Metric", "sortable": true},
+					{"key": "period", "label": "Period", "sortable": true},
+					{"key": "stable", "label": "Stable", "sortable": true}
+				],
+				"defaultSort": "period",
+				"detailRoute": "CcmBaselineDetail"
+			}
+		},
+		{
+			"id": "CcmBaselineDetail",
+			"route": "/ccm/baselines/:id",
+			"type": "detail",
+			"title": "Baseline",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmBaseline",
+				"_note": "REPORT/METRIC archetype — a baseline is a computed statistical reference (sample size, computed value, confidence interval) that anomaly rules compare against. Native shillinq detail contract: config.aggregations[] surface the two headline numbers (computed value, sample size) so an analyst reads the metric first; config.fields[] render the full definition (scope, metric, period, distribution, refresh cadence, stability); the sidebar carries an audit-trail tab. NO comms/files — a baseline is derived data, not a document; the KPIs are numeric, not currency.",
+				"aggregations": [
+					{"id": "computedValue", "title": "Computed value", "field": "computedValue", "metric": "value", "format": "number"},
+					{"id": "sampleSize", "title": "Sample size", "field": "sampleSize", "metric": "value", "format": "number"}
+				],
+				"fields": [
+					{"key": "baselineScope", "label": "Scope", "type": "string"},
+					{"key": "scopeKey", "label": "Scope key", "type": "string"},
+					{"key": "baselineMetric", "label": "Metric", "type": "string"},
+					{"key": "period", "label": "Period", "type": "string"},
+					{"key": "sampleSize", "label": "Sample size", "type": "number"},
+					{"key": "computedValue", "label": "Computed value", "type": "number"},
+					{"key": "stable", "label": "Stable", "type": "boolean"}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
+				"indexRoute": "CcmBaselines"
+			}
+		},
+		{
+			"id": "CcmAuditCommitteeReports",
+			"route": "/ccm/audit-committee-reports",
+			"type": "index",
+			"title": "Audit Committee Reports",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmAuditCommitteeReport",
+				"columns": [
+					{"key": "period", "label": "Period", "sortable": true},
+					{"key": "reportingCadence", "label": "Cadence", "sortable": true},
+					{"key": "approver", "label": "Approver", "sortable": true},
+					{"key": "approvalDate", "label": "Approved", "sortable": true},
+					{"key": "state", "label": "State", "sortable": true}
+				],
+				"defaultSort": "period",
+				"detailRoute": "CcmAuditCommitteeReportDetail"
+			}
+		},
+		{
+			"id": "CcmAuditCommitteeReportDetail",
+			"route": "/ccm/audit-committee-reports/:id",
+			"type": "detail",
+			"title": "Audit Committee Report",
+			"config": {
+				"register": "shillinq",
+				"schema": "CcmAuditCommitteeReport",
+				"_note": "REPORT/DOCUMENT archetype — a periodic audit-committee report summarises rule firings, SoD compliance and SOX deficiencies for governance sign-off. Native shillinq detail contract: config.fields[] render the narrative (executive summary, recommendations, approver, state); config.relatedCollections[] list the open findings the committee reviews so risk reads first (KEY: `relatedCollections`, not `relatedLists`, which is not a prop on any Cn page component and renders nothing). This filter is a STATIC `status: open` equality with no object token — the section is deliberately register-wide, not scoped to this report, because CcmFinding carries no FK back to CcmAuditCommitteeReport; the sidebar carries a file-references tab for the signed PDF and supporting workpapers and an audit-trail tab for the immutable approval/distribution log — governance evidence. NO comms — this is a formal artefact, not correspondence; no money aggregation of its own.",
+				"fields": [
+					{"key": "period", "label": "Period", "type": "string"},
+					{"key": "reportingCadence", "label": "Cadence", "type": "string"},
+					{"key": "executiveSummary", "label": "Executive summary", "type": "string"},
+					{"key": "recommendations", "label": "Recommendations", "type": "string"},
+					{"key": "approver", "label": "Approver", "type": "string"},
+					{"key": "approvalDate", "label": "Approved", "type": "string"},
+					{"key": "state", "label": "State", "type": "string"}
+				],
+				"relatedCollections": [
+					{"title": "Open findings", "register": "shillinq", "schema": "CcmFinding", "filter": {"status": "open"}, "columns": [
+						{"key": "ruleCode", "label": "Rule"},
+						{"key": "title", "label": "Title"},
+						{"key": "severity", "label": "Severity"},
+						{"key": "assignee", "label": "Assignee"},
+						{"key": "fireTimestamp", "label": "Fired"}
+					]}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Report documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "CcmAuditCommitteeReport", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
+				"indexRoute": "CcmAuditCommitteeReports"
+			}
+		}
+	]
+}

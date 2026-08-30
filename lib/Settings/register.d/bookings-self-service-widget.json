@@ -1,0 +1,217 @@
+{
+  "info": {
+    "version": "0.1.0-bookings-self-service-widget"
+  },
+  "components": {
+    "schemas": {
+      "WidgetAccessKey": {
+        "slug": "WidgetAccessKey",
+        "icon": "KeyOutline",
+        "version": "0.1.0",
+        "title": "Widget Access Key",
+        "description": "Authentication credentials granting partner websites access to the public Booking Self-service Widget API. The plaintext API key is shown to the partner once at creation; only its bcrypt hash is persisted. Used by WidgetApiController via Authorization: Bearer header to authenticate widget requests (services list, slot availability, appointment creation). Rate-limiting is enforced per business_id per REQ-WSW-009.",
+        "x-schema-org": "schema:DigitalDocument",
+        "x-openregister-purpose": "dimension",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "businessId",
+          "apiKeyHash",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration that owns this widget key for tenant isolation and IDOR-safe scoping.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "businessId": {
+            "type": "string",
+            "description": "Public partner business identifier used in widget embeds (e.g. ?businessId=salon-001). Unique per administration.",
+            "example": "salon-001",
+            "title": "Business ID"
+          },
+          "apiKeyHash": {
+            "type": "string",
+            "description": "bcrypt hash of the partner API key. Plaintext key is shown once at creation per REQ-WSW-009 and never persisted.",
+            "example": "$2y$10$...",
+            "title": "API Key Hash"
+          },
+          "apiKeyPrefix": {
+            "type": "string",
+            "nullable": true,
+            "description": "First 8 characters of the plaintext key, stored for partner-facing display ('bk_live_xxxx...') and audit-log identification. Never sufficient to reconstruct the key.",
+            "example": "bk_live_",
+            "title": "API Key Prefix"
+          },
+          "rateLimit": {
+            "type": "integer",
+            "description": "Requests per minute permitted for this business_id. Defaults to 100 per REQ-WSW-001.",
+            "default": 100,
+            "example": 100,
+            "title": "Rate Limit"
+          },
+          "allowedOrigins": {
+            "type": "array",
+            "description": "Configured CORS origins for the partner website (e.g. https://salons.example.com). Wildcards are not accepted per the CORS policy in tasks.md.",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "https://salons.example.com"
+            ],
+            "title": "Allowed Origins"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the key was created.",
+            "example": "2026-05-22T10:00:00Z",
+            "title": "Created At"
+          },
+          "rotatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp of the most recent rotation. Old keys remain active for 7 days after rotation per REQ-WSW-009.",
+            "example": "2026-06-21T10:00:00Z",
+            "title": "Rotated At"
+          },
+          "revokedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp when the key was administratively revoked. After revocation the key cannot authenticate any request.",
+            "example": "2026-06-22T10:00:00Z",
+            "title": "Revoked At"
+          },
+          "status": {
+            "type": "string",
+            "description": "Key lifecycle status. 'active' authenticates; 'rotating' is the 7-day grace period for the predecessor of a freshly-rotated key; 'revoked' is terminal.",
+            "enum": [
+              "active",
+              "rotating",
+              "revoked"
+            ],
+            "default": "active",
+            "example": "active",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Key is current and authenticates partner requests."
+            },
+            "rotating": {
+              "label": "Rotating",
+              "description": "Key has been rotated; remains active for 7 days as a grace period."
+            },
+            "revoked": {
+              "label": "Revoked",
+              "description": "Key has been administratively revoked and can no longer authenticate."
+            }
+          },
+          "transitions": {
+            "rotate": {
+              "from": "active",
+              "to": "rotating",
+              "label": "Rotate",
+              "description": "Start the 7-day grace period after a new key was generated."
+            },
+            "revoke": {
+              "from": "active",
+              "to": "revoked",
+              "label": "Revoke",
+              "description": "Administratively revoke the key."
+            },
+            "revokeRotating": {
+              "from": "rotating",
+              "to": "revoked",
+              "label": "Revoke rotating key",
+              "description": "Revoke a key whose grace period has elapsed."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "WidgetAccessKeyAuditEntry": {
+        "slug": "WidgetAccessKeyAuditEntry",
+        "icon": "ClipboardTextClockOutline",
+        "version": "0.1.0",
+        "title": "Widget Access Key Audit Entry",
+        "description": "Audit trail entry for partner widget key lifecycle operations (created, rotated, revoked). Used by SECURITY/Compliance reviewers to reconstruct who did what when to partner credentials per REQ-WSW-009.",
+        "x-schema-org": "schema:Action",
+        "x-openregister-purpose": "audit",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "businessId",
+          "action",
+          "actor",
+          "occurredAt"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration that owns this audit entry.",
+            "title": "Administration ID"
+          },
+          "businessId": {
+            "type": "string",
+            "description": "businessId of the affected WidgetAccessKey.",
+            "title": "Business ID"
+          },
+          "action": {
+            "type": "string",
+            "description": "The lifecycle action that triggered the audit entry.",
+            "enum": [
+              "created",
+              "rotated",
+              "revoked"
+            ],
+            "title": "Action"
+          },
+          "actor": {
+            "type": "string",
+            "description": "Nextcloud user id of the administrator that performed the action.",
+            "title": "Actor"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the action took place.",
+            "title": "Occurred At"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional administrator-provided note describing the action.",
+            "title": "Notes"
+          }
+        }
+      }
+    }
+  },
+  "objects": []
+}

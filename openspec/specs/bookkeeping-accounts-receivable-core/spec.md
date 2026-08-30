@@ -1,9 +1,15 @@
+---
+status: in-progress
+---
+
 # Spec: bookkeeping-accounts-receivable-core
 
-**Status:** proposed
+**Status:** in-progress
 **Scope:** shillinq
 **Tier:** T2 (compliance + operations)
 **Depends on:** T1 `bookkeeping-general-ledger`, T2 `bookkeeping-document-attachment-integration`, T2 `bookkeeping-bank-reconciliation`
+**OpenSpec changes:**
+- `add-invoice-pdf-export-with-ubl-peppol-support` — adds `ARInvoice.deliveryStatus` field + Peppol delivery sub-lifecycle (REQ-AR-011)
 
 This capability **carries forward the original Shillinq invoicing
 scope** — the customer invoicing surface that was Shillinq's founding
@@ -11,10 +17,12 @@ use-case — and expands it with dunning, credit-limit checks, and
 bank-reconciliation-based payment matching. It is the AR half that
 completes the AP half delivered by `bookkeeping-accounts-payable-core`.
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping accounts receivable core in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+## Requirements
 
 @e2e exclude pure backend/schema: AR register declarations, schema constraints, dunning logic — not browser-testable
-
 
 ### REQ-AR-001: The system SHALL store customer masters, AR invoices, and dunning records as OpenRegister-managed registers
 
@@ -31,6 +39,8 @@ anti-pattern list). OR's generic CRUD HTTP surface exposes all three.
 - **THEN** no such classes SHALL exist.
 
 ### REQ-AR-002: The `CustomerMaster` schema SHALL declare a fixed minimum field set
+
+The system SHALL satisfy this requirement: The `CustomerMaster` schema SHALL declare a fixed minimum field set.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
@@ -56,6 +66,8 @@ anti-pattern list). OR's generic CRUD HTTP surface exposes all three.
 - **THEN** validation MUST pass.
 
 ### REQ-AR-003: The `ARInvoice` schema SHALL declare a fixed minimum field set
+
+The system SHALL satisfy this requirement: The `ARInvoice` schema SHALL declare a fixed minimum field set.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
@@ -126,6 +138,8 @@ visual indicator only.
 
 ### REQ-AR-005: AR dunning SHALL be consumed from OR's dunning-workflow abstraction
 
+The system SHALL satisfy this requirement: AR dunning SHALL be consumed from OR's dunning-workflow abstraction.
+
 Per ADR-022, the dunning workflow (reminder sequences, escalation
 cadence, debt-collection hand-off) MUST be consumed from OR's
 dunning-workflow abstraction. The `CustomerMaster.dunningPolicyRef`
@@ -185,6 +199,8 @@ is null or 0, the check is skipped.
   exceeds the limit (5.000).
 
 ### REQ-AR-007: The `DunningRecord` schema SHALL declare a fixed minimum field set
+
+The system SHALL satisfy this requirement: The `DunningRecord` schema SHALL declare a fixed minimum field set.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
@@ -254,3 +270,54 @@ No bespoke Vue components are authored (per ADR-024).
 - **WHEN** `node tests/validate-manifest.js` is run
 - **THEN** the script MUST exit 0 and all four AR navigation entries
   MUST be present.
+
+### Requirement: REQ-AR-011 — The `ARInvoice` schema SHALL declare a Peppol delivery-status field and a declarative delivery sub-lifecycle
+
+The `ARInvoice` schema MUST declare the following additive fields (all optional,
+defaulting so existing invoices remain valid):
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `deliveryStatus` | enum | No | One of `not-sent`, `queued`, `sent`, `delivered`, `rejected`, `failed` — default `not-sent` |
+| `transmissionId` | string | No | Peppol message/transmission id (URN) returned by the transmission port |
+| `payloadFileUri` | string | No | Docudesk/Files FK URI of the stored UBL / PDF-A3 artefact |
+| `deliveryDetail` | string | No | Last delivery-status `detail` message (rejection/failure reason) |
+
+The delivery status transitions MUST be declared via
+`x-openregister-lifecycle` (a delivery sub-lifecycle keyed on `deliveryStatus`,
+distinct from the `lifecycleState` lifecycle) with the following transitions:
+
+| From | To | Trigger |
+|---|---|---|
+| `not-sent` | `queued` | operator triggers Send e-invoice (after validation) |
+| `queued` | `sent` | access point accepts (`nl.conduction.peppol.delivery.status` `status: sent`) |
+| `sent` | `delivered` | recipient access point confirms (`status: delivered`) |
+| `queued` | `rejected` | access point/recipient rejects (`status: rejected`) |
+| `sent` | `rejected` | recipient rejects after acceptance (`status: rejected`) |
+| `queued` | `failed` | transmission error (`status: failed`) |
+| `rejected` | `queued` | operator re-sends after correction |
+| `failed` | `queued` | operator re-sends |
+
+The delivery sub-lifecycle MUST NOT alter the accounting `lifecycleState`
+(REQ-AR-004): an invoice can be `issued`/`overdue`/`paid` independently of its
+`deliveryStatus`.
+
+#### Scenario: Schema validator accepts an ARInvoice with a delivery status
+
+- GIVEN the `ARInvoice` schema after this delta
+- WHEN an object with required AR fields plus `deliveryStatus: "queued"`,
+  `transmissionId: "urn:uuid:00000000-0000-0000-0000-000000000000"` is validated
+- THEN validation MUST pass
+
+#### Scenario: Existing invoices remain valid without the new field
+
+- GIVEN a pre-existing `ARInvoice` object with no `deliveryStatus`
+- WHEN it is loaded and re-validated
+- THEN validation MUST pass and `deliveryStatus` MUST be treated as `not-sent`
+
+#### Scenario: Delivery sub-lifecycle is independent of accounting state
+
+- GIVEN an `ARInvoice` in `lifecycleState: paid` and `deliveryStatus: sent`
+- WHEN a delivery-status event advances `deliveryStatus` to `delivered`
+- THEN `lifecycleState` MUST remain `paid` (unchanged)
+

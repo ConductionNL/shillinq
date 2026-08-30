@@ -12,10 +12,24 @@
          failOnWarning="false"
          failOnDeprecation="false">
 
+    <!--
+        Kept in step with phpunit-unit.xml. CI's shared quality workflow prefers
+        phpunit.xml when it exists, while `composer test:unit` runs
+        phpunit-unit.xml — so a testsuite that differs between the two means CI
+        and the developer are measuring different things.
+    -->
     <testsuites>
         <testsuite name="Unit Tests">
             <directory>tests/Unit</directory>
             <directory>tests/unit</directory>
+            <!--
+                tests/Integration/ as a whole is not wired into this suite yet
+                (pre-existing gap). These two files are pure declarative
+                (register-JSON + seed-fixture) tests with no OpenRegister
+                runtime dependency.
+            -->
+            <file>tests/Integration/SalesOrderSeedDataIntegrationTest.php</file>
+            <file>tests/Integration/ModelOrReferencesPilotSeedIntegrationTest.php</file>
         </testsuite>
     </testsuites>
 
@@ -39,5 +53,14 @@
 
     <php>
         <env name="PHPUNIT_RUN" value="1"/>
+        <!--
+            The suite is ~3960 tests and exhausts PHP's stock 128M CLI limit at
+            roughly 89% through, dying with a fatal "Allowed memory size
+            exhausted". A fatal mid-run is another silent-abort mode: the
+            summary line is never printed, so nothing reports how many tests
+            actually ran. Raise the limit here so a bare `vendor/bin/phpunit`
+            completes without the caller having to pass `-d memory_limit=...`.
+        -->
+        <ini name="memory_limit" value="1G"/>
     </php>
 </phpunit>

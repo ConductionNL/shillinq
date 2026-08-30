@@ -1,0 +1,1195 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-btw-oss-eu",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 2 — Union One-Stop-Shop (OSS) cross-border EU VAT compliance per Council Directive 2006/112/EC Articles 358a-369x + Council Implementing Regulation (EU) 282/2011. Declares five new schemas (OssRegistration, EuVatRate, OssThresholdCounter, OssReturn, OssPayment), additively extends the Invoice schema (owned by bookings-deposit-to-invoice) with an ossContext sub-object via key-union merge (ADR-037 deepMergeConfig), and seeds the EuVatRate table from the EU Commission TEDB v3 plus example OSS registrations and a worked quarterly return. The OSS pipeline runs alongside (not inside) the domestic BTW pipeline (VatReturn): OSS turnover (8xxx Omzet OSS {country}) and OSS VAT-payable (1xxx BTW af te dragen OSS {country}) are booked to dedicated per-country grootboekrekeningen that are excluded from the regular BTW-aangifte rubrieken 3a/3b/4a/4b (OssLedgerGuard::assertNoOssAccountsOnBtwReturn). Destination-country VAT-rate resolution, threshold monitoring, quarterly aangifte generation, XSD/CSV formatting and payment reconciliation are the ADR-031 exception-path services in lib/Service (OssRateResolver, OssReturnGenerator, OssReturnFormatter, OssPaymentReconciliation) + lib/Guard (OssThresholdGuard, OssLedgerGuard) which use the real OpenRegister ObjectService API (find/findAll). B2B intra-community supplies are explicitly excluded and route to the reverse-charge / ICP path (IcpStatement)."
+  },
+  "components": {
+    "schemas": {
+      "OssRegistration": {
+        "slug": "OssRegistration",
+        "icon": "EarthArrowRight",
+        "version": "0.1.0",
+        "title": "OSS-registratie",
+        "description": "Seller-side enrolment in the Union One-Stop-Shop scheme (REQ-OSS-012). Captures the Belastingdienst-issued OSS-identifier, the effective date, the home member state (always NL for Shillinq tenants), the destination countries actively sold into, the registration status, and the 3-year voluntary lock-in (Article 369a Directive 2006/112/EC, REQ-OSS-009).",
+        "x-schema-org": "schema:GovernmentService",
+        "x-spec": "openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "ossIdentifier",
+          "effectiveDate",
+          "homeMemberState",
+          "registrationStatus"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this registration belongs to; reads are scoped per administration (REQ-OSS-002).",
+            "example": "adm-mkb-1",
+            "title": "Administration ID"
+          },
+          "ossIdentifier": {
+            "type": "string",
+            "description": "Belastingdienst-issued OSS identifier (REQ-OSS-012).",
+            "example": "NL123456789B01",
+            "title": "OSS Identifier"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the registration became effective.",
+            "example": "2026-07-01",
+            "title": "Effective Date"
+          },
+          "homeMemberState": {
+            "type": "string",
+            "default": "NL",
+            "description": "Member state of identification — always NL for Shillinq tenants.",
+            "example": "NL",
+            "title": "Home Member State"
+          },
+          "destinationCountries": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "ISO 3166-1 alpha-2 codes of member states actively sold into (REQ-OSS-012).",
+            "example": [
+              "DE",
+              "FR",
+              "IT"
+            ],
+            "title": "Destination Countries"
+          },
+          "registrationStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "active",
+              "voluntaryBelowThreshold",
+              "deregistered",
+              "excluded"
+            ],
+            "default": "pending",
+            "description": "Current status (REQ-OSS-012). voluntaryBelowThreshold is the Article 369a opt-in below EUR 10,000.",
+            "title": "Registration Status"
+          },
+          "voluntaryBelowThreshold": {
+            "type": "boolean",
+            "default": false,
+            "description": "True when the seller opted in before crossing EUR 10,000 (REQ-OSS-009).",
+            "title": "Voluntary Below Threshold"
+          },
+          "lockInPeriodEndDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "End of the 3-year voluntary lock-in (Article 369a paragraph 3, REQ-OSS-009). Disable is blocked before this date.",
+            "example": "2028-12-31",
+            "title": "Lock In Period End Date"
+          },
+          "deregistrationDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Effective date of deregistration; invoices on/after this date are no longer OSS-eligible and the threshold counter resets (REQ-OSS-012).",
+            "title": "Deregistration Date"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "registrationStatus",
+          "initialState": "pending",
+          "retention": {
+            "rule": "bewaarplicht",
+            "period": "P10Y",
+            "description": "OSS records retained 10 years (bewaarplicht)."
+          },
+          "states": {
+            "pending": {
+              "label": "In aanvraag",
+              "description": "Registration requested at the Belastingdienst; awaiting OSS-identifier."
+            },
+            "active": {
+              "label": "Actief",
+              "description": "Active registration; qualifying B2C-to-EU sales feed the OSS return."
+            },
+            "voluntaryBelowThreshold": {
+              "label": "Vrijwillig (onder drempel)",
+              "description": "Article 369a voluntary opt-in below EUR 10,000; bound for the current + following two calendar years."
+            },
+            "deregistered": {
+              "label": "Uitgeschreven",
+              "description": "Voluntarily deregistered; effective from deregistrationDate."
+            },
+            "excluded": {
+              "label": "Uitgesloten",
+              "description": "Excluded by the tax authority."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "pending",
+              "to": "active",
+              "label": "Activeren",
+              "description": "OSS-identifier received; registration becomes active."
+            },
+            "optInVoluntary": {
+              "from": "pending",
+              "to": "voluntaryBelowThreshold",
+              "label": "Vrijwillig aanmelden",
+              "description": "Opt in below threshold (Article 369a); sets lockInPeriodEndDate.",
+              "requires": "OCA\\Shillinq\\Guard\\OssThresholdGuard::canEnableVoluntary"
+            },
+            "deregister": {
+              "from": "active",
+              "to": "deregistered",
+              "label": "Uitschrijven",
+              "description": "Voluntary deregistration; blocked for voluntary registrations before lockInPeriodEndDate (REQ-OSS-009).",
+              "requires": "OCA\\Shillinq\\Guard\\OssThresholdGuard::canDeregister"
+            },
+            "exclude": {
+              "from": "active",
+              "to": "excluded",
+              "label": "Uitsluiten",
+              "description": "Tax authority excludes the seller."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "EuVatRate": {
+        "slug": "EuVatRate",
+        "icon": "Percent",
+        "version": "0.1.0",
+        "title": "EU BTW-tarief (TEDB)",
+        "description": "Per-country, per-period EU VAT rate mirroring the European Commission Taxes in Europe Database (TEDB) v3 (REQ-OSS-001, REQ-OSS-011). Seeded on install and refreshed periodically; manual edits are forbidden (readonly) because applying a hand-typed rate would defeat the audit-trail purpose. The OssRateResolver service resolves the rate effective on the invoice date by (countryCode, rateCategory).",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md",
+        "x-openregister": {
+          "readonly": true
+        },
+        "readonly": true,
+        "type": "object",
+        "required": [
+          "countryCode",
+          "rateCategory",
+          "ratePercentage",
+          "validFrom"
+        ],
+        "properties": {
+          "countryCode": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 destination member state (REQ-OSS-001).",
+            "example": "DE",
+            "title": "Country Code"
+          },
+          "rateCategory": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "reduced1",
+              "reduced2",
+              "superReduced",
+              "parking",
+              "zero"
+            ],
+            "description": "VAT rate category (REQ-OSS-001).",
+            "example": "standard",
+            "title": "Rate Category"
+          },
+          "ratePercentage": {
+            "type": "number",
+            "minimum": 0,
+            "description": "VAT rate as a percentage (REQ-OSS-001).",
+            "example": 19.0,
+            "title": "Rate Percentage"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "First date this rate is in force (REQ-OSS-001, REQ-OSS-007).",
+            "example": "2024-01-01",
+            "title": "Valid From"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Last date in force; null = still in effect (REQ-OSS-007).",
+            "title": "Valid Until"
+          },
+          "cnCpaCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "CN/CPA code range where a reduced rate applies.",
+            "title": "Cn Cpa Code"
+          },
+          "tedbSource": {
+            "type": "string",
+            "nullable": true,
+            "description": "TEDB version / refresh date for traceability (REQ-OSS-011).",
+            "example": "TEDB-v3-2026-01-01",
+            "title": "Tedb Source"
+          },
+          "administrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional FK to an administration for per-admin TEDB variants; null = shared catalogue.",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-aggregations": {
+          "rateByCountryCategoryDate": {
+            "description": "Declarative shape of the rate resolution OssRateResolver performs (REQ-OSS-001): select the EuVatRate row for (countryCode, rateCategory) whose validFrom <= invoiceDate and (validUntil is null or validUntil >= invoiceDate). When the OR aggregation engine cannot express the validity-window selection, OssRateResolver computes it in PHP from the real ObjectService API.",
+            "source": "EuVatRate",
+            "groupBy": [
+              "countryCode",
+              "rateCategory"
+            ],
+            "filter": {
+              "countryCode": "@param.countryCode",
+              "rateCategory": "@param.rateCategory"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "OssThresholdCounter": {
+        "slug": "OssThresholdCounter",
+        "icon": "Gauge",
+        "version": "0.1.0",
+        "title": "OSS-drempelteller",
+        "description": "Per-tenant running calendar-year sum of B2C-to-EU turnover, excluding NL domestic and excluding B2B intra-community supplies (REQ-OSS-002). A derived view recomputed from the journal whenever an invoice is booked, credited or voided — never authored directly by operators (readonly). The OssThresholdGuard evaluates the EUR 10,000 threshold against this counter.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md",
+        "x-openregister": {
+          "readonly": true
+        },
+        "readonly": true,
+        "type": "object",
+        "required": [
+          "administrationId",
+          "calendarYear",
+          "totalB2cEuTurnover"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration (REQ-OSS-002).",
+            "example": "adm-mkb-1",
+            "title": "Administration ID"
+          },
+          "calendarYear": {
+            "type": "integer",
+            "description": "Calendar year being tracked.",
+            "example": 2026,
+            "title": "Calendar Year"
+          },
+          "totalB2cEuTurnover": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Running sum of B2C turnover to other EU member states in the year (REQ-OSS-002).",
+            "example": 9200.0,
+            "title": "Total B2C Eu Turnover"
+          },
+          "byQuarter": {
+            "type": "object",
+            "nullable": true,
+            "description": "Breakdown by quarter, e.g. {\"2026-Q1\": 2500, \"2026-Q2\": 1800}.",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "By Quarter"
+          },
+          "byCountry": {
+            "type": "object",
+            "nullable": true,
+            "description": "Breakdown by destination country, e.g. {\"DE\": 3200, \"FR\": 1100}.",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "By Country"
+          },
+          "thresholdBreachedDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date EUR 10,000 was crossed, if applicable (REQ-OSS-002).",
+            "title": "Threshold Breached Date"
+          }
+        },
+        "x-openregister-aggregations": {
+          "b2cEuTurnoverByYear": {
+            "description": "Declarative shape of the counter OssThresholdGuard computes (REQ-OSS-002): sum Invoice.netAmount for invoices whose ossContext.ossEligible is true within the calendar year, excluding cancelled invoices, credit notes and B2B reverse-charge supplies. Grouped by destination country and quarter for the breakdown. The PHP guard is the ADR-031 fallback for the cross-period, conditional sum.",
+            "groupBy": [
+              "administrationId",
+              "ossContext.destinationCountry"
+            ],
+            "filter": {
+              "ossContext.ossEligible": true
+            },
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "netAmount",
+                "as": "netAmount"
+              }
+            ],
+            "from": "Invoice"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "OssReturn": {
+        "slug": "OssReturn",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "OSS-aangifte",
+        "description": "A single quarterly Union OSS aangifte (REQ-OSS-004, REQ-OSS-005, REQ-OSS-013). Line items are grouped by destination country and rate category; corrections are modelled as separate records of type 'correction' linked to the original period via correctsPeriod (REQ-OSS-010) — never as in-place amendments. The generated XSD/CSV payload is archived for the 10-year bewaarplicht (REQ-OSS-016).",
+        "x-schema-org": "schema:GovernmentService",
+        "x-spec": "openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "periodYear",
+          "periodQuarter",
+          "registrationId",
+          "type",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration (REQ-OSS-004).",
+            "example": "adm-mkb-1",
+            "title": "Administration ID"
+          },
+          "periodYear": {
+            "type": "integer",
+            "description": "Fiscal year (REQ-OSS-004).",
+            "example": 2026,
+            "title": "Period Year"
+          },
+          "periodQuarter": {
+            "type": "string",
+            "enum": [
+              "Q1",
+              "Q2",
+              "Q3",
+              "Q4"
+            ],
+            "description": "Quarter (REQ-OSS-004).",
+            "example": "Q2",
+            "title": "Period Quarter"
+          },
+          "registrationId": {
+            "type": "string",
+            "description": "FK to OssRegistration (REQ-OSS-005).",
+            "example": "ossreg-mkb-1",
+            "title": "Registration ID"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "regular",
+              "correction"
+            ],
+            "default": "regular",
+            "description": "Regular filing or a correction return (REQ-OSS-010).",
+            "title": "Type"
+          },
+          "correctsPeriod": {
+            "type": "string",
+            "nullable": true,
+            "description": "Period this correction amends, e.g. '2026-Q1' (REQ-OSS-010).",
+            "example": "2026-Q1",
+            "title": "Corrects Period"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "submitted",
+              "accepted",
+              "rejected",
+              "paid",
+              "corrected"
+            ],
+            "default": "draft",
+            "description": "Lifecycle status (REQ-OSS-013).",
+            "title": "Status"
+          },
+          "lineItems": {
+            "type": "array",
+            "description": "Per (destinationCountry, rateCategory) lines (REQ-OSS-004).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "countryCode": {
+                  "type": "string",
+                  "title": "Country Code",
+                  "description": "The code for country."
+                },
+                "rateCategory": {
+                  "type": "string",
+                  "title": "Rate Category",
+                  "description": "The date and time for rate category."
+                },
+                "taxableBase": {
+                  "type": "number",
+                  "title": "Taxable Base",
+                  "description": "The numeric value for taxable base."
+                },
+                "vatRate": {
+                  "type": "number",
+                  "title": "VAT Rate",
+                  "description": "The vat rate as a numeric value."
+                },
+                "vatAmount": {
+                  "type": "number",
+                  "title": "VAT Amount",
+                  "description": "The VAT amount included in this transaction."
+                }
+              }
+            },
+            "title": "Line Items"
+          },
+          "totalTaxableBase": {
+            "type": "number",
+            "description": "Sum of taxable bases in EUR (REQ-OSS-004).",
+            "example": 24905.16,
+            "title": "Total Taxable Base"
+          },
+          "totalVatAmount": {
+            "type": "number",
+            "description": "Sum of VAT amounts in EUR (REQ-OSS-004).",
+            "example": 4732.18,
+            "title": "Total VAT Amount"
+          },
+          "taxAuthorityReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "Confirmation reference after submission (REQ-OSS-013).",
+            "title": "Belastingdienst Kenmerk"
+          },
+          "xmlPayload": {
+            "type": "string",
+            "nullable": true,
+            "description": "Archived XSD-compliant XML for bewaarplicht (REQ-OSS-005, REQ-OSS-016).",
+            "title": "XML Payload"
+          },
+          "csvPayload": {
+            "type": "string",
+            "nullable": true,
+            "description": "Archived CSV export for bewaarplicht (REQ-OSS-005, REQ-OSS-016).",
+            "title": "CSV Payload"
+          },
+          "perCountryDistribution": {
+            "type": "object",
+            "nullable": true,
+            "description": "Per-country distribution declared / confirmed, e.g. {\"DE\": 1802, \"FR\": 1440}.",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Per Country Distribution"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "retention": {
+            "rule": "bewaarplicht",
+            "period": "P10Y",
+            "description": "OSS returns retained 10 years (bewaarplicht, REQ-OSS-016)."
+          },
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Generated draft aggregated from OSS-eligible invoices and credit notes."
+            },
+            "submitted": {
+              "label": "Ingediend",
+              "description": "Uploaded through Mijn Belastingdienst Zakelijk; kenmerk recorded."
+            },
+            "accepted": {
+              "label": "Geaccepteerd",
+              "description": "Belastingdienst acknowledged receipt."
+            },
+            "rejected": {
+              "label": "Afgewezen",
+              "description": "Belastingdienst rejected the return; a correction may be filed."
+            },
+            "paid": {
+              "label": "Betaald",
+              "description": "Consolidated payment matched and reconciled (REQ-OSS-008)."
+            },
+            "corrected": {
+              "label": "Gecorrigeerd",
+              "description": "Superseded by a correction return (REQ-OSS-010)."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Indienen",
+              "description": "Finalise and record the kenmerk (REQ-OSS-013). Requires a valid active registration.",
+              "requires": "OCA\\Shillinq\\Service\\OssReturnFormatter::canFinalize"
+            },
+            "accept": {
+              "from": "submitted",
+              "to": "accepted",
+              "label": "Acceptatie",
+              "description": "Acknowledgement received."
+            },
+            "reject": {
+              "from": "submitted",
+              "to": "rejected",
+              "label": "Afwijzing",
+              "description": "Belastingdienst rejected the return."
+            },
+            "pay": {
+              "from": "accepted",
+              "to": "paid",
+              "label": "Betaald",
+              "description": "Payment matched and reconciled (REQ-OSS-008).",
+              "requires": "OCA\\Shillinq\\Service\\OssPaymentReconciliation::canMarkPaid"
+            },
+            "correct": {
+              "from": "accepted",
+              "to": "corrected",
+              "label": "Corrigeren",
+              "description": "A correction return supersedes this one (REQ-OSS-010)."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "linesByCountryRate": {
+            "description": "Declarative shape of the quarterly aggregation OssReturnGenerator performs (REQ-OSS-004): group OSS-eligible Invoice/CreditNote lines in the period by (ossContext.destinationCountry, ossContext.appliedRateCategory), summing taxable base and VAT amount net of credit notes. The PHP service is the ADR-031 fallback for the cross-document, conditional group-by.",
+            "groupBy": [
+              "ossContext.destinationCountry",
+              "ossContext.appliedRateCategory"
+            ],
+            "filter": {
+              "ossContext.ossReportingPeriod": "@self.periodYear-@self.periodQuarter"
+            },
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "netAmount",
+                "as": "netAmount"
+              },
+              {
+                "metric": "sum",
+                "field": "vatAmount",
+                "as": "vatAmount"
+              }
+            ],
+            "from": "Invoice"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "OssPayment": {
+        "slug": "OssPayment",
+        "icon": "BankTransfer",
+        "version": "0.1.0",
+        "title": "OSS-betaling",
+        "description": "The consolidated euro payment to the Belastingdienst for an OSS return (REQ-OSS-008). Links to the settling bank transaction and stores the per-country distribution the Belastingdienst confirms back through the OSS portal so reconciliation is closed and discrepancies surfaced.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "ossReturnId",
+          "paymentDate",
+          "amount",
+          "ibanFrom",
+          "ibanTo",
+          "reconciliationStatus"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration (REQ-OSS-008).",
+            "example": "adm-mkb-1",
+            "title": "Administration ID"
+          },
+          "ossReturnId": {
+            "type": "string",
+            "description": "FK to the OssReturn being settled (REQ-OSS-008).",
+            "example": "ossret-2026q2-mkb-1",
+            "title": "OSS Return ID"
+          },
+          "paymentDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the payment was made.",
+            "example": "2026-07-28",
+            "title": "Payment Date"
+          },
+          "bankTransactionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the bank transaction that settled the payment (REQ-OSS-008).",
+            "title": "Bank Transaction ID"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Payment amount in EUR (REQ-OSS-008).",
+            "example": 4732.18,
+            "title": "Amount"
+          },
+          "ibanFrom": {
+            "type": "string",
+            "description": "Company IBAN.",
+            "example": "NL00BANK0123456789",
+            "title": "IBAN From"
+          },
+          "ibanTo": {
+            "type": "string",
+            "description": "Belastingdienst IBAN.",
+            "example": "NL86INGB0002445588",
+            "title": "IBAN To"
+          },
+          "perCountryDistribution": {
+            "type": "object",
+            "nullable": true,
+            "description": "Per-country distribution confirmed by the Belastingdienst, e.g. {\"DE\": 1802, \"FR\": 1440, \"IT\": 1490.18}.",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Per Country Distribution"
+          },
+          "reconciliationStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "reconciled",
+              "discrepancy"
+            ],
+            "default": "pending",
+            "description": "Reconciliation outcome (REQ-OSS-008).",
+            "title": "Reconciliation Status"
+          },
+          "distributionDifferences": {
+            "type": "object",
+            "nullable": true,
+            "description": "REQ-OSS-008 / revive-gl-tax-capabilities REQ-GLTAX-004 — the per-country differences (confirmed minus declared, in euro) OssPaymentReconciliation::reconcileDistribution() found between the Belastingdienst's confirmed perCountryDistribution and the OssReturn's declared line items. Empty when the payment reconciles; populated (and reconciliationStatus = discrepancy) when it does not, so the divergence is stored on the record instead of only being logged.",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "example": {
+              "FR": -40
+            },
+            "title": "Distribution Differences"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "reconciliationStatus",
+          "initialState": "pending",
+          "retention": {
+            "rule": "bewaarplicht",
+            "period": "P10Y",
+            "description": "OSS payment records retained 10 years (bewaarplicht)."
+          },
+          "states": {
+            "pending": {
+              "label": "In afwachting",
+              "description": "Payment recorded; awaiting reconciliation."
+            },
+            "reconciled": {
+              "label": "Afgestemd",
+              "description": "Matched to the OSS return and the bank transaction (REQ-OSS-008)."
+            },
+            "discrepancy": {
+              "label": "Verschil",
+              "description": "Confirmed per-country distribution diverges from the declared totals (REQ-OSS-008)."
+            }
+          },
+          "transitions": {
+            "reconcile": {
+              "from": "pending",
+              "to": "reconciled",
+              "label": "Afstemmen",
+              "description": "Match the payment to the return.",
+              "requires": "OCA\\Shillinq\\Service\\OssPaymentReconciliation::canMarkPaid"
+            },
+            "flagDiscrepancy": {
+              "from": "pending",
+              "to": "discrepancy",
+              "label": "Verschil markeren",
+              "description": "Confirmed distribution diverges from declared totals."
+            },
+            "resolveDiscrepancy": {
+              "from": "discrepancy",
+              "to": "reconciled",
+              "label": "Verschil opgelost",
+              "description": "Discrepancy investigated and closed."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "vat-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "Invoice": {
+        "properties": {
+          "ossContext": {
+            "type": "object",
+            "nullable": true,
+            "description": "Union OSS context, populated only when the destination country is an EU member state other than NL and the customer is B2C (REQ-OSS-014). Carries the destination-country VAT rate that was applied, the rate category, the EuVatRate row reference (tedbRateVersion) for the audit trail (REQ-OSS-007), the ossEligible flag that feeds the threshold counter, and the reporting period the invoice lands in. The ossContext property is added additively to the Invoice schema (owned by bookings-deposit-to-invoice) via ADR-037 key-union merge; it does not edit that fragment.",
+            "x-spec": "openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md",
+            "properties": {
+              "destinationCountry": {
+                "type": "string",
+                "description": "ISO 3166-1 alpha-2 destination member state (REQ-OSS-014).",
+                "example": "FR",
+                "title": "Destination Country"
+              },
+              "appliedVatRate": {
+                "type": "number",
+                "description": "VAT rate that was applied, as a percentage (REQ-OSS-001, REQ-OSS-007).",
+                "example": 20.0,
+                "title": "Applied VAT Rate"
+              },
+              "appliedRateCategory": {
+                "type": "string",
+                "enum": [
+                  "standard",
+                  "reduced1",
+                  "reduced2",
+                  "superReduced",
+                  "parking",
+                  "zero"
+                ],
+                "description": "Rate category that was applied (REQ-OSS-001).",
+                "title": "Applied Rate Category"
+              },
+              "tedbRateVersion": {
+                "type": "string",
+                "description": "FK to the EuVatRate row that supplied the rate; preserves the audit trail across TEDB refreshes (REQ-OSS-007).",
+                "example": "euvat-de-standard-2024",
+                "title": "Tedb Rate Version"
+              },
+              "ossEligible": {
+                "type": "boolean",
+                "description": "True when this invoice counts toward the OSS threshold and feeds the OSS return (REQ-OSS-002).",
+                "example": true,
+                "title": "OSS Eligible"
+              },
+              "ossReportingPeriod": {
+                "type": "string",
+                "description": "The YYYY-Qn this invoice lands in for aangifte generation (REQ-OSS-014).",
+                "example": "2026-Q2",
+                "title": "OSS Reporting Period"
+              }
+            },
+            "title": "OSS Context"
+          }
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EuVatRate",
+          "slug": "euvat-nl-standard-2024"
+        },
+        "countryCode": "NL",
+        "rateCategory": "standard",
+        "ratePercentage": 21.0,
+        "validFrom": "2024-01-01",
+        "validUntil": null,
+        "tedbSource": "TEDB-v3-2026-01-01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EuVatRate",
+          "slug": "euvat-nl-reduced1-2024"
+        },
+        "countryCode": "NL",
+        "rateCategory": "reduced1",
+        "ratePercentage": 9.0,
+        "validFrom": "2024-01-01",
+        "validUntil": null,
+        "tedbSource": "TEDB-v3-2026-01-01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EuVatRate",
+          "slug": "euvat-de-standard-2024"
+        },
+        "countryCode": "DE",
+        "rateCategory": "standard",
+        "ratePercentage": 19.0,
+        "validFrom": "2024-01-01",
+        "validUntil": null,
+        "tedbSource": "TEDB-v3-2026-01-01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EuVatRate",
+          "slug": "euvat-de-reduced1-2024"
+        },
+        "countryCode": "DE",
+        "rateCategory": "reduced1",
+        "ratePercentage": 7.0,
+        "validFrom": "2024-01-01",
+        "validUntil": null,
+        "tedbSource": "TEDB-v3-2026-01-01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EuVatRate",
+          "slug": "euvat-fr-standard-2024"
+        },
+        "countryCode": "FR",
+        "rateCategory": "standard",
+        "ratePercentage": 20.0,
+        "validFrom": "2024-01-01",
+        "validUntil": null,
+        "tedbSource": "TEDB-v3-2026-01-01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EuVatRate",
+          "slug": "euvat-fr-reduced1-2024"
+        },
+        "countryCode": "FR",
+        "rateCategory": "reduced1",
+        "ratePercentage": 10.0,
+        "validFrom": "2024-01-01",
+        "validUntil": null,
+        "tedbSource": "TEDB-v3-2026-01-01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EuVatRate",
+          "slug": "euvat-fr-reduced2-2024"
+        },
+        "countryCode": "FR",
+        "rateCategory": "reduced2",
+        "ratePercentage": 5.5,
+        "validFrom": "2024-01-01",
+        "validUntil": null,
+        "tedbSource": "TEDB-v3-2026-01-01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EuVatRate",
+          "slug": "euvat-it-standard-2024"
+        },
+        "countryCode": "IT",
+        "rateCategory": "standard",
+        "ratePercentage": 22.0,
+        "validFrom": "2024-01-01",
+        "validUntil": null,
+        "tedbSource": "TEDB-v3-2026-01-01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EuVatRate",
+          "slug": "euvat-it-reduced1-2024"
+        },
+        "countryCode": "IT",
+        "rateCategory": "reduced1",
+        "ratePercentage": 10.0,
+        "validFrom": "2024-01-01",
+        "validUntil": null,
+        "tedbSource": "TEDB-v3-2026-01-01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EuVatRate",
+          "slug": "euvat-es-standard-2024"
+        },
+        "countryCode": "ES",
+        "rateCategory": "standard",
+        "ratePercentage": 21.0,
+        "validFrom": "2024-01-01",
+        "validUntil": null,
+        "tedbSource": "TEDB-v3-2026-01-01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EuVatRate",
+          "slug": "euvat-es-reduced1-2024"
+        },
+        "countryCode": "ES",
+        "rateCategory": "reduced1",
+        "ratePercentage": 10.0,
+        "validFrom": "2024-01-01",
+        "validUntil": null,
+        "tedbSource": "TEDB-v3-2026-01-01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EuVatRate",
+          "slug": "euvat-be-standard-2024"
+        },
+        "countryCode": "BE",
+        "rateCategory": "standard",
+        "ratePercentage": 21.0,
+        "validFrom": "2024-01-01",
+        "validUntil": null,
+        "tedbSource": "TEDB-v3-2026-01-01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EuVatRate",
+          "slug": "euvat-ie-standard-2024"
+        },
+        "countryCode": "IE",
+        "rateCategory": "standard",
+        "ratePercentage": 23.0,
+        "validFrom": "2024-01-01",
+        "validUntil": null,
+        "tedbSource": "TEDB-v3-2026-01-01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "EuVatRate",
+          "slug": "euvat-ie-reduced1-2024"
+        },
+        "countryCode": "IE",
+        "rateCategory": "reduced1",
+        "ratePercentage": 9.0,
+        "validFrom": "2024-01-01",
+        "validUntil": null,
+        "tedbSource": "TEDB-v3-2026-01-01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "OssRegistration",
+          "slug": "ossreg-mkb-1"
+        },
+        "administrationId": "adm-mkb-1",
+        "ossIdentifier": "NL123456789B01",
+        "effectiveDate": "2026-07-01",
+        "homeMemberState": "NL",
+        "destinationCountries": [
+          "DE",
+          "FR",
+          "IT"
+        ],
+        "registrationStatus": "active",
+        "voluntaryBelowThreshold": false
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "OssRegistration",
+          "slug": "ossreg-zzp-1"
+        },
+        "administrationId": "adm-zzp-1",
+        "ossIdentifier": "NL987654321B01",
+        "effectiveDate": "2026-01-01",
+        "homeMemberState": "NL",
+        "destinationCountries": [
+          "BE",
+          "DE"
+        ],
+        "registrationStatus": "voluntaryBelowThreshold",
+        "voluntaryBelowThreshold": true,
+        "lockInPeriodEndDate": "2028-12-31"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "OssThresholdCounter",
+          "slug": "ossctr-zzp-2026"
+        },
+        "administrationId": "adm-zzp-1",
+        "calendarYear": 2026,
+        "totalB2cEuTurnover": 9200.0,
+        "byQuarter": {
+          "2026-Q1": 5400.0,
+          "2026-Q2": 3800.0
+        },
+        "byCountry": {
+          "DE": 6100.0,
+          "BE": 3100.0
+        },
+        "thresholdBreachedDate": null
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "OssReturn",
+          "slug": "ossret-2026q2-mkb-1"
+        },
+        "administrationId": "adm-mkb-1",
+        "periodYear": 2026,
+        "periodQuarter": "Q2",
+        "registrationId": "ossreg-mkb-1",
+        "type": "regular",
+        "status": "submitted",
+        "lineItems": [
+          {
+            "countryCode": "DE",
+            "rateCategory": "standard",
+            "taxableBase": 9484.21,
+            "vatRate": 19.0,
+            "vatAmount": 1802.0
+          },
+          {
+            "countryCode": "FR",
+            "rateCategory": "standard",
+            "taxableBase": 7200.0,
+            "vatRate": 20.0,
+            "vatAmount": 1440.0
+          },
+          {
+            "countryCode": "IT",
+            "rateCategory": "standard",
+            "taxableBase": 6773.55,
+            "vatRate": 22.0,
+            "vatAmount": 1490.18
+          }
+        ],
+        "totalTaxableBase": 23457.76,
+        "totalVatAmount": 4732.18,
+        "taxAuthorityReference": "OSS-2026Q2-NL123456789B01",
+        "perCountryDistribution": {
+          "DE": 1802.0,
+          "FR": 1440.0,
+          "IT": 1490.18
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "OssPayment",
+          "slug": "osspay-2026q2-mkb-1"
+        },
+        "administrationId": "adm-mkb-1",
+        "ossReturnId": "ossret-2026q2-mkb-1",
+        "paymentDate": "2026-07-28",
+        "bankTransactionId": null,
+        "amount": 4732.18,
+        "ibanFrom": "NL00BANK0123456789",
+        "ibanTo": "NL86INGB0002445588",
+        "perCountryDistribution": {
+          "DE": 1802.0,
+          "FR": 1440.0,
+          "IT": 1490.18
+        },
+        "reconciliationStatus": "reconciled"
+      }
+    ]
+  }
+}

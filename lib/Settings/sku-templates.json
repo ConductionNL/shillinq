@@ -1,0 +1,134 @@
+{
+	"_meta": {
+		"description": "Declarative SKU generation templates per inventory-barcode-sku design D2. Each template declares a pattern and a list of rules; SkuGenerator (lib/Service/SkuGenerator.php) interpolates product attributes into the pattern, applying per-field transformations (mapping, passthrough, hex_first_3_chars). Edits to this file take effect on the next SKU generation request — no code deploy required.",
+		"spec": "openspec/changes/inventory-barcode-sku/specs/inventory-barcode-sku/spec.md",
+		"req": "REQ-SKU-002"
+	},
+	"templates": [
+		{
+			"templateId": "RETAIL_APPAREL_TEMPLATE",
+			"name": "Retail apparel products",
+			"description": "SKU format: {category_code}-{manufacturer_abbrev}-{size}-{color_code} — e.g. Apparel/Nike/M/Black -> AP-NK-M-000.",
+			"pattern": "{category}-{manufacturer}-{size}-{color}",
+			"rules": [
+				{
+					"field": "category",
+					"type": "mapping",
+					"mapping": {
+						"Apparel": "AP",
+						"Footwear": "FW",
+						"Accessories": "AC"
+					}
+				},
+				{
+					"field": "manufacturer",
+					"type": "mapping",
+					"mapping": {
+						"Nike": "NK",
+						"Adidas": "AD",
+						"Puma": "PM",
+						"Levi's": "LV"
+					}
+				},
+				{
+					"field": "size",
+					"type": "passthrough"
+				},
+				{
+					"field": "color",
+					"type": "hex_first_3_chars",
+					"mapping": {
+						"Black": "000",
+						"White": "FFF",
+						"Red": "F00",
+						"Green": "0F0",
+						"Blue": "00F"
+					}
+				}
+			]
+		},
+		{
+			"templateId": "PET_FOOD_TEMPLATE",
+			"name": "Pet food products",
+			"description": "SKU format: {category_prefix}-{species_code}-{formula_type}-{size_code} — e.g. Dry Food/Cat/Senior/2kg -> DV-KAT-SENIOR-2KG.",
+			"pattern": "{category}-{species}-{formula}-{size}",
+			"rules": [
+				{
+					"field": "category",
+					"type": "mapping",
+					"mapping": {
+						"Dry Food": "DV",
+						"Wet Food": "WF",
+						"Treats": "TR"
+					}
+				},
+				{
+					"field": "species",
+					"type": "mapping",
+					"mapping": {
+						"Cat": "KAT",
+						"Dog": "HON",
+						"Rabbit": "KNJ"
+					}
+				},
+				{
+					"field": "formula",
+					"type": "mapping",
+					"mapping": {
+						"Senior": "SENIOR",
+						"Adult": "ADULT",
+						"Kitten": "KITTEN"
+					}
+				},
+				{
+					"field": "size",
+					"type": "mapping",
+					"mapping": {
+						"2kg": "2KG",
+						"5kg": "5KG",
+						"10kg": "10KG"
+					}
+				}
+			]
+		},
+		{
+			"templateId": "SUPPLEMENT_TEMPLATE",
+			"name": "Dietary supplements (EU)",
+			"description": "SKU format: {ingredient_code}-{dose}-{unit_abbrev}-{form_code} — e.g. Vitamin C/1000/mg/Capsule -> VIT-C-1000-MG-CAP.",
+			"pattern": "{ingredient}-{dose}-{unit}-{form}",
+			"rules": [
+				{
+					"field": "ingredient",
+					"type": "mapping",
+					"mapping": {
+						"Vitamin C": "VIT-C",
+						"Vitamin D": "VIT-D",
+						"Omega-3": "OMG3"
+					}
+				},
+				{
+					"field": "dose",
+					"type": "passthrough"
+				},
+				{
+					"field": "unit",
+					"type": "mapping",
+					"mapping": {
+						"mg": "MG",
+						"ug": "UG",
+						"IU": "IU"
+					}
+				},
+				{
+					"field": "form",
+					"type": "mapping",
+					"mapping": {
+						"Capsule": "CAP",
+						"Tablet": "TAB",
+						"Liquid": "LIQ"
+					}
+				}
+			]
+		}
+	]
+}

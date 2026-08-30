@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-sbr-xbrl-reporting
 
 **Status:** proposed
@@ -6,12 +10,18 @@
 **Depends on:** `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-general-ledger/spec.md` (T1 GL),
 `../add-shillinq-chart-of-accounts/specs/bookkeeping-chart-of-accounts/spec.md` (T2 chart mapping)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping sbr xbrl reporting in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: SBR/XBRL taxonomy pages not yet implemented
 
 
 ### REQ-SBR-001: SBR / XBRL reporting capability SHALL be declared as `XBRLTaxonomy` + `SBRDocumentType` + `XBRLMapping` registers
+
+The system SHALL satisfy this requirement: SBR / XBRL reporting capability SHALL be declared as `XBRLTaxonomy` + `SBRDocumentType` + `XBRLMapping` registers.
 
 Standard Business Reporting (SBR) and XBRL (eXtensible Business
 Reporting Language) compliance for Dutch financial institutions is
@@ -51,6 +61,8 @@ fields + aggregations) or config-driven.
 
 ### REQ-SBR-002: The `XBRLTaxonomy` schema SHALL declare official taxonomy versions
 
+The system SHALL satisfy this requirement: The `XBRLTaxonomy` schema SHALL declare official taxonomy versions.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `taxonomyId` | string | Yes | Unique identifier (e.g., `xbrl-gl-2026`) |
@@ -80,6 +92,8 @@ Schema.org annotation: `schema:Thing`.
   reference and prior-year filings.
 
 ### REQ-SBR-003: The `SBRDocumentType` schema SHALL declare filing types and rules
+
+The system SHALL satisfy this requirement: The `SBRDocumentType` schema SHALL declare filing types and rules.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -111,6 +125,8 @@ Schema.org annotation: `schema:Thing`.
   at `today = filingDeadline - 30 days`).
 
 ### REQ-SBR-004: The `XBRLMapping` schema SHALL map accounts to XBRL GL concepts
+
+The system SHALL satisfy this requirement: The `XBRLMapping` schema SHALL map accounts to XBRL GL concepts.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -182,6 +198,8 @@ required fields) but outbound submission is T4 scope.
 
 ### REQ-SBR-006: Pre-filing validation SHALL enforce GL completeness, mapping coverage, and mandatory fields
 
+The system SHALL satisfy this requirement: Pre-filing validation SHALL enforce GL completeness, mapping coverage, and mandatory fields.
+
 Before transitioning an SBR document to `validated`, the following
 checks MUST run as `x-openregister-aggregations` predicates:
 
@@ -232,6 +250,8 @@ lifecycle.
 
 ### REQ-SBR-007: XBRL mapping validation SHALL be pre-filing aggregation, not imperative
 
+The system SHALL satisfy this requirement: XBRL mapping validation SHALL be pre-filing aggregation, not imperative.
+
 Mapping validation is performed via aggregations that answer: "For
 this FiscalYear and XBRLTaxonomy version, is every GL account
 covered?" The aggregation MUST:
@@ -258,6 +278,8 @@ state.
 - **THEN** it MUST return an empty list (all accounts covered).
 
 ### REQ-SBR-008: Filing deadline notifications SHALL alert operators before regulatory deadline
+
+The system SHALL satisfy this requirement: Filing deadline notifications SHALL alert operators before regulatory deadline.
 
 For each `SBRDocumentType` where the entity's business type matches
 `applicableEntityTypes`, a notification MUST fire 30 days before

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-cashflow-13wk
 
 **Status:** proposed
@@ -9,12 +13,18 @@
 - `openconnector` PSD2 API (existing)
 - `pipelinq` CRM API (existing)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping cashflow 13wk in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: cashflow dashboard pages not yet implemented
 
 
 ### REQ-CF-000: Cashflow forecast horizon SHALL be a 13-week rolling window per IAS 7 + RJ 360
+
+The system SHALL satisfy this requirement: Cashflow forecast horizon SHALL be a 13-week rolling window per IAS 7 + RJ 360.
 
 The forecast is expressed as one `CashflowForecastHorizon` register per administration, containing 13 weekly slots (`CashflowWeek` records) covering the next 13 calendar weeks (91 days). The window rolls forward every Monday 02:00 UTC: week-1 is archived, week-13 is appended.
 
@@ -162,7 +172,15 @@ The `CashflowARProjection` register SHALL track one record per open AR invoice, 
 - M:1 with `ARInvoice` (read-only FK)
 - M:1 with `CashflowForecastHorizon`
 
+#### Scenario: AR projection records expected receipt date and confidence
+
+- **GIVEN** an open AR invoice with `vervalDatum: "2026-05-15"` and a customer betalingsgedrag offset of +13 days at confidence 0.75
+- **WHEN** a `CashflowARProjection` is created for the invoice
+- **THEN** the record SHALL store `verwachtOntvangstDatum: "2026-05-28"`, `verwachtOntvangstWeek: "2026-w22"` and `betrouwbaarheidScore: 0.75`
+
 ### REQ-CF-005: Recurring costs automatic scheduling with lifecycle + CPI indexing
+
+The system SHALL satisfy this requirement: Recurring costs automatic scheduling with lifecycle + CPI indexing.
 
 Recurring cost items (huur, verzekering, abonnementen, DGA-loon, pension) are defined once in a `CashflowRecurring` registry and auto-expanded into the 13-week horizon based on frequency, activation window, and optional annual indexing.
 
@@ -184,9 +202,18 @@ Recurring cost items (huur, verzekering, abonnementen, DGA-loon, pension) are de
 | `geldigTot` | date | No | Expiration date; null if indefinite. Horizon-roll ignores weeks after this |
 | `administrazioneId` | string (FK) | Yes | FK to Administration |
 | `accountNumberExpense` | string (FK) | No | GL account code for the recurring cost (used on settlement) |
+| `contractReference` | string (FK) | No | FK to `Contract` (`contract-lifecycle-management`); null means this recurring cost has no originating contract — a dated planned cost (`budget-known-costs` REQ-BKC-001). Added by the `budget-known-costs` delta, additive/optional. |
+| `cpiRatePercent` | number | No | Operator-supplied annual indexation rate (e.g. `2.5` for 2.5%), consumed when `indexatieRegel = CPI_AFGELOPEN_JAAR`; null means the rate is not yet known and CPI indexation cannot be computed until it is supplied (`budget-known-costs` REQ-BKC-003). Added by the `budget-known-costs` delta, additive/optional. |
 
 **Relations:**
 - M:1 with `Administration`
+
+`CashflowRecurringGuard::validateOnSave()` gains one additional precondition
+(`budget-known-costs` REQ-BKC-002): when `contractReference` is set and the
+referenced `Contract`'s `startDate`/`endDate` are known, `geldigVan`/
+`geldigTot` must fall within them. Every existing precondition (non-negative
+amount, frequency-anchor consistency, validity window ordering,
+CPI-applicable-to-annual-only) is unchanged.
 
 #### Scenario: Monthly rent recurring every 1st of month
 
@@ -203,7 +230,28 @@ Recurring cost items (huur, verzekering, abonnementen, DGA-loon, pension) are de
 - **THEN** projected amount SHALL be €620 × 1.032 = €639.84
 - **AND** amount for July 2024 shall remain €620 (no retroactive reindex)
 
+#### Scenario: A recurring cost tagged to a Contract must stay within that Contract's dates
+
+- **GIVEN** a `Contract` with `startDate: "2027-01-01"`, `endDate` null
+- **WHEN** a `CashflowRecurring` row with `contractReference` set to that
+  contract and `geldigVan: "2026-06-01"` is saved
+- **THEN** `CashflowRecurringGuard` rejects the save (`budget-known-costs`
+  REQ-BKC-002)
+
+#### Scenario: CPI indexation with no operator-supplied rate cannot be computed
+
+- **GIVEN** a `CashflowRecurring` row with `indexatieRegel:
+  "CPI_AFGELOPEN_JAAR"` and `cpiRatePercent` absent
+- **WHEN** a consumer (`budget-known-costs`'s `KnownCostScheduleExpander`)
+  attempts to compute an indexed amount for it
+- **THEN** it receives a typed "needs operator input" result, never a
+  fabricated percentage and never this requirement's own base scenario's
+  assumed live CBS-published figure, which this codebase has never
+  implemented (`budget-known-costs` REQ-BKC-003)
+
 ### REQ-CF-006: AP scheduling from open invoices + due-date projection
+
+The system SHALL satisfy this requirement: AP scheduling from open invoices + due-date projection.
 
 All open `APTransaction` (accounts-payable invoices) within the 13-week horizon are automatically scheduled based on `dueDate` or `paymentTerms`, grouped by week, and summed into `outflows_ap_geprognosticeerd` per `CashflowWeek`.
 

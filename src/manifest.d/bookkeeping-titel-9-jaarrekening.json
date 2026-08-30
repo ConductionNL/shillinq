@@ -3,12 +3,12 @@
 		{
 			"id": "Bookkeeping",
 			"label": "Bookkeeping",
-			"icon": "icon-category-organization",
+			"icon": "NotebookOutline",
 			"order": 20,
 			"children": [
 				{
 					"id": "Jaarrekening",
-					"label": "Jaarrekening",
+					"label": "Annual accounts",
 					"icon": "FileDocumentOutline",
 					"route": "Jaarrekening",
 					"order": 60
@@ -21,7 +21,7 @@
 			"id": "Jaarrekening",
 			"route": "/bookkeeping/jaarrekening",
 			"type": "index",
-			"title": "Jaarrekening",
+			"title": "Annual accounts",
 			"config": {
 				"register": "shillinq",
 				"schema": "AnnualReport",
@@ -32,13 +32,13 @@
 						"sortable": true
 					},
 					{
-						"key": "boekjaarEind",
-						"label": "Boekjaar",
+						"key": "financialYearEnd",
+						"label": "Financial year",
 						"sortable": true
 					},
 					{
-						"key": "groottecategorie",
-						"label": "Groottecategorie",
+						"key": "sizeCategory",
+						"label": "Size category",
 						"sortable": true
 					},
 					{
@@ -47,22 +47,22 @@
 						"sortable": true
 					},
 					{
-						"key": "opmaakDatum",
-						"label": "Opgemaakt",
+						"key": "layoutDate",
+						"label": "Prepared",
 						"sortable": true
 					},
 					{
-						"key": "vaststellingDatum",
-						"label": "Vastgesteld",
+						"key": "determinationDate",
+						"label": "Adopted",
 						"sortable": true
 					},
 					{
-						"key": "depositeringDatum",
-						"label": "Gedeponeerd",
+						"key": "depositDate",
+						"label": "Filed",
 						"sortable": true
 					}
 				],
-				"defaultSort": "boekjaarEind",
+				"defaultSort": "financialYearEnd",
 				"detailRoute": "JaarrekeningDetail"
 			}
 		},
@@ -70,10 +70,11 @@
 			"id": "JaarrekeningDetail",
 			"route": "/bookkeeping/jaarrekening/:id",
 			"type": "detail",
-			"title": "Jaarrekening",
+			"title": "Annual accounts",
 			"config": {
 				"register": "shillinq",
 				"schema": "AnnualReport",
+				"_note": "REPORT/DOCUMENT archetype — the Titel-9 jaarrekening is a statutory annual report assembled from a balance sheet, income statement, cash-flow statement and disclosure notes. Native shillinq detail contract: config.fields[] render the report header (administration, boekjaar window, size category, reporting basis, currency, status, the three preparation/adoption/filing dates and the auditor/cashflow/management-report requirement flags); config.relatedCollections[] show the disclosure notes (Note, FK reportId=@objectId) so a preparer sees disclosure completeness. KEY+TOKEN: the prop is `relatedCollections` (a `relatedLists` block lands in $attrs and renders nothing), and the token is `@objectId`, NOT `@self.id` — `@self.id` is not a token resolveFilterTokens.js knows, so it never resolved. AnnualReport's payload carries no flat report-key field, so Note.reportId holds the report's UUID; the sidebar carries a file-references tab for the filed/deposited document and an audit-trail tab for the immutable prepare→adopt→file history. NO comms — the jaarrekening is a formal filing, not correspondence; no money aggregation of its own (totals live on the constituent statements).",
 				"fields": [
 					{
 						"key": "administrationId",
@@ -81,28 +82,28 @@
 						"type": "string"
 					},
 					{
-						"key": "boekjaarStart",
-						"label": "Boekjaar start",
+						"key": "financialYearStart",
+						"label": "Financial year start",
 						"type": "string"
 					},
 					{
-						"key": "boekjaarEind",
-						"label": "Boekjaar eind",
+						"key": "financialYearEnd",
+						"label": "Financial year end",
 						"type": "string"
 					},
 					{
-						"key": "groottecategorie",
-						"label": "Groottecategorie",
+						"key": "sizeCategory",
+						"label": "Size category",
 						"type": "string"
 					},
 					{
-						"key": "rapportageGrondslag",
-						"label": "Rapportagegrondslag",
+						"key": "rapportageBasis",
+						"label": "Reporting basis",
 						"type": "string"
 					},
 					{
-						"key": "valuta",
-						"label": "Valuta",
+						"key": "currency",
+						"label": "Currency",
 						"type": "string"
 					},
 					{
@@ -111,41 +112,60 @@
 						"type": "string"
 					},
 					{
-						"key": "opmaakDatum",
-						"label": "Opmaakdatum",
+						"key": "layoutDate",
+						"label": "Preparation date",
 						"type": "string"
 					},
 					{
-						"key": "vaststellingDatum",
-						"label": "Vaststellingsdatum",
+						"key": "determinationDate",
+						"label": "Adoption date",
 						"type": "string"
 					},
 					{
-						"key": "depositeringDatum",
-						"label": "Deponeringsdatum",
+						"key": "depositDate",
+						"label": "Filing date",
 						"type": "string"
 					},
 					{
-						"key": "accountantsverklaringVereist",
-						"label": "Accountantsverklaring vereist",
+						"key": "auditorsStatementRequired",
+						"label": "Auditor's report required",
 						"type": "boolean"
 					},
 					{
 						"key": "accountantsverklaringStatus",
-						"label": "Accountantsverklaring",
+						"label": "Auditor's report",
 						"type": "string"
 					},
 					{
-						"key": "kasstroomoverzichtVereist",
-						"label": "Kasstroomoverzicht vereist",
+						"key": "cashFlowStatementRequired",
+						"label": "Cash flow statement required",
 						"type": "boolean"
 					},
 					{
-						"key": "bestuursverslagVereist",
-						"label": "Bestuursverslag vereist",
+						"key": "boardReportRequired",
+						"label": "Management report required",
 						"type": "boolean"
 					}
 				],
+				"relatedCollections": [
+					{"title": "Disclosure notes", "register": "shillinq", "schema": "Note", "filter": {"reportId": "@objectId"}, "columns": [
+						{"key": "code", "label": "Code"},
+						{"key": "title", "label": "Title"},
+						{"key": "statutoryBasis", "label": "Legal basis"},
+						{"key": "verplicht", "label": "Mandatory"}
+					]}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Filed documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "AnnualReport", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
 				"indexRoute": "Jaarrekening"
 			}
 		},
@@ -153,22 +173,31 @@
 			"id": "ReviewWorkflowDetail",
 			"route": "/bookkeeping/jaarrekening/review/:id",
 			"type": "detail",
-			"title": "Reviewworkflow",
+			"title": "Review workflow",
 			"config": {
 				"register": "shillinq",
 				"schema": "ReviewWorkflow",
+				"_note": "CASE/WORKFLOW archetype — a review workflow tracks the sign-off route of one annual-accounts document through its approval steps. Native shillinq detail contract: config.fields[] render the current step and step-route data back to the annual report under review (reportId); the sidebar carries an audit-trail tab — the overdrachtenLog (hand-over log) is the immutable trail of who advanced the review. NO comms/files/aggregation — the workflow is process state; supporting documents live on the annual report itself.",
 				"fields": [
 					{
 						"key": "reportId",
-						"label": "Jaarrekening",
+						"label": "Annual accounts",
 						"type": "string"
 					},
 					{
-						"key": "huidigStap",
-						"label": "Huidige stap",
+						"key": "currentStap",
+						"label": "Current step",
 						"type": "string"
 					}
 				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
 				"indexRoute": "Jaarrekening"
 			}
 		}

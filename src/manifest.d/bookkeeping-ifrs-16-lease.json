@@ -1,0 +1,164 @@
+{
+	"menu": [
+		{
+			"id": "Ifrs16Leases",
+			"label": "IFRS 16 Leases",
+			"icon": "FileSign",
+			"order": 80,
+			"children": [
+				{
+					"id": "LeaseRegister",
+					"label": "Lease Register",
+					"icon": "DatabaseOutline",
+					"route": "LeaseRegister",
+					"order": 10
+				},
+				{
+					"id": "LeaseReassessmentEvents",
+					"label": "Reassessment Events",
+					"icon": "FileDocumentEditOutline",
+					"route": "LeaseReassessmentEvents",
+					"order": 20
+				},
+				{
+					"id": "LeaseDisclosures",
+					"label": "Annual Disclosures",
+					"icon": "TableLarge",
+					"route": "LeaseDisclosures",
+					"order": 30
+				},
+				{
+					"id": "LeaseExemptions",
+					"label": "Exemption Policy",
+					"icon": "ShieldCheckOutline",
+					"route": "LeaseExemptions",
+					"order": 40
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "LeaseRegister",
+			"route": "/ifrs-16/leases",
+			"type": "index",
+			"title": "Lease Register",
+			"config": {
+				"register": "shillinq",
+				"schema": "LeaseContract",
+				"columns": [
+					{ "key": "leaseNumber", "label": "Lease Number", "sortable": true },
+					{ "key": "description", "label": "Description", "sortable": false },
+					{ "key": "assetClass", "label": "Asset Class", "sortable": true },
+					{ "key": "commencementDate", "label": "Lease Commencement", "sortable": true },
+					{ "key": "ibrPercent", "label": "Incremental Borrowing Rate", "sortable": true },
+					{ "key": "classification", "label": "Classification", "sortable": true },
+					{ "key": "status", "label": "State", "sortable": true }
+				],
+				"defaultSort": "leaseNumber",
+				"detailRoute": "LeaseDetail"
+			}
+		},
+		{
+			"id": "LeaseDetail",
+			"route": "/ifrs-16/leases/:id",
+			"type": "detail",
+			"title": "Lease Contract",
+			"config": {
+				"register": "shillinq",
+				"schema": "LeaseContract",
+				"_note": "FINANCIAL / LEASE-CONTRACT (master) archetype — native CnDetailPage. An IFRS 16 lease contract capitalises a right-of-use asset and a lease liability; the contract fields (lessor, term, payment, IBR, classification, status) are the primary record. Two related child schemas hang off leaseContract FK: the amortisation schedule (LeasePaymentSchedule, one row per period — opening/closing liability, interest, principal, depreciation) and reassessment/modification events (LeaseReassessmentEvent — remeasurements, IBR resets, terminations). Both child lists are currently ABSENT from this page — see _relatedListsExclude below: they were declared under the dead `relatedLists` key and their FK value (`@self.slug`) cannot be produced by any filter token, so they were removed rather than converted into sections that render empty but look fixed. The signed lease contract PDF (plus amortisation workpapers) is a real source document, so a Documents sidebar tab (openregister-file-references) is present. lifecycleActions surface the draft→active→modified→terminated/expired state machine (x-openregister-lifecycle on LeaseContract, REQ-LC-004); auditTrail records classification/remeasurement changes. NO comms leaves — a lease is an accounting instrument, not a conversation.",
+				"lifecycleActions": true,
+				"auditTrail": true,
+				"_relatedListsExclude": "'Amortisation Schedule' and 'Reassessment Events' NOT converted — removed rather than faked, because the linking value is unreachable from any filter token. Both were declared under `relatedLists`, which is not a prop on any Cn page component (it lands in $attrs and renders nothing), so neither has ever rendered. Converting the key alone would not fix them: OCA\\Shillinq\\Listener\\LeaseActivationListener::resolveLeaseId() PREFERS `@self.slug` and only falls back to `@self.id`, so LeasePaymentSchedule.leaseContract holds the lease's SLUG whenever one exists (schema example 'lease-vh-2024-001' confirms the slug shape). `@object.<field>` reads FLAT payload fields only and cannot reach `@self.slug`; LeaseContract exposes no flat slug/lease-key field (`leaseNumber` is a different value); and `@objectId` yields the UUID, which resolveLeaseId only writes when the slug is empty. Picking either token would render an empty section that LOOKS fixed. Restoring these needs resolveLeaseId() to write a stable identifier the parent also exposes flat (or a `@self.slug` token in nextcloud-vue) — see the relatedLists sweep report.",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "documents",
+							"label": "Documents",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "LeaseContract", "objectId": ":id" } }
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				},
+				"fields": [
+					{ "key": "leaseNumber", "label": "Lease Number", "type": "string" },
+					{ "key": "counterparty", "label": "Lessor", "type": "string" },
+					{ "key": "description", "label": "Description", "type": "string" },
+					{ "key": "assetClass", "label": "Asset Class", "type": "string" },
+					{ "key": "commencementDate", "label": "Lease Commencement", "type": "string" },
+					{ "key": "endDate", "label": "End Date", "type": "string" },
+					{ "key": "nonCancellableTermMonths", "label": "Lease Term", "type": "number" },
+					{ "key": "paymentFrequency", "label": "Payment Schedule", "type": "string" },
+					{ "key": "basePaymentAmount", "label": "Payment Amount", "type": "number" },
+					{ "key": "ibrPercent", "label": "Incremental Borrowing Rate", "type": "number" },
+					{ "key": "classification", "label": "Classification", "type": "string" },
+					{ "key": "status", "label": "State", "type": "string" }
+				]
+			}
+		},
+		{
+			"id": "LeaseReassessmentEvents",
+			"route": "/ifrs-16/reassessment-events",
+			"type": "index",
+			"title": "Reassessment Events",
+			"config": {
+				"register": "shillinq",
+				"schema": "LeaseReassessmentEvent",
+				"columns": [
+					{ "key": "reassessmentNumber", "label": "Reassessment Event", "sortable": true },
+					{ "key": "eventType", "label": "Event Type", "sortable": true },
+					{ "key": "leaseContract", "label": "Lease Number", "sortable": true },
+					{ "key": "eventDate", "label": "Event Date", "sortable": true },
+					{ "key": "rouAssetAdjustment", "label": "RoU Impact", "sortable": true },
+					{ "key": "approvalStatus", "label": "Approval", "sortable": true }
+				],
+				"defaultSort": "eventDate"
+			}
+		},
+		{
+			"id": "LeaseDisclosures",
+			"route": "/ifrs-16/disclosures",
+			"type": "index",
+			"title": "IFRS 16 Disclosure",
+			"config": {
+				"register": "shillinq",
+				"schema": "LeaseDisclosureTable",
+				"columns": [
+					{ "key": "fiscalPeriod", "label": "Period", "sortable": true },
+					{ "key": "totalLeaseLiabilityCurrent", "label": "Lease Liability", "sortable": true },
+					{ "key": "totalRouDepreciationInPeriod", "label": "Depreciation", "sortable": true },
+					{ "key": "totalInterestExpense", "label": "Interest Accrued", "sortable": true }
+				],
+				"defaultSort": "fiscalPeriod"
+			}
+		},
+		{
+			"id": "LeaseExemptions",
+			"route": "/ifrs-16/exemptions",
+			"type": "index",
+			"title": "Exemption",
+			"config": {
+				"register": "shillinq",
+				"schema": "LeasePortfolioExemption",
+				"columns": [
+					{ "key": "policyEffectiveDate", "label": "Effective Date", "sortable": true },
+					{ "key": "lowValueThreshold", "label": "Low-Value Lease", "sortable": true }
+				],
+				"defaultSort": "policyEffectiveDate"
+			}
+		}
+	]
+}

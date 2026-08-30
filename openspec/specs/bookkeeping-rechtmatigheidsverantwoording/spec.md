@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Specification: Rechtmatigheidsverantwoording
 
 **Status:** proposed  
@@ -7,7 +11,7 @@
 
 ---
 
-## Overview
+## Purpose
 
 Rechtmatigheidsverantwoording (BBV artikel 17a, mandatory since 2023) declares that all financial transactions of a decentrale overheid have been processed legitimately. This spec defines:
 
@@ -19,10 +23,13 @@ Rechtmatigheidsverantwoording (BBV artikel 17a, mandatory since 2023) declares t
 
 ---
 
-## REQ-RV-001: Automatic Lightweight Toetsing on Journaalpost Creation
-
 @e2e exclude unbuilt UI: rechtmatigheidsverantwoording pages not yet implemented
 
+## Requirements
+
+### Requirement: REQ-RV-001 Automatic Lightweight Toetsing on Journaalpost Creation
+
+The system MUST subject every journaalpost to an automatic minimum set of legitimacy checks on creation.
 
 Iedere journaalpost moet bij creatie automatisch worden onderworpen aan een minimumset van geautomatiseerde toetsen (begroting, calculatie, valutering, adressering, volledigheid) zodat handmatige werklast beperkt blijft tot de materiële criteria.
 
@@ -53,7 +60,9 @@ Iedere journaalpost moet bij creatie automatisch worden onderworpen aan een mini
 
 ---
 
-## REQ-RV-002: Manual Material Criteria with Evidence Attachment
+### Requirement: REQ-RV-002 Manual Material Criteria with Evidence Attachment
+
+The system MUST allow the material criteria to be assessed manually with supporting evidence attachments.
 
 De criteria Europees aanbesteden, staatssteun, voorwaarden en M&O moeten handmatig of via gerichte workflow-koppeling getoetst kunnen worden, met onderbouwing en bewijsstukken.
 
@@ -82,7 +91,9 @@ De criteria Europees aanbesteden, staatssteun, voorwaarden en M&O moeten handmat
 
 ---
 
-## REQ-RV-003: Tolerantiegrens Configuration per Fiscal Year
+### Requirement: REQ-RV-003 Tolerantiegrens Configuration per Fiscal Year
+
+The system MUST allow tolerance thresholds to be configured per fiscal year by council decision.
 
 Toleranties moeten per boekjaar vastgelegd worden bij raadsbesluit; default is wettelijk 3% fout / 1% onzekerheid maar de raad mag scherper stellen.
 
@@ -102,7 +113,9 @@ Toleranties moeten per boekjaar vastgelegd worden bij raadsbesluit; default is w
 
 ---
 
-## REQ-RV-004: Audit Trail per Toets en Bevinding
+### Requirement: REQ-RV-004 Audit Trail per Toets en Bevinding
+
+The system MUST record every check, status transition and finding change immutably in the audit trail.
 
 Elke toets, statusovergang en wijziging aan een bevinding moet onveranderlijk worden vastgelegd via OpenRegister audit log, conform BADO-eisen voor toetsbare verantwoording.
 
@@ -127,7 +140,9 @@ Elke toets, statusovergang en wijziging aan een bevinding moet onveranderlijk wo
 
 ---
 
-## REQ-RV-005: Aggregation Against Tolerances and Rollup to Rechtmatigheidsparagraaf
+### Requirement: REQ-RV-005 Aggregation Against Tolerances and Rollup to Rechtmatigheidsparagraaf
+
+The system MUST aggregate all findings against tolerances into a single rechtmatigheidsparagraaf at year-end close.
 
 Bij afsluiting van het boekjaar moet shillinq alle openstaande bevindingen aggregeren tot één `rechtmatigheidsparagraaf` met de wettelijke verklaring.
 
@@ -168,7 +183,9 @@ HAVING totaal_geconstateerde_fouten <= tolerantiegrens_fout_bedrag
 
 ---
 
-## REQ-RV-006: Jaarrekening Export (BBV-conform)
+### Requirement: REQ-RV-006 Jaarrekening Export (BBV-conform)
+
+The system MUST export the rechtmatigheidsparagraaf as part of the annual accounts in BBV-conform format.
 
 De rechtmatigheidsparagraaf moet als bestanddeel van de jaarrekening worden geëxporteerd in BBV-conform formaat (XBRL IV3 + PDF bijlage).
 
@@ -191,7 +208,9 @@ De rechtmatigheidsparagraaf moet als bestanddeel van de jaarrekening worden geë
 
 ---
 
-## REQ-RV-007: Drempelbedragen en Clustering-detectie voor Europees Aanbesteden
+### Requirement: REQ-RV-007 Drempelbedragen en Clustering-detectie voor Europees Aanbesteden
+
+The system MUST know the current EU procurement thresholds and MUST detect supplier invoice clustering.
 
 Het systeem moet de actuele Europese drempelbedragen kennen en factuurclustering per leverancier signaleren.
 
@@ -221,7 +240,9 @@ Geen verdere factuurverwerking zonder toets-afronding.
 
 ---
 
-## REQ-RV-008: Workflow Integration with Procurement and Obligations
+### Requirement: REQ-RV-008 Workflow Integration with Procurement and Obligations
+
+The system MUST integrate legitimacy checks into the procurement and obligation workflow as early as possible.
 
 Rechtmatigheidstoetsing moet zo vroeg mogelijk in het inkoopproces plaatsvinden, idealiter bij de verplichting (PO) zodat de factuur slechts een afronding is.
 
@@ -239,7 +260,9 @@ Rechtmatigheidstoetsing moet zo vroeg mogelijk in het inkoopproces plaatsvinden,
 
 ---
 
-## REQ-RV-009: Rapportage en Dashboards per Programma en Portefeuille
+### Requirement: REQ-RV-009 Rapportage en Dashboards per Programma en Portefeuille
+
+The system MUST provide reporting and dashboards of the current legitimacy position per programme and portfolio.
 
 Het college, de raad en de auditcommissie moeten op elk moment inzicht hebben in de actuele rechtmatigheidspositie.
 
@@ -266,7 +289,9 @@ Het college, de raad en de auditcommissie moeten op elk moment inzicht hebben in
 
 ---
 
-## REQ-RV-010: Correctieboeking Linking and Bevinding Resolution
+### Requirement: REQ-RV-010 Correctieboeking Linking and Bevinding Resolution
+
+The system MUST keep the original check and finding auditable when a correction entry resolves an error.
 
 Wanneer een fout wordt opgelost via een correctieboeking moet de oorspronkelijke toets en bevinding toetsbaar blijven.
 

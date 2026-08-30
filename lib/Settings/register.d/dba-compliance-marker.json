@@ -1,0 +1,1438 @@
+{
+  "info": {
+    "version": "0.1.0-dba-compliance-marker"
+  },
+  "objects": [
+    {
+      "@self": {
+        "schema": "DBAModelovereenkomst",
+        "slug": "modov-bd-2024-tussenkomstvrij-v3"
+      },
+      "name": "Tussenkomstvrij - algemeen (Belastingdienst v3 - 2024)",
+      "source": "TAXAUTHORITY_APPROVED",
+      "publicationURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/tussenkomstvrij",
+      "approvalDate": "2024-04-12",
+      "validTo": "2029-04-12",
+      "version": "v3-2024",
+      "currentVersion": true,
+      "essentieleBepalingen": [
+        {
+          "id": "EB-01",
+          "text": "Opdrachtnemer is vrij in tijd, plaats en wijze van uitvoering.",
+          "mandatory": true
+        },
+        {
+          "id": "EB-02",
+          "text": "Opdrachtnemer mag zich laten vervangen zonder toestemming opdrachtgever.",
+          "mandatory": true
+        },
+        {
+          "id": "EB-03",
+          "text": "Opdrachtnemer factureert per opdracht, geen vaste maandelijkse vergoeding.",
+          "mandatory": true
+        },
+        {
+          "id": "EB-04",
+          "text": "Opdrachtnemer draagt eigen ondernemersrisico (geen doorbetaling bij ziekte/vakantie).",
+          "mandatory": true
+        }
+      ]
+    },
+    {
+      "@self": {
+        "schema": "DBAModelovereenkomst",
+        "slug": "modov-bd-2023-leverancier-zelfstandig-v2"
+      },
+      "name": "Leverancier-zelfstandig (Belastingdienst v2 - 2023)",
+      "source": "TAXAUTHORITY_APPROVED",
+      "publicationURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/leverancier-zelfstandig",
+      "approvalDate": "2023-06-01",
+      "validTo": "2028-06-01",
+      "version": "v2-2023",
+      "currentVersion": true,
+      "essentieleBepalingen": [
+        {
+          "id": "EB-01",
+          "text": "Opdrachtnemer levert een specifiek werk of dienst tegen overeengekomen prijs.",
+          "mandatory": true
+        },
+        {
+          "id": "EB-02",
+          "text": "Opdrachtnemer factureert per geleverd werk of mijlpaal.",
+          "mandatory": true
+        },
+        {
+          "id": "EB-03",
+          "text": "Geen verplichting tot persoonlijke uitvoering door specifieke persoon.",
+          "mandatory": true
+        }
+      ]
+    },
+    {
+      "@self": {
+        "schema": "DBAModelovereenkomst",
+        "slug": "modov-bd-2024-tussenkomst-v1"
+      },
+      "name": "Tussenkomst (Belastingdienst v1 - 2024)",
+      "source": "TAXAUTHORITY_APPROVED",
+      "publicationURL": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/tussenkomst",
+      "approvalDate": "2024-02-15",
+      "validTo": "2029-02-15",
+      "version": "v1-2024",
+      "currentVersion": true,
+      "essentieleBepalingen": [
+        {
+          "id": "EB-01",
+          "text": "Drie-partijen-constructie: ZZP - intermediair - eindklant.",
+          "mandatory": true
+        },
+        {
+          "id": "EB-02",
+          "text": "Intermediair heeft alleen administratieve rol; geen werkgeversgezag.",
+          "mandatory": true
+        },
+        {
+          "id": "EB-03",
+          "text": "Opdrachtnemer factureert intermediair per opdracht; intermediair factureert eindklant.",
+          "mandatory": true
+        },
+        {
+          "id": "EB-04",
+          "text": "Waadi- en Wka-bepalingen zijn opgenomen.",
+          "mandatory": true
+        }
+      ]
+    }
+  ],
+  "components": {
+    "schemas": {
+      "DBAOpdracht": {
+        "slug": "DBAOpdracht",
+        "icon": "BriefcaseAccountOutline",
+        "version": "0.1.0",
+        "title": "DBA opdracht",
+        "description": "Per-opdracht engagement registratie voor Wet DBA-compliance (REQ-DBA-001). Bevat ondernemingId + klantId, intake-status, gekozen modelovereenkomst, lopende risico-score (0-100) en risico-band (LAAG/LAAG_MIDDEN/MIDDEN_HOOG/HOOG), open-flags-count en evidence-dossier-ref. De lifecycle gaat van DRAFT -> INTAKE_VEREIST -> INTAKE_VOLTOOID -> ACTIEF -> BEEINDIGD. Save-precondition DBAOpdrachtGuard valideert dat een actieve opdracht een voltooide intake heeft (ADR-031 uitzondering).",
+        "x-schema-org": "schema:Project",
+        "x-openregister-purpose": "transaction",
+        "x-spec": "openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "enterpriseId",
+          "customerId",
+          "assignmentName",
+          "startDate",
+          "intakeStatus",
+          "riskLevel"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK naar de Administration voor tenant-isolatie en IDOR-veilige scoping.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "enterpriseId": {
+            "type": "string",
+            "description": "FK naar de onderneming (ZZP/eenmanszaak/MKB) die deze opdracht uitvoert of inhuurt.",
+            "example": "ond-nl-001234",
+            "title": "Onderneming ID"
+          },
+          "customerId": {
+            "type": "string",
+            "description": "FK naar de klant (Nextcloud contact via ContactSyncService) voor wie de opdracht wordt uitgevoerd.",
+            "example": "klant-acme-bv",
+            "title": "Klant ID"
+          },
+          "assignmentName": {
+            "type": "string",
+            "description": "Vrije naam van de opdracht/engagement (REQ-DBA-001).",
+            "example": "Backend ontwikkeling betaalmodule",
+            "title": "Opdracht Naam"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Startdatum van de opdracht.",
+            "example": "2026-03-01",
+            "title": "Start Datum"
+          },
+          "expectedEndDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Verwachte einddatum (kan null zijn voor doorlopende relaties).",
+            "example": "2026-09-30",
+            "title": "Verwachte Eind Datum"
+          },
+          "actualEndDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Feitelijke einddatum; gevuld bij beeindiging-procedure (REQ-DBA-018).",
+            "example": null,
+            "title": "Feitelijke Eind Datum"
+          },
+          "expectedRevenue": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Verwachte totaalomzet in eurocenten (ADR-money: integer-cent).",
+            "example": 4800000,
+            "title": "Verwachte Omzet"
+          },
+          "realisedRevenue": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Tot dusver gerealiseerde omzet in eurocenten (gevoed door AP/AR factuurfrequentie-hook, REQ-DBA-004).",
+            "default": 0,
+            "example": 1820000,
+            "title": "Gerealiseerde Omzet"
+          },
+          "oneOffLowThreshold": {
+            "type": "boolean",
+            "description": "Gemarkeerd als 'eenmalig, totaal < 5000 EUR': verkorte intake (3 vragen) wordt aangeboden (REQ-DBA-001).",
+            "default": false,
+            "example": false,
+            "title": "Eenmalig Lage Drempel"
+          },
+          "modelAgreementId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK naar DBAModelovereenkomst die op deze opdracht van toepassing is (REQ-DBA-002).",
+            "example": "modov-bd-2024-tussenkomstvrij-v3",
+            "title": "Model Overeenkomst ID",
+            "$ref": "DBAModelovereenkomst"
+          },
+          "intakeStatus": {
+            "type": "string",
+            "description": "Status van de DBA-intake voor deze opdracht.",
+            "enum": [
+              "DRAFT",
+              "INTAKE_REQUIRED",
+              "INTAKE_COMPLETED",
+              "ACTIVE",
+              "ENDED"
+            ],
+            "default": "DRAFT",
+            "example": "INTAKE_COMPLETED",
+            "title": "Intake Status"
+          },
+          "intakeDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Datum waarop de DBA-intake is afgerond.",
+            "example": "2026-02-22",
+            "title": "Intake Datum"
+          },
+          "actueleRisicoscore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "nullable": true,
+            "description": "Lopende DBA-risicoscore (0-100) per REQ-DBA-003.",
+            "example": 34,
+            "title": "Actuele Risicoscore"
+          },
+          "riskLevel": {
+            "type": "string",
+            "description": "Risico-band afgeleid van actueleRisicoscore per REQ-DBA-003.",
+            "enum": [
+              "LOW",
+              "LOW_MIDDEN",
+              "MIDDEN_HIGH",
+              "HIGH",
+              "ABBREVIATED_LOW_THRESHOLD"
+            ],
+            "default": "LOW",
+            "example": "LOW_MIDDEN",
+            "title": "Risico Niveau"
+          },
+          "openFlags": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Aantal open DBARisicoflag-records voor deze opdracht (REQ-DBA-004).",
+            "default": 0,
+            "example": 2,
+            "title": "Open Flags"
+          },
+          "evidenceDossierId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK naar het DBAEvidenceDossier voor deze opdracht (REQ-DBA-007).",
+            "example": "evid-dba-opdr-2026-0042",
+            "title": "Evidence Dossier ID",
+            "$ref": "DBAEvidenceDossier"
+          },
+          "wbaAssessmentResult": {
+            "type": "string",
+            "nullable": true,
+            "description": "Geuploade Belastingdienst-WBA-beoordeling (indicatie binnen/buiten dienstbetrekking) per REQ-DBA-013.",
+            "enum": [
+              "OUTSIDE_EMPLOYMENT",
+              "WITHIN_EMPLOYMENT",
+              "NONE_OPINION",
+              "NON_FROM_APPLICATION"
+            ],
+            "example": "OUTSIDE_EMPLOYMENT",
+            "title": "Wba Beoordeling Resultaat"
+          },
+          "wbaValidTo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Geldigheidsdatum van de WBA-beoordeling (1 jaar volgens WBA-policy).",
+            "example": "2027-02-22",
+            "title": "Wba Geldig Tot"
+          },
+          "intermediaryMode": {
+            "type": "boolean",
+            "description": "Indien true: tussenkomst-driehoek modelleren (ZZP-intermediair + intermediair-eindklant), REQ-DBA-017.",
+            "default": false,
+            "example": false,
+            "title": "Intermediair Mode"
+          },
+          "perspective": {
+            "type": "string",
+            "description": "ZZP-perspectief (opdrachtnemer) of opdrachtgever-perspectief (inhuur-flow), REQ-DBA-010.",
+            "enum": [
+              "CONTRACTOR",
+              "CLIENT"
+            ],
+            "default": "CONTRACTOR",
+            "example": "CONTRACTOR",
+            "title": "Perspectief"
+          },
+          "retentionDeadline": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Datum waarna evidence-dossier verwijderbaar is (7 jaar na feitelijkeEindDatum per AWR art. 52, REQ-DBA-018).",
+            "example": "2033-09-30",
+            "title": "Retentie Deadline"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "intakeStatus",
+          "initialState": "DRAFT",
+          "states": {
+            "DRAFT": {
+              "label": "Concept",
+              "description": "Opdracht aangemaakt, intake nog niet vereist (geen factuur opgesteld)."
+            },
+            "INTAKE_REQUIRED": {
+              "label": "Intake vereist",
+              "description": "Eerste factuur staat op stapel; DBA-intake moet eerst worden voltooid (REQ-DBA-001)."
+            },
+            "INTAKE_COMPLETED": {
+              "label": "Intake voltooid",
+              "description": "DBA-intake is afgerond; opdracht is gereed om actief te starten."
+            },
+            "ACTIVE": {
+              "label": "Actief",
+              "description": "Opdracht loopt; periodieke monitoring (REQ-DBA-004/005/006) is actief."
+            },
+            "ENDED": {
+              "label": "Beeindigd",
+              "description": "Opdracht is afgesloten; evidence-trail gesloten en retentie-klok loopt (REQ-DBA-018)."
+            }
+          },
+          "transitions": {
+            "DRAFT": [
+              "INTAKE_REQUIRED",
+              "ENDED"
+            ],
+            "INTAKE_REQUIRED": [
+              "INTAKE_COMPLETED",
+              "DRAFT",
+              "ENDED"
+            ],
+            "INTAKE_COMPLETED": [
+              "ACTIVE",
+              "ENDED"
+            ],
+            "ACTIVE": [
+              "ENDED"
+            ],
+            "ENDED": []
+          },
+          "preconditions": {
+            "save": "OCA\\Shillinq\\Guard\\DBAOpdrachtGuard::validateOnSave"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "ondernemer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "boekhouder": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "compliance_officer": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "controleur": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "countByRisicoNiveau": {
+            "field": "riskLevel",
+            "metric": "count",
+            "description": "Aantal opdrachten per risico-niveau (LAAG/LAAG_MIDDEN/MIDDEN_HOOG/HOOG/VERKORT_LAGE_DREMPEL).",
+            "groupBy": ["riskLevel"]
+          },
+          "omzetPerKlant": {
+            "field": "realisedRevenue",
+            "metric": "sum",
+            "description": "Totale gerealiseerde omzet per klant (eurocenten); voedt concentratie-aggregatie REQ-DBA-005.",
+            "groupBy": ["customerId"]
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a DBA opdracht is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "DBAIntake": {
+        "slug": "DBAIntake",
+        "icon": "ClipboardListOutline",
+        "version": "0.1.0",
+        "title": "DBA intake",
+        "description": "Per-opdracht vragenlijst-antwoorden voor de drie Wet DBA-pijlers (gezagsverhouding, persoonlijke arbeid, financieel risico) plus Deliveroo-arrest criteria (HR 24-3-2023). Totaalscore 0-100 berekend via x-openregister-calculations of de ADR-031 exception DBAScoreCalculator (REQ-DBA-003).",
+        "x-schema-org": "schema:Questionnaire",
+        "x-openregister-purpose": "transaction",
+        "x-spec": "openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "assignmentId",
+          "filledOn",
+          "filledBy"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK naar de Administration voor tenant-isolatie en IDOR-veilige scoping.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "assignmentId": {
+            "type": "string",
+            "description": "FK naar de DBAOpdracht waarvoor deze intake is ingevuld.",
+            "example": "dba-opdr-2026-0042",
+            "title": "Opdracht ID"
+          },
+          "filledOn": {
+            "type": "string",
+            "format": "date",
+            "description": "Datum waarop de intake is ingevuld.",
+            "example": "2026-02-22",
+            "title": "Ingevuld Op"
+          },
+          "filledBy": {
+            "type": "string",
+            "description": "Nextcloud user-id van de invuller (audit-trail).",
+            "example": "user-zzp-ond-001234",
+            "title": "Ingevuld Door"
+          },
+          "abbreviatedType": {
+            "type": "boolean",
+            "description": "Verkorte intake (3 vragen) i.p.v. volledige (20 vragen); voor eenmalig < 5000 EUR (REQ-DBA-001).",
+            "default": false,
+            "example": false,
+            "title": "Verkort Type"
+          },
+          "authorityRelationship": {
+            "type": "object",
+            "description": "Pijler 1: gezagsverhouding (instructies, controle, integratie); 0-20 punten.",
+            "properties": {
+              "kwaInstructiesScore": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 7,
+                "description": "Mate van instructies (0=geen, 7=dagelijks/intensief).",
+                "title": "Kwa Instructies Score"
+              },
+              "kwaResultFreeScore": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 7,
+                "description": "Mate van vrijheid in resultaat-bepaling (0=volledig vrij, 7=strikt voorgeschreven).",
+                "title": "Kwa Resultaat Vrij Score"
+              },
+              "participatesInTeamMeetingScore": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 6,
+                "description": "Mate van integratie in werkoverleg/scrum (0=niet, 6=dagelijks vast onderdeel).",
+                "title": "Deelneemt Aan Werkoverleg Score"
+              },
+              "subtotal": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 20,
+                "description": "Subtotaal gezagsverhouding (afgeleid).",
+                "title": "Subtotaal"
+              }
+            },
+            "title": "Gezagsverhouding"
+          },
+          "personalLabour": {
+            "type": "object",
+            "description": "Pijler 2: persoonlijke arbeid (vervangbaarheid); 0-20 punten.",
+            "properties": {
+              "replaceableScore": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10,
+                "description": "Vervangbaarheid volgens contract (0=ja, 10=expliciet niet).",
+                "title": "Vervangbaar Score"
+              },
+              "replacementActualScore": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10,
+                "description": "Feitelijk doorgevoerde vervanging (0=meerdere keren, 10=nooit), REQ-DBA-014.",
+                "title": "Vervanging Feitelijk Score"
+              },
+              "subtotal": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 20,
+                "description": "Subtotaal persoonlijke arbeid (afgeleid).",
+                "title": "Subtotaal"
+              }
+            },
+            "title": "Persoonlijke Arbeid"
+          },
+          "financialRisk": {
+            "type": "object",
+            "description": "Pijler 3: financieel risico (ondernemerschap, factuurpatronen, debiteuren-risico); 0-20 punten.",
+            "properties": {
+              "invoiceFrequencyScore": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 7,
+                "description": "Mate waarin factuur-patroon op loon lijkt (0=zeer onregelmatig, 7=maandvast).",
+                "title": "Factuur Frequentie Score"
+              },
+              "paymentRiskScore": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 7,
+                "description": "Mate van financieel risico (0=hoog risico, 7=gegarandeerd loon).",
+                "title": "Betalings Risico Score"
+              },
+              "investmentOwnResourcesScore": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 6,
+                "description": "Mate van eigen investering/middelen (0=hoog, 6=geen).",
+                "title": "Investering Eigen Middelen Score"
+              },
+              "subtotal": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 20,
+                "description": "Subtotaal financieel risico (afgeleid).",
+                "title": "Subtotaal"
+              }
+            },
+            "title": "Financieel Risico"
+          },
+          "deliverooCriteria": {
+            "type": "object",
+            "description": "Deliveroo-arrest criteria (HR 24-3-2023, NJ 2023/188); 0-40 punten.",
+            "properties": {
+              "natureActivitiesSpecialist": {
+                "type": "boolean",
+                "description": "Werk is specialistisch / hoog gekwalificeerd (vermindert risico).",
+                "title": "Aard Werkzaamheden Specialistisch"
+              },
+              "durationRelationship": {
+                "type": "string",
+                "enum": [
+                  "MINDER_DAN_3_MONTHS",
+                  "3_TO_6_MONTHS",
+                  "6_TO_12_MONTHS",
+                  "1_TO_2_YEAR",
+                  "MEER_DAN_2_YEAR"
+                ],
+                "description": "Duur van de opdracht-relatie.",
+                "title": "Duur Relatie"
+              },
+              "excluding": {
+                "type": "boolean",
+                "description": "Werkt exclusief voor deze opdrachtgever (verhoogt risico).",
+                "title": "Exclusief"
+              },
+              "ownCustomers": {
+                "type": "boolean",
+                "description": "Heeft naast deze opdracht meerdere eigen klanten.",
+                "title": "Eigen Klanten"
+              },
+              "ownReclame": {
+                "type": "boolean",
+                "description": "Voert eigen reclame / acquisitie.",
+                "title": "Eigen Reclame"
+              },
+              "modelAgreementPresent": {
+                "type": "boolean",
+                "description": "Een modelovereenkomst is gekozen en gekoppeld.",
+                "title": "Modelovereenkomst Aanwezig"
+              },
+              "actualExecutionFollowsContract": {
+                "type": "boolean",
+                "description": "Feitelijke uitvoering komt overeen met contractueel intent.",
+                "title": "Feitelijke Uitvoering Volgt Contract"
+              },
+              "subtotal": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 40,
+                "description": "Subtotaal Deliveroo (afgeleid).",
+                "title": "Subtotaal"
+              }
+            },
+            "title": "Deliveroo Criteria"
+          },
+          "branchekader": {
+            "type": "string",
+            "nullable": true,
+            "description": "Toegepast branchekader voor extra interpretatie (REQ-DBA-015).",
+            "enum": [
+              "NONE",
+              "ICT",
+              "CARE",
+              "CONSTRUCTION",
+              "EDUCATION"
+            ],
+            "default": "NONE",
+            "title": "Branchekader"
+          },
+          "totalScore": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Berekend totaal (REQ-DBA-003) via x-openregister-calculations of DBAScoreCalculator.",
+            "readOnly": true,
+            "example": 34,
+            "title": "Totaal Score"
+          },
+          "maxScore": {
+            "type": "integer",
+            "description": "Maximaal mogelijke score (100 voor volledige intake; 30 voor verkorte intake).",
+            "default": 100,
+            "example": 100,
+            "title": "Max Score"
+          },
+          "interpretation": {
+            "type": "string",
+            "description": "Tekstuele interpretatie van de totaalscore (LAAG/LAAG_MIDDEN/MIDDEN_HOOG/HOOG).",
+            "readOnly": true,
+            "example": "LAAG_MIDDEN_RISICO",
+            "title": "Interpretatie"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "@self.state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Intake wordt ingevuld; nog niet voltooid."
+            },
+            "submitted": {
+              "label": "Ingediend",
+              "description": "Intake ingediend; lopende validatie."
+            },
+            "completed": {
+              "label": "Voltooid",
+              "description": "Intake voltooid; risicoscore vastgesteld."
+            }
+          },
+          "transitions": {
+            "draft": [
+              "submitted",
+              "completed"
+            ],
+            "submitted": [
+              "completed",
+              "draft"
+            ],
+            "completed": []
+          }
+        },
+        "x-openregister-calculations": {
+          "gezagsverhouding.subtotaal": {
+            "formula": "gezagsverhouding.kwaInstructiesScore + gezagsverhouding.kwaResultaatVrijScore + gezagsverhouding.deelneemtAanWerkoverlegScore",
+            "description": "Som pijler-1 subscores (max 20)."
+          },
+          "persoonlijkeArbeid.subtotaal": {
+            "formula": "persoonlijkeArbeid.vervangbaarScore + persoonlijkeArbeid.vervangingFeitelijkScore",
+            "description": "Som pijler-2 subscores (max 20)."
+          },
+          "financieelRisico.subtotaal": {
+            "formula": "financieelRisico.factuurFrequentieScore + financieelRisico.betalingsRisicoScore + financieelRisico.investeringEigenMiddelenScore",
+            "description": "Som pijler-3 subscores (max 20)."
+          },
+          "totalScore": {
+            "formula": "gezagsverhouding.subtotaal + persoonlijkeArbeid.subtotaal + financieelRisico.subtotaal + deliverooCriteria.subtotaal",
+            "guard": "OCA\\Shillinq\\Guard\\DBAScoreCalculator::computeTotal",
+            "description": "Som van alle pijlers + Deliveroo-criteria; guard valt terug op DBAScoreCalculator wanneer de declaratieve som niet volstaat (ADR-031 exception)."
+          },
+          "interpretation": {
+            "formula": "case when totaalScore < 25 then 'LAAG' when totaalScore < 50 then 'LAAG_MIDDEN' when totaalScore < 75 then 'MIDDEN_HOOG' else 'HOOG' end",
+            "description": "Risico-band afgeleid van totaalScore per REQ-DBA-003."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "ondernemer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "boekhouder": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "compliance_officer": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "controleur": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a DBA intake is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "DBAModelovereenkomst": {
+        "slug": "DBAModelovereenkomst",
+        "icon": "FileDocumentMultipleOutline",
+        "version": "0.1.0",
+        "title": "DBA modelovereenkomst",
+        "description": "Register van DBA modelovereenkomsten: Belastingdienst-goedgekeurde varianten (tussenkomstvrij, leverancier-zelfstandig) + eigen varianten. Houdt geldigheid en essentiele bepalingen bij (REQ-DBA-002).",
+        "x-schema-org": "schema:DigitalDocument",
+        "x-openregister-purpose": "reference",
+        "x-spec": "openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md",
+        "type": "object",
+        "required": [
+          "name",
+          "source",
+          "approvalDate",
+          "currentVersion"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Naam van de modelovereenkomst.",
+            "example": "Tussenkomst-vrij - algemeen (Belastingdienst v3 - 2024)",
+            "title": "Naam"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "TAXAUTHORITY_APPROVED",
+              "OWN_VARIANT",
+              "SECTOR_ASSOCIATION"
+            ],
+            "description": "Herkomst van het model.",
+            "example": "TAXAUTHORITY_APPROVED",
+            "title": "Bron"
+          },
+          "publicationURL": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Officiele publicatie-URL (Belastingdienst of intern).",
+            "example": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/modelovereenkomsten/tussenkomstvrij",
+            "title": "Publicatie URL"
+          },
+          "approvalDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Datum waarop het model is approved/gepubliceerd.",
+            "example": "2024-04-12",
+            "title": "Goedkeuring Datum"
+          },
+          "validTo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Geldig-tot-datum (null = onbeperkt geldig tot herroeping).",
+            "example": "2029-04-12",
+            "title": "Geldig Tot"
+          },
+          "essentieleBepalingen": {
+            "type": "array",
+            "description": "Lijst van essentiele bepalingen die in het feitelijke contract terug MOETEN komen.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Bepalings-identifier (bijv. EB-01).",
+                  "title": "ID"
+                },
+                "text": {
+                  "type": "string",
+                  "description": "Tekst van de bepaling.",
+                  "title": "Tekst"
+                },
+                "mandatory": {
+                  "type": "boolean",
+                  "description": "Indien true: de bepaling MOET worden overgenomen.",
+                  "title": "Verplicht"
+                }
+              }
+            },
+            "title": "Essentiele Bepalingen"
+          },
+          "version": {
+            "type": "string",
+            "description": "Versie-aanduiding van het model.",
+            "example": "v3-2024",
+            "title": "Versie"
+          },
+          "currentVersion": {
+            "type": "boolean",
+            "description": "Indien true: dit is de actuele versie binnen de bron-familie.",
+            "default": true,
+            "example": true,
+            "title": "Actuele Versie"
+          },
+          "fileRef": {
+            "type": "string",
+            "nullable": true,
+            "description": "Openregister file-api URI van het modelovereenkomst-PDF.",
+            "example": "files/dba-models/tussenkomstvrij-bd-v3-2024.pdf",
+            "title": "File Ref"
+          },
+          "sha256": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "SHA-256 hash van het modelovereenkomst-PDF (immutable proof).",
+            "title": "Sha256"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "ondernemer": {
+              "permissions": [
+                "read",
+                "create"
+              ]
+            },
+            "compliance_officer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "controleur": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a DBA modelovereenkomst is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "DBARisicoflag": {
+        "slug": "DBARisicoflag",
+        "icon": "FlagVariantOutline",
+        "version": "0.1.0",
+        "title": "DBA risico-flag",
+        "description": "Per-opdracht append-only flag, automatisch gegenereerd door de dagelijkse monitoring-engine (REQ-DBA-004/005/006/014/015/016). Bevat type, ernst, detectiemoment, fiscale grondslag en actie-suggestie. Immutabel (audit-trail).",
+        "x-schema-org": "schema:AlertSpecification",
+        "x-openregister-purpose": "audit",
+        "x-spec": "openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "assignmentId",
+          "type",
+          "detectionMoment",
+          "severity",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK naar de Administration voor tenant-isolatie en IDOR-veilige scoping.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "assignmentId": {
+            "type": "string",
+            "description": "FK naar DBAOpdracht waarover deze flag is gegenereerd.",
+            "example": "dba-opdr-2026-0042",
+            "title": "Opdracht ID"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "INVOICE_FREQUENCY_APPEARS_ON_PAY",
+              "CONCENTRATION_WARNING",
+              "MULTI_YEAR_MAIN_RELATION",
+              "VBAR_GRENS_BELOW_THRESHOLD",
+              "REPLACEABILITY_THEORETICAL",
+              "MULTIPLE_ENGAGEMENT_SAME_CONCERN",
+              "ICT_INTEGRATION_IN_TEAM",
+              "MODELAGREEMENT_EXPIRED",
+              "REASSESSMENT_OVERDUE",
+              "WBA_EXPIRED"
+            ],
+            "description": "Type van de flag.",
+            "example": "INVOICE_FREQUENCY_APPEARS_ON_PAY",
+            "title": "Type"
+          },
+          "detectionMoment": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Tijdstip van detectie door de monitoring-engine.",
+            "example": "2026-05-15T09:00:00Z",
+            "title": "Detectie Moment"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH"
+            ],
+            "description": "Ernst van de bevinding.",
+            "example": "MEDIUM",
+            "title": "Ernst"
+          },
+          "details": {
+            "type": "object",
+            "nullable": true,
+            "description": "Gestructureerde detail-informatie over de bevinding (bijv. factuur-interval, omzet-aandeel).",
+            "additionalProperties": true,
+            "title": "Details"
+          },
+          "fiscalSource": {
+            "type": "string",
+            "nullable": true,
+            "description": "Fiscale grondslag (wetsartikel, jurisprudentie, arrest).",
+            "example": "Deliveroo-arrest HR 24-3-2023, criterium 'financieel risico'",
+            "title": "Fiscale Bron"
+          },
+          "actionSuggestion": {
+            "type": "string",
+            "nullable": true,
+            "description": "Aanbevolen vervolgactie voor de gebruiker.",
+            "example": "Vary factuurbedrag op basis van werkelijk gewerkte uren; factureer per deliverable.",
+            "title": "Actie Suggestie"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "BEKEKEN",
+              "AFGEHANDELD",
+              "VERVALLEN"
+            ],
+            "default": "OPEN",
+            "description": "Status van de flag in de workflow.",
+            "example": "OPEN",
+            "title": "Status"
+          },
+          "displayedInUser": {
+            "type": "boolean",
+            "default": true,
+            "description": "Indien true: flag wordt op dashboard getoond.",
+            "example": true,
+            "title": "Weergegeven Aan Gebruiker"
+          },
+          "resolutionMemo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Memo bij afhandeling (waarom de flag is afgesloten).",
+            "title": "Resolutie Memo"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "OPEN",
+          "states": {
+            "OPEN": {
+              "label": "Open",
+              "description": "Onafgehandelde flag."
+            },
+            "BEKEKEN": {
+              "label": "Bekeken",
+              "description": "Gebruiker heeft de flag gezien; nog geen actie."
+            },
+            "AFGEHANDELD": {
+              "label": "Afgehandeld",
+              "description": "Gebruiker heeft de bevinding opgelost of als acceptabel gemarkeerd."
+            },
+            "VERVALLEN": {
+              "label": "Vervallen",
+              "description": "Bevinding is niet meer van toepassing (bijv. opdracht beeindigd)."
+            }
+          },
+          "transitions": {
+            "OPEN": [
+              "BEKEKEN",
+              "AFGEHANDELD",
+              "VERVALLEN"
+            ],
+            "BEKEKEN": [
+              "AFGEHANDELD",
+              "VERVALLEN"
+            ],
+            "AFGEHANDELD": [],
+            "VERVALLEN": []
+          },
+          "immutableFields": [
+            "administrationId",
+            "assignmentId",
+            "type",
+            "detectieMoment",
+            "ernst",
+            "details",
+            "fiscalSource"
+          ]
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "ondernemer": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "boekhouder": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "compliance_officer": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "controleur": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "openFlagsPerOpdracht": {
+            "field": "assignmentId",
+            "metric": "count",
+            "description": "Open-flag-aantal per opdracht (voedt DBAOpdracht.openFlags).",
+            "groupBy": ["assignmentId"],
+            "filter": {
+              "status": "OPEN"
+            }
+          },
+          "flagsByType": {
+            "field": "type",
+            "metric": "count",
+            "description": "Aantal flags per type (voor dashboard).",
+            "groupBy": ["type"]
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a DBA risico-flag is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "DBAPortfolioRisico": {
+        "slug": "DBAPortfolioRisico",
+        "icon": "ChartDonutVariant",
+        "version": "0.1.0",
+        "title": "DBA portfolio-risico",
+        "description": "Maandelijkse / on-demand aggregatie van alle actieve opdrachten van een ondernemer: omzetconcentratie (>70%), langjarige relaties (>2 jaar), exclusiviteit-patronen, multiple-engagement-zelfde-concern (REQ-DBA-005/006).",
+        "x-schema-org": "schema:Quantity",
+        "x-openregister-purpose": "aggregation",
+        "x-spec": "openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "enterpriseId",
+          "levelDate",
+          "overallRisk"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK naar de Administration voor tenant-isolatie en IDOR-veilige scoping.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "enterpriseId": {
+            "type": "string",
+            "description": "FK naar de onderneming waarvoor dit portfolio-risico is berekend.",
+            "example": "ond-nl-001234",
+            "title": "Onderneming ID"
+          },
+          "levelDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Datum waarop het portfolio-risico is gemeten.",
+            "example": "2026-05-21",
+            "title": "Peil Datum"
+          },
+          "activeAssignments": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Aantal actieve opdrachten op peilDatum.",
+            "example": 7,
+            "title": "Actieve Opdrachten"
+          },
+          "concentration": {
+            "type": "object",
+            "description": "Omzetconcentratie op een klant (12-maand rolling).",
+            "properties": {
+              "largestCustomer": {
+                "type": "string",
+                "nullable": true,
+                "description": "Klant met grootste omzetaandeel.",
+                "title": "Grootste Klant"
+              },
+              "revenueShare12m": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Aandeel (0-1) van grootste klant in 12-mnd omzet.",
+                "title": "Aandeel Omzet12Mnd"
+              },
+              "thresholdHigh": {
+                "type": "number",
+                "default": 0.7,
+                "description": "Drempel waarboven concentratie WAARSCHUWING is.",
+                "title": "Drempel Hoog"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "VEILIG",
+                  "WARNING",
+                  "CRITICAL"
+                ],
+                "description": "Status van de concentratie.",
+                "title": "Status"
+              }
+            },
+            "title": "Concentratie"
+          },
+          "multiYearRelationships": {
+            "type": "array",
+            "description": "Klanten waarmee >2 jaar relatie bestaat.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "customerId": {
+                  "type": "string",
+                  "title": "Klant ID",
+                  "description": "The identifier of the associated klant."
+                },
+                "startDate": {
+                  "type": "string",
+                  "format": "date",
+                  "title": "Start Datum",
+                  "description": "The date and time for start datum."
+                },
+                "durationYears": {
+                  "type": "number",
+                  "minimum": 0,
+                  "title": "Duur Jaren",
+                  "description": "The numeric value for duur jaren."
+                },
+                "revenueShare": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "title": "Omzet Aandeel",
+                  "description": "The numeric value for omzet aandeel."
+                }
+              }
+            },
+            "title": "Langjarige Relaties"
+          },
+          "exclusiveRelationships": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Aantal klant-relaties waar de ondernemer exclusief voor werkt (geen andere klanten in periode).",
+            "default": 0,
+            "example": 0,
+            "title": "Exclusieve Relaties"
+          },
+          "multipleEngagementConcern": {
+            "type": "array",
+            "description": "Concern-clusters waar meerdere opdrachten lopen (REQ-DBA-006).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "concernId": {
+                  "type": "string",
+                  "title": "Concern ID",
+                  "description": "The identifier of the associated concern."
+                },
+                "assignments": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Opdrachten",
+                  "description": "A list of opdrachten entries."
+                }
+              }
+            },
+            "title": "Multiple Engagement Concern"
+          },
+          "overallRisk": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH"
+            ],
+            "description": "Geaggregeerd portfolio-risico-niveau.",
+            "example": "MEDIUM",
+            "title": "Overall Risico"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "ondernemer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "boekhouder": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "compliance_officer": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "controleur": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "countByOverallRisico": {
+            "field": "overallRisk",
+            "metric": "count",
+            "description": "Aantal portfolio-records per overall-risico-niveau.",
+            "groupBy": ["overallRisk"]
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a DBA portfolio-risico is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "DBAEvidenceDossier": {
+        "slug": "DBAEvidenceDossier",
+        "icon": "FolderLockOutline",
+        "version": "0.1.0",
+        "title": "DBA evidence-dossier",
+        "description": "Per-opdracht stukkenlijst voor Belastingdienst-audit: getekende modelovereenkomst, eerste/laatste factuur, urenstaten, e-mailcommunicatie. Elke stuk heeft SHA-256-hash + datum. 7 jaar retentie per AWR art. 52 (REQ-DBA-007).",
+        "x-schema-org": "schema:Collection",
+        "x-openregister-purpose": "evidence",
+        "x-spec": "openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "assignmentId",
+          "retentionTerm"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK naar de Administration voor tenant-isolatie en IDOR-veilige scoping.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "assignmentId": {
+            "type": "string",
+            "description": "FK naar de DBAOpdracht waarvoor dit dossier wordt bijgehouden.",
+            "example": "dba-opdr-2026-0042",
+            "title": "Opdracht ID"
+          },
+          "documents": {
+            "type": "array",
+            "description": "Inventaris van evidence-stukken.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "SIGNED_AGREEMENT",
+                    "INVOICE_FIRST",
+                    "INVOICE_LAST",
+                    "INVOICE_INTERIM",
+                    "TIMESHEET_QUARTER",
+                    "EMAIL_ARCHIVE",
+                    "WBA_OUTCOME",
+                    "CORRECTION_BRIEF",
+                    "INTERNAL_MEMO",
+                    "OTHER"
+                  ],
+                  "description": "Type van het stuk.",
+                  "title": "Type"
+                },
+                "fileRef": {
+                  "type": "string",
+                  "description": "Openregister file-api URI of docudesk-FK.",
+                  "title": "File Ref"
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Datum dat het stuk aan het dossier is toegevoegd.",
+                  "title": "Datum"
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$",
+                  "description": "SHA-256-hash van het bestand (immutable proof).",
+                  "title": "Sha256"
+                },
+                "description": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "Vrije omschrijving.",
+                  "title": "Omschrijving"
+                }
+              }
+            },
+            "title": "Stukken"
+          },
+          "completenessScore": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Compleetheid 0-1 op basis van stuk-inventaris (REQ-DBA-007).",
+            "readOnly": true,
+            "example": 0.85,
+            "title": "Compleetheid Score"
+          },
+          "missingDocuments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Lijst van ontbrekende stuk-types die de compleetheid drukken.",
+            "readOnly": true,
+            "title": "Ontbrekende Stukken"
+          },
+          "emailArchiveOptIn": {
+            "type": "boolean",
+            "description": "AVG-opt-in voor e-mail-archivering (REQ-DBA-012).",
+            "default": false,
+            "example": false,
+            "title": "Email Archive Opt In"
+          },
+          "emailArchiveConsentRecordId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK naar de ConsentRecord waarin de opt-in is vastgelegd.",
+            "title": "Email Archive Consent Record ID"
+          },
+          "retentionTerm": {
+            "type": "string",
+            "description": "Bewaartermijn-aanduiding (default '7 jaar (art. 52 AWR)').",
+            "default": "7 jaar (art. 52 AWR)",
+            "example": "7 jaar (art. 52 AWR)",
+            "title": "Bewaar Termijn"
+          },
+          "archiveDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Datum waarop het dossier verwijderbaar wordt (peilDatum + 7 jaar).",
+            "title": "Archive Date"
+          }
+        },
+        "x-openregister-calculations": {
+          "completenessScore": {
+            "formula": "case when array_length(stukken) = 0 then 0 else (count_distinct_types(stukken) * 1.0) / 4 end",
+            "description": "Score gebaseerd op aanwezigheid van vier verplichte stuk-types: GETEKENDE_OVEREENKOMST, FACTUUR_EERSTE, FACTUUR_LAATSTE, URENSTAAT_KWARTAAL."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "ondernemer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "boekhouder": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "compliance_officer": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "controleur": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a DBA evidence-dossier is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

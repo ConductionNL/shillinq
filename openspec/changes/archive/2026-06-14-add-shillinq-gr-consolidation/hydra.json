@@ -1,0 +1,92 @@
+{
+  "schema_version": 2,
+  "spec_slug": "add-shillinq-gr-consolidation",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "issue": 27,
+  "cycles": [
+    {
+      "cycle": 1,
+      "trigger": "build:queued",
+      "started_at": "2026-06-01T21:05:50Z",
+      "ended_at": "2026-06-01T21:44:19Z",
+      "outcome": "done",
+      "outcome_reason": "pipeline complete \u2014 reviews passed and applier passed (if run)",
+      "pattern_tags": [
+        "browser-test-nc-setup-failed"
+      ],
+      "stages": [
+        {
+          "stage": "build",
+          "persona": "Al Gorithm",
+          "model": "sonnet",
+          "container": "hydra-builder",
+          "started_at": "2026-06-01T20:31:40Z",
+          "ended_at": "2026-06-01T21:05:44Z",
+          "exit_code": 0,
+          "turns_used": 343,
+          "turns_budget": 200,
+          "checks_run": [
+            "composer test:unit (phpunit)"
+          ],
+          "checks_skipped": [
+            "composer check:strict (phpcs) \u2014 Rule 0b"
+          ],
+          "findings": [
+            {
+              "id": "build-rule-0b-skipped",
+              "severity": "CRITICAL",
+              "gate": "rule-0b",
+              "rule": "builder did not invoke mandatory pre-push gate (composer check:strict)",
+              "status": "open",
+              "note": "Rule 0b in images/builder/CLAUDE.md requires composer check:strict + phpunit before push. No invocations found in transcript \u2014 the pipeline will likely catch pre-review-quality failures downstream.",
+              "autofixable": false
+            }
+          ],
+          "decisions": [],
+          "verdict": "pass",
+          "duration_seconds": 2044
+        },
+        {
+          "stage": "applier",
+          "persona": "Axel Pli\u00e9r",
+          "model": "sonnet",
+          "container": "hydra-applier",
+          "started_at": "2026-06-01T21:42:40Z",
+          "ended_at": "2026-06-01T21:44:06Z",
+          "exit_code": 0,
+          "turns_used": 8,
+          "turns_budget": 20,
+          "checks_run": [
+            "hydra.json-consumer"
+          ],
+          "checks_skipped": [],
+          "findings": [],
+          "decisions": [],
+          "verdict": "pass",
+          "duration_seconds": 86
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "runs": 2,
+    "turns_used": 351,
+    "cost_usd": 0.0,
+    "duration_seconds": 2130,
+    "cycles": 1,
+    "by_stage": {
+      "build": {
+        "runs": 1,
+        "turns_used": 343,
+        "cost_usd": 0.0,
+        "duration_seconds": 2044
+      },
+      "applier": {
+        "runs": 1,
+        "turns_used": 8,
+        "cost_usd": 0.0,
+        "duration_seconds": 86
+      }
+    }
+  }
+}

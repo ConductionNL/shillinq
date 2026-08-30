@@ -1,0 +1,130 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-waterschappen-bbv-variant-04-manifest-routes",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Slice 04 of the bookkeeping-waterschappen-bbv-variant chain wires the navigation + page skeleton that members 05-07 will fill in. Two navigation entries (BBV Compliance Dashboard + Budget Mapping with index/detail) are added under a top-level 'BBV' menu, ordered immediately after the main Dashboard (order 11) and gated to waterschap administrations. The dashboard page is declared as type=dashboard with an empty widget list (widgets are added in slice 05). The Budget Mapping index+detail pages are declared against the BudgetBBVMapping schema (introduced in slice 01) — the bespoke pickers + relations live in slices 06/07 which will re-declare them as kind=page custom components when needed. The HTTP-level routes that mirror these manifest pages are registered in appinfo/routes.php with explicit #[NoAdminRequired] auth attributes per ADR-016 + hydra-gate-route-auth.",
+		"slice-06-update": "Slice 06 (bookkeeping-waterschappen-bbv-variant-06-mapping-index) swaps the BudgetBBVMappings page from type=index → type=custom + component=BudgetBBVMappingIndex so the manifest router dispatches the bespoke CnIndexPage wrapper that owns the four-facet filter chrome (search, fiscal year, allocation bucket, effective-date window) and the percentage/status cell renderers REQ-BBVW-004 calls for. The legacy `columns` array + `defaultSort` are dropped because the custom component declares them in code; the `register`, `schema`, `detailRoute` config keys are retained so the component still reads them from the manifest page config."
+	},
+	"menu": [
+		{
+			"id": "BBVCompliance",
+			"label": "BBV",
+			"icon": "WaterCheckOutline",
+			"order": 11,
+			"visibility": {
+				"field": "administrationType",
+				"in": [
+					"waterschap"
+				]
+			},
+			"children": [
+				{
+					"id": "BBVComplianceDashboard",
+					"label": "BBV Compliance Dashboard",
+					"icon": "ViewDashboardOutline",
+					"route": "BBVComplianceDashboard",
+					"order": 10
+				},
+				{
+					"id": "BudgetBBVMappings",
+					"label": "Budget Mapping",
+					"icon": "SwapHorizontal",
+					"route": "BudgetBBVMappings",
+					"order": 20
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "BBVComplianceDashboard",
+			"route": "/bbv-dashboard",
+			"type": "custom",
+			"title": "BBV Compliance Dashboard",
+			"component": "BBVComplianceDashboard",
+			"_note": "DECOMPOSITION CANDIDATE, kept custom for now. The layout is an ordinary dashboard (four KPI cards, a compliance pie, a YTD trend line, a programme-utilization table) and its host component already renders CnDashboardPage, so the widgets map onto `type: dashboard` one for one. What blocks the move today is the data source: every widget reads the SAME single fetch of BBVProgramme objects, on which the slice-02 x-openregister-aggregations materialise totalBudget, ytdSpend, utilization, utilizationPercentage and complianceStatus per object — declarative widgets each issue their own dataSource fetch, so converting now means five fetches where there is one. Revisit when slice 04's GET /bbv-dashboard envelope lands and the widgets can bind to one endpointSource.",
+			"config": {
+				"register": "shillinq"
+			}
+		},
+		{
+			"id": "BudgetBBVMappings",
+			"route": "/budget-mappings",
+			"type": "custom",
+			"title": "Budget Mapping",
+			"component": "BudgetBBVMappingIndex",
+			"_note": "DECOMPOSITION CANDIDATE, kept custom for now. The component is a thin wrapper around the library's own CnIndexPage — columns, sort, paging, empty state and the Add affordance are all platform-rendered. What it adds is a header-actions filter row with an allocation-percentage RANGE and an effective-date RANGE (REQ-BBVW-004), plus a debounced search that matches GL account number OR programme code. `type: index` facets are per-value, not per-range, and its search is single-field, so converting today would drop three of the spec's filters. Revisit when range facets and multi-field search exist in the shared index.",
+			"config": {
+				"register": "shillinq",
+				"schema": "BudgetBBVMapping",
+				"detailRoute": "BudgetBBVMappingDetail"
+			}
+		},
+		{
+			"id": "BudgetBBVMappingDetail",
+			"route": "/budget-mappings/:id",
+			"type": "detail",
+			"title": "Budget Mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "BudgetBBVMapping",
+				"fields": [
+					{
+						"key": "accountNumber",
+						"label": "Ledger",
+						"type": "string"
+					},
+					{
+						"key": "programmeCode",
+						"label": "Programme",
+						"type": "string"
+					},
+					{
+						"key": "taskField",
+						"label": "Task field",
+						"type": "string"
+					},
+					{
+						"key": "budgetAmount",
+						"label": "Budget",
+						"type": "number"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					},
+					{
+						"key": "lifecycleState",
+						"label": "Status",
+						"type": "string"
+					}
+				],
+				"_note": "CONFIG — a waterschappen BBV budget mapping that pins a GL ledger account to a programme/task-field with a budgeted amount, driving BBV-conformant aggregation. Body is a compact key-value mapping; the audit trail (who changed the allocation and when) is the single sidebar tab. A mapping row has no documents, children or correspondence — data + audit only.",
+				"indexRoute": "BudgetBBVMappings",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}

@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-chart-of-accounts
 
 **Status:** proposed
@@ -5,7 +9,11 @@
 **Tier:** T1 (foundation)
 **Depends on:** none
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping chart of accounts in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 ### REQ-CoA-001: The system SHALL store the chart of accounts as an OpenRegister-managed `Account` register
 
@@ -102,6 +110,8 @@ OpenRegister's relation engine; no app-local join code.
   resolvable error message naming the missing parent.
 
 ### REQ-CoA-004: The `Account` schema SHALL declare a canonical Schema.org annotation
+
+The system SHALL ensure the `Account` schema declares a canonical Schema.org annotation.
 
 For interoperability with shared catalogues and the MCP discovery
 endpoint, the schema MUST carry a Schema.org type annotation (per
@@ -260,6 +270,8 @@ purpose" convention).
   by REQ-CoA-005.
 
 ### REQ-CoA-009: Each administration SHALL designate exactly one account as the closing account
+
+The system SHALL ensure each administration designates exactly one account as the closing account.
 
 The `isClosingAccount` boolean field MAY be true on at most one
 `Account` record per administration (uniqueness constraint scoped to

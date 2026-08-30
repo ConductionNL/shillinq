@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: rate-card-management
 
 **Status:** proposed
@@ -5,7 +9,11 @@
 **Tier:** T2 (compliance + operations)
 **Depends on:** None (foundational)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for rate card management in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/schema: rate card register — not browser-testable
 
@@ -45,6 +53,8 @@ declarative aggregation per REQ-RATE-005.
 
 ### REQ-RATE-002: The `RateCardTemplate` schema SHALL declare a minimum field set
 
+The system SHALL satisfy this requirement: The `RateCardTemplate` schema SHALL declare a minimum field set.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `templateId` | string | Yes | Unique rate-card template identifier |
@@ -65,6 +75,8 @@ Schema.org annotation: `schema:Thing`.
 - **THEN** validation MUST pass.
 
 ### REQ-RATE-003: The `RateCardVersion` schema SHALL declare a minimum field set with effective-date window
+
+The system SHALL satisfy this requirement: The `RateCardVersion` schema SHALL declare a minimum field set with effective-date window.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -92,6 +104,8 @@ Schema.org annotation: `schema:Thing`.
 - **THEN** V1 SHALL still be applicable; lookup must succeed.
 
 ### REQ-RATE-004: The `RateSchedule` schema SHALL declare tier-specific rates with effective-date lifecycle
+
+The system SHALL satisfy this requirement: The `RateSchedule` schema SHALL declare tier-specific rates with effective-date lifecycle.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|

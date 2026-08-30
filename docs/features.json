@@ -1,1 +1,210 @@
-[]
+[
+  {
+    "slug": "bbv-compliance",
+    "title": "Dutch BBV compliance for governments",
+    "summary": "You report per programme according to BBV with a dedicated dashboard.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/bookkeeping-bbv-compliance/spec.md",
+    "title_nl": "BBV-compliance voor overheden",
+    "summary_nl": "Je rapporteert per programma volgens BBV met een eigen dashboard."
+  },
+  {
+    "slug": "general-ledger",
+    "title": "General ledger and trial balance",
+    "summary": "You post double-entry and close periods with a balanced, auditable trial balance.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/bookkeeping-general-ledger/spec.md",
+    "title_nl": "Grootboek en proefbalans",
+    "summary_nl": "Je boekt dubbel en sluit perioden af met een sluitende, controleerbare balans."
+  },
+  {
+    "slug": "purchase-order-3way-match",
+    "title": "Three-way matching for purchase orders",
+    "summary": "You link order, receipt and invoice and catch every discrepancy.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/bookkeeping-purchase-order-3way/spec.md",
+    "title_nl": "Drieweg-matching voor inkooporders",
+    "summary_nl": "Je koppelt order, ontvangst en factuur en vangt elke afwijking af."
+  },
+  {
+    "slug": "sales-invoicing",
+    "title": "Sales invoices and receivables",
+    "summary": "You create an invoice fast and track outstanding receivables.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/bookkeeping-accounts-receivable-core/spec.md",
+    "title_nl": "Verkoopfacturen en debiteuren",
+    "summary_nl": "Je maakt snel een factuur en houdt openstaande posten bij."
+  },
+  {
+    "slug": "bill-import-ubl-csv",
+    "title": "Import supplier bills (UBL and CSV)",
+    "summary": "You read supplier bills in automatically without retyping.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/bookkeeping-accounts-payable-core/spec.md",
+    "title_nl": "Inkoopfacturen importeren (UBL en CSV)",
+    "summary_nl": "Je leest leveranciersfacturen automatisch in zonder overtypen."
+  },
+  {
+    "slug": "bank-import-reconciliation",
+    "title": "Bank import and reconciliation (CAMT.053, MT940, CSV)",
+    "summary": "You match bank transactions to invoices in seconds.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/bookkeeping-bank-reconciliation/spec.md",
+    "title_nl": "Bankimport en reconciliatie (CAMT.053, MT940, CSV)",
+    "summary_nl": "Je matcht banktransacties razendsnel aan facturen."
+  },
+  {
+    "slug": "sepa-payment-runs",
+    "title": "SEPA payment batches (pain.001)",
+    "summary": "You pay suppliers in one batch and book CAMT.053 back automatically.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/payment-run-sepa-export/spec.md",
+    "title_nl": "SEPA-betaalbatches (pain.001)",
+    "summary_nl": "Je betaalt leveranciers in één batch en boekt CAMT.053 automatisch terug."
+  },
+  {
+    "slug": "vat-filing",
+    "title": "VAT return, ICP, OSS and KOR",
+    "summary": "You file an auditable VAT return with the Belastingdienst.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/bookkeeping-vat-btw-filing/spec.md",
+    "title_nl": "BTW-aangifte, ICP, OSS en KOR",
+    "summary_nl": "Je levert een controleerbare BTW-aangifte aan de Belastingdienst."
+  },
+  {
+    "slug": "recurring-retainer-billing",
+    "title": "Recurring and retainer billing",
+    "summary": "You let subscriptions and hours invoice themselves automatically.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/recurring-invoicing/spec.md",
+    "title_nl": "Terugkerende en retainer-facturatie",
+    "summary_nl": "Je laat abonnementen en uren automatisch uitfactureren."
+  },
+  {
+    "slug": "financial-dashboard",
+    "title": "Financial dashboard",
+    "summary": "You see revenue, margin and cashflow at a glance.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/financial-dashboard-graphs/spec.md",
+    "title_nl": "Financieel dashboard",
+    "summary_nl": "Je ziet omzet, marge en cashflow in één oogopslag."
+  },
+  {
+    "slug": "self-hosted-open-source",
+    "title": "Self-hosted and open source (EUPL-1.2)",
+    "summary": "Your financial data stays on your own Nextcloud.",
+    "status": "stable",
+    "docsUrl": "openspec/specs/self-hosted-open-source/spec.md",
+    "title_nl": "Zelf gehost en open source (EUPL-1.2)",
+    "summary_nl": "Je financiële data blijft op je eigen Nextcloud."
+  },
+  {
+    "slug": "audit-trail",
+    "title": "Audit trail and controlespoor",
+    "summary": "You trace every mutation back for the audit.",
+    "status": "beta",
+    "docsUrl": "openspec/specs/bookkeeping-audit-trail/spec.md",
+    "providedBy": "openregister",
+    "title_nl": "Auditspoor en controlespoor",
+    "summary_nl": "Je volgt elke mutatie terug voor de controle."
+  },
+  {
+    "slug": "multi-administration-currency",
+    "title": "Multiple administrations and currencies",
+    "summary": "You keep several sets of books in one app.",
+    "status": "beta",
+    "docsUrl": "openspec/specs/bookkeeping-multi-administratie/spec.md",
+    "title_nl": "Meerdere administraties en valuta",
+    "summary_nl": "Je voert meerdere boeken in één app."
+  },
+  {
+    "slug": "inventory-fifo-valuation",
+    "title": "Inventory and FIFO valuation",
+    "summary": "You track stock and cost price per article.",
+    "status": "beta",
+    "docsUrl": "openspec/specs/inventory-valuation-fifo-avg/spec.md",
+    "title_nl": "Voorraad en FIFO-waardering",
+    "summary_nl": "Je houdt voorraad en kostprijs bij per artikel."
+  },
+  {
+    "slug": "expense-claims",
+    "title": "Expenses and reimbursements",
+    "summary": "You submit expenses with an approval step.",
+    "status": "beta",
+    "docsUrl": "openspec/specs/expense-capture-core/spec.md",
+    "title_nl": "Onkosten en declaraties",
+    "summary_nl": "Je dient onkosten in met een goedkeuringsstap."
+  },
+  {
+    "slug": "lease-accounting",
+    "title": "Lease accounting (IFRS 16 and RJ)",
+    "summary": "You record lease contracts with an amortisation schedule.",
+    "status": "beta",
+    "docsUrl": "openspec/specs/bookkeeping-lease-accounting/spec.md",
+    "title_nl": "Lease-administratie (IFRS 16 en RJ)",
+    "summary_nl": "Je legt leasecontracten vast met aflossingsschema."
+  },
+  {
+    "slug": "emu-sisa-bcf-reporting",
+    "title": "EMU balance, SiSa and BCF for governments",
+    "summary": "You compile statutory government reports.",
+    "status": "beta",
+    "docsUrl": "openspec/specs/bookkeeping-emu-reporting/spec.md",
+    "title_nl": "EMU-saldo, SiSa en BCF voor overheden",
+    "summary_nl": "Je stelt statutaire overheidsrapportages samen."
+  },
+  {
+    "slug": "bookings-appointments",
+    "title": "Appointments and bookings",
+    "summary": "You schedule appointments per resource and invoice them through.",
+    "status": "beta",
+    "docsUrl": "openspec/specs/bookings/spec.md",
+    "title_nl": "Afspraken en boekingen",
+    "summary_nl": "Je plant afspraken per resource en factureert ze door."
+  },
+  {
+    "slug": "accountant-export",
+    "title": "Bookkeeping export for the accountant",
+    "summary": "You hand a journal export to your accountant.",
+    "status": "beta",
+    "docsUrl": "openspec/specs/bookkeeping-sbr-xbrl-reporting/spec.md",
+    "title_nl": "Boekhoudexport voor de accountant",
+    "summary_nl": "Je levert een journaalexport aan je accountant."
+  },
+  {
+    "slug": "bill-ocr",
+    "title": "Supplier bills via OCR",
+    "summary": "You will read pdf bills out automatically.",
+    "status": "soon",
+    "docsUrl": "openspec/specs/bill-ocr/spec.md",
+    "title_nl": "Inkoopfacturen via OCR",
+    "summary_nl": "Je leest pdf-facturen straks automatisch uit."
+  },
+  {
+    "slug": "outbound-peppol-factur-x",
+    "title": "Outbound Peppol BIS 3.0 and Factur-X",
+    "summary": "You will send e-invoices that meet the government requirement.",
+    "status": "soon",
+    "docsUrl": "openspec/specs/outbound-peppol-factur-x/spec.md",
+    "title_nl": "Uitgaande Peppol BIS 3.0 en Factur-X",
+    "summary_nl": "Je verstuurt straks e-facturen die voldoen aan de overheidseis."
+  },
+  {
+    "slug": "psd2-bank-feeds",
+    "title": "PSD2 bank connection",
+    "summary": "You will pull bank transactions live without a file.",
+    "status": "soon",
+    "docsUrl": "openspec/specs/psd2-bank-feeds/spec.md",
+    "title_nl": "PSD2-bankkoppeling",
+    "summary_nl": "Je haalt straks banktransacties live op zonder bestand."
+  },
+  {
+    "slug": "external-connections-integration-config",
+    "title": "External regulatory, bank and payment connections",
+    "summary": "You activate a real connection per integration once its source is provisioned in OpenConnector — until then each family ships dormant and only logs, instead of calling out.",
+    "status": "soon",
+    "docsUrl": "openspec/specs/bookkeeping-bank-connectors/spec.md",
+    "title_nl": "Externe koppelingen met overheid, bank en betaalprovider",
+    "summary_nl": "Je activeert per koppeling een echte verbinding zodra de bron is ingericht in OpenConnector — tot die tijd is elke koppeling inactief en wordt er alleen gelogd, in plaats van extern aangeroepen."
+  }
+]

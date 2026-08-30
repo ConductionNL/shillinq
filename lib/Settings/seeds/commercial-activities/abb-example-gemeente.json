@@ -1,0 +1,32 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "shillinq-documentation",
+		"variant": "test-gemeente",
+		"spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
+		"description": "Example AlgemeenBelangBesluit linked to the sportkantine-exploitatie activity. status=concept — operator promotes through the workflow when adopting the seed."
+	},
+	"besluiten": [
+		{
+			"id": "abb-mo-sp-016-2023",
+			"reference": "Raadsbesluit 2023-184",
+			"governingBody": "Gemeente Voorbeeld",
+			"determinationDate": "2023-03-14",
+			"publicationMunicipalGazette": "gmb-2023-198321",
+			"publicationDate": "2023-03-21",
+			"notificationAcm": {
+				"submitted": true,
+				"date": "2023-03-28",
+				"reference": "ACM/IN/621004"
+			},
+			"concernsActivities": ["MO-SP-016"],
+			"publicInterestCategories": ["arbeidsparticipatie", "sociaaleconomische-cohesie"],
+			"rationale": "De sportkantine-exploitatie wordt voortgezet als integratie- en arbeidsparticipatiehefboom voor mensen met een afstand tot de arbeidsmarkt (samenwerking met Wsw, banenpool). De exploitatie verstoort de concurrentie niet aantoonbaar: omzet < €60k/jaar, lokale markt, kostprijs-monitor zonder winstopslag.",
+			"evaluationCadence": "tweejaarlijks",
+			"nextEvaluation": "2025-03-14",
+			"status": "draft",
+			"objectionTermElapsed": false
+		}
+	]
+}

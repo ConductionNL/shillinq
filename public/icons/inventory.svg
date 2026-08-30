@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Inventory Mobile Scanner PWA icon (REQ-UI-003, T7.2).
+  Used as the source for the 192×192 and 512×512 PNG rasterisations
+  shipped in public/icons/inventory-192.png and inventory-512.png.
+  Replace the PNGs by running:
+    rsvg-convert -w 192 inventory.svg > inventory-192.png
+    rsvg-convert -w 512 inventory.svg > inventory-512.png
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+	<rect width="512" height="512" rx="80" fill="#0082c9"/>
+	<g fill="#ffffff" transform="translate(96 144)">
+		<rect x="0" y="0" width="24" height="224" rx="4"/>
+		<rect x="40" y="0" width="12" height="224" rx="4"/>
+		<rect x="68" y="0" width="32" height="224" rx="4"/>
+		<rect x="116" y="0" width="12" height="224" rx="4"/>
+		<rect x="144" y="0" width="24" height="224" rx="4"/>
+		<rect x="184" y="0" width="12" height="224" rx="4"/>
+		<rect x="212" y="0" width="32" height="224" rx="4"/>
+		<rect x="260" y="0" width="24" height="224" rx="4"/>
+		<rect x="300" y="0" width="12" height="224" rx="4"/>
+	</g>
+</svg>

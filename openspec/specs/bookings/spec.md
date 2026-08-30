@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Bookings Specification
 
 **Status**: proposal  
@@ -13,7 +17,7 @@ Defines the canonical requirements for per-resource calendar and booking managem
 
 Shillinq is a Nextcloud-based business accounting and management application. The booking module is a key feature for appointment-driven businesses (salons, healthcare providers, coworking spaces, hospitality venues). Competitors in this space (Acuity Scheduling, Fresha, Treatwell, Vagaro) universally provide per-resource calendars with conflict detection; this is a P0-priority feature.
 
-## ADDED Requirements
+## Requirements
 
 @e2e exclude unbuilt UI: booking/resource management pages not yet implemented
 

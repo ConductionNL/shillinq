@@ -1,0 +1,204 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Provinciale handleiding BBV",
+    "year": 2026,
+    "variant": "provincie",
+    "description": "Provinciale BBV kerntaken-indeling 2026. De zeven canonieke kerntaken (ruimte, mobiliteit, water, milieu, cultuur, economie, bestuur) conform de Provinciale handleiding BBV met RGS-uitgelijnde rekeningsubstructuren.",
+    "imported": "2026-06-03T00:00:00Z"
+  },
+  "programmas": [
+    {
+      "code": "ruimte",
+      "name": "Ruimte",
+      "description": "Ruimtelijke ordening en gebiedsontwikkeling, inclusief omgevingsvisie, omgevingsplan en vergunningverlening conform de Omgevingswet.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "administrationId": "template"
+    },
+    {
+      "code": "ruimte-omgevingsvisie",
+      "name": "Omgevingsvisie en -beleid",
+      "description": "Opstellen en actualiseren van de provinciale omgevingsvisie en omgevingsverordening.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "parentCode": "ruimte",
+      "administrationId": "template"
+    },
+    {
+      "code": "ruimte-gebiedsontwikkeling",
+      "name": "Gebiedsontwikkeling",
+      "description": "Provinciale inbreng in gebiedsontwikkelingsprojecten: woningbouw, bedrijventerreinen, landinrichting.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "parentCode": "ruimte",
+      "administrationId": "template"
+    },
+    {
+      "code": "mobiliteit",
+      "name": "Mobiliteit",
+      "description": "Provinciale wegen, openbaar vervoer en regionale bereikbaarheid conform het Provinciaal Verkeers- en Vervoersplan.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "administrationId": "template"
+    },
+    {
+      "code": "mobiliteit-wegen",
+      "name": "Provinciale wegen en bruggen",
+      "description": "Beheer, onderhoud en vervanging van provinciale wegen, bruggen en viaducten.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "parentCode": "mobiliteit",
+      "administrationId": "template"
+    },
+    {
+      "code": "mobiliteit-ov",
+      "name": "Openbaar vervoer",
+      "description": "Concessieverlening en toezicht op regionaal openbaar vervoer (bus, trein, veerverbindingen).",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "parentCode": "mobiliteit",
+      "administrationId": "template"
+    },
+    {
+      "code": "water",
+      "name": "Water",
+      "description": "Provinciaal waterbeleid: grondwaterbeheer, regionale watersystemen en waterkeringen conform de Waterwet en Omgevingswet.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "administrationId": "template"
+    },
+    {
+      "code": "water-grondwater",
+      "name": "Grondwater",
+      "description": "Vergunningverlening en toezicht op grondwateronttrekkingen, peilbeheer en grondwaterkwaliteit.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "parentCode": "water",
+      "administrationId": "template"
+    },
+    {
+      "code": "water-oppervlaktewater",
+      "name": "Regionale watersystemen",
+      "description": "Afstemming met waterschappen over regionaal oppervlaktewaterbeheer en KRW-doelstellingen.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "parentCode": "water",
+      "administrationId": "template"
+    },
+    {
+      "code": "milieu",
+      "name": "Milieu",
+      "description": "Provinciaal milieubeleid: vergunningverlening, toezicht en handhaving op milieubelastende activiteiten, luchtkwaliteit en bodem.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "administrationId": "template"
+    },
+    {
+      "code": "milieu-vth",
+      "name": "Vergunningverlening, toezicht en handhaving",
+      "description": "VTH-taken voor Wabo/Omgevingswet-plichtige activiteiten (BRZO, IPPC, grote industriële installaties).",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "parentCode": "milieu",
+      "administrationId": "template"
+    },
+    {
+      "code": "milieu-luchtkwaliteit",
+      "name": "Luchtkwaliteit en klimaat",
+      "description": "Monitoring en beleid voor luchtkwaliteit en regionale klimaatdoelstellingen.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "parentCode": "milieu",
+      "administrationId": "template"
+    },
+    {
+      "code": "cultuur",
+      "name": "Cultuur",
+      "description": "Provinciale cultuursubsidies, erfgoedbeheer en regionale culturele infrastructuur conform de Erfgoedwet.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "administrationId": "template"
+    },
+    {
+      "code": "cultuur-erfgoed",
+      "name": "Erfgoed",
+      "description": "Monumentenzorg, archeologie en cultureel erfgoedbeleid op provinciaal niveau.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "parentCode": "cultuur",
+      "administrationId": "template"
+    },
+    {
+      "code": "cultuur-subsidies",
+      "name": "Culturele subsidies en instellingen",
+      "description": "Subsidieverlening aan regionale culturele instellingen (theaters, musea, bibliotheken, podia).",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "parentCode": "cultuur",
+      "administrationId": "template"
+    },
+    {
+      "code": "economie",
+      "name": "Economie",
+      "description": "Regionale economische ontwikkeling: bedrijventerreinen, innovatie, arbeidsmarkt en Europese fondsen (EFRO).",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "administrationId": "template"
+    },
+    {
+      "code": "economie-innovatie",
+      "name": "Innovatie en kenniseconomie",
+      "description": "Stimuleren van regionale innovatie, smart industry en samenwerking met kennisinstellingen.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "parentCode": "economie",
+      "administrationId": "template"
+    },
+    {
+      "code": "economie-efro",
+      "name": "Europese fondsen (EFRO/JTF)",
+      "description": "Beheer en verantwoording van EFRO- en JTF-programma's voor regionale economische ontwikkeling.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "parentCode": "economie",
+      "administrationId": "template"
+    },
+    {
+      "code": "bestuur",
+      "name": "Bestuur",
+      "description": "Provinciebestuur, bedrijfsvoering, interbestuurlijke samenwerking en financiering.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "administrationId": "template"
+    },
+    {
+      "code": "bestuur-bestuurorg",
+      "name": "Bestuur en organisatie",
+      "description": "Kosten van Provinciale Staten, Gedeputeerde Staten, griffie en rekenkamer.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "parentCode": "bestuur",
+      "administrationId": "template"
+    },
+    {
+      "code": "bestuur-bedrijfsvoering",
+      "name": "Bedrijfsvoering",
+      "description": "Overhead, staf en ondersteunende diensten (ICT, HRM, financiën, juridisch, communicatie).",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "parentCode": "bestuur",
+      "administrationId": "template"
+    },
+    {
+      "code": "bestuur-financiering",
+      "name": "Financiering en provinciale opcenten",
+      "description": "Rente en aflossingen, schatkistbankieren, opcenten motorrijtuigenbelasting en algemene dekkingsmiddelen.",
+      "programmeStructure": "kerntaak",
+      "bbvVariant": "province",
+      "parentCode": "bestuur",
+      "administrationId": "template"
+    }
+  ]
+}

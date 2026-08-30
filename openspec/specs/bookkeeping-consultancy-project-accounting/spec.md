@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-consultancy-project-accounting
 
 **Status:** proposed
@@ -5,12 +9,18 @@
 **Tier:** T3 (operations + NL compliance core)
 **Depends on:** bookkeeping-general-ledger (T1), bookkeeping-accounts-receivable-core (T2)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping consultancy project accounting in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: project accounting pages not yet implemented
 
 
 ### REQ-CPA-001: The system SHALL administer multi-project consultancy work as OpenRegister-managed registers
+
+The system SHALL satisfy this requirement: The system SHALL administer multi-project consultancy work as OpenRegister-managed registers.
 
 For administrations of type `mkb` or `zzp` (in particular the
 consultancy operator profile — Conduction's own primary customer
@@ -52,6 +62,8 @@ applying full IFRS).
 
 ### REQ-CPA-002: The `Project` schema SHALL declare a fixed minimum field set
 
+The system SHALL satisfy this requirement: The `Project` schema SHALL declare a fixed minimum field set.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `administrationId` | string | Yes | FK to administration |
@@ -82,6 +94,8 @@ applying full IFRS).
 
 ### REQ-CPA-003: The `Project` lifecycle SHALL be declarative per ADR-031
 
+The system SHALL satisfy this requirement: The `Project` lifecycle SHALL be declarative per ADR-031.
+
 | From | To | Trigger | Guard |
 |---|---|---|---|
 | (new) | `offerte` | operator action | none |
@@ -104,6 +118,8 @@ Per ADR-031 anti-pattern list, shillinq MUST NOT author a
 
 ### REQ-CPA-004: The `ProjectAssignment` schema SHALL declare a fixed minimum field set
 
+The system SHALL satisfy this requirement: The `ProjectAssignment` schema SHALL declare a fixed minimum field set.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `projectId` | string | Yes | FK to `Project.id` |
@@ -122,6 +138,8 @@ Per ADR-031 anti-pattern list, shillinq MUST NOT author a
   then reference this assignment's `projectId` + `personId`.
 
 ### REQ-CPA-005: The `RateCard` schema SHALL declare per-level rates with effectivity windows
+
+The system SHALL satisfy this requirement: The `RateCard` schema SHALL declare per-level rates with effectivity windows.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -169,6 +187,8 @@ The project tagging on a `GLLine` happens either:
 - **THEN** the value MUST equal €25.000.
 
 ### REQ-CPA-007: Recognised revenue SHALL be a declarative calculation per RJ 270 / IFRS 15
+
+The system SHALL satisfy this requirement: Recognised revenue SHALL be a declarative calculation per RJ 270 / IFRS 15.
 
 For `recognitionMethod: "percentage-of-completion-cost-to-cost"`,
 the `recognisedRevenue` field MUST be derived via
@@ -242,6 +262,8 @@ period close (T2). One record per project per period.
   matching Q1 and the correct per-project values.
 
 ### REQ-CPA-009: Multi-rate-card boundaries SHALL snapshot the rate at hour-posting time
+
+The system SHALL snapshot the applicable rate at hour-posting time so multi-rate-card boundaries remain auditable.
 
 When a `BillableHour` is posted with `projectId` set, the system
 MUST snapshot the applicable `RateCard.hourlyRate` at write time
@@ -342,6 +364,8 @@ No bespoke Vue.
   assigned to a project this period.
 
 ### REQ-CPA-014: Audit trail and retention SHALL be consumed from OR's abstractions
+
+The system SHALL satisfy this requirement: Audit trail and retention SHALL be consumed from OR's abstractions.
 
 Every `Project`, `ProjectAssignment`, `RateCard`, and `WipBalance`
 operation MUST be audited via OR's audit-trail-immutable (ADR-022).

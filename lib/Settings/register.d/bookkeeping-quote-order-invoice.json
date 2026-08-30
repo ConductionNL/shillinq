@@ -1,0 +1,1995 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-quote-order-invoice",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 3 — Sales Funnel: Quote -> Order -> Invoice (Q2C). Eleven new schemas (Quote, QuoteLine, SalesOrder, SalesOrderLine, Delivery, Invoice, InvoiceLine, CreditNote, PricingTier, VolumeDiscount, BlanketOrder, CreditHold) covering the quote-to-cash workflow for Dutch SMEs: versioned non-binding quotes with multi-channel acceptance, binding sales orders with partial delivery / backorder tracking, delivery (Levering) shipments, delivery/advance/consolidated invoicing with Dutch sequential numbering, BTW per line (binnenland / intracommunautair reverse-charge), Peppol BIS 3.0 / UBL 2.1 outbound e-invoicing, customer-specific pricing tiers + volume discounts, blanket-order call-off, automated AR-ageing credit holds, and credit notes with AR offset. All quantitative + reporting logic is declarative (x-openregister-calculations / x-openregister-aggregations) per ADR-031 — no QuoteService.php / OrderService.php / InvoiceService.php. Cross-field / cross-schema lifecycle preconditions delegate to OCA\\Shillinq\\Lifecycle\\QuoteOrderInvoiceGuard (ADR-031 exception path). A customer/contact is a Nextcloud entity (NC addressbook / AR customer master) referenced by customerReference FK — never re-declared here. GL posting, AR open-item creation, IFRS 15 Contract/PO linking, VIES validation, e-signature, Peppol dispatch, shipping and CRM integrations are FK references / openconnector calls delegated to the dependency apps (bookkeeping-general-ledger, bookkeeping-accounts-receivable-core, bookkeeping-ifrs15-revenue, openconnector, docudesk) — see tasks.md for deferred items. Seed data pre-loads a worked B2B / retail / public-sector quote -> order -> delivery -> invoice scenario set.",
+    "spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md"
+  },
+  "components": {
+    "schemas": {
+      "Quote": {
+        "slug": "Quote",
+        "icon": "FileDocumentOutline",
+        "version": "0.1.0",
+        "title": "Quote",
+        "description": "Verkoopofferte — a versioned, non-binding sales offer with multi-channel acceptance (REQ-QOI-001, design D1). schema:Offer per ADR-011.",
+        "x-schema-org": "schema:Offer",
+        "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
+        "type": "object",
+        "required": [
+          "quoteNumber",
+          "customerReference"
+        ],
+        "properties": {
+          "quoteNumber": {
+            "type": "string",
+            "description": "Human-readable quote number (e.g. Q-2026-0042).",
+            "title": "Quote Number"
+          },
+          "customerReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the customer — a Nextcloud addressbook contact / AR customer master. Never a re-declared Customer schema (guardrail).",
+            "title": "Customer Reference"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Quote version. Each revision increments; prior versions are retained as immutable snapshots (design D1).",
+            "default": 1,
+            "title": "Version"
+          },
+          "supersedesQuote": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the prior version this quote supersedes.",
+            "nullable": true,
+            "title": "Supersedes Quote"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date",
+            "description": "Validity expiry date — quote auto-expires after this (REQ-QOI-002).",
+            "nullable": true,
+            "title": "Valid Until"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code.",
+            "default": "EUR",
+            "title": "Currency"
+          },
+          "language": {
+            "type": "string",
+            "description": "Quote language (nl / en) for generated document.",
+            "default": "nl",
+            "title": "Language"
+          },
+          "headerText": {
+            "type": "string",
+            "description": "Free-text header / introduction.",
+            "nullable": true,
+            "title": "Header Text"
+          },
+          "footerText": {
+            "type": "string",
+            "description": "Free-text footer / terms.",
+            "nullable": true,
+            "title": "Footer Text"
+          },
+          "paymentTerms": {
+            "type": "string",
+            "description": "Payment terms (e.g. net30, net45, net60).",
+            "nullable": true,
+            "title": "Payment Terms"
+          },
+          "deliveryTerms": {
+            "type": "string",
+            "description": "Incoterms 2020 delivery terms (e.g. EXW, DAP, DDP).",
+            "nullable": true,
+            "title": "Delivery Terms"
+          },
+          "responsibleSalesperson": {
+            "type": "string",
+            "description": "NC user id of the responsible salesperson.",
+            "nullable": true,
+            "title": "Responsible Salesperson"
+          },
+          "relatedOpportunityReference": {
+            "type": "string",
+            "description": "FK / external id to a CRM opportunity (openconnector sync).",
+            "nullable": true,
+            "title": "Related Opportunity Reference"
+          },
+          "acceptanceChannel": {
+            "type": "string",
+            "enum": [
+              "in-app-link",
+              "e-signature",
+              "manual-backoffice"
+            ],
+            "description": "How the quote was accepted (design D1).",
+            "nullable": true,
+            "title": "Acceptance Channel"
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp the quote was accepted.",
+            "nullable": true,
+            "title": "Accepted At"
+          },
+          "acceptanceEvidenceReference": {
+            "type": "string",
+            "description": "FK URI (docudesk / e-signature provider) to acceptance evidence.",
+            "nullable": true,
+            "title": "Acceptance Evidence Reference"
+          },
+          "documentReference": {
+            "type": "string",
+            "description": "FK URI to the docudesk-generated quote PDF (bookkeeping-document-attachment-integration).",
+            "nullable": true,
+            "title": "Document Reference"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the owning administration (multi-tenant scope).",
+            "nullable": true,
+            "title": "Administration ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "sent",
+              "accepted",
+              "declined",
+              "expired"
+            ],
+            "description": "Quote lifecycle state (REQ-QOI-001).",
+            "default": "draft",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Quote being prepared."
+            },
+            "sent": {
+              "label": "Sent",
+              "description": "Quote sent to the customer, awaiting response."
+            },
+            "accepted": {
+              "label": "Accepted",
+              "description": "Customer accepted; ready to convert to a sales order."
+            },
+            "declined": {
+              "label": "Declined",
+              "description": "Customer declined."
+            },
+            "expired": {
+              "label": "Expired",
+              "description": "Validity period lapsed without acceptance."
+            }
+          },
+          "transitions": {
+            "send": {
+              "from": "draft",
+              "to": "sent",
+              "label": "Send quote",
+              "description": "Send the quote to the customer (REQ-QOI-001). Blocked unless at least one quote line is present and the customer reference is set.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\QuoteOrderInvoiceGuard::canSendQuote"
+            },
+            "accept": {
+              "from": "sent",
+              "to": "accepted",
+              "label": "Accept quote",
+              "description": "Record acceptance via in-app signed URL, e-signature provider, or manual back-office (design D1). Blocked unless an acceptance channel is recorded.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\QuoteOrderInvoiceGuard::canAcceptQuote"
+            },
+            "decline": {
+              "from": "sent",
+              "to": "declined",
+              "label": "Decline quote",
+              "description": "Customer declined the quote."
+            },
+            "expire": {
+              "from": "sent",
+              "to": "expired",
+              "label": "Expire quote",
+              "description": "Validity period lapsed (REQ-QOI-002)."
+            },
+            "revise": {
+              "from": "sent",
+              "to": "draft",
+              "label": "Revise quote",
+              "description": "Return to draft to issue a new version; the sent version is retained as an immutable snapshot (design D1)."
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Quote is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "QuoteLine": {
+        "slug": "QuoteLine",
+        "icon": "FormatListBulletedSquare",
+        "version": "0.1.0",
+        "title": "Quote Line",
+        "description": "A line on a Quote (REQ-QOI-001). FK to Quote.",
+        "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
+        "type": "object",
+        "required": [
+          "quote"
+        ],
+        "properties": {
+          "quote": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the owning Quote.",
+            "title": "Quote"
+          },
+          "lineNumber": {
+            "type": "integer",
+            "description": "Ordinal line number on the quote.",
+            "nullable": true,
+            "title": "Line Number"
+          },
+          "productReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the Product (inventory catalog).",
+            "nullable": true,
+            "title": "Product Reference"
+          },
+          "description": {
+            "type": "string",
+            "description": "Line description.",
+            "nullable": true,
+            "title": "Description"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantity offered.",
+            "default": 1,
+            "title": "Quantity"
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "Resolved unit price (after pricing-tier resolution, design D6).",
+            "default": 0,
+            "title": "Unit Price"
+          },
+          "discount": {
+            "type": "number",
+            "description": "Line discount (percentage, 0-100).",
+            "default": 0,
+            "title": "Discount"
+          },
+          "appliedTierName": {
+            "type": "string",
+            "description": "Name of the pricing tier applied (line-level transparency, design D6).",
+            "nullable": true,
+            "title": "Applied Tier Name"
+          },
+          "vatRate": {
+            "type": "number",
+            "description": "BTW rate applied to this line (0 / 9 / 21).",
+            "default": 21,
+            "title": "BTW Rate"
+          },
+          "glAccount": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the revenue GL Account.",
+            "nullable": true,
+            "title": "GL Account"
+          },
+          "projectReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to a Project dimension.",
+            "nullable": true,
+            "title": "Project Reference"
+          },
+          "costOfGoodsEstimate": {
+            "type": "number",
+            "description": "Estimated cost of goods for margin reporting.",
+            "nullable": true,
+            "title": "Cost Of Goods Estimate"
+          }
+        },
+        "x-openregister-calculations": {
+          "lineNet": {
+            "type": "number",
+            "description": "lineNet = quantity * unitPrice * (1 - discount/100). Declarative per ADR-031 — no PHP pricing service.",
+            "expr": "@self.quantity * @self.unitPrice * (1 - (@self.discount / 100))"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Quote Line is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "SalesOrder": {
+        "slug": "SalesOrder",
+        "icon": "ClipboardCheckOutline",
+        "version": "0.1.0",
+        "title": "Sales Order",
+        "description": "Verkooporder — a binding sales commitment with partial-delivery / backorder tracking (REQ-QOI-004, design D2). schema:Order per ADR-011.",
+        "x-schema-org": "schema:Order",
+        "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
+        "type": "object",
+        "required": [
+          "orderNumber",
+          "customerReference"
+        ],
+        "properties": {
+          "orderNumber": {
+            "type": "string",
+            "description": "Human-readable order number (e.g. SO-2026-0042).",
+            "title": "Order Number"
+          },
+          "customerReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the customer (Nextcloud contact / AR customer master).",
+            "title": "Customer Reference"
+          },
+          "sourceQuoteReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the accepted Quote this order was converted from (REQ-QOI-003).",
+            "nullable": true,
+            "title": "Source Quote Reference"
+          },
+          "contractReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the IFRS 15 Contract created on conversion (bookkeeping-ifrs15-revenue).",
+            "nullable": true,
+            "title": "Contract Reference"
+          },
+          "orderDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Order date.",
+            "nullable": true,
+            "title": "Order Date"
+          },
+          "requestedDeliveryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Customer-requested delivery date.",
+            "nullable": true,
+            "title": "Requested Delivery Date"
+          },
+          "confirmedDeliveryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Confirmed delivery date.",
+            "nullable": true,
+            "title": "Confirmed Delivery Date"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code.",
+            "default": "EUR",
+            "title": "Currency"
+          },
+          "paymentTerms": {
+            "type": "string",
+            "description": "Payment terms.",
+            "nullable": true,
+            "title": "Payment Terms"
+          },
+          "deliveryTerms": {
+            "type": "string",
+            "description": "Incoterms 2020 delivery terms.",
+            "nullable": true,
+            "title": "Delivery Terms"
+          },
+          "shippingAddress": {
+            "type": "string",
+            "description": "Shipping address (free text or FK).",
+            "nullable": true,
+            "title": "Shipping Address"
+          },
+          "billingAddress": {
+            "type": "string",
+            "description": "Billing address (free text or FK).",
+            "nullable": true,
+            "title": "Billing Address"
+          },
+          "invoicingMode": {
+            "type": "string",
+            "enum": [
+              "on-delivery",
+              "on-order",
+              "consolidated-monthly"
+            ],
+            "description": "When invoices are generated for this order (design D4).",
+            "default": "on-delivery",
+            "title": "Invoicing Mode"
+          },
+          "creditCheckResult": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "warning",
+              "blocked"
+            ],
+            "description": "Outcome of the AR credit check on confirmation (design D9).",
+            "nullable": true,
+            "title": "Credit Check Result"
+          },
+          "blanketOrderFlag": {
+            "type": "boolean",
+            "description": "Whether this order is a call-off release against a blanket order (design D8).",
+            "default": false,
+            "title": "Blanket Order Flag"
+          },
+          "masterOrderReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the parent BlanketOrder for a call-off release.",
+            "nullable": true,
+            "title": "Master Order Reference"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the owning administration.",
+            "nullable": true,
+            "title": "Administration ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "confirmed",
+              "partial",
+              "shipped",
+              "invoiced",
+              "closed",
+              "cancelled"
+            ],
+            "description": "Sales-order lifecycle state (REQ-QOI-004).",
+            "default": "draft",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Order being prepared (e.g. just converted from a quote)."
+            },
+            "confirmed": {
+              "label": "Confirmed",
+              "description": "Binding; credit check passed; awaiting fulfilment."
+            },
+            "partial": {
+              "label": "Partially delivered",
+              "description": "Some but not all lines delivered (backorder open)."
+            },
+            "shipped": {
+              "label": "Shipped",
+              "description": "All lines delivered."
+            },
+            "invoiced": {
+              "label": "Invoiced",
+              "description": "All delivered lines invoiced."
+            },
+            "closed": {
+              "label": "Closed",
+              "description": "Fully delivered, invoiced, and paid."
+            },
+            "cancelled": {
+              "label": "Cancelled",
+              "description": "Order cancelled before fulfilment."
+            }
+          },
+          "transitions": {
+            "confirm": {
+              "from": "draft",
+              "to": "confirmed",
+              "label": "Confirm order",
+              "description": "Run the AR credit check (design D9) and confirm. Blocked when a block-severity credit hold applies to the customer.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\QuoteOrderInvoiceGuard::canConfirmOrder"
+            },
+            "deliverPartial": {
+              "from": "confirmed",
+              "to": "partial",
+              "label": "Record partial delivery",
+              "description": "A delivery covered some lines; backorder remains."
+            },
+            "deliverPartialAgain": {
+              "from": "partial",
+              "to": "partial",
+              "label": "Record further partial delivery",
+              "description": "Another delivery against an order still carrying backorder."
+            },
+            "ship": {
+              "from": "partial",
+              "to": "shipped",
+              "label": "Complete shipment",
+              "description": "Final delivery cleared the backorder; all lines delivered."
+            },
+            "shipDirect": {
+              "from": "confirmed",
+              "to": "shipped",
+              "label": "Ship in full",
+              "description": "Single delivery covered the whole order."
+            },
+            "invoice": {
+              "from": "shipped",
+              "to": "invoiced",
+              "label": "Invoice order",
+              "description": "All delivered lines invoiced."
+            },
+            "close": {
+              "from": "invoiced",
+              "to": "closed",
+              "label": "Close order",
+              "description": "Order fully delivered, invoiced, and paid."
+            },
+            "cancel": {
+              "from": "confirmed",
+              "to": "cancelled",
+              "label": "Cancel order",
+              "description": "Cancel an unfulfilled order."
+            }
+          }
+        }
+      },
+      "SalesOrderLine": {
+        "slug": "SalesOrderLine",
+        "icon": "FormatListNumbered",
+        "version": "0.1.0",
+        "title": "Sales Order Line",
+        "description": "A line on a SalesOrder tracking ordered / delivered / invoiced / backorder quantities (REQ-QOI-004, design D2). FK to SalesOrder.",
+        "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
+        "type": "object",
+        "required": [
+          "salesOrder"
+        ],
+        "properties": {
+          "salesOrder": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the owning SalesOrder.",
+            "title": "Sales Order"
+          },
+          "lineNumber": {
+            "type": "integer",
+            "description": "Ordinal line number.",
+            "nullable": true,
+            "title": "Line Number"
+          },
+          "productReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the Product.",
+            "nullable": true,
+            "title": "Product Reference"
+          },
+          "description": {
+            "type": "string",
+            "description": "Line description.",
+            "nullable": true,
+            "title": "Description"
+          },
+          "orderedQuantity": {
+            "type": "number",
+            "description": "Quantity ordered.",
+            "default": 0,
+            "title": "Ordered Quantity"
+          },
+          "deliveredQuantity": {
+            "type": "number",
+            "description": "Quantity delivered so far (incremented by delivery confirmations, design D3).",
+            "default": 0,
+            "title": "Delivered Quantity"
+          },
+          "invoicedQuantity": {
+            "type": "number",
+            "description": "Quantity invoiced so far.",
+            "default": 0,
+            "title": "Invoiced Quantity"
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "Resolved unit price (stored at confirmation, design D6).",
+            "default": 0,
+            "title": "Unit Price"
+          },
+          "discountApplied": {
+            "type": "number",
+            "description": "Discount applied (percentage, 0-100).",
+            "default": 0,
+            "title": "Discount Applied"
+          },
+          "appliedTierName": {
+            "type": "string",
+            "description": "Pricing tier applied (line-level transparency, design D6).",
+            "nullable": true,
+            "title": "Applied Tier Name"
+          },
+          "vatRate": {
+            "type": "number",
+            "description": "BTW rate (0 / 9 / 21).",
+            "default": 21,
+            "title": "BTW Rate"
+          },
+          "requestedDeliveryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Line-level requested delivery date.",
+            "nullable": true,
+            "title": "Requested Delivery Date"
+          },
+          "projectReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to a Project dimension.",
+            "nullable": true,
+            "title": "Project Reference"
+          },
+          "performanceObligationReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the IFRS 15 PerformanceObligation (bookkeeping-ifrs15-revenue).",
+            "nullable": true,
+            "title": "Performance Obligation Reference"
+          }
+        },
+        "x-openregister-calculations": {
+          "backorderQuantity": {
+            "type": "number",
+            "description": "backorderQuantity = max(orderedQuantity - deliveredQuantity, 0). Declarative per ADR-031 (design D2).",
+            "expr": "max(@self.orderedQuantity - @self.deliveredQuantity, 0)"
+          },
+          "uninvoicedQuantity": {
+            "type": "number",
+            "description": "uninvoicedQuantity = max(deliveredQuantity - invoicedQuantity, 0).",
+            "expr": "max(@self.deliveredQuantity - @self.invoicedQuantity, 0)"
+          }
+        }
+      },
+      "Delivery": {
+        "slug": "Delivery",
+        "icon": "TruckDeliveryOutline",
+        "version": "0.1.0",
+        "title": "Delivery",
+        "description": "Levering — a shipment record linking a SalesOrder to invoicing (REQ-QOI-005, design D3). schema:ParcelDelivery per ADR-011.",
+        "x-schema-org": "schema:ParcelDelivery",
+        "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
+        "type": "object",
+        "required": [
+          "deliveryNumber",
+          "sourceOrderReference"
+        ],
+        "properties": {
+          "deliveryNumber": {
+            "type": "string",
+            "description": "Human-readable delivery / packing-slip number.",
+            "title": "Delivery Number"
+          },
+          "sourceOrderReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the SalesOrder being shipped.",
+            "title": "Source Order Reference"
+          },
+          "shippedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Shipment timestamp.",
+            "nullable": true,
+            "title": "Shipped At"
+          },
+          "carrier": {
+            "type": "string",
+            "description": "Carrier (PostNL, DHL, UPS, ...).",
+            "nullable": true,
+            "title": "Carrier"
+          },
+          "trackingNumber": {
+            "type": "string",
+            "description": "Carrier tracking number (openconnector shipping integration).",
+            "nullable": true,
+            "title": "Tracking Number"
+          },
+          "lines": {
+            "type": "array",
+            "description": "Shipped line quantities: [{ orderLineReference, productReference, quantityShipped }].",
+            "items": {
+              "type": "object"
+            },
+            "title": "Lines"
+          },
+          "proofOfDeliveryReference": {
+            "type": "string",
+            "description": "FK URI (docudesk) to the proof-of-delivery document.",
+            "nullable": true,
+            "title": "Proof Of Delivery Reference"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the owning administration.",
+            "nullable": true,
+            "title": "Administration ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "confirmed",
+              "shipped"
+            ],
+            "description": "Delivery lifecycle state (REQ-QOI-005).",
+            "default": "draft",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Delivery being prepared (lines selected)."
+            },
+            "confirmed": {
+              "label": "Confirmed",
+              "description": "Quantities confirmed; order line deliveredQuantity updated; invoicing may trigger."
+            },
+            "shipped": {
+              "label": "Shipped",
+              "description": "Handed to the carrier."
+            }
+          },
+          "transitions": {
+            "confirm": {
+              "from": "draft",
+              "to": "confirmed",
+              "label": "Confirm delivery",
+              "description": "Confirm shipped quantities and update SalesOrderLine.deliveredQuantity (design D3). Blocked unless every line references an order line and a positive quantity, and the customer is not under a block-delivery credit hold.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\QuoteOrderInvoiceGuard::canConfirmDelivery"
+            },
+            "ship": {
+              "from": "confirmed",
+              "to": "shipped",
+              "label": "Mark shipped",
+              "description": "Record carrier hand-off."
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Delivery is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "Invoice": {
+        "slug": "Invoice",
+        "icon": "ReceiptTextOutline",
+        "version": "0.1.0",
+        "title": "Invoice",
+        "description": "Factuur — a sales invoice with Dutch sequential numbering, BTW, and Peppol BIS 3.0 / UBL 2.1 dispatch (REQ-QOI-005..008, design D4/D5/D11). schema:Invoice per ADR-011. No deletion (Belastingdienst) — reverse with a CreditNote only.",
+        "x-schema-org": "schema:Invoice",
+        "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
+        "type": "object",
+        "configuration": {
+          "objectNameField": "invoiceNumber",
+          "linkedTypes": [
+            "mail"
+          ],
+          "mailObjectTemplate": {
+            "administrationId": "adm-1",
+            "invoiceId": "eml-{{messageId}}",
+            "invoiceNumber": "EML-{{messageId}}",
+            "customerId": "{{sender}}",
+            "customerReference": "{{senderName}}",
+            "invoiceDate": "{{date}}",
+            "dueDate": "{{date30}}",
+            "sourceDocumentUri": "urn:nextcloud:mail:{{mailRef}}",
+            "netAmount": 0,
+            "vatAmount": 0,
+            "grossAmount": 0,
+            "currency": "EUR",
+            "state": "issued",
+            "status": "draft"
+          }
+        },
+        "required": [
+          "invoiceNumber",
+          "customerReference"
+        ],
+        "properties": {
+          "invoiceNumber": {
+            "type": "string",
+            "description": "Dutch sequential invoice number (no gaps; Belastingdienst).",
+            "title": "Invoice Number"
+          },
+          "customerReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the customer (Nextcloud contact / AR customer master).",
+            "title": "Customer Reference"
+          },
+          "invoiceDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Invoice issue date.",
+            "nullable": true,
+            "title": "Invoice Date"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Payment due date (per payment terms).",
+            "nullable": true,
+            "title": "Due Date"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code.",
+            "default": "EUR",
+            "title": "Currency"
+          },
+          "paymentTerms": {
+            "type": "string",
+            "description": "Payment terms (net30, net45, ...).",
+            "nullable": true,
+            "title": "Payment Terms"
+          },
+          "invoiceType": {
+            "type": "string",
+            "enum": [
+              "delivery-based",
+              "advance",
+              "consolidated"
+            ],
+            "description": "Invoice triggering mode (design D4).",
+            "default": "delivery-based",
+            "title": "Invoice Type"
+          },
+          "sourceOrderReferences": {
+            "type": "array",
+            "description": "FK list (slug/uuid) to source SalesOrders.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Order References"
+          },
+          "sourceDeliveryReferences": {
+            "type": "array",
+            "description": "FK list (slug/uuid) to source Deliveries.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Delivery References"
+          },
+          "grossAmount": {
+            "type": "number",
+            "description": "Gross (incl. BTW) invoice total.",
+            "nullable": true,
+            "title": "Gross Amount"
+          },
+          "netAmount": {
+            "type": "number",
+            "description": "Net (excl. BTW) invoice total.",
+            "nullable": true,
+            "title": "Net Amount"
+          },
+          "vatAmount": {
+            "type": "number",
+            "description": "Total BTW amount.",
+            "nullable": true,
+            "title": "VAT Amount"
+          },
+          "vatLegend": {
+            "type": "string",
+            "description": "BTW legend (e.g. reverse-charge / btw verlegd, intracommunautaire levering Article 196).",
+            "nullable": true,
+            "title": "BTW Legend"
+          },
+          "viesValidated": {
+            "type": "boolean",
+            "description": "Whether the customer EU VAT number was VIES-validated for reverse-charge (REQ-QOI-006).",
+            "nullable": true,
+            "title": "Vies Validated"
+          },
+          "glTransactionReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the materialised GL posting (bookkeeping-general-ledger).",
+            "nullable": true,
+            "title": "GL Transaction Reference"
+          },
+          "arOpenItemReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the AR open item (bookkeeping-accounts-receivable-core).",
+            "nullable": true,
+            "title": "AR Open Item Reference"
+          },
+          "peppolMessageId": {
+            "type": "string",
+            "description": "Peppol message id returned by the access point on dispatch (REQ-QOI-008).",
+            "nullable": true,
+            "title": "Peppol Message ID"
+          },
+          "ublXmlReference": {
+            "type": "string",
+            "description": "FK URI to the generated UBL 2.1 / Peppol BIS 3.0 XML.",
+            "nullable": true,
+            "title": "Ubl XML Reference"
+          },
+          "documentReference": {
+            "type": "string",
+            "description": "FK URI to the docudesk-generated invoice PDF.",
+            "nullable": true,
+            "title": "Document Reference"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the owning administration.",
+            "nullable": true,
+            "title": "Administration ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "sent",
+              "partially-paid",
+              "paid",
+              "overdue",
+              "cancelled",
+              "credited"
+            ],
+            "description": "Invoice lifecycle state (REQ-QOI-005/007).",
+            "default": "draft",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Invoice prepared; awaiting operator review."
+            },
+            "sent": {
+              "label": "Sent",
+              "description": "Issued: GL posting materialised, AR open item created, dispatched (optionally via Peppol)."
+            },
+            "partially-paid": {
+              "label": "Partially paid",
+              "description": "Part of the balance settled."
+            },
+            "paid": {
+              "label": "Paid",
+              "description": "Fully settled."
+            },
+            "overdue": {
+              "label": "Overdue",
+              "description": "Past due date, unpaid."
+            },
+            "cancelled": {
+              "label": "Cancelled",
+              "description": "Draft invoice cancelled before issue."
+            },
+            "credited": {
+              "label": "Credited",
+              "description": "Reversed by a credit note."
+            }
+          },
+          "transitions": {
+            "issue": {
+              "from": "draft",
+              "to": "sent",
+              "label": "Issue invoice",
+              "description": "Issue: materialise the GL posting (debit AR, credit revenue, credit BTW; advance -> deferred revenue), create the AR open item, validate BTW (VIES if intracommunautair), generate UBL, and dispatch (Peppol if the customer has a Peppol id) (REQ-QOI-005..008). Blocked unless the invoice has at least one line, a sequential number, and a balanced net/vat/gross total.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\QuoteOrderInvoiceGuard::canIssueInvoice"
+            },
+            "cancel": {
+              "from": "draft",
+              "to": "cancelled",
+              "label": "Cancel draft",
+              "description": "Cancel a draft invoice before issue (issued invoices are never deleted — Belastingdienst)."
+            },
+            "registerPartialPayment": {
+              "from": "sent",
+              "to": "partially-paid",
+              "label": "Register partial payment",
+              "description": "A partial payment was received."
+            },
+            "registerPayment": {
+              "from": "sent",
+              "to": "paid",
+              "label": "Register payment",
+              "description": "Full payment received."
+            },
+            "settleRemainder": {
+              "from": "partially-paid",
+              "to": "paid",
+              "label": "Settle remainder",
+              "description": "Remaining balance settled."
+            },
+            "markOverdue": {
+              "from": "sent",
+              "to": "overdue",
+              "label": "Mark overdue",
+              "description": "Due date passed without full payment (drives AR ageing / credit holds)."
+            },
+            "credit": {
+              "from": "sent",
+              "to": "credited",
+              "label": "Credit invoice",
+              "description": "Reverse via a credit note (design D10)."
+            }
+          }
+        }
+      },
+      "InvoiceLine": {
+        "slug": "InvoiceLine",
+        "icon": "FormatListChecks",
+        "version": "0.1.0",
+        "title": "Invoice Line",
+        "description": "A line on an Invoice (REQ-QOI-005). FK to Invoice.",
+        "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
+        "type": "object",
+        "required": [
+          "invoice"
+        ],
+        "properties": {
+          "invoice": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the owning Invoice.",
+            "title": "Invoice"
+          },
+          "lineNumber": {
+            "type": "integer",
+            "description": "Ordinal line number.",
+            "nullable": true,
+            "title": "Line Number"
+          },
+          "productReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the Product.",
+            "nullable": true,
+            "title": "Product Reference"
+          },
+          "description": {
+            "type": "string",
+            "description": "Line description.",
+            "nullable": true,
+            "title": "Description"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantity invoiced.",
+            "default": 0,
+            "title": "Quantity"
+          },
+          "unitPrice": {
+            "type": "number",
+            "description": "Unit price (carried from the order line).",
+            "default": 0,
+            "title": "Unit Price"
+          },
+          "discountApplied": {
+            "type": "number",
+            "description": "Discount applied (percentage, 0-100).",
+            "default": 0,
+            "title": "Discount Applied"
+          },
+          "vatRate": {
+            "type": "number",
+            "description": "BTW rate (0 / 9 / 21).",
+            "default": 21,
+            "title": "BTW Rate"
+          },
+          "glAccount": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the revenue GL Account.",
+            "nullable": true,
+            "title": "GL Account"
+          },
+          "periodStartDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Service period start (for period-based revenue).",
+            "nullable": true,
+            "title": "Period Start Date"
+          },
+          "periodEndDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Service period end.",
+            "nullable": true,
+            "title": "Period End Date"
+          },
+          "performanceObligationReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the IFRS 15 PerformanceObligation.",
+            "nullable": true,
+            "title": "Performance Obligation Reference"
+          }
+        },
+        "x-openregister-calculations": {
+          "lineNet": {
+            "type": "number",
+            "description": "lineNet = quantity * unitPrice * (1 - discountApplied/100).",
+            "expr": "@self.quantity * @self.unitPrice * (1 - (@self.discountApplied / 100))"
+          },
+          "lineVat": {
+            "type": "number",
+            "description": "lineVat = lineNet * btwRate/100.",
+            "expr": "(@self.quantity * @self.unitPrice * (1 - (@self.discountApplied / 100))) * (@self.btwRate / 100)"
+          }
+        }
+      },
+      "CreditNote": {
+        "slug": "CreditNote",
+        "icon": "ReceiptTextMinusOutline",
+        "version": "0.1.0",
+        "title": "Credit Note",
+        "description": "Creditfactuur — reverses an invoice with automatic AR offset (REQ-QOI-010, design D10). schema:Invoice per ADR-011. Dutch sequential numbering; no deletion.",
+        "x-schema-org": "schema:Invoice",
+        "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
+        "type": "object",
+        "required": [
+          "creditNoteNumber",
+          "sourceInvoiceReference"
+        ],
+        "properties": {
+          "creditNoteNumber": {
+            "type": "string",
+            "description": "Dutch sequential credit-note number.",
+            "title": "Credit Note Number"
+          },
+          "sourceInvoiceReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the Invoice being reversed.",
+            "title": "Source Invoice Reference"
+          },
+          "creditDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Credit-note date.",
+            "nullable": true,
+            "title": "Credit Date"
+          },
+          "totalAmount": {
+            "type": "number",
+            "description": "Gross credit amount.",
+            "nullable": true,
+            "title": "Total Amount"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "return",
+              "price-dispute",
+              "quality-issue",
+              "billing-error",
+              "goodwill"
+            ],
+            "description": "Reason code (Belastingdienst audit trail).",
+            "nullable": true,
+            "title": "Reason"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Free-text explanation.",
+            "nullable": true,
+            "title": "Notes"
+          },
+          "glTransactionReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the materialised GL reversal posting.",
+            "nullable": true,
+            "title": "GL Transaction Reference"
+          },
+          "arOffsetReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the AR offset / customer credit (bookkeeping-accounts-receivable-core).",
+            "nullable": true,
+            "title": "AR Offset Reference"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the owning administration.",
+            "nullable": true,
+            "title": "Administration ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "issued",
+              "applied"
+            ],
+            "description": "Credit-note lifecycle state (REQ-QOI-010).",
+            "default": "draft",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Credit note being prepared."
+            },
+            "issued": {
+              "label": "Issued",
+              "description": "GL reversal posted and AR offset created."
+            },
+            "applied": {
+              "label": "Applied",
+              "description": "Offset applied against the customer balance."
+            }
+          },
+          "transitions": {
+            "issue": {
+              "from": "draft",
+              "to": "issued",
+              "label": "Issue credit note",
+              "description": "Post the GL reversal (debit revenue / credit AR) and create the AR offset (design D10). Blocked unless the source invoice is set, a reason is recorded, and the amount is positive.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\QuoteOrderInvoiceGuard::canIssueCreditNote"
+            },
+            "apply": {
+              "from": "issued",
+              "to": "applied",
+              "label": "Apply credit",
+              "description": "Apply the credit against the customer balance."
+            }
+          }
+        }
+      },
+      "PricingTier": {
+        "slug": "PricingTier",
+        "icon": "TagMultipleOutline",
+        "version": "0.1.0",
+        "title": "Pricing Tier",
+        "description": "Prijsniveaus — customer / customer-group / product-group quantity-break pricing resolved in priority order (REQ-QOI-009, design D6).",
+        "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Pricing-tier name (shown on order lines for transparency).",
+            "title": "Name"
+          },
+          "customerReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to a specific customer (highest priority). Mutually informative with customerGroupReference.",
+            "nullable": true,
+            "title": "Customer Reference"
+          },
+          "customerGroupReference": {
+            "type": "string",
+            "description": "FK / code for a customer group (second priority).",
+            "nullable": true,
+            "title": "Customer Group Reference"
+          },
+          "productReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to a specific Product.",
+            "nullable": true,
+            "title": "Product Reference"
+          },
+          "productGroupReference": {
+            "type": "string",
+            "description": "FK / code for a product group (default tier).",
+            "nullable": true,
+            "title": "Product Group Reference"
+          },
+          "breakpoints": {
+            "type": "array",
+            "description": "Quantity-break -> unit-price entries: [{ minQuantity, maxQuantity, unitPrice, discountPercent }].",
+            "items": {
+              "type": "object"
+            },
+            "title": "Breakpoints"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Validity start.",
+            "nullable": true,
+            "title": "Valid From"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date",
+            "description": "Validity end.",
+            "nullable": true,
+            "title": "Valid Until"
+          },
+          "priority": {
+            "type": "integer",
+            "description": "Resolution priority (lower = higher precedence): 1 customer-specific, 2 customer-group, 3 product-group, 4 list.",
+            "default": 4,
+            "title": "Priority"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Pricing Tier is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "VolumeDiscount": {
+        "slug": "VolumeDiscount",
+        "icon": "SaleOutline",
+        "version": "0.1.0",
+        "title": "Volume Discount",
+        "description": "Volumekortingen — time-bounded, customer-eligible promotional rules applied automatically (REQ-QOI-009, design D7).",
+        "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
+        "type": "object",
+        "required": [
+          "name",
+          "ruleType"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Rule name (shown on order lines).",
+            "title": "Name"
+          },
+          "ruleType": {
+            "type": "string",
+            "enum": [
+              "buy-x-get-y",
+              "percentage-off-above-threshold",
+              "free-shipping-above-amount"
+            ],
+            "description": "Discount rule type (design D7).",
+            "title": "Rule Type"
+          },
+          "thresholdQuantity": {
+            "type": "number",
+            "description": "Quantity threshold (for buy-x-get-y / quantity rules).",
+            "nullable": true,
+            "title": "Threshold Quantity"
+          },
+          "thresholdAmount": {
+            "type": "number",
+            "description": "Amount threshold (for free-shipping / above-amount rules).",
+            "nullable": true,
+            "title": "Threshold Amount"
+          },
+          "discountPercent": {
+            "type": "number",
+            "description": "Discount percentage applied when the rule fires.",
+            "nullable": true,
+            "title": "Discount Percent"
+          },
+          "productReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to a specific Product the rule targets.",
+            "nullable": true,
+            "title": "Product Reference"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Validity start.",
+            "nullable": true,
+            "title": "Valid From"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date",
+            "description": "Validity end.",
+            "nullable": true,
+            "title": "Valid Until"
+          },
+          "customerEligibility": {
+            "type": "string",
+            "enum": [
+              "all",
+              "customer-list",
+              "customer-group"
+            ],
+            "description": "Who the rule applies to (design D7).",
+            "default": "all",
+            "title": "Customer Eligibility"
+          },
+          "eligibleCustomerReferences": {
+            "type": "array",
+            "description": "FK list (slug/uuid) of eligible customers (when customerEligibility = customer-list).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Eligible Customer References"
+          },
+          "automaticApplication": {
+            "type": "boolean",
+            "description": "Whether the rule applies automatically at quote / order time.",
+            "default": true,
+            "title": "Automatic Application"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Volume Discount is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "BlanketOrder": {
+        "slug": "BlanketOrder",
+        "icon": "ClipboardListOutline",
+        "version": "0.1.0",
+        "title": "Blanket Order",
+        "description": "Blancokorder — a master commitment with call-off releases drawn over months and remaining-quantity tracking (design D8).",
+        "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
+        "type": "object",
+        "required": [
+          "blanketOrderNumber",
+          "customerReference"
+        ],
+        "properties": {
+          "blanketOrderNumber": {
+            "type": "string",
+            "description": "Human-readable blanket-order number.",
+            "title": "Blanket Order Number"
+          },
+          "customerReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the customer.",
+            "title": "Customer Reference"
+          },
+          "productReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the committed Product.",
+            "nullable": true,
+            "title": "Product Reference"
+          },
+          "committedQuantity": {
+            "type": "number",
+            "description": "Total authorised quantity over the commitment.",
+            "default": 0,
+            "title": "Committed Quantity"
+          },
+          "calledOffQuantity": {
+            "type": "number",
+            "description": "Quantity released through call-off SalesOrders so far.",
+            "default": 0,
+            "title": "Called Off Quantity"
+          },
+          "agreedUnitPrice": {
+            "type": "number",
+            "description": "Agreed unit price for the commitment.",
+            "nullable": true,
+            "title": "Agreed Unit Price"
+          },
+          "callOffOrderReferences": {
+            "type": "array",
+            "description": "FK list (slug/uuid) of child SalesOrder call-off releases (design D8).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Call Off Order References"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Commitment start.",
+            "nullable": true,
+            "title": "Valid From"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date",
+            "description": "Commitment expiry.",
+            "nullable": true,
+            "title": "Valid Until"
+          },
+          "expiryHandling": {
+            "type": "string",
+            "enum": [
+              "void-remaining",
+              "rollover"
+            ],
+            "description": "What happens to the remaining quantity on expiry (design D8).",
+            "default": "void-remaining",
+            "title": "Expiry Handling"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the owning administration.",
+            "nullable": true,
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-calculations": {
+          "remainingQuantity": {
+            "type": "number",
+            "description": "remainingQuantity = max(committedQuantity - calledOffQuantity, 0). Declarative per ADR-031 (design D8).",
+            "expr": "max(@self.committedQuantity - @self.calledOffQuantity, 0)"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Blanket Order is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "CreditHold": {
+        "slug": "CreditHold",
+        "icon": "AccountCancelOutline",
+        "version": "0.1.0",
+        "title": "Credit Hold",
+        "description": "Kredietstop — an automated, audit-trailed customer credit hold triggered by AR-ageing thresholds (REQ-QOI-010, design D9).",
+        "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
+        "type": "object",
+        "required": [
+          "customerReference",
+          "severity"
+        ],
+        "properties": {
+          "customerReference": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the customer under hold.",
+            "title": "Customer Reference"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "warning",
+              "block-order",
+              "block-delivery"
+            ],
+            "description": "Hold severity (design D9): warning blocks nothing, block-order prevents order confirmation, block-delivery prevents shipment.",
+            "title": "Severity"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why the hold was applied (e.g. open AR > threshold AND > N days overdue).",
+            "nullable": true,
+            "title": "Reason"
+          },
+          "openBalanceAtTrigger": {
+            "type": "number",
+            "description": "Open AR balance that triggered the hold.",
+            "nullable": true,
+            "title": "Open Balance At Trigger"
+          },
+          "daysOverdueAtTrigger": {
+            "type": "integer",
+            "description": "Days overdue of the oldest open item at trigger.",
+            "nullable": true,
+            "title": "Days Overdue At Trigger"
+          },
+          "appliedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the hold was applied.",
+            "nullable": true,
+            "title": "Applied At"
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "NC user id (or 'system' for the scheduled workflow) that applied the hold.",
+            "nullable": true,
+            "title": "Created By"
+          },
+          "releasedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the hold was released.",
+            "nullable": true,
+            "title": "Released At"
+          },
+          "releasedBy": {
+            "type": "string",
+            "description": "NC user id (Credit Controller) that released the hold.",
+            "nullable": true,
+            "title": "Released By"
+          },
+          "releaseReason": {
+            "type": "string",
+            "description": "Why the hold was released (e.g. payment plan agreed, dispute resolved).",
+            "nullable": true,
+            "title": "Release Reason"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK (slug/uuid) to the owning administration.",
+            "nullable": true,
+            "title": "Administration ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "released"
+            ],
+            "description": "Hold state.",
+            "default": "active",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Hold in force."
+            },
+            "released": {
+              "label": "Released",
+              "description": "Hold lifted after negotiation."
+            }
+          },
+          "transitions": {
+            "release": {
+              "from": "active",
+              "to": "released",
+              "label": "Release hold",
+              "description": "Credit Controller lifts the hold (design D9). Blocked unless a releasedBy and a releaseReason are recorded (audit trail).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\QuoteOrderInvoiceGuard::canReleaseCreditHold"
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Credit Hold is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "PricingTier",
+          "slug": "qoi-sample-tier-bulk-widgets"
+        },
+        "name": "Bulk widget pricing",
+        "productReference": "qoi-sample-product-widget",
+        "productGroupReference": "widgets",
+        "breakpoints": [
+          {
+            "minQuantity": 1,
+            "maxQuantity": 9,
+            "unitPrice": 100,
+            "discountPercent": 0
+          },
+          {
+            "minQuantity": 10,
+            "maxQuantity": 49,
+            "unitPrice": 90,
+            "discountPercent": 10
+          },
+          {
+            "minQuantity": 50,
+            "maxQuantity": null,
+            "unitPrice": 80,
+            "discountPercent": 20
+          }
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2026-12-31",
+        "priority": 3
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "PricingTier",
+          "slug": "qoi-sample-tier-industrial-customer"
+        },
+        "name": "Industrial buyer agreed price",
+        "customerReference": "qoi-sample-customer-industrial",
+        "productReference": "qoi-sample-product-widget",
+        "breakpoints": [
+          {
+            "minQuantity": 1,
+            "maxQuantity": null,
+            "unitPrice": 75,
+            "discountPercent": 0
+          }
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2026-12-31",
+        "priority": 1
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "VolumeDiscount",
+          "slug": "qoi-sample-discount-free-shipping"
+        },
+        "name": "Free shipping above EUR 1.000",
+        "ruleType": "free-shipping-above-amount",
+        "thresholdAmount": 1000,
+        "validFrom": "2026-01-01",
+        "validUntil": "2026-12-31",
+        "customerEligibility": "all",
+        "automaticApplication": true
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "VolumeDiscount",
+          "slug": "qoi-sample-discount-bulk-widget"
+        },
+        "name": "Buy 100+ widgets, 5% off",
+        "ruleType": "percentage-off-above-threshold",
+        "thresholdQuantity": 100,
+        "discountPercent": 5,
+        "productReference": "qoi-sample-product-widget",
+        "validFrom": "2026-01-01",
+        "validUntil": "2026-03-31",
+        "customerEligibility": "customer-group",
+        "automaticApplication": true
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Quote",
+          "slug": "qoi-sample-quote-industrial-sent"
+        },
+        "quoteNumber": "Q-2026-0001",
+        "customerReference": "qoi-sample-customer-industrial",
+        "version": 1,
+        "validUntil": "2026-07-15",
+        "currency": "EUR",
+        "language": "nl",
+        "paymentTerms": "net60",
+        "deliveryTerms": "DAP",
+        "responsibleSalesperson": "sales",
+        "status": "sent"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Quote",
+          "slug": "qoi-sample-quote-retail-accepted"
+        },
+        "quoteNumber": "Q-2026-0002",
+        "customerReference": "qoi-sample-customer-retail",
+        "version": 2,
+        "supersedesQuote": "qoi-sample-quote-retail-v1",
+        "validUntil": "2026-07-30",
+        "currency": "EUR",
+        "language": "nl",
+        "paymentTerms": "net30",
+        "deliveryTerms": "EXW",
+        "acceptanceChannel": "in-app-link",
+        "acceptedAt": "2026-06-01T10:15:00+02:00",
+        "status": "accepted"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Quote",
+          "slug": "qoi-sample-quote-public-expired"
+        },
+        "quoteNumber": "Q-2026-0003",
+        "customerReference": "qoi-sample-customer-public",
+        "version": 1,
+        "validUntil": "2026-04-01",
+        "currency": "EUR",
+        "language": "nl",
+        "paymentTerms": "net45",
+        "status": "expired"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "QuoteLine",
+          "slug": "qoi-sample-quoteline-retail-1"
+        },
+        "quote": "qoi-sample-quote-retail-accepted",
+        "lineNumber": 1,
+        "productReference": "qoi-sample-product-widget",
+        "description": "Widget type A",
+        "quantity": 20,
+        "unitPrice": 90,
+        "discount": 10,
+        "appliedTierName": "Bulk widget pricing",
+        "vatRate": 21
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "SalesOrder",
+          "slug": "qoi-sample-order-retail-partial"
+        },
+        "orderNumber": "SO-2026-0001",
+        "customerReference": "qoi-sample-customer-retail",
+        "sourceQuoteReference": "qoi-sample-quote-retail-accepted",
+        "orderDate": "2026-06-02",
+        "requestedDeliveryDate": "2026-06-20",
+        "currency": "EUR",
+        "paymentTerms": "net30",
+        "deliveryTerms": "EXW",
+        "invoicingMode": "on-delivery",
+        "creditCheckResult": "passed",
+        "status": "partial"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "SalesOrderLine",
+          "slug": "qoi-sample-orderline-retail-1"
+        },
+        "salesOrder": "qoi-sample-order-retail-partial",
+        "lineNumber": 1,
+        "productReference": "qoi-sample-product-widget",
+        "description": "Widget type A",
+        "orderedQuantity": 100,
+        "deliveredQuantity": 60,
+        "invoicedQuantity": 60,
+        "unitPrice": 90,
+        "discountApplied": 10,
+        "appliedTierName": "Bulk widget pricing",
+        "vatRate": 21
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Delivery",
+          "slug": "qoi-sample-delivery-retail-1"
+        },
+        "deliveryNumber": "DN-2026-0001",
+        "sourceOrderReference": "qoi-sample-order-retail-partial",
+        "shippedAt": "2026-06-10T09:00:00+02:00",
+        "carrier": "PostNL",
+        "trackingNumber": "3STBJG123456789",
+        "lines": [
+          {
+            "orderLineReference": "qoi-sample-orderline-retail-1",
+            "productReference": "qoi-sample-product-widget",
+            "quantityShipped": 60
+          }
+        ],
+        "status": "shipped"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Delivery",
+          "slug": "qoi-sample-delivery-retail-2"
+        },
+        "deliveryNumber": "DN-2026-0002",
+        "sourceOrderReference": "qoi-sample-order-retail-partial",
+        "carrier": "PostNL",
+        "lines": [
+          {
+            "orderLineReference": "qoi-sample-orderline-retail-1",
+            "productReference": "qoi-sample-product-widget",
+            "quantityShipped": 40
+          }
+        ],
+        "status": "draft"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Invoice",
+          "slug": "qoi-sample-invoice-retail-delivery1"
+        },
+        "invoiceNumber": "2026-0001",
+        "customerReference": "qoi-sample-customer-retail",
+        "invoiceDate": "2026-06-10",
+        "dueDate": "2026-07-10",
+        "currency": "EUR",
+        "paymentTerms": "net30",
+        "invoiceType": "delivery-based",
+        "sourceOrderReferences": [
+          "qoi-sample-order-retail-partial"
+        ],
+        "sourceDeliveryReferences": [
+          "qoi-sample-delivery-retail-1"
+        ],
+        "netAmount": 4860,
+        "vatAmount": 1020.6,
+        "grossAmount": 5880.6,
+        "status": "sent"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "InvoiceLine",
+          "slug": "qoi-sample-invoiceline-retail-1"
+        },
+        "invoice": "qoi-sample-invoice-retail-delivery1",
+        "lineNumber": 1,
+        "productReference": "qoi-sample-product-widget",
+        "description": "Widget type A",
+        "quantity": 60,
+        "unitPrice": 90,
+        "discountApplied": 10,
+        "vatRate": 21
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Invoice",
+          "slug": "qoi-sample-invoice-public-peppol"
+        },
+        "invoiceNumber": "2026-0002",
+        "customerReference": "qoi-sample-customer-public",
+        "invoiceDate": "2026-06-03",
+        "dueDate": "2026-07-18",
+        "currency": "EUR",
+        "paymentTerms": "net45",
+        "invoiceType": "delivery-based",
+        "vatLegend": "21% BTW",
+        "viesValidated": false,
+        "peppolMessageId": "peppol-msg-sample-0002",
+        "ublXmlReference": "docudesk://ubl/2026-0002.xml",
+        "netAmount": 2000,
+        "vatAmount": 420,
+        "grossAmount": 2420,
+        "status": "sent"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Invoice",
+          "slug": "qoi-sample-invoice-industrial-advance"
+        },
+        "invoiceNumber": "2026-0003",
+        "customerReference": "qoi-sample-customer-industrial",
+        "invoiceDate": "2026-06-04",
+        "dueDate": "2026-08-03",
+        "currency": "EUR",
+        "paymentTerms": "net60",
+        "invoiceType": "advance",
+        "vatLegend": "Btw verlegd — intracommunautaire levering (art. 196 btw-richtlijn)",
+        "viesValidated": true,
+        "netAmount": 7500,
+        "vatAmount": 0,
+        "grossAmount": 7500,
+        "status": "draft"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "BlanketOrder",
+          "slug": "qoi-sample-blanket-industrial"
+        },
+        "blanketOrderNumber": "BO-2026-0001",
+        "customerReference": "qoi-sample-customer-industrial",
+        "productReference": "qoi-sample-product-widget",
+        "committedQuantity": 1000,
+        "calledOffQuantity": 250,
+        "agreedUnitPrice": 75,
+        "callOffOrderReferences": [],
+        "validFrom": "2026-01-01",
+        "validUntil": "2026-12-31",
+        "expiryHandling": "void-remaining"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CreditHold",
+          "slug": "qoi-sample-credithold-overdue"
+        },
+        "customerReference": "qoi-sample-customer-retail",
+        "severity": "block-delivery",
+        "reason": "2 invoices overdue 45+ days; open AR EUR 8.200 > threshold EUR 5.000",
+        "openBalanceAtTrigger": 8200,
+        "daysOverdueAtTrigger": 47,
+        "appliedAt": "2026-06-01T03:00:00+02:00",
+        "createdBy": "system",
+        "status": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CreditNote",
+          "slug": "qoi-sample-creditnote-return"
+        },
+        "creditNoteNumber": "CN-2026-0001",
+        "sourceInvoiceReference": "qoi-sample-invoice-retail-delivery1",
+        "creditDate": "2026-06-15",
+        "totalAmount": 588.06,
+        "reason": "return",
+        "notes": "Customer returned 6 defective widgets.",
+        "status": "issued"
+      }
+    ]
+  }
+}

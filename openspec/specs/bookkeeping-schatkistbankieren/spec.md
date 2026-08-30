@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-schatkistbankieren
 
 **Status:** proposed
@@ -6,7 +10,11 @@
 **Depends on:** `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-chart-of-accounts/spec.md` (T1 chart of accounts),
 `./bookkeeping-audit-trail/spec.md` (T2 audit trail)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping schatkistbankieren in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: schatkistbankieren treasury pages not yet implemented
 
@@ -43,6 +51,8 @@ every register consumes OR's audit-trail-immutable and RBAC abstractions.
 
 ### REQ-SCHATKIST-002: The `TreasuryAccount` schema SHALL declare a fixed minimum field set
 
+The system SHALL satisfy this requirement: The `TreasuryAccount` schema SHALL declare a fixed minimum field set.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `accountNumber` | string | Yes | Stable identifier (per administration) |
@@ -74,6 +84,8 @@ Schema.org annotation: `schema:BankAccount` (per shillinq config.yaml `rules.spe
 - **THEN** validation MUST fail with an "invalid IBAN format" error.
 
 ### REQ-SCHATKIST-003: The `BankingRule` schema SHALL declare configurable compliance criteria
+
+The system SHALL satisfy this requirement: The `BankingRule` schema SHALL declare configurable compliance criteria.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -143,6 +155,8 @@ is declared in the schema.
   account MUST remain `configured`.
 
 ### REQ-SCHATKIST-005: Treasury account activation SHALL enforce multi-criteria compliance precondition with declarative rule evaluation
+
+The system SHALL satisfy this requirement: Treasury account activation SHALL enforce multi-criteria compliance precondition with declarative rule evaluation.
 
 When a `TreasuryAccount` transitions from `configured → active`, the lifecycle
 engine MUST evaluate ALL active `BankingRule` records applicable to that administration
@@ -245,6 +259,8 @@ GROUP BY + metric computation.
 - **THEN** the result MUST include `{ administrationId: "adm-1", period: "2026-Q1", totalAccounts: 10, compliantCount: 8, compliancePercentage: 80 }`.
 
 ### REQ-SCHATKIST-008: Treasury account transitions SHALL materialize audit trail events per T2 `bookkeeping-audit-trail`
+
+The system SHALL satisfy this requirement: Treasury account transitions SHALL materialize audit trail events per T2 `bookkeeping-audit-trail`.
 
 Every `TreasuryAccount` state transition (draft → configured → active → monitored
 → compliant) MUST generate an immutable audit trail event per the T2

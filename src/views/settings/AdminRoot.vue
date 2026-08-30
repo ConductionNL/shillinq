@@ -1,45 +1,38 @@
 <template>
-	<div class="shillinq-admin">
-		<CnVersionInfoCard
-			:app-name="'Shillinq'"
-			:app-version="appVersion"
-			:is-up-to-date="true"
-			:show-update-button="true"
-			:title="t('shillinq', 'Version Information')"
-			:description="t('shillinq', 'Information about the current Shillinq installation')">
-			<template #footer>
-				<div class="cn-support-info">
-					<h4>{{ t('shillinq', 'Support') }}</h4>
-					<p>{{ t('shillinq', 'For support, contact us at') }} <a href="mailto:support@conduction.nl">support@conduction.nl</a></p>
-				</div>
-			</template>
-		</CnVersionInfoCard>
-
+	<CnAdminSettingsShell
+		appId="shillinq"
+		appName="Shillinq"
+		docUrl="https://shillinq.conduction.nl/docs/intro"
+		@reimported="onReimported">
 		<Settings v-if="storesReady" />
-	</div>
+
+		<PipelinqIntegration v-if="storesReady" />
+	</CnAdminSettingsShell>
 </template>
 
 <script>
-import { loadState } from '@nextcloud/initial-state'
-import { CnVersionInfoCard } from '@conduction/nextcloud-vue'
+import { CnAdminSettingsShell } from '@conduction/nextcloud-vue'
+import PipelinqIntegration from './PipelinqIntegration.vue'
 import Settings from './Settings.vue'
 import { initializeStores } from '../../store/store.js'
 
 export default {
 	name: 'AdminRoot',
 	components: {
-		CnVersionInfoCard,
+		CnAdminSettingsShell,
 		Settings,
+		PipelinqIntegration,
 	},
+
 	data() {
 		return {
 			storesReady: false,
-			appVersion: loadState('shillinq', 'version', 'Unknown'),
 		}
 	},
+
 	/**
-	 * Bring up the Pinia stores (object + settings) so the embedded Settings
-	 * form can read register data, then reveal it.
+	 * Bring up the Pinia stores (settings) so the embedded Settings form can
+	 * read register data, then reveal it.
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-app-administration/tasks.md#task-5
 	 */
@@ -47,11 +40,12 @@ export default {
 		await initializeStores()
 		this.storesReady = true
 	},
+
+	methods: {
+		/** Reload register-backed config after a successful re-import. */
+		onReimported() {
+			initializeStores()
+		},
+	},
 }
 </script>
-
-<style scoped>
-.shillinq-admin {
-	max-width: 900px;
-}
-</style>

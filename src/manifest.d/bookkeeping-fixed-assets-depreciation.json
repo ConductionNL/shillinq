@@ -1,0 +1,144 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-fixed-assets-depreciation",
+		"description": "Manifest navigation + pages for REQ-FA-010. Adds Depreciation Schedules (index + detail) and Depreciation Expense (report) alongside the existing Fixed Assets entry already declared in src/manifest.json (REQ-FA-010 explicitly states the Fixed Assets entry is part of the three-entry set; only the two additional entries land here to avoid duplicate menu entries)."
+	},
+	"menu": [
+		{
+			"id": "DepreciationSchedules",
+			"label": "Depreciation Schedules",
+			"icon": "ChartLineVariant",
+			"route": "DepreciationSchedules",
+			"order": 39
+		},
+		{
+			"id": "DepreciationExpense",
+			"label": "Depreciation Expense",
+			"icon": "ReceiptOutline",
+			"route": "DepreciationExpense",
+			"order": 40
+		}
+	],
+	"pages": [
+		{
+			"id": "DepreciationSchedules",
+			"route": "/depreciation-schedules",
+			"type": "index",
+			"title": "Depreciation Schedules",
+			"config": {
+				"register": "shillinq",
+				"schema": "DepreciationSchedule",
+				"columns": [
+					{ "key": "scheduleNumber", "label": "Schedule Number", "sortable": true },
+					{ "key": "assetRef", "label": "Asset", "sortable": true },
+					{ "key": "fiscalYear", "label": "Fiscal Year", "sortable": true },
+					{ "key": "depreciationMethod", "label": "Method", "sortable": true },
+					{ "key": "annualRate", "label": "Annual Rate", "sortable": true },
+					{ "key": "depreciationAmount", "label": "Depreciation", "sortable": true },
+					{ "key": "accumulatedDepreciation", "label": "Accumulated", "sortable": true },
+					{ "key": "costCenterCode", "label": "Cost Centre", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "fiscalYear",
+				"filters": [
+					{ "key": "fiscalYear", "label": "Fiscal Year" },
+					{ "key": "depreciationMethod", "label": "Method" },
+					{ "key": "status", "label": "Status" },
+					{ "key": "costCenterCode", "label": "Cost Centre" }
+				],
+				"detailRoute": "DepreciationScheduleDetail"
+			}
+		},
+		{
+			"id": "DepreciationScheduleDetail",
+			"route": "/depreciation-schedules/:id",
+			"type": "detail",
+			"title": "Depreciation Schedule",
+			"config": {
+				"register": "shillinq",
+				"schema": "DepreciationSchedule",
+				"fields": [
+					{ "key": "scheduleNumber", "label": "Schedule Number", "type": "string" },
+					{ "key": "assetRef", "label": "Asset", "type": "string" },
+					{ "key": "depreciationMethod", "label": "Method", "type": "string" },
+					{ "key": "annualRate", "label": "Annual Rate", "type": "number" },
+					{ "key": "rateType", "label": "Rate Type", "type": "string" },
+					{ "key": "periodStartDate", "label": "Period Start", "type": "string" },
+					{ "key": "periodEndDate", "label": "Period End", "type": "string" },
+					{ "key": "depreciationAmount", "label": "Depreciation Amount", "type": "number" },
+					{ "key": "accumulatedDepreciation", "label": "Accumulated Depreciation", "type": "number" },
+					{ "key": "bookValue", "label": "Book Value", "type": "number" },
+					{ "key": "fiscalYear", "label": "Fiscal Year", "type": "number" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "costCenterCode", "label": "Cost Centre", "type": "string" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" },
+					{ "key": "glTransactionRef", "label": "GL Transaction", "type": "string" },
+					{ "key": "calculationFloatPrecision", "label": "Float Precision", "type": "number" }
+				],
+				"_note": "FINANCIAL LEDGER row — one period's depreciation for a fixed asset. Body shows the method/rate, the period depreciation vs accumulated depreciation and running book value, plus the GL transaction that posts it. The full depreciation history for the same asset is listed on the body so the roll-forward is legible; the audit trail sits in the sidebar. A ledger posting has no correspondence — no comms leaves.",
+				"indexRoute": "DepreciationSchedules",
+				"relatedObjects": [
+					{
+						"id": "asset-schedule",
+						"label": "Depreciation history (same asset)",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "DepreciationSchedule",
+							"filterField": "assetRef",
+							"columns": ["fiscalYear", "periodStartDate", "periodEndDate", "depreciationAmount", "accumulatedDepreciation", "bookValue"],
+							"detailRoute": "DepreciationScheduleDetail",
+							"defaultSort": "periodStartDate"
+						}
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "DepreciationExpense",
+			"route": "/depreciation-expense",
+			"type": "index",
+			"title": "Depreciation Expense",
+			"config": {
+				"register": "shillinq",
+				"schema": "DepreciationSchedule",
+				"description": "REQ-FA-009 cost-centre and method-based depreciation reporting backed by the DepreciationSchedule register x-openregister-aggregations queries (depreciationAmountByCostCenter, depreciationAmountByMethod, accumulatedDepreciationByAsset).",
+				"columns": [
+					{ "key": "costCenterCode", "label": "Cost Centre", "sortable": true },
+					{ "key": "depreciationMethod", "label": "Method", "sortable": true },
+					{ "key": "fiscalYear", "label": "Fiscal Year", "sortable": true },
+					{ "key": "depreciationAmount", "label": "Depreciation Amount", "sortable": true },
+					{ "key": "accumulatedDepreciation", "label": "Accumulated", "sortable": true }
+				],
+				"defaultSort": "costCenterCode",
+				"filters": [
+					{ "key": "fiscalYear", "label": "Fiscal Year" },
+					{ "key": "costCenterCode", "label": "Cost Centre" },
+					{ "key": "depreciationMethod", "label": "Method" }
+				]
+			}
+		}
+	]
+}

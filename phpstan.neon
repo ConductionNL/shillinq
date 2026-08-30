@@ -1,59 +1,133 @@
+# Shillinq — Conduction PHPStan config.
+#
+# The shared base is the single source of truth. Everything here is either the
+# app's own tracked debt or an ignore naming a symbol that exists in no other
+# fleet app. Anything you are tempted to add that another app would also need
+# belongs in the base, not here.
 includes:
-    # Per-app tracked lint debt lives here (auto-generated via `phpstan --generate-baseline`).
-    # Apps without debt ship an empty baseline file; canonical includes are otherwise byte-identical
-    # across the fleet.
+    - vendor/conduction/hydra-gates/quality-config/phpstan-base.neon
+    # Per-app tracked lint debt (auto-generated via `phpstan --generate-baseline`).
     - phpstan-baseline.neon
 
 parameters:
-    level: 5
-    paths:
-        - lib
-    bootstrapFiles:
-        - phpstan-bootstrap.php
-    excludePaths:
-        - vendor
-        - vendor-bin
-        # Apps that ship a verbatim template snapshot under lib/Resources/template/ (e.g. openbuilt).
-        - lib/Resources/template
+    # App-specific only. The base already sets level, paths, bootstrapFiles,
+    # excludePaths, scanDirectories and every fleet-wide ignore.
+
+    # OpenRegister's contract, which lib/ typehints in 174 places but does not own.
+    #
+    # This app already SHIPS the stubs, at tests/stubs/OpenRegister/Contract/ —
+    # but phpstan refuses to autoload them and says so:
+    #
+    #   Class OCA\OpenRegister\Contract\ObjectServiceInterface located in
+    #   ./tests/stubs/OpenRegister/Contract/ObjectServiceInterface.php does not
+    #   comply with psr-4 autoloading standard (rule: OCA\Shillinq\Tests\ =>
+    #   ./tests). Skipping.
+    #
+    # It resolved anyway until now, because conduction/hydra-gates declared
+    # `OCA\OpenRegister\Contract\` as a runtime psr-4 prefix. That was a bug —
+    # the prefix is longer than openregister's own, so a vendored copy in ANY app
+    # defined the contract for the whole process — and v1.9.0 removed it
+    # (ConductionNL/.github#531). The skip notice was always there; the removal is
+    # what made it matter.
+    #
+    # scanDirectories loads the files for ANALYSIS without going through psr-4,
+    # which is exactly the seam needed: the class must be visible to phpstan and
+    # must NOT go back into the runtime autoloader.
     scanDirectories:
-        - vendor/nextcloud/ocp
-    reportUnmatchedIgnoredErrors: false
+        - %currentWorkingDirectory%/tests/stubs/OpenRegister/Contract
+        # ADR-078 listener-deferral contract (#1198). TenderNedAwardPromotionJob
+        # EXTENDS OCA\OpenRegister\BackgroundJob\ActorForwardedJob, and phpstan
+        # refuses to ignore an "extends unknown class" error — it says
+        # "cannot be ignored, use excludePaths instead". excludePaths is what the
+        # cross-app *interface* implementors below had to do, but it drops the
+        # file from analysis entirely; scanDirectories makes the base class
+        # visible instead, so the new job stays analysed.
+        - %currentWorkingDirectory%/tests/stubs/OpenRegister/BackgroundJob
+        # Covers Service/Deferral too — scanDirectories recurses, so listing the
+        # subdirectory separately would be redundant, not additive.
+        - %currentWorkingDirectory%/tests/stubs/OpenRegister/Service
+
+    # PHPDoc @return bool / @return array types are often intentionally broader than the
+    # inferred type (e.g. SimpleXMLElement methods, third-party SDKs). Treating PHPDoc
+    # types as certain causes spurious `=== true/false` / `=== null` "always false" errors.
+    treatPhpDocTypesAsCertain: false
+
+    excludePaths:
+        # CustomerBridgeMetricsService implements OCA\OpenRegister\AppHost\IMetricsProvider which is
+        # unavailable at analysis time (cross-app interface, present only at runtime). PHPStan requires
+        # excludePaths for this class of error (not suppressible via ignoreErrors or baseline).
+        - lib/Service/Pipelinq/CustomerBridgeMetricsService.php
+        # shillinq#425: RegisterRequiresGuardAdapter implements
+        # OCA\OpenRegister\Lifecycle\LifecycleGuardInterface, a cross-app interface present only at
+        # runtime — same class of error as CustomerBridgeMetricsService above.
+        - lib/Lifecycle/RegisterRequiresGuardAdapter.php
+        # FourEyesPaymentRunGuard + PaymentRunDuplicateGuard implement the same cross-app
+        # OCA\OpenRegister\Lifecycle\LifecycleGuardInterface — non-ignorable "implements unknown
+        # interface" error at analysis time; only resolvable via excludePaths.
+        - lib/Lifecycle/FourEyesPaymentRunGuard.php
+        - lib/Lifecycle/PaymentRunDuplicateGuard.php
+        # RoleFallbackResolver implements the cross-app
+        # OCA\OpenRegister\Service\Notification\RecipientResolverInterface — same
+        # non-ignorable "implements unknown interface" class as the guards above.
+        - lib/Notification/RoleFallbackResolver.php
+        # AppendReopenHistoryAction implements the cross-app
+        # OCA\OpenRegister\Lifecycle\LifecycleActionInterface — same non-ignorable
+        # "implements unknown interface" class as the guards above.
+        - lib/Lifecycle/Action/AppendReopenHistoryAction.php
+
     ignoreErrors:
-        # Nextcloud server internals (\OC, OC_App, OC\) not stubbed in nextcloud/ocp
-        - '#Call to an undefined method OC::#'
-        - '#Class OC not found#'
-        - '#Access to static property \$server on an unknown class OC#'
-        - '#unknown class OC\\#'
-        - '#Caught class OC\\#'
-        - '#unknown class OC_App#'
-        - '#Class OC_App not found#'
-        # OCA\DAV is server-internal and not in nextcloud/ocp stubs
-        - '#unknown class OCA\\DAV\\#'
-        - '#Class OCA\\DAV\\#'
-        # OCA classes from other apps (OpenRegister) not available during static analysis
-        - '#unknown class OCA\\OpenRegister\\#'
-        - '#OCA\\OpenRegister\\[a-zA-Z\\]+.*not found#'
-        - '#on an unknown class OCA\\OpenRegister\\#'
-        - '#has invalid return type OCA\\OpenRegister\\#'
-        - '#has invalid type OCA\\OpenRegister\\#'
-        - '#implements unknown interface OCA\\OpenRegister\\#'
-        # GuzzleHttp is available at runtime via Nextcloud but not in composer require
-        - '#unknown class GuzzleHttp\\#'
-        - '#GuzzleHttp\\[a-zA-Z\\]+.*not found#'
-        - '#on an unknown class GuzzleHttp\\#'
-        - '#invalid type GuzzleHttp\\#'
-        - '#Caught class GuzzleHttp\\#'
-        # Doctrine\DBAL is shipped by Nextcloud server but not stubbed in nextcloud/ocp
-        - '#unknown class Doctrine\\DBAL\\#'
-        - '#Doctrine\\DBAL\\[a-zA-Z\\]+.*not found#'
-        - '#on an unknown class Doctrine\\DBAL\\#'
-        # Dynamic HTTP status codes from business rule validation results
-        # (matches both `Parameter $statusCode` and `Parameter #N $statusCode` forms emitted by phpstan)
-        - '#Parameter (\#\d+ )?\$statusCode of class OCP\\AppFramework\\Http\\JSONResponse constructor expects#'
-        # registerRepairStep exists on server; not yet in nextcloud/ocp stub used for analysis
-        - '#Call to an undefined method OCP\\AppFramework\\Bootstrap\\IRegistrationContext::registerRepairStep#'
-        # OCP stub gaps for methods that exist at runtime
-        - '#Call to an undefined method OCP\\IRequest::getContent\(\)#'
-        - '#Call to an undefined method OCP\\IRequest::setParameter\(\)#'
-        - '#Call to an undefined method OCP\\Mail\\IMessage::attachFile\(\)#'
-        - '#Call to an undefined method OCP\\AppFramework\\Db\\Entity::jsonSerialize#'
+        # OCA\Decidesk (decision module) — cross-app dep, present only at runtime
+        - '#unknown class OCA\\Decidesk\\#'
+        - '#OCA\\Decidesk\\[a-zA-Z\\]+.*not found#'
+        - '#on an unknown class OCA\\Decidesk\\#'
+        - '#has invalid type OCA\\Decidesk\\#'
+        - '#Class OCA\\Decidesk\\[a-zA-Z\\]+.*not found#'
+        # Cross-app events that extend OCP\EventDispatcher\Event at runtime but PHPStan cannot verify
+        - '#expects OCP\\EventDispatcher\\Event, OCA\\Decidesk\\#'
+        # OCA\DocuDesk (document signing) — cross-app dep, present only at runtime
+        - '#unknown class OCA\\DocuDesk\\#'
+        - '#OCA\\DocuDesk\\[a-zA-Z\\]+.*not found#'
+        - '#on an unknown class OCA\\DocuDesk\\#'
+        - '#has invalid type OCA\\DocuDesk\\#'
+        - '#Class OCA\\DocuDesk\\[a-zA-Z\\]+.*not found#'
+        # Cross-app events that extend OCP\EventDispatcher\Event at runtime but PHPStan cannot verify
+        - '#expects OCP\\EventDispatcher\\Event, OCA\\DocuDesk\\#'
+        # OCA\Pipelinq (POS) — cross-app dep, present only at runtime.
+        # Change inventory-pos-decrement (shillinq#504): PosStockDecrementListener
+        # consumes pipelinq's PosStockMovedEvent.
+        - '#unknown class OCA\\Pipelinq\\Event\\#'
+        - '#OCA\\Pipelinq\\Event\\[a-zA-Z\\]+.*not found#'
+        - '#on an unknown class OCA\\Pipelinq\\Event\\#'
+        - '#has invalid type OCA\\Pipelinq\\Event\\#'
+        - '#Class OCA\\Pipelinq\\Event\\[a-zA-Z\\]+.*not found#'
+        - '#expects OCP\\EventDispatcher\\Event, OCA\\Pipelinq\\#'
+        # PhpOffice\PhpWord — word-processor library available at runtime via NC app deps;
+        # not declared in composer.json to avoid version conflicts with NC's own phpword.
+        - '#unknown class PhpOffice\\#'
+        - '#PhpOffice\\[a-zA-Z\\]+.*not found#'
+        - '#on an unknown class PhpOffice\\#'
+        - '#has invalid return type PhpOffice\\#'
+        - '#has invalid type PhpOffice\\#'
+        - '#Instantiated class PhpOffice\\#'
+        - '#Call to method .+ on an unknown class PhpOffice\\#'
+        - '#Call to static method .+ on an unknown class PhpOffice\\#'
+        # AuthorizedAdminSetting attribute — NC allows passing the app-id string (e.g. Application::APP_ID)
+        # at runtime; PHPStan's attribute ctor type is stricter (class-string<IDelegatedSettings>).
+        # This is intentional: all controllers use the fleet-canonical app-id pattern.
+        - '#Parameter (\#\d+ )?\$settings of attribute class OCP\\AppFramework\\Http\\Attribute\\AuthorizedAdminSetting#'
+        # DataResponse body type — NC31's DataResponseType generic is `array<int|string,mixed>|string|int|bool|float|null`
+        # but PHPStan infers stricter union types for complex nested arrays and string bodies (e.g. markdown/PDF).
+        # At runtime DataResponse accepts any serialisable value; the mismatch is a PHPStan generic inference gap.
+        - '#Parameter (\#\d+ )?\$data of class OCP\\AppFramework\\Http\\DataResponse constructor expects#'
+        # Dompdf ReflectionClass: $domPdfClass is verified by class_exists above, but PHPStan
+        # cannot narrow from string to class-string<\Dompdf\Dompdf> through a variable.
+        - '#Parameter (\#\d+ )?\$objectOrClass of class ReflectionClass constructor expects.*string given#'
+        # RuleEngine::providerSeedObjects narrows via class_implements, but PHPStan still sees
+        # CheckProvider (the base type) which does not declare seedObjects().
+        - '#Call to an undefined static method OCA\\Shillinq\\Standards\\Checks\\CheckProvider::seedObjects#'
+        # OpenRegister's stoppable pre-save events (ObjectCreatingEvent /
+        # ObjectUpdatingEvent) declare setErrors(); they are cross-app classes
+        # absent at analysis time, so PHPStan only sees the OCP base Event and
+        # cannot narrow the instanceof. The call is valid at runtime — it is the
+        # documented veto contract MagicMapper turns into a HookStoppedException.
+        - '#Call to an undefined method OCP\\EventDispatcher\\Event::setErrors\(\)#'

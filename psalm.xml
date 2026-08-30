@@ -60,6 +60,14 @@
                 <referencedClass name="OCP\Notification\IManager"/>
                 <referencedClass name="OCP\Share\IManager"/>
                 <!-- OpenRegister cross-app classes (loaded dynamically) -->
+                <!-- ADR-084 published contract (adopted by commit ef9c8fa5, pre-dates
+                     security-endpoint-guards) — missing from this allowlist since that
+                     adoption; every controller injecting these two (CBSSubmissionController,
+                     InvoiceApiController, and others) already failed UndefinedClass here.
+                     Not introduced by this change; fixed alongside since this change's own
+                     verification pass is what surfaced it. -->
+                <referencedClass name="OCA\OpenRegister\Contract\ObjectServiceInterface"/>
+                <referencedClass name="OCA\OpenRegister\Contract\ObjectEntityInterface"/>
                 <referencedClass name="OCA\OpenRegister\Db\ObjectEntity"/>
                 <referencedClass name="OCA\OpenRegister\Db\RegisterMapper"/>
                 <referencedClass name="OCA\OpenRegister\Db\SchemaMapper"/>
@@ -69,12 +77,48 @@
                 <referencedClass name="OCA\OpenRegister\Event\ObjectUpdatingEvent"/>
                 <referencedClass name="OCA\OpenRegister\Event\ObjectUpdatedEvent"/>
                 <referencedClass name="OCA\OpenRegister\Event\ObjectDeletedEvent"/>
+                <referencedClass name="OCA\OpenRegister\Event\ObjectTransitionedEvent"/>
                 <referencedClass name="OCA\OpenRegister\Service\ObjectService"/>
+                <referencedClass name="OCA\OpenRegister\Service\Aggregation\AggregationQuery"/>
+                <referencedClass name="OCA\OpenRegister\Service\Notification\RecipientResolverInterface"/>
                 <referencedClass name="OCA\OpenRegister\Service\ConfigurationService"/>
                 <referencedClass name="OCA\OpenRegister\Service\RegisterService"/>
                 <referencedClass name="OCA\OpenRegister\Service\FileService"/>
                 <referencedClass name="OCA\OpenRegister\Service\CalendarEventService"/>
                 <referencedClass name="OCA\OpenRegister\Mcp\IMcpToolProvider"/>
+                <referencedClass name="OCA\OpenRegister\Lifecycle\LifecycleGuardInterface"/>
+                <referencedClass name="OCA\OpenRegister\Lifecycle\LifecycleActionInterface"/>
+                <referencedClass name="OCA\OpenRegister\Lifecycle\GuardResult"/>
+                <!-- OpenRegister listener-deferral contract (ADR-078). Used by
+                     TenderNedAwardPromotionJob + TenderNedAwardDetectedListener to
+                     move post-`*ed` work off the caller's write path (#1198). -->
+                <referencedClass name="OCA\OpenRegister\BackgroundJob\ActorForwardedJob"/>
+                <referencedClass name="OCA\OpenRegister\Service\Deferral\ListenerDeferralService"/>
+                <referencedClass name="OCA\OpenRegister\Service\Deferral\DeferredListenerContext"/>
+                <referencedClass name="OCA\OpenRegister\Service\OrganisationService"/>
+                <!-- OpenRegister AppHost (GenericController/Settings wrappers) -->
+                <referencedClass name="OCA\OpenRegister\AppHost\IMetricsProvider"/>
+                <referencedClass name="OCA\OpenRegister\AppHost\Controller\GenericDashboardController"/>
+                <referencedClass name="OCA\OpenRegister\AppHost\Controller\GenericHealthController"/>
+                <referencedClass name="OCA\OpenRegister\AppHost\Controller\GenericMetricsController"/>
+                <referencedClass name="OCA\OpenRegister\AppHost\Settings\GenericAdminSettings"/>
+                <referencedClass name="OCA\OpenRegister\AppHost\Settings\GenericSettingsSection"/>
+                <!-- Decidesk cross-app dep (decision module) -->
+                <referencedClass name="OCA\Decidesk\Event\DecisionConcludedEvent"/>
+                <referencedClass name="OCA\Decidesk\Event\DecisionRequestedEvent"/>
+                <!-- DocuDesk cross-app dep (document signing) -->
+                <referencedClass name="OCA\DocuDesk\Event\SigningConcludedEvent"/>
+                <referencedClass name="OCA\DocuDesk\Event\FinancialExtractionCompletedEvent"/>
+                <referencedClass name="OCA\DocuDesk\Event\DocumentSigningRequestedEvent"/>
+                <referencedClass name="OCA\DocuDesk\Event\SigningProvenance"/>
+                <!-- Pipelinq cross-app dep (POS) — inventory-pos-decrement, shillinq#504 -->
+                <referencedClass name="OCA\Pipelinq\Event\PosStockMovedEvent"/>
+                <!-- PhpOffice\PhpWord — available at runtime via NC app deps -->
+                <referencedClass name="PhpOffice\PhpWord\PhpWord"/>
+                <referencedClass name="PhpOffice\PhpWord\Element\Section"/>
+                <referencedClass name="PhpOffice\PhpWord\Settings"/>
+                <referencedClass name="PhpOffice\PhpWord\Shared\Converter"/>
+                <referencedClass name="PhpOffice\PhpWord\IOFactory"/>
                 <!-- Additional OCP infrastructure types used across the fleet -->
                 <referencedClass name="OCP\AppFramework\Bootstrap\IBootContext"/>
                 <referencedClass name="OCP\AppFramework\Bootstrap\IRegistrationContext"/>
@@ -83,6 +127,20 @@
                 <referencedClass name="OCP\IGroup"/>
                 <referencedClass name="OCP\IUser"/>
                 <referencedClass name="OCP\Migration\IRepairStep"/>
+                <referencedClass name="OCP\Notification\INotifier"/>
+                <referencedClass name="OCP\SystemTag\ISystemTagManager"/>
+                <referencedClass name="OCP\Activity\IManager"/>
+                <referencedClass name="OCP\AppFramework\Utility\ITimeFactory"/>
+                <referencedClass name="OCP\EventDispatcher\GenericEvent"/>
+                <referencedClass name="OCP\Http\Client\IResponse"/>
+                <referencedClass name="OCP\ICache"/>
+                <referencedClass name="OCP\Security\ICredentialsManager"/>
+                <referencedClass name="OCP\Server"/>
+                <referencedClass name="OCP\Settings\IDelegatedSettings"/>
+                <referencedClass name="OCP\Settings\IIconSection"/>
+                <referencedClass name="OCP\SystemTag\ISystemTag"/>
+                <referencedClass name="OCP\SystemTag\ISystemTagObjectMapper"/>
+                <referencedClass name="OCP\SystemTag\TagNotFoundException"/>
                 <!-- Nextcloud server internals -->
                 <referencedClass name="OC"/>
                 <!-- GuzzleHttp (loaded via composer at runtime) -->
@@ -99,6 +157,11 @@
         <UnusedDocblockParam errorLevel="suppress"/>
         <UnusedVariable errorLevel="suppress"/>
         <PossiblyUnusedReturnValue errorLevel="suppress"/>
+        <!-- UnusedParam + UnusedReturnValue: interface-implementation methods must match the
+             interface signature even when params are not used in the body (CustomerBridgeMetricsService,
+             WidgetAuthService, CogsPosterService, LeaseReassessmentService). -->
+        <UnusedParam errorLevel="suppress"/>
+        <UnusedReturnValue errorLevel="suppress"/>
         <RedundantCondition errorLevel="suppress"/>
         <RedundantFunctionCall errorLevel="suppress"/>
         <RedundantCast errorLevel="suppress"/>
@@ -120,6 +183,16 @@
         <InvalidMethodCall errorLevel="suppress"/>
         <UndefinedInterfaceMethod errorLevel="suppress"/>
         <MissingTemplateParam errorLevel="suppress"/>
+        <!-- InvalidConstantAssignmentValue / InvalidPropertyAssignmentValue:
+             Psalm over-narrows literal string types in array constants (ExternalAdaptersAdminController::ADAPTERS)
+             and lazy-init property patterns (PaymentRunExportService::$generators). These patterns are
+             correct at runtime. -->
+        <InvalidConstantAssignmentValue errorLevel="suppress"/>
+        <InvalidPropertyAssignmentValue errorLevel="suppress"/>
+        <!-- UndefinedMethod on cross-app event classes: Psalm narrows the type to the base OCP
+             Event class after an earlier UndefinedClass suppression; the method calls ARE valid
+             at runtime on the concrete cross-app event type. -->
+        <UndefinedMethod errorLevel="suppress"/>
     </issueHandlers>
     <extraFiles>
         <directory name="vendor/nextcloud/ocp" />

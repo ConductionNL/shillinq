@@ -1,0 +1,911 @@
+{
+  "_meta": {
+    "change": "bookkeeping-rechtmatigheidsverantwoording",
+    "spec": "openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md",
+    "description": "ADR-037 register fragment: Rechtmatigheidsverantwoording (BBV artikel 17a, verplicht sinds 2023). Declares the rechtmatigheidstoets / rechtmatigheidsbevinding / rechtmatigheidsparagraaf / tolerantiegrens schemas, additively extends JournalEntry (journaalpost) with the mandatory rechtmatigheid sub-object, and seeds the default tolerantiegrens per boekjaar (3% fout / 1% onzekerheid per BADO)."
+  },
+  "components": {
+    "schemas": {
+      "JournalEntry": {
+        "properties": {
+          "lawfulness": {
+            "type": "object",
+            "description": "REQ-RV-001: mandatory rechtmatigheid sub-object tracking the legitimacy-assessment status of this journaalpost. Backward-compatible: existing journaalposten default to status niet_getoetst on first access. Embedded (not a separate register) to preserve the transaction-level audit-trail.",
+            "default": {
+              "status": "niet_getoetst",
+              "tests": [],
+              "summary_opinion": null,
+              "last_test_date": null
+            },
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "niet_getoetst",
+                  "in_behandeling",
+                  "getoetst",
+                  "exempt"
+                ],
+                "default": "niet_getoetst",
+                "description": "Aggregate toets status across all linked rechtmatigheidstoets records (REQ-RV-001).",
+                "title": "Status"
+              },
+              "tests": {
+                "type": "array",
+                "description": "FK references to rechtmatigheidstoets.id records for this journaalpost.",
+                "items": {
+                  "type": "string",
+                  "description": "rechtmatigheidstoets.id (uuid)."
+                },
+                "title": "Toetsen"
+              },
+              "summary_opinion": {
+                "type": "string",
+                "enum": [
+                  "voldoet",
+                  "bevat_fout",
+                  "bevat_onzekerheid",
+                  "gemengd"
+                ],
+                "nullable": true,
+                "description": "Summary verdict derived from the linked toetsen uitkomsten.",
+                "title": "Samenvattend Oordeel"
+              },
+              "last_test_date": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Date of the most recent toets on this journaalpost.",
+                "title": "Laatste Toetsdatum"
+              }
+            },
+            "title": "Rechtmatigheid"
+          }
+        }
+      },
+      "Rechtmatigheidstoets": {
+        "slug": "Rechtmatigheidstoets",
+        "icon": "ClipboardCheckOutline",
+        "version": "0.1.0",
+        "title": "Rechtmatigheidstoets",
+        "description": "REQ-RV-001 / REQ-RV-002: one automatic or manual assessment of one journaalpost against one of the nine wettelijke BBV-criteria. The atomic unit of rechtmatigheidsverantwoording (BBV artikel 17a). Wettelijke verplichting sinds 2023; gating functionaliteit voor jaarrekening-export.",
+        "x-schema-org": "schema:Action",
+        "x-spec": "openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "journalEntry",
+          "criterium",
+          "outcome",
+          "toetstype",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this toets belongs to (tenant scope, IDOR boundary).",
+            "example": "adm-gemeente-1",
+            "title": "Administration ID"
+          },
+          "journalEntry": {
+            "type": "string",
+            "description": "FK to JournalEntry.id (journaalpost) being assessed (REQ-RV-001).",
+            "example": "je-2026-0441",
+            "title": "Journaalpost"
+          },
+          "criterium": {
+            "type": "string",
+            "enum": [
+              "begroting",
+              "terms",
+              "misbruik_oneigenlijk_gebruik",
+              "calculatie",
+              "valutering",
+              "adressering",
+              "volledigheid",
+              "aanvaardbaarheid",
+              "europees_aanbesteden",
+              "staatssteun"
+            ],
+            "description": "The wettelijk criterium being assessed (negen BBV-criteria).",
+            "title": "Criterium"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "voldoet",
+              "voldoet_niet",
+              "onzeker",
+              "niet_van_toepassing"
+            ],
+            "description": "Assessment outcome (REQ-RV-001). voldoet_niet/onzeker roll up into a rechtmatigheidsbevinding.",
+            "title": "Uitkomst"
+          },
+          "testDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the toets was performed.",
+            "example": "2026-03-15",
+            "title": "Toetsdatum"
+          },
+          "reviewer": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the Nextcloud user (gebruiker) who performed the toets. For automatische toetsen this is the system user.",
+            "example": "u-inkoopadviseur-1",
+            "title": "Toetser"
+          },
+          "toetstype": {
+            "type": "string",
+            "enum": [
+              "automatic",
+              "manual",
+              "extern"
+            ],
+            "description": "How the toets was produced (REQ-RV-001 automatic / REQ-RV-002 manual).",
+            "title": "Toetstype"
+          },
+          "substantiation": {
+            "type": "string",
+            "nullable": true,
+            "description": "Substantiation. Minimaal 50 tekens vereist wanneer uitkomst = voldoet_niet (REQ-RV-002, enforced by RechtmatigheidGuard).",
+            "example": "Factuur 2026-441 valt onder raamovereenkomst RO-2024-12 (TenderNed 2024/S-117-356721, eerder Europees aanbesteed).",
+            "title": "Onderbouwing"
+          },
+          "amount_involved": {
+            "type": "number",
+            "nullable": true,
+            "description": "Monetary amount involved in this toets (MonetaryAmount, EUR).",
+            "example": 12450.0,
+            "title": "Bedrag Betrokken"
+          },
+          "supportingDocuments": {
+            "type": "array",
+            "description": "REQ-RV-002 / REQ-RV-004: file:uuid references to attached evidence (invoices, aanbestedingspublicaties, de-minimis-verklaringen) via OpenRegister files-attached-to-object. Immutable; deletion is audit-logged.",
+            "items": {
+              "type": "string",
+              "description": "file:uuid reference."
+            },
+            "title": "Bewijsstukken"
+          },
+          "ruleReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "Legal / policy reference underpinning the toets.",
+            "example": "BBV art. 17a lid 2; gemeentelijk inkoopbeleid 2024 art. 8.3",
+            "title": "Regelverwijzing"
+          },
+          "lawfulnessFinding": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to Rechtmatigheidsbevinding.id when uitkomst != voldoet (REQ-RV-002).",
+            "title": "Rechtmatigheidsbevinding"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "in_behandeling",
+              "getoetst"
+            ],
+            "default": "in_behandeling",
+            "description": "Lifecycle status (REQ-RV-002). Synced from procest task completion for handmatige toetsen.",
+            "title": "Status"
+          },
+          "frameworkAgreement": {
+            "type": "string",
+            "nullable": true,
+            "description": "REQ-RV-007: FK to a framework agreement; when present the europees_aanbesteden toets refers to the earlier aanbesteding and auto-voldoet.",
+            "example": "RO-2024-12",
+            "title": "Raamovereenkomst"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "in_behandeling",
+          "retention": {
+            "rule": "selectielijst:5.1.4",
+            "period": "P10Y",
+            "description": "Rechtmatigheidsverantwoording-records retained 10 years per Archiefwet 1995 + Selectielijst Gemeenten 2020 (BADO)."
+          },
+          "states": {
+            "in_behandeling": {
+              "label": "In behandeling",
+              "description": "Toets created, awaiting completion (automatisch synchroon, handmatig via procest)."
+            },
+            "getoetst": {
+              "label": "Getoetst",
+              "description": "Toets uitkomst established and substantiated."
+            }
+          },
+          "transitions": {
+            "afronden": {
+              "from": "in_behandeling",
+              "to": "getoetst",
+              "label": "Toets afronden",
+              "description": "Operator/procest finalises the toets; requires onderbouwing >= 50 chars and a linked bevinding when uitkomst != voldoet (REQ-RV-002).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\RechtmatigheidGuard::canFinaliseToets"
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "clusteringPerLeverancier": {
+            "description": "REQ-RV-007: cumulative bedrag per leverancier per boekjaar, used by clustering-detection to flag europees_aanbesteden drempel-overschrijding.",
+            "source": "JournalEntry",
+            "groupBy": [
+              "administrationId"
+            ],
+            "filter": {},
+            "sum": [
+              "amount_involved"
+            ]
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "rechtmatigheid-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "inkoopadviseur": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "juridisch-medewerker": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Rechtmatigheidstoets is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "Rechtmatigheidsbevinding": {
+        "slug": "Rechtmatigheidsbevinding",
+        "icon": "AlertCircleOutline",
+        "version": "0.1.0",
+        "title": "Rechtmatigheidsbevinding",
+        "description": "REQ-RV-002 / REQ-RV-005: quantifies a fout (error) or onzekerheid (uncertainty) when one or more toetsen yield voldoet_niet / onzeker. Rolls up into the jaarrekening-required rechtmatigheidsparagraaf.",
+        "x-schema-org": "schema:Report",
+        "x-spec": "openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "findingNumber",
+          "kind",
+          "criterium",
+          "financialYear",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration (tenant scope, IDOR boundary).",
+            "example": "adm-gemeente-1",
+            "title": "Administration ID"
+          },
+          "findingNumber": {
+            "type": "string",
+            "description": "Unique finding identifier, format RV-YYYY-NNNN (auto-generated).",
+            "example": "RV-2026-0142",
+            "title": "Bevindingsnummer"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "error",
+              "uncertainty"
+            ],
+            "description": "Finding type (REQ-RV-005).",
+            "title": "Soort"
+          },
+          "criterium": {
+            "type": "string",
+            "enum": [
+              "begroting",
+              "terms",
+              "misbruik_oneigenlijk_gebruik",
+              "calculatie",
+              "valutering",
+              "adressering",
+              "volledigheid",
+              "aanvaardbaarheid",
+              "europees_aanbesteden",
+              "staatssteun"
+            ],
+            "description": "The wettelijk criterium the finding pertains to.",
+            "title": "Criterium"
+          },
+          "amount_error": {
+            "type": "number",
+            "default": 0,
+            "description": "Error amount (EUR). Counts towards the fout-tolerance aggregation (REQ-RV-005).",
+            "title": "Bedrag Fout"
+          },
+          "amount_uncertainty": {
+            "type": "number",
+            "default": 0,
+            "description": "Uncertainty amount (EUR). Counts towards the onzekerheid-tolerance aggregation (REQ-RV-005).",
+            "title": "Bedrag Onzekerheid"
+          },
+          "financialYear": {
+            "type": "integer",
+            "description": "Fiscal year of the finding (REQ-RV-005).",
+            "example": 2026,
+            "title": "Boekjaar"
+          },
+          "programme": {
+            "type": "string",
+            "nullable": true,
+            "description": "BBV programma the finding pertains to.",
+            "example": "5.1",
+            "title": "Programma"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable description of the finding.",
+            "title": "Omschrijving"
+          },
+          "cause": {
+            "type": "string",
+            "nullable": true,
+            "description": "Root cause analysis.",
+            "title": "Oorzaak"
+          },
+          "measure": {
+            "type": "string",
+            "nullable": true,
+            "description": "Remedial measure.",
+            "title": "Maatregel"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in_behandeling",
+              "opgenomen_in_paragraaf",
+              "opgelost"
+            ],
+            "default": "open",
+            "description": "Finding lifecycle status (REQ-RV-005 / REQ-RV-010).",
+            "title": "Status"
+          },
+          "reported_in": {
+            "type": "array",
+            "description": "Stakeholders the finding has been reported to.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "college",
+                "auditcommissie"
+              ]
+            },
+            "title": "Gemeld Aan"
+          },
+          "reportDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the finding was reported.",
+            "title": "Meldingsdatum"
+          },
+          "responsible_portfolio_holder": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the responsible bestuurder (portefeuillehouder).",
+            "title": "Verantwoordelijke Portefeuillehouder"
+          },
+          "correction_entry_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "REQ-RV-010: FK to JournalEntry.id of the linked correctieboeking; setting it transitions the bevinding to opgelost.",
+            "title": "Correctieboeking ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "open",
+          "retention": {
+            "rule": "selectielijst:5.1.4",
+            "period": "P10Y",
+            "description": "Bevindingen retained 10 years per Archiefwet 1995 + Selectielijst Gemeenten 2020 (BADO)."
+          },
+          "states": {
+            "open": {
+              "label": "Open",
+              "description": "Finding recorded, awaiting maatregel."
+            },
+            "in_behandeling": {
+              "label": "In behandeling",
+              "description": "Remedial measure being worked on."
+            },
+            "opgenomen_in_paragraaf": {
+              "label": "Opgenomen in paragraaf",
+              "description": "Aggregated into the rechtmatigheidsparagraaf."
+            },
+            "opgelost": {
+              "label": "Opgelost",
+              "description": "Resolved via correctieboeking (REQ-RV-010); original bedrag remains in the year-of-discovery paragraaf."
+            }
+          },
+          "transitions": {
+            "oplossen": {
+              "from": "in_behandeling",
+              "to": "opgelost",
+              "label": "Markeren als opgelost",
+              "description": "Operator links a correctieboeking (REQ-RV-010); requires correctieboeking_id to be set.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\RechtmatigheidGuard::canResolveBevinding"
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "foutenPerBoekjaar": {
+            "description": "REQ-RV-005: SUM bedrag_fout / bedrag_onzekerheid per boekjaar for openstaande bevindingen (status != opgelost), driving paragraaf tolerance comparison.",
+            "groupBy": [
+              "financialYear"
+            ],
+            "filter": {},
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "amount_error",
+                "as": "amount_error"
+              },
+              {
+                "metric": "sum",
+                "field": "amount_uncertainty",
+                "as": "amount_uncertainty"
+              }
+            ],
+            "from": "Rechtmatigheidsbevinding"
+          }
+        },
+        "x-openregister-notifications": {
+          "onBudgetOvershoot": {
+            "_note": "This rule has never fired. It carried a field=>value map ({criterium: begroting, kind: error}) — the SCHEDULED path's grammar — on a CREATED trigger. createdFilterMatches() reads a single clause {field, operator, value}, so it looked for a 'field' key, found none, and returned false for every bevinding. It cannot be repaired as-is either: the intent is criterium=begroting AND kind=error, and the created path has no combinator, only one clause. Narrowing to criterium=begroting alone would notify the portefeuillehouder about warnings and uncertainties as well as errors, which is a different rule than REQ-RV-001 asks for. Left disabled and honest rather than half-right, pending combinators on the created path — the created-vs-scheduled convergence deferred by ConductionNL/openregister#2787. DO NOT re-enable without a filter: with none, this matches every Rechtmatigheidsbevinding.",
+            "trigger": {
+              "type": "created"
+            },
+            "description": "REQ-RV-001: notify the portefeuillehouder of the affected programma when a begroting-fout bevinding is created.",
+            "enabled": false,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "portefeuillehouder"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Begrotingsoverschrijding geconstateerd — bevinding {{bevindingsnummer}} (programma {{programma}}): EUR {{bedrag_fout}}",
+              "en": "Budget overrun found — finding {{bevindingsnummer}} (programme {{programma}}): EUR {{bedrag_fout}}"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "rechtmatigheid-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "portfolioHolder": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Rechtmatigheidsbevinding is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "Rechtmatigheidsparagraaf": {
+        "slug": "Rechtmatigheidsparagraaf",
+        "icon": "FileDocumentCheckOutline",
+        "version": "0.1.0",
+        "title": "Rechtmatigheidsparagraaf",
+        "description": "REQ-RV-005 / REQ-RV-006: the aggregated jaarrekening statement per boekjaar. Compares totaal fouten/onzekerheden against toleranties, carries the college-verklaring, and transitions concept -> vastgesteld_college -> behandeld_raad -> definitief. Gating record for jaarrekening-export.",
+        "x-schema-org": "schema:Report",
+        "x-spec": "openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "financialYear",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration (tenant scope, IDOR boundary).",
+            "example": "adm-gemeente-1",
+            "title": "Administration ID"
+          },
+          "financialYear": {
+            "type": "integer",
+            "description": "Fiscal year of the paragraaf (one per boekjaar).",
+            "example": 2026,
+            "title": "Boekjaar"
+          },
+          "total_expenses_including_reserve_movements": {
+            "type": "number",
+            "default": 0,
+            "description": "Basis for tolerance computation (REQ-RV-005).",
+            "title": "Totaal Lasten Inclusief Mutaties Reserves"
+          },
+          "tolerance_limit_error_percentage": {
+            "type": "number",
+            "default": 3.0,
+            "description": "Snapshot of the fout-tolerance percentage at aggregation time.",
+            "title": "Tolerantiegrens Fout Percentage"
+          },
+          "tolerance_error_amount": {
+            "type": "number",
+            "default": 0,
+            "description": "tolerantiegrens_fout_percentage% of totaal_lasten (REQ-RV-005).",
+            "title": "Tolerantiegrens Fout Bedrag"
+          },
+          "tolerance_limit_uncertainty_percentage": {
+            "type": "number",
+            "default": 1.0,
+            "description": "Snapshot of the onzekerheid-tolerance percentage at aggregation time.",
+            "title": "Tolerantiegrens Onzekerheid Percentage"
+          },
+          "tolerance_uncertainty_amount": {
+            "type": "number",
+            "default": 0,
+            "description": "tolerantiegrens_onzekerheid_percentage% of totaal_lasten (REQ-RV-005).",
+            "title": "Tolerantiegrens Onzekerheid Bedrag"
+          },
+          "total_identified_errors": {
+            "type": "number",
+            "default": 0,
+            "description": "SUM bedrag_fout of openstaande bevindingen for the boekjaar.",
+            "title": "Totaal Geconstateerde Fouten"
+          },
+          "total_identified_uncertainties": {
+            "type": "number",
+            "default": 0,
+            "description": "SUM bedrag_onzekerheid of openstaande bevindingen for the boekjaar.",
+            "title": "Totaal Geconstateerde Onzekerheden"
+          },
+          "within_tolerance": {
+            "type": "boolean",
+            "default": true,
+            "description": "True when both fouten and onzekerheden are within their thresholds (REQ-RV-005).",
+            "title": "Binnen Tolerantie"
+          },
+          "declaration_college": {
+            "type": "string",
+            "nullable": true,
+            "description": "College verklaring text (standaard when binnen_tolerantie, else gewijzigd citing overages).",
+            "title": "Verklaring College"
+          },
+          "bevindingen": {
+            "type": "array",
+            "description": "FK references to Rechtmatigheidsbevinding.id records aggregated into this paragraaf.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Bevindingen"
+          },
+          "determined_by_college_on": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the college vaststellingsbesluit was taken.",
+            "title": "Vastgesteld Door College Op"
+          },
+          "handled_in_council_on": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the raad behandelde the paragraaf.",
+            "title": "Behandeld In Raad Op"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "vastgesteld_college",
+              "behandeld_raad",
+              "final"
+            ],
+            "default": "draft",
+            "description": "Paragraaf lifecycle status (REQ-RV-005 / REQ-RV-006).",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "retention": {
+            "rule": "selectielijst:5.1.4",
+            "period": "P10Y",
+            "description": "Jaarrekening-bestanddeel retained 10 years per Archiefwet 1995 + Selectielijst Gemeenten 2020."
+          },
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Aggregated, awaiting college vaststelling."
+            },
+            "vastgesteld_college": {
+              "label": "Vastgesteld door college",
+              "description": "College vaststellingsbesluit taken."
+            },
+            "behandeld_raad": {
+              "label": "Behandeld in raad",
+              "description": "Behandeld in de raadsvergadering."
+            },
+            "final": {
+              "label": "Definitief",
+              "description": "Final; eligible for jaarrekening-export (REQ-RV-006)."
+            }
+          },
+          "transitions": {
+            "vaststellen_college": {
+              "from": "draft",
+              "to": "vastgesteld_college",
+              "label": "Vaststellen door college",
+              "description": "College vaststelling; when binnen_tolerantie is false a portefeuillehouder-toelichting (verklaring_college) is required before advancing (REQ-RV-005).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\RechtmatigheidGuard::canVaststellenParagraaf"
+            },
+            "behandelen_raad": {
+              "from": "vastgesteld_college",
+              "to": "behandeld_raad",
+              "label": "Behandelen in raad"
+            },
+            "finaliseren": {
+              "from": "behandeld_raad",
+              "to": "final",
+              "label": "Definitief maken voor jaarrekening"
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "onConcept": {
+            "trigger": {
+              "type": "created"
+            },
+            "description": "REQ-RV-005: notify college secretaris + auditcommissie that the paragraaf is ready for review.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "auditcommissie"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Rechtmatigheidsparagraaf boekjaar {{boekjaar}} is geaggregeerd en gereed voor college-beoordeling",
+              "en": "Lawfulness paragraph for financial year {{boekjaar}} has been aggregated and is ready for board review"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "rechtmatigheid-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "portefeuillehouder-financien": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "college": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Rechtmatigheidsparagraaf is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "Tolerantiegrens": {
+        "slug": "Tolerantiegrens",
+        "icon": "PercentOutline",
+        "version": "0.1.0",
+        "title": "Tolerantiegrens",
+        "description": "REQ-RV-003: per-boekjaar tolerance configuration set by raadsbesluit. Default 3% fout / 1% onzekerheid per BADO; the raad may set stricter limits. A tolerance change re-aggregates all paragraaf computations for the boekjaar.",
+        "x-schema-org": "schema:PropertyValue",
+        "x-spec": "openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "financialYear",
+          "error_percentage",
+          "uncertainty_percentage",
+          "calculationBasis"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration (tenant scope, IDOR boundary).",
+            "example": "adm-gemeente-1",
+            "title": "Administration ID"
+          },
+          "financialYear": {
+            "type": "integer",
+            "description": "Fiscal year the tolerance applies to (one per boekjaar).",
+            "example": 2026,
+            "title": "Boekjaar"
+          },
+          "error_percentage": {
+            "type": "number",
+            "default": 3.0,
+            "description": "Maximum fout as a percentage of totaal lasten (default 3.0 per BADO).",
+            "title": "Fout Percentage"
+          },
+          "uncertainty_percentage": {
+            "type": "number",
+            "default": 1.0,
+            "description": "Maximum onzekerheid as a percentage of totaal lasten (default 1.0 per BADO).",
+            "title": "Onzekerheid Percentage"
+          },
+          "determined_at_council_resolution": {
+            "type": "string",
+            "nullable": true,
+            "description": "Raadsbesluit reference establishing the tolerance.",
+            "example": "RB-2025-117",
+            "title": "Vastgesteld Bij Raadsbesluit"
+          },
+          "determined_on": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the raadsbesluit was taken.",
+            "title": "Vastgesteld Op"
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Validity start.",
+            "example": "2026-01-01",
+            "title": "Geldig Vanaf"
+          },
+          "valid_to": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Validity end.",
+            "example": "2026-12-31",
+            "title": "Geldig Tot"
+          },
+          "calculationBasis": {
+            "type": "string",
+            "enum": [
+              "total_expenses_including_reserve_movements"
+            ],
+            "default": "total_expenses_including_reserve_movements",
+            "description": "Basis for the tolerance calculation (REQ-RV-003).",
+            "title": "Berekeningsbasis"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "determined"
+            ],
+            "default": "draft",
+            "description": "Concept until a raadsbesluit-referentie is recorded (REQ-RV-003).",
+            "title": "Status"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "rechtmatigheid-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "portefeuillehouder-financien": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Tolerantiegrens is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Tolerantiegrens",
+        "slug": "tolerantiegrens-2026-default"
+      },
+      "administrationId": "adm-1",
+      "financialYear": 2026,
+      "error_percentage": 3.0,
+      "uncertainty_percentage": 1.0,
+      "determined_at_council_resolution": null,
+      "determined_on": null,
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-12-31",
+      "calculationBasis": "total_expenses_including_reserve_movements",
+      "status": "draft"
+    }
+  ]
+}

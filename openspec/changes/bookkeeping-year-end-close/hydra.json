@@ -1,8 +1,0 @@
-{
-  "spec_slug": "bookkeeping-year-end-close",
-  "title": "Year-end Close",
-  "app": "shillinq",
-  "repo": "https://github.com/ConductionNL/shillinq",
-  "depends_on": [],
-  "issue": null
-}

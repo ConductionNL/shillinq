@@ -1,16 +1,28 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-vat-btw-filing
 
-**Status:** proposed
+**Status:** done
 **Scope:** shillinq
 **Tier:** T3 (operations + NL compliance core)
 **Depends on:** bookkeeping-general-ledger (T1), bookkeeping-period-close (T2)
+**OpenSpec changes**:
+- [bookkeeping-vat-btw-filing](../../changes/archive/2026-06-14-bookkeeping-vat-btw-filing/) _(archived 2026-06-14)_
+- [add-shillinq-bookkeeping-operations](../../changes/archive/2026-06-14-add-shillinq-bookkeeping-operations/) _(archived 2026-06-14)_
+- [btw-suppletie-detection](../../changes/archive/2026-07-13-btw-suppletie-detection/) _(archived 2026-07-13)_
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping vat btw filing in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: BTW filing index page not yet implemented
 
 
-### REQ-VBTW-001: The system SHALL store BTW returns as an OpenRegister-managed `VatReturn` register
+### Requirement: REQ-VBTW-001 — The system SHALL store BTW returns as an OpenRegister-managed `VatReturn` register
 
 BTW (omzetbelasting) periodic returns MUST be declared as a register
 in `lib/Settings/shillinq_register.json` per ADR-024, with the
@@ -39,7 +51,7 @@ Statutory basis: Wet OB 1968 (Wet op de omzetbelasting) art. 14 +
 - **THEN** the save MUST succeed via OR's generic endpoint, with no
   shillinq-side controller in the call path.
 
-### REQ-VBTW-002: The `VatReturn` schema SHALL declare a fixed minimum field set
+### Requirement: REQ-VBTW-002 — The `VatReturn` schema SHALL declare a fixed minimum field set
 
 The schema MUST declare the following fields. Additional fields MAY
 be added later (additive only).
@@ -78,7 +90,7 @@ Schema.org annotation: `schema:Invoice` (the filing object — a periodic statem
   `submittedAt`
 - **THEN** the save MUST fail with a precondition error.
 
-### REQ-VBTW-003: BTW rate seed data SHALL be loaded as a register, not hard-coded as enums
+### Requirement: REQ-VBTW-003 — BTW rate seed data SHALL be loaded as a register, not hard-coded as enums
 
 A `VatTariff` register MUST be declared and seeded from
 `lib/Settings/seeds/btw-tariffs-2026.json`. Each tariff record
@@ -112,7 +124,7 @@ doesn't include (e.g. new EU-imposed rates).
 - **THEN** the rate MUST be available for selection on GL postings;
   re-running the repair step MUST NOT delete the operator-added record.
 
-### REQ-VBTW-004: The BTW journal SHALL be derived from period-filtered GL aggregations
+### Requirement: REQ-VBTW-004 — The BTW journal SHALL be derived from period-filtered GL aggregations
 
 The `rubrieken` field of `VatReturn` MUST be populated via
 `x-openregister-aggregations` over `GLLine` (T1) joined with
@@ -143,7 +155,7 @@ operator-edited tariff records override.
   `teBetalenOfTeruggave` delta MUST equal the new total minus the
   submitted total.
 
-### REQ-VBTW-005: The `VatReturn` lifecycle SHALL be declarative per ADR-031
+### Requirement: REQ-VBTW-005 — The `VatReturn` lifecycle SHALL be declarative per ADR-031
 
 The schema MUST declare an `x-openregister-lifecycle` block with the
 following states and transitions:
@@ -187,7 +199,7 @@ state machine.
 - **THEN** the save MUST fail with a "lifecycle transition required"
   error.
 
-### REQ-VBTW-006: Submission gates SHALL consume OR's approval-workflow extension per ADR-022
+### Requirement: REQ-VBTW-006 — Submission gates SHALL consume OR's approval-workflow extension per ADR-022
 
 The `draft → submitted` transition MUST declare
 `x-openregister-lifecycle.requires.approval-workflow` with a policy
@@ -214,7 +226,7 @@ service — this is the ADR-022 anti-pattern.
 - **THEN** the transition MUST succeed AND the audit trail MUST
   record both the approval event and the submission event.
 
-### REQ-VBTW-007: The system SHALL provide ICP-opgaaf for intracommunautaire prestaties as a separate `IcpStatement` register
+### Requirement: REQ-VBTW-007 — The system SHALL provide ICP-opgaaf for intracommunautaire prestaties as a separate `IcpStatement` register
 
 EU intracommunautaire prestaties MUST be filed quarterly via
 ICP-opgaaf. T3 ships an `IcpStatement` schema with:
@@ -252,7 +264,7 @@ prestaties).
 - **WHEN** the same Q1 ICP statement is generated
 - **THEN** the Dutch customer MUST NOT appear in `lines`.
 
-### REQ-VBTW-008: Verleggingsregeling (reverse-charge) handling SHALL be a tariff category, not a separate code path
+### Requirement: REQ-VBTW-008 — Verleggingsregeling (reverse-charge) handling SHALL be a tariff category, not a separate code path
 
 Reverse-charge transactions (verleggingsregeling) MUST be modelled
 as a `VatTariff` with `category: "verleggingsregeling"` and `rate: 0`.
@@ -270,7 +282,7 @@ the standard aggregation. No separate `ReverseChargeService`.
   `voorbelasting` in rubriek 5b — the net effect on
   `teBetalenOfTeruggave` is zero per Belastingdienst rules.
 
-### REQ-VBTW-009: Suppletie-aangifte SHALL be modelled as `VatCorrection` with mandatory link to the original return
+### Requirement: REQ-VBTW-009 — Suppletie-aangifte SHALL be modelled as `VatCorrection` with mandatory link to the original return
 
 A `VatCorrection` register MUST be declared for material corrections
 (suppletie) where a previously-submitted return needs amendment.
@@ -314,7 +326,7 @@ art. 24c.
 - **THEN** the operator MUST see a warning suggesting they amend the
   next regular return instead; the operator MAY still proceed.
 
-### REQ-VBTW-010: SBR/Digipoort submission SHALL be an OR `ScheduledWorkflow` consuming an OpenConnector source
+### Requirement: REQ-VBTW-010 — SBR/Digipoort submission SHALL be an OR `ScheduledWorkflow` consuming an OpenConnector source
 
 The actual SBR/Digipoort submission MUST be expressed as an OR
 `ScheduledWorkflow` (per ADR-031 §"Background jobs that orchestrate
@@ -346,7 +358,7 @@ for the implementing cycle's first end-to-end test.
   URLs in `lib/`
 - **THEN** no matches SHALL exist (the workflow is the only path).
 
-### REQ-VBTW-011: BTW filing SHALL be reachable through the shillinq manifest navigation
+### Requirement: REQ-VBTW-011 — BTW filing SHALL be reachable through the shillinq manifest navigation
 
 `src/manifest.json` MUST declare a navigation entry `Belastingen >
 BTW-aangiften` with a `type: index` page binding to `VatReturn`, a
@@ -372,11 +384,10 @@ for `ICP-opgaaf` (binding `IcpStatement`) and `BTW-correcties`
 - **THEN** the BTW menu entry MAY be hidden (or shown with a
   "vrijgesteld" badge) per the manifest's visibility predicate.
 
-### REQ-VBTW-012: Audit trail and retention SHALL be consumed from OR's abstractions
+### Requirement: REQ-VBTW-012 — The audit trail and retention SHALL be consumed from OR's abstractions
 
-Every `VatReturn`, `IcpStatement`, `VatCorrection`, and `VatTariff`
-operation MUST be audited via OR's audit-trail-immutable (per
-ADR-022) — shillinq MUST NOT write to a private audit table.
+Every `VatReturn`, `IcpStatement`, `VatCorrection`, and `VatTariff` operation MUST be audited via OR's audit-trail-immutable (per ADR-022) — shillinq MUST NOT write to a private audit table.
+
 Retention MUST be declared via
 `x-openregister-lifecycle.retention: { rule: "selectielijst:5.1.2" }`
 referencing the seed rule for financial records (7 years per
@@ -397,3 +408,110 @@ administrations).
 - **THEN** the record MUST be archived (or anonymised, depending on
   the rule's disposition) per the Selectielijst rule, AND the audit
   trail's immutable hash chain MUST remain verifiable.
+
+### Requirement: REQ-VBTW-013 — The system SHALL detect drift between a filed `VATReturn` and its underlying GL ledger
+
+`VatSuppletieDetectionService::detect()` MUST accept a filed (submitted or
+later) `VATReturn` id, recompute the same GL-derived per-rubriek grouping
+`VATReturnService::deriveVATLines()` produces (grouped by `type` × `taxRate`)
+**without persisting it**, and diff it bucket-by-bucket against the
+`VATDeclaration` rows already persisted for that return (the as-filed
+snapshot, stable because nothing re-derives them outside an explicit
+`rebase`). The method MUST create a `VatCorrection` in `draft` state
+carrying both the filed snapshot and the current snapshot, and MUST NOT
+mutate the original `VATReturn`, its `VATDeclaration`s, or its `VATLine`s.
+When the two snapshots are identical (no drift), `detect()` MUST return
+without creating a `VatCorrection`.
+
+#### Scenario: Drift is detected after a late-posted GL transaction
+
+- **GIVEN** a `VATReturn` submitted for Q1-2026 with a persisted
+  `VATDeclaration` of `21% collected: €3.150,00`
+- **AND** a new `GLTransaction` posted after submission adds €500,00 of
+  taxable revenue at 21% within the Q1-2026 date range on a
+  `vatApplicable` account
+- **WHEN** `VatSuppletieDetectionService::detect()` runs for that return
+- **THEN** a `VatCorrection` MUST be created in `draft` state with
+  `filedSnapshot` containing the original €3.150,00 bucket and
+  `currentSnapshot` containing the recomputed €3.255,00 bucket (21% of the
+  extra €500,00 = €105,00 collected VAT added)
+- **AND** the original `VATReturn`'s `VATDeclaration` rows MUST remain
+  unchanged.
+
+#### Scenario: No drift produces no correction
+
+- **GIVEN** a filed `VATReturn` whose GL data has not changed since filing
+- **WHEN** `detect()` runs
+- **THEN** no `VatCorrection` MUST be created.
+
+@e2e exclude pure backend/data: GL diff computation is not browser-testable
+
+### Requirement: REQ-VBTW-014 — The system SHALL compile per-rubriek deltas, decide suppletie-eligibility against the €1.000 grens, and stage a GL correction posting
+
+`VatSuppletieDetectionService::prepare()` MUST take a `detected` (draft,
+`preparedAt` null) `VatCorrection`, compute `rubriekDeltas` (one entry per
+`type:taxRate` bucket with a non-zero difference between filed and current
+snapshots), sum them into a net `correctionAmount`/`adjustmentAmount`, set
+`thresholdExceeded` to `true` when `abs(correctionAmount) >= 1000` (the
+statutory suppletie grens — see Notes) and `false` otherwise, stamp a
+`filingDeadline` of `preparedAt + 8 weeks` (per the Belastingdienst's
+discovery-to-filing obligation), and create a companion `draft`
+`GLTransaction` with one balanced `GLLine` per non-zero rubriek delta
+against the account originally used for that bucket, offset by a clearing
+account. The method MUST NOT auto-post the `GLTransaction` and MUST NOT
+auto-transition the `VatCorrection` past `draft` — the operator decides
+whether and when to file, per REQ-VBTW-009's existing non-auto-decide rule.
+
+#### Scenario: Above-grens correction is flagged threshold-exceeded with an 8-week deadline
+
+- **GIVEN** a `detected` `VatCorrection` whose recomputed delta nets to
+  €1.450,00 additional payable
+- **WHEN** `prepare()` runs
+- **THEN** `thresholdExceeded` MUST be `true`
+- **AND** `filingDeadline` MUST be set to 8 weeks after `preparedAt`
+- **AND** a `draft` `GLTransaction` MUST exist with balanced `GLLine`s
+  summing to €1.450,00.
+
+#### Scenario: Below-grens correction is flagged as next-return-eligible
+
+- **GIVEN** a `detected` `VatCorrection` whose recomputed delta nets to
+  €320,00
+- **WHEN** `prepare()` runs
+- **THEN** `thresholdExceeded` MUST be `false`
+- **AND** the `VatCorrection` MUST still be fully compiled (deltas, GL
+  posting) so the operator can choose to file anyway or fold it into the
+  next return.
+
+#### Scenario: The audit trail preserves the original filed figures
+
+- **GIVEN** a `VatCorrection` compiled from a `VATReturn` originally filed
+  with `totalVATCollected: €3.150,00`
+- **WHEN** an auditor inspects the `VatCorrection`
+- **THEN** `filedSnapshot` MUST reproduce the exact figures that were true
+  at filing time, independent of any later GL changes
+- **AND** the `VatCorrection` object itself MUST be covered by OR's
+  immutable audit-trail (already satisfied by
+  `add-shillinq-audit-trail.json`'s `x-openregister-audit-trail.enabled`
+  flag per REQ-VBTW-012 — confirmed, not modified, by this change).
+
+@e2e exclude pure backend/data: threshold decision + GL posting compilation is not browser-testable
+
+## Notes
+
+- **€1.000 threshold, verified 2026-07-13 via WebSearch against
+  belastingdienst.nl** (not from training-data memory): "Hebt u bij uw
+  btw-aangifte een bedrag van maximaal €1000 te veel of te weinig ingevuld?
+  Geef dit dan aan in uw eerstvolgende btw-aangifte." Source:
+  https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/belastingdienst/zakelijk/btw/btw_aangifte_doen_en_betalen/aangifte_corrigeren/
+  — corrections at or above €1.000 require the formal suppletie form and,
+  per the Belastingdienst's 1 January 2025 update, must be filed within
+  8 weeks of discovery or risk a "vergrijpboete" (up to 100% of the
+  underpaid amount).
+- This delta bridges a pre-existing dual-schema situation
+  (`VATReturn`/all-caps vs. `VatReturn`/mixed-case) documented in
+  `design.md`; `originalVatReturnId` on the compiled `VatCorrection`
+  points at the all-caps `VATReturn.id` because that is the only schema
+  with real, computed per-rubriek data today.
+- Status lifecycle `detected → prepared → filed` is layered on the
+  already-landed `draft/submitted/accepted/rejected` states via
+  `preparedAt` rather than new states — see `design.md` Decision 3.

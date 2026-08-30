@@ -1,0 +1,119 @@
+{
+  "schema_version": 2,
+  "spec_slug": "add-shillinq-fixed-assets-depreciation",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "issue": 23,
+  "cycles": [
+    {
+      "cycle": 1,
+      "trigger": "build:queued",
+      "started_at": "2026-06-01T20:55:42Z",
+      "ended_at": "2026-06-02T18:14:34Z",
+      "outcome": "done",
+      "outcome_reason": "pipeline complete \u2014 reviews passed and applier passed (if run)",
+      "pattern_tags": [
+        "browser-test-nc-setup-failed"
+      ],
+      "stages": [
+        {
+          "stage": "build",
+          "persona": "Al Gorithm",
+          "model": "sonnet",
+          "container": "hydra-builder",
+          "started_at": "2026-06-01T20:29:07Z",
+          "ended_at": "2026-06-01T20:55:32Z",
+          "exit_code": 0,
+          "turns_used": 267,
+          "turns_budget": 200,
+          "checks_run": [
+            "composer check:strict (phpcs)",
+            "composer test:unit (phpunit)"
+          ],
+          "checks_skipped": [],
+          "findings": [],
+          "decisions": [],
+          "verdict": "pass",
+          "duration_seconds": 1585
+        },
+        {
+          "stage": "applier",
+          "persona": "Axel Pli\u00e9r",
+          "model": "sonnet",
+          "container": "hydra-applier",
+          "started_at": "2026-06-01T21:42:56Z",
+          "ended_at": "2026-06-01T21:44:24Z",
+          "exit_code": 0,
+          "turns_used": 10,
+          "turns_budget": 20,
+          "checks_run": [
+            "hydra.json-consumer"
+          ],
+          "checks_skipped": [],
+          "findings": [],
+          "decisions": [],
+          "verdict": "pass",
+          "duration_seconds": 88
+        },
+        {
+          "stage": "applier",
+          "persona": "Axel Pli\u00e9r",
+          "model": "sonnet",
+          "container": "hydra-applier",
+          "started_at": "2026-06-02T17:00:30Z",
+          "ended_at": "2026-06-02T17:02:05Z",
+          "exit_code": 0,
+          "turns_used": 8,
+          "turns_budget": 20,
+          "checks_run": [
+            "hydra.json-consumer"
+          ],
+          "checks_skipped": [],
+          "findings": [],
+          "decisions": [],
+          "verdict": "pass",
+          "duration_seconds": 95
+        },
+        {
+          "stage": "applier",
+          "persona": "Axel Pli\u00e9r",
+          "model": "sonnet",
+          "container": "hydra-applier",
+          "started_at": "2026-06-02T18:11:40Z",
+          "ended_at": "2026-06-02T18:13:41Z",
+          "exit_code": 0,
+          "turns_used": 8,
+          "turns_budget": 20,
+          "checks_run": [
+            "hydra.json-consumer"
+          ],
+          "checks_skipped": [],
+          "findings": [],
+          "decisions": [],
+          "verdict": "pass",
+          "duration_seconds": 121
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "runs": 4,
+    "turns_used": 293,
+    "cost_usd": 0.0,
+    "duration_seconds": 1889,
+    "cycles": 1,
+    "by_stage": {
+      "build": {
+        "runs": 1,
+        "turns_used": 267,
+        "cost_usd": 0.0,
+        "duration_seconds": 1585
+      },
+      "applier": {
+        "runs": 3,
+        "turns_used": 26,
+        "cost_usd": 0.0,
+        "duration_seconds": 304
+      }
+    }
+  }
+}

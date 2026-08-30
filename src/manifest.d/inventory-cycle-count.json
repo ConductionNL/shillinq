@@ -1,0 +1,174 @@
+{
+	"menu": [
+		{
+			"id": "Inventory",
+			"label": "Inventory",
+			"icon": "Warehouse",
+			"order": 22,
+			"children": [
+				{
+					"id": "CycleCounts",
+					"label": "Cycle Counts",
+					"icon": "ClipboardListOutline",
+					"route": "CycleCounts",
+					"order": 50
+				},
+				{
+					"id": "CountTemplates",
+					"label": "Count Templates",
+					"icon": "FileReplaceOutline",
+					"route": "CountTemplates",
+					"order": 51
+				},
+				{
+					"id": "VarianceReports",
+					"label": "Variance Reports",
+					"icon": "ChartBoxOutline",
+					"route": "VarianceReports",
+					"order": 52
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "CycleCounts",
+			"route": "/inventory/cycle-counts",
+			"type": "index",
+			"title": "Cycle Counts",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryCycleCount",
+				"columns": [
+					{ "key": "countId", "label": "Count #", "sortable": true },
+					{ "key": "countDate", "label": "Date", "sortable": true },
+					{ "key": "countType", "label": "Type", "sortable": true },
+					{ "key": "locationFilter", "label": "Location", "sortable": true },
+					{ "key": "categoryFilter", "label": "Category", "sortable": true },
+					{ "key": "expectedValue", "label": "Expected Value", "sortable": true },
+					{ "key": "countedValue", "label": "Counted Value", "sortable": true },
+					{ "key": "varianceValue", "label": "Variance", "sortable": true },
+					{ "key": "variancePercentage", "label": "Variance %", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"filters": [
+					{ "key": "state", "label": "Status", "type": "enum",
+						"options": ["draft", "submitted", "counting", "posted", "reconciled", "cancelled"] },
+					{ "key": "countType", "label": "Type", "type": "enum",
+						"options": ["full", "partial"] },
+					{ "key": "countDate", "label": "Date Range", "type": "dateRange" },
+					{ "key": "locationFilter", "label": "Location", "type": "string" }
+				],
+				"defaultSort": "countDate",
+				"defaultSortDirection": "desc",
+				"detailRoute": "CycleCountDetail",
+				"description": "Periodic stock-take batches per REQ-ICC-010. Each row drills down to the line snapshot + variance review + reconciliation actions. Filter by status, type, date range, and (for partial counts) location."
+			}
+		},
+		{
+			"id": "CycleCountDetail",
+			"route": "/inventory/cycle-counts/:id",
+			"type": "detail",
+			"title": "Cycle Count",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryCycleCount",
+				"_note": "MASTER archetype (native CnDetailPage). A cycle count is a periodic stock-take SESSION (REQ-ICC-006/REQ-ICC-010): a header carrying scope, dates, and the aggregate expected/counted/variance totals, with a lifecycle (draft -> submitted -> counting -> posted -> reconciled -> cancelled). The counted stock lines (InventoryCycleCountLine, one per sku/location pair per REQ-ICC-003) are surfaced as a relatedCollection keyed on FK countId=@object.countId (see _relatedCollectionsNote), so a reviewer walks from the session header to every counted line and its flagged variance/reason code. lifecycleActions on for the submit/begin-counting/post/reconcile/cancel state machine per REQ-ICC-006. An audit-trail sidebar tab records who counted and reconciled per REQ-ICC-007. No documents tab - counts are entered in-app, not source documents; no comms tabs - this is an accounting event, not a conversation.",
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`; a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing while every gate stays green. TOKEN: `@object.countId`, NOT `@objectId` — WRITER-PROVEN. OCA\\Shillinq\\Service\\CycleCountService::snapshotScope() sets `$countId = $count['countId']` from the parent's FLAT payload field (pattern ^CC-[0-9]{4}-[0-9]{2}-[0-9]{5}$) and writes it onto every line as `'countId' => $countId`; the service's own reader findLinesForCount() filters lines with `['countId' => $countId]`. A UUID filter would match zero rows. NOTE: the old block's `detailRoute` pointed at CycleCountDetail — this page itself — which would navigate a LINE click to a cycle-count detail keyed by the line's id. There is no InventoryCycleCountLineDetail page, so `rowRoute` is deliberately OMITTED rather than pointed at the wrong page.",
+				"relatedCollections": [
+					{ "title": "Count Lines", "register": "shillinq", "schema": "InventoryCycleCountLine", "filter": { "countId": "@object.countId" }, "columns": [ { "key": "lineId", "label": "Line #" }, { "key": "sku", "label": "SKU" }, { "key": "productName", "label": "Product" }, { "key": "locationId", "label": "Location" }, { "key": "expectedQuantity", "label": "Expected Qty" }, { "key": "countedQuantity", "label": "Counted Qty" }, { "key": "quantityVariance", "label": "Qty Variance" }, { "key": "valueVariance", "label": "Value Variance" }, { "key": "requiresReason", "label": "Requires Reason" }, { "key": "reasonCode", "label": "Reason" } ] }
+				],
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [ { "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } } ] }
+					]
+				},
+				"fields": [
+					{ "key": "countId", "label": "Count #", "type": "string" },
+					{ "key": "countDate", "label": "Date", "type": "date" },
+					{ "key": "countType", "label": "Type", "type": "string" },
+					{ "key": "locationFilter", "label": "Location Filter", "type": "string" },
+					{ "key": "categoryFilter", "label": "Category Filter", "type": "string" },
+					{ "key": "initiatedBy", "label": "Initiated By", "type": "string" },
+					{ "key": "expectedValue", "label": "Expected Value", "type": "money" },
+					{ "key": "countedValue", "label": "Counted Value", "type": "money" },
+					{ "key": "varianceValue", "label": "Variance", "type": "money" },
+					{ "key": "variancePercentage", "label": "Variance %", "type": "number" },
+					{ "key": "state", "label": "Status", "type": "string" },
+					{ "key": "notes", "label": "Notes", "type": "string" },
+					{ "key": "submittedAt", "label": "Submitted At", "type": "datetime" },
+					{ "key": "postedAt", "label": "Posted At", "type": "datetime" },
+					{ "key": "reconciledAt", "label": "Reconciled At", "type": "datetime" },
+					{ "key": "cancelledAt", "label": "Cancelled At", "type": "datetime" },
+					{ "key": "administrationId", "label": "Administration", "type": "string" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "CycleCounts",
+				"description": "REQ-ICC-006 lifecycle controls: submit (snapshot scope), begin-counting, post (variance review), reconcile (emit StockMoves), cancel. Variance lines that require investigation are highlighted; reason-code dropdown drawn from the active set in InventoryVarianceReason."
+			}
+		},
+		{
+			"id": "CountTemplates",
+			"route": "/inventory/count-templates",
+			"type": "index",
+			"title": "Count Templates",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryVarianceReason",
+				"columns": [
+					{ "key": "reasonId", "label": "Reason Code", "sortable": true },
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "category", "label": "Category", "sortable": true },
+					{ "key": "description", "label": "Description", "sortable": false },
+					{ "key": "isActive", "label": "Active", "sortable": true }
+				],
+				"filters": [
+					{ "key": "category", "label": "Category", "type": "enum",
+						"options": ["damage", "loss", "obsolescence", "error-counting", "error-stocking", "system-discrepancy", "other"] },
+					{ "key": "isActive", "label": "Active", "type": "boolean" }
+				],
+				"defaultSort": "reasonId",
+				"defaultSortDirection": "asc",
+				"description": "The reason codes offered when a counted quantity differs from the recorded one. Bookkeepers can retire a code without affecting counts that already use it, and warehouse managers and bookkeepers can add new ones per administration."
+			}
+		},
+		{
+			"id": "VarianceReports",
+			"route": "/inventory/variance-reports",
+			"type": "index",
+			"title": "Variance Reports",
+			"config": {
+				"register": "shillinq",
+				"schema": "InventoryCycleCountLine",
+				"filterPreset": {
+					"requiresReason": true
+				},
+				"columns": [
+					{ "key": "countId", "label": "Count #", "sortable": true },
+					{ "key": "lineId", "label": "Line #", "sortable": true },
+					{ "key": "sku", "label": "SKU", "sortable": true },
+					{ "key": "locationId", "label": "Location", "sortable": true },
+					{ "key": "expectedQuantity", "label": "Expected", "sortable": true },
+					{ "key": "countedQuantity", "label": "Counted", "sortable": true },
+					{ "key": "quantityVariance", "label": "Qty Variance", "sortable": true },
+					{ "key": "valueVariance", "label": "Value Variance", "sortable": true },
+					{ "key": "reasonCode", "label": "Reason", "sortable": true },
+					{ "key": "adjustmentStockMoveId", "label": "Posted Move", "sortable": true }
+				],
+				"filters": [
+					{ "key": "reasonCode", "label": "Reason Code", "type": "string" },
+					{ "key": "locationId", "label": "Location", "type": "string" },
+					{ "key": "sku", "label": "SKU", "type": "string" },
+					{ "key": "countId", "label": "Count", "type": "string" }
+				],
+				"groupBy": "reasonCode",
+				"defaultSort": "countId",
+				"defaultSortDirection": "desc",
+				"detailRoute": "CycleCountDetail",
+				"_note_rowRoute": "`detailRoute` is inert; the implicit fallback matches by register+schema and this index is bound to InventoryCycleCountLine. The description below promises a row-click drilldown that did nothing without `rowRoute`.",
+				"rowRoute": "CycleCountDetail",
+				"description": "Aggregated view of every flagged variance line per REQ-ICC-010. Group-by reasonCode produces the count-by-reason rollup; row click drills back to the originating count and its adjustment StockMove."
+			}
+		}
+	]
+}

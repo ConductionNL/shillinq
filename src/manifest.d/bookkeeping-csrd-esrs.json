@@ -3,7 +3,7 @@
 		{
 			"id": "Sustainability",
 			"label": "Sustainability",
-			"icon": "LeafOutline",
+			"icon": "Leaf",
 			"order": 70,
 			"children": [
 				{
@@ -16,14 +16,14 @@
 				{
 					"id": "EsrsDataPoints",
 					"label": "ESRS Data Points",
-					"icon": "TableLarge",
+					"icon": "DatabaseOutline",
 					"route": "EsrsDataPoints",
 					"order": 20
 				},
 				{
 					"id": "GhgInventories",
 					"label": "GHG Inventory",
-					"icon": "Molecule",
+					"icon": "Warehouse",
 					"route": "GhgInventories",
 					"order": 30
 				},
@@ -83,7 +83,47 @@
 					{"key": "approvalDate", "label": "Approved", "type": "string"},
 					{"key": "state", "label": "State", "type": "string"}
 				],
-				"indexRoute": "MaterialityAssessments"
+				"_note": "GOVERNANCE report — the double-materiality assessment that gates the whole CSRD filing. Body shows period, methodology, the impact/financial thresholds and the approval chain; the supporting documents that evidence the stakeholder consultation sit in the sidebar alongside the immutable audit trail. A governance decision record, not correspondence — no comms leaves.",
+				"indexRoute": "MaterialityAssessments",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "docs",
+							"label": "Supporting documents",
+							"icon": "FileDocumentMultipleOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"register": "shillinq",
+										"schema": "MaterialityAssessment",
+										"field": "supportingDocuments",
+										"objectId": ":id",
+										"description": "Stakeholder-consultation evidence referenced from NC Files."
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -128,7 +168,47 @@
 					{"key": "status", "label": "Status", "type": "string"},
 					{"key": "narrativeComment", "label": "Narrative", "type": "string"}
 				],
-				"indexRoute": "EsrsDataPoints"
+				"_note": "MEASUREMENT record — one disclosed ESRS data point. Body pairs the value (numeric/text + unit) with its provenance: source, source reference, preparer and reviewer — the four-eyes chain an assurer checks. The assurance-evidence file and audit trail sit in the sidebar. A single measured value has nothing to aggregate or correspond about, so no object-list or comms leaf.",
+				"indexRoute": "EsrsDataPoints",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "evidence",
+							"label": "Assurance evidence",
+							"icon": "FileCertificateOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"register": "shillinq",
+										"schema": "EsrsDataPoint",
+										"field": "assuranceEvidence",
+										"objectId": ":id",
+										"description": "Evidence backing this data point, referenced from NC Files."
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -169,7 +249,28 @@
 					{"key": "intensityTurnover", "label": "Turnover (EUR)", "type": "number"},
 					{"key": "state", "label": "State", "type": "string"}
 				],
-				"indexRoute": "GhgInventories"
+				"_note": "REPORT — the GHG inventory for a reporting period. Body foregrounds the boundary/consolidation methodology and the emission-intensity denominators (headcount, turnover) that make Scope figures comparable year-on-year. The audit trail sits in the sidebar. Methodology and base-year framing are the payload; no comms leaf on an emissions report.",
+				"indexRoute": "GhgInventories",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -212,7 +313,28 @@
 					{"key": "lastEngagementDate", "label": "Last engagement", "type": "string"},
 					{"key": "dataQualityScore", "label": "Data quality", "type": "number"}
 				],
-				"indexRoute": "ValueChainActors"
+				"_note": "MASTER record — an up/downstream value-chain counterparty in scope for CSRD. Body shows who they are (name, NACE sector, country, tier/role) and the engagement metrics: collection method, engagement status, last-engagement date and a data-quality score. The audit trail sits in the sidebar. Engagement here means sustainability data collection, not sales correspondence — no email/calendar leaf.",
+				"indexRoute": "ValueChainActors",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -253,7 +375,47 @@
 					{"key": "submissionKvkReceiptId", "label": "KvK receipt", "type": "string"},
 					{"key": "state", "label": "State", "type": "string"}
 				],
-				"indexRoute": "AssuranceEngagements"
+				"_note": "AUDIT ENGAGEMENT — the limited/reasonable assurance over the CSRD report. Body shows the audit firm, lead partner, engagement level, scope statement, materiality threshold and opinion/KvK-submission milestones. The signed assurance report file and the audit trail sit in the sidebar. It records an external opinion, not a conversation — no comms leaf.",
+				"indexRoute": "AssuranceEngagements",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "report",
+							"label": "Assurance report",
+							"icon": "FileCertificateOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"register": "shillinq",
+										"schema": "AssuranceEngagement",
+										"field": "assuranceReport",
+										"objectId": ":id",
+										"description": "Signed assurance report referenced from NC Files."
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		}
 	]

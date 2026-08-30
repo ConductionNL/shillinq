@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-deferred-tax
 
 **Status:** proposed
@@ -5,7 +9,11 @@
 **Tier:** T3 (financial reporting)
 **Depends on:** bookkeeping-general-ledger (T1), bookkeeping-vpb-mkb (T3)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping deferred tax in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: deferred tax logic — not browser-testable
 

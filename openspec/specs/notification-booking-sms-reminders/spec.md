@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: Booking SMS Reminder Channel
 
 **Scope:** notification-booking-sms-reminders
@@ -5,7 +9,7 @@
 **Status:** draft
 **Applies to:** Nextcloud Booking
 
-## Overview
+## Purpose
 
 Configurable SMS reminder channels for booking reminders with pluggable
 provider support (MessageBird, Twilio). Operators configure SMS channel,
@@ -66,6 +70,8 @@ SMS character limits (e.g., location >30 chars) truncated with ellipsis.
 
 ### REQ-SMS-001: Channel CRUD operations
 
+The system SHALL satisfy this requirement: Channel CRUD operations.
+
 #### Scenario: Create a new SMS reminder channel
 
 **GIVEN** an operator accessing the SMS Reminder Channels admin page,
@@ -81,6 +87,8 @@ channel list. Channel is immediately available for booking dispatch.
 
 ### REQ-SMS-002: Channel provider selection via openconnector
 
+The system SHALL satisfy this requirement: Channel provider selection via openconnector.
+
 #### Scenario: Switch SMS provider
 
 **GIVEN** a channel configured with MessageBird,
@@ -90,6 +98,8 @@ dropdown, and switches to "twilio",
 discarded, and channel applies new provider on next send.
 
 ### REQ-SMS-003: Message template validation and character limit
+
+The system SHALL satisfy this requirement: Message template validation and character limit.
 
 #### Scenario: Validate SMS message length
 
@@ -101,6 +111,8 @@ rejected if template is too long.
 
 ### REQ-SMS-004: Phone number validation per locale
 
+The system SHALL satisfy this requirement: Phone number validation per locale.
+
 #### Scenario: Validate fallback phone number
 
 **GIVEN** an operator setting fallback phone number,
@@ -110,6 +122,8 @@ rejected if template is too long.
 format with error message.
 
 ### REQ-SMS-005: Delivery scheduling with send time
+
+The system SHALL satisfy this requirement: Delivery scheduling with send time.
 
 #### Scenario: Configure reminder send time
 
@@ -121,6 +135,8 @@ scheduled time if channel is active.
 
 ### REQ-SMS-006: Channel lifecycle — active to inactive
 
+The system SHALL satisfy this requirement: Channel lifecycle — active to inactive.
+
 #### Scenario: Disable SMS channel temporarily
 
 **GIVEN** a channel in status `active`,
@@ -130,6 +146,8 @@ are dispatched from this channel. Operator can re-enable by clicking
 "Activate Channel" (status back to `active`).
 
 ### REQ-SMS-007: Channel lifecycle — to archived
+
+The system SHALL satisfy this requirement: Channel lifecycle — to archived.
 
 #### Scenario: Archive a channel
 
@@ -142,6 +160,8 @@ channel.
 
 ### REQ-SMS-008: Retry logic for failed SMS sends
 
+The system SHALL satisfy this requirement: Retry logic for failed SMS sends.
+
 #### Scenario: Retry on SMS delivery failure
 
 **GIVEN** a channel with `retryCount: 3` and `retryIntervalSeconds: 300`,
@@ -151,6 +171,8 @@ channel.
 marked failed; error logged for operator review.
 
 ### REQ-SMS-009: Message variable substitution
+
+The system SHALL satisfy this requirement: Message variable substitution.
 
 #### Scenario: Render SMS with booking variables
 
@@ -164,6 +186,8 @@ substituted message.
 
 ### REQ-SMS-010: Long variable truncation for SMS character limit
 
+The system SHALL satisfy this requirement: Long variable truncation for SMS character limit.
+
 #### Scenario: Truncate long variable values
 
 **GIVEN** an SMS channel with template:
@@ -173,6 +197,8 @@ substituted message.
 chars). Final SMS is "Hallo Jan Jansen, uw boeking in Amsterdam Hoofdkantoor, K.... Ref: BK001".
 
 ### REQ-SMS-011: Sender ID customization per provider
+
+The system SHALL satisfy this requirement: Sender ID customization per provider.
 
 #### Scenario: Set custom sender ID
 
@@ -184,6 +210,8 @@ without reactivating channel.
 
 ### REQ-SMS-012: Fallback phone number for missing contact
 
+The system SHALL satisfy this requirement: Fallback phone number for missing contact.
+
 #### Scenario: Use fallback when booking contact unavailable
 
 **GIVEN** a channel with `fallbackPhoneNumber: "+31123456789"` and a
@@ -193,6 +221,8 @@ booking with no customer phone number,
 fallback missing, SMS dispatch fails with error logged.
 
 ### REQ-SMS-013: Provider credential storage via openconnector
+
+The system SHALL satisfy this requirement: Provider credential storage via openconnector.
 
 #### Scenario: Securely store provider credentials
 
@@ -204,6 +234,8 @@ or admin UI (masked as "●●●●●●").
 
 ### REQ-SMS-014: Test send for channel validation
 
+The system SHALL satisfy this requirement: Test send for channel validation.
+
 #### Scenario: Send test SMS before activation
 
 **GIVEN** a channel in draft/configuration state,
@@ -214,6 +246,8 @@ test SMS. Operator sees success or failure message.
 
 ### REQ-SMS-015: Channel manifest entry and admin navigation
 
+The system SHALL satisfy this requirement: Channel manifest entry and admin navigation.
+
 #### Scenario: Navigate to SMS Reminder Channels admin
 
 **GIVEN** an operator logged in with booking admin permissions,
@@ -222,6 +256,8 @@ test SMS. Operator sees success or failure message.
 opens the channel list and admin interface.
 
 ### REQ-SMS-016: Audit trail for channel changes
+
+The system SHALL satisfy this requirement: Audit trail for channel changes.
 
 #### Scenario: Track channel configuration changes
 
@@ -232,6 +268,8 @@ field changed, old value, new value). Audit trail visible in channel
 detail history.
 
 ### REQ-SMS-017: Multi-channel support (multiple SMS providers)
+
+The system SHALL satisfy this requirement: Multi-channel support (multiple SMS providers).
 
 #### Scenario: Create fallback SMS channel
 
@@ -244,6 +282,8 @@ integration can try fallback channel.
 
 ### REQ-SMS-018: Provider API error handling
 
+The system SHALL satisfy this requirement: Provider API error handling.
+
 #### Scenario: Handle provider unavailability gracefully
 
 **GIVEN** a channel configured with MessageBird and the provider API is
@@ -255,6 +295,8 @@ dispatch history; channel remains active for future sends.
 
 ### REQ-SMS-019: SMS cost logging for billing integration
 
+The system SHALL satisfy this requirement: SMS cost logging for billing integration.
+
 #### Scenario: Log SMS send cost for future billing
 
 **GIVEN** a channel dispatches SMS via provider,
@@ -264,6 +306,8 @@ message length (single SMS or multi-part), cost (if available from
 provider). Log available for future billing integration (T3).
 
 ### REQ-SMS-020: Permissions and access control
+
+The system SHALL satisfy this requirement: Permissions and access control.
 
 #### Scenario: Restrict channel management to authorized operators
 

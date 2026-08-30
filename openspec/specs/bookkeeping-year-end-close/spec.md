@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-year-end-close
 
 **Status:** proposed
@@ -5,7 +9,13 @@
 **Tier:** T4 (advanced engine)
 **Depends on:** bookkeeping-period-close (T3)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping year end close in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+@e2e exclude pure backend/data: year-end close postings, reversals and lock behaviour are schema + service + ledger behaviour — not browser-testable
+
+## Requirements
 
 ### REQ-YEC-001: The fiscal-year close SHALL be expressed as a declarative lifecycle transition on a `FiscalYear` register
 
@@ -27,6 +37,8 @@ dimensional rollover) MUST be declared on the transition.
   schema-declared.
 
 ### REQ-YEC-002: The `FiscalYear` register SHALL declare a fixed minimum field set
+
+The system SHALL satisfy this requirement: The `FiscalYear` register SHALL declare a fixed minimum field set.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -132,6 +144,8 @@ registers — no PHP `RolloverService`.
   REQ-CoA-005's archived-rejects-new-postings rule.
 
 ### REQ-YEC-006: Reopening a closed year SHALL require an Admin role and SHALL emit a reverse-and-reopen audit chain
+
+The system SHALL satisfy this requirement: Reopening a closed year SHALL require an Admin role and SHALL emit a reverse-and-reopen audit chain.
 
 Per ADR-022 (apps consume OR's RBAC abstraction), the `closed →
 reopened` lifecycle transition MUST declare an `admin` role guard

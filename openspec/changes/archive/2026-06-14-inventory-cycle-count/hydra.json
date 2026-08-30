@@ -1,0 +1,14 @@
+{
+  "spec_slug": "inventory-cycle-count",
+  "title": "Inventory Cycle Count / Stock-take with variance",
+  "app": "shillinq",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "depends_on": [
+    "inventory-stock-tracking"
+  ],
+  "issue": null,
+  "status": "applied",
+  "applied_at": "2026-06-07",
+  "tasks_complete": 15,
+  "tasks_total": 15
+}

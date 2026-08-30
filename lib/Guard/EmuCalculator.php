@@ -45,90 +45,83 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/add-shillinq-emu-reporting/tasks.md#task-11
  */
-class EmuCalculator
-{
-    /**
-     * Constructor.
-     *
-     * @param LoggerInterface $logger Nextcloud logger for computation diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class EmuCalculator {
+	/**
+	 * Constructor.
+	 *
+	 * @param LoggerInterface $logger Nextcloud logger for computation diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Compute quarterly EMU-saldo from a pre-filtered set of GL lines.
-     *
-     * @param array<int,array<string,mixed>> $glLines GL lines already fetched by the engine for the quarter.
-     * @param array<string,mixed>            $params  Must include `quarter` (Q1–Q4) and `year` (int).
-     *
-     * @return array<string,int> Sector-keyed saldo in euro-cents (e.g. ['S.1313' => 150000]).
-     *
-     * @spec openspec/changes/add-shillinq-emu-reporting/tasks.md#task-11
-     */
-    public function computeQuarterlySaldo(array $glLines, array $params): array
-    {
-        $this->logger->debug('EmuCalculator: quarterly saldo', ['params' => $params, 'lines' => count($glLines)]);
-        return $this->aggregateBySector(glLines: $glLines);
+	/**
+	 * Compute quarterly EMU-saldo from a pre-filtered set of GL lines.
+	 *
+	 * @param array<int,array<string,mixed>> $glLines GL lines already fetched by the engine for the quarter.
+	 * @param array<string,mixed> $params Must include `quarter` (Q1–Q4) and `year` (int).
+	 *
+	 * @return array<string,int> Sector-keyed saldo in euro-cents (e.g. ['S.1313' => 150000]).
+	 *
+	 * @spec openspec/changes/add-shillinq-emu-reporting/tasks.md#task-11
+	 */
+	public function computeQuarterlySaldo(array $glLines, array $params): array {
+		$this->logger->debug('EmuCalculator: quarterly saldo', ['params' => $params, 'lines' => count($glLines)]);
+		return $this->aggregateBySector(glLines: $glLines);
+	}//end computeQuarterlySaldo()
 
-    }//end computeQuarterlySaldo()
+	/**
+	 * Compute annual EMU-saldo (and EMU-schuld as negative saldo) from GL lines.
+	 *
+	 * @param array<int,array<string,mixed>> $glLines GL lines for the closed fiscal year.
+	 * @param array<string,mixed> $params Must include `fiscalYear` (int).
+	 *
+	 * @return array<string,int> Sector-keyed saldo in euro-cents.
+	 *
+	 * @spec openspec/changes/add-shillinq-emu-reporting/tasks.md#task-11
+	 */
+	public function computeAnnualSaldo(array $glLines, array $params): array {
+		$this->logger->debug('EmuCalculator: annual saldo', ['params' => $params, 'lines' => count($glLines)]);
+		return $this->aggregateBySector(glLines: $glLines);
+	}//end computeAnnualSaldo()
 
-    /**
-     * Compute annual EMU-saldo (and EMU-schuld as negative saldo) from GL lines.
-     *
-     * @param array<int,array<string,mixed>> $glLines GL lines for the closed fiscal year.
-     * @param array<string,mixed>            $params  Must include `fiscalYear` (int).
-     *
-     * @return array<string,int> Sector-keyed saldo in euro-cents.
-     *
-     * @spec openspec/changes/add-shillinq-emu-reporting/tasks.md#task-11
-     */
-    public function computeAnnualSaldo(array $glLines, array $params): array
-    {
-        $this->logger->debug('EmuCalculator: annual saldo', ['params' => $params, 'lines' => count($glLines)]);
-        return $this->aggregateBySector(glLines: $glLines);
+	/**
+	 * Core sector-grouping logic shared by quarterly and annual paths.
+	 *
+	 * Applies emuInclusionRule: 'excluded' → skip; 'partial' → 50%; 'included' → 100%.
+	 * Uses integer cents to avoid IEEE-754 float equality issues (same pattern as
+	 * AccountBalanceGuard::requireZeroBalance).
+	 *
+	 * @param array<int,array<string,mixed>> $glLines Raw GL line objects from OR.
+	 *
+	 * @return array<string,int> ESA sector code → net saldo in euro-cents.
+	 */
+	private function aggregateBySector(array $glLines): array {
+		$balance = [];
+		foreach ($glLines as $line) {
+			$sector = $line['account']['esaClassifier'] ?? ($line['esaClassifier'] ?? null);
+			if ($sector === null) {
+				continue;
+			}
 
-    }//end computeAnnualSaldo()
+			$rule = $line['emuInclusionRule'] ?? 'included';
+			if ($rule === 'excluded') {
+				continue;
+			}
 
-    /**
-     * Core sector-grouping logic shared by quarterly and annual paths.
-     *
-     * Applies emuInclusionRule: 'excluded' → skip; 'partial' → 50%; 'included' → 100%.
-     * Uses integer cents to avoid IEEE-754 float equality issues (same pattern as
-     * AccountBalanceGuard::requireZeroBalance).
-     *
-     * @param array<int,array<string,mixed>> $glLines Raw GL line objects from OR.
-     *
-     * @return array<string,int> ESA sector code → net saldo in euro-cents.
-     */
-    private function aggregateBySector(array $glLines): array
-    {
-        $saldo = [];
-        foreach ($glLines as $line) {
-            $sector = $line['account']['esaClassifier'] ?? ($line['esaClassifier'] ?? null);
-            if ($sector === null) {
-                continue;
-            }
+			$debitCents = (int)round((float)($line['debit'] ?? 0) * 100);
+			$creditCents = (int)round((float)($line['credit'] ?? 0) * 100);
+			$netCents = $debitCents - $creditCents;
 
-            $rule = $line['emuInclusionRule'] ?? 'included';
-            if ($rule === 'excluded') {
-                continue;
-            }
+			if ($rule === 'partial') {
+				// Integer-safe 50 % — multiply by 1 then divide by 2 to avoid float.
+				$netCents = (int)round($netCents / 2);
+			}
 
-            $debitCents  = (int) round((float) ($line['debit'] ?? 0) * 100);
-            $creditCents = (int) round((float) ($line['credit'] ?? 0) * 100);
-            $netCents    = $debitCents - $creditCents;
+			$balance[$sector] = ($balance[$sector] ?? 0) + $netCents;
+		}//end foreach
 
-            if ($rule === 'partial') {
-                // Integer-safe 50 % — multiply by 1 then divide by 2 to avoid float.
-                $netCents = (int) round($netCents / 2);
-            }
-
-            $saldo[$sector] = ($saldo[$sector] ?? 0) + $netCents;
-        }//end foreach
-
-        return $saldo;
-
-    }//end aggregateBySector()
+		return $balance;
+	}//end aggregateBySector()
 }//end class

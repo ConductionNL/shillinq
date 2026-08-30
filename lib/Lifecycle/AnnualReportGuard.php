@@ -34,7 +34,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/bookkeeping-titel-9-jaarrekening/specs/bookkeeping-titel-9-jaarrekening/spec.md
+ * @spec openspec/specs/bookkeeping-titel-9-jaarrekening/spec.md
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -46,8 +46,8 @@ namespace OCA\Shillinq\Lifecycle;
 
 use OCA\Shillinq\AppInfo\Application;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Contract\ObjectServiceInterface;
 
 /**
  * Lifecycle precondition guards for AnnualReport opmaken and vaststellen.
@@ -58,261 +58,250 @@ use Psr\Log\LoggerInterface;
  * transitions.{vaststellen,vaststellenZonderReview}.requires as
  * OCA\Shillinq\Lifecycle\AnnualReportGuard::canVaststellen.
  *
- * @spec openspec/changes/bookkeeping-titel-9-jaarrekening/specs/bookkeeping-titel-9-jaarrekening/spec.md
+ * @spec openspec/specs/bookkeeping-titel-9-jaarrekening/spec.md
  */
-class AnnualReportGuard
-{
-    /**
-     * Construct the guard with DI dependencies.
-     *
-     * @param ContainerInterface $container DI container for lazy ObjectService resolution.
-     * @param IAppConfig         $appConfig App config for the register slug.
-     * @param LoggerInterface    $logger    Logger for fail-closed diagnostics.
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly IAppConfig $appConfig,
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class AnnualReportGuard {
+	/**
+	 * Construct the guard with DI dependencies.
+	 *
+	 * @param IAppConfig $appConfig App config for the register slug.
+	 * @param LoggerInterface $logger Logger for fail-closed diagnostics.
+	 * @param ObjectServiceInterface $objectService OpenRegister's object service, injected per ADR-083.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly LoggerInterface $logger,
+		private readonly ObjectServiceInterface $objectService,
+	) {
+	}//end __construct()
 
-    /**
-     * Returns true iff the jaarrekening's balans balances (activa = passiva).
-     *
-     * REQ-T9-002 / REQ-T9-010 (design D2): the bestuur may only opmaken a
-     * jaarrekening whose balans is arithmetically consistent. The balance is
-     * computed from the linked BalanceSheet's totalActiva/totalPassiva when
-     * present, otherwise from the activa/passiva rubriek sums, using
-     * integer-cent arithmetic to avoid IEEE-754 float equality issues.
-     *
-     * Fail-closed: returns false on any exception, a missing BalanceSheet, or
-     * an unbalanced balans (CWE-863).
-     *
-     * @param string                   $annualReportId The AnnualReport.id being transitioned.
-     * @param array<string,mixed>|null $object         The AnnualReport object being transitioned.
-     *
-     * @return bool True when the balans balances and the report may opmaken.
-     *
-     * @spec openspec/changes/bookkeeping-titel-9-jaarrekening/specs/bookkeeping-titel-9-jaarrekening/spec.md
-     */
-    public function canOpmaken(string $annualReportId, ?array $object=null): bool
-    {
-        try {
-            $reportId = $this->resolveReportId(annualReportId: $annualReportId, object: $object);
-            if ($reportId === '') {
-                return false;
-            }
+	/**
+	 * Returns true iff the jaarrekening's balans balances (activa = passiva).
+	 *
+	 * REQ-T9-002 / REQ-T9-010 (design D2): the bestuur may only opmaken a
+	 * jaarrekening whose balans is arithmetically consistent. The balance is
+	 * computed from the linked BalanceSheet's totalActiva/totalPassiva when
+	 * present, otherwise from the activa/passiva rubriek sums, using
+	 * integer-cent arithmetic to avoid IEEE-754 float equality issues.
+	 *
+	 * Fail-closed: returns false on any exception, a missing BalanceSheet, or
+	 * an unbalanced balans (CWE-863).
+	 *
+	 * @param string $annualReportId The AnnualReport.id being transitioned.
+	 * @param array<string,mixed>|null $object The AnnualReport object being transitioned.
+	 *
+	 * @return bool True when the balans balances and the report may opmaken.
+	 *
+	 * @spec openspec/specs/bookkeeping-titel-9-jaarrekening/spec.md
+	 */
+	public function canOpmaken(string $annualReportId, ?array $object = null): bool {
+		try {
+			$reportId = $this->resolveReportId(annualReportId: $annualReportId, object: $object);
+			if ($reportId === '') {
+				return false;
+			}
 
-            $balanceSheet = $this->resolveBalanceSheet(reportId: $reportId);
-            if ($balanceSheet === null) {
-                return false;
-            }
+			$balanceSheet = $this->resolveBalanceSheet(reportId: $reportId);
+			if ($balanceSheet === null) {
+				return false;
+			}
 
-            $totals = $this->balanceTotalsInCents(balanceSheet: $balanceSheet);
-            if ($totals === null) {
-                return false;
-            }
+			$totals = $this->balanceTotalsInCents(balanceSheet: $balanceSheet);
+			if ($totals === null) {
+				return false;
+			}
 
-            [$activaCents, $passivaCents] = $totals;
+			[$activaCents, $passivaCents] = $totals;
 
-            return $activaCents > 0 && $activaCents === $passivaCents;
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'AnnualReportGuard: opmaak balans check failed — denying opmaken transition (fail-closed)',
-                ['annualReportId' => $annualReportId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canOpmaken()
+			return $activaCents > 0 && $activaCents === $passivaCents;
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'AnnualReportGuard: opmaak balans check failed — denying opmaken transition (fail-closed)',
+				['annualReportId' => $annualReportId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canOpmaken()
 
-    /**
-     * Returns true iff an accountantsverklaring is attached when it is verplicht.
-     *
-     * REQ-T9-007 / REQ-T9-009: for middelgroot+ (accountantsverklaringVereist
-     * === true) the AV may only vaststellen once a goedkeurende/met-beperking/
-     * samenstelling/beoordeling accountantsverklaring has been recorded. When
-     * the verklaring is not verplicht (klein/micro) the AV may vaststellen
-     * freely.
-     *
-     * Fail-closed: returns false on any exception (CWE-863).
-     *
-     * @param string                   $annualReportId The AnnualReport.id being transitioned.
-     * @param array<string,mixed>|null $object         The AnnualReport object being transitioned.
-     *
-     * @return bool True when the report may be vastgesteld.
-     *
-     * @spec openspec/changes/bookkeeping-titel-9-jaarrekening/specs/bookkeeping-titel-9-jaarrekening/spec.md
-     */
-    public function canVaststellen(string $annualReportId, ?array $object=null): bool
-    {
-        try {
-            $report = $object;
-            if ($report === null || isset($report['accountantsverklaringVereist']) === false) {
-                $report = $this->resolveAnnualReport(annualReportId: $annualReportId);
-            }
+	/**
+	 * Returns true iff an accountantsverklaring is attached when it is verplicht.
+	 *
+	 * REQ-T9-007 / REQ-T9-009: for middelgroot+ (accountantsverklaringVereist
+	 * === true) the AV may only vaststellen once a goedkeurende/met-beperking/
+	 * samenstelling/beoordeling accountantsverklaring has been recorded. When
+	 * the verklaring is not verplicht (klein/micro) the AV may vaststellen
+	 * freely.
+	 *
+	 * Fail-closed: returns false on any exception (CWE-863).
+	 *
+	 * @param string $annualReportId The AnnualReport.id being transitioned.
+	 * @param array<string,mixed>|null $object The AnnualReport object being transitioned.
+	 *
+	 * @return bool True when the report may be vastgesteld.
+	 *
+	 * @spec openspec/specs/bookkeeping-titel-9-jaarrekening/spec.md
+	 */
+	public function canVaststellen(string $annualReportId, ?array $object = null): bool {
+		try {
+			$report = $object;
+			if ($report === null || isset($report['auditorsStatementRequired']) === false) {
+				$report = $this->resolveAnnualReport(annualReportId: $annualReportId);
+			}
 
-            if ($report === null) {
-                return false;
-            }
+			if ($report === null) {
+				return false;
+			}
 
-            $vereist = ($report['accountantsverklaringVereist'] ?? false) === true;
-            if ($vereist === false) {
-                return true;
-            }
+			$required = ($report['auditorsStatementRequired'] ?? false) === true;
+			if ($required === false) {
+				return true;
+			}
 
-            $status = (string) ($report['accountantsverklaringStatus'] ?? 'niet-vereist');
-            $valid  = ['goedkeurend', 'met-beperking', 'samenstelling', 'beoordeling'];
+			$status = (string)($report['auditorsStatementStatus'] ?? 'niet-vereist');
+			$valid = ['goedkeurend', 'met-beperking', 'samenstelling', 'beoordeling'];
 
-            return in_array($status, $valid, true);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'AnnualReportGuard: vaststelling verklaring check failed — denying vaststellen transition (fail-closed)',
-                ['annualReportId' => $annualReportId, 'exception' => $e->getMessage()]
-            );
-            return false;
-        }//end try
-    }//end canVaststellen()
+			return in_array($status, $valid, true);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'AnnualReportGuard: vaststelling verklaring check failed — denying vaststellen transition (fail-closed)',
+				['annualReportId' => $annualReportId, 'exception' => $e->getMessage()]
+			);
+			return false;
+		}//end try
+	}//end canVaststellen()
 
-    /**
-     * Compute the balans activa/passiva totals in integer cents.
-     *
-     * Prefers the persisted totalActiva/totalPassiva when both are present;
-     * otherwise sums the rubriek huidigJaar amounts grouped by zijde. Integer-
-     * cent arithmetic avoids IEEE-754 float equality issues.
-     *
-     * @param array<string,mixed> $balanceSheet The BalanceSheet to total.
-     *
-     * @return array{0:int,1:int}|null A [activaCents, passivaCents] pair, or
-     *                                 null when neither totals nor rubrieken
-     *                                 are available (fail-closed).
-     */
-    private function balanceTotalsInCents(array $balanceSheet): ?array
-    {
-        $totalActiva  = ($balanceSheet['totalActiva'] ?? null);
-        $totalPassiva = ($balanceSheet['totalPassiva'] ?? null);
-        if ($totalActiva !== null && $totalPassiva !== null) {
-            return [
-                (int) round((float) $totalActiva * 100),
-                (int) round((float) $totalPassiva * 100),
-            ];
-        }
+	/**
+	 * Compute the balans activa/passiva totals in integer cents.
+	 *
+	 * Prefers the persisted totalActiva/totalPassiva when both are present;
+	 * otherwise sums the rubriek huidigJaar amounts grouped by zijde. Integer-
+	 * cent arithmetic avoids IEEE-754 float equality issues.
+	 *
+	 * @param array<string,mixed> $balanceSheet The BalanceSheet to total.
+	 *
+	 * @return array{0:int,1:int}|null A [activaCents, passivaCents] pair, or
+	 *                                 null when neither totals nor rubrieken
+	 *                                 are available (fail-closed).
+	 */
+	private function balanceTotalsInCents(array $balanceSheet): ?array {
+		$totalAssets = ($balanceSheet['totalAssets'] ?? null);
+		$totalLiabilities = ($balanceSheet['totalLiabilities'] ?? null);
+		if ($totalAssets !== null && $totalLiabilities !== null) {
+			return [
+				(int)round((float)$totalAssets * 100),
+				(int)round((float)$totalLiabilities * 100),
+			];
+		}
 
-        $rubrieken = ($balanceSheet['rubrieken'] ?? null);
-        if (is_array($rubrieken) === false) {
-            return null;
-        }
+		$rubrieken = ($balanceSheet['rubrieken'] ?? null);
+		if (is_array($rubrieken) === false) {
+			return null;
+		}
 
-        return [
-            $this->sumRubriekCents(rubrieken: $rubrieken, zijde: 'activa'),
-            $this->sumRubriekCents(rubrieken: $rubrieken, zijde: 'passiva'),
-        ];
-    }//end balanceTotalsInCents()
+		return [
+			$this->sumRubriekCents(rubrieken: $rubrieken, side: 'assets'),
+			$this->sumRubriekCents(rubrieken: $rubrieken, side: 'liabilities'),
+		];
+	}//end balanceTotalsInCents()
 
-    /**
-     * Sum the huidigJaar amounts (in integer cents) of the rubrieken on one zijde.
-     *
-     * @param array<int,mixed> $rubrieken The balans rubriek rows.
-     * @param string           $zijde     The side to total ('activa' or 'passiva').
-     *
-     * @return int The summed amount in integer cents.
-     */
-    private function sumRubriekCents(array $rubrieken, string $zijde): int
-    {
-        $cents = 0;
-        foreach ($rubrieken as $rubriek) {
-            if (is_array($rubriek) === true && ($rubriek['zijde'] ?? '') === $zijde) {
-                $cents += (int) round((float) ($rubriek['huidigJaar'] ?? 0) * 100);
-            }
-        }
+	/**
+	 * Sum the huidigJaar amounts (in integer cents) of the rubrieken on one zijde.
+	 *
+	 * @param array<int,mixed> $rubrieken The balans rubriek rows.
+	 * @param string $side The side to total ('assets' or 'liabilities').
+	 *
+	 * @return int The summed amount in integer cents.
+	 */
+	private function sumRubriekCents(array $rubrieken, string $side): int {
+		$cents = 0;
+		foreach ($rubrieken as $section) {
+			if (is_array($section) === true && ($section['side'] ?? '') === $side) {
+				$cents += (int)round((float)($section['currentYear'] ?? 0) * 100);
+			}
+		}
 
-        return $cents;
-    }//end sumRubriekCents()
+		return $cents;
+	}//end sumRubriekCents()
 
-    /**
-     * Resolve the AnnualReport reportId (its own id) from the object or lookup.
-     *
-     * @param string                   $annualReportId The AnnualReport.id.
-     * @param array<string,mixed>|null $object         The in-flight object, if provided.
-     *
-     * @return string The report id, or '' when unresolvable.
-     */
-    private function resolveReportId(string $annualReportId, ?array $object): string
-    {
-        if ($object !== null && isset($object['id']) === true && (string) $object['id'] !== '') {
-            return (string) $object['id'];
-        }
+	/**
+	 * Resolve the AnnualReport reportId (its own id) from the object or lookup.
+	 *
+	 * @param string $annualReportId The AnnualReport.id.
+	 * @param array<string,mixed>|null $object The in-flight object, if provided.
+	 *
+	 * @return string The report id, or '' when unresolvable.
+	 */
+	private function resolveReportId(string $annualReportId, ?array $object): string {
+		if ($object !== null && isset($object['id']) === true && (string)$object['id'] !== '') {
+			return (string)$object['id'];
+		}
 
-        return $annualReportId;
-    }//end resolveReportId()
+		return $annualReportId;
+	}//end resolveReportId()
 
-    /**
-     * Resolve the AnnualReport object by id via ObjectService.
-     *
-     * @param string $annualReportId The AnnualReport.id to look up.
-     *
-     * @return array<string,mixed>|null The report, or null when not found.
-     */
-    private function resolveAnnualReport(string $annualReportId): ?array
-    {
-        if ($annualReportId === '') {
-            return null;
-        }
+	/**
+	 * Resolve the AnnualReport object by id via ObjectService.
+	 *
+	 * @param string $annualReportId The AnnualReport.id to look up.
+	 *
+	 * @return array<string,mixed>|null The report, or null when not found.
+	 */
+	private function resolveAnnualReport(string $annualReportId): ?array {
+		if ($annualReportId === '') {
+			return null;
+		}
 
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $register      = $this->resolveRegister();
+		$register = $this->resolveRegister();
 
-        $reports = $objectService
-            ->setRegister($register)
-            ->setSchema('AnnualReport')
-            ->findAll(['filters' => ['id' => $annualReportId]]);
+		$reports = $this->objectService
+			->setRegister($register)
+			->setSchema('AnnualReport')
+			->findAll(['filters' => ['id' => $annualReportId]]);
 
-        foreach ($reports as $report) {
-            if (is_array($report) === true) {
-                return $report;
-            }
-        }
+		foreach ($reports as $report) {
+			if (is_array($report) === true) {
+				return $report;
+			}
+		}
 
-        return null;
-    }//end resolveAnnualReport()
+		return null;
+	}//end resolveAnnualReport()
 
-    /**
-     * Resolve the linked BalanceSheet for a given report id via ObjectService.
-     *
-     * @param string $reportId The AnnualReport.id whose balans to fetch.
-     *
-     * @return array<string,mixed>|null The BalanceSheet, or null when not found.
-     */
-    private function resolveBalanceSheet(string $reportId): ?array
-    {
-        $objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        $register      = $this->resolveRegister();
+	/**
+	 * Resolve the linked BalanceSheet for a given report id via ObjectService.
+	 *
+	 * @param string $reportId The AnnualReport.id whose balans to fetch.
+	 *
+	 * @return array<string,mixed>|null The BalanceSheet, or null when not found.
+	 */
+	private function resolveBalanceSheet(string $reportId): ?array {
+		$register = $this->resolveRegister();
 
-        $sheets = $objectService
-            ->setRegister($register)
-            ->setSchema('BalanceSheet')
-            ->findAll(['filters' => ['reportId' => $reportId]]);
+		$sheets = $this->objectService
+			->setRegister($register)
+			->setSchema('BalanceSheet')
+			->findAll(['filters' => ['reportId' => $reportId]]);
 
-        foreach ($sheets as $sheet) {
-            if (is_array($sheet) === true) {
-                return $sheet;
-            }
-        }
+		foreach ($sheets as $sheet) {
+			if (is_array($sheet) === true) {
+				return $sheet;
+			}
+		}
 
-        return null;
-    }//end resolveBalanceSheet()
+		return null;
+	}//end resolveBalanceSheet()
 
-    /**
-     * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
-     *
-     * @return string The register slug.
-     */
-    private function resolveRegister(): string
-    {
-        $register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-        if ($register === '') {
-            return 'shillinq';
-        }
+	/**
+	 * Resolve the configured OpenRegister register slug, defaulting to `shillinq`.
+	 *
+	 * @return string The register slug.
+	 */
+	private function resolveRegister(): string {
+		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
+		if ($register === '') {
+			return 'shillinq';
+		}
 
-        return $register;
-    }//end resolveRegister()
+		return $register;
+	}//end resolveRegister()
 }//end class

@@ -1,0 +1,380 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-gr-consolidation",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "T5 Gemeenschappelijke Regeling (GR) consolidation — inter-company posting layer. Adds the IntercompanyTransaction and EliminationRule schemas plus seed objects. The ConsolidationGroup and ConsolidatedReport schemas already live in the monolith from bookkeeping-financial-statements; this fragment adds only the inter-company elimination surface (REQ-ICP-*) on top of that consolidation container."
+  },
+  "components": {
+    "schemas": {
+      "EliminationRule": {
+        "slug": "EliminationRule",
+        "icon": "VectorDifference",
+        "version": "0.1.0",
+        "title": "Elimination Rule",
+        "description": "A per-ConsolidationGroup rule declaring which GL account pairs cancel out when inter-company transactions are matched at consolidation time (REQ-ICP-002). Rules are metadata; matching itself runs at consolidation time against IntercompanyTransaction records.",
+        "x-schema-org": "schema:Rule",
+        "x-spec": "openspec/changes/bookkeeping-gr-consolidation/specs/bookkeeping-intercompany-posting.md",
+        "type": "object",
+        "required": [
+          "consolidationGroupId",
+          "ruleType",
+          "accountPairFrom",
+          "accountPairTo",
+          "isActive"
+        ],
+        "properties": {
+          "consolidationGroupId": {
+            "type": "string",
+            "description": "FK to the ConsolidationGroup this rule applies to (REQ-ICP-002).",
+            "example": "gr-afval-001",
+            "title": "Consolidation Group ID",
+            "$ref": "ConsolidationGroup"
+          },
+          "ruleType": {
+            "type": "string",
+            "enum": [
+              "auto-match",
+              "reference-match",
+              "manual-review"
+            ],
+            "description": "auto-match: exact account + amount (within amountTolerance); reference-match: matches on invoice/reference; manual-review: pause and ask an operator before eliminating (REQ-ICP-002).",
+            "default": "auto-match",
+            "example": "auto-match",
+            "title": "Rule Type"
+          },
+          "accountPairFrom": {
+            "type": "string",
+            "description": "GL account code on the selling/providing member (e.g. 4000 Revenue).",
+            "example": "4000",
+            "title": "Account Pair From"
+          },
+          "accountPairTo": {
+            "type": "string",
+            "description": "GL account code on the buying/receiving member (e.g. 7000 Expenses).",
+            "example": "7000",
+            "title": "Account Pair To"
+          },
+          "amountTolerance": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0,
+            "description": "For auto-match: maximum EUR difference allowed between paired amounts. 0 means exact match (REQ-ICP-002).",
+            "example": 0.0,
+            "title": "Amount Tolerance"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-text note on the rule (e.g. 'Revenue ↔ Expenses inter-company pairs').",
+            "title": "Description"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether this rule is enforced at consolidation time. Disable instead of deleting to preserve audit history (REQ-ICP-002).",
+            "title": "Is Active"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create/update/delete of an EliminationRule is logged to OR's immutable audit trail (REQ-AT-001 / REQ-ICP-007)."
+        }
+      },
+      "IntercompanyTransaction": {
+        "slug": "IntercompanyTransaction",
+        "icon": "SwapHorizontalBold",
+        "version": "0.1.0",
+        "title": "Inter-Company Transaction",
+        "description": "A sale or service between two members of a ConsolidationGroup. Serves as a routing label over the underlying GL posting and as the hook for elimination rules at consolidation time (REQ-ICP-001). Elimination happens at consolidation time, not at posting time.",
+        "x-schema-org": "schema:MoneyTransfer",
+        "x-spec": "openspec/changes/bookkeeping-gr-consolidation/specs/bookkeeping-intercompany-posting.md",
+        "type": "object",
+        "required": [
+          "consolidationGroupId",
+          "fromMemberId",
+          "toMemberId",
+          "transactionDate",
+          "amount",
+          "accountFrom",
+          "accountTo",
+          "eliminationStatus"
+        ],
+        "properties": {
+          "consolidationGroupId": {
+            "type": "string",
+            "description": "FK to the ConsolidationGroup this transaction belongs to (REQ-ICP-001).",
+            "example": "gr-afval-001",
+            "title": "Consolidation Group ID",
+            "$ref": "ConsolidationGroup"
+          },
+          "fromMemberId": {
+            "type": "string",
+            "description": "FK to the selling/providing member Organization (REQ-ICP-001).",
+            "example": "amsterdam",
+            "title": "From Member ID"
+          },
+          "toMemberId": {
+            "type": "string",
+            "description": "FK to the buying/receiving member Organization (REQ-ICP-001).",
+            "example": "utrecht",
+            "title": "To Member ID"
+          },
+          "transactionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the service was delivered or sale occurred.",
+            "example": "2026-05-10",
+            "title": "Transaction Date"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "EUR amount of the transaction (non-negative).",
+            "example": 50000.0,
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217 currency; GR members operate in EUR (multi-currency deferred).",
+            "title": "Currency"
+          },
+          "accountFrom": {
+            "type": "string",
+            "description": "GL account code on the selling member (e.g. 4000 Revenue).",
+            "example": "4000",
+            "title": "Account From"
+          },
+          "accountTo": {
+            "type": "string",
+            "description": "GL account code on the buying member (e.g. 7000 Expenses).",
+            "example": "7000",
+            "title": "Account To"
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true,
+            "description": "Invoice/PO number or external identifier for manual or reference-match pairing (REQ-ICP-001).",
+            "example": "INV-2026-001",
+            "title": "Reference"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-text description of the service or goods.",
+            "title": "Description"
+          },
+          "glTransactionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the underlying GLTransaction once posted; may be null if the record is created post-facto (REQ-ICP-005).",
+            "example": "gl-txn-2026-0001",
+            "title": "GL Transaction ID",
+            "$ref": "GLTransaction"
+          },
+          "isManualOverride": {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, this transaction is excluded from automatic elimination even if it matches an active rule (REQ-ICP-004).",
+            "title": "Is Manual Override"
+          },
+          "overrideReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator note recorded when isManualOverride is set or a forced elimination is applied (REQ-ICP-004).",
+            "title": "Override Reason"
+          },
+          "eliminatedByRuleId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the EliminationRule that eliminated this transaction, recorded for audit traceability (REQ-ICP-003 / REQ-ICP-007).",
+            "title": "Eliminated By Rule ID"
+          },
+          "consolidatedReportId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the ConsolidatedReport this transaction was included in once consolidated. Once that report is finalized or published, eliminationStatus is immutable (REQ-ICP-006).",
+            "title": "Consolidated Report ID",
+            "$ref": "ConsolidatedReport"
+          },
+          "eliminationStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "eliminated",
+              "excluded"
+            ],
+            "default": "pending",
+            "description": "pending: not yet consolidated, included in totals; eliminated: matched a rule and removed from group totals; excluded: manual override, intentionally retained in totals (REQ-ICP-001 / REQ-ICP-008).",
+            "title": "Elimination Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "eliminationStatus",
+          "initialState": "pending",
+          "states": {
+            "pending": {
+              "label": "Pending",
+              "description": "Not yet consolidated. Included in consolidated GL totals until matched (REQ-ICP-008)."
+            },
+            "eliminated": {
+              "label": "Eliminated",
+              "description": "Matched an active elimination rule (or forced) and removed from consolidated group totals (REQ-ICP-003)."
+            },
+            "excluded": {
+              "label": "Excluded",
+              "description": "Manual override — matches a rule but intentionally retained in consolidated totals at fair-market value (REQ-ICP-004)."
+            }
+          },
+          "transitions": {
+            "eliminate": {
+              "from": "pending",
+              "to": "eliminated",
+              "label": "Eliminate",
+              "description": "Mark this inter-company transaction as eliminated at consolidation time. Denied once the owning ConsolidatedReport is finalized or published (REQ-ICP-006).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\EliminationGuard::canChangeEliminationStatus"
+            },
+            "exclude": {
+              "from": "pending",
+              "to": "excluded",
+              "label": "Exclude from elimination",
+              "description": "Operator override retaining this transaction in consolidated totals. Denied once the owning ConsolidatedReport is finalized or published (REQ-ICP-006).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\EliminationGuard::canChangeEliminationStatus"
+            },
+            "restore": {
+              "from": "excluded",
+              "to": "pending",
+              "label": "Restore to pending",
+              "description": "Undo an exclusion before the report is finalized so the transaction is reconsidered at the next consolidation run (REQ-ICP-006).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\EliminationGuard::canChangeEliminationStatus"
+            },
+            "reinstate": {
+              "from": "eliminated",
+              "to": "pending",
+              "label": "Reinstate",
+              "description": "Reverse an elimination before the report is finalized (REQ-ICP-006).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\EliminationGuard::canChangeEliminationStatus"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create/update/delete and lifecycle transition (eliminate / exclude / restore / reinstate) of an IntercompanyTransaction is logged to OR's immutable audit trail (REQ-AT-001 / REQ-ICP-007)."
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EliminationRule",
+        "slug": "gr-rule-revenue-expense"
+      },
+      "consolidationGroupId": "gr-afval-001",
+      "ruleType": "auto-match",
+      "accountPairFrom": "4000",
+      "accountPairTo": "7000",
+      "amountTolerance": 0.0,
+      "description": "Eliminate inter-company revenue (4000) against the matching expense (7000) booked by the receiving member.",
+      "isActive": true
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EliminationRule",
+        "slug": "gr-rule-receivable-payable"
+      },
+      "consolidationGroupId": "gr-afval-001",
+      "ruleType": "auto-match",
+      "accountPairFrom": "1300",
+      "accountPairTo": "1600",
+      "amountTolerance": 0.0,
+      "description": "Eliminate inter-company receivables (1300) against payables (1600) between group members.",
+      "isActive": true
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EliminationRule",
+        "slug": "gr-rule-interest-review"
+      },
+      "consolidationGroupId": "gr-afval-001",
+      "ruleType": "manual-review",
+      "accountPairFrom": "8100",
+      "accountPairTo": "8200",
+      "amountTolerance": 0.0,
+      "description": "Inter-company loan interest (8100 income ↔ 8200 expense) requires manual review before elimination.",
+      "isActive": false
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "IntercompanyTransaction",
+        "slug": "gr-ict-2026-sample-waste-service"
+      },
+      "consolidationGroupId": "gr-afval-001",
+      "fromMemberId": "amsterdam",
+      "toMemberId": "utrecht",
+      "transactionDate": "2026-05-10",
+      "amount": 50000.0,
+      "currency": "EUR",
+      "accountFrom": "4000",
+      "accountTo": "7000",
+      "reference": "INV-2026-001",
+      "description": "Waste-collection service provided by Gemeente Amsterdam to Gemeente Utrecht.",
+      "isManualOverride": false,
+      "eliminationStatus": "pending"
+    }
+  ]
+}

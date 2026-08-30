@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-ifrs-rj-dual-gaap
 
 **Status:** proposed
@@ -7,7 +11,11 @@
 `../bookkeeping-financial-statements/spec.md` (RJ + IFRS statement generation),
 `../bookkeeping-consolidation/spec.md` (multi-entity framework conversion)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping ifrs rj dual gaap in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: IFRS/RJ dual GAAP pages not yet implemented
 
@@ -209,6 +217,8 @@ total deferred-tax impact.
 
 ### REQ-DGAAP-007: Version management and effective dates SHALL support retrospective and modified-retrospective application
 
+The system SHALL satisfy this requirement: Version management and effective dates SHALL support retrospective and modified-retrospective application.
+
 When an accounting standard changes (e.g., RJ 271 revised effective 2027-01-01 with new
 VPL-regeling treatment), the group-accountant MUST be able to:
 
@@ -254,6 +264,8 @@ for audit evidence review.
   supporting sheets).
 
 ### REQ-DGAAP-009: Multi-entity consolidation with mixed frameworks SHALL automatically convert RJ subsidiaries to IFRS
+
+The system SHALL satisfy this requirement: Multi-entity consolidation with mixed frameworks SHALL automatically convert RJ subsidiaries to IFRS.
 
 When a Nederlandse holding consolideert 7 dochters (3 IFRS-rapporterend, 4 RJ-rapporterend),
 the system MUST:

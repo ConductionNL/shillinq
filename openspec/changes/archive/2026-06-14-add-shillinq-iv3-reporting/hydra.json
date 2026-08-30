@@ -1,0 +1,153 @@
+{
+  "schema_version": 2,
+  "spec_slug": "add-shillinq-iv3-reporting",
+  "repo": "https://github.com/ConductionNL/shillinq",
+  "issue": 29,
+  "cycles": [
+    {
+      "cycle": 1,
+      "trigger": "build:queued",
+      "started_at": "2026-06-01T21:05:23Z",
+      "ended_at": "2026-06-01T21:43:44Z",
+      "outcome": "done",
+      "outcome_reason": "pipeline complete \u2014 reviews passed and applier passed (if run)",
+      "pattern_tags": [
+        "browser-test-nc-setup-failed"
+      ],
+      "stages": [
+        {
+          "stage": "build",
+          "persona": "Al Gorithm",
+          "model": "sonnet",
+          "container": "hydra-builder",
+          "started_at": "2026-06-01T20:32:25Z",
+          "ended_at": "2026-06-01T21:05:13Z",
+          "exit_code": 0,
+          "turns_used": 343,
+          "turns_budget": 200,
+          "checks_run": [
+            "composer check:strict (phpcs)",
+            "composer test:unit (phpunit)"
+          ],
+          "checks_skipped": [],
+          "findings": [],
+          "decisions": [],
+          "verdict": "pass",
+          "duration_seconds": 1968
+        },
+        {
+          "stage": "applier",
+          "persona": "Axel Pli\u00e9r",
+          "model": "sonnet",
+          "container": "hydra-applier",
+          "started_at": "2026-06-01T21:42:21Z",
+          "ended_at": "2026-06-01T21:43:27Z",
+          "exit_code": 0,
+          "turns_used": 8,
+          "turns_budget": 20,
+          "checks_run": [
+            "hydra.json-consumer"
+          ],
+          "checks_skipped": [],
+          "findings": [],
+          "decisions": [],
+          "verdict": "pass",
+          "duration_seconds": 66
+        }
+      ]
+    },
+    {
+      "cycle": 2,
+      "trigger": "build:queued",
+      "started_at": "2026-06-03T18:52:05Z",
+      "ended_at": "2026-06-06T04:02:15Z",
+      "outcome": "needs-input",
+      "outcome_reason": "applier returned fail verdict",
+      "pattern_tags": [
+        "browser-test-nc-setup-failed"
+      ],
+      "stages": [
+        {
+          "stage": "build",
+          "persona": "Al Gorithm",
+          "model": "sonnet",
+          "container": "hydra-builder",
+          "started_at": "2026-06-03T18:26:53Z",
+          "ended_at": "2026-06-03T18:52:01Z",
+          "exit_code": 0,
+          "turns_used": 244,
+          "turns_budget": 200,
+          "checks_run": [],
+          "checks_skipped": [
+            "composer check:strict (phpcs) \u2014 Rule 0b",
+            "composer test:unit (phpunit) \u2014 Rule 0b"
+          ],
+          "findings": [
+            {
+              "id": "build-rule-0b-skipped",
+              "severity": "CRITICAL",
+              "gate": "rule-0b",
+              "rule": "builder did not invoke mandatory pre-push gate (composer check:strict, phpunit)",
+              "status": "open",
+              "note": "Rule 0b in images/builder/CLAUDE.md requires composer check:strict + phpunit before push. No invocations found in transcript \u2014 the pipeline will likely catch pre-review-quality failures downstream.",
+              "autofixable": false
+            }
+          ],
+          "decisions": [],
+          "verdict": "pass",
+          "duration_seconds": 1508
+        },
+        {
+          "stage": "applier",
+          "persona": "Axel Pli\u00e9r",
+          "model": "sonnet",
+          "container": "hydra-applier",
+          "started_at": "2026-06-06T04:01:47Z",
+          "ended_at": "2026-06-06T04:02:03Z",
+          "exit_code": 1,
+          "turns_used": 0,
+          "turns_budget": 20,
+          "checks_run": [
+            "hydra.json-consumer"
+          ],
+          "checks_skipped": [],
+          "findings": [
+            {
+              "id": "applier-fail",
+              "severity": "CRITICAL",
+              "gate": "applier",
+              "rule": "applier returned fail verdict",
+              "status": "open",
+              "note": "Applier blocking items should be captured in hydra.json pipeline.applier.blocking[] by the container itself. See logs/pipeline-*/applier.jsonl for detail.",
+              "autofixable": false
+            }
+          ],
+          "decisions": [],
+          "verdict": "fail",
+          "duration_seconds": 16
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "runs": 4,
+    "turns_used": 595,
+    "cost_usd": 0.0,
+    "duration_seconds": 3558,
+    "cycles": 2,
+    "by_stage": {
+      "build": {
+        "runs": 2,
+        "turns_used": 587,
+        "cost_usd": 0.0,
+        "duration_seconds": 3476
+      },
+      "applier": {
+        "runs": 2,
+        "turns_used": 8,
+        "cost_usd": 0.0,
+        "duration_seconds": 82
+      }
+    }
+  }
+}

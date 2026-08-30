@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-investeringsaftrek
 
 **Status:** proposed
@@ -6,7 +10,11 @@
 **Depends on:** `../bookkeeping-fixed-assets-depreciation/spec.md` (FixedAsset base),
 `../bookkeeping-vpb-corporate-tax/spec.md` (Vpb-aangifte integration)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping investeringsaftrek in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: investeringsaftrek — not browser-testable
 
@@ -151,6 +159,12 @@ marginal rates** at the top of each tier; the legal table uses the
 absolute formulas above. The system SHALL display both for boekhouder
 transparency.
 
+#### Scenario: KIA 2026 tier formula applied for high investment
+
+- **GIVEN** a total `investering` of EUR 150.000 in boekjaar 2026
+- **WHEN** the KIA is computed against the 2026 tier table
+- **THEN** the system SHALL apply `EUR 19.769 − 7,56% × (150.000 − 130.744)` and display both the absolute formula result and the effective marginal rate
+
 ### REQ-INV-007: RvO digital aanvraag generation
 
 For every EIA/MIA/Vamil claim the system SHALL generate the RvO eLoket
@@ -192,7 +206,15 @@ Investeringsaftrek" report grouping all claims by scheme, showing:
 This report SHALL be exportable as PDF and as XBRL-fragments suitable for
 inclusion in the SBR Vpb-aangifte rendered by `bookkeeping-vpb-corporate-tax`.
 
+#### Scenario: Bijlage Investeringsaftrek produced at boekjaarafsluiting
+
+- **GIVEN** a boekjaar containing KIA, EIA, MIA and Vamil claims plus open RvO-beschikkingen
+- **WHEN** the boekjaar is closed
+- **THEN** the system SHALL produce a single "Bijlage Investeringsaftrek" report grouped by scheme, exportable as PDF and as XBRL-fragments for the SBR Vpb-aangifte
+
 ### REQ-INV-009: Vrijwillige verlaging tracking
+
+The system SHALL satisfy this requirement: Vrijwillige verlaging tracking.
 
 An entrepreneur may **vrijwillig de aftrek verlagen** (art. 3.42a lid 4 /
 3.42b lid 4) — i.e. claim less than the full statutory amount in the
@@ -206,7 +228,15 @@ verliesverrekening across years. The system SHALL:
 - Make clear that EIA/MIA reductions are **not carry-forwardable** — the
   foregone amount is lost.
 
+#### Scenario: Vrijwillige verlaging recorded with rationale
+
+- **GIVEN** an EIA-claim with a legal entitlement of EUR 20.000
+- **WHEN** the entrepreneur voluntarily reduces the claimed amount to EUR 12.000 with a rationale
+- **THEN** the system SHALL store the reduced amount separately from the legal entitlement, refuse reduction below zero, and flag the foregone EUR 8.000 as not carry-forwardable
+
 ### REQ-INV-010: Desinvesteringsbijtelling on early disposal
+
+The system SHALL satisfy this requirement: Desinvesteringsbijtelling on early disposal.
 
 If an asset on which KIA/EIA/MIA was claimed is **disposed of within
 5 jaar na aanvang kalenderjaar van investering** (art. 3.47 Wet IB 2001),
@@ -268,6 +298,12 @@ melding, RvO-beschikking, eventueel afwijzingsgrond, ingediend bezwaar,
 finale uitspraak, en de doorwerking in de aangifte. Deze audit trail is een
 controle-eis voor accountants onder NV COS 4410 (samenstellingsopdracht) en
 NV COS 4400N (overeengekomen specifieke werkzaamheden).
+
+#### Scenario: RvO correspondence archived and immutably logged
+
+- **GIVEN** a claim with a filed melding, an RvO-beschikking PDF, and a subsequent bezwaar
+- **WHEN** the auditor opens the claim's audit trail
+- **THEN** the system SHALL show the original melding, RvO-beschikking, afwijzingsgrond, bezwaar and finale uitspraak on one screen, each immutably logged with timestamp, user and full request/response payload
 
 ## Data Model Additions
 

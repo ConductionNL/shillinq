@@ -1,0 +1,974 @@
+{
+  "components": {
+    "schemas": {
+      "SepaMandate": {
+        "slug": "SepaMandate",
+        "icon": "FileSign",
+        "version": "0.1.0",
+        "title": "SEPA Mandate",
+        "description": "A SEPA Direct Debit mandate (incassomachtiging) authorising the creditor to collect from a debtor account under the SDD CORE or B2B rulebook (REQ-SDD-001). Source of truth for incasso eligibility; collections may only be scheduled against an `active` mandate (design D1).",
+        "x-schema-org": "schema:FinancialProduct",
+        "x-spec": "openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md",
+        "type": "object",
+        "required": [
+          "mandateReference",
+          "creditorIdentifier",
+          "scheme",
+          "type",
+          "status",
+          "signedAt",
+          "signedBy",
+          "debtorIban",
+          "debtorName",
+          "debtorAccountType",
+          "administrationId"
+        ],
+        "properties": {
+          "mandateReference": {
+            "type": "string",
+            "maxLength": 35,
+            "description": "Unique mandate reference per creditor, max 35 chars, immutable once issued (REQ-SDD-001). Operator-supplied; never auto-generated.",
+            "example": "MAND-2026-0042",
+            "title": "Mandate Reference"
+          },
+          "creditorIdentifier": {
+            "type": "string",
+            "description": "Dutch creditor identifier NL{check}ZZZ{KvK} per De Nederlandsche Bank (REQ-SDD-001).",
+            "example": "NL98ZZZ123456780000",
+            "title": "Creditor Identifier"
+          },
+          "scheme": {
+            "type": "string",
+            "enum": [
+              "CORE",
+              "B2B"
+            ],
+            "description": "SDD rulebook scheme: CORE (consumer debtors) or B2B (business debtors) (REQ-SDD-001).",
+            "title": "Scheme"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "recurring",
+              "oneoff"
+            ],
+            "description": "recurring (RCUR-capable) or oneoff (OOFF, single collection only) (REQ-SDD-002).",
+            "title": "Type"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "active",
+              "cancelled",
+              "expired",
+              "suspended"
+            ],
+            "description": "Mandate lifecycle status (REQ-SDD-001, REQ-SDD-008). Managed by x-openregister-lifecycle.",
+            "title": "Status"
+          },
+          "signedAt": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the mandate was signed by the debtor (REQ-SDD-001). Must not be after a collection's requestedCollectionDate (REQ-SDD-005).",
+            "example": "2026-05-10",
+            "title": "Signed At"
+          },
+          "signedBy": {
+            "type": "string",
+            "description": "Debtor name as it appears on the mandate document (REQ-SDD-001).",
+            "example": "J. de Vries",
+            "title": "Signed By"
+          },
+          "debtorIban": {
+            "type": "string",
+            "description": "Debtor bank account IBAN; validated mod-97 at batch generation (REQ-SDD-005).",
+            "example": "NL91ABNA0417164300",
+            "title": "Debtor IBAN"
+          },
+          "debtorBic": {
+            "type": "string",
+            "nullable": true,
+            "description": "BIC/SWIFT; mandatory for non-EEA destinations, optional for EEA (REQ-SDD-001).",
+            "example": "ABNANL2A",
+            "title": "Debtor BIC"
+          },
+          "debtorName": {
+            "type": "string",
+            "description": "Debtor legal or trading name (REQ-SDD-001).",
+            "example": "J. de Vries",
+            "title": "Debtor Name"
+          },
+          "debtorAddress": {
+            "type": "object",
+            "nullable": true,
+            "description": "Optional debtor postal address (REQ-SDD-001).",
+            "properties": {
+              "street": {
+                "type": "string",
+                "title": "Street",
+                "description": "The street."
+              },
+              "postcode": {
+                "type": "string",
+                "title": "Postcode",
+                "description": "The postcode."
+              },
+              "city": {
+                "type": "string",
+                "title": "City",
+                "description": "The city name."
+              },
+              "country": {
+                "type": "string",
+                "description": "ISO 3166-1 alpha-2.",
+                "title": "Country"
+              }
+            },
+            "title": "Debtor Address"
+          },
+          "debtorAccountType": {
+            "type": "string",
+            "enum": [
+              "consumer",
+              "business"
+            ],
+            "description": "consumer (CORE only) or business (B2B only). Mismatch with scheme is rejected sdd.mandate.scheme.mismatch (REQ-SDD-001).",
+            "title": "Debtor Account Type"
+          },
+          "firstCollectionDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "First permissible collection date (REQ-SDD-001).",
+            "title": "First Collection Date"
+          },
+          "lastCollectionDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Last known or planned collection date (REQ-SDD-001).",
+            "title": "Last Collection Date"
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date of last successful collection; drives the 36-month dormancy expiry rule (REQ-SDD-008).",
+            "title": "Last Used At"
+          },
+          "mandateDocument": {
+            "type": "string",
+            "nullable": true,
+            "description": "OpenRegister file reference to the scanned signature or digital-signing evidence (PDF/image) (REQ-SDD-001). Stored per OR files-attached-to-object pattern.",
+            "title": "Mandate Document"
+          },
+          "cancellationReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-text reason recorded when status transitions to cancelled (REQ-SDD-008).",
+            "example": "Klant heeft opgezegd op 2026-05-21",
+            "title": "Cancellation Reason"
+          },
+          "preNotificationDays": {
+            "type": "integer",
+            "default": 14,
+            "minimum": 1,
+            "description": "Lead time in calendar days for pre-notification; default 14 per SDD CORE rulebook 2.6, configurable down to contractual minimum (REQ-SDD-003).",
+            "title": "Pre Notification Days"
+          },
+          "reviewFlag": {
+            "type": "boolean",
+            "default": false,
+            "description": "Set true when a consumer refund (MD06) is received; high refund rate risks scheme exclusion (REQ-SDD-007).",
+            "title": "Review Flag"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning administration (tenant scope; REQ-SDD-001).",
+            "example": "adm-consultancy-nl",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "pending",
+          "states": {
+            "pending": {
+              "label": "Pending",
+              "description": "Awaiting signature/activation. No collections may be scheduled (design D1)."
+            },
+            "active": {
+              "label": "Active",
+              "description": "Ready for collections (REQ-SDD-001)."
+            },
+            "cancelled": {
+              "label": "Cancelled",
+              "description": "Terminal. No further collections may reference this mandate (REQ-SDD-008). cancellationReason recorded."
+            },
+            "expired": {
+              "label": "Expired",
+              "description": "Terminal. Auto-set after 36 months of inactivity (REQ-SDD-008). Requires a fresh mandate."
+            },
+            "suspended": {
+              "label": "Suspended",
+              "description": "Temporarily blocked from collection (operator-triggered)."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "pending",
+              "to": "active",
+              "label": "Activate mandate",
+              "description": "Operator activates a signed mandate, making it eligible for collections (REQ-SDD-001).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\MandateGuard::canActivate"
+            },
+            "cancel": {
+              "from": "active",
+              "to": "cancelled",
+              "label": "Cancel mandate",
+              "description": "Operator cancels the mandate with a recorded cancellationReason. Future-dated scheduled collections are cancelled automatically (REQ-SDD-008).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\MandateGuard::canCancel"
+            },
+            "suspend": {
+              "from": "active",
+              "to": "suspended",
+              "label": "Suspend mandate",
+              "description": "Temporarily block the mandate from new collections (REQ-SDD-001)."
+            },
+            "resume": {
+              "from": "suspended",
+              "to": "active",
+              "label": "Resume mandate",
+              "description": "Re-enable a suspended mandate for collections (REQ-SDD-001)."
+            },
+            "expire": {
+              "from": "active",
+              "to": "expired",
+              "label": "Expire (dormancy)",
+              "description": "Automated transition after 36 months of inactivity, driven by the daily MandateDormancyExpiryJob (REQ-SDD-008).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\MandateGuard::canExpire"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a SEPA Mandate is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "DirectDebitCollection": {
+        "slug": "DirectDebitCollection",
+        "icon": "BankTransferIn",
+        "version": "0.1.0",
+        "title": "Direct Debit Collection",
+        "description": "A single SEPA Direct Debit collection against a mandate (REQ-SDD-002). sequenceType is derived from mandate history, never operator-supplied (design D2).",
+        "x-schema-org": "schema:PaymentMethod",
+        "x-spec": "openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md",
+        "type": "object",
+        "required": [
+          "mandateId",
+          "amount",
+          "currency",
+          "sequenceType",
+          "requestedCollectionDate",
+          "endToEndId",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "mandateId": {
+            "type": "string",
+            "description": "FK to SepaMandate UUID (REQ-SDD-002).",
+            "title": "Mandate ID",
+            "$ref": "SepaMandate"
+          },
+          "invoiceId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to Invoice UUID (nullable for ad-hoc collections) (REQ-SDD-002).",
+            "title": "Invoice ID"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0.01,
+            "multipleOf": 0.01,
+            "description": "Collection amount in EUR, two decimals (REQ-SDD-002).",
+            "example": 89.0,
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "EUR"
+            ],
+            "default": "EUR",
+            "description": "Always EUR for SEPA (REQ-SDD-002).",
+            "title": "Currency"
+          },
+          "sequenceType": {
+            "type": "string",
+            "enum": [
+              "FRST",
+              "RCUR",
+              "OOFF",
+              "FNAL"
+            ],
+            "description": "Auto-derived from mandate history; operator input is rejected (REQ-SDD-002, design D2). FRST=first, RCUR=recurrent, OOFF=one-off, FNAL=final.",
+            "title": "Sequence Type"
+          },
+          "requestedCollectionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date funds should hit the creditor account (REQ-SDD-002).",
+            "example": "2026-07-15",
+            "title": "Requested Collection Date"
+          },
+          "endToEndId": {
+            "type": "string",
+            "maxLength": 35,
+            "description": "Unique end-to-end identifier per creditor, max 35 chars (REQ-SDD-002).",
+            "example": "SDD-2026-00451",
+            "title": "End To End ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "submitted",
+              "accepted_by_bank",
+              "presented",
+              "succeeded",
+              "rejected",
+              "refunded"
+            ],
+            "description": "Collection lifecycle status (REQ-SDD-002, REQ-SDD-006, REQ-SDD-007).",
+            "title": "Status"
+          },
+          "submittedInBatchId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to DirectDebitBatch once submitted (REQ-SDD-002).",
+            "title": "Submitted In Batch ID",
+            "$ref": "DirectDebitBatch"
+          },
+          "pain002ReasonCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 20022 reason code if rejected, e.g. AM04, AC04, MD01 (REQ-SDD-006).",
+            "example": "AM04",
+            "title": "Pain002Reason Code"
+          },
+          "camt054ReferenceId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reference ID from the camt.054 notification that closed this collection (REQ-SDD-007).",
+            "title": "Camt054Reference ID"
+          },
+          "repostedAsCollectionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the new collection created when this one was reposted (REQ-SDD-009).",
+            "title": "Reposted As Collection ID"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning administration (tenant scope; REQ-SDD-002).",
+            "example": "adm-consultancy-nl",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "scheduled",
+          "states": {
+            "scheduled": {
+              "label": "Scheduled",
+              "description": "Created and awaiting inclusion in a pain.008 batch (REQ-SDD-002)."
+            },
+            "submitted": {
+              "label": "Submitted",
+              "description": "Included in a batch submitted to the bank (REQ-SDD-005)."
+            },
+            "accepted_by_bank": {
+              "label": "Accepted by bank",
+              "description": "pain.002 ACCP for this collection (REQ-SDD-006)."
+            },
+            "presented": {
+              "label": "Presented",
+              "description": "Presented for debit at the debtor bank (REQ-SDD-002)."
+            },
+            "succeeded": {
+              "label": "Succeeded",
+              "description": "camt.054 debit confirmed; invoice paid, journal posted (REQ-SDD-007)."
+            },
+            "rejected": {
+              "label": "Rejected",
+              "description": "pain.002 RJCT with a reason code (REQ-SDD-006). Repostable only for bank-problem codes (REQ-SDD-009)."
+            },
+            "refunded": {
+              "label": "Refunded",
+              "description": "camt.054 return/refund; journal reversed, receivable re-opened (REQ-SDD-007)."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "from": "scheduled",
+              "to": "submitted",
+              "label": "Submit in batch",
+              "description": "Batch generation includes this collection; gated by pre-notification and submission-window guards (REQ-SDD-003, REQ-SDD-004).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\PreNotificationGuard::canIncludeInBatch"
+            },
+            "accept": {
+              "from": "submitted",
+              "to": "accepted_by_bank",
+              "label": "Accepted (pain.002)",
+              "description": "pain.002 ACCP ingestion (REQ-SDD-006)."
+            },
+            "reject": {
+              "from": "submitted",
+              "to": "rejected",
+              "label": "Rejected (pain.002)",
+              "description": "pain.002 RJCT ingestion with reason code (REQ-SDD-006)."
+            },
+            "succeed": {
+              "from": "accepted_by_bank",
+              "to": "succeeded",
+              "label": "Settled (camt.054)",
+              "description": "camt.054 debit confirmation (REQ-SDD-007)."
+            },
+            "refund": {
+              "from": "succeeded",
+              "to": "refunded",
+              "label": "Refunded (camt.054 R-transaction)",
+              "description": "camt.054 return/refund; creates an RTransaction record (REQ-SDD-007)."
+            },
+            "repost": {
+              "from": "rejected",
+              "to": "scheduled",
+              "label": "Repost",
+              "description": "One-click repost; allowed only for bank-problem reason codes (REQ-SDD-009).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\RepostingEligibilityGuard::canRepost"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Direct Debit Collection is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "DirectDebitBatch": {
+        "slug": "DirectDebitBatch",
+        "icon": "BankOutline",
+        "version": "0.1.0",
+        "title": "Direct Debit Batch",
+        "description": "A pain.008.001.02 batch aggregating homo-sequence collections for submission (REQ-SDD-005). pain008Xml / pain002Xml are archived 7+ years (bewaarplicht, design D11).",
+        "x-schema-org": "schema:Invoice",
+        "x-spec": "openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md",
+        "type": "object",
+        "required": [
+          "messageId",
+          "creationDateTime",
+          "requestedCollectionDate",
+          "scheme",
+          "sequenceType",
+          "collectionCount",
+          "controlSum",
+          "status",
+          "administrationId"
+        ],
+        "properties": {
+          "messageId": {
+            "type": "string",
+            "maxLength": 35,
+            "description": "Globally unique message id per creditor per file, max 35 chars (REQ-SDD-005).",
+            "example": "SDD-MSG-2026-0001",
+            "title": "Message ID"
+          },
+          "creationDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp the batch was generated (REQ-SDD-005).",
+            "title": "Creation Date Time"
+          },
+          "requestedCollectionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Earliest collection date in the batch (REQ-SDD-005).",
+            "title": "Requested Collection Date"
+          },
+          "scheme": {
+            "type": "string",
+            "enum": [
+              "CORE",
+              "B2B"
+            ],
+            "description": "Batch scheme (REQ-SDD-005).",
+            "title": "Scheme"
+          },
+          "sequenceType": {
+            "type": "string",
+            "enum": [
+              "FRST",
+              "RCUR",
+              "OOFF",
+              "FNAL"
+            ],
+            "description": "Homo-sequence batch sequence type (REQ-SDD-005).",
+            "title": "Sequence Type"
+          },
+          "collectionCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of collections in the batch; equals pain.008 NbOfTxs (REQ-SDD-005).",
+            "title": "Collection Count"
+          },
+          "controlSum": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Sum of all collection amounts in EUR; equals pain.008 CtrlSum (REQ-SDD-005).",
+            "example": 247.5,
+            "title": "Control Sum"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "generated",
+              "submitted",
+              "accepted_by_bank",
+              "partially_rejected",
+              "fully_rejected"
+            ],
+            "description": "Batch lifecycle status (REQ-SDD-005, REQ-SDD-006).",
+            "title": "Status"
+          },
+          "pain008Xml": {
+            "type": "string",
+            "nullable": true,
+            "description": "Full ISO 20022 pain.008.001.02 payload; archived 7+ years, non-deletable (REQ-SDD-005, REQ-SDD-010).",
+            "title": "Pain008Xml"
+          },
+          "pain002Xml": {
+            "type": "string",
+            "nullable": true,
+            "description": "Incoming pain.002 status report; archived (REQ-SDD-006, REQ-SDD-010).",
+            "title": "Pain002Xml"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the batch was submitted to the bank via connector (REQ-SDD-005).",
+            "title": "Submitted At"
+          },
+          "isArchived": {
+            "type": "boolean",
+            "default": true,
+            "description": "Retention flag; archived pain files must not be auto-deleted (REQ-SDD-010, design D11).",
+            "title": "Is Archived"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning administration (tenant scope; REQ-SDD-005).",
+            "example": "adm-consultancy-nl",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Being assembled (REQ-SDD-005)."
+            },
+            "generated": {
+              "label": "Generated",
+              "description": "pain.008 generated and XSD-validated; eligible for submission (REQ-SDD-005)."
+            },
+            "submitted": {
+              "label": "Submitted",
+              "description": "Sent to the bank via connector (REQ-SDD-005)."
+            },
+            "accepted_by_bank": {
+              "label": "Accepted by bank",
+              "description": "pain.002 ACCP (REQ-SDD-006)."
+            },
+            "partially_rejected": {
+              "label": "Partially rejected",
+              "description": "pain.002 PART; some collections rejected (REQ-SDD-006)."
+            },
+            "fully_rejected": {
+              "label": "Fully rejected",
+              "description": "pain.002 RJCT for the whole group (REQ-SDD-006)."
+            }
+          },
+          "transitions": {
+            "generate": {
+              "from": "draft",
+              "to": "generated",
+              "label": "Generate pain.008",
+              "description": "Generate and XSD-validate the pain.008 payload; gated by pre-notification and submission-window preconditions (REQ-SDD-003, REQ-SDD-004, REQ-SDD-005)."
+            },
+            "submit": {
+              "from": "generated",
+              "to": "submitted",
+              "label": "Submit to bank",
+              "description": "Hand the batch to the bank connector (REQ-SDD-005)."
+            },
+            "accept": {
+              "from": "submitted",
+              "to": "accepted_by_bank",
+              "label": "Accepted (pain.002 ACCP)",
+              "description": "pain.002 group status ACCP (REQ-SDD-006)."
+            },
+            "partiallyReject": {
+              "from": "submitted",
+              "to": "partially_rejected",
+              "label": "Partially rejected (pain.002 PART)",
+              "description": "pain.002 group status PART (REQ-SDD-006)."
+            },
+            "fullyReject": {
+              "from": "submitted",
+              "to": "fully_rejected",
+              "label": "Fully rejected (pain.002 RJCT)",
+              "description": "pain.002 group status RJCT (REQ-SDD-006)."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Direct Debit Batch is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "RTransaction": {
+        "slug": "RTransaction",
+        "icon": "BankTransferOut",
+        "version": "0.1.0",
+        "title": "R-Transaction",
+        "description": "A bank-side R-transaction (reject/return/refund/reversal/revocation) parsed from pain.002 or camt.054 (REQ-SDD-007). Captured separately for audit and reposting decisions (design D7). Non-deletable (REQ-SDD-010).",
+        "x-schema-org": "schema:MoneyTransfer",
+        "x-spec": "openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md",
+        "type": "object",
+        "required": [
+          "collectionId",
+          "type",
+          "reasonCode",
+          "transactionAmount",
+          "valueDate",
+          "notifiedAt",
+          "administrationId"
+        ],
+        "properties": {
+          "collectionId": {
+            "type": "string",
+            "description": "FK to DirectDebitCollection UUID (REQ-SDD-007).",
+            "title": "Collection ID",
+            "$ref": "DirectDebitCollection"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "reject",
+              "return",
+              "refund",
+              "reversal",
+              "revocation",
+              "request_for_cancellation"
+            ],
+            "description": "R-transaction type per ISO 20022 (REQ-SDD-007).",
+            "title": "Type"
+          },
+          "reasonCode": {
+            "type": "string",
+            "description": "ISO 20022 ExternalReturnReason code, e.g. MS03, AC04, MD01 (REQ-SDD-007).",
+            "example": "MS03",
+            "title": "Reason Code"
+          },
+          "reasonText": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable reason from the bank (REQ-SDD-007).",
+            "title": "Reason Text"
+          },
+          "originatorBic": {
+            "type": "string",
+            "nullable": true,
+            "description": "BIC of the institution initiating the R-transaction (REQ-SDD-007).",
+            "title": "Originator BIC"
+          },
+          "transactionAmount": {
+            "type": "number",
+            "description": "Amount of the R-transaction, usually matching the collection amount (REQ-SDD-007).",
+            "title": "Transaction Amount"
+          },
+          "valueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the debtor account was re-credited (REQ-SDD-007).",
+            "title": "Value Date"
+          },
+          "notifiedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When shillinq received the R-transaction notification (REQ-SDD-007).",
+            "title": "Notified At"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning administration (tenant scope; REQ-SDD-007).",
+            "example": "adm-consultancy-nl",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a R-Transaction is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "PreNotification": {
+        "slug": "PreNotification",
+        "icon": "BellRingOutline",
+        "version": "0.1.0",
+        "title": "Pre-notification",
+        "description": "A vooraankondiging for a collection (REQ-SDD-003). A collection MUST NOT enter a pain.008 batch unless its pre-notification is sent or carried on the invoice line (design D3).",
+        "x-schema-org": "schema:Message",
+        "x-spec": "openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md",
+        "type": "object",
+        "required": [
+          "collectionId",
+          "noticeDays",
+          "administrationId"
+        ],
+        "properties": {
+          "collectionId": {
+            "type": "string",
+            "description": "FK to DirectDebitCollection UUID (REQ-SDD-003).",
+            "title": "Collection ID",
+            "$ref": "DirectDebitCollection"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the notification was actually sent; null = not yet sent (REQ-SDD-003).",
+            "title": "Sent At"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "email",
+              "letter",
+              "invoice_line"
+            ],
+            "nullable": true,
+            "description": "Dispatch channel; null until sent (REQ-SDD-003).",
+            "title": "Channel"
+          },
+          "noticeDays": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 14,
+            "description": "Calendar days between notification and collection date; default 14 (REQ-SDD-003).",
+            "title": "Notice Days"
+          },
+          "recipientAddress": {
+            "type": "string",
+            "nullable": true,
+            "description": "Email, postal address, or invoice reference per channel (REQ-SDD-003).",
+            "title": "Recipient Address"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning administration (tenant scope; REQ-SDD-003).",
+            "example": "adm-consultancy-nl",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Pre-notification is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "CustomerMaster": {
+        "description": "Customer master overlay adding the default SEPA mandate link (REQ-SDD-002). When a customer has a `defaultMandateId`, the AR billing flow proposes direct-debit collection by default; the field is OPTIONAL — collections may still be scheduled against any mandate the customer holds. Owning fragment: `add-shillinq-bookkeeping-compliance.json` (shillinq CustomerMaster is the AR-core analogue of the company-wide `Counterparty` entity referenced in design D1).",
+        "x-spec": "openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md",
+        "properties": {
+          "defaultMandateId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the customer's default SEPA mandate UUID; when set the AR billing flow proposes direct-debit collection by default (REQ-SDD-002). Optional — collections may still be scheduled against any active mandate held by the customer. Cleared automatically when the referenced mandate transitions to `cancelled` or `expired`.",
+            "title": "Default Mandate ID",
+            "$ref": "SepaMandate"
+          }
+        }
+      },
+      "ARInvoice": {
+        "description": "AR invoice overlay adding direct-debit payment-method linkage (REQ-SDD-002, REQ-SDD-003). When `paymentMethod = direct_debit`, `directDebitMandateId` MUST reference an `active` SepaMandate; the optional `directDebitPreNotificationInvoiceId` links back to the invoice whose line item carried the SEPA pre-notification (design D3 / REQ-SDD-003 invoice-line pre-notification channel). Owning fragment: `add-shillinq-bookkeeping-compliance.json`.",
+        "x-spec": "openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md",
+        "properties": {
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "bank_transfer",
+              "direct_debit",
+              "cash",
+              "card",
+              "other"
+            ],
+            "nullable": true,
+            "default": "bank_transfer",
+            "description": "Expected payment method (REQ-SDD-002). When `direct_debit`, `directDebitMandateId` MUST be populated and reference an `active` SepaMandate; collection scheduling is gated on this combination.",
+            "title": "Payment Method"
+          },
+          "directDebitMandateId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the SepaMandate UUID under which this invoice is to be collected (REQ-SDD-002). Required when `paymentMethod = direct_debit`; ignored otherwise. The mandate MUST be `active` at collection-scheduling time; cancellation or expiry triggers `sdd.mandate.cancelled` / `sdd.mandate.expired`.",
+            "title": "Direct Debit Mandate ID",
+            "$ref": "SepaMandate"
+          },
+          "directDebitPreNotificationInvoiceId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional FK to the ARInvoice whose line item carried the SEPA pre-notification text for this collection (REQ-SDD-003, design D3 invoice-line channel). When set, this invoice's pre-notification proof is sourced from the linked invoice's issue date + line text; the `PreNotification` register entry references the same invoice via `recipientAddress`.",
+            "title": "Direct Debit Pre Notification Invoice ID",
+            "$ref": "ARInvoice"
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "SepaMandate",
+        "slug": "mandate-sample-de-vries"
+      },
+      "mandateReference": "MAND-2026-0042",
+      "creditorIdentifier": "NL98ZZZ123456780000",
+      "scheme": "CORE",
+      "type": "recurring",
+      "status": "active",
+      "signedAt": "2026-05-10",
+      "signedBy": "J. de Vries",
+      "debtorIban": "NL91ABNA0417164300",
+      "debtorBic": "ABNANL2A",
+      "debtorName": "J. de Vries",
+      "debtorAccountType": "consumer",
+      "firstCollectionDate": "2026-06-01",
+      "lastUsedAt": "2026-06-01",
+      "preNotificationDays": 14,
+      "reviewFlag": false,
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "DirectDebitCollection",
+        "slug": "collection-sample-de-vries-juli"
+      },
+      "mandateId": "mandate-sample-de-vries",
+      "amount": 89.0,
+      "currency": "EUR",
+      "sequenceType": "RCUR",
+      "requestedCollectionDate": "2026-07-15",
+      "endToEndId": "SDD-2026-00451",
+      "status": "scheduled",
+      "administrationId": "adm-consultancy-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "PreNotification",
+        "slug": "prenotification-sample-de-vries-juli"
+      },
+      "collectionId": "collection-sample-de-vries-juli",
+      "noticeDays": 14,
+      "channel": "invoice_line",
+      "sentAt": "2026-06-28T10:00:00+02:00",
+      "recipientAddress": "INV-2026-1018",
+      "administrationId": "adm-consultancy-nl"
+    }
+  ]
+}

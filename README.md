@@ -65,6 +65,29 @@ Market research reveals substantial demand for integrated business administratio
 
 This data-driven foundation ensures Shillinq addresses real market needs and user pain points.
 
+## Waterschappen BBV variant
+
+For Dutch water boards, Shillinq ships a compliance variant of the
+general ledger that maps GL accounts to the BBV (*Besluit Begroting en
+Verantwoording*) programme structure, materialises per-programme budget
+utilization as a server-side aggregation, and renders a compliance
+dashboard with KPI cards, distribution pie, YTD trend, and a
+per-programme utilization table.
+
+Scope:
+
+- `BBVProgramme` + `BudgetBBVMapping` schemas with declarative
+  validation (allocation sum ≤ 100% per GL account per fiscal year, ±0.1%
+  rounding tolerance) and the OpenRegister audit-trail plugin.
+- Dashboard at `/apps/shillinq/bbv-dashboard` and budget-mapping CRUD at
+  `/apps/shillinq/budget-mappings`.
+- Per-programme compliance envelope cached for 1 h, invalidated on any
+  GL transaction create/update so the dashboard always reflects current
+  spend.
+
+See [Technical → Waterschappen BBV variant](docs/Technical/waterschappen-bbv-variant.md)
+for the architecture, admin guide, and audit-export usage.
+
 ## Installation
 
 1. Download Shillinq from the [Nextcloud App Store](https://apps.nextcloud.com) or clone this repository
@@ -101,3 +124,4 @@ We welcome contributions from the community. Please ensure code passes our quali
 ## License
 
 This project is licensed under the [European Union Public License 1.2 (EUPL-1.2)](LICENSE).
+<!-- hydra repro -->

@@ -1,0 +1,769 @@
+{
+  "components": {
+    "schemas": {
+      "BookingConfirmationTemplate": {
+        "slug": "BookingConfirmationTemplate",
+        "icon": "EmailCheckOutline",
+        "version": "0.1.0",
+        "title": "Booking Confirmation Template",
+        "description": "Branded email template dispatched immediately when a booking is created. Operators customise subject, HTML/plain-text body, logo, accent colour and footer without code access. Body and subject support {{variable}} placeholders rendered at dispatch by the OpenRegister notification engine (ADR-022). Lifecycle draft -> published -> archived controls which version is active (REQ-BET-001/002/003).",
+        "x-schema-org": "schema:EmailMessage",
+        "type": "object",
+        "required": [
+          "name",
+          "subjectLine",
+          "htmlBody",
+          "plainTextBody"
+        ],
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Template under preparation; not used for dispatch."
+            },
+            "published": {
+              "label": "Published",
+              "description": "Active template; used for new booking-confirmation emails."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Previously published; no longer dispatched. Kept for audit and history."
+            }
+          },
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published",
+              "label": "Publish template",
+              "description": "Operator (role: communications-manager) activates the template; sets activatedAt to the current timestamp (REQ-BET-002)."
+            },
+            "archive": {
+              "from": "published",
+              "to": "archived",
+              "label": "Archive template",
+              "description": "Operator retires the template; new emails are no longer dispatched with it (REQ-BET-003). Existing instances remain visible in history."
+            },
+            "archiveDraft": {
+              "from": "draft",
+              "to": "archived",
+              "label": "Archive draft",
+              "description": "Operator discards a draft that was never published; kept for history without ever activating."
+            }
+          },
+          "hooks": {
+            "onPublish": {
+              "trigger": "lifecycle:publish",
+              "description": "Stamp activatedAt with the publication timestamp so the first activation is auditable (REQ-BET-002).",
+              "action": "x-openregister-calculations",
+              "actionParameters": {
+                "calculations": [
+                  "activatedAt"
+                ]
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "communications-manager": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ],
+              "description": "Full access: create, edit drafts, publish and archive booking-confirmation templates (booking:template:* per REQ-BET, Task 22)."
+            },
+            "operator": {
+              "permissions": [
+                "read"
+              ],
+              "description": "Read-only access for staff who dispatch bookings but do not edit templates (booking:template:list)."
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ],
+              "description": "Read-only access for audit and compliance inspection."
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "activatedAt": {
+            "expression": "@self.activatedAt != null ? @self.activatedAt : now()",
+            "type": "datetime",
+            "description": "First-publication timestamp. Set once on the publish transition; preserved on later edits (REQ-BET-002)."
+          },
+          "renderedSubject": {
+            "expression": "substitute(@self.subjectLine, @variables)",
+            "type": "string",
+            "description": "Subject line with {{variableName}} placeholders replaced from the supplied variable map. Undefined variables render as an empty string (REQ-BET-004)."
+          },
+          "renderedHtmlBody": {
+            "expression": "substitute(@self.htmlBody, @variables)",
+            "type": "string",
+            "description": "HTML body with {{variableName}} placeholders replaced from the supplied variable map. Variable values are HTML-escaped to prevent injection (REQ-BET-004, Task 25)."
+          },
+          "renderedPlainTextBody": {
+            "expression": "substitute(@self.plainTextBody, @variables)",
+            "type": "string",
+            "description": "Plain-text fallback body with {{variableName}} placeholders replaced. Displayed when the client cannot render HTML (REQ-BET-006)."
+          },
+          "subjectLineLength": {
+            "expression": "length(@self.subjectLine)",
+            "type": "integer",
+            "description": "Character count of the raw subject line. Validated against the 78-character cross-client limit (NFR-BET-002, Task 12)."
+          },
+          "bodySizeBytes": {
+            "expression": "byteLength(@self.htmlBody) + byteLength(@self.plainTextBody)",
+            "type": "integer",
+            "description": "Combined HTML + plain-text body size in bytes. Validated against the 102 KB (104448 bytes) SMTP limit (NFR-BET-003, Task 13)."
+          }
+        },
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable template name shown in the admin list.",
+            "example": "Default Booking Confirmation",
+            "maxLength": 255,
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle state of the template.",
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "default": "draft",
+            "example": "published",
+            "title": "Status"
+          },
+          "subjectLine": {
+            "type": "string",
+            "description": "Email subject. Supports {{variable}} placeholders. Limited to 78 characters after substitution for cross-client compatibility (NFR-BET-002).",
+            "example": "Boeking bevestigd: {{bookingRef}}",
+            "maxLength": 255,
+            "title": "Subject Line"
+          },
+          "htmlBody": {
+            "type": "string",
+            "description": "HTML email body. Inline styles only, no external CSS or JavaScript. Supports {{variable}} placeholders (NFR-BET-001).",
+            "example": "<h1>Hallo {{customerName}}</h1><p>Uw boeking is bevestigd.</p>",
+            "title": "Html Body"
+          },
+          "plainTextBody": {
+            "type": "string",
+            "description": "Plain-text fallback body for clients without HTML rendering. Supports {{variable}} placeholders (REQ-BET-006).",
+            "example": "Hallo {{customerName}}, uw boeking is bevestigd.",
+            "title": "Plain Text Body"
+          },
+          "logoUri": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to the organization logo image. Loaded from a CDN or document store; inline base64 is not used (NFR-BET-004).",
+            "example": "https://cdn.example.org/logo.png",
+            "title": "Logo URI"
+          },
+          "accentColor": {
+            "type": "string",
+            "description": "Hex colour code for branding accents (e.g. button and header colour).",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "example": "#21468B",
+            "title": "Accent Color"
+          },
+          "footerText": {
+            "type": "string",
+            "description": "Custom footer text (address, contact, legal notice).",
+            "example": "© 2026 Example BV, Postbus 123, Amsterdam",
+            "title": "Footer Text"
+          },
+          "senderName": {
+            "type": "string",
+            "description": "Display name shown as the email sender.",
+            "example": "Example BV Boekingen",
+            "title": "Sender Name"
+          },
+          "senderAddress": {
+            "type": "string",
+            "format": "email",
+            "description": "From-address used for dispatch. Validated by the notification engine against the configured provider (ADR-022).",
+            "example": "bookings@example.org",
+            "title": "Sender Address"
+          },
+          "locale": {
+            "type": "string",
+            "description": "BCP-47 language tag the template is authored in. Used to select the template for a customer's language preference (NFR-BET-005).",
+            "enum": [
+              "nl",
+              "en"
+            ],
+            "default": "nl",
+            "example": "nl",
+            "title": "Locale"
+          },
+          "activatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the template was first published. Set on the publish transition (REQ-BET-002).",
+            "title": "Activated At"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Tenant administration this template belongs to. Null for shipped defaults that apply to all administrations.",
+            "title": "Administration ID"
+          }
+        }
+      },
+      "BookingReminderTemplate": {
+        "slug": "BookingReminderTemplate",
+        "icon": "EmailOutline",
+        "version": "0.1.0",
+        "title": "Booking Reminder Template",
+        "description": "Branded reminder email dispatched N hours before a booking starts. The hoursBeforeBooking field configures the reminder timing; the booking system queues dispatch at that offset (REQ-BET-005). Subject/body support {{variable}} placeholders including {{hoursUntilBooking}}. Lifecycle draft -> published -> archived controls the active version.",
+        "x-schema-org": "schema:EmailMessage",
+        "type": "object",
+        "required": [
+          "name",
+          "hoursBeforeBooking",
+          "subjectLine",
+          "htmlBody",
+          "plainTextBody"
+        ],
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Template under preparation; not used for dispatch."
+            },
+            "published": {
+              "label": "Published",
+              "description": "Active template; reminders dispatched at the configured offset before booking start."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Previously published; no longer dispatched. Kept for audit and history."
+            }
+          },
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published",
+              "label": "Publish template",
+              "description": "Operator activates the reminder template; sets activatedAt (REQ-BET-002)."
+            },
+            "archive": {
+              "from": "published",
+              "to": "archived",
+              "label": "Archive template",
+              "description": "Operator retires the template; new reminders no longer use it (REQ-BET-003)."
+            },
+            "archiveDraft": {
+              "from": "draft",
+              "to": "archived",
+              "label": "Archive draft",
+              "description": "Operator discards a never-published draft; kept for history."
+            }
+          },
+          "hooks": {
+            "onPublish": {
+              "trigger": "lifecycle:publish",
+              "description": "Stamp activatedAt with the publication timestamp (REQ-BET-002).",
+              "action": "x-openregister-calculations",
+              "actionParameters": {
+                "calculations": [
+                  "activatedAt"
+                ]
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "communications-manager": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ],
+              "description": "Full access to booking-reminder templates."
+            },
+            "operator": {
+              "permissions": [
+                "read"
+              ],
+              "description": "Read-only access (booking:template:list)."
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ],
+              "description": "Read-only access for audit and compliance inspection."
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "activatedAt": {
+            "expression": "@self.activatedAt != null ? @self.activatedAt : now()",
+            "type": "datetime",
+            "description": "First-publication timestamp (REQ-BET-002)."
+          },
+          "renderedSubject": {
+            "expression": "substitute(@self.subjectLine, @variables)",
+            "type": "string",
+            "description": "Subject with placeholders substituted (REQ-BET-004)."
+          },
+          "renderedHtmlBody": {
+            "expression": "substitute(@self.htmlBody, @variables)",
+            "type": "string",
+            "description": "HTML body with placeholders substituted; values HTML-escaped (REQ-BET-004)."
+          },
+          "renderedPlainTextBody": {
+            "expression": "substitute(@self.plainTextBody, @variables)",
+            "type": "string",
+            "description": "Plain-text fallback with placeholders substituted (REQ-BET-006)."
+          },
+          "subjectLineLength": {
+            "expression": "length(@self.subjectLine)",
+            "type": "integer",
+            "description": "Subject character count, validated against the 78-character limit (NFR-BET-002)."
+          },
+          "bodySizeBytes": {
+            "expression": "byteLength(@self.htmlBody) + byteLength(@self.plainTextBody)",
+            "type": "integer",
+            "description": "Combined body size validated against the 102 KB limit (NFR-BET-003)."
+          }
+        },
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable template name.",
+            "example": "24-Hour Booking Reminder",
+            "maxLength": 255,
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle state of the template.",
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "default": "draft",
+            "example": "published",
+            "title": "Status"
+          },
+          "hoursBeforeBooking": {
+            "type": "integer",
+            "description": "Number of hours before booking start at which the reminder is dispatched (e.g. 24, 2, 1). Configures timing per REQ-BET-005.",
+            "minimum": 0,
+            "maximum": 8760,
+            "example": 24,
+            "title": "Hours Before Booking"
+          },
+          "subjectLine": {
+            "type": "string",
+            "description": "Email subject. Supports {{variable}} placeholders (NFR-BET-002).",
+            "example": "Herinnering: uw boeking op {{bookingDate}}",
+            "maxLength": 255,
+            "title": "Subject Line"
+          },
+          "htmlBody": {
+            "type": "string",
+            "description": "HTML email body, inline styles only (NFR-BET-001).",
+            "example": "<p>Hallo {{customerName}}, over {{hoursUntilBooking}} uur start uw boeking.</p>",
+            "title": "Html Body"
+          },
+          "plainTextBody": {
+            "type": "string",
+            "description": "Plain-text fallback body (REQ-BET-006).",
+            "example": "Hallo {{customerName}}, over {{hoursUntilBooking}} uur start uw boeking.",
+            "title": "Plain Text Body"
+          },
+          "logoUri": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to the organization logo image (NFR-BET-004).",
+            "example": "https://cdn.example.org/logo.png",
+            "title": "Logo URI"
+          },
+          "accentColor": {
+            "type": "string",
+            "description": "Hex colour code for branding accents.",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "example": "#21468B",
+            "title": "Accent Color"
+          },
+          "footerText": {
+            "type": "string",
+            "description": "Custom footer text.",
+            "example": "© 2026 Example BV",
+            "title": "Footer Text"
+          },
+          "senderName": {
+            "type": "string",
+            "description": "Display name shown as the email sender.",
+            "example": "Example BV Boekingen",
+            "title": "Sender Name"
+          },
+          "senderAddress": {
+            "type": "string",
+            "format": "email",
+            "description": "From-address used for dispatch (ADR-022).",
+            "example": "bookings@example.org",
+            "title": "Sender Address"
+          },
+          "locale": {
+            "type": "string",
+            "description": "BCP-47 language tag the template is authored in (NFR-BET-005).",
+            "enum": [
+              "nl",
+              "en"
+            ],
+            "default": "nl",
+            "example": "nl",
+            "title": "Locale"
+          },
+          "activatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the template was first published (REQ-BET-002).",
+            "title": "Activated At"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Tenant administration this template belongs to. Null for shipped defaults.",
+            "title": "Administration ID"
+          }
+        }
+      },
+      "BookingCancellationTemplate": {
+        "slug": "BookingCancellationTemplate",
+        "icon": "EmailRemoveOutline",
+        "version": "0.1.0",
+        "title": "Booking Cancellation Template",
+        "description": "Branded email dispatched when a booking is cancelled. When cancellationReasonRequired is true the {{cancellationReason}} variable is included in the available bindings (REQ-BET-009). Subject/body support {{variable}} placeholders. Lifecycle draft -> published -> archived controls the active version.",
+        "x-schema-org": "schema:EmailMessage",
+        "type": "object",
+        "required": [
+          "name",
+          "subjectLine",
+          "htmlBody",
+          "plainTextBody"
+        ],
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Template under preparation; not used for dispatch."
+            },
+            "published": {
+              "label": "Published",
+              "description": "Active template; used for new booking-cancellation emails."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Previously published; no longer dispatched. Kept for audit and history."
+            }
+          },
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published",
+              "label": "Publish template",
+              "description": "Operator activates the cancellation template; sets activatedAt (REQ-BET-002)."
+            },
+            "archive": {
+              "from": "published",
+              "to": "archived",
+              "label": "Archive template",
+              "description": "Operator retires the template (REQ-BET-003)."
+            },
+            "archiveDraft": {
+              "from": "draft",
+              "to": "archived",
+              "label": "Archive draft",
+              "description": "Operator discards a never-published draft; kept for history."
+            }
+          },
+          "hooks": {
+            "onPublish": {
+              "trigger": "lifecycle:publish",
+              "description": "Stamp activatedAt with the publication timestamp (REQ-BET-002).",
+              "action": "x-openregister-calculations",
+              "actionParameters": {
+                "calculations": [
+                  "activatedAt"
+                ]
+              }
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "communications-manager": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ],
+              "description": "Full access to booking-cancellation templates."
+            },
+            "operator": {
+              "permissions": [
+                "read"
+              ],
+              "description": "Read-only access (booking:template:list)."
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ],
+              "description": "Read-only access for audit and compliance inspection."
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "activatedAt": {
+            "expression": "@self.activatedAt != null ? @self.activatedAt : now()",
+            "type": "datetime",
+            "description": "First-publication timestamp (REQ-BET-002)."
+          },
+          "renderedSubject": {
+            "expression": "substitute(@self.subjectLine, @variables)",
+            "type": "string",
+            "description": "Subject with placeholders substituted (REQ-BET-004)."
+          },
+          "renderedHtmlBody": {
+            "expression": "substitute(@self.htmlBody, @variables)",
+            "type": "string",
+            "description": "HTML body with placeholders substituted; values HTML-escaped (REQ-BET-004, REQ-BET-009)."
+          },
+          "renderedPlainTextBody": {
+            "expression": "substitute(@self.plainTextBody, @variables)",
+            "type": "string",
+            "description": "Plain-text fallback with placeholders substituted (REQ-BET-006)."
+          },
+          "subjectLineLength": {
+            "expression": "length(@self.subjectLine)",
+            "type": "integer",
+            "description": "Subject character count, validated against the 78-character limit (NFR-BET-002)."
+          },
+          "bodySizeBytes": {
+            "expression": "byteLength(@self.htmlBody) + byteLength(@self.plainTextBody)",
+            "type": "integer",
+            "description": "Combined body size validated against the 102 KB limit (NFR-BET-003)."
+          }
+        },
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable template name.",
+            "example": "Default Booking Cancellation",
+            "maxLength": 255,
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle state of the template.",
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "default": "draft",
+            "example": "published",
+            "title": "Status"
+          },
+          "subjectLine": {
+            "type": "string",
+            "description": "Email subject. Supports {{variable}} placeholders (NFR-BET-002).",
+            "example": "Boeking geannuleerd: {{bookingRef}}",
+            "maxLength": 255,
+            "title": "Subject Line"
+          },
+          "htmlBody": {
+            "type": "string",
+            "description": "HTML email body, inline styles only (NFR-BET-001).",
+            "example": "<p>Uw boeking {{bookingRef}} is geannuleerd.</p>",
+            "title": "Html Body"
+          },
+          "plainTextBody": {
+            "type": "string",
+            "description": "Plain-text fallback body (REQ-BET-006).",
+            "example": "Uw boeking {{bookingRef}} is geannuleerd.",
+            "title": "Plain Text Body"
+          },
+          "cancellationReasonRequired": {
+            "type": "boolean",
+            "description": "Whether the {{cancellationReason}} variable is included in the template bindings (REQ-BET-009).",
+            "default": false,
+            "example": true,
+            "title": "Cancellation Reason Required"
+          },
+          "logoUri": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to the organization logo image (NFR-BET-004).",
+            "example": "https://cdn.example.org/logo.png",
+            "title": "Logo URI"
+          },
+          "accentColor": {
+            "type": "string",
+            "description": "Hex colour code for branding accents.",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "example": "#21468B",
+            "title": "Accent Color"
+          },
+          "footerText": {
+            "type": "string",
+            "description": "Custom footer text.",
+            "example": "© 2026 Example BV",
+            "title": "Footer Text"
+          },
+          "senderName": {
+            "type": "string",
+            "description": "Display name shown as the email sender.",
+            "example": "Example BV Boekingen",
+            "title": "Sender Name"
+          },
+          "senderAddress": {
+            "type": "string",
+            "format": "email",
+            "description": "From-address used for dispatch (ADR-022).",
+            "example": "bookings@example.org",
+            "title": "Sender Address"
+          },
+          "locale": {
+            "type": "string",
+            "description": "BCP-47 language tag the template is authored in (NFR-BET-005).",
+            "enum": [
+              "nl",
+              "en"
+            ],
+            "default": "nl",
+            "example": "nl",
+            "title": "Locale"
+          },
+          "activatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the template was first published (REQ-BET-002).",
+            "title": "Activated At"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Tenant administration this template belongs to. Null for shipped defaults.",
+            "title": "Administration ID"
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingConfirmationTemplate",
+        "slug": "default-confirmation-nl"
+      },
+      "name": "Standaard boekingsbevestiging",
+      "status": "published",
+      "locale": "nl",
+      "subjectLine": "Boeking bevestigd: {{bookingRef}}",
+      "htmlBody": "<div style=\"font-family:Arial,sans-serif;color:#212121\"><img src=\"{{logoUri}}\" alt=\"{{organizationName}}\" style=\"max-height:48px\"/><h1 style=\"color:#21468B\">Hallo {{customerName}}</h1><p>Uw boeking <strong>{{bookingRef}}</strong> op {{bookingDate}} om {{bookingTime}} bij {{bookingLocation}} is bevestigd.</p><p>Met vriendelijke groet,<br/>{{organizationName}}</p></div>",
+      "plainTextBody": "Hallo {{customerName}},\n\nUw boeking {{bookingRef}} op {{bookingDate}} om {{bookingTime}} bij {{bookingLocation}} is bevestigd.\n\nMet vriendelijke groet,\n{{organizationName}}",
+      "accentColor": "#21468B",
+      "footerText": "{{organizationName}} — dit is een automatisch bericht."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingConfirmationTemplate",
+        "slug": "default-confirmation-en"
+      },
+      "name": "Default booking confirmation",
+      "status": "published",
+      "locale": "en",
+      "subjectLine": "Booking confirmed: {{bookingRef}}",
+      "htmlBody": "<div style=\"font-family:Arial,sans-serif;color:#212121\"><img src=\"{{logoUri}}\" alt=\"{{organizationName}}\" style=\"max-height:48px\"/><h1 style=\"color:#21468B\">Hello {{customerName}}</h1><p>Your booking <strong>{{bookingRef}}</strong> on {{bookingDate}} at {{bookingTime}} at {{bookingLocation}} is confirmed.</p><p>Kind regards,<br/>{{organizationName}}</p></div>",
+      "plainTextBody": "Hello {{customerName}},\n\nYour booking {{bookingRef}} on {{bookingDate}} at {{bookingTime}} at {{bookingLocation}} is confirmed.\n\nKind regards,\n{{organizationName}}",
+      "accentColor": "#21468B",
+      "footerText": "{{organizationName}} — this is an automated message."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingReminderTemplate",
+        "slug": "default-reminder-24h-nl"
+      },
+      "name": "Herinnering 24 uur — boeking morgen",
+      "status": "published",
+      "locale": "nl",
+      "hoursBeforeBooking": 24,
+      "subjectLine": "Herinnering: uw boeking op {{bookingDate}}",
+      "htmlBody": "<div style=\"font-family:Arial,sans-serif;color:#212121\"><h1 style=\"color:#21468B\">Hallo {{customerName}}</h1><p>Dit is een herinnering voor uw boeking <strong>{{bookingRef}}</strong> op {{bookingDate}} om {{bookingTime}} bij {{bookingLocation}}.</p></div>",
+      "plainTextBody": "Hallo {{customerName}},\n\nDit is een herinnering voor uw boeking {{bookingRef}} op {{bookingDate}} om {{bookingTime}} bij {{bookingLocation}}.",
+      "accentColor": "#21468B",
+      "footerText": "{{organizationName}} — dit is een automatisch bericht."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingReminderTemplate",
+        "slug": "default-reminder-24h-en"
+      },
+      "name": "24-hour reminder — booking tomorrow",
+      "status": "published",
+      "locale": "en",
+      "hoursBeforeBooking": 24,
+      "subjectLine": "Reminder: your booking on {{bookingDate}}",
+      "htmlBody": "<div style=\"font-family:Arial,sans-serif;color:#212121\"><h1 style=\"color:#21468B\">Hello {{customerName}}</h1><p>This is a reminder for your booking <strong>{{bookingRef}}</strong> on {{bookingDate}} at {{bookingTime}} at {{bookingLocation}}.</p></div>",
+      "plainTextBody": "Hello {{customerName}},\n\nThis is a reminder for your booking {{bookingRef}} on {{bookingDate}} at {{bookingTime}} at {{bookingLocation}}.",
+      "accentColor": "#21468B",
+      "footerText": "{{organizationName}} — this is an automated message."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingCancellationTemplate",
+        "slug": "default-cancellation-nl"
+      },
+      "name": "Standaard annulering",
+      "status": "published",
+      "locale": "nl",
+      "cancellationReasonRequired": true,
+      "subjectLine": "Boeking geannuleerd: {{bookingRef}}",
+      "htmlBody": "<div style=\"font-family:Arial,sans-serif;color:#212121\"><h1 style=\"color:#21468B\">Hallo {{customerName}}</h1><p>Uw boeking <strong>{{bookingRef}}</strong> op {{bookingDate}} is geannuleerd.</p><p>Reden: {{cancellationReason}}</p></div>",
+      "plainTextBody": "Hallo {{customerName}},\n\nUw boeking {{bookingRef}} op {{bookingDate}} is geannuleerd.\nReden: {{cancellationReason}}",
+      "accentColor": "#21468B",
+      "footerText": "{{organizationName}} — dit is een automatisch bericht."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingCancellationTemplate",
+        "slug": "default-cancellation-en"
+      },
+      "name": "Default cancellation",
+      "status": "published",
+      "locale": "en",
+      "cancellationReasonRequired": true,
+      "subjectLine": "Booking cancelled: {{bookingRef}}",
+      "htmlBody": "<div style=\"font-family:Arial,sans-serif;color:#212121\"><h1 style=\"color:#21468B\">Hello {{customerName}}</h1><p>Your booking <strong>{{bookingRef}}</strong> on {{bookingDate}} has been cancelled.</p><p>Reason: {{cancellationReason}}</p></div>",
+      "plainTextBody": "Hello {{customerName}},\n\nYour booking {{bookingRef}} on {{bookingDate}} has been cancelled.\nReason: {{cancellationReason}}",
+      "accentColor": "#21468B",
+      "footerText": "{{organizationName}} — this is an automated message."
+    }
+  ]
+}

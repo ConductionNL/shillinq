@@ -1,0 +1,28 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"source": "NL-taxonomie nt17 — Aw / WSW / Logius",
+		"variant": "sbr-wonen",
+		"taxonomyVersion": "nt17",
+		"entryPoint": "sbr-wonen",
+		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt17 concepts for the SBR-Wonen (housing-corporation rapportage Aw/WSW) entry point (REQ-SBR-005, REQ-SBR-006). Toegelaten instellingen (woningcorporaties) file via this entry point; Aw and WSW consume the resulting XBRL. Vastgoed-categorie concepts (DAEB / niet-DAEB) reflect the woningwet split.",
+		"imported": "2026-06-09T00:00:00Z"
+	},
+	"mapping": {
+		"slug": "map-sbr-wonen-nt17",
+		"name": "SBR-Wonen rapportage — NL-taxonomie nt17",
+		"entryPoint": "sbr-wonen",
+		"taxonomyVersion": "nt17",
+		"records": [
+			{"financialStatementLineId": "wonen.vastgoed.daeb.bezit", "taxonomyConcept": "wo-i:DAEBProperty", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "wonen.vastgoed.nietDaeb.bezit", "taxonomyConcept": "wo-i:NonDAEBProperty", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "wonen.vastgoed.marktwaarde", "taxonomyConcept": "wo-i:MarketValue", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "wonen.vastgoed.bedrijfswaarde", "taxonomyConcept": "wo-i:OperatingValue", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "wonen.exploitatie.huren", "taxonomyConcept": "wo-i:RentalIncome", "contextRef": "duration_boekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "wonen.exploitatie.onderhoud", "taxonomyConcept": "wo-i:MaintenanceExpense", "contextRef": "duration_boekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "wonen.exploitatie.heffingen", "taxonomyConcept": "wo-i:Levies", "contextRef": "duration_boekjaar", "unitRef": "EUR"},
+			{"financialStatementLineId": "wonen.financiering.langlopendeLeningen", "taxonomyConcept": "wo-i:LongTermLoans", "contextRef": "instant_eindBoekjaar", "unitRef": "EUR"}
+		]
+	}
+}

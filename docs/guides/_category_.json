@@ -1,0 +1,11 @@
+{
+  "label": "Compliance guides",
+  "position": 50,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "generated-index",
+    "title": "Compliance guides",
+    "description": "Pre-audit checklists, reconciliation flows, and operator runbooks that span Shillinq's BBV, IFRS, and other regulatory surfaces."
+  }
+}

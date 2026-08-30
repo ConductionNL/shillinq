@@ -1,0 +1,489 @@
+{
+	"menu": [
+		{
+			"id": "EuFondsen",
+			"label": "EU funds",
+			"icon": "EarthBox",
+			"order": 33,
+			"children": [
+				{
+					"id": "EuProjecten",
+					"label": "EU projects",
+					"icon": "EarthBox",
+					"route": "EuProjecten",
+					"order": 10
+				},
+				{
+					"id": "EuDeclaraties",
+					"label": "Claims",
+					"icon": "CashMultiple",
+					"route": "EuDeclaraties",
+					"order": 20
+				},
+				{
+					"id": "EuBewijsstukken",
+					"label": "Supporting documents",
+					"icon": "FileDocumentMultipleOutline",
+					"route": "EuBewijsstukken",
+					"order": 30
+				},
+				{
+					"id": "EuOnregelmatigheden",
+					"label": "Irregularities",
+					"icon": "AlertOctagonOutline",
+					"route": "EuOnregelmatigheden",
+					"order": 40
+				},
+				{
+					"id": "EuAuditPortaal",
+					"label": "Audit portal",
+					"icon": "ClipboardTextClockOutline",
+					"route": "EuAuditPortaal",
+					"order": 50
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "EuProjecten",
+			"route": "/eu-fondsen/projecten",
+			"type": "index",
+			"title": "EU projects",
+			"config": {
+				"register": "shillinq",
+				"schema": "EuProject",
+				"columns": [
+					{ "key": "cciNumber", "label": "CCI number", "sortable": true },
+					{ "key": "programmeName", "label": "Programme", "sortable": true },
+					{ "key": "fonds", "label": "Fund", "sortable": true },
+					{ "key": "beneficiaryOrganization", "label": "Beneficiary", "sortable": true },
+					{ "key": "totalEligibleBudget", "label": "Budget", "sortable": true },
+					{ "key": "projectStatus", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "cciNumber",
+				"detailRoute": "EuProjectDetail"
+			}
+		},
+		{
+			"id": "EuProjectDetail",
+			"route": "/eu-fondsen/projecten/:id",
+			"type": "detail",
+			"title": "EU project",
+			"config": {
+				"register": "shillinq",
+				"schema": "EuProject",
+				"fields": [
+					{ "key": "cciNumber", "label": "CCI number", "type": "string" },
+					{ "key": "fonds", "label": "Fund", "type": "string" },
+					{ "key": "programmeName", "label": "Programme", "type": "string" },
+					{ "key": "priorityAxis", "label": "Priority axis", "type": "string" },
+					{ "key": "specificObjective", "label": "Specific objective", "type": "string" },
+					{ "key": "beneficiaryOrganization", "label": "Beneficiary", "type": "string" },
+					{ "key": "managingAuthority", "label": "Managing authority", "type": "string" },
+					{ "key": "euCoFundingRate", "label": "EU co-funding", "type": "number" },
+					{ "key": "totalEligibleBudget", "label": "Eligible budget", "type": "number" },
+					{ "key": "startDate", "label": "Start date", "type": "string" },
+					{ "key": "endDate", "label": "End date", "type": "string" },
+					{ "key": "projectStatus", "label": "Status", "type": "string" }
+				],
+				"_note": "MASTER + REPORT record — a co-funded EU project. Body leads with programme identity, co-funding rate and eligible budget, then the two lists an auditor actually opens: the claimed expenditure booked against it and any irregularities detected. Eligible-budget and total-claimed KPIs plus the retained supporting documents and immutable audit portal sit in the sidebar. No comms leaves on a funds ledger.",
+				"indexRoute": "EuProjecten",
+				"relatedObjects": [
+					{
+						"id": "expenditures",
+						"label": "Claimed expenditure",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "EuExpenditure",
+							"filterField": "euProjectId",
+							"columns": ["costCategory", "declarationPeriod", "grossAmount", "declaredAmount", "status"],
+							"detailRoute": "EuDeclaratieDetail",
+							"defaultSort": "declarationPeriod"
+						}
+					},
+					{
+						"id": "irregularities",
+						"label": "Irregularities",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "IrregularityReport",
+							"filterField": "euProjectId",
+							"columns": ["detectionDate", "nature", "amountConcerned", "recoveryAmount", "state"],
+							"detailRoute": "EuOnregelmatigheidDetail",
+							"defaultSort": "detectionDate"
+						}
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "budget",
+							"label": "Budget & claims",
+							"icon": "CashMultiple",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-aggregation",
+									"props": {
+										"register": "shillinq",
+										"schema": "EuExpenditure",
+										"aggregation": "declaredByProject",
+										"filter": { "euProjectId": ":id" }
+									}
+								}
+							]
+						},
+						{
+							"id": "evidence",
+							"label": "Supporting documents",
+							"icon": "FileCertificateOutline",
+							"order": 20,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-related-objects",
+									"props": {
+										"register": "shillinq",
+										"schema": "SupportingDocument",
+										"filter": { "euProjectId": ":id" }
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit portal",
+							"icon": "ClipboardTextClockOutline",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-related-objects",
+									"props": {
+										"register": "shillinq",
+										"schema": "AuditTrail",
+										"filter": { "euProjectId": ":id" }
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "EuDeclaraties",
+			"route": "/eu-fondsen/declaraties",
+			"type": "index",
+			"title": "Claims",
+			"config": {
+				"register": "shillinq",
+				"schema": "EuExpenditure",
+				"columns": [
+					{ "key": "euProjectId", "label": "Project", "sortable": true },
+					{ "key": "costCategory", "label": "Cost category", "sortable": true },
+					{ "key": "grossAmount", "label": "Gross", "sortable": true },
+					{ "key": "vatTreatment", "label": "BTW", "sortable": true },
+					{ "key": "declaredAmount", "label": "Claimed", "sortable": true },
+					{ "key": "declarationPeriod", "label": "Period", "sortable": true },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "declarationPeriod",
+				"detailRoute": "EuDeclaratieDetail"
+			}
+		},
+		{
+			"id": "EuDeclaratieDetail",
+			"route": "/eu-fondsen/declaraties/:id",
+			"type": "detail",
+			"title": "Claim",
+			"config": {
+				"register": "shillinq",
+				"schema": "EuExpenditure",
+				"fields": [
+					{ "key": "euProjectId", "label": "Project", "type": "string" },
+					{ "key": "costCategory", "label": "Cost category", "type": "string" },
+					{ "key": "description", "label": "Description", "type": "string" },
+					{ "key": "grossAmount", "label": "Gross amount", "type": "number" },
+					{ "key": "vatTreatment", "label": "BTW treatment", "type": "string" },
+					{ "key": "declaredAmount", "label": "Claimed amount", "type": "number" },
+					{ "key": "euCoFundingAmount", "label": "EU co-funding", "type": "number" },
+					{ "key": "declarationPeriod", "label": "Claim period", "type": "string" },
+					{ "key": "procurementRequired", "label": "Procurement required", "type": "boolean" },
+					{ "key": "eligibilityConfirmed", "label": "Eligibility confirmed", "type": "boolean" },
+					{ "key": "supportingDocumentsCount", "label": "Supporting documents", "type": "number" },
+					{ "key": "status", "label": "Status", "type": "string" }
+				],
+				"_note": "CLAIM (declared expenditure). Body shows the cost line, gross vs claimed vs EU co-funding amount and the eligibility/procurement flags that decide whether it survives an audit. The supporting documents that substantiate this claim are listed directly on the body; the GL linkage and audit trail sit in the sidebar. Financial record — no comms leaves.",
+				"indexRoute": "EuDeclaraties",
+				"relatedObjects": [
+					{
+						"id": "docs",
+						"label": "Supporting documents",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "SupportingDocument",
+							"filterField": "euExpenditureId",
+							"columns": ["documentType", "certifiedTrueCopyStatus", "retentionUntilDate", "state"],
+							"detailRoute": "EuBewijsstukDetail"
+						}
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit portal",
+							"icon": "ClipboardTextClockOutline",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-related-objects",
+									"props": {
+										"register": "shillinq",
+										"schema": "AuditTrail",
+										"filter": { "euExpenditureId": ":id" }
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "EuBewijsstukken",
+			"route": "/eu-fondsen/bewijsstukken",
+			"type": "index",
+			"title": "Supporting documents",
+			"config": {
+				"register": "shillinq",
+				"schema": "SupportingDocument",
+				"columns": [
+					{ "key": "documentType", "label": "Type", "sortable": true },
+					{ "key": "euExpenditureId", "label": "Expenditure", "sortable": true },
+					{ "key": "certifiedTrueCopyStatus", "label": "Certified", "sortable": true },
+					{ "key": "retentionUntilDate", "label": "Retained until", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "documentType",
+				"detailRoute": "EuBewijsstukDetail"
+			}
+		},
+		{
+			"id": "EuBewijsstukDetail",
+			"route": "/eu-fondsen/bewijsstukken/:id",
+			"type": "detail",
+			"title": "Supporting document",
+			"config": {
+				"register": "shillinq",
+				"schema": "SupportingDocument",
+				"fields": [
+					{ "key": "documentType", "label": "Document type", "type": "string" },
+					{ "key": "euExpenditureId", "label": "Expenditure", "type": "string" },
+					{ "key": "euProjectId", "label": "Project", "type": "string" },
+					{ "key": "sourceUri", "label": "Source URI (docudesk)", "type": "string" },
+					{ "key": "sha256Hash", "label": "SHA-256 hash", "type": "string" },
+					{ "key": "retentionUntilDate", "label": "Retained until", "type": "string" },
+					{ "key": "accessibilityLevel", "label": "Accessibility", "type": "string" },
+					{ "key": "certifiedTrueCopyStatus", "label": "Certified true copy", "type": "boolean" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"_note": "DOCUMENT (audit evidence). Body pairs the metadata that proves authenticity — SHA-256 hash, certified-true-copy status, retention deadline, docudesk source URI — with the actual file preview from NC Files in the sidebar. The whole purpose of this record is to survive a Commission audit, so the file itself and the audit trail are the sidebar tabs.",
+				"indexRoute": "EuBewijsstukken",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "file",
+							"label": "Document",
+							"icon": "FileCertificateOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"register": "shillinq",
+										"schema": "SupportingDocument",
+										"field": "sourceUri",
+										"objectId": ":id",
+										"description": "Certified source document referenced from NC Files / docudesk; opens in the NC Files viewer."
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit portal",
+							"icon": "ClipboardTextClockOutline",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "EuOnregelmatigheden",
+			"route": "/eu-fondsen/onregelmatigheden",
+			"type": "index",
+			"title": "Irregularities",
+			"config": {
+				"register": "shillinq",
+				"schema": "IrregularityReport",
+				"columns": [
+					{ "key": "euProjectId", "label": "Project", "sortable": true },
+					{ "key": "detectionDate", "label": "Date", "sortable": true },
+					{ "key": "detectionSource", "label": "Source", "sortable": true },
+					{ "key": "nature", "label": "Nature", "sortable": true },
+					{ "key": "amountConcerned", "label": "Amount", "sortable": true },
+					{ "key": "state", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "detectionDate",
+				"detailRoute": "EuOnregelmatigheidDetail"
+			}
+		},
+		{
+			"id": "EuOnregelmatigheidDetail",
+			"route": "/eu-fondsen/onregelmatigheden/:id",
+			"type": "detail",
+			"title": "Irregularity",
+			"config": {
+				"register": "shillinq",
+				"schema": "IrregularityReport",
+				"fields": [
+					{ "key": "euProjectId", "label": "Project", "type": "string" },
+					{ "key": "detectionDate", "label": "Detection date", "type": "string" },
+					{ "key": "detectionSource", "label": "Detection source", "type": "string" },
+					{ "key": "nature", "label": "Nature", "type": "string" },
+					{ "key": "amountConcerned", "label": "Amount concerned", "type": "number" },
+					{ "key": "imsReportable", "label": "IMS reportable", "type": "boolean" },
+					{ "key": "recoveryAmount", "label": "Recoverable amount", "type": "number" },
+					{ "key": "imsReference", "label": "IMS reference", "type": "string" },
+					{ "key": "imsSubmittedAt", "label": "Reported to EC", "type": "string" },
+					{ "key": "state", "label": "Status", "type": "string" }
+				],
+				"_note": "CASE record — a detected irregularity under investigation. Body carries detection source/nature, the amount concerned vs the recoverable amount, and the IMS reporting status that drives the mandatory EC notification. Evidence file and the immutable audit trail sit in the sidebar. It documents a finding, not a conversation, so no email/talk leaf.",
+				"indexRoute": "EuOnregelmatigheden",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "evidence",
+							"label": "Evidence",
+							"icon": "FileDocumentOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"register": "shillinq",
+										"schema": "IrregularityReport",
+										"field": "evidenceUri",
+										"objectId": ":id",
+										"description": "Evidence file backing the irregularity finding, referenced from NC Files."
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit portal",
+							"icon": "ClipboardTextClockOutline",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "EuAuditPortaal",
+			"route": "/eu-fondsen/audit-portaal",
+			"type": "index",
+			"title": "Audit portal",
+			"config": {
+				"register": "shillinq",
+				"schema": "AuditTrail",
+				"columns": [
+					{ "key": "timestamp", "label": "Timestamp", "sortable": true },
+					{ "key": "euProjectId", "label": "Project", "sortable": true },
+					{ "key": "euExpenditureId", "label": "Expenditure", "sortable": true },
+					{ "key": "eventType", "label": "Event", "sortable": true },
+					{ "key": "actorRole", "label": "Role", "sortable": true }
+				],
+				"defaultSort": "timestamp",
+				"detailRoute": "EuAuditTrailDetail"
+			}
+		},
+		{
+			"id": "EuAuditTrailDetail",
+			"route": "/eu-fondsen/audit-portaal/:id",
+			"type": "detail",
+			"title": "Audit-trail",
+			"config": {
+				"register": "shillinq",
+				"schema": "AuditTrail",
+				"fields": [
+					{ "key": "timestamp", "label": "Timestamp", "type": "string" },
+					{ "key": "euProjectId", "label": "Project", "type": "string" },
+					{ "key": "euExpenditureId", "label": "Expenditure", "type": "string" },
+					{ "key": "eventType", "label": "Event", "type": "string" },
+					{ "key": "actorRole", "label": "Role", "type": "string" },
+					{ "key": "actorOrganisation", "label": "Organisation", "type": "string" },
+					{ "key": "justification", "label": "Justification", "type": "string" },
+					{ "key": "auditEvidenceUri", "label": "Evidence URI", "type": "string" }
+				],
+				"_note": "IMMUTABLE LOG entry. A single audit-portal event is a write-once record — actor, role, organisation, before/after state and justification — so the body is a flat read-only field list with the linked evidence file in the sidebar. No object-list, KPI or comms leaf: there is nothing to aggregate or reply to on one log line.",
+				"indexRoute": "EuAuditPortaal",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "evidence",
+							"label": "Evidence",
+							"icon": "FileDocumentOutline",
+							"order": 10,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"register": "shillinq",
+										"schema": "AuditTrail",
+										"field": "auditEvidenceUri",
+										"objectId": ":id",
+										"description": "Evidence file attached to this audit event, referenced from NC Files."
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}

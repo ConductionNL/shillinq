@@ -1,0 +1,30 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-purchase-order-3way-06-matching-engine",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Slice 06 of the bookkeeping-purchase-order-3way chain adds a filterable index of ThreeWayMatch records — the visible artefact of the matching engine. The page is registered as a kind=page custom component in src/registry.js because the standard generated index does not render per-row match-status pills or the quick-action 'evaluate again' button this view exposes. Adds the matching-engine entry under the Purchase Orders menu so the AP team can navigate from PO list → invoice list → match list."
+	},
+	"menu": [
+		{
+			"id": "POMatching",
+			"label": "PO Matching",
+			"icon": "ClipboardListOutline",
+			"order": 90,
+			"children": [
+				{"id": "ThreeWayMatchIndex", "label": "Three-way matches", "icon": "VectorIntersection", "route": "ThreeWayMatchIndex", "order": 30}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "ThreeWayMatchIndex",
+			"route": "/inkoop/three-way-matches",
+			"type": "custom",
+			"title": "Three-way matches",
+			"component": "ThreeWayMatchIndex",
+			"_note": "Every row carries a Re-evaluate button that calls the MATCHING ENGINE (POST /api/three-way-matches/evaluate) rather than mutating the row — a per-row call into a service, which `type: index` row actions (view / edit / copy / delete, or an object-op patch) do not cover. The button stays enabled in every match status on purpose, because the usual reason to re-run the matcher is a ToleranceProfile change rather than anything about the row itself."
+		}
+	]
+}

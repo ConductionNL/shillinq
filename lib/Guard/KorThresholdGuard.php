@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
+ * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
  */
 
 declare(strict_types=1);
@@ -38,62 +38,59 @@ use Psr\Log\LoggerInterface;
  * year, excluding cancelled invoices and credit notes (negative documents). The
  * resulting total drives the KOR threshold-warning/threshold-exceeded lifecycle.
  *
- * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
+ * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
  */
-class KorThresholdGuard
-{
-    /**
-     * Constructor.
-     *
-     * @param LoggerInterface $logger Nextcloud logger for computation diagnostics.
-     */
-    public function __construct(
-        private readonly LoggerInterface $logger,
-    ) {
-    }//end __construct()
+class KorThresholdGuard {
+	/**
+	 * Constructor.
+	 *
+	 * @param LoggerInterface $logger Nextcloud logger for computation diagnostics.
+	 */
+	public function __construct(
+		private readonly LoggerInterface $logger,
+	) {
+	}//end __construct()
 
-    /**
-     * Compute YTD revenue for an administration in a calendar year.
-     *
-     * @param array<int,array<string,mixed>> $invoices         Pre-fetched Invoice records.
-     * @param string                         $administrationId The administration whose revenue is summed.
-     * @param int                            $year             The calendar year to bound the sum.
-     *
-     * @return float Sum of qualifying invoice revenue for the administration in the year.
-     *
-     * @spec openspec/changes/add-shillinq-bookkeeping-operations/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
-     */
-    public function currentYtdRevenue(array $invoices, string $administrationId, int $year): float
-    {
-        $this->logger->debug(
-            'KorThresholdGuard: currentYtdRevenue',
-            ['administrationId' => $administrationId, 'year' => $year, 'invoices' => count($invoices)]
-        );
+	/**
+	 * Compute YTD revenue for an administration in a calendar year.
+	 *
+	 * @param array<int,array<string,mixed>> $invoices Pre-fetched Invoice records.
+	 * @param string $administrationId The administration whose revenue is summed.
+	 * @param int $year The calendar year to bound the sum.
+	 *
+	 * @return float Sum of qualifying invoice revenue for the administration in the year.
+	 *
+	 * @spec openspec/specs/bookkeeping-kor-kleine-ondernemersregeling/spec.md
+	 */
+	public function currentYtdRevenue(array $invoices, string $administrationId, int $year): float {
+		$this->logger->debug(
+			'KorThresholdGuard: currentYtdRevenue',
+			['administrationId' => $administrationId, 'year' => $year, 'invoices' => count($invoices)]
+		);
 
-        $total = 0.0;
-        foreach ($invoices as $invoice) {
-            if (($invoice['administrationId'] ?? null) !== $administrationId) {
-                continue;
-            }
+		$total = 0.0;
+		foreach ($invoices as $invoice) {
+			if (($invoice['administrationId'] ?? null) !== $administrationId) {
+				continue;
+			}
 
-            $invoiceDate = (string) ($invoice['invoiceDate'] ?? ($invoice['issueDate'] ?? ''));
-            if (substr($invoiceDate, 0, 4) !== (string) $year) {
-                continue;
-            }
+			$invoiceDate = (string)($invoice['invoiceDate'] ?? ($invoice['issueDate'] ?? ''));
+			if (substr($invoiceDate, 0, 4) !== (string)$year) {
+				continue;
+			}
 
-            $status = (string) ($invoice['status'] ?? ($invoice['state'] ?? ''));
-            if ($status === 'cancelled' || $status === 'credited') {
-                continue;
-            }
+			$status = (string)($invoice['status'] ?? ($invoice['state'] ?? ''));
+			if ($status === 'cancelled' || $status === 'credited') {
+				continue;
+			}
 
-            if (($invoice['documentType'] ?? '') === 'credit-note') {
-                continue;
-            }
+			if (($invoice['documentType'] ?? '') === 'credit-note') {
+				continue;
+			}
 
-            $total += (float) ($invoice['amount'] ?? ($invoice['netAmount'] ?? 0));
-        }//end foreach
+			$total += (float)($invoice['amount'] ?? ($invoice['netAmount'] ?? 0));
+		}//end foreach
 
-        return $total;
-
-    }//end currentYtdRevenue()
+		return $total;
+	}//end currentYtdRevenue()
 }//end class

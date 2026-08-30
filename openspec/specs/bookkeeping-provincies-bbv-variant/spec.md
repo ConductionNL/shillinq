@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-provincies-bbv-variant
 
 **Status:** proposed
@@ -5,21 +9,36 @@
 **Tier:** T3 (reporting + compliance)
 **Depends on:** `../add-shillinq-provincies-bbv-variant/spec.md` (BBV-variant
 foundation), `../bookkeeping-chart-of-accounts/spec.md` (GL account base),
-`../budget-planning-control/spec.md` (Budget register)
+`../budget-core-schema/spec.md` (`BbvProgrammeBudget` schema — corrected
+2026-08-20 by `budget-core-schema`: this line previously named
+`../budget-planning-control/spec.md`, a capability spec that was never
+built; `budget-core-schema` is the capability it anticipated)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping provincies bbv variant in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: BBV variant pages not yet implemented
 
 
 ### REQ-BBC-001: BBV Compliance Dashboard SHALL display budget health by programme with traffic-light status
 
+**Renamed 2026-08-20 by `budget-core-schema`:** this requirement's schema
+was `Budget`, colliding with an unrelated `Budget` declared by
+`bookkeeping-verplichtingenadministratie` — the two merged into one
+franken-schema that silently refused every BBV-shaped create. Renamed to
+`BbvProgrammeBudget`; this requirement's substance (KPI cards, traffic-light
+rule) is unchanged.
+
 The BBV Compliance Dashboard page MUST render a `CnDashboardPage` widget
 containing:
 
 - **4 KPI cards** (per RFC 2119 requirement, not optional):
-  1. **Total Budget** — sum of all `Budget.totalAmount` records matching
-     the selected `programmaStructure` + fiscal year, displayed in EUR.
+  1. **Total Budget** — sum of all `BbvProgrammeBudget.totalAmount` records
+     matching the selected `programmaStructure` + fiscal year, displayed in
+     EUR.
   2. **Committed** — sum of `GLLine.amount` where `status: "committed"` and
      `programmaStructure` matches; includes active contracts and purchase orders.
   3. **Spent** — sum of `GLLine.amount` where `status: "posted"` and
@@ -42,7 +61,8 @@ containing:
 
 #### Scenario: Dashboard KPI cards reflect current fiscal year
 
-- **GIVEN** a province with FY 2026 budget €1M for programme `mobiliteit`
+- **GIVEN** a province with FY 2026 `BbvProgrammeBudget` €1M for programme
+  `mobiliteit`
 - **WHEN** €600k spent and €200k committed in GL as of 2026-05-21
 - **THEN** dashboard MUST show:
   - Total Budget: €1,000,000
@@ -52,19 +72,21 @@ containing:
 
 #### Scenario: Overspend triggers red status
 
-- **GIVEN** a programme `water` with €500k budget, €350k spent, €200k committed
+- **GIVEN** a programme `water` with €500k `BbvProgrammeBudget`, €350k spent, €200k committed
 - **WHEN** dashboard is rendered
 - **THEN** status MUST be 🔴 Red (50k overspend); Remaining field MUST display
   as negative (-€50,000).
 
 ### REQ-BBC-002: Dashboard filters SHALL support programme, fiscal year, and compliance status
 
+**Renamed 2026-08-20 by `budget-core-schema`:** schema `Budget` → `BbvProgrammeBudget` (see REQ-BBC-001's rename note); this requirement's substance is unchanged.
+
 The dashboard `CnFilterBar` MUST include three filter controls:
 
 | Filter | Type | Values | Default |
 |---|---|---|---|
 | **Programme** | multi-select enum | 7 values: ruimte, mobiliteit, water, milieu, cultuur, economie, bestuur | all selected |
-| **Fiscal Year** | dropdown | years with existing Budget + GL data (2023–2026, auto-discovered) | current FY |
+| **Fiscal Year** | dropdown | years with existing `BbvProgrammeBudget` + GL data (2023–2026, auto-discovered) | current FY |
 | **Budget Status** | multi-select enum | approved, provisional, amended | all selected |
 
 Filters MUST be applied cumulatively (AND logic). Selecting no programme
@@ -72,7 +94,7 @@ MUST show no data (not all programmes).
 
 #### Scenario: Filter by single programme and year
 
-- **GIVEN** dashboard with Budget + GL data for 2025 and 2026
+- **GIVEN** dashboard with `BbvProgrammeBudget` + GL data for 2025 and 2026
 - **WHEN** user selects Filter: Programme = `cultuur`, Fiscal Year = 2026
 - **THEN** KPI cards MUST show only 2026 `cultuur` budget vs. actuals; other
   programmes hidden.
@@ -151,6 +173,8 @@ inline.
   be in the future"; no GL lines MUST be updated.
 
 ### REQ-BBL-003: Programme assignments SHALL be auditable via OpenRegister audit trail
+
+The system SHALL satisfy this requirement: Programme assignments SHALL be auditable via OpenRegister audit trail.
 
 Every `ObjectService.updateObject()` call on a GL line (via Linker or direct edit)
 MUST trigger an audit-trail entry capturing:
@@ -237,7 +261,7 @@ When refresh is triggered:
 
 Operator walkthrough:
 
-1. Create 2–3 Budgets for different programmes (mobiliteit, water, cultuur).
+1. Create 2–3 `BbvProgrammeBudget`s for different programmes (mobiliteit, water, cultuur).
 2. Post 5–10 GL lines across programmes (mix of committed and spent).
 3. Open BBV Compliance Dashboard — verify KPI cards match budget vs. GL totals.
 4. Apply filters — verify chart updates correctly per filter selection.

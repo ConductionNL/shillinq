@@ -1,0 +1,21 @@
+{
+  "menu": [
+    {
+      "id": "BookingWidgetKeys",
+      "label": "Widget API keys",
+      "icon": "KeyOutline",
+      "route": "BookingWidgetKeys",
+      "order": 90
+    }
+  ],
+  "pages": [
+    {
+      "id": "BookingWidgetKeys",
+      "route": "/settings/booking-widget-keys",
+      "type": "custom",
+      "component": "BookingWidgetKeys",
+      "title": "Widget API keys",
+      "_note": "Key-management console for the public self-service booking widget: it mints, rotates and revokes a widget API key for a (businessId, administrationId) pair against the widget-key endpoints, and shows the generated key exactly once. The key is a credential, not an OpenRegister object the viewer may list — no index/detail/form page type can express a write-only secret whose value is returned once and never readable again."
+    }
+  ]
+}

@@ -1,0 +1,192 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "add-shillinq-vpb-corporate-tax",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json; ADR-031 declarative-first (no PHP Vpb-balans service).",
+    "description": "Tier 4-specialized (MKB / innovation — Vpb). Declarative VPB-balans scope per add-shillinq-vpb-corporate-tax: adds the `vpbPligtig` flag on Account (REQ-VPB-001), declares the VpbBalansLink overlay tying ondernemingsactiviteit cost-centers (CostCenter.ondernemingsActiviteit = true) to Vpb-pligtige accountNumbers with vpbPligtigVanaf (REQ-VPB-002), and declares the Vpb-balans aggregation (output VpbBalansFiltered, schema:Dataset) filtering GLLine on (accountNumber IN VpbBalansLink.accountNumbers AND periodId IN fiscalYearPeriods) grouped per costCenterId, producing Activa/Passiva/Resultaat per ondernemingsactiviteit (REQ-VPB-003). Honours T1 REQ-GL-005 balance invariant per cost-center (Task 8). The orphan-Vpb-pligt warning aggregation flags accounts with vpbPligtig=true not referenced by any VpbBalansLink (Task 11). The Vpb-aangifte voorbereiding docudesk template and its SBR payload binding (REQ-VPB-004) are declared in lib/Settings/docudesk-templates.json; aangifte transmission rides the T4-base bookkeeping-sbr-xbrl-reporting SBR endpoint (Task 10, ADR-019, no new SBR client). Manifest navigation entry (Bookkeeping > Vennootschapsbelasting) sits behind featureFlags.mkb-vpb in src/manifest.d/bookkeeping-vpb-corporate-tax-balans.json (REQ-VPB-005). No PHP Vpb service (ADR-022/ADR-031)."
+  },
+  "components": {
+    "schemas": {
+      "Account": {
+        "x-openspec-extend": true,
+        "description": "ADR-037 additive extension: adds optional `vpbPligtig` flag (default false) per REQ-VPB-001. Per Wet modernisering Vpb-plicht (2016), municipal ondernemingsactiviteiten and certain stichtingen/verenigingen are Vpb-pligtig. When true, postings against this account contribute to the Vpb-balans aggregation (REQ-VPB-003). Per ADR-031 the flag is schema metadata — no parallel VpbAccount register.",
+        "properties": {
+          "vpbPligtig": {
+            "type": "boolean",
+            "description": "Whether postings against this account contribute to the Vpb-balans (REQ-VPB-001). Defaults to false; flagged accounts are filtered into VpbBalansFiltered when they appear in a VpbBalansLink.accountNumbers list (REQ-VPB-003).",
+            "default": false,
+            "example": false,
+            "title": "VpB Pligtig"
+          }
+        }
+      },
+      "VpbBalansLink": {
+        "slug": "VpbBalansLink",
+        "icon": "BankTransferIn",
+        "version": "0.1.0",
+        "title": "Vpb Balans Link",
+        "description": "Overlay register declaring per-ondernemingsactiviteit clusters of Vpb-pligtige accounts (REQ-VPB-002). One record per (costCenterId, vpbPligtigVanaf) tuple. `costCenterId` MUST reference a CostCenter with `ondernemingsActiviteit: true`. `accountNumbers` is the list of `Account.accountNumber` strings (each with `vpbPligtig: true`) belonging to this ondernemingsactiviteit. Per ADR-031 the linkage is schema overlay — no Vpb service.",
+        "x-schema-org": "schema:Intangible",
+        "x-spec": "openspec/changes/add-shillinq-vpb-corporate-tax/specs/bookkeeping-vpb-corporate-tax/spec.md#req-vpb-002",
+        "type": "object",
+        "required": [
+          "costCenterId",
+          "accountNumbers",
+          "vpbLiableFrom",
+          "administrationId"
+        ],
+        "properties": {
+          "costCenterId": {
+            "type": "string",
+            "description": "FK to CostCenter (the cost-center MUST have `ondernemingsActiviteit: true`). One link per ondernemingsactiviteit.",
+            "example": "cc-acme-bv-marketactivity",
+            "title": "Cost Center ID"
+          },
+          "accountNumbers": {
+            "type": "array",
+            "description": "List of `Account.accountNumber` strings belonging to this ondernemingsactiviteit. Each referenced account MUST have `vpbPligtig: true` (REQ-VPB-001); an orphan-Vpb-pligt warning flags any `vpbPligtig` account not referenced by ANY VpbBalansLink (Task 11).",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "example": [
+              "8001",
+              "8002",
+              "8003",
+              "8004",
+              "8005"
+            ],
+            "title": "Account Numbers"
+          },
+          "vpbLiableFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Start date of Vpb-pligtigheid for this cluster. Used to bound the periodId range in the Vpb-balans aggregation (REQ-VPB-003).",
+            "example": "2026-01-01",
+            "title": "VpB Pligtig Vanaf"
+          },
+          "vpbLiableToAndWith": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Optional end date of Vpb-pligtigheid (e.g. when the ondernemingsactiviteit is wound down). Null = ongoing.",
+            "example": null,
+            "title": "VpB Pligtig Tot En Met"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-text bookkeeper note on the Vpb-pligt grond (e.g. 'gemeentelijk havenbedrijf, Wet modernisering Vpb-plicht 2016').",
+            "example": null,
+            "title": "Toelichting"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration; reads are scoped to the requesting user's administration.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-aggregations": {
+          "vpbBalansFiltered": {
+            "description": "Vpb-balans per ondernemingsactiviteit per REQ-VPB-003: filters GLLine on (accountNumber IN VpbBalansLink.accountNumbers AND periodId IN fiscalYearPeriods) and groups per costCenterId, producing Activa/Passiva/Resultaat per ondernemingsactiviteit. Output dataset name VpbBalansFiltered with schema.org type schema:Dataset. Per ADR-031, no PHP Vpb-balans service — operators consume the aggregation directly. The T1 REQ-GL-005 balance invariant is honoured per cost-center (Task 8): a cost-center where activaTotal + passivaTotal != 0 surfaces an `unbalancedOndernemingsactiviteit` warning.",
+            "source": "GLLine",
+            "output": "VpbBalansFiltered",
+            "x-schema-org": "schema:Dataset",
+            "filter": {
+              "accountNumber": {
+                "in": "VpbBalansLink.accountNumbers"
+              },
+              "periodId": {
+                "in": "FiscalPeriod.fiscalYearPeriods"
+              }
+            },
+            "join": {
+              "from": "GLLine.accountNumber",
+              "through": "VpbBalansLink",
+              "on": "VpbBalansLink.accountNumbers",
+              "select": [
+                "VpbBalansLink.costCenterId",
+                "VpbBalansLink.vpbLiableFrom"
+              ]
+            },
+            "groupBy": [
+              "VpbBalansLink.costCenterId"
+            ],
+            "operations": {
+              "activaTotal": {
+                "operation": "sum",
+                "expression": "case when Account.accountType = 'asset' then GLLine.debit - GLLine.credit else 0 end",
+                "target": "activaTotal",
+                "unit": "cents"
+              },
+              "passivaTotal": {
+                "operation": "sum",
+                "expression": "case when Account.accountType = 'liability' or Account.accountType = 'equity' then GLLine.credit - GLLine.debit else 0 end",
+                "target": "passivaTotal",
+                "unit": "cents"
+              },
+              "resultaatTotal": {
+                "operation": "sum",
+                "expression": "case when Account.accountType = 'revenue' then GLLine.credit - GLLine.debit when Account.accountType = 'expense' then -(GLLine.debit - GLLine.credit) else 0 end",
+                "target": "resultaatTotal",
+                "unit": "cents"
+              },
+              "balansSluit": {
+                "operation": "expression",
+                "expression": "activaTotal - passivaTotal - resultaatTotal == 0",
+                "target": "balansSluit",
+                "description": "T1 REQ-GL-005 balance invariant per cost-center; false surfaces `unbalancedOndernemingsactiviteit` warning."
+              }
+            },
+            "warnings": {
+              "unbalancedOndernemingsactiviteit": {
+                "condition": "balansSluit == false",
+                "severity": "warning",
+                "message": "Vpb-balans per ondernemingsactiviteit is niet in balans (T1 REQ-GL-005). Activa - Passiva - Resultaat != 0; controleer GL-postings voor cost-center {{costCenterId}}."
+              }
+            }
+          },
+          "orphanedVpbPligtigAccounts": {
+            "description": "Task 11 invariant warning: lists Account records with `vpbPligtig: true` that are NOT referenced by ANY VpbBalansLink.accountNumbers. Orphans signal a configuration gap — postings against an orphan account never appear in any ondernemingsactiviteit's Vpb-balans. Surfaced in the Vpb menu detail view (REQ-VPB-005).",
+            "source": "Account",
+            "output": "OrphanedVpbPligtigAccounts",
+            "x-schema-org": "schema:Dataset",
+            "filter": {
+              "vpbPligtig": {
+                "equals": true
+              }
+            },
+            "antiJoin": {
+              "from": "Account.accountNumber",
+              "against": "VpbBalansLink.accountNumbers"
+            },
+            "warnings": {
+              "orphanedVpbPligt": {
+                "condition": "vpbPligtig == true && referencedByVpbBalansLink == false",
+                "severity": "warning",
+                "message": "Account {{accountNumber}} ({{name}}) is gemarkeerd als Vpb-pligtig maar is niet gekoppeld aan een VpbBalansLink. Voeg het account toe aan een VpbBalansLink.accountNumbers van de relevante ondernemingsactiviteit, anders verschijnen postings niet in de Vpb-balans."
+              }
+            }
+          }
+        },
+        "x-openregister-unique": [
+          [
+            "costCenterId",
+            "vpbLiableFrom",
+            "administrationId"
+          ]
+        ],
+        "x-openregister-rbac": {
+          "read": "auth.administrationId == record.administrationId",
+          "write": "auth.administrationId == record.administrationId && auth.role in ['bookkeeper','admin']"
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Vpb Balans Link is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

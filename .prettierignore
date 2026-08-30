@@ -1,0 +1,18 @@
+# Build output, vendored trees and the separate Docusaurus site.
+js/
+dist/
+build/
+node_modules/
+vendor/
+coverage/
+coverage-frontend/
+coverage-vitest/
+docs/
+docusaurus/
+website/
+playwright-report/
+test-results/
+*.min.*
+# Written by the translation workflow — a formatter here would fight its own
+# generator on every run.
+l10n/

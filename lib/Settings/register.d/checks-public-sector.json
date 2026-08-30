@@ -1,0 +1,712 @@
+{
+  "x-shillinq-fragment": "checks-public-sector",
+  "components": {
+    "schemas": {
+      "PublicSectorStatement": {
+        "slug": "PublicSectorStatement",
+        "icon": "BankOutline",
+        "version": "0.1.0",
+        "title": "Public Sector Statement",
+        "description": "An international public-sector accrual financial statement for one fiscal year of a government or public entity, used by the public-sector rule domain to evaluate the IPSASB IPSAS framework (statement composition, cash-flow classification, inventory lower-of-cost measurement, contingent-liability prohibition, non-cash-generating-asset impairment, non-exchange revenue / tax-on-taxable-event recognition, the budget comparison, consolidation eliminations, short-term employee benefits, financial-instrument recognition and the IPSAS 43 right-of-use lease model) and the US GASB statements (the GASB 34 dual government-wide / fund model and its measurement focuses, MD&A, the major-fund criteria, GASB 54 fund-balance classifications, GASB 84 fiduciary fund types, the GASB 87 single lease model, the GASB 96 SBITA model and the GASB 103 budgetary-comparison RSI). The NL-BBV framework is modelled separately by BbvStatement. Per ADR-022 this is a register object, not an embedded structure.",
+        "type": "object",
+        "x-schema-org": "schema:Report",
+        "required": [
+          "framework",
+          "fiscalYear"
+        ],
+        "properties": {
+          "framework": {
+            "type": "string",
+            "description": "Which international public-sector framework this statement is prepared under: the IPSASB IPSAS accrual framework or the US GASB statements.",
+            "enum": [
+              "ipsas",
+              "gasb"
+            ],
+            "example": "ipsas",
+            "title": "Framework"
+          },
+          "jurisdiction": {
+            "type": "string",
+            "nullable": true,
+            "description": "Jurisdiction the framework applies to: 'global' for IPSAS, ISO 3166-1 alpha-2 (US) for GASB.",
+            "example": "global",
+            "title": "Jurisdiction"
+          },
+          "reportingEntity": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the reporting public-sector entity.",
+            "title": "Reporting Entity"
+          },
+          "fiscalYear": {
+            "type": "number",
+            "description": "The fiscal year the statement covers.",
+            "title": "Fiscal Year"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 4217 currency the statement is presented in.",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "consolidated": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the statement is a consolidated (group) statement, triggering the IPSAS 35 intragroup-elimination rule.",
+            "title": "Consolidated"
+          },
+          "budgetMadePublic": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the entity makes its approved budget publicly available, which under IPSAS 24 requires a budget comparison in the complete set of statements (IPSAS 1.21).",
+            "title": "Budget Made Public"
+          },
+          "components": {
+            "type": "array",
+            "nullable": true,
+            "description": "The component statements present (IPSAS 1.21): financialPosition, financialPerformance, changesInNetAssets, cashFlow, notes, and budgetComparison where applicable.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Components"
+          },
+          "cashFlowActivities": {
+            "type": "array",
+            "nullable": true,
+            "description": "The cash-flow activity classes the cash-flow statement reports (IPSAS 2.18): operating, investing, financing.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Cash Flow Activities"
+          },
+          "inventories": {
+            "type": "array",
+            "nullable": true,
+            "description": "Inventory lines measured per IPSAS 12: ordinary lines at the lower of cost and net realizable value (12.15); distribution lines at the lower of cost and current replacement cost (12.17).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Inventory line name.",
+                  "title": "Name"
+                },
+                "category": {
+                  "type": "string",
+                  "description": "Measurement category.",
+                  "enum": [
+                    "ordinary",
+                    "distribution"
+                  ],
+                  "title": "Category"
+                },
+                "cost": {
+                  "type": "number",
+                  "description": "Cost of the inventory line.",
+                  "title": "Cost"
+                },
+                "netRealizableValue": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "Net realizable value (ordinary lines).",
+                  "title": "Net Realizable Value"
+                },
+                "currentReplacementCost": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "Current replacement cost (distribution lines).",
+                  "title": "Current Replacement Cost"
+                },
+                "carryingAmount": {
+                  "type": "number",
+                  "description": "Carrying amount recognized = lower of cost and the applicable comparison value.",
+                  "title": "Carrying Amount"
+                }
+              }
+            },
+            "title": "Inventories"
+          },
+          "contingentLiabilities": {
+            "type": "array",
+            "nullable": true,
+            "description": "Contingent liabilities (IPSAS 19.35): each disclosed only and never recognized on the face of the statements.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "Description of the contingency.",
+                  "title": "Description"
+                },
+                "recognized": {
+                  "type": "boolean",
+                  "description": "Whether recognized on the face — must be false (IPSAS 19.35).",
+                  "title": "Recognized"
+                },
+                "disclosed": {
+                  "type": "boolean",
+                  "description": "Whether disclosed in the notes.",
+                  "title": "Disclosed"
+                }
+              }
+            },
+            "title": "Contingent Liabilities"
+          },
+          "impairments": {
+            "type": "array",
+            "nullable": true,
+            "description": "Non-cash-generating-asset impairments (IPSAS 21): the carrying amount is reduced to the recoverable service amount, the loss is the difference, and the loss is recognized in surplus or deficit unless the asset is revalued.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "asset": {
+                  "type": "string",
+                  "description": "Asset name.",
+                  "title": "Asset"
+                },
+                "carryingAmountBefore": {
+                  "type": "number",
+                  "description": "Carrying amount before impairment.",
+                  "title": "Carrying Amount Before"
+                },
+                "recoverableServiceAmount": {
+                  "type": "number",
+                  "description": "Recoverable service amount.",
+                  "title": "Recoverable Service Amount"
+                },
+                "carryingAmount": {
+                  "type": "number",
+                  "description": "Carrying amount after impairment = recoverable service amount.",
+                  "title": "Carrying Amount"
+                },
+                "impairmentLoss": {
+                  "type": "number",
+                  "description": "Recognized impairment loss = carryingAmountBefore - recoverableServiceAmount.",
+                  "title": "Impairment Loss"
+                },
+                "revalued": {
+                  "type": "boolean",
+                  "description": "Whether the asset is carried at a revalued amount.",
+                  "title": "Revalued"
+                },
+                "recognizedIn": {
+                  "type": "string",
+                  "description": "Where the loss is recognized.",
+                  "enum": [
+                    "surplusOrDeficit",
+                    "revaluationSurplus"
+                  ],
+                  "title": "Recognized In"
+                }
+              }
+            },
+            "title": "Impairments"
+          },
+          "nonExchangeRevenues": {
+            "type": "array",
+            "nullable": true,
+            "description": "Non-exchange revenue inflows (IPSAS 23): a conditioned inflow recognizes the conditioned portion as a liability and the rest as revenue (liability + revenue = amount).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "description": "Source of the inflow.",
+                  "title": "Source"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "Total inflow of resources.",
+                  "title": "Amount"
+                },
+                "hasCondition": {
+                  "type": "boolean",
+                  "description": "Whether a present obligation (condition) attaches.",
+                  "title": "Has Condition"
+                },
+                "liabilityRecognized": {
+                  "type": "number",
+                  "description": "Conditioned portion recognized as a liability.",
+                  "title": "Liability Recognized"
+                },
+                "revenueRecognized": {
+                  "type": "number",
+                  "description": "Portion recognized as revenue.",
+                  "title": "Revenue Recognized"
+                }
+              }
+            },
+            "title": "Non Exchange Revenues"
+          },
+          "taxAssets": {
+            "type": "array",
+            "nullable": true,
+            "description": "Tax assets (IPSAS 23.59 / 47.36): recognized when the taxable event has occurred.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "taxType": {
+                  "type": "string",
+                  "description": "Type of tax.",
+                  "title": "Tax Type"
+                },
+                "taxableEventOccurred": {
+                  "type": "boolean",
+                  "description": "Whether the taxable event has occurred.",
+                  "title": "Taxable Event Occurred"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "Recognized tax-asset amount.",
+                  "title": "Amount"
+                }
+              }
+            },
+            "title": "Tax Assets"
+          },
+          "budgetComparison": {
+            "type": "object",
+            "nullable": true,
+            "description": "The IPSAS 24.14 budget comparison: original and final budget against actuals on a comparable basis, with a material-difference explanation.",
+            "properties": {
+              "basis": {
+                "type": "string",
+                "description": "The basis the comparison is presented on.",
+                "enum": [
+                  "comparable"
+                ],
+                "title": "Basis"
+              },
+              "originalBudget": {
+                "type": "number",
+                "description": "Original budget amount.",
+                "title": "Original Budget"
+              },
+              "finalBudget": {
+                "type": "number",
+                "description": "Final budget amount.",
+                "title": "Final Budget"
+              },
+              "actualAmount": {
+                "type": "number",
+                "description": "Actual amount on a comparable basis.",
+                "title": "Actual Amount"
+              },
+              "materialDifferenceNote": {
+                "type": "string",
+                "description": "Explanation of material differences.",
+                "title": "Material Difference Note"
+              }
+            },
+            "title": "Budget Comparison"
+          },
+          "intragroupEliminations": {
+            "type": "array",
+            "nullable": true,
+            "description": "Consolidation eliminations (IPSAS 35.40): the controlling entity's investment and all intragroup balances and transactions.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "Elimination type.",
+                  "enum": [
+                    "investment",
+                    "intragroupBalance",
+                    "intragroupTransaction"
+                  ],
+                  "title": "Type"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "Eliminated amount.",
+                  "title": "Amount"
+                }
+              }
+            },
+            "title": "Intragroup Eliminations"
+          },
+          "shortTermEmployeeBenefits": {
+            "type": "array",
+            "nullable": true,
+            "description": "Short-term employee benefits (IPSAS 39.11): recognized at the undiscounted amount as both a liability and an expense for service rendered.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "Benefit type.",
+                  "title": "Type"
+                },
+                "undiscountedAmount": {
+                  "type": "number",
+                  "description": "Undiscounted amount expected to be paid.",
+                  "title": "Undiscounted Amount"
+                },
+                "liabilityRecognized": {
+                  "type": "number",
+                  "description": "Recognized liability = undiscounted amount.",
+                  "title": "Liability Recognized"
+                },
+                "expenseRecognized": {
+                  "type": "number",
+                  "description": "Recognized expense = undiscounted amount.",
+                  "title": "Expense Recognized"
+                },
+                "serviceRendered": {
+                  "type": "boolean",
+                  "description": "Whether the related service has been rendered.",
+                  "title": "Service Rendered"
+                },
+                "discounted": {
+                  "type": "boolean",
+                  "description": "Whether the amount is discounted — must be false for short-term benefits.",
+                  "title": "Discounted"
+                }
+              }
+            },
+            "title": "Short Term Employee Benefits"
+          },
+          "financialInstruments": {
+            "type": "array",
+            "nullable": true,
+            "description": "Financial assets/liabilities (IPSAS 41.10): recognized when, and only when, the entity becomes party to the contractual provisions.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Instrument name.",
+                  "title": "Name"
+                },
+                "partyToContract": {
+                  "type": "boolean",
+                  "description": "Whether the entity is party to the contractual provisions.",
+                  "title": "Party To Contract"
+                },
+                "recognized": {
+                  "type": "boolean",
+                  "description": "Whether recognized — tracks partyToContract.",
+                  "title": "Recognized"
+                }
+              }
+            },
+            "title": "Financial Instruments"
+          },
+          "leases": {
+            "type": "array",
+            "nullable": true,
+            "description": "Leases under IPSAS 43 / GASB 87: a single financing model recognizing a right-of-use asset and a lease liability at present value at commencement; leases with a maximum term of 12 months or less are excluded.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "asset": {
+                  "type": "string",
+                  "description": "Underlying leased asset.",
+                  "title": "Asset"
+                },
+                "maxTermMonths": {
+                  "type": "number",
+                  "description": "Maximum possible lease term in months (<=12 invokes the short-term exception).",
+                  "title": "Max Term Months"
+                },
+                "rightOfUseAsset": {
+                  "type": "number",
+                  "description": "Recognized right-of-use asset (0 for short-term).",
+                  "title": "Right Of Use Asset"
+                },
+                "leaseLiability": {
+                  "type": "number",
+                  "description": "Recognized lease liability at present value (0 for short-term).",
+                  "title": "Lease Liability"
+                },
+                "intangibleRouAsset": {
+                  "type": "boolean",
+                  "nullable": true,
+                  "description": "Whether the right-of-use asset is recognized as an intangible asset (GASB 87).",
+                  "title": "Intangible Rou Asset"
+                },
+                "annualPayment": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "Level annual lease payment.",
+                  "title": "Annual Payment"
+                },
+                "termYears": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "Lease term in whole years.",
+                  "title": "Term Years"
+                },
+                "discountRate": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "Per-period discount rate (implicit or incremental borrowing rate).",
+                  "title": "Discount Rate"
+                },
+                "singleModel": {
+                  "type": "boolean",
+                  "nullable": true,
+                  "description": "Whether the lease is on the single financing model (GASB 87, no operating-vs-capital split).",
+                  "title": "Single Model"
+                },
+                "shortTerm": {
+                  "type": "boolean",
+                  "nullable": true,
+                  "description": "Explicit short-term flag.",
+                  "title": "Short Term"
+                }
+              }
+            },
+            "title": "Leases"
+          },
+          "sbitas": {
+            "type": "array",
+            "nullable": true,
+            "description": "Subscription-based IT arrangements (GASB 96): recognize a subscription liability at present value and an intangible right-to-use subscription asset; SBITAs with a maximum term of 12 months or less are excluded.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "SBITA name.",
+                  "title": "Name"
+                },
+                "maxTermMonths": {
+                  "type": "number",
+                  "description": "Maximum possible subscription term in months (<=12 invokes the short-term exception).",
+                  "title": "Max Term Months"
+                },
+                "subscriptionLiability": {
+                  "type": "number",
+                  "description": "Recognized subscription liability at present value (0 for short-term).",
+                  "title": "Subscription Liability"
+                },
+                "rightOfUseAsset": {
+                  "type": "number",
+                  "description": "Recognized right-to-use subscription asset (0 for short-term).",
+                  "title": "Right Of Use Asset"
+                },
+                "intangibleRouAsset": {
+                  "type": "boolean",
+                  "nullable": true,
+                  "description": "Whether the right-to-use asset is recognized as an intangible capital asset.",
+                  "title": "Intangible Rou Asset"
+                },
+                "annualPayment": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "Level annual subscription payment.",
+                  "title": "Annual Payment"
+                },
+                "termYears": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "Subscription term in whole years.",
+                  "title": "Term Years"
+                },
+                "discountRate": {
+                  "type": "number",
+                  "nullable": true,
+                  "description": "Per-period discount rate.",
+                  "title": "Discount Rate"
+                },
+                "shortTerm": {
+                  "type": "boolean",
+                  "nullable": true,
+                  "description": "Explicit short-term flag.",
+                  "title": "Short Term"
+                }
+              }
+            },
+            "title": "Sbitas"
+          },
+          "governmentWideStatements": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether government-wide financial statements are presented (GASB 34 dual model).",
+            "title": "Government Wide Statements"
+          },
+          "fundStatements": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether fund financial statements are presented (GASB 34 dual model).",
+            "title": "Fund Statements"
+          },
+          "govWideMeasurementFocus": {
+            "type": "string",
+            "nullable": true,
+            "description": "Measurement focus of the government-wide statements (GASB 34).",
+            "enum": [
+              "economicResources"
+            ],
+            "title": "Gov Wide Measurement Focus"
+          },
+          "govWideBasis": {
+            "type": "string",
+            "nullable": true,
+            "description": "Basis of accounting of the government-wide statements (GASB 34).",
+            "enum": [
+              "accrual"
+            ],
+            "title": "Gov Wide Basis"
+          },
+          "govWideColumns": {
+            "type": "array",
+            "nullable": true,
+            "description": "Activity columns of the government-wide statements (GASB 34): governmental and businessType.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Gov Wide Columns"
+          },
+          "mdaPresent": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether Management's Discussion and Analysis is present (GASB 34 RSI).",
+            "title": "Mda Present"
+          },
+          "mdaPlacement": {
+            "type": "string",
+            "nullable": true,
+            "description": "Placement of the MD&A relative to the basic financial statements (GASB 34).",
+            "enum": [
+              "precedes"
+            ],
+            "title": "Mda Placement"
+          },
+          "govFundsMeasurementFocus": {
+            "type": "string",
+            "nullable": true,
+            "description": "Measurement focus of the governmental funds (GASB 34).",
+            "enum": [
+              "currentFinancialResources"
+            ],
+            "title": "Gov Funds Measurement Focus"
+          },
+          "govFundsBasis": {
+            "type": "string",
+            "nullable": true,
+            "description": "Basis of accounting of the governmental funds (GASB 34).",
+            "enum": [
+              "modifiedAccrual"
+            ],
+            "title": "Gov Funds Basis"
+          },
+          "funds": {
+            "type": "array",
+            "nullable": true,
+            "description": "Funds and their major-fund determination (GASB 34): the general fund is always major; any other fund is major iff an element is at least 10% of its category total and at least 5% of the combined total.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Fund name.",
+                  "title": "Name"
+                },
+                "category": {
+                  "type": "string",
+                  "description": "Fund category.",
+                  "enum": [
+                    "governmental",
+                    "enterprise"
+                  ],
+                  "title": "Category"
+                },
+                "isGeneralFund": {
+                  "type": "boolean",
+                  "description": "Whether this is the general fund (always major).",
+                  "title": "Is General Fund"
+                },
+                "major": {
+                  "type": "boolean",
+                  "description": "Declared major-fund status.",
+                  "title": "Major"
+                },
+                "categoryPercent": {
+                  "type": "number",
+                  "description": "The element as a percentage of its category total.",
+                  "title": "Category Percent"
+                },
+                "combinedPercent": {
+                  "type": "number",
+                  "description": "The element as a percentage of the combined governmental + enterprise total.",
+                  "title": "Combined Percent"
+                }
+              }
+            },
+            "title": "Funds"
+          },
+          "fundBalanceClassifications": {
+            "type": "array",
+            "nullable": true,
+            "description": "The five GASB 54 governmental fund-balance classifications: nonspendable, restricted, committed, assigned, unassigned.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Fund Balance Classifications"
+          },
+          "fiduciaryFunds": {
+            "type": "array",
+            "nullable": true,
+            "description": "Fiduciary funds reported under the four GASB 84 fund types: pensionTrust, investmentTrust, privatePurposeTrust, custodial.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Fiduciary fund name.",
+                  "title": "Name"
+                },
+                "fundType": {
+                  "type": "string",
+                  "description": "Fiduciary fund type.",
+                  "enum": [
+                    "pensionTrust",
+                    "investmentTrust",
+                    "privatePurposeTrust",
+                    "custodial"
+                  ],
+                  "title": "Fund Type"
+                }
+              }
+            },
+            "title": "Fiduciary Funds"
+          },
+          "budgetaryComparison": {
+            "type": "object",
+            "nullable": true,
+            "description": "The GASB 103 budgetary-comparison RSI: presented as required supplementary information with separate variance columns and notes explaining significant variances.",
+            "properties": {
+              "presentedAsRsi": {
+                "type": "boolean",
+                "description": "Whether presented as required supplementary information.",
+                "title": "Presented As Rsi"
+              },
+              "varianceColumns": {
+                "type": "array",
+                "description": "The separate variance columns presented.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Variance Columns"
+              },
+              "significantVarianceNote": {
+                "type": "string",
+                "description": "Note explaining significant variances.",
+                "title": "Significant Variance Note"
+              }
+            },
+            "title": "Budgetary Comparison"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Public Sector Statement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

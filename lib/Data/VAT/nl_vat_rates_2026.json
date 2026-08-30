@@ -1,0 +1,66 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Wet OB 1968 + Belastingdienst tariefoverzicht 2026; supersedes legacy lib/Settings/seeds/btw-tariffs-2026.json for the InvoiceLine VAT field per bookkeeping-invoice-vat-kassakoppeling design.md.",
+    "version": "2026",
+    "description": "Standard Dutch VAT (BTW) rates per REQ-VAT-001 used by ARInvoice.lines[].vatRate and the bookkeeping-invoice-vat-kassakoppeling capability. Read-only; version-locked. Installer SHALL insert these into the TaxRate register on first run; admin SHALL NOT override the canonical Belastingdienst values, but MAY add additional administration-specific rates.",
+    "appliesTo": "ARInvoice.lines[].vatRate (REQ-VAT-001), VATGLAccounts default mapping (REQ-VAT-006), ServiceCategoryOverride matrix (REQ-VAT-002bis)",
+    "readOnly": true,
+    "imported": "2026-01-01T00:00:00Z"
+  },
+  "rates": [
+    {
+      "rateId": "nl-vat-21-2026",
+      "name": "NL Standard (21%)",
+      "ratePercentage": 21,
+      "category": "product",
+      "permittedServiceCategories": ["product", "service"],
+      "defaultGlAccount": "2020",
+      "rgsAccountHint": "WBeBoB",
+      "validFrom": "2012-10-01",
+      "validTo": null,
+      "legalBasis": "Wet OB 1968 art. 9 lid 1",
+      "description": "Algemeen tarief; toegepast op alle producten en diensten die niet onder een ander tarief vallen."
+    },
+    {
+      "rateId": "nl-vat-9-2026",
+      "name": "NL Reduced Services (9%)",
+      "ratePercentage": 9,
+      "category": "service",
+      "permittedServiceCategories": ["service"],
+      "defaultGlAccount": "2021",
+      "rgsAccountHint": "WBeBoL",
+      "validFrom": "2019-01-01",
+      "validTo": null,
+      "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel a + Tabel I",
+      "description": "Laag tarief; toegepast op specifieke diensten en goederen (Tabel I) zoals voedingsmiddelen, boeken (vanaf 2019), water, geneesmiddelen, openbaar vervoer."
+    },
+    {
+      "rateId": "nl-vat-6-2026",
+      "name": "NL Books/Media (6%)",
+      "ratePercentage": 6,
+      "category": "product",
+      "permittedServiceCategories": ["product"],
+      "defaultGlAccount": "2022",
+      "rgsAccountHint": "WBeBoM",
+      "validFrom": "2012-10-01",
+      "validTo": "2018-12-31",
+      "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel a (historisch tarief)",
+      "description": "Historisch laag tarief; vervangen door 9% per 2019-01-01. Behouden in de spec voor backward-compatibiliteit met facturen uit het verleden en internationale administraties die het 6%-tarief nog hanteren. Nieuwe NL-administraties gebruiken in plaats hiervan 9%."
+    },
+    {
+      "rateId": "nl-vat-0-2026",
+      "name": "Exempt / Export (0%)",
+      "ratePercentage": 0,
+      "category": "exempt",
+      "permittedServiceCategories": ["product", "service", "exempt"],
+      "defaultGlAccount": "2023",
+      "rgsAccountHint": "WBeBoN",
+      "validFrom": "1969-01-01",
+      "validTo": null,
+      "legalBasis": "Wet OB 1968 art. 9 lid 2 onderdeel b + Tabel II + art. 11 (vrijstellingen)",
+      "description": "Nultarief / vrijgesteld; toegepast op export naar buiten EU, intracommunautaire leveringen, en vrijgestelde prestaties (onderwijs, zorg, financiële diensten)."
+    }
+  ]
+}

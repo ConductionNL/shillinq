@@ -1,0 +1,217 @@
+{
+	"_comment": "bookings-resource-calendar seed data (task 7). The same records are also embedded in lib/Settings/register.d/bookings-resource-calendar.json under .objects so OpenRegister's importFromApp picks them up on app activation. This file is the canonical, schema-grouped declaration referenced from design.md#seed-data and the user-guide documentation.",
+	"resources": [
+		{
+			"resourceId": "res-001",
+			"type": "staff",
+			"name": "Jan Peeters",
+			"administrationId": "adm-1",
+			"openingTime": "09:00",
+			"closingTime": "17:00",
+			"allowOverlap": false,
+			"status": "active"
+		},
+		{
+			"resourceId": "res-002",
+			"type": "staff",
+			"name": "Marie Dubois",
+			"administrationId": "adm-1",
+			"openingTime": "09:00",
+			"closingTime": "17:00",
+			"allowOverlap": false,
+			"status": "active"
+		},
+		{
+			"resourceId": "res-003",
+			"type": "room",
+			"name": "Vergaderruimte A",
+			"administrationId": "adm-1",
+			"openingTime": "08:00",
+			"closingTime": "18:00",
+			"allowOverlap": false,
+			"status": "active"
+		},
+		{
+			"resourceId": "res-004",
+			"type": "equipment",
+			"name": "Behandelstoel 1",
+			"administrationId": "adm-1",
+			"openingTime": "10:00",
+			"closingTime": "20:00",
+			"allowOverlap": false,
+			"status": "active"
+		},
+		{
+			"resourceId": "res-005",
+			"type": "furniture",
+			"name": "Tafel 4 (hoek)",
+			"administrationId": "adm-1",
+			"openingTime": null,
+			"closingTime": null,
+			"allowOverlap": false,
+			"status": "active"
+		}
+	],
+	"calendars": [
+		{
+			"calendarId": "cal-001",
+			"resource": "res-001",
+			"administrationId": "adm-1",
+			"timeZone": "Europe/Amsterdam",
+			"workingHours": {
+				"monday": "09:00-17:00",
+				"tuesday": "09:00-17:00",
+				"wednesday": "09:00-17:00",
+				"thursday": "09:00-17:00",
+				"friday": "09:00-17:00",
+				"saturday": null,
+				"sunday": null
+			},
+			"status": "active"
+		},
+		{
+			"calendarId": "cal-002",
+			"resource": "res-003",
+			"administrationId": "adm-1",
+			"timeZone": "Europe/Amsterdam",
+			"workingHours": {
+				"monday": "08:00-18:00",
+				"tuesday": "08:00-18:00",
+				"wednesday": "08:00-18:00",
+				"thursday": "08:00-18:00",
+				"friday": "08:00-18:00",
+				"saturday": "09:00-13:00",
+				"sunday": null
+			},
+			"status": "active"
+		},
+		{
+			"calendarId": "cal-003",
+			"resource": "res-004",
+			"administrationId": "adm-1",
+			"timeZone": "Europe/Amsterdam",
+			"workingHours": {
+				"monday": "10:00-18:00",
+				"tuesday": "10:00-18:00",
+				"wednesday": "10:00-18:00",
+				"thursday": "10:00-18:00",
+				"friday": "10:00-20:00",
+				"saturday": "10:00-16:00",
+				"sunday": null
+			},
+			"status": "active"
+		}
+	],
+	"bookings": [
+		{
+			"bookingId": "bk-001",
+			"calendar": "cal-001",
+			"resource": "res-001",
+			"administrationId": "adm-1",
+			"title": "Klant: Anna de Wit",
+			"startTime": "2026-05-21T10:00:00Z",
+			"endTime": "2026-05-21T10:30:00Z",
+			"attendee": "Anna de Wit",
+			"status": "confirmed"
+		},
+		{
+			"bookingId": "bk-002",
+			"calendar": "cal-001",
+			"resource": "res-001",
+			"administrationId": "adm-1",
+			"title": "Klant: Kees Bakker",
+			"startTime": "2026-05-21T11:00:00Z",
+			"endTime": "2026-05-21T11:45:00Z",
+			"attendee": "Kees Bakker",
+			"status": "confirmed"
+		},
+		{
+			"bookingId": "bk-003",
+			"calendar": "cal-001",
+			"resource": "res-001",
+			"administrationId": "adm-1",
+			"title": "Klant: Sophia Vermeulen (CONFLICT: overlaps with bk-002)",
+			"startTime": "2026-05-21T11:15:00Z",
+			"endTime": "2026-05-21T12:00:00Z",
+			"attendee": "Sophia Vermeulen",
+			"status": "pending"
+		},
+		{
+			"bookingId": "bk-004",
+			"calendar": "cal-002",
+			"resource": "res-003",
+			"administrationId": "adm-1",
+			"title": "Team Meeting: Q2 Planning",
+			"startTime": "2026-05-22T13:00:00Z",
+			"endTime": "2026-05-22T14:30:00Z",
+			"attendee": "Team",
+			"status": "confirmed"
+		},
+		{
+			"bookingId": "bk-005",
+			"calendar": "cal-002",
+			"resource": "res-003",
+			"administrationId": "adm-1",
+			"title": "Client Presentation (CONFLICT: overlaps with bk-004)",
+			"startTime": "2026-05-22T13:45:00Z",
+			"endTime": "2026-05-22T15:00:00Z",
+			"attendee": "Client XYZ",
+			"status": "pending"
+		},
+		{
+			"bookingId": "bk-006",
+			"calendar": "cal-003",
+			"resource": "res-004",
+			"administrationId": "adm-1",
+			"title": "Afspraak: Manicure",
+			"startTime": "2026-05-23T10:00:00Z",
+			"endTime": "2026-05-23T10:30:00Z",
+			"attendee": "Cliente A",
+			"status": "confirmed"
+		},
+		{
+			"bookingId": "bk-007",
+			"calendar": "cal-003",
+			"resource": "res-004",
+			"administrationId": "adm-1",
+			"title": "Afspraak: Pedicure",
+			"startTime": "2026-05-23T11:00:00Z",
+			"endTime": "2026-05-23T11:45:00Z",
+			"attendee": "Cliente B",
+			"status": "confirmed"
+		},
+		{
+			"bookingId": "bk-008",
+			"calendar": "cal-003",
+			"resource": "res-004",
+			"administrationId": "adm-1",
+			"title": "Afspraak: Styling",
+			"startTime": "2026-05-24T14:00:00Z",
+			"endTime": "2026-05-24T15:00:00Z",
+			"attendee": "Cliente C",
+			"status": "confirmed"
+		},
+		{
+			"bookingId": "bk-009",
+			"calendar": "cal-001",
+			"resource": "res-001",
+			"administrationId": "adm-1",
+			"title": "Klant: Dirk Peeters",
+			"startTime": "2026-05-27T14:00:00Z",
+			"endTime": "2026-05-27T14:30:00Z",
+			"attendee": "Dirk Peeters",
+			"status": "confirmed"
+		},
+		{
+			"bookingId": "bk-010",
+			"calendar": "cal-001",
+			"resource": "res-001",
+			"administrationId": "adm-1",
+			"title": "Klant: Nina Jansen",
+			"startTime": "2026-05-27T15:00:00Z",
+			"endTime": "2026-05-27T15:45:00Z",
+			"attendee": "Nina Jansen",
+			"status": "confirmed"
+		}
+	]
+}

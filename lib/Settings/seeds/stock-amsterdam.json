@@ -1,0 +1,67 @@
+{
+	"_meta": {
+		"description": "InventoryStock seed for Amsterdam Warehouse (head office distribution centre). Five products covering the inventory-product-catalog demo SKUs with mixed reservation / in-transit states so the operator UI demonstrates all four quantity dimensions (on-hand, reserved, in-transit, available). Idempotent: SettingsService::seedInventoryStockExamples() deduplicates on (administrationId, productSku, locationCode) per REQ-IST-002 + REQ-IST-009.",
+		"spec": "openspec/changes/inventory-stock-tracking/specs/inventory-stock-tracking/spec.md",
+		"req": "REQ-IST-009",
+		"source": "Nextcloud Inventory",
+		"location": "Amsterdam Warehouse",
+		"version": "1.0"
+	},
+	"stock": [
+		{
+			"productSku": "LAPTOP-DELL-XPS13",
+			"locationCode": "WH-AMS-001",
+			"locationName": "Amsterdam Warehouse",
+			"quantityOnHand": 15,
+			"quantityReserved": 3,
+			"quantityInTransit": 5,
+			"unitCost": 1899.00,
+			"lastRestockDate": "2026-05-15T00:00:00Z",
+			"status": "active"
+		},
+		{
+			"productSku": "TONER-HP-CF283A",
+			"locationCode": "WH-AMS-001",
+			"locationName": "Amsterdam Warehouse",
+			"quantityOnHand": 150,
+			"quantityReserved": 20,
+			"quantityInTransit": 0,
+			"unitCost": 45.00,
+			"lastRestockDate": "2026-05-10T00:00:00Z",
+			"status": "active"
+		},
+		{
+			"productSku": "BOX-CARDBOARD-S",
+			"locationCode": "WH-AMS-001",
+			"locationName": "Amsterdam Warehouse",
+			"quantityOnHand": 1200,
+			"quantityReserved": 0,
+			"quantityInTransit": 500,
+			"unitCost": 0.75,
+			"lastRestockDate": "2026-04-30T00:00:00Z",
+			"status": "active"
+		},
+		{
+			"productSku": "NOTEBOOK-A4-100",
+			"locationCode": "WH-AMS-001",
+			"locationName": "Amsterdam Warehouse",
+			"quantityOnHand": 90,
+			"quantityReserved": 12,
+			"quantityInTransit": 0,
+			"unitCost": 3.50,
+			"lastRestockDate": "2026-05-05T00:00:00Z",
+			"status": "active"
+		},
+		{
+			"productSku": "USB-DRIVE-32GB",
+			"locationCode": "WH-AMS-001",
+			"locationName": "Amsterdam Warehouse",
+			"quantityOnHand": 60,
+			"quantityReserved": 8,
+			"quantityInTransit": 25,
+			"unitCost": 12.00,
+			"lastRestockDate": "2026-05-12T00:00:00Z",
+			"status": "active"
+		}
+	]
+}

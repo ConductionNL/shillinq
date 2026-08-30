@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: inventory-product-catalog
 
 **Status:** proposed
@@ -5,9 +9,41 @@
 **Tier:** T1 (foundational)
 **Depends on:** none
 
-## ADDED Requirements
+## Purpose
 
-@e2e exclude unbuilt UI: product catalog index/detail pages not yet implemented
+This specification defines the requirements for inventory product catalog in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Superseded in part by `shillinq-product-vendor-to-pipelinq`
+
+🔴 **REQ-IPC-001, REQ-IPC-003, REQ-IPC-006 and REQ-IPC-007 are SUPERSEDED and
+must NOT be re-implemented in shillinq.** They were implemented (commit
+`726249f4`) and then deliberately withdrawn (commit `4a1d3275`) by
+`shillinq-product-vendor-to-pipelinq` **REQ-SPVP-004**, which requires that
+"no `Product` or `ProductAttribute` schema MUST be present" in the shillinq
+register and moves product-definition ownership to pipelinq. Every inventory
+schema now carries a `productId` FK resolved through the ADR-019 integration
+registry; `InventoryStock`'s uniqueness key is `[productId, locationCode,
+administrationId]`.
+
+**REQ-IPC-002, REQ-IPC-004, REQ-IPC-005 and REQ-IPC-009 survive as the FIELD
+CONTRACT** the catalog resolves and renders — they describe the shape of a
+product, not where it is stored, and that shape is what the integration
+registry's `getProduct` resolver returns.
+
+**REQ-IPC-008 survives in full and is implemented** (#860), read-only:
+`/inventory/products` and `/inventory/product-attributes` are declared manifest
+pages again, backed by `lib/Service/ProductCatalogService.php`, which resolves
+the pipelinq master first and falls back to the local denormalised cache the
+integration contract declares. REQ-IPC-010's tenant scoping applies to that
+fallback. No page here writes: REQ-SPVP-004's second scenario is that no
+shillinq surface may accept a product definition.
+
+**REQ-IPC-011 (Phase 2 attribute values) is withdrawn**, not deferred — the
+value model belongs to whoever owns the master.
+
+## Requirements
+
+@e2e exclude superseded storage requirements: REQ-IPC-001/003/006/007's scenarios describe a shillinq-local `Product` / `ProductAttribute` register that REQ-SPVP-004 removed, so they are unreachable by any e2e test against this app. The surviving surface REQ-IPC-008 IS covered — `tests/e2e/spec-coverage/inventory.spec.ts` asserts both `/inventory/products` and `/inventory/product-attributes` resolve and render an index surface.
 
 
 ### REQ-IPC-001: The system SHALL store products as an OpenRegister-managed `Product` register
@@ -204,6 +240,8 @@ SKU uniqueness (REQ-IPC-002) is scoped to `(organizationId, sku)` — different 
 - **THEN** only `org-A`'s `LAPTOP-001` MUST be returned; `org-B`'s version MUST be hidden.
 
 ### REQ-IPC-011: Product attributes (values) link to ProductAttribute definitions (Phase 2 deferred)
+
+The system SHALL satisfy this requirement: Product attributes (values) link to ProductAttribute definitions (Phase 2 deferred).
 
 **This requirement is declared for forward compatibility but implementation is deferred to Phase 2.**
 

@@ -1,0 +1,241 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "semantic-invoice-consume",
+		"adr": "ADR-037 modular register fragment + ADR-048 semantic references + ADR-051 semantic-object-handoff + ADR-031 declarative business logic — never edit shillinq_register.json",
+		"description": "kind: config — shillinq consume side of the cross-app quote → contract → AR-invoice handoff chain (ADR-051). Declares (1) configuration.implements markers for the four canonical finance kinds, exactly one deployed schema per kind: ARInvoice=ns#Invoice (+schema.org/Invoice), Contract=ns#Contract, SalesOrder=ns#SalesOrder (+schema.org/Order; ns#SalesOrder carries no kind contract at OR HEAD, so marker only), Quote=ns#Quote; (2) handoffContract provider bindings (the landed consume-side dialect: contract field → own property, validated by OR's HandoffContractBindingValidator) on Contract for ns#Contract and ARInvoice for ns#Invoice; (3) x-openregister-handoff emitter entries — H1 quote-accepted-to-contract on Quote (trigger lifecycle:accepted, per the hydra order-chain contract) and H2 contract-to-initial-invoice on Contract (trigger MANUAL: the landed v1 dialect has no condition grammar, so a lifecycle:active auto-trigger would also draft AR invoices for inbound/purchase contracts — manual is the narrowest safe scope per the change's Open Question 3; recurring billing stays with RecurringInvoiceProfile); (4) provenance pointer properties sourceQuoteReference / sourceContractReference — scalar URN shillinq:<schema>:<businessNumber> written by the emitters' source template because the notification created-filter grammar is scalar-only (objects string-cast to ''), while UUID-level provenance additionally lives in the engine-written handoff:<id>:originated-from relations and audit rows; (5) handoff-received notification rules (ADR-031 canonical dialect, trigger created + filter provenance-non-empty, recipients object-acl manage + shillinq-finance, bilingual metadata-only subjects); (6) two DEMO seeds making the draft-arrival, provenance rendering and notification condition verifiable without pipelinq. Everything is keyed to kind URIs — the abstract-order-primitive consolidation re-points this ONE file (REQ-SIC-006); no Order-slug schema is declared and no property is added to the colliding Order declarations."
+	},
+	"components": {
+		"schemas": {
+			"Quote": {
+				"configuration": {
+					"implements": [
+						"https://openregister.app/ns#Quote"
+					]
+				},
+				"x-openregister-handoff": [
+					{
+						"id": "quote-accepted-to-contract",
+						"targetSemanticType": "https://openregister.app/ns#Contract",
+						"trigger": "lifecycle:accepted",
+						"whenUnavailable": "hide",
+						"mapping": {
+							"title": {
+								"template": "Contract {{quoteNumber}}"
+							},
+							"counterparty": {
+								"semanticRef": "customerReference"
+							},
+							"currency": {
+								"from": "currency",
+								"default": "EUR"
+							},
+							"totalAmount": {
+								"from": "totalAmount"
+							},
+							"startDate": {
+								"from": "acceptedAt"
+							},
+							"source": {
+								"template": "shillinq:quote:{{quoteNumber}}"
+							}
+						}
+					}
+				]
+			},
+			"SalesOrder": {
+				"configuration": {
+					"implements": [
+						"https://openregister.app/ns#SalesOrder",
+						"https://schema.org/Order"
+					]
+				}
+			},
+			"Contract": {
+				"configuration": {
+					"implements": [
+						"https://openregister.app/ns#Contract"
+					],
+					"handoffContract": {
+						"https://openregister.app/ns#Contract": {
+							"title": "title",
+							"counterparty": "counterpartyReference",
+							"currency": "currency",
+							"totalAmount": "totalContractValue",
+							"startDate": "startDate",
+							"endDate": "endDate",
+							"source": "sourceQuoteReference"
+						}
+					}
+				},
+				"properties": {
+					"sourceQuoteReference": {
+						"type": "string",
+						"title": "Source Quote Reference",
+						"description": "Handoff provenance pointer to the quote this contract originated from (ADR-051; bound to the ns#Contract kind-contract field `source`). Scalar URN `shillinq:quote:<quoteNumber>` written by the quote-accepted-to-contract emitter mapping — scalar because the notification created-filter grammar string-casts objects to ''. UUID-level provenance additionally lives in the engine-written `handoff:<id>:originated-from` relation and the immutable audit trail. Null/absent for operator-created contracts."
+					}
+				},
+				"x-openregister-handoff": [
+					{
+						"id": "contract-to-initial-invoice",
+						"targetSemanticType": "https://openregister.app/ns#Invoice",
+						"trigger": "manual",
+						"whenUnavailable": "hide",
+						"mapping": {
+							"counterparty": {
+								"semanticRef": "counterpartyReference"
+							},
+							"currency": {
+								"from": "currency",
+								"default": "EUR"
+							},
+							"totalAmount": {
+								"from": "totalContractValue"
+							},
+							"source": {
+								"template": "shillinq:contract:{{contractNumber}}"
+							}
+						}
+					}
+				],
+				"x-openregister-notifications": {
+					"handoffReceived": {
+						"trigger": {
+							"type": "created",
+							"filter": {
+								"field": "sourceQuoteReference",
+								"operator": "notIn",
+								"values": [
+									""
+								]
+							}
+						},
+						"enabled": true,
+						"channels": [
+							"nc-notification"
+						],
+						"recipients": [
+							{
+								"kind": "object-acl",
+								"permission": "manage"
+							},
+							{
+								"kind": "groups",
+								"groups": [
+									"shillinq-finance"
+								]
+							}
+						],
+						"subject": {
+							"nl": "Contract ontvangen via handoff: {{contractNumber}}",
+							"en": "Contract received via handoff: {{contractNumber}}"
+						}
+					}
+				}
+			},
+			"ARInvoice": {
+				"configuration": {
+					"implements": [
+						"https://openregister.app/ns#Invoice",
+						"https://schema.org/Invoice"
+					],
+					"handoffContract": {
+						"https://openregister.app/ns#Invoice": {
+							"counterparty": "customerId",
+							"currency": "currency",
+							"totalAmount": "grossAmount",
+							"dueDate": "dueDate",
+							"source": "sourceContractReference"
+						}
+					}
+				},
+				"properties": {
+					"sourceContractReference": {
+						"type": "string",
+						"title": "Source Contract Reference",
+						"description": "Handoff provenance pointer to the contract this AR invoice originated from (ADR-051; bound to the ns#Invoice kind-contract field `source`). Scalar URN `shillinq:contract:<contractNumber>` written by the contract-to-initial-invoice emitter mapping — scalar because the notification created-filter grammar string-casts objects to ''. UUID-level provenance additionally lives in the engine-written `handoff:<id>:originated-from` relation and the immutable audit trail. Null/absent for operator-created invoices."
+					}
+				},
+				"x-openregister-notifications": {
+					"handoffReceived": {
+						"trigger": {
+							"type": "created",
+							"filter": {
+								"field": "sourceContractReference",
+								"operator": "notIn",
+								"values": [
+									""
+								]
+							}
+						},
+						"enabled": true,
+						"channels": [
+							"nc-notification"
+						],
+						"recipients": [
+							{
+								"kind": "object-acl",
+								"permission": "manage"
+							},
+							{
+								"kind": "groups",
+								"groups": [
+									"shillinq-finance"
+								]
+							}
+						],
+						"subject": {
+							"nl": "AR-factuur ontvangen via handoff: {{invoiceNumber}}",
+							"en": "AR invoice received via handoff: {{invoiceNumber}}"
+						}
+					}
+				}
+			}
+		},
+		"objects": [
+			{
+				"@self": {
+					"register": "shillinq",
+					"schema": "Contract",
+					"slug": "contract-handoff-demo-2026"
+				},
+				"contractNumber": "CT-2026-HANDOFF-001",
+				"title": "Adviesdiensten Gemeente Voorbeeld (DEMO)",
+				"description": "DEMO seed data — contract zoals aangemaakt door de ADR-051 quote→contract handoff (H1). De provenance wijst naar een placeholder-offerte (nil-UUID; de bron bestaat niet in een verse omgeving), zodat de handoffReceived-notificatieregel en de draft-aankomst verifieerbaar zijn zonder pipelinq.",
+				"contractType": "sales",
+				"direction": "outbound",
+				"counterpartyReference": "contacts://shillinq/principals-users-admin/gemeente-voorbeeld",
+				"startDate": "2026-07-01",
+				"totalContractValue": 48000,
+				"currency": "EUR",
+				"status": "draft",
+				"sourceQuoteReference": "shillinq:quote:00000000-0000-0000-0000-000000000000",
+				"tags": [
+					"handoff",
+					"demo"
+				],
+				"administrationId": "adm-shillinq-demo"
+			},
+			{
+				"@self": {
+					"register": "shillinq",
+					"schema": "ARInvoice",
+					"slug": "arinvoice-handoff-demo-2026"
+				},
+				"invoiceNumber": "INV-2026-HANDOFF-001",
+				"customerId": "contact-gemeente-voorbeeld",
+				"administrationId": "adm-shillinq-demo",
+				"invoiceDate": "2026-07-05",
+				"dueDate": "2026-08-04",
+				"netAmount": 4000.0,
+				"vatAmount": 840.0,
+				"grossAmount": 4840.0,
+				"currency": "EUR",
+				"periodId": "2026-07",
+				"lifecycleState": "draft",
+				"sourceContractReference": "shillinq:contract:CT-2026-HANDOFF-001"
+			}
+		]
+	}
+}

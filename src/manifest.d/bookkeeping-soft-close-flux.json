@@ -1,0 +1,232 @@
+{
+	"menu": [
+		{
+			"id": "Bookkeeping",
+			"label": "Bookkeeping",
+			"icon": "NotebookOutline",
+			"order": 20,
+			"children": [
+				{
+					"id": "ContinuousClose",
+					"label": "Continuous Close",
+					"icon": "Restore",
+					"route": "ContinuousClose",
+					"order": 66
+				},
+				{
+					"id": "AccrualRules",
+					"label": "Accrual Rules",
+					"icon": "CalendarSync",
+					"route": "AccrualRules",
+					"order": 67
+				},
+				{
+					"id": "FluxAnalysis",
+					"label": "Flux Analysis",
+					"icon": "ChartLine",
+					"route": "FluxAnalysis",
+					"order": 68
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "ContinuousClose",
+			"route": "/bookkeeping/continuous-close",
+			"type": "index",
+			"title": "Continuous Close",
+			"config": {
+				"register": "shillinq",
+				"schema": "PeriodStatus",
+				"columns": [
+					{"key": "administrationId", "label": "Administration", "sortable": true},
+					{"key": "periodYear", "label": "Year", "sortable": true},
+					{"key": "periodMonth", "label": "Month", "sortable": true},
+					{"key": "stage", "label": "Stage", "sortable": true},
+					{"key": "softClosedAt", "label": "Soft-closed at", "sortable": true},
+					{"key": "hardClosedAt", "label": "Hard-closed at", "sortable": true},
+					{"key": "auditedAt", "label": "Audited at", "sortable": true},
+					{"key": "lockedAt", "label": "Locked at", "sortable": true}
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "ContinuousCloseDetail"
+			}
+		},
+		{
+			"id": "ContinuousCloseDetail",
+			"route": "/bookkeeping/continuous-close/:id",
+			"type": "detail",
+			"title": "Continuous Close",
+			"config": {
+				"register": "shillinq",
+				"schema": "PeriodStatus",
+				"_note": "REPORT/STATUS archetype — a period-status record tracks a fiscal period's progress through the soft→hard→audited→locked close stages. Native shillinq detail contract: config.fields[] renders the identity, stage timestamps and posting-restriction data an accountant acts on; the 'Run soft-close now' action is a native config.actions[] endpoint (role-gated, gated on stage=open); and the immutable audit trail lives in the sidebar tab — the change log of the close. NO comms/files/aggregation — a close-status row is process state, not correspondence and carries no financial totals.",
+				"fields": [
+					{"key": "administrationId", "label": "Administration", "type": "string"},
+					{"key": "periodYear", "label": "Year", "type": "number"},
+					{"key": "periodMonth", "label": "Month", "type": "number"},
+					{"key": "stage", "label": "Stage", "type": "string"},
+					{"key": "softClosedAt", "label": "Soft-closed at", "type": "date"},
+					{"key": "hardClosedAt", "label": "Hard-closed at", "type": "date"},
+					{"key": "auditedAt", "label": "Audited at", "type": "date"},
+					{"key": "lockedAt", "label": "Locked at", "type": "date"},
+					{"key": "stageChangeHistory", "label": "Stage history", "type": "array"},
+					{"key": "ownerPerStage", "label": "Owner per stage", "type": "object"},
+					{"key": "postingRestrictionsPerStage", "label": "Posting restrictions", "type": "object"}
+				],
+				"actions": [
+					{"id": "executeNow", "label": "Run soft-close now", "endpoint": "/api/v2/soft-close/:administrationId/execute-now", "method": "POST", "visibleWhen": {"stage": "open"}, "requiresRole": "soft-close-operator"}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
+				"indexRoute": "ContinuousClose"
+			}
+		},
+		{
+			"id": "AccrualRules",
+			"route": "/bookkeeping/accrual-rules",
+			"type": "index",
+			"title": "Accrual Rules",
+			"config": {
+				"register": "shillinq",
+				"schema": "AutoAccrualRule",
+				"columns": [
+					{"key": "ruleName", "label": "Rule", "sortable": true},
+					{"key": "administrationId", "label": "Administration", "sortable": true},
+					{"key": "targetGLAccount", "label": "Target GL", "sortable": true},
+					{"key": "contraGLAccount", "label": "Contra GL", "sortable": true},
+					{"key": "calculationMethod", "label": "Method", "sortable": true},
+					{"key": "reversalPattern", "label": "Reversal", "sortable": true},
+					{"key": "frequency", "label": "Frequency", "sortable": true},
+					{"key": "lifecycleState", "label": "State", "sortable": true}
+				],
+				"defaultSort": "ruleName",
+				"detailRoute": "AccrualRuleDetail"
+			}
+		},
+		{
+			"id": "AccrualRuleDetail",
+			"route": "/bookkeeping/accrual-rules/:id",
+			"type": "detail",
+			"title": "Accrual Rule",
+			"config": {
+				"register": "shillinq",
+				"schema": "AutoAccrualRule",
+				"_note": "CONFIG archetype — an auto-accrual rule defines how a period-end accrual is calculated and reversed against a target/contra GL. Native shillinq detail contract: config.fields[] renders the rule definition (GL accounts, calculation method/parameters, reversal cadence); a native relatedCollections[] shows the postings this rule generated (AutoAccrualPosting, FK ruleId=@objectId) so an accountant sees its real activity. KEY+TOKEN: the prop is `relatedCollections` (a `relatedLists` block lands in $attrs and renders nothing), and the token is `@objectId`, NOT `@self.id` — `@self.id` is not a token resolveFilterTokens.js knows, so it never resolved. AutoAccrualRule's payload carries no flat rule-key field (`ruleName` is a display label), so the posting holds the rule's UUID; and the immutable audit trail lives in the sidebar. NO comms/files/aggregation — a calculation rule carries no documents or financial totals of its own.",
+				"fields": [
+					{"key": "ruleName", "label": "Rule", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"},
+					{"key": "lifecycleState", "label": "State", "type": "string"},
+					{"key": "targetGLAccount", "label": "Target GL", "type": "string"},
+					{"key": "contraGLAccount", "label": "Contra GL", "type": "string"},
+					{"key": "calculationMethod", "label": "Method", "type": "string"},
+					{"key": "calculationParameters", "label": "Parameters", "type": "object"},
+					{"key": "reversalPattern", "label": "Reversal", "type": "string"},
+					{"key": "frequency", "label": "Frequency", "type": "string"},
+					{"key": "ruleVersion", "label": "Version", "type": "number"}
+				],
+				"relatedCollections": [
+					{"title": "Generated postings", "register": "shillinq", "schema": "AutoAccrualPosting", "filter": {"ruleId": "@objectId"}, "columns": [
+						{"key": "periodId", "label": "Period"},
+						{"key": "amountCents", "label": "Amount (cents)"},
+						{"key": "journalEntryId", "label": "Journal entry"},
+						{"key": "reversalState", "label": "Reversal"},
+						{"key": "postedAt", "label": "Posted at"}
+					]}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
+				"indexRoute": "AccrualRules"
+			}
+		},
+		{
+			"id": "FluxAnalysis",
+			"route": "/bookkeeping/flux-analysis",
+			"type": "index",
+			"title": "Flux Analysis",
+			"config": {
+				"register": "shillinq",
+				"schema": "FluxRun",
+				"columns": [
+					{"key": "administrationId", "label": "Administration", "sortable": true},
+					{"key": "periodId", "label": "Period", "sortable": true},
+					{"key": "scope", "label": "Scope", "sortable": true},
+					{"key": "comparisonBasis", "label": "Basis", "sortable": true},
+					{"key": "runTimestamp", "label": "Run at", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "runTimestamp",
+				"detailRoute": "FluxRunDetail"
+			}
+		},
+		{
+			"id": "FluxRunDetail",
+			"route": "/bookkeeping/flux-analysis/:id",
+			"type": "detail",
+			"title": "Flux Run",
+			"config": {
+				"register": "shillinq",
+				"schema": "FluxRun",
+				"_note": "REPORT/ANALYSIS archetype — a flux run compares budget vs actual per GL account and ranks the material variances. Native shillinq detail contract: config.fields[] renders the run parameters (scope, comparison basis, materiality thresholds, result summary); the ranked variance items (FluxItem, FK fluxRunId) are currently ABSENT from this page — see _relatedListsExclude below: the run record does not store its own run id, so no filter token can reach the value FluxItem holds, and a converted section would render empty while looking fixed; the immutable audit trail lives in the sidebar; and the three narrative export links (Markdown/PDF/JSON) are preserved verbatim as config.links[]. NO comms/files/aggregation — a flux run is derived analysis, not correspondence.",
+				"fields": [
+					{"key": "administrationId", "label": "Administration", "type": "string"},
+					{"key": "periodId", "label": "Period", "type": "string"},
+					{"key": "scope", "label": "Scope", "type": "string"},
+					{"key": "scopeFilter", "label": "Scope filter", "type": "string"},
+					{"key": "comparisonBasis", "label": "Basis", "type": "string"},
+					{"key": "materialityAbsoluteCents", "label": "Materiality (cents)", "type": "number"},
+					{"key": "materialityPercentage", "label": "Materiality %", "type": "number"},
+					{"key": "runTimestamp", "label": "Run at", "type": "date"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "resultSummary", "label": "Result summary", "type": "object"}
+				],
+				"_relatedListsExclude": "'Variance items' NOT converted — removed rather than faked, because NO filter token can produce the stored value. It was declared under `relatedLists` (not a prop on any Cn page component, so it never rendered) with `@self.id`, which is not a token resolveFilterTokens.js knows either. Converting the key cannot fix it: OCA\\Shillinq\\Service\\FluxService::persistRun() saves the FluxRun object WITHOUT any fluxRunId field, while every FluxItem stores `fluxRunId` = generateRunId() = sprintf('flux-%s-%s-%s', administrationId, periodId, His) — a synthetic run id the parent record does not carry in ANY flat payload field (FluxRun's properties are administrationId/periodId/scope/comparisonBasis/materiality*/runTimestamp/status/resultSummary). So `@object.<field>` has nothing to read and `@objectId` yields a UUID that no FluxItem stores. Restoring this needs persistRun() to persist fluxRunId onto the FluxRun row (then the token becomes `@object.fluxRunId`) — see the relatedLists sweep report.",
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				},
+				"links": [
+					{
+						"id": "narrative-md",
+						"label": "Export narrative (Markdown)",
+						"description": "Render the flux narrative ranked by absolute variance (REQ-CLS-007).",
+						"endpoint": "/api/v2/flux-runs/:id/narrative?format=markdown",
+						"method": "GET"
+					},
+					{
+						"id": "narrative-pdf",
+						"label": "Export narrative (PDF)",
+						"description": "1-page board-pack ready narrative (REQ-CLS-007).",
+						"endpoint": "/api/v2/flux-runs/:id/narrative?format=pdf",
+						"method": "GET"
+					},
+					{
+						"id": "narrative-json",
+						"label": "Export narrative (JSON)",
+						"description": "Board-pack embedding format (REQ-CLS-007).",
+						"endpoint": "/api/v2/flux-runs/:id/narrative?format=json",
+						"method": "GET"
+					}
+				],
+				"indexRoute": "FluxAnalysis"
+			}
+		}
+	]
+}

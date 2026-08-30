@@ -1,17 +1,24 @@
+---
+status: done
+---
+
 # Spec: Invoice from Time + Expense
 
-**Status:** proposed
+**Status:** done
 **Scope:** shillinq-bookkeeping
 **Tier:** T2
 **Depends on:** `obligation-financial-administration` (approved), `rate-card-engine` (approved), `retainer-billing-engine` (approved)
 
-## Preamble
+**OpenSpec changes:**
+- [time-expense-invoice-intake](../../changes/archive/2026-07-12-time-expense-invoice-intake/) _(archived 2026-07-12)_ — adds the authenticated, idempotent `POST /apps/shillinq/api/billing/time-intake` ingress that materialises a pipelinq-approved time batch into one draft `BillableInvoice` (T&M), unblocking the pipelinq `time-billing-handoff-emit` consumer. Own spec now lives at [time-expense-invoice-intake](../time-expense-invoice-intake/spec.md).
+
+## Purpose
 
 This specification defines invoice generation from approved time entries and expense records, supporting multiple billing models (T&M, fixed-fee, milestone, retainer, mixed). It extends the `Invoice` and `InvoiceLine` registers with time/expense tracking, rate card integration, and GL posting. All requirements use RFC 2119 language (MUST, SHOULD, MAY).
 
 ---
 
-## ADDED Requirements
+## Requirements
 
 @e2e exclude unbuilt UI: invoice-from-time-and-expense pages not yet implemented
 

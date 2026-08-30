@@ -1,0 +1,185 @@
+{
+	"menu": [
+		{
+			"id": "Bookkeeping",
+			"label": "Bookkeeping",
+			"icon": "NotebookOutline",
+			"order": 20,
+			"children": [
+				{
+					"id": "OssRegistration",
+					"label": "OSS Registration",
+					"icon": "EarthArrowRight",
+					"route": "OssRegistration",
+					"order": 70
+				},
+				{
+					"id": "OssReturns",
+					"label": "OSS Returns",
+					"icon": "FileDocumentOutline",
+					"route": "OssReturns",
+					"order": 71
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "OssRegistration",
+			"route": "/bookkeeping/oss/registration",
+			"type": "index",
+			"title": "OSS Registration",
+			"config": {
+				"register": "shillinq",
+				"schema": "OssRegistration",
+				"columns": [
+					{"key": "ossIdentifier", "label": "OSS-Identifier", "sortable": true},
+					{"key": "homeMemberState", "label": "Home member state", "sortable": true},
+					{"key": "registrationStatus", "label": "Status", "sortable": true},
+					{"key": "effectiveDate", "label": "Effective date", "sortable": true},
+					{"key": "administrationId", "label": "Administration", "sortable": true}
+				],
+				"defaultSort": "effectiveDate",
+				"detailRoute": "OssRegistrationDetail"
+			}
+		},
+		{
+			"id": "OssRegistrationDetail",
+			"route": "/bookkeeping/oss/registration/:id",
+			"type": "detail",
+			"title": "OSS Registration",
+			"config": {
+				"register": "shillinq",
+				"schema": "OssRegistration",
+				"fields": [
+					{"key": "ossIdentifier", "label": "OSS-Identifier", "type": "string"},
+					{"key": "effectiveDate", "label": "Effective date", "type": "string"},
+					{"key": "homeMemberState", "label": "Home member state", "type": "string"},
+					{"key": "destinationCountries", "label": "EU Destination Country", "type": "array"},
+					{"key": "registrationStatus", "label": "Status", "type": "string"},
+					{"key": "voluntaryBelowThreshold", "label": "Voluntary below threshold", "type": "boolean"},
+					{"key": "lockInPeriodEndDate", "label": "Lock-in end date", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"_note": "MASTER — the Union OSS registration (One-Stop-Shop for cross-border EU VAT). Body shows the OSS identifier, home member state, in-scope destination countries and the lock-in window; the primary related content is the list of quarterly OSS returns filed under it. Audit trail in the sidebar. A registration record does not correspond — no comms leaves.",
+				"indexRoute": "OssRegistration",
+				"relatedObjects": [
+					{
+						"id": "returns",
+						"label": "OSS returns",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "OssReturn",
+							"filterField": "registrationId",
+							"columns": ["periodYear", "periodQuarter", "type", "totalVatAmount", "status"],
+							"detailRoute": "OssReturnDetail",
+							"defaultSort": "periodYear"
+						}
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "OssReturns",
+			"route": "/bookkeeping/oss/returns",
+			"type": "index",
+			"title": "OSS Returns",
+			"config": {
+				"register": "shillinq",
+				"schema": "OssReturn",
+				"columns": [
+					{"key": "periodYear", "label": "Year", "sortable": true},
+					{"key": "periodQuarter", "label": "Quarter", "sortable": true},
+					{"key": "type", "label": "Type", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true},
+					{"key": "totalVatAmount", "label": "VAT amount", "sortable": true},
+					{"key": "taxAuthorityReference", "label": "Kenmerk", "sortable": true},
+					{"key": "administrationId", "label": "Administration", "sortable": true}
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "OssReturnDetail"
+			}
+		},
+		{
+			"id": "OssReturnDetail",
+			"route": "/bookkeeping/oss/returns/:id",
+			"type": "detail",
+			"title": "OSS Return",
+			"config": {
+				"register": "shillinq",
+				"schema": "OssReturn",
+				"fields": [
+					{"key": "periodYear", "label": "Year", "type": "number"},
+					{"key": "periodQuarter", "label": "Quarter", "type": "string"},
+					{"key": "registrationId", "label": "Registration", "type": "string"},
+					{"key": "type", "label": "Type", "type": "string"},
+					{"key": "correctsPeriod", "label": "Corrects period", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "totalTaxableBase", "label": "Taxable base", "type": "number"},
+					{"key": "totalVatAmount", "label": "VAT amount", "type": "number"},
+					{"key": "taxAuthorityReference", "label": "Kenmerk", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"_note": "TAX RETURN — a quarterly Union-OSS VAT return. Body shows the period, correction linkage, taxable base and total VAT, plus the Belastingdienst kenmerk that confirms filing; the embedded per-country line items and distribution ride on the object. XML/CSV filing payloads download from the export links; audit trail in the sidebar. It is a filed return, not a mailbox — no comms leaves.",
+				"indexRoute": "OssReturns",
+				"links": [
+					{
+						"id": "xml-payload",
+						"label": "Download XML payload",
+						"description": "The XML filing payload submitted to the Belastingdienst OSS portal.",
+						"endpoint": "/index.php/apps/openregister/api/objects/shillinq/OssReturn/:id?field=xmlPayload",
+						"method": "GET"
+					},
+					{
+						"id": "csv-payload",
+						"label": "Download CSV payload",
+						"description": "CSV export of the per-country distribution for reconciliation.",
+						"endpoint": "/index.php/apps/openregister/api/objects/shillinq/OssReturn/:id?field=csvPayload",
+						"method": "GET"
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}

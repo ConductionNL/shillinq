@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-innovatiebox-administratie
 
 **Status:** proposed
@@ -5,12 +9,18 @@
 **Tier:** T4-specialized (MKB + R&D-intensive scale-ups)
 **Depends on:** bookkeeping-cost-centers-dimensions, bookkeeping-chart-of-accounts, bookkeeping-vpb-corporate-tax, bookkeeping-wbso-sno-administratie, bookkeeping-payroll
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping innovatiebox administratie in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: innovatiebox admin — not browser-testable
 
 
 ### REQ-IBA-001: The system SHALL register kwalificerende immateriele activa (IP assets) with validated access-tickets
+
+The system SHALL satisfy this requirement: The system SHALL register kwalificerende immateriele activa (IP assets) with validated access-tickets.
 
 Per Wet Vpb art. 12ba, three routes are available for IP assets:
 1. **Octrooi-route** (art. 12ba lid 1 sub a): patent, utility model, plant breeder's right, orphan drug cert, supplementary protection cert
@@ -56,6 +66,8 @@ For `type: 'combinatie'`, both `so_verklaring_nummer` AND (`octrooi_nummer` OR `
 
 ### REQ-IBA-002: The system SHALL compute OECD BEPS Action 5 nexus per IP asset per fiscal year
 
+The system SHALL satisfy this requirement: The system SHALL compute OECD BEPS Action 5 nexus per IP asset per fiscal year.
+
 Per Wet Vpb art. 12bc + OECD BEPS Action 5 modified nexus approach:
 
 ```
@@ -96,6 +108,8 @@ The record MUST be immutable after creation (audit-trail enforces this).
 - **THEN** `nexusbreuk_toegepast: 0.433` (43.3%); **AND** profit is reduced by 56.7% due to related-party R&D outsourcing
 
 ### REQ-IBA-003: The system SHALL attribute profit per IP asset using three configurable methods
+
+The system SHALL satisfy this requirement: The system SHALL attribute profit per IP asset using three configurable methods.
 
 Per Wet Vpb art. 12bd, three methods exist:
 1. **Per-asset afpelmethode** (default): Opbrengst - routinewinst (mfg/distrib/marketing) = kwalificerende winst
@@ -175,6 +189,8 @@ The system MUST declare an `IBExpenseAllocation` register with:
 
 ### REQ-IBA-005: The system SHALL track innovation losses and carry them forward per asset only
 
+The system SHALL satisfy this requirement: The system SHALL track innovation losses and carry them forward per asset only.
+
 Per Wet Vpb art. 12be, innovation losses (negative kwalificerende winst) are asset-specific. Losses from asset A can only offset future profits on asset A.
 
 The system MUST declare a `CarryForwardLoss` register with:
@@ -227,6 +243,8 @@ The system MUST register a docudesk template for Vpb-aangifte innovatiebox-secti
 
 ### REQ-IBA-007: Loss carry-forward aggregation MUST prioritize prior-year offsets at full tariff before 9% applies
 
+The system SHALL satisfy this requirement: Loss carry-forward aggregation MUST prioritize prior-year offsets at full tariff before 9% applies.
+
 Per Wet Vpb art. 12be, loss recovery follows strict accounting:
 1. Open carry-forward loss (prior year(s)) offsets first against current-year profit, at full statutory tariff (NOT reduced by nexus)
 2. Residual profit subject to 9% × nexus
@@ -266,6 +284,8 @@ Taxpayers (especially scale-ups planning R&D headcount) need to forecast nexus i
 - **THEN** system MUST display: *"Outsourcing €300k reduces nexus from 100% to 81.25%. Vpb-impact change: €XX → €YY"* without modifying actual records
 
 ### REQ-IBA-010: Statutory tariff 0.09 (per Wet Vpb art. 12b 2026) SHALL be hard-coded; legislative changes ship as spec updates
+
+The system SHALL satisfy this requirement: Statutory tariff 0.09 (per Wet Vpb art. 12b 2026) SHALL be hard-coded; legislative changes ship as spec updates.
 
 The statutory rate of 9% is encoded in `applicableTariff: 0.09` across all registers. Future statutory changes (e.g., 2028 hike to 15%) require spec update.
 

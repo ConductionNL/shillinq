@@ -1,0 +1,1568 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-soft-close-flux",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 2 — continuous-close + flux analysis. Declares the 11 registers (PeriodStatus, AutoAccrualRule, AutoAccrualPosting, CloseChecklistTemplate, CloseChecklistInstance, FluxRun, FluxItem, FluxAttribution, MaterialityPolicy, ContinuousCloseAlert, CloseMetrics) for REQ-CLS-001..010 of the bookkeeping-continuous-close spec. PeriodStatus carries a five-stage x-openregister-lifecycle (open → soft-closed → hard-closed → audited → locked) with stage-change history (REQ-CLS-001); the soft-close transition is the entry point for OCA\\Shillinq\\Service\\SoftCloseExecutor (ADR-031 orchestration exception, REQ-CLS-002). CloseChecklistInstance carries a pending → in-progress → completed lifecycle with task-dependency enforcement and SLA escalation (REQ-CLS-004). AutoAccrualPosting carries a posted → reversed lifecycle linked to the original entry + reversal entry (REQ-CLS-010). GLTransaction.post is additively augmented with PeriodStatusGuard::postingAllowed enforcing the stage-based posting restrictions (REQ-CLS-001) without dropping any existing precondition. Sibling to bookkeeping-period-close (FiscalPeriod) — both schemas coexist: FiscalPeriod is the T1 entity, PeriodStatus extends it with continuous-close stages."
+  },
+  "components": {
+    "schemas": {
+      "PeriodStatus": {
+        "slug": "PeriodStatus",
+        "icon": "Restore",
+        "version": "0.1.0",
+        "title": "Period Status",
+        "description": "Continuous-close lifecycle wrapper around a FiscalPeriod (REQ-CLS-001). Carries the five-stage lifecycle (open → soft-closed → hard-closed → audited → locked), stage-change history, owner-per-stage, and posting-restriction flags. Posting into hard-closed/audited/locked stages is rejected by PeriodStatusGuard::postingAllowed unless the actor holds controller-override + exception-journal privilege. Sibling to the T1 FiscalPeriod entity; both can co-exist (FiscalPeriod is the period entity, PeriodStatus extends it with the continuous-close stage model).",
+        "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "periodYear",
+          "periodMonth",
+          "stage"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration (REQ-CLS-001).",
+            "example": "adm-smb-1",
+            "title": "Administration ID"
+          },
+          "periodYear": {
+            "type": "integer",
+            "description": "Fiscal year (REQ-CLS-001).",
+            "example": 2026,
+            "title": "Period Year"
+          },
+          "periodMonth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12,
+            "description": "Calendar month 1..12 (REQ-CLS-001).",
+            "example": 3,
+            "title": "Period Month"
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "open",
+              "soft-closed",
+              "hard-closed",
+              "audited",
+              "locked"
+            ],
+            "default": "open",
+            "description": "Current lifecycle stage (REQ-CLS-001).",
+            "example": "open",
+            "title": "Stage"
+          },
+          "stageChangeHistory": {
+            "type": "array",
+            "description": "Append-only audit trail of stage transitions; each entry is {fromStage, toStage, actor, timestamp, reason} (REQ-CLS-001, ADR-022).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fromStage": {
+                  "type": "string",
+                  "title": "From Stage",
+                  "description": "The from stage."
+                },
+                "toStage": {
+                  "type": "string",
+                  "title": "To Stage",
+                  "description": "The to stage."
+                },
+                "actor": {
+                  "type": "string",
+                  "title": "Actor",
+                  "description": "The actor."
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time",
+                  "title": "Timestamp",
+                  "description": "The date and time for timestamp."
+                },
+                "reason": {
+                  "type": "string",
+                  "title": "Reason",
+                  "description": "The reason or justification for this state or action."
+                }
+              }
+            },
+            "default": [],
+            "title": "Stage Change History"
+          },
+          "ownerPerStage": {
+            "type": "object",
+            "description": "Owner role per stage; e.g. {soft-closed: 'Controller', hard-closed: 'CFO'} (REQ-CLS-001).",
+            "default": {},
+            "title": "Owner Per Stage"
+          },
+          "postingRestrictionsPerStage": {
+            "type": "object",
+            "description": "Posting restriction map. Keys are stage names; values are {allow: ['accrual-reversal','correction'], requireOverride: bool} (REQ-CLS-001).",
+            "default": {
+              "open": {
+                "allow": [
+                  "all"
+                ],
+                "requireOverride": false
+              },
+              "soft-closed": {
+                "allow": [
+                  "accrual-reversal",
+                  "correction"
+                ],
+                "requireOverride": false
+              },
+              "hard-closed": {
+                "allow": [],
+                "requireOverride": true
+              },
+              "audited": {
+                "allow": [],
+                "requireOverride": true
+              },
+              "locked": {
+                "allow": [],
+                "requireOverride": false
+              }
+            },
+            "title": "Posting Restrictions Per Stage"
+          },
+          "softClosedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp of the soft-close transition (REQ-CLS-002).",
+            "example": null,
+            "title": "Soft Closed At"
+          },
+          "hardClosedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp of the hard-close transition.",
+            "example": null,
+            "title": "Hard Closed At"
+          },
+          "auditedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp of the audited transition.",
+            "example": null,
+            "title": "Audited At"
+          },
+          "lockedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp of the locked transition.",
+            "example": null,
+            "title": "Locked At"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "stage",
+          "initialState": "open",
+          "states": {
+            "open": {
+              "label": "Open",
+              "description": "Default state; all posting allowed (REQ-CLS-001)."
+            },
+            "soft-closed": {
+              "label": "Soft-closed",
+              "description": "Soft-close job completed; only accrual reversals + corrections allowed (REQ-CLS-001)."
+            },
+            "hard-closed": {
+              "label": "Hard-closed",
+              "description": "Operator manual transition; no posting except via controller override + exception journal (REQ-CLS-001)."
+            },
+            "audited": {
+              "label": "Audited",
+              "description": "External auditor sign-off; no posting (REQ-CLS-001)."
+            },
+            "locked": {
+              "label": "Locked",
+              "description": "Period locked forever; no posting (REQ-CLS-001)."
+            }
+          },
+          "transitions": {
+            "softClose": {
+              "from": "open",
+              "to": "soft-closed",
+              "label": "Soft-close",
+              "description": "Trigger the SoftCloseExecutor orchestration (ADR-031 exception, REQ-CLS-002).",
+              "roles": [
+                "controller",
+                "soft-close-operator"
+              ],
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "set-fields",
+                  "description": "Stamp softClosedAt=now on the soft-close transition.",
+                  "actionParameters": {
+                    "softClosedAt": "@now"
+                  }
+                }
+              ]
+            },
+            "hardClose": {
+              "from": "soft-closed",
+              "to": "hard-closed",
+              "label": "Hard-close",
+              "description": "Lock period for any posting except controller override (REQ-CLS-001).",
+              "roles": [
+                "controller"
+              ],
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "set-fields",
+                  "description": "Stamp hardClosedAt=now on the hard-close transition.",
+                  "actionParameters": {
+                    "hardClosedAt": "@now"
+                  }
+                }
+              ]
+            },
+            "audit": {
+              "from": "hard-closed",
+              "to": "audited",
+              "label": "Mark audited",
+              "description": "External auditor sign-off (REQ-CLS-001).",
+              "roles": [
+                "auditor"
+              ],
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "set-fields",
+                  "description": "Stamp auditedAt=now on the audited transition.",
+                  "actionParameters": {
+                    "auditedAt": "@now"
+                  }
+                }
+              ]
+            },
+            "lock": {
+              "from": "audited",
+              "to": "locked",
+              "label": "Lock",
+              "description": "Year-end terminal lock; no further posting (REQ-CLS-001).",
+              "roles": [
+                "controller"
+              ],
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "set-fields",
+                  "description": "Stamp lockedAt=now on the locked transition.",
+                  "actionParameters": {
+                    "lockedAt": "@now"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "controller": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "soft-close-operator": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "PeriodStatus stage transitions (open → soft-closed → hard-closed → audited → locked) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-001 — each transition controls which postings are permitted into the period; the stage change history + actor + timestamp is the canonical audit evidence."
+        }
+      },
+      "AutoAccrualRule": {
+        "slug": "AutoAccrualRule",
+        "icon": "CalendarSync",
+        "version": "0.1.0",
+        "title": "Auto-Accrual Rule",
+        "description": "Declarative auto-accrual rule (REQ-CLS-003) executed nightly by SoftCloseExecutor. Carries calculation method (fixed-amount, percentage-of-revenue, straight-line-from-contract, days-elapsed-of-period, external-lookup), reversal pattern (first-of-next-month, on-receipt-of-invoice, on-settlement), frequency, lifecycle state, and a JSON calculationParameters bag for method-specific inputs. Each execution emits an AutoAccrualPosting linking rule version + resulting JournalEntry for audit trail.",
+        "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
+        "type": "object",
+        "required": [
+          "ruleName",
+          "targetGLAccount",
+          "contraGLAccount",
+          "calculationMethod",
+          "calculationParameters",
+          "reversalPattern",
+          "frequency",
+          "administrationId",
+          "lifecycleState"
+        ],
+        "properties": {
+          "ruleName": {
+            "type": "string",
+            "description": "Human-readable name (REQ-CLS-003).",
+            "example": "Rent accrual",
+            "title": "Rule Name"
+          },
+          "targetGLAccount": {
+            "type": "string",
+            "description": "Target GL account code (REQ-CLS-003).",
+            "example": "4001-rent",
+            "title": "Target GL Account"
+          },
+          "contraGLAccount": {
+            "type": "string",
+            "description": "Contra / accrued-expense GL account (REQ-CLS-003).",
+            "example": "2100-accrued-rent",
+            "title": "Contra GL Account"
+          },
+          "calculationMethod": {
+            "type": "string",
+            "enum": [
+              "fixed-amount",
+              "percentage-of-revenue",
+              "straight-line-from-contract",
+              "days-elapsed-of-period",
+              "external-lookup"
+            ],
+            "description": "Calculation method (REQ-CLS-003).",
+            "example": "fixed-amount",
+            "title": "Calculation Method"
+          },
+          "calculationParameters": {
+            "type": "object",
+            "description": "Method-specific parameters; e.g. {amount: 1200000} for fixed (integer-cent), {rate: 0.03, sourceField: 'revenue_mtd'} for percentage (REQ-CLS-003).",
+            "default": {},
+            "title": "Calculation Parameters"
+          },
+          "reversalPattern": {
+            "type": "string",
+            "enum": [
+              "first-of-next-month",
+              "on-receipt-of-invoice",
+              "on-settlement",
+              "none"
+            ],
+            "description": "Reversal pattern (REQ-CLS-003).",
+            "example": "first-of-next-month",
+            "title": "Reversal Pattern"
+          },
+          "frequency": {
+            "type": "string",
+            "enum": [
+              "daily",
+              "weekly",
+              "monthly"
+            ],
+            "description": "Execution frequency.",
+            "example": "daily",
+            "title": "Frequency"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration (REQ-CLS-003).",
+            "example": "adm-smb-1",
+            "title": "Administration ID"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "active",
+              "disabled",
+              "archived"
+            ],
+            "default": "active",
+            "description": "Rule lifecycle state.",
+            "title": "Lifecycle State"
+          },
+          "ruleVersion": {
+            "type": "integer",
+            "default": 1,
+            "description": "Monotonic version stamped onto each AutoAccrualPosting for audit (REQ-CLS-010).",
+            "title": "Rule Version"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "controller": {
+              "permissions": [
+                "read",
+                "create",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "AutoAccrualRule changes (target GL account, calculation method, parameters, reversal pattern, lifecycle state) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-003 — each AutoAccrualPosting snapshots the ruleVersion at posting time so audit can reconstruct exactly which rule produced any historical accrual."
+        }
+      },
+      "AutoAccrualPosting": {
+        "slug": "AutoAccrualPosting",
+        "icon": "DatabaseArrowDown",
+        "version": "0.1.0",
+        "title": "Auto-Accrual Posting",
+        "description": "Append-only audit record per AutoAccrualRule execution (REQ-CLS-010). Carries ruleId + ruleVersion + periodId + integer-cent amount + journalEntryId + postedAt + postedBy + reversalId. Lifecycle: posted → reversed. Once posted the original record is preserved; the reversal links back to the original posting and emits a fresh JournalEntry per IAS 8.",
+        "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
+        "type": "object",
+        "required": [
+          "ruleId",
+          "ruleVersion",
+          "periodId",
+          "amountCents",
+          "journalEntryId",
+          "postedAt",
+          "postedBy"
+        ],
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "description": "FK to AutoAccrualRule (REQ-CLS-010).",
+            "example": "rule-rent-001",
+            "title": "Rule ID"
+          },
+          "ruleVersion": {
+            "type": "integer",
+            "description": "Snapshot of AutoAccrualRule.ruleVersion at posting time (REQ-CLS-010).",
+            "example": 1,
+            "title": "Rule Version"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "FK to FiscalPeriod.periodId (REQ-CLS-010).",
+            "example": "2026-03",
+            "title": "Period ID"
+          },
+          "amountCents": {
+            "type": "integer",
+            "description": "Posted amount in integer cents (money-as-cents per ADR-001 fleet rule).",
+            "example": 658000,
+            "title": "Amount Cents"
+          },
+          "journalEntryId": {
+            "type": "string",
+            "description": "FK to JournalEntry written by the accrual (REQ-CLS-010).",
+            "example": "je-2026-03-17-rent",
+            "title": "Journal Entry ID"
+          },
+          "postedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Posting timestamp (REQ-CLS-010).",
+            "example": "2026-03-17T00:30:00+01:00",
+            "title": "Posted At"
+          },
+          "postedBy": {
+            "type": "string",
+            "description": "Posting actor (SYSTEM:SoftCloseExecutor or specific service) (REQ-CLS-010).",
+            "example": "SYSTEM:SoftCloseExecutor",
+            "title": "Posted By"
+          },
+          "reversalId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the reversal AutoAccrualPosting once reversed (REQ-CLS-010).",
+            "example": null,
+            "title": "Reversal ID"
+          },
+          "reversalState": {
+            "type": "string",
+            "enum": [
+              "posted",
+              "reversed"
+            ],
+            "default": "posted",
+            "description": "Lifecycle state.",
+            "title": "Reversal State"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "reversalState",
+          "initialState": "posted",
+          "states": {
+            "posted": {
+              "label": "Posted",
+              "description": "Accrual is live in the trial balance."
+            },
+            "reversed": {
+              "label": "Reversed",
+              "description": "Reversing entry has been posted; original entry preserved for audit (REQ-CLS-010)."
+            }
+          },
+          "transitions": {
+            "reverse": {
+              "from": "posted",
+              "to": "reversed",
+              "label": "Reverse accrual",
+              "description": "Mark the accrual as reversed; original entry preserved (REQ-CLS-010).",
+              "roles": [
+                "controller",
+                "soft-close-operator"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "AutoAccrualPosting is append-only audit evidence per REQ-AT-001 / ADR-022 / REQ-CLS-010 — original posted entry MUST be preserved when a reversal is recorded; the reversal links back to the original via reversalId."
+        }
+      },
+      "CloseChecklistTemplate": {
+        "slug": "CloseChecklistTemplate",
+        "icon": "FormatListChecks",
+        "version": "0.1.0",
+        "title": "Close Checklist Template",
+        "description": "Reusable list of close tasks per administratie type (BV, NV, eenmanszaak); instantiated per period as a CloseChecklistInstance (REQ-CLS-004). Each task carries owner, dueBefore, dependsOn (task-dependency graph), and evidenceRequired flag.",
+        "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
+        "type": "object",
+        "required": [
+          "templateName",
+          "administrationTypeId",
+          "tasks"
+        ],
+        "properties": {
+          "templateName": {
+            "type": "string",
+            "description": "Template name (REQ-CLS-004).",
+            "example": "Standard SMB Close",
+            "title": "Template Name"
+          },
+          "administrationTypeId": {
+            "type": "string",
+            "description": "FK to administration type (BV, NV, eenmanszaak) (REQ-CLS-004).",
+            "example": "BV",
+            "title": "Administration Type ID"
+          },
+          "tasks": {
+            "type": "array",
+            "description": "Task definitions (REQ-CLS-004).",
+            "items": {
+              "type": "object",
+              "required": [
+                "taskId",
+                "taskName",
+                "taskOwner",
+                "dueBefore"
+              ],
+              "properties": {
+                "taskId": {
+                  "type": "string",
+                  "title": "Task ID",
+                  "description": "The identifier of the associated task."
+                },
+                "taskName": {
+                  "type": "string",
+                  "title": "Task Name",
+                  "description": "The name of the associated task."
+                },
+                "taskOwner": {
+                  "type": "string",
+                  "title": "Task Owner",
+                  "description": "The task owner."
+                },
+                "dueBefore": {
+                  "type": "string",
+                  "description": "Relative due-date expression; e.g. 'end-of-period+2', 'end-of-period+5'.",
+                  "title": "Due Before"
+                },
+                "dependsOn": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": [],
+                  "title": "Depends On",
+                  "description": "A list of depends on entries."
+                },
+                "evidenceRequired": {
+                  "type": "boolean",
+                  "default": false,
+                  "title": "Evidence Required",
+                  "description": "Indicates whether evidence required applies."
+                }
+              }
+            },
+            "default": [],
+            "title": "Tasks"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "CloseChecklistTemplate changes (task list, owners, due-before, dependsOn, evidenceRequired) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-004 — close procedures are an SOX-relevant control; auditors trace which template version produced each CloseChecklistInstance."
+        }
+      },
+      "CloseChecklistInstance": {
+        "slug": "CloseChecklistInstance",
+        "icon": "FormatListChecks",
+        "version": "0.1.0",
+        "title": "Close Checklist Instance",
+        "description": "Per-period instantiation of a CloseChecklistTemplate (REQ-CLS-004). Carries per-task status (pending | in-progress | completed | overdue), owner override, completedAt, evidence attachment, and slaBreach flag. Lifecycle: pending → in-progress → completed with SLA escalation on overdue.",
+        "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
+        "type": "object",
+        "required": [
+          "templateId",
+          "periodId",
+          "tasks"
+        ],
+        "properties": {
+          "templateId": {
+            "type": "string",
+            "description": "FK to CloseChecklistTemplate (REQ-CLS-004).",
+            "example": "tpl-smb-close",
+            "title": "Template ID"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "FK to FiscalPeriod.periodId (REQ-CLS-004).",
+            "example": "2026-03",
+            "title": "Period ID"
+          },
+          "instanceState": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "in-progress",
+              "completed"
+            ],
+            "default": "pending",
+            "description": "Overall instance state (REQ-CLS-004).",
+            "title": "Instance State"
+          },
+          "tasks": {
+            "type": "array",
+            "description": "Per-task state (REQ-CLS-004).",
+            "items": {
+              "type": "object",
+              "required": [
+                "taskId",
+                "status"
+              ],
+              "properties": {
+                "taskId": {
+                  "type": "string",
+                  "title": "Task ID",
+                  "description": "The identifier of the associated task."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "in-progress",
+                    "completed",
+                    "overdue"
+                  ],
+                  "title": "Status",
+                  "description": "The current status of this record."
+                },
+                "owner": {
+                  "type": "string",
+                  "title": "Owner",
+                  "description": "The owner."
+                },
+                "completedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true,
+                  "title": "Completed At",
+                  "description": "The date and time for completed at."
+                },
+                "evidence": {
+                  "type": "string",
+                  "description": "URL or docudesk file id.",
+                  "title": "Evidence"
+                },
+                "slaBreach": {
+                  "type": "boolean",
+                  "default": false,
+                  "title": "Sla Breach",
+                  "description": "Indicates whether sla breach applies."
+                }
+              }
+            },
+            "default": [],
+            "title": "Tasks"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "instanceState",
+          "initialState": "pending",
+          "states": {
+            "pending": {
+              "label": "Pending",
+              "description": "All tasks pending (REQ-CLS-004)."
+            },
+            "in-progress": {
+              "label": "In progress",
+              "description": "At least one task started."
+            },
+            "completed": {
+              "label": "Completed",
+              "description": "All tasks completed."
+            }
+          },
+          "transitions": {
+            "start": {
+              "from": "pending",
+              "to": "in-progress",
+              "label": "Start",
+              "roles": [
+                "controller",
+                "bookkeeper"
+              ]
+            },
+            "complete": {
+              "from": "in-progress",
+              "to": "completed",
+              "label": "Complete",
+              "roles": [
+                "controller",
+                "bookkeeper"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "CloseChecklistInstance per-task state (status, owner, completedAt, evidence, slaBreach) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-004 — task completion is internal-control evidence; the audit trail captures who completed what and when, including SLA breaches."
+        }
+      },
+      "FluxRun": {
+        "slug": "FluxRun",
+        "icon": "ChartLine",
+        "version": "0.1.0",
+        "title": "Flux Run",
+        "description": "A single variance-analysis execution (REQ-CLS-005). Carries scope (administratie, segment, cost centre), comparison basis (budget | forecast | prior-period | prior-year), materiality thresholds, runTimestamp, status, and resultSummary aggregating the FluxItem outcomes.",
+        "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "periodId",
+          "scope",
+          "comparisonBasis",
+          "runTimestamp",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration (REQ-CLS-005).",
+            "example": "adm-smb-1",
+            "title": "Administration ID"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "FK to FiscalPeriod.periodId (REQ-CLS-005).",
+            "example": "2026-03",
+            "title": "Period ID"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "administration",
+              "segment",
+              "cost-centre",
+              "consolidated"
+            ],
+            "description": "Scope of the run (REQ-CLS-005).",
+            "example": "administration",
+            "title": "Scope"
+          },
+          "scopeFilter": {
+            "type": "string",
+            "description": "Free-form filter (segment id, cost-centre code) when scope is segment/cost-centre.",
+            "example": "",
+            "title": "Scope Filter"
+          },
+          "comparisonBasis": {
+            "type": "string",
+            "enum": [
+              "budget",
+              "forecast",
+              "prior-period",
+              "prior-year"
+            ],
+            "description": "Comparison basis (REQ-CLS-005).",
+            "example": "budget",
+            "title": "Comparison Basis"
+          },
+          "materialityAbsoluteCents": {
+            "type": "integer",
+            "description": "Absolute floor in integer cents per MaterialityPolicy.",
+            "example": 100000,
+            "title": "Materiality Absolute Cents"
+          },
+          "materialityPercentage": {
+            "type": "number",
+            "description": "Percentage floor (e.g. 0.02 = 2%).",
+            "example": 0.02,
+            "title": "Materiality Percentage"
+          },
+          "runTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Run start timestamp (REQ-CLS-005).",
+            "example": "2026-04-01T07:00:00+02:00",
+            "title": "Run Timestamp"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "running",
+              "completed",
+              "failed"
+            ],
+            "default": "running",
+            "description": "Run status (REQ-CLS-005).",
+            "title": "Status"
+          },
+          "resultSummary": {
+            "type": "object",
+            "description": "Aggregated outcomes: {materialCount, autoExplainedCount, ownerExplainedCount, escalatedCount, totalVarianceCents} (REQ-CLS-005).",
+            "default": {},
+            "title": "Result Summary"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "FluxRun (scope, comparison basis, materiality thresholds, runTimestamp, status) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-005 — variance analysis feeds the board pack; auditors trace which run produced which narrative and against which baseline."
+        }
+      },
+      "FluxItem": {
+        "slug": "FluxItem",
+        "icon": "ChartBoxOutline",
+        "version": "0.1.0",
+        "title": "Flux Item",
+        "description": "Per-GL-account variance row of a FluxRun (REQ-CLS-005). Carries budget/actual/variance in integer cents, percentage variance, materiality classification, autoExplanation, ownerExplanation, status, and owner SLA. Status lifecycle: open | auto-explained | owner-explained | escalated | accepted (REQ-CLS-006).",
+        "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
+        "type": "object",
+        "required": [
+          "fluxRunId",
+          "glAccountNumber",
+          "actualCents",
+          "varianceCents",
+          "materialityClassification",
+          "status"
+        ],
+        "properties": {
+          "fluxRunId": {
+            "type": "string",
+            "description": "FK to FluxRun (REQ-CLS-005).",
+            "example": "flux-2026-03-1",
+            "title": "Flux Run ID"
+          },
+          "glAccountNumber": {
+            "type": "string",
+            "description": "GL account code under analysis (REQ-CLS-005).",
+            "example": "5001-cogs",
+            "title": "GL Account Number"
+          },
+          "budgetCents": {
+            "type": "integer",
+            "description": "Comparison-basis amount in cents (REQ-CLS-005).",
+            "example": 120000000,
+            "title": "Budget Cents"
+          },
+          "actualCents": {
+            "type": "integer",
+            "description": "Actual amount in cents (REQ-CLS-005).",
+            "example": 138000000,
+            "title": "Actual Cents"
+          },
+          "varianceCents": {
+            "type": "integer",
+            "description": "Signed variance in cents (actual - budget) (REQ-CLS-005).",
+            "example": 18000000,
+            "title": "Variance Cents"
+          },
+          "percentageVariance": {
+            "type": "number",
+            "description": "Percentage variance (variance / budget) (REQ-CLS-005).",
+            "example": 0.15,
+            "title": "Percentage Variance"
+          },
+          "materialityClassification": {
+            "type": "string",
+            "enum": [
+              "immaterial",
+              "material",
+              "highly-material"
+            ],
+            "description": "Materiality bucket (REQ-CLS-005).",
+            "example": "material",
+            "title": "Materiality Classification"
+          },
+          "autoExplanation": {
+            "type": "string",
+            "description": "Rule-based explanation (REQ-CLS-006).",
+            "example": "Volume +10%, price +6%, mix +20K, FX +20K",
+            "title": "Auto Explanation"
+          },
+          "autoExplanationCoverage": {
+            "type": "number",
+            "description": "Fraction of variance covered by auto-explanation (0..1) (REQ-CLS-006).",
+            "example": 0.95,
+            "title": "Auto Explanation Coverage"
+          },
+          "ownerExplanation": {
+            "type": "string",
+            "description": "Free-text owner explanation when escalated (REQ-CLS-006).",
+            "example": "",
+            "title": "Owner Explanation"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "auto-explained",
+              "owner-explained",
+              "escalated",
+              "accepted"
+            ],
+            "default": "open",
+            "description": "Item status (REQ-CLS-006).",
+            "title": "Status"
+          },
+          "ownerEscalationSLA": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Deadline for owner response (typically run+24h) (REQ-CLS-006).",
+            "example": null,
+            "title": "Owner Escalation Sla"
+          },
+          "ownerEscalatedTo": {
+            "type": "string",
+            "description": "Owner role/user routed for explanation (REQ-CLS-006).",
+            "example": "controller",
+            "title": "Owner Escalated To"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "FluxItem variance figures, materiality classification, auto-explanation, and owner explanation MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-005 / REQ-CLS-006 — owner explanations are SOX-relevant attestations; the audit trail captures who explained what."
+        }
+      },
+      "FluxAttribution": {
+        "slug": "FluxAttribution",
+        "icon": "ChartScatterPlot",
+        "version": "0.1.0",
+        "title": "Flux Attribution",
+        "description": "Driver decomposition of a FluxItem variance (REQ-CLS-006). One row per driver (volume | price | mix | fx | one-off) with quantified contribution in cents and percentage share.",
+        "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
+        "type": "object",
+        "required": [
+          "fluxItemId",
+          "driver",
+          "contributionCents"
+        ],
+        "properties": {
+          "fluxItemId": {
+            "type": "string",
+            "description": "FK to FluxItem (REQ-CLS-006).",
+            "example": "flux-item-cogs-2026-03",
+            "title": "Flux Item ID"
+          },
+          "driver": {
+            "type": "string",
+            "enum": [
+              "volume",
+              "price",
+              "mix",
+              "fx",
+              "one-off"
+            ],
+            "description": "Driver kind (REQ-CLS-006).",
+            "example": "volume",
+            "title": "Driver"
+          },
+          "contributionCents": {
+            "type": "integer",
+            "description": "Signed contribution to the variance in cents (REQ-CLS-006).",
+            "example": 8000000,
+            "title": "Contribution Cents"
+          },
+          "percentage": {
+            "type": "number",
+            "description": "Share of the total variance attributable to this driver (0..1) (REQ-CLS-006).",
+            "example": 0.44,
+            "title": "Percentage"
+          },
+          "explanation": {
+            "type": "string",
+            "description": "Free-text driver explanation; e.g. 'Volume +10% units'.",
+            "example": "Volume +10% units",
+            "title": "Explanation"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "FluxAttribution driver decomposition MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-006 — explained variances are the quantitative backing for the flux narrative; auditors review individual driver contributions."
+        }
+      },
+      "MaterialityPolicy": {
+        "slug": "MaterialityPolicy",
+        "icon": "ScaleBalance",
+        "version": "0.1.0",
+        "title": "Materiality Policy",
+        "description": "Per-administratie + per-account-group materiality thresholds (REQ-CLS-005). Absolute floor (integer cents) + percentage floor; the max of both applies. Special-rule overrides for cash, tax, revenue groups (typically lower thresholds).",
+        "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "accountGroupCode",
+          "absoluteThresholdCents",
+          "percentageThreshold"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to Administration (REQ-CLS-005).",
+            "example": "adm-smb-1",
+            "title": "Administration ID"
+          },
+          "accountGroupCode": {
+            "type": "string",
+            "description": "GL account group code (operational, cash, tax, revenue, ...) (REQ-CLS-005).",
+            "example": "operational",
+            "title": "Account Group Code"
+          },
+          "absoluteThresholdCents": {
+            "type": "integer",
+            "description": "Absolute floor in integer cents (REQ-CLS-005).",
+            "example": 100000,
+            "title": "Absolute Threshold Cents"
+          },
+          "percentageThreshold": {
+            "type": "number",
+            "description": "Percentage floor (e.g. 0.02 = 2%) (REQ-CLS-005).",
+            "example": 0.02,
+            "title": "Percentage Threshold"
+          },
+          "specialRules": {
+            "type": "object",
+            "description": "Override rules for cash/tax/revenue groups (REQ-CLS-005).",
+            "properties": {
+              "cash": {
+                "type": "object",
+                "properties": {
+                  "absoluteThresholdCents": {
+                    "type": "integer",
+                    "title": "Absolute Threshold Cents",
+                    "description": "The numeric value for absolute threshold cents."
+                  },
+                  "percentageThreshold": {
+                    "type": "number",
+                    "title": "Percentage Threshold",
+                    "description": "The numeric value for percentage threshold."
+                  }
+                },
+                "title": "Cash",
+                "description": "A structured cash object with nested properties."
+              },
+              "tax": {
+                "type": "object",
+                "properties": {
+                  "absoluteThresholdCents": {
+                    "type": "integer",
+                    "title": "Absolute Threshold Cents",
+                    "description": "The numeric value for absolute threshold cents."
+                  },
+                  "percentageThreshold": {
+                    "type": "number",
+                    "title": "Percentage Threshold",
+                    "description": "The numeric value for percentage threshold."
+                  }
+                },
+                "title": "Tax",
+                "description": "A structured tax object with nested properties."
+              },
+              "revenue": {
+                "type": "object",
+                "properties": {
+                  "absoluteThresholdCents": {
+                    "type": "integer",
+                    "title": "Absolute Threshold Cents",
+                    "description": "The numeric value for absolute threshold cents."
+                  },
+                  "percentageThreshold": {
+                    "type": "number",
+                    "title": "Percentage Threshold",
+                    "description": "The numeric value for percentage threshold."
+                  }
+                },
+                "title": "Revenue",
+                "description": "A structured revenue object with nested properties."
+              }
+            },
+            "default": {},
+            "title": "Special Rules"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "MaterialityPolicy thresholds MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-005 — thresholds determine which variances are escalated; auditors verify that no threshold change was used to suppress disclosable variances."
+        }
+      },
+      "ContinuousCloseAlert": {
+        "slug": "ContinuousCloseAlert",
+        "icon": "AlertCircleOutline",
+        "version": "0.1.0",
+        "title": "Continuous-Close Alert",
+        "description": "Alert raised by SoftCloseExecutor or the flux engine when a soft-close step fails or a flux SLA breaches (REQ-CLS-002, REQ-CLS-006). Carries severity, message, routedTo (list of roles), createdAt, and acknowledged flag.",
+        "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "periodId",
+          "severity",
+          "message",
+          "createdAt"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "example": "adm-smb-1",
+            "title": "Administration ID",
+            "description": "The date and time for administration id."
+          },
+          "periodId": {
+            "type": "string",
+            "example": "2026-03",
+            "title": "Period ID",
+            "description": "The identifier of the accounting period."
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "warning",
+              "error"
+            ],
+            "default": "info",
+            "title": "Severity",
+            "description": "The severity."
+          },
+          "message": {
+            "type": "string",
+            "example": "FX revaluation failed; please review treasury module",
+            "title": "Message",
+            "description": "The message."
+          },
+          "routedTo": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "List of roles or user ids to notify.",
+            "title": "Routed To"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-01T00:30:00+02:00",
+            "title": "Created At",
+            "description": "The date and time this record was created."
+          },
+          "acknowledged": {
+            "type": "boolean",
+            "default": false,
+            "title": "Acknowledged",
+            "description": "Indicates whether acknowledged applies."
+          },
+          "acknowledgedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "default": null,
+            "title": "Acknowledged At",
+            "description": "The date and time for acknowledged at."
+          },
+          "acknowledgedBy": {
+            "type": "string",
+            "nullable": true,
+            "default": null,
+            "title": "Acknowledged By",
+            "description": "The acknowledged by."
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "ContinuousCloseAlert records (severity, message, routedTo, acknowledged) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-002 — soft-close failures and SLA breaches are operational-risk events; auditors review who was notified and when the alert was acknowledged."
+        }
+      },
+      "CloseMetrics": {
+        "slug": "CloseMetrics",
+        "icon": "ChartTimelineVariant",
+        "version": "0.1.0",
+        "title": "Close Metrics",
+        "description": "Close-quality KPI snapshot per administratie + period (REQ-CLS-009). Carries time-to-close, post-close adjustment count, audit-correction ratio, flux-SLA compliance, and unexplained flux item count plus a rolling 12-month trend.",
+        "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "periodId"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "example": "adm-smb-1",
+            "title": "Administration ID",
+            "description": "The date and time for administration id."
+          },
+          "periodId": {
+            "type": "string",
+            "example": "2026-01",
+            "title": "Period ID",
+            "description": "The identifier of the accounting period."
+          },
+          "timeToCloseDays": {
+            "type": "number",
+            "description": "Days from period-end to hard-close (REQ-CLS-009).",
+            "example": 4,
+            "title": "Time To Close Days"
+          },
+          "postCloseAdjustmentCount": {
+            "type": "integer",
+            "description": "Count of entries posted to the period after hard-close (REQ-CLS-009).",
+            "example": 2,
+            "title": "Post Close Adjustment Count"
+          },
+          "auditCorrectionRatio": {
+            "type": "number",
+            "description": "audit adjustments / total close adjustments (REQ-CLS-009).",
+            "example": 0.0,
+            "title": "Audit Correction Ratio"
+          },
+          "fluxSLACompliance": {
+            "type": "number",
+            "description": "% of material flux items explained within 24h SLA (0..1) (REQ-CLS-009).",
+            "example": 0.95,
+            "title": "Flux Sla Compliance"
+          },
+          "unexplainedFluxItemCount": {
+            "type": "integer",
+            "description": "Count of material variances still unexplained at board-pack publication (REQ-CLS-009).",
+            "example": 1,
+            "title": "Unexplained Flux Item Count"
+          },
+          "trendData": {
+            "type": "array",
+            "description": "Rolling 12-period trend; each entry {periodId, timeToCloseDays, postCloseAdjustmentCount, fluxSLACompliance} (REQ-CLS-009).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "periodId": {
+                  "type": "string",
+                  "title": "Period ID",
+                  "description": "The identifier of the accounting period."
+                },
+                "timeToCloseDays": {
+                  "type": "number",
+                  "title": "Time To Close Days",
+                  "description": "The numeric value for time to close days."
+                },
+                "postCloseAdjustmentCount": {
+                  "type": "integer",
+                  "title": "Post Close Adjustment Count",
+                  "description": "The count or quantity of post close adjust."
+                },
+                "fluxSLACompliance": {
+                  "type": "number",
+                  "title": "Flux Sla Compliance",
+                  "description": "The numeric value for flux sla compliance."
+                }
+              }
+            },
+            "default": [],
+            "title": "Trend Data"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "CloseMetrics KPI snapshots (time-to-close, post-close adjustment count, audit-correction ratio, flux-SLA compliance, unexplained item count, 12-month trend) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-009 — these KPIs trend over 12 periods and are presented to the audit committee; tampering with historical KPI values defeats the entire metric."
+        }
+      },
+      "GLTransaction": {
+        "x-openregister-lifecycle": {
+          "transitions": {
+            "post": {
+              "preconditions": [
+                "OCA\\Shillinq\\Lifecycle\\PeriodStatusGuard::postingAllowed"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "PeriodStatus",
+          "slug": "period-status-smb-2026-03"
+        },
+        "administrationId": "adm-smb-1",
+        "periodYear": 2026,
+        "periodMonth": 3,
+        "stage": "soft-closed",
+        "softClosedAt": "2026-04-01T06:45:00+02:00",
+        "stageChangeHistory": [
+          {
+            "fromStage": "open",
+            "toStage": "soft-closed",
+            "actor": "SYSTEM:SoftCloseExecutor",
+            "timestamp": "2026-04-01T06:45:00+02:00",
+            "reason": "Nightly soft-close completed"
+          }
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AutoAccrualRule",
+          "slug": "rule-rent-accrual"
+        },
+        "ruleName": "Rent Accrual",
+        "targetGLAccount": "4001-rent",
+        "contraGLAccount": "2100-accrued-rent",
+        "calculationMethod": "fixed-amount",
+        "calculationParameters": {
+          "amountCents": 1200000
+        },
+        "reversalPattern": "first-of-next-month",
+        "frequency": "monthly",
+        "administrationId": "adm-smb-1",
+        "lifecycleState": "active",
+        "ruleVersion": 1
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AutoAccrualRule",
+          "slug": "rule-utilities-accrual"
+        },
+        "ruleName": "Utilities Accrual",
+        "targetGLAccount": "4005-utilities",
+        "contraGLAccount": "2105-accrued-utilities",
+        "calculationMethod": "percentage-of-revenue",
+        "calculationParameters": {
+          "rate": 0.03,
+          "sourceField": "revenue_mtd"
+        },
+        "reversalPattern": "on-receipt-of-invoice",
+        "frequency": "monthly",
+        "administrationId": "adm-smb-1",
+        "lifecycleState": "active",
+        "ruleVersion": 1
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AutoAccrualRule",
+          "slug": "rule-interest-accrual"
+        },
+        "ruleName": "Interest Accrual",
+        "targetGLAccount": "4010-interest",
+        "contraGLAccount": "2110-accrued-interest",
+        "calculationMethod": "straight-line-from-contract",
+        "calculationParameters": {
+          "principalCents": 10000000,
+          "annualRate": 0.05,
+          "dayCount": 365
+        },
+        "reversalPattern": "first-of-next-month",
+        "frequency": "daily",
+        "administrationId": "adm-smb-1",
+        "lifecycleState": "active",
+        "ruleVersion": 1
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AutoAccrualRule",
+          "slug": "rule-salaries-accrual"
+        },
+        "ruleName": "Salaries Accrual",
+        "targetGLAccount": "4020-salaries",
+        "contraGLAccount": "2120-accrued-salaries",
+        "calculationMethod": "external-lookup",
+        "calculationParameters": {
+          "source": "payroll-calendar"
+        },
+        "reversalPattern": "on-settlement",
+        "frequency": "weekly",
+        "administrationId": "adm-smb-1",
+        "lifecycleState": "active",
+        "ruleVersion": 1
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AutoAccrualRule",
+          "slug": "rule-depreciation"
+        },
+        "ruleName": "Depreciation",
+        "targetGLAccount": "6001-depreciation",
+        "contraGLAccount": "1050-accumulated-depreciation",
+        "calculationMethod": "straight-line-from-contract",
+        "calculationParameters": {
+          "source": "asset-schedule"
+        },
+        "reversalPattern": "none",
+        "frequency": "monthly",
+        "administrationId": "adm-smb-1",
+        "lifecycleState": "active",
+        "ruleVersion": 1
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "MaterialityPolicy",
+          "slug": "materiality-smb-default"
+        },
+        "administrationId": "adm-smb-1",
+        "accountGroupCode": "operational",
+        "absoluteThresholdCents": 100000,
+        "percentageThreshold": 0.02,
+        "specialRules": {
+          "cash": {
+            "absoluteThresholdCents": 10000,
+            "percentageThreshold": 0.005
+          },
+          "tax": {
+            "absoluteThresholdCents": 5000,
+            "percentageThreshold": 0.001
+          },
+          "revenue": {
+            "absoluteThresholdCents": 50000,
+            "percentageThreshold": 0.01
+          }
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CloseChecklistTemplate",
+          "slug": "tpl-smb-close"
+        },
+        "templateName": "Standard SMB Close",
+        "administrationTypeId": "BV",
+        "tasks": [
+          {
+            "taskId": "bank-rec",
+            "taskName": "Bank reconciliation completed",
+            "taskOwner": "bookkeeper",
+            "dueBefore": "end-of-period+2"
+          },
+          {
+            "taskId": "ap-cutoff",
+            "taskName": "AP cut-off reviewed",
+            "taskOwner": "ap-officer",
+            "dueBefore": "end-of-period+2",
+            "dependsOn": [
+              "bank-rec"
+            ]
+          },
+          {
+            "taskId": "ar-cutoff",
+            "taskName": "AR ageing reviewed",
+            "taskOwner": "ar-officer",
+            "dueBefore": "end-of-period+2"
+          },
+          {
+            "taskId": "accruals",
+            "taskName": "Accruals posted",
+            "taskOwner": "controller",
+            "dueBefore": "end-of-period+3",
+            "dependsOn": [
+              "ap-cutoff",
+              "ar-cutoff"
+            ]
+          },
+          {
+            "taskId": "fx-reval",
+            "taskName": "FX revaluation done",
+            "taskOwner": "treasurer",
+            "dueBefore": "end-of-period+3"
+          },
+          {
+            "taskId": "ic-match",
+            "taskName": "Intercompany matched",
+            "taskOwner": "controller",
+            "dueBefore": "end-of-period+3"
+          },
+          {
+            "taskId": "depreciation",
+            "taskName": "Depreciation posted",
+            "taskOwner": "controller",
+            "dueBefore": "end-of-period+3"
+          },
+          {
+            "taskId": "payroll",
+            "taskName": "Payroll booked",
+            "taskOwner": "payroll-officer",
+            "dueBefore": "end-of-period+3"
+          },
+          {
+            "taskId": "tax-provision",
+            "taskName": "Tax provision posted",
+            "taskOwner": "tax-officer",
+            "dueBefore": "end-of-period+4"
+          },
+          {
+            "taskId": "flux",
+            "taskName": "Flux analysis reviewed",
+            "taskOwner": "controller",
+            "dueBefore": "end-of-period+5",
+            "dependsOn": [
+              "accruals",
+              "fx-reval",
+              "depreciation"
+            ],
+            "evidenceRequired": true
+          },
+          {
+            "taskId": "board-pack",
+            "taskName": "Board pack drafted",
+            "taskOwner": "cfo",
+            "dueBefore": "end-of-period+5",
+            "dependsOn": [
+              "flux"
+            ],
+            "evidenceRequired": true
+          }
+        ]
+      }
+    ]
+  }
+}

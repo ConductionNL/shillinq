@@ -1,0 +1,461 @@
+{
+	"menu": [
+		{
+			"id": "IbAangifteZzpGroep",
+			"label": "IB return (sole trader / ZZP)",
+			"icon": "FileDocumentEditOutline",
+			"order": 26,
+			"children": [
+				{
+					"id": "IbAangiftenZzp",
+					"label": "IB returns",
+					"icon": "FileDocumentEditOutline",
+					"route": "IbAangiftenZzp",
+					"order": 10
+				},
+				{
+					"id": "IbOndernemersaftrekken",
+					"label": "Entrepreneur allowances",
+					"icon": "AccountCashOutline",
+					"route": "IbOndernemersaftrekken",
+					"order": 20
+				},
+				{
+					"id": "IbLijfrenteBeheer",
+					"label": "Annuity management",
+					"icon": "PiggyBankOutline",
+					"route": "IbLijfrenteBeheer",
+					"order": 30
+				},
+				{
+					"id": "IbBox3Vermogen",
+					"label": "Box 3 assets",
+					"icon": "DesktopTowerMonitor",
+					"route": "IbBox3Vermogen",
+					"order": 40
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "IbAangiftenZzp",
+			"route": "/ib-aangifte/aangiften",
+			"type": "index",
+			"title": "IB returns",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBAangifte",
+				"columns": [
+					{
+						"key": "taxYear",
+						"label": "Tax year",
+						"sortable": true
+					},
+					{
+						"key": "enterpriseId",
+						"label": "Business",
+						"sortable": true
+					},
+					{
+						"key": "taxReturnType",
+						"label": "Type",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "taxableProfit",
+						"label": "Taxable profit",
+						"sortable": true
+					},
+					{
+						"key": "teBetalenOfTeOntvangen",
+						"label": "Payable / receivable",
+						"sortable": true
+					}
+				],
+				"defaultSort": "taxYear",
+				"detailRoute": "IbAangifteZzpDetail"
+			}
+		},
+		{
+			"id": "IbAangifteZzpDetail",
+			"route": "/ib-aangifte/aangiften/:id",
+			"type": "detail",
+			"title": "IB return",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBAangifte",
+				"_note": "FINANCIAL / REPORT archetype (native CnDetailPage). An income-tax (IB) return for a sole trader is a tax filing - a signed/submitted document with a lifecycle (CONCEPT -> GEVALIDEERD -> XBRL_GEVALIDEERD -> INGEDIEND -> CORRECTIE_SUPPLETIE) and a Digipoort acknowledgement. Fields carry the P-formulier totals. relatedCollections link to the three schedule schemas that have their own index+detail pages in this fragment (IBOndernemersaftrek, IBLijfrenteAOV, IBBox3Vermogen; all FK taxReturnId) so the preparer can drill into each schedule. KEY: `relatedCollections`, NOT `relatedLists` — `relatedLists` is not a prop on any Cn page component, so it lands in $attrs and renders nothing while every gate stays green (tests/validate-manifest.js now hard-fails on it). TOKEN: `@objectId` — IBAangifte carries no flat business key for a schedule to reference (its payload has enterpriseId/bsn/taxYear but no taxReturnId), so the child FK holds the parent's OpenRegister UUID. Sidebar carries a Documents tab (XBRL/Digipoort source documents) and an Audit Trail tab (immutable filing record, REQ-IB-009). NO comms leaves - a tax return is filed, not discussed.",
+				"lifecycleActions": true,
+				"relatedCollections": [
+					{
+						"title": "Entrepreneur allowances",
+						"register": "shillinq",
+						"schema": "IBOndernemersaftrek",
+						"filter": { "taxReturnId": "@objectId" },
+						"columns": [
+							{ "key": "mkbProfitExemption", "label": "MKB exemption" },
+							{ "key": "totalDeduction", "label": "Total deduction" }
+						],
+						"rowRoute": "IbOndernemersaftrekDetail"
+					},
+					{
+						"title": "Annuity & AOV",
+						"register": "shillinq",
+						"schema": "IBLijfrenteAOV",
+						"filter": { "taxReturnId": "@objectId" },
+						"columns": [
+							{ "key": "totalDeductible", "label": "Total deductible" }
+						],
+						"rowRoute": "IbLijfrenteBeheerDetail"
+					},
+					{
+						"title": "Box 3 assets",
+						"register": "shillinq",
+						"schema": "IBBox3Vermogen",
+						"filter": { "taxReturnId": "@objectId" },
+						"columns": [
+							{ "key": "referenceDate", "label": "Reference date" },
+							{ "key": "totalYieldBasis", "label": "Yield basis" },
+							{ "key": "taxableBasis", "label": "Taxable basis" }
+						],
+						"rowRoute": "IbBox3VermogenDetail"
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "documents",
+							"label": "Documents",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-file-references", "props": { "register": "shillinq", "schema": "IBAangifte", "objectId": ":id" } }
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				},
+				"fields": [
+					{
+						"key": "taxYear",
+						"label": "Tax year",
+						"type": "number"
+					},
+					{
+						"key": "enterpriseId",
+						"label": "Business",
+						"type": "string"
+					},
+					{
+						"key": "taxReturnType",
+						"label": "Return type",
+						"type": "string"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "submissionChannel",
+						"label": "Filing channel",
+						"type": "string"
+					},
+					{
+						"key": "profitFromEnterprise",
+						"label": "Business profit",
+						"type": "number"
+					},
+					{
+						"key": "entrepreneurDeduction",
+						"label": "Entrepreneur allowance",
+						"type": "number"
+					},
+					{
+						"key": "mkbProfitExemption",
+						"label": "MKB profit exemption",
+						"type": "number"
+					},
+					{
+						"key": "taxableProfit",
+						"label": "Taxable profit",
+						"type": "number"
+					},
+					{
+						"key": "totalBox1Income",
+						"label": "Total Box 1",
+						"type": "number"
+					},
+					{
+						"key": "totalBox3Income",
+						"label": "Total Box 3",
+						"type": "number"
+					},
+					{
+						"key": "taxCredits",
+						"label": "Tax credits",
+						"type": "number"
+					},
+					{
+						"key": "teBetalenOfTeOntvangen",
+						"label": "Payable / receivable",
+						"type": "number"
+					},
+					{
+						"key": "digipoortReceiptConfirmationId",
+						"label": "Digipoort acknowledgement",
+						"type": "string"
+					}
+				],
+				"indexRoute": "IbAangiftenZzp"
+			}
+		},
+		{
+			"id": "IbOndernemersaftrekken",
+			"route": "/ib-aangifte/ondernemersaftrekken",
+			"type": "index",
+			"title": "Entrepreneur allowances",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBOndernemersaftrek",
+				"columns": [
+					{
+						"key": "taxReturnId",
+						"label": "Return",
+						"sortable": true
+					},
+					{
+						"key": "mkbProfitExemption",
+						"label": "MKB exemption",
+						"sortable": true
+					},
+					{
+						"key": "totalDeduction",
+						"label": "Total deduction",
+						"sortable": true
+					}
+				],
+				"defaultSort": "taxReturnId",
+				"detailRoute": "IbOndernemersaftrekDetail"
+			}
+		},
+		{
+			"id": "IbOndernemersaftrekDetail",
+			"route": "/ib-aangifte/ondernemersaftrekken/:id",
+			"type": "detail",
+			"title": "Entrepreneur allowance",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBOndernemersaftrek",
+				"_note": "FINANCIAL / TRANSACTION archetype (native CnDetailPage). A supporting entrepreneur-allowance schedule (zelfstandigenaftrek/MKB-vrijstelling) that feeds one parent IB return via FK aangifteId. It is a computed sub-record of the parent filing, so no lifecycle or relatedLists of its own - just fields plus an audit tab for traceability back to the parent filing's audit trail. NO comms leaves and no files - it is a derived line of a filed return.",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				},
+				"fields": [
+					{
+						"key": "taxReturnId",
+						"label": "Return",
+						"type": "string"
+					},
+					{
+						"key": "mkbProfitExemption",
+						"label": "MKB profit exemption",
+						"type": "number"
+					},
+					{
+						"key": "totalDeduction",
+						"label": "Total deduction",
+						"type": "number"
+					}
+				],
+				"indexRoute": "IbOndernemersaftrekken"
+			}
+		},
+		{
+			"id": "IbLijfrenteBeheer",
+			"route": "/ib-aangifte/lijfrente",
+			"type": "index",
+			"title": "Annuity management",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBLijfrenteAOV",
+				"columns": [
+					{
+						"key": "taxReturnId",
+						"label": "Return",
+						"sortable": true
+					},
+					{
+						"key": "totalDeductible",
+						"label": "Total deductible",
+						"sortable": true
+					}
+				],
+				"defaultSort": "taxReturnId",
+				"detailRoute": "IbLijfrenteBeheerDetail"
+			}
+		},
+		{
+			"id": "IbLijfrenteBeheerDetail",
+			"route": "/ib-aangifte/lijfrente/:id",
+			"type": "detail",
+			"title": "Annuity & AOV",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBLijfrenteAOV",
+				"_note": "FINANCIAL / TRANSACTION archetype (native CnDetailPage). Annuity & disability-insurance (AOV) deduction schedule feeding one parent IB return via FK aangifteId - a computed sub-record of the parent filing, so no lifecycle or relatedLists of its own - just fields plus an audit tab for traceability. NO comms leaves and no files.",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				},
+				"fields": [
+					{
+						"key": "taxReturnId",
+						"label": "Return",
+						"type": "string"
+					},
+					{
+						"key": "totalDeductible",
+						"label": "Total deductible",
+						"type": "number"
+					}
+				],
+				"indexRoute": "IbLijfrenteBeheer"
+			}
+		},
+		{
+			"id": "IbBox3Vermogen",
+			"route": "/ib-aangifte/box3",
+			"type": "index",
+			"title": "Box 3 assets",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBBox3Vermogen",
+				"columns": [
+					{
+						"key": "taxReturnId",
+						"label": "Return",
+						"sortable": true
+					},
+					{
+						"key": "referenceDate",
+						"label": "Reference date",
+						"sortable": true
+					},
+					{
+						"key": "totalYieldBasis",
+						"label": "Yield basis",
+						"sortable": true
+					},
+					{
+						"key": "taxableBasis",
+						"label": "Taxable basis",
+						"sortable": true
+					}
+				],
+				"defaultSort": "referenceDate",
+				"detailRoute": "IbBox3VermogenDetail"
+			}
+		},
+		{
+			"id": "IbBox3VermogenDetail",
+			"route": "/ib-aangifte/box3/:id",
+			"type": "detail",
+			"title": "Box 3 assets",
+			"config": {
+				"register": "shillinq",
+				"schema": "IBBox3Vermogen",
+				"_note": "FINANCIAL / TRANSACTION archetype (native CnDetailPage). Box 3 net-wealth schedule (savings + other assets minus debts) feeding one parent IB return via FK aangifteId - a computed sub-record of the parent filing, so no lifecycle or relatedLists of its own - just fields plus an audit tab for traceability. NO comms leaves and no files - a derived asset line of a filed return.",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+							]
+						}
+					]
+				},
+				"fields": [
+					{
+						"key": "taxReturnId",
+						"label": "Return",
+						"type": "string"
+					},
+					{
+						"key": "referenceDate",
+						"label": "Reference date",
+						"type": "string"
+					},
+					{
+						"key": "bankEnSavingsBalances",
+						"label": "Bank & savings balances",
+						"type": "number"
+					},
+					{
+						"key": "overigeBezittingen",
+						"label": "Other assets",
+						"type": "number"
+					},
+					{
+						"key": "debts",
+						"label": "Debts",
+						"type": "number"
+					},
+					{
+						"key": "totalYieldBasis",
+						"label": "Yield basis",
+						"type": "number"
+					},
+					{
+						"key": "taxExemptEquity",
+						"label": "Tax-free allowance",
+						"type": "number"
+					},
+					{
+						"key": "taxableBasis",
+						"label": "Taxable basis",
+						"type": "number"
+					}
+				],
+				"indexRoute": "IbBox3Vermogen"
+			}
+		}
+	]
+}

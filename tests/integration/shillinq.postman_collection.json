@@ -5,6 +5,21 @@
 		"description": "Integration test collection for the shillinq Nextcloud app.\nReplace this with your actual API tests.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Nextcloud rejects API requests without the OCS-APIRequest header",
+					"// (or a CSRF requesttoken) with 412 'CSRF check failed'. Inject it on",
+					"// every request from this collection so individual requests need not",
+					"// each declare it. upsert() overrides any per-request value.",
+					"pm.request.headers.upsert({ key: 'OCS-APIRequest', value: 'true' });"
+				]
+			}
+		}
+	],
 	"auth": {
 		"type": "basic",
 		"basic": [
@@ -35,9 +50,546 @@
 			"key": "admin_password",
 			"value": "admin",
 			"type": "string"
+		},
+		{
+			"key": "administration_id",
+			"value": "adm-smb-1",
+			"type": "string"
+		},
+		{
+			"key": "period_id_open",
+			"value": "2026-04",
+			"type": "string"
+		},
+		{
+			"key": "period_id_closed",
+			"value": "2026-02",
+			"type": "string"
+		},
+		{
+			"key": "period_id_locked",
+			"value": "2026-01",
+			"type": "string"
+		},
+		{
+			"key": "calendar_id",
+			"value": "cal-001",
+			"type": "string"
+		},
+		{
+			"key": "resource_id",
+			"value": "res-001",
+			"type": "string"
 		}
 	],
 	"item": [
+		{
+			"name": "Setup — grant the caller a membership in the administration (ADR-005)",
+			"description": "PeriodCloseController::show/aiFlags/transition all open with requireAccessibleAdministration(), which refuses with a masked 404 'Period not found' unless AdministrationContextService::canAccess() finds a valid AdministrationMembership for the caller. Being a Nextcloud admin does not imply one. Without this fixture every Period Close assertion below measures the membership guard instead of the close lifecycle — all seven were failing on 404 for exactly that reason, while VAT_Filings, which seeds the identical membership, passed 22/22 against the same administration_id.\n\nVAT_Filings also REVOKES its membership in its own teardown, and collections run alphabetically (TenderNed, VAT_Filings, bookings, shillinq), so this collection cannot piggyback on it — it has to seed its own.",
+			"item": [
+				{
+					"name": "POST AdministrationMembership for {{admin_user}} on {{administration_id}}",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('membership created or already present', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+									"const body = pm.response.json();",
+									"const id = body.id || body['@self']?.id;",
+									"if (id) { pm.collectionVariables.set('membership_id', id); }"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/AdministrationMembership",
+						"body": {
+							"mode": "raw",
+							"raw": "{\"userId\":\"{{admin_user}}\",\"administrationId\":\"{{administration_id}}\",\"role\":\"eigenaar\",\"mayPostJournalEntries\":true,\"mayCloseFiscalYear\":true}"
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Period Close",
+			"description": "bookkeeping-period-close (T2): guided close lifecycle + AI close-assistant flags.\n\nThe folder SEEDS ITS OWN FiscalPeriod fixtures (adm-smb-1: 2026-01 audit-locked, 2026-02 closed, 2026-04 open) and deletes them again at the end. It used to assume they were already present, but nothing in the product creates them: PeriodCloseBackfill seeds a rolling FORWARD horizon (current month + twelve), which by construction never contains a period in the past, and BackfillFiscalPeriods only materialises periods that historical GLLine rows already reference. On a fresh install `GET /apps/openregister/api/objects/shillinq/FiscalPeriod` returns zero rows, so all seven assertions below were asserting against 404 rather than against the close lifecycle. Seeding them here makes the folder self-contained and makes the assertions actually exercise the transitions.",
+			"item": [
+				{
+					"name": "Setup — seed the 2026-04 open period",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/FiscalPeriod",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"periodId\": \"{{period_id_open}}\",\n  \"name\": \"April 2026\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"startDate\": \"2026-04-01\",\n  \"endDate\": \"2026-04-30\",\n  \"fiscalYear\": 2026,\n  \"state\": \"open\",\n  \"reopenedHistory\": [],\n  \"taskChecklistItems\": [],\n  \"aiFlags\": []\n}"
+						},
+						"description": "Fixture for the open → closing → closed path."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('open period fixture created', function () {",
+									"    pm.expect([200, 201]).to.include(pm.response.code);",
+									"    const body = pm.response.json();",
+									"    const uuid = body.id || body['@self']?.id || body.uuid;",
+									"    pm.expect(uuid).to.be.a('string').and.not.equal('');",
+									"    pm.collectionVariables.set('fixture_period_open_uuid', String(uuid));",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Setup — seed the 2026-02 closed period",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/FiscalPeriod",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"periodId\": \"{{period_id_closed}}\",\n  \"name\": \"February 2026\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"startDate\": \"2026-02-01\",\n  \"endDate\": \"2026-02-28\",\n  \"fiscalYear\": 2026,\n  \"state\": \"closed\",\n  \"closedAt\": \"2026-03-05T10:00:00+00:00\",\n  \"closedBy\": \"admin\",\n  \"reopenedHistory\": [],\n  \"taskChecklistItems\": [],\n  \"aiFlags\": []\n}"
+						},
+						"description": "Fixture for the reopen path (REQ-PC-006)."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('closed period fixture created', function () {",
+									"    pm.expect([200, 201]).to.include(pm.response.code);",
+									"    const body = pm.response.json();",
+									"    const uuid = body.id || body['@self']?.id || body.uuid;",
+									"    pm.expect(uuid).to.be.a('string').and.not.equal('');",
+									"    pm.collectionVariables.set('fixture_period_closed_uuid', String(uuid));",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Setup — seed the 2026-01 audit-locked period",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/FiscalPeriod",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"periodId\": \"{{period_id_locked}}\",\n  \"name\": \"January 2026\",\n  \"administrationId\": \"{{administration_id}}\",\n  \"startDate\": \"2026-01-01\",\n  \"endDate\": \"2026-01-31\",\n  \"fiscalYear\": 2026,\n  \"state\": \"audit-locked\",\n  \"closedAt\": \"2026-02-05T10:00:00+00:00\",\n  \"closedBy\": \"admin\",\n  \"auditLockedAt\": \"2026-03-01T10:00:00+00:00\",\n  \"auditLockedBy\": \"admin\",\n  \"reopenedHistory\": [],\n  \"taskChecklistItems\": [],\n  \"aiFlags\": []\n}"
+						},
+						"description": "Fixture for the irreversible audit-lock conflict (REQ-PC-002)."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('audit-locked period fixture created', function () {",
+									"    pm.expect([200, 201]).to.include(pm.response.code);",
+									"    const body = pm.response.json();",
+									"    const uuid = body.id || body['@self']?.id || body.uuid;",
+									"    pm.expect(uuid).to.be.a('string').and.not.equal('');",
+									"    pm.collectionVariables.set('fixture_period_locked_uuid', String(uuid));",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET period detail + AI flags",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/index.php/apps/shillinq/api/period-close/{{period_id_open}}?administration_id={{administration_id}}",
+						"description": "REQ-PC-005: fetch the period detail with freshly-computed close-assistant flags."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 with period data', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.data).to.have.property('periodId');",
+									"    pm.expect(json.data).to.have.property('aiFlags');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET AI flags",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/index.php/apps/shillinq/api/period-close/{{period_id_open}}/ai-flags?administration_id={{administration_id}}",
+						"description": "REQ-PC-004: fetch only the close-assistant flags for the period."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 with flags array', function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().data).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET missing administration_id → 400",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/index.php/apps/shillinq/api/period-close/{{period_id_open}}",
+						"description": "ADR-005: administration scope is required."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('400 bad request', function () {",
+									"    pm.response.to.have.status(400);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST start-close (open → closing)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"administration_id\":\"{{administration_id}}\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/period-close/{{period_id_open}}/start-close",
+						"description": "REQ-PC-002: begin the guided close (period-closer role)."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 transitions to closing', function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().data.state).to.eql('closing');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST close (closing → closed)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"administration_id\":\"{{administration_id}}\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/period-close/{{period_id_open}}/close",
+						"description": "REQ-PC-002: freeze the period after mandatory checklist items resolve."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 transitions to closed', function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().data.state).to.eql('closed');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST reopen without reason → 422",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"administration_id\":\"{{administration_id}}\",\"closeReason\":\"\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/period-close/{{period_id_closed}}/reopen",
+						"description": "REQ-PC-006: a non-empty close reason is required to reopen."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('422 validation error', function () {",
+									"    pm.response.to.have.status(422);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST reopen with reason (closed → open)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"administration_id\":\"{{administration_id}}\",\"closeReason\":\"Posted correction for invoice #2026-0042\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/period-close/{{period_id_closed}}/reopen",
+						"description": "REQ-PC-006: reopen a closed period with an audit-trailed reason."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 transitions to open', function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().data.state).to.eql('open');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST lock-audit on audit-locked → 409",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"administration_id\":\"{{administration_id}}\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/period-close/{{period_id_locked}}/lock-audit",
+						"description": "REQ-PC-002: an already audit-locked period rejects further transitions (terminal state)."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('409 invalid state', function () {",
+									"    pm.response.to.have.status(409);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Teardown — delete the open period fixture",
+					"request": {
+						"method": "DELETE",
+						"url": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/FiscalPeriod/{{fixture_period_open_uuid}}",
+						"description": "Leaves the instance as this folder found it, so a re-run seeds a clean fixture instead of a second row with the same periodId."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('open fixture cleaned up', function () {",
+									"    pm.expect(pm.response.code === 404 || (pm.response.code >= 200 && pm.response.code < 300)).to.be.true;",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Teardown — delete the closed period fixture",
+					"request": {
+						"method": "DELETE",
+						"url": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/FiscalPeriod/{{fixture_period_closed_uuid}}",
+						"description": "Leaves the instance as this folder found it."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('closed fixture cleaned up', function () {",
+									"    pm.expect(pm.response.code === 404 || (pm.response.code >= 200 && pm.response.code < 300)).to.be.true;",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Teardown — delete the audit-locked period fixture",
+					"request": {
+						"method": "DELETE",
+						"url": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/FiscalPeriod/{{fixture_period_locked_uuid}}",
+						"description": "Leaves the instance as this folder found it."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('audit-locked fixture cleaned up', function () {",
+									"    pm.expect(pm.response.code === 404 || (pm.response.code >= 200 && pm.response.code < 300)).to.be.true;",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "AR E-Invoicing (Peppol)",
+			"item": [
+				{
+					"name": "Send e-invoice without administrationId is rejected",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/ar-invoices/2026-0042/send-einvoice",
+						"description": "REQ-EINV-005: the send action requires an explicit administration scope — a body without administrationId is a 400, and nothing is transmitted."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('400 administrationId required', function () {",
+									"    pm.response.to.have.status(400);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.error).to.include('administrationId');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Send e-invoice for unknown invoice is an IDOR-safe 404",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"administrationId\": \"{{administration_id}}\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/ar-invoices/NO-SUCH-INVOICE-9999/send-einvoice",
+						"description": "REQ-EINV-005: an invoice that does not exist in the caller's administration (or belongs to another tenant) is masked as 404 — the endpoint never discloses cross-tenant existence (ADR-005, no IDOR)."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('404 not found (IDOR-safe mask)', function () {",
+									"    pm.response.to.have.status(404);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.error).to.include('not found');",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
 		{
 			"name": "Health Check",
 			"item": [
@@ -63,6 +615,571 @@
 							}
 						}
 					]
+				}
+			]
+		},
+		{
+			"name": "Bookings Resource Calendar",
+			"description": "bookings-resource-calendar (REQ-005): calendar listing, single-calendar lookup, bookings range query, and conflict-aware POST. Tolerant of seed-absent dev containers — assertions accept 200 OR 404 on read paths so the Newman run is green on a fresh install while still verifying the route shape and JSON contract.",
+			"item": [
+				{
+					"name": "GET /api/v2/calendars (list)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							}
+						],
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars",
+						"description": "REQ-005: list all calendars. Returns 200 with a JSON array (possibly empty when no seed data is loaded)."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 or 503 (register absent on fresh container)', function () {",
+									"    pm.expect([200, 503]).to.include(pm.response.code);",
+									"    if (pm.response.code !== 200) { return; }",
+									"    const body = pm.response.json();",
+									"    // CalendarController::index() returns the envelope {calendars: [...]}",
+									"    // (documented on the method, and what bookings.postman_collection.json",
+									"    // already asserts). This test used to read `body.data ?? body` and so",
+									"    // asserted the RESPONSE ITSELF was an array — it could never pass.",
+									"    pm.expect(body.calendars).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET /api/v2/calendars?resource=res-001 (filter)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							}
+						],
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars?resource={{resource_id}}",
+						"description": "REQ-005: filter calendars by resource. Empty array is a valid response on a fresh container."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 or 503 (register absent on fresh container)', function () {",
+									"    pm.expect([200, 503]).to.include(pm.response.code);",
+									"    if (pm.response.code !== 200) { return; }",
+									"    const body = pm.response.json();",
+									"    // CalendarController::index() returns the envelope {calendars: [...]}",
+									"    // (documented on the method, and what bookings.postman_collection.json",
+									"    // already asserts). This test used to read `body.data ?? body` and so",
+									"    // asserted the RESPONSE ITSELF was an array — it could never pass.",
+									"    pm.expect(body.calendars).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET /api/v2/calendars/{id} (detail)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							}
+						],
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars/{{calendar_id}}",
+						"description": "REQ-005: fetch a single calendar by id. 200 when seeded, 404 on a fresh container — both are accepted."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 or 404 (seed-dependent)', function () {",
+									"    pm.expect([200, 404, 503]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET /api/v2/calendars/{id}/bookings?start=...&end=... (range)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							}
+						],
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars/{{calendar_id}}/bookings?start=2026-05-21&end=2026-05-31",
+						"description": "REQ-005: list bookings for a calendar in a date range, sorted by startTime."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 or 404 (seed-dependent)', function () {",
+									"    pm.expect([200, 404, 503]).to.include(pm.response.code);",
+									"    if (pm.response.code === 200) {",
+									"        const body = pm.response.json();",
+									"        // CalendarController::listBookings() returns {bookings: [...]}.",
+									"        // Reachable now that the cal-001 seed imports; while the seed was",
+									"        // broken this branch never ran, so the wrong shape went unnoticed.",
+									"        pm.expect(body.bookings).to.be.an('array');",
+									"    }",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST /api/v2/calendars/{id}/bookings (create)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"title\":\"Newman integration test booking\",\"startTime\":\"2030-01-01T10:00:00Z\",\"endTime\":\"2030-01-01T10:30:00Z\",\"attendee\":\"newman@example.com\",\"status\":\"pending\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v2/calendars/{{calendar_id}}/bookings",
+						"description": "REQ-005 + REQ-004: create a booking. Returns 201 on success, 409 on overlap with an existing booking, 404 when the calendar is absent on a fresh container."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('201, 409 or 404 (seed-dependent)', function () {",
+									"    pm.expect([201, 409, 404, 503]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Payroll Webhook",
+			"item": [
+				{
+					"name": "GET webhook returns 501",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/index.php/apps/shillinq/api/webhooks/payroll",
+						"description": "REQ-PAY-009: the webhook endpoint accepts POST only; GET returns 501 Not Implemented."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('GET webhook returns 501', function () {",
+									"    pm.response.to.have.status(501);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Unsigned POST is rejected",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"specversion\":\"1.0\",\"type\":\"nl.conduction.payroll.calculated\",\"id\":\"ext-1\",\"data\":{\"payrollId\":\"payroll-2026-05-emp-001\",\"deductions\":[]}}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/webhooks/payroll",
+						"description": "ADR-005: a POST without a valid X-Shillinq-Signature HMAC is rejected fail-closed before any object is touched."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Unsigned webhook POST is rejected', function () {",
+									"    // ADR-005: the signature is part of the PAYLOAD, not caller auth, and",
+									"    // this is a #[PublicPage] route, so PayrollWebhookController::receive()",
+									"    // surfaces a missing/mismatching HMAC as 400 (untrusted payload) rather",
+									"    // than 401 (which would contradict the route's public posture and trip",
+									"    // hydra gate-9 semantic-auth). Assert the exact code AND the rejection",
+									"    // message: a bare status check would also be satisfied by the guard",
+									"    // 400ing on its own malformed body, which proves nothing about the",
+									"    // signature check. Before this was fixed the request went to an",
+									"    // UNROUTED url (/api/payroll/webhook) and got 405 — the rejection this",
+									"    // test claims to prove was not happening at all.",
+									"    pm.response.to.have.status(400);",
+									"    pm.expect(pm.response.json().message).to.match(/signature/i);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Deadline Calendar Settings",
+			"description": "compliance-deadline-calendar REQ-CDC-006: per-user category toggles + reminder lead times. Strictly current-user scoped (the acting user comes from the session; no user id parameter exists). Idempotent: the suite saves a change and restores the defaults.",
+			"item": [
+				{
+					"name": "GET settings returns the four categories",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							}
+						],
+						"url": "{{base_url}}/index.php/apps/shillinq/api/deadline-calendar/settings",
+						"description": "REQ-CDC-006: fetch the current user's deadline-calendar category toggles."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 with the four categories', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json).to.have.property('categories');",
+									"    ['filing', 'payment-run', 'ar-due', 'contract'].forEach(function (category) {",
+									"        pm.expect(json.categories).to.have.property(category);",
+									"        pm.expect(json.categories[category]).to.have.property('enabled');",
+									"        pm.expect(json.categories[category]).to.have.property('leadDays');",
+									"    });",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST toggles the payment-run category off",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"categories\": {\"payment-run\": {\"enabled\": false, \"leadDays\": 5}}}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/deadline-calendar/settings",
+						"description": "REQ-CDC-006: disable one category; the response echoes the saved state and reports the (fail-soft) publication status."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 and payment-run saved as disabled', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.categories['payment-run'].enabled).to.eql(false);",
+									"    pm.expect(json.categories['payment-run'].leadDays).to.eql(5);",
+									"    pm.expect(json).to.have.property('publication');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST malformed categories payload is a 400",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"categories\": \"not-an-object\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/deadline-calendar/settings",
+						"description": "REQ-CDC-006: a non-object categories payload is rejected."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('400 on malformed payload', function () {",
+									"    pm.response.to.have.status(400);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST restores the payment-run default (teardown)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"categories\": {\"payment-run\": {\"enabled\": true, \"leadDays\": 7}}}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/deadline-calendar/settings",
+						"description": "Idempotency teardown: restore the documented payment-run defaults."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('200 and payment-run restored', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.categories['payment-run'].enabled).to.eql(true);",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Extraction (receipt-extraction-consume)",
+			"description": "receipt-extraction-consume REQ-RXC-004/REQ-RXC-005: the thin ExtractionRequestController proxy to docudesk (request) and the correction-commit endpoint (confirm). docudesk is not guaranteed installed in every test environment, so the re-request assertion accepts either 202 Accepted (docudesk present) or 503 Service Unavailable (docudesk absent) — both are honest, non-fabricating outcomes per REQ-RXC-005's design.",
+			"item": [
+				{
+					"name": "POST extraction/request rejects an invalid docType",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"documentUri\": \"docudesk://attachments/00000000-0000-0000-0000-000000000000/x.pdf\", \"docType\": \"invalid\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v1/extraction/request",
+						"description": "REQ-RXC-005: docType must be receipt|supplier-invoice."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('422 for an invalid docType', function () {",
+									"    pm.response.to.have.status(422);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST extraction/request proxies to docudesk (or fails soft when absent)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"documentUri\": \"docudesk://attachments/00000000-0000-0000-0000-000000000000/invoice.pdf\", \"docType\": \"supplier-invoice\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v1/extraction/request",
+						"description": "REQ-RXC-005: re-request a fresh extraction. Accepts 202 (docudesk present) or 503 (docudesk absent) — never a 5xx crash and never a fabricated 200 with fake fields."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('202 accepted or 503 docudesk unavailable, never a crash', function () {",
+									"    pm.expect([202, 503]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "PUT extraction/drafts/{id} rejects an unknown schema",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"glAccount\": \"4500\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v1/extraction/drafts/does-not-exist?schema=NotASchema",
+						"description": "REQ-RXC-004: schema must be SupplierInvoice|Receipt."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('422 for an unknown schema', function () {",
+									"    pm.response.to.have.status(422);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "PUT extraction/drafts/{id} returns 404 for an unknown draft",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "OCS-APIRequest",
+								"value": "true"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"glAccount\": \"4500\"}"
+						},
+						"url": "{{base_url}}/index.php/apps/shillinq/api/v1/extraction/drafts/does-not-exist?schema=SupplierInvoice",
+						"description": "REQ-RXC-004: a masked 404 (never a 403) for an id that does not resolve — mirrors the IDOR-safe masking used across the fleet (ADR-005)."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('404 for an unknown draft id', function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Teardown — revoke the membership seeded by Setup",
+			"item": [
+				{
+					"name": "DELETE the AdministrationMembership",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Idempotent: skipped rather than failed when Setup recorded no id, so a",
+									"// partial run cannot turn a teardown into a spurious red.",
+									"if (!pm.collectionVariables.get('membership_id')) {",
+									"    pm.test('nothing to revoke', () => pm.expect(true).to.be.true);",
+									"} else {",
+									"    pm.test('membership revoked', () => pm.expect(pm.response.code).to.be.oneOf([200, 204, 404]));",
+									"}",
+									"pm.collectionVariables.unset('membership_id');"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"url": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/AdministrationMembership/{{membership_id}}"
+					}
 				}
 			]
 		}

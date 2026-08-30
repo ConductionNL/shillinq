@@ -1,0 +1,113 @@
+{
+	"menu": [
+		{
+			"id": "Communicatie",
+			"label": "Communication",
+			"icon": "CommentOutline",
+			"order": 36,
+			"children": [
+				{
+					"id": "SmsReminderChannels",
+					"label": "SMS Reminder Channels",
+					"icon": "MessageTextOutline",
+					"route": "SmsReminderChannels",
+					"order": 10
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "SmsReminderChannels",
+			"route": "/communication/sms-reminder-channels",
+			"type": "index",
+			"title": "SMS Reminder Channels",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingSmsReminderChannel",
+				"columns": [
+					{ "key": "name", "label": "Name", "sortable": true },
+					{ "key": "provider", "label": "Provider", "sortable": true },
+					{ "key": "sendMinutesBefore", "label": "Send before (min)", "sortable": true },
+					{ "key": "senderId", "label": "Sender ID", "sortable": false },
+					{ "key": "status", "label": "Status", "sortable": true }
+				],
+				"defaultSort": "name",
+				"detailRoute": "SmsReminderChannelDetail"
+			}
+		},
+		{
+			"id": "SmsReminderChannelDetail",
+			"route": "/communication/sms-reminder-channels/:id",
+			"type": "detail",
+			"title": "SMS Reminder Channel",
+			"config": {
+				"register": "shillinq",
+				"schema": "BookingSmsReminderChannel",
+				"_note": "CONFIG/TECHNICAL archetype — an SMS reminder channel is provider configuration (template, timing, sender ID, retry policy, GDPR opt-out). It configures messaging but is not itself a conversation, so NO email/talk/calendar widget (the record declares no comms linkedType). Native shillinq detail contract: the config renders from config.fields[] (including the calculated renderedPreview / character-count / fallback-valid fields), lifecycleActions activate/deactivate the channel, and the immutable audit trail lives in the sidebar so an admin can see who changed the template or timing. NO files/aggregation — a channel config has no attachments and no financial totals.",
+				"fields": [
+					{ "key": "name", "label": "Name", "type": "string" },
+					{ "key": "status", "label": "Status", "type": "string" },
+					{ "key": "provider", "label": "Provider", "type": "string" },
+					{
+						"key": "messageTemplate",
+						"label": "Message template",
+						"type": "string",
+						"help": "SMS text with {{customerName}}, {{bookingRef}}, {{bookingDate}}, {{bookingTime}}, {{bookingLocation}}, {{organizationName}}, {{bookingUrl}}. Max 160 characters."
+					},
+					{
+						"key": "renderedPreview",
+						"label": "Preview (sample data)",
+						"type": "calculated",
+						"help": "Template rendered with example booking variables."
+					},
+					{
+						"key": "renderedPreviewLength",
+						"label": "Preview length",
+						"type": "calculated",
+						"help": "Character count of the rendered preview; a real send must stay within 160 characters."
+					},
+					{
+						"key": "sendMinutesBefore",
+						"label": "Send before (minutes)",
+						"type": "number",
+						"help": "Minutes before the booking start to dispatch the reminder (1440 = 24h)."
+					},
+					{
+						"key": "fallbackPhoneNumber",
+						"label": "Fallback phone number",
+						"type": "string",
+						"help": "Used when the booking contact has no number. NL/E.164 format (+31… or 06…)."
+					},
+					{ "key": "fallbackPhoneValid", "label": "Fallback number valid", "type": "calculated" },
+					{
+						"key": "senderId",
+						"label": "Sender ID",
+						"type": "string",
+						"help": "Shown to the recipient. Max 11 characters."
+					},
+					{ "key": "phoneNumberFormat", "label": "Phone number format", "type": "string" },
+					{ "key": "retryCount", "label": "Retry attempts", "type": "number" },
+					{ "key": "retryIntervalSeconds", "label": "Retry interval (seconds)", "type": "number" },
+					{
+						"key": "respectOptOut",
+						"label": "Respect opt-out",
+						"type": "boolean",
+						"help": "When on, recipients who opted out of SMS reminders are skipped (GDPR). Leave on unless this is a transactional-only channel."
+					},
+					{ "key": "logSmsCost", "label": "Log SMS cost", "type": "boolean" },
+					{ "key": "activatedAt", "label": "First activated", "type": "date-time" }
+				],
+				"lifecycleActions": true,
+				"indexRoute": "SmsReminderChannels",
+				"sidebarProps": {
+					"tabs": [
+						{ "id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{ "type": "data", "componentName": "openregister-audit-trail", "props": { "source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true } }
+						] }
+					]
+				}
+			}
+		}
+	]
+}

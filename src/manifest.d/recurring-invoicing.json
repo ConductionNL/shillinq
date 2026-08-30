@@ -1,0 +1,193 @@
+{
+    "_meta": {
+        "spdx-license": "EUPL-1.2",
+        "spdx-copyright": "2026 Conduction B.V.",
+        "change": "recurring-invoicing",
+        "adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+        "description": "Recurring Invoicing (Periodieke Facturen) — navigation + index/detail pages for RecurringInvoiceProfile, plus the create/edit modal launched from the index. Generated invoices are ordinary ARInvoice records; the detail page lists them via the recurringProfileId provenance filter (REQ-RIN-008)."
+    },
+    "menu": [
+        {
+            "id": "RecurringInvoicing",
+            "label": "Recurring Invoices",
+            "icon": "ReceiptTextOutline",
+            "route": "RecurringInvoiceProfiles",
+            "order": 46
+        }
+    ],
+    "pages": [
+        {
+            "id": "RecurringInvoiceProfiles",
+            "route": "/bookkeeping/recurring-invoices",
+            "type": "index",
+            "title": "Recurring Invoices",
+            "widgets": [
+                {
+                    "id": "new-recurring-profile-launcher",
+                    "widgetKey": "RecurringInvoiceProfileLauncher",
+                    "slot": "header-actions",
+                    "gridX": 0,
+                    "gridY": 0,
+                    "gridWidth": 12,
+                    "gridHeight": 1,
+                    "_note": "Closes the gap config._note_open_modal_gap describes. CnWidgetGrid resolves `widgetKey` against the CnAppRoot registry before its built-in table, so a kind:\"widget\" entry is the supported way to put a working control on an index page."
+                }
+            ],
+            "config": {
+                "register": "shillinq",
+                "schema": "RecurringInvoiceProfile",
+                "columns": [
+                    {
+                        "key": "name",
+                        "label": "Profile",
+                        "sortable": true
+                    },
+                    {
+                        "key": "customerReference",
+                        "label": "Customer",
+                        "sortable": true
+                    },
+                    {
+                        "key": "frequency",
+                        "label": "Frequency",
+                        "sortable": true
+                    },
+                    {
+                        "key": "nextRunDate",
+                        "label": "Next run",
+                        "sortable": true
+                    },
+                    {
+                        "key": "perPeriodNetAmount",
+                        "label": "Per period (net)",
+                        "sortable": false
+                    },
+                    {
+                        "key": "status",
+                        "label": "Status",
+                        "sortable": true
+                    }
+                ],
+                "defaultSort": "nextRunDate",
+                "detailRoute": "RecurringInvoiceProfileDetail",
+                "_note_open_modal_gap": "RESOLVED; history kept because the trap is easy to walk back into. The create affordance used to be `config.headerActions[{id: new-recurring-profile}]`, which failed twice over: CnActionsBar renders a manifest header action as an NcActionButton inside the COLLAPSED ⋯ overflow (nothing visible on the page), and its click only makes CnIndexPage `$emit('header-action')`, an event CnPageRenderer does not listen for. `type:\"open-modal\"` works on CnDashboardPage/CnDetailPage but NOT on CnIndexPage, so RecurringInvoiceProfileModal was unreachable. The inert entry is REMOVED and replaced by the header-actions slot widget above; RecurringInvoiceProfileLauncher owns the visible button and mounts the modal, keeping it isolated under src/modals/ (gate-13).",
+                "documentationUrl": "https://shillinq.conduction.nl/guides/recurring-invoices"
+            }
+        },
+        {
+            "id": "RecurringInvoiceProfileDetail",
+            "route": "/bookkeeping/recurring-invoices/:id",
+            "type": "detail",
+            "title": "Recurring Invoice Profile",
+            "config": {
+                "register": "shillinq",
+                "schema": "RecurringInvoiceProfile",
+                "_note": "MASTER billing-profile archetype — the template that mints periodic AR invoices. Body leads with a schema-driven Data widget (schedule mechanics: customer, frequency/interval, invoice day, next-run, last-billed period, plus the issue/delivery/payment-terms + indexation policy and lastRunStatus for inline failure visibility) beside a Related panel; the full-width child list is the actual generated invoices (ARInvoice filtered recurringProfileId=@objectId, rowRoute ARInvoiceDetail) as provenance evidence, with a KPI strip of generated-invoice count and total billed. A profile schedules billing, it does not correspond — no comms leaves. Audit trail moves to the sidebar per policy.",
+                "indexRoute": "RecurringInvoiceProfiles",
+                "widgets": [
+                    {
+                        "id": "profile-schedule",
+                        "type": "data",
+                        "title": "Identity & schedule",
+                        "icon": "Calendar",
+                        "content": {
+                            "columns": 2,
+                            "include": [
+                                "name",
+                                "customerReference",
+                                "frequency",
+                                "interval",
+                                "startDate",
+                                "endCondition",
+                                "invoiceDay",
+                                "nextRunDate",
+                                "lastBillingPeriod",
+                                "remainingOccurrences",
+                                "status"
+                            ],
+                            "overrides": { "status": { "editable": false } }
+                        }
+                    },
+                    {
+                        "id": "profile-stats",
+                        "type": "stats-block",
+                        "title": "Generation position",
+                        "icon": "ChartBar",
+                        "content": {
+                            "entries": [
+                                { "title": "Invoices generated", "register": "shillinq", "schema": "ARInvoice", "metric": "count", "filter": { "recurringProfileId": "@objectId" }, "route": "AccountsReceivable" },
+                                { "title": "Total billed", "register": "shillinq", "schema": "ARInvoice", "metric": "sum", "field": "grossAmount", "filter": { "recurringProfileId": "@objectId" }, "format": "currency" }
+                            ]
+                        }
+                    },
+                    {
+                        "id": "profile-billing",
+                        "type": "data",
+                        "title": "Billing & delivery",
+                        "icon": "Cash",
+                        "content": {
+                            "columns": 2,
+                            "include": [
+                                "issueMode",
+                                "deliveryChannel",
+                                "paymentTermsDays",
+                                "indexationPercent",
+                                "sepaCollection",
+                                "contractReference",
+                                "currency",
+                                "administrationId",
+                                "lastRunStatus",
+                                "lastRunError"
+                            ]
+                        }
+                    },
+                    {
+                        "id": "profile-related",
+                        "type": "related",
+                        "title": "Links",
+                        "icon": "LinkVariant"
+                    },
+                    {
+                        "id": "profile-invoices",
+                        "type": "object-list",
+                        "title": "Generated invoices",
+                        "icon": "FileDocument",
+                        "content": {
+                            "register": "shillinq",
+                            "schema": "ARInvoice",
+                            "filter": { "recurringProfileId": "@objectId" },
+                            "sort": { "field": "invoiceDate", "dir": "desc" },
+                            "limit": 20,
+                            "columns": [
+                                { "key": "invoiceNumber", "label": "Invoice #" },
+                                { "key": "invoiceDate", "label": "Date" },
+                                { "key": "grossAmount", "label": "Total (EUR)" },
+                                { "key": "lifecycleState", "label": "Status" }
+                            ],
+                            "rowRoute": "ARInvoiceDetail",
+                            "viewAllRoute": "AccountsReceivable",
+                            "viewAllQuery": { "recurringProfileId": "@objectId" },
+                            "emptyText": "No invoices generated yet from this profile.",
+                            "allowCreate": false
+                        }
+                    }
+                ],
+                "layout": [
+                    { "id": "1", "widgetId": "profile-schedule", "gridX": 0, "gridY": 0, "gridWidth": 8, "gridHeight": 6 },
+                    { "id": "2", "widgetId": "profile-stats", "gridX": 8, "gridY": 0, "gridWidth": 4, "gridHeight": 6 },
+                    { "id": "3", "widgetId": "profile-billing", "gridX": 0, "gridY": 6, "gridWidth": 8, "gridHeight": 5 },
+                    { "id": "4", "widgetId": "profile-related", "gridX": 8, "gridY": 6, "gridWidth": 4, "gridHeight": 5 },
+                    { "id": "5", "widgetId": "profile-invoices", "gridX": 0, "gridY": 11, "gridWidth": 12, "gridHeight": 5 }
+                ],
+                "lifecycleActions": true,
+                "sidebar": {
+                    "enabled": true,
+                    "showMetadata": true,
+                    "tabs": [
+                        { "id": "audit", "label": "History", "icon": "History", "widgets": [ { "type": "audit" } ] }
+                    ]
+                }
+            }
+        }
+    ]
+}

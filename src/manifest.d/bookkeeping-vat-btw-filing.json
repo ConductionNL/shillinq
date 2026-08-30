@@ -1,0 +1,196 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "bookkeeping-vat-btw-filing",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
+		"description": "Tier-3 BTW-aangifte UI: two top-level navigation entries (VAT Returns, VAT Reports), an index + detail page for VATReturn, and a dashboard page for the report overview. Index columns reflect the return summary; detail shows declarations + lines + the lifecycle action buttons (Submit, Rebase) driven by VATReturn.statusCode."
+	},
+	"menu": [
+		{
+			"id": "VATReturns",
+			"label": "BTW return",
+			"icon": "PercentOutline",
+			"route": "VATReturns",
+			"order": 70
+		},
+		{
+			"id": "VATReports",
+			"label": "BTW report",
+			"icon": "PercentOutline",
+			"route": "VATReports",
+			"order": 71
+		}
+	],
+	"pages": [
+		{
+			"id": "VATReturns",
+			"route": "/vat-returns",
+			"type": "index",
+			"title": "BTW returns",
+			"config": {
+				"register": "shillinq",
+				"schema": "BtwAangifte",
+				"columns": [
+					{"key": "returnNumber", "label": "Return number", "sortable": true},
+					{"key": "period", "label": "Period", "sortable": true},
+					{"key": "periodYear", "label": "Year", "sortable": true},
+					{"key": "periodNumber", "label": "#", "sortable": true},
+					{"key": "regime", "label": "Regime", "sortable": true},
+					{"key": "totalVATCollected", "label": "BTW collected", "sortable": true, "type": "money"},
+					{"key": "totalVATPaid", "label": "Input tax", "sortable": true, "type": "money"},
+					{"key": "vatBalance", "label": "Balance", "sortable": true, "type": "money"},
+					{"key": "statusCode", "label": "Status", "sortable": true}
+				],
+				"filters": [
+					{"key": "period", "label": "Period", "type": "select", "options": ["quarter", "month", "year"]},
+					{"key": "regime", "label": "Regime", "type": "select", "options": ["standard", "kor", "reverse-charge"]},
+					{"key": "statusCode", "label": "Status", "type": "select", "options": ["draft", "submitted", "verified", "filed"]}
+				],
+				"defaultSort": "periodYear",
+				"detailRoute": "VATReturnDetail"
+			}
+		},
+		{
+			"id": "VATReturnDetail",
+			"route": "/vat-returns/:id",
+			"type": "detail",
+			"title": "BTW return",
+			"config": {
+				"_note": "A BTW return (VATReturn) is a tax-filing TRANSACTION: a period's declarations and VAT lines rolled up into collected BTW, input tax and the balance owed/refundable, driven through a draft → submitted → verified → filed lifecycle. Body leads with the return header data plus three currency KPIs (BTW collected, input tax, balance); the Declarations (rubrieken) and Lines child tables sit below as the auditable breakdown, and the Submit/Verify/File lifecycle buttons are gated on statusCode. Source documents and the immutable audit trail live in the sidebar. No comms — a tax filing, not a conversation.",
+				"register": "shillinq",
+				"schema": "BtwAangifte",
+				"aggregations": [
+					{"id": "vatCollected", "title": "BTW collected", "field": "totalVATCollected", "metric": "value", "format": "currency"},
+					{"id": "vatPaid", "title": "Input tax", "field": "totalVATPaid", "metric": "value", "format": "currency"},
+					{"id": "vatBalance", "title": "Balance", "field": "vatBalance", "metric": "value", "format": "currency"}
+				],
+				"fields": [
+					{"key": "returnNumber", "label": "Return number", "type": "string"},
+					{"key": "period", "label": "Period", "type": "string"},
+					{"key": "periodYear", "label": "Fiscal year", "type": "number"},
+					{"key": "periodNumber", "label": "Period number", "type": "number"},
+					{"key": "startDate", "label": "Start date", "type": "string"},
+					{"key": "endDate", "label": "End date", "type": "string"},
+					{"key": "regime", "label": "Regime", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"},
+					{"key": "statusCode", "label": "Status", "type": "string"},
+					{"key": "submissionDate", "label": "Submitted on", "type": "string"},
+					{"key": "verificationDate", "label": "Confirmed on", "type": "string"},
+					{"key": "filingReference", "label": "Belastingdienst reference", "type": "string"},
+					{"key": "totalVATCollected", "label": "BTW collected", "type": "number"},
+					{"key": "totalVATPaid", "label": "Input tax", "type": "number"},
+					{"key": "vatBalance", "label": "Balance", "type": "number"},
+					{"key": "totalTaxableAmount", "label": "Taxable turnover", "type": "number"},
+					{"key": "notes", "label": "Notes", "type": "string"}
+				],
+				"sections": [
+					{
+						"id": "Declarations",
+						"label": "Sections",
+						"type": "table",
+						"register": "shillinq",
+						"schema": "VATDeclaration",
+						"filter": {"returnId": "@self.id"},
+						"columns": [
+							{"key": "type", "label": "Type", "sortable": true},
+							{"key": "taxRate", "label": "Rate %", "sortable": true},
+							{"key": "totalTaxableAmount", "label": "Taxable", "sortable": true, "type": "money"},
+							{"key": "totalVATAmount", "label": "BTW", "sortable": true, "type": "money"},
+							{"key": "lineCount", "label": "Lines", "sortable": true}
+						]
+					},
+					{
+						"id": "Lines",
+						"label": "Lines",
+						"type": "table",
+						"register": "shillinq",
+						"schema": "VATLine",
+						"filter": {"returnId": "@self.id"},
+						"columns": [
+							{"key": "lineNumber", "label": "#", "sortable": true},
+							{"key": "glAccountNumber", "label": "Ledger", "sortable": true},
+							{"key": "glAccountName", "label": "Name", "sortable": true},
+							{"key": "type", "label": "Type", "sortable": true},
+							{"key": "taxRate", "label": "Rate %", "sortable": true},
+							{"key": "taxableAmount", "label": "Taxable", "sortable": true, "type": "money"},
+							{"key": "vatAmount", "label": "BTW", "sortable": true, "type": "money"}
+						]
+					}
+				],
+				"actions": [
+					{"id": "submit", "label": "Submit", "type": "lifecycle", "transition": "submit", "enabledWhen": "statusCode === 'draft'"},
+					{"id": "rebase", "label": "Reopen", "type": "lifecycle", "transition": "rebase", "enabledWhen": "statusCode === 'submitted'"},
+					{"id": "verify", "label": "Record confirmation", "type": "lifecycle", "transition": "verify", "enabledWhen": "statusCode === 'submitted'"},
+					{"id": "file", "label": "Finalize", "type": "lifecycle", "transition": "file", "enabledWhen": "statusCode === 'verified'"}
+				],
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{"id": "documents", "label": "Source documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "BtwAangifte", "objectId": ":id"}}
+						]},
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
+			}
+		},
+		{
+			"id": "VATReports",
+			"route": "/vat-reports",
+			"type": "dashboard",
+			"title": "BTW report",
+			"config": {
+				"register": "shillinq",
+				"schema": "BtwAangifte",
+				"widgets": [
+					{
+						"id": "summary",
+						"type": "summary",
+						"label": "BTW overview (year)",
+						"fields": [
+							{"key": "vatBalance", "label": "BTW balance", "aggregation": "sum"},
+							{"key": "totalVATCollected", "label": "BTW collected", "aggregation": "sum"},
+							{"key": "totalVATPaid", "label": "Input tax", "aggregation": "sum"}
+						]
+					},
+					{
+						"id": "periodTable",
+						"type": "table",
+						"label": "Returns per period",
+						"columns": [
+							{"key": "returnNumber", "label": "Return"},
+							{"key": "periodYear", "label": "Year"},
+							{"key": "periodNumber", "label": "Period"},
+							{"key": "regime", "label": "Regime"},
+							{"key": "totalVATCollected", "label": "Collected", "type": "money"},
+							{"key": "totalVATPaid", "label": "Input tax", "type": "money"},
+							{"key": "vatBalance", "label": "Balance", "type": "money"},
+							{"key": "statusCode", "label": "Status"}
+						]
+					},
+					{
+						"id": "trend",
+						"type": "lineChart",
+						"label": "BTW balance per quarter",
+						"xKey": "periodNumber",
+						"yKey": "vatBalance",
+						"groupBy": "periodYear"
+					},
+					{
+						"id": "statusDistribution",
+						"type": "pieChart",
+						"label": "Status distribution",
+						"groupBy": "statusCode"
+					}
+				],
+				"exports": [
+					{"id": "csv", "label": "Export CSV", "format": "csv"},
+					{"id": "pdf", "label": "Export PDF", "format": "pdf"}
+				]
+			}
+		}
+	]
+}

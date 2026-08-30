@@ -1,0 +1,480 @@
+{
+	"menu": [
+		{
+			"id": "BbvProvincie",
+			"label": "BBV Province",
+			"icon": "MapOutline",
+			"order": 75,
+			"children": [
+				{
+					"id": "BbvComplianceDashboard",
+					"label": "BBV Compliance Dashboard",
+					"icon": "ViewDashboardOutline",
+					"route": "BbvComplianceDashboard",
+					"order": 10
+				},
+				{
+					"id": "BudgetToProgrammeLinker",
+					"label": "Budget Links",
+					"icon": "CalculatorVariantOutline",
+					"route": "BudgetToProgrammeLinker",
+					"order": 20
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "BbvComplianceDashboard",
+			"route": "/bbv-provincie/compliance-dashboard",
+			"type": "dashboard",
+			"title": "BBV Compliance Dashboard",
+			"_note": "#866/#862. This body was declared under `config.dashboard.{kpis,charts,exceptions,filters}` against a named OpenRegister aggregation, `programmeBudgetVsActuals`. NEITHER EXISTED — CnDashboardPage has no `dashboard` prop and OpenRegister has no named-aggregation registry — so the page mounted an EMPTY dashboard for every visitor while the manifest validated, `pages[].config` being additionalProperties:true. It is now `widgets` + `layout` + `pageFilters`, the vocabulary CnDashboardPage reads, over `\\OCA\\Shillinq\\Service\\BbvProgrammeBudgetService`. NOT CLOSED: REQ-BBC-002 wants MULTI-select Programme and Budget status; `pageFilters` is single-select and nc-vue 2.3.0 has no multi-select page filter anywhere. Fiscal years are static here though the endpoint returns `fiscalYears[]`. REQ-BBC-004 is untouched.",
+			"config": {
+				"register": "shillinq",
+				"schema": "BbvProgrammeBudget",
+				"description": "Budget health per BBV programme for the active fiscal year.",
+				"pageFilters": [
+					{
+						"key": "bbvProgramme",
+						"label": "Programme",
+						"type": "select",
+						"default": "all",
+						"options": [
+							{ "value": "all", "label": "All programmes" },
+							{ "value": "ruimte", "label": "Ruimte" },
+							{ "value": "mobiliteit", "label": "Mobiliteit" },
+							{ "value": "water", "label": "Water" },
+							{ "value": "milieu", "label": "Milieu" },
+							{ "value": "cultuur", "label": "Cultuur" },
+							{ "value": "economie", "label": "Economie" },
+							{ "value": "bestuur", "label": "Bestuur" }
+						]
+					},
+					{
+						"key": "bbvFiscalYear",
+						"label": "Fiscal year",
+						"type": "select",
+						"default": "all",
+						"options": [
+							{ "value": "all", "label": "Current fiscal year" },
+							{ "value": "2026", "label": "2026" },
+							{ "value": "2025", "label": "2025" },
+							{ "value": "2024", "label": "2024" },
+							{ "value": "2023", "label": "2023" }
+						]
+					},
+					{
+						"key": "bbvBudgetStatus",
+						"label": "Budget status",
+						"type": "select",
+						"default": "all",
+						"options": [
+							{ "value": "all", "label": "All statuses" },
+							{ "value": "approved", "label": "Approved" },
+							{ "value": "provisional", "label": "Provisional" },
+							{ "value": "amended", "label": "Amended" }
+						]
+					}
+				],
+				"widgets": [
+					{
+						"id": "bbv-total-budget",
+						"title": "Total budget",
+						"type": "stat",
+						"content": {
+							"label": "Total budget",
+							"icon": "CashMultiple",
+							"format": { "style": "currency", "currency": "EUR", "decimals": 0 },
+							"endpointSource": {
+								"url": "/apps/shillinq/api/bbv-provincie/programme-budget-vs-actuals",
+								"params": {
+									"programme": "@workspace.bbvProgramme?",
+									"fiscalYear": "@workspace.bbvFiscalYear?",
+									"status": "@workspace.bbvBudgetStatus?"
+								}
+							},
+							"valueField": "totals.totalBudget"
+						}
+					},
+					{
+						"id": "bbv-committed",
+						"title": "Committed",
+						"type": "stat",
+						"content": {
+							"label": "Committed",
+							"icon": "FileSign",
+							"format": { "style": "currency", "currency": "EUR", "decimals": 0 },
+							"endpointSource": {
+								"url": "/apps/shillinq/api/bbv-provincie/programme-budget-vs-actuals",
+								"params": {
+									"programme": "@workspace.bbvProgramme?",
+									"fiscalYear": "@workspace.bbvFiscalYear?",
+									"status": "@workspace.bbvBudgetStatus?"
+								}
+							},
+							"valueField": "totals.committed"
+						}
+					},
+					{
+						"id": "bbv-spent",
+						"title": "Spent",
+						"type": "stat",
+						"content": {
+							"label": "Spent",
+							"icon": "CartOutline",
+							"format": { "style": "currency", "currency": "EUR", "decimals": 0 },
+							"endpointSource": {
+								"url": "/apps/shillinq/api/bbv-provincie/programme-budget-vs-actuals",
+								"params": {
+									"programme": "@workspace.bbvProgramme?",
+									"fiscalYear": "@workspace.bbvFiscalYear?",
+									"status": "@workspace.bbvBudgetStatus?"
+								}
+							},
+							"valueField": "totals.spent"
+						}
+					},
+					{
+						"id": "bbv-remaining",
+						"title": "Remaining",
+						"type": "stat",
+						"_note": "REQ-BBC-001's traffic light. `variantWhen` is FIRST-MATCH, so the red rule must precede the green one.",
+						"content": {
+							"label": "Remaining",
+							"icon": "WalletOutline",
+							"format": { "style": "currency", "currency": "EUR", "decimals": 0 },
+							"endpointSource": {
+								"url": "/apps/shillinq/api/bbv-provincie/programme-budget-vs-actuals",
+								"params": {
+									"programme": "@workspace.bbvProgramme?",
+									"fiscalYear": "@workspace.bbvFiscalYear?",
+									"status": "@workspace.bbvBudgetStatus?"
+								}
+							},
+							"valueField": "totals.remaining",
+							"variantWhen": [
+								{ "op": "lt", "value": 0, "variant": "error", "icon": "AlertCircleOutline" },
+								{ "op": "gte", "value": 0, "variant": "success" }
+							]
+						}
+					},
+					{
+						"id": "bbv-budget-vs-actuals",
+						"title": "Budget vs. actuals",
+						"type": "chart",
+						"content": {
+							"chartKind": "bar",
+							"horizontal": true,
+							"height": "100%",
+							"legend": true,
+							"valueFormat": "currency",
+							"emptyLabel": "No budget or GL data for this fiscal year yet",
+							"endpointSource": {
+								"url": "/apps/shillinq/api/bbv-provincie/programme-budget-vs-actuals",
+								"params": {
+									"programme": "@workspace.bbvProgramme?",
+									"fiscalYear": "@workspace.bbvFiscalYear?",
+									"status": "@workspace.bbvBudgetStatus?"
+								},
+								"responsePath": "programmes",
+								"labelsPath": "labels",
+								"series": [
+									{ "name": "Budget", "path": "budget" },
+									{ "name": "Spent", "path": "spent" },
+									{ "name": "Committed", "path": "committed" }
+								]
+							}
+						}
+					},
+					{
+						"id": "bbv-spend-trend",
+						"title": "Trend",
+						"type": "chart",
+						"content": {
+							"chartKind": "line",
+							"height": "100%",
+							"legend": true,
+							"valueFormat": "currency",
+							"emptyLabel": "No posted GL spend in this fiscal year yet",
+							"endpointSource": {
+								"url": "/apps/shillinq/api/bbv-provincie/programme-budget-vs-actuals",
+								"params": {
+									"programme": "@workspace.bbvProgramme?",
+									"fiscalYear": "@workspace.bbvFiscalYear?",
+									"status": "@workspace.bbvBudgetStatus?"
+								},
+								"responsePath": "trend",
+								"labelsPath": "months",
+								"series": [
+									{ "name": "Cumulative spend", "path": "cumulativeSpend" },
+									{ "name": "Budget", "path": "budgetReference" }
+								]
+							}
+						}
+					},
+					{
+						"id": "bbv-exceptions",
+						"title": "Exceptions",
+						"type": "object-table",
+						"content": {
+							"emptyText": "No overspends",
+							"rowRoute": "BudgetToProgrammeLinker",
+							"endpointSource": {
+								"url": "/apps/shillinq/api/bbv-provincie/programme-budget-vs-actuals",
+								"params": {
+									"programme": "@workspace.bbvProgramme?",
+									"fiscalYear": "@workspace.bbvFiscalYear?",
+									"status": "@workspace.bbvBudgetStatus?"
+								},
+								"responsePath": "exceptions"
+							},
+							"columns": [
+								{ "key": "programme", "label": "Programme" },
+								{
+									"key": "totalBudget",
+									"label": "Budget",
+									"formatter": "currency",
+									"formatterOptions": { "currency": "EUR", "decimals": 2 }
+								},
+								{
+									"key": "spent",
+									"label": "Spent",
+									"formatter": "currency",
+									"formatterOptions": { "currency": "EUR", "decimals": 2 }
+								},
+								{
+									"key": "committed",
+									"label": "Committed",
+									"formatter": "currency",
+									"formatterOptions": { "currency": "EUR", "decimals": 2 }
+								},
+								{
+									"key": "overspent",
+									"label": "Overspent",
+									"formatter": "currency",
+									"formatterOptions": { "currency": "EUR", "decimals": 2 }
+								}
+							]
+						}
+					}
+				],
+				"layout": [
+					{ "id": "bbv-layout-total-budget", "widgetId": "bbv-total-budget", "gridX": 0, "gridY": 0, "gridWidth": 3, "gridHeight": 2, "showTitle": false },
+					{ "id": "bbv-layout-committed", "widgetId": "bbv-committed", "gridX": 3, "gridY": 0, "gridWidth": 3, "gridHeight": 2, "showTitle": false },
+					{ "id": "bbv-layout-spent", "widgetId": "bbv-spent", "gridX": 6, "gridY": 0, "gridWidth": 3, "gridHeight": 2, "showTitle": false },
+					{ "id": "bbv-layout-remaining", "widgetId": "bbv-remaining", "gridX": 9, "gridY": 0, "gridWidth": 3, "gridHeight": 2, "showTitle": false },
+					{ "id": "bbv-layout-budget-vs-actuals", "widgetId": "bbv-budget-vs-actuals", "gridX": 0, "gridY": 2, "gridWidth": 7, "gridHeight": 5 },
+					{ "id": "bbv-layout-spend-trend", "widgetId": "bbv-spend-trend", "gridX": 7, "gridY": 2, "gridWidth": 5, "gridHeight": 5 },
+					{ "id": "bbv-layout-exceptions", "widgetId": "bbv-exceptions", "gridX": 0, "gridY": 7, "gridWidth": 12, "gridHeight": 4 }
+				]
+			}
+		},
+		{
+			"id": "BudgetToProgrammeLinker",
+			"route": "/bbv-provincie/budget-to-programme",
+			"type": "index",
+			"title": "Budget Links",
+			"_note": "#866/#862. `config.filters[]` below is UNCHANGED — it is the declaration, and it is now READ. CnIndexPage has no `filters` prop (its concepts are `quickFilters` and a schema-derived facet sidebar), so the array rendered nowhere. `slots.below-header` mounts `BbvLinkerFilterBar`, which reads it from the injected manifest, takes live values from `/api/bbv-provincie/gl-line-facets`, and writes `$route.query` — the deep-link path CnIndexPage's self-fetch merges into `fixedFilters`. Every facet lands on a property GLLine declares: accountType→`accountNumber[]` (accountType belongs to Account), programme→`programmeStructure`, assignment status→the `empty` operator. STILL UNBUILT, deliberately left declared: `config.bulkActions[]` (REQ-BBL-001 §2/§3) and `config.mappingStatus` (REQ-BBL-004); both are outside the five e2e specs this change closes.",
+			"slots": {
+				"below-header": "BbvLinkerFilterBar"
+			},
+			"config": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"selectable": true,
+				"defaultSort": "accountNumber",
+				"pageSize": 50,
+				"mappingStatus": {
+					"unmappedField": "programmeStructure",
+					"label": "Unmapped GL lines",
+					"thresholds": {
+						"red": 30,
+						"yellow": 10
+					}
+				},
+				"columns": [
+					{
+						"key": "accountNumber",
+						"label": "Account number",
+						"sortable": true
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"sortable": true
+					},
+					{
+						"key": "amount",
+						"label": "Amount",
+						"sortable": true
+					},
+					{
+						"key": "programmeStructure",
+						"label": "Current programme",
+						"sortable": true
+					},
+					{
+						"key": "periodId",
+						"label": "Period",
+						"sortable": true
+					}
+				],
+				"filters": [
+					{
+						"key": "accountType",
+						"label": "Account type",
+						"type": "select",
+						"options": [
+							"assets",
+							"liabilities",
+							"revenue",
+							"expenses"
+						]
+					},
+					{
+						"key": "programmeStructure",
+						"label": "Programme",
+						"type": "select",
+						"options": [
+							"ruimte",
+							"mobiliteit",
+							"water",
+							"milieu",
+							"cultuur",
+							"economie",
+							"bestuur",
+							"unmapped"
+						]
+					},
+					{
+						"key": "assignmentStatus",
+						"label": "Assignment status",
+						"type": "select",
+						"options": [
+							"mapped",
+							"unmapped"
+						]
+					}
+				],
+				"bulkActions": [
+					{
+						"id": "link-to-programme",
+						"label": "Link to Programme",
+						"icon": "LinkVariant",
+						"requiresSelection": true,
+						"dialog": {
+							"title": "Link to Programme",
+							"submitLabel": "Link",
+							"cancelLabel": "Cancel",
+							"fields": [
+								{
+									"key": "programmeStructure",
+									"label": "Target programme",
+									"type": "select",
+									"required": true,
+									"options": [
+										"ruimte",
+										"mobiliteit",
+										"water",
+										"milieu",
+										"cultuur",
+										"economie",
+										"bestuur"
+									]
+								},
+								{
+									"key": "programmeAssignedAt",
+									"label": "Effective date",
+									"type": "date",
+									"required": true,
+									"default": "@today",
+									"maxDate": "@today"
+								}
+							]
+						}
+					}
+				],
+				"detailRoute": "BudgetToProgrammeLinkerDetail"
+			}
+		},
+		{
+			"id": "BudgetToProgrammeLinkerDetail",
+			"route": "/bbv-provincie/budget-to-programme/:id",
+			"type": "detail",
+			"title": "GL line",
+			"config": {
+				"register": "shillinq",
+				"schema": "GLLine",
+				"_note": "GL LINE in its programme-assignment role (the BBV-province view of a single general-ledger line being mapped to a budget programme). The body shows the line's ledger data — account, description, amount, side, period — alongside the editable programma assignment and when it was assigned, which is the one action this screen exists for. A ledger posting is not a correspondence: no comms leaves. The audit trail sidebar is the mapping-change record, since re-assigning a line shifts spend between BBV programmes.",
+				"fields": [
+					{
+						"key": "accountNumber",
+						"label": "Account number",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Description",
+						"type": "string"
+					},
+					{
+						"key": "amount",
+						"label": "Amount",
+						"type": "number"
+					},
+					{
+						"key": "side",
+						"label": "Side",
+						"type": "string"
+					},
+					{
+						"key": "periodId",
+						"label": "Period",
+						"type": "string"
+					},
+					{
+						"key": "programmeStructure",
+						"label": "Programme",
+						"type": "enum",
+						"options": [
+							"ruimte",
+							"mobiliteit",
+							"water",
+							"milieu",
+							"cultuur",
+							"economie",
+							"bestuur"
+						]
+					},
+					{
+						"key": "programmeAssignedAt",
+						"label": "Assigned at",
+						"type": "string"
+					}
+				],
+				"indexRoute": "BudgetToProgrammeLinker",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}

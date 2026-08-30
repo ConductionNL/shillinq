@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-market-government-separation
 
 **Status:** proposed
@@ -5,7 +9,11 @@
 **Tier:** T4 (advanced engine)
 **Depends on:** bookkeeping-bbv-compliance (T3), bookkeeping-cost-centers-dimensions (T4), bookkeeping-general-ledger (T1)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping market government separation in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: market/government separation pages not yet implemented
 
@@ -296,6 +304,12 @@ This requirement is **deferred to Phase 3** but specified here for architecture.
 3. Signature + timestamp on the governance-side record are inherited into WMO audit trail.
 
 This ensures IKP-tarieven and ABB-exemptions carry formal bestuurlijke legitimatie and are auditable to the raad.
+
+#### Scenario: ABB blocked from raadsbesluit without linked raadsvoorstel
+
+- **GIVEN** the Phase 3 governance coupling is available and an ABB has no linked raadsvoorstel-id
+- **WHEN** an operator attempts to transition the ABB to status=raadsbesluit
+- **THEN** the system SHALL refuse the transition and require a linked raadsvoorstel-id, with the raad-decision's signature, timestamp and griffier-handtekening inherited into the WMO audit trail
 
 ### REQ-WMO-010: The system SHALL provide an immutable audit trail meeting ACM-onderzoek standards
 

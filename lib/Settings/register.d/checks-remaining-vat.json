@@ -1,0 +1,281 @@
+{
+  "x-shillinq-fragment": "checks-remaining-vat",
+  "components": {
+    "schemas": {
+      "ARInvoice": {
+        "version": "0.7.0",
+        "properties": {
+          "supplyType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "goods",
+              "service",
+              "immovable",
+              "event",
+              "admission",
+              "restaurant",
+              "transport-hire",
+              "tbe"
+            ],
+            "description": "Nature of the supply for place-of-supply determination (VAT Directive title V): goods, a general service, immovable-property service (art. 47), an event activity (art. 54) or admission (art. 53), restaurant/catering (art. 55), short-term hire of a means of transport (art. 56) or telecom/broadcasting/electronic services (art. 58).",
+            "title": "Supply Type"
+          },
+          "customerType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "business",
+              "private"
+            ],
+            "description": "Whether the customer is a taxable person (business, B2B) or a non-taxable person (private, B2C); selects the applicable general place-of-supply rule (art. 44 vs art. 45).",
+            "title": "Customer Type"
+          },
+          "goodsTransported": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the goods are dispatched/transported to the customer; selects art. 32 (place = dispatch origin) over art. 31 (place = goods location).",
+            "title": "Goods Transported"
+          },
+          "placeOfSupplyCountry": {
+            "type": "string",
+            "nullable": true,
+            "description": "The Member State the directive deems the place of supply (ISO 3166-1 alpha-2). Must equal the directive-mandated location for the supply nature (arts. 31/32/44/45/47/53/54/55/56/58).",
+            "title": "Place Of Supply Country"
+          },
+          "buyerCountryCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Buyer country (ISO 3166-1 alpha-2); the place of supply for B2B general services (art. 44) and B2C TBE services (art. 58).",
+            "title": "Buyer Country Code"
+          },
+          "sellerCountryCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Seller country (BT-40, ISO 3166-1 alpha-2); the place of supply for B2C general services (art. 45).",
+            "title": "Seller Country Code"
+          },
+          "goodsLocationCountry": {
+            "type": "string",
+            "nullable": true,
+            "description": "Country where the goods are located at the time of supply (ISO 3166-1 alpha-2); the place of supply for goods not dispatched/transported (art. 31).",
+            "title": "Goods Location Country"
+          },
+          "dispatchOriginCountry": {
+            "type": "string",
+            "nullable": true,
+            "description": "Country where dispatch/transport of the goods to the customer begins (ISO 3166-1 alpha-2); the place of supply for transported goods (art. 32).",
+            "title": "Dispatch Origin Country"
+          },
+          "propertyCountry": {
+            "type": "string",
+            "nullable": true,
+            "description": "Country where the immovable property is located (ISO 3166-1 alpha-2); the place of supply for property-connected services (art. 47).",
+            "title": "Property Country"
+          },
+          "eventCountry": {
+            "type": "string",
+            "nullable": true,
+            "description": "Country where the event/cultural activity actually takes place (ISO 3166-1 alpha-2); the place of supply under arts. 53/54.",
+            "title": "Event Country"
+          },
+          "serviceCountry": {
+            "type": "string",
+            "nullable": true,
+            "description": "Country where the service is physically carried out or the vehicle is put at the customer's disposal (ISO 3166-1 alpha-2); the place of supply under arts. 55/56.",
+            "title": "Service Country"
+          },
+          "continuousSupply": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the supply gives rise to successive statements of account or payments (art. 64), so the tax point falls on expiry of the period.",
+            "title": "Continuous Supply"
+          },
+          "periodEndDate": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "End of the statement/payment period for a continuous supply (art. 64); the tax point must fall on or after this date.",
+            "title": "Period End Date"
+          },
+          "prepaymentAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Amount of a payment on account received before the supply (art. 65); VAT becomes chargeable on receipt of this amount.",
+            "title": "Prepayment Amount"
+          },
+          "prepaymentReceiptDate": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "Date the prepayment was received (art. 65); the tax point must fall on or after this date.",
+            "title": "Prepayment Receipt Date"
+          },
+          "taxableAmountReduction": {
+            "type": "number",
+            "nullable": true,
+            "description": "Reduction of the taxable amount on cancellation, refusal, non-payment or price reduction after the supply (art. 90 bad-debt relief).",
+            "title": "Taxable Amount Reduction"
+          }
+        }
+      },
+      "APTransaction": {
+        "version": "0.2.0",
+        "properties": {
+          "intraCommunityAcquisition": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether this purchase is an intra-Community acquisition of goods (arts. 40/41/68); enables the ICA place / safety-net / tax-point checks.",
+            "title": "Intra Community Acquisition"
+          },
+          "acquisitionPlaceCountry": {
+            "type": "string",
+            "nullable": true,
+            "description": "Member State the directive deems the place of the intra-Community acquisition (ISO 3166-1 alpha-2); must equal the arrival country (art. 40).",
+            "title": "Acquisition Place Country"
+          },
+          "arrivalCountry": {
+            "type": "string",
+            "nullable": true,
+            "description": "Country where dispatch/transport of the acquired goods ends (ISO 3166-1 alpha-2); the place of the intra-Community acquisition (art. 40).",
+            "title": "Arrival Country"
+          },
+          "acquirerVatIdUsed": {
+            "type": "string",
+            "nullable": true,
+            "description": "The VAT identification number under which the acquirer made the acquisition (art. 41 safety-net Member State).",
+            "title": "Acquirer VAT ID Used"
+          },
+          "taxedAtArrivalProven": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the acquirer proves the acquisition was taxed at the place of arrival, disapplying the art. 41 safety-net.",
+            "title": "Taxed At Arrival Proven"
+          },
+          "supplyDate": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "Date of the chargeable event for the acquisition (art. 68); anchors the 15th-of-following-month tax-point backstop.",
+            "title": "Supply Date"
+          },
+          "invoiceNumber": {
+            "type": "string",
+            "nullable": true,
+            "description": "Number of the received supplier invoice held by the taxable person (art. 178 deduction condition).",
+            "title": "Invoice Number"
+          },
+          "invoiceReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "Alternative reference to the received invoice held by the taxable person (art. 178 deduction condition).",
+            "title": "Invoice Reference"
+          },
+          "deductible": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the input VAT on this purchase is deductible; enables the arts. 167/178 deduction-right checks.",
+            "title": "Deductible"
+          }
+        }
+      },
+      "VatReturnFiling": {
+        "version": "0.3.0",
+        "slug": "VatReturnFiling",
+        "title": "VAT Return Filing (compliance)",
+        "type": "object",
+        "properties": {
+          "outputVat": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total output VAT chargeable in the period (art. 250); the return states this to calculate the liability.",
+            "title": "Output VAT"
+          },
+          "deductibleVat": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total deductible (input) VAT in the period (art. 250); the return states this to calculate the deductions.",
+            "title": "Deductible VAT"
+          },
+          "amount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Net VAT payable/refundable for the period = outputVat - deductibleVat (art. 250).",
+            "title": "Amount"
+          },
+          "periodEndDate": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "End of the tax period the return covers (art. 252); the filing deadline must fall within two months of it.",
+            "title": "Period End Date"
+          },
+          "filingDeadline": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "Statutory deadline by which the return must be submitted (art. 252), no later than two months after the period end.",
+            "title": "Filing Deadline"
+          },
+          "intraCommunitySupplies": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total value of exempt intra-Community supplies / art.-44 reverse-charge services reported in the period; triggers the recapitulative-statement obligation (arts. 262/138).",
+            "title": "Intra Community Supplies"
+          },
+          "recapitulativeSubmitted": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the recapitulative statement (EC Sales List) covering the period's intra-Community supplies was submitted (arts. 262/138).",
+            "title": "Recapitulative Submitted"
+          },
+          "recapPeriodEndDate": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "End of the period the recapitulative statement covers (art. 263); the statement must be submitted within one month of it.",
+            "title": "Recap Period End Date"
+          },
+          "recapSubmittedDate": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "Date the recapitulative statement was submitted (art. 263), within one month of the recap period end.",
+            "title": "Recap Submitted Date"
+          },
+          "recapTotal": {
+            "type": "number",
+            "nullable": true,
+            "description": "Listed total value of the recapitulative statement (art. 264); reconciles to the reported intra-Community supplies.",
+            "title": "Recap Total"
+          },
+          "recapLines": {
+            "type": "array",
+            "nullable": true,
+            "description": "Recapitulative-statement lines (art. 264); each states a customer VAT identification number and the total value supplied to that customer in the period.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "customerVatId": {
+                  "type": "string",
+                  "description": "Customer VAT identification number (art. 264).",
+                  "title": "Customer VAT ID"
+                },
+                "value": {
+                  "type": "number",
+                  "description": "Total value of goods/services supplied to the customer in the period (art. 264).",
+                  "title": "Value"
+                }
+              }
+            },
+            "title": "Recap Lines"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a VAT Return Filing (compliance) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

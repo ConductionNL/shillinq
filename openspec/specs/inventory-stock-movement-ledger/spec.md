@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: inventory-stock-movement-ledger
 
 **Status:** proposed
@@ -6,7 +10,11 @@
 **Depends on:** `inventory-stock-tracking` (InventoryStock updates),
 `add-shillinq-general-ledger` (GL materialisation for receipt/issue COGS)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory stock movement ledger in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: stock movements index page not yet implemented
 
@@ -44,6 +52,8 @@ asset; issue: debit COGS, credit inventory asset).
 - **THEN** the sum MUST equal 50 (allowing for rounding to 2 decimals).
 
 ### REQ-SM-002: The `StockMove` schema SHALL declare a fixed minimum field set
+
+The system SHALL satisfy this requirement: The `StockMove` schema SHALL declare a fixed minimum field set.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -84,6 +94,8 @@ Schema.org annotation: `schema:Event` (per shillinq config.yaml `rules.specs` �
 
 ### REQ-SM-003: Stock move lifecycle SHALL be `draft → posted → cancelled` with immutability lock
 
+The system SHALL satisfy this requirement: Stock move lifecycle SHALL be `draft → posted → cancelled` with immutability lock.
+
 `StockMove` declares a state machine per `x-openregister-lifecycle`:
 
 - **draft**: operator creates move, can edit any field, quantity reserved from source location
@@ -109,6 +121,8 @@ Schema.org annotation: `schema:Event` (per shillinq config.yaml `rules.specs` �
   in `posted` state, linked to SM-001-CANCEL in `relations` (per OR built-in field).
 
 ### REQ-SM-004: Reserved quantity prevents over-allocation; draft move reserves from source
+
+The system SHALL satisfy this requirement: Reserved quantity prevents over-allocation; draft move reserves from source.
 
 On transition `draft`:
 
@@ -161,6 +175,8 @@ that comprise the balance. Operator can trace any quantity discrepancy to a spec
 
 ### REQ-SM-006: GL materialisation: receipt increases asset, issue decreases asset + posts COGS
 
+The system SHALL satisfy this requirement: GL materialisation: receipt increases asset, issue decreases asset + posts COGS.
+
 On transition `posted`, if `StockMove.movementType` is:
 
 - **receipt** (sourceLocationId=null): Post balanced GL entry: debit
@@ -195,6 +211,8 @@ GL lines reference the `StockMove` UUID via `subLedgerType: "inventory"`,
 
 ### REQ-SM-007: Audit trail with mandatory reason code on posting
 
+The system SHALL satisfy this requirement: Audit trail with mandatory reason code on posting.
+
 `auditTrail` (OR built-in field) captures every lifecycle transition with:
 
 - `timestamp` — exact timestamp of transition.
@@ -211,6 +229,8 @@ GL lines reference the `StockMove` UUID via `subLedgerType: "inventory"`,
 - **THEN** the request MUST be rejected with message "movementReason is required to post".
 
 ### REQ-SM-008: Manifest navigation entries for Stock Movements, Stock Ledger, Reserved Stock
+
+The system SHALL satisfy this requirement: Manifest navigation entries for Stock Movements, Stock Ledger, Reserved Stock.
 
 Add three manifest entries to `src/manifest.json`:
 

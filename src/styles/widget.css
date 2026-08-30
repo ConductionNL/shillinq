@@ -1,0 +1,227 @@
+/*
+ * Booking Self-service Widget — base styles + CSS variables.
+ *
+ * The widget is themable via CSS custom properties (REQ-WSW-005). Partners
+ * override the variables in their own stylesheet or inline before the widget
+ * mounts; we never read theme tokens from JavaScript. All identifiers are
+ * prefixed `--wsw-` (Widget Self-service Widget) to avoid collisions with
+ * partner CSS or the Nextcloud nldesign vars.
+ *
+ * Dark mode is toggled via `--wsw-dark-mode: 1` and inverts the surface
+ * tokens via a single ruleset to keep the cascade simple.
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+.wsw-widget {
+	--wsw-primary-color: #0082c9;
+	--wsw-secondary-color: #f1f1f1;
+	--wsw-text-color: #333333;
+	--wsw-text-muted: #6b6b6b;
+	--wsw-surface-color: #ffffff;
+	--wsw-border-color: #cccccc;
+	--wsw-success-color: #2d7500;
+	--wsw-error-color: #f83838;
+	--wsw-font-family:
+		-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	--wsw-font-size-base: 16px;
+	--wsw-spacing-unit: 8px;
+	--wsw-border-radius: 4px;
+	--wsw-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+	--wsw-dark-mode: 0;
+	box-sizing: border-box;
+	font-family: var(--wsw-font-family);
+	font-size: var(--wsw-font-size-base);
+	color: var(--wsw-text-color);
+	background: var(--wsw-surface-color);
+	padding: calc(var(--wsw-spacing-unit) * 2);
+	border-radius: var(--wsw-border-radius);
+	box-shadow: var(--wsw-shadow);
+	max-width: 480px;
+	margin: 0 auto;
+}
+
+.wsw-widget *,
+.wsw-widget *::before,
+.wsw-widget *::after {
+	box-sizing: inherit;
+}
+
+.wsw-widget--dark {
+	--wsw-text-color: #f1f1f1;
+	--wsw-text-muted: #b5b5b5;
+	--wsw-surface-color: #1f1f1f;
+	--wsw-secondary-color: #2a2a2a;
+	--wsw-border-color: #444444;
+}
+
+.wsw-widget__header {
+	margin-bottom: calc(var(--wsw-spacing-unit) * 2);
+}
+
+.wsw-widget__title {
+	margin: 0;
+	font-size: 1.25rem;
+	font-weight: 600;
+	color: var(--wsw-text-color);
+}
+
+.wsw-widget__step-indicator {
+	margin: 0 0 calc(var(--wsw-spacing-unit) * 2);
+	font-size: 0.85rem;
+	color: var(--wsw-text-muted);
+}
+
+.wsw-widget__field {
+	display: block;
+	margin-bottom: calc(var(--wsw-spacing-unit) * 2);
+}
+
+.wsw-widget__label {
+	display: block;
+	margin-bottom: var(--wsw-spacing-unit);
+	font-weight: 500;
+	color: var(--wsw-text-color);
+}
+
+.wsw-widget__input,
+.wsw-widget__select,
+.wsw-widget__textarea {
+	width: 100%;
+	padding: var(--wsw-spacing-unit) calc(var(--wsw-spacing-unit) * 1.5);
+	border: 1px solid var(--wsw-border-color);
+	border-radius: var(--wsw-border-radius);
+	background: var(--wsw-surface-color);
+	color: var(--wsw-text-color);
+	font-family: inherit;
+	font-size: inherit;
+	min-height: 44px; /* WCAG 2.1 AA touch target */
+}
+
+.wsw-widget__input:focus,
+.wsw-widget__select:focus,
+.wsw-widget__textarea:focus {
+	outline: 2px solid var(--wsw-primary-color);
+	outline-offset: 2px;
+}
+
+.wsw-widget__error {
+	color: var(--wsw-error-color);
+	font-size: 0.85rem;
+	margin-top: calc(var(--wsw-spacing-unit) / 2);
+	min-height: 1.2em;
+}
+
+.wsw-widget__button {
+	display: inline-block;
+	padding: var(--wsw-spacing-unit) calc(var(--wsw-spacing-unit) * 2);
+	border: 0;
+	border-radius: var(--wsw-border-radius);
+	background: var(--wsw-primary-color);
+	color: #ffffff;
+	font-family: inherit;
+	font-size: inherit;
+	font-weight: 500;
+	cursor: pointer;
+	min-height: 44px;
+	min-width: 96px;
+}
+
+.wsw-widget__button:disabled {
+	background: var(--wsw-secondary-color);
+	color: var(--wsw-text-muted);
+	cursor: not-allowed;
+}
+
+.wsw-widget__button:focus {
+	outline: 2px solid var(--wsw-text-color);
+	outline-offset: 2px;
+}
+
+.wsw-widget__button--secondary {
+	background: var(--wsw-secondary-color);
+	color: var(--wsw-text-color);
+}
+
+.wsw-widget__actions {
+	display: flex;
+	gap: var(--wsw-spacing-unit);
+	justify-content: flex-end;
+	margin-top: calc(var(--wsw-spacing-unit) * 2);
+}
+
+.wsw-widget__slot-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+	gap: var(--wsw-spacing-unit);
+}
+
+.wsw-widget__slot {
+	padding: var(--wsw-spacing-unit) calc(var(--wsw-spacing-unit) * 1.5);
+	border: 1px solid var(--wsw-border-color);
+	border-radius: var(--wsw-border-radius);
+	background: var(--wsw-surface-color);
+	color: var(--wsw-text-color);
+	cursor: pointer;
+	min-height: 44px;
+}
+
+.wsw-widget__slot--selected {
+	border-color: var(--wsw-primary-color);
+	background: var(--wsw-primary-color);
+	color: #ffffff;
+}
+
+.wsw-widget__summary {
+	border: 1px solid var(--wsw-border-color);
+	border-radius: var(--wsw-border-radius);
+	padding: calc(var(--wsw-spacing-unit) * 2);
+	margin-bottom: calc(var(--wsw-spacing-unit) * 2);
+}
+
+.wsw-widget__summary dt {
+	font-weight: 500;
+	color: var(--wsw-text-muted);
+}
+
+.wsw-widget__summary dd {
+	margin: 0 0 var(--wsw-spacing-unit) 0;
+}
+
+.wsw-widget__status {
+	padding: calc(var(--wsw-spacing-unit) * 2);
+	border-radius: var(--wsw-border-radius);
+	text-align: center;
+}
+
+.wsw-widget__status--success {
+	background: var(--wsw-success-color);
+	color: #ffffff;
+}
+
+.wsw-widget__status--error {
+	background: var(--wsw-error-color);
+	color: #ffffff;
+}
+
+/* Mobile breakpoint (REQ-WSW-005 responsive design) */
+@media (max-width: 480px) {
+	.wsw-widget {
+		padding: var(--wsw-spacing-unit);
+		max-width: 100%;
+		box-shadow: none;
+		border-radius: 0;
+	}
+
+	.wsw-widget__slot-grid {
+		grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+	}
+}
+
+/* Print: hide the widget in print context */
+@media print {
+	.wsw-widget {
+		display: none !important;
+	}
+}

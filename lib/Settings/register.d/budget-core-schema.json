@@ -1,0 +1,849 @@
+{
+  "_meta": {
+    "description": "budget-core-schema — the data foundation for begroting (budgeting): LedgerGroup (verzamelpost, REQ-BCS-004/005), AnnualBudget (the fiscal-year budget container + one-default invariant, REQ-BCS-006), and BudgetLine (AnnualBudget x LedgerGroup crossed with 12 monthly phased amounts + a source marker, REQ-BCS-007). Seeded from lib/Settings/statements/rj270-pl.json (P&L-shaped, not the balance sheet — a begroting is a monthly-phased flow plan, design.md §3c). The budget-vs-actuals roll-up (REQ-BCS-008) is a PHP service (BudgetVsActualsReader/Calculator), not a declarative aggregation — see design.md §6."
+  },
+  "components": {
+    "schemas": {
+      "LedgerGroup": {
+        "slug": "LedgerGroup",
+        "icon": "FormatListGroup",
+        "version": "0.1.0",
+        "title": "Ledger Group",
+        "description": "A per-administration, ordered, nestable grouping of GL accounts (verzamelpost) — the reusable grouping unit both the RJ270 statement manifests and the begroting grid need (REQ-BCS-004). Members are resolved at evaluation time from an optional accountRanges array plus explicit includedAccountNumbers/excludedAccountNumbers — never a declarative filter (design.md §3a). No lifecycle: a LedgerGroup is configuration, edited directly, consistent with Account/AllocationRule/the rubriek-mapping precedent.",
+        "x-schema-org": "schema:DefinedTermSet",
+        "x-spec": "openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "code",
+          "name",
+          "order"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this ledger group. Every reviewed schema in this codebase denormalises this directly, even under a parent FK (design.md §3b).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "code": {
+            "type": "string",
+            "description": "Short operator-facing identifier for this group.",
+            "example": "NETO",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display label.",
+            "example": "Netto-omzet",
+            "title": "Name"
+          },
+          "order": {
+            "type": "integer",
+            "default": 0,
+            "description": "Sibling ordering within the same parent (or among roots when parentLedgerGroupId is null).",
+            "example": 10,
+            "title": "Order"
+          },
+          "parentLedgerGroupId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Self-FK holding the parent LedgerGroup's `code` — a flat business key, exactly as the description says it mirrors: Account.parentAccountNumber references an accountNumber, not an object id. Null for a root group. WHY A BUSINESS KEY AND NOT AN ID: a real object id is not known at seed-authoring time, and OpenRegister's `@ref:` seed-token mechanism (which would mint one) is unusable here — it only walks `components.objects`, a bucket shillinq's fragment merge currently corrupts (see _objects_placement_note). A `code` is the only parent identity BOTH the PHP rollup and the manifest's declarative filter engine can resolve: the LedgerGroupDetail `children` relatedCollection filters `parentLedgerGroupId == @object.code`, and `@object.<field>` reads a FLAT payload field only — it cannot reach `@self.slug`. `code` is unique within an administration, which is the scope BudgetVsActualsReader loads. BudgetVsActualsReader keeps its id|slug|code lookup so hand-authored id or slug references still resolve. A parent with children uses its OWN BudgetLine if one exists; otherwise its value is the recursive sum of its children's resolved values (design.md §3d) — no double counting when both exist.",
+            "example": null,
+            "title": "Parent Ledger Group Code"
+          },
+          "accountRanges": {
+            "type": "array",
+            "default": [],
+            "description": "Inclusive numeric-string account-number range pairs (RJ270 array-pair convention, not the rubriek-mapping hyphenated string). Default membership before includedAccountNumbers/excludedAccountNumbers are applied (design.md §3a). A group with none of the three (accountRanges/includedAccountNumbers/excludedAccountNumbers) has no members — a valid, if useless, state the schema does not forbid.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string",
+                  "description": "Inclusive range start (accountNumber).",
+                  "example": "1000",
+                  "title": "Range Start Account Number"
+                },
+                "to": {
+                  "type": "string",
+                  "description": "Inclusive range end (accountNumber).",
+                  "example": "1099",
+                  "title": "Range End Account Number"
+                }
+              }
+            },
+            "example": [
+              {
+                "from": "1000",
+                "to": "1099"
+              }
+            ],
+            "title": "Account Ranges"
+          },
+          "includedAccountNumbers": {
+            "type": "array",
+            "default": [],
+            "description": "Explicit account-number adds, regardless of accountRanges — the escape hatch for a chart of accounts that does not align perfectly to RGS ranges.",
+            "items": {
+              "type": "string"
+            },
+            "example": [],
+            "title": "Included Account Numbers"
+          },
+          "excludedAccountNumbers": {
+            "type": "array",
+            "default": [],
+            "description": "Explicit carve-outs from any matching accountRanges entry.",
+            "items": {
+              "type": "string"
+            },
+            "example": [],
+            "title": "Excluded Account Numbers"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "nullable": true,
+            "description": "Date from which this group applies (ISO-8601), per the ChartOfAccountsMapping precedent.",
+            "example": "2026-01-01",
+            "title": "Effective From"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Date this group ceases to apply; null while open-ended.",
+            "example": null,
+            "title": "Effective To"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeping-approver": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a LedgerGroup is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "AnnualBudget": {
+        "slug": "AnnualBudget",
+        "icon": "CalendarRange",
+        "version": "0.1.0",
+        "title": "Annual Budget",
+        "description": "The fiscal-year budget container (begroting), crossed with LedgerGroup via BudgetLine (REQ-BCS-006). Carries the one-default invariant AnnualBudgetDefaultGuard enforces on the activate transition: at most one AnnualBudget per administrationId + fiscalYear may have isDefault=true — aligned now so the budget-scenarios follow-up change does not need to retrofit it (design.md §4b).",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "fiscalYear",
+          "name",
+          "isDefault",
+          "state"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this budget.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "description": "Fiscal year this budget applies to.",
+            "example": 2027,
+            "title": "Fiscal Year"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable budget name.",
+            "example": "Begroting 2027",
+            "title": "Name"
+          },
+          "isDefault": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether this is the default AnnualBudget for its administrationId + fiscalYear. Governs WHICH ONE WINS when more than one active budget could theoretically exist for the same year (e.g. a draft alternate/scenario budget under budget-scenarios) — a separate axis from state, which governs editability (design.md §4b).",
+            "example": true,
+            "title": "Is Default"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "closed"
+            ],
+            "description": "Lifecycle state. draft: under construction, lines editable. active: the budget in force for its fiscal year, lines still editable. closed: locked at year-end, superseded, retained for audit.",
+            "default": "draft",
+            "example": "draft",
+            "title": "State"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Under construction; lines editable."
+            },
+            "active": {
+              "label": "Active",
+              "description": "The budget in force for its fiscal year; lines still editable."
+            },
+            "closed": {
+              "label": "Closed",
+              "description": "Locked at year-end; superseded, retained for audit."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "draft",
+              "to": "active",
+              "label": "Activate budget",
+              "description": "Requires no other AnnualBudget with isDefault=true for the same administrationId+fiscalYear (REQ-BCS-006).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\AnnualBudgetDefaultGuard::isUniqueDefault"
+            },
+            "close": {
+              "from": "active",
+              "to": "closed",
+              "label": "Close budget",
+              "description": "Year-end lock; no further line edits."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeping-approver": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of an AnnualBudget is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "BudgetLine": {
+        "slug": "BudgetLine",
+        "icon": "TableColumn",
+        "version": "0.1.0",
+        "title": "Budget Line",
+        "description": "AnnualBudget x LedgerGroup crossed with 12 monthly phased amounts and a source marker (REQ-BCS-007) — the spreadsheet mental model's row. This change writes only source=manual lines (an operator typing a number); contract/recurring/projected/scenario are declared for budget-known-costs, budget-projection-engine and budget-scenarios to populate later. The cumulative 13th-column total is a UI concern (budget-grid-view), not a stored field, per design.md §5b.",
+        "x-spec": "openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "annualBudgetId",
+          "ledgerGroupId",
+          "source"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this budget line.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "annualBudgetId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "FK to the owning AnnualBudget.",
+            "title": "Annual Budget ID",
+            "$ref": "AnnualBudget"
+          },
+          "ledgerGroupId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "FK to the LedgerGroup this line phases amounts against.",
+            "title": "Ledger Group ID",
+            "$ref": "LedgerGroup"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "contract",
+              "recurring",
+              "projected",
+              "scenario"
+            ],
+            "default": "manual",
+            "description": "How this line's amounts were populated. manual: operator-entered (this change's only writer). contract/recurring: budget-known-costs. projected: budget-projection-engine. scenario: budget-scenarios.",
+            "example": "manual",
+            "title": "Source"
+          },
+          "month01Amount": {
+            "type": "integer",
+            "default": 0,
+            "description": "January budgeted amount, minor units (EUR cents), matching CommitmentBudget's own convention.",
+            "example": 0,
+            "title": "January Amount"
+          },
+          "month02Amount": {
+            "type": "integer",
+            "default": 0,
+            "description": "February budgeted amount, minor units (EUR cents).",
+            "example": 0,
+            "title": "February Amount"
+          },
+          "month03Amount": {
+            "type": "integer",
+            "default": 0,
+            "description": "March budgeted amount, minor units (EUR cents).",
+            "example": 0,
+            "title": "March Amount"
+          },
+          "month04Amount": {
+            "type": "integer",
+            "default": 0,
+            "description": "April budgeted amount, minor units (EUR cents).",
+            "example": 0,
+            "title": "April Amount"
+          },
+          "month05Amount": {
+            "type": "integer",
+            "default": 0,
+            "description": "May budgeted amount, minor units (EUR cents).",
+            "example": 0,
+            "title": "May Amount"
+          },
+          "month06Amount": {
+            "type": "integer",
+            "default": 0,
+            "description": "June budgeted amount, minor units (EUR cents).",
+            "example": 0,
+            "title": "June Amount"
+          },
+          "month07Amount": {
+            "type": "integer",
+            "default": 0,
+            "description": "July budgeted amount, minor units (EUR cents).",
+            "example": 0,
+            "title": "July Amount"
+          },
+          "month08Amount": {
+            "type": "integer",
+            "default": 0,
+            "description": "August budgeted amount, minor units (EUR cents).",
+            "example": 0,
+            "title": "August Amount"
+          },
+          "month09Amount": {
+            "type": "integer",
+            "default": 0,
+            "description": "September budgeted amount, minor units (EUR cents).",
+            "example": 0,
+            "title": "September Amount"
+          },
+          "month10Amount": {
+            "type": "integer",
+            "default": 0,
+            "description": "October budgeted amount, minor units (EUR cents).",
+            "example": 0,
+            "title": "October Amount"
+          },
+          "month11Amount": {
+            "type": "integer",
+            "default": 0,
+            "description": "November budgeted amount, minor units (EUR cents).",
+            "example": 0,
+            "title": "November Amount"
+          },
+          "month12Amount": {
+            "type": "integer",
+            "default": 0,
+            "description": "December budgeted amount, minor units (EUR cents).",
+            "example": 0,
+            "title": "December Amount"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional free-text note on this line.",
+            "example": null,
+            "title": "Notes"
+          }
+        },
+        "x-openregister-aggregations": {
+          "budgetVsActuals": {
+            "description": "DOCUMENTATION-ONLY declarative shape for the budget-vs-actuals roll-up (REQ-BCS-008). This is NOT the computed path this change depends on — BudgetVsActualsReader/BudgetVsActualsCalculator (PHP) is the primary, PHPUnit-tested path, because AggregationAnnotationValidator validates cross-schema filter fields against the DECLARING schema's own properties rather than the TARGET schema's, silently discarding the annotation on a mismatch (design.md §6a). UNVERIFIED / EXPECTED-DISCARDED pending the positive-control task (grep nextcloud.log for \"annotation on schema\" after a fresh import) — do not wire any page to depend on this block.",
+            "source": "GLLine",
+            "groupBy": [
+              "accountNumber"
+            ],
+            "filter": {},
+            "join": {
+              "through": "GLTransaction",
+              "on": "GLTransaction.state",
+              "filter": {
+                "state": "posted"
+              },
+              "select": [
+                "GLTransaction.postingDate"
+              ]
+            },
+            "sum": [
+              "amount"
+            ]
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeping-approver": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a BudgetLine is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  },
+  "_objects_placement_note": "These seed objects sit at the TOP-LEVEL `objects` key, NOT under `components.objects`. Both buckets are imported by OpenRegister's ImportHandler, but SettingsService::deepMergeConfig() currently mis-merges the `components.objects` bucket across fragments: measured on this tree it keeps only 98 of the ~483 objects the fragments declare, later fragments overwriting earlier ones index-by-index. Moving these 19 rows there loses 11 of them AND clobbers 19 rows belonging to other fragments. Do not move them until that merge bug is fixed (tracked separately). CONSEQUENCE: `@ref:<schema>:<slug>` seed-reference tokens — which the importer rewrites into the target object's UUID — are NOT usable here, because resolveSeedReferenceTokens() only walks `components.objects`. That is why parentLedgerGroupId below carries the parent's `code` (a flat business key, exactly like Account.parentAccountNumber) rather than an object id: it is the only parent identity that both the PHP rollup and the manifest's `@object.code` filter token can resolve. SECOND TRAP: the import loop only re-saves an ALREADY-IMPORTED object when the incoming `@self.version` compares HIGHER than the stored one (both default to '1.0.0'), so on any instance that already seeded these rows an edit here is a silent no-op — the old values stay in the database and nothing is logged at warning level. The eight child rows therefore carry `@self.version: \"1.0.1\"`; bump it again on any future change to their payload.",
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-omzet",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "OMZET",
+      "name": "Omzet",
+      "order": 10,
+      "parentLedgerGroupId": null,
+      "accountRanges": [],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-neto",
+        "version": "1.0.1",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "NETO",
+      "name": "Netto-omzet",
+      "order": 10,
+      "parentLedgerGroupId": "OMZET",
+      "accountRanges": [
+        {
+          "from": "8000",
+          "to": "8099"
+        }
+      ],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-wvpv",
+        "version": "1.0.1",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "WVPV",
+      "name": "Wijziging voorraden gereed product en onderhanden werk",
+      "order": 20,
+      "parentLedgerGroupId": "OMZET",
+      "accountRanges": [
+        {
+          "from": "8100",
+          "to": "8199"
+        }
+      ],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-geac",
+        "version": "1.0.1",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "GEAC",
+      "name": "Geactiveerde productie eigen bedrijf",
+      "order": 30,
+      "parentLedgerGroupId": "OMZET",
+      "accountRanges": [
+        {
+          "from": "8200",
+          "to": "8299"
+        }
+      ],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-ovop",
+        "version": "1.0.1",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "OVOP",
+      "name": "Overige bedrijfsopbrengsten",
+      "order": 40,
+      "parentLedgerGroupId": "OMZET",
+      "accountRanges": [
+        {
+          "from": "8300",
+          "to": "8399"
+        }
+      ],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-kostprijs-van-de-omzet",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "KPOMZET",
+      "name": "Kostprijs van de omzet",
+      "order": 20,
+      "parentLedgerGroupId": null,
+      "accountRanges": [],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-kpvo",
+        "version": "1.0.1",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "KPVO",
+      "name": "Kostprijs van de omzet",
+      "order": 10,
+      "parentLedgerGroupId": "KPOMZET",
+      "accountRanges": [
+        {
+          "from": "7000",
+          "to": "7099"
+        }
+      ],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-inkw",
+        "version": "1.0.1",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "INKW",
+      "name": "Inkoopwaarde van de omzet",
+      "order": 20,
+      "parentLedgerGroupId": "KPOMZET",
+      "accountRanges": [
+        {
+          "from": "7100",
+          "to": "7199"
+        }
+      ],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-personeel",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "PERSONEEL",
+      "name": "Personeel",
+      "order": 30,
+      "parentLedgerGroupId": null,
+      "accountRanges": [],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-lone",
+        "version": "1.0.1",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "LONE",
+      "name": "Lonen en salarissen",
+      "order": 10,
+      "parentLedgerGroupId": "PERSONEEL",
+      "accountRanges": [
+        {
+          "from": "4000",
+          "to": "4099"
+        }
+      ],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-socl",
+        "version": "1.0.1",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "SOCL",
+      "name": "Sociale lasten en pensioenlasten",
+      "order": 20,
+      "parentLedgerGroupId": "PERSONEEL",
+      "accountRanges": [
+        {
+          "from": "4100",
+          "to": "4199"
+        }
+      ],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-afsc",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "AFSC",
+      "name": "Afschrijvingen op vaste activa",
+      "order": 40,
+      "parentLedgerGroupId": null,
+      "accountRanges": [
+        {
+          "from": "4300",
+          "to": "4399"
+        }
+      ],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-huis",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "HUIS",
+      "name": "Huisvestingskosten",
+      "order": 50,
+      "parentLedgerGroupId": null,
+      "accountRanges": [
+        {
+          "from": "4400",
+          "to": "4499"
+        }
+      ],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-expl",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "EXPL",
+      "name": "Exploitatie- en machinekosten",
+      "order": 60,
+      "parentLedgerGroupId": null,
+      "accountRanges": [
+        {
+          "from": "4500",
+          "to": "4599"
+        }
+      ],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-vkko",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "VKKO",
+      "name": "Verkoopkosten",
+      "order": 70,
+      "parentLedgerGroupId": null,
+      "accountRanges": [
+        {
+          "from": "4600",
+          "to": "4699"
+        }
+      ],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-algk",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "ALGK",
+      "name": "Algemene kosten",
+      "order": 80,
+      "parentLedgerGroupId": null,
+      "accountRanges": [
+        {
+          "from": "4700",
+          "to": "4899"
+        }
+      ],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-rbat",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "RBAT",
+      "name": "Rentebaten",
+      "order": 90,
+      "parentLedgerGroupId": null,
+      "accountRanges": [
+        {
+          "from": "8400",
+          "to": "8449"
+        }
+      ],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-rlst",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "RLST",
+      "name": "Rentelasten",
+      "order": 100,
+      "parentLedgerGroupId": null,
+      "accountRanges": [
+        {
+          "from": "8450",
+          "to": "8499"
+        }
+      ],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "LedgerGroup",
+        "slug": "ledger-group-vpb",
+        "seedExemption": "anchor"
+      },
+      "administrationId": "template",
+      "code": "VPB",
+      "name": "Vennootschapsbelasting",
+      "order": 110,
+      "parentLedgerGroupId": null,
+      "accountRanges": [
+        {
+          "from": "8900",
+          "to": "8999"
+        }
+      ],
+      "includedAccountNumbers": [],
+      "excludedAccountNumbers": []
+    }
+  ]
+}

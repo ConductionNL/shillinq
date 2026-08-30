@@ -1,0 +1,671 @@
+{
+  "info": {
+    "version": "0.1.0-bookkeeping-investeringsaftrek"
+  },
+  "components": {
+    "schemas": {
+      "InvestmentAsset": {
+        "slug": "InvestmentAsset",
+        "icon": "SolarPower",
+        "version": "0.1.0",
+        "title": "InvestmentAsset",
+        "description": "A capitalised asset eligible for one or more investeringsaftrek schemes (KIA/EIA/MIA/Vamil) per Wet IB 2001 art. 3.40-3.47. 1-to-1 with FixedAsset (fixedAssetId). Eligibility is classified at capitalisation against the four schemes (REQ-INV-001); the RvO meldingstermijn deadline is derived from opdrachtverleningDatum (REQ-INV-007). Introduced by the bookkeeping-investeringsaftrek change (T4).",
+        "x-schema-org": "schema:Thing",
+        "x-openregister-purpose": "fact",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "fixedAssetId",
+          "description",
+          "acquisitionValue"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this asset for tenant isolation.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "fixedAssetId": {
+            "type": "string",
+            "description": "1-to-1 FK to the FixedAsset this InvestmentAsset overlays (bookkeeping-fixed-assets-depreciation).",
+            "example": "fa-2001",
+            "title": "Fixed Asset ID"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the asset.",
+            "example": "Zonnepaneelsysteem 20 kWp dakmontage",
+            "title": "Omschrijving"
+          },
+          "leverancier": {
+            "type": "string",
+            "nullable": true,
+            "description": "Supplier of the asset.",
+            "example": "SolarNL B.V.",
+            "title": "Leverancier"
+          },
+          "invoiceNumber": {
+            "type": "string",
+            "nullable": true,
+            "description": "Supplier invoice number for audit linkage.",
+            "example": "INV-2026-0420",
+            "title": "Factuurnummer"
+          },
+          "acquisitionDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Invoice/acquisition date. NOT used for the RvO deadline (see opdrachtverleningDatum).",
+            "example": "2026-04-01",
+            "title": "Aanschafdatum"
+          },
+          "assignmentAwardDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the binding order was placed. Mandatory for EIA/MIA/Vamil assets; the RvO 3-month meldingstermijn runs from this date, NOT the invoice or delivery date (REQ-INV-007).",
+            "example": "2026-03-15",
+            "title": "Opdrachtverlening Datum"
+          },
+          "commissioningDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the asset was taken into use; relevant for Vamil 75%-direct timing.",
+            "example": "2026-05-01",
+            "title": "Ingebruikname Datum"
+          },
+          "acquisitionValue": {
+            "type": "integer",
+            "description": "Acquisition value in minor currency units (EUR cents), excluding recoverable BTW.",
+            "example": 5000000,
+            "title": "Aanschafwaarde"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code. EUR-only in this tier.",
+            "default": "EUR",
+            "example": "EUR",
+            "title": "Valuta"
+          },
+          "vatRegime": {
+            "type": "string",
+            "nullable": true,
+            "description": "BTW handling for the asset (aftrekbaar/niet-aftrekbaar/gemengd); affects the aftrek grondslag.",
+            "example": "deductible",
+            "title": "BTW Regime"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-text or taxonomy category used for code lookup hints.",
+            "example": "Duurzame energie",
+            "title": "Categorie"
+          },
+          "energyListCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Matched EnergielijstCode.code (EIA). Resolved against the opdrachtverleningDatum year list (REQ-INV-002).",
+            "example": "251701",
+            "title": "Energielijst Code"
+          },
+          "environmentListCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Matched MilieulijstCode.code (MIA/Vamil). Resolved against the opdrachtverleningDatum year list (REQ-INV-002).",
+            "example": "G3110",
+            "title": "Milieulijst Code"
+          },
+          "kiaEligible": {
+            "type": "boolean",
+            "description": "Whether the asset qualifies for KIA (computed by the eligibility classifier; operator-overridable).",
+            "default": false,
+            "example": true,
+            "title": "Kia Eligible"
+          },
+          "eiaEligible": {
+            "type": "boolean",
+            "description": "Whether the asset qualifies for EIA (Energielijst match + EUR 2.5k minimum).",
+            "default": false,
+            "example": true,
+            "title": "Eia Eligible"
+          },
+          "miaEligible": {
+            "type": "boolean",
+            "description": "Whether the asset qualifies for MIA (Milieulijst match + EUR 2.5k minimum).",
+            "default": false,
+            "example": false,
+            "title": "Mia Eligible"
+          },
+          "vamilEligible": {
+            "type": "boolean",
+            "description": "Whether the asset qualifies for Vamil (Milieulijst + vamilToegestaan + EUR 2.5k minimum).",
+            "default": false,
+            "example": false,
+            "title": "Vamil Eligible"
+          },
+          "eligibilityOverride": {
+            "type": "object",
+            "nullable": true,
+            "description": "Boekhouder override of the computed classification, per scheme, with a mandatory rationale (REQ-INV-001 / D2).",
+            "properties": {
+              "scheme": {
+                "type": "string",
+                "example": "EIA",
+                "title": "Scheme",
+                "description": "The scheme."
+              },
+              "value": {
+                "type": "boolean",
+                "example": false,
+                "title": "Value",
+                "description": "Indicates whether value applies."
+              },
+              "rationale": {
+                "type": "string",
+                "example": "Niet claimen: asset is geleased, niet in eigendom.",
+                "title": "Rationale",
+                "description": "The date and time for rationale."
+              }
+            },
+            "title": "Eligibility Override"
+          },
+          "rvoReportStatus": {
+            "type": "string",
+            "description": "RvO melding lifecycle state.",
+            "enum": [
+              "none",
+              "submitted",
+              "final",
+              "expired"
+            ],
+            "default": "none",
+            "example": "submitted",
+            "title": "Rvo Melding Status"
+          },
+          "rvoReportDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the RvO melding was submitted.",
+            "example": "2026-04-10",
+            "title": "Rvo Melding Datum"
+          },
+          "rvoReportDeadline": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Computed deadline = opdrachtverleningDatum + 3 months (REQ-INV-007). Derived by DesinvesteringsbijtellingGuard::computeMeldingDeadline / the calculations engine.",
+            "example": "2026-06-15",
+            "title": "Rvo Melding Deadline"
+          },
+          "rvoReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "RvO eLoket reference once a melding is submitted.",
+            "example": "RVO-2026-EIA-00123",
+            "title": "Rvo Referentie"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a InvestmentAsset is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "EnergielijstCode": {
+        "slug": "EnergielijstCode",
+        "icon": "FlashOutline",
+        "version": "0.1.0",
+        "title": "EnergielijstCode",
+        "description": "Reference data: a single RvO Energielijst code (EIA) for a given jaartal. Versioned per year; codes are resolved against the opdrachtverleningDatum year, not the current year (REQ-INV-002). Seeded from lib/Settings/seeds/investeringsaftrek-energielijst-2026.json.",
+        "x-schema-org": "schema:DefinedTerm",
+        "x-openregister-purpose": "dimension",
+        "type": "object",
+        "required": [
+          "code",
+          "yearNumber",
+          "description"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "RvO Energielijst code.",
+            "example": "251701",
+            "title": "Code"
+          },
+          "yearNumber": {
+            "type": "integer",
+            "description": "List year this code belongs to.",
+            "example": 2026,
+            "title": "Jaartal"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "example": "Duurzame energie",
+            "title": "Categorie",
+            "description": "The date and time for categorie."
+          },
+          "description": {
+            "type": "string",
+            "example": "Zonnepaneelsysteem > 15 kWp",
+            "title": "Omschrijving",
+            "description": "The omschrijving."
+          },
+          "deelpercentage": {
+            "type": "integer",
+            "description": "Percentage of the investment that qualifies (often 100).",
+            "default": 100,
+            "example": 100,
+            "title": "Deelpercentage"
+          },
+          "maxAmountPerUnit": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Maximum qualifying amount per unit in EUR cents, when capped.",
+            "example": null,
+            "title": "Max Bedrag Per Eenheid"
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true,
+            "example": "kWp",
+            "title": "Eenheid",
+            "description": "The eenheid."
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-01",
+            "title": "Ingangsdatum",
+            "description": "The date and time for ingangsdatum."
+          },
+          "expiryDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": null,
+            "title": "Vervaldatum",
+            "description": "The date and time for vervaldatum."
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a EnergielijstCode is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "MilieulijstCode": {
+        "slug": "MilieulijstCode",
+        "icon": "Leaf",
+        "version": "0.1.0",
+        "title": "MilieulijstCode",
+        "description": "Reference data: a single RvO Milieulijst code (MIA/Vamil) for a given jaartal. Carries the MIA percentage (27/36/45) and the vamilToegestaan flag. Versioned per year. Seeded from lib/Settings/seeds/investeringsaftrek-milieulijst-2026.json.",
+        "x-schema-org": "schema:DefinedTerm",
+        "x-openregister-purpose": "dimension",
+        "type": "object",
+        "required": [
+          "code",
+          "yearNumber",
+          "description",
+          "miaPercentage"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "RvO Milieulijst code.",
+            "example": "G3110",
+            "title": "Code"
+          },
+          "yearNumber": {
+            "type": "integer",
+            "example": 2026,
+            "title": "Jaartal",
+            "description": "The numeric value for jaartal."
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "example": "Circulaire economie",
+            "title": "Categorie",
+            "description": "The date and time for categorie."
+          },
+          "description": {
+            "type": "string",
+            "example": "Recyclemiddel textiel",
+            "title": "Omschrijving",
+            "description": "The omschrijving."
+          },
+          "miaPercentage": {
+            "type": "integer",
+            "description": "MIA deduction percentage (27, 36 or 45).",
+            "enum": [
+              27,
+              36,
+              45
+            ],
+            "example": 45,
+            "title": "Mia Percentage"
+          },
+          "vamilPermitted": {
+            "type": "boolean",
+            "description": "Whether Vamil willekeurige afschrijving is permitted for this code.",
+            "default": false,
+            "example": true,
+            "title": "Vamil Toegestaan"
+          },
+          "deelpercentage": {
+            "type": "integer",
+            "default": 100,
+            "example": 100,
+            "title": "Deelpercentage",
+            "description": "The numeric value for deelpercentage."
+          },
+          "maxAmount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Maximum qualifying amount in EUR cents, when capped.",
+            "example": null,
+            "title": "Max Bedrag"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-01-01",
+            "title": "Ingangsdatum",
+            "description": "The date and time for ingangsdatum."
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a MilieulijstCode is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "InvesteringsaftrekClaim": {
+        "slug": "InvesteringsaftrekClaim",
+        "icon": "CashRefund",
+        "version": "0.1.0",
+        "title": "InvesteringsaftrekClaim",
+        "description": "One claim per (asset, scheme, boekjaar) combination. Carries the grondslag, percentage and computed aftrekbedrag, plus the ingediend -> definitief lifecycle and the async RvO beschikking. Vrijwillige verlaging is tracked separately from the legal entitlement (REQ-INV-009). Introduced by bookkeeping-investeringsaftrek.",
+        "x-schema-org": "schema:Thing",
+        "x-openregister-purpose": "fact",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "investmentAssetId",
+          "financialYear",
+          "scheme"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "example": "adm-1",
+            "title": "Administration ID",
+            "description": "The date and time for administration id."
+          },
+          "investmentAssetId": {
+            "type": "string",
+            "description": "FK to InvestmentAsset.",
+            "example": "ia-3001",
+            "title": "Investment Asset ID"
+          },
+          "financialYear": {
+            "type": "integer",
+            "description": "Fiscal year the claim applies to.",
+            "example": 2026,
+            "title": "Boekjaar"
+          },
+          "scheme": {
+            "type": "string",
+            "enum": [
+              "KIA",
+              "EIA",
+              "MIA",
+              "Vamil"
+            ],
+            "example": "EIA",
+            "title": "Scheme",
+            "description": "The scheme."
+          },
+          "basis": {
+            "type": "integer",
+            "description": "Base amount the percentage applies to, in EUR cents.",
+            "example": 5000000,
+            "title": "Grondslag"
+          },
+          "percentage": {
+            "type": "number",
+            "nullable": true,
+            "description": "Applied percentage (e.g. 40 for EIA, 27/36/45 for MIA). Null for KIA (tiered).",
+            "example": 40,
+            "title": "Percentage"
+          },
+          "deductionAmount": {
+            "type": "integer",
+            "description": "Computed deduction in EUR cents (after any vrijwillige verlaging).",
+            "example": 2000000,
+            "title": "Aftrekbedrag"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "submitted",
+              "final"
+            ],
+            "default": "submitted",
+            "example": "submitted",
+            "title": "Status",
+            "description": "The current status of this record."
+          },
+          "submittedInTaxReturn": {
+            "type": "boolean",
+            "default": false,
+            "example": false,
+            "title": "Ingediend In Aangifte",
+            "description": "Indicates whether ngediend in aangifte applies."
+          },
+          "rvoDecision": {
+            "type": "object",
+            "nullable": true,
+            "description": "RvO award, populated async via the openconnector mededeling feed or overridden by the boekhouder (REQ-INV-007 / D8).",
+            "properties": {
+              "decisionDate": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-07-01",
+                "title": "Beschikkingsdatum",
+                "description": "The date and time for beschikkingsdatum."
+              },
+              "awardedAmount": {
+                "type": "integer",
+                "example": 2000000,
+                "title": "Toegekend Bedrag",
+                "description": "The numeric value for toegekend bedrag."
+              },
+              "reference": {
+                "type": "string",
+                "example": "RVO-2026-EIA-00123",
+                "title": "Referentie",
+                "description": "The referentie."
+              }
+            },
+            "title": "Rvo Beschikking"
+          },
+          "voluntaryReduction": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Voluntary reduction applied to the legal entitlement, in EUR cents (REQ-INV-009). Not carry-forwardable.",
+            "example": null,
+            "title": "Vrijwillige Verlaging"
+          },
+          "verlaginRationale": {
+            "type": "string",
+            "nullable": true,
+            "description": "Mandatory rationale when a vrijwillige verlaging is applied.",
+            "example": null,
+            "title": "Verlagin Rationale"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a InvesteringsaftrekClaim is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "VamilDepreciation": {
+        "slug": "VamilDepreciation",
+        "icon": "ChartTimelineVariant",
+        "version": "0.1.0",
+        "title": "VamilDepreciation",
+        "description": "Willekeurige afschrijving schedule for a Vamil-claimed asset: 75% direct in the year of ingebruikname + 25% via the regular depreciation schedule. Consumed by bookkeeping-fixed-assets-depreciation via the InvestmentAsset relation (REQ-INV-010 / D6).",
+        "x-schema-org": "schema:Thing",
+        "x-openregister-purpose": "fact",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "investmentAssetId",
+          "financialYear",
+          "acquisitionValue"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "example": "adm-1",
+            "title": "Administration ID",
+            "description": "The date and time for administration id."
+          },
+          "investmentAssetId": {
+            "type": "string",
+            "example": "ia-3001",
+            "title": "Investment Asset ID",
+            "description": "The identifier of the associated investment asset."
+          },
+          "financialYear": {
+            "type": "integer",
+            "example": 2026,
+            "title": "Boekjaar",
+            "description": "The numeric value for boekjaar."
+          },
+          "acquisitionValue": {
+            "type": "integer",
+            "description": "Base value in EUR cents.",
+            "example": 5000000,
+            "title": "Aanschafwaarde"
+          },
+          "directDepreciation": {
+            "type": "integer",
+            "description": "75% direct write-off in EUR cents.",
+            "example": 3750000,
+            "title": "Directe Afschrijving"
+          },
+          "spreadPart": {
+            "type": "integer",
+            "description": "Remaining 25% spread over the regular schedule, in EUR cents.",
+            "example": 1250000,
+            "title": "Gespreid Deel"
+          },
+          "regularDepreciationSchedule": {
+            "type": "object",
+            "description": "The regular schedule for the 25% gespreid deel.",
+            "properties": {
+              "method": {
+                "type": "string",
+                "example": "lineair",
+                "title": "Methode",
+                "description": "The methode."
+              },
+              "termYears": {
+                "type": "integer",
+                "example": 5,
+                "title": "Looptijd Jaren",
+                "description": "The numeric value for looptijd jaren."
+              },
+              "residualValue": {
+                "type": "integer",
+                "example": 0,
+                "title": "Restwaarde",
+                "description": "The numeric value for restwaarde."
+              },
+              "annualDepreciation": {
+                "type": "integer",
+                "example": 250000,
+                "title": "Jaarlijkse Afschrijving",
+                "description": "The numeric value for jaarlijkse afschrijving."
+              }
+            },
+            "title": "Regulier Afschrijfschema"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a VamilDepreciation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "KIATier": {
+        "slug": "KIATier",
+        "icon": "StairsUp",
+        "version": "0.1.0",
+        "title": "KIATier",
+        "description": "Reference data: the 2026 KIA tiered lookup table (Wet IB 2001 art. 3.41, geindexeerd). KIA is aggregated at boekjaar level over the running kiaJaartotaal; the tier is resolved by KiaSchalenLookup (ADR-031 exception guard). Seeded from lib/Settings/seeds/investeringsaftrek-kia-tiers-2026.json.",
+        "x-schema-org": "schema:DefinedTerm",
+        "x-openregister-purpose": "dimension",
+        "type": "object",
+        "required": [
+          "tier",
+          "yearNumber",
+          "from"
+        ],
+        "properties": {
+          "tier": {
+            "type": "integer",
+            "description": "Tier ordinal (1..5).",
+            "example": 2,
+            "title": "Tier"
+          },
+          "yearNumber": {
+            "type": "integer",
+            "example": 2026,
+            "title": "Jaartal",
+            "description": "The numeric value for jaartal."
+          },
+          "from": {
+            "type": "integer",
+            "description": "Lower bound of the tier (inclusive), EUR cents.",
+            "example": 280000,
+            "title": "Vanaf"
+          },
+          "tot": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Upper bound of the tier (exclusive), EUR cents. Null for the open top tier.",
+            "example": 7060200,
+            "title": "Tot"
+          },
+          "percentage": {
+            "type": "number",
+            "nullable": true,
+            "description": "Percentage applied within the tier (28 for tier 2; -7.56 for the tier-4 taper). Null for the flat-amount tier 3.",
+            "example": 28,
+            "title": "Percentage"
+          },
+          "fixedAmount": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Flat KIA amount for the tier in EUR cents (tier 3/4 anchor). Null where the tier is purely percentage.",
+            "example": null,
+            "title": "Vast Bedrag"
+          },
+          "rule": {
+            "type": "string",
+            "description": "Human-readable description of the tier rule.",
+            "example": "28% over investering",
+            "title": "Regel"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a KIATier is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

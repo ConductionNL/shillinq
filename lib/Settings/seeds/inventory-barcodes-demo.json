@@ -1,0 +1,64 @@
+{
+	"_meta": {
+		"description": "Demo Barcode records for inventory-barcode-sku (REQ-SKU-011). Five Dutch retail scenarios: pet food unit/carton/pallet (EAN/GTIN/SSCC), dietary supplement legacy internal code + UPC. References inventory-product-catalog demo SKUs (DV-KAT-SENIOR-2KG, VIT-C-1000MG-100CT). Idempotent: SettingsService::seedInventoryBarcodes() deduplicates on (barcode, uomCode).",
+		"spec": "openspec/changes/inventory-barcode-sku/specs/inventory-barcode-sku/spec.md",
+		"req": "REQ-SKU-011"
+	},
+	"barcodes": [
+		{
+			"productSku": "DV-KAT-SENIOR-2KG",
+			"barcode": "5410317126589",
+			"barcodeType": "EAN",
+			"format": "EAN-13",
+			"uomCode": "EA",
+			"quantity": 1,
+			"isDefault": true,
+			"isActive": true,
+			"notes": "Unit barcode for individual 2kg bag"
+		},
+		{
+			"productSku": "DV-KAT-SENIOR-2KG",
+			"barcode": "15410317126586",
+			"barcodeType": "GTIN",
+			"format": "GTIN-14",
+			"uomCode": "CA",
+			"quantity": 4,
+			"isDefault": false,
+			"isActive": true,
+			"notes": "Carton of 4 bags"
+		},
+		{
+			"productSku": "DV-KAT-SENIOR-2KG",
+			"barcode": "00123456789123456789",
+			"barcodeType": "SSCC",
+			"format": "SSCC-18",
+			"uomCode": "PL",
+			"quantity": 100,
+			"isDefault": false,
+			"isActive": true,
+			"notes": "Pallet barcode (25 cartons = 100 individual bags)"
+		},
+		{
+			"productSku": "VIT-C-1000MG-100CT",
+			"barcode": "OLD-VIT-001",
+			"barcodeType": "INTERNAL",
+			"format": "INTERNAL",
+			"uomCode": "EA",
+			"quantity": 1,
+			"isDefault": false,
+			"isActive": true,
+			"notes": "Legacy internal code from prior ERP system (still in use in some locations)"
+		},
+		{
+			"productSku": "VIT-C-1000MG-100CT",
+			"barcode": "012345678912",
+			"barcodeType": "UPC",
+			"format": "UPC-A",
+			"uomCode": "EA",
+			"quantity": 1,
+			"isDefault": true,
+			"isActive": true,
+			"notes": "North American UPC-A for US retail channels"
+		}
+	]
+}

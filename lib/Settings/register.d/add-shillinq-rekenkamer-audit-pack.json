@@ -1,0 +1,228 @@
+{
+	"_spdx": {
+		"SPDX-FileCopyrightText": "2026 Conduction B.V.",
+		"SPDX-License-Identifier": "EUPL-1.2"
+	},
+	"components": {
+		"schemas": {
+			"GLTransaction": {
+				"x-openregister-aggregations": {
+					"nivraBericht": {
+						"description": "NIVRA-bestand projection for a closed period: every posted GLTransaction + child GLLines + audit-trail events + period trial-balance + chart of accounts in effect. Output conforms to the NIVRA standard referenced in _meta.standardVersion. No PHP audit-export service — pure declarative aggregation + docudesk XML template per REQ-REK-002.",
+						"params": {
+							"periodId": {
+								"type": "string",
+								"required": true,
+								"description": "FK to the FiscalPeriod to export."
+							},
+							"administrationId": {
+								"type": "string",
+								"required": true,
+								"description": "FK to the Administration."
+							},
+							"standardVersion": {
+								"type": "string",
+								"required": false,
+								"default": "nivra-audit-file-2026",
+								"description": "Controleprotocol version reference. Defaults to the current standard year."
+							}
+						},
+						"filter": {
+							"periodId": "@params.periodId",
+							"administrationId": "@params.administrationId",
+							"state": "posted"
+						},
+						"include": {
+							"lines": {
+								"schema": "GLLine",
+								"joinOn": "transactionId",
+								"description": "All debit/credit lines for each posted transaction."
+							},
+							"trialBalance": {
+								"schema": "TrialBalance",
+								"filter": {
+									"periodId": "@params.periodId",
+									"administrationId": "@params.administrationId"
+								},
+								"description": "Period trial-balance (debit/credit totals per account)."
+							},
+							"chartOfAccounts": {
+								"schema": "Account",
+								"filter": {
+									"administrationId": "@params.administrationId"
+								},
+								"description": "Chart of accounts in effect for this administration."
+							}
+						},
+						"template": "shillinq/nivra-bestand-xml",
+						"meta": {
+							"standardVersion": "@params.standardVersion",
+							"reproducible": true,
+							"auditHashFields": [
+								"periodId",
+								"administrationId",
+								"standardVersion"
+							]
+						},
+						"audit": {
+							"event": "audit-pack.nivra.exported",
+							"immutable": true,
+							"fields": {
+								"operatorId": "@actor.id",
+								"outputType": "nivra",
+								"periodId": "@params.periodId",
+								"administrationId": "@params.administrationId",
+								"documentUri": "@result.documentUri",
+								"sha256": "@result.sha256"
+							}
+						}
+					},
+					"steekproef": {
+						"description": "Deterministic random sample of posted GLTransaction records for substantive testing. Given periodId, sampleSize, and seed, returns a reproducible ordered sample — re-running with the same seed yields the same records in the same order per REQ-REK-003. shillinq#425: the previously-declared `guard` (OCA\\Shillinq\\Guard\\SteekproefSampler) referenced a class that did not exist, AND OpenRegister's aggregation engine never reads a `guard` key on any aggregation at all — it was dead, unconsumed configuration regardless of the class (same defect shape as the near-duplicate `engineLimitFallback` reference on this same aggregation key in lib/Settings/shillinq_register.json, which points at a different nonexistent class, OCA\\Shillinq\\Audit\\SteekproefSampler — filed as shillinq#436 for both).",
+						"params": {
+							"periodId": {
+								"type": "string",
+								"required": true,
+								"description": "FK to the FiscalPeriod to sample from."
+							},
+							"administrationId": {
+								"type": "string",
+								"required": true,
+								"description": "FK to the Administration."
+							},
+							"sampleSize": {
+								"type": "integer",
+								"required": true,
+								"minimum": 1,
+								"description": "Number of GLTransaction records to include in the sample."
+							},
+							"seed": {
+								"type": "string",
+								"required": true,
+								"description": "Reproducibility seed — same seed with same period produces the same sample. Convention: 'audit-YYYY-qN' or operator-supplied string."
+							}
+						},
+						"filter": {
+							"periodId": "@params.periodId",
+							"administrationId": "@params.administrationId",
+							"state": "posted"
+						},
+						"operations": {
+							"sample": {
+								"operation": "deterministic-sample",
+								"size": "@params.sampleSize",
+								"seed": "@params.seed",
+								"target": "sampledTransactionIds"
+							}
+						},
+						"include": {
+							"lines": {
+								"schema": "GLLine",
+								"joinOn": "transactionId",
+								"description": "All debit/credit lines for sampled transactions."
+							}
+						},
+						"template": "shillinq/steekproef-werkpapier",
+						"meta": {
+							"reproducible": true,
+							"seedHashFields": [
+								"periodId",
+								"administrationId",
+								"sampleSize",
+								"seed"
+							],
+							"adimensionalNote": "ADR-031 exception path: if the OR aggregation engine cannot guarantee deterministic seed-sampling across engine versions, OCA\\Shillinq\\Guard\\SteekproefSampler::computeDeterministicSample provides a ~20-LOC fallback using PHP's seeded shuffle."
+						},
+						"audit": {
+							"event": "audit-pack.steekproef.exported",
+							"immutable": true,
+							"fields": {
+								"operatorId": "@actor.id",
+								"outputType": "steekproef",
+								"periodId": "@params.periodId",
+								"administrationId": "@params.administrationId",
+								"sampleSize": "@params.sampleSize",
+								"seed": "@params.seed",
+								"documentUri": "@result.documentUri",
+								"sha256": "@result.sha256"
+							}
+						}
+					},
+					"ledenraadpleging": {
+						"description": "Redacted slice of posted GLTransaction records for raadsleden review. Fields tagged redactFor: ['raadsleden'] are replaced by a stable SHA-256 hash (description-level free-text) or [REDACTED] placeholder (AP/AR sub-ledger refs) per REQ-REK-004. Numeric and account-code fields remain intact. No PHP redaction service — redaction profile is declared as aggregation metadata per ADR-031.",
+						"params": {
+							"periodId": {
+								"type": "string",
+								"required": true,
+								"description": "FK to the FiscalPeriod to export."
+							},
+							"administrationId": {
+								"type": "string",
+								"required": true,
+								"description": "FK to the Administration."
+							}
+						},
+						"filter": {
+							"periodId": "@params.periodId",
+							"administrationId": "@params.administrationId",
+							"state": "posted"
+						},
+						"include": {
+							"lines": {
+								"schema": "GLLine",
+								"joinOn": "transactionId",
+								"description": "All debit/credit lines for each posted transaction."
+							}
+						},
+						"redactionProfile": {
+							"target": "raadsleden",
+							"fields": {
+								"description": {
+									"redactFor": [
+										"raadsleden"
+									],
+									"strategy": "stable-hash",
+									"description": "Free-text posting description may carry personal data (e.g. 'Salaris Jan Bakker maart 2026'). Replaced by SHA-256(description) per REQ-REK-004."
+								},
+								"GLLine.description": {
+									"redactFor": [
+										"raadsleden"
+									],
+									"strategy": "stable-hash",
+									"description": "Free-text line description. Replaced by stable hash."
+								},
+								"sourceReference": {
+									"redactFor": [
+										"raadsleden"
+									],
+									"strategy": "placeholder",
+									"placeholder": "[REDACTED]",
+									"description": "AP/AR sub-ledger reference numbers that may identify persons. Replaced by [REDACTED] placeholder per REQ-REK-004."
+								}
+							}
+						},
+						"template": "shillinq/raadsleden-export",
+						"meta": {
+							"redactFor": [
+								"raadsleden"
+							],
+							"reproducible": true
+						},
+						"audit": {
+							"event": "audit-pack.ledenraadpleging.exported",
+							"immutable": true,
+							"fields": {
+								"operatorId": "@actor.id",
+								"outputType": "ledenraadpleging",
+								"periodId": "@params.periodId",
+								"administrationId": "@params.administrationId",
+								"documentUri": "@result.documentUri",
+								"sha256": "@result.sha256"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

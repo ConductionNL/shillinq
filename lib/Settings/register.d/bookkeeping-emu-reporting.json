@@ -1,0 +1,887 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-emu-reporting",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "EMU-saldo & EMU-schuld reporting pipeline for Dutch decentrale overheden under Wet Houdbare Overheidsfinanciën. Adds four entities — EMUReport (concept/ingediend/herzien aangifte), EMUAdjustment (accrual→kas conversie per Wet Hof art. 3), CashFlowItem (IV3-geclassificeerde kasstroom, shared taxonomy with bookkeeping-iv3-reporting), DebtPosition (ESA2010 bruto schuld per instrument per peildatum). Declarative lifecycle, aggregations, calculations, notifications, RBAC and retention per ADR-022/ADR-031. The prior add-shillinq-emu-reporting change shipped only the esaClassifier field + EmuCalculator aggregation guard; this fragment adds the full pipeline entities. Slugs mirror the existing fragment convention (PascalCase schema key + slug)."
+  },
+  "components": {
+    "schemas": {
+      "EMUReport": {
+        "slug": "EMUReport",
+        "icon": "FileChartOutline",
+        "version": "0.1.0",
+        "title": "EMU-rapportage",
+        "description": "Ingediende of in-progress EMU-aangifte voor een periode (kwartaal of jaar) per REQ-EMU-001. Atomic versioned submission unit; carries the computed EMU-saldo, bruto EMU-schuld ultimo, BBV-aansluiting and CBS-bevestiging. Lifecycle concept → ingediend → herzien per Wet Hof art. 10 (REQ-EMU-001/006). Audit-trail + 10-jaar retention per Archiefwet 1995 (REQ-EMU-012).",
+        "x-schema-org": "schema:GovernmentService",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "periodYear",
+          "periodType",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the rapporterende administration (gemeente/provincie/waterschap/GR).",
+            "example": "adm-gemeente-1",
+            "title": "Administration ID"
+          },
+          "reportingOrganisation": {
+            "type": "object",
+            "nullable": true,
+            "description": "RSIN, gemeentecode, naam, soort (gemeente/provincie/waterschap/GR) of the reporting body.",
+            "title": "Rapporterende Organisatie"
+          },
+          "periodYear": {
+            "type": "integer",
+            "description": "Calendar year of the period (REQ-EMU-001).",
+            "example": 2026,
+            "title": "Periode Jaar"
+          },
+          "periodQuarter": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "nullable": true,
+            "description": "Quarter 1-4; required when periodeType=kwartaal-emu-saldo (REQ-EMU-001).",
+            "title": "Periode Kwartaal"
+          },
+          "periodType": {
+            "type": "string",
+            "enum": [
+              "quarter-emu-balance",
+              "year-emu-balance",
+              "year-emu-debt"
+            ],
+            "description": "Aangifte type per Wet Hof (REQ-EMU-001/004).",
+            "title": "Periode Type"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "submitted",
+              "herzien"
+            ],
+            "default": "draft",
+            "description": "Lifecycle status per Wet Hof art. 10 (REQ-EMU-001).",
+            "title": "Status"
+          },
+          "submissionDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp of submission to CBS (REQ-EMU-006).",
+            "title": "Indieningsdatum"
+          },
+          "cbsConfirmationNumber": {
+            "type": "string",
+            "nullable": true,
+            "description": "CBS confirmation reference returned on accepted indiening (REQ-EMU-006).",
+            "title": "CBS Bevestigingsnummer"
+          },
+          "cbsTemplateVersion": {
+            "type": "string",
+            "default": "2026",
+            "description": "CBS-enquête template version this report conforms to (REQ-EMU-003).",
+            "title": "CBS Template Version"
+          },
+          "emuBalanceCalculated": {
+            "type": "number",
+            "nullable": true,
+            "description": "Computed EMU cash saldo for the period (MonetaryAmount, EUR; negative = tekort) per REQ-EMU-002.",
+            "example": -2300000,
+            "title": "Emu Saldo Berekend"
+          },
+          "emuBalanceBudgeted": {
+            "type": "number",
+            "nullable": true,
+            "description": "Budgeted (begroot) EMU saldo for the period from the meerjarenraming (REQ-EMU-007).",
+            "example": -1800000,
+            "title": "Emu Saldo Begroot"
+          },
+          "emuBalanceDeviation": {
+            "type": "number",
+            "nullable": true,
+            "description": "berekend − begroot (derived, REQ-EMU-007).",
+            "example": -500000,
+            "title": "Emu Saldo Afwijking"
+          },
+          "emuBalanceDeviationPercentage": {
+            "type": "number",
+            "nullable": true,
+            "description": "(afwijking / abs(begroot)) × 100 (derived, REQ-EMU-007).",
+            "example": -27.8,
+            "title": "Emu Saldo Afwijking Percentage"
+          },
+          "emuDebtGross": {
+            "type": "number",
+            "nullable": true,
+            "description": "Bruto nominale EMU-schuld ultimo periode (sum AF.2+AF.3+AF.4) per REQ-EMU-004.",
+            "example": 142500000,
+            "title": "Emu Schuld Bruto"
+          },
+          "emuDebtStatutoryNorm": {
+            "type": "number",
+            "nullable": true,
+            "description": "Individuele EMU-referentiewaarde / wettelijke norm (REQ-EMU-008).",
+            "example": 156000000,
+            "title": "Emu Schuld Wettelijke Norm"
+          },
+          "emuDebtCapacity": {
+            "type": "number",
+            "nullable": true,
+            "description": "wettelijkeNorm − bruto (derived, REQ-EMU-008).",
+            "example": 13500000,
+            "title": "Emu Schuld Ruimte"
+          },
+          "municipalAccountingBalanceRevenueExpenses": {
+            "type": "number",
+            "nullable": true,
+            "description": "BBV jaarrekening saldo baten/lasten used for reconciliation (REQ-EMU-009).",
+            "example": 4200000,
+            "title": "BBV Saldo Baten Lasten"
+          },
+          "bbvTotaleAdjustments": {
+            "type": "number",
+            "nullable": true,
+            "description": "Sum of all EMUAdjustment.bedrag for the year (derived, REQ-EMU-009).",
+            "example": -6500000,
+            "title": "BBV Totale Adjustments"
+          },
+          "bbvReconciliationCheck": {
+            "type": "string",
+            "enum": [
+              "succeeded",
+              "failed",
+              "non-executed"
+            ],
+            "default": "non-executed",
+            "description": "Reconciliation outcome (REQ-EMU-009).",
+            "title": "BBV Aansluitingscontrole"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Concerncontroller toelichting on significant deviations; auto-seeded with top-3 contributors (REQ-EMU-007).",
+            "title": "Toelichting"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217 currency, default EUR.",
+            "title": "Currency"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "retention": {
+            "rule": "selectielijst:5.1.4",
+            "period": "P10Y",
+            "description": "EMU-rapportage records retained 10 years per Archiefwet 1995 + Selectielijst Gemeenten 2020 (REQ-EMU-012)."
+          },
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Auto-generated draft; concerncontroller reviews and adjusts before submission (REQ-EMU-001)."
+            },
+            "submitted": {
+              "label": "Ingediend",
+              "description": "Submitted to CBS via SBR/Digipoort; cbsBevestigingsnummer stored (REQ-EMU-006)."
+            },
+            "herzien": {
+              "label": "Herzien",
+              "description": "Superseded by a correction aangifte after late BBV-naverwerking (REQ-EMU-001)."
+            }
+          },
+          "transitions": {
+            "indienen": {
+              "from": "draft",
+              "to": "submitted",
+              "label": "Indienen bij CBS",
+              "description": "Concerncontroller submits the approved concept via SBR/Digipoort; requires sign-off (REQ-EMU-006).",
+              "requires": "OCA\\Shillinq\\Guard\\EmuSubmissionGuard::requireApproval"
+            },
+            "herzien": {
+              "from": "submitted",
+              "to": "herzien",
+              "label": "Herzien",
+              "description": "File a correctie-aangifte after a late GL entry in a submitted period (REQ-EMU-001)."
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "emuBalanceDeviation": {
+            "description": "berekend − begroot (REQ-EMU-007).",
+            "expr": "@self.emuSaldoBerekend - @self.emuSaldoBegroot"
+          },
+          "emuDebtCapacity": {
+            "description": "wettelijkeNorm − bruto schuld (REQ-EMU-008).",
+            "expr": "@self.emuSchuldWettelijkeNorm - @self.emuSchuldBruto"
+          }
+        },
+        "x-openregister-aggregations": {
+          "totaleAdjustments": {
+            "description": "Sum of EMUAdjustment.bedrag (signed by richting) for this report, driving the BBV-reconciliation control (REQ-EMU-009).",
+            "filter": {},
+            "from": "EMUAdjustment",
+            "metric": "sum",
+            "field": "amount",
+            "groupBy": [
+              "reportId"
+            ]
+          }
+        },
+        "x-openregister-notifications": {
+          "onConcept": {
+            "trigger": {
+              "type": "created"
+            },
+            "description": "Notify the concerncontroller when a quarterly concept-aangifte is generated (REQ-EMU-001).",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "emu-concerncontroller"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "EMU-conceptaangifte voor {{periodeJaar}} is gegenereerd en wacht op review",
+              "en": "EMU draft return for {{periodeJaar}} has been generated and is awaiting review"
+            }
+          },
+          "onIngediend": {
+            "trigger": {
+              "type": "transition",
+              "action": "indienen"
+            },
+            "description": "Notify on successful CBS submission (REQ-EMU-006).",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "emu-concerncontroller"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "EMU-aangifte {{periodeJaar}} is ingediend bij het CBS",
+              "en": "EMU return {{periodeJaar}} was submitted to Statistics Netherlands (CBS)"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "emu-concerncontroller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "emu-reviewer": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a EMU-rapportage is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "EMUAdjustment": {
+        "slug": "EMUAdjustment",
+        "icon": "SwapVerticalBold",
+        "version": "0.1.0",
+        "title": "EMU-correctie",
+        "description": "Individuele accrual→kas correctie gekoppeld aan een grootboekmutatie of macroregel per Wet Hof art. 3 (REQ-EMU-002). Traceerbaar per adjustment; richting (saldo-verhogend/verlagend/neutraal) en bedrag voeden de EMUReport-aansluiting (REQ-EMU-009). Concerncontroller kan bedrag overschrijven met audit-trail.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "type": "object",
+        "required": [
+          "reportId",
+          "type",
+          "direction",
+          "amount",
+          "rule"
+        ],
+        "properties": {
+          "reportId": {
+            "type": "string",
+            "description": "FK to the EMUReport (REQ-EMU-002).",
+            "example": "emu-2026-q2-gem-1742",
+            "title": "Report ID"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "elimination-depreciation",
+              "elimination-provision-contribution",
+              "elimination-withdrawal-reserve",
+              "addition-gross-investment",
+              "addition-repayment",
+              "elimination-book-profit-divestment",
+              "correction-transaction-moment",
+              "intercompany-elimination"
+            ],
+            "description": "Adjustment type per Wet Hof art. 3 (8 macro-rules, REQ-EMU-002/005).",
+            "title": "Type"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "balance-increasing",
+              "balance-decreasing",
+              "balance-neutral"
+            ],
+            "description": "Effect direction on the EMU-saldo (REQ-EMU-002).",
+            "title": "Richting"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Adjustment amount (MonetaryAmount, EUR; always non-negative — richting carries the sign).",
+            "example": 1240000,
+            "title": "Bedrag"
+          },
+          "source": {
+            "type": "object",
+            "nullable": true,
+            "description": "Source GL reference: grootboekrekening, omschrijving, taakveld, taakveldNaam, programma (REQ-EMU-002).",
+            "title": "Bron"
+          },
+          "rule": {
+            "type": "string",
+            "description": "Legal basis citation, e.g. 'Wet Hof art. 3 lid 2' (REQ-EMU-002).",
+            "example": "Wet Hof art. 3 lid 2: afschrijvingen zijn geen kasuitgaven",
+            "title": "Regel"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-text business context.",
+            "title": "Toelichting"
+          },
+          "overridden": {
+            "type": "boolean",
+            "default": false,
+            "description": "True when a concerncontroller manually overrode the auto-computed bedrag (REQ-EMU-002, audit-trail logged).",
+            "title": "Overridden"
+          },
+          "consolidationEMU": {
+            "type": "string",
+            "enum": [
+              "extern",
+              "intern-S1313",
+              "internal-entity"
+            ],
+            "default": "extern",
+            "description": "Counterparty consolidation flag for intercompany-eliminatie (REQ-EMU-005).",
+            "title": "Consolidatie Emu"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217 currency, default EUR.",
+            "title": "Currency"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "emu-concerncontroller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "emu-reviewer": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a EMU-correctie is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "CashFlowItem": {
+        "slug": "CashFlowItem",
+        "icon": "CashFast",
+        "version": "0.1.0",
+        "title": "Kasstroomregel",
+        "description": "Kasstroomregel geclassificeerd naar IV3 (hoofdstuk-functie-categorie) per REQ-EMU-010. Shared entity with bookkeeping-iv3-reporting: één geclassificeerd dataset voedt zowel de IV3-kwartaalaangifte als de EMU-aangifte. EMU filtert op kas-basis (kasOfTransactiebasis=kas).",
+        "x-schema-org": "schema:MonetaryAmount",
+        "type": "object",
+        "required": [
+          "reportId",
+          "date",
+          "amount",
+          "kasOfTransactionBasis"
+        ],
+        "properties": {
+          "reportId": {
+            "type": "string",
+            "description": "FK to the EMUReport (REQ-EMU-010).",
+            "example": "emu-2026-q2-gem-1742",
+            "title": "Report ID"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Transaction (kas) date.",
+            "example": "2026-05-22",
+            "title": "Datum"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Cash amount (MonetaryAmount, EUR; negative = uitstroom).",
+            "example": -820000,
+            "title": "Bedrag"
+          },
+          "iv3": {
+            "type": "object",
+            "nullable": true,
+            "description": "IV3-taxonomie classification: hoofdstuk, hoofdstukNaam, functie, functieNaam, categorie, categorieNaam (REQ-EMU-010).",
+            "title": "Iv3"
+          },
+          "taskField": {
+            "type": "string",
+            "nullable": true,
+            "description": "BBV taakveld code (REQ-EMU-010).",
+            "example": "8.1",
+            "title": "Taakveld"
+          },
+          "contraAccount": {
+            "type": "object",
+            "nullable": true,
+            "description": "Counterparty: soort (leverancier/klant/begunstigde), naam, nummer (factuurnummer/IBAN).",
+            "title": "Tegenrekening"
+          },
+          "kasOfTransactionBasis": {
+            "type": "string",
+            "enum": [
+              "kas",
+              "transactie"
+            ],
+            "default": "kas",
+            "description": "Whether this item is on a cash or transaction basis (REQ-EMU-010).",
+            "title": "Kas Of Transactiebasis"
+          },
+          "paymentMoment": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Actual cash transaction timestamp.",
+            "title": "Betaalmoment"
+          },
+          "invoiceMoment": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Invoice date when different from cash date (drives correctie-transactiemoment, REQ-EMU-002).",
+            "title": "Factuurmoment"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217 currency, default EUR.",
+            "title": "Currency"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "emu-concerncontroller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "emu-reviewer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Kasstroomregel is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "DebtPosition": {
+        "slug": "DebtPosition",
+        "icon": "BankMinus",
+        "version": "0.1.0",
+        "title": "Schuldpositie",
+        "description": "Uitstaande schuld per instrument per peildatum (kwartaal- of jaar-ultimo) per REQ-EMU-004. Bruto nominaal bedrag classified per Eurostat ESA2010 (AF.2/AF.3/AF.4 tellen mee; AF.7 derivaten niet). Can be sourced from the schatkistbankieren daily sync (REQ-EMU-011) or entered manually.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "type": "object",
+        "required": [
+          "reportId",
+          "referenceDate",
+          "instrument",
+          "outstandingDebt",
+          "teltMeeInEmuDebt",
+          "categoryEurostat"
+        ],
+        "properties": {
+          "reportId": {
+            "type": "string",
+            "description": "FK to the EMUReport (REQ-EMU-004).",
+            "example": "emu-2026-q2-gem-1742",
+            "title": "Report ID"
+          },
+          "referenceDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Measurement date (kwartaal- of jaar-ultimo).",
+            "example": "2026-06-30",
+            "title": "Peildatum"
+          },
+          "instrument": {
+            "type": "string",
+            "enum": [
+              "vaste-geldlening",
+              "obligatie",
+              "kasgeldlening",
+              "schatkistbankieren-rekeningcourant",
+              "crediteurensaldo-1j+",
+              "derivaten-passief",
+              "voorziening-juridisch"
+            ],
+            "description": "Debt instrument type (REQ-EMU-004/011).",
+            "title": "Instrument"
+          },
+          "counterparty": {
+            "type": "object",
+            "nullable": true,
+            "description": "Counterparty: naam, soort (sector-S122-bank / sector-S11-nfv / sector-S13-government), consolidatieEMU (extern/intern-S1313/internal-entity) (REQ-EMU-004/005).",
+            "title": "Tegenpartij"
+          },
+          "principalOriginal": {
+            "type": "number",
+            "nullable": true,
+            "description": "Original principal (MonetaryAmount, EUR).",
+            "example": 25000000,
+            "title": "Hoofdsom Oorspronkelijk"
+          },
+          "outstandingDebt": {
+            "type": "number",
+            "description": "Outstanding nominal balance (MonetaryAmount, EUR) (REQ-EMU-004).",
+            "example": 18750000,
+            "title": "Uitstaande Schuld"
+          },
+          "interestRate": {
+            "type": "number",
+            "nullable": true,
+            "description": "Annual interest rate (%).",
+            "example": 2.85,
+            "title": "Rentevoet"
+          },
+          "rentevorm": {
+            "type": "string",
+            "enum": [
+              "vast",
+              "variabel"
+            ],
+            "nullable": true,
+            "description": "Interest form.",
+            "title": "Rentevorm"
+          },
+          "termYears": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Original term in years.",
+            "example": 20,
+            "title": "Looptijd Jaren"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Maturity date.",
+            "example": "2034-12-31",
+            "title": "Einddatum"
+          },
+          "teltMeeInEmuDebt": {
+            "type": "boolean",
+            "description": "ESA2010: AF.2/AF.3/AF.4 = true, AF.7 derivaten = false (REQ-EMU-004).",
+            "example": true,
+            "title": "Telt Mee In Emu Schuld"
+          },
+          "categoryEurostat": {
+            "type": "string",
+            "enum": [
+              "off_2-deposits",
+              "off_3-securities",
+              "off_4-loans",
+              "off_7-derivatives",
+              "other"
+            ],
+            "description": "Eurostat ESA2010 financial instrument category (REQ-EMU-004).",
+            "example": "off_4-loans",
+            "title": "Categorie Eurostat"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO 4217 currency, default EUR.",
+            "title": "Currency"
+          }
+        },
+        "x-openregister-aggregations": {
+          "brutoSchuldPerCategorie": {
+            "description": "Sum of uitstaandeSchuld grouped by categorieEurostat for AF.2/AF.3/AF.4 instruments that count toward the bruto EMU-schuld (REQ-EMU-004).",
+            "groupBy": [
+              "reportId",
+              "categoryEurostat"
+            ],
+            "filter": {
+              "teltMeeInEmuDebt": true
+            },
+            "from": "DebtPosition",
+            "metric": "sum",
+            "field": "outstandingDebt"
+          }
+        },
+        "x-openregister-notifications": {
+          "onSchatkistNegatief": {
+            "trigger": {
+              "type": "created",
+              "condition": {
+                "field": "instrument",
+                "operator": "equals",
+                "value": "schatkistbankieren-rekeningcourant"
+              }
+            },
+            "description": "Alert the treasury-officer when a negative schatkistbankieren position is recorded as EMU-schuld (REQ-EMU-011).",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              },
+              {
+                "kind": "groups",
+                "groups": [
+                  "treasury-officer"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Schatkistbankieren rood: negatieve positie van {{uitstaandeSchuld}} telt mee als EMU-schuld op {{peildatum}}",
+              "en": "Treasury banking overdrawn: a negative position of {{uitstaandeSchuld}} counts towards EMU debt on {{peildatum}}"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "emu-concerncontroller": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "treasury-officer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "emu-reviewer": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Schuldpositie is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EMUReport",
+        "slug": "emu-2026-q2-gem-1742"
+      },
+      "administrationId": "adm-gemeente-1",
+      "reportingOrganisation": {
+        "rsin": "001234567",
+        "gemeentecode": "1742",
+        "name": "Gemeente Voorbeeldam",
+        "kind": "municipality"
+      },
+      "periodYear": 2026,
+      "periodQuarter": 2,
+      "periodType": "quarter-emu-balance",
+      "status": "submitted",
+      "submissionDate": "2026-07-15T09:23:00+02:00",
+      "cbsConfirmationNumber": "CBS-EMU-2026Q2-001234567",
+      "cbsTemplateVersion": "2026",
+      "emuBalanceCalculated": -2300000,
+      "emuBalanceBudgeted": -1800000,
+      "emuBalanceDeviation": -500000,
+      "emuBalanceDeviationPercentage": -27.8,
+      "emuDebtGross": 142500000,
+      "emuDebtStatutoryNorm": 156000000,
+      "emuDebtCapacity": 13500000,
+      "municipalAccountingBalanceRevenueExpenses": 4200000,
+      "bbvTotaleAdjustments": -6500000,
+      "bbvReconciliationCheck": "succeeded",
+      "notes": "Afwijking veroorzaakt door versnelde dotatie aan voorziening pensioen wethouders (+450K) en hogere investering MFA Centrum (+820K kas).",
+      "currency": "EUR"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "EMUAdjustment",
+        "slug": "adj-2026-q2-0142"
+      },
+      "reportId": "emu-2026-q2-gem-1742",
+      "type": "elimination-depreciation",
+      "direction": "balance-increasing",
+      "amount": 1240000,
+      "source": {
+        "generalLedgerAccount": "4801000",
+        "description": "Afschrijving gebouwen onderwijs",
+        "taskField": "4.2",
+        "taskFieldName": "Onderwijshuisvesting",
+        "programme": "Onderwijs"
+      },
+      "rule": "Wet Hof art. 3 lid 2: afschrijvingen zijn geen kasuitgaven en worden geëlimineerd uit EMU-saldo",
+      "notes": "Lineaire afschrijving brede school De Hoeksteen, boekwaarde EUR 24,8M, looptijd 40 jaar",
+      "overridden": false,
+      "consolidationEMU": "extern",
+      "currency": "EUR"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CashFlowItem",
+        "slug": "cf-2026-q2-08745"
+      },
+      "reportId": "emu-2026-q2-gem-1742",
+      "date": "2026-05-22",
+      "amount": -820000,
+      "iv3": {
+        "hoofdstuk": "8",
+        "hoofdstukNaam": "Volkshuisvesting, ruimtelijke ordening en stedelijke vernieuwing",
+        "functie": "810",
+        "functieNaam": "Ruimtelijke ordening",
+        "category": "3.4.1",
+        "categorieNaam": "Investeringen materiële vaste activa met economisch nut"
+      },
+      "taskField": "8.1",
+      "contraAccount": {
+        "kind": "supplier",
+        "name": "BAM Infra Nederland B.V.",
+        "number": "F-2026-44218"
+      },
+      "kasOfTransactionBasis": "kas",
+      "paymentMoment": "2026-05-22T14:11:00+02:00",
+      "invoiceMoment": "2026-04-30T00:00:00+02:00",
+      "currency": "EUR"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "DebtPosition",
+        "slug": "debt-2026-q2-bng-0034"
+      },
+      "reportId": "emu-2026-q2-gem-1742",
+      "referenceDate": "2026-06-30",
+      "instrument": "vaste-geldlening",
+      "counterparty": {
+        "name": "BNG Bank N.V.",
+        "kind": "sector-S122-bank",
+        "consolidationEMU": "extern"
+      },
+      "principalOriginal": 25000000,
+      "outstandingDebt": 18750000,
+      "interestRate": 2.85,
+      "rentevorm": "vast",
+      "termYears": 20,
+      "endDate": "2034-12-31",
+      "teltMeeInEmuDebt": true,
+      "categoryEurostat": "off_4-loans",
+      "currency": "EUR"
+    }
+  ]
+}

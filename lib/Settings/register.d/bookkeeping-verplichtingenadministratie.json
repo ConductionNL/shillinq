@@ -1,0 +1,1294 @@
+{
+  "info": {
+    "version": "0.1.0-bookkeeping-verplichtingenadministratie"
+  },
+  "components": {
+    "schemas": {
+      "Commitment": {
+        "slug": "Commitment",
+        "icon": "FileSign",
+        "version": "0.1.0",
+        "title": "Commitment",
+        "description": "A financial commitment (verplichting) tracked from the moment it becomes legally binding (purchase order signed, framework agreement agreed, employment contract executed, grant decision awarded) through delivery, invoicing, payment, and closure. Drives budget-blocking at commitment-time (REQ-VPL-001) and mandate enforcement on aangaan (REQ-VPL-002). The status field is the lifecycle field; every state change is recorded as an immutable CommitmentMovement (D1). The tegenpartij is an embedded vendor reference (kvk/naam/iban) — not a bespoke customer schema; a customer/contact is a Nextcloud entity (ADR). THIS FRAGMENT IS THE SINGLE OWNER OF THIS SCHEMA'S `required` LIST: ADR-037's deepMergeConfig() CONCATENATES list values, so a second fragment declaring `required` makes the effective list the UNION of both and no payload of either model can satisfy it. Overlay fragments (20-bookkeeping-tenderned-integratie.json) contribute properties only.",
+        "x-schema-org": "schema:Order",
+        "x-openregister-purpose": "fact",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "commitmentNumber",
+          "kind",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this verplichting for tenant isolation (IDOR-safe scoping).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "commitmentNumber": {
+            "type": "string",
+            "description": "Operator-assigned unique commitment number within the administration. This is the single spelling: the camelCase `verplichtingNummer` variant that TenderNedAwardDetectedListener once wrote is gone — every writer (CommitmentMaterialisationService, TenderNedAwardDetectedListener) and every reader (BudgetBlocker::canCommit, MandateEnforcer::hasSufficientMandate, CommitmentGuard, RequisitionService) now agrees on `commitmentNumber`.",
+            "example": "PO-2026-00874",
+            "title": "Verplichtingsnummer"
+          },
+          "sourceReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "Provenance reference for auto-materialised commitments (REQ-VPL-010): the poNumber of the approved PurchaseOrder or the contractNumber of the signed Contract this Commitment was raised from. Used as the idempotency key so a repeated approval/signature transition never creates a duplicate commitment. Null for manually-created commitments.",
+            "example": "PO-2026-0207",
+            "title": "Bron Referentie"
+          },
+          "kind": {
+            "type": "string",
+            "description": "Kind of commitment.",
+            "enum": [
+              "purchase_order",
+              "frameworkAgreement",
+              "employment_contract",
+              "grant_decision",
+              "lease_agreement",
+              "leasing",
+              "other"
+            ],
+            "example": "purchase_order",
+            "title": "Soort"
+          },
+          "commencementDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the commitment became legally binding (set when moved to committed).",
+            "example": "2026-04-15",
+            "title": "Aangaandatum"
+          },
+          "term_from": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Start of the commitment term. Used to derive per-boekjaar regels for multi-year raamovereenkomsten (REQ-VPL-004).",
+            "example": "2026-05-01",
+            "title": "Looptijd Van"
+          },
+          "term_to": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "End of the commitment term. Snapped to boekjaar boundaries for regel creation (D10).",
+            "example": "2030-04-30",
+            "title": "Looptijd Tot"
+          },
+          "counterparty": {
+            "type": "object",
+            "nullable": true,
+            "description": "Embedded counterparty reference (vendor/supplier). A customer/contact is a Nextcloud entity, not a bespoke schema; this carries only the external reference fields needed for the commitment and three-way match.",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "description": "Counterparty kind.",
+                "enum": [
+                  "supplier",
+                  "employee",
+                  "grantRecipient",
+                  "landlord",
+                  "other"
+                ],
+                "example": "supplier",
+                "title": "Soort"
+              },
+              "kvk": {
+                "type": "string",
+                "nullable": true,
+                "description": "Chamber of Commerce number (user-entered; external validation is out of scope).",
+                "example": "12345678",
+                "title": "KvK"
+              },
+              "name": {
+                "type": "string",
+                "nullable": true,
+                "description": "Counterparty name.",
+                "example": "ICT Leverancier B.V.",
+                "title": "Naam"
+              },
+              "iban": {
+                "type": "string",
+                "nullable": true,
+                "description": "Counterparty IBAN (user-entered).",
+                "example": "NL00BANK0123456789",
+                "title": "IBAN"
+              },
+              "vat_number": {
+                "type": "string",
+                "nullable": true,
+                "description": "Counterparty VAT identification number.",
+                "example": "NL860784241B01",
+                "title": "BTW Nummer"
+              },
+              "contactId": {
+                "type": "string",
+                "nullable": true,
+                "description": "Optional reference to a Nextcloud contact entity (OCP\\Contacts\\IManager) for the counterparty.",
+                "example": "contact:abc-123",
+                "title": "Contact ID"
+              }
+            },
+            "title": "Tegenpartij"
+          },
+          "total_amount_excl_vat": {
+            "type": "integer",
+            "description": "Total commitment amount excluding VAT, in minor units (EUR cents).",
+            "example": 5000000,
+            "title": "Totaalbedrag Excl BTW"
+          },
+          "total_amount_incl_vat": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Total commitment amount including VAT, in minor units (EUR cents).",
+            "example": 6050000,
+            "title": "Totaalbedrag Incl BTW"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code. EUR-only in this tier.",
+            "default": "EUR",
+            "example": "EUR",
+            "title": "Valuta"
+          },
+          "vat_regime": {
+            "type": "string",
+            "description": "VAT regime applied to the commitment.",
+            "enum": [
+              "standard",
+              "reverse_charged",
+              "exempt"
+            ],
+            "default": "standard",
+            "example": "standard",
+            "title": "BTW Regime"
+          },
+          "status": {
+            "type": "string",
+            "description": "Commitment lifecycle state. Derived from the latest CommitmentMovement (D1).",
+            "enum": [
+              "draft",
+              "in_approval",
+              "committed",
+              "partially_delivered",
+              "partially_invoiced",
+              "partially_paid",
+              "closed",
+              "cancelled"
+            ],
+            "default": "draft",
+            "example": "draft",
+            "title": "Status"
+          },
+          "mandate_applied": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the Mandate under whose authority this commitment was signed (REQ-VPL-002).",
+            "example": "M-INKOOP-50K",
+            "title": "Mandaat Toegepast"
+          },
+          "override_reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Audit-trail reason recorded when a budget-exceeding commitment is force-accepted under an override-mandate (REQ-VPL-001).",
+            "example": "Spoedlevering approved door CFO",
+            "title": "Override Reden"
+          },
+          "internal_reference": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional internal reference (contract number, dossier, etc.).",
+            "example": "DOS-2026-441",
+            "title": "Interne Kenmerk"
+          },
+          "lawfulnessTests": {
+            "type": "array",
+            "nullable": true,
+            "description": "Optional FKs to rechtmatigheidstoetsen attached at commitment-time (REQ-VPL-010). Nullable; gated on bookkeeping-rechtmatigheidsverantwoording being installed.",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "toets-001"
+            ],
+            "title": "Rechtmatigheidstoetsen"
+          },
+          "documents": {
+            "type": "array",
+            "nullable": true,
+            "description": "File URIs (e.g. docudesk) for the signed PO/contract/beschikking.",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "docudesk:doc-991"
+            ],
+            "title": "Documenten"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Commitment drafted, not yet signed. No budget impact."
+            },
+            "in_approval": {
+              "label": "In goedkeuring",
+              "description": "Mandate exceeded; routed to a goedkeuringsstap approval chain (REQ-VPL-002, D7)."
+            },
+            "committed": {
+              "label": "Aangegaan",
+              "description": "Signed/legally binding. Budget is blocked; a `committed` CommitmentMovement is recorded (REQ-VPL-001/003)."
+            },
+            "partially_delivered": {
+              "label": "Deels geleverd",
+              "description": "Goods/services partially received (performance_received). Informational; no budget change (REQ-VPL-003)."
+            },
+            "partially_invoiced": {
+              "label": "Deels gefactureerd",
+              "description": "Partially invoiced; remaining_committed reduced and AP invoice matched (REQ-VPL-003)."
+            },
+            "partially_paid": {
+              "label": "Deels betaald",
+              "description": "Partially paid; no further budget impact (REQ-VPL-003)."
+            },
+            "closed": {
+              "label": "Afgesloten",
+              "description": "Closed; remaining restant released back to budget (REQ-VPL-006)."
+            },
+            "cancelled": {
+              "label": "Geannuleerd",
+              "description": "Cancelled; reversal mutatie posted and openstaande_verplichtingen reduced (REQ-VPL-006). Remains queryable for audit."
+            }
+          },
+          "transitions": {
+            "indienen": {
+              "from": "draft",
+              "to": "in_approval",
+              "label": "Ter goedkeuring aanbieden",
+              "description": "Offer for approval when the signer's mandaat is insufficient. Gated by MandateEnforcer (REQ-VPL-002).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\MandateEnforcer::requiresApproval"
+            },
+            "aangaan": {
+              "from": "draft",
+              "to": "committed",
+              "label": "Verplichting aangaan",
+              "description": "Sign the commitment within mandaat and budget. Gated by MandateEnforcer (mandaat sufficient) and BudgetBlocker (vrije_ruimte sufficient or override). A `committed` CommitmentMovement is recorded (REQ-VPL-001/002).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\BudgetBlocker::canCommit",
+              "actions": [
+                {
+                  "trigger": "x-openregister-lifecycle-action",
+                  "action": "record-mutatie",
+                  "description": "Record a `committed` CommitmentMovement and increase openstaande_verplichtingen on the matching budgets (REQ-VPL-001/003).",
+                  "actionParameters": {
+                    "register": "shillinq",
+                    "schema": "CommitmentMovement",
+                    "kind": "committed"
+                  }
+                }
+              ]
+            },
+            "goedkeuren": {
+              "from": "in_approval",
+              "to": "committed",
+              "label": "Goedkeuren",
+              "description": "Approval chain completed; the commitment becomes binding. Gated by BudgetBlocker (REQ-VPL-002).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\BudgetBlocker::canCommit"
+            },
+            "ontvangen": {
+              "from": "committed",
+              "to": "partially_delivered",
+              "label": "Prestatie ontvangen",
+              "description": "Record (partial) receipt. Informational; budget unchanged (REQ-VPL-003)."
+            },
+            "factureren": {
+              "from": "partially_delivered",
+              "to": "partially_invoiced",
+              "label": "Factureren",
+              "description": "Invoice matched against the commitment; remaining_committed reduced (REQ-VPL-003)."
+            },
+            "betalen": {
+              "from": "partially_invoiced",
+              "to": "partially_paid",
+              "label": "Betalen",
+              "description": "Payment settled; openstaande_verplichtingen unchanged (already released at gefactureerd, REQ-VPL-003)."
+            },
+            "afsluiten": {
+              "from": "committed",
+              "to": "closed",
+              "label": "Afsluiten",
+              "description": "Close the commitment; restant released back to budget (REQ-VPL-006)."
+            },
+            "annuleren": {
+              "from": "committed",
+              "to": "cancelled",
+              "label": "Annuleren",
+              "description": "Cancel; reversal mutatie posted, openstaande_verplichtingen reduced (REQ-VPL-006)."
+            }
+          }
+        },
+        "x-openregister-approval-chains": {
+          "commitment-approval": {
+            "description": "Approval chain that gates the Commitment in_approval -> committed `goedkeuren` transition (REQ-VPL-013). A commitment reaches in_approval only when MandateEnforcer::requiresApproval routed it there because the signer's mandaat was insufficient (REQ-VPL-002); this chain then runs the finance approval workflow that releases it. Threshold-routed on totaalbedrag_excl_btw (EUR cents): a single commitment-administrator approves from EUR 0, and a finance-director approves commitments at or above EUR 250.000. Separation of duties is enforced - the requester who submitted the commitment cannot approve their own step. On completion the goedkeuren transition auto-advances (BudgetBlocker still gates the budget). Declarative metadata only: OpenRegister's approval-workflow primitive (x-openregister-approval-chains, ApprovalChainGateListener/ApprovalChainAdvanceListener) materialises and gates the actual steps; this app ships no PHP approval-chain implementation. INERT until the OpenRegister release carrying the declarative approval-chains capability (PR #396/#397) is deployed - see openspec/changes/migrate-mandaat-to-approval-chains/design.md for the sequencing and the named follow-up.",
+            "transition": "goedkeuren",
+            "amountField": "total_amount_excl_vat",
+            "separationOfDuties": true,
+            "approvers": [
+              {
+                "role": "commitment-administrator",
+                "min": 1,
+                "minAmount": 0
+              },
+              {
+                "role": "finance-director",
+                "min": 1,
+                "minAmount": 25000000
+              }
+            ],
+            "onApprove": "advanceTransition"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "commitment-administrator": {
+              "scope": "administration",
+              "capabilities": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "budget-holder": {
+              "scope": "programme",
+              "capabilities": [
+                "read"
+              ]
+            },
+            "finance-director": {
+              "scope": "administration",
+              "capabilities": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "scope": "administration",
+              "capabilities": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "CommitmentLine": {
+        "slug": "CommitmentLine",
+        "icon": "FormatListNumbered",
+        "version": "0.1.0",
+        "title": "CommitmentLine",
+        "description": "A budget-tracking line on a Commitment, one per budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Each regel tracks its own delivery, invoicing, and payment independently so multi-year raamovereenkomsten block budget per boekjaar (D2, REQ-VPL-004).",
+        "x-openregister-purpose": "fact",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "commitment",
+          "ruleNumber",
+          "financialYear",
+          "amount_excl_vat"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration (tenant isolation).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "commitment": {
+            "type": "string",
+            "description": "FK to the parent Commitment (commitmentNumber).",
+            "example": "PO-2026-00874",
+            "title": "Commitment"
+          },
+          "ruleNumber": {
+            "type": "integer",
+            "description": "Sequential line number within the verplichting.",
+            "example": 1,
+            "title": "Regelnummer"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable line description.",
+            "example": "Licentie 2026",
+            "title": "Omschrijving"
+          },
+          "financialYear": {
+            "type": "integer",
+            "description": "Fiscal year this line's budget is consumed from (REQ-VPL-004).",
+            "example": 2026,
+            "title": "Boekjaar"
+          },
+          "amount_excl_vat": {
+            "type": "integer",
+            "description": "Committed amount excluding VAT, in minor units (EUR cents).",
+            "example": 6200000,
+            "title": "Bedrag Excl BTW"
+          },
+          "amount_incl_vat": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Committed amount including VAT, in minor units.",
+            "example": 7502000,
+            "title": "Bedrag Incl BTW"
+          },
+          "generalLedgerAccount": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the Account (grootboekrekening) charged.",
+            "example": "4310",
+            "title": "Grootboekrekening"
+          },
+          "costCentre": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cost centre code.",
+            "example": "KP-1042",
+            "title": "Kostenplaats"
+          },
+          "programme": {
+            "type": "string",
+            "nullable": true,
+            "description": "BBV taakveld / programma code, ties the commitment to a budget bucket (REQ-VPL-009).",
+            "example": "5.1",
+            "title": "Programma"
+          },
+          "vat_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "VAT code applied to the line.",
+            "example": "21",
+            "title": "BTW Code"
+          },
+          "expected_delivered_on": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Expected delivery date.",
+            "example": "2026-09-01",
+            "title": "Verwacht Geleverd Op"
+          },
+          "delivered_amount": {
+            "type": "integer",
+            "description": "Aggregated received amount, in minor units (informational; no budget impact).",
+            "default": 0,
+            "example": 1500000,
+            "title": "Geleverd Bedrag"
+          },
+          "invoiced_amount": {
+            "type": "integer",
+            "description": "Aggregated invoiced amount, in minor units.",
+            "default": 0,
+            "example": 1500000,
+            "title": "Gefactureerd Bedrag"
+          },
+          "paid_amount": {
+            "type": "integer",
+            "description": "Aggregated paid amount, in minor units.",
+            "default": 0,
+            "example": 0,
+            "title": "Betaald Bedrag"
+          },
+          "remaining_committed": {
+            "type": "integer",
+            "description": "Outstanding committed amount = bedrag_excl_btw - gefactureerd_bedrag (REQ-VPL-003).",
+            "default": 0,
+            "example": 4700000,
+            "title": "Restant Verplicht"
+          },
+          "afgesloten": {
+            "type": "boolean",
+            "description": "Whether this line is closed (REQ-VPL-006).",
+            "default": false,
+            "example": false,
+            "title": "Afgesloten"
+          }
+        },
+        "x-openregister-aggregations": {
+          "committedVsRealisedPerBudgetLine": {
+            "description": "REQ-VPL-011: per-budget-line committed-vs-realised rollup, grouped by budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Excludes afgesloten regels. verplicht = sum(restant_verplicht); gerealiseerd = sum(gefactureerd_bedrag); geautoriseerd is joined from the matching CommitmentBudget (administrationId + programmaCode = programma + boekjaar); vrij = geautoriseerd - verplicht - gerealiseerd is computed by the drilldown view (BudgetLineCommitments.vue) from these three declared figures — no parallel PHP reporting service (ADR-031).",
+            "_grammar_note": "Rewritten into OpenRegister's actual annotation vocabulary (openregister#2846 + #2849). It previously used `source` and a `sum` list, neither of which the engine reads — the runner recognised the aggregation by NAME and understood none of its body, returning metric:\"\", field:null, groups:[] against live objects with no error at all (issue #1216). `source` is dropped because this is an intra-schema aggregation declared ON CommitmentLine; `from` is the cross-schema key and would have sent it down a different path. `sum: [a, b]` becomes `metrics: [{metric, field}, ...]`, the multi-metric spelling. `on` uses the explicit {parentField: joinedField} map rather than the string shorthand: the shorthand names only the joined side and leaves the parent side to be inferred from the group fields, which happens to give the right answer here but is a guess, and the map is the only spelling that could express a composite key later.",
+            "groupBy": [
+              "programme",
+              "costCentre",
+              "financialYear",
+              "generalLedgerAccount"
+            ],
+            "_scoping_note": "administrationId is NOT declared here, deliberately. It used to read `@self.administrationId`, which is not a placeholder the resolver knows — `$currentUser` is the only one — so it was left literal, matched nothing, and filtered every row away. Declaring it as a constant is impossible because it differs per caller, so scoping is supplied BY the caller as a narrowing filter: BudgetLineCommitments.vue passes filter[administrationId] from /api/administrations/context. openregister#2852 makes that safe — a request filter may ADD a constraint and can never relax or replace a declared one, so this cannot become a way to widen the set. Do not re-add a placeholder here without first checking PlaceholderResolver actually implements it.",
+            "filter": {
+              "afgesloten": false
+            },
+            "metrics": [
+              { "metric": "sum", "field": "remaining_committed" },
+              { "metric": "sum", "field": "invoiced_amount" }
+            ],
+            "join": {
+              "through": "CommitmentBudget",
+              "on": { "programme": "programmeCode" },
+              "filter": {},
+              "select": [
+                "CommitmentBudget.authorised_amount",
+                "CommitmentBudget.realised_amount"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a CommitmentLine is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "CommitmentMovement": {
+        "slug": "CommitmentMovement",
+        "icon": "History",
+        "version": "0.1.0",
+        "title": "CommitmentMovement",
+        "description": "Immutable audit-log entry for every change to a Commitment (D1, REQ-VPL-010). The commitment.status is derived from the latest mutatie. Bedrag may be negative for cancelled/decreased/reclaimed; aggregations track sign explicitly.",
+        "x-openregister-purpose": "fact",
+        "x-openregister-immutable": true,
+        "type": "object",
+        "required": [
+          "administrationId",
+          "commitment",
+          "date",
+          "kind",
+          "amount"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration (tenant isolation).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "commitment": {
+            "type": "string",
+            "description": "FK to the parent Commitment (commitmentNumber).",
+            "example": "PO-2026-00874",
+            "title": "Commitment"
+          },
+          "commitmentRule": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional FK to the specific CommitmentLine affected.",
+            "example": "PO-2026-00874-1",
+            "title": "CommitmentLine"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the mutation occurred.",
+            "example": "2026-04-15",
+            "title": "Datum"
+          },
+          "kind": {
+            "type": "string",
+            "description": "Kind of mutation.",
+            "enum": [
+              "committed",
+              "increased",
+              "decreased",
+              "performance_received",
+              "invoiced",
+              "paid",
+              "closed",
+              "cancelled",
+              "reclaimed"
+            ],
+            "example": "committed",
+            "title": "Soort"
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Mutation amount in minor units (EUR cents); may be negative for decreased/cancelled/reclaimed.",
+            "example": 5000000,
+            "title": "Bedrag"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code.",
+            "default": "EUR",
+            "example": "EUR",
+            "title": "Valuta"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-text explanation for the audit trail.",
+            "example": "PO getekend door inkoper",
+            "title": "Toelichting"
+          },
+          "related_invoice": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional FK to the AP/AR Invoice this mutation relates to.",
+            "example": "inv-2001",
+            "title": "Gerelateerde Factuur"
+          },
+          "related_payment": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional FK to the Payment/PaymentRun this mutation relates to.",
+            "example": "pr-7001",
+            "title": "Gerelateerde Betaling"
+          },
+          "journalEntry": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional FK to the GLTransaction journal entry.",
+            "example": "glt-3001",
+            "title": "Journaalpost"
+          },
+          "user": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the Nextcloud user who triggered the mutation.",
+            "example": "user-5",
+            "title": "Gebruiker"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a CommitmentMovement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "Mandate": {
+        "slug": "Mandate",
+        "icon": "AccountKey",
+        "version": "0.1.0",
+        "title": "Mandate",
+        "description": "Authorization record defining who may sign commitments up to what amount, for which soort_verplichting, with optional second-signature thresholds (D6, REQ-VPL-002). Enforced by MandateEnforcer on the verplichting aangaan transition. A register (not an enum) so operators can manage mandates over time.",
+        "x-openregister-purpose": "dimension",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "mandateCode",
+          "name",
+          "maximumAmount"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration (tenant isolation).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "mandateCode": {
+            "type": "string",
+            "description": "Unique mandate code within the administration.",
+            "example": "M-INKOOP-50K",
+            "title": "Mandaatcode"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable mandate name.",
+            "example": "Inkoopmandaat tot 50.000 EUR",
+            "title": "Naam"
+          },
+          "holder": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to a Nextcloud user or role that holds the mandate.",
+            "example": "user-3",
+            "title": "Houder"
+          },
+          "holder_type": {
+            "type": "string",
+            "description": "Whether houder references a user, a role, or a team.",
+            "enum": [
+              "user",
+              "role",
+              "team"
+            ],
+            "default": "user",
+            "example": "user",
+            "title": "Houder Type"
+          },
+          "maximumAmount": {
+            "type": "integer",
+            "description": "Ceiling amount this mandate may sign, in minor units (EUR cents). Use a very large value for unlimited.",
+            "example": 5000000,
+            "title": "Maximumbedrag"
+          },
+          "kind_commitment": {
+            "type": "array",
+            "description": "Commitment kinds this mandate applies to. MUST use the same vocabulary as Commitment.kind: MandateEnforcer::mandateApplies() matches the commitment's `kind` against this list with in_array(strict), so a value that drifts from Commitment.kind's enum makes the mandate silently stop applying rather than error.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "purchase_order",
+                "frameworkAgreement",
+                "employment_contract",
+                "grant_decision",
+                "lease_agreement",
+                "leasing",
+                "other"
+              ]
+            },
+            "example": [
+              "purchase_order",
+              "frameworkAgreement"
+            ],
+            "title": "Soort Verplichting"
+          },
+          "is_override": {
+            "type": "boolean",
+            "description": "Whether this mandate may force-accept a budget-exceeding commitment with an audit-trail reason (REQ-VPL-001).",
+            "default": false,
+            "example": false,
+            "title": "Is Override"
+          },
+          "uitsluitingen": {
+            "type": "array",
+            "nullable": true,
+            "description": "Optional textual exclusions narrowing the mandate.",
+            "items": {
+              "type": "string"
+            },
+            "example": [],
+            "title": "Uitsluitingen"
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Mandate validity start.",
+            "example": "2025-01-01",
+            "title": "Geldig Van"
+          },
+          "valid_to": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Mandate validity end. Expired mandates are treated as absent (REQ-VPL-002).",
+            "example": "2027-12-31",
+            "title": "Geldig Tot"
+          },
+          "determined_at": {
+            "type": "string",
+            "nullable": true,
+            "description": "Legal reference under which the mandate was established (e.g. Mandaatregeling Gemeentewet 168).",
+            "example": "Mandaatregeling 2025, art. 4",
+            "title": "Vastgesteld Bij"
+          },
+          "required_second_signature_above": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Amount above which a second signature is required, in minor units (REQ-VPL-002).",
+            "example": 2500000,
+            "title": "Vereist Tweede Handtekening Boven"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "finance-director": {
+              "scope": "administration",
+              "capabilities": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "auditor": {
+              "scope": "administration",
+              "capabilities": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Mandate is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "ApprovalStep": {
+        "slug": "ApprovalStep",
+        "icon": "ClipboardCheckOutline",
+        "version": "0.1.0",
+        "title": "ApprovalStep",
+        "description": "A workflow step in a commitment's approval chain when the signer's mandaat is exceeded (D7, REQ-VPL-002). Created by MandateEnforcer when a verplichting moves to in_approval; gives finance a clear view of pending approvals.",
+        "x-openregister-purpose": "fact",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "commitment",
+          "stepNumber",
+          "role_required",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration (tenant isolation).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "commitment": {
+            "type": "string",
+            "description": "FK to the Commitment awaiting approval.",
+            "example": "PO-2026-00874",
+            "title": "Commitment"
+          },
+          "stepNumber": {
+            "type": "integer",
+            "description": "Sequential step number in the approval chain.",
+            "example": 1,
+            "title": "Stapnummer"
+          },
+          "role_required": {
+            "type": "string",
+            "description": "Role required to action this step. `municipal_executive` is the College van B&W (the municipal executive board), not an educational college.",
+            "enum": [
+              "budget_holder",
+              "team_lead",
+              "director",
+              "municipal_executive"
+            ],
+            "example": "director",
+            "title": "Rol Vereist"
+          },
+          "assigned_in": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the Nextcloud user assigned this step.",
+            "example": "user-5",
+            "title": "Toegewezen Aan"
+          },
+          "status": {
+            "type": "string",
+            "_note": "DELIBERATELY LEFT DUTCH — do not anglicise these values piecemeal. RenameDutchValueDecisions::VALUE_MAP is keyed by PROPERTY NAME and every entry applies REGISTER-WIDE, so a `status` entry translating `in_behandeling` or `afgewezen` would also rewrite stored rows of Rechtmatigheidstoets.status, Rechtmatigheidsbevinding.status and JournalEntry.lawfulness.status (bookkeeping-rechtmatigheidsverantwoording.json) plus ReviewWorkflow's nested step/comment statuses (bookkeeping-titel-9-jaarrekening.json) — all of which still declare the Dutch enum. Schema and data would silently desync: OpenRegister does not reject an out-of-enum stored value, the filter just returns nothing. A wholly Dutch enum is honest; a half-renamed one is a trap. Anglicise this only together with those fragments, or after the value map grows a schema-scoped key.",
+            "description": "Step status.",
+            "enum": [
+              "wachtend",
+              "in_behandeling",
+              "approved",
+              "afgewezen",
+              "teruggezonden"
+            ],
+            "default": "wachtend",
+            "example": "wachtend",
+            "title": "Status"
+          },
+          "handled_on": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the step was actioned.",
+            "example": "2026-04-16T10:00:00Z",
+            "title": "Behandeld Op"
+          },
+          "remark": {
+            "type": "string",
+            "nullable": true,
+            "description": "Approver remark.",
+            "example": "Akkoord, binnen kaderstelling.",
+            "title": "Opmerking"
+          },
+          "required_signature": {
+            "type": "boolean",
+            "description": "Whether this step requires a digital signature.",
+            "default": false,
+            "example": true,
+            "title": "Vereist Handtekening"
+          },
+          "signature_file": {
+            "type": "string",
+            "nullable": true,
+            "description": "File URI of the captured signature.",
+            "example": "docudesk:sig-12",
+            "title": "Handtekening Bestand"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a ApprovalStep is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "CommitmentBudget": {
+        "slug": "CommitmentBudget",
+        "icon": "Wallet",
+        "version": "0.1.0",
+        "title": "Commitment Budget",
+        "description": "Per-programma / per-boekjaar budget bucket. Verplichtingenadministratie introduces this register (no prior Budget schema exists in shillinq) so budget can be blocked at commitment-time. vrije_ruimte = geautoriseerd_bedrag - gerealiseerd_bedrag - openstaande_verplichtingen, evaluated on-demand (D4/D9, REQ-VPL-001).",
+        "x-openregister-purpose": "dimension",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "financialYear",
+          "authorised_amount"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the owning Administration (tenant isolation).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "programmeCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "BBV programma / taakveld code this budget covers.",
+            "example": "5.1",
+            "title": "Programma Code"
+          },
+          "costCentre": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional cost-centre scope for the budget.",
+            "example": "KP-1042",
+            "title": "Kostenplaats"
+          },
+          "financialYear": {
+            "type": "integer",
+            "description": "Fiscal year of the budget.",
+            "example": 2026,
+            "title": "Boekjaar"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable budget label.",
+            "example": "Programma 5.1 Cultuur 2026",
+            "title": "Omschrijving"
+          },
+          "authorised_amount": {
+            "type": "integer",
+            "description": "Authorised budget, in minor units (EUR cents).",
+            "example": 50000000,
+            "title": "Geautoriseerd Bedrag"
+          },
+          "realised_amount": {
+            "type": "integer",
+            "description": "Realised (invoiced) spend, in minor units.",
+            "default": 0,
+            "example": 20000000,
+            "title": "Gerealiseerd Bedrag"
+          },
+          "outstanding_commitments": {
+            "type": "integer",
+            "description": "Outstanding commitments aggregated from CommitmentLines, in minor units (D9, REQ-VPL-001).",
+            "default": 0,
+            "example": 0,
+            "title": "Openstaande Verplichtingen"
+          },
+          "free_capacity": {
+            "type": "integer",
+            "description": "Calculated free budget = geautoriseerd_bedrag - gerealiseerd_bedrag - openstaande_verplichtingen (D9).",
+            "default": 0,
+            "example": 30000000,
+            "title": "Vrije Ruimte"
+          }
+        },
+        "x-openregister-aggregations": {
+          "outstanding_commitments": {
+            "type": "sum",
+            "source": "CommitmentLine",
+            "field": "remaining_committed",
+            "where": [
+              {
+                "field": "financialYear",
+                "op": "eq",
+                "ref": "financialYear"
+              },
+              {
+                "field": "programme",
+                "op": "eq",
+                "ref": "programmeCode"
+              },
+              {
+                "field": "administrationId",
+                "op": "eq",
+                "ref": "administrationId"
+              },
+              {
+                "field": "afgesloten",
+                "op": "eq",
+                "value": false
+              }
+            ],
+            "description": "On-demand sum of outstanding committed amounts for this programma + boekjaar; not cached (D9, REQ-VPL-001)."
+          },
+          "free_capacity": {
+            "type": "calculation",
+            "formula": "authorised_amount - realised_amount - outstanding_commitments",
+            "description": "Free budget snapshot (D9)."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "budget-holder": {
+              "scope": "programme",
+              "capabilities": [
+                "read"
+              ]
+            },
+            "finance-director": {
+              "scope": "administration",
+              "capabilities": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "scope": "administration",
+              "capabilities": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a CommitmentBudget is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001). Pre-existing gap fixed while renaming this schema in the same edit (budget-core-schema) — the flag was missing under the retired 'Budget' slug too."
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Mandate",
+        "slug": "vpl-mandaat-inkoop-50k"
+      },
+      "administrationId": "adm-demo",
+      "mandateCode": "M-INKOOP-50K",
+      "name": "Inkoopmandaat tot 50.000 EUR",
+      "holder_type": "role",
+      "maximumAmount": 5000000,
+      "kind_commitment": [
+        "purchase_order",
+        "frameworkAgreement"
+      ],
+      "is_override": false,
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-12-31",
+      "determined_at": "Mandaatregeling Gemeentewet 168 e.v.",
+      "required_second_signature_above": 2500000
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Mandate",
+        "slug": "vpl-mandaat-directeur-250k"
+      },
+      "administrationId": "adm-demo",
+      "mandateCode": "M-DIRECTEUR-250K",
+      "name": "Directeursmandaat tot 250.000 EUR",
+      "holder_type": "role",
+      "maximumAmount": 25000000,
+      "kind_commitment": [
+        "purchase_order",
+        "frameworkAgreement",
+        "employment_contract",
+        "lease_agreement",
+        "leasing"
+      ],
+      "is_override": false,
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-12-31",
+      "determined_at": "Mandaatregeling Gemeentewet 168 e.v."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Mandate",
+        "slug": "vpl-mandaat-cfo-override"
+      },
+      "administrationId": "adm-demo",
+      "mandateCode": "M-CFO-OVERRIDE",
+      "name": "CFO override-mandaat (budgetoverschrijding)",
+      "holder_type": "role",
+      "maximumAmount": 1000000000,
+      "kind_commitment": [
+        "purchase_order",
+        "frameworkAgreement",
+        "employment_contract",
+        "grant_decision",
+        "lease_agreement",
+        "leasing",
+        "other"
+      ],
+      "is_override": true,
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-12-31",
+      "determined_at": "Mandaatregeling 2026, art. 12 (override)"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CommitmentBudget",
+        "slug": "example-vpl-budget-5-1-fac2026-2026"
+      },
+      "administrationId": "adm-demo",
+      "programmeCode": "5.1",
+      "costCentre": "FAC-2026",
+      "financialYear": 2026,
+      "description": "Programma 5.1 Cultuur 2026",
+      "authorised_amount": 50000000,
+      "realised_amount": 2500000
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CommitmentBudget",
+        "slug": "example-vpl-budget-5-1-fac2027-2027"
+      },
+      "administrationId": "adm-demo",
+      "programmeCode": "5.1",
+      "costCentre": "FAC-2027",
+      "financialYear": 2027,
+      "description": "Programma 5.1 Cultuur 2027",
+      "authorised_amount": 30000000,
+      "realised_amount": 0
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Commitment",
+        "slug": "verplichting-2026-0001"
+      },
+      "administrationId": "adm-demo",
+      "commitmentNumber": "VPL-2026-0001",
+      "sourceReference": "PO-2026-0207",
+      "kind": "purchase_order",
+      "status": "committed",
+      "commencementDate": "2026-04-15",
+      "total_amount_excl_vat": 7500000,
+      "mandate_applied": "M-DIRECTEUR-250K",
+      "counterparty": {
+        "kind": "supplier",
+        "name": "ICT Leverancier B.V.",
+        "kvk": "12345678"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CommitmentLine",
+        "slug": "vpl-regel-0001"
+      },
+      "administrationId": "adm-demo",
+      "commitment": "VPL-2026-0001",
+      "ruleNumber": 1,
+      "description": "ICT-diensten 2026",
+      "financialYear": 2026,
+      "amount_excl_vat": 7500000,
+      "generalLedgerAccount": "4400",
+      "costCentre": "FAC-2026",
+      "programme": "5.1",
+      "invoiced_amount": 2500000,
+      "remaining_committed": 5000000
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Commitment",
+        "slug": "verplichting-2026-0002"
+      },
+      "administrationId": "adm-demo",
+      "commitmentNumber": "VPL-2026-0002",
+      "sourceReference": "PO-2026-0231",
+      "kind": "frameworkAgreement",
+      "status": "committed",
+      "commencementDate": "2026-03-01",
+      "total_amount_excl_vat": 20000000,
+      "mandate_applied": "M-DIRECTEUR-250K",
+      "counterparty": {
+        "kind": "supplier",
+        "name": "Facilitair Diensten Groep B.V.",
+        "kvk": "87654321"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CommitmentLine",
+        "slug": "vpl-regel-0002"
+      },
+      "administrationId": "adm-demo",
+      "commitment": "VPL-2026-0002",
+      "ruleNumber": 1,
+      "description": "Facilitaire dienstverlening 2026",
+      "financialYear": 2026,
+      "amount_excl_vat": 10000000,
+      "generalLedgerAccount": "4400",
+      "costCentre": "FAC-2026",
+      "programme": "5.1",
+      "invoiced_amount": 0,
+      "remaining_committed": 10000000
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CommitmentLine",
+        "slug": "vpl-regel-0003"
+      },
+      "administrationId": "adm-demo",
+      "commitment": "VPL-2026-0002",
+      "ruleNumber": 2,
+      "description": "Facilitaire dienstverlening 2027",
+      "financialYear": 2027,
+      "amount_excl_vat": 10000000,
+      "generalLedgerAccount": "4400",
+      "costCentre": "FAC-2027",
+      "programme": "5.1",
+      "invoiced_amount": 0,
+      "remaining_committed": 10000000
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Commitment",
+        "slug": "verplichting-2026-0003"
+      },
+      "administrationId": "adm-demo",
+      "commitmentNumber": "VPL-2026-0003",
+      "sourceReference": "BES-2026-0044",
+      "kind": "grant_decision",
+      "status": "committed",
+      "commencementDate": "2026-02-10",
+      "total_amount_excl_vat": 4000000,
+      "internal_reference": "Eindafrekening 20% restant nog te ontvangen",
+      "counterparty": {
+        "kind": "grantRecipient",
+        "name": "Stichting Cultuurhuis Zuidoost"
+      }
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CommitmentLine",
+        "slug": "vpl-regel-0004"
+      },
+      "administrationId": "adm-demo",
+      "commitment": "VPL-2026-0003",
+      "ruleNumber": 1,
+      "description": "Subsidiebeschikking cultuurhuis 2026",
+      "financialYear": 2026,
+      "amount_excl_vat": 4000000,
+      "generalLedgerAccount": "4410",
+      "costCentre": "FAC-2026",
+      "programme": "5.1",
+      "invoiced_amount": 0,
+      "remaining_committed": 4000000
+    }
+  ]
+}

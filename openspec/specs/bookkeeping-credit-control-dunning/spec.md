@@ -7,7 +7,11 @@
 `../bookkeeping-general-ledger/spec.md` (GL posting), `../bookkeeping-btw-aangifte/spec.md` (BTW-teruggaaf),
 `../docudesk/spec.md` (dunning-templates), `../openconnector/spec.md` (API integrations)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping credit control dunning in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: dunning/credit control pages not yet implemented
 
@@ -96,10 +100,10 @@ The `IncassoKostenBerekening` register MUST declare a fixed minimum field set:
 |---|---|---|---|
 | `factuurId` | string | Yes | FK to invoice UUID |
 | `hoofdsom` | number | Yes | Invoice amount at time of calculation |
-| `berekening` | object | Yes | {schaal1_0_2500, schaal2_2500_5000, schaal3_5000_10000, schaal4_10000_200000, schaal5_200000plus, totaal, minimum, toegepast} |
-| `wettelijkeRente` | object | Yes | {tarief (decimal 0.115 or 0.07), type enum: HANDELSRENTE_B2B_6_119A_BW / WETTELIJKE_RENTE_B2C_6_119_BW, ingangsdatum, berekendOp, dagen, bedrag} |
+| `berekening` | object | Yes | {schaal1_0_2500, schaal2_2500_5000, schaal3_5000_10000, schaal4_10000_200000, schaal5_200000plus, totaal, minimum, maximum, toegepast, btwVerrekenbaar, btwPercentage, btwBedrag, toegepastInclBtw} |
+| `wettelijkeRente` | object | Yes | {tarief (decimal; 0.1015 B2B / 0.04 B2C per 1-1-2026), type enum: HANDELSRENTE_B2B_6_119A_BW / WETTELIJKE_RENTE_B2C_6_119_BW, ingangsdatum, berekendOp, dagen, bedrag, perioden[] (per-rate sub-periods {van, tot, dagen, tarief, bedrag})} |
 | `partyType` | enum | Yes | B2B / B2C (controls rente-rate choice) |
-| `totaalVerschuldigd` | number | Yes | hoofdsom + incassokosten + rente |
+| `totaalVerschuldigd` | number | Yes | hoofdsom + incassokosten (incl. BTW) + rente |
 | `administrationId` | string | Yes | FK to administration |
 
 Staffel-berekening (Besluit BIK):
@@ -109,6 +113,41 @@ Staffel-berekening (Besluit BIK):
 - €10.000–€200.000: 1% on amount above €10.000
 - €200.000+: 0.5% on amount above €200.000
 
+The applied fee MUST honour the statutory **maximum €6.775** (reached at a €1.000.000 hoofdsom):
+`toegepast = min(max(totaal, €40), €6.775)`.
+
+Wettelijke rente MUST be resolved from a **maintained, date-keyed rate table** (the rate changes
+~biannually; per 1-1-2026 B2C is 4% per art. 6:119 BW and B2B handelsrente is 10,15% per art. 6:119a
+BW). An accrual window crossing a statutory rate boundary MUST split into sub-periods (`perioden`)
+that each accrue at their own rate; `bedrag` is their sum. An explicit override tarief forces a flat
+single period (contractual B2B, art. 6:119a lid 3 BW).
+
+**BTW-over-incassokosten** (art. 2 lid 2 Besluit BIK): when the creditor cannot offset the VAT on the
+collection service (`btwVerrekenbaar = false`) and declares this, the fee is increased by
+`btwPercentage` (default 21%); `btwBedrag` and `toegepastInclBtw` MUST be recorded and
+`totaalVerschuldigd` MUST count `toegepastInclBtw`.
+
+#### Scenario: Statutory maximum €6.775 caps incassokosten on large claims
+
+- **GIVEN** an outstanding hoofdsom of €2.000.000
+- **WHEN** IncassoKostenBerekening is evaluated
+- **THEN** `berekening.totaal` MUST be €11.775 but `berekening.toegepast` MUST be €6.775; a
+  €1.000.000 hoofdsom MUST likewise yield `toegepast` €6.775 (the cap is reached exactly).
+
+#### Scenario: B2C rente splits across a statutory rate boundary
+
+- **GIVEN** invoice €10.000, partyType=B2C, rente accruing 2025-12-17 → 2026-01-16 (6% → 4% at 1-1-2026)
+- **WHEN** wettelijkeRente is calculated with no override
+- **THEN** `perioden` MUST contain 15 days @ 6% (€24.66) + 15 days @ 4% (€16.44) and `bedrag` MUST be
+  €41.10; `tarief` MUST be 0.04.
+
+#### Scenario: BTW-over-incassokosten added when creditor cannot offset VAT
+
+- **GIVEN** invoice €8.400 with staffel `toegepast` €795 and a creditor who cannot offset VAT
+- **WHEN** IncassoKostenBerekening is evaluated with `btwVerrekenbaar=false`
+- **THEN** `btwBedrag` MUST be €166.95 and `toegepastInclBtw` €961.95; with the default
+  `btwVerrekenbaar=true` `btwBedrag` MUST be €0.
+
 #### Scenario: B2B incassokostenstaffel calculated correctly on €8.400
 
 - **GIVEN** invoice €8.400, partyType=B2B, stage 3 entered on day 30
@@ -116,19 +155,18 @@ Staffel-berekening (Besluit BIK):
 - **THEN** staffel-berekening MUST yield: 15% × €2.500 (€375) + 10% × €2.500 (€250)
   + 5% × €3.400 (€170) = €795 total.
 
-#### Scenario: B2B handelsrente calculated per art. 6:119a BW (11.5% per 1-1-2026)
+#### Scenario: B2B handelsrente calculated per art. 6:119a BW (10.15% per 1-1-2026)
 
-- **GIVEN** invoice €8.400 in verzuim since day 30, calculated on day 50 (20 days verzuim)
-- **WHEN** wettelijkeRente is calculated for partyType=B2B
-- **THEN** rente MUST be (€8.400 × 0.115 × 20/365) = €53.01; tarief MUST be 0.115;
+- **GIVEN** invoice €8.400 in verzuim, calculated over 22 days in 2026
+- **WHEN** wettelijkeRente is calculated for partyType=B2B with no override
+- **THEN** rente MUST be (€8.400 × 0.1015 × 22/365) = €51.39; tarief MUST be 0.1015;
   type MUST be HANDELSRENTE_B2B_6_119A_BW.
 
-#### Scenario: B2C rente calculated per art. 6:119 BW (7% per 1-1-2026)
+#### Scenario: B2C rente calculated per art. 6:119 BW (4% per 1-1-2026)
 
-- **GIVEN** invoice €820, partyType=B2C, stage 3 entered day 30, calculated day 75 (14-dag
-  brief period + 31 days = day 44–75)
-- **WHEN** wettelijkeRente is calculated
-- **THEN** rente MUST be (€820 × 0.07 × 31/365) = €4.92; tarief MUST be 0.07;
+- **GIVEN** invoice €820, partyType=B2C, calculated over 31 days in 2026
+- **WHEN** wettelijkeRente is calculated with no override
+- **THEN** rente MUST be (€820 × 0.04 × 31/365) = €2.79; tarief MUST be 0.04;
   type MUST be WETTELIJKE_RENTE_B2C_6_119_BW.
 
 #### Scenario: B2C incassokostenstaffel NOT calculated before day 44
@@ -273,6 +311,8 @@ Periodic updates (e.g., monthly) refresh scores; dunning-run does NOT re-fetch.
 
 ### REQ-CCD-008: Optionele overdraft-actie stage 5 SHALL POST dossier-bundel to incassobureau-API
 
+The system SHALL satisfy this requirement: Optionele overdraft-actie stage 5 SHALL POST dossier-bundel to incassobureau-API.
+
 At stage 5 (day 90, overdraft incasso), operator can trigger:
 
 ```
@@ -303,6 +343,8 @@ API-error (network, 4xx/5xx) MUST queue for retry; operator notified.
   updates for that invoice MUST FAIL with "Invoice in_incasso; dunning-actions locked".
 
 ### REQ-CCD-009: Optionele PostNL aangetekende-post SHALL send stage 4 ingebrekestelling via PostNL Track & Trace API
+
+The system SHALL satisfy this requirement: Optionele PostNL aangetekende-post SHALL send stage 4 ingebrekestelling via PostNL Track & Trace API.
 
 If PostNL integration is enabled, stage 4 (ingebrekestelling) can be configured
 to dispatch via aangetekende post:
@@ -354,6 +396,8 @@ Upon operator action "Afschrijven oninbaar":
 
 ### REQ-CCD-011: Anti-pattern-detector SHALL halt escalation if admin-error detected
 
+The system SHALL satisfy this requirement: Anti-pattern-detector SHALL halt escalation if admin-error detected.
+
 If a customer has paid 1+ invoices successfully in the prior 90 days AND a dunning
 trigger arises from a single admin-error scenario (wrong IBAN, missing payment-reference),
 the system MUST:
@@ -387,7 +431,8 @@ the system MUST:
 - Wet betalingstermijnen overheid (Stb. 2017, 226) — 30-dagensbetaaltermijn
 - Wet op de omzetbelasting 1968, art. 29 lid 1 (BTW-teruggaaf oninbaar)
 - Aanbestedingswet 2012, ARIV 2018, ARVODI 2018 (Rijksoverheid inkoopvoorwaarden)
-- ECB Main Refinancing Rate (per 1-1-2026: 3.5%, handelsrente 11.5%)
-- DNB publicatie wettelijke rente B2C (per 1-1-2026: 7%)
+- Wettelijke handelsrente B2B (art. 6:119a BW, ECB Main Refinancing Rate + 8pp): 10.15% per 1-1-2026 (Wieringa Advocaten, wettelijke-rente.com)
+- Wettelijke rente B2C (art. 6:119 BW, AMvB 10-12-2025): 4% per 1-1-2026
+- Besluit BIK maximum incassokosten: €6.775 (reached at €1.000.000 vordering); art. 2 lid 2 BTW-verhoging
 - Atradius Payment Practices Barometer 2024
 - RJ Guidance (Richtlijnen voor de Jaarrekening) — dunning-brief formatting

@@ -1,0 +1,403 @@
+{
+  "x-shillinq-fragment": "checks-ifrsusgaap",
+  "components": {
+    "schemas": {
+      "FinancialStatement": {
+        "slug": "FinancialStatement",
+        "version": "0.3.0",
+        "properties": {
+          "ifrsComponents": {
+            "type": "array",
+            "nullable": true,
+            "description": "The IFRS primary statements present in the complete set (IAS 1.10): financialPosition, profitOrLossOci, changesInEquity, cashFlows, notes.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Ifrs Components"
+          },
+          "cashFlowStatement": {
+            "type": "object",
+            "nullable": true,
+            "description": "Cash flows classified into operating, investing and financing activities (IAS 7.10 / ASC 230), reconciling to the net change in cash for the period.",
+            "properties": {
+              "operating": {
+                "type": "number",
+                "description": "Net cash flow from operating activities.",
+                "title": "Operating"
+              },
+              "investing": {
+                "type": "number",
+                "description": "Net cash flow from investing activities.",
+                "title": "Investing"
+              },
+              "financing": {
+                "type": "number",
+                "description": "Net cash flow from financing activities.",
+                "title": "Financing"
+              },
+              "netChange": {
+                "type": "number",
+                "description": "Net increase/decrease in cash and cash equivalents.",
+                "title": "Net Change"
+              }
+            },
+            "title": "Cash Flow Statement"
+          },
+          "pnlCategories": {
+            "type": "array",
+            "nullable": true,
+            "description": "The IFRS 18.47 income/expense categories presented in the statement of profit or loss: operating, investing, financing, incomeTaxes, discontinuedOperations.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Pnl Categories"
+          },
+          "operatingProfitSubtotal": {
+            "type": "number",
+            "nullable": true,
+            "description": "The operating profit-or-loss subtotal required by IFRS 18.69.",
+            "title": "Operating Profit Subtotal"
+          },
+          "inventoryCostFormula": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cost formula for interchangeable inventories (IAS 2.25). FIFO or weighted-average is permitted; LIFO is prohibited.",
+            "enum": [
+              "fifo",
+              "weightedAverage",
+              "lifo"
+            ],
+            "example": "fifo",
+            "title": "Inventory Cost Formula"
+          },
+          "internalGoodwillRecognised": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when internally generated goodwill is recognised as an asset. IAS 38.48 prohibits this — compliant statements set this false.",
+            "title": "Internal Goodwill Recognised"
+          },
+          "internalBrandsRecognised": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when internally generated brands, mastheads, customer lists, etc., are recognised as intangible assets. IAS 38.63 prohibits this — compliant statements set this false.",
+            "title": "Internal Brands Recognised"
+          },
+          "goodwillImpairmentReversed": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when a goodwill impairment loss has been reversed. IAS 36.124 prohibits this — compliant statements set this false.",
+            "title": "Goodwill Impairment Reversed"
+          },
+          "contingentLiabilityRecognised": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when a contingent liability has been recognised. IAS 37.27 forbids recognition (disclosure only) — compliant statements set this false.",
+            "title": "Contingent Liability Recognised"
+          },
+          "fxInitialMeasurement": {
+            "type": "object",
+            "nullable": true,
+            "description": "Initial recognition of a foreign-currency transaction at the spot rate at the transaction date (IAS 21.21): recordedAmount = foreignAmount x spotRate.",
+            "properties": {
+              "foreignAmount": {
+                "type": "number",
+                "description": "Foreign-currency transaction amount.",
+                "title": "Foreign Amount"
+              },
+              "spotRate": {
+                "type": "number",
+                "description": "Spot exchange rate at the transaction date.",
+                "title": "Spot Rate"
+              },
+              "recordedAmount": {
+                "type": "number",
+                "description": "Functional-currency amount recorded on initial recognition.",
+                "title": "Recorded Amount"
+              }
+            },
+            "title": "Fx Initial Measurement"
+          },
+          "monetaryItemRateType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Exchange rate applied to foreign-currency monetary items at the reporting date. IAS 21.23(a) requires the closing rate.",
+            "enum": [
+              "closing",
+              "historical",
+              "average"
+            ],
+            "example": "closing",
+            "title": "Monetary Item Rate Type"
+          },
+          "nonMonetaryHistoricalRateType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Exchange rate applied to non-monetary items measured at historical cost. IAS 21.23(b) requires the transaction-date (historical) rate.",
+            "enum": [
+              "historical",
+              "closing",
+              "average"
+            ],
+            "example": "historical",
+            "title": "Non Monetary Historical Rate Type"
+          },
+          "currentTaxPosition": {
+            "type": "object",
+            "nullable": true,
+            "description": "Current-tax position (IAS 12.12): unpaid current tax is recognised as a liability, any excess paid as an asset. The classification matches the sign of unpaidCurrentTax.",
+            "properties": {
+              "unpaidCurrentTax": {
+                "type": "number",
+                "description": "Unpaid current tax for current and prior periods (negative when overpaid).",
+                "title": "Unpaid Current Tax"
+              },
+              "classification": {
+                "type": "string",
+                "description": "liability when unpaidCurrentTax > 0, asset when < 0.",
+                "enum": [
+                  "liability",
+                  "asset"
+                ],
+                "title": "Classification"
+              }
+            },
+            "title": "Current Tax Position"
+          },
+          "deferredTaxDiscounted": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when deferred tax assets/liabilities are discounted. IAS 12.53 prohibits discounting — compliant statements set this false.",
+            "title": "Deferred Tax Discounted"
+          },
+          "deferredTaxClassification": {
+            "type": "string",
+            "nullable": true,
+            "description": "Balance-sheet classification of deferred tax. ASC 740 requires non-current classification on a classified balance sheet.",
+            "enum": [
+              "noncurrent",
+              "current"
+            ],
+            "example": "noncurrent",
+            "title": "Deferred Tax Classification"
+          },
+          "shortTermBenefitsDiscounted": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when short-term employee benefits are discounted. IAS 19.11 requires the undiscounted amount — compliant statements set this false.",
+            "title": "Short Term Benefits Discounted"
+          },
+          "creditRiskExposure": {
+            "type": "object",
+            "nullable": true,
+            "description": "IFRS 9 credit-risk staging for a representative financial asset. The 30-DPD SICR (5.5.11) and 90-DPD default (B5.5.37) presumptions are rebuttable.",
+            "properties": {
+              "daysPastDue": {
+                "type": "number",
+                "description": "Contractual days past due.",
+                "title": "Days Past Due"
+              },
+              "sicrRebutted": {
+                "type": "boolean",
+                "description": "True when the 30-DPD SICR presumption is rebutted with reasonable supportable information.",
+                "title": "Sicr Rebutted"
+              },
+              "sicrStage": {
+                "type": "number",
+                "description": "ECL stage (1 = 12-month, 2 = lifetime SICR, 3 = credit-impaired).",
+                "title": "Sicr Stage"
+              },
+              "defaultRebutted": {
+                "type": "boolean",
+                "description": "True when the 90-DPD default presumption is rebutted.",
+                "title": "Default Rebutted"
+              },
+              "inDefault": {
+                "type": "boolean",
+                "description": "True when the asset is classified in default.",
+                "title": "In Default"
+              }
+            },
+            "title": "Credit Risk Exposure"
+          },
+          "acquisitionDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Acquisition date of a business combination (IFRS 3 / ASC 805), from which the measurement period runs.",
+            "title": "Acquisition Date"
+          },
+          "measurementPeriodEnd": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "End of the business-combination measurement period. IFRS 3.45 / ASC 805 cap it at one year after the acquisition date.",
+            "title": "Measurement Period End"
+          },
+          "investeeVotingPowerPct": {
+            "type": "number",
+            "nullable": true,
+            "description": "Percentage of voting power held in an investee. IAS 28 / ASC 323 presume significant influence (equity method) at 20% or more.",
+            "title": "Investee Voting Power Pct"
+          },
+          "equityMethodApplied": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the equity method is applied to the investment. Consistent with investeeVotingPowerPct >= 20%.",
+            "title": "Equity Method Applied"
+          },
+          "financingExpedientApplied": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the IFRS 15.63 no-significant-financing-component practical expedient is applied (only valid when transferToPaymentDays <= 365).",
+            "title": "Financing Expedient Applied"
+          },
+          "transferToPaymentDays": {
+            "type": "number",
+            "nullable": true,
+            "description": "Expected number of days between transfer of goods/services and customer payment, for the IFRS 15.63 expedient.",
+            "title": "Transfer To Payment Days"
+          },
+          "costObtainingExpedientApplied": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the IFRS 15.94 practical expedient (expensing incremental costs of obtaining a contract) is applied (only valid when costAmortisationMonths <= 12).",
+            "title": "Cost Obtaining Expedient Applied"
+          },
+          "costAmortisationMonths": {
+            "type": "number",
+            "nullable": true,
+            "description": "Amortisation period (in months) of the costs of obtaining a contract, for the IFRS 15.94 expedient.",
+            "title": "Cost Amortisation Months"
+          },
+          "leaseRecognition": {
+            "type": "object",
+            "nullable": true,
+            "description": "Lessee lease recognition (IFRS 16.22/16.37): right-of-use asset and lease liability at commencement, and the first-period interest at a constant periodic rate.",
+            "properties": {
+              "rouAsset": {
+                "type": "number",
+                "description": "Right-of-use asset recognised at commencement.",
+                "title": "Rou Asset"
+              },
+              "leaseLiability": {
+                "type": "number",
+                "description": "Lease liability recognised at commencement.",
+                "title": "Lease Liability"
+              },
+              "openingLiability": {
+                "type": "number",
+                "description": "Opening lease liability for the first period.",
+                "title": "Opening Liability"
+              },
+              "discountRate": {
+                "type": "number",
+                "description": "Discount rate (periodic) used to unwind the liability.",
+                "title": "Discount Rate"
+              },
+              "firstPeriodInterest": {
+                "type": "number",
+                "description": "First-period interest = openingLiability x discountRate.",
+                "title": "First Period Interest"
+              }
+            },
+            "title": "Lease Recognition"
+          },
+          "shortTermLease": {
+            "type": "object",
+            "nullable": true,
+            "description": "ASC 842 short-term-lease exemption: a lease of 12 months or less with no reasonably certain purchase option may be exempted by class.",
+            "properties": {
+              "termMonths": {
+                "type": "number",
+                "description": "Lease term in months.",
+                "title": "Term Months"
+              },
+              "purchaseOptionLikely": {
+                "type": "boolean",
+                "description": "True when a purchase option is reasonably certain to be exercised.",
+                "title": "Purchase Option Likely"
+              },
+              "exemptionElected": {
+                "type": "boolean",
+                "description": "True when the short-term exemption is elected (valid only when termMonths <= 12 and no purchase option).",
+                "title": "Exemption Elected"
+              }
+            },
+            "title": "Short Term Lease"
+          },
+          "classifiedBalanceSheet": {
+            "type": "object",
+            "nullable": true,
+            "description": "ASC 210 classified balance sheet separating current from non-current assets and liabilities.",
+            "properties": {
+              "currentAssets": {
+                "type": "number",
+                "description": "Assets expected to be realised within one year or the operating cycle.",
+                "title": "Current Assets"
+              },
+              "noncurrentAssets": {
+                "type": "number",
+                "description": "Non-current assets.",
+                "title": "Noncurrent Assets"
+              },
+              "currentLiabilities": {
+                "type": "number",
+                "description": "Liabilities expected to be settled within one year or the operating cycle.",
+                "title": "Current Liabilities"
+              },
+              "noncurrentLiabilities": {
+                "type": "number",
+                "description": "Non-current liabilities.",
+                "title": "Noncurrent Liabilities"
+              }
+            },
+            "title": "Classified Balance Sheet"
+          },
+          "comprehensiveIncome": {
+            "type": "object",
+            "nullable": true,
+            "description": "ASC 220 comprehensive income: net income plus other comprehensive income equals total comprehensive income, in a single or two-statement format.",
+            "properties": {
+              "netIncome": {
+                "type": "number",
+                "description": "Net income for the period.",
+                "title": "Net Income"
+              },
+              "otherComprehensiveIncome": {
+                "type": "number",
+                "description": "Other comprehensive income for the period.",
+                "title": "Other Comprehensive Income"
+              },
+              "totalComprehensiveIncome": {
+                "type": "number",
+                "description": "Total comprehensive income = netIncome + otherComprehensiveIncome.",
+                "title": "Total Comprehensive Income"
+              },
+              "presentationFormat": {
+                "type": "string",
+                "description": "Presentation format.",
+                "enum": [
+                  "single",
+                  "two-statement"
+                ],
+                "title": "Presentation Format"
+              }
+            },
+            "title": "Comprehensive Income"
+          },
+          "asc848ModificationDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date a contract modification or hedging relationship relies on ASC 848 reference-rate-reform relief. The relief sunsets after 31 December 2024.",
+            "title": "Asc848Modification Date"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Financial Statement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

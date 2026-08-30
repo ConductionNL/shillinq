@@ -1,0 +1,576 @@
+{
+  "info": {
+    "version": "0.1.0-bookings-resource-calendar"
+  },
+  "components": {
+    "schemas": {
+      "Resource": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Resource type classifier per REQ-001 of bookings-resource-calendar. Drives icon/colour in the calendar UI and powers resource-type filters in the listing view.",
+            "enum": [
+              "staff",
+              "room",
+              "equipment",
+              "furniture",
+              "other"
+            ],
+            "default": "other",
+            "example": "staff",
+            "title": "Type"
+          }
+        }
+      },
+      "Calendar": {
+        "slug": "Calendar",
+        "icon": "CalendarOutline",
+        "version": "0.1.0",
+        "title": "Calendar",
+        "description": "Per-resource calendar carrying time-zone and weekly working-hours configuration. Introduced by bookings-resource-calendar (REQ-002). Each Calendar is bound to exactly one Resource via the resource FK. timeZone is an IANA identifier (default Europe/Amsterdam for Dutch context); workingHours is an optional JSON template keyed by weekday — null entries mean the resource is closed that day. Multi-tenant isolation via administrationId per ADR-005. Status follows the standard active → inactive → archived OR lifecycle.",
+        "x-schema-org": "schema:Schedule",
+        "x-openregister-purpose": "dimension",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "calendarId",
+          "resource",
+          "timeZone",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this calendar for tenant isolation (ADR-005).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "calendarId": {
+            "type": "string",
+            "description": "Operator-assigned unique calendar identifier within the administration.",
+            "example": "cal-001",
+            "title": "Calendar ID"
+          },
+          "resource": {
+            "type": "string",
+            "description": "FK to Resource.resourceId — the resource this calendar represents.",
+            "example": "res-001",
+            "title": "Resource"
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "IANA time zone identifier. Display times in the UI are converted from UTC into this zone per REQ-008.",
+            "default": "Europe/Amsterdam",
+            "example": "Europe/Amsterdam",
+            "title": "Time Zone"
+          },
+          "workingHours": {
+            "type": "object",
+            "nullable": true,
+            "description": "JSON template of weekday → working window (HH:MM-HH:MM). Null per-day means the resource is closed that day; omitting the field means 24/7 availability.",
+            "properties": {
+              "monday": {
+                "type": "string",
+                "nullable": true,
+                "example": "09:00-17:00",
+                "title": "Monday",
+                "description": "The monday."
+              },
+              "tuesday": {
+                "type": "string",
+                "nullable": true,
+                "example": "09:00-17:00",
+                "title": "Tuesday",
+                "description": "The tuesday."
+              },
+              "wednesday": {
+                "type": "string",
+                "nullable": true,
+                "example": "09:00-17:00",
+                "title": "Wednesday",
+                "description": "The wednesday."
+              },
+              "thursday": {
+                "type": "string",
+                "nullable": true,
+                "example": "09:00-17:00",
+                "title": "Thursday",
+                "description": "The thursday."
+              },
+              "friday": {
+                "type": "string",
+                "nullable": true,
+                "example": "09:00-17:00",
+                "title": "Friday",
+                "description": "The friday."
+              },
+              "saturday": {
+                "type": "string",
+                "nullable": true,
+                "example": null,
+                "title": "Saturday",
+                "description": "The date and time for saturday."
+              },
+              "sunday": {
+                "type": "string",
+                "nullable": true,
+                "example": null,
+                "title": "Sunday",
+                "description": "The sunday."
+              }
+            },
+            "title": "Working Hours"
+          },
+          "status": {
+            "type": "string",
+            "description": "Calendar lifecycle state.",
+            "enum": [
+              "active",
+              "inactive",
+              "archived"
+            ],
+            "default": "active",
+            "example": "active",
+            "title": "Status"
+          }
+        }
+      },
+      "Booking": {
+        "slug": "Booking",
+        "icon": "CalendarCheckOutline",
+        "version": "0.1.0",
+        "title": "Booking",
+        "description": "A scheduled appointment on a resource calendar (REQ-003 of bookings-resource-calendar). Distinct from the Appointment entity (bookings-create-appointment): Appointment is the customer/service-driven product (booking → invoice flow), whereas Booking is the calendar-cell record consumed by the conflict-detection engine and the per-resource calendar UI. The two co-exist; the conflict-detection service reads both during overlap checks. All times are stored in UTC (ISO 8601, REQ-008). The resource FK is denormalised from calendar.resource for query efficiency (design D4); the API enforces the invariant on write. status pending = conflicting/unconfirmed (red in UI), confirmed = blocks the slot, cancelled = releases the slot without deleting the audit record.",
+        "x-schema-org": "schema:Reservation",
+        "x-openregister-purpose": "transaction",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "bookingId",
+          "calendar",
+          "resource",
+          "title",
+          "startTime",
+          "endTime",
+          "attendee",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this booking for tenant isolation (ADR-005).",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "bookingId": {
+            "type": "string",
+            "description": "Operator-assigned unique booking identifier within the administration.",
+            "example": "bk-001",
+            "title": "Booking ID"
+          },
+          "calendar": {
+            "type": "string",
+            "description": "FK to Calendar.calendarId.",
+            "example": "cal-001",
+            "title": "Calendar"
+          },
+          "resource": {
+            "type": "string",
+            "description": "FK to Resource.resourceId — denormalised from calendar.resource for direct query (design D4). API write path validates the denormalisation invariant.",
+            "example": "res-001",
+            "title": "Resource"
+          },
+          "title": {
+            "type": "string",
+            "description": "Booking title (e.g. 'Klant: Anna de Wit').",
+            "maxLength": 255,
+            "example": "Klant: Anna de Wit",
+            "title": "Title"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Appointment start time as ISO 8601 UTC per REQ-008.",
+            "example": "2026-05-21T10:00:00Z",
+            "title": "Start Time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Appointment end time as ISO 8601 UTC. Duration must be ≥15 minutes (REQ-007).",
+            "example": "2026-05-21T10:30:00Z",
+            "title": "End Time"
+          },
+          "attendee": {
+            "type": "string",
+            "description": "Attendee display name or external reference (free-text or Contact UID).",
+            "maxLength": 255,
+            "example": "Anna de Wit",
+            "title": "Attendee"
+          },
+          "status": {
+            "type": "string",
+            "description": "Booking lifecycle status. pending = unconfirmed (red-highlighted in UI), confirmed = blocks the slot, cancelled = released without deletion (audit trail kept).",
+            "enum": [
+              "pending",
+              "confirmed",
+              "cancelled"
+            ],
+            "default": "pending",
+            "example": "confirmed",
+            "title": "Status"
+          },
+          "externalId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional external calendar event id (Google/Outlook) for future Tier-3 sync.",
+            "example": null,
+            "title": "External ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "pending",
+          "states": {
+            "pending": {
+              "label": "Pending",
+              "description": "Submitted but not yet confirmed. Highlighted as conflicting in the calendar UI when the slot also has a confirmed booking."
+            },
+            "confirmed": {
+              "label": "Confirmed",
+              "description": "Booking is live and blocks the time slot for the resource."
+            },
+            "cancelled": {
+              "label": "Cancelled",
+              "description": "Released without deleting the audit record; no longer blocks the slot."
+            }
+          },
+          "transitions": {
+            "confirm": {
+              "from": "pending",
+              "to": "confirmed",
+              "label": "Confirm booking",
+              "description": "Approve a pending booking."
+            },
+            "cancel": {
+              "from": "confirmed",
+              "to": "cancelled",
+              "label": "Cancel booking",
+              "description": "Cancel a confirmed booking."
+            },
+            "cancelPending": {
+              "from": "pending",
+              "to": "cancelled",
+              "label": "Cancel pending",
+              "description": "Cancel a pending booking that was never confirmed."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "countByStatus": {
+            "field": "status",
+            "metric": "count",
+            "description": "Number of bookings per status.",
+            "groupBy": ["status"]
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Resource",
+        "slug": "bookings-resource-calendar-res-jan-peeters"
+      },
+      "administrationId": "adm-1",
+      "resourceId": "res-001",
+      "type": "staff",
+      "name": "Jan Peeters",
+      "openingTime": "09:00",
+      "closingTime": "17:00",
+      "allowOverlap": false,
+      "status": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Resource",
+        "slug": "bookings-resource-calendar-res-marie-dubois"
+      },
+      "administrationId": "adm-1",
+      "resourceId": "res-002",
+      "type": "staff",
+      "name": "Marie Dubois",
+      "openingTime": "09:00",
+      "closingTime": "17:00",
+      "allowOverlap": false,
+      "status": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Resource",
+        "slug": "bookings-resource-calendar-res-vergaderruimte-a"
+      },
+      "administrationId": "adm-1",
+      "resourceId": "res-003",
+      "type": "room",
+      "name": "Vergaderruimte A",
+      "openingTime": "08:00",
+      "closingTime": "18:00",
+      "allowOverlap": false,
+      "status": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Resource",
+        "slug": "bookings-resource-calendar-res-behandelstoel-1"
+      },
+      "administrationId": "adm-1",
+      "resourceId": "res-004",
+      "type": "equipment",
+      "name": "Behandelstoel 1",
+      "openingTime": "10:00",
+      "closingTime": "20:00",
+      "allowOverlap": false,
+      "status": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Resource",
+        "slug": "bookings-resource-calendar-res-tafel-4-hoek"
+      },
+      "administrationId": "adm-1",
+      "resourceId": "res-005",
+      "type": "furniture",
+      "name": "Tafel 4 (hoek)",
+      "openingTime": null,
+      "closingTime": null,
+      "allowOverlap": false,
+      "status": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Calendar",
+        "slug": "bookings-resource-calendar-cal-001"
+      },
+      "administrationId": "adm-1",
+      "calendarId": "cal-001",
+      "resource": "res-001",
+      "timeZone": "Europe/Amsterdam",
+      "workingHours": {
+        "monday": "09:00-17:00",
+        "tuesday": "09:00-17:00",
+        "wednesday": "09:00-17:00",
+        "thursday": "09:00-17:00",
+        "friday": "09:00-17:00"
+      },
+      "status": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Calendar",
+        "slug": "bookings-resource-calendar-cal-002"
+      },
+      "administrationId": "adm-1",
+      "calendarId": "cal-002",
+      "resource": "res-003",
+      "timeZone": "Europe/Amsterdam",
+      "workingHours": {
+        "monday": "08:00-18:00",
+        "tuesday": "08:00-18:00",
+        "wednesday": "08:00-18:00",
+        "thursday": "08:00-18:00",
+        "friday": "08:00-18:00",
+        "saturday": "09:00-13:00"
+      },
+      "status": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Calendar",
+        "slug": "bookings-resource-calendar-cal-003"
+      },
+      "administrationId": "adm-1",
+      "calendarId": "cal-003",
+      "resource": "res-004",
+      "timeZone": "Europe/Amsterdam",
+      "workingHours": {
+        "monday": "10:00-18:00",
+        "tuesday": "10:00-18:00",
+        "wednesday": "10:00-18:00",
+        "thursday": "10:00-18:00",
+        "friday": "10:00-20:00",
+        "saturday": "10:00-16:00"
+      },
+      "status": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Booking",
+        "slug": "bookings-resource-calendar-bk-001"
+      },
+      "administrationId": "adm-1",
+      "bookingId": "bk-001",
+      "calendar": "cal-001",
+      "resource": "res-001",
+      "title": "Klant: Anna de Wit",
+      "startTime": "2026-05-21T10:00:00Z",
+      "endTime": "2026-05-21T10:30:00Z",
+      "attendee": "Anna de Wit",
+      "status": "confirmed"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Booking",
+        "slug": "bookings-resource-calendar-bk-002"
+      },
+      "administrationId": "adm-1",
+      "bookingId": "bk-002",
+      "calendar": "cal-001",
+      "resource": "res-001",
+      "title": "Klant: Kees Bakker",
+      "startTime": "2026-05-21T11:00:00Z",
+      "endTime": "2026-05-21T11:45:00Z",
+      "attendee": "Kees Bakker",
+      "status": "confirmed"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Booking",
+        "slug": "bookings-resource-calendar-bk-003"
+      },
+      "administrationId": "adm-1",
+      "bookingId": "bk-003",
+      "calendar": "cal-001",
+      "resource": "res-001",
+      "title": "Klant: Sophia Vermeulen (CONFLICT: overlaps with bk-002)",
+      "startTime": "2026-05-21T11:15:00Z",
+      "endTime": "2026-05-21T12:00:00Z",
+      "attendee": "Sophia Vermeulen",
+      "status": "pending"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Booking",
+        "slug": "bookings-resource-calendar-bk-004"
+      },
+      "administrationId": "adm-1",
+      "bookingId": "bk-004",
+      "calendar": "cal-002",
+      "resource": "res-003",
+      "title": "Team Meeting: Q2 Planning",
+      "startTime": "2026-05-22T13:00:00Z",
+      "endTime": "2026-05-22T14:30:00Z",
+      "attendee": "Team",
+      "status": "confirmed"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Booking",
+        "slug": "bookings-resource-calendar-bk-005"
+      },
+      "administrationId": "adm-1",
+      "bookingId": "bk-005",
+      "calendar": "cal-002",
+      "resource": "res-003",
+      "title": "Client Presentation (CONFLICT: overlaps with bk-004)",
+      "startTime": "2026-05-22T13:45:00Z",
+      "endTime": "2026-05-22T15:00:00Z",
+      "attendee": "Client XYZ",
+      "status": "pending"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Booking",
+        "slug": "bookings-resource-calendar-bk-006"
+      },
+      "administrationId": "adm-1",
+      "bookingId": "bk-006",
+      "calendar": "cal-003",
+      "resource": "res-004",
+      "title": "Afspraak: Manicure",
+      "startTime": "2026-05-23T10:00:00Z",
+      "endTime": "2026-05-23T10:30:00Z",
+      "attendee": "Cliente A",
+      "status": "confirmed"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Booking",
+        "slug": "bookings-resource-calendar-bk-007"
+      },
+      "administrationId": "adm-1",
+      "bookingId": "bk-007",
+      "calendar": "cal-003",
+      "resource": "res-004",
+      "title": "Afspraak: Pedicure",
+      "startTime": "2026-05-23T11:00:00Z",
+      "endTime": "2026-05-23T11:45:00Z",
+      "attendee": "Cliente B",
+      "status": "confirmed"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Booking",
+        "slug": "bookings-resource-calendar-bk-008"
+      },
+      "administrationId": "adm-1",
+      "bookingId": "bk-008",
+      "calendar": "cal-003",
+      "resource": "res-004",
+      "title": "Afspraak: Styling",
+      "startTime": "2026-05-24T14:00:00Z",
+      "endTime": "2026-05-24T15:00:00Z",
+      "attendee": "Cliente C",
+      "status": "confirmed"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Booking",
+        "slug": "bookings-resource-calendar-bk-009"
+      },
+      "administrationId": "adm-1",
+      "bookingId": "bk-009",
+      "calendar": "cal-001",
+      "resource": "res-001",
+      "title": "Klant: Dirk Peeters",
+      "startTime": "2026-05-27T14:00:00Z",
+      "endTime": "2026-05-27T14:30:00Z",
+      "attendee": "Dirk Peeters",
+      "status": "confirmed"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "Booking",
+        "slug": "bookings-resource-calendar-bk-010"
+      },
+      "administrationId": "adm-1",
+      "bookingId": "bk-010",
+      "calendar": "cal-001",
+      "resource": "res-001",
+      "title": "Klant: Nina Jansen",
+      "startTime": "2026-05-27T15:00:00Z",
+      "endTime": "2026-05-27T15:45:00Z",
+      "attendee": "Nina Jansen",
+      "status": "confirmed"
+    }
+  ]
+}

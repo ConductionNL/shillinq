@@ -1,0 +1,63 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bbv-taakveld-english-names",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Declares the English display fields carried by the BBV taakveld catalogues alongside their statutory Dutch counterparts. The Dutch strings (name/description/programmaFocus on BbvTaakveld; naam/hoofdfunctieNaam/omschrijvingIv3 on Taakveld) come from Besluit BBV bijlage IV and the Iv3-informatievoorschrift: they are what legalBasis cites and what a CBS Iv3 submission carries, so they are IDENTIFIERS rather than display text and are never translated in place. These *En fields are display-only and are never submitted to CBS nor used for matching. Declaring them is not optional: OpenRegister's MagicMapper DISCARDS properties a schema does not declare — it logs and continues — so a seed carrying naamEn against an undeclared schema would import 'successfully', store nothing, and leave the UI silently falling back to Dutch. The BbvTaakveld schema's own description already anticipates this, giving 'needs translation handling' as the reason the catalogue is a register rather than an enum.",
+    "spec": "openspec/specs/bbv-compliance/spec.md"
+  },
+  "components": {
+    "schemas": {
+      "BbvTaakveld": {
+        "properties": {
+          "nameEn": {
+            "type": "string",
+            "description": "English display name for the taakveld. Display-only: never submitted to CBS and never used for matching. Absent means no translation has been supplied, in which case a UI falls back to `name`.",
+            "nullable": true,
+            "example": "Cultural presentation, production and participation",
+            "title": "Name (English)"
+          },
+          "descriptionEn": {
+            "type": "string",
+            "description": "English rendering of the catalogue entry's description. In the shipped 2024 seed `description` mirrors `name` exactly in every record, and `descriptionEn` preserves that same invariant rather than inventing a second phrasing.",
+            "nullable": true,
+            "example": "Cultural presentation, production and participation",
+            "title": "Description (English)"
+          },
+          "programmeFocusAnd": {
+            "type": "string",
+            "description": "English display name for the BBV programme grouping this taakveld rolls up to. Display-only; falls back to `programmaFocus` when absent.",
+            "nullable": true,
+            "example": "Sport, culture and recreation",
+            "title": "Programme Focus (English)"
+          }
+        }
+      },
+      "Taakveld": {
+        "properties": {
+          "nameEn": {
+            "type": "string",
+            "description": "English display name for the taakveld. Display-only: never sent to CBS and never used for matching. Absent means no translation has been supplied yet, in which case a UI falls back to `naam`.",
+            "nullable": true,
+            "example": "Cemeteries and crematoria",
+            "title": "Name (English)"
+          },
+          "mainFunctionNameEn": {
+            "type": "string",
+            "description": "English display name for the hoofdfunctie. Display-only; falls back to `hoofdfunctieNaam` when absent.",
+            "nullable": true,
+            "example": "Public health and environment",
+            "title": "Main Function Name (English)"
+          },
+          "descriptionIv3And": {
+            "type": "string",
+            "description": "English rendering of the Iv3 scope description. Display-only. Present only where the source regulation supplies a Dutch description — an absent description is not translated into an invented one.",
+            "nullable": true,
+            "title": "Iv3 Description (English)"
+          }
+        }
+      }
+    }
+  }
+}

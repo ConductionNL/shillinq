@@ -1,0 +1,176 @@
+{
+	"menu": [
+		{
+			"id": "Verkoop",
+			"label": "Sales",
+			"icon": "CartOutline",
+			"order": 33,
+			"children": [
+				{
+					"id": "Diensten",
+					"label": "Services",
+					"icon": "BriefcaseOutline",
+					"route": "Diensten",
+					"order": 5
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "Diensten",
+			"route": "/verkoop/diensten",
+			"type": "index",
+			"title": "Service catalogue",
+			"config": {
+				"register": "shillinq",
+				"schema": "Service",
+				"columns": [
+					{
+						"key": "code",
+						"label": "Code",
+						"sortable": true
+					},
+					{
+						"key": "name",
+						"label": "Service",
+						"sortable": true
+					},
+					{
+						"key": "serviceCategory",
+						"label": "Category",
+						"sortable": true
+					},
+					{
+						"key": "duration",
+						"label": "Duration (min)",
+						"sortable": true
+					},
+					{
+						"key": "basePrice",
+						"label": "Base price",
+						"sortable": true
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"sortable": true
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					}
+				],
+				"defaultSort": "name",
+				"detailRoute": "DienstDetail"
+			}
+		},
+		{
+			"id": "DienstDetail",
+			"route": "/verkoop/diensten/:id",
+			"type": "detail",
+			"title": "Service",
+			"config": {
+				"register": "shillinq",
+				"schema": "Service",
+				"_note": "MASTER/reference archetype (native CnDetailPage). A Service is a bookable catalogue definition (base price, duration, buffers, dynamic-pricing flag) with a three-state lifecycle (draft -> active -> archived) enforced via x-openregister-lifecycle in the register schema, so lifecycleActions is enabled to let the seller activate/archive a service directly from the detail page. No child schema exists yet (service options/variants/price-tiers are not modelled as a separate schema with a FK to Service — resourceTypeRef is a forward FK pointing OUT to future resource-type specs, not a child pointing in), so no relatedLists. No file/document tab — a catalogue price definition is master data, not a document-bearing record. Audit trail tab retained so category/price/status changes over time are traceable.",
+				"fields": [
+					{
+						"key": "code",
+						"label": "Service Code",
+						"type": "string"
+					},
+					{
+						"key": "name",
+						"label": "Service Name",
+						"type": "string"
+					},
+					{
+						"key": "description",
+						"label": "Service Description",
+						"type": "string"
+					},
+					{
+						"key": "serviceCategory",
+						"label": "Service Category",
+						"type": "string"
+					},
+					{
+						"key": "resourceTypeRef",
+						"label": "Resource Type",
+						"type": "string"
+					},
+					{
+						"key": "duration",
+						"label": "Duration",
+						"type": "integer"
+					},
+					{
+						"key": "prepareTime",
+						"label": "Preparation Time",
+						"type": "integer"
+					},
+					{
+						"key": "bufferBefore",
+						"label": "Buffer Before",
+						"type": "integer"
+					},
+					{
+						"key": "bufferAfter",
+						"label": "Buffer After",
+						"type": "integer"
+					},
+					{
+						"key": "basePrice",
+						"label": "Base Price",
+						"type": "number"
+					},
+					{
+						"key": "currency",
+						"label": "Currency",
+						"type": "string"
+					},
+					{
+						"key": "dynamicPricing",
+						"label": "Dynamic Pricing",
+						"type": "boolean"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"type": "string"
+					},
+					{
+						"key": "administrationId",
+						"label": "Administration",
+						"type": "string"
+					}
+				],
+				"indexRoute": "Diensten",
+				"lifecycleActions": true,
+				"auditTrail": true,
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}

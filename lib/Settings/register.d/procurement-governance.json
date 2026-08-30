@@ -1,0 +1,345 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "procurement-governance",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Two generic, jurisdiction-neutral procurement-governance controls abstracted from the retired purchaseq slug set (purchaseq#5). SupplierQualification: approve-before-first-PO onboarding with a duplicate-supplier check on taxId/IBAN and required documents/certificates that expire — enforced by SupplierQualificationGuard behind a default-OFF policy require_supplier_qualification_for_po. FrameworkAgreement: a supplier contract with a spend ceiling that PurchaseOrder call-offs draw down against — a call-off exceeding the remaining ceiling is blocked by FrameworkAgreementDrawdownGuard. Both consume OpenRegister's ObjectService (ADR-022) and reuse the existing PurchaseOrderService without re-implementing any business logic (ADR-031). Money fields are integer euro cents."
+  },
+  "components": {
+    "schemas": {
+      "SupplierQualification": {
+        "slug": "SupplierQualification",
+        "icon": "AccountCheckOutline",
+        "version": "0.1.0",
+        "title": "Supplier Qualification",
+        "description": "Generic supplier onboarding/qualification record. A supplier must be qualified (all required documents provided and unexpired) before its first PurchaseOrder when the require_supplier_qualification_for_po policy is enabled (REQ-PG-002). Registration rejects a duplicate supplier on taxId or IBAN (REQ-PG-003). Abstracted from purchaseq's supplier-onboarding-vragenlijst as a jurisdiction-neutral control — no country-specific questionnaire is modelled.",
+        "x-schema-org": "schema:Organization",
+        "x-spec": "openspec/specs/procurement-governance/spec.md",
+        "type": "object",
+        "required": [
+          "supplierId",
+          "supplierName",
+          "statusCode",
+          "administrationId"
+        ],
+        "properties": {
+          "supplierId": {
+            "type": "string",
+            "description": "Stable supplier reference, matching PurchaseOrder.supplierId.",
+            "example": "SUP-000123",
+            "title": "Supplier"
+          },
+          "supplierName": {
+            "type": "string",
+            "description": "Human-readable supplier name.",
+            "example": "Acme Office Supplies B.V.",
+            "title": "Supplier Name"
+          },
+          "taxId": {
+            "type": "string",
+            "description": "Supplier tax/VAT identifier — checked for duplicates at registration (jurisdiction-neutral free string).",
+            "example": "NL001234567B01",
+            "title": "Tax / VAT ID"
+          },
+          "iban": {
+            "type": "string",
+            "description": "Supplier bank account (IBAN) — checked for duplicates at registration.",
+            "example": "NL91ABNA0417164300",
+            "title": "IBAN"
+          },
+          "requiredDocuments": {
+            "type": "array",
+            "description": "Documents/certificates required to qualify the supplier. Each carries an optional expiry; an absent (provided=false) or expired document blocks qualification and the first PurchaseOrder.",
+            "title": "Required Documents",
+            "items": {
+              "type": "object",
+              "properties": {
+                "documentType": {
+                  "type": "string",
+                  "description": "Document/certificate type key (e.g. insurance-certificate, iso-9001, chamber-of-commerce-extract).",
+                  "title": "Document Type"
+                },
+                "provided": {
+                  "type": "boolean",
+                  "description": "Whether the document has been provided.",
+                  "title": "Provided"
+                },
+                "expiresAt": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Expiry date; a document past this date counts as not valid.",
+                  "title": "Expires At"
+                }
+              }
+            }
+          },
+          "statusCode": {
+            "type": "string",
+            "description": "Qualification lifecycle status.",
+            "enum": ["draft", "qualified", "expired", "revoked"],
+            "example": "qualified",
+            "title": "Status"
+          },
+          "qualifiedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Server-authoritative timestamp the supplier became qualified.",
+            "title": "Qualified At"
+          },
+          "qualifiedBy": {
+            "type": "string",
+            "description": "User ID of the approver who qualified the supplier.",
+            "title": "Qualified By"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Administration (tenant) scope.",
+            "example": "adm-demo",
+            "title": "Administration"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "statusCode",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Supplier registered; not yet qualified — cannot be used for a first PurchaseOrder while enforcement is on."
+            },
+            "qualified": {
+              "label": "Gekwalificeerd",
+              "description": "All required documents provided and unexpired; eligible for PurchaseOrders."
+            },
+            "expired": {
+              "label": "Verlopen",
+              "description": "A required document has expired; re-qualification needed (terminal until renewed)."
+            },
+            "revoked": {
+              "label": "Ingetrokken",
+              "description": "Qualification revoked (terminal)."
+            }
+          },
+          "transitions": {
+            "qualify": {
+              "from": "draft",
+              "to": "qualified",
+              "label": "Kwalificeren",
+              "description": "Qualify the supplier once every required document is provided and unexpired (REQ-PG-002), enforced by SupplierQualificationService::qualify()."
+            },
+            "expire": {
+              "from": "qualified",
+              "to": "expired",
+              "label": "Laten verlopen",
+              "description": "Mark the qualification expired when a required document lapses."
+            },
+            "revoke": {
+              "from": "qualified",
+              "to": "revoked",
+              "label": "Intrekken",
+              "description": "Revoke a supplier's qualification (terminal)."
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every registration/qualification/revocation of a SupplierQualification is logged to OR's immutable audit trail with actor + timestamp."
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "procurement-officer": {
+              "scope": "administration",
+              "capabilities": ["create", "read", "update"]
+            },
+            "auditor": {
+              "scope": "administration",
+              "capabilities": ["read"]
+            }
+          }
+        }
+      },
+      "FrameworkAgreement": {
+        "slug": "FrameworkAgreement",
+        "icon": "FileSign",
+        "version": "0.1.0",
+        "title": "Framework Agreement",
+        "description": "Generic framework agreement (raamovereenkomst abstracted): a supplier contract with a spend ceiling that PurchaseOrder call-offs draw down against. A call-off exceeding the remaining ceiling is blocked by FrameworkAgreementDrawdownGuard (REQ-PG-004). Distinct from the generic Contract (contract-lifecycle-management), which has no ceiling/drawdown accounting. Money is integer euro cents (ADR-022).",
+        "x-schema-org": "schema:Contract",
+        "x-spec": "openspec/specs/procurement-governance/spec.md",
+        "type": "object",
+        "required": [
+          "agreementNumber",
+          "supplierId",
+          "ceilingAmount",
+          "statusCode",
+          "administrationId"
+        ],
+        "properties": {
+          "agreementNumber": {
+            "type": "string",
+            "description": "Auto-generated framework-agreement number, unique per administration.",
+            "example": "FA-2026-adm-demo-000001",
+            "title": "Agreement Number"
+          },
+          "supplierId": {
+            "type": "string",
+            "description": "Supplier the agreement is with (matches PurchaseOrder.supplierId).",
+            "example": "SUP-000123",
+            "title": "Supplier"
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable agreement title.",
+            "example": "Office supplies framework 2026-2028",
+            "title": "Title"
+          },
+          "ceilingAmount": {
+            "type": "integer",
+            "description": "Maximum total spend the agreement authorises, in integer euro cents. Call-offs may not draw the cumulative drawn amount above this.",
+            "example": 5000000,
+            "title": "Ceiling Amount (cents)"
+          },
+          "drawnAmount": {
+            "type": "integer",
+            "description": "Cumulative amount already called off against the ceiling, in integer euro cents. Server-maintained by FrameworkAgreementService::recordCallOff().",
+            "example": 0,
+            "title": "Drawn Amount (cents)"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO currency code.",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Start of the agreement's validity window.",
+            "title": "Valid From"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date",
+            "description": "End of the agreement's validity window; call-offs after this date are blocked.",
+            "title": "Valid Until"
+          },
+          "statusCode": {
+            "type": "string",
+            "description": "Agreement lifecycle status.",
+            "enum": ["active", "closed", "expired"],
+            "example": "active",
+            "title": "Status"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Administration (tenant) scope.",
+            "example": "adm-demo",
+            "title": "Administration"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "statusCode",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Actief",
+              "description": "Agreement is live; call-offs are allowed up to the remaining ceiling within the validity window."
+            },
+            "closed": {
+              "label": "Afgesloten",
+              "description": "Agreement closed; no further call-offs (terminal)."
+            },
+            "expired": {
+              "label": "Verlopen",
+              "description": "Past validUntil; no further call-offs (terminal)."
+            }
+          },
+          "transitions": {
+            "close": {
+              "from": "active",
+              "to": "closed",
+              "label": "Afsluiten",
+              "description": "Close the agreement; blocks further call-offs."
+            },
+            "expire": {
+              "from": "active",
+              "to": "expired",
+              "label": "Laten verlopen",
+              "description": "Mark the agreement expired past its validity window."
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every call-off drawdown and status change of a FrameworkAgreement is logged to OR's immutable audit trail with actor + timestamp."
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "procurement-officer": {
+              "scope": "administration",
+              "capabilities": ["create", "read", "update"]
+            },
+            "auditor": {
+              "scope": "administration",
+              "capabilities": ["read"]
+            }
+          }
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "SupplierQualification",
+        "slug": "supplier-qualification-demo-qualified"
+      },
+      "administrationId": "adm-demo",
+      "supplierId": "SUP-000123",
+      "supplierName": "Acme Office Supplies B.V.",
+      "taxId": "NL001234567B01",
+      "iban": "NL91ABNA0417164300",
+      "requiredDocuments": [
+        { "documentType": "insurance-certificate", "provided": true, "expiresAt": "2027-12-31" },
+        { "documentType": "chamber-of-commerce-extract", "provided": true, "expiresAt": "2027-06-30" }
+      ],
+      "statusCode": "qualified",
+      "qualifiedAt": "2026-07-01T09:00:00+02:00",
+      "qualifiedBy": "procurement-01"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "SupplierQualification",
+        "slug": "supplier-qualification-demo-draft-expired"
+      },
+      "administrationId": "adm-demo",
+      "supplierId": "SUP-000999",
+      "supplierName": "New Vendor Ltd.",
+      "taxId": "NL009998887B01",
+      "iban": "NL02RABO0123456789",
+      "requiredDocuments": [
+        { "documentType": "iso-9001", "provided": true, "expiresAt": "2026-01-31" }
+      ],
+      "statusCode": "draft"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "FrameworkAgreement",
+        "slug": "framework-agreement-demo-office-supplies"
+      },
+      "administrationId": "adm-demo",
+      "agreementNumber": "FA-2026-adm-demo-000001",
+      "supplierId": "SUP-000123",
+      "title": "Office supplies framework 2026-2028",
+      "ceilingAmount": 5000000,
+      "drawnAmount": 4800000,
+      "currency": "EUR",
+      "validFrom": "2026-01-01",
+      "validUntil": "2028-12-31",
+      "statusCode": "active"
+    }
+  ]
+}

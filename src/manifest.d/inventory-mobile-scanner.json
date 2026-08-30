@@ -1,0 +1,61 @@
+{
+	"menu": [
+		{
+			"id": "Inventory",
+			"label": "Inventory",
+			"icon": "Warehouse",
+			"order": 38,
+			"children": [
+				{
+					"id": "MobileScannerHome",
+					"label": "Mobile Scanner",
+					"icon": "BarcodeScan",
+					"route": "MobileScannerHome",
+					"order": 10
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "MobileScannerHome",
+			"route": "/inventory/mobile",
+			"type": "custom",
+			"title": "Inventory Mobile Scanner",
+			"component": "MobileScannerHome",
+			"_note": "Entry screen of the warehouse PWA: it boots the offline scanner store, shows the four operations as large touch targets and renders the sync-status badge (queued pending operations, last sync). It navigates between operations rather than presenting an object collection, so `type: index` has no register/schema to bind, and the sync badge reflects local queue state that exists only in the browser."
+		},
+		{
+			"id": "MobileScannerReceive",
+			"route": "/inventory/mobile/receive",
+			"type": "custom",
+			"title": "Receive Goods",
+			"component": "MobileScannerReceive",
+			"_note": "Barcode-scanner receive flow (REQ-INVENTORY-001): scan, confirm SKU + quantity + location, then apply an OPTIMISTIC local update and queue a pendingOp that a background worker syncs when connectivity returns. `type: form` posts to the server on submit and reports the result; it has no offline queue, no optimistic local state and no camera scan input, so a warehouse device out of range would simply fail to save."
+		},
+		{
+			"id": "MobileScannerTransfer",
+			"route": "/inventory/mobile/transfer",
+			"type": "custom",
+			"title": "Transfer Inventory",
+			"component": "MobileScannerTransfer",
+			"_note": "Scanner transfer flow (REQ-INVENTORY-002): pick source location, scan, pick destination, confirm. The two InventoryStock mutations are dispatched inside ONE queued pendingOp so the server applies them atomically — a `type: form` page writes a single object per submit and would let a decrement land without its matching increment. It also shares the offline queue and camera scan input the rest of the warehouse PWA depends on."
+		},
+		{
+			"id": "MobileScannerPick",
+			"route": "/inventory/mobile/pick",
+			"type": "custom",
+			"title": "Pick for Order",
+			"component": "MobileScannerPick",
+			"_note": "Scanner pick flow (REQ-INVENTORY-003): scan, reduce the quantity at the location and mark the order line picked, optionally binding the pick to an open order line so pick-to-order reconciles downstream. Two records change from one scan, through the same offline pendingOp queue as the other scanner operations; `type: form` writes one object online only and has no scan input."
+		},
+		{
+			"id": "MobileScannerCount",
+			"route": "/inventory/mobile/count",
+			"type": "custom",
+			"title": "Inventory Count",
+			"component": "MobileScannerCount",
+			"_note": "Scanner count flow (REQ-INVENTORY-004): scan or type the SKU, enter the physical count, and record the VARIANCE against the system quantity — a value computed from the live stock record at scan time and shown before the entry is queued. Reconciling that variance is deliberately a separate approval, so this page records a reference point rather than editing InventoryStock; no standard page type computes and displays a delta against a second record before submit, and none of them work offline."
+		}
+	]
+}

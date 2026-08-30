@@ -1,0 +1,741 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "administration-import-migration",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json. ADR-031 declarative-first lifecycle + notifications. ADR-022 consume OR object/contact surfaces (no parallel PHP model).",
+    "description": "Tier 2 — Administration Import & Migration. Declares ImportBatch (XAF/CSV migration unit with a fail-closed lifecycle: draft → parsing → staged → mapping → validated | validation_failed → dry_run_complete → posting → posted | posting_failed → reversed; NO validated→posting edge so a dry-run is mandatory; reversal only while the period is open, guarded by OCA\\Shillinq\\Lifecycle\\ImportBatchGuard::canReverse) and ImportMapping (per-account source→target mapping rows with RGS-based auto-suggestion; unmapped/unconfirmed rows block validation) per REQ-AIM-001 .. REQ-AIM-010. Source files live in NC Files (link, don't store). The five x-openregister-notifications rules fire on ImportBatch.status changes (validation_failed / dry_run_complete / posted / posting_failed / reversed), metadata-only nl+en. Distinct from AdministrationMigrationService (bookkeeping-multi-administratie) which handles GL inter-administration migration journal drafts — no overlap. Seed data ships demo ImportBatch + ImportMapping rows under administrationId 'adm-shillinq-demo'."
+  },
+  "components": {
+    "schemas": {
+      "ImportBatch": {
+        "slug": "ImportBatch",
+        "icon": "DatabaseImportOutline",
+        "version": "0.1.0",
+        "title": "Import Batch",
+        "description": "A single administration migration tracked end-to-end per REQ-AIM-001/002. The unit of lifecycle, idempotency, reporting, and reversal. Source files live in Nextcloud Files (link via sourceFiles, never copied into the register). Staged parse output, the validation report, the dry-run report, and posting references all live inline on the batch. CRUD goes through OpenRegister's generic object surface (ADR-022); there is NO parallel PHP model or import table.",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Import-batch register; every create / update / lifecycle transition (parse / stage / map / validate / dry-run / post / reverse) is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. The audit trail is the evidence chain for the migration dossier."
+        },
+        "x-schema-org": "schema:Action",
+        "x-spec": "openspec/changes/administration-import-migration/specs/administration-import-migration/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "sourceSystem",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the target administratie (per bookkeeping-multi-administratie). Opening balance posts into this administration's books.",
+            "example": "adm-shillinq-demo",
+            "title": "Administration ID"
+          },
+          "sourceSystem": {
+            "type": "string",
+            "enum": [
+              "xaf-generic",
+              "e-boekhouden",
+              "exact-online",
+              "moneybird",
+              "snelstart"
+            ],
+            "description": "Source package whose import profile parses the auditfile + companion CSVs. xaf-generic is the standard XAF 3.2 pass-through baseline.",
+            "example": "e-boekhouden",
+            "title": "Source System"
+          },
+          "sourceFiles": {
+            "type": "array",
+            "description": "Nextcloud Files references (XAF auditfile + optional companion CSVs). Link, don't store — the file bytes are never copied into the register.",
+            "items": {
+              "type": "object",
+              "required": [
+                "path"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "NC Files path to the artifact.",
+                  "example": "/Migrations/auditfile-2025.xaf",
+                  "title": "Path"
+                },
+                "fileId": {
+                  "type": "string",
+                  "description": "NC Files numeric id, if known.",
+                  "nullable": true,
+                  "title": "File ID"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "xaf",
+                    "open-items-csv",
+                    "relations-csv",
+                    "other"
+                  ],
+                  "description": "Artifact role used by the profile's CSV column maps.",
+                  "default": "xaf",
+                  "title": "Kind"
+                }
+              }
+            },
+            "title": "Source Files"
+          },
+          "migrationDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Opening-balance date (period boundary). The single opening journal is dated here and must land in an open period.",
+            "example": "2026-01-01",
+            "title": "Migration Date"
+          },
+          "scope": {
+            "type": "object",
+            "description": "Which artifacts to migrate per REQ-AIM-001. At least one flag must be true to leave draft.",
+            "properties": {
+              "chartOfAccounts": {
+                "type": "boolean",
+                "default": true,
+                "title": "Chart Of Accounts",
+                "description": "Indicates whether chart of accounts applies."
+              },
+              "openingBalance": {
+                "type": "boolean",
+                "default": true,
+                "title": "Opening Balance",
+                "description": "The balance at the start of the period."
+              },
+              "openItems": {
+                "type": "boolean",
+                "default": true,
+                "title": "Open Items",
+                "description": "Indicates whether open items applies."
+              },
+              "relations": {
+                "type": "boolean",
+                "default": true,
+                "title": "Relations",
+                "description": "Indicates whether relations applies."
+              }
+            },
+            "title": "Scope"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "parsing",
+              "staged",
+              "mapping",
+              "validated",
+              "validation_failed",
+              "dry_run_complete",
+              "posting",
+              "posted",
+              "posting_failed",
+              "reversed"
+            ],
+            "description": "Import lifecycle state per REQ-AIM-002. Fail-closed; dry-run is mandatory before posting (no validated→posting edge).",
+            "default": "draft",
+            "example": "draft",
+            "title": "Status"
+          },
+          "stagedCounts": {
+            "type": "object",
+            "description": "Computed counts after parsing: accounts / journal lines / AR items / AP items / relations staged (REQ-AIM-002 scenario).",
+            "nullable": true,
+            "properties": {
+              "ledgerAccounts": {
+                "type": "integer",
+                "default": 0,
+                "title": "Ledger Accounts",
+                "description": "The count or quantity of ledger accounts."
+              },
+              "openingBalanceLines": {
+                "type": "integer",
+                "default": 0,
+                "title": "Opening Balance Lines",
+                "description": "The opening balance lines as a numeric value."
+              },
+              "arOpenItems": {
+                "type": "integer",
+                "default": 0,
+                "title": "AR Open Items",
+                "description": "The numeric value for ar open items."
+              },
+              "apOpenItems": {
+                "type": "integer",
+                "default": 0,
+                "title": "AP Open Items",
+                "description": "The numeric value for ap open items."
+              },
+              "relations": {
+                "type": "integer",
+                "default": 0,
+                "title": "Relations",
+                "description": "The numeric value for relations."
+              }
+            },
+            "title": "Staged Counts"
+          },
+          "stagingPayload": {
+            "type": "object",
+            "description": "Parsed staged data (company / ledgerAccounts / relations / openingBalances / openItems / journals) held between parse and post; cleared after a successful post. No independent identity or lifecycle (D1).",
+            "nullable": true,
+            "title": "Staging Payload"
+          },
+          "validationReport": {
+            "type": "object",
+            "description": "Structured findings from validate(): error-severity findings block (transition to validation_failed); warning-severity findings inform. Each finding carries code / severity / message / context.",
+            "nullable": true,
+            "title": "Validation Report"
+          },
+          "dryRunReport": {
+            "type": "object",
+            "description": "The exact would-be result per REQ-AIM-008: full opening journal (per mapped account), would-be AR/AP open-item lists, contact/master list with dedupe outcomes, warning findings, and a stagedHash. Posting must match this exactly or fail to posting_failed.",
+            "nullable": true,
+            "title": "Dry Run Report"
+          },
+          "postingRefs": {
+            "type": "object",
+            "description": "References to created objects after posting (opening journal id, AR/AP item ids, contact ids, master ids). Used by reversal (REQ-AIM-009).",
+            "nullable": true,
+            "title": "Posting Refs"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "description": "Computed hash of source files + scope + administration. Posting a key that already posted is a no-op returning the existing postingRefs (REQ-AIM-009).",
+            "nullable": true,
+            "title": "Idempotency Key"
+          },
+          "mappingProfile": {
+            "type": "string",
+            "description": "Saved mapping-profile name applied to this batch and reusable across batches/administrations (the accountant-with-50-clients case, REQ-AIM-004).",
+            "nullable": true,
+            "example": "kantoor-standaard",
+            "title": "Mapping Profile"
+          },
+          "owner": {
+            "type": "string",
+            "description": "Nextcloud user-id of the operator that created the batch. Notification recipient via {kind:field,field:owner}.",
+            "nullable": true,
+            "example": "alice",
+            "title": "Owner"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Batch created; source files, administration, migration date, and scope being assembled. No books touched."
+            },
+            "parsing": {
+              "label": "Parsing",
+              "description": "Auditfile + companion CSVs are being stream-parsed via OR background machinery (REQ-AIM-002). A multi-100MB file never parses inside the HTTP request."
+            },
+            "staged": {
+              "label": "Staged",
+              "description": "Parse complete; stagedCounts and stagingPayload populated. Still nothing written to the books."
+            },
+            "mapping": {
+              "label": "Mapping",
+              "description": "Account mappings being resolved/reviewed. RGS auto-matched and profile-default rows pre-confirmed; suggestion/unmapped rows await operator confirmation."
+            },
+            "validated": {
+              "label": "Validated",
+              "description": "All mappings confirmed and every validation check passed (balanced opening journal, open period, AR/AP control = open items, valid mappings). Ready for the mandatory dry-run."
+            },
+            "validation_failed": {
+              "label": "Validation failed",
+              "description": "At least one error-severity finding (e.g. unbalanced opening journal, control-account mismatch, unmapped account, closed period). Terminal review state; no journal/open item/contact written (REQ-AIM-002 scenario)."
+            },
+            "dry_run_complete": {
+              "label": "Dry-run complete",
+              "description": "The exact would-be result is persisted on dryRunReport for the accountant to verify before anything is written (REQ-AIM-008). The only legal predecessor of posting."
+            },
+            "posting": {
+              "label": "Posting",
+              "description": "Pipeline is composing the opening journal, AR/AP open items, and contacts/masters through existing surfaces via OR background machinery. Idempotent under idempotencyKey."
+            },
+            "posted": {
+              "label": "Posted",
+              "description": "Opening journal posted, open items and masters created, contacts created/linked. postingRefs set. Happy-path terminal state (reversible while the period is open)."
+            },
+            "posting_failed": {
+              "label": "Posting failed",
+              "description": "A staged-state change was detected (dry-run no longer matches) or a cross-service write failed mid-post. Requires a fresh validation + dry-run (REQ-AIM-008)."
+            },
+            "reversed": {
+              "label": "Reversed",
+              "description": "Reversing journal posted, imported open items and masters soft-deleted, contacts reported (never deleted). Terminal state (REQ-AIM-009)."
+            }
+          },
+          "transitions": {
+            "parse": {
+              "from": "draft",
+              "to": "parsing",
+              "label": "Parse",
+              "description": "Start parsing. Requires sourceFiles, administrationId, migrationDate, and at least one scope flag. Runs under OR background machinery; the initiating request returns immediately (REQ-AIM-002).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\ImportBatchGuard::canParse"
+            },
+            "staged": {
+              "from": "parsing",
+              "to": "staged",
+              "label": "Staged",
+              "description": "Parse finished; stagedCounts + stagingPayload populated by ImportPipelineService::stage()."
+            },
+            "startMapping": {
+              "from": "staged",
+              "to": "mapping",
+              "label": "Start mapping",
+              "description": "Begin mapping resolution/review. ImportPipelineService::resolveMappings() persists ImportMapping rows."
+            },
+            "validate": {
+              "from": "mapping",
+              "to": "validated",
+              "label": "Validate",
+              "description": "Run all validation checks (balanced opening journal, open period, AR/AP control = open items, every referenced mapping confirmed & mapped). Fails closed to validation_failed on any error finding (REQ-AIM-005/006/007). Unmapped or unconfirmed referenced rows block this transition (REQ-AIM-004)."
+            },
+            "validationFailed": {
+              "from": "mapping",
+              "to": "validation_failed",
+              "label": "Validation failed",
+              "description": "Recorded when validation produced an error-severity finding. validationReport holds the findings; no books were touched."
+            },
+            "dryRun": {
+              "from": "validated",
+              "to": "dry_run_complete",
+              "label": "Dry-run",
+              "description": "Generate and persist the full would-be result on dryRunReport and record the staged-state hash. MANDATORY before posting — there is deliberately NO validated→posting edge (REQ-AIM-002/008)."
+            },
+            "post": {
+              "from": "dry_run_complete",
+              "to": "posting",
+              "label": "Post import",
+              "description": "Begin posting. Idempotent under idempotencyKey; re-post returns existing postingRefs. Composes the existing journal-entry, AR/AP, and NC contacts surfaces (REQ-AIM-005/006/007/009). Runs under OR background machinery."
+            },
+            "posted": {
+              "from": "posting",
+              "to": "posted",
+              "label": "Posted",
+              "description": "Posting succeeded; postingRefs set. The dry-run report doubles as the migration verification document."
+            },
+            "postingFailed": {
+              "from": "posting",
+              "to": "posting_failed",
+              "label": "Posting failed",
+              "description": "Staged-state changed since the dry-run, or a cross-service write failed. Requires a fresh validation + dry-run before retrying (REQ-AIM-008)."
+            },
+            "reverse": {
+              "from": "posted",
+              "to": "reversed",
+              "label": "Reverse import",
+              "description": "Post the reversing journal, soft-delete imported open items and master rows, mark the batch reversed; contacts are reported but never deleted. ONLY while the target period is open (REQ-AIM-009) — guarded.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\ImportBatchGuard::canReverse",
+              "x-adr-031-exception": "Open-period precondition for reversal is a cross-schema FiscalPeriod check the declarative requires: DSL cannot yet express; ImportBatchGuard::canReverse is the documented ADR-031 PHP-guard seam (mirrors APGuard / StatementParser). Replace with a declarative condition when OR gains the primitive."
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "validationFailed": {
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "status",
+                "operator": "equals",
+                "value": "validation_failed"
+              }
+            },
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "field",
+                "field": "owner"
+              },
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              }
+            ],
+            "subject": {
+              "nl": "Import validatie mislukt: batch {{id}} ({{administrationId}})",
+              "en": "Import validation failed: batch {{id}} ({{administrationId}})"
+            }
+          },
+          "dryRunComplete": {
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "status",
+                "operator": "equals",
+                "value": "dry_run_complete"
+              }
+            },
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "field",
+                "field": "owner"
+              },
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              }
+            ],
+            "subject": {
+              "nl": "Import proefronde gereed: batch {{id}} ({{administrationId}})",
+              "en": "Import dry-run complete: batch {{id}} ({{administrationId}})"
+            }
+          },
+          "posted": {
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "status",
+                "operator": "equals",
+                "value": "posted"
+              }
+            },
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "field",
+                "field": "owner"
+              },
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              }
+            ],
+            "subject": {
+              "nl": "Import geboekt: batch {{id}} ({{administrationId}})",
+              "en": "Import posted: batch {{id}} ({{administrationId}})"
+            }
+          },
+          "postingFailed": {
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "status",
+                "operator": "equals",
+                "value": "posting_failed"
+              }
+            },
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "field",
+                "field": "owner"
+              },
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              }
+            ],
+            "subject": {
+              "nl": "Import boeken mislukt: batch {{id}} ({{administrationId}})",
+              "en": "Import posting failed: batch {{id}} ({{administrationId}})"
+            }
+          },
+          "reversed": {
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "status",
+                "operator": "equals",
+                "value": "reversed"
+              }
+            },
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "field",
+                "field": "owner"
+              },
+              {
+                "kind": "object-acl",
+                "permission": "manage"
+              }
+            ],
+            "subject": {
+              "nl": "Import teruggedraaid: batch {{id}} ({{administrationId}})",
+              "en": "Import reversed: batch {{id}} ({{administrationId}})"
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "ImportMapping": {
+        "slug": "ImportMapping",
+        "icon": "SwapHorizontalBold",
+        "version": "0.1.0",
+        "title": "Import Mapping",
+        "description": "One source-account → Shillinq-account mapping row per REQ-AIM-004. Separate rows (not embedded on the batch) because a real chart has hundreds of accounts and the mapping needs its own review grid, per-row status, and reuse as a saved profile across an accountant's client migrations. Resolution order: source RGS code → target with same RGS (rgs-auto, pre-confirmed); saved profile hit (profile-default); code/name similarity (manual review); else unmapped. Unmapped or unconfirmed rows referenced by staged data block the mapping→validated transition (fail-closed).",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Mapping-review register; every resolution and operator confirmation is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022."
+        },
+        "x-schema-org": "schema:PropertyValue",
+        "x-spec": "openspec/changes/administration-import-migration/specs/administration-import-migration/spec.md",
+        "type": "object",
+        "required": [
+          "batchReference",
+          "sourceCode",
+          "mappingSource"
+        ],
+        "properties": {
+          "batchReference": {
+            "type": "string",
+            "description": "FK to the owning ImportBatch (UUID or slug).",
+            "example": "import-batch-eboekhouden-demo",
+            "title": "Batch Reference"
+          },
+          "sourceCode": {
+            "type": "string",
+            "description": "Source ledger account code as it appeared in the auditfile.",
+            "example": "1300",
+            "title": "Source Code"
+          },
+          "sourceName": {
+            "type": "string",
+            "description": "Source account name from the auditfile.",
+            "nullable": true,
+            "example": "Debiteuren",
+            "title": "Source Name"
+          },
+          "sourceRgsCode": {
+            "type": "string",
+            "description": "RGS (Referentie Grootboekschema) code from the source file, if present. The backbone of auto-mapping.",
+            "nullable": true,
+            "example": "BVorDebHad",
+            "title": "Source Rgs Code"
+          },
+          "targetAccount": {
+            "type": "string",
+            "description": "FK to the Shillinq GL Account (per bookkeeping-chart-of-accounts). Null until resolved/confirmed.",
+            "nullable": true,
+            "example": "1300",
+            "title": "Target Account"
+          },
+          "mappingSource": {
+            "type": "string",
+            "enum": [
+              "rgs-auto",
+              "profile-default",
+              "manual",
+              "unmapped"
+            ],
+            "description": "Which resolution path produced this row. rgs-auto and profile-default are pre-confirmed; manual requires operator confirmation; unmapped blocks posting.",
+            "example": "rgs-auto",
+            "title": "Mapping Source"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "description": "Operator confirmation state. rgs-auto/profile-default default true; manual/unmapped default false.",
+            "default": false,
+            "example": true,
+            "title": "Confirmed"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this mapping belongs to (denormalised from the batch for the review grid filters).",
+            "nullable": true,
+            "example": "adm-shillinq-demo",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ImportBatch",
+          "slug": "import-batch-eboekhouden-demo"
+        },
+        "administrationId": "adm-shillinq-demo",
+        "sourceSystem": "e-boekhouden",
+        "sourceFiles": [
+          {
+            "path": "/Migrations/eboekhouden-auditfile-2025.xaf",
+            "kind": "xaf"
+          },
+          {
+            "path": "/Migrations/eboekhouden-openposten-2025.csv",
+            "kind": "open-items-csv"
+          }
+        ],
+        "migrationDate": "2026-01-01",
+        "scope": {
+          "chartOfAccounts": true,
+          "openingBalance": true,
+          "openItems": true,
+          "relations": true
+        },
+        "status": "draft",
+        "mappingProfile": "kantoor-standaard",
+        "owner": "admin"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ImportBatch",
+          "slug": "import-batch-moneybird-demo"
+        },
+        "administrationId": "adm-shillinq-demo",
+        "sourceSystem": "moneybird",
+        "sourceFiles": [
+          {
+            "path": "/Migrations/moneybird-auditfile-2025.xaf",
+            "kind": "xaf"
+          },
+          {
+            "path": "/Migrations/moneybird-openposten-2025.csv",
+            "kind": "open-items-csv"
+          }
+        ],
+        "migrationDate": "2026-01-01",
+        "scope": {
+          "chartOfAccounts": true,
+          "openingBalance": true,
+          "openItems": true,
+          "relations": true
+        },
+        "status": "dry_run_complete",
+        "stagedCounts": {
+          "ledgerAccounts": 42,
+          "openingBalanceLines": 18,
+          "arOpenItems": 6,
+          "apOpenItems": 4,
+          "relations": 9
+        },
+        "owner": "admin"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ImportMapping",
+          "slug": "import-mapping-eboekhouden-1300"
+        },
+        "batchReference": "import-batch-eboekhouden-demo",
+        "sourceCode": "1300",
+        "sourceName": "Debiteuren",
+        "sourceRgsCode": "BVorDebHad",
+        "targetAccount": "1300",
+        "mappingSource": "rgs-auto",
+        "confirmed": true,
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ImportMapping",
+          "slug": "import-mapping-eboekhouden-1600"
+        },
+        "batchReference": "import-batch-eboekhouden-demo",
+        "sourceCode": "1600",
+        "sourceName": "Crediteuren",
+        "sourceRgsCode": "BSchSchCrd",
+        "targetAccount": "1600",
+        "mappingSource": "rgs-auto",
+        "confirmed": true,
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ImportMapping",
+          "slug": "import-mapping-eboekhouden-8000"
+        },
+        "batchReference": "import-batch-eboekhouden-demo",
+        "sourceCode": "8000",
+        "sourceName": "Omzet hoog tarief",
+        "sourceRgsCode": "WOmzNopOht",
+        "targetAccount": null,
+        "mappingSource": "manual",
+        "confirmed": false,
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ImportMapping",
+          "slug": "import-mapping-eboekhouden-9999"
+        },
+        "batchReference": "import-batch-eboekhouden-demo",
+        "sourceCode": "9999",
+        "sourceName": "Tussenrekening onbekend",
+        "sourceRgsCode": null,
+        "targetAccount": null,
+        "mappingSource": "unmapped",
+        "confirmed": false,
+        "administrationId": "adm-shillinq-demo"
+      }
+    ]
+  }
+}

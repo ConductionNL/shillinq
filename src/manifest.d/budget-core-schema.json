@@ -1,0 +1,184 @@
+{
+	"_meta_note": "budget-core-schema REQ-BCS-009/010 — minimal index/detail pages for AnnualBudget/LedgerGroup/BudgetLine, gated on manifest byte-budget headroom (design.md §8). nav-six-clusters (PR #923) had already merged onto this branch by implementation time, so the 'Budgets' top-level group declared here is relocated DIRECTLY into the Cluster-4 'Banking & Cashflow' group via src/menu-layout.json#relocations in the SAME change, rather than left as a flat top-level group for a later coordination step (design.md §7b's own deferred step, done now since its precondition already held).",
+	"menu": [
+		{
+			"id": "Budgets",
+			"label": "Budgets",
+			"icon": "PiggyBankOutline",
+			"order": 29,
+			"children": [
+				{"id": "AnnualBudgets", "label": "Annual Budgets", "icon": "CalendarRange", "route": "AnnualBudgets", "order": 10},
+				{"id": "LedgerGroups", "label": "Ledger Groups", "icon": "FormatListGroup", "route": "LedgerGroups", "order": 20},
+				{"id": "BudgetLines", "label": "Budget Lines", "icon": "TableColumn", "route": "BudgetLines", "order": 30}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "AnnualBudgets",
+			"route": "/begroting/annual-budgets",
+			"type": "index",
+			"title": "Annual Budgets",
+			"config": {
+				"register": "shillinq",
+				"schema": "AnnualBudget",
+				"columns": [
+					{"key": "fiscalYear", "label": "Fiscal year", "sortable": true},
+					{"key": "name", "label": "Name", "sortable": true},
+					{"key": "isDefault", "label": "Default", "sortable": true},
+					{"key": "state", "label": "State", "sortable": true}
+				],
+				"defaultSort": "fiscalYear",
+				"detailRoute": "AnnualBudgetDetail"
+			}
+		},
+		{
+			"id": "AnnualBudgetDetail",
+			"route": "/begroting/annual-budgets/:id",
+			"type": "detail",
+			"title": "Annual Budget",
+			"config": {
+				"_note": "REQ-BCS-006/009. The fiscal-year begroting container. State chip drives the draft/active/closed lifecycle (activate is gated by AnnualBudgetDefaultGuard's one-default invariant); the budgetLines relatedCollection is this budget's phased BudgetLine rows (key MUST be `relatedCollections` — see the LedgerGroupDetail note below).",
+				"register": "shillinq",
+				"schema": "AnnualBudget",
+				"auditTrail": true,
+				"fields": [
+					{"key": "fiscalYear", "label": "Fiscal year", "type": "number"},
+					{"key": "name", "label": "Name", "type": "string"},
+					{"key": "isDefault", "label": "Default", "type": "boolean"},
+					{"key": "state", "label": "State", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"relatedCollections": [
+					{"title": "Budget lines", "register": "shillinq", "schema": "BudgetLine", "filter": {"annualBudgetId": "@objectId"}, "columns": [
+						{"key": "ledgerGroupId", "label": "Ledger group"},
+						{"key": "source", "label": "Source"},
+						{"key": "month01Amount", "label": "Jan"}
+					], "rowRoute": "BudgetLineDetail"}
+				],
+				"indexRoute": "AnnualBudgets",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
+			}
+		},
+		{
+			"id": "LedgerGroups",
+			"route": "/begroting/ledger-groups",
+			"type": "index",
+			"title": "Ledger Groups",
+			"config": {
+				"register": "shillinq",
+				"schema": "LedgerGroup",
+				"columns": [
+					{"key": "code", "label": "Code", "sortable": true},
+					{"key": "name", "label": "Name", "sortable": true},
+					{"key": "order", "label": "Order", "sortable": true},
+					{"key": "parentLedgerGroupId", "label": "Parent", "sortable": true}
+				],
+				"defaultSort": "order",
+				"detailRoute": "LedgerGroupDetail"
+			}
+		},
+		{
+			"id": "LedgerGroupDetail",
+			"route": "/begroting/ledger-groups/:id",
+			"type": "detail",
+			"title": "Ledger Group",
+			"config": {
+				"_note": "REQ-BCS-004/005/009. A verzamelpost: an ordered, nestable GL-account grouping resolved from accountRanges + explicit include/exclude (design.md §3a) — membership is computed in PHP (BudgetVsActualsReader), not shown as a live query here. The children relatedCollection surfaces nested LedgerGroups via parentLedgerGroupId (design.md §3d's parent-rollup rule). NOTE THE KEY: CnDetailPage's prop is `relatedCollections` with a token-resolved `filter` — a `relatedLists` block (the spelling 22 other shillinq fragments still use) is not a prop on any Cn page component, so it lands in $attrs, renders nothing, and the page shows only the generic 'No relations yet' widget while every gate stays green. THE FILTER TOKEN IS `@object.code`, NOT `@objectId`: `@objectId` resolves to the row's UUID, but parentLedgerGroupId stores the parent's `code` (a flat business key — see the register fragment's note on why an id is not available at seed time), so an `@objectId` filter matched zero rows and the page fell back to 'No relations yet'. `@object.<field>` reads a FLAT payload field only — it cannot reach `@self.slug`, which is why the seed cannot reference the parent by slug either.",
+				"register": "shillinq",
+				"schema": "LedgerGroup",
+				"auditTrail": true,
+				"fields": [
+					{"key": "code", "label": "Code", "type": "string"},
+					{"key": "name", "label": "Name", "type": "string"},
+					{"key": "order", "label": "Order", "type": "number"},
+					{"key": "parentLedgerGroupId", "label": "Parent ledger group", "type": "string"},
+					{"key": "accountRanges", "label": "Account ranges", "type": "string"},
+					{"key": "includedAccountNumbers", "label": "Included accounts", "type": "string"},
+					{"key": "excludedAccountNumbers", "label": "Excluded accounts", "type": "string"},
+					{"key": "effectiveFrom", "label": "Effective from", "type": "string"},
+					{"key": "effectiveTo", "label": "Effective to", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"relatedCollections": [
+					{"title": "Child ledger groups", "register": "shillinq", "schema": "LedgerGroup", "filter": {"parentLedgerGroupId": "@object.code"}, "columns": [
+						{"key": "code", "label": "Code"},
+						{"key": "name", "label": "Name"},
+						{"key": "order", "label": "Order"}
+					], "rowRoute": "LedgerGroupDetail"}
+				],
+				"indexRoute": "LedgerGroups",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
+			}
+		},
+		{
+			"id": "BudgetLines",
+			"route": "/begroting/budget-lines",
+			"type": "index",
+			"title": "Budget Lines",
+			"config": {
+				"register": "shillinq",
+				"schema": "BudgetLine",
+				"columns": [
+					{"key": "annualBudgetId", "label": "Annual budget", "sortable": true},
+					{"key": "ledgerGroupId", "label": "Ledger group", "sortable": true},
+					{"key": "source", "label": "Source", "sortable": true},
+					{"key": "month01Amount", "label": "Jan", "sortable": true}
+				],
+				"defaultSort": "ledgerGroupId",
+				"detailRoute": "BudgetLineDetail"
+			}
+		},
+		{
+			"id": "BudgetLineDetail",
+			"route": "/begroting/budget-lines/:id",
+			"type": "detail",
+			"title": "Budget Line",
+			"config": {
+				"_note": "REQ-BCS-007/009. AnnualBudget x LedgerGroup crossed with 12 monthly phased amounts (minor units, EUR cents) and a source marker. Plain CRUD detail, not the spreadsheet grid — budget-grid-view builds that as its own type:custom page reusing this schema (design.md §7a). The 13th cumulative-total column is a UI concern computed client-side there, not a stored field here (design.md §5b).",
+				"register": "shillinq",
+				"schema": "BudgetLine",
+				"auditTrail": true,
+				"fields": [
+					{"key": "annualBudgetId", "label": "Annual budget", "type": "string"},
+					{"key": "ledgerGroupId", "label": "Ledger group", "type": "string"},
+					{"key": "source", "label": "Source", "type": "string"},
+					{"key": "month01Amount", "label": "Jan", "type": "number"},
+					{"key": "month02Amount", "label": "Feb", "type": "number"},
+					{"key": "month03Amount", "label": "Mar", "type": "number"},
+					{"key": "month04Amount", "label": "Apr", "type": "number"},
+					{"key": "month05Amount", "label": "May", "type": "number"},
+					{"key": "month06Amount", "label": "Jun", "type": "number"},
+					{"key": "month07Amount", "label": "Jul", "type": "number"},
+					{"key": "month08Amount", "label": "Aug", "type": "number"},
+					{"key": "month09Amount", "label": "Sep", "type": "number"},
+					{"key": "month10Amount", "label": "Oct", "type": "number"},
+					{"key": "month11Amount", "label": "Nov", "type": "number"},
+					{"key": "month12Amount", "label": "Dec", "type": "number"},
+					{"key": "notes", "label": "Notes", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"indexRoute": "BudgetLines",
+				"sidebarProps": {
+					"tabs": [
+						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
+							{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails", "collapsed": true}}
+						]}
+					]
+				}
+			}
+		}
+	]
+}

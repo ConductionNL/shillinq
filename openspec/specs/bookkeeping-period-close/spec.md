@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-period-close
 
 **Status:** proposed
@@ -6,12 +10,18 @@
 **Depends on:** `./bookkeeping-trial-balance/spec.md` (T2 trial-balance — pre-close
 preview), `../add-shillinq-bookkeeping-foundation/specs/bookkeeping-general-ledger/spec.md` (T1 GL)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping period close in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: period-close index/detail pages not yet implemented
 
 
 ### REQ-PC-001: The system SHALL declare a `FiscalPeriod` register replacing T1's stub-string `periodId`
+
+The system SHALL satisfy this requirement: The system SHALL declare a `FiscalPeriod` register replacing T1's stub-string `periodId`.
 
 T1 REQ-GL-006 stubbed `GLLine.periodId` as a free-form string with
 no FK validation. T2 promotes `FiscalPeriod` to a full register
@@ -40,6 +50,8 @@ match, no data migration.
   MUST resolve `periodId` to the `FiscalPeriod` record.
 
 ### REQ-PC-002: The `FiscalPeriod` schema SHALL declare a fixed minimum field set
+
+The system SHALL satisfy this requirement: The `FiscalPeriod` schema SHALL declare a fixed minimum field set.
 
 | Field | Type | Required | Purpose |
 |---|---|---|---|
@@ -125,6 +137,8 @@ transition with actor, before/after, hash chain.
 
 ### REQ-PC-004: Closed periods SHALL reject new postings via a precondition added to `GLTransaction.post`
 
+The system SHALL satisfy this requirement: Closed periods SHALL reject new postings via a precondition added to `GLTransaction.post`.
+
 T1 REQ-GL-004 declared a `draft → posted` lifecycle on
 `GLTransaction` with a balance precondition + all-active-account
 precondition. T2 adds a third precondition: the
@@ -163,6 +177,8 @@ becomes effective.
 - **THEN** the transition MUST succeed per T1 REQ-GL-004.
 
 ### REQ-PC-005: Backdating across closed periods SHALL be prevented at posting time
+
+The system SHALL satisfy this requirement: Backdating across closed periods SHALL be prevented at posting time.
 
 A `GLTransaction.postingDate` falling within a `closed` or
 `audit-locked` period MUST be rejected even if the operator did
@@ -277,6 +293,8 @@ Rendering MUST use `@conduction/nextcloud-vue`'s generic
   balance loads and reports balanced.
 
 ### REQ-PC-008: Year-end close SHALL be explicitly out of scope; T3 owns opening-balance journal generation
+
+The system SHALL satisfy this requirement: Year-end close SHALL be explicitly out of scope; T3 owns opening-balance journal generation.
 
 T2 declares the period-close lifecycle as a *monthly / quarterly*
 mechanism. The year-end concerns — generating the opening-balance

@@ -1,0 +1,17 @@
+{
+  "ran": true,
+  "pass": false,
+  "blocking": [
+    {
+      "file": "Conduction/shillinq",
+      "severity": "critical",
+      "note": "mergeable=false \u2014 PR branch has unresolvable merge conflicts with development; force-merging would silently overwrite conflicting upstream changes"
+    }
+  ],
+  "turns": 7,
+  "cost_usd": 0.2471,
+  "cost_eur": 0.2273,
+  "pr": 302,
+  "commit": "920477e",
+  "timestamp": "2026-06-07T10:58:07.435152+00:00"
+}

@@ -1,0 +1,250 @@
+{
+	"menu": [
+		{
+			"id": "Consolidation",
+			"label": "Consolidation",
+			"icon": "Sitemap",
+			"order": 75,
+			"children": [
+				{
+					"id": "ConsolidationGroups",
+					"label": "Consolidation Groups",
+					"icon": "AccountGroupOutline",
+					"route": "ConsolidationGroups",
+					"order": 10
+				},
+				{
+					"id": "ConsolidationPeriods",
+					"label": "Consolidation Periods",
+					"icon": "CalendarSync",
+					"route": "ConsolidationPeriods",
+					"order": 20
+				},
+				{
+					"id": "ConsolidatedReports",
+					"label": "Consolidated Reports",
+					"icon": "ChartBoxOutline",
+					"route": "ConsolidatedReports",
+					"order": 30
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "ConsolidationGroups",
+			"route": "/consolidation/groups",
+			"type": "index",
+			"title": "Consolidation Groups",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidationGroup",
+				"columns": [
+					{"key": "groupName", "label": "Group", "sortable": true},
+					{"key": "reportingCurrency", "label": "Currency", "sortable": true},
+					{"key": "reportingFramework", "label": "Framework", "sortable": true},
+					{"key": "fiscalYearEnd", "label": "Fiscal year end", "sortable": true},
+					{"key": "defaultConsolidationMethod", "label": "Default method", "sortable": true},
+					{"key": "state", "label": "State", "sortable": true}
+				],
+				"defaultSort": "groupName",
+				"detailRoute": "ConsolidationGroupDetail"
+			}
+		},
+		{
+			"id": "ConsolidationGroupDetail",
+			"route": "/consolidation/groups/:id",
+			"type": "detail",
+			"title": "Consolidation Group",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidationGroup",
+				"_note": "FINANCIAL / MASTER archetype (native CnDetailPage). A consolidation group is the reporting-entity master (parent administration, reporting currency + framework, fiscal year-end, default method) that periodic consolidation runs hang off. Fields render the group definition natively. The related list surfaces the consolidation periods run against this group (ConsolidationPeriod FK consolidationGroupId) so the controller can drill straight into a run. Lifecycle actions expose draft/active/inactive transitions (x-openregister-lifecycle on state). Audit-trail sidebar tab holds the setup change log -- a reporting entity is configured, not conversed with, so no comms/file leaves.",
+				"fields": [
+					{"key": "groupName", "label": "Group", "type": "string"},
+					{"key": "parentAdministrationId", "label": "Parent administration", "type": "string"},
+					{"key": "reportingCurrency", "label": "Reporting currency", "type": "string"},
+					{"key": "reportingFramework", "label": "Reporting framework", "type": "string"},
+					{"key": "fiscalYearEnd", "label": "Fiscal year end", "type": "string"},
+					{"key": "defaultConsolidationMethod", "label": "Default method", "type": "string"},
+					{"key": "firstConsolidationDate", "label": "First consolidation date", "type": "string"},
+					{"key": "notes", "label": "Notes", "type": "string"},
+					{"key": "state", "label": "State", "type": "string"}
+				],
+				"lifecycleActions": true,
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`; a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing while every gate stays green. TOKEN: `@objectId` — ConsolidationGroup's payload carries no flat group-key field (groupName is a display label, not an FK value), so ConsolidationPeriod.consolidationGroupId holds the group's OpenRegister UUID.",
+				"relatedCollections": [
+					{
+						"title": "Consolidation periods",
+						"register": "shillinq",
+						"schema": "ConsolidationPeriod",
+						"filter": { "consolidationGroupId": "@objectId" },
+						"columns": [
+							{"key": "periodStart", "label": "Period start"},
+							{"key": "periodEnd", "label": "Period end"},
+							{"key": "executor", "label": "Executor"},
+							{"key": "totalEliminationCount", "label": "Eliminations"},
+							{"key": "totalEliminationAmount", "label": "Elimination amount"},
+							{"key": "status", "label": "Status"}
+						],
+						"rowRoute": "ConsolidationPeriodDetail"
+					}
+				],
+				"indexRoute": "ConsolidationGroups",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/ConsolidationGroup/:id/audit-trails", "collapsed": true}}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ConsolidationPeriods",
+			"route": "/consolidation/periods",
+			"type": "index",
+			"title": "Consolidation Periods",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidationPeriod",
+				"columns": [
+					{"key": "consolidationGroupId", "label": "Group", "sortable": true},
+					{"key": "periodStart", "label": "Period start", "sortable": true},
+					{"key": "periodEnd", "label": "Period end", "sortable": true},
+					{"key": "executor", "label": "Executor", "sortable": true},
+					{"key": "totalEliminationCount", "label": "Eliminations", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "periodEnd",
+				"detailRoute": "ConsolidationPeriodDetail"
+			}
+		},
+		{
+			"id": "ConsolidationPeriodDetail",
+			"route": "/consolidation/periods/:id",
+			"type": "detail",
+			"title": "Consolidation Period",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidationPeriod",
+				"_note": "FINANCIAL / TRANSACTION (consolidation-run) archetype (native CnDetailPage). A consolidation period is a single run that eliminates intercompany balances and produces the group balance(s) for a reporting window; totalEliminationCount/totalEliminationAmount are declarative x-openregister-aggregations so the run fields alone surface the elimination footprint -- no bespoke stat widgets needed. Related lists surface both outputs of the run: the elimination entries booked in this period (EliminationEntry FK consolidationPeriodId) and the consolidated balances it produced (ConsolidatedBalance FK consolidationPeriodId). Lifecycle actions expose the open -> eliminationPhase -> review -> closed -> archived workflow (x-openregister-lifecycle on status). Audit-trail sidebar tab records who ran it and when; no comms/file leaves -- a consolidation is a computation.",
+				"fields": [
+					{"key": "consolidationGroupId", "label": "Group", "type": "string"},
+					{"key": "periodStart", "label": "Period start", "type": "string"},
+					{"key": "periodEnd", "label": "Period end", "type": "string"},
+					{"key": "executor", "label": "Executor", "type": "string"},
+					{"key": "executionTimestamp", "label": "Executed at", "type": "string"},
+					{"key": "totalEliminationCount", "label": "Elimination count", "type": "number"},
+					{"key": "totalEliminationAmount", "label": "Elimination amount", "type": "number"},
+					{"key": "status", "label": "Status", "type": "string"}
+				],
+				"lifecycleActions": true,
+				"_relatedCollectionsNote": "KEY: the prop is `relatedCollections`, not `relatedLists` (the latter lands in $attrs and renders nothing). TOKEN: `@objectId` — ConsolidationPeriod's payload carries no flat period-key field (it has periodStart/periodEnd, not a period id), so both children hold the period's OpenRegister UUID. Consistent with OCA\\Shillinq\\Lifecycle\\ConsolidationGuard, which reads back with `findAll(['filters' => ['consolidationPeriodId' => $periodId]])` on the period's identity.",
+				"relatedCollections": [
+					{
+						"title": "Elimination entries",
+						"register": "shillinq",
+						"schema": "EliminationEntry",
+						"filter": { "consolidationPeriodId": "@objectId" },
+						"columns": [
+							{"key": "eliminationType", "label": "Type"},
+							{"key": "bookingDate", "label": "Booking date"},
+							{"key": "description", "label": "Description"},
+							{"key": "autoGenerated", "label": "Auto-generated"},
+							{"key": "reviewStatus", "label": "Review status"}
+						]
+					},
+					{
+						"title": "Consolidated balances",
+						"register": "shillinq",
+						"schema": "ConsolidatedBalance",
+						"filter": { "consolidationPeriodId": "@objectId" },
+						"columns": [
+							{"key": "reportDate", "label": "Report date"},
+							{"key": "totalAssets", "label": "Total assets"},
+							{"key": "totalLiabilities", "label": "Total liabilities"},
+							{"key": "totalEquity", "label": "Total equity"},
+							{"key": "state", "label": "State"}
+						],
+						"rowRoute": "ConsolidatedBalanceDetail"
+					}
+				],
+				"indexRoute": "ConsolidationPeriods",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/ConsolidationPeriod/:id/audit-trails", "collapsed": true}}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ConsolidatedReports",
+			"route": "/consolidation/reports",
+			"type": "index",
+			"title": "Consolidated Reports",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidatedBalance",
+				"columns": [
+					{"key": "consolidationGroupId", "label": "Group", "sortable": true},
+					{"key": "reportDate", "label": "Report date", "sortable": true},
+					{"key": "totalAssets", "label": "Total assets", "sortable": true},
+					{"key": "totalEquity", "label": "Total equity", "sortable": true},
+					{"key": "state", "label": "State", "sortable": true}
+				],
+				"defaultSort": "reportDate",
+				"detailRoute": "ConsolidatedBalanceDetail"
+			}
+		},
+		{
+			"id": "ConsolidatedBalanceDetail",
+			"route": "/consolidation/reports/:id",
+			"type": "detail",
+			"title": "Consolidated Balance",
+			"config": {
+				"register": "shillinq",
+				"schema": "ConsolidatedBalance",
+				"_note": "FINANCIAL / REPORT (balance sheet) archetype (native CnDetailPage). A consolidated balance is the group's aggregated balance sheet for a period; totalAssets/totalLiabilities/totalEquity are declarative x-openregister-aggregations so the headline totals surface directly from the fields, no bespoke stat widgets needed. Lifecycle actions expose the draft -> final -> published workflow (x-openregister-lifecycle on state). No relatedLists (ConsolidatedBalance has no child schemas) and no file tab -- this is a generated statement, not an uploaded document. Audit-trail sidebar tab records generation/finalisation.",
+				"fields": [
+					{"key": "consolidationGroupId", "label": "Group", "type": "string"},
+					{"key": "consolidationPeriodId", "label": "Period", "type": "string"},
+					{"key": "reportDate", "label": "Report date", "type": "string"},
+					{"key": "totalAssets", "label": "Total assets", "type": "number"},
+					{"key": "totalLiabilities", "label": "Total liabilities", "type": "number"},
+					{"key": "totalEquity", "label": "Total equity", "type": "number"},
+					{"key": "state", "label": "State", "type": "string"}
+				],
+				"lifecycleActions": true,
+				"indexRoute": "ConsolidatedReports",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{"type": "data", "componentName": "openregister-audit-trail", "props": {"source": "/index.php/apps/openregister/api/objects/shillinq/ConsolidatedBalance/:id/audit-trails", "collapsed": true}}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}

@@ -1,0 +1,1686 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-accounts-payable-core",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 2 — Accounts Payable (Core). Adds Payee, APTransaction, DunningNotice, PaymentRun schemas with x-openregister-lifecycle and x-openregister-aggregations per REQ-AP-001 .. REQ-AP-013. Mirrors the AR core. Consumes OR dunning-workflow (ADR-022) and OR scheduled-workflow for the issued → overdue transition (ADR-031 path 2). Sub-ledger materialises balanced GLTransaction via the T1 JournalEntry pattern. PaymentRun re-established as the canonical batch-payment schema (consolidate-accounts-payable). Seed data per REQ-AP-011 ships Dutch suppliers + a ZZP freelancer + a government payee + AP invoices spanning lifecycle states + an approved PaymentRun."
+  },
+  "components": {
+    "schemas": {
+      "Payee": {
+        "slug": "Payee",
+        "icon": "TruckOutline",
+        "version": "0.2.0",
+        "title": "Payee",
+        "description": "Canonical \"anyone we pay\" master for accounts payable per REQ-AP-002 + REQ-AP-012 — covers suppliers, vendors, AND freelancers (Dutch ZZP'ers / sole traders / contractors), plus government payees. Holds party contact details, payment terms, a structured bankAccount object (IBAN + BIC/SWIFT + account holder), payeeType, folded financial fields (creditLimit, apBalance), dunning policy reference, and default expense account. Folds in the retired VendorFinancialProfile duplicate. Symmetric to CustomerMaster on the AR side. Per REQ-AP-001 + ADR-024 (registers, not parallel PHP tables) + ADR-022 (consumes OR contact abstraction when available via contactRef).",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Vendor master register; every create / update / lifecycle transition is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022."
+        },
+        "x-schema-org": "schema:Organization",
+        "configuration": {
+            "implements": [
+                "https://openregister.app/ns#Vendor",
+                "https://schema.org/Organization"
+            ]
+        },
+        "x-spec": "openspec/changes/bookkeeping-accounts-payable-core/specs/bookkeeping-accounts-payable-core/spec.md",
+        "type": "object",
+        "required": [
+          "vendorNumber",
+          "name",
+          "paymentTermDays",
+          "administrationId",
+          "lifecycleState"
+        ],
+        "properties": {
+          "vendorNumber": {
+            "type": "string",
+            "description": "Stable vendor identifier unique per administration. Operator-supplied; never auto-generated.",
+            "example": "V-2026-001",
+            "title": "Vendor Number"
+          },
+          "name": {
+            "type": "string",
+            "description": "Legal name of the vendor.",
+            "example": "Eneco Energie B.V.",
+            "title": "Name"
+          },
+          "payeeType": {
+            "type": "string",
+            "enum": [
+              "supplier",
+              "vendor",
+              "freelancer",
+              "contractor",
+              "government",
+              "other"
+            ],
+            "description": "Kind of party we pay per REQ-AP-012. supplier/vendor = trading companies; freelancer = Dutch ZZP'er / sole trader; contractor = subcontracted party; government = public-sector payee; other = anything else. The AP module treats every payeeType as a payable party.",
+            "default": "supplier",
+            "example": "supplier",
+            "title": "Payee Type"
+          },
+          "tradingName": {
+            "type": "string",
+            "description": "Alternate or DBA trading name.",
+            "nullable": true,
+            "example": "Eneco",
+            "title": "Trading Name"
+          },
+          "kvkNumber": {
+            "type": "string",
+            "description": "Dutch KvK number (8 digits).",
+            "nullable": true,
+            "example": "24502797",
+            "title": "KvK Number"
+          },
+          "vatNumber": {
+            "type": "string",
+            "description": "Dutch BTW / EU VAT number.",
+            "nullable": true,
+            "example": "NL003726244B01",
+            "title": "BTW Number"
+          },
+          "paymentTermDays": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 30,
+            "description": "Default payment term in days (auto-sets APTransaction.dueDate on creation per REQ-AP-003).",
+            "example": 30,
+            "title": "Payment Term Days"
+          },
+          "defaultExpenseAccountNumber": {
+            "type": "string",
+            "description": "FK to Account.accountNumber for default expense coding on AP invoices.",
+            "nullable": true,
+            "example": "4000",
+            "title": "Default Expense Account Number"
+          },
+          "bankAccount": {
+            "type": "object",
+            "description": "Payee bank account for outgoing SEPA payments. Folds the retired VendorFinancialProfile iban/bic into a structured object. NOTE: bic IS the ISO 9362 SWIFT code (a \"SWIFT code\" and a BIC are the same identifier) — no separate swift field is modelled. Non-SEPA / cross-border international payments (non-IBAN account numbers, intermediary/correspondent banks) are OUT OF SCOPE here — a future capability; this object models SEPA IBAN/BIC only.",
+            "nullable": true,
+            "properties": {
+              "iban": {
+                "type": "string",
+                "description": "Payee IBAN for outgoing SEPA payments. Read by the payment-run SEPA export as the creditor account.",
+                "nullable": true,
+                "example": "NL00BANK0123456789",
+                "title": "IBAN"
+              },
+              "bic": {
+                "type": "string",
+                "description": "Bank ISO 9362 BIC / SWIFT code (same identifier). Creditor agent for the SEPA export.",
+                "nullable": true,
+                "example": "<BANKNL2A>",
+                "title": "BIC"
+              },
+              "accountHolderName": {
+                "type": "string",
+                "description": "Name on the bank account, if it differs from the payee legal name.",
+                "nullable": true,
+                "example": "Eneco Energie B.V.",
+                "title": "Account Holder Name"
+              }
+            },
+            "title": "Bank Account"
+          },
+          "creditLimit": {
+            "type": "number",
+            "description": "Maximum outstanding AP balance permitted for this payee. Folded in from the retired VendorFinancialProfile per REQ-AP-012.",
+            "nullable": true,
+            "example": 10000,
+            "title": "Credit Limit"
+          },
+          "apBalance": {
+            "type": "number",
+            "description": "Current open accounts-payable balance for this payee (derived open-AP total; mirrors the vendorOpenApBalance aggregation). Folded in from the retired VendorFinancialProfile per REQ-AP-012.",
+            "nullable": true,
+            "example": 892.5,
+            "title": "AP Balance"
+          },
+          "creditTerms": {
+            "type": "string",
+            "description": "Free-text payment terms or reference to OR terms record.",
+            "nullable": true,
+            "example": "Net 30, korting 2%/10 dagen",
+            "title": "Credit Terms"
+          },
+          "dunningPolicyRef": {
+            "type": "string",
+            "description": "FK to OR dunning-workflow policy record if the extension is stable per ADR-022; else null. Drives REQ-AP-005 reminder cadence from the overdue state.",
+            "nullable": true,
+            "title": "Dunning Policy Ref"
+          },
+          "address": {
+            "type": "object",
+            "description": "Postal address of the vendor.",
+            "nullable": true,
+            "properties": {
+              "street": {
+                "type": "string",
+                "title": "Street",
+                "description": "The street."
+              },
+              "houseNumber": {
+                "type": "string",
+                "title": "House Number",
+                "description": "The house number."
+              },
+              "postcode": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]{3}[A-Z]{2}$",
+                "description": "Dutch postcode (4 digits + 2 capital letters).",
+                "title": "Postcode"
+              },
+              "city": {
+                "type": "string",
+                "title": "City",
+                "description": "The city name."
+              },
+              "country": {
+                "type": "string",
+                "default": "NL",
+                "title": "Country",
+                "description": "The country name or ISO code."
+              }
+            },
+            "title": "Address"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Primary contact email for remittance advice and queries.",
+            "nullable": true,
+            "example": "facturen@eneco.nl",
+            "title": "Email"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Primary contact phone number.",
+            "nullable": true,
+            "example": "+31881234567",
+            "title": "Phone"
+          },
+          "contactRef": {
+            "type": "string",
+            "description": "FK to OR contact abstraction if stable per ADR-022; else null. Symmetric to AR REQ-AR-002. Resolution deferred to implementing cycle.",
+            "nullable": true,
+            "title": "Contact Ref"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration owning this vendor record.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "active",
+              "blocked",
+              "archived"
+            ],
+            "description": "Vendor master lifecycle state. blocked: new AP invoices cannot transition from received to issued; archived: historical reference only.",
+            "default": "active",
+            "example": "active",
+            "title": "Lifecycle State"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "active",
+          "states": {
+            "active": {
+              "label": "Active",
+              "description": "Vendor is active; AP invoices may be received and posted."
+            },
+            "blocked": {
+              "label": "Blocked",
+              "description": "Vendor is blocked; new AP invoices cannot transition received → issued."
+            },
+            "archived": {
+              "label": "Archived",
+              "description": "Vendor is archived for historical reference; no new invoices may be drafted."
+            }
+          },
+          "transitions": {
+            "block": {
+              "from": "active",
+              "to": "blocked",
+              "label": "Block vendor",
+              "description": "Suspend new AP invoicing for this vendor (e.g. credit hold or dispute)."
+            },
+            "unblock": {
+              "from": "blocked",
+              "to": "active",
+              "label": "Unblock vendor",
+              "description": "Restore vendor to active status."
+            },
+            "archive": {
+              "from": [
+                "active",
+                "blocked"
+              ],
+              "to": "archived",
+              "label": "Archive vendor",
+              "description": "Archive vendor after all open AP invoices are settled or written off."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "APTransaction": {
+        "slug": "APTransaction",
+        "icon": "ReceiptTextOutline",
+        "version": "0.1.0",
+        "title": "AP Transaction",
+        "description": "Accounts payable sub-ledger invoice recording vendor billing and payment obligation per REQ-AP-003. Posting (issued transition) materialises one balanced GLTransaction per T1 REQ-JE-007 (credit AP payable, debit expense per lines). Lifecycle: draft → received → issued → paid with partially-paid / overdue / disputed / written-off / voided branches per REQ-AP-004. The issued → overdue transition fires via OR ScheduledWorkflow (ADR-031 path 2 — no PHP cron job). Aged-payables aggregations (detail / summary / timeline) declared inline per REQ-AP-006 .. REQ-AP-008. Sub-ledger linkage: every GLLine emitted from issue or write-off carries subLedgerType=ap + subLedgerRef=<APTransaction UUID> (REQ-AP-001 scenario).",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Bookkeeping sub-ledger register; every lifecycle transition (receive / issue / match / dispute / overdue / write-off / void) and every header/line edit is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. Audit trail is the canonical evidence chain for the AP write-off scenario per REQ-AP-005."
+        },
+        "x-schema-org": "schema:Invoice",
+        "x-spec": "openspec/changes/bookkeeping-accounts-payable-core/specs/bookkeeping-accounts-payable-core/spec.md",
+        "type": "object",
+        "required": [
+          "invoiceNumber",
+          "vendorId",
+          "invoiceDate",
+          "dueDate",
+          "currency",
+          "totalAmount",
+          "lines",
+          "state",
+          "administrationId"
+        ],
+        "properties": {
+          "invoiceNumber": {
+            "type": "string",
+            "description": "Vendor invoice number. Unique per administration + vendorId (REQ-AP-003 scenario 2).",
+            "example": "ENECO-2026-04-0001",
+            "title": "Invoice Number"
+          },
+          "vendorId": {
+            "type": "string",
+            "description": "FK to Payee UUID (or slug). Resolves to the vendor record carrying paymentTermDays and dunningPolicyRef.",
+            "example": "payee-eneco",
+            "title": "Vendor ID"
+          },
+          "invoiceDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the vendor issued the invoice.",
+            "example": "2026-04-15",
+            "title": "Invoice Date"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Auto-calculated from invoiceDate + Payee.paymentTermDays on receipt; operator overrideable.",
+            "example": "2026-05-15",
+            "title": "Due Date"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "description": "ISO 4217 currency code. T2: base currency only (EUR); T5 adds multi-currency.",
+            "default": "EUR",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "totalAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Total amount including tax in administration base currency. Integer-cent precision applied per ADR-031 money rules. Credit memos are separate journal types, not negative totals.",
+            "example": 1250.0,
+            "title": "Total Amount"
+          },
+          "taxAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "VAT/BTW amount. T3 adds automated reverse-charge logic; T2 carries the field for reporting.",
+            "nullable": true,
+            "example": 217.98,
+            "title": "Tax Amount"
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Invoice line breakdown. Each line maps to one GL expense account.",
+            "items": {
+              "type": "object",
+              "required": [
+                "description",
+                "accountNumber",
+                "amount"
+              ],
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "description": "Line description.",
+                  "title": "Description"
+                },
+                "accountNumber": {
+                  "type": "string",
+                  "description": "FK to Account.accountNumber (expense account).",
+                  "title": "Account Number"
+                },
+                "amount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Line amount net of VAT in administration base currency.",
+                  "title": "Amount"
+                },
+                "taxCode": {
+                  "type": "string",
+                  "description": "Tax code for this line (e.g. BTW21, BTW9, BTW0, VERLEGD).",
+                  "nullable": true,
+                  "title": "Tax Code"
+                },
+                "quantity": {
+                  "type": "number",
+                  "description": "Quantity received/billed.",
+                  "nullable": true,
+                  "title": "Quantity"
+                },
+                "unitPrice": {
+                  "type": "number",
+                  "description": "Unit price net of VAT.",
+                  "nullable": true,
+                  "title": "Unit Price"
+                }
+              }
+            },
+            "title": "Lines"
+          },
+          "sourceDocumentUri": {
+            "type": "string",
+            "description": "docudesk FK URI per bookkeeping-document-attachment-integration. Points to the uploaded vendor invoice PDF.",
+            "nullable": true,
+            "example": "docudesk://files/shillinq/ap/eneco-2026-04-0001.pdf",
+            "title": "Source Document URI"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "received",
+              "issued",
+              "partially-paid",
+              "paid",
+              "overdue",
+              "disputed",
+              "written-off",
+              "voided"
+            ],
+            "description": "AP invoice lifecycle state per REQ-AP-004.",
+            "default": "draft",
+            "example": "received",
+            "title": "State"
+          },
+          "glTransactionId": {
+            "type": "string",
+            "description": "Back-reference to the materialised GLTransaction once the invoice is issued (REQ-AP-001 sub-ledger linkage).",
+            "nullable": true,
+            "example": "gl-txn-2026-ap-0001",
+            "title": "GL Transaction ID"
+          },
+          "writeOffReason": {
+            "type": "string",
+            "description": "Operator-authored audit-trailed reason for write-off. Required on the writeOff lifecycle transition per REQ-AP-005.",
+            "nullable": true,
+            "example": "Vendor administratie afgewikkeld; restant oninbaar per leveranciersbericht 2026-06-01.",
+            "title": "Write Off Reason"
+          },
+          "writeOffGlTransactionId": {
+            "type": "string",
+            "description": "Back-reference to the compensating GLTransaction emitted on write-off (debit AP payable, credit bad-debt recovery/write-off expense). Per REQ-AP-005.",
+            "nullable": true,
+            "title": "Write Off GL Transaction ID"
+          },
+          "periodId": {
+            "type": "string",
+            "description": "FK to the FiscalPeriod for GL posting (resolved on issue transition per REQ-AP-004 guard 2).",
+            "nullable": true,
+            "title": "Period ID"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration owning this AP invoice.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "AP invoices retained 7 years per AWR art. 52 + Selectielijst Gemeenten 2020."
+          },
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Under construction. Lines and header fields may be edited."
+            },
+            "received": {
+              "label": "Received",
+              "description": "Vendor invoice physically received and recorded; awaiting approval/posting. Vendor invoice-number uniqueness already enforced."
+            },
+            "issued": {
+              "label": "Issued",
+              "description": "Header immutable. Balanced GLTransaction materialised; awaiting payment match."
+            },
+            "partially-paid": {
+              "label": "Partially paid",
+              "description": "One or more bank-reconciliation matches applied; cumulative matched amount is less than totalAmount."
+            },
+            "paid": {
+              "label": "Paid",
+              "description": "Full payment matched via bank-reconciliation engine. Terminal state for the happy path."
+            },
+            "overdue": {
+              "label": "Overdue",
+              "description": "today > dueDate and no full payment match yet. OR dunning-workflow drives REQ-AP-005 reminder cadence from this state."
+            },
+            "disputed": {
+              "label": "Disputed",
+              "description": "Operator placed payment-match pursuit on hold pending vendor-raised dispute investigation."
+            },
+            "written-off": {
+              "label": "Written off",
+              "description": "Vendor restant uncollectible / waived; compensating GL posting emitted per REQ-AP-005. Terminal state."
+            },
+            "voided": {
+              "label": "Voided",
+              "description": "Issued invoice voided. The materialised issue GLTransaction MUST already be reversed per T1 REQ-GL-004."
+            }
+          },
+          "transitions": {
+            "receive": {
+              "from": "draft",
+              "to": "received",
+              "label": "Receive invoice",
+              "description": "Operator records vendor invoice receipt. Guard: vendor invoice number unique per (administrationId, vendorId) per REQ-AP-003 scenario 2.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\APGuard::isInvoiceNumberUnique",
+              "x-adr-031-exception": "Single-method guard pending OR's unique-key extension stabilisation. Documented per ADR-031 §'PHP guards remain a legitimate seam' and the spec's REQ-AP-005 fallback clause."
+            },
+            "issue": {
+              "from": "received",
+              "to": "issued",
+              "label": "Issue / post invoice",
+              "description": "Operator approves and posts the AP invoice. Guards: (1) balanced materialisation per T1 REQ-JE-007; (2) FiscalPeriod open per REQ-PC-004; (3) Payee.lifecycleState=active. Actions: (a) materialise one balanced GLTransaction (debit expense per line, credit AP payable account); (b) set glTransactionId back-reference; (c) set periodId from invoiceDate.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced"
+            },
+            "matchFull": {
+              "from": [
+                "issued",
+                "overdue",
+                "partially-paid"
+              ],
+              "to": "paid",
+              "label": "Match full payment",
+              "description": "Operator confirms a bank-reconciliation ReconciliationMatch per REQ-AP-009. Guard: cumulative matched amount = totalAmount."
+            },
+            "matchPartial": {
+              "from": [
+                "issued",
+                "overdue"
+              ],
+              "to": "partially-paid",
+              "label": "Match partial payment",
+              "description": "Operator confirms a bank-reconciliation ReconciliationMatch per REQ-AP-009 where matched amount < totalAmount."
+            },
+            "markOverdue": {
+              "from": [
+                "issued",
+                "partially-paid"
+              ],
+              "to": "overdue",
+              "label": "Mark overdue",
+              "description": "Scheduled lifecycle action fires when today > dueDate and no full payment match yet. Triggered by OR ScheduledWorkflow per REQ-AP-004 + ADR-031 path 2 — NOT a shillinq *Job PHP class.",
+              "x-scheduled-workflow": {
+                "primitive": "OR.ScheduledWorkflow",
+                "cron": "0 1 * * *",
+                "description": "Daily 01:00 sweep evaluates open AP invoices and transitions issued|partially-paid → overdue when today > dueDate. Per ADR-031 §'Background jobs that walk an object queue' path 2."
+              }
+            },
+            "dispute": {
+              "from": "issued",
+              "to": "disputed",
+              "label": "Dispute invoice",
+              "description": "Operator marks invoice as disputed. Payment-match pursuit pauses pending resolution."
+            },
+            "resolveDispute": {
+              "from": "disputed",
+              "to": "issued",
+              "label": "Resolve dispute",
+              "description": "Vendor-raised dispute resolved; payment-match pursuit resumes."
+            },
+            "writeOff": {
+              "from": "overdue",
+              "to": "written-off",
+              "label": "Write off",
+              "description": "Operator in role controller writes off the residual balance. Action: materialise a compensating balanced GLTransaction (debit AP payable account, credit bad-debt recovery / write-off account). Audit-trailed reason required per REQ-AP-005. Sets writeOffGlTransactionId back-reference.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\APGuard::requireWriteOffReason",
+              "x-rbac-role": "controller"
+            },
+            "void": {
+              "from": "issued",
+              "to": "voided",
+              "label": "Void invoice",
+              "description": "Operator voids the issued invoice. Guard: materialised GLTransaction MUST already be reversed per T1 REQ-GL-004."
+            }
+          },
+          "requires": {
+            "dunning": {
+              "source": "openregister-dunning-workflow",
+              "description": "Per REQ-AP-005 the dunning cadence (reminder-1 / reminder-2 / formal-notice / collection) is owned by OR's dunning-workflow extension. The policy referenced via Payee.dunningPolicyRef drives DunningNotice creation from the overdue state. If OR's extension is not yet stable at implementation time, ADR-031's exception path applies: OCA\\Shillinq\\Lifecycle\\APGuard ships a single-method fallback documented in the spec."
+            }
+          }
+        },
+        "x-openregister-aggregations": {
+          "agedPayablesDetail": {
+            "description": "REQ-AP-006: Aged Payables Detail report — per-invoice breakdown grouped by vendor and due-date bucket. Excludes paid / written-off / voided. BLOCKED (cross-tab): OpenRegister's aggregation engine honours only a single-field groupBy ({field: <name>}) today — this multi-field groupBy [vendorId, dueDateBucket] plus the buckets/return projection are INERT engine-side and must not be read as a working capability. Tracked by openregister#432 (honour multi-field groupBy); the shillinq spend-analytics feature ships single-dimension views against the honoured path meanwhile.",
+            "source": "APTransaction",
+            "where": {
+              "state": {
+                "in": [
+                  "issued",
+                  "partially-paid",
+                  "overdue",
+                  "disputed"
+                ]
+              }
+            },
+            "groupBy": [
+              "vendorId",
+              "dueDateBucket"
+            ],
+            "orderBy": [
+              {
+                "field": "vendorName",
+                "direction": "asc"
+              },
+              {
+                "field": "dueDate",
+                "direction": "asc"
+              }
+            ],
+            "buckets": {
+              "field": "dueDate",
+              "source": "IAppConfig",
+              "configKey": "ap.aging.buckets",
+              "defaults": [
+                30,
+                60,
+                90
+              ],
+              "labels": [
+                "current",
+                "30days",
+                "60days",
+                "90days"
+              ],
+              "reference": "today"
+            },
+            "return": [
+              "vendorName",
+              "vendorNumber",
+              "invoiceNumber",
+              "invoiceDate",
+              "dueDate",
+              {
+                "field": "totalAmount",
+                "alias": "amount"
+              },
+              "paidAmount",
+              "dueDateBucket",
+              {
+                "computed": "daysOverdue",
+                "expression": "today - dueDate"
+              }
+            ]
+          },
+          "agedPayablesSummary": {
+            "description": "REQ-AP-007: Aged Payables Summary report — vendor totals grouped by aging bucket. Excludes paid / written-off / voided. BLOCKED (cross-tab): the multi-field groupBy [vendorId, agingBucket] and the aggregate/buckets/return projection maps are INERT — OpenRegister honours only a single-field groupBy ({field: <name>}) today. Tracked by openregister#432.",
+            "source": "APTransaction",
+            "where": {
+              "state": {
+                "in": [
+                  "issued",
+                  "partially-paid",
+                  "overdue",
+                  "disputed"
+                ]
+              }
+            },
+            "groupBy": [
+              "vendorId",
+              "agingBucket"
+            ],
+            "orderBy": [
+              {
+                "field": "agingBucket",
+                "direction": "desc"
+              },
+              {
+                "field": "totalAmount",
+                "direction": "desc"
+              }
+            ],
+            "aggregate": {
+              "count": "count(invoiceNumber)",
+              "totalAmount": "sum(totalAmount)",
+              "percentageOfTotal": "100 * sum(totalAmount) / window.sum(totalAmount)"
+            },
+            "buckets": {
+              "field": "dueDate",
+              "source": "IAppConfig",
+              "configKey": "ap.aging.buckets",
+              "defaults": [
+                30,
+                60,
+                90
+              ],
+              "labels": [
+                "current",
+                "30days",
+                "60days",
+                "90days"
+              ],
+              "reference": "today"
+            },
+            "return": [
+              "vendorName",
+              "vendorNumber",
+              "agingBucket",
+              "count",
+              "totalAmount",
+              "percentageOfTotal"
+            ]
+          },
+          "agedPayablesTimeline": {
+            "description": "REQ-AP-008: Aged Payables Timeline report — payment due dates with amounts and vendor summary. Excludes paid / written-off / voided.",
+            "source": "APTransaction",
+            "where": {
+              "state": {
+                "in": [
+                  "issued",
+                  "partially-paid",
+                  "overdue",
+                  "disputed"
+                ]
+              }
+            },
+            "groupBy": [
+              "dueDate"
+            ],
+            "orderBy": [
+              {
+                "field": "dueDate",
+                "direction": "asc"
+              }
+            ],
+            "aggregate": {
+              "count": "count(invoiceNumber)",
+              "totalAmount": "sum(totalAmount)",
+              "vendors": "list({vendorName, totalAmount})"
+            },
+            "return": [
+              "dueDate",
+              {
+                "computed": "daysUntilDue",
+                "expression": "dueDate - today"
+              },
+              "count",
+              "totalAmount",
+              "vendors"
+            ]
+          },
+          "vendorOpenApBalance": {
+            "description": "Per-vendor open AP balance used by Vendor detail view and pre-payment-run checks. Aggregates open (state in issued/partially-paid/overdue/disputed) APTransaction totals by vendorId.",
+            "source": "APTransaction",
+            "where": {
+              "state": {
+                "in": [
+                  "issued",
+                  "partially-paid",
+                  "overdue",
+                  "disputed"
+                ]
+              }
+            },
+            "groupBy": [
+              "vendorId"
+            ],
+            "aggregate": {
+              "openBalance": "sum(totalAmount)",
+              "openCount": "count(invoiceNumber)"
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "approvalNeeded": {
+            "trigger": {
+              "type": "updated",
+              "condition": {
+                "field": "state",
+                "operator": "equals",
+                "value": "received"
+              }
+            },
+            "enabled": true,
+            "originApp": "shillinq",
+            "channels": [
+              "nc-notification",
+              "web-push"
+            ],
+            "recipients": [
+              {
+                "kind": "groups",
+                "groups": [
+                  "shillinq-finance"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Goedkeuring nodig: {{invoiceNumber}}",
+              "en": "Approval needed: {{invoiceNumber}}"
+            },
+            "message": {
+              "nl": "Deze inkoopfactuur staat in Shillinq. Openen?",
+              "en": "This supplier invoice is in Shillinq. Open it?"
+            },
+            "actions": [
+              {
+                "label": {
+                  "nl": "Factuur openen",
+                  "en": "Open invoice"
+                },
+                "primary": true,
+                "target": {
+                  "kind": "object-detail"
+                }
+              }
+            ]
+          },
+          "overdue": {
+            "trigger": {
+              "type": "scheduled",
+              "intervalSec": 86400,
+              "filter": {
+                "all": [
+                  {
+                    "field": "state",
+                    "operator": "notIn",
+                    "values": [
+                      "paid",
+                      "written-off",
+                      "voided"
+                    ]
+                  },
+                  {
+                    "field": "dueDate",
+                    "operator": "before",
+                    "value": "now"
+                  }
+                ]
+              }
+            },
+            "enabled": true,
+            "originApp": "shillinq",
+            "channels": [
+              "nc-notification",
+              "web-push"
+            ],
+            "recipients": [
+              {
+                "kind": "groups",
+                "groups": [
+                  "shillinq-finance"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Factuur over de vervaldatum: {{invoiceNumber}}",
+              "en": "Invoice overdue: {{invoiceNumber}}"
+            },
+            "message": {
+              "nl": "Deze factuur is vervallen in Shillinq. Openen?",
+              "en": "This invoice is overdue in Shillinq. Open it?"
+            },
+            "actions": [
+              {
+                "label": {
+                  "nl": "Factuur openen",
+                  "en": "Open invoice"
+                },
+                "primary": true,
+                "target": {
+                  "kind": "object-detail"
+                }
+              }
+            ]
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "DunningNotice": {
+        "slug": "DunningNotice",
+        "icon": "EmailAlertOutline",
+        "version": "0.1.0",
+        "title": "Dunning Notice",
+        "description": "Per-AP-invoice dunning timeline record per REQ-AP-005. One row per reminder dispatched against one APTransaction in the overdue state. Reminder cadence (reminder-1 at +14d, reminder-2 at +30d, formal-notice at +45d, collection at +60d — all customisable per administration via OR dunning-workflow policy) is owned by OR's dunning-workflow extension, NOT by an app-local PHP service (ADR-022 anti-pattern). This register is a thin audit-trail of what OR's engine emitted.",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Dunning-notice timeline; every dispatch and acknowledgement is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022."
+        },
+        "x-schema-org": "schema:Message",
+        "x-spec": "openspec/changes/bookkeeping-accounts-payable-core/specs/bookkeeping-accounts-payable-core/spec.md",
+        "type": "object",
+        "required": [
+          "invoiceRef",
+          "reminderLevel",
+          "dispatchedAt",
+          "dispatchedBy",
+          "administrationId"
+        ],
+        "properties": {
+          "invoiceRef": {
+            "type": "string",
+            "description": "FK to APTransaction UUID.",
+            "example": "ap-txn-eneco-2026-04-0001",
+            "title": "Invoice Ref"
+          },
+          "reminderLevel": {
+            "type": "string",
+            "enum": [
+              "reminder-1",
+              "reminder-2",
+              "formal-notice",
+              "collection"
+            ],
+            "description": "Dunning escalation level per REQ-AP-005. Customisable cadence via OR dunning-workflow policy referenced from Payee.dunningPolicyRef.",
+            "example": "reminder-1",
+            "title": "Reminder Level"
+          },
+          "dispatchedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the reminder was dispatched.",
+            "example": "2026-05-29T09:00:00Z",
+            "title": "Dispatched At"
+          },
+          "dispatchedBy": {
+            "type": "string",
+            "description": "Actor that dispatched the reminder. 'system' if emitted by OR's scheduled-workflow; otherwise the operator user-id.",
+            "example": "system",
+            "title": "Dispatched By"
+          },
+          "templateRef": {
+            "type": "string",
+            "description": "FK to OR notification template used for the dispatch.",
+            "nullable": true,
+            "title": "Template Ref"
+          },
+          "acknowledgedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the vendor acknowledged the notice (e.g. promise-to-pay or dispute response).",
+            "nullable": true,
+            "title": "Acknowledged At"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration owning this dunning notice.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "PaymentRun": {
+        "slug": "PaymentRun",
+        "icon": "BankTransfer",
+        "version": "0.3.0",
+        "title": "Payment Run",
+        "description": "A batch of approved Payee payments per REQ-AP-013 (consolidate-accounts-payable). Groups open AP invoices into a single outgoing payment instruction with a declarative lifecycle draft → approved → exported → reconciled. Approval (RBAC controller) is a hard gate before export — there is NO direct draft → exported transition. The actual SEPA pain.001 / CSV bank-file GENERATION is the separate payment-run-sepa-export change (writes exportedFileRef); this schema models only the batch + its lifecycle. Each paymentLines[] entry references one Payee + one APTransaction. bankAccount.iban / bankAccount.bic on the referenced Payee are the SEPA creditor source of truth.",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Payment-batch register; every create / approve / export / reconcile transition is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. Approval and export are the auditable control points before money leaves the administration."
+        },
+        "x-schema-org": "schema:PaymentService",
+        "x-spec": "openspec/changes/bookkeeping-accounts-payable-core/specs/bookkeeping-accounts-payable-core/spec.md",
+        "type": "object",
+        "required": [
+          "runNumber",
+          "administrationId",
+          "executionDate",
+          "status",
+          "totalAmount",
+          "currency",
+          "paymentLines",
+          "lifecycleState"
+        ],
+        "properties": {
+          "runNumber": {
+            "type": "string",
+            "description": "Stable batch identifier unique per administration. Operator-supplied.",
+            "example": "PR-2026-001",
+            "title": "Run Number"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration owning this payment run.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "executionDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Requested execution date (ISO 20022 RequestedExecutionDate) for the batch.",
+            "example": "2026-07-01",
+            "title": "Execution Date"
+          },
+          "debtorAccountIban": {
+            "type": "string",
+            "description": "IBAN of the administration's own (debtor) bank account the batch is paid from. SAFE placeholder in seed data.",
+            "nullable": true,
+            "example": "NL00BANK9999999999",
+            "title": "Debtor Account IBAN"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "approved",
+              "exported",
+              "reconciled"
+            ],
+            "description": "Mirror of lifecycleState for list/filter convenience; the canonical state machine is x-openregister-lifecycle on lifecycleState.",
+            "default": "draft",
+            "example": "approved",
+            "title": "Status"
+          },
+          "totalAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Sum of all paymentLines[].amount in the run currency. Integer-cent precision per ADR-031 money rules.",
+            "example": 1497.5,
+            "title": "Total Amount"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "description": "ISO 4217 currency code. T2: base currency only (EUR).",
+            "default": "EUR",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "paymentLines": {
+            "type": "array",
+            "minItems": 1,
+            "description": "One line per Payee payment in the batch. Each line references a Payee and the AP invoice being settled.",
+            "items": {
+              "type": "object",
+              "required": [
+                "payeeId",
+                "creditorIban",
+                "amount",
+                "apTransactionRef"
+              ],
+              "properties": {
+                "payeeId": {
+                  "type": "string",
+                  "description": "FK to Payee UUID / slug being paid.",
+                  "title": "Payee ID"
+                },
+                "payeeName": {
+                  "type": "string",
+                  "description": "Denormalised payee name for display / remittance.",
+                  "nullable": true,
+                  "title": "Payee Name"
+                },
+                "creditorIban": {
+                  "type": "string",
+                  "description": "Creditor (payee) IBAN, sourced from the referenced Payee.bankAccount.iban. SAFE placeholder in seed data.",
+                  "title": "Creditor IBAN"
+                },
+                "amount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Line payment amount in the run currency.",
+                  "title": "Amount"
+                },
+                "remittanceInfo": {
+                  "type": "string",
+                  "description": "Unstructured or structured remittance reference (ISO 20022 RmtInf) — typically the vendor invoice number.",
+                  "nullable": true,
+                  "title": "Remittance Info"
+                },
+                "apTransactionRef": {
+                  "type": "string",
+                  "description": "FK to the APTransaction UUID / slug this line settles.",
+                  "title": "AP Transaction Ref"
+                }
+              }
+            },
+            "title": "Payment Lines"
+          },
+          "exportedFileRef": {
+            "type": "string",
+            "description": "FK / URI to the generated SEPA pain.001 / CSV bank file. Written by the separate payment-run-sepa-export change on the export transition; null until exported.",
+            "nullable": true,
+            "title": "Exported File Ref"
+          },
+          "exportedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp the batch was exported to a bank file.",
+            "nullable": true,
+            "title": "Exported At"
+          },
+          "reconciledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp the batch was reconciled against the bank statement.",
+            "nullable": true,
+            "title": "Reconciled At"
+          },
+          "lifecycleState": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "approved",
+              "exported",
+              "reconciled"
+            ],
+            "description": "Canonical payment-run lifecycle state (see x-openregister-lifecycle).",
+            "default": "draft",
+            "example": "approved",
+            "title": "Lifecycle State"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "lifecycleState",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Batch under construction; payment lines may be added/removed."
+            },
+            "approved": {
+              "label": "Approved",
+              "description": "Batch approved by a controller; immutable and ready for export. Hard gate before money leaves the administration."
+            },
+            "exported": {
+              "label": "Exported",
+              "description": "SEPA pain.001 / CSV bank file generated (payment-run-sepa-export change); exportedFileRef set."
+            },
+            "reconciled": {
+              "label": "Reconciled",
+              "description": "Batch reconciled against the bank statement; terminal state."
+            }
+          },
+          "transitions": {
+            "approve": {
+              "from": "draft",
+              "to": "approved",
+              "label": "Approve payment run",
+              "description": "Controller approves the batch. Four-eyes segregation of duties (payment-run-four-eyes, REQ-PR4E-001): the approver MUST differ from whoever prepared the batch — enforced server-side by FourEyesPaymentRunGuard, which derives the preparer from OpenRegister's immutable audit trail (ADR-022) and fails closed when the preparer is indeterminate. There is NO direct draft → exported transition. Approval is the control point before money leaves the administration.",
+              "x-rbac-role": "controller",
+              "requires": "OCA\\Shillinq\\Lifecycle\\FourEyesPaymentRunGuard"
+            },
+            "export": {
+              "from": "approved",
+              "to": "exported",
+              "label": "Export payment run",
+              "description": "Generate the SEPA pain.001 / CSV bank file (payment-run-sepa-export change) and set exportedFileRef + exportedAt. Only an approved batch can be exported. Duplicate-payment control (payment-control-guards, REQ-PCG-001): PaymentRunDuplicateGuard rejects the export server-side when any paymentLines[].apTransactionRef settles an AP invoice that is already paid, or is already queued in another open/executed PaymentRun (draft/approved/exported). Export is the last declarative choke point before money leaves — the approve transition's requires slot is occupied by FourEyesPaymentRunGuard and the OR lifecycle engine resolves a single requires guard per transition. Fails closed on any indeterminate check.",
+              "requires": "OCA\\Shillinq\\Lifecycle\\PaymentRunDuplicateGuard"
+            },
+            "reconcile": {
+              "from": "exported",
+              "to": "reconciled",
+              "label": "Reconcile payment run",
+              "description": "Match the exported batch against the bank statement and set reconciledAt. Terminal."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "bookkeeper": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "controller": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Payee",
+          "slug": "payee-eneco"
+        },
+        "vendorNumber": "V-2026-001",
+        "name": "Eneco Energie B.V.",
+        "payeeType": "supplier",
+        "tradingName": "Eneco",
+        "kvkNumber": "24502797",
+        "vatNumber": "NL003726244B01",
+        "paymentTermDays": 30,
+        "defaultExpenseAccountNumber": "4150",
+        "bankAccount": {
+          "iban": "NL00BANK0123456789",
+          "bic": "<BANKNL2A>",
+          "accountHolderName": "Eneco Energie B.V."
+        },
+        "creditLimit": 10000,
+        "apBalance": 892.5,
+        "creditTerms": "Net 30",
+        "address": {
+          "street": "Marten Meesweg",
+          "houseNumber": "5",
+          "postcode": "3068AV",
+          "city": "Rotterdam",
+          "country": "NL"
+        },
+        "email": "facturen@eneco.nl",
+        "phone": "+31881234567",
+        "administrationId": "adm-shillinq-demo",
+        "lifecycleState": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Payee",
+          "slug": "payee-officecenter"
+        },
+        "vendorNumber": "V-2026-002",
+        "name": "Office Centre Nederland B.V.",
+        "payeeType": "supplier",
+        "tradingName": "Office Centre",
+        "kvkNumber": "27176868",
+        "vatNumber": "NL807898852B01",
+        "paymentTermDays": 14,
+        "defaultExpenseAccountNumber": "4400",
+        "bankAccount": {
+          "iban": "NL00TEST0222222222",
+          "bic": "<TESTNL2A>",
+          "accountHolderName": "Office Centre Nederland B.V."
+        },
+        "creditLimit": 5000,
+        "apBalance": 858.0,
+        "creditTerms": "Net 14",
+        "address": {
+          "street": "Bredewater",
+          "houseNumber": "16",
+          "postcode": "2715CA",
+          "city": "Zoetermeer",
+          "country": "NL"
+        },
+        "email": "administratie@officecentre.nl",
+        "phone": "+31793204000",
+        "administrationId": "adm-shillinq-demo",
+        "lifecycleState": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Payee",
+          "slug": "payee-deloitte"
+        },
+        "vendorNumber": "V-2026-003",
+        "name": "Deloitte Accountants B.V.",
+        "payeeType": "supplier",
+        "tradingName": "Deloitte",
+        "kvkNumber": "24362853",
+        "vatNumber": "NL006847569B01",
+        "paymentTermDays": 30,
+        "defaultExpenseAccountNumber": "4302",
+        "bankAccount": {
+          "iban": "NL00BANK0333333333",
+          "bic": "<BANKNL2A>",
+          "accountHolderName": "Deloitte Accountants B.V."
+        },
+        "creditLimit": 25000,
+        "apBalance": 6352.5,
+        "creditTerms": "Net 30, korting 2%/10 dagen",
+        "address": {
+          "street": "Gustav Mahlerlaan",
+          "houseNumber": "2970",
+          "postcode": "1081LA",
+          "city": "Amsterdam",
+          "country": "NL"
+        },
+        "email": "billing.nl@deloitte.nl",
+        "phone": "+31882882888",
+        "administrationId": "adm-shillinq-demo",
+        "lifecycleState": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Payee",
+          "slug": "payee-jandevries"
+        },
+        "vendorNumber": "V-2026-010",
+        "name": "Jan de Vries (ZZP)",
+        "payeeType": "freelancer",
+        "tradingName": "JdV Reisadvies",
+        "kvkNumber": "11122233",
+        "vatNumber": "NL001234567B01",
+        "paymentTermDays": 14,
+        "defaultExpenseAccountNumber": "4302",
+        "bankAccount": {
+          "iban": "NL00TEST0222222222",
+          "bic": "<TESTNL2A>",
+          "accountHolderName": "Jan de Vries"
+        },
+        "creditLimit": 2000,
+        "apBalance": 605.0,
+        "creditTerms": "Net 14",
+        "email": "jan@jdvreisadvies.nl",
+        "phone": "+31612345678",
+        "administrationId": "adm-shillinq-demo",
+        "lifecycleState": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Payee",
+          "slug": "payee-gemeente-inkoop"
+        },
+        "vendorNumber": "V-2026-020",
+        "name": "Gemeente Demo Inkoopbureau",
+        "payeeType": "government",
+        "kvkNumber": "55566677",
+        "paymentTermDays": 30,
+        "defaultExpenseAccountNumber": "4400",
+        "bankAccount": {
+          "iban": "NL00BANK0333333333",
+          "bic": "<BANKNL2A>",
+          "accountHolderName": "Gemeente Demo Inkoopbureau"
+        },
+        "creditLimit": 50000,
+        "apBalance": 0,
+        "creditTerms": "Net 30",
+        "email": "crediteuren@gemeente-demo.nl",
+        "phone": "+31702000000",
+        "administrationId": "adm-shillinq-demo",
+        "lifecycleState": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "APTransaction",
+          "slug": "ap-txn-eneco-2026-04-0001"
+        },
+        "invoiceNumber": "ENECO-2026-04-0001",
+        "vendorId": "payee-eneco",
+        "invoiceDate": "2026-05-25",
+        "dueDate": "2026-06-24",
+        "currency": "EUR",
+        "totalAmount": 892.5,
+        "taxAmount": 154.91,
+        "lines": [
+          {
+            "description": "Elektriciteit + gas mei 2026",
+            "accountNumber": "4150",
+            "amount": 737.59,
+            "taxCode": "BTW21",
+            "quantity": 1,
+            "unitPrice": 737.59
+          }
+        ],
+        "sourceDocumentUri": "docudesk://files/shillinq/ap/eneco-2026-04-0001.pdf",
+        "state": "issued",
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "APTransaction",
+          "slug": "ap-txn-officecenter-2026-05-0014"
+        },
+        "invoiceNumber": "OC-2026-05-0014",
+        "vendorId": "payee-officecenter",
+        "invoiceDate": "2026-05-20",
+        "dueDate": "2026-06-03",
+        "currency": "EUR",
+        "totalAmount": 612.59,
+        "taxAmount": 106.32,
+        "lines": [
+          {
+            "description": "Kantoorartikelen (papier, toner)",
+            "accountNumber": "4400",
+            "amount": 412.4,
+            "taxCode": "BTW21",
+            "quantity": 1,
+            "unitPrice": 412.4
+          },
+          {
+            "description": "Koffie + thee kantoorvoorraad",
+            "accountNumber": "4400",
+            "amount": 93.87,
+            "taxCode": "BTW9",
+            "quantity": 1,
+            "unitPrice": 93.87
+          }
+        ],
+        "state": "issued",
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "APTransaction",
+          "slug": "ap-txn-eneco-2026-03-0001"
+        },
+        "invoiceNumber": "ENECO-2026-03-0001",
+        "vendorId": "payee-eneco",
+        "invoiceDate": "2026-04-25",
+        "dueDate": "2026-05-25",
+        "currency": "EUR",
+        "totalAmount": 875.0,
+        "taxAmount": 151.86,
+        "lines": [
+          {
+            "description": "Elektriciteit + gas april 2026",
+            "accountNumber": "4150",
+            "amount": 723.14,
+            "taxCode": "BTW21",
+            "quantity": 1,
+            "unitPrice": 723.14
+          }
+        ],
+        "sourceDocumentUri": "docudesk://files/shillinq/ap/eneco-2026-03-0001.pdf",
+        "state": "overdue",
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "APTransaction",
+          "slug": "ap-txn-deloitte-2026-04-0001"
+        },
+        "invoiceNumber": "DEL-NL-2026-04-0001",
+        "vendorId": "payee-deloitte",
+        "invoiceDate": "2026-04-25",
+        "dueDate": "2026-05-25",
+        "currency": "EUR",
+        "totalAmount": 4537.5,
+        "taxAmount": 787.5,
+        "lines": [
+          {
+            "description": "Jaarrekening 2025 — controlewerkzaamheden",
+            "accountNumber": "4302",
+            "amount": 3750.0,
+            "taxCode": "BTW21",
+            "quantity": 25,
+            "unitPrice": 150.0
+          }
+        ],
+        "state": "overdue",
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "APTransaction",
+          "slug": "ap-txn-deloitte-2026-02-0001"
+        },
+        "invoiceNumber": "DEL-NL-2026-02-0001",
+        "vendorId": "payee-deloitte",
+        "invoiceDate": "2026-04-10",
+        "dueDate": "2026-05-10",
+        "currency": "EUR",
+        "totalAmount": 1815.0,
+        "taxAmount": 315.0,
+        "lines": [
+          {
+            "description": "Adviesuren BTW-aangifte Q1",
+            "accountNumber": "4302",
+            "amount": 1500.0,
+            "taxCode": "BTW21",
+            "quantity": 10,
+            "unitPrice": 150.0
+          }
+        ],
+        "state": "disputed",
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "APTransaction",
+          "slug": "ap-txn-jdv-2026-06-0003"
+        },
+        "invoiceNumber": "JDV-2026-06-0003",
+        "vendorId": "payee-jandevries",
+        "invoiceDate": "2026-06-10",
+        "dueDate": "2026-06-24",
+        "currency": "EUR",
+        "totalAmount": 605.0,
+        "taxAmount": 105.0,
+        "lines": [
+          {
+            "description": "Reisadvies + offerte-uitwerking projectteam",
+            "accountNumber": "4302",
+            "amount": 500.0,
+            "taxCode": "BTW21",
+            "quantity": 5,
+            "unitPrice": 100.0
+          }
+        ],
+        "state": "issued",
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "APTransaction",
+          "slug": "ap-txn-officecenter-2026-04-0007"
+        },
+        "invoiceNumber": "OC-2026-04-0007",
+        "vendorId": "payee-officecenter",
+        "invoiceDate": "2026-04-15",
+        "dueDate": "2026-04-29",
+        "currency": "EUR",
+        "totalAmount": 245.41,
+        "taxAmount": 42.58,
+        "lines": [
+          {
+            "description": "Bureaustoel (ergonomisch)",
+            "accountNumber": "4400",
+            "amount": 202.83,
+            "taxCode": "BTW21",
+            "quantity": 1,
+            "unitPrice": 202.83
+          }
+        ],
+        "state": "paid",
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "APTransaction",
+          "slug": "ap-txn-eneco-2026-02-0001"
+        },
+        "invoiceNumber": "ENECO-2026-02-0001",
+        "vendorId": "payee-eneco",
+        "invoiceDate": "2026-03-25",
+        "dueDate": "2026-04-24",
+        "currency": "EUR",
+        "totalAmount": 818.21,
+        "taxAmount": 141.97,
+        "lines": [
+          {
+            "description": "Elektriciteit + gas maart 2026",
+            "accountNumber": "4150",
+            "amount": 676.24,
+            "taxCode": "BTW21",
+            "quantity": 1,
+            "unitPrice": 676.24
+          }
+        ],
+        "sourceDocumentUri": "docudesk://files/shillinq/ap/eneco-2026-02-0001.pdf",
+        "state": "paid",
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DunningNotice",
+          "slug": "dunning-eneco-2026-03-r1"
+        },
+        "invoiceRef": "ap-txn-eneco-2026-03-0001",
+        "reminderLevel": "reminder-1",
+        "dispatchedAt": "2026-06-08T09:00:00+02:00",
+        "dispatchedBy": "system",
+        "templateRef": "or-notification-template-dunning-reminder-1",
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "DunningNotice",
+          "slug": "dunning-deloitte-2026-04-r1"
+        },
+        "invoiceRef": "ap-txn-deloitte-2026-04-0001",
+        "reminderLevel": "reminder-1",
+        "dispatchedAt": "2026-06-08T09:00:00+02:00",
+        "dispatchedBy": "system",
+        "templateRef": "or-notification-template-dunning-reminder-1",
+        "administrationId": "adm-shillinq-demo"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "PaymentRun",
+          "slug": "pr-2026-001-approved"
+        },
+        "runNumber": "PR-2026-001",
+        "administrationId": "adm-shillinq-demo",
+        "executionDate": "2026-07-01",
+        "debtorAccountIban": "NL00BANK9999999999",
+        "status": "approved",
+        "lifecycleState": "approved",
+        "currency": "EUR",
+        "totalAmount": 1497.5,
+        "paymentLines": [
+          {
+            "payeeId": "payee-eneco",
+            "payeeName": "Eneco Energie B.V.",
+            "creditorIban": "NL00BANK0123456789",
+            "amount": 892.5,
+            "remittanceInfo": "ENECO-2026-04-0001",
+            "apTransactionRef": "ap-txn-eneco-2026-04-0001"
+          },
+          {
+            "payeeId": "payee-jandevries",
+            "payeeName": "Jan de Vries (ZZP)",
+            "creditorIban": "NL00TEST0222222222",
+            "amount": 605.0,
+            "remittanceInfo": "JDV-2026-06-0003",
+            "apTransactionRef": "ap-txn-jdv-2026-06-0003"
+          }
+        ]
+      }
+    ]
+  }
+}

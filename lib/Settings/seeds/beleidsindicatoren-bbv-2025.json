@@ -1,0 +1,27 @@
+{
+  "_meta": {
+    "spdx-license": "CC0-1.0",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "source": "Regeling Vaststelling Beleidsindicatoren (BZK)",
+    "iv3Version": "2025-1.0",
+    "effectiveDate": "2025-01-01",
+    "description": "BBV-verplichte beleidsindicatoren per BBV art. 25 lid 2. Representatieve subset van de 39 vaste indicatoren; de volledige set wordt via openconnector geimporteerd (REQ-BBV-007).",
+    "url": "https://www.waarstaatjegemeente.nl"
+  },
+  "beleidsindicatoren": [
+    {"code": "BBV-0.1", "name": "Formatie", "unit": "fte per 1.000 inwoners", "source": "Eigen begroting"},
+    {"code": "BBV-0.2", "name": "Bezetting", "unit": "fte per 1.000 inwoners", "source": "Eigen begroting"},
+    {"code": "BBV-0.3", "name": "Apparaatskosten", "unit": "kosten per inwoner", "source": "Eigen begroting"},
+    {"code": "BBV-1.1", "name": "Verwijzingen Halt", "unit": "per 1.000 inwoners 12-17 jaar", "source": "Bureau Halt"},
+    {"code": "BBV-1.2", "name": "Winkeldiefstallen", "unit": "per 1.000 inwoners", "source": "CBS"},
+    {"code": "BBV-2.1", "name": "Banen", "unit": "per 1.000 inwoners 15-64 jaar", "source": "LISA"},
+    {"code": "BBV-4.1", "name": "Absoluut verzuim", "unit": "per 1.000 leerlingen", "source": "DUO"},
+    {"code": "BBV-4.2", "name": "Relatief verzuim", "unit": "per 1.000 leerlingen", "source": "DUO"},
+    {"code": "BBV-5.1", "name": "Niet-sporters", "unit": "%", "source": "RIVM"},
+    {"code": "BBV-6.1", "name": "Banen (sociaal domein)", "unit": "per 1.000 inwoners 15-64 jaar", "source": "CBS"},
+    {"code": "BBV-7.1", "name": "Omvang huishoudelijk restafval", "unit": "kg per inwoner", "source": "CBS"},
+    {"code": "BBV-7.2", "name": "Hernieuwbare elektriciteit", "unit": "%", "source": "RWS"},
+    {"code": "BBV-8.1", "name": "Gemiddelde WOZ-waarde", "unit": "EUR x 1.000", "source": "CBS"},
+    {"code": "BBV-8.2", "name": "Nieuw gebouwde woningen", "unit": "per 1.000 woningen", "source": "ABF Systeem Woningvoorraad"}
+  ]
+}

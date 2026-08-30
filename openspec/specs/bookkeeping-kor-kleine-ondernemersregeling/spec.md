@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-kor-kleine-ondernemersregeling
 
 **Status:** proposed
@@ -5,7 +9,11 @@
 **Tier:** T3 (operations + NL compliance core)
 **Depends on:** bookkeeping-vat-btw-filing (T3)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping kor kleine ondernemersregeling in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: KOR page not yet implemented
 
@@ -30,6 +38,8 @@ Statutory basis: Wet OB 1968 art. 25 + Uitvoeringsbeschikking OB
   to KOR).
 
 ### REQ-KOR-002: The `KorRegime` schema SHALL declare a fixed minimum field set
+
+The system SHALL satisfy this requirement: The `KorRegime` schema SHALL declare a fixed minimum field set.
 
 Schema.org annotation: `schema:GovernmentPermit` (KOR is an opt-in statutory exemption regime granted by the Belastingdienst; the record represents the administration's permit-like enrolment status, not just a static term).
 
@@ -142,6 +152,8 @@ calculation-triggered-lifecycle-transition, not a cron job.
 
 ### REQ-KOR-006: An opt-out due to threshold-exceeded MUST NOT auto-post the KOR-vrijval journal entry
 
+The system SHALL satisfy this requirement: An opt-out due to threshold-exceeded MUST NOT auto-post the KOR-vrijval journal entry.
+
 When the regime transitions `threshold-exceeded → opted-out`, the
 operator typically must reverse previously vrijgestelde BTW. The
 system MUST surface a journal-entry template (per T1
@@ -158,6 +170,8 @@ journal entry MUST NOT auto-post — operator approval is required
   MUST explicitly approve the entry before it lands in the GL.
 
 ### REQ-KOR-007: Threshold-warning and -exceeded events SHALL emit notifications via `x-openregister-notifications`
+
+The system SHALL satisfy this requirement: Threshold-warning and -exceeded events SHALL emit notifications via `x-openregister-notifications`.
 
 The `outside → opted-in`, `opted-in → threshold-warning`,
 `threshold-warning → threshold-exceeded`, and any →`opted-out`

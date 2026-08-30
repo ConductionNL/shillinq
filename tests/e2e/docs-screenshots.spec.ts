@@ -42,7 +42,15 @@ import { test, expect, type Page } from '@playwright/test'
 import * as path from 'path'
 import * as fs from 'fs'
 
-const SHOT_ROOT = path.resolve(__dirname, '..', '..', 'docs', 'static', 'screenshots', 'tutorials')
+const SHOT_ROOT = path.resolve(
+	__dirname,
+	'..',
+	'..',
+	'docs',
+	'static',
+	'screenshots',
+	'tutorials',
+)
 const APP = '/apps/shillinq'
 
 /**
@@ -51,12 +59,20 @@ const APP = '/apps/shillinq'
  * Lives under `static/` so Docusaurus copies the PNG into the build
  * root — markdown image refs use `/screenshots/...` (root-absolute).
  */
-async function shoot(page: Page, track: 'user' | 'admin', file: string): Promise<void> {
+async function shoot(
+	page: Page,
+	track: 'user' | 'admin',
+	file: string,
+): Promise<void> {
 	const dir = path.join(SHOT_ROOT, track)
 	if (!fs.existsSync(dir)) {
 		fs.mkdirSync(dir, { recursive: true })
 	}
-	await page.screenshot({ path: path.join(dir, file), fullPage: false, type: 'png' })
+	await page.screenshot({
+		path: path.join(dir, file),
+		fullPage: false,
+		type: 'png',
+	})
 }
 
 /**
@@ -67,7 +83,9 @@ async function shoot(page: Page, track: 'user' | 'admin', file: string): Promise
 async function dismissOverlays(page: Page): Promise<void> {
 	const wizard = page.locator('#firstrunwizard')
 	if (await wizard.isVisible().catch(() => false)) {
-		const close = wizard.getByRole('button', { name: /close|got it|finish|skip/i }).first()
+		const close = wizard
+			.getByRole('button', { name: /close|got it|finish|skip/i })
+			.first()
 		if (await close.isVisible().catch(() => false)) {
 			await close.click().catch(() => {})
 		} else {
@@ -76,7 +94,12 @@ async function dismissOverlays(page: Page): Promise<void> {
 		await wizard.waitFor({ state: 'hidden', timeout: 4000 }).catch(() => {})
 	}
 	const stray = page.locator('[role="dialog"]:not(#firstrunwizard)')
-	if (await stray.first().isVisible().catch(() => false)) {
+	if (
+		await stray
+			.first()
+			.isVisible()
+			.catch(() => false)
+	) {
 		await page.keyboard.press('Escape').catch(() => {})
 		await page.waitForTimeout(300)
 	}
@@ -92,11 +115,20 @@ async function dismissOverlays(page: Page): Promise<void> {
  * via /apps/shillinq/<route>.
  */
 async function go(page: Page, route: string): Promise<void> {
-	const url = (route.startsWith('/apps/') || route.startsWith('/settings'))
-		? route
-		: `${APP}${route.startsWith('/') ? route : `/${route}`}`
-	await page.goto(url).catch(() => { /* tolerate 404 — caller decides */ })
-	await page.waitForLoadState('networkidle').catch(() => { /* idle never fires on some pages */ })
+	const url =
+		route.startsWith('/apps/') || route.startsWith('/settings')
+			? route
+			: `${APP}${route.startsWith('/') ? route : `/${route}`}`
+	await page.goto(url).catch(() => {
+		/* tolerate 404 — caller decides */
+	})
+	// ADR-074 rule 4: `networkidle` never settles on Nextcloud — the shell keeps
+	// long-poll/notification requests open, so the wait always burned its full
+	// timeout and was swallowed by the .catch(). domcontentloaded is the state
+	// that actually arrives; the settle-time wait below covers rendering.
+	await page.waitForLoadState('domcontentloaded').catch(() => {
+		/* tolerate an already-detached navigation */
+	})
 	await dismissOverlays(page)
 	await page.waitForTimeout(900)
 }
@@ -192,6 +224,18 @@ test.describe('docs: user track', () => {
 		await shoot(page, 'user', '08-financial-statements-03.png')
 		await shoot(page, 'user', '08-financial-statements-04.png')
 		await shoot(page, 'user', '08-financial-statements-05.png')
+	})
+
+	test('UN post-journal-entry', async ({ page }) => {
+		// docs/user-guide/user/11-post-journal-entry.md — bookkeeping
+		// foundation T1 journal entries (manifest-rendered CnIndexPage /
+		// CnDetailPage on the JournalEntry register, per REQ-JE-009).
+		await go(page, '/journals')
+		await shoot(page, 'user', '11-post-journal-entry-01.png')
+		await shoot(page, 'user', '11-post-journal-entry-02.png')
+		await shoot(page, 'user', '11-post-journal-entry-03.png')
+		await shoot(page, 'user', '11-post-journal-entry-04.png')
+		await shoot(page, 'user', '11-post-journal-entry-05.png')
 	})
 })
 

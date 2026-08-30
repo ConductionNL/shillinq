@@ -2,13 +2,13 @@
 	"menu": [
 		{
 			"id": "Verkoop",
-			"label": "Verkoop",
+			"label": "Sales",
 			"icon": "CartOutline",
 			"order": 33,
 			"children": [
 				{
 					"id": "Afspraken",
-					"label": "Afspraken",
+					"label": "Appointments",
 					"icon": "CalendarClockOutline",
 					"route": "Afspraken",
 					"order": 10
@@ -21,7 +21,7 @@
 			"id": "Afspraken",
 			"route": "/verkoop/afspraken",
 			"type": "index",
-			"title": "Afspraken",
+			"title": "Appointments",
 			"config": {
 				"register": "shillinq",
 				"schema": "Appointment",
@@ -63,64 +63,21 @@
 					}
 				],
 				"defaultSort": "startTime",
-				"detailRoute": "AfspraakDetail"
+				"detailRoute": "AfspraakDetail",
+				"_note_rowRoute": "`detailRoute` is inert — the library never reads it. AfspraakDetail is a `type:\"custom\"` page, so CnPageRenderer's register+schema detail lookup finds nothing and rows do not open without `rowRoute`.",
+				"rowRoute": "AfspraakDetail"
 			}
 		},
 		{
 			"id": "AfspraakDetail",
 			"route": "/verkoop/afspraken/:id",
-			"type": "detail",
-			"title": "Afspraak",
+			"type": "custom",
+			"title": "Appointment",
+			"component": "AfspraakDetail",
+			"_note": "Resolves the appointment, its linked pipelinq Contact and the customer's klantbeeld transaction history in ONE hop through /api/v1/bookings/{id} (BookingDetailController), because the profile card and the history timeline come from a different app across the customer bridge, not from the Appointment object. `type: detail` fetches exactly one OpenRegister object and cannot carry the bridge payload; the timeline additionally needs offset pagination ('Load more') and four distinct fallback states (bridge unavailable, contact unlinked, no history, history hidden) that a declarative field list has no way to render.",
 			"config": {
 				"register": "shillinq",
 				"schema": "Appointment",
-				"fields": [
-					{
-						"key": "appointmentId",
-						"label": "Reference",
-						"type": "string"
-					},
-					{
-						"key": "startTime",
-						"label": "Start (UTC)",
-						"type": "string"
-					},
-					{
-						"key": "endTime",
-						"label": "End (UTC)",
-						"type": "string"
-					},
-					{
-						"key": "serviceId",
-						"label": "Service",
-						"type": "string"
-					},
-					{
-						"key": "resourceId",
-						"label": "Resource",
-						"type": "string"
-					},
-					{
-						"key": "customerId",
-						"label": "Customer",
-						"type": "string"
-					},
-					{
-						"key": "status",
-						"label": "Status",
-						"type": "string"
-					},
-					{
-						"key": "notes",
-						"label": "Notes",
-						"type": "string"
-					},
-					{
-						"key": "administrationId",
-						"label": "Administration",
-						"type": "string"
-					}
-				],
 				"indexRoute": "Afspraken"
 			}
 		}

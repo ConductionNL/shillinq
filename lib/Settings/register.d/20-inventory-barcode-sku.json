@@ -1,0 +1,140 @@
+{
+  "info": {
+    "version": "0.1.0-inventory-barcode-sku"
+  },
+  "components": {
+    "schemas": {
+      "Barcode": {
+        "slug": "Barcode",
+        "icon": "Barcode",
+        "version": "0.1.0",
+        "title": "Barcode",
+        "description": "A scannable code (EAN, GTIN, UPC, SSCC, or internal) bound to a Product at a specific unit-of-measure. A single Product carries 1..N barcodes — one per UoM or channel (e.g. EAN-13 per unit, GTIN-14 per carton, SSCC per pallet). Declared as a separate register (not an inline array on Product) so barcodes are individually queryable, auditable, and have an independent lifecycle (deactivate without delete). Consumed by the shillinq barcode lookup endpoint and the pipelinq pos-barcode-scan module. Spec: inventory-barcode-sku. Depends on inventory-product-catalog (Product schema). The 'InventoryItem' wording in the spec refers to the shillinq Product schema.",
+        "x-schema-org": "schema:Product",
+        "x-openregister-purpose": "dimension",
+        "type": "object",
+        "x-openregister-unique": [
+          [
+            "productId",
+            "barcodeType",
+            "uomCode"
+          ]
+        ],
+        "required": [
+          "barcode",
+          "barcodeType",
+          "format",
+          "productId",
+          "uomCode",
+          "quantity"
+        ],
+        "properties": {
+          "barcode": {
+            "type": "string",
+            "description": "The barcode value as printed/scanned (e.g. 5410317126589 for an EAN-13).",
+            "example": "5410317126589",
+            "title": "Barcode"
+          },
+          "barcodeType": {
+            "type": "string",
+            "description": "The barcode standard family. EAN/GTIN/UPC/SSCC are GS1 standards; INTERNAL is a non-standard custom code (e.g. a legacy ERP code).",
+            "enum": [
+              "EAN",
+              "GTIN",
+              "UPC",
+              "SSCC",
+              "INTERNAL"
+            ],
+            "example": "EAN",
+            "title": "Barcode Type"
+          },
+          "format": {
+            "type": "string",
+            "description": "The specific barcode format for disambiguation within a type (e.g. EAN-13, EAN-8, GTIN-14, UPC-A, SSCC-18, INTERNAL).",
+            "example": "EAN-13",
+            "title": "Format"
+          },
+          "productId": {
+            "type": "string",
+            "description": "FK to pipelinq Product (productId). Required. Resolved via ADR-019 integration registry.",
+            "example": "pipelinq-product-id-001",
+            "title": "Product ID",
+            "x-external-register": "pipelinq"
+          },
+          "productSku": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true,
+            "description": "TRANSITIONAL ALIAS: deprecated — use productId. Retained for 3-way-match fallback only. Will be removed after pipelinq-product-vendor-master is confirmed live.",
+            "deprecated": true,
+            "title": "Product SKU"
+          },
+          "uomCode": {
+            "type": "string",
+            "description": "UN/CEFACT unit-of-measure code this barcode represents: EA (each), CA (carton/case), PL (pallet), etc.",
+            "example": "EA",
+            "title": "Uom Code"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 1,
+            "description": "How many base units this barcode represents (1 for a single unit, 4 for a carton of four, 100 for a pallet). Must be >= 1.",
+            "example": 1,
+            "title": "Quantity"
+          },
+          "isDefault": {
+            "type": "boolean",
+            "default": false,
+            "description": "True when this is the primary/default barcode scanned at retail POS for the product.",
+            "example": true,
+            "title": "Is Default"
+          },
+          "isActive": {
+            "type": "boolean",
+            "default": true,
+            "description": "True when the barcode is in use. Inactive barcodes (deprecated supplier/legacy codes) are retained for audit but excluded from the lookup endpoint per REQ-SKU-008.",
+            "example": true,
+            "title": "Is Active"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator-authored free text (e.g. 'Carton of 4 bags').",
+            "example": "Unit barcode for individual 2kg bag",
+            "title": "Notes"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "warehouse_manager": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "pos_terminal": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "inventory": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "objects": []
+}

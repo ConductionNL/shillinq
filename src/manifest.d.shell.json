@@ -1,0 +1,4991 @@
+{
+	"fragments": [
+		{
+			"menu": [
+				{
+					"id": "Verkoop",
+					"label": "Sales",
+					"icon": "CartOutline",
+					"order": 33,
+					"children": [
+						{
+							"id": "Afspraken",
+							"label": "Appointments",
+							"icon": "CalendarClockOutline",
+							"route": "Afspraken",
+							"order": 10
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "10-bookings-create-appointment",
+					"id": "Afspraken",
+					"route": "/verkoop/afspraken",
+					"type": "index",
+					"title": "Appointments"
+				},
+				{
+					"_fragment": "10-bookings-create-appointment",
+					"id": "AfspraakDetail",
+					"route": "/verkoop/afspraken/:id",
+					"type": "custom",
+					"title": "Appointment"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookings",
+					"label": "Bookings",
+					"icon": "CalendarClockOutline",
+					"order": 55,
+					"children": [
+						{
+							"id": "Resources",
+							"label": "Resources",
+							"icon": "SourceBranch",
+							"route": "Resources",
+							"order": 10
+						},
+						{
+							"id": "Calendars",
+							"label": "Calendars",
+							"icon": "CalendarOutline",
+							"route": "Calendars",
+							"order": 20
+						},
+						{
+							"id": "BookingList",
+							"label": "Bookings",
+							"icon": "CalendarClockOutline",
+							"route": "BookingList",
+							"order": 30
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "10-bookings-resource-calendar",
+					"id": "Resources",
+					"route": "/bookings/resources",
+					"type": "index",
+					"title": "Resources"
+				},
+				{
+					"_fragment": "10-bookings-resource-calendar",
+					"id": "ResourceDetail",
+					"route": "/bookings/resources/:id",
+					"type": "detail",
+					"title": "Resource"
+				},
+				{
+					"_fragment": "10-bookings-resource-calendar",
+					"id": "Calendars",
+					"route": "/bookings/calendars",
+					"type": "index",
+					"title": "Calendars"
+				},
+				{
+					"_fragment": "10-bookings-resource-calendar",
+					"id": "CalendarDetail",
+					"route": "/bookings/calendars/:id",
+					"type": "detail",
+					"title": "Calendar"
+				},
+				{
+					"_fragment": "10-bookings-resource-calendar",
+					"id": "BookingList",
+					"route": "/bookings/list",
+					"type": "index",
+					"title": "Bookings"
+				},
+				{
+					"_fragment": "10-bookings-resource-calendar",
+					"id": "BookingDetail",
+					"route": "/bookings/list/:id",
+					"type": "detail",
+					"title": "Booking"
+				},
+				{
+					"_fragment": "10-bookings-resource-calendar",
+					"id": "BookingsCalendarView",
+					"route": "/bookings/calendar/:calendarId",
+					"type": "custom",
+					"title": "Calendar View"
+				},
+				{
+					"_fragment": "10-bookings-resource-calendar",
+					"id": "BookingsForm",
+					"route": "/bookings/calendar/:calendarId/new",
+					"type": "custom",
+					"title": "New Booking"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Purchasing",
+					"label": "Purchasing & Inventory",
+					"icon": "CartArrowDown",
+					"order": 35,
+					"children": [
+						{
+							"id": "TenderNedProcurements",
+							"label": "TenderNed tenders",
+							"icon": "Gavel",
+							"route": "TenderNedProcurements",
+							"order": 10
+						},
+						{
+							"id": "MijnContracten",
+							"label": "TenderNed-sourced commitments",
+							"icon": "FileSign",
+							"route": "CommitmentsRegister",
+							"query": {
+								"source": "tenderned"
+							},
+							"order": 30
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "20-tenderned-integratie",
+					"id": "TenderNedProcurements",
+					"route": "/inkoop/tenderned",
+					"type": "index",
+					"title": "TenderNed tenders"
+				},
+				{
+					"_fragment": "20-tenderned-integratie",
+					"id": "TenderNedProcurementDetail",
+					"route": "/inkoop/tenderned/:id",
+					"type": "detail",
+					"title": "TenderNed file"
+				},
+				{
+					"_fragment": "20-tenderned-integratie",
+					"id": "CommitmentDetail",
+					"route": "/inkoop/commitments/:id",
+					"type": "detail",
+					"title": "Commitment"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "BookingWidgetKeys",
+					"label": "Widget API keys",
+					"icon": "KeyOutline",
+					"route": "BookingWidgetKeys",
+					"order": 90
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "30-bookings-self-service-widget",
+					"id": "BookingWidgetKeys",
+					"route": "/settings/booking-widget-keys",
+					"type": "custom",
+					"title": "Widget API keys"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "IbAangifteZzpGroep",
+					"label": "IB return (sole trader / ZZP)",
+					"icon": "FileDocumentEditOutline",
+					"order": 26,
+					"children": [
+						{
+							"id": "IbAangiftenZzp",
+							"label": "IB returns",
+							"icon": "FileDocumentEditOutline",
+							"route": "IbAangiftenZzp",
+							"order": 10
+						},
+						{
+							"id": "IbOndernemersaftrekken",
+							"label": "Entrepreneur allowances",
+							"icon": "AccountCashOutline",
+							"route": "IbOndernemersaftrekken",
+							"order": 20
+						},
+						{
+							"id": "IbLijfrenteBeheer",
+							"label": "Annuity management",
+							"icon": "PiggyBankOutline",
+							"route": "IbLijfrenteBeheer",
+							"order": 30
+						},
+						{
+							"id": "IbBox3Vermogen",
+							"label": "Box 3 assets",
+							"icon": "DesktopTowerMonitor",
+							"route": "IbBox3Vermogen",
+							"order": 40
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "30-bookkeeping-ib-aangifte-zzp",
+					"id": "IbAangiftenZzp",
+					"route": "/ib-aangifte/aangiften",
+					"type": "index",
+					"title": "IB returns"
+				},
+				{
+					"_fragment": "30-bookkeeping-ib-aangifte-zzp",
+					"id": "IbAangifteZzpDetail",
+					"route": "/ib-aangifte/aangiften/:id",
+					"type": "detail",
+					"title": "IB return"
+				},
+				{
+					"_fragment": "30-bookkeeping-ib-aangifte-zzp",
+					"id": "IbOndernemersaftrekken",
+					"route": "/ib-aangifte/ondernemersaftrekken",
+					"type": "index",
+					"title": "Entrepreneur allowances"
+				},
+				{
+					"_fragment": "30-bookkeeping-ib-aangifte-zzp",
+					"id": "IbOndernemersaftrekDetail",
+					"route": "/ib-aangifte/ondernemersaftrekken/:id",
+					"type": "detail",
+					"title": "Entrepreneur allowance"
+				},
+				{
+					"_fragment": "30-bookkeeping-ib-aangifte-zzp",
+					"id": "IbLijfrenteBeheer",
+					"route": "/ib-aangifte/lijfrente",
+					"type": "index",
+					"title": "Annuity management"
+				},
+				{
+					"_fragment": "30-bookkeeping-ib-aangifte-zzp",
+					"id": "IbLijfrenteBeheerDetail",
+					"route": "/ib-aangifte/lijfrente/:id",
+					"type": "detail",
+					"title": "Annuity & AOV"
+				},
+				{
+					"_fragment": "30-bookkeeping-ib-aangifte-zzp",
+					"id": "IbBox3Vermogen",
+					"route": "/ib-aangifte/box3",
+					"type": "index",
+					"title": "Box 3 assets"
+				},
+				{
+					"_fragment": "30-bookkeeping-ib-aangifte-zzp",
+					"id": "IbBox3VermogenDetail",
+					"route": "/ib-aangifte/box3/:id",
+					"type": "detail",
+					"title": "Box 3 assets"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Taxes",
+					"children": [
+						{
+							"id": "KorAanmelding",
+							"label": "KOR registration",
+							"icon": "ShieldPlusOutline",
+							"route": "KorDashboard",
+							"query": {
+								"status": "draft"
+							},
+							"order": 11
+						},
+						{
+							"id": "KorDashboard",
+							"label": "KOR dashboard",
+							"icon": "ViewDashboardOutline",
+							"route": "KorDashboard",
+							"order": 12
+						},
+						{
+							"id": "KorOpzegging",
+							"label": "KOR cancellation",
+							"icon": "ShieldRemoveOutline",
+							"route": "KorDashboard",
+							"query": {
+								"status": "ACTIEF"
+							},
+							"order": 14
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "30-bookkeeping-kor-kleine-ondernemersregeling",
+					"id": "KorDashboard",
+					"route": "/belastingen/kor-dashboard",
+					"type": "index",
+					"title": "KOR dashboard"
+				},
+				{
+					"_fragment": "30-bookkeeping-kor-kleine-ondernemersregeling",
+					"id": "KorDrempelMonitor",
+					"route": "/belastingen/kor-drempel/:id",
+					"type": "detail",
+					"title": "Threshold monitor"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Treasury",
+					"label": "Treasury",
+					"icon": "BankOutline",
+					"order": 38,
+					"children": [
+						{
+							"id": "CashPools",
+							"label": "Cash Pools",
+							"icon": "BankTransfer",
+							"route": "CashPools",
+							"order": 10
+						},
+						{
+							"id": "IntercompanyLoans",
+							"label": "Intercompany Loans",
+							"icon": "HandCoinOutline",
+							"route": "IntercompanyLoans",
+							"order": 20
+						},
+						{
+							"id": "FXHedges",
+							"label": "FX Hedges",
+							"icon": "CurrencyUsd",
+							"route": "FXHedges",
+							"order": 30
+						},
+						{
+							"id": "CashflowForecast",
+							"label": "Cashflow Forecast",
+							"icon": "ChartTimelineVariant",
+							"route": "CashflowForecast",
+							"order": 40
+						},
+						{
+							"id": "GroupLiquidityDashboard",
+							"label": "Group Liquidity Dashboard",
+							"icon": "ViewDashboardOutline",
+							"route": "GroupLiquidityDashboard",
+							"order": 50
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "30-treasury-ihb",
+					"id": "CashPools",
+					"route": "/treasury/cash-pools",
+					"type": "index",
+					"title": "Cash Pools"
+				},
+				{
+					"_fragment": "30-treasury-ihb",
+					"id": "CashPoolDetail",
+					"route": "/treasury/cash-pools/:id",
+					"type": "detail",
+					"title": "Cash Pool"
+				},
+				{
+					"_fragment": "30-treasury-ihb",
+					"id": "IntercompanyLoans",
+					"route": "/treasury/intercompany-loans",
+					"type": "index",
+					"title": "Intercompany Loans"
+				},
+				{
+					"_fragment": "30-treasury-ihb",
+					"id": "IntercompanyLoanDetail",
+					"route": "/treasury/intercompany-loans/:id",
+					"type": "detail",
+					"title": "Intercompany Loan"
+				},
+				{
+					"_fragment": "30-treasury-ihb",
+					"id": "FXHedges",
+					"route": "/treasury/fx-hedges",
+					"type": "index",
+					"title": "FX Hedges"
+				},
+				{
+					"_fragment": "30-treasury-ihb",
+					"id": "FXHedgeDetail",
+					"route": "/treasury/fx-hedges/:id",
+					"type": "detail",
+					"title": "FX Hedge"
+				},
+				{
+					"_fragment": "30-treasury-ihb",
+					"id": "CashflowForecast",
+					"route": "/treasury/cashflow-forecast",
+					"type": "dashboard",
+					"title": "Cashflow Forecast"
+				},
+				{
+					"_fragment": "30-treasury-ihb",
+					"id": "GroupLiquidityDashboard",
+					"route": "/treasury/group-liquidity",
+					"type": "dashboard",
+					"title": "Group Liquidity Dashboard"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Purchasing",
+					"label": "Purchasing & Inventory",
+					"icon": "CartArrowDown",
+					"order": 35,
+					"children": [
+						{
+							"id": "SupplierQualifications",
+							"label": "Supplier Qualifications",
+							"icon": "AccountCheckOutline",
+							"route": "SupplierQualifications",
+							"order": 3
+						},
+						{
+							"id": "FrameworkAgreements",
+							"label": "Framework Agreements",
+							"icon": "FileSign",
+							"route": "FrameworkAgreements",
+							"order": 9
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "35-procurement-governance",
+					"id": "SupplierQualifications",
+					"route": "/inkoop/supplier-qualifications",
+					"type": "index",
+					"title": "Supplier Qualifications"
+				},
+				{
+					"_fragment": "35-procurement-governance",
+					"id": "SupplierQualificationDetail",
+					"route": "/inkoop/supplier-qualifications/:id",
+					"type": "detail",
+					"title": "Supplier Qualification"
+				},
+				{
+					"_fragment": "35-procurement-governance",
+					"id": "FrameworkAgreements",
+					"route": "/inkoop/framework-agreements",
+					"type": "index",
+					"title": "Framework Agreements"
+				},
+				{
+					"_fragment": "35-procurement-governance",
+					"id": "FrameworkAgreementDetail",
+					"route": "/inkoop/framework-agreements/:id",
+					"type": "detail",
+					"title": "Framework Agreement"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Verkoop",
+					"label": "Sales",
+					"icon": "CartOutline",
+					"order": 33,
+					"children": [
+						{
+							"id": "Annuleringsbeleid",
+							"label": "Cancellation policy",
+							"icon": "ShieldCheckOutline",
+							"route": "Annuleringsbeleid",
+							"order": 20
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "40-bookings-cancellation-rules",
+					"id": "Annuleringsbeleid",
+					"route": "/verkoop/annuleringsbeleid",
+					"type": "index",
+					"title": "Cancellation policy"
+				},
+				{
+					"_fragment": "40-bookings-cancellation-rules",
+					"id": "AnnuleringsbeleidDetail",
+					"route": "/verkoop/annuleringsbeleid/:id",
+					"type": "detail",
+					"title": "Cancellation policy"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "EuFondsen",
+					"label": "EU funds",
+					"icon": "EarthBox",
+					"order": 33,
+					"children": [
+						{
+							"id": "EuProjecten",
+							"label": "EU projects",
+							"icon": "EarthBox",
+							"route": "EuProjecten",
+							"order": 10
+						},
+						{
+							"id": "EuDeclaraties",
+							"label": "Claims",
+							"icon": "CashMultiple",
+							"route": "EuDeclaraties",
+							"order": 20
+						},
+						{
+							"id": "EuBewijsstukken",
+							"label": "Supporting documents",
+							"icon": "FileDocumentMultipleOutline",
+							"route": "EuBewijsstukken",
+							"order": 30
+						},
+						{
+							"id": "EuOnregelmatigheden",
+							"label": "Irregularities",
+							"icon": "AlertOctagonOutline",
+							"route": "EuOnregelmatigheden",
+							"order": 40
+						},
+						{
+							"id": "EuAuditPortaal",
+							"label": "Audit portal",
+							"icon": "ClipboardTextClockOutline",
+							"route": "EuAuditPortaal",
+							"order": 50
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "40-eu-fondsen",
+					"id": "EuProjecten",
+					"route": "/eu-fondsen/projecten",
+					"type": "index",
+					"title": "EU projects"
+				},
+				{
+					"_fragment": "40-eu-fondsen",
+					"id": "EuProjectDetail",
+					"route": "/eu-fondsen/projecten/:id",
+					"type": "detail",
+					"title": "EU project"
+				},
+				{
+					"_fragment": "40-eu-fondsen",
+					"id": "EuDeclaraties",
+					"route": "/eu-fondsen/declaraties",
+					"type": "index",
+					"title": "Claims"
+				},
+				{
+					"_fragment": "40-eu-fondsen",
+					"id": "EuDeclaratieDetail",
+					"route": "/eu-fondsen/declaraties/:id",
+					"type": "detail",
+					"title": "Claim"
+				},
+				{
+					"_fragment": "40-eu-fondsen",
+					"id": "EuBewijsstukken",
+					"route": "/eu-fondsen/bewijsstukken",
+					"type": "index",
+					"title": "Supporting documents"
+				},
+				{
+					"_fragment": "40-eu-fondsen",
+					"id": "EuBewijsstukDetail",
+					"route": "/eu-fondsen/bewijsstukken/:id",
+					"type": "detail",
+					"title": "Supporting document"
+				},
+				{
+					"_fragment": "40-eu-fondsen",
+					"id": "EuOnregelmatigheden",
+					"route": "/eu-fondsen/onregelmatigheden",
+					"type": "index",
+					"title": "Irregularities"
+				},
+				{
+					"_fragment": "40-eu-fondsen",
+					"id": "EuOnregelmatigheidDetail",
+					"route": "/eu-fondsen/onregelmatigheden/:id",
+					"type": "detail",
+					"title": "Irregularity"
+				},
+				{
+					"_fragment": "40-eu-fondsen",
+					"id": "EuAuditPortaal",
+					"route": "/eu-fondsen/audit-portaal",
+					"type": "index",
+					"title": "Audit portal"
+				},
+				{
+					"_fragment": "40-eu-fondsen",
+					"id": "EuAuditTrailDetail",
+					"route": "/eu-fondsen/audit-portaal/:id",
+					"type": "detail",
+					"title": "Audit-trail"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "50-bookings-deposits",
+					"id": "Deposits",
+					"route": "/sales/deposits",
+					"type": "index",
+					"title": "Deposits"
+				},
+				{
+					"_fragment": "50-bookings-deposits",
+					"id": "DepositDetail",
+					"route": "/sales/deposits/:id",
+					"type": "detail",
+					"title": "Deposit"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": []
+		},
+		{
+			"menu": [
+				{
+					"id": "AccountantPortal",
+					"label": "Accountant portal",
+					"icon": "AccountTieOutline",
+					"route": "AccountantPortalDashboard",
+					"order": 15
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "accountant-portal",
+					"id": "AccountantPortalDashboard",
+					"route": "/accountant-portal",
+					"type": "custom",
+					"title": "Accountant portal"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"children": [
+						{
+							"id": "SalarisFeed",
+							"label": "Salary feeds",
+							"icon": "FileImportOutline",
+							"route": "SalarisFeed",
+							"order": 45
+						},
+						{
+							"id": "OpdrachtgeversVerklaringen",
+							"label": "Client statements",
+							"icon": "AccountStarOutline",
+							"route": "OpdrachtgeversVerklaringen",
+							"order": 46
+						},
+						{
+							"id": "IB47Jaarbatch",
+							"label": "IB47 annual batch",
+							"icon": "FileDocumentOutline",
+							"route": "IB47Jaarbatch",
+							"order": 47
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "add-shillinq-detachering-payroll-administratie",
+					"id": "SalarisFeed",
+					"route": "/bookkeeping/detachering-payroll/salaris-feeds",
+					"type": "index",
+					"title": "Salary feeds"
+				},
+				{
+					"_fragment": "add-shillinq-detachering-payroll-administratie",
+					"id": "SalarisFeedDetail",
+					"route": "/bookkeeping/detachering-payroll/salaris-feeds/:id",
+					"type": "detail",
+					"title": "Salary feed"
+				},
+				{
+					"_fragment": "add-shillinq-detachering-payroll-administratie",
+					"id": "OpdrachtgeversVerklaringen",
+					"route": "/bookkeeping/detachering-payroll/opdrachtgeversverklaringen",
+					"type": "index",
+					"title": "Client statements"
+				},
+				{
+					"_fragment": "add-shillinq-detachering-payroll-administratie",
+					"id": "OpdrachtgeversVerklaringDetail",
+					"route": "/bookkeeping/detachering-payroll/opdrachtgeversverklaringen/:id",
+					"type": "detail",
+					"title": "Client statement"
+				},
+				{
+					"_fragment": "add-shillinq-detachering-payroll-administratie",
+					"id": "IB47Jaarbatch",
+					"route": "/bookkeeping/detachering-payroll/ib47",
+					"type": "index",
+					"title": "IB47 annual batch"
+				},
+				{
+					"_fragment": "add-shillinq-detachering-payroll-administratie",
+					"id": "IB47RecordDetail",
+					"route": "/bookkeeping/detachering-payroll/ib47/:id",
+					"type": "detail",
+					"title": "IB47 record"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "add-shillinq-einvoicing-ubl-peppol",
+					"id": "ARInvoiceDetail",
+					"route": "/bookkeeping/accounts-receivable/:id",
+					"type": "detail",
+					"title": "AR Invoice"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "BookkeepingMultiCurrency",
+					"label": "Multi-currency",
+					"icon": "CurrencyEur",
+					"order": 11,
+					"children": [
+						{
+							"id": "FXRates",
+							"label": "FX Rates",
+							"icon": "CurrencyUsd",
+							"route": "FXRates",
+							"order": 28
+						},
+						{
+							"id": "FxRatesAdmin",
+							"label": "FX Rates (Admin)",
+							"icon": "CogOutline",
+							"route": "FxRatesAdmin",
+							"order": 29
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "add-shillinq-multi-currency-t4",
+					"id": "FXRates",
+					"route": "/bookkeeping/multi-currency/fx-rates",
+					"type": "index",
+					"title": "FX Rates"
+				},
+				{
+					"_fragment": "add-shillinq-multi-currency-t4",
+					"id": "FXRateDetail",
+					"route": "/bookkeeping/multi-currency/fx-rates/:id",
+					"type": "detail",
+					"title": "FX Rate"
+				},
+				{
+					"_fragment": "add-shillinq-multi-currency-t4",
+					"id": "FxRatesAdmin",
+					"route": "/bookkeeping/multi-currency/fx-rates/admin",
+					"type": "custom",
+					"title": "FX Rates (Admin)"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "ImportMigration",
+					"label": "Import & migration",
+					"icon": "DatabaseImportOutline",
+					"order": 60,
+					"children": [
+						{
+							"id": "ImportWizard",
+							"label": "Import wizard",
+							"icon": "DatabaseImportOutline",
+							"route": "ImportWizard",
+							"order": 10
+						},
+						{
+							"id": "ImportBatches",
+							"label": "Import batches",
+							"icon": "DatabaseImportOutline",
+							"route": "ImportBatches",
+							"order": 20
+						},
+						{
+							"id": "ImportMappings",
+							"label": "Mapping",
+							"icon": "SwapHorizontal",
+							"route": "ImportMappings",
+							"order": 30
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "administration-import-migration",
+					"id": "ImportWizard",
+					"route": "/import/wizard",
+					"type": "custom",
+					"title": "Import wizard"
+				},
+				{
+					"_fragment": "administration-import-migration",
+					"id": "ImportBatches",
+					"route": "/import/batches",
+					"type": "index",
+					"title": "Import batches"
+				},
+				{
+					"_fragment": "administration-import-migration",
+					"id": "ImportBatchDetail",
+					"route": "/import/batches/:id",
+					"type": "detail",
+					"title": "Import batch"
+				},
+				{
+					"_fragment": "administration-import-migration",
+					"id": "ImportMappings",
+					"route": "/import/mappings",
+					"type": "index",
+					"title": "Mapping"
+				},
+				{
+					"_fragment": "administration-import-migration",
+					"id": "ImportMappingDetail",
+					"route": "/import/mappings/:id",
+					"type": "detail",
+					"title": "Import mapping"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "PaymentRequests",
+					"label": "Payment requests",
+					"icon": "CreditCardOutline",
+					"route": "PaymentRequests",
+					"order": 24
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "ar-invoice-payment-links",
+					"id": "PaymentRequests",
+					"route": "/bookkeeping/payment-requests",
+					"type": "index",
+					"title": "Payment requests"
+				},
+				{
+					"_fragment": "ar-invoice-payment-links",
+					"id": "PaymentRequestDetail",
+					"route": "/bookkeeping/payment-requests/:id",
+					"type": "detail",
+					"title": "Payment request"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "BankImportPage",
+					"label": "Import bank statements",
+					"icon": "DatabaseImportOutline",
+					"route": "BankImportPage",
+					"order": 40
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bank-import-settings",
+					"id": "BankImportPage",
+					"route": "/configuratie/bank-import",
+					"type": "custom",
+					"title": "Import bank statements"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Verkoop",
+					"label": "Sales",
+					"icon": "CartOutline",
+					"order": 33,
+					"children": [
+						{
+							"id": "AvailabilityRules",
+							"label": "Availability Rules",
+							"icon": "CalendarClockOutline",
+							"route": "AvailabilityRules",
+							"order": 14
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookings-availability-rules",
+					"id": "AvailabilityRules",
+					"route": "/verkoop/beschikbaarheidsregels",
+					"type": "index",
+					"title": "Availability Rules"
+				},
+				{
+					"_fragment": "bookings-availability-rules",
+					"id": "AvailabilityRuleDetail",
+					"route": "/verkoop/beschikbaarheidsregels/:id",
+					"type": "detail",
+					"title": "Availability Rule"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Verkoop",
+					"label": "Sales",
+					"icon": "CartOutline",
+					"order": 33,
+					"children": [
+						{
+							"id": "BookingsPendingConfirmations",
+							"label": "Pending confirmations",
+							"icon": "EmailCheckOutline",
+							"route": "BookingsPendingConfirmations",
+							"order": 14
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookings-confirm-flow",
+					"id": "BookingsConfirmationPortal",
+					"route": "/confirm/:appointmentId",
+					"type": "custom",
+					"title": "Confirm your appointment"
+				},
+				{
+					"_fragment": "bookings-confirm-flow",
+					"id": "BookingsPendingConfirmations",
+					"route": "/verkoop/openstaande-bevestigingen",
+					"type": "custom",
+					"title": "Pending confirmations"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Communicatie",
+					"label": "Communication",
+					"icon": "CommentOutline",
+					"order": 36,
+					"children": [
+						{
+							"id": "ConfirmationTemplates",
+							"label": "Confirmation Templates",
+							"icon": "FileReplaceOutline",
+							"route": "ConfirmationTemplates",
+							"order": 20
+						},
+						{
+							"id": "ReminderTemplates",
+							"label": "Reminder Templates",
+							"icon": "FileReplaceOutline",
+							"route": "ReminderTemplates",
+							"order": 30
+						},
+						{
+							"id": "CancellationTemplates",
+							"label": "Cancellation Templates",
+							"icon": "FileReplaceOutline",
+							"route": "CancellationTemplates",
+							"order": 40
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookings-email-templates",
+					"id": "ConfirmationTemplates",
+					"route": "/communication/confirmation-templates",
+					"type": "index",
+					"title": "Confirmation Templates"
+				},
+				{
+					"_fragment": "bookings-email-templates",
+					"id": "ConfirmationTemplateDetail",
+					"route": "/communication/confirmation-templates/:id",
+					"type": "detail",
+					"title": "Confirmation Template"
+				},
+				{
+					"_fragment": "bookings-email-templates",
+					"id": "ReminderTemplates",
+					"route": "/communication/reminder-templates",
+					"type": "index",
+					"title": "Reminder Templates"
+				},
+				{
+					"_fragment": "bookings-email-templates",
+					"id": "ReminderTemplateDetail",
+					"route": "/communication/reminder-templates/:id",
+					"type": "detail",
+					"title": "Reminder Template"
+				},
+				{
+					"_fragment": "bookings-email-templates",
+					"id": "CancellationTemplates",
+					"route": "/communication/cancellation-templates",
+					"type": "index",
+					"title": "Cancellation Templates"
+				},
+				{
+					"_fragment": "bookings-email-templates",
+					"id": "CancellationTemplateDetail",
+					"route": "/communication/cancellation-templates/:id",
+					"type": "detail",
+					"title": "Cancellation Template"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Communicatie",
+					"label": "Communication",
+					"icon": "CommentOutline",
+					"order": 36,
+					"children": [
+						{
+							"id": "NotificationTriggers",
+							"label": "Notification Triggers",
+							"icon": "BellOutline",
+							"route": "NotificationTriggers",
+							"order": 10
+						},
+						{
+							"id": "NotificationMonitor",
+							"label": "Notification Monitor",
+							"icon": "BellOutline",
+							"route": "NotificationMonitor",
+							"order": 50
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookings-notification-triggers",
+					"id": "NotificationTriggers",
+					"route": "/communication/notification-triggers",
+					"type": "index",
+					"title": "Notification Triggers"
+				},
+				{
+					"_fragment": "bookings-notification-triggers",
+					"id": "NotificationTriggerDetail",
+					"route": "/communication/notification-triggers/:id",
+					"type": "detail",
+					"title": "Notification Trigger"
+				},
+				{
+					"_fragment": "bookings-notification-triggers",
+					"id": "NotificationMonitor",
+					"route": "/communication/notification-monitor",
+					"type": "index",
+					"title": "Notification Monitor"
+				},
+				{
+					"_fragment": "bookings-notification-triggers",
+					"id": "NotificationDeliveryDetail",
+					"route": "/communication/notification-monitor/:id",
+					"type": "detail",
+					"title": "Notification Delivery"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Verkoop",
+					"label": "Sales",
+					"icon": "CartOutline",
+					"order": 33,
+					"children": [
+						{
+							"id": "Diensten",
+							"label": "Services",
+							"icon": "BriefcaseOutline",
+							"route": "Diensten",
+							"order": 5
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookings-service-catalog",
+					"id": "Diensten",
+					"route": "/verkoop/diensten",
+					"type": "index",
+					"title": "Service catalogue"
+				},
+				{
+					"_fragment": "bookings-service-catalog",
+					"id": "DienstDetail",
+					"route": "/verkoop/diensten/:id",
+					"type": "detail",
+					"title": "Service"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Communicatie",
+					"label": "Communication",
+					"icon": "CommentOutline",
+					"order": 36,
+					"children": [
+						{
+							"id": "SmsReminderChannels",
+							"label": "SMS Reminder Channels",
+							"icon": "MessageTextOutline",
+							"route": "SmsReminderChannels",
+							"order": 10
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookings-sms-reminder-channel",
+					"id": "SmsReminderChannels",
+					"route": "/communication/sms-reminder-channels",
+					"type": "index",
+					"title": "SMS Reminder Channels"
+				},
+				{
+					"_fragment": "bookings-sms-reminder-channel",
+					"id": "SmsReminderChannelDetail",
+					"route": "/communication/sms-reminder-channels/:id",
+					"type": "detail",
+					"title": "SMS Reminder Channel"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "AccountsPayableT2",
+					"label": "Accounts Payable",
+					"icon": "TruckOutline",
+					"order": 23,
+					"children": [
+						{
+							"id": "Payees",
+							"label": "Payees",
+							"icon": "TruckOutline",
+							"route": "Payees",
+							"order": 10
+						},
+						{
+							"id": "APTransactions",
+							"label": "AP Invoices",
+							"icon": "ReceiptTextOutline",
+							"route": "APTransactions",
+							"order": 20
+						},
+						{
+							"id": "APAgingT2",
+							"label": "AP Aging",
+							"icon": "CalendarClockOutline",
+							"route": "APAgingT2",
+							"order": 30
+						},
+						{
+							"id": "DunningNotices",
+							"label": "Dunning Notices",
+							"icon": "EmailAlertOutline",
+							"route": "DunningNotices",
+							"order": 40
+						},
+						{
+							"id": "PaymentRuns",
+							"label": "Payment Runs",
+							"icon": "CreditCardOutline",
+							"route": "PaymentRuns",
+							"order": 50
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-accounts-payable-core",
+					"id": "Payees",
+					"route": "/bookkeeping/payees",
+					"type": "index",
+					"title": "Payees"
+				},
+				{
+					"_fragment": "bookkeeping-accounts-payable-core",
+					"id": "PayeeDetail",
+					"route": "/bookkeeping/payees/:id",
+					"type": "detail",
+					"title": "Payee"
+				},
+				{
+					"_fragment": "bookkeeping-accounts-payable-core",
+					"id": "APTransactions",
+					"route": "/bookkeeping/ap-transactions",
+					"type": "index",
+					"title": "Accounts Payable"
+				},
+				{
+					"_fragment": "bookkeeping-accounts-payable-core",
+					"id": "APTransactionDetail",
+					"route": "/bookkeeping/ap-transactions/:id",
+					"type": "detail",
+					"title": "AP Transaction"
+				},
+				{
+					"_fragment": "bookkeeping-accounts-payable-core",
+					"id": "APAgingT2",
+					"route": "/bookkeeping/ap-aging-t2",
+					"type": "index",
+					"title": "AP Aging"
+				},
+				{
+					"_fragment": "bookkeeping-accounts-payable-core",
+					"id": "DunningNotices",
+					"route": "/bookkeeping/dunning-notices",
+					"type": "index",
+					"title": "Dunning Notices"
+				},
+				{
+					"_fragment": "bookkeeping-accounts-payable-core",
+					"id": "DunningNoticeDetail",
+					"route": "/bookkeeping/dunning-notices/:id",
+					"type": "detail",
+					"title": "Dunning Notice"
+				},
+				{
+					"_fragment": "bookkeeping-accounts-payable-core",
+					"id": "PaymentRuns",
+					"route": "/bookkeeping/payment-runs",
+					"type": "index",
+					"title": "Payment Runs"
+				},
+				{
+					"_fragment": "bookkeeping-accounts-payable-core",
+					"id": "PaymentRunDetail",
+					"route": "/bookkeeping/payment-runs/:id",
+					"type": "detail",
+					"title": "Payment Run"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "BadoAudit",
+					"label": "BADO Audit",
+					"icon": "ClipboardCheckOutline",
+					"order": 70,
+					"children": [
+						{
+							"id": "AuditProtocols",
+							"label": "Audit Protocols",
+							"icon": "ClipboardCheckOutline",
+							"route": "AuditProtocols",
+							"order": 10
+						},
+						{
+							"id": "ToleranceMatrices",
+							"label": "Tolerance Matrices",
+							"icon": "TableLarge",
+							"route": "ToleranceMatrices",
+							"order": 20
+						},
+						{
+							"id": "AuditFindings",
+							"label": "Audit Samples & Findings",
+							"icon": "AlertCircleOutline",
+							"route": "AuditFindings",
+							"order": 30
+						},
+						{
+							"id": "AuditVerklaringen",
+							"label": "Audit statements",
+							"icon": "FileCertificateOutline",
+							"route": "AuditVerklaringen",
+							"order": 40
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-bado-controleprotocol",
+					"id": "AuditProtocols",
+					"route": "/bado/protocols",
+					"type": "index",
+					"title": "Audit Protocols"
+				},
+				{
+					"_fragment": "bookkeeping-bado-controleprotocol",
+					"id": "AuditProtocolDetail",
+					"route": "/bado/protocols/:id",
+					"type": "detail",
+					"title": "Audit Protocol"
+				},
+				{
+					"_fragment": "bookkeeping-bado-controleprotocol",
+					"id": "ToleranceMatrices",
+					"route": "/bado/tolerance-matrices",
+					"type": "index",
+					"title": "Tolerance Matrices"
+				},
+				{
+					"_fragment": "bookkeeping-bado-controleprotocol",
+					"id": "ToleranceMatrixDetail",
+					"route": "/bado/tolerance-matrices/:id",
+					"type": "detail",
+					"title": "Tolerance Matrix"
+				},
+				{
+					"_fragment": "bookkeeping-bado-controleprotocol",
+					"id": "AuditFindings",
+					"route": "/bado/findings",
+					"type": "index",
+					"title": "Audit Samples & Findings"
+				},
+				{
+					"_fragment": "bookkeeping-bado-controleprotocol",
+					"id": "AuditFindingDetail",
+					"route": "/bado/findings/:id",
+					"type": "detail",
+					"title": "Audit Finding"
+				},
+				{
+					"_fragment": "bookkeeping-bado-controleprotocol",
+					"id": "AuditVerklaringen",
+					"route": "/bado/verklaringen",
+					"type": "index",
+					"title": "Audit statements"
+				},
+				{
+					"_fragment": "bookkeeping-bado-controleprotocol",
+					"id": "AuditVerklaringDetail",
+					"route": "/bado/verklaringen/:id",
+					"type": "detail",
+					"title": "Audit statement"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"label": "Bookkeeping",
+					"icon": "NotebookOutline",
+					"order": 20,
+					"children": [
+						{
+							"id": "OssRegistration",
+							"label": "OSS Registration",
+							"icon": "EarthArrowRight",
+							"route": "OssRegistration",
+							"order": 70
+						},
+						{
+							"id": "OssReturns",
+							"label": "OSS Returns",
+							"icon": "FileDocumentOutline",
+							"route": "OssReturns",
+							"order": 71
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-btw-oss-eu",
+					"id": "OssRegistration",
+					"route": "/bookkeeping/oss/registration",
+					"type": "index",
+					"title": "OSS Registration"
+				},
+				{
+					"_fragment": "bookkeeping-btw-oss-eu",
+					"id": "OssRegistrationDetail",
+					"route": "/bookkeeping/oss/registration/:id",
+					"type": "detail",
+					"title": "OSS Registration"
+				},
+				{
+					"_fragment": "bookkeeping-btw-oss-eu",
+					"id": "OssReturns",
+					"route": "/bookkeeping/oss/returns",
+					"type": "index",
+					"title": "OSS Returns"
+				},
+				{
+					"_fragment": "bookkeeping-btw-oss-eu",
+					"id": "OssReturnDetail",
+					"route": "/bookkeeping/oss/returns/:id",
+					"type": "detail",
+					"title": "OSS Return"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"children": [
+						{
+							"id": "CBSSubmissions",
+							"label": "CBS Submissions",
+							"icon": "FileChartCheckOutline",
+							"route": "CBSSubmissions",
+							"order": 145
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-cbs-bestanden-extended",
+					"id": "CBSSubmissions",
+					"route": "/bookkeeping/cbs-submissions",
+					"type": "index",
+					"title": "CBS Submissions"
+				},
+				{
+					"_fragment": "bookkeeping-cbs-bestanden-extended",
+					"id": "CBSSubmissionDetail",
+					"route": "/bookkeeping/cbs-submissions/:id",
+					"type": "detail",
+					"title": "CBS Submission"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "ContinuousControlsMonitoring",
+					"label": "Continuous Controls Monitoring",
+					"icon": "ShieldSearch",
+					"order": 80,
+					"children": [
+						{
+							"id": "CcmFindings",
+							"label": "Findings",
+							"icon": "AlertCircleOutline",
+							"route": "CcmFindings",
+							"order": 10
+						},
+						{
+							"id": "CcmRules",
+							"label": "Rule Library",
+							"icon": "ShieldSearch",
+							"route": "CcmRules",
+							"order": 20
+						},
+						{
+							"id": "CcmSegregationMatrix",
+							"label": "Segregation Matrix",
+							"icon": "AccountSwitch",
+							"route": "CcmSegregationMatrix",
+							"order": 30
+						},
+						{
+							"id": "CcmUserFunctionAssignments",
+							"label": "Function Assignments",
+							"icon": "AccountKey",
+							"route": "CcmUserFunctionAssignments",
+							"order": 40
+						},
+						{
+							"id": "CcmBaselines",
+							"label": "Baselines",
+							"icon": "ChartBellCurve",
+							"route": "CcmBaselines",
+							"order": 50
+						},
+						{
+							"id": "CcmAuditCommitteeReports",
+							"label": "Audit Committee Reports",
+							"icon": "AccountGroupOutline",
+							"route": "CcmAuditCommitteeReports",
+							"order": 60
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-ccm-rule-engine",
+					"id": "CcmFindings",
+					"route": "/ccm/findings",
+					"type": "index",
+					"title": "Findings"
+				},
+				{
+					"_fragment": "bookkeeping-ccm-rule-engine",
+					"id": "CcmFindingDetail",
+					"route": "/ccm/findings/:id",
+					"type": "detail",
+					"title": "Finding"
+				},
+				{
+					"_fragment": "bookkeeping-ccm-rule-engine",
+					"id": "CcmRules",
+					"route": "/ccm/rules",
+					"type": "index",
+					"title": "Rule Library"
+				},
+				{
+					"_fragment": "bookkeeping-ccm-rule-engine",
+					"id": "CcmRuleDetail",
+					"route": "/ccm/rules/:id",
+					"type": "detail",
+					"title": "Rule"
+				},
+				{
+					"_fragment": "bookkeeping-ccm-rule-engine",
+					"id": "CcmSegregationMatrix",
+					"route": "/ccm/segregation-matrix",
+					"type": "index",
+					"title": "Segregation Matrix"
+				},
+				{
+					"_fragment": "bookkeeping-ccm-rule-engine",
+					"id": "CcmSegregationMatrixDetail",
+					"route": "/ccm/segregation-matrix/:id",
+					"type": "detail",
+					"title": "Function Code"
+				},
+				{
+					"_fragment": "bookkeeping-ccm-rule-engine",
+					"id": "CcmUserFunctionAssignments",
+					"route": "/ccm/function-assignments",
+					"type": "index",
+					"title": "Function Assignments"
+				},
+				{
+					"_fragment": "bookkeeping-ccm-rule-engine",
+					"id": "CcmUserFunctionAssignmentDetail",
+					"route": "/ccm/function-assignments/:id",
+					"type": "detail",
+					"title": "Function Assignment"
+				},
+				{
+					"_fragment": "bookkeeping-ccm-rule-engine",
+					"id": "CcmBaselines",
+					"route": "/ccm/baselines",
+					"type": "index",
+					"title": "Baselines"
+				},
+				{
+					"_fragment": "bookkeeping-ccm-rule-engine",
+					"id": "CcmBaselineDetail",
+					"route": "/ccm/baselines/:id",
+					"type": "detail",
+					"title": "Baseline"
+				},
+				{
+					"_fragment": "bookkeeping-ccm-rule-engine",
+					"id": "CcmAuditCommitteeReports",
+					"route": "/ccm/audit-committee-reports",
+					"type": "index",
+					"title": "Audit Committee Reports"
+				},
+				{
+					"_fragment": "bookkeeping-ccm-rule-engine",
+					"id": "CcmAuditCommitteeReportDetail",
+					"route": "/ccm/audit-committee-reports/:id",
+					"type": "detail",
+					"title": "Audit Committee Report"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Consolidation",
+					"label": "Consolidation",
+					"icon": "Sitemap",
+					"order": 75,
+					"children": [
+						{
+							"id": "ConsolidationGroups",
+							"label": "Consolidation Groups",
+							"icon": "AccountGroupOutline",
+							"route": "ConsolidationGroups",
+							"order": 10
+						},
+						{
+							"id": "ConsolidationPeriods",
+							"label": "Consolidation Periods",
+							"icon": "CalendarSync",
+							"route": "ConsolidationPeriods",
+							"order": 20
+						},
+						{
+							"id": "ConsolidatedReports",
+							"label": "Consolidated Reports",
+							"icon": "ChartBoxOutline",
+							"route": "ConsolidatedReports",
+							"order": 30
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "ConsolidationGroups",
+					"route": "/consolidation/groups",
+					"type": "index",
+					"title": "Consolidation Groups"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "ConsolidationGroupDetail",
+					"route": "/consolidation/groups/:id",
+					"type": "detail",
+					"title": "Consolidation Group"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "ConsolidationPeriods",
+					"route": "/consolidation/periods",
+					"type": "index",
+					"title": "Consolidation Periods"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "ConsolidationPeriodDetail",
+					"route": "/consolidation/periods/:id",
+					"type": "detail",
+					"title": "Consolidation Period"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "ConsolidatedReports",
+					"route": "/consolidation/reports",
+					"type": "index",
+					"title": "Consolidated Reports"
+				},
+				{
+					"_fragment": "bookkeeping-consolidation-commercial",
+					"id": "ConsolidatedBalanceDetail",
+					"route": "/consolidation/reports/:id",
+					"type": "detail",
+					"title": "Consolidated Balance"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"label": "Bookkeeping",
+					"icon": "NotebookOutline",
+					"order": 20,
+					"children": [
+						{
+							"id": "AnalyticalDimensions",
+							"label": "Analytical dimensions",
+							"icon": "ChartLineVariant",
+							"route": "AnalyticalDimensions",
+							"order": 92
+						},
+						{
+							"id": "SegmentPnLDashboard",
+							"label": "Segment P&L",
+							"icon": "Poll",
+							"route": "SegmentPnLDashboard",
+							"order": 93
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-cost-centers-dimensions",
+					"id": "AnalyticalDimensions",
+					"route": "/bookkeeping/dimensions/analytical-dimensions",
+					"type": "index",
+					"title": "Analytical dimensions"
+				},
+				{
+					"_fragment": "bookkeeping-cost-centers-dimensions",
+					"id": "AnalyticalDimensionDetail",
+					"route": "/bookkeeping/dimensions/analytical-dimensions/:id",
+					"type": "detail",
+					"title": "Analytical dimension"
+				},
+				{
+					"_fragment": "bookkeeping-cost-centers-dimensions",
+					"id": "SegmentPnLDashboard",
+					"route": "/bookkeeping/dimensions/segment-pnl",
+					"type": "custom",
+					"title": "Segment P&L"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Sustainability",
+					"label": "Sustainability",
+					"icon": "Leaf",
+					"order": 70,
+					"children": [
+						{
+							"id": "MaterialityAssessments",
+							"label": "Materiality Assessments",
+							"icon": "ScaleBalance",
+							"route": "MaterialityAssessments",
+							"order": 10
+						},
+						{
+							"id": "EsrsDataPoints",
+							"label": "ESRS Data Points",
+							"icon": "DatabaseOutline",
+							"route": "EsrsDataPoints",
+							"order": 20
+						},
+						{
+							"id": "GhgInventories",
+							"label": "GHG Inventory",
+							"icon": "Warehouse",
+							"route": "GhgInventories",
+							"order": 30
+						},
+						{
+							"id": "ValueChainActors",
+							"label": "Value Chain Actors",
+							"icon": "Truck",
+							"route": "ValueChainActors",
+							"order": 40
+						},
+						{
+							"id": "AssuranceEngagements",
+							"label": "Assurance Engagements",
+							"icon": "ClipboardCheckOutline",
+							"route": "AssuranceEngagements",
+							"order": 50
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-csrd-esrs",
+					"id": "MaterialityAssessments",
+					"route": "/sustainability/materiality-assessments",
+					"type": "index",
+					"title": "Materiality Assessments"
+				},
+				{
+					"_fragment": "bookkeeping-csrd-esrs",
+					"id": "MaterialityAssessmentDetail",
+					"route": "/sustainability/materiality-assessments/:id",
+					"type": "detail",
+					"title": "Materiality Assessment"
+				},
+				{
+					"_fragment": "bookkeeping-csrd-esrs",
+					"id": "EsrsDataPoints",
+					"route": "/sustainability/esrs-data-points",
+					"type": "index",
+					"title": "ESRS Data Points"
+				},
+				{
+					"_fragment": "bookkeeping-csrd-esrs",
+					"id": "EsrsDataPointDetail",
+					"route": "/sustainability/esrs-data-points/:id",
+					"type": "detail",
+					"title": "ESRS Data Point"
+				},
+				{
+					"_fragment": "bookkeeping-csrd-esrs",
+					"id": "GhgInventories",
+					"route": "/sustainability/ghg-inventories",
+					"type": "index",
+					"title": "GHG Inventory"
+				},
+				{
+					"_fragment": "bookkeeping-csrd-esrs",
+					"id": "GhgInventoryDetail",
+					"route": "/sustainability/ghg-inventories/:id",
+					"type": "detail",
+					"title": "GHG Inventory"
+				},
+				{
+					"_fragment": "bookkeeping-csrd-esrs",
+					"id": "ValueChainActors",
+					"route": "/sustainability/value-chain-actors",
+					"type": "index",
+					"title": "Value Chain Actors"
+				},
+				{
+					"_fragment": "bookkeeping-csrd-esrs",
+					"id": "ValueChainActorDetail",
+					"route": "/sustainability/value-chain-actors/:id",
+					"type": "detail",
+					"title": "Value Chain Actor"
+				},
+				{
+					"_fragment": "bookkeeping-csrd-esrs",
+					"id": "AssuranceEngagements",
+					"route": "/sustainability/assurance-engagements",
+					"type": "index",
+					"title": "Assurance Engagements"
+				},
+				{
+					"_fragment": "bookkeeping-csrd-esrs",
+					"id": "AssuranceEngagementDetail",
+					"route": "/sustainability/assurance-engagements/:id",
+					"type": "detail",
+					"title": "Assurance Engagement"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "DepreciationSchedules",
+					"label": "Depreciation Schedules",
+					"icon": "ChartLineVariant",
+					"route": "DepreciationSchedules",
+					"order": 39
+				},
+				{
+					"id": "DepreciationExpense",
+					"label": "Depreciation Expense",
+					"icon": "ReceiptOutline",
+					"route": "DepreciationExpense",
+					"order": 40
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-fixed-assets-depreciation",
+					"id": "DepreciationSchedules",
+					"route": "/depreciation-schedules",
+					"type": "index",
+					"title": "Depreciation Schedules"
+				},
+				{
+					"_fragment": "bookkeeping-fixed-assets-depreciation",
+					"id": "DepreciationScheduleDetail",
+					"route": "/depreciation-schedules/:id",
+					"type": "detail",
+					"title": "Depreciation Schedule"
+				},
+				{
+					"_fragment": "bookkeeping-fixed-assets-depreciation",
+					"id": "DepreciationExpense",
+					"route": "/depreciation-expense",
+					"type": "index",
+					"title": "Depreciation Expense"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Ifrs16Leases",
+					"label": "IFRS 16 Leases",
+					"icon": "FileSign",
+					"order": 80,
+					"children": [
+						{
+							"id": "LeaseRegister",
+							"label": "Lease Register",
+							"icon": "DatabaseOutline",
+							"route": "LeaseRegister",
+							"order": 10
+						},
+						{
+							"id": "LeaseReassessmentEvents",
+							"label": "Reassessment Events",
+							"icon": "FileDocumentEditOutline",
+							"route": "LeaseReassessmentEvents",
+							"order": 20
+						},
+						{
+							"id": "LeaseDisclosures",
+							"label": "Annual Disclosures",
+							"icon": "TableLarge",
+							"route": "LeaseDisclosures",
+							"order": 30
+						},
+						{
+							"id": "LeaseExemptions",
+							"label": "Exemption Policy",
+							"icon": "ShieldCheckOutline",
+							"route": "LeaseExemptions",
+							"order": 40
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-ifrs-16-lease",
+					"id": "LeaseRegister",
+					"route": "/ifrs-16/leases",
+					"type": "index",
+					"title": "Lease Register"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs-16-lease",
+					"id": "LeaseDetail",
+					"route": "/ifrs-16/leases/:id",
+					"type": "detail",
+					"title": "Lease Contract"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs-16-lease",
+					"id": "LeaseReassessmentEvents",
+					"route": "/ifrs-16/reassessment-events",
+					"type": "index",
+					"title": "Reassessment Events"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs-16-lease",
+					"id": "LeaseDisclosures",
+					"route": "/ifrs-16/disclosures",
+					"type": "index",
+					"title": "IFRS 16 Disclosure"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs-16-lease",
+					"id": "LeaseExemptions",
+					"route": "/ifrs-16/exemptions",
+					"type": "index",
+					"title": "Exemption"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "DualGaap",
+					"label": "Dual GAAP",
+					"icon": "ScaleBalance",
+					"order": 45,
+					"children": [
+						{
+							"id": "AccountingFrameworks",
+							"label": "Framework Configuration",
+							"icon": "CogOutline",
+							"route": "AccountingFrameworks",
+							"order": 10
+						},
+						{
+							"id": "ChartOfAccountsMappings",
+							"label": "Chart of Accounts Mapping",
+							"icon": "SwapHorizontal",
+							"route": "ChartOfAccountsMappings",
+							"order": 20
+						},
+						{
+							"id": "ReconciliationBridges",
+							"label": "Reconciliation Bridge",
+							"icon": "TransitConnectionVariant",
+							"route": "ReconciliationBridges",
+							"order": 30
+						},
+						{
+							"id": "DualTransactions",
+							"label": "Dual Ledger Explorer",
+							"icon": "TableLarge",
+							"route": "DualTransactions",
+							"order": 40
+						},
+						{
+							"id": "FrameworkElections",
+							"label": "Framework Election",
+							"icon": "Gavel",
+							"route": "FrameworkElections",
+							"order": 50
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-ifrs-rj-dual-gaap",
+					"id": "AccountingFrameworks",
+					"route": "/dual-gaap/accounting-frameworks",
+					"type": "index",
+					"title": "Framework Configuration"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs-rj-dual-gaap",
+					"id": "AccountingFrameworkDetail",
+					"route": "/dual-gaap/accounting-frameworks/:id",
+					"type": "detail",
+					"title": "Accounting Framework"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs-rj-dual-gaap",
+					"id": "ChartOfAccountsMappings",
+					"route": "/dual-gaap/coa-mappings",
+					"type": "index",
+					"title": "Chart of Accounts Mapping"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs-rj-dual-gaap",
+					"id": "ChartOfAccountsMappingDetail",
+					"route": "/dual-gaap/coa-mappings/:id",
+					"type": "detail",
+					"title": "Chart of Accounts Mapping"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs-rj-dual-gaap",
+					"id": "ReconciliationBridges",
+					"route": "/dual-gaap/reconciliation-bridges",
+					"type": "index",
+					"title": "Reconciliation Bridge"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs-rj-dual-gaap",
+					"id": "ReconciliationBridgeDetail",
+					"route": "/dual-gaap/reconciliation-bridges/:id",
+					"type": "detail",
+					"title": "Reconciliation Bridge"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs-rj-dual-gaap",
+					"id": "DualTransactions",
+					"route": "/dual-gaap/dual-transactions",
+					"type": "index",
+					"title": "Dual Ledger Explorer"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs-rj-dual-gaap",
+					"id": "DualTransactionDetail",
+					"route": "/dual-gaap/dual-transactions/:id",
+					"type": "detail",
+					"title": "Dual Transaction"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs-rj-dual-gaap",
+					"id": "FrameworkElections",
+					"route": "/dual-gaap/framework-elections",
+					"type": "index",
+					"title": "Framework Election"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs-rj-dual-gaap",
+					"id": "FrameworkElectionDetail",
+					"route": "/dual-gaap/framework-elections/:id",
+					"type": "detail",
+					"title": "Framework Election"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Ifrs15Revenue",
+					"label": "Revenue Recognition (IFRS 15)",
+					"icon": "CurrencyEur",
+					"order": 85,
+					"children": [
+						{
+							"id": "RevenueContracts",
+							"label": "Revenue Contracts",
+							"icon": "FileSign",
+							"route": "RevenueContracts",
+							"order": 10
+						},
+						{
+							"id": "PerformanceObligations",
+							"label": "Performance Obligations",
+							"icon": "FormatListChecks",
+							"route": "PerformanceObligations",
+							"order": 20
+						},
+						{
+							"id": "RevenueWaterfall",
+							"label": "Revenue Waterfall",
+							"icon": "CurrencyEur",
+							"route": "RevenueWaterfall",
+							"order": 30
+						},
+						{
+							"id": "ContractBalances",
+							"label": "Contract Balances",
+							"icon": "FileSign",
+							"route": "ContractBalances",
+							"order": 40
+						},
+						{
+							"id": "ContractModifications",
+							"label": "Contract Modifications",
+							"icon": "FileSign",
+							"route": "ContractModifications",
+							"order": 50
+						},
+						{
+							"id": "ContractCostAssets",
+							"label": "Contract Cost Assets",
+							"icon": "FileSign",
+							"route": "ContractCostAssets",
+							"order": 60
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-ifrs15-revenue",
+					"id": "RevenueContracts",
+					"route": "/ifrs-15/contracts",
+					"type": "index",
+					"title": "Revenue Contracts"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs15-revenue",
+					"id": "ContractDetail",
+					"route": "/ifrs-15/contracts/:id",
+					"type": "detail",
+					"title": "Contract"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs15-revenue",
+					"id": "PerformanceObligations",
+					"route": "/ifrs-15/performance-obligations",
+					"type": "index",
+					"title": "Performance Obligations"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs15-revenue",
+					"id": "RevenueWaterfall",
+					"route": "/ifrs-15/revenue-waterfall",
+					"type": "index",
+					"title": "Revenue Waterfall"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs15-revenue",
+					"id": "ContractBalances",
+					"route": "/ifrs-15/contract-balances",
+					"type": "index",
+					"title": "Contract Balances"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs15-revenue",
+					"id": "ContractModifications",
+					"route": "/ifrs-15/contract-modifications",
+					"type": "index",
+					"title": "Contract Modifications"
+				},
+				{
+					"_fragment": "bookkeeping-ifrs15-revenue",
+					"id": "ContractCostAssets",
+					"route": "/ifrs-15/contract-cost-assets",
+					"type": "index",
+					"title": "Contract Cost Assets"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "WmoCompliance",
+					"label": "WMO Compliance",
+					"icon": "ClipboardCheckOutline",
+					"order": 42,
+					"children": [
+						{
+							"id": "CommercialActivities",
+							"label": "Commercial Activities",
+							"icon": "StoreOutline",
+							"route": "CommercialActivities",
+							"order": 10
+						},
+						{
+							"id": "IntegralCostPrices",
+							"label": "Integral Cost Prices",
+							"icon": "CalculatorVariantOutline",
+							"route": "IntegralCostPrices",
+							"order": 20
+						},
+						{
+							"id": "ActivityCostAllocations",
+							"label": "Activity Cost Allocations",
+							"icon": "MapMarkerOutline",
+							"route": "ActivityCostAllocations",
+							"order": 30
+						},
+						{
+							"id": "PublicInterestDecisions",
+							"label": "Public Interest Decisions",
+							"icon": "Gavel",
+							"route": "PublicInterestDecisions",
+							"order": 40
+						},
+						{
+							"id": "AcmReports",
+							"label": "ACM Reports",
+							"icon": "ChartBoxOutline",
+							"route": "AcmReports",
+							"order": 50
+						},
+						{
+							"id": "CrossSubsidyAlerts",
+							"label": "Cross-Subsidy Alerts",
+							"icon": "HandHeartOutline",
+							"route": "CrossSubsidyAlerts",
+							"order": 60
+						},
+						{
+							"id": "WmoAuditLog",
+							"label": "WMO Audit Log",
+							"icon": "History",
+							"route": "WmoAuditLog",
+							"order": 70
+						},
+						{
+							"id": "MarketBenchmarks",
+							"label": "Market Benchmarks",
+							"icon": "ChartLine",
+							"route": "MarketBenchmarks",
+							"order": 80
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-market-government-separation",
+					"id": "CommercialActivities",
+					"route": "/wmo/commercial-activities",
+					"type": "index",
+					"title": "Commercial Activities"
+				},
+				{
+					"_fragment": "bookkeeping-market-government-separation",
+					"id": "CommercialActivityDetail",
+					"route": "/wmo/commercial-activities/:id",
+					"type": "detail",
+					"title": "Commercial Activity"
+				},
+				{
+					"_fragment": "bookkeeping-market-government-separation",
+					"id": "IntegralCostPrices",
+					"route": "/wmo/integral-cost-prices",
+					"type": "index",
+					"title": "Integral Cost Prices"
+				},
+				{
+					"_fragment": "bookkeeping-market-government-separation",
+					"id": "IntegralCostPriceDetail",
+					"route": "/wmo/integral-cost-prices/:id",
+					"type": "detail",
+					"title": "Integral Cost Price"
+				},
+				{
+					"_fragment": "bookkeeping-market-government-separation",
+					"id": "ActivityCostAllocations",
+					"route": "/wmo/activity-cost-allocations",
+					"type": "index",
+					"title": "Activity Cost Allocations"
+				},
+				{
+					"_fragment": "bookkeeping-market-government-separation",
+					"id": "ActivityCostAllocationDetail",
+					"route": "/wmo/activity-cost-allocations/:id",
+					"type": "detail",
+					"title": "Activity Cost Allocation"
+				},
+				{
+					"_fragment": "bookkeeping-market-government-separation",
+					"id": "PublicInterestDecisions",
+					"route": "/wmo/public-interest-decisions",
+					"type": "index",
+					"title": "Public Interest Decisions"
+				},
+				{
+					"_fragment": "bookkeeping-market-government-separation",
+					"id": "PublicInterestDecisionDetail",
+					"route": "/wmo/public-interest-decisions/:id",
+					"type": "detail",
+					"title": "Public Interest Decision"
+				},
+				{
+					"_fragment": "bookkeeping-market-government-separation",
+					"id": "AcmReports",
+					"route": "/wmo/acm-reports",
+					"type": "index",
+					"title": "ACM Reports"
+				},
+				{
+					"_fragment": "bookkeeping-market-government-separation",
+					"id": "AcmReportDetail",
+					"route": "/wmo/acm-reports/:id",
+					"type": "detail",
+					"title": "ACM Report"
+				},
+				{
+					"_fragment": "bookkeeping-market-government-separation",
+					"id": "CrossSubsidyAlerts",
+					"route": "/wmo/cross-subsidy-alerts",
+					"type": "index",
+					"title": "Cross-Subsidy Alerts"
+				},
+				{
+					"_fragment": "bookkeeping-market-government-separation",
+					"id": "CrossSubsidyAlertDetail",
+					"route": "/wmo/cross-subsidy-alerts/:id",
+					"type": "detail",
+					"title": "Cross-Subsidy Alert"
+				},
+				{
+					"_fragment": "bookkeeping-market-government-separation",
+					"id": "WmoAuditLog",
+					"route": "/wmo/audit-log",
+					"type": "index",
+					"title": "WMO Audit Log"
+				},
+				{
+					"_fragment": "bookkeeping-market-government-separation",
+					"id": "WmoAuditLogDetail",
+					"route": "/wmo/audit-log/:id",
+					"type": "detail",
+					"title": "WMO Audit Entry"
+				},
+				{
+					"_fragment": "bookkeeping-market-government-separation",
+					"id": "MarketBenchmarks",
+					"route": "/wmo/market-benchmarks",
+					"type": "index",
+					"title": "Market Benchmarks"
+				},
+				{
+					"_fragment": "bookkeeping-market-government-separation",
+					"id": "MarketBenchmarkDetail",
+					"route": "/wmo/market-benchmarks/:id",
+					"type": "detail",
+					"title": "Market Benchmark"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "MultiAdministratie",
+					"label": "Administrations",
+					"icon": "OfficeBuildingOutline",
+					"order": 29,
+					"children": [
+						{
+							"id": "AdministrationSwitcher",
+							"label": "Switch administration",
+							"icon": "ShieldAccountOutline",
+							"route": "AdministrationSwitcher",
+							"order": 1
+						},
+						{
+							"id": "Administraties",
+							"label": "Administrations",
+							"icon": "OfficeBuildingOutline",
+							"route": "Administraties",
+							"order": 5
+						},
+						{
+							"id": "AdministratieLidmaatschappen",
+							"label": "Access & roles",
+							"icon": "AccountKeyOutline",
+							"route": "AdministratieLidmaatschappen",
+							"order": 6
+						},
+						{
+							"id": "IntercompanyBoekingen",
+							"label": "Intercompany journal entries",
+							"icon": "SwapHorizontal",
+							"route": "IntercompanyBoekingen",
+							"order": 7
+						},
+						{
+							"id": "ConsolidatieMappings",
+							"label": "Consolidation mapping",
+							"icon": "SwapHorizontal",
+							"route": "ConsolidatieMappings",
+							"order": 8
+						},
+						{
+							"id": "AdministratieMigraties",
+							"label": "Asset transfer",
+							"icon": "DesktopTowerMonitor",
+							"route": "AdministratieMigraties",
+							"order": 9
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-multi-administratie",
+					"id": "AdministrationSwitcher",
+					"route": "/administratie/wisselen",
+					"type": "custom",
+					"title": "Switch administration"
+				},
+				{
+					"_fragment": "bookkeeping-multi-administratie",
+					"id": "Administraties",
+					"route": "/administratie/administraties",
+					"type": "index",
+					"title": "Administrations"
+				},
+				{
+					"_fragment": "bookkeeping-multi-administratie",
+					"id": "AdministratieDetail",
+					"route": "/administratie/administraties/:id",
+					"type": "detail",
+					"title": "Administration"
+				},
+				{
+					"_fragment": "bookkeeping-multi-administratie",
+					"id": "AdministratieLidmaatschappen",
+					"route": "/administratie/lidmaatschappen",
+					"type": "index",
+					"title": "Access & roles"
+				},
+				{
+					"_fragment": "bookkeeping-multi-administratie",
+					"id": "AdministratieLidmaatschapDetail",
+					"route": "/administratie/lidmaatschappen/:id",
+					"type": "detail",
+					"title": "Access & role"
+				},
+				{
+					"_fragment": "bookkeeping-multi-administratie",
+					"id": "IntercompanyBoekingen",
+					"route": "/administratie/intercompany",
+					"type": "index",
+					"title": "Intercompany journal entries"
+				},
+				{
+					"_fragment": "bookkeeping-multi-administratie",
+					"id": "IntercompanyBoekingDetail",
+					"route": "/administratie/intercompany/:id",
+					"type": "detail",
+					"title": "Intercompany journal entry"
+				},
+				{
+					"_fragment": "bookkeeping-multi-administratie",
+					"id": "ConsolidatieMappings",
+					"route": "/administratie/consolidatie-mappings",
+					"type": "index",
+					"title": "Consolidation mapping"
+				},
+				{
+					"_fragment": "bookkeeping-multi-administratie",
+					"id": "ConsolidatieMappingDetail",
+					"route": "/administratie/consolidatie-mappings/:id",
+					"type": "detail",
+					"title": "Consolidation mapping"
+				},
+				{
+					"_fragment": "bookkeeping-multi-administratie",
+					"id": "AdministratieMigraties",
+					"route": "/administratie/migraties",
+					"type": "index",
+					"title": "Asset transfer"
+				},
+				{
+					"_fragment": "bookkeeping-multi-administratie",
+					"id": "AdministratieMigratieDetail",
+					"route": "/administratie/migraties/:id",
+					"type": "detail",
+					"title": "Asset transfer"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"label": "Bookkeeping",
+					"icon": "NotebookOutline",
+					"order": 11,
+					"children": [
+						{
+							"id": "BankAccounts",
+							"label": "Bank Accounts",
+							"icon": "BankOutline",
+							"route": "BankAccounts",
+							"order": 26
+						},
+						{
+							"id": "CurrencyBalances",
+							"label": "Currency Balances",
+							"icon": "CurrencyUsd",
+							"route": "CurrencyBalances",
+							"order": 27
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-multi-currency",
+					"id": "BankAccounts",
+					"route": "/bookkeeping/bank-accounts",
+					"type": "index",
+					"title": "Bank Accounts"
+				},
+				{
+					"_fragment": "bookkeeping-multi-currency",
+					"id": "BankAccountDetail",
+					"route": "/bookkeeping/bank-accounts/:id",
+					"type": "detail",
+					"title": "Bank Account"
+				},
+				{
+					"_fragment": "bookkeeping-multi-currency",
+					"id": "CurrencyBalances",
+					"route": "/bookkeeping/currency-balances",
+					"type": "index",
+					"title": "Currency Balances"
+				},
+				{
+					"_fragment": "bookkeeping-multi-currency",
+					"id": "CurrencyBalanceDetail",
+					"route": "/bookkeeping/currency-balances/:id",
+					"type": "detail",
+					"title": "Currency Balance"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Loonadministratie",
+					"label": "Payroll",
+					"icon": "CashSync",
+					"order": 80,
+					"children": [
+						{
+							"id": "Werkgevers",
+							"label": "Employers",
+							"icon": "OfficeBuilding",
+							"route": "Werkgevers",
+							"order": 10
+						},
+						{
+							"id": "Werknemers",
+							"label": "Employees",
+							"icon": "AccountTieOutline",
+							"route": "Werknemers",
+							"order": 20
+						},
+						{
+							"id": "Loonperiodes",
+							"label": "Pay periods",
+							"icon": "CalendarRange",
+							"route": "Loonperiodes",
+							"order": 30
+						},
+						{
+							"id": "Loonstroken",
+							"label": "Payslips",
+							"icon": "FileDocumentOutline",
+							"route": "Loonstroken",
+							"order": 40
+						},
+						{
+							"id": "LHAfdrachten",
+							"label": "LH remittances",
+							"icon": "BankTransfer",
+							"route": "LHAfdrachten",
+							"order": 50
+						},
+						{
+							"id": "Loonjournaalposten",
+							"label": "Payroll journal entries",
+							"icon": "CashSync",
+							"route": "Loonjournaalposten",
+							"order": 60
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-payroll-engine-nl",
+					"id": "Werkgevers",
+					"route": "/loonadministratie/werkgevers",
+					"type": "index",
+					"title": "Employers"
+				},
+				{
+					"_fragment": "bookkeeping-payroll-engine-nl",
+					"id": "WerkgeverDetail",
+					"route": "/loonadministratie/werkgevers/:id",
+					"type": "detail",
+					"title": "Employer"
+				},
+				{
+					"_fragment": "bookkeeping-payroll-engine-nl",
+					"id": "Werknemers",
+					"route": "/loonadministratie/werknemers",
+					"type": "index",
+					"title": "Employees"
+				},
+				{
+					"_fragment": "bookkeeping-payroll-engine-nl",
+					"id": "WerknemerDetail",
+					"route": "/loonadministratie/werknemers/:id",
+					"type": "detail",
+					"title": "Employee"
+				},
+				{
+					"_fragment": "bookkeeping-payroll-engine-nl",
+					"id": "Loonperiodes",
+					"route": "/loonadministratie/loonperiodes",
+					"type": "index",
+					"title": "Pay periods"
+				},
+				{
+					"_fragment": "bookkeeping-payroll-engine-nl",
+					"id": "LoonperiodeDetail",
+					"route": "/loonadministratie/loonperiodes/:id",
+					"type": "detail",
+					"title": "Pay period"
+				},
+				{
+					"_fragment": "bookkeeping-payroll-engine-nl",
+					"id": "Loonstroken",
+					"route": "/loonadministratie/loonstroken",
+					"type": "index",
+					"title": "Payslips"
+				},
+				{
+					"_fragment": "bookkeeping-payroll-engine-nl",
+					"id": "LoonstrookDetail",
+					"route": "/loonadministratie/loonstroken/:id",
+					"type": "detail",
+					"title": "Payslip"
+				},
+				{
+					"_fragment": "bookkeeping-payroll-engine-nl",
+					"id": "LHAfdrachten",
+					"route": "/loonadministratie/lh-afdrachten",
+					"type": "index",
+					"title": "LH remittances"
+				},
+				{
+					"_fragment": "bookkeeping-payroll-engine-nl",
+					"id": "LHAfdrachtDetail",
+					"route": "/loonadministratie/lh-afdrachten/:id",
+					"type": "detail",
+					"title": "LH remittance"
+				},
+				{
+					"_fragment": "bookkeeping-payroll-engine-nl",
+					"id": "Loonjournaalposten",
+					"route": "/loonadministratie/loonjournaalposten",
+					"type": "index",
+					"title": "Payroll journal entries"
+				},
+				{
+					"_fragment": "bookkeeping-payroll-engine-nl",
+					"id": "LoonjournaalpostDetail",
+					"route": "/loonadministratie/loonjournaalposten/:id",
+					"type": "detail",
+					"title": "Payroll journal entry"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"label": "Bookkeeping",
+					"icon": "NotebookOutline",
+					"order": 20,
+					"children": [
+						{
+							"id": "PeriodClose",
+							"label": "Period Close",
+							"icon": "CalendarLock",
+							"route": "PeriodClose",
+							"order": 65
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-period-close",
+					"id": "PeriodClose",
+					"route": "/bookkeeping/period-close",
+					"type": "index",
+					"title": "Period Close"
+				},
+				{
+					"_fragment": "bookkeeping-period-close",
+					"id": "PeriodCloseDetail",
+					"route": "/bookkeeping/period-close/:id",
+					"type": "custom",
+					"title": "Period Close"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "BbvProvincie",
+					"label": "BBV Province",
+					"icon": "MapOutline",
+					"order": 75,
+					"children": [
+						{
+							"id": "BbvComplianceDashboard",
+							"label": "BBV Compliance Dashboard",
+							"icon": "ViewDashboardOutline",
+							"route": "BbvComplianceDashboard",
+							"order": 10
+						},
+						{
+							"id": "BudgetToProgrammeLinker",
+							"label": "Budget Links",
+							"icon": "CalculatorVariantOutline",
+							"route": "BudgetToProgrammeLinker",
+							"order": 20
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-provincies-bbv-variant",
+					"id": "BbvComplianceDashboard",
+					"route": "/bbv-provincie/compliance-dashboard",
+					"type": "dashboard",
+					"title": "BBV Compliance Dashboard"
+				},
+				{
+					"_fragment": "bookkeeping-provincies-bbv-variant",
+					"id": "BudgetToProgrammeLinker",
+					"route": "/bbv-provincie/budget-to-programme",
+					"type": "index",
+					"title": "Budget Links"
+				},
+				{
+					"_fragment": "bookkeeping-provincies-bbv-variant",
+					"id": "BudgetToProgrammeLinkerDetail",
+					"route": "/bbv-provincie/budget-to-programme/:id",
+					"type": "detail",
+					"title": "GL line"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": []
+		},
+		{
+			"menu": [
+				{
+					"id": "Purchasing",
+					"children": [
+						{
+							"id": "GoodsReceiptNotes",
+							"label": "Goods Receipt Notes",
+							"icon": "PackageVariantClosed",
+							"order": 92,
+							"children": [
+								{
+									"id": "GoodsReceiptNoteForm",
+									"label": "Receive goods",
+									"icon": "PlusCircle",
+									"route": "GoodsReceiptNoteForm",
+									"order": 10
+								}
+							]
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-purchase-order-3way-04-goods-receipt-note",
+					"id": "GoodsReceiptNoteForm",
+					"route": "/inkoop/goods-receipt-notes/new",
+					"type": "custom",
+					"title": "Receive goods"
+				},
+				{
+					"_fragment": "bookkeeping-purchase-order-3way-04-goods-receipt-note",
+					"id": "GoodsReceiptNoteDetail",
+					"route": "/inkoop/goods-receipt-notes/:id",
+					"type": "custom",
+					"title": "Goods Receipt Note"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-purchase-order-3way-05-supplier-invoice",
+					"id": "SupplierInvoiceDetail",
+					"route": "/inkoop/supplier-invoices/:id",
+					"type": "custom",
+					"title": "Supplier Invoice"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "POMatching",
+					"label": "PO Matching",
+					"icon": "ClipboardListOutline",
+					"order": 90,
+					"children": [
+						{
+							"id": "ThreeWayMatchIndex",
+							"label": "Three-way matches",
+							"icon": "VectorIntersection",
+							"route": "ThreeWayMatchIndex",
+							"order": 30
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-purchase-order-3way-06-matching-engine",
+					"id": "ThreeWayMatchIndex",
+					"route": "/inkoop/three-way-matches",
+					"type": "custom",
+					"title": "Three-way matches"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-purchase-order-3way-08-exception-workflow",
+					"id": "ThreeWayMatchDetail",
+					"route": "/inkoop/3way-matches/:id",
+					"type": "custom",
+					"title": "3-way Match"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "POMatching",
+					"label": "PO Matching",
+					"icon": "ClipboardListOutline",
+					"order": 90,
+					"children": [
+						{
+							"id": "VendorPerformanceIndex",
+							"label": "Vendor performance",
+							"icon": "ChartTimelineVariant",
+							"route": "VendorPerformanceIndex",
+							"order": 50
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-purchase-order-3way-10-vendor-performance",
+					"id": "VendorPerformanceIndex",
+					"route": "/inkoop/vendor-performance",
+					"type": "custom",
+					"title": "Vendor performance"
+				},
+				{
+					"_fragment": "bookkeeping-purchase-order-3way-10-vendor-performance",
+					"id": "VendorPerformanceDetail",
+					"route": "/inkoop/vendor-performance/:id",
+					"type": "custom",
+					"title": "Vendor performance"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Rechtmatigheid",
+					"label": "Lawfulness",
+					"icon": "ClipboardCheckOutline",
+					"order": 41,
+					"children": [
+						{
+							"id": "Rechtmatigheidstoetsing",
+							"label": "Lawfulness assessment",
+							"icon": "ClipboardCheckOutline",
+							"route": "Rechtmatigheidstoetsing",
+							"order": 10
+						},
+						{
+							"id": "Bevindingen",
+							"label": "Findings",
+							"icon": "AlertCircleOutline",
+							"route": "Bevindingen",
+							"order": 20
+						},
+						{
+							"id": "Toleranties",
+							"label": "Tolerances",
+							"icon": "PercentOutline",
+							"route": "Toleranties",
+							"order": 30
+						},
+						{
+							"id": "Rechtmatigheidsparagraaf",
+							"label": "Lawfulness paragraph",
+							"icon": "ClipboardCheckOutline",
+							"route": "Rechtmatigheidsparagraaf",
+							"order": 40
+						},
+						{
+							"id": "RechtmatigheidAuditExport",
+							"label": "Audit Export",
+							"icon": "DatabaseExportOutline",
+							"route": "RechtmatigheidAuditExport",
+							"order": 50
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-rechtmatigheidsverantwoording",
+					"id": "Rechtmatigheidstoetsing",
+					"route": "/rechtmatigheid/toetsing",
+					"type": "index",
+					"title": "Lawfulness assessment"
+				},
+				{
+					"_fragment": "bookkeeping-rechtmatigheidsverantwoording",
+					"id": "RechtmatigheidstoetsDetail",
+					"route": "/rechtmatigheid/toetsing/:id",
+					"type": "detail",
+					"title": "Lawfulness assessment"
+				},
+				{
+					"_fragment": "bookkeeping-rechtmatigheidsverantwoording",
+					"id": "Bevindingen",
+					"route": "/rechtmatigheid/bevindingen",
+					"type": "index",
+					"title": "Findings"
+				},
+				{
+					"_fragment": "bookkeeping-rechtmatigheidsverantwoording",
+					"id": "BevindingDetail",
+					"route": "/rechtmatigheid/bevindingen/:id",
+					"type": "detail",
+					"title": "Finding"
+				},
+				{
+					"_fragment": "bookkeeping-rechtmatigheidsverantwoording",
+					"id": "Toleranties",
+					"route": "/rechtmatigheid/toleranties",
+					"type": "index",
+					"title": "Tolerances"
+				},
+				{
+					"_fragment": "bookkeeping-rechtmatigheidsverantwoording",
+					"id": "TolerantieDetail",
+					"route": "/rechtmatigheid/toleranties/:id",
+					"type": "detail",
+					"title": "Tolerance threshold"
+				},
+				{
+					"_fragment": "bookkeeping-rechtmatigheidsverantwoording",
+					"id": "Rechtmatigheidsparagraaf",
+					"route": "/rechtmatigheid/paragraaf",
+					"type": "index",
+					"title": "Lawfulness paragraph"
+				},
+				{
+					"_fragment": "bookkeeping-rechtmatigheidsverantwoording",
+					"id": "ParagraafDetail",
+					"route": "/rechtmatigheid/paragraaf/:id",
+					"type": "detail",
+					"title": "Lawfulness paragraph"
+				},
+				{
+					"_fragment": "bookkeeping-rechtmatigheidsverantwoording",
+					"id": "RechtmatigheidAuditExport",
+					"route": "/rechtmatigheid/audit-export",
+					"type": "index",
+					"title": "Audit Export"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Governance",
+					"label": "Governance",
+					"icon": "ShieldCrownOutline",
+					"order": 75,
+					"children": [
+						{
+							"id": "TreasuryAccounts",
+							"label": "Treasury Accounts",
+							"icon": "BankOutline",
+							"route": "TreasuryAccounts",
+							"order": 10
+						},
+						{
+							"id": "BankingRules",
+							"label": "Banking Rules",
+							"icon": "BankOutline",
+							"route": "BankingRules",
+							"order": 20
+						},
+						{
+							"id": "ComplianceReports",
+							"label": "Compliance Reports",
+							"icon": "ChartBoxOutline",
+							"route": "ComplianceReports",
+							"order": 30
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-schatkistbankieren",
+					"id": "TreasuryAccounts",
+					"route": "/governance/treasury-accounts",
+					"type": "index",
+					"title": "Treasury Accounts"
+				},
+				{
+					"_fragment": "bookkeeping-schatkistbankieren",
+					"id": "TreasuryAccountDetail",
+					"route": "/governance/treasury-accounts/:id",
+					"type": "detail",
+					"title": "Treasury Account"
+				},
+				{
+					"_fragment": "bookkeeping-schatkistbankieren",
+					"id": "BankingRules",
+					"route": "/governance/banking-rules",
+					"type": "index",
+					"title": "Banking Rules"
+				},
+				{
+					"_fragment": "bookkeeping-schatkistbankieren",
+					"id": "BankingRuleDetail",
+					"route": "/governance/banking-rules/:id",
+					"type": "detail",
+					"title": "Banking Rule"
+				},
+				{
+					"_fragment": "bookkeeping-schatkistbankieren",
+					"id": "ComplianceReports",
+					"route": "/governance/compliance-reports",
+					"type": "index",
+					"title": "Compliance Reports"
+				},
+				{
+					"_fragment": "bookkeeping-schatkistbankieren",
+					"id": "ComplianceReportDetail",
+					"route": "/governance/compliance-reports/:id",
+					"type": "detail",
+					"title": "Compliance Report"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"label": "Bookkeeping",
+					"icon": "NotebookOutline",
+					"order": 20,
+					"children": [
+						{
+							"id": "ContinuousClose",
+							"label": "Continuous Close",
+							"icon": "Restore",
+							"route": "ContinuousClose",
+							"order": 66
+						},
+						{
+							"id": "AccrualRules",
+							"label": "Accrual Rules",
+							"icon": "CalendarSync",
+							"route": "AccrualRules",
+							"order": 67
+						},
+						{
+							"id": "FluxAnalysis",
+							"label": "Flux Analysis",
+							"icon": "ChartLine",
+							"route": "FluxAnalysis",
+							"order": 68
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-soft-close-flux",
+					"id": "ContinuousClose",
+					"route": "/bookkeeping/continuous-close",
+					"type": "index",
+					"title": "Continuous Close"
+				},
+				{
+					"_fragment": "bookkeeping-soft-close-flux",
+					"id": "ContinuousCloseDetail",
+					"route": "/bookkeeping/continuous-close/:id",
+					"type": "detail",
+					"title": "Continuous Close"
+				},
+				{
+					"_fragment": "bookkeeping-soft-close-flux",
+					"id": "AccrualRules",
+					"route": "/bookkeeping/accrual-rules",
+					"type": "index",
+					"title": "Accrual Rules"
+				},
+				{
+					"_fragment": "bookkeeping-soft-close-flux",
+					"id": "AccrualRuleDetail",
+					"route": "/bookkeeping/accrual-rules/:id",
+					"type": "detail",
+					"title": "Accrual Rule"
+				},
+				{
+					"_fragment": "bookkeeping-soft-close-flux",
+					"id": "FluxAnalysis",
+					"route": "/bookkeeping/flux-analysis",
+					"type": "index",
+					"title": "Flux Analysis"
+				},
+				{
+					"_fragment": "bookkeeping-soft-close-flux",
+					"id": "FluxRunDetail",
+					"route": "/bookkeeping/flux-analysis/:id",
+					"type": "detail",
+					"title": "Flux Run"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"label": "Bookkeeping",
+					"icon": "NotebookOutline",
+					"order": 20,
+					"children": [
+						{
+							"id": "Jaarrekening",
+							"label": "Annual accounts",
+							"icon": "FileDocumentOutline",
+							"route": "Jaarrekening",
+							"order": 60
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-titel-9-jaarrekening",
+					"id": "Jaarrekening",
+					"route": "/bookkeeping/jaarrekening",
+					"type": "index",
+					"title": "Annual accounts"
+				},
+				{
+					"_fragment": "bookkeeping-titel-9-jaarrekening",
+					"id": "JaarrekeningDetail",
+					"route": "/bookkeeping/jaarrekening/:id",
+					"type": "detail",
+					"title": "Annual accounts"
+				},
+				{
+					"_fragment": "bookkeeping-titel-9-jaarrekening",
+					"id": "ReviewWorkflowDetail",
+					"route": "/bookkeeping/jaarrekening/review/:id",
+					"type": "detail",
+					"title": "Review workflow"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "VATReturns",
+					"label": "BTW return",
+					"icon": "PercentOutline",
+					"route": "VATReturns",
+					"order": 70
+				},
+				{
+					"id": "VATReports",
+					"label": "BTW report",
+					"icon": "PercentOutline",
+					"route": "VATReports",
+					"order": 71
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-vat-btw-filing",
+					"id": "VATReturns",
+					"route": "/vat-returns",
+					"type": "index",
+					"title": "BTW returns"
+				},
+				{
+					"_fragment": "bookkeeping-vat-btw-filing",
+					"id": "VATReturnDetail",
+					"route": "/vat-returns/:id",
+					"type": "detail",
+					"title": "BTW return"
+				},
+				{
+					"_fragment": "bookkeeping-vat-btw-filing",
+					"id": "VATReports",
+					"route": "/vat-reports",
+					"type": "dashboard",
+					"title": "BTW report"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Commitments",
+					"label": "Commitments",
+					"icon": "FileSign",
+					"order": 30,
+					"children": [
+						{
+							"id": "CommitmentsRegister",
+							"label": "Commitments register",
+							"icon": "DatabaseOutline",
+							"route": "CommitmentsRegister",
+							"order": 10
+						},
+						{
+							"id": "Mandates",
+							"label": "Mandates",
+							"icon": "AccountKey",
+							"route": "Mandates",
+							"order": 20
+						},
+						{
+							"id": "ApprovalSteps",
+							"label": "Approvals",
+							"icon": "CheckDecagramOutline",
+							"route": "ApprovalSteps",
+							"order": 30
+						},
+						{
+							"id": "BudgetLineCommitments",
+							"label": "Committed vs. realised",
+							"icon": "ChartBoxOutline",
+							"route": "BudgetLineCommitments",
+							"order": 40
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-verplichtingenadministratie",
+					"id": "CommitmentsRegister",
+					"route": "/commitments",
+					"type": "index",
+					"title": "Commitments register"
+				},
+				{
+					"_fragment": "bookkeeping-verplichtingenadministratie",
+					"id": "CommitmentDetail",
+					"route": "/commitments/:id",
+					"type": "detail",
+					"title": "Commitment"
+				},
+				{
+					"_fragment": "bookkeeping-verplichtingenadministratie",
+					"id": "BudgetLineCommitments",
+					"route": "/commitments/budget-lines",
+					"type": "custom",
+					"title": "Committed vs. realised"
+				},
+				{
+					"_fragment": "bookkeeping-verplichtingenadministratie",
+					"id": "Mandates",
+					"route": "/commitments/mandates",
+					"type": "index",
+					"title": "Mandates"
+				},
+				{
+					"_fragment": "bookkeeping-verplichtingenadministratie",
+					"id": "MandateDetail",
+					"route": "/commitments/mandates/:id",
+					"type": "detail",
+					"title": "Mandate"
+				},
+				{
+					"_fragment": "bookkeeping-verplichtingenadministratie",
+					"id": "ApprovalSteps",
+					"route": "/commitments/approvals",
+					"type": "index",
+					"title": "Approvals"
+				},
+				{
+					"_fragment": "bookkeeping-verplichtingenadministratie",
+					"id": "ApprovalStepDetail",
+					"route": "/commitments/approvals/:id",
+					"type": "detail",
+					"title": "Approval step"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"label": "Bookkeeping",
+					"icon": "NotebookOutline",
+					"order": 20,
+					"children": [
+						{
+							"id": "Provisions",
+							"label": "Provisions",
+							"icon": "ShieldAlertOutline",
+							"route": "Provisions",
+							"order": 80
+						},
+						{
+							"id": "ProvisionMovements",
+							"label": "Provision Movements",
+							"icon": "TableArrowRight",
+							"route": "ProvisionMovements",
+							"order": 81
+						},
+						{
+							"id": "ContingentLiabilities",
+							"label": "Contingent Liabilities",
+							"icon": "AlertOctagonOutline",
+							"route": "ContingentLiabilities",
+							"order": 82
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-voorzieningen-claims",
+					"id": "Provisions",
+					"route": "/bookkeeping/provisions",
+					"type": "index",
+					"title": "Provisions"
+				},
+				{
+					"_fragment": "bookkeeping-voorzieningen-claims",
+					"id": "ProvisionMovements",
+					"route": "/bookkeeping/provision-movements",
+					"type": "index",
+					"title": "Provision Movements"
+				},
+				{
+					"_fragment": "bookkeeping-voorzieningen-claims",
+					"id": "ContingentLiabilities",
+					"route": "/bookkeeping/contingent-liabilities",
+					"type": "index",
+					"title": "Contingent Liabilities"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "VennootschapsbelastingBalans",
+					"label": "Corporate income tax (Vpb)",
+					"icon": "PercentOutline",
+					"order": 36,
+					"children": [
+						{
+							"id": "VpbPligtigeAccounts",
+							"label": "Vpb-liable accounts",
+							"icon": "BookmarkCheckOutline",
+							"route": "VpbPligtigeAccounts",
+							"order": 10
+						},
+						{
+							"id": "VpbBalansLinks",
+							"label": "Business activities (Vpb balance link)",
+							"icon": "LinkVariant",
+							"route": "VpbBalansLinks",
+							"order": 20
+						},
+						{
+							"id": "VpbBalansAangifte",
+							"label": "Vpb balance + return preparation",
+							"icon": "FileDocumentMultipleOutline",
+							"route": "VpbBalansAangifte",
+							"order": 30
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-vpb-corporate-tax-balans",
+					"id": "VpbPligtigeAccounts",
+					"route": "/bookkeeping/vpb-balans/accounts",
+					"type": "index",
+					"title": "Vpb-liable accounts"
+				},
+				{
+					"_fragment": "bookkeeping-vpb-corporate-tax-balans",
+					"id": "VpbBalansLinks",
+					"route": "/bookkeeping/vpb-balans/links",
+					"type": "index",
+					"title": "Business activities (Vpb balance link)"
+				},
+				{
+					"_fragment": "bookkeeping-vpb-corporate-tax-balans",
+					"id": "VpbBalansLinkDetail",
+					"route": "/bookkeeping/vpb-balans/links/:id",
+					"type": "detail",
+					"title": "Vpb balance link"
+				},
+				{
+					"_fragment": "bookkeeping-vpb-corporate-tax-balans",
+					"id": "VpbBalansAangifte",
+					"route": "/bookkeeping/vpb-balans/aangifte",
+					"type": "detail",
+					"title": "Vpb balance + return preparation"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Vpb",
+					"label": "Corporate tax (Vpb)",
+					"icon": "PercentOutline",
+					"order": 35,
+					"children": [
+						{
+							"id": "VpbDeadlines",
+							"label": "Tax deadlines",
+							"icon": "ClockAlertOutline",
+							"route": "VpbDeadlines",
+							"order": 10
+						},
+						{
+							"id": "VpbPayments",
+							"label": "Tax payments",
+							"icon": "CreditCardOutline",
+							"route": "VpbPayments",
+							"order": 20
+						},
+						{
+							"id": "VpbReports",
+							"label": "Quarterly statement",
+							"icon": "FileChartOutline",
+							"route": "VpbReports",
+							"order": 30
+						},
+						{
+							"id": "VpbSettings",
+							"label": "Vpb settings",
+							"icon": "CogOutline",
+							"route": "VpbSettings",
+							"order": 40
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-vpb-corporate-tax",
+					"id": "VpbDeadlines",
+					"route": "/bookkeeping/vpb/deadlines",
+					"type": "index",
+					"title": "Tax deadlines"
+				},
+				{
+					"_fragment": "bookkeeping-vpb-corporate-tax",
+					"id": "VpbDeadlineDetail",
+					"route": "/bookkeeping/vpb/deadlines/:id",
+					"type": "detail",
+					"title": "Tax deadline"
+				},
+				{
+					"_fragment": "bookkeeping-vpb-corporate-tax",
+					"id": "VpbPayments",
+					"route": "/bookkeeping/vpb/payments",
+					"type": "index",
+					"title": "Tax payments"
+				},
+				{
+					"_fragment": "bookkeeping-vpb-corporate-tax",
+					"id": "VpbPaymentDetail",
+					"route": "/bookkeeping/vpb/payments/:id",
+					"type": "detail",
+					"title": "Tax payment"
+				},
+				{
+					"_fragment": "bookkeeping-vpb-corporate-tax",
+					"id": "VpbReports",
+					"route": "/bookkeeping/vpb/reports",
+					"type": "index",
+					"title": "Quarterly statement"
+				},
+				{
+					"_fragment": "bookkeeping-vpb-corporate-tax",
+					"id": "VpbSettings",
+					"route": "/bookkeeping/vpb/settings",
+					"type": "settings",
+					"title": "Vpb settings"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "BBVCompliance",
+					"label": "BBV",
+					"icon": "WaterCheckOutline",
+					"order": 11,
+					"visibility": {
+						"field": "administrationType",
+						"in": [
+							"waterschap"
+						]
+					},
+					"children": [
+						{
+							"id": "BBVComplianceDashboard",
+							"label": "BBV Compliance Dashboard",
+							"icon": "ViewDashboardOutline",
+							"route": "BBVComplianceDashboard",
+							"order": 10
+						},
+						{
+							"id": "BudgetBBVMappings",
+							"label": "Budget Mapping",
+							"icon": "SwapHorizontal",
+							"route": "BudgetBBVMappings",
+							"order": 20
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-waterschappen-bbv-variant-04-manifest-routes",
+					"id": "BBVComplianceDashboard",
+					"route": "/bbv-dashboard",
+					"type": "custom",
+					"title": "BBV Compliance Dashboard"
+				},
+				{
+					"_fragment": "bookkeeping-waterschappen-bbv-variant-04-manifest-routes",
+					"id": "BudgetBBVMappings",
+					"route": "/budget-mappings",
+					"type": "custom",
+					"title": "Budget Mapping"
+				},
+				{
+					"_fragment": "bookkeeping-waterschappen-bbv-variant-04-manifest-routes",
+					"id": "BudgetBBVMappingDetail",
+					"route": "/budget-mappings/:id",
+					"type": "detail",
+					"title": "Budget Mapping"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-waterschappen-bbv-variant-07-mapping-detail",
+					"id": "BudgetBBVMappingDetail",
+					"route": "/budget-mappings/:id",
+					"type": "custom",
+					"title": "Budget Mapping"
+				},
+				{
+					"_fragment": "bookkeeping-waterschappen-bbv-variant-07-mapping-detail",
+					"id": "BudgetMappingDetail",
+					"route": "/budget-mappings/by-programme/:id",
+					"type": "custom",
+					"title": "Budget Mapping"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"label": "Bookkeeping",
+					"icon": "NotebookOutline",
+					"order": 20,
+					"children": [
+						{
+							"id": "WbsoChartOfAccounts",
+							"label": "Chart of Accounts",
+							"icon": "NotebookOutline",
+							"route": "WbsoChartOfAccounts",
+							"order": 10
+						},
+						{
+							"id": "WbsoTransactions",
+							"label": "Transactions",
+							"icon": "ReceiptTextOutline",
+							"route": "WbsoTransactions",
+							"order": 20
+						},
+						{
+							"id": "WbsoDocuments",
+							"label": "Documents",
+							"icon": "FileDocumentMultipleOutline",
+							"route": "WbsoDocuments",
+							"order": 30
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-wbso-sno-administratie",
+					"id": "WbsoChartOfAccounts",
+					"route": "/bookkeeping/chart-of-accounts",
+					"type": "custom",
+					"title": "Chart of Accounts"
+				},
+				{
+					"_fragment": "bookkeeping-wbso-sno-administratie",
+					"id": "WbsoTransactions",
+					"route": "/bookkeeping/transactions",
+					"type": "custom",
+					"title": "Transactions"
+				},
+				{
+					"_fragment": "bookkeeping-wbso-sno-administratie",
+					"id": "WbsoDocuments",
+					"route": "/bookkeeping/documents",
+					"type": "custom",
+					"title": "Documents"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Treasury",
+					"label": "Treasury",
+					"icon": "BankOutline",
+					"order": 80,
+					"children": [
+						{
+							"id": "TreasuryDashboard",
+							"label": "Treasury Dashboard",
+							"icon": "ViewDashboardOutline",
+							"route": "TreasuryDashboard",
+							"order": 10
+						},
+						{
+							"id": "Treasurystatuten",
+							"label": "Treasurystatuut",
+							"icon": "BankOutline",
+							"route": "Treasurystatuten",
+							"order": 20
+						},
+						{
+							"id": "Leningen",
+							"label": "Loans",
+							"icon": "CashMultiple",
+							"route": "Leningen",
+							"order": 30
+						},
+						{
+							"id": "Derivaten",
+							"label": "Derivatives",
+							"icon": "SwapHorizontal",
+							"route": "Derivaten",
+							"order": 40
+						},
+						{
+							"id": "QuartaalrapportagesFido",
+							"label": "Quarterly Fido Reports",
+							"icon": "ChartBoxOutline",
+							"route": "QuartaalrapportagesFido",
+							"order": 50
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "bookkeeping-wet-fido-treasury",
+					"id": "TreasuryDashboard",
+					"route": "/treasury/dashboard",
+					"type": "dashboard",
+					"title": "Treasury Dashboard"
+				},
+				{
+					"_fragment": "bookkeeping-wet-fido-treasury",
+					"id": "Treasurystatuten",
+					"route": "/treasury/treasurystatuten",
+					"type": "index",
+					"title": "Treasurystatuut"
+				},
+				{
+					"_fragment": "bookkeeping-wet-fido-treasury",
+					"id": "TreasurystatuutDetail",
+					"route": "/treasury/treasurystatuten/:id",
+					"type": "detail",
+					"title": "Treasurystatuut"
+				},
+				{
+					"_fragment": "bookkeeping-wet-fido-treasury",
+					"id": "Leningen",
+					"route": "/treasury/leningen",
+					"type": "index",
+					"title": "Loans"
+				},
+				{
+					"_fragment": "bookkeeping-wet-fido-treasury",
+					"id": "LeningDetail",
+					"route": "/treasury/leningen/:id",
+					"type": "detail",
+					"title": "Loan"
+				},
+				{
+					"_fragment": "bookkeeping-wet-fido-treasury",
+					"id": "Derivaten",
+					"route": "/treasury/derivaten",
+					"type": "index",
+					"title": "Derivatives"
+				},
+				{
+					"_fragment": "bookkeeping-wet-fido-treasury",
+					"id": "DerivaatDetail",
+					"route": "/treasury/derivaten/:id",
+					"type": "detail",
+					"title": "Derivative"
+				},
+				{
+					"_fragment": "bookkeeping-wet-fido-treasury",
+					"id": "QuartaalrapportagesFido",
+					"route": "/treasury/quartaalrapportages-fido",
+					"type": "index",
+					"title": "Quarterly Fido Reports"
+				},
+				{
+					"_fragment": "bookkeeping-wet-fido-treasury",
+					"id": "QuartaalrapportageFidoDetail",
+					"route": "/treasury/quartaalrapportages-fido/:id",
+					"type": "detail",
+					"title": "Quarterly Fido Report"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Budgets",
+					"label": "Budgets",
+					"icon": "PiggyBankOutline",
+					"order": 29,
+					"children": [
+						{
+							"id": "AnnualBudgets",
+							"label": "Annual Budgets",
+							"icon": "CalendarRange",
+							"route": "AnnualBudgets",
+							"order": 10
+						},
+						{
+							"id": "LedgerGroups",
+							"label": "Ledger Groups",
+							"icon": "FormatListGroup",
+							"route": "LedgerGroups",
+							"order": 20
+						},
+						{
+							"id": "BudgetLines",
+							"label": "Budget Lines",
+							"icon": "TableColumn",
+							"route": "BudgetLines",
+							"order": 30
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "budget-core-schema",
+					"id": "AnnualBudgets",
+					"route": "/begroting/annual-budgets",
+					"type": "index",
+					"title": "Annual Budgets"
+				},
+				{
+					"_fragment": "budget-core-schema",
+					"id": "AnnualBudgetDetail",
+					"route": "/begroting/annual-budgets/:id",
+					"type": "detail",
+					"title": "Annual Budget"
+				},
+				{
+					"_fragment": "budget-core-schema",
+					"id": "LedgerGroups",
+					"route": "/begroting/ledger-groups",
+					"type": "index",
+					"title": "Ledger Groups"
+				},
+				{
+					"_fragment": "budget-core-schema",
+					"id": "LedgerGroupDetail",
+					"route": "/begroting/ledger-groups/:id",
+					"type": "detail",
+					"title": "Ledger Group"
+				},
+				{
+					"_fragment": "budget-core-schema",
+					"id": "BudgetLines",
+					"route": "/begroting/budget-lines",
+					"type": "index",
+					"title": "Budget Lines"
+				},
+				{
+					"_fragment": "budget-core-schema",
+					"id": "BudgetLineDetail",
+					"route": "/begroting/budget-lines/:id",
+					"type": "detail",
+					"title": "Budget Line"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Budgets",
+					"children": [
+						{
+							"id": "BudgetGrid",
+							"label": "Budget Grid",
+							"icon": "TableLarge",
+							"route": "BudgetGrid",
+							"order": 5
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "budget-grid-view",
+					"id": "BudgetGrid",
+					"route": "/begroting/grid",
+					"type": "custom",
+					"title": "Budget Grid"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Budgets",
+					"label": "Budgets",
+					"icon": "PiggyBankOutline",
+					"order": 29,
+					"children": [
+						{
+							"id": "BudgetLineDerivations",
+							"label": "Derivations",
+							"icon": "SourceBranch",
+							"route": "BudgetLineDerivations",
+							"order": 40
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "budget-known-costs",
+					"id": "BudgetLineDerivations",
+					"route": "/begroting/derivations",
+					"type": "index",
+					"title": "Budget Line Derivations"
+				},
+				{
+					"_fragment": "budget-known-costs",
+					"id": "BudgetLineDerivationDetail",
+					"route": "/begroting/derivations/:id",
+					"type": "detail",
+					"title": "Budget Line Derivation"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Budgets",
+					"label": "Budgets",
+					"icon": "PiggyBankOutline",
+					"order": 29,
+					"children": [
+						{
+							"id": "BudgetScenarios",
+							"label": "Scenarios",
+							"icon": "SourceBranch",
+							"route": "BudgetScenarios",
+							"order": 40
+						},
+						{
+							"id": "BudgetScenarioModifiers",
+							"label": "Scenario Modifiers",
+							"icon": "TuneVariant",
+							"route": "BudgetScenarioModifiers",
+							"order": 50
+						},
+						{
+							"id": "BudgetScenarioComparison",
+							"label": "Scenario Comparison",
+							"icon": "CompareHorizontal",
+							"route": "BudgetScenarioComparison",
+							"order": 60
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "budget-scenarios",
+					"id": "BudgetScenarios",
+					"route": "/begroting/scenarios",
+					"type": "index",
+					"title": "Budget Scenarios"
+				},
+				{
+					"_fragment": "budget-scenarios",
+					"id": "BudgetScenarioDetail",
+					"route": "/begroting/scenarios/:id",
+					"type": "detail",
+					"title": "Budget Scenario"
+				},
+				{
+					"_fragment": "budget-scenarios",
+					"id": "BudgetScenarioModifiers",
+					"route": "/begroting/scenario-modifiers",
+					"type": "index",
+					"title": "Budget Scenario Modifiers"
+				},
+				{
+					"_fragment": "budget-scenarios",
+					"id": "BudgetScenarioModifierDetail",
+					"route": "/begroting/scenario-modifiers/:id",
+					"type": "detail",
+					"title": "Budget Scenario Modifier"
+				},
+				{
+					"_fragment": "budget-scenarios",
+					"id": "BudgetScenarioComparison",
+					"route": "/begroting/scenarios/compare",
+					"type": "custom",
+					"title": "Scenario Comparison"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "DeadlineCalendarSettings",
+					"label": "Deadline calendar",
+					"icon": "ClockAlertOutline",
+					"route": "DeadlineCalendarSettings",
+					"order": 30
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "compliance-deadline-calendar",
+					"id": "DeadlineCalendarSettings",
+					"route": "/settings/deadline-calendar",
+					"type": "custom",
+					"title": "Deadline calendar"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Purchasing",
+					"children": [
+						{
+							"id": "SupplierInvoicesMissingDocument",
+							"label": "Missing Supplier Documents",
+							"icon": "FileDocumentMultipleOutline",
+							"route": "SupplierInvoices",
+							"query": {
+								"sourceDocumentUri_isnull": "true"
+							},
+							"order": 29
+						},
+						{
+							"id": "ReceiptsMissingDocument",
+							"label": "Missing Receipt Photos",
+							"icon": "FileAlertOutline",
+							"route": "Receipts",
+							"query": {
+								"sourceDocumentUri_isnull": "true"
+							},
+							"order": 29
+						}
+					]
+				}
+			],
+			"pages": []
+		},
+		{
+			"menu": [
+				{
+					"id": "Contracts",
+					"label": "Contracts",
+					"icon": "FileSign",
+					"order": 25,
+					"children": [
+						{
+							"id": "Contracts",
+							"label": "Procurement Contracts",
+							"icon": "FileSign",
+							"route": "Contracts",
+							"order": 10
+						},
+						{
+							"id": "ContractObligations",
+							"label": "Obligations",
+							"icon": "ClipboardCheckOutline",
+							"route": "ContractObligations",
+							"order": 20
+						},
+						{
+							"id": "ContractSpend",
+							"label": "Contract Spend",
+							"icon": "FileSign",
+							"route": "ContractSpendDashboard",
+							"order": 30
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "contract-lifecycle-management",
+					"id": "Contracts",
+					"route": "/contracts",
+					"type": "index",
+					"title": "Procurement Contracts"
+				},
+				{
+					"_fragment": "contract-lifecycle-management",
+					"id": "ContractDetail",
+					"route": "/contracts/:id",
+					"type": "detail",
+					"title": "Contract"
+				},
+				{
+					"_fragment": "contract-lifecycle-management",
+					"id": "ContractObligations",
+					"route": "/contracts/obligations",
+					"type": "index",
+					"title": "Contract Obligations"
+				},
+				{
+					"_fragment": "contract-lifecycle-management",
+					"id": "ContractObligationDetail",
+					"route": "/contracts/obligations/:id",
+					"type": "detail",
+					"title": "Contract Obligation"
+				},
+				{
+					"_fragment": "contract-lifecycle-management",
+					"id": "ContractSpendDashboard",
+					"route": "/contracts/spend",
+					"type": "custom",
+					"title": "Contract Spend"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "DBACompliance",
+					"label": "DBA Compliance",
+					"icon": "ClipboardCheckOutline",
+					"order": 55,
+					"children": [
+						{
+							"id": "DBAIntakes",
+							"label": "DBA Intake Wizard",
+							"icon": "ClipboardListOutline",
+							"route": "DBAIntakes",
+							"order": 20
+						},
+						{
+							"id": "DBARisicoflags",
+							"label": "Risk Flags",
+							"icon": "FlagVariantOutline",
+							"route": "DBARisicoflags",
+							"order": 60
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "dba-compliance-marker",
+					"id": "DBAIntakes",
+					"route": "/dba/intakes",
+					"type": "index",
+					"title": "DBA Intake Wizard"
+				},
+				{
+					"_fragment": "dba-compliance-marker",
+					"id": "DBAIntakeDetail",
+					"route": "/dba/intakes/:id",
+					"type": "detail",
+					"title": "DBA Intake"
+				},
+				{
+					"_fragment": "dba-compliance-marker",
+					"id": "DBARisicoflags",
+					"route": "/dba/flags",
+					"type": "index",
+					"title": "Risk Flags"
+				},
+				{
+					"_fragment": "dba-compliance-marker",
+					"id": "DBARisicoflagDetail",
+					"route": "/dba/flags/:id",
+					"type": "detail",
+					"title": "Risk Flag"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "ExpenseSettlement",
+					"label": "Expense Settlement",
+					"icon": "ReceiptOutline",
+					"order": 80,
+					"children": [
+						{
+							"id": "ExpenseSettlementClassifier",
+							"label": "Settlement Classifier",
+							"icon": "FormatListChecks",
+							"route": "ExpenseSettlementClassifier",
+							"order": 10
+						},
+						{
+							"id": "ReimbursementPolicies",
+							"label": "Reimbursement Policies",
+							"icon": "ShieldCheckOutline",
+							"route": "ReimbursementPolicies",
+							"order": 20
+						},
+						{
+							"id": "PassThroughMarkupRules",
+							"label": "Pass-through Markup Rules",
+							"icon": "PercentOutline",
+							"route": "PassThroughMarkupRules",
+							"order": 30
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "expense-reimbursement-or-passthrough",
+					"id": "ExpenseSettlementClassifier",
+					"route": "/expense-settlement-classifier",
+					"type": "custom",
+					"title": "Expense Settlement Classifier"
+				},
+				{
+					"_fragment": "expense-reimbursement-or-passthrough",
+					"id": "ReimbursementPolicies",
+					"route": "/reimbursement-policies",
+					"type": "index",
+					"title": "Reimbursement Policies"
+				},
+				{
+					"_fragment": "expense-reimbursement-or-passthrough",
+					"id": "ReimbursementPolicyDetail",
+					"route": "/reimbursement-policies/:id",
+					"type": "detail",
+					"title": "Reimbursement Policy"
+				},
+				{
+					"_fragment": "expense-reimbursement-or-passthrough",
+					"id": "PassThroughMarkupRules",
+					"route": "/passthrough-markup-rules",
+					"type": "index",
+					"title": "Pass-through Markup Rules"
+				},
+				{
+					"_fragment": "expense-reimbursement-or-passthrough",
+					"id": "PassThroughMarkupRuleDetail",
+					"route": "/passthrough-markup-rules/:id",
+					"type": "detail",
+					"title": "Pass-through Markup Rule"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "ExternalConnections",
+					"label": "External Connections",
+					"icon": "TransitConnectionVariant",
+					"route": "ExternalAdaptersStatus",
+					"order": 46
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "external-adapters-w8",
+					"id": "ExternalAdaptersStatus",
+					"route": "/external-adapters",
+					"type": "custom",
+					"title": "External Connections"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Inventory",
+					"label": "Inventory",
+					"icon": "Warehouse",
+					"order": 22,
+					"children": [
+						{
+							"id": "CycleCounts",
+							"label": "Cycle Counts",
+							"icon": "ClipboardListOutline",
+							"route": "CycleCounts",
+							"order": 50
+						},
+						{
+							"id": "CountTemplates",
+							"label": "Count Templates",
+							"icon": "FileReplaceOutline",
+							"route": "CountTemplates",
+							"order": 51
+						},
+						{
+							"id": "VarianceReports",
+							"label": "Variance Reports",
+							"icon": "ChartBoxOutline",
+							"route": "VarianceReports",
+							"order": 52
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "inventory-cycle-count",
+					"id": "CycleCounts",
+					"route": "/inventory/cycle-counts",
+					"type": "index",
+					"title": "Cycle Counts"
+				},
+				{
+					"_fragment": "inventory-cycle-count",
+					"id": "CycleCountDetail",
+					"route": "/inventory/cycle-counts/:id",
+					"type": "detail",
+					"title": "Cycle Count"
+				},
+				{
+					"_fragment": "inventory-cycle-count",
+					"id": "CountTemplates",
+					"route": "/inventory/count-templates",
+					"type": "index",
+					"title": "Count Templates"
+				},
+				{
+					"_fragment": "inventory-cycle-count",
+					"id": "VarianceReports",
+					"route": "/inventory/variance-reports",
+					"type": "index",
+					"title": "Variance Reports"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Inventory",
+					"label": "Inventory",
+					"icon": "Warehouse",
+					"order": 38,
+					"children": [
+						{
+							"id": "MobileScannerHome",
+							"label": "Mobile Scanner",
+							"icon": "BarcodeScan",
+							"route": "MobileScannerHome",
+							"order": 10
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "inventory-mobile-scanner",
+					"id": "MobileScannerHome",
+					"route": "/inventory/mobile",
+					"type": "custom",
+					"title": "Inventory Mobile Scanner"
+				},
+				{
+					"_fragment": "inventory-mobile-scanner",
+					"id": "MobileScannerReceive",
+					"route": "/inventory/mobile/receive",
+					"type": "custom",
+					"title": "Receive Goods"
+				},
+				{
+					"_fragment": "inventory-mobile-scanner",
+					"id": "MobileScannerTransfer",
+					"route": "/inventory/mobile/transfer",
+					"type": "custom",
+					"title": "Transfer Inventory"
+				},
+				{
+					"_fragment": "inventory-mobile-scanner",
+					"id": "MobileScannerPick",
+					"route": "/inventory/mobile/pick",
+					"type": "custom",
+					"title": "Pick for Order"
+				},
+				{
+					"_fragment": "inventory-mobile-scanner",
+					"id": "MobileScannerCount",
+					"route": "/inventory/mobile/count",
+					"type": "custom",
+					"title": "Inventory Count"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Inventory",
+					"children": [
+						{
+							"id": "ProductCatalog",
+							"label": "Products",
+							"icon": "PackageVariantClosed",
+							"route": "ProductCatalog",
+							"order": 5
+						},
+						{
+							"id": "ProductAttributeCatalog",
+							"label": "Product Attributes",
+							"icon": "FormatListBulletedType",
+							"route": "ProductAttributeCatalog",
+							"order": 6
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "inventory-product-catalog",
+					"id": "ProductCatalog",
+					"route": "/inventory/products",
+					"type": "custom",
+					"title": "Products"
+				},
+				{
+					"_fragment": "inventory-product-catalog",
+					"id": "ProductAttributeCatalog",
+					"route": "/inventory/product-attributes",
+					"type": "custom",
+					"title": "Product Attributes"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Inventory",
+					"label": "Inventory",
+					"icon": "Warehouse",
+					"order": 22,
+					"children": [
+						{
+							"id": "StockMovements",
+							"label": "Stock Movements",
+							"icon": "SwapHorizontalBold",
+							"route": "StockMovements",
+							"order": 45
+						},
+						{
+							"id": "StockLedger",
+							"label": "Stock Ledger",
+							"icon": "BookOpenVariantOutline",
+							"route": "StockLedger",
+							"order": 46
+						},
+						{
+							"id": "ReservedStock",
+							"label": "Stock reservations (movements)",
+							"icon": "LockOutline",
+							"route": "StockMovements",
+							"query": {
+								"lifecycleState": "draft"
+							},
+							"order": 47
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "inventory-stock-movement-ledger",
+					"id": "StockMovements",
+					"route": "/inventory/stock-movements",
+					"type": "index",
+					"title": "Stock Movements"
+				},
+				{
+					"_fragment": "inventory-stock-movement-ledger",
+					"id": "StockMovementDetail",
+					"route": "/inventory/stock-movements/:id",
+					"type": "detail",
+					"title": "Stock Movement"
+				},
+				{
+					"_fragment": "inventory-stock-movement-ledger",
+					"id": "StockLedger",
+					"route": "/inventory/stock-ledger",
+					"type": "index",
+					"title": "Stock Ledger"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "inventory-valuation-fifo-avg",
+					"id": "InventoryValuationDetail",
+					"route": "/inventory/valuations/:id",
+					"type": "detail",
+					"title": "Inventory Valuation"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "BillableInvoices",
+					"label": "Invoices",
+					"icon": "ReceiptTextOutline",
+					"order": 36,
+					"children": [
+						{
+							"id": "BillableInvoiceList",
+							"label": "All invoices",
+							"icon": "ReceiptTextOutline",
+							"route": "BillableInvoiceList",
+							"order": 10
+						},
+						{
+							"id": "BillableInvoiceGenerate",
+							"label": "Generate invoice",
+							"icon": "ReceiptTextOutline",
+							"route": "BillableInvoiceGenerate",
+							"order": 20
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "invoice-from-time-and-expense",
+					"id": "BillableInvoiceList",
+					"route": "/invoice",
+					"type": "custom",
+					"title": "Invoices"
+				},
+				{
+					"_fragment": "invoice-from-time-and-expense",
+					"id": "BillableInvoiceGenerate",
+					"route": "/invoice/generate",
+					"type": "custom",
+					"title": "Generate Invoice"
+				},
+				{
+					"_fragment": "invoice-from-time-and-expense",
+					"id": "BillableInvoiceDetail",
+					"route": "/invoice/:invoiceId",
+					"type": "custom",
+					"title": "Invoice"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Bookkeeping",
+					"route": "BookkeepingOverview"
+				},
+				{
+					"id": "Sales",
+					"route": "SalesOverview"
+				},
+				{
+					"id": "Purchasing",
+					"route": "PurchasingOverview"
+				},
+				{
+					"id": "BankingCashflow",
+					"route": "BankingCashflowOverview"
+				},
+				{
+					"id": "Taxes",
+					"route": "TaxesOverview"
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "nav-six-clusters-landing-pages",
+					"id": "BookkeepingOverview",
+					"route": "/bookkeeping/overview",
+					"type": "custom",
+					"title": "Bookkeeping"
+				},
+				{
+					"_fragment": "nav-six-clusters-landing-pages",
+					"id": "SalesOverview",
+					"route": "/sales/overview",
+					"type": "custom",
+					"title": "Sales"
+				},
+				{
+					"_fragment": "nav-six-clusters-landing-pages",
+					"id": "PurchasingOverview",
+					"route": "/purchasing/overview",
+					"type": "custom",
+					"title": "Purchasing"
+				},
+				{
+					"_fragment": "nav-six-clusters-landing-pages",
+					"id": "BankingCashflowOverview",
+					"route": "/banking-cashflow/overview",
+					"type": "custom",
+					"title": "Banking & Cashflow"
+				},
+				{
+					"_fragment": "nav-six-clusters-landing-pages",
+					"id": "TaxesOverview",
+					"route": "/taxes/overview",
+					"type": "custom",
+					"title": "Taxes"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "Orders",
+					"label": "Orders",
+					"icon": "ClipboardListOutline",
+					"route": "Orders",
+					"order": 28
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "order-workspace",
+					"id": "Orders",
+					"route": "/orders",
+					"type": "index",
+					"title": "Orders"
+				},
+				{
+					"_fragment": "order-workspace",
+					"id": "OrderDetail",
+					"route": "/orders/:id",
+					"type": "detail",
+					"title": "Order"
+				}
+			]
+		},
+		{
+			"menu": [],
+			"pages": [
+				{
+					"_fragment": "receipt-extraction-consume",
+					"id": "ReceiptDetail",
+					"route": "/inkoop/receipts/:id",
+					"type": "custom",
+					"title": "Receipt"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "RecurringInvoicing",
+					"label": "Recurring Invoices",
+					"icon": "ReceiptTextOutline",
+					"route": "RecurringInvoiceProfiles",
+					"order": 46
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "recurring-invoicing",
+					"id": "RecurringInvoiceProfiles",
+					"route": "/bookkeeping/recurring-invoices",
+					"type": "index",
+					"title": "Recurring Invoices"
+				},
+				{
+					"_fragment": "recurring-invoicing",
+					"id": "RecurringInvoiceProfileDetail",
+					"route": "/bookkeeping/recurring-invoices/:id",
+					"type": "detail",
+					"title": "Recurring Invoice Profile"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "ReportingCompliance",
+					"route": "ReportingComplianceOverview"
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "reporting-compliance",
+					"id": "ReportingComplianceOverview",
+					"route": "/reporting-compliance",
+					"type": "custom",
+					"title": "Reporting & Compliance"
+				},
+				{
+					"_fragment": "reporting-compliance",
+					"id": "GeneratedReportsIndex",
+					"route": "/reporting-compliance/generated",
+					"type": "custom",
+					"title": "Generated reports"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "RetainerPools",
+					"label": "Retainer Pools",
+					"icon": "WalletOutline",
+					"route": "RetainerPools",
+					"order": 75
+				},
+				{
+					"id": "RetainerDrawdowns",
+					"label": "Drawdowns",
+					"icon": "ArrowDownBoldOutline",
+					"route": "RetainerDrawdowns",
+					"order": 76
+				},
+				{
+					"id": "RetainerRollovers",
+					"label": "Rollovers",
+					"icon": "ArrowRightBoldOutline",
+					"route": "RetainerRollovers",
+					"order": 77
+				},
+				{
+					"id": "RetainerTrueUps",
+					"label": "True-Ups",
+					"icon": "ScaleBalance",
+					"route": "RetainerTrueUps",
+					"order": 78
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "retainer-billing-engine",
+					"id": "RetainerPools",
+					"route": "/retainer-pools",
+					"type": "index",
+					"title": "Retainer Pools"
+				},
+				{
+					"_fragment": "retainer-billing-engine",
+					"id": "RetainerPoolDetail",
+					"route": "/retainer-pools/:id",
+					"type": "detail",
+					"title": "Retainer Pool"
+				},
+				{
+					"_fragment": "retainer-billing-engine",
+					"id": "RetainerDrawdowns",
+					"route": "/retainer-drawdowns",
+					"type": "index",
+					"title": "Drawdowns"
+				},
+				{
+					"_fragment": "retainer-billing-engine",
+					"id": "RetainerDrawdownDetail",
+					"route": "/retainer-drawdowns/:id",
+					"type": "detail",
+					"title": "Drawdown"
+				},
+				{
+					"_fragment": "retainer-billing-engine",
+					"id": "RetainerRollovers",
+					"route": "/retainer-rollovers",
+					"type": "index",
+					"title": "Rollovers"
+				},
+				{
+					"_fragment": "retainer-billing-engine",
+					"id": "RetainerRolloverDetail",
+					"route": "/retainer-rollovers/:id",
+					"type": "detail",
+					"title": "Rollover"
+				},
+				{
+					"_fragment": "retainer-billing-engine",
+					"id": "RetainerTrueUps",
+					"route": "/retainer-true-ups",
+					"type": "index",
+					"title": "True-Ups"
+				},
+				{
+					"_fragment": "retainer-billing-engine",
+					"id": "RetainerTrueUpDetail",
+					"route": "/retainer-true-ups/:id",
+					"type": "detail",
+					"title": "True-Up"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "ReportingCompliance",
+					"children": [
+						{
+							"id": "SpendAnalytics",
+							"label": "Spend analysis",
+							"icon": "ChartBoxOutline",
+							"route": "SpendAnalytics",
+							"order": 15
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "spend-analytics-ui",
+					"id": "SpendAnalytics",
+					"route": "/reporting-compliance/spend-analytics",
+					"type": "dashboard",
+					"title": "Spend analysis"
+				}
+			]
+		},
+		{
+			"menu": [
+				{
+					"id": "GeneralSettings",
+					"label": "General",
+					"icon": "CogOutline",
+					"href": "/index.php/settings/admin/shillinq",
+					"order": 1
+				}
+			],
+			"pages": []
+		},
+		{
+			"menu": [
+				{
+					"id": "Cashflow",
+					"label": "Cashflow",
+					"icon": "ChartTimelineVariant",
+					"order": 21,
+					"children": [
+						{
+							"id": "CashflowDashboard",
+							"label": "Cashflow Dashboard",
+							"icon": "ViewDashboardOutline",
+							"route": "CashflowDashboard",
+							"order": 10
+						},
+						{
+							"id": "CashflowRecurring",
+							"label": "Recurring Costs",
+							"icon": "Sync",
+							"route": "CashflowRecurring",
+							"order": 20
+						},
+						{
+							"id": "CashflowBufferPolicy",
+							"label": "Buffer Policy",
+							"icon": "ShieldCheckOutline",
+							"route": "CashflowBufferPolicy",
+							"order": 30
+						},
+						{
+							"id": "CashflowScenarios",
+							"label": "Scenarios",
+							"icon": "Sitemap",
+							"route": "CashflowScenarios",
+							"order": 40
+						},
+						{
+							"id": "CashflowCalibration",
+							"label": "Calibration Report",
+							"icon": "ChartBoxOutline",
+							"route": "CashflowCalibration",
+							"order": 50
+						}
+					]
+				}
+			],
+			"pages": [
+				{
+					"_fragment": "zzp-cashflow-13wk",
+					"id": "CashflowWeekDetail",
+					"route": "/cashflow/dashboard/:id",
+					"type": "detail",
+					"title": "Cashflow Week"
+				},
+				{
+					"_fragment": "zzp-cashflow-13wk",
+					"id": "CashflowRecurringDetail",
+					"route": "/cashflow/recurring/:id",
+					"type": "detail",
+					"title": "Recurring Cost"
+				},
+				{
+					"_fragment": "zzp-cashflow-13wk",
+					"id": "CashflowBufferPolicyDetail",
+					"route": "/cashflow/buffer-policy/:id",
+					"type": "detail",
+					"title": "Buffer Policy"
+				},
+				{
+					"_fragment": "zzp-cashflow-13wk",
+					"id": "CashflowScenarioDetail",
+					"route": "/cashflow/scenarios/:id",
+					"type": "detail",
+					"title": "Scenario"
+				},
+				{
+					"_fragment": "zzp-cashflow-13wk",
+					"id": "CashflowCalibration",
+					"route": "/cashflow/calibration",
+					"type": "index",
+					"title": "Calibration Report"
+				},
+				{
+					"_fragment": "zzp-cashflow-13wk",
+					"id": "CashflowCalibrationDetail",
+					"route": "/cashflow/calibration/:id",
+					"type": "detail",
+					"title": "Calibration Report"
+				}
+			]
+		}
+	]
+}

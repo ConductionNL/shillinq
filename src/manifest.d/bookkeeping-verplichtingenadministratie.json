@@ -1,0 +1,278 @@
+{
+	"menu": [
+		{
+			"id": "Commitments",
+			"label": "Commitments",
+			"icon": "FileSign",
+			"order": 30,
+			"children": [
+				{
+					"id": "CommitmentsRegister",
+					"label": "Commitments register",
+					"icon": "DatabaseOutline",
+					"route": "CommitmentsRegister",
+					"order": 10
+				},
+				{
+					"id": "Mandates",
+					"label": "Mandates",
+					"icon": "AccountKey",
+					"route": "Mandates",
+					"order": 20
+				},
+				{
+					"id": "ApprovalSteps",
+					"label": "Approvals",
+					"icon": "CheckDecagramOutline",
+					"route": "ApprovalSteps",
+					"order": 30
+				},
+				{
+					"id": "BudgetLineCommitments",
+					"label": "Committed vs. realised",
+					"icon": "ChartBoxOutline",
+					"route": "BudgetLineCommitments",
+					"order": 40
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "CommitmentsRegister",
+			"route": "/commitments",
+			"type": "index",
+			"title": "Commitments register",
+			"config": {
+				"register": "shillinq",
+				"schema": "Commitment",
+				"columns": [
+					{"key": "commitmentNumber", "label": "Number", "sortable": true},
+					{"key": "kind", "label": "Kind", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true},
+					{"key": "total_amount_excl_vat", "label": "Amount (excl. BTW)", "sortable": true},
+					{"key": "costCentre", "label": "Cost center", "sortable": true},
+					{"key": "commencementDate", "label": "Start date", "sortable": true},
+					{"key": "mandate_applied", "label": "Mandate", "sortable": true}
+				],
+				"defaultSort": "commitmentNumber",
+				"detailRoute": "CommitmentDetail"
+			}
+		},
+		{
+			"id": "CommitmentDetail",
+			"route": "/commitments/:id",
+			"type": "detail",
+			"title": "Commitment",
+			"config": {
+				"register": "shillinq",
+				"schema": "Commitment",
+				"_note": "COMMITMENT (the parent obligation an organisation enters into — a purchase order/contract encumbrance). The body pairs the commitment header (amounts, term, BTW, applied mandate) with its three child registers, all filtered on `verplichting`: the budget lines (CommitmentLine) that break it down per GL/programme with delivered/invoiced/paid running balances, the movements (CommitmentMovement) that draw it down over time, and the approval steps (ApprovalStep) that authorise it. This is the encumbrance-tracking view. No comms leaves; audit trail sidebar records mandate overrides and amount changes.",
+				"fields": [
+					{"key": "commitmentNumber", "label": "Number", "type": "string"},
+					{"key": "kind", "label": "Kind", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "commencementDate", "label": "Start date", "type": "string"},
+					{"key": "term_from", "label": "Term from", "type": "string"},
+					{"key": "term_to", "label": "Term until", "type": "string"},
+					{"key": "total_amount_excl_vat", "label": "Total amount (excl. BTW)", "type": "number"},
+					{"key": "total_amount_incl_vat", "label": "Total amount (incl. BTW)", "type": "number"},
+					{"key": "currency", "label": "Currency", "type": "string"},
+					{"key": "vat_regime", "label": "BTW regime", "type": "string"},
+					{"key": "mandate_applied", "label": "Mandate", "type": "string"},
+					{"key": "override_reason", "label": "Override reason", "type": "string"},
+					{"key": "internal_reference", "label": "Internal reference", "type": "string"},
+					{"key": "sourceReference", "label": "Source reference", "type": "string"}
+				],
+				"relatedObjects": [
+					{
+						"id": "lines",
+						"label": "Commitment lines",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "CommitmentLine",
+							"filterField": "commitment",
+							"columns": ["ruleNumber", "description", "amount_excl_vat", "delivered_amount", "invoiced_amount", "restant_verplicht"]
+						}
+					},
+					{
+						"id": "movements",
+						"label": "Movements",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "CommitmentMovement",
+							"filterField": "commitment",
+							"columns": ["date", "kind", "amount", "related_invoice", "journalEntry"]
+						}
+					},
+					{
+						"id": "approvals",
+						"label": "Approvals",
+						"componentName": "openregister-related-list",
+						"componentProps": {
+							"register": "shillinq",
+							"schema": "ApprovalStep",
+							"filterField": "commitment",
+							"columns": ["stepNumber", "role_required", "assigned_in", "status", "handled_on"]
+						}
+					}
+				],
+				"indexRoute": "CommitmentsRegister",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "BudgetLineCommitments",
+			"route": "/commitments/budget-lines",
+			"type": "custom",
+			"title": "Committed vs. realised",
+			"component": "BudgetLineCommitments",
+			"_note": "Rows are AGGREGATION BUCKETS, not objects: the page renders the committedVsRealisedPerBudgetLine aggregation on CommitmentLine (geautoriseerd / verplicht / gerealiseerd / vrij per budget coding combination) and lets the controller drill from a bucket into the underlying Commitments. `type: index` lists objects of one schema, so it cannot have aggregation buckets as its rows; `type: dashboard` can show an aggregation as a widget but not drill from a row into the commitments behind it (REQ-VPL-011). Both the aggregation and the drilldown go through OpenRegister's own APIs — no parallel shillinq reporting endpoint."
+		},
+		{
+			"id": "Mandates",
+			"route": "/commitments/mandates",
+			"type": "index",
+			"title": "Mandates",
+			"config": {
+				"register": "shillinq",
+				"schema": "Mandate",
+				"columns": [
+					{"key": "mandateCode", "label": "Code", "sortable": true},
+					{"key": "name", "label": "Name", "sortable": true},
+					{"key": "maximumAmount", "label": "Maximum amount", "sortable": true},
+					{"key": "is_override", "label": "Override", "sortable": true},
+					{"key": "valid_to", "label": "Valid until", "sortable": true}
+				],
+				"defaultSort": "mandateCode",
+				"detailRoute": "MandateDetail"
+			}
+		},
+		{
+			"id": "MandateDetail",
+			"route": "/commitments/mandates/:id",
+			"type": "detail",
+			"title": "Mandate",
+			"config": {
+				"register": "shillinq",
+				"schema": "Mandate",
+				"_note": "MANDATE (the authority definition that governs who may enter commitments and up to what amount). The body is the rule: holder + holder type, maximum amount, whether it is an override mandate, the second-signature threshold, validity window and the decision that adopted it. A config record with no children of its own; no comms. The audit trail sidebar is critical — a mandate is a delegated-authority control, so every change to its limits or holder must be traceable.",
+				"fields": [
+					{"key": "mandateCode", "label": "Code", "type": "string"},
+					{"key": "name", "label": "Name", "type": "string"},
+					{"key": "houder", "label": "Holder", "type": "string"},
+					{"key": "houder_type", "label": "Holder type", "type": "string"},
+					{"key": "maximumAmount", "label": "Maximum amount", "type": "number"},
+					{"key": "is_override", "label": "Override mandate", "type": "boolean"},
+					{"key": "required_second_signature_above", "label": "Second signature above", "type": "number"},
+					{"key": "valid_from", "label": "Valid from", "type": "string"},
+					{"key": "valid_to", "label": "Valid until", "type": "string"},
+					{"key": "determined_at", "label": "Adopted by", "type": "string"}
+				],
+				"indexRoute": "Mandates",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": "ApprovalSteps",
+			"route": "/commitments/approvals",
+			"type": "index",
+			"title": "Approvals",
+			"config": {
+				"register": "shillinq",
+				"schema": "ApprovalStep",
+				"columns": [
+					{"key": "commitment", "label": "Commitment", "sortable": true},
+					{"key": "stepNumber", "label": "Step", "sortable": true},
+					{"key": "role_required", "label": "Role", "sortable": true},
+					{"key": "assigned_in", "label": "Assigned to", "sortable": true},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "commitment",
+				"detailRoute": "ApprovalStepDetail"
+			}
+		},
+		{
+			"id": "ApprovalStepDetail",
+			"route": "/commitments/approvals/:id",
+			"type": "detail",
+			"title": "Approval step",
+			"config": {
+				"register": "shillinq",
+				"schema": "ApprovalStep",
+				"_note": "APPROVAL STEP (one node in a commitment's authorisation chain). The body is the step: which commitment, step number, required role, assignee, current status, when it was handled, the remark, and whether a signature is required. A single workflow item with no children; no comms. The audit trail sidebar is the sign-off evidence — approvals must be individually traceable for segregation-of-duties.",
+				"fields": [
+					{"key": "commitment", "label": "Commitment", "type": "string"},
+					{"key": "stepNumber", "label": "Step", "type": "number"},
+					{"key": "role_required", "label": "Role required", "type": "string"},
+					{"key": "assigned_in", "label": "Assigned to", "type": "string"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "handled_on", "label": "Handled on", "type": "string"},
+					{"key": "remark", "label": "Remark", "type": "string"},
+					{"key": "required_signature", "label": "Signature required", "type": "boolean"}
+				],
+				"indexRoute": "ApprovalSteps",
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		}
+	]
+}

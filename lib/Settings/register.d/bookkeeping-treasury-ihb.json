@@ -1,0 +1,1706 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-treasury-ihb",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "T3 strategic + compliance — Treasury / In-house Bank (IHB) / Cash Pooling. Declares nine new schemas (CashPool, CashPoolMembership, IntercompanyLoan, IntercompanyTransaction, FXContract, FXPosition, CashForecast, BankReconciliationGroup, LiquidityKPI) plus their lifecycles, aggregation formulas, RBAC and seed objects. Per ADR-031 all treasury calculation is declarative metadata; the only PHP seam is the period-close precondition guard for IntercompanyTransaction posting (REQ-IHB-005)."
+  },
+  "components": {
+    "schemas": {
+      "CashPool": {
+        "slug": "CashPool",
+        "icon": "BankTransfer",
+        "version": "0.1.0",
+        "title": "Cash Pool",
+        "description": "Group cash-pool header (REQ-IHB-001). Type discriminator distinguishes notional pooling (interest calculated on aggregate, no cash movement) from physical zero-balance / target-balance sweeping. Master account, base currency, daily interest rate, interest-allocation method and minimum-cash policy drive the daily aggregation queries and the n8n sweep orchestration (REQ-IHB-002, REQ-IHB-003).",
+        "x-schema-org": "schema:FinancialProduct",
+        "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "masterAccount",
+          "currency",
+          "interestAllocationMethod",
+          "state",
+          "administrationId"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable pool name.",
+            "example": "Groepmaatschappij EUR Netto Pool",
+            "title": "Name"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "notional",
+              "zero-balance",
+              "target-balance"
+            ],
+            "description": "Pool type discriminator (REQ-IHB-001). Notional = interest only; zero-balance/target-balance = physical sweep.",
+            "title": "Type"
+          },
+          "masterAccount": {
+            "type": "string",
+            "description": "Master account IBAN that sweeps concentrate into (REQ-IHB-002).",
+            "example": "NL91ABNA0417164300",
+            "title": "Master Account"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "Pool base currency, ISO 4217. Sweep + interest always post in this reporting currency for v1 (multi-currency deferred to T5).",
+            "title": "Currency"
+          },
+          "dailyInterestRate": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Annualised pool interest rate used for daily notional accrual (REQ-IHB-003). Expressed as a fraction, e.g. 0.045 for 4.5% p.a.",
+            "example": 0.045,
+            "title": "Daily Interest Rate"
+          },
+          "interestAllocationMethod": {
+            "type": "string",
+            "enum": [
+              "proportional",
+              "weighted-average",
+              "fixed"
+            ],
+            "default": "proportional",
+            "description": "How notional interest is split across members (REQ-IHB-003).",
+            "title": "Interest Allocation Method"
+          },
+          "allocationWeights": {
+            "type": "object",
+            "nullable": true,
+            "description": "For weighted-average / fixed methods: map of administrationId → weight or fixed percentage. Ignored for proportional.",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Allocation Weights"
+          },
+          "sweepFrequency": {
+            "type": "string",
+            "enum": [
+              "daily",
+              "weekly",
+              "on-threshold"
+            ],
+            "default": "daily",
+            "description": "Physical-sweep cadence (REQ-IHB-002). Ignored for notional pools.",
+            "title": "Sweep Frequency"
+          },
+          "sweepTime": {
+            "type": "string",
+            "nullable": true,
+            "description": "Local time the end-of-day sweep job runs, HH:MM 24h.",
+            "example": "23:30",
+            "title": "Sweep Time"
+          },
+          "minimumCashPolicy": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Group minimum-cash floor in pool currency; the 13-week forecast raises a treasury alert when projected closing cash drops below this (REQ-IHB-008).",
+            "example": 500000.0,
+            "title": "Minimum Cash Policy"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "First date the pool is active.",
+            "title": "Effective From"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Last date the pool is active; null = open-ended.",
+            "title": "Effective To"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "inactive"
+            ],
+            "default": "draft",
+            "description": "Lifecycle state (REQ-IHB-001).",
+            "title": "State"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Owning administration (the group/holding entity that operates the pool).",
+            "example": "adm-holding-nl",
+            "title": "Administration ID"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator free text.",
+            "title": "Notes"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P10Y",
+            "description": "Treasury pool configurations retained 10 years per Dutch fiscal retention (AWR art. 52)."
+          },
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Pool is being configured; members and rules not yet finalised."
+            },
+            "active": {
+              "label": "Actief",
+              "description": "Pool is live; sweep and interest jobs operate against its members."
+            },
+            "inactive": {
+              "label": "Inactief",
+              "description": "Pool decommissioned; retained for audit but no longer swept."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "draft",
+              "to": "active",
+              "label": "Activeren",
+              "description": "Group treasurer activates the pool after member + rule review."
+            },
+            "deactivate": {
+              "from": "active",
+              "to": "inactive",
+              "label": "Deactiveren",
+              "description": "Group treasurer decommissions the pool."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "group-treasurer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "cfo": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Cash Pool is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "CashPoolMembership": {
+        "slug": "CashPoolMembership",
+        "icon": "BankCircle",
+        "version": "0.1.0",
+        "title": "Cash Pool Membership",
+        "description": "Links one administration's bank account to a CashPool (REQ-IHB-001). Sweep direction, target balance, priority and intra-day limit drive the physical-sweep calculation; exclusions list accounts that must not be swept (e.g. regulatory-balance accounts).",
+        "x-schema-org": "schema:AggregateOffer",
+        "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
+        "type": "object",
+        "required": [
+          "poolId",
+          "administrationId",
+          "bankAccount",
+          "sweepDirection"
+        ],
+        "properties": {
+          "poolId": {
+            "type": "string",
+            "description": "FK to CashPool.",
+            "example": "cp-eur-netto",
+            "title": "Pool ID"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the participating Administration.",
+            "example": "adm-consultancy-nl",
+            "title": "Administration ID"
+          },
+          "bankAccount": {
+            "type": "string",
+            "description": "Member bank account IBAN.",
+            "example": "NL12INGD1234567890",
+            "title": "Bank Account"
+          },
+          "sweepDirection": {
+            "type": "string",
+            "enum": [
+              "upstream",
+              "downstream",
+              "central"
+            ],
+            "description": "Sweep polarity (REQ-IHB-002). upstream = balance flows to master; downstream = funded from master; central = the master account itself.",
+            "title": "Sweep Direction"
+          },
+          "targetBalance": {
+            "type": "number",
+            "nullable": true,
+            "description": "Target end-of-day balance for target-balance pools; null = zero-balance / notional.",
+            "example": 50000.0,
+            "title": "Target Balance"
+          },
+          "priority": {
+            "type": "integer",
+            "default": 1,
+            "description": "Sweep ordering; the master account uses priority 0.",
+            "title": "Priority"
+          },
+          "intraDayLimit": {
+            "type": "number",
+            "nullable": true,
+            "description": "Maximum intra-day overdraft permitted on this account before a downstream funding sweep is triggered.",
+            "title": "Intra Day Limit"
+          },
+          "exclusions": {
+            "type": "array",
+            "description": "Account references excluded from automated sweeping (regulatory-balance / cash-management accounts).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Exclusions"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suspended"
+            ],
+            "default": "active",
+            "description": "Membership state; suspended members are skipped by the sweep job.",
+            "title": "State"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "group-treasurer": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "cfo": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Cash Pool Membership is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "IntercompanyLoan": {
+        "slug": "IntercompanyLoan",
+        "icon": "HandCoinOutline",
+        "version": "0.1.0",
+        "title": "Intercompany Loan",
+        "description": "Inter-company loan between two administrations (REQ-IHB-004). Supports fixed and floating (reference rate + spread) interest, daily accrual and monthly GL posting on both lender and borrower ledgers. Transfer-pricing documentation reference (OECD arm's-length, Chapter X Financial Transactions) is stored for auditor review.",
+        "x-schema-org": "schema:LoanOrCredit",
+        "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
+        "type": "object",
+        "required": [
+          "name",
+          "lenderAdministrationId",
+          "borrowerAdministrationId",
+          "principal",
+          "currency",
+          "startDate",
+          "maturityDate",
+          "state"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable loan label.",
+            "example": "Interim Financing 2026 (adm-001 → adm-002)",
+            "title": "Name"
+          },
+          "lenderAdministrationId": {
+            "type": "string",
+            "description": "FK to the lending Administration.",
+            "example": "adm-holding-nl",
+            "title": "Lender Administration ID"
+          },
+          "borrowerAdministrationId": {
+            "type": "string",
+            "description": "FK to the borrowing Administration.",
+            "example": "adm-consultancy-nl",
+            "title": "Borrower Administration ID"
+          },
+          "principal": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Loan principal amount.",
+            "example": 250000.0,
+            "title": "Principal"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "Loan currency, ISO 4217 (v1: EUR; multi-currency deferred to T5).",
+            "title": "Currency"
+          },
+          "rateType": {
+            "type": "string",
+            "enum": [
+              "fixed",
+              "floating"
+            ],
+            "default": "fixed",
+            "description": "Whether the loan carries a fixed rate or a floating reference rate + spread (REQ-IHB-004).",
+            "title": "Rate Type"
+          },
+          "fixedRate": {
+            "type": "number",
+            "nullable": true,
+            "description": "Fixed annual rate as a fraction when rateType=fixed (e.g. 0.035 for 3.5%).",
+            "example": 0.035,
+            "title": "Fixed Rate"
+          },
+          "referenceRate": {
+            "type": "string",
+            "enum": [
+              "EURIBOR-3M",
+              "SOFR",
+              "SARON"
+            ],
+            "nullable": true,
+            "description": "Floating reference rate index when rateType=floating (REQ-IHB-004).",
+            "title": "Reference Rate"
+          },
+          "spread": {
+            "type": "number",
+            "nullable": true,
+            "description": "Spread added to the reference rate as a fraction (e.g. 0.02 for +2.0%).",
+            "example": 0.02,
+            "title": "Spread"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Loan drawdown / value date.",
+            "example": "2026-01-01",
+            "title": "Start Date"
+          },
+          "maturityDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Loan maturity date.",
+            "example": "2026-12-31",
+            "title": "Maturity Date"
+          },
+          "repaymentSchedule": {
+            "type": "array",
+            "nullable": true,
+            "description": "Optional amortisation installments (date + amount).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "title": "Date",
+                  "description": "The relevant date."
+                },
+                "amount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "title": "Amount",
+                  "description": "The monetary amount."
+                }
+              }
+            },
+            "title": "Repayment Schedule"
+          },
+          "transferPricingDocumentReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "docudesk URI to the OECD-compliant transfer-pricing memo (REQ-IHB-004).",
+            "example": "docudesk://00000000-0000-0000-0000-000000000000",
+            "title": "Transfer Pricing Document Reference"
+          },
+          "ifrsClassification": {
+            "type": "string",
+            "enum": [
+              "amortised-cost",
+              "fvtpl"
+            ],
+            "default": "amortised-cost",
+            "description": "IFRS 9 classification for measurement.",
+            "title": "Ifrs Classification"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "repaid",
+              "written-off"
+            ],
+            "default": "draft",
+            "description": "Loan lifecycle state (REQ-IHB-004).",
+            "title": "State"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Owning administration (the group entity that administers the loan).",
+            "example": "adm-holding-nl",
+            "title": "Administration ID"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P10Y",
+            "description": "Intercompany loan agreements + TP documentation retained 10 years per AWR art. 52."
+          },
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Loan terms being negotiated; not yet drawn."
+            },
+            "active": {
+              "label": "Actief",
+              "description": "Loan drawn; daily interest accrues and posts monthly."
+            },
+            "repaid": {
+              "label": "Afgelost",
+              "description": "Principal fully repaid; terminal."
+            },
+            "written-off": {
+              "label": "Afgeboekt",
+              "description": "Loan written off as uncollectible; terminal."
+            }
+          },
+          "transitions": {
+            "activate": {
+              "from": "draft",
+              "to": "active",
+              "label": "Opnemen",
+              "description": "Treasurer draws the loan; requires arm's-length warning acknowledgement (REQ-IHB-004).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\IntercompanyTransactionGuard::canActivateLoan"
+            },
+            "repay": {
+              "from": "active",
+              "to": "repaid",
+              "label": "Aflossen",
+              "description": "Principal fully repaid."
+            },
+            "writeOff": {
+              "from": "active",
+              "to": "written-off",
+              "label": "Afboeken",
+              "description": "Loan written off as uncollectible."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "group-treasurer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "cfo": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Intercompany Loan is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "IntercompanyTransaction": {
+        "slug": "IntercompanyTransaction",
+        "icon": "SwapHorizontalBold",
+        "version": "0.1.0",
+        "title": "Intercompany Transaction",
+        "description": "A single in-house-bank movement between two administrations (REQ-IHB-005): a sweep, loan drawdown, interest accrual or settlement. Posting materialises balanced double-sided GL entries on both ledgers; posting is blocked when either administration's period is closed (REQ-IHB-005, REQ-PC-004).",
+        "x-schema-org": "schema:MoneyTransfer",
+        "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
+        "type": "object",
+        "required": [
+          "movementType",
+          "amount",
+          "fromAdministrationId",
+          "toAdministrationId",
+          "postingDate",
+          "state"
+        ],
+        "properties": {
+          "poolId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to CashPool when the movement originates from a pool sweep/interest.",
+            "title": "Pool ID"
+          },
+          "loanId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to IntercompanyLoan when the movement is a drawdown/interest/settlement on a loan.",
+            "title": "Loan ID"
+          },
+          "movementType": {
+            "type": "string",
+            "enum": [
+              "sweep",
+              "loan-drawdown",
+              "interest-accrual",
+              "settlement",
+              "other"
+            ],
+            "description": "Movement classification (REQ-IHB-005).",
+            "title": "Movement Type"
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Movement amount in pool/loan currency (always non-negative; direction is given by from/to).",
+            "example": 50000.0,
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "Movement currency, ISO 4217.",
+            "title": "Currency"
+          },
+          "fromAdministrationId": {
+            "type": "string",
+            "description": "Source administration.",
+            "example": "adm-consultancy-nl",
+            "title": "From Administration ID"
+          },
+          "toAdministrationId": {
+            "type": "string",
+            "description": "Destination administration.",
+            "example": "adm-holding-nl",
+            "title": "To Administration ID"
+          },
+          "postingDate": {
+            "type": "string",
+            "format": "date",
+            "description": "GL posting date; validated against both administrations' period status (REQ-IHB-005).",
+            "title": "Posting Date"
+          },
+          "valueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Cash value date (T+0 for same-day sweeps).",
+            "title": "Value Date"
+          },
+          "glTransactionId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the materialised GLTransaction once posted.",
+            "title": "GL Transaction ID"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "posted",
+              "settled"
+            ],
+            "default": "draft",
+            "description": "Movement lifecycle (REQ-IHB-005).",
+            "title": "State"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P10Y",
+            "description": "Treasury movements retained 10 years per AWR art. 52."
+          },
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Movement created (by sweep job or operator); not yet posted to GL."
+            },
+            "posted": {
+              "label": "Geboekt",
+              "description": "Balanced double-sided JournalEntry materialised on both ledgers."
+            },
+            "settled": {
+              "label": "Afgewikkeld",
+              "description": "Underlying cash transfer confirmed by the bank."
+            }
+          },
+          "transitions": {
+            "post": {
+              "from": "draft",
+              "to": "posted",
+              "label": "Boeken",
+              "description": "Materialise GL entries; blocked if either administration's period is closed (REQ-IHB-005, REQ-PC-004).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\IntercompanyTransactionGuard::canPost"
+            },
+            "settle": {
+              "from": "posted",
+              "to": "settled",
+              "label": "Afwikkelen",
+              "description": "Bank confirms the underlying cash transfer."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "group-treasurer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "cfo": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        }
+      },
+      "FXContract": {
+        "slug": "FXContract",
+        "icon": "CurrencyUsd",
+        "version": "0.1.0",
+        "title": "FX Contract",
+        "description": "Foreign-exchange contract with full IFRS 9 lifecycle (REQ-IHB-006). Records counterparty, instrument, buy/sell currency + amount, trade/value/settlement dates, contract rate, hedge designation and settlement instructions. Revalued at period close; unrealised gains/losses post to OCI or P&L per hedge designation (IFRS 9 §6.4).",
+        "x-schema-org": "schema:Invoice",
+        "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
+        "type": "object",
+        "required": [
+          "instrumentType",
+          "buyCurrency",
+          "buyAmount",
+          "sellCurrency",
+          "sellAmount",
+          "tradeDate",
+          "contractRate",
+          "state"
+        ],
+        "properties": {
+          "counterpartyBank": {
+            "type": "string",
+            "nullable": true,
+            "description": "Counterparty bank name.",
+            "example": "ING Bank N.V.",
+            "title": "Counterparty Bank"
+          },
+          "counterpartyReference": {
+            "type": "string",
+            "nullable": true,
+            "description": "Counterparty confirmation reference number.",
+            "title": "Counterparty Reference"
+          },
+          "instrumentType": {
+            "type": "string",
+            "enum": [
+              "spot",
+              "forward",
+              "swap",
+              "NDF"
+            ],
+            "description": "FX instrument type (REQ-IHB-006).",
+            "title": "Instrument Type"
+          },
+          "buyCurrency": {
+            "type": "string",
+            "description": "Currency bought, ISO 4217.",
+            "example": "USD",
+            "title": "Buy Currency"
+          },
+          "buyAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Amount of buy currency.",
+            "example": 100000.0,
+            "title": "Buy Amount"
+          },
+          "sellCurrency": {
+            "type": "string",
+            "description": "Currency sold, ISO 4217.",
+            "example": "EUR",
+            "title": "Sell Currency"
+          },
+          "sellAmount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Amount of sell currency.",
+            "example": 92592.59,
+            "title": "Sell Amount"
+          },
+          "tradeDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Trade execution date.",
+            "title": "Trade Date"
+          },
+          "valueDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Value date of the exchange.",
+            "title": "Value Date"
+          },
+          "settlementDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Settlement date.",
+            "title": "Settlement Date"
+          },
+          "contractRate": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Agreed contract rate (buy currency per sell currency), three-decimal FX precision.",
+            "example": 1.08,
+            "title": "Contract Rate"
+          },
+          "hedgeDesignation": {
+            "type": "string",
+            "enum": [
+              "cashflow",
+              "fair-value",
+              "net-investment"
+            ],
+            "nullable": true,
+            "description": "IFRS 9 §6.4 hedge designation; null = undesignated/trading (REQ-IHB-006).",
+            "title": "Hedge Designation"
+          },
+          "settlementInstructions": {
+            "type": "object",
+            "nullable": true,
+            "description": "Nostro account / correspondent settlement details.",
+            "additionalProperties": true,
+            "title": "Settlement Instructions"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "Administration that holds the contract.",
+            "example": "adm-holding-nl",
+            "title": "Administration ID"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "drafted",
+              "confirmed",
+              "settled",
+              "closed",
+              "cancelled"
+            ],
+            "default": "drafted",
+            "description": "FX contract lifecycle (REQ-IHB-006).",
+            "title": "State"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "drafted",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P10Y",
+            "description": "FX contracts + confirmations retained 10 years per AWR art. 52."
+          },
+          "states": {
+            "drafted": {
+              "label": "Concept",
+              "description": "Trade captured; awaiting counterparty confirmation."
+            },
+            "confirmed": {
+              "label": "Bevestigd",
+              "description": "Counterparty confirmation matched."
+            },
+            "settled": {
+              "label": "Afgewikkeld",
+              "description": "Exchange settled on value date."
+            },
+            "closed": {
+              "label": "Afgesloten",
+              "description": "Contract matured / unwound; terminal."
+            },
+            "cancelled": {
+              "label": "Geannuleerd",
+              "description": "Trade cancelled before settlement; terminal."
+            }
+          },
+          "transitions": {
+            "confirm": {
+              "from": "drafted",
+              "to": "confirmed",
+              "label": "Bevestigen",
+              "description": "Counterparty confirmation received."
+            },
+            "settle": {
+              "from": "confirmed",
+              "to": "settled",
+              "label": "Afwikkelen",
+              "description": "Exchange settled on value date."
+            },
+            "close": {
+              "from": "settled",
+              "to": "closed",
+              "label": "Afsluiten",
+              "description": "Contract matured / fully unwound."
+            },
+            "cancel": {
+              "from": "drafted",
+              "to": "cancelled",
+              "label": "Annuleren",
+              "description": "Trade cancelled before settlement."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "group-treasurer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "cfo": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a FX Contract is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "FXPosition": {
+        "slug": "FXPosition",
+        "icon": "ChartLine",
+        "version": "0.1.0",
+        "title": "FX Position",
+        "description": "Per-(entity, currency) open foreign-exchange position (REQ-IHB-006). Mark-to-market valuation and unrealised P&L are derived from the open position and the current spot rate; the consolidated group total is an aggregation across all entity positions per currency.",
+        "x-schema-org": "schema:MonetaryAmount",
+        "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "foreignCurrency",
+          "position"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "Administration holding the position.",
+            "example": "adm-holding-nl",
+            "title": "Administration ID"
+          },
+          "foreignCurrency": {
+            "type": "string",
+            "description": "Foreign currency of the open position, ISO 4217.",
+            "example": "USD",
+            "title": "Foreign Currency"
+          },
+          "position": {
+            "type": "number",
+            "description": "Net open position in the foreign currency (positive = long, negative = short).",
+            "example": 100000.0,
+            "title": "Position"
+          },
+          "spotRate": {
+            "type": "number",
+            "nullable": true,
+            "description": "Spot rate (reporting currency per foreign currency unit) at last valuation, three-decimal FX precision.",
+            "example": 0.926,
+            "title": "Spot Rate"
+          },
+          "fairValue": {
+            "type": "number",
+            "nullable": true,
+            "description": "Fair value of the position in reporting currency (derived: position × spotRate).",
+            "title": "Fair Value"
+          },
+          "unrealisedPL": {
+            "type": "number",
+            "nullable": true,
+            "description": "Unrealised gain/loss in reporting currency since entry (derived).",
+            "title": "Unrealised Pl"
+          },
+          "valuationMethod": {
+            "type": "string",
+            "enum": [
+              "mark-to-market",
+              "amortised-cost"
+            ],
+            "default": "mark-to-market",
+            "description": "Valuation method per IFRS 13.",
+            "title": "Valuation Method"
+          },
+          "lastUpdated": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp of the last revaluation; UI warns when stale > 1 hour (REQ-IHB-006).",
+            "title": "Last Updated"
+          }
+        },
+        "x-openregister-aggregations": {
+          "groupTotal": {
+            "description": "Consolidated group position per currency = sum of all entity positions and fair values (REQ-IHB-006, REQ-IHB-007).",
+            "groupBy": [
+              "foreignCurrency"
+            ],
+            "metrics": [
+              {
+                "metric": "sum",
+                "field": "position",
+                "as": "position"
+              },
+              {
+                "metric": "sum",
+                "field": "fairValue",
+                "as": "fairValue"
+              },
+              {
+                "metric": "sum",
+                "field": "unrealisedPL",
+                "as": "unrealisedPL"
+              }
+            ],
+            "from": "FXPosition"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "group-treasurer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "cfo": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a FX Position is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "CashForecast": {
+        "slug": "CashForecast",
+        "icon": "CalendarMultiselect",
+        "version": "0.1.0",
+        "title": "Cash Forecast",
+        "description": "One weekly bucket of the rolling 13-week cashflow forecast for a pool/scenario (REQ-IHB-008). Inflows and outflows are aggregated from AR/AP ageing, payroll calendar and scheduled debt service; closing cash is derived; variance vs prior forecast drives treasury alerts.",
+        "x-schema-org": "schema:Statement",
+        "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
+        "type": "object",
+        "required": [
+          "poolId",
+          "forecastWeek",
+          "scenario",
+          "openingCash"
+        ],
+        "properties": {
+          "poolId": {
+            "type": "string",
+            "description": "FK to CashPool.",
+            "example": "cp-eur-netto",
+            "title": "Pool ID"
+          },
+          "forecastWeek": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 13,
+            "description": "Week bucket index in the 13-week horizon (REQ-IHB-008).",
+            "title": "Forecast Week"
+          },
+          "weekStartDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "First date of the week bucket.",
+            "title": "Week Start Date"
+          },
+          "scenario": {
+            "type": "string",
+            "enum": [
+              "base",
+              "downside",
+              "stress"
+            ],
+            "description": "Forecast scenario (REQ-IHB-008).",
+            "title": "Scenario"
+          },
+          "openingCash": {
+            "type": "number",
+            "description": "Opening cash for the bucket (prior week closing).",
+            "title": "Opening Cash"
+          },
+          "inflows": {
+            "type": "object",
+            "description": "Expected inflows for the bucket.",
+            "properties": {
+              "arCollections": {
+                "type": "number",
+                "default": 0,
+                "title": "AR Collections",
+                "description": "The numeric value for ar collections."
+              },
+              "loanDrawdowns": {
+                "type": "number",
+                "default": 0,
+                "title": "Loan Drawdowns",
+                "description": "The numeric value for loan drawdowns."
+              },
+              "other": {
+                "type": "number",
+                "default": 0,
+                "title": "Other",
+                "description": "The numeric value for other."
+              }
+            },
+            "title": "Inflows"
+          },
+          "outflows": {
+            "type": "object",
+            "description": "Expected outflows for the bucket.",
+            "properties": {
+              "apPayments": {
+                "type": "number",
+                "default": 0,
+                "title": "AP Payments",
+                "description": "The numeric value for ap payments."
+              },
+              "payroll": {
+                "type": "number",
+                "default": 0,
+                "title": "Payroll",
+                "description": "The numeric value for payroll."
+              },
+              "taxPayments": {
+                "type": "number",
+                "default": 0,
+                "title": "Tax Payments",
+                "description": "The numeric value for tax payments."
+              },
+              "debtService": {
+                "type": "number",
+                "default": 0,
+                "title": "Debt Service",
+                "description": "The numeric value for debt service."
+              },
+              "other": {
+                "type": "number",
+                "default": 0,
+                "title": "Other",
+                "description": "The numeric value for other."
+              }
+            },
+            "title": "Outflows"
+          },
+          "closingCash": {
+            "type": "number",
+            "nullable": true,
+            "description": "Derived: openingCash + Σ inflows − Σ outflows.",
+            "title": "Closing Cash"
+          },
+          "varianceVsPriorForecast": {
+            "type": "number",
+            "nullable": true,
+            "description": "Closing-cash delta vs the prior forecast run for the same week; alert raised when |variance| > EUR 50K (REQ-IHB-008).",
+            "title": "Variance Vs Prior Forecast"
+          },
+          "lastRegenerated": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp of the nightly regeneration that produced this bucket.",
+            "title": "Last Regenerated"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Operator adjustments / commentary.",
+            "title": "Notes"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "group-treasurer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "cfo": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Cash Forecast is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "BankReconciliationGroup": {
+        "slug": "BankReconciliationGroup",
+        "icon": "BankCheck",
+        "version": "0.1.0",
+        "title": "Bank Reconciliation Group",
+        "description": "A multi-administration bank-reconciliation run across all participants of a pool (REQ-IHB-009). Links one bank line to GL entries from several administrations in a single workflow (typical for shared-service-centre payments), with an auto-match score and an exception queue for operator review.",
+        "x-schema-org": "schema:Action",
+        "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
+        "type": "object",
+        "required": [
+          "poolId",
+          "participatingAdministrationIds",
+          "state"
+        ],
+        "properties": {
+          "poolId": {
+            "type": "string",
+            "description": "FK to CashPool whose members are reconciled together.",
+            "example": "cp-eur-netto",
+            "title": "Pool ID"
+          },
+          "bankReconciliationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the underlying single-administration reconciliation master record, if any.",
+            "title": "Bank Reconciliation ID"
+          },
+          "participatingAdministrationIds": {
+            "type": "array",
+            "description": "Administrations whose ledgers are searched for matches (REQ-IHB-009).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Participating Administration Ids"
+          },
+          "autoMatchedCount": {
+            "type": "integer",
+            "default": 0,
+            "description": "Number of bank lines auto-matched at score >= 95%.",
+            "title": "Auto Matched Count"
+          },
+          "manualMatchesRequired": {
+            "type": "integer",
+            "default": 0,
+            "description": "Number of lines needing operator review.",
+            "title": "Manual Matches Required"
+          },
+          "exceptionQueue": {
+            "type": "array",
+            "description": "Lines below the auto-match threshold with suggested candidates.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bankLineId": {
+                  "type": "string",
+                  "title": "Bank Line ID",
+                  "description": "The identifier of the associated bank line."
+                },
+                "suggestedMatches": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Suggested Matches",
+                  "description": "A list of suggested matches entries."
+                },
+                "operator": {
+                  "type": "string",
+                  "nullable": true,
+                  "title": "Operator",
+                  "description": "The date and time for operator."
+                }
+              }
+            },
+            "title": "Exception Queue"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "in-progress",
+              "completed"
+            ],
+            "default": "draft",
+            "description": "Reconciliation-run lifecycle (REQ-IHB-009).",
+            "title": "State"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "retention": {
+            "rule": "selectielijst:5.1.2",
+            "period": "P7Y",
+            "description": "Reconciliation runs retained 7 years per AWR art. 52."
+          },
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Run created; member bank lines loaded."
+            },
+            "in-progress": {
+              "label": "In behandeling",
+              "description": "Operator reviewing matches across administrations."
+            },
+            "completed": {
+              "label": "Afgerond",
+              "description": "All lines matched / accepted; terminal."
+            }
+          },
+          "transitions": {
+            "start": {
+              "from": "draft",
+              "to": "in-progress",
+              "label": "Starten",
+              "description": "Operator begins reviewing auto-match suggestions."
+            },
+            "complete": {
+              "from": "in-progress",
+              "to": "completed",
+              "label": "Afronden",
+              "description": "All lines matched; reconciliation closed."
+            }
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "group-treasurer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Bank Reconciliation Group is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      },
+      "LiquidityKPI": {
+        "slug": "LiquidityKPI",
+        "icon": "SpeedometerSlow",
+        "version": "0.1.0",
+        "title": "Liquidity KPI",
+        "description": "Liquidity key-performance-indicator snapshot per pool + measurement date (REQ-IHB-010): cash-conversion cycle, days cash on hand, current ratio, quick ratio, with a per-entity breakdown and trend vs prior week. Computed from CashForecast plus AR/AP ageing.",
+        "x-schema-org": "schema:Observation",
+        "x-spec": "openspec/changes/bookkeeping-treasury-ihb/specs/bookkeeping-treasury-ihb/spec.md",
+        "type": "object",
+        "required": [
+          "poolId",
+          "measurementDate"
+        ],
+        "properties": {
+          "poolId": {
+            "type": "string",
+            "description": "FK to CashPool.",
+            "example": "cp-eur-netto",
+            "title": "Pool ID"
+          },
+          "measurementDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the KPIs were measured.",
+            "title": "Measurement Date"
+          },
+          "cashConversionCycleDays": {
+            "type": "number",
+            "nullable": true,
+            "description": "DIO + DSO − DPO in days (REQ-IHB-010).",
+            "title": "Cash Conversion Cycle Days"
+          },
+          "daysCashOnHandDays": {
+            "type": "number",
+            "nullable": true,
+            "description": "Closing cash / daily operating expense, in days.",
+            "title": "Days Cash On Hand Days"
+          },
+          "currentRatio": {
+            "type": "number",
+            "nullable": true,
+            "description": "Current assets / current liabilities.",
+            "title": "Current Ratio"
+          },
+          "quickRatio": {
+            "type": "number",
+            "nullable": true,
+            "description": "(Current assets − inventory) / current liabilities.",
+            "title": "Quick Ratio"
+          },
+          "forecastRunwayWeeks": {
+            "type": "number",
+            "nullable": true,
+            "description": "Weeks of cash remaining at current burn rate.",
+            "title": "Forecast Runway Weeks"
+          },
+          "perEntityBreakdown": {
+            "type": "array",
+            "description": "Per-administration KPI rows.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "administrationId": {
+                  "type": "string",
+                  "title": "Administration ID",
+                  "description": "The date and time for administration id."
+                },
+                "daysCashOnHandDays": {
+                  "type": "number",
+                  "title": "Days Cash On Hand Days",
+                  "description": "The numeric value for days cash on hand days."
+                },
+                "currentRatio": {
+                  "type": "number",
+                  "title": "Current Ratio",
+                  "description": "The numeric value for current ratio."
+                },
+                "quickRatio": {
+                  "type": "number",
+                  "title": "Quick Ratio",
+                  "description": "The numeric value for quick ratio."
+                }
+              }
+            },
+            "title": "Per Entity Breakdown"
+          },
+          "trendVsPriorWeek": {
+            "type": "object",
+            "nullable": true,
+            "description": "Delta of each KPI vs the prior week's snapshot.",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Trend Vs Prior Week"
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "group-treasurer": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "cfo": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Liquidity KPI is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CashPool",
+        "slug": "cp-eur-netto-pool"
+      },
+      "name": "Groepmaatschappij EUR Netto Pool",
+      "type": "notional",
+      "masterAccount": "NL91ABNA0417164300",
+      "currency": "EUR",
+      "dailyInterestRate": 0.045,
+      "interestAllocationMethod": "proportional",
+      "sweepFrequency": "daily",
+      "minimumCashPolicy": 500000.0,
+      "effectiveFrom": "2026-01-01",
+      "state": "active",
+      "administrationId": "adm-holding-nl",
+      "notes": "Notionele pool over drie groepsmaatschappijen; rente over geaggregeerd saldo, geen fysieke verschuiving."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CashPool",
+        "slug": "cp-eur-zero-pool"
+      },
+      "name": "Filiaalbedrijven EUR Zero Pool",
+      "type": "zero-balance",
+      "masterAccount": "NL34DEUTDE87654321",
+      "currency": "EUR",
+      "interestAllocationMethod": "proportional",
+      "sweepFrequency": "daily",
+      "sweepTime": "23:30",
+      "minimumCashPolicy": 100000.0,
+      "effectiveFrom": "2026-01-01",
+      "state": "active",
+      "administrationId": "adm-holding-nl",
+      "notes": "Fysieke zero-balance sweep om 23:30; saldi van adm-002 en adm-003 dagelijks naar masteraccount."
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CashPoolMembership",
+        "slug": "cpm-netto-master"
+      },
+      "poolId": "cp-eur-netto-pool",
+      "administrationId": "adm-holding-nl",
+      "bankAccount": "NL91ABNA0417164300",
+      "sweepDirection": "central",
+      "priority": 0,
+      "state": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CashPoolMembership",
+        "slug": "cpm-netto-member-a"
+      },
+      "poolId": "cp-eur-netto-pool",
+      "administrationId": "adm-consultancy-nl",
+      "bankAccount": "NL12INGD1234567890",
+      "sweepDirection": "upstream",
+      "priority": 1,
+      "state": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CashPoolMembership",
+        "slug": "cpm-netto-member-b"
+      },
+      "poolId": "cp-eur-netto-pool",
+      "administrationId": "adm-retail-nl",
+      "bankAccount": "NL34DEUTDE87654321",
+      "sweepDirection": "upstream",
+      "priority": 2,
+      "state": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CashPoolMembership",
+        "slug": "cpm-zero-member-002"
+      },
+      "poolId": "cp-eur-zero-pool",
+      "administrationId": "adm-consultancy-nl",
+      "bankAccount": "NL12INGD1234567890",
+      "sweepDirection": "upstream",
+      "targetBalance": 50000.0,
+      "priority": 1,
+      "state": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "CashPoolMembership",
+        "slug": "cpm-zero-member-003"
+      },
+      "poolId": "cp-eur-zero-pool",
+      "administrationId": "adm-retail-nl",
+      "bankAccount": "NL34DEUTDE87654321",
+      "sweepDirection": "upstream",
+      "targetBalance": 25000.0,
+      "priority": 2,
+      "state": "active"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "IntercompanyLoan",
+        "slug": "icl-interim-financing-2026"
+      },
+      "name": "Interim Financing 2026 (adm-holding-nl → adm-consultancy-nl)",
+      "lenderAdministrationId": "adm-holding-nl",
+      "borrowerAdministrationId": "adm-consultancy-nl",
+      "principal": 250000.0,
+      "currency": "EUR",
+      "rateType": "fixed",
+      "fixedRate": 0.035,
+      "startDate": "2026-01-01",
+      "maturityDate": "2026-12-31",
+      "transferPricingDocumentReference": "docudesk://00000000-0000-0000-0000-000000000001",
+      "ifrsClassification": "amortised-cost",
+      "state": "active",
+      "administrationId": "adm-holding-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "IntercompanyLoan",
+        "slug": "icl-working-capital-line"
+      },
+      "name": "Working Capital Line (adm-holding-nl → adm-retail-nl)",
+      "lenderAdministrationId": "adm-holding-nl",
+      "borrowerAdministrationId": "adm-retail-nl",
+      "principal": 150000.0,
+      "currency": "EUR",
+      "rateType": "floating",
+      "referenceRate": "EURIBOR-3M",
+      "spread": 0.02,
+      "startDate": "2026-01-01",
+      "maturityDate": "2027-06-30",
+      "transferPricingDocumentReference": "docudesk://00000000-0000-0000-0000-000000000002",
+      "ifrsClassification": "amortised-cost",
+      "state": "active",
+      "administrationId": "adm-holding-nl"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "FXContract",
+        "slug": "fx-forward-usd-cashflow"
+      },
+      "counterpartyBank": "ING Bank N.V.",
+      "counterpartyReference": "FX-2026-0001",
+      "instrumentType": "forward",
+      "buyCurrency": "USD",
+      "buyAmount": 100000.0,
+      "sellCurrency": "EUR",
+      "sellAmount": 92592.59,
+      "tradeDate": "2026-04-30",
+      "valueDate": "2026-06-30",
+      "settlementDate": "2026-06-30",
+      "contractRate": 1.08,
+      "hedgeDesignation": "cashflow",
+      "administrationId": "adm-holding-nl",
+      "state": "confirmed"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "FXContract",
+        "slug": "fx-spot-gbp-fairvalue"
+      },
+      "counterpartyBank": "Rabobank",
+      "counterpartyReference": "FX-2026-0002",
+      "instrumentType": "spot",
+      "buyCurrency": "GBP",
+      "buyAmount": 50000.0,
+      "sellCurrency": "EUR",
+      "sellAmount": 58139.53,
+      "tradeDate": "2026-05-01",
+      "valueDate": "2026-05-03",
+      "settlementDate": "2026-05-03",
+      "contractRate": 0.86,
+      "hedgeDesignation": "fair-value",
+      "administrationId": "adm-holding-nl",
+      "state": "settled"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "FXContract",
+        "slug": "fx-swap-chf-netinvestment"
+      },
+      "counterpartyBank": "ABN AMRO",
+      "counterpartyReference": "FX-2026-0003",
+      "instrumentType": "swap",
+      "buyCurrency": "CHF",
+      "buyAmount": 220000.0,
+      "sellCurrency": "EUR",
+      "sellAmount": 200000.0,
+      "tradeDate": "2026-03-15",
+      "valueDate": "2026-03-17",
+      "settlementDate": "2027-03-17",
+      "contractRate": 1.1,
+      "hedgeDesignation": "net-investment",
+      "administrationId": "adm-holding-nl",
+      "state": "confirmed"
+    }
+  ]
+}

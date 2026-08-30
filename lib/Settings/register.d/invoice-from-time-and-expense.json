@@ -1,0 +1,455 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "invoice-from-time-and-expense",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json or other fragments",
+    "description": "Tier-2 invoice generation from approved time entries and expense records (issue #111). Adds three companion schemas: BillableInvoice (the time+expense materialisation of the canonical Invoice), BillableInvoiceLine (line items with sourceType + rateApplied snapshot), and RetainerSchedule (monthly recurring fee with optional T&M overage threshold). Supports five billing models — t_and_m, fixed_fee, milestone, retainer, mixed — selectable per invoice (D1). Rates from RateCard are snapshot'd into rateApplied at generation time so historical invoices retain original rates if the rate card is later amended (D2). Retainer charges render as a mandatory separate line item per month (D3). Time entries reference the existing UrenRegistratie schema (closest equivalent to the spec's TimeEntry); expenses reference ExpenseClaimEntry. Monetary fields use multipleOf 0.01 with integer-cent persistence per the Money type used elsewhere in shillinq (e.g. VATReturn.totalVATCollected)."
+  },
+  "components": {
+    "schemas": {
+      "BillableInvoice": {
+        "slug": "BillableInvoice",
+        "icon": "FileDocumentEditOutline",
+        "version": "0.1.0",
+        "title": "Billable Invoice",
+        "description": "Invoice materialised from approved time entries + expenses with explicit billing-model semantics. Companion to the canonical Invoice (from bookings-deposit-to-invoice); the BillableInvoice carries the model-specific projection while the Invoice carries the AR-aging-facing record. The billingModel is set once at draft time and immutable after posting (REQ-ITE-001, D1). Source-id arrays (timeEntryIds, expenseIds) are checked for duplicates against existing posted/draft BillableInvoice rows before generation (REQ-ITE-006, D9).",
+        "x-schema-org": "schema:Invoice",
+        "x-openregister-purpose": "fact",
+        "x-spec": "openspec/changes/invoice-from-time-and-expense/specs/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "invoiceNumber",
+          "billingModel",
+          "customerId",
+          "invoiceDate",
+          "dueDate",
+          "netAmount",
+          "vatAmount",
+          "grossAmount",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration owning this invoice for tenant isolation.",
+            "example": "adm-1",
+            "title": "Administration ID"
+          },
+          "invoiceNumber": {
+            "type": "string",
+            "description": "Human-readable invoice number (Dutch: factuurnummer), e.g. BIL-2026-0042.",
+            "example": "BIL-2026-0042",
+            "title": "Invoice Number"
+          },
+          "billingModel": {
+            "type": "string",
+            "enum": [
+              "t_and_m",
+              "fixed_fee",
+              "milestone",
+              "retainer",
+              "mixed"
+            ],
+            "description": "Billing-model selector (REQ-ITE-001, D1). Drives line-item composition and revenue-account choice on GL posting.",
+            "example": "t_and_m",
+            "title": "Billing Model"
+          },
+          "customerId": {
+            "type": "string",
+            "description": "FK to the customer (Nextcloud contact entity).",
+            "example": "cust-5432",
+            "title": "Customer ID"
+          },
+          "projectId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the Project this invoice covers (single-project per invoice in T2; multi-project deferred to T3).",
+            "example": "proj-widget-api",
+            "title": "Project ID"
+          },
+          "invoiceDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the invoice was issued.",
+            "example": "2026-06-15",
+            "title": "Invoice Date"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Payment due date.",
+            "example": "2026-07-15",
+            "title": "Due Date"
+          },
+          "timeEntryIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "FKs to UrenRegistratie rows included in this invoice. Stored for audit + deduplication even when the model is fixed_fee/milestone (where hours are informational only).",
+            "example": [
+              "uren-001",
+              "uren-002"
+            ],
+            "title": "Time Entry Ids"
+          },
+          "expenseIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "FKs to ExpenseClaimEntry rows included in this invoice.",
+            "example": [
+              "exp-001"
+            ],
+            "title": "Expense Ids"
+          },
+          "rateCardId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the RateCard applied — required for t_and_m and mixed, optional for retainer overage, null for fixed_fee/milestone (REQ-ITE-002, D2).",
+            "example": "rate-card-consulting",
+            "title": "Rate Card ID"
+          },
+          "retainerScheduleId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the RetainerSchedule applied — required for retainer and mixed, null for the others (REQ-ITE-005).",
+            "example": "retainer-support-monthly",
+            "title": "Retainer Schedule ID"
+          },
+          "lineItemsByModel": {
+            "type": "object",
+            "nullable": true,
+            "description": "Per-sourceType summary: {time_entry: {count, totalCents}, expense: {count, totalCents}, retainer_charge: {count, totalCents}, fixed_fee: {count, totalCents}}. Computed at draft time for fast reporting.",
+            "example": {
+              "time_entry": {
+                "count": 2,
+                "totalCents": 800000
+              },
+              "expense": {
+                "count": 1,
+                "totalCents": 15000
+              }
+            },
+            "title": "Line Items By Model"
+          },
+          "summary": {
+            "type": "object",
+            "nullable": true,
+            "description": "Computed totals snapshot: {netAmount, vatAmount, grossAmount, currency}. Used by list views without re-totalling line items.",
+            "example": {
+              "netAmount": 815000,
+              "vatAmount": 171150,
+              "grossAmount": 986150,
+              "currency": "EUR"
+            },
+            "title": "Summary"
+          },
+          "netAmount": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "description": "Total excluding VAT in euros (2-decimal precision; persisted as integer cents in services).",
+            "example": 8150.0,
+            "title": "Net Amount"
+          },
+          "vatAmount": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "description": "Total VAT/BTW in euros.",
+            "example": 1711.5,
+            "title": "VAT Amount"
+          },
+          "grossAmount": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "description": "Total including VAT in euros.",
+            "example": 9861.5,
+            "title": "Gross Amount"
+          },
+          "currency": {
+            "type": "string",
+            "default": "EUR",
+            "description": "ISO-4217 currency code. T2 supports EUR only (D2); multi-currency deferred to T4.",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "paymentTerms": {
+            "type": "string",
+            "default": "net 30",
+            "description": "Free-text payment terms (Dutch: betalingscondities).",
+            "example": "net 30",
+            "title": "Payment Terms"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "posted",
+              "cancelled"
+            ],
+            "default": "draft",
+            "description": "Lifecycle status. Moves draft → posted when postInvoice() runs; cancelled is operator-initiated and prevents GL posting.",
+            "title": "Status"
+          },
+          "posted": {
+            "type": "boolean",
+            "default": false,
+            "description": "True once GL posting completed (status=posted + Obligation created). Read-only convenience flag mirroring status.",
+            "example": false,
+            "title": "Posted"
+          },
+          "obligationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the Obligation entity created at post time. Null until posted.",
+            "example": "obl-2026-0042",
+            "title": "Obligation ID"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "description": "Free-text operator notes captured at draft time, included in the PDF footer.",
+            "title": "Notes"
+          }
+        }
+      },
+      "BillableInvoiceLine": {
+        "slug": "BillableInvoiceLine",
+        "icon": "FormatListBulletedSquare",
+        "version": "0.1.0",
+        "title": "Billable Invoice Line",
+        "description": "Single line item on a BillableInvoice. sourceType identifies the originating record (time_entry, expense, retainer_charge, fixed_fee, manual). rateApplied snapshots the applicable RateCard rate so historical invoices preserve their original rates if the rate card is later amended (REQ-ITE-003, D2). modelSpecificFields carries milestone/retainer-month metadata when applicable.",
+        "x-schema-org": "schema:Service",
+        "x-openregister-purpose": "fact",
+        "x-spec": "openspec/changes/invoice-from-time-and-expense/specs/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "invoiceId",
+          "lineNumber",
+          "sourceType",
+          "description",
+          "costAmount"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration (mirror of parent invoice for tenant-scoped queries).",
+            "title": "Administration ID"
+          },
+          "invoiceId": {
+            "type": "string",
+            "description": "FK to the parent BillableInvoice.",
+            "example": "bil-2026-0042",
+            "title": "Invoice ID"
+          },
+          "lineNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "1-based ordinal within the invoice.",
+            "example": 1,
+            "title": "Line Number"
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "time_entry",
+              "expense",
+              "retainer_charge",
+              "fixed_fee",
+              "manual"
+            ],
+            "description": "What this line represents (REQ-ITE-003).",
+            "example": "time_entry",
+            "title": "Source Type"
+          },
+          "sourceId": {
+            "type": "string",
+            "nullable": true,
+            "description": "FK to the source record (UrenRegistratie ID for time_entry, ExpenseClaimEntry ID for expense, RetainerSchedule ID for retainer_charge). Null for fixed_fee and manual.",
+            "example": "uren-001",
+            "title": "Source ID"
+          },
+          "description": {
+            "type": "string",
+            "description": "Customer-facing line description rendered on the PDF.",
+            "example": "Senior Consultant — 40 hours @ €150/hr",
+            "title": "Description"
+          },
+          "billableUnits": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "nullable": true,
+            "description": "Hours (for time_entry) or count (for expense / retainer_charge). Pre-multiplier figure used for the rate × units display.",
+            "example": 40.0,
+            "title": "Billable Units"
+          },
+          "rateApplied": {
+            "type": "object",
+            "nullable": true,
+            "description": "Snapshot of the rate used: {rateCents (integer cents), currency, rateCardVersion, effectiveDate}. Null when the line is not rate-based (expense / fixed_fee / manual).",
+            "example": {
+              "rateCents": 15000,
+              "currency": "EUR",
+              "rateCardVersion": "v1",
+              "effectiveDate": "2026-05-21"
+            },
+            "title": "Rate Applied"
+          },
+          "markup": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "maximum": 100,
+            "default": 0,
+            "description": "Markup percentage applied to (rate × units). Per-invoice in T2; per-line markup is T3+.",
+            "example": 0,
+            "title": "Markup"
+          },
+          "costAmount": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "description": "Final line cost in euros after rate × units × (1 + markup/100). Persisted as integer cents in services for exact arithmetic.",
+            "example": 6000.0,
+            "title": "Cost Amount"
+          },
+          "vatRate": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "maximum": 100,
+            "default": 21,
+            "description": "VAT/BTW percentage for this line. Dutch invoices use 21 / 9 / 6 / 0.",
+            "example": 21,
+            "title": "VAT Rate"
+          },
+          "vatAmount": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "description": "VAT amount in euros (= costAmount × vatRate / 100, rounded to €0.01 with bankers' rounding).",
+            "example": 1260.0,
+            "title": "VAT Amount"
+          },
+          "modelSpecificFields": {
+            "type": "object",
+            "nullable": true,
+            "description": "Model-specific metadata: {milestoneId, milestoneCompletedAt, milestoneName, milestoneBudget} for milestone; {retainerMonth: 'YYYY-MM'} for retainer; {} otherwise.",
+            "example": {
+              "retainerMonth": "2026-05"
+            },
+            "title": "Model Specific Fields"
+          }
+        }
+      },
+      "RetainerSchedule": {
+        "slug": "RetainerSchedule",
+        "icon": "CalendarSyncOutline",
+        "version": "0.1.0",
+        "title": "Retainer Schedule",
+        "description": "Monthly recurring fee + optional T&M overage threshold. Referenced from BillableInvoice.retainerScheduleId when billingModel is retainer or mixed (REQ-ITE-005). monthlyAmount is locked in via effectiveDate so historical invoices retain the rate in force on their invoiceDate (D3).",
+        "x-schema-org": "schema:Service",
+        "x-openregister-purpose": "config",
+        "x-spec": "openspec/changes/invoice-from-time-and-expense/specs/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "scheduleId",
+          "customerId",
+          "monthlyAmount",
+          "effectiveDate",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration (tenant).",
+            "title": "Administration ID"
+          },
+          "scheduleId": {
+            "type": "string",
+            "description": "Stable identifier (e.g. retainer-support-monthly).",
+            "example": "retainer-support-monthly",
+            "title": "Schedule ID"
+          },
+          "customerId": {
+            "type": "string",
+            "description": "FK to the customer this retainer applies to.",
+            "title": "Customer ID"
+          },
+          "projectId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional FK if the retainer is scoped to a specific project.",
+            "title": "Project ID"
+          },
+          "label": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable label rendered on the invoice line (e.g. 'Monthly support retainer').",
+            "example": "Monthly support retainer",
+            "title": "Label"
+          },
+          "monthlyAmount": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "minimum": 0,
+            "description": "Recurring monthly fee in euros.",
+            "example": 3000.0,
+            "title": "Monthly Amount"
+          },
+          "overageHoursThreshold": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "nullable": true,
+            "description": "Hours included in the retainer before overage T&M billing kicks in. Null disables overage detection.",
+            "example": 30.0,
+            "title": "Overage Hours Threshold"
+          },
+          "overageHourlyRate": {
+            "type": "number",
+            "multipleOf": 0.01,
+            "nullable": true,
+            "description": "Hourly rate (€) charged on overage hours when overageHoursThreshold is set.",
+            "example": 100.0,
+            "title": "Overage Hourly Rate"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date this schedule version becomes the active rate. Earlier invoices see the previous schedule.",
+            "example": "2026-01-01",
+            "title": "Effective Date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Optional end date for time-bounded retainers.",
+            "title": "End Date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "ended",
+              "draft"
+            ],
+            "default": "active",
+            "description": "Lifecycle status.",
+            "title": "Status"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,363 @@
+{
+	"info": {
+		"_postman_id": "shillinq-vat-filings",
+		"name": "Shillinq — BTW-aangifte (VAT filings)",
+		"description": "Integration test collection for the bookkeeping-vat-btw-filing capability (issue #127). Covers the happy path (create draft → derive lines → submit → verify status), validation rejections (future period, invalid regime), lifecycle conflicts (submit twice, delete after submit), and the filterable list endpoint.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Nextcloud rejects API requests without the OCS-APIRequest header",
+					"// (or a CSRF requesttoken) with 412 'CSRF check failed'. Inject it on",
+					"// every request from this collection so individual requests need not",
+					"// each declare it. upsert() overrides any per-request value.",
+					"pm.request.headers.upsert({ key: 'OCS-APIRequest', value: 'true' });"
+				]
+			}
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{"key": "username", "value": "{{admin_user}}", "type": "string"},
+			{"key": "password", "value": "{{admin_password}}", "type": "string"}
+		]
+	},
+	"variable": [
+		{"key": "base_url", "value": "http://localhost:8080", "type": "string"},
+		{"key": "admin_user", "value": "admin", "type": "string"},
+		{"key": "admin_password", "value": "admin", "type": "string"},
+		{"key": "administration_id", "value": "adm-smb-1", "type": "string"}
+	],
+	"item": [
+		{
+			"name": "Setup — grant the caller a membership in the administration (ADR-005)",
+			"item": [
+				{
+					"name": "POST AdministrationMembership for {{admin_user}} on {{administration_id}}",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Every /api/vat-returns endpoint is #[NoAdminRequired] AND authorised per",
+									"// administration by AdministrationContextService::canAccess(), which grants",
+									"// access on a valid AdministrationMembership and NOTHING else — being a",
+									"// Nextcloud admin does not imply a membership. That is the same guard the 29",
+									"// other shillinq controllers already use, so this collection has to supply the",
+									"// precondition a real tenant user would have.",
+									"//",
+									"// Until the guard landed these endpoints read administrationId straight off the",
+									"// wire, so the collection was green precisely BECAUSE nothing was checked.",
+									"// This request is the fixture, not a workaround: seeding what it needs and",
+									"// tearing it down is this suite's stated contract (see run-newman.sh).",
+									"pm.test('membership created or already present', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+									"const body = pm.response.json();",
+									"const id = body.id || body['@self']?.id;",
+									"if (id) { pm.collectionVariables.set('membership_id', id); }"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/AdministrationMembership",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"index.php",
+								"apps",
+								"openregister",
+								"api",
+								"objects",
+								"shillinq",
+								"AdministrationMembership"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"userId\":\"{{admin_user}}\",\"administrationId\":\"{{administration_id}}\",\"role\":\"eigenaar\",\"mayPostJournalEntries\":true,\"mayCloseFiscalYear\":true}"
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Happy path — create + derive + submit",
+			"item": [
+				{
+					"name": "POST create Q1 2024 standard return",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('status 201', () => pm.response.to.have.status(201));",
+									"// `data` is a RESERVED global in the Postman/Newman sandbox (the data-file variables).",
+										"// Declaring `const data` at script top level throws SyntaxError: Identifier 'data'",
+										"// has already been declared BEFORE the first pm.test() runs, so none of the three",
+										"// assertions below executed and `return_id` was never set — which is why every",
+										"// later request ran against an unresolved `/api/vat-returns/{{return_id}}`.",
+										"const created = pm.response.json().data;",
+									"pm.test('return id present', () => pm.expect(created.id || created['@self']?.id).to.be.a('string'));",
+									"pm.test('statusCode is draft', () => pm.expect(created.statusCode).to.eql('draft'));",
+									"pm.collectionVariables.set('return_id', created.id || created['@self'].id);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"url": {"raw": "{{base_url}}/index.php/apps/shillinq/api/vat-returns", "host": ["{{base_url}}"], "path": ["index.php", "apps", "shillinq", "api", "vat-returns"]},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"administrationId\":\"{{administration_id}}\",\"period\":\"quarter\",\"periodYear\":2024,\"periodNumber\":1,\"regime\":\"standard\"}"
+						}
+					}
+				},
+				{
+					"name": "GET show the created return",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('status 200', () => pm.response.to.have.status(200));",
+									"const json = pm.response.json();",
+									"pm.test('declarations array present', () => pm.expect(json.declarations).to.be.an('array'));",
+									"pm.test('lines array present', () => pm.expect(json.lines).to.be.an('array'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {"raw": "{{base_url}}/index.php/apps/shillinq/api/vat-returns/{{return_id}}", "host": ["{{base_url}}"], "path": ["index.php", "apps", "shillinq", "api", "vat-returns", "{{return_id}}"]}
+					}
+				},
+				{
+					"name": "GET lines for the return",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('status 200', () => pm.response.to.have.status(200));",
+									"pm.test('data array present', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {"raw": "{{base_url}}/index.php/apps/shillinq/api/vat-returns/{{return_id}}/lines", "host": ["{{base_url}}"], "path": ["index.php", "apps", "shillinq", "api", "vat-returns", "{{return_id}}", "lines"]}
+					}
+				},
+				{
+					"name": "POST submit the return",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('status 200', () => pm.response.to.have.status(200));",
+									"pm.test('statusCode is submitted', () => pm.expect(pm.response.json().data.statusCode).to.eql('submitted'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"url": {"raw": "{{base_url}}/index.php/apps/shillinq/api/vat-returns/{{return_id}}/submit", "host": ["{{base_url}}"], "path": ["index.php", "apps", "shillinq", "api", "vat-returns", "{{return_id}}", "submit"]}
+					}
+				},
+				{
+					"name": "POST submit again returns 409",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('status 409 on second submit', () => pm.response.to.have.status(409));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"url": {"raw": "{{base_url}}/index.php/apps/shillinq/api/vat-returns/{{return_id}}/submit", "host": ["{{base_url}}"], "path": ["index.php", "apps", "shillinq", "api", "vat-returns", "{{return_id}}", "submit"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "Error paths",
+			"item": [
+				{
+					"name": "POST future period — 400",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": ["pm.test('status 400 on future period', () => pm.response.to.have.status(400));"]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"url": {"raw": "{{base_url}}/index.php/apps/shillinq/api/vat-returns", "host": ["{{base_url}}"], "path": ["index.php", "apps", "shillinq", "api", "vat-returns"]},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"administrationId\":\"{{administration_id}}\",\"period\":\"quarter\",\"periodYear\":2099,\"periodNumber\":4,\"regime\":\"standard\"}"
+						}
+					}
+				},
+				{
+					"name": "POST invalid regime — 400",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": ["pm.test('status 400 on invalid regime', () => pm.response.to.have.status(400));"]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"url": {"raw": "{{base_url}}/index.php/apps/shillinq/api/vat-returns", "host": ["{{base_url}}"], "path": ["index.php", "apps", "shillinq", "api", "vat-returns"]},
+						"body": {
+							"mode": "raw",
+							"raw": "{\"administrationId\":\"{{administration_id}}\",\"period\":\"quarter\",\"periodYear\":2024,\"periodNumber\":1,\"regime\":\"imaginary\"}"
+						}
+					}
+				},
+				{
+					"name": "DELETE after submit — 409",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": ["pm.test('status 409 on delete of submitted', () => pm.response.to.have.status(409));"]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"url": {"raw": "{{base_url}}/index.php/apps/shillinq/api/vat-returns/{{return_id}}", "host": ["{{base_url}}"], "path": ["index.php", "apps", "shillinq", "api", "vat-returns", "{{return_id}}"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "Filtering & pagination",
+			"item": [
+				{
+					"name": "GET list filtered by regime + paginated",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('status 200', () => pm.response.to.have.status(200));",
+									"const json = pm.response.json();",
+									"pm.test('total field present', () => pm.expect(json).to.have.property('total'));",
+									"pm.test('page field present', () => pm.expect(json).to.have.property('page'));",
+									"pm.test('pages field present', () => pm.expect(json).to.have.property('pages'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/index.php/apps/shillinq/api/vat-returns?regime=standard&_limit=10&_page=1",
+							"host": ["{{base_url}}"],
+							"path": ["index.php", "apps", "shillinq", "api", "vat-returns"],
+							"query": [
+								{"key": "regime", "value": "standard"},
+								{"key": "_limit", "value": "10"},
+								{"key": "_page", "value": "1"}
+							]
+						}
+					}
+				},
+				{
+					"name": "GET declarations for return",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('status 200', () => pm.response.to.have.status(200));",
+									"pm.test('data array present', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {"raw": "{{base_url}}/index.php/apps/shillinq/api/vat-returns/{{return_id}}/declarations", "host": ["{{base_url}}"], "path": ["index.php", "apps", "shillinq", "api", "vat-returns", "{{return_id}}", "declarations"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "Teardown — revoke the membership seeded by Setup",
+			"item": [
+				{
+					"name": "DELETE the AdministrationMembership",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Idempotent teardown: this suite's contract is that a collection seeds what",
+									"// it needs and removes it again, so a later run starts from the same state.",
+									"// Skipped rather than failed when Setup did not record an id, so a partial",
+									"// run cannot turn a teardown into a spurious red.",
+									"if (!pm.collectionVariables.get('membership_id')) {",
+									"    pm.test('nothing to revoke', () => pm.expect(true).to.be.true);",
+									"} else {",
+									"    pm.test('membership revoked', () => pm.expect(pm.response.code).to.be.oneOf([200, 204, 404]));",
+									"}",
+									"pm.collectionVariables.unset('membership_id');"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"url": {"raw": "{{base_url}}/index.php/apps/openregister/api/objects/shillinq/AdministrationMembership/{{membership_id}}", "host": ["{{base_url}}"], "path": ["index.php", "apps", "openregister", "api", "objects", "shillinq", "AdministrationMembership", "{{membership_id}}"]}
+					}
+				}
+			]
+		}
+	]
+}

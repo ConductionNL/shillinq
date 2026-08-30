@@ -1,0 +1,36 @@
+{
+  "x-shillinq-fragment": "checks-invoicing",
+  "components": {
+    "schemas": {
+      "ARInvoice": {
+        "version": "0.9.0",
+        "properties": {
+          "buyerName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Buyer name (BT-44); the customer's full name (EN 16931 BR-07 / VAT Directive art. 226(5)).",
+            "title": "Buyer Name"
+          },
+          "cardPan": {
+            "type": "string",
+            "nullable": true,
+            "description": "Card primary account number (BT-87); an Invoice should never include a full card PAN (EN 16931 BR-51). Must remain absent.",
+            "title": "Card Pan"
+          },
+          "itemStandardId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Item standard identifier (BT-157) at line level; requires a scheme identifier (EN 16931 BR-64).",
+            "title": "Item Standard ID"
+          },
+          "itemClassificationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Item classification identifier (BT-158) at line level; requires a scheme identifier (EN 16931 BR-65).",
+            "title": "Item Classification ID"
+          }
+        }
+      }
+    }
+  }
+}

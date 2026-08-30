@@ -1,0 +1,450 @@
+{
+  "components": {
+    "schemas": {
+      "Resource": {
+        "slug": "Resource",
+        "icon": "AccountHardHatOutline",
+        "version": "0.1.0",
+        "title": "Resource",
+        "description": "A bookable resource: a staff member, a room, a piece of equipment, or furniture. Foundation entity for the booking module per bookings-resource-calendar REQ-001. Each resource is owned by an administration and has a lifecycle status. NOTE: `organization` below is the RETIRED alias of `administrationId` (the field CalendarController actually filters on, and the one the bookings-resource-calendar fragment requires). It is kept as an OPTIONAL property for backwards compatibility and MUST NOT be listed in `required`: register fragments are merged by schema key and `required` is a LIST, so ADR-037's deep merge CONCATENATES it — requiring both the alias and the canonical field made this schema unsatisfiable by every seed either fragment ships.",
+        "x-schema-org": "schema:Thing",
+        "type": "object",
+        "required": [
+          "type",
+          "name",
+          "status"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "The kind of bookable resource per REQ-001.",
+            "enum": [
+              "staff",
+              "room",
+              "equipment",
+              "furniture",
+              "other"
+            ],
+            "example": "staff",
+            "title": "Type"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable resource name.",
+            "example": "Jan Peeters",
+            "title": "Name"
+          },
+          "organization": {
+            "type": "string",
+            "description": "FK to the organization that owns this resource.",
+            "example": "org-001",
+            "title": "Organization"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle status of the resource.",
+            "enum": [
+              "active",
+              "inactive",
+              "archived"
+            ],
+            "default": "active",
+            "example": "active",
+            "title": "Status"
+          }
+        }
+      },
+      "Calendar": {
+        "slug": "Calendar",
+        "icon": "CalendarOutline",
+        "version": "0.1.0",
+        "title": "Calendar",
+        "description": "A per-resource calendar carrying time-zone and working-hours configuration per bookings-resource-calendar REQ-002. Bound to exactly one Resource. All booking times are stored in UTC; the timeZone field drives display conversion on the client. NOTE: `organization` below is the RETIRED alias of `administrationId` and is OPTIONAL — see the same note on Resource above. Requiring it here is what made every seeded Calendar (cal-001..cal-003) fail to import, so GET /api/v2/calendars answered `{\"calendars\":[]}` and GET /api/v2/calendars/{id} answered 404 for calendars this app ships.",
+        "x-schema-org": "schema:Schedule",
+        "type": "object",
+        "required": [
+          "resource",
+          "timeZone",
+          "status"
+        ],
+        "properties": {
+          "resource": {
+            "type": "string",
+            "description": "FK to the Resource this calendar is bound to.",
+            "example": "res-001",
+            "title": "Resource"
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "IANA time zone identifier used to display booking times. Storage is always UTC.",
+            "default": "Europe/Amsterdam",
+            "example": "Europe/Amsterdam",
+            "title": "Time Zone"
+          },
+          "workingHours": {
+            "type": "object",
+            "nullable": true,
+            "description": "Optional working-hours template keyed by weekday (e.g. {\"monday\": \"09:00-17:00\"}). A weekday that is OMITTED means the resource is closed that day. Omit it, do not send null: OpenRegister's validator reads JSON-Schema types and rejects null against type \"string\" regardless of the OpenAPI `nullable` keyword, which is honoured only at the TOP level of a schema and never inside a nested object's additionalProperties. Sending null is what dropped the seeded Calendar below (\"Property 'workingHours.saturday' should be type 'string' but is 'null'\"). A null value for the whole workingHours object still means 24/7 availability — that is top-level and is accepted.",
+            "additionalProperties": {
+              "type": "string",
+              "nullable": true
+            },
+            "example": {
+              "monday": "09:00-17:00",
+              "friday": "09:00-17:00"
+            },
+            "title": "Working Hours"
+          },
+          "organization": {
+            "type": "string",
+            "description": "FK to the organization that owns this calendar.",
+            "example": "org-001",
+            "title": "Organization"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle status of the calendar.",
+            "enum": [
+              "active",
+              "inactive",
+              "archived"
+            ],
+            "default": "active",
+            "example": "active",
+            "title": "Status"
+          }
+        }
+      },
+      "Booking": {
+        "slug": "Booking",
+        "icon": "CalendarClockOutline",
+        "version": "0.1.0",
+        "title": "Booking",
+        "description": "A scheduled appointment on a resource's calendar per bookings-resource-calendar REQ-003. Times are stored in UTC (ISO 8601). The resource FK is denormalized from the calendar for efficient per-resource conflict queries.",
+        "x-schema-org": "schema:Reservation",
+        "type": "object",
+        "required": [
+          "calendar",
+          "resource",
+          "title",
+          "startTime",
+          "endTime",
+          "attendee",
+          "status"
+        ],
+        "properties": {
+          "calendar": {
+            "type": "string",
+            "description": "FK to the Calendar this booking belongs to.",
+            "example": "cal-001",
+            "title": "Calendar"
+          },
+          "resource": {
+            "type": "string",
+            "description": "Denormalized FK to the Resource (mirrors Calendar.resource) for efficient conflict queries per design Decision 4.",
+            "example": "res-001",
+            "title": "Resource"
+          },
+          "title": {
+            "type": "string",
+            "description": "Short booking title.",
+            "example": "Klant: Anna de Wit",
+            "title": "Title"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Appointment start time in UTC (ISO 8601).",
+            "example": "2026-05-21T10:00:00Z",
+            "title": "Start Time"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Appointment end time in UTC (ISO 8601). Must be after startTime.",
+            "example": "2026-05-21T10:30:00Z",
+            "title": "End Time"
+          },
+          "attendee": {
+            "type": "string",
+            "description": "Attendee name or free-text reference.",
+            "example": "Anna de Wit",
+            "title": "Attendee"
+          },
+          "status": {
+            "type": "string",
+            "description": "Booking lifecycle status. A pending booking that overlaps another is flagged as conflicting in the UI.",
+            "enum": [
+              "pending",
+              "confirmed",
+              "cancelled"
+            ],
+            "default": "pending",
+            "example": "confirmed",
+            "title": "Status"
+          },
+          "externalId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional external calendar event ID for future Tier-3 sync (Google/Outlook).",
+            "example": null,
+            "title": "External ID"
+          }
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Resource",
+          "slug": "res-001"
+        },
+        "type": "staff",
+        "name": "Jan Peeters",
+        "organization": "org-001",
+        "status": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Resource",
+          "slug": "res-002"
+        },
+        "type": "staff",
+        "name": "Marie Dubois",
+        "organization": "org-001",
+        "status": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Resource",
+          "slug": "res-003"
+        },
+        "type": "room",
+        "name": "Vergaderruimte A",
+        "organization": "org-001",
+        "status": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Resource",
+          "slug": "res-004"
+        },
+        "type": "equipment",
+        "name": "Behandelstoel 1",
+        "organization": "org-001",
+        "status": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Resource",
+          "slug": "res-005"
+        },
+        "type": "furniture",
+        "name": "Tafel 4 (hoek)",
+        "organization": "org-001",
+        "status": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Calendar",
+          "slug": "cal-001"
+        },
+        "resource": "res-001",
+        "timeZone": "Europe/Amsterdam",
+        "workingHours": {
+          "monday": "09:00-17:00",
+          "tuesday": "09:00-17:00",
+          "wednesday": "09:00-17:00",
+          "thursday": "09:00-17:00",
+          "friday": "09:00-17:00"
+        },
+        "organization": "org-001",
+        "status": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Calendar",
+          "slug": "cal-002"
+        },
+        "resource": "res-003",
+        "timeZone": "Europe/Amsterdam",
+        "workingHours": {
+          "monday": "08:00-18:00",
+          "tuesday": "08:00-18:00",
+          "wednesday": "08:00-18:00",
+          "thursday": "08:00-18:00",
+          "friday": "08:00-18:00",
+          "saturday": "09:00-13:00"
+        },
+        "organization": "org-001",
+        "status": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Calendar",
+          "slug": "cal-003"
+        },
+        "resource": "res-004",
+        "timeZone": "Europe/Amsterdam",
+        "workingHours": {
+          "monday": "10:00-18:00",
+          "tuesday": "10:00-18:00",
+          "wednesday": "10:00-18:00",
+          "thursday": "10:00-18:00",
+          "friday": "10:00-20:00",
+          "saturday": "10:00-16:00"
+        },
+        "organization": "org-001",
+        "status": "active"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Booking",
+          "slug": "bk-001"
+        },
+        "calendar": "cal-001",
+        "resource": "res-001",
+        "title": "Klant: Anna de Wit",
+        "startTime": "2026-05-21T10:00:00Z",
+        "endTime": "2026-05-21T10:30:00Z",
+        "attendee": "Anna de Wit",
+        "status": "confirmed"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Booking",
+          "slug": "bk-002"
+        },
+        "calendar": "cal-001",
+        "resource": "res-001",
+        "title": "Klant: Kees Bakker",
+        "startTime": "2026-05-21T11:00:00Z",
+        "endTime": "2026-05-21T11:45:00Z",
+        "attendee": "Kees Bakker",
+        "status": "confirmed"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Booking",
+          "slug": "bk-003"
+        },
+        "calendar": "cal-001",
+        "resource": "res-001",
+        "title": "Klant: Sophia Vermeulen (CONFLICT: overlaps with bk-002)",
+        "startTime": "2026-05-21T11:15:00Z",
+        "endTime": "2026-05-21T12:00:00Z",
+        "attendee": "Sophia Vermeulen",
+        "status": "pending"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Booking",
+          "slug": "bk-004"
+        },
+        "calendar": "cal-002",
+        "resource": "res-003",
+        "title": "Team Meeting: Q2 Planning",
+        "startTime": "2026-05-22T13:00:00Z",
+        "endTime": "2026-05-22T14:30:00Z",
+        "attendee": "Team",
+        "status": "confirmed"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Booking",
+          "slug": "bk-005"
+        },
+        "calendar": "cal-002",
+        "resource": "res-003",
+        "title": "Client Presentation (CONFLICT: overlaps with bk-004)",
+        "startTime": "2026-05-22T13:45:00Z",
+        "endTime": "2026-05-22T15:00:00Z",
+        "attendee": "Client XYZ",
+        "status": "pending"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Booking",
+          "slug": "bk-006"
+        },
+        "calendar": "cal-003",
+        "resource": "res-004",
+        "title": "Afspraak: Manicure",
+        "startTime": "2026-05-23T10:00:00Z",
+        "endTime": "2026-05-23T10:30:00Z",
+        "attendee": "Cliente A",
+        "status": "confirmed"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Booking",
+          "slug": "bk-007"
+        },
+        "calendar": "cal-003",
+        "resource": "res-004",
+        "title": "Afspraak: Pedicure",
+        "startTime": "2026-05-23T11:00:00Z",
+        "endTime": "2026-05-23T11:45:00Z",
+        "attendee": "Cliente B",
+        "status": "confirmed"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Booking",
+          "slug": "bk-008"
+        },
+        "calendar": "cal-003",
+        "resource": "res-004",
+        "title": "Afspraak: Styling",
+        "startTime": "2026-05-24T14:00:00Z",
+        "endTime": "2026-05-24T15:00:00Z",
+        "attendee": "Cliente C",
+        "status": "confirmed"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Booking",
+          "slug": "bk-009"
+        },
+        "calendar": "cal-001",
+        "resource": "res-001",
+        "title": "Klant: Dirk Peeters",
+        "startTime": "2026-05-27T14:00:00Z",
+        "endTime": "2026-05-27T14:30:00Z",
+        "attendee": "Dirk Peeters",
+        "status": "confirmed"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Booking",
+          "slug": "bk-010"
+        },
+        "calendar": "cal-001",
+        "resource": "res-001",
+        "title": "Klant: Nina Jansen",
+        "startTime": "2026-05-27T15:00:00Z",
+        "endTime": "2026-05-27T15:45:00Z",
+        "attendee": "Nina Jansen",
+        "status": "confirmed"
+      }
+    ]
+  }
+}

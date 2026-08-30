@@ -1,0 +1,59 @@
+{
+	"menu": [
+		{
+			"id": "Bookkeeping",
+			"label": "Bookkeeping",
+			"icon": "NotebookOutline",
+			"order": 20,
+			"children": [
+				{
+					"id": "WbsoChartOfAccounts",
+					"label": "Chart of Accounts",
+					"icon": "NotebookOutline",
+					"route": "WbsoChartOfAccounts",
+					"order": 10
+				},
+				{
+					"id": "WbsoTransactions",
+					"label": "Transactions",
+					"icon": "ReceiptTextOutline",
+					"route": "WbsoTransactions",
+					"order": 20
+				},
+				{
+					"id": "WbsoDocuments",
+					"label": "Documents",
+					"icon": "FileDocumentMultipleOutline",
+					"route": "WbsoDocuments",
+					"order": 30
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "WbsoChartOfAccounts",
+			"route": "/bookkeeping/chart-of-accounts",
+			"type": "custom",
+			"component": "WbsoChartOfAccountsView",
+			"_note": "Hierarchical RGS chart-of-accounts TREE with expand/collapse (REQ-WBSO-006), read from /api/wbso-sno/accounts/hierarchy via WbsoAccountApiController. `type: index` is register/schema-driven through config.register + config.schema and renders a flat object table; it cannot express a nested hierarchy served by a bespoke REST endpoint that is not an OpenRegister schema at all.",
+			"title": "Chart of Accounts"
+		},
+		{
+			"id": "WbsoTransactions",
+			"route": "/bookkeeping/transactions",
+			"type": "custom",
+			"component": "WbsoTransactionsView",
+			"_note": "WBSO/SNO transaction list (REQ-WBSO-002 / REQ-WBSO-008) read from the bespoke /api/v1/transactions endpoint, not from an OpenRegister register/schema, so `type: index` — which resolves its rows through config.register + config.schema — has no data source to point at. The view already renders through the shared nc-vue CnDataTable, so the deviation is the data source, not the presentation.",
+			"title": "Transactions"
+		},
+		{
+			"id": "WbsoDocuments",
+			"route": "/bookkeeping/documents",
+			"type": "custom",
+			"component": "WbsoDocumentsView",
+			"_note": "WBSO/SNO document list with upload (REQ-WBSO-003 / REQ-WBSO-007 / REQ-WBSO-009) read from the bespoke /api/v1/documents endpoint rather than an OpenRegister register/schema, so `type: index` has no config.register/config.schema to resolve. Like the transactions view it already renders through the shared nc-vue CnDataTable; the data source is what makes it custom.",
+			"title": "Documents"
+		}
+	]
+}

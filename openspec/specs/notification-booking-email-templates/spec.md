@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: Booking Email Templates
 
 **Scope:** notification-booking-email-templates
@@ -5,7 +9,7 @@
 **Status:** draft
 **Applies to:** Nextcloud Booking
 
-## Overview
+## Purpose
 
 Declared templates for automated booking emails: confirmation,
 reminder, cancellation. Operators customize branding (logo, colors,
@@ -121,6 +125,8 @@ engine. Undefined variables are rendered as empty string.
 
 ### REQ-BET-001: Template CRUD operations
 
+The system SHALL satisfy this requirement: Template CRUD operations.
+
 #### Scenario: Create a new confirmation template
 
 **GIVEN** an operator accessing the Confirmation Templates admin
@@ -138,6 +144,8 @@ template list.
 
 ### REQ-BET-002: Template lifecycle — draft to published
 
+The system SHALL satisfy this requirement: Template lifecycle — draft to published.
+
 #### Scenario: Publish a template from draft
 
 **GIVEN** a template in status `draft`,
@@ -148,6 +156,8 @@ available for dispatch.
 
 ### REQ-BET-003: Template lifecycle — published to archived
 
+The system SHALL satisfy this requirement: Template lifecycle — published to archived.
+
 #### Scenario: Archive an active template
 
 **GIVEN** a template in status `published`,
@@ -157,6 +167,8 @@ not dispatched using archived templates; existing instances remain
 visible in history.
 
 ### REQ-BET-004: Variable rendering in email subject and body
+
+The system SHALL satisfy this requirement: Variable rendering in email subject and body.
 
 #### Scenario: Dispatch confirmation with variables substituted
 
@@ -175,6 +187,8 @@ and the body begins:
 
 ### REQ-BET-005: Reminder template timing configuration
 
+The system SHALL satisfy this requirement: Reminder template timing configuration.
+
 #### Scenario: Send reminder 24 hours before booking
 
 **GIVEN** a published `BookingReminderTemplate` with `hoursBeforeBooking: 24`,
@@ -186,6 +200,8 @@ immediately.
 
 ### REQ-BET-006: Plain-text fallback for email clients
 
+The system SHALL satisfy this requirement: Plain-text fallback for email clients.
+
 #### Scenario: Email client without HTML rendering falls back to plain-text
 
 **GIVEN** a template with:
@@ -196,6 +212,8 @@ immediately.
 **THEN** the plain-text body is displayed instead.
 
 ### REQ-BET-007: Branding customization per template
+
+The system SHALL satisfy this requirement: Branding customization per template.
 
 #### Scenario: Apply different logos and colors to different template types
 
@@ -211,6 +229,8 @@ requiring three separate organizational branding profiles.
 
 ### REQ-BET-008: Template version management (draft vs published)
 
+The system SHALL satisfy this requirement: Template version management (draft vs published).
+
 #### Scenario: Update a published template as draft; keep current live
 
 **GIVEN** a published `BookingConfirmationTemplate` (v1),
@@ -222,6 +242,8 @@ At publication, the system uses the new version for future dispatches.
 
 ### REQ-BET-009: Cancellation template with optional reason
 
+The system SHALL satisfy this requirement: Cancellation template with optional reason.
+
 #### Scenario: Include booking cancellation reason in email
 
 **GIVEN** a `BookingCancellationTemplate` with:
@@ -232,6 +254,8 @@ At publication, the system uses the new version for future dispatches.
 `"Uw boeking BK20260521042 is geannuleerd.\nReden: Customer requested"`
 
 ### REQ-BET-010: Integration with OR notification engine
+
+The system SHALL satisfy this requirement: Integration with OR notification engine.
 
 #### Scenario: Template dispatch via OR notification abstraction
 

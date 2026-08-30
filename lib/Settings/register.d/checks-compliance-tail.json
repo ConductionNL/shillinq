@@ -1,0 +1,371 @@
+{
+  "x-shillinq-fragment": "checks-compliance-tail",
+  "components": {
+    "schemas": {
+      "ARInvoice": {
+        "version": "0.10.0",
+        "properties": {
+          "marginScheme": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether this invoice is supplied under the VAT margin scheme for second-hand goods, works of art, collectors' items and antiques (VAT Directive arts. 312-325); enables the art. 315 margin-taxable-amount and art. 322 no-separate-VAT checks.",
+            "title": "Margin Scheme"
+          },
+          "marginPurchasePrice": {
+            "type": "number",
+            "nullable": true,
+            "description": "Purchase price of the margin-scheme goods (VAT Directive art. 312); subtracted from the selling price to derive the taxable margin (art. 315).",
+            "title": "Margin Purchase Price"
+          },
+          "marginSellingPrice": {
+            "type": "number",
+            "nullable": true,
+            "description": "Selling price of the margin-scheme goods (VAT Directive art. 312); the taxable margin is this less the purchase price (art. 315).",
+            "title": "Margin Selling Price"
+          },
+          "marginTaxableAmount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Stated taxable amount under the margin scheme (VAT Directive art. 315); must reconcile to marginSellingPrice - marginPurchasePrice.",
+            "title": "Margin Taxable Amount"
+          }
+        }
+      },
+      "SaftFile": {
+        "version": "0.1.0",
+        "slug": "SaftFile",
+        "title": "SAF-T File (compliance)",
+        "type": "object",
+        "description": "A generated OECD SAF-T (Standard Audit File for Tax) 2.0 export, modelled at the structural-group level so its mandatory/conditional groups (Header, GeneralLedgerAccounts, Customers/Suppliers, TaxTable, GeneralLedgerEntries, SourceDocuments) and XSD validity can be machine-checked. Distinct from the SaftExportProfile configuration object.",
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The administration / legal entity the SAF-T export belongs to.",
+            "title": "Administration ID"
+          },
+          "fileVersion": {
+            "type": "string",
+            "nullable": true,
+            "description": "The SAF-T schema/file version the export was produced against (e.g. '2.0').",
+            "title": "File Version"
+          },
+          "auditFileCountry": {
+            "type": "string",
+            "nullable": true,
+            "description": "The country whose national SAF-T schema the file conforms to (ISO 3166-1 alpha-2).",
+            "title": "Audit File Country"
+          },
+          "xsdValid": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "True when the export is a valid XML document conforming to the applicable national SAF-T XSD schema version (SAF-T xml-schema-validity).",
+            "title": "Xsd Valid"
+          },
+          "header": {
+            "type": "object",
+            "nullable": true,
+            "description": "SAF-T Header group: company identification, fiscal/selection period, currency, taxonomy/schema version and producing-software details.",
+            "properties": {
+              "companyName": {
+                "type": "string",
+                "description": "Registered name of the company.",
+                "title": "Company Name"
+              },
+              "companyId": {
+                "type": "string",
+                "description": "Company registration / tax identifier.",
+                "title": "Company ID"
+              },
+              "taxRegistrationNbr": {
+                "type": "string",
+                "description": "VAT / tax registration number.",
+                "title": "Tax Registration Nbr"
+              },
+              "currencyCode": {
+                "type": "string",
+                "description": "Default currency of the accounts (ISO 4217).",
+                "title": "Currency Code"
+              },
+              "fiscalYear": {
+                "type": "string",
+                "description": "The fiscal year the file covers.",
+                "title": "Fiscal Year"
+              },
+              "startDate": {
+                "type": "string",
+                "format": "date",
+                "description": "Start of the selection period.",
+                "title": "Start Date"
+              },
+              "endDate": {
+                "type": "string",
+                "format": "date",
+                "description": "End of the selection period.",
+                "title": "End Date"
+              },
+              "taxonomyVersion": {
+                "type": "string",
+                "description": "Taxonomy / schema version of the export.",
+                "title": "Taxonomy Version"
+              },
+              "softwareId": {
+                "type": "string",
+                "description": "Identifier of the producing software.",
+                "title": "Software ID"
+              },
+              "softwareVersion": {
+                "type": "string",
+                "description": "Version of the producing software.",
+                "title": "Software Version"
+              }
+            },
+            "title": "Header"
+          },
+          "generalLedgerAccounts": {
+            "type": "array",
+            "nullable": true,
+            "description": "SAF-T MasterFiles/GeneralLedgerAccounts: each ledger account with its id, description, type and opening/closing balances.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "accountId": {
+                  "type": "string",
+                  "description": "Ledger account number.",
+                  "title": "Account ID"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Account description.",
+                  "title": "Description"
+                },
+                "accountType": {
+                  "type": "string",
+                  "description": "Account type (asset/liability/equity/income/expense).",
+                  "title": "Account Type"
+                },
+                "openingBalance": {
+                  "type": "number",
+                  "description": "Opening balance of the account.",
+                  "title": "Opening Balance"
+                },
+                "closingBalance": {
+                  "type": "number",
+                  "description": "Closing balance of the account.",
+                  "title": "Closing Balance"
+                }
+              }
+            },
+            "title": "General Ledger Accounts"
+          },
+          "customers": {
+            "type": "array",
+            "nullable": true,
+            "description": "SAF-T MasterFiles/Customers: each customer with identification, VAT registration, address and balances.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "customerId": {
+                  "type": "string",
+                  "description": "Customer identifier.",
+                  "title": "Customer ID"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Customer name.",
+                  "title": "Name"
+                },
+                "vatNumber": {
+                  "type": "string",
+                  "description": "Customer VAT registration number.",
+                  "title": "VAT Number"
+                },
+                "address": {
+                  "type": "string",
+                  "description": "Customer address.",
+                  "title": "Address"
+                },
+                "openingBalance": {
+                  "type": "number",
+                  "description": "Opening account balance.",
+                  "title": "Opening Balance"
+                },
+                "closingBalance": {
+                  "type": "number",
+                  "description": "Closing account balance.",
+                  "title": "Closing Balance"
+                }
+              }
+            },
+            "title": "Customers"
+          },
+          "suppliers": {
+            "type": "array",
+            "nullable": true,
+            "description": "SAF-T MasterFiles/Suppliers: each supplier with identification, VAT registration, address and balances.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "supplierId": {
+                  "type": "string",
+                  "description": "Supplier identifier.",
+                  "title": "Supplier ID"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Supplier name.",
+                  "title": "Name"
+                },
+                "vatNumber": {
+                  "type": "string",
+                  "description": "Supplier VAT registration number.",
+                  "title": "VAT Number"
+                },
+                "address": {
+                  "type": "string",
+                  "description": "Supplier address.",
+                  "title": "Address"
+                },
+                "openingBalance": {
+                  "type": "number",
+                  "description": "Opening account balance.",
+                  "title": "Opening Balance"
+                },
+                "closingBalance": {
+                  "type": "number",
+                  "description": "Closing account balance.",
+                  "title": "Closing Balance"
+                }
+              }
+            },
+            "title": "Suppliers"
+          },
+          "taxTable": {
+            "type": "array",
+            "nullable": true,
+            "description": "SAF-T MasterFiles/TaxTable: the tax (VAT) codes, rates and descriptions referenced by the entries.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "taxCode": {
+                  "type": "string",
+                  "description": "Tax (VAT) code.",
+                  "title": "Tax Code"
+                },
+                "taxPercentage": {
+                  "type": "number",
+                  "description": "Tax rate percentage.",
+                  "title": "Tax Percentage"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Tax code description.",
+                  "title": "Description"
+                }
+              }
+            },
+            "title": "Tax Table"
+          },
+          "glEntries": {
+            "type": "array",
+            "nullable": true,
+            "description": "SAF-T GeneralLedgerEntries: journals and transactions, each transaction carrying lines with account, date, debit/credit amount and document reference.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "journalId": {
+                  "type": "string",
+                  "description": "Journal the transaction belongs to.",
+                  "title": "Journal ID"
+                },
+                "transactionId": {
+                  "type": "string",
+                  "description": "Transaction identifier.",
+                  "title": "Transaction ID"
+                },
+                "lines": {
+                  "type": "array",
+                  "description": "Transaction lines.",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "accountId": {
+                        "type": "string",
+                        "description": "Ledger account number of the line.",
+                        "title": "Account ID"
+                      },
+                      "postingDate": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "Posting date of the line.",
+                        "title": "Posting Date"
+                      },
+                      "debitAmount": {
+                        "type": "number",
+                        "description": "Debit amount of the line.",
+                        "title": "Debit Amount"
+                      },
+                      "creditAmount": {
+                        "type": "number",
+                        "description": "Credit amount of the line.",
+                        "title": "Credit Amount"
+                      },
+                      "documentReference": {
+                        "type": "string",
+                        "description": "Reference to the source document.",
+                        "title": "Document Reference"
+                      }
+                    }
+                  },
+                  "title": "Lines"
+                }
+              }
+            },
+            "title": "GL Entries"
+          },
+          "sourceDocuments": {
+            "type": "array",
+            "nullable": true,
+            "description": "SAF-T SourceDocuments: sales/purchase invoices, payments and movement-of-goods records linking source documents to ledger entries.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "documentType": {
+                  "type": "string",
+                  "description": "Source-document type (e.g. sales-invoice, purchase-invoice, payment).",
+                  "title": "Document Type"
+                },
+                "documentReference": {
+                  "type": "string",
+                  "description": "Source-document reference number.",
+                  "title": "Document Reference"
+                },
+                "glTransactionId": {
+                  "type": "string",
+                  "description": "The general-ledger transaction the document links to.",
+                  "title": "GL Transaction ID"
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Document date.",
+                  "title": "Date"
+                },
+                "totalAmount": {
+                  "type": "number",
+                  "description": "Total document amount.",
+                  "title": "Total Amount"
+                }
+              }
+            },
+            "title": "Source Documents"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a SAF-T File (compliance) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    }
+  }
+}

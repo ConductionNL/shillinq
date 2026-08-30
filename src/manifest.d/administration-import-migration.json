@@ -1,0 +1,236 @@
+{
+	"_meta": {
+		"spdx-license": "EUPL-1.2",
+		"spdx-copyright": "2026 Conduction B.V.",
+		"change": "administration-import-migration",
+		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json. ADR-004 NcSelect inputLabel + modal-isolation gates.",
+		"description": "Tier 2 — Administration Import & Migration navigation per REQ-AIM-010. Adds the 'Import & migration' menu with the import wizard, batch list, batch detail (reports + reversal action via lifecycleActions), and the mapping review grid, bound to the canonical ImportBatch / ImportMapping schemas. The multi-step wizard (upload via NC Files picker → profile selection → mapping review → validation findings → dry-run report → post) is described as a sequence over the batch detail + mapping grid; the single-screen wizard host references a custom component noted as deferred until the wizard component lands."
+	},
+	"menu": [
+		{
+			"id": "ImportMigration",
+			"label": "Import & migration",
+			"icon": "DatabaseImportOutline",
+			"order": 60,
+			"children": [
+				{
+					"id": "ImportWizard",
+					"label": "Import wizard",
+					"icon": "DatabaseImportOutline",
+					"route": "ImportWizard",
+					"order": 10
+				},
+				{
+					"id": "ImportBatches",
+					"label": "Import batches",
+					"icon": "DatabaseImportOutline",
+					"route": "ImportBatches",
+					"order": 20
+				},
+				{
+					"id": "ImportMappings",
+					"label": "Mapping",
+					"icon": "SwapHorizontal",
+					"route": "ImportMappings",
+					"order": 30
+				}
+			]
+		}
+	],
+	"pages": [
+		{
+			"id": "ImportWizard",
+			"route": "/import/wizard",
+			"type": "custom",
+			"title": "Import wizard",
+			"_note": "A single-screen host for a six-stage migration run (upload via the Nextcloud Files picker, source-profile selection, mapping review, validation findings, dry-run report, post) whose stages each drive a different backend lifecycle call on one ImportBatch. `type: form` submits one object once and its config.steps only partition that object's own fields into pages — it cannot run validate, dry-run and post between stages, nor block progress on validation findings. The wizard component itself is DEFERRED (see config['x-deferred']): until it lands the page renders the empty state and the same flow is operable through ImportBatches / ImportMappings / ImportBatchDetail.",
+			"config": {
+				"x-deferred": "The wizard host references an ImportWizard.vue component that does not exist yet — and `config.component` is read by nothing (CnPageRenderer resolves a custom page as `page.component || page.slots.main`), so the key has been removed rather than left looking wired. Until the component lands the flow is fully operable as a sequence: create an ImportBatch (ImportBatches → new), review accounts in the Mapping grid (ImportMappings), then drive the lifecycle (validate → dry-run → post) from the batch detail's lifecycleActions and read the validation/dry-run reports in its tabs.",
+				"x-deferred-steps": [
+					{"id": "upload", "label": "Upload files", "description": "Select the XAF auditfile and any companion CSVs from Nextcloud Files (link, not copied)."},
+					{"id": "profile", "label": "Source system", "description": "Choose the source package profile (xaf-generic / e-boekhouden / exact-online / moneybird / snelstart)."},
+					{"id": "mapping", "label": "Mapping review", "description": "Review RGS-auto and profile-default rows, confirm suggestions, resolve unmapped accounts.", "route": "ImportMappings"},
+					{"id": "validation", "label": "Validation", "description": "Run validation; error findings block posting.", "route": "ImportBatchDetail"},
+					{"id": "dry-run", "label": "Dry-run", "description": "Generate the would-be result report; mandatory before posting.", "route": "ImportBatchDetail"},
+					{"id": "post", "label": "Post", "description": "Post the opening journal, open items, and relations.", "route": "ImportBatchDetail"}
+				]
+			}
+		},
+		{
+			"id": "ImportBatches",
+			"route": "/import/batches",
+			"type": "index",
+			"title": "Import batches",
+			"config": {
+				"register": "shillinq",
+				"schema": "ImportBatch",
+				"columns": [
+					{"key": "sourceSystem", "label": "Source system", "sortable": true},
+					{"key": "administrationId", "label": "Administration", "sortable": true},
+					{"key": "migrationDate", "label": "Migration date", "sortable": true},
+					{"key": "mappingProfile", "label": "Mapping profile", "sortable": false},
+					{"key": "status", "label": "Status", "sortable": true}
+				],
+				"defaultSort": "migrationDate",
+				"detailRoute": "ImportBatchDetail"
+			}
+		},
+		{
+			"id": "ImportBatchDetail",
+			"route": "/import/batches/:id",
+			"type": "detail",
+			"title": "Import batch",
+			"config": {
+				"register": "shillinq",
+				"schema": "ImportBatch",
+				"_note": "MASTER archetype (native CnDetailPage). An import batch is a staged administration migration (XAF + companion CSVs → opening journal, open items, relations) that owns its ImportMapping review rows (FK batchReference) as the actual mapping-review surface, so it renders via relatedCollections rather than a bespoke object-list widget. KEY: the prop is `relatedCollections` — a `relatedLists` block is not a prop on any Cn page component, lands in $attrs and renders nothing. TOKEN: `@objectId` — ImportMapping.batchReference is documented as \"UUID or slug\" and ImportBatch exposes no flat batch-reference field, so the UUID is the only value reachable from a filter token. The source XAF/CSV files are metadata on sourceFiles (Nextcloud Files references, linked not stored) so the Documents sidebar tab surfaces them via openregister-file-references. The status field drives a fail-closed lifecycle (draft → parsing → staged → mapping → validated|validation_failed → dry_run_complete → posting → posted|posting_failed → reversed), so the lifecycle toolbar is preserved via lifecycleActions. Audit trail lives in the canonical sidebarProps audit tab.",
+				"fields": [
+					{"key": "sourceSystem", "label": "Source system", "type": "string"},
+					{"key": "administrationId", "label": "Administration", "type": "string"},
+					{"key": "sourceFiles", "label": "Source files", "type": "array"},
+					{"key": "migrationDate", "label": "Migration date", "type": "date"},
+					{"key": "scope", "label": "Scope", "type": "object"},
+					{"key": "status", "label": "Status", "type": "string"},
+					{"key": "stagedCounts", "label": "Staged counts", "type": "object"},
+					{"key": "validationReport", "label": "Validation findings", "type": "object"},
+					{"key": "dryRunReport", "label": "Dry-run report", "type": "object"},
+					{"key": "idempotencyKey", "label": "Idempotency key", "type": "string"},
+					{"key": "mappingProfile", "label": "Mapping profile", "type": "string"},
+					{"key": "owner", "label": "Owner", "type": "string"}
+				],
+				"lifecycleActions": true,
+				"relatedCollections": [
+					{
+						"title": "Account mappings",
+						"register": "shillinq",
+						"schema": "ImportMapping",
+						"filter": { "batchReference": "@objectId" },
+						"columns": [
+							{"key": "sourceCode", "label": "Source code"},
+							{"key": "sourceName", "label": "Source name"},
+							{"key": "sourceRgsCode", "label": "RGS code"},
+							{"key": "targetAccount", "label": "Target account"},
+							{"key": "mappingSource", "label": "Mapping source"},
+							{"key": "confirmed", "label": "Confirmed"}
+						],
+						"rowRoute": "ImportMappingDetail"
+					}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "documents",
+							"label": "Documents",
+							"icon": "FileDocumentOutline",
+							"order": 80,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-file-references",
+									"props": {
+										"register": "shillinq",
+										"schema": "ImportBatch",
+										"objectId": ":id"
+									}
+								}
+							]
+						},
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
+				"indexRoute": "ImportBatches"
+			}
+		},
+		{
+			"id": "ImportMappings",
+			"route": "/import/mappings",
+			"type": "index",
+			"title": "Mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "ImportMapping",
+				"columns": [
+					{"key": "sourceCode", "label": "Source code", "sortable": true},
+					{"key": "sourceName", "label": "Source name", "sortable": true},
+					{"key": "sourceRgsCode", "label": "RGS code", "sortable": true},
+					{"key": "targetAccount", "label": "Target account", "sortable": true},
+					{"key": "mappingSource", "label": "Mapping source", "sortable": true},
+					{"key": "confirmed", "label": "Confirmed", "sortable": true}
+				],
+				"filters": [
+					{
+						"key": "mappingSource",
+						"inputLabel": "Filter by mapping source",
+						"type": "select",
+						"options": ["rgs-auto", "profile-default", "manual", "unmapped"]
+					},
+					{
+						"key": "confirmed",
+						"inputLabel": "Filter by confirmation",
+						"type": "select",
+						"options": ["true", "false"]
+					}
+				],
+				"defaultSort": "sourceCode",
+				"detailRoute": "ImportMappingDetail"
+			}
+		},
+		{
+			"id": "ImportMappingDetail",
+			"route": "/import/mappings/:id",
+			"type": "detail",
+			"title": "Import mapping",
+			"config": {
+				"register": "shillinq",
+				"schema": "ImportMapping",
+				"_note": "CONFIG archetype (native CnDetailPage). An import mapping ties one source-system account code to a target GL account for a batch — a configuration row a bookkeeper confirms (rgs-auto/profile-default pre-confirmed, manual needs confirmation, unmapped blocks validation). It has no child records of its own and no independent lifecycle state machine (ImportMapping carries no x-openregister-lifecycle), so per the config archetype the page is fields + audit trail only — no relatedLists, no lifecycleActions, no files.",
+				"fields": [
+					{"key": "batchReference", "label": "Batch", "type": "string"},
+					{"key": "sourceCode", "label": "Source code", "type": "string"},
+					{"key": "sourceName", "label": "Source name", "type": "string"},
+					{"key": "sourceRgsCode", "label": "RGS code", "type": "string"},
+					{"key": "targetAccount", "label": "Target account", "type": "string"},
+					{"key": "mappingSource", "label": "Mapping source", "type": "string"},
+					{"key": "confirmed", "label": "Confirmed", "type": "boolean"},
+					{"key": "administrationId", "label": "Administration", "type": "string"}
+				],
+				"sidebarProps": {
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "Audit Trail",
+							"icon": "History",
+							"order": 90,
+							"widgets": [
+								{
+									"type": "data",
+									"componentName": "openregister-audit-trail",
+									"props": {
+										"source": "/index.php/apps/openregister/api/objects/shillinq/:schema/:id/audit-trails",
+										"collapsed": true
+									}
+								}
+							]
+						}
+					]
+				},
+				"indexRoute": "ImportMappings"
+			}
+		}
+	]
+}

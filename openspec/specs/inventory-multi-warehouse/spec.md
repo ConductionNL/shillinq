@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: inventory-multi-warehouse
 
 **Status:** proposed
@@ -6,7 +10,11 @@
 **Depends on:** `inventory-stock-tracking` (InventoryStock queries),
 optional: `add-shillinq-general-ledger` (GL integration for transfers)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for inventory multi warehouse in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/schema: multi-warehouse register — not browser-testable
 
@@ -44,6 +52,8 @@ at warehouse level MUST return aggregated quantities from all bins under that wa
 
 ### REQ-LOC-002: Location schema SHALL include hierarchy and type fields
 
+The system SHALL satisfy this requirement: Location schema SHALL include hierarchy and type fields.
+
 | Field | Type | Required | Purpose |
 |---|---|---|---|
 | `id` | string | Yes | Unique location identifier (inherited from OR) |
@@ -79,6 +89,8 @@ Schema.org annotation: `schema:Place` (location is a physical/virtual place).
 
 ### REQ-LOC-003: Location hierarchy depth SHALL be limited and queryable
 
+The system SHALL satisfy this requirement: Location hierarchy depth SHALL be limited and queryable.
+
 Maximum location hierarchy depth is **4 levels** (warehouse → zone → aisle → bin):
 
 - Level 0: Warehouse (no parent)
@@ -103,6 +115,8 @@ Deep hierarchy queries (e.g., "all bins under warehouse W-01") MUST be performan
 - **THEN** result MUST include all 3 zones + all 30 bins in < 50ms.
 
 ### REQ-LOC-004: In-transit location type enables transfer-in-progress inventory tracking
+
+The system SHALL satisfy this requirement: In-transit location type enables transfer-in-progress inventory tracking.
 
 In-transit location (locationType='in-transit') is a virtual holding location for
 stock being transferred between warehouses. Stock in in-transit locations is visible
@@ -156,6 +170,8 @@ stock table.
 
 ### REQ-LOC-006: Inter-location transfer workflow supports moves between any two locations
 
+The system SHALL satisfy this requirement: Inter-location transfer workflow supports moves between any two locations.
+
 Inter-location transfer is a stock movement between two locations in the hierarchy
 (warehouse-to-warehouse, zone-to-zone, bin-to-bin). Transfer MUST update source and
 destination InventoryStock quantities atomically.
@@ -184,6 +200,8 @@ If move ledger is not present:
 - **THEN** quantities MUST update atomically. GL entry is null (intra-warehouse is neutral).
 
 ### REQ-LOC-007: Location navigation and filters for operators
+
+The system SHALL satisfy this requirement: Location navigation and filters for operators.
 
 Manifest entries for warehouse location management:
 
@@ -216,6 +234,8 @@ Manifest entries for warehouse location management:
 
 ### REQ-LOC-008: Location audit trail with administration scope
 
+The system SHALL satisfy this requirement: Location audit trail with administration scope.
+
 `auditTrail` (OR built-in field) captures every location create/update with:
 
 - `timestamp` — exact timestamp of operation.
@@ -240,6 +260,8 @@ in their administration).
 - **THEN** operation MUST fail with 403 Forbidden.
 
 ### REQ-LOC-009: Inventory Stock integration: InventoryStock location FK scoped to Location hierarchy
+
+The system SHALL satisfy this requirement: Inventory Stock integration: InventoryStock location FK scoped to Location hierarchy.
 
 `InventoryStock` entity references `Location` via `locationId` FK (scoped to most-granular
 bin level). Queries for stock at warehouse level aggregate InventoryStock records for

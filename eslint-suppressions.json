@@ -1,0 +1,300 @@
+{
+  "src/components/BudgetBBVMapping/BudgetBBVMappingDetail.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    }
+  },
+  "src/components/BudgetBBVMapping/BudgetBBVMappingIndex.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    }
+  },
+  "src/components/Dashboard/BBVComplianceDashboard.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "vue/custom-event-name-casing": {
+      "count": 1
+    }
+  },
+  "src/components/Dashboard/BBVProgrammeTable.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "vue/custom-event-name-casing": {
+      "count": 1
+    }
+  },
+  "src/components/cashflow/CashflowDashboard.vue": {
+    "vue/custom-event-name-casing": {
+      "count": 1
+    }
+  },
+  "src/components/cashflow/ScenarioCreator.vue": {
+    "vue/custom-event-name-casing": {
+      "count": 1
+    }
+  },
+  "src/components/goods-receipt-note/GoodsReceiptNoteDetail.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 4
+    }
+  },
+  "src/components/goods-receipt-note/GoodsReceiptNoteForm.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 4
+    }
+  },
+  "src/components/inventory/BarcodeScanner.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/components/inventory/CountOp.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/components/inventory/PickOp.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/components/inventory/TransferOp.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/components/invoice/InvoiceGenerator.vue": {
+    "vue/custom-event-name-casing": {
+      "count": 2
+    }
+  },
+  "src/components/period-close/PeriodCloseDetail.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    }
+  },
+  "src/components/pipelinq/KlantbeeldTimeline.vue": {
+    "vue/custom-event-name-casing": {
+      "count": 1
+    }
+  },
+  "src/components/purchase-order/PurchaseOrderDetail.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 3
+    }
+  },
+  "src/components/purchase-order/PurchaseOrderForm.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    }
+  },
+  "src/components/reporting/GeneratedReportsIndex.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    }
+  },
+  "src/components/reporting/ReportingComplianceOverview.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/components/supplier-invoice/SupplierInvoiceDetail.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 3
+    }
+  },
+  "src/components/three-way-match/AuditTrailDetail.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/components/three-way-match/ThreeWayMatchExceptionPanel.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 5
+    }
+  },
+  "src/components/three-way-match/ThreeWayMatchIndex.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    }
+  },
+  "src/components/widget/SelfServiceWidget.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 4
+    }
+  },
+  "src/composables/useBarcodeScanner.js": {
+    "no-unused-vars": {
+      "count": 5
+    }
+  },
+  "src/modals/BankStatementWizard.vue": {
+    "jsdoc/require-param-type": {
+      "count": 4
+    }
+  },
+  "src/modals/BillImportModal.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    },
+    "jsdoc/require-param-type": {
+      "count": 6
+    }
+  },
+  "src/modals/InvoiceQuickDraftModal.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    },
+    "jsdoc/require-param-type": {
+      "count": 7
+    }
+  },
+  "src/modals/RecurringInvoiceProfileModal.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 8
+    }
+  },
+  "src/modals/bankStatementWizard.js": {
+    "no-unused-vars": {
+      "count": 3
+    }
+  },
+  "src/modals/invoiceQuickDraft.js": {
+    "no-unused-vars": {
+      "count": 2
+    }
+  },
+  "src/store/modules/inventoryMobileScanner.js": {
+    "eqeqeq": {
+      "count": 2
+    }
+  },
+  "src/store/modules/settings.js": {
+    "no-console": {
+      "count": 2
+    }
+  },
+  "src/views/BookingWidgetKeys.vue": {
+    "no-console": {
+      "count": 1
+    }
+  },
+  "src/views/BudgetLineCommitments.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/views/DeadlineCalendarSettings.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    }
+  },
+  "src/views/ReceiptCapture.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 2
+    }
+  },
+  "src/views/bookings/AfspraakDetail.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "eqeqeq": {
+      "count": 1
+    }
+  },
+  "src/views/bookings/BookingForm.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/views/bookings/CalendarView.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/views/bookings/ConfirmationPortal.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    }
+  },
+  "src/views/bookkeeping/ChartOfAccountsView.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "vue/custom-event-name-casing": {
+      "count": 1
+    }
+  },
+  "src/views/bookkeeping/DocumentsView.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "vue/custom-event-name-casing": {
+      "count": 1
+    }
+  },
+  "src/views/bookkeeping/TransactionsView.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "vue/custom-event-name-casing": {
+      "count": 1
+    }
+  },
+  "src/views/bookkeeping/dimensions/SegmentPnLDashboard.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/views/bookkeeping/multi-currency/FxRatesAdmin.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/views/budgetLineCommitmentsHelpers.js": {
+    "no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/views/inventory/MobileScannerHome.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/views/invoice/AdminInvoiceDetail.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/views/invoice/AdminInvoiceList.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/views/settings/PipelinqIntegration.vue": {
+    "no-console": {
+      "count": 1
+    }
+  },
+  "src/views/settings/Settings.vue": {
+    "vue/multi-word-component-names": {
+      "count": 1
+    }
+  },
+  "src/views/settings/StandardsPolicyEditor.vue": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "jsdoc/require-param-type": {
+      "count": 1
+    }
+  }
+}

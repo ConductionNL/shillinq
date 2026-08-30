@@ -1,0 +1,1202 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-multi-administratie",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Foundational multi-administratie (multi-tenant) layer. Declares Administration as a first-class register record (the juridisch-onafhankelijke boekhouding boundary), the AdministrationMembership user-administratie-role join, the IntercompanyJournalEntry mirrored-pair tracker, the ConsolidationMapping chart-of-accounts mapping, and the AdministrationMigration asset/contract/employee transfer audit record. Field names follow the app's existing English camelCase convention (administrationId already on GLTransaction/Account/FixedAsset/BalanceSheet); the Dutch context-brief names map 1:1. Schema membership of the shillinq register is by components.schemas key (objects carry @self.register=shillinq); the existing ConsolidationGroup/ConsolidatedReport schemas are NOT touched. Lifecycle is declared via x-openregister-lifecycle and relations via property-level $ref (ADR-031 declarative, no service classes for storage). Seed objects provide a worked holding-werkmij (Beheer B.V. / Werk B.V.) example plus an accounting-firm multi-client example."
+  },
+  "components": {
+    "schemas": {
+      "Administration": {
+        "slug": "Administration",
+        "icon": "OfficeBuilding",
+        "version": "0.1.0",
+        "title": "Administration",
+        "description": "A legally self-contained bookkeeping entity (juridisch-onafhankelijke boekhouding). The first-class multi-tenant isolation boundary: every financial record carries an administrationId FK to this schema (REQ-MA-001). Each Administration owns its own chart-of-accounts, fiscal-year cycle, presentation currency and VAT regime independently of other administrations (REQ-MA-002). Holding/werkmij structures link via parentAdministrationId / childAdministrationIds.",
+        "x-schema-org": "schema:Organization",
+        "x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
+        "type": "object",
+        "required": [
+          "administrationCode",
+          "name",
+          "legalForm",
+          "status"
+        ],
+        "properties": {
+          "administrationCode": {
+            "type": "string",
+            "description": "Operator-facing unique identifier for the administration (REQ-MA-001).",
+            "example": "WERK-001",
+            "title": "Administration Code"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the administration / legal entity.",
+            "example": "Voorbeeld Werk B.V.",
+            "title": "Name"
+          },
+          "legalForm": {
+            "type": "string",
+            "description": "Dutch legal form of the entity.",
+            "enum": [
+              "bv",
+              "nv",
+              "eenmanszaak",
+              "vof",
+              "maatschap",
+              "cv",
+              "stichting",
+              "vereniging",
+              "cooperatie",
+              "municipality",
+              "province",
+              "waterAuthority",
+              "gr",
+              "other"
+            ],
+            "example": "bv",
+            "title": "Legal Form"
+          },
+          "kvkNumber": {
+            "type": "string",
+            "description": "KvK Handelsregister registration number; null until filled by operator or KvK pre-fill (REQ-MA-010).",
+            "nullable": true,
+            "example": "12345678",
+            "title": "KvK Number"
+          },
+          "rsin": {
+            "type": "string",
+            "description": "RSIN (Rechtspersonen Samenwerkingsverbanden Informatie Nummer).",
+            "nullable": true,
+            "example": "001234567",
+            "title": "Rsin"
+          },
+          "vatNumber": {
+            "type": "string",
+            "description": "BTW-nummer (VAT identification number).",
+            "nullable": true,
+            "example": "NL001234567B01",
+            "title": "VAT Number"
+          },
+          "payrollTaxNumber": {
+            "type": "string",
+            "description": "Loonheffingsnummer for payroll/wage-tax registration, if the entity employs staff.",
+            "nullable": true,
+            "example": "001234567L01",
+            "title": "Payroll Tax Number"
+          },
+          "fiscalUnitVpbId": {
+            "type": "string",
+            "description": "FK to the Administration acting as fiscale eenheid VPB head, if this entity is part of one (REQ-MA-008). The data structure only; VPB consolidation logic is delegated to bookkeeping-tax-filing.",
+            "nullable": true,
+            "example": null,
+            "title": "Fiscal Unit VpB ID"
+          },
+          "fiscalUnitVatId": {
+            "type": "string",
+            "description": "FK to the Administration acting as fiscale eenheid BTW head, if any (REQ-MA-008). Intercompany BTW handling is delegated to bookkeeping-vat-return.",
+            "nullable": true,
+            "example": null,
+            "title": "Fiscal Unit VAT ID"
+          },
+          "primaryIban": {
+            "type": "string",
+            "description": "Primary bank account IBAN of the administration.",
+            "nullable": true,
+            "example": "NL91ABNA0417164300",
+            "title": "Primary IBAN"
+          },
+          "parentAdministrationId": {
+            "type": "string",
+            "description": "FK to the moederadministratie when this entity is a dochter in a holding structure.",
+            "nullable": true,
+            "example": null,
+            "title": "Parent Administration ID",
+            "$ref": "Administration"
+          },
+          "childAdministrationIds": {
+            "type": "array",
+            "description": "FKs to dochteradministraties owned by this entity.",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "title": "Child Administration Ids"
+          },
+          "fiscalYearStartMonth": {
+            "type": "integer",
+            "description": "Month (1-12) on which the boekjaar starts; 1 = calendar year (REQ-MA-002).",
+            "minimum": 1,
+            "maximum": 12,
+            "default": 1,
+            "example": 1,
+            "title": "Fiscal Year Start Month"
+          },
+          "fiscalYearStartDay": {
+            "type": "integer",
+            "description": "Day of month on which the boekjaar starts.",
+            "minimum": 1,
+            "maximum": 31,
+            "default": 1,
+            "example": 1,
+            "title": "Fiscal Year Start Day"
+          },
+          "nonCalendarFiscalYear": {
+            "type": "boolean",
+            "description": "True when the administration runs an afwijkend (non-calendar) boekjaar (REQ-MA-002).",
+            "default": false,
+            "example": false,
+            "title": "Non Calendar Fiscal Year"
+          },
+          "presentationCurrency": {
+            "type": "string",
+            "description": "ISO-4217 presentatievaluta for reporting.",
+            "default": "EUR",
+            "example": "EUR",
+            "title": "Presentation Currency"
+          },
+          "functionalCurrency": {
+            "type": "string",
+            "description": "ISO-4217 functionele valuta for measurement.",
+            "default": "EUR",
+            "example": "EUR",
+            "title": "Functional Currency"
+          },
+          "vatRegime": {
+            "type": "string",
+            "description": "BTW regime of the administration (REQ-MA-002).",
+            "enum": [
+              "standard",
+              "kleine_ondernemers_regeling",
+              "landbouw",
+              "reisbureau",
+              "exempt",
+              "overheid"
+            ],
+            "default": "standard",
+            "example": "standard",
+            "title": "VAT Regime"
+          },
+          "vatFilingFrequency": {
+            "type": "string",
+            "description": "BTW-aangifte frequentie.",
+            "enum": [
+              "month",
+              "quarter",
+              "year"
+            ],
+            "default": "quarter",
+            "example": "quarter",
+            "title": "VAT Filing Frequency"
+          },
+          "chartOfAccountsId": {
+            "type": "string",
+            "description": "FK to the chart-of-accounts (Account set) this administration validates journals against (REQ-MA-002). Null until accounts are seeded.",
+            "nullable": true,
+            "example": null,
+            "title": "Chart Of Accounts ID"
+          },
+          "consolidationMappingId": {
+            "type": "string",
+            "description": "FK to a ConsolidationMapping used when consolidating this administration into its parent (REQ-MA-005).",
+            "nullable": true,
+            "example": null,
+            "title": "Consolidation Mapping ID",
+            "$ref": "ConsolidationMapping"
+          },
+          "consolidateIntoId": {
+            "type": "string",
+            "description": "FK to the destination Administration this entity consolidates into.",
+            "nullable": true,
+            "example": null,
+            "title": "Consolidate Into ID"
+          },
+          "consolidationMethod": {
+            "type": "string",
+            "description": "Consolidatiemethode applied at group level (RJ 217 / IFRS 10).",
+            "enum": [
+              "integraal",
+              "proportioneel",
+              "equity",
+              "niet_consolideren"
+            ],
+            "default": "niet_consolideren",
+            "example": "integraal",
+            "title": "Consolidation Method"
+          },
+          "activeFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the administration became active.",
+            "nullable": true,
+            "example": "2024-01-01",
+            "title": "Active From"
+          },
+          "activeUntil": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the administration ceased to be active (e.g. on liquidation).",
+            "nullable": true,
+            "example": null,
+            "title": "Active Until"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle status of the administration. Archived/opgeheven administrations are read-only (REQ-MA-007).",
+            "enum": [
+              "actief",
+              "gearchiveerd",
+              "in_liquidatie",
+              "opgeheven"
+            ],
+            "default": "actief",
+            "example": "actief",
+            "title": "Status"
+          },
+          "backupSchedule": {
+            "type": "string",
+            "description": "Per-administratie backup cadence; routes the incremental backup scheduler (REQ-MA-007).",
+            "enum": [
+              "dagelijks",
+              "wekelijks",
+              "aanvragen"
+            ],
+            "default": "dagelijks",
+            "example": "dagelijks",
+            "title": "Backup Schedule"
+          },
+          "dataRetentionYears": {
+            "type": "integer",
+            "description": "Wettelijke bewaartermijn in years (default 7; 10 for onroerende zaken) (REQ-MA-007, AWR art. 52).",
+            "default": 7,
+            "example": 7,
+            "title": "Data Retention Years"
+          },
+          "defaultLanguage": {
+            "type": "string",
+            "description": "Default UI/document language for this administration.",
+            "enum": [
+              "nl",
+              "en",
+              "de",
+              "fr"
+            ],
+            "default": "nl",
+            "example": "nl",
+            "title": "Default Language"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "actief",
+          "states": {
+            "actief": {
+              "label": "Actief",
+              "description": "Administration is open for posting; reads and writes allowed."
+            },
+            "in_liquidatie": {
+              "label": "In liquidatie",
+              "description": "Wind-down in progress; posting still allowed for closing entries."
+            },
+            "gearchiveerd": {
+              "label": "Gearchiveerd",
+              "description": "Read-only: historical data remains queryable for the retention period but no new mutations are accepted (REQ-MA-007)."
+            },
+            "opgeheven": {
+              "label": "Opgeheven",
+              "description": "Terminated; retained for the wettelijke bewaartermijn, fully read-only."
+            }
+          },
+          "transitions": {
+            "archive": {
+              "from": "actief",
+              "to": "gearchiveerd",
+              "label": "Archiveren",
+              "description": "Move an active administration to read-only archival; starts the dataRetentionYears counter (REQ-MA-007)."
+            },
+            "liquidate": {
+              "from": "actief",
+              "to": "in_liquidatie",
+              "label": "In liquidatie zetten",
+              "description": "Begin wind-down while still allowing closing journal entries."
+            },
+            "close": {
+              "from": "in_liquidatie",
+              "to": "opgeheven",
+              "label": "Opheffen",
+              "description": "Finalise liquidation; the administration becomes permanently read-only."
+            },
+            "archiveLiquidated": {
+              "from": "in_liquidatie",
+              "to": "gearchiveerd",
+              "label": "Archiveren na liquidatie",
+              "description": "Archive a liquidated administration for retention."
+            }
+          }
+        }
+      },
+      "AdministrationMembership": {
+        "slug": "AdministrationMembership",
+        "icon": "AccountKey",
+        "version": "0.1.0",
+        "title": "Administration Membership",
+        "description": "Join record granting a Nextcloud user a role in a single Administration (REQ-MA-003). One user may hold many memberships with a different role per administration; access is the administratie-aware RBAC boundary. The userId is the Nextcloud account uid (a contact/person is a Nextcloud entity — no person schema is invented).",
+        "x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
+        "type": "object",
+        "required": [
+          "userId",
+          "administrationId",
+          "role"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "Nextcloud user uid that this membership grants access for (REQ-MA-003).",
+            "example": "controller",
+            "title": "User ID"
+          },
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the Administration this membership grants access to.",
+            "example": "adm-werk-001",
+            "title": "Administration ID",
+            "$ref": "Administration"
+          },
+          "role": {
+            "type": "string",
+            "description": "Role the user holds in this administration. Roles map to permission bundles checked server-side.",
+            "enum": [
+              "eigenaar",
+              "controller",
+              "boekhouder",
+              "inkijker",
+              "accountant_extern",
+              "salarisadministrateur",
+              "debiteurenadmin",
+              "crediteurenadmin"
+            ],
+            "example": "controller",
+            "title": "Role"
+          },
+          "ledgerAccessRestriction": {
+            "type": "array",
+            "description": "Optional grootboek account ranges this membership is restricted to (e.g. [\"4000-4999\"]).",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "title": "Ledger Access Restriction"
+          },
+          "mayPostJournalEntries": {
+            "type": "boolean",
+            "description": "Whether the membership may post journaalposten in this administration (REQ-MA-003).",
+            "default": false,
+            "example": true,
+            "title": "May Post Journal Entries"
+          },
+          "mayCloseFiscalYear": {
+            "type": "boolean",
+            "description": "Whether the membership may perform jaarafsluiting in this administration.",
+            "default": false,
+            "example": false,
+            "title": "May Close Fiscal Year"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Date from which the membership is valid.",
+            "nullable": true,
+            "example": "2026-01-01",
+            "title": "Valid From"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the membership expires; null = open-ended.",
+            "nullable": true,
+            "example": null,
+            "title": "Valid Until"
+          },
+          "grantedBy": {
+            "type": "string",
+            "description": "Nextcloud uid of the operator who granted this membership (audit).",
+            "nullable": true,
+            "example": "partner",
+            "title": "Granted By"
+          }
+        }
+      },
+      "IntercompanyJournalEntry": {
+        "slug": "IntercompanyJournalEntry",
+        "icon": "SwapHorizontal",
+        "version": "0.1.0",
+        "title": "Intercompany Journal Entry",
+        "description": "Tracking record linking the two mirrored GLTransactions of an intercompany transaction across two administrations (REQ-MA-004). The two journal entries themselves live in each administration's own journal (Dutch GAAP: each entity keeps a self-contained journaal); this record holds the link, the reconciliation variance and the consolidation-elimination flag.",
+        "x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
+        "type": "object",
+        "required": [
+          "intercompanyNumber",
+          "date",
+          "kind",
+          "sourceAdministrationId",
+          "destinationAdministrationId",
+          "amount",
+          "status"
+        ],
+        "properties": {
+          "intercompanyNumber": {
+            "type": "string",
+            "description": "Unique intercompany identifier linking both sides (REQ-MA-004).",
+            "example": "IC-2026-00042",
+            "title": "Intercompany Number"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Booking date of the intercompany transaction.",
+            "example": "2026-06-30",
+            "title": "Date"
+          },
+          "kind": {
+            "type": "string",
+            "description": "Nature of the intercompany flow.",
+            "enum": [
+              "doorbelasting",
+              "dividend",
+              "lening",
+              "aandelenkapitaal",
+              "rente",
+              "huur",
+              "management_fee",
+              "other"
+            ],
+            "example": "management_fee",
+            "title": "Kind"
+          },
+          "sourceAdministrationId": {
+            "type": "string",
+            "description": "FK to the source (bron) administration where the originating journaalpost is booked.",
+            "example": "adm-werk-001",
+            "title": "Source Administration ID",
+            "$ref": "Administration"
+          },
+          "destinationAdministrationId": {
+            "type": "string",
+            "description": "FK to the destination (doel) administration where the mirrored journaalpost is booked.",
+            "example": "adm-beheer-001",
+            "title": "Destination Administration ID",
+            "$ref": "Administration"
+          },
+          "sourceJournalEntryId": {
+            "type": "string",
+            "description": "FK to the GLTransaction in the source administration.",
+            "nullable": true,
+            "example": null,
+            "title": "Source Journal Entry ID"
+          },
+          "destinationJournalEntryId": {
+            "type": "string",
+            "description": "FK to the mirrored GLTransaction in the destination administration.",
+            "nullable": true,
+            "example": null,
+            "title": "Destination Journal Entry ID"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Transaction amount in the transaction currency.",
+            "example": 25000.0,
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO-4217 currency of the transaction.",
+            "default": "EUR",
+            "example": "EUR",
+            "title": "Currency"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "description": "FX rate applied if the currency differs from the destination presentation currency.",
+            "default": 1.0,
+            "example": 1.0,
+            "title": "Exchange Rate"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of the intercompany transaction.",
+            "nullable": true,
+            "example": "Management fee Q2 2026 van Werk B.V. aan Beheer B.V.",
+            "title": "Description"
+          },
+          "vatTreatment": {
+            "type": "string",
+            "description": "BTW treatment of the intercompany flow.",
+            "enum": [
+              "verlegd",
+              "standard",
+              "fiscal_unit_none_vat"
+            ],
+            "default": "standard",
+            "example": "verlegd",
+            "title": "VAT Treatment"
+          },
+          "eliminateOnConsolidation": {
+            "type": "boolean",
+            "description": "Marks the matching P&L lines on both sides for elimination at consolidation time (REQ-MA-005). Consumed by the future bookkeeping-consolidatie spec.",
+            "default": false,
+            "example": true,
+            "title": "Eliminate On Consolidation"
+          },
+          "eliminationAccount": {
+            "type": "string",
+            "description": "GL account number used for the consolidation elimination adjustment.",
+            "nullable": true,
+            "example": "9999",
+            "title": "Elimination Account"
+          },
+          "status": {
+            "type": "string",
+            "description": "Mirroring status. draft = one side drafted; gekoppeld = both sides exist; bevestigd_beide = both confirmed; eliminatie_geboekt = consolidation elimination processed (REQ-MA-004).",
+            "enum": [
+              "draft",
+              "gekoppeld",
+              "bevestigd_beide",
+              "eliminatie_geboekt"
+            ],
+            "default": "draft",
+            "example": "bevestigd_beide",
+            "title": "Status"
+          },
+          "varianceAmount": {
+            "type": "number",
+            "description": "Reconciliation variance (afwijking) between the two sides; non-zero flags the pair for manual review (REQ-MA-004).",
+            "default": 0.0,
+            "example": 0.0,
+            "title": "Variance Amount"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "One side drafted; the mirror has not yet been created."
+            },
+            "gekoppeld": {
+              "label": "Gekoppeld",
+              "description": "Both journal entries exist and are linked via intercompanyNumber."
+            },
+            "bevestigd_beide": {
+              "label": "Bevestigd beide",
+              "description": "Both administrations have confirmed their side."
+            },
+            "eliminatie_geboekt": {
+              "label": "Eliminatie geboekt",
+              "description": "Consolidation elimination has been applied (REQ-MA-005)."
+            }
+          },
+          "transitions": {
+            "link": {
+              "from": "draft",
+              "to": "gekoppeld",
+              "label": "Koppelen",
+              "description": "The mirrored journal entry is created in the destination administration."
+            },
+            "confirmBoth": {
+              "from": "gekoppeld",
+              "to": "bevestigd_beide",
+              "label": "Bevestigen",
+              "description": "Both sides confirm; the pair is locked for reconciliation."
+            },
+            "reopen": {
+              "from": "bevestigd_beide",
+              "to": "draft",
+              "label": "Heropenen",
+              "description": "An edit on one unconfirmed-mirror side returns the pair to concept; the counterparty must re-confirm (REQ-MA-004)."
+            },
+            "eliminate": {
+              "from": "bevestigd_beide",
+              "to": "eliminatie_geboekt",
+              "label": "Elimineren",
+              "description": "Consolidation elimination is booked for this intercompany pair. REQ-MA-004 / revive-gl-tax-capabilities REQ-GLTAX-002 — guarded: the pair must reconcile (zero varianceAmount between the source and the counter-side entry) before the elimination may be booked. Fail-closed when the counter-side entry cannot be resolved.",
+              "requires": "OCA\\Shillinq\\Guard\\IntercompanyEliminationGuard::requireReconciledPair"
+            }
+          }
+        }
+      },
+      "ConsolidationMapping": {
+        "slug": "ConsolidationMapping",
+        "icon": "Sitemap",
+        "version": "0.1.0",
+        "title": "Consolidation Mapping",
+        "description": "Maps a dochter administration's chart-of-accounts onto the moeder's for consolidation, plus the intercompany elimination account and currency-translation method (REQ-MA-005). Mapping rules are stored as a JSON array (ADR-031 declarative — no separate line-item schema). Consumed by the future bookkeeping-consolidatie spec; no consolidation rendering logic lives here.",
+        "x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
+        "type": "object",
+        "required": [
+          "name",
+          "sourceAdministrationId",
+          "destinationAdministrationId"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Mapping identifier.",
+            "example": "Mapping WERK-001 naar HOLDING-001",
+            "title": "Name"
+          },
+          "sourceAdministrationId": {
+            "type": "string",
+            "description": "FK to the dochter (source) administration.",
+            "example": "adm-werk-001",
+            "title": "Source Administration ID",
+            "$ref": "Administration"
+          },
+          "destinationAdministrationId": {
+            "type": "string",
+            "description": "FK to the moeder (destination) administration.",
+            "example": "adm-beheer-001",
+            "title": "Destination Administration ID",
+            "$ref": "Administration"
+          },
+          "rules": {
+            "type": "array",
+            "description": "Account-mapping rules: each maps a source GL account to a destination GL account (REQ-MA-005).",
+            "items": {
+              "type": "object",
+              "required": [
+                "sourceAccount",
+                "destinationAccount"
+              ],
+              "properties": {
+                "sourceAccount": {
+                  "type": "string",
+                  "description": "Source administration GL account number.",
+                  "title": "Source Account"
+                },
+                "destinationAccount": {
+                  "type": "string",
+                  "description": "Destination (consolidated) GL account number.",
+                  "title": "Destination Account"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Human-readable note for this mapping rule.",
+                  "title": "Description"
+                }
+              }
+            },
+            "default": [],
+            "title": "Rules"
+          },
+          "intercompanyEliminationAccount": {
+            "type": "string",
+            "description": "GL account used to book intercompany eliminations at consolidation.",
+            "nullable": true,
+            "example": "9999",
+            "title": "Intercompany Elimination Account"
+          },
+          "currencyTranslationMethod": {
+            "type": "string",
+            "description": "Currency-translation method for foreign-currency dochters (RJ 122).",
+            "enum": [
+              "slotkoers",
+              "gemiddelde",
+              "historisch"
+            ],
+            "default": "slotkoers",
+            "example": "slotkoers",
+            "title": "Currency Translation Method"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "Date from which the mapping is effective.",
+            "nullable": true,
+            "example": "2026-01-01",
+            "title": "Valid From"
+          }
+        }
+      },
+      "AdministrationMigration": {
+        "slug": "AdministrationMigration",
+        "icon": "TransitConnectionVariant",
+        "version": "0.1.0",
+        "title": "Administration Migration",
+        "description": "Audit record of an asset / contract / employee transfer between two administrations during internal restructuring (REQ-MA-006). Captures boekwaarde vs marktwaarde, the juridische grondslag, the fiscale behandeling, and the paired GLTransaction references on both sides so the transfer is reversible without breaking the audit trail.",
+        "x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
+        "type": "object",
+        "required": [
+          "migrationNumber",
+          "date",
+          "sourceAdministrationId",
+          "destinationAdministrationId",
+          "kind",
+          "status"
+        ],
+        "properties": {
+          "migrationNumber": {
+            "type": "string",
+            "description": "Unique migration identifier (REQ-MA-006).",
+            "example": "MIG-2026-007",
+            "title": "Migration Number"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Effective date of the transfer.",
+            "example": "2026-09-01",
+            "title": "Date"
+          },
+          "sourceAdministrationId": {
+            "type": "string",
+            "description": "FK to the administration the object leaves.",
+            "example": "adm-werk-001",
+            "title": "Source Administration ID",
+            "$ref": "Administration"
+          },
+          "destinationAdministrationId": {
+            "type": "string",
+            "description": "FK to the administration the object enters.",
+            "example": "adm-werk-002",
+            "title": "Destination Administration ID",
+            "$ref": "Administration"
+          },
+          "kind": {
+            "type": "string",
+            "description": "Type of object being migrated.",
+            "enum": [
+              "vaste_activa",
+              "debiteur",
+              "crediteur",
+              "employee",
+              "contract",
+              "other"
+            ],
+            "example": "vaste_activa",
+            "title": "Kind"
+          },
+          "objectIds": {
+            "type": "array",
+            "description": "UUIDs of the migrated object(s).",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "title": "Object Ids"
+          },
+          "bookValueTransferred": {
+            "type": "number",
+            "description": "Boekwaarde of the transferred object at the migration date.",
+            "nullable": true,
+            "example": 87000.0,
+            "title": "Book Value Transferred"
+          },
+          "marketValueTransferred": {
+            "type": "number",
+            "description": "Marktwaarde / overdrachtswaarde of the transferred object.",
+            "nullable": true,
+            "example": 92000.0,
+            "title": "Market Value Transferred"
+          },
+          "resultImpact": {
+            "type": "number",
+            "description": "P&L impact (verschil_naar_resultaat) recognised on the transfer.",
+            "nullable": true,
+            "example": 5000.0,
+            "title": "Result Impact"
+          },
+          "fiscalTreatment": {
+            "type": "string",
+            "description": "Fiscale behandeling of the transfer.",
+            "enum": [
+              "geruisloze_doorschuiving",
+              "with_actuals",
+              "fiscal_unit"
+            ],
+            "default": "with_actuals",
+            "example": "with_actuals",
+            "title": "Fiscal Treatment"
+          },
+          "legalBasis": {
+            "type": "string",
+            "description": "Juridische grondslag (e.g. notariële akte reference) underpinning the transfer (REQ-MA-006).",
+            "nullable": true,
+            "example": "Akte van inbreng dd 2026-08-15 notaris X",
+            "title": "Legal Basis"
+          },
+          "documentIds": {
+            "type": "array",
+            "description": "File references for supporting documents (akte, taxatie).",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "title": "Document Ids"
+          },
+          "sourceJournalEntryId": {
+            "type": "string",
+            "description": "FK to the deactivation/disposal GLTransaction in the source administration.",
+            "nullable": true,
+            "example": null,
+            "title": "Source Journal Entry ID"
+          },
+          "destinationJournalEntryId": {
+            "type": "string",
+            "description": "FK to the activation GLTransaction in the destination administration.",
+            "nullable": true,
+            "example": null,
+            "title": "Destination Journal Entry ID"
+          },
+          "status": {
+            "type": "string",
+            "description": "Migration lifecycle. voorbereid = drafted; uitgevoerd = one side posted; geboekt_beide = both posted (atomic); teruggedraaid = reversed (REQ-MA-006).",
+            "enum": [
+              "voorbereid",
+              "uitgevoerd",
+              "geboekt_beide",
+              "teruggedraaid"
+            ],
+            "default": "voorbereid",
+            "example": "voorbereid",
+            "title": "Status"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "voorbereid",
+          "states": {
+            "voorbereid": {
+              "label": "Voorbereid",
+              "description": "Both sides drafted but not yet posted; safe to edit or cancel."
+            },
+            "uitgevoerd": {
+              "label": "Uitgevoerd",
+              "description": "Transfer in progress; one side posted."
+            },
+            "geboekt_beide": {
+              "label": "Geboekt beide",
+              "description": "Both paired journal entries posted; the migration is complete and locked."
+            },
+            "teruggedraaid": {
+              "label": "Teruggedraaid",
+              "description": "Both journal entries reversed; both administrations returned to their pre-migration state (REQ-MA-006)."
+            }
+          },
+          "transitions": {
+            "execute": {
+              "from": "voorbereid",
+              "to": "uitgevoerd",
+              "label": "Uitvoeren",
+              "description": "Begin posting the paired journal entries."
+            },
+            "complete": {
+              "from": "uitgevoerd",
+              "to": "geboekt_beide",
+              "label": "Afronden",
+              "description": "Both paired journal entries posted simultaneously (atomic)."
+            },
+            "reverse": {
+              "from": "geboekt_beide",
+              "to": "teruggedraaid",
+              "label": "Terugdraaien",
+              "description": "Reverse both journal entries; restore the pre-migration state."
+            },
+            "cancel": {
+              "from": "voorbereid",
+              "to": "teruggedraaid",
+              "label": "Annuleren",
+              "description": "Cancel a prepared migration before any side is posted."
+            }
+          }
+        }
+      },
+      "AdministrationBackupRun": {
+        "slug": "AdministrationBackupRun",
+        "icon": "DatabaseClock",
+        "version": "0.1.0",
+        "title": "Administration Backup Run",
+        "description": "Audit record of one per-administration backup run (REQ-MA-007). Each row carries exactly one administrationId — backups are scoped per administratie so no cross-tenant data leaks into a single backup file (REQ-MA-001). Written by AdministrationBackupSchedulerJob (BackgroundJob, Task 15).",
+        "x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
+        "type": "object",
+        "required": [
+          "administrationId",
+          "startedAt",
+          "completedAt",
+          "status"
+        ],
+        "properties": {
+          "administrationId": {
+            "type": "string",
+            "description": "FK to the administration this backup covers.",
+            "example": "adm-werk-001",
+            "title": "Administration ID",
+            "$ref": "Administration"
+          },
+          "administrationCode": {
+            "type": "string",
+            "description": "Cached administrationCode for human-readable listing.",
+            "nullable": true,
+            "example": "WERK-001",
+            "title": "Administration Code"
+          },
+          "schedule": {
+            "type": "string",
+            "description": "Backup-schedule slug that triggered the run.",
+            "enum": [
+              "dagelijks",
+              "wekelijks",
+              "aanvragen"
+            ],
+            "example": "dagelijks",
+            "title": "Schedule"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 instant the backup started.",
+            "title": "Started At"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 instant the backup completed.",
+            "title": "Completed At"
+          },
+          "status": {
+            "type": "string",
+            "description": "Outcome of the run.",
+            "enum": [
+              "success",
+              "failed",
+              "snapshot-only"
+            ],
+            "default": "success",
+            "example": "success",
+            "title": "Status"
+          },
+          "snapshotOnly": {
+            "type": "boolean",
+            "description": "True when the administration is archived/opgeheven and the backup is a read-only snapshot.",
+            "default": false,
+            "title": "Snapshot Only"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "description": "Size of the backup payload in bytes.",
+            "nullable": true,
+            "example": 12345678,
+            "title": "Size Bytes"
+          },
+          "nextBackupAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Computed next scheduled backup instant; null for on-request schedules.",
+            "nullable": true,
+            "title": "Next Backup At"
+          }
+        },
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a Administration Backup Run is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Administration",
+          "slug": "adm-beheer-001"
+        },
+        "administrationCode": "BEHEER-001",
+        "name": "Voorbeeld Beheer B.V.",
+        "legalForm": "bv",
+        "kvkNumber": "87654321",
+        "vatNumber": "NL876543210B01",
+        "parentAdministrationId": null,
+        "childAdministrationIds": [
+          "adm-werk-001"
+        ],
+        "fiscalYearStartMonth": 1,
+        "fiscalYearStartDay": 1,
+        "nonCalendarFiscalYear": false,
+        "presentationCurrency": "EUR",
+        "functionalCurrency": "EUR",
+        "vatRegime": "standard",
+        "vatFilingFrequency": "quarter",
+        "consolidationMethod": "integraal",
+        "activeFrom": "2020-01-01",
+        "status": "actief",
+        "backupSchedule": "dagelijks",
+        "dataRetentionYears": 7,
+        "defaultLanguage": "nl"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Administration",
+          "slug": "adm-werk-001"
+        },
+        "administrationCode": "WERK-001",
+        "name": "Voorbeeld Werk B.V.",
+        "legalForm": "bv",
+        "kvkNumber": "12345678",
+        "vatNumber": "NL001234567B01",
+        "payrollTaxNumber": "001234567L01",
+        "parentAdministrationId": "adm-beheer-001",
+        "childAdministrationIds": [],
+        "consolidateIntoId": "adm-beheer-001",
+        "fiscalYearStartMonth": 1,
+        "fiscalYearStartDay": 1,
+        "nonCalendarFiscalYear": false,
+        "presentationCurrency": "EUR",
+        "functionalCurrency": "EUR",
+        "vatRegime": "standard",
+        "vatFilingFrequency": "month",
+        "consolidationMethod": "integraal",
+        "activeFrom": "2020-01-01",
+        "status": "actief",
+        "backupSchedule": "dagelijks",
+        "dataRetentionYears": 7,
+        "defaultLanguage": "nl"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "Administration",
+          "slug": "adm-klant-acme"
+        },
+        "administrationCode": "KLANT-ACME",
+        "name": "Acme Retail B.V. (kantoorklant)",
+        "legalForm": "bv",
+        "kvkNumber": "55512345",
+        "vatNumber": "NL555123450B01",
+        "parentAdministrationId": null,
+        "childAdministrationIds": [],
+        "fiscalYearStartMonth": 7,
+        "fiscalYearStartDay": 1,
+        "nonCalendarFiscalYear": true,
+        "presentationCurrency": "EUR",
+        "functionalCurrency": "EUR",
+        "vatRegime": "standard",
+        "vatFilingFrequency": "quarter",
+        "consolidationMethod": "niet_consolideren",
+        "activeFrom": "2023-07-01",
+        "status": "actief",
+        "backupSchedule": "wekelijks",
+        "dataRetentionYears": 7,
+        "defaultLanguage": "nl"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AdministrationMembership",
+          "slug": "lid-controller-werk-001"
+        },
+        "userId": "controller",
+        "administrationId": "adm-werk-001",
+        "role": "controller",
+        "mayPostJournalEntries": true,
+        "mayCloseFiscalYear": false,
+        "validFrom": "2026-01-01",
+        "grantedBy": "partner"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AdministrationMembership",
+          "slug": "lid-controller-beheer-001"
+        },
+        "userId": "controller",
+        "administrationId": "adm-beheer-001",
+        "role": "inkijker",
+        "mayPostJournalEntries": false,
+        "mayCloseFiscalYear": false,
+        "validFrom": "2026-01-01",
+        "grantedBy": "partner"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AdministrationMembership",
+          "slug": "lid-partner-beheer-001"
+        },
+        "userId": "partner",
+        "administrationId": "adm-beheer-001",
+        "role": "eigenaar",
+        "mayPostJournalEntries": true,
+        "mayCloseFiscalYear": true,
+        "validFrom": "2020-01-01",
+        "grantedBy": "partner"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "IntercompanyJournalEntry",
+          "slug": "ic-2026-00042"
+        },
+        "intercompanyNumber": "IC-2026-00042",
+        "date": "2026-06-30",
+        "kind": "management_fee",
+        "sourceAdministrationId": "adm-werk-001",
+        "destinationAdministrationId": "adm-beheer-001",
+        "amount": 25000.0,
+        "currency": "EUR",
+        "exchangeRate": 1.0,
+        "description": "Management fee Q2 2026 van Werk B.V. aan Beheer B.V.",
+        "vatTreatment": "verlegd",
+        "eliminateOnConsolidation": true,
+        "eliminationAccount": "9999",
+        "status": "bevestigd_beide",
+        "varianceAmount": 0.0
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "ConsolidationMapping",
+          "slug": "map-werk-001-beheer-001"
+        },
+        "name": "Mapping WERK-001 naar BEHEER-001",
+        "sourceAdministrationId": "adm-werk-001",
+        "destinationAdministrationId": "adm-beheer-001",
+        "rules": [
+          {
+            "sourceAccount": "4310",
+            "destinationAccount": "4300",
+            "description": "ICT-kosten consolidatie"
+          },
+          {
+            "sourceAccount": "4311",
+            "destinationAccount": "4300",
+            "description": "ICT-licenties consolidatie"
+          }
+        ],
+        "intercompanyEliminationAccount": "9999",
+        "currencyTranslationMethod": "slotkoers",
+        "validFrom": "2026-01-01"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "AdministrationMigration",
+          "slug": "mig-2026-007"
+        },
+        "migrationNumber": "MIG-2026-007",
+        "date": "2026-09-01",
+        "sourceAdministrationId": "adm-werk-001",
+        "destinationAdministrationId": "adm-beheer-001",
+        "kind": "vaste_activa",
+        "objectIds": [],
+        "bookValueTransferred": 87000.0,
+        "marketValueTransferred": 92000.0,
+        "resultImpact": 5000.0,
+        "fiscalTreatment": "with_actuals",
+        "legalBasis": "Akte van inbreng dd 2026-08-15 notaris X",
+        "documentIds": [],
+        "status": "voorbereid"
+      }
+    ]
+  }
+}

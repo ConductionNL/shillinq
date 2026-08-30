@@ -1,7 +1,0 @@
-{
-  "schema_version": 2,
-  "spec_slug": "bookings-pipelinq-customer-bridge-03-contact-read",
-  "app": "shillinq",
-  "kind": "code",
-  "depends_on": ["bookings-pipelinq-customer-bridge-02-http-adapter-core"]
-}

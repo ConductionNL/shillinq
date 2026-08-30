@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-ifrs15-revenue
 
 **Status:** proposed
@@ -7,7 +11,11 @@
 `../../specs/bookkeeping-quote-order-invoice/spec.md` (contract origination),
 `../../specs/bookkeeping-consultancy-project-accounting/spec.md` (input-method cost sourcing)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping ifrs15 revenue in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude pure backend/compliance: IFRS 15 revenue recognition — not browser-testable
 
@@ -129,6 +137,8 @@ per administration). Each re-estimation MUST:
   is updated.
 
 ### REQ-IFRS15-004: Allocation of transaction price MUST default to relative stand-alone selling price (SSP) method, with residual-method support and recalculation on modification
+
+The system SHALL satisfy this requirement: Allocation of transaction price MUST default to relative stand-alone selling price (SSP) method, with residual-method support and recalculation on modification.
 
 `PriceAllocation` records the allocation of the total transaction price across
 performance obligations per IFRS 15.73-79. The allocation method MUST be one of:
@@ -465,6 +475,8 @@ All disclosure data MUST be:
     delivery; costs capitalised as contract-setup labor per IFRS 15.91"
 
 ### REQ-IFRS15-011: System MUST support contract-group (combination of contracts) treatment per IFRS 15.17
+
+The system SHALL satisfy this requirement: System MUST support contract-group (combination of contracts) treatment per IFRS 15.17.
 
 A `Contract` MAY declare a `contractGroupId` to indicate that it is combined with
 other contracts for revenue recognition purposes per IFRS 15.17 (when contracts are:

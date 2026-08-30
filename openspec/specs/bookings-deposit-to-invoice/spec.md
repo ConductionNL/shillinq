@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Capability Spec: Booking Deposit-to-Invoice Flow
 
 **Status:** proposed  
@@ -8,7 +12,7 @@
 
 ---
 
-## Overview
+## Purpose
 
 This spec defines the capability to automatically consume authorized deposit amounts when a booking transitions to invoicing (at completion or checkout). When a booking moves from `confirmed` to `completed`, a final `Invoice` is created in Shillinq with a negative line item (credit) for the deposit amount, reducing the customer's outstanding balance. Deposit-to-invoice reconciliation is bidirectional and auditable through Shillinq's AR module.
 
@@ -104,205 +108,132 @@ Created when a booking with an issued invoice is cancelled:
 
 **Requirement:** Invoice and DepositPayment MUST be bidirectionally linked; the audit trail MUST preserve full traceability from Order → DepositPayment → DepositInvoice and Order → FinalInvoice → DepositPayment.
 
-**Scenario:**
-```
-GIVEN a booking with Order.orderId=ord-123, DepositPayment.depositPaymentId=dp-456
-WHEN the booking completes and an Invoice is created with Invoice.invoiceId=inv-789
-THEN:
-  - Order.invoiceId = inv-789
-  - Invoice.sourceDocumentUri = "urn:nextcloud:booking:order:ord-123"
-  - Invoice.depositPaymentId = dp-456
-  - DepositPayment can be traced backward from Invoice
-  - Audit log records the linkage (REQ-DI-011)
-```
+#### Scenario: Bidirectional linkage on completion
+
+- **GIVEN** a booking with Order.orderId=ord-123, DepositPayment.depositPaymentId=dp-456
+- **WHEN** the booking completes and an Invoice is created with Invoice.invoiceId=inv-789
+- **THEN** Order.invoiceId = inv-789
+- **AND** Invoice.sourceDocumentUri = "urn:nextcloud:booking:order:ord-123"
+- **AND** Invoice.depositPaymentId = dp-456
+- **AND** DepositPayment can be traced backward from Invoice
+- **AND** Audit log records the linkage (REQ-DI-011)
 
 ### REQ-DI-002: Automatic Invoice Creation on Booking Completion
 
 **Requirement:** When an Order transitions to `completed` state, an `Invoice` MUST be automatically created in Shillinq with correct line items and deposit credit applied.
 
-**Scenario:**
-```
-GIVEN a booking:
-  - Order.orderId = ord-1001
-  - Order.state = confirmed
-  - Order.estimatedTotal = 15000 EUR cents (€150.00)
-  - DepositPayment.amount = 7500 EUR cents (€75.00)
-  - DepositPayment.state = authorized
-  - Booking type: "Studio Portrait Session"
-  
-WHEN Order transitions to completed (operator confirms fulfillment)
-THEN Invoice is created in Shillinq with:
-  - Invoice.invoiceNumber = auto-generated (e.g., INV-2026-0567)
-  - Invoice.invoiceDate = today
-  - Invoice.sourceDocumentUri = "urn:nextcloud:booking:order:ord-1001"
-  - Invoice.depositPaymentId = dp-5001
-  - Invoice state = "issued"
-  AND Order.invoiceId = inv-2001
-  AND Order.state remains "completed"
-```
+#### Scenario: Invoice auto-created on completion
+
+- **GIVEN** a booking with Order.orderId = ord-1001, Order.state = confirmed, Order.estimatedTotal = 15000 EUR cents (€150.00), DepositPayment.amount = 7500 EUR cents (€75.00), DepositPayment.state = authorized, Booking type: "Studio Portrait Session"
+- **WHEN** Order transitions to completed (operator confirms fulfillment)
+- **THEN** Invoice is created in Shillinq with Invoice.invoiceNumber = auto-generated (e.g., INV-2026-0567), Invoice.invoiceDate = today, Invoice.sourceDocumentUri = "urn:nextcloud:booking:order:ord-1001", Invoice.depositPaymentId = dp-5001, Invoice state = "issued"
+- **AND** Order.invoiceId = inv-2001
+- **AND** Order.state remains "completed"
 
 ### REQ-DI-003: Deposit Credit as Negative Line Item
 
 **Requirement:** The DepositPayment amount MUST appear on the invoice as a negative `InvoiceLine` (credit), reducing the gross amount due.
 
-**Scenario:**
-```
-GIVEN an Invoice with:
-  - Line 1: Studio Portrait Session (2h), €150.00, 21% VAT → €178.50 gross
-  - Line 2: Deposit Credit Applied, -€75.00, 0% VAT → -€75.00 gross
-  
-THEN:
-  - Invoice.netAmount = €150.00 (service net only)
-  - Invoice.vatAmount = €31.50 (21% on service)
-  - Invoice.grossAmount = €103.50 (178.50 - 75.00)
-  - Customer sees €103.50 due (deposit already paid)
-```
+#### Scenario: Deposit credit reduces gross amount
+
+- **GIVEN** an Invoice with Line 1: Studio Portrait Session (2h), €150.00, 21% VAT → €178.50 gross, and Line 2: Deposit Credit Applied, -€75.00, 0% VAT → -€75.00 gross
+- **THEN** Invoice.netAmount = €150.00 (service net only)
+- **AND** Invoice.vatAmount = €31.50 (21% on service)
+- **AND** Invoice.grossAmount = €103.50 (178.50 - 75.00)
+- **AND** Customer sees €103.50 due (deposit already paid)
 
 ### REQ-DI-004: Tax Calculation & Compliance
 
 **Requirement:** VAT MUST be calculated on the service amount only; the deposit credit is applied with 0% tax (deposit was already taxed at collection time).
 
-**Scenario:**
-```
-GIVEN:
-  - Service gross (with 21% VAT): €178.50
-  - Deposit collected and taxed: €75.00 (included €15.75 VAT)
-  - Due date for final invoice: event completion date
+#### Scenario: VAT only on service amount
 
-WHEN invoice is created
-THEN:
-  - Line 1 (service): amount €150.00, VAT €31.50 (21%)
-  - Line 2 (credit): amount -€75.00, VAT €0.00 (no reversal; already paid)
-  - Total VAT on invoice: €31.50 (same as on service alone)
-  - Gross due: €103.50 (service with VAT, minus deposit)
-```
+- **GIVEN** Service gross (with 21% VAT): €178.50, Deposit collected and taxed: €75.00 (included €15.75 VAT), Due date for final invoice: event completion date
+- **WHEN** invoice is created
+- **THEN** Line 1 (service): amount €150.00, VAT €31.50 (21%)
+- **AND** Line 2 (credit): amount -€75.00, VAT €0.00 (no reversal; already paid)
+- **AND** Total VAT on invoice: €31.50 (same as on service alone)
+- **AND** Gross due: €103.50 (service with VAT, minus deposit)
 
 ### REQ-DI-005: Due Date Calculation
 
 **Requirement:** Invoice due date MUST be calculated from the invoice date plus configured payment terms (default: 14 days for bookings).
 
-**Scenario:**
-```
-GIVEN a completed booking:
-  - Invoice.invoiceDate = 2026-06-15 (completion date)
-  - Payment terms = "Net 14 days"
-  
-THEN:
-  - Invoice.dueDate = 2026-06-29 (14 days later)
-```
+#### Scenario: Due date from payment terms
+
+- **GIVEN** a completed booking with Invoice.invoiceDate = 2026-06-15 (completion date) and Payment terms = "Net 14 days"
+- **THEN** Invoice.dueDate = 2026-06-29 (14 days later)
 
 ### REQ-DI-006: Cancellation After Invoicing
 
 **Requirement:** If a booking is cancelled AFTER a final invoice is issued, a `CreditNote` MUST be created in Shillinq to reverse the invoice. The original invoice remains in AR for audit.
 
-**Scenario:**
-```
-GIVEN:
-  - Order.state = completed
-  - Invoice.invoiceId = inv-2001 (issued)
-  - Invoice.grossAmount = €103.50
-  - Order is cancelled by customer
-  
-WHEN Order state transitions to cancelled
-THEN:
-  - CreditNote is created in Shillinq with:
-    - CreditNote.linkedInvoiceId = inv-2001
-    - CreditNote.grossAmount = -€103.50 (full reversal)
-    - CreditNote.creditDate = today
-    - CreditNote.reason = "Booking cancelled"
-  AND Invoice.state remains "issued" (record preserved)
-  AND DepositPayment.state may transition to "refunded" (if refundPolicy=automatic_on_cancellation)
-```
+#### Scenario: Credit note on cancellation after invoicing
+
+- **GIVEN** Order.state = completed, Invoice.invoiceId = inv-2001 (issued), Invoice.grossAmount = €103.50, and the Order is cancelled by customer
+- **WHEN** Order state transitions to cancelled
+- **THEN** CreditNote is created in Shillinq with CreditNote.linkedInvoiceId = inv-2001, CreditNote.grossAmount = -€103.50 (full reversal), CreditNote.creditDate = today, CreditNote.reason = "Booking cancelled"
+- **AND** Invoice.state remains "issued" (record preserved)
+- **AND** DepositPayment.state may transition to "refunded" (if refundPolicy=automatic_on_cancellation)
 
 ### REQ-DI-007: Invoice Links & Traceability
 
 **Requirement:** Invoice MUST provide links back to the Order and DepositPayment for traceability in Shillinq and booking modules.
 
-**Scenario:**
-```
-GIVEN an Invoice in Shillinq:
-  - Invoice.invoiceNumber = INV-2026-0567
-  - Invoice.sourceDocumentUri = "urn:nextcloud:booking:order:ord-1001"
-  - Invoice.depositPaymentId = "dp-5001"
-  
-THEN:
-  - Shillinq can navigate to the source Order
-  - Shillinq can look up the DepositPayment that was credited
-  - Both systems maintain a shared reference for reconciliation
-```
+#### Scenario: Invoice links back to source records
+
+- **GIVEN** an Invoice in Shillinq with Invoice.invoiceNumber = INV-2026-0567, Invoice.sourceDocumentUri = "urn:nextcloud:booking:order:ord-1001", Invoice.depositPaymentId = "dp-5001"
+- **THEN** Shillinq can navigate to the source Order
+- **AND** Shillinq can look up the DepositPayment that was credited
+- **AND** Both systems maintain a shared reference for reconciliation
 
 ### REQ-DI-008: Invoice for Bookings Without Deposits
 
 **Requirement:** If a booking has no deposit rule, a final invoice MUST still be created with the full service amount (no credit line).
 
-**Scenario:**
-```
-GIVEN a booking-type with no depositRule:
-  - Order.estimatedTotal = 15000 EUR cents
-  - DepositRequired = false
-  
-WHEN Order completes
-THEN Invoice is created with:
-  - Line 1: Service €150.00 (21% VAT → €178.50 gross)
-  - No deposit credit line
-  - Invoice.grossAmount = €178.50 (full amount due)
-```
+#### Scenario: Invoice without deposit credit
+
+- **GIVEN** a booking-type with no depositRule, Order.estimatedTotal = 15000 EUR cents, DepositRequired = false
+- **WHEN** Order completes
+- **THEN** Invoice is created with Line 1: Service €150.00 (21% VAT → €178.50 gross), no deposit credit line, Invoice.grossAmount = €178.50 (full amount due)
 
 ### REQ-DI-009: Invoice Reference & AR Aging
 
 **Requirement:** The created invoice MUST be integrated into Shillinq's AR aging, payment matching, and reporting workflows with no special handling required.
 
-**Scenario:**
-```
-GIVEN an issued Invoice from a completed booking:
-  - Invoice.state = issued
-  - Invoice.grossAmount = €103.50
-  - Invoice.dueDate = 2026-06-29
-  
-THEN:
-  - Invoice appears in Shillinq's AR aging report (outstanding > 0 days)
-  - Payment module can match payments to invoice
-  - Invoice can be paid in full or partially per AR workflows
-  - No booking-specific logic required in Shillinq
-```
+#### Scenario: Invoice flows through standard AR workflows
+
+- **GIVEN** an issued Invoice from a completed booking with Invoice.state = issued, Invoice.grossAmount = €103.50, Invoice.dueDate = 2026-06-29
+- **THEN** Invoice appears in Shillinq's AR aging report (outstanding > 0 days)
+- **AND** Payment module can match payments to invoice
+- **AND** Invoice can be paid in full or partially per AR workflows
+- **AND** No booking-specific logic required in Shillinq
 
 ### REQ-DI-010: User-Facing Visibility
 
 **Requirement:** The created invoice MUST be visible to the operator in the booking module (as a link) and to the customer in their booking confirmation/receipt.
 
-**Scenario:**
-```
-GIVEN a completed booking with Invoice.invoiceId = inv-2001
+#### Scenario: Invoice visible to operator and customer
 
-WHEN operator views the booking detail page
-THEN a widget shows:
-  - "Invoice: INV-2026-0567"
-  - Link to open the invoice in Shillinq
-  - Invoice amount, due date, payment status
-
-WHEN customer views their booking confirmation (email/portal)
-THEN the confirmation includes:
-  - Invoice number and amount due
-  - Due date
-  - Link to invoice (PDF or Shillinq portal)
-  - Deposit credit applied (e.g., "€75.00 deposit applied, €103.50 due")
-```
+- **GIVEN** a completed booking with Invoice.invoiceId = inv-2001
+- **WHEN** operator views the booking detail page
+- **THEN** a widget shows "Invoice: INV-2026-0567", a link to open the invoice in Shillinq, and invoice amount, due date, payment status
+- **WHEN** customer views their booking confirmation (email/portal)
+- **THEN** the confirmation includes invoice number and amount due, due date, link to invoice (PDF or Shillinq portal), and deposit credit applied (e.g., "€75.00 deposit applied, €103.50 due")
 
 ### REQ-DI-011: Error Handling & Logging
 
 **Requirement:** If invoice creation fails, the error MUST be logged and the Order MUST remain in `completed` state (not orphaned). A retry mechanism or manual intervention path MUST be available.
 
-**Scenario:**
-```
-GIVEN Order completes, triggering invoice creation
-WHEN Shillinq API is unavailable
-THEN:
-  - Lifecycle action logs error (code, message, timestamp)
-  - Order remains in "completed" state
-  - Background job retries invoice creation (T4+ async worker)
-  - Operator receives alert in booking module UI
-  - Manual "Create Invoice" button available for operator retry
-```
+#### Scenario: Invoice creation failure handling
+
+- **GIVEN** Order completes, triggering invoice creation
+- **WHEN** Shillinq API is unavailable
+- **THEN** Lifecycle action logs error (code, message, timestamp)
+- **AND** Order remains in "completed" state
+- **AND** Background job retries invoice creation (T4+ async worker)
+- **AND** Operator receives alert in booking module UI
+- **AND** Manual "Create Invoice" button available for operator retry
 
 ---
 

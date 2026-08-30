@@ -1,0 +1,3536 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookkeeping-ccm-rule-engine",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "Tier 3 — Continuous Controls Monitoring (CCM) rule engine. Six new schemas (CcmRule, CcmFinding, CcmSegregationMatrix, CcmUserFunctionAssignment, CcmBaseline, CcmAuditCommitteeReport). Every rule/finding/report carries an immutable audit trail (x-openregister-audit-trail per REQ-CCM-009). The four-state finding triage workflow and the report approval gate are declarative (x-openregister-lifecycle) with the cross-field preconditions delegated to OCA\\Shillinq\\Lifecycle\\CcmFindingGuard (ADR-031 exception path). Finding notifications + critical-finding auto-escalation are declarative (x-openregister-notifications, REQ-CCM-008). The three nightly materialisation jobs (baseline 23:30, SoD 23:15, async sweep 23:00) are declarative (x-openregister-scheduled-workflows, REQ-CCM-003) — no PHP TimedJob classes. Rule DSL evaluation is the one imperative service (OCA\\Shillinq\\Service\\CcmRuleEngine) — a pure deterministic AST evaluator with no eval()/exec() (REQ-CCM-002). Seed data ships the 60-rule forensic library across eight control families and a representative SoD function-code matrix. A contact/user is a Nextcloud entity — rule owners, assignees, approvers are NC user ids (FK to the NC user directory), never an invented person schema. Extensions to journal-entry / journal-entry-line / organisations are DEFERRED to the bookkeeping-journal-entries / bookkeeping-general-ledger / organisations dependency apps (those schemas are not yet present in shillinq) — see tasks.md."
+  },
+  "components": {
+    "schemas": {
+      "CcmRule": {
+        "slug": "CcmRule",
+        "icon": "ShieldSearch",
+        "version": "0.1.0",
+        "title": "CCM Rule",
+        "description": "A Continuous Controls Monitoring rule definition (REQ-CCM-001). Carries the control family, objective, COSO assertion, severity, evaluation mode, trigger events, and the constrained JSON DSL logic (ruleLogic) evaluated by CcmRuleEngine (REQ-CCM-002). Parameters are tenant-configurable thresholds; ruleLogic is never arbitrary code. rule owner/reviewer are Nextcloud user ids (FK to the NC user directory). Immutable audit trail per REQ-CCM-009.",
+        "x-schema-org": "schema:GovernmentService",
+        "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a CCM Rule is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "internal-audit": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "finance-director": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "type": "object",
+        "required": [
+          "ruleCode",
+          "name",
+          "controlFamily",
+          "severity",
+          "evaluationMode",
+          "ruleLogic"
+        ],
+        "properties": {
+          "ruleCode": {
+            "type": "string",
+            "description": "Sequential rule code within the tenant, e.g. SoD-01 (REQ-CCM-001/007).",
+            "example": "SoD-01",
+            "title": "Rule Code"
+          },
+          "name": {
+            "type": "string",
+            "description": "Short rule name (translatable label).",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Plain-language description of what the rule detects.",
+            "nullable": true,
+            "title": "Description"
+          },
+          "controlFamily": {
+            "type": "string",
+            "enum": [
+              "segregation-of-duties",
+              "duplicate-detection",
+              "anomalous-amount",
+              "timing",
+              "master-data",
+              "approval-bypass",
+              "manual-journal",
+              "value-chain",
+              "custom"
+            ],
+            "description": "One of the eight control families plus custom (REQ-CCM-007).",
+            "title": "Control Family"
+          },
+          "controlObjective": {
+            "type": "string",
+            "description": "Control objective free text, e.g. 'prevent vendor master fraud'.",
+            "nullable": true,
+            "title": "Control Objective"
+          },
+          "cosoAssertion": {
+            "type": "string",
+            "enum": [
+              "existence",
+              "completeness",
+              "accuracy",
+              "valuation",
+              "rights-and-obligations",
+              "presentation-and-disclosure"
+            ],
+            "description": "Mapped COSO financial-statement assertion (REQ-CCM-001).",
+            "nullable": true,
+            "title": "Coso Assertion"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "informational",
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "description": "Rule severity; inherited by findings unless overridden (REQ-CCM-004).",
+            "title": "Severity"
+          },
+          "evaluationMode": {
+            "type": "string",
+            "enum": [
+              "synchronous-block",
+              "synchronous-warn",
+              "asynchronous-detect"
+            ],
+            "description": "Block prevents the transaction; warn flags it; async runs on the nightly sweep (REQ-CCM-003).",
+            "title": "Evaluation Mode"
+          },
+          "schedule": {
+            "type": "string",
+            "enum": [
+              "event-triggered",
+              "hourly",
+              "daily",
+              "weekly",
+              "monthly"
+            ],
+            "description": "Evaluation cadence for asynchronous rules.",
+            "default": "event-triggered",
+            "title": "Schedule"
+          },
+          "triggerEvents": {
+            "type": "array",
+            "description": "Events that trigger evaluation (REQ-CCM-001).",
+            "items": {
+              "type": "string",
+              "enum": [
+                "journal-entry-posted",
+                "vendor-created",
+                "vendor-modified",
+                "payment-instruction-created",
+                "invoice-approved",
+                "approval-granted",
+                "period-end-approaching",
+                "bank-reconciliation-completed"
+              ]
+            },
+            "title": "Trigger Events"
+          },
+          "ruleLogic": {
+            "type": "object",
+            "description": "Constrained JSON DSL expression evaluated by CcmRuleEngine (REQ-CCM-002). Operators: event-matches / field-equals / field-in-set / field-greater-than / field-between / field-matches-regex / time-is-within / time-is-weekend / time-is-outside-business-hours / user-has-function / user-also-has-function / user-is-in-role / value-deviates-from-baseline / value-violates-benford / count-of-similar-in-period-exceeds / duplicate-of-existing / master-data-changed-within / approval-chain-bypassed / posted-while-period-closing / same-user-as; compound: all-of / any-of / none-of. Never arbitrary code — no eval().",
+            "additionalProperties": true,
+            "title": "Rule Logic"
+          },
+          "parameters": {
+            "type": "object",
+            "description": "Tenant-configurable thresholds (z-score, lookback window, chi-square cutoff, etc.).",
+            "additionalProperties": true,
+            "title": "Parameters"
+          },
+          "suppressionRules": {
+            "type": "object",
+            "description": "Known exceptions that should not fire (e.g. month-end consolidation JE from parent).",
+            "additionalProperties": true,
+            "nullable": true,
+            "title": "Suppression Rules"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the rule is active for this tenant.",
+            "default": true,
+            "title": "Enabled"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date",
+            "description": "First date the rule applies.",
+            "nullable": true,
+            "title": "Effective From"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date",
+            "description": "Last date the rule applies (open-ended when null).",
+            "nullable": true,
+            "title": "Effective To"
+          },
+          "ruleOwner": {
+            "type": "string",
+            "description": "Nextcloud user id of the rule owner (typically internal-audit or CFO). FK to the NC user directory — a person is an NC entity, never an invented schema.",
+            "nullable": true,
+            "title": "Rule Owner"
+          },
+          "ruleReviewer": {
+            "type": "string",
+            "description": "Nextcloud user id of the reviewer (typically external auditor for SOX engagements).",
+            "nullable": true,
+            "title": "Rule Reviewer"
+          },
+          "lastReviewDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "title": "Last Review Date",
+            "description": "The date and time for last review date."
+          },
+          "nextReviewDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "title": "Next Review Date",
+            "description": "The date and time for next review date."
+          },
+          "soxKeyControl": {
+            "type": "boolean",
+            "description": "Whether this rule is a SOX 404 key control (only meaningful when SOX mode is enabled).",
+            "default": false,
+            "title": "Sox Key Control"
+          },
+          "versionHistory": {
+            "type": "array",
+            "description": "Self-FK chain of prior rule uuids (version history).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Version History"
+          }
+        }
+      },
+      "CcmFinding": {
+        "slug": "CcmFinding",
+        "icon": "AlertCircleOutline",
+        "version": "0.1.0",
+        "title": "CCM Finding",
+        "description": "A single rule firing (REQ-CCM-004). Captures an immutable evidence snapshot at fire time (before/after, actor, approver chain, GL context) and transitions through a four-state triage workflow via x-openregister-lifecycle. Investigation notes and status history are append-only. Resolution requires a mandatory rationale (CcmFindingGuard). The assignee is a Nextcloud user id. Immutable audit trail per REQ-CCM-009.",
+        "x-schema-org": "schema:GovernmentService",
+        "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a CCM Finding is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "internal-audit": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "finance-director": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "open",
+          "states": {
+            "open": {
+              "label": "Open",
+              "description": "Finding created; awaiting investigation (REQ-CCM-004)."
+            },
+            "under-investigation": {
+              "label": "Under investigation",
+              "description": "An investigator has taken ownership."
+            },
+            "awaiting-information": {
+              "label": "Awaiting information",
+              "description": "Investigation paused pending additional evidence."
+            },
+            "dismissed-false-positive": {
+              "label": "Dismissed — false positive",
+              "description": "Closed with rationale; not a real anomaly."
+            },
+            "dismissed-acceptable-risk": {
+              "label": "Dismissed — acceptable risk",
+              "description": "Closed with rationale; accepted by management."
+            },
+            "confirmed-control-deficiency": {
+              "label": "Confirmed — control deficiency",
+              "description": "Escalated as a control deficiency (REQ-CCM-004)."
+            },
+            "confirmed-fraud-suspected": {
+              "label": "Confirmed — fraud suspected",
+              "description": "Escalated; fraud investigation triggered."
+            }
+          },
+          "transitions": {
+            "investigate": {
+              "from": "open",
+              "to": "under-investigation",
+              "label": "Start investigation",
+              "description": "An investigator takes ownership of the finding (REQ-CCM-004)."
+            },
+            "awaitInfo": {
+              "from": "under-investigation",
+              "to": "awaiting-information",
+              "label": "Await information",
+              "description": "Pause pending additional evidence."
+            },
+            "resumeInvestigation": {
+              "from": "awaiting-information",
+              "to": "under-investigation",
+              "label": "Resume investigation",
+              "description": "Resume after evidence is received."
+            },
+            "dismissFalsePositive": {
+              "from": "under-investigation",
+              "to": "dismissed-false-positive",
+              "label": "Dismiss — false positive",
+              "description": "Close with a mandatory rationale (REQ-CCM-004).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\CcmFindingGuard::canDismiss"
+            },
+            "dismissAcceptableRisk": {
+              "from": "under-investigation",
+              "to": "dismissed-acceptable-risk",
+              "label": "Dismiss — acceptable risk",
+              "description": "Close with a mandatory rationale (REQ-CCM-004).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\CcmFindingGuard::canDismiss"
+            },
+            "confirmDeficiency": {
+              "from": "under-investigation",
+              "to": "confirmed-control-deficiency",
+              "label": "Confirm control deficiency",
+              "description": "Escalate as a control deficiency with a mandatory rationale (REQ-CCM-004).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\CcmFindingGuard::canConfirm"
+            },
+            "confirmFraud": {
+              "from": "under-investigation",
+              "to": "confirmed-fraud-suspected",
+              "label": "Confirm — fraud suspected",
+              "description": "Escalate; fraud investigation triggered, mandatory rationale (REQ-CCM-004).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\CcmFindingGuard::canConfirm"
+            }
+          }
+        },
+        "x-openregister-notifications": {
+          "onCreate": {
+            "trigger": {
+              "type": "created",
+              "condition": {
+                "field": "severity",
+                "operator": "in",
+                "value": [
+                  "critical",
+                  "high"
+                ]
+              }
+            },
+            "description": "Notify the rule owner / assignee when a critical or high-severity finding is created (REQ-CCM-008). The `field` recipient resolves the finding's own assignee and yields nobody while a finding is still unassigned; the `relation` recipient reaches the owner of the CcmRule that fired, which is the fallback the retired imperative dispatcher applied.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "field",
+                "field": "assignee"
+              },
+              {
+                "kind": "relation",
+                "relation": "rule"
+              }
+            ],
+            "subject": {
+              "nl": "CCM-bevinding ({{severity}}) op regel {{ruleCode}}: {{title}}",
+              "en": "CCM finding ({{severity}}) on rule {{ruleCode}}: {{title}}"
+            },
+            "template": "ccm-finding-created"
+          },
+          "onAutoEscalate": {
+            "trigger": {
+              "type": "scheduled",
+              "intervalSec": 86400,
+              "filter": {
+                "severity": "critical",
+                "status": "open"
+              }
+            },
+            "description": "Auto-escalate critical findings still open after 24h to the CFO (REQ-CCM-008). The 24h re-check cadence is the scheduled trigger's intervalSec; the filter is the escalation condition.",
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "groups",
+                "groups": [
+                  "finance-director"
+                ]
+              }
+            ],
+            "subject": {
+              "nl": "Escalatie: kritieke CCM-bevinding op regel {{ruleCode}} staat nog open — {{title}}",
+              "en": "Escalation: critical CCM finding on rule {{ruleCode}} is still open — {{title}}"
+            },
+            "template": "ccm-finding-escalated"
+          }
+        },
+        "x-openregister-scheduled-workflows": {
+          "ccm-finding-auto-escalation": {
+            "name": "Critical finding auto-escalation",
+            "description": "Hourly sweep that escalates critical findings still in 'open' for >24h to the CFO (REQ-CCM-008). No PHP TimedJob — declarative scheduled workflow.",
+            "cron": "0 * * * *",
+            "register": "shillinq",
+            "schema": "CcmFinding",
+            "enabled": true,
+            "filter": {
+              "status": [
+                "open"
+              ],
+              "severity": [
+                "critical"
+              ],
+              "ageHoursExceeds": 24
+            },
+            "action": {
+              "emit": "scheduled.autoEscalate"
+            }
+          }
+        },
+        "type": "object",
+        "required": [
+          "rule",
+          "fireTimestamp",
+          "severity",
+          "title",
+          "status"
+        ],
+        "properties": {
+          "rule": {
+            "type": "string",
+            "description": "FK (uuid/slug) to the CcmRule that fired.",
+            "title": "Rule"
+          },
+          "ruleCode": {
+            "type": "string",
+            "description": "Denormalised rule code for display (e.g. SoD-01).",
+            "nullable": true,
+            "title": "Rule Code"
+          },
+          "fireTimestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the rule fired (REQ-CCM-004).",
+            "title": "Fire Timestamp"
+          },
+          "triggeringEventType": {
+            "type": "string",
+            "enum": [
+              "journal-entry",
+              "payment",
+              "vendor-change",
+              "invoice",
+              "bank-reconciliation"
+            ],
+            "description": "Typed reference to the triggering event.",
+            "nullable": true,
+            "title": "Triggering Event Type"
+          },
+          "triggeringEventId": {
+            "type": "string",
+            "description": "Id of the triggering object (journal entry / payment / vendor change).",
+            "nullable": true,
+            "title": "Triggering Event ID"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "informational",
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "description": "Severity inherited from the rule, overridable (REQ-CCM-004).",
+            "title": "Severity"
+          },
+          "title": {
+            "type": "string",
+            "description": "Auto-generated finding title, e.g. 'Manual JE EUR 487,000 posted by CFO on last day of Q4'.",
+            "title": "Title"
+          },
+          "evidence": {
+            "type": "object",
+            "description": "Immutable JSON evidence snapshot captured at fire time (before/after, actor, approver chain, GL context, diagnostics). Never updated after creation (REQ-CCM-004).",
+            "additionalProperties": true,
+            "title": "Evidence"
+          },
+          "suggestedInvestigationSteps": {
+            "type": "array",
+            "description": "Auto-generated investigation steps from the rule template.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Suggested Investigation Steps"
+          },
+          "assignee": {
+            "type": "string",
+            "description": "Nextcloud user id the finding is assigned to (defaults to the rule owner). FK to the NC user directory.",
+            "nullable": true,
+            "title": "Assignee"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "under-investigation",
+              "awaiting-information",
+              "dismissed-false-positive",
+              "dismissed-acceptable-risk",
+              "confirmed-control-deficiency",
+              "confirmed-fraud-suspected"
+            ],
+            "description": "Triage workflow state (REQ-CCM-004). Managed by x-openregister-lifecycle.",
+            "default": "open",
+            "title": "Status"
+          },
+          "statusHistory": {
+            "type": "array",
+            "description": "Append-only status-change audit ({timestamp, user, fromStatus, toStatus, rationale}).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time",
+                  "title": "Timestamp",
+                  "description": "The date and time for timestamp."
+                },
+                "user": {
+                  "type": "string",
+                  "title": "User",
+                  "description": "The user."
+                },
+                "fromStatus": {
+                  "type": "string",
+                  "title": "From Status",
+                  "description": "The date and time for from status."
+                },
+                "toStatus": {
+                  "type": "string",
+                  "title": "To Status",
+                  "description": "The date and time for to status."
+                },
+                "rationale": {
+                  "type": "string",
+                  "title": "Rationale",
+                  "description": "The date and time for rationale."
+                }
+              }
+            },
+            "title": "Status History"
+          },
+          "investigationNotes": {
+            "type": "array",
+            "description": "Append-only investigation notes ({timestamp, user, note}).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time",
+                  "title": "Timestamp",
+                  "description": "The date and time for timestamp."
+                },
+                "user": {
+                  "type": "string",
+                  "title": "User",
+                  "description": "The user."
+                },
+                "note": {
+                  "type": "string",
+                  "title": "Note",
+                  "description": "The note."
+                }
+              }
+            },
+            "title": "Investigation Notes"
+          },
+          "resolutionRationale": {
+            "type": "string",
+            "description": "Mandatory free-text rationale on dismissal or confirmation (REQ-CCM-004).",
+            "nullable": true,
+            "title": "Resolution Rationale"
+          },
+          "resolvedBy": {
+            "type": "string",
+            "description": "Nextcloud user id who resolved the finding.",
+            "nullable": true,
+            "title": "Resolved By"
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Resolved At",
+            "description": "The date and time for resolved at."
+          },
+          "escalated": {
+            "type": "boolean",
+            "default": false,
+            "title": "Escalated",
+            "description": "Indicates whether escalated applies."
+          },
+          "escalatedTo": {
+            "type": "string",
+            "description": "Nextcloud user id or role the finding escalated to.",
+            "nullable": true,
+            "title": "Escalated To"
+          },
+          "escalatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Escalated At",
+            "description": "The date and time for escalated at."
+          },
+          "linkedFindings": {
+            "type": "array",
+            "description": "Related findings for pattern clustering by vendor/user (REQ-CCM-004).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Linked Findings"
+          },
+          "externalReference": {
+            "type": "string",
+            "description": "Audit-firm finding number or whistleblower report reference.",
+            "nullable": true,
+            "title": "External Reference"
+          }
+        }
+      },
+      "CcmSegregationMatrix": {
+        "slug": "CcmSegregationMatrix",
+        "icon": "AccountSwitch",
+        "version": "0.1.0",
+        "title": "CCM Segregation Matrix",
+        "description": "Segregation-of-duties reference data (REQ-CCM-005). One row per function code, listing the conflicting function codes a single user may not also hold, with conflict severity, rationale (Dutch), and the compensating controls allowed. Pre-loaded with the standard SAP/Oracle function library, tenant-configurable.",
+        "x-schema-org": "schema:DefinedTerm",
+        "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a CCM Segregation Matrix is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        },
+        "x-openregister-unique": [
+          "functionCode"
+        ],
+        "x-openregister-rbac": {
+          "roles": {
+            "internal-audit": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "bookkeeper": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "type": "object",
+        "required": [
+          "functionCode",
+          "conflictSeverity"
+        ],
+        "properties": {
+          "functionCode": {
+            "type": "string",
+            "description": "SoD function code, e.g. VENDOR-CREATE, INVOICE-POST, PAYMENT-RELEASE (REQ-CCM-005).",
+            "title": "Function Code"
+          },
+          "label": {
+            "type": "string",
+            "description": "Human-readable function label.",
+            "nullable": true,
+            "title": "Label"
+          },
+          "conflictingFunctions": {
+            "type": "array",
+            "description": "Function codes that conflict with this one (no single user may hold both).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Conflicting Functions"
+          },
+          "conflictSeverity": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "description": "Severity of holding a conflicting function (REQ-CCM-005).",
+            "title": "Conflict Severity"
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Why the conflict matters (Dutch).",
+            "nullable": true,
+            "title": "Rationale"
+          },
+          "compensatingControlsAllowed": {
+            "type": "array",
+            "description": "Compensating controls that mitigate the conflict if both functions must be held.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Compensating Controls Allowed"
+          }
+        }
+      },
+      "CcmUserFunctionAssignment": {
+        "slug": "CcmUserFunctionAssignment",
+        "icon": "AccountKey",
+        "version": "0.1.0",
+        "title": "CCM User Function Assignment",
+        "description": "Materialised mapping of a Nextcloud user to a SoD function code (REQ-CCM-005), recomputed nightly from roles + direct grants + temporary elevations by the ccm-sod-materialisation scheduled workflow. The user is a Nextcloud entity (FK to the NC user directory). conflictWith records the SoD conflicts the user currently holds.",
+        "x-schema-org": "schema:Role",
+        "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a CCM User Function Assignment is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "internal-audit": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "finance-director": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-scheduled-workflows": {
+          "ccm-sod-materialisation": {
+            "name": "SoD function-assignment materialisation",
+            "description": "Nightly job (23:15) that recomputes every user's SoD function-code assignments from roles + grants + temporary elevations and records conflicts against CcmSegregationMatrix (REQ-CCM-005). No PHP TimedJob — declarative scheduled workflow.",
+            "cron": "15 23 * * *",
+            "register": "shillinq",
+            "schema": "CcmUserFunctionAssignment",
+            "enabled": true,
+            "action": {
+              "materialise": "user-function-assignments",
+              "against": "CcmSegregationMatrix"
+            }
+          }
+        },
+        "type": "object",
+        "required": [
+          "user",
+          "functionCode",
+          "source"
+        ],
+        "properties": {
+          "user": {
+            "type": "string",
+            "description": "Nextcloud user id (FK to the NC user directory — a person is an NC entity).",
+            "title": "User"
+          },
+          "functionCode": {
+            "type": "string",
+            "description": "SoD function code the user holds (FK to CcmSegregationMatrix.functionCode).",
+            "title": "Function Code"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "role",
+              "direct-grant",
+              "temporary-elevation"
+            ],
+            "description": "How the function was granted (REQ-CCM-005).",
+            "title": "Source"
+          },
+          "grantedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Granted At",
+            "description": "The date and time for granted at."
+          },
+          "grantedBy": {
+            "type": "string",
+            "description": "Nextcloud user id who granted the function.",
+            "nullable": true,
+            "title": "Granted By"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Expiry for temporary elevations.",
+            "nullable": true,
+            "title": "Expires At"
+          },
+          "conflictWith": {
+            "type": "array",
+            "description": "SoD conflicts this assignment creates ({function, severity}).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "function": {
+                  "type": "string",
+                  "title": "Function",
+                  "description": "The function."
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high",
+                    "critical"
+                  ],
+                  "title": "Severity",
+                  "description": "The severity."
+                }
+              }
+            },
+            "title": "Conflict With"
+          }
+        }
+      },
+      "CcmBaseline": {
+        "slug": "CcmBaseline",
+        "icon": "ChartBellCurve",
+        "version": "0.1.0",
+        "title": "CCM Baseline",
+        "description": "A statistical baseline that anomalous-amount and Benford's-Law rules compare against (REQ-CCM-002). Materialised nightly (not computed per evaluation, REQ-CCM-003) by the ccm-baseline-materialisation scheduled workflow over a rolling window per scope. stable=false when the sample size or variance is too small to flag.",
+        "x-schema-org": "schema:QuantitativeValue",
+        "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a CCM Baseline is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "internal-audit": {
+              "permissions": [
+                "read"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-scheduled-workflows": {
+          "ccm-baseline-materialisation": {
+            "name": "Baseline materialisation",
+            "description": "Nightly job (23:30) computing mean/median/stddev/Benford/typical-hour/typical-day baselines per scope over a rolling 12-month window (REQ-CCM-003). Completion SLA ≤1h. No PHP TimedJob — declarative scheduled workflow.",
+            "cron": "30 23 * * *",
+            "register": "shillinq",
+            "schema": "CcmBaseline",
+            "enabled": true,
+            "action": {
+              "materialise": "statistical-baselines",
+              "window": "12-month"
+            }
+          }
+        },
+        "type": "object",
+        "required": [
+          "baselineScope",
+          "baselineMetric",
+          "period"
+        ],
+        "properties": {
+          "baselineScope": {
+            "type": "string",
+            "enum": [
+              "vendor",
+              "gl-account",
+              "cost-centre",
+              "project",
+              "tenant-wide"
+            ],
+            "description": "Scope the baseline applies to (REQ-CCM-002).",
+            "title": "Baseline Scope"
+          },
+          "scopeKey": {
+            "type": "string",
+            "description": "Identifier within the scope (vendor id, GL-account code, etc.).",
+            "nullable": true,
+            "title": "Scope Key"
+          },
+          "baselineMetric": {
+            "type": "string",
+            "enum": [
+              "mean",
+              "median",
+              "stddev",
+              "quartile",
+              "benford-leading-digit",
+              "typical-hour-of-day",
+              "typical-day-of-week",
+              "typical-poster-set"
+            ],
+            "description": "Which statistic this baseline holds (REQ-CCM-002).",
+            "title": "Baseline Metric"
+          },
+          "period": {
+            "type": "string",
+            "description": "Period the baseline was computed over, e.g. 2026-Q1.",
+            "example": "2026-Q1",
+            "title": "Period"
+          },
+          "sampleSize": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "title": "Sample Size",
+            "description": "The numeric value for sample size."
+          },
+          "computedValue": {
+            "type": "number",
+            "description": "The computed scalar value (for scalar metrics).",
+            "nullable": true,
+            "title": "Computed Value"
+          },
+          "distribution": {
+            "type": "object",
+            "description": "Distribution payload (e.g. Benford leading-digit frequencies, typical-poster set).",
+            "additionalProperties": true,
+            "nullable": true,
+            "title": "Distribution"
+          },
+          "confidenceIntervalLow": {
+            "type": "number",
+            "nullable": true,
+            "title": "Confidence Interval Low",
+            "description": "The numeric value for confidence interval low."
+          },
+          "confidenceIntervalHigh": {
+            "type": "number",
+            "nullable": true,
+            "title": "Confidence Interval High",
+            "description": "The numeric value for confidence interval high."
+          },
+          "lastRefresh": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Last Refresh",
+            "description": "The last refresh."
+          },
+          "refreshCadence": {
+            "type": "string",
+            "enum": [
+              "daily",
+              "weekly",
+              "monthly"
+            ],
+            "default": "daily",
+            "title": "Refresh Cadence",
+            "description": "The refresh cadence."
+          },
+          "stable": {
+            "type": "boolean",
+            "description": "False when the sample size or variance is too small to flag against (REQ-CCM-002).",
+            "default": false,
+            "title": "Stable"
+          }
+        }
+      },
+      "CcmAuditCommitteeReport": {
+        "slug": "CcmAuditCommitteeReport",
+        "icon": "FileChartOutline",
+        "version": "0.1.0",
+        "title": "CCM Audit Committee Report",
+        "description": "The period-end audit-committee deliverable (REQ-CCM-006). Assembles rule-firings by family/severity, findings by status, top findings, trend analysis, SoD compliance scorecard, manual-JE summary, approver-bypass summary, and (when SOX mode is enabled) the SOX 404 deficiency log. The executive summary is LLM-drafted then human-edited; no report is published without approver sign-off (CcmFindingGuard::canApproveReport). Immutable audit trail per REQ-CCM-009.",
+        "x-schema-org": "schema:Report",
+        "x-spec": "openspec/changes/bookkeeping-ccm-rule-engine/specs/bookkeeping-ccm-rule-engine/index.md",
+        "x-openregister-audit-trail": {
+          "enabled": true,
+          "description": "Every create, update and delete of a CCM Audit Committee Report is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "internal-audit": {
+              "permissions": [
+                "create",
+                "read",
+                "update"
+              ]
+            },
+            "finance-director": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "state",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Draft",
+              "description": "Auto-assembled; executive summary LLM-drafted, awaiting CFO edit (REQ-CCM-006)."
+            },
+            "in-review": {
+              "label": "In review",
+              "description": "Submitted for audit-committee-chair review."
+            },
+            "approved": {
+              "label": "Approved",
+              "description": "Approver signed off; immutable."
+            },
+            "distributed": {
+              "label": "Distributed",
+              "description": "Distributed to the audit committee; distribution logged."
+            }
+          },
+          "transitions": {
+            "submit": {
+              "from": "draft",
+              "to": "in-review",
+              "label": "Submit for review",
+              "description": "CFO submits the edited report for chair review (REQ-CCM-006)."
+            },
+            "approve": {
+              "from": "in-review",
+              "to": "approved",
+              "label": "Approve",
+              "description": "Approver signs off; blocked unless an approver and an executive summary are present (REQ-CCM-006).",
+              "requires": "OCA\\Shillinq\\Lifecycle\\CcmFindingGuard::canApproveReport"
+            },
+            "distribute": {
+              "from": "approved",
+              "to": "distributed",
+              "label": "Distribute",
+              "description": "Distribute to the audit committee; distribution logged (REQ-CCM-006)."
+            }
+          }
+        },
+        "type": "object",
+        "required": [
+          "period",
+          "state"
+        ],
+        "properties": {
+          "period": {
+            "type": "string",
+            "description": "Reporting period, e.g. 2026-Q1 (REQ-CCM-006).",
+            "example": "2026-Q1",
+            "title": "Period"
+          },
+          "reportingCadence": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "quarterly"
+            ],
+            "default": "quarterly",
+            "title": "Reporting Cadence",
+            "description": "The reporting cadence."
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Generated At",
+            "description": "The date and time for generated at."
+          },
+          "generator": {
+            "type": "string",
+            "description": "Nextcloud user id of the generator.",
+            "nullable": true,
+            "title": "Generator"
+          },
+          "executiveSummary": {
+            "type": "string",
+            "description": "Executive summary, LLM-drafted then human-edited (REQ-CCM-006).",
+            "nullable": true,
+            "title": "Executive Summary"
+          },
+          "ruleFiringsByFamily": {
+            "type": "object",
+            "description": "Rule-firing counts keyed by control family.",
+            "additionalProperties": true,
+            "title": "Rule Firings By Family"
+          },
+          "ruleFiringsBySeverity": {
+            "type": "object",
+            "description": "Rule-firing counts keyed by severity.",
+            "additionalProperties": true,
+            "title": "Rule Firings By Severity"
+          },
+          "findingsByStatus": {
+            "type": "object",
+            "description": "Finding counts keyed by status.",
+            "additionalProperties": true,
+            "title": "Findings By Status"
+          },
+          "unresolvedCriticals": {
+            "type": "array",
+            "description": "FK findings that remain critical and unresolved.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Unresolved Criticals"
+          },
+          "topFindings": {
+            "type": "array",
+            "description": "Top-N investigated findings.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Top Findings"
+          },
+          "trendAnalysis": {
+            "type": "object",
+            "description": "Year-over-year / period-over-period trend comparison (REQ-CCM-006).",
+            "additionalProperties": true,
+            "title": "Trend Analysis"
+          },
+          "sodComplianceScorecard": {
+            "type": "object",
+            "description": "SoD compliance scorecard (% users compliant, conflict counts by severity).",
+            "additionalProperties": true,
+            "title": "Sod Compliance Scorecard"
+          },
+          "manualJeSummary": {
+            "type": "object",
+            "description": "Manual journal-entry summary.",
+            "additionalProperties": true,
+            "title": "Manual Je Summary"
+          },
+          "approverBypassSummary": {
+            "type": "object",
+            "description": "Approver-bypass attempt summary.",
+            "additionalProperties": true,
+            "title": "Approver Bypass Summary"
+          },
+          "soxDeficiencies": {
+            "type": "array",
+            "description": "SOX 404 deficiency log (only when SOX mode is enabled, REQ-CCM-006).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "control": {
+                  "type": "string",
+                  "title": "Control",
+                  "description": "The control."
+                },
+                "rating": {
+                  "type": "string",
+                  "enum": [
+                    "control-deficiency",
+                    "significant-deficiency",
+                    "material-weakness"
+                  ],
+                  "title": "Rating",
+                  "description": "The date and time for rating."
+                },
+                "remediationPlan": {
+                  "type": "string",
+                  "title": "Remediation Plan",
+                  "description": "The date and time for remediation plan."
+                }
+              }
+            },
+            "title": "Sox Deficiencies"
+          },
+          "recommendations": {
+            "type": "string",
+            "description": "Recommendations for new or modified rules.",
+            "nullable": true,
+            "title": "Recommendations"
+          },
+          "approver": {
+            "type": "string",
+            "description": "Nextcloud user id of the audit-committee-chair approver (REQ-CCM-006).",
+            "nullable": true,
+            "title": "Approver"
+          },
+          "approvalDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "title": "Approval Date",
+            "description": "The date and time for approval date."
+          },
+          "distributionLog": {
+            "type": "array",
+            "description": "Distribution audit ({timestamp, recipient, channel}).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time",
+                  "title": "Timestamp",
+                  "description": "The date and time for timestamp."
+                },
+                "recipient": {
+                  "type": "string",
+                  "title": "Recipient",
+                  "description": "The recipient."
+                },
+                "channel": {
+                  "type": "string",
+                  "title": "Channel",
+                  "description": "The channel."
+                }
+              }
+            },
+            "title": "Distribution Log"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "in-review",
+              "approved",
+              "distributed"
+            ],
+            "description": "Report lifecycle state (REQ-CCM-006). Managed by x-openregister-lifecycle.",
+            "default": "draft",
+            "title": "State"
+          }
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-sod-01"
+        },
+        "ruleCode": "SoD-01",
+        "name": "Dezelfde gebruiker maakte en betaalde leverancier aan",
+        "description": "Detecteert wanneer één gebruiker zowel een leverancier aanmaakt als een betaling aan die leverancier vrijgeeft.",
+        "controlFamily": "segregation-of-duties",
+        "severity": "critical",
+        "evaluationMode": "synchronous-block",
+        "triggerEvents": [
+          "payment-instruction-created"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "event-matches": "payment-instruction-created"
+            },
+            {
+              "user-has-function": [
+                "posting_user",
+                "VENDOR-CREATE"
+              ]
+            },
+            {
+              "user-also-has-function": [
+                "posting_user",
+                "PAYMENT-RELEASE",
+                "VENDOR-CREATE"
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "existence"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-sod-02"
+        },
+        "ruleCode": "SoD-02",
+        "name": "Dezelfde gebruiker maakte en keurde factuur goed",
+        "description": "Detecteert wanneer één gebruiker zowel een leveranciersfactuur aanmaakt als goedkeurt.",
+        "controlFamily": "segregation-of-duties",
+        "severity": "high",
+        "evaluationMode": "synchronous-warn",
+        "triggerEvents": [
+          "invoice-approved"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "event-matches": "invoice-approved"
+            },
+            {
+              "same-user-as": [
+                "approver",
+                "creator",
+                "invoice"
+              ]
+            },
+            {
+              "none-of": [
+                {
+                  "user-has-function": [
+                    "approver",
+                    "INVOICE-REVIEW"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "accuracy"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-sod-03"
+        },
+        "ruleCode": "SoD-03",
+        "name": "Goedkeurder is ook boeker van journaalpost",
+        "description": "Detecteert wanneer de goedkeurder van een journaalpost ook de boeker is.",
+        "controlFamily": "segregation-of-duties",
+        "severity": "high",
+        "evaluationMode": "synchronous-warn",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "event-matches": "journal-entry-posted"
+            },
+            {
+              "same-user-as": [
+                "approver",
+                "poster",
+                "journalEntry"
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "accuracy"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-sod-04"
+        },
+        "ruleCode": "SoD-04",
+        "name": "Reconciliator is ook boeker bij bankreconciliatie",
+        "description": "Detecteert wanneer dezelfde gebruiker een bankreconciliatie uitvoert en de gerelateerde posten boekt.",
+        "controlFamily": "segregation-of-duties",
+        "severity": "high",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "bank-reconciliation-completed"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "event-matches": "bank-reconciliation-completed"
+            },
+            {
+              "user-has-function": [
+                "posting_user",
+                "BANK-RECONCILIATION"
+              ]
+            },
+            {
+              "user-also-has-function": [
+                "posting_user",
+                "JOURNAL-MANUAL",
+                "BANK-RECONCILIATION"
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "completeness"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-sod-05"
+        },
+        "ruleCode": "SoD-05",
+        "name": "Stamgegevenswijziging door AP-medewerker zonder tweede goedkeuring",
+        "description": "Detecteert stamgegevenswijzigingen door een AP-medewerker zonder secundaire goedkeuring.",
+        "controlFamily": "segregation-of-duties",
+        "severity": "high",
+        "evaluationMode": "synchronous-warn",
+        "triggerEvents": [
+          "vendor-modified"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "event-matches": "vendor-modified"
+            },
+            {
+              "user-is-in-role": [
+                "posting_user",
+                "ap-clerk"
+              ]
+            },
+            {
+              "approval-chain-bypassed": [
+                "secondary-approval",
+                "policy"
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "rights-and-obligations"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-sod-06"
+        },
+        "ruleCode": "SoD-06",
+        "name": "Slapende rekening heractiveerd door één gebruiker",
+        "description": "Detecteert heractivering van een slapende rekening door één enkele gebruiker zonder vier-ogen-controle.",
+        "controlFamily": "segregation-of-duties",
+        "severity": "medium",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "vendor-modified"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "event-matches": "vendor-modified"
+            },
+            {
+              "field-equals": [
+                "dormant_reactivated",
+                "true"
+              ]
+            },
+            {
+              "approval-chain-bypassed": [
+                "secondary-approval",
+                "policy"
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "existence"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-sod-07"
+        },
+        "ruleCode": "SoD-07",
+        "name": "Kritieke rol bij één gebruiker (geen back-up)",
+        "description": "Detecteert wanneer een kritieke SoD-functie door slechts één gebruiker wordt gehouden (bedrijfscontinuïteitsrisico).",
+        "controlFamily": "segregation-of-duties",
+        "severity": "medium",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "period-end-approaching"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "event-matches": "period-end-approaching"
+            },
+            {
+              "count-of-similar-in-period-exceeds": [
+                "function_code",
+                "holder",
+                1,
+                "current"
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "completeness"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-dup-01"
+        },
+        "ruleCode": "DUP-01",
+        "name": "Exacte dubbele factuur",
+        "description": "Zelfde leverancier + bedrag + referentie.",
+        "controlFamily": "duplicate-detection",
+        "severity": "high",
+        "evaluationMode": "synchronous-block",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "duplicate-of-existing": [
+            "vendor",
+            "amount",
+            "90-days",
+            1.0
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "existence",
+        "parameters": {
+          "matchFields": [
+            "vendor",
+            "amount",
+            "reference"
+          ]
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-dup-02"
+        },
+        "ruleCode": "DUP-02",
+        "name": "Fuzzy dubbele factuur",
+        "description": "Zelfde leverancier + bedrag binnen 1% + binnen 30 dagen.",
+        "controlFamily": "duplicate-detection",
+        "severity": "medium",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "duplicate-of-existing": [
+            "vendor",
+            "amount",
+            "30-days",
+            0.99
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "existence",
+        "parameters": {
+          "amountTolerancePct": 1.0
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-dup-03"
+        },
+        "ruleCode": "DUP-03",
+        "name": "Dubbele betaling",
+        "description": "Zelfde leverancier + bank + bedrag binnen 7 dagen.",
+        "controlFamily": "duplicate-detection",
+        "severity": "critical",
+        "evaluationMode": "synchronous-block",
+        "triggerEvents": [
+          "payment-instruction-created"
+        ],
+        "ruleLogic": {
+          "duplicate-of-existing": [
+            "vendor",
+            "amount",
+            "7-days",
+            1.0
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "existence",
+        "parameters": {
+          "matchFields": [
+            "vendor",
+            "bank_account",
+            "amount"
+          ]
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-dup-04"
+        },
+        "ruleCode": "DUP-04",
+        "name": "Dubbele leverancier (zelfde bankrekening)",
+        "description": "Zelfde bankrekening, andere naam/adres/KvK.",
+        "controlFamily": "duplicate-detection",
+        "severity": "high",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "vendor-created"
+        ],
+        "ruleLogic": {
+          "duplicate-of-existing": [
+            "bank_account",
+            "vendor_name",
+            "all-time",
+            0.0
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "existence"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-dup-05"
+        },
+        "ruleCode": "DUP-05",
+        "name": "Dubbele werknemer (zelfde bankrekening)",
+        "description": "Zelfde bankrekening op twee werknemerrecords.",
+        "controlFamily": "duplicate-detection",
+        "severity": "high",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "vendor-created"
+        ],
+        "ruleLogic": {
+          "duplicate-of-existing": [
+            "bank_account",
+            "employee_id",
+            "all-time",
+            0.0
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "existence"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-amt-01"
+        },
+        "ruleCode": "AMT-01",
+        "name": "Benford-afwijking op leidende cijfers",
+        "description": "Chi-kwadraat van de leidende-cijferverdeling overschrijdt de drempel over een rollend venster van 12 maanden.",
+        "controlFamily": "anomalous-amount",
+        "severity": "medium",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "period-end-approaching"
+        ],
+        "ruleLogic": {
+          "value-violates-benford": [
+            "amount",
+            "leading-digit",
+            0.05
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "accuracy",
+        "parameters": {
+          "chiSquarePValue": 0.05,
+          "window": "12-month"
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-amt-02"
+        },
+        "ruleCode": "AMT-02",
+        "name": "Rond-getal-anomalie",
+        "description": "Verdachte frequentie van bedragen in de stijl '10.000,00'.",
+        "controlFamily": "anomalous-amount",
+        "severity": "low",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "field-matches-regex": [
+            "amount",
+            "^[1-9]0{3,}\\.00$"
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "accuracy"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-amt-03"
+        },
+        "ruleCode": "AMT-03",
+        "name": "Net-onder-drempel",
+        "description": "Bijv. factuur EUR 24.950 terwijl de goedkeuringsgrens EUR 25.000 is.",
+        "controlFamily": "anomalous-amount",
+        "severity": "medium",
+        "evaluationMode": "synchronous-warn",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "field-between": [
+            "amount",
+            24000,
+            24999
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "valuation",
+        "parameters": {
+          "thresholdAmount": 25000,
+          "marginPct": 5
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-amt-04"
+        },
+        "ruleCode": "AMT-04",
+        "name": "Bedrag wijkt af van leveranciersbaseline",
+        "description": "Z-score > 3 ten opzichte van de leveranciersbaseline.",
+        "controlFamily": "anomalous-amount",
+        "severity": "medium",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "value-deviates-from-baseline": [
+            "amount",
+            "vendor",
+            3.0,
+            "12-month"
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "valuation",
+        "parameters": {
+          "zScore": 3.0
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-amt-05"
+        },
+        "ruleCode": "AMT-05",
+        "name": "Bedrag wijkt af van grootboekrekeningbaseline",
+        "description": "Z-score > 3 ten opzichte van de grootboekrekeningbaseline.",
+        "controlFamily": "anomalous-amount",
+        "severity": "medium",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "value-deviates-from-baseline": [
+            "amount",
+            "gl-account",
+            3.0,
+            "12-month"
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "valuation",
+        "parameters": {
+          "zScore": 3.0
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-amt-06"
+        },
+        "ruleCode": "AMT-06",
+        "name": "Leverancierspiek",
+        "description": "Leveranciertotaal deze maand > 5x het voortschrijdend 12-maands gemiddelde.",
+        "controlFamily": "anomalous-amount",
+        "severity": "medium",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "value-deviates-from-baseline": [
+            "vendor_month_total",
+            "vendor",
+            5.0,
+            "12-month"
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "completeness",
+        "parameters": {
+          "multiplier": 5.0
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-tim-01"
+        },
+        "ruleCode": "TIM-01",
+        "name": "Weekendboeking",
+        "description": "Handmatige journaalpost geboekt op zaterdag of zondag.",
+        "controlFamily": "timing",
+        "severity": "low",
+        "evaluationMode": "synchronous-warn",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "field-equals": [
+                "posting_channel",
+                "manual-by-user"
+              ]
+            },
+            {
+              "time-is-weekend": "posting_date"
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "accuracy"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-tim-02"
+        },
+        "ruleCode": "TIM-02",
+        "name": "Boeking buiten kantooruren",
+        "description": "Handmatige journaalpost tussen 20:00-06:00 lokale tijd.",
+        "controlFamily": "timing",
+        "severity": "low",
+        "evaluationMode": "synchronous-warn",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "field-equals": [
+                "posting_channel",
+                "manual-by-user"
+              ]
+            },
+            {
+              "time-is-outside-business-hours": [
+                "posting_date",
+                "06:00",
+                "20:00"
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "accuracy"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-tim-03"
+        },
+        "ruleCode": "TIM-03",
+        "name": "Boeking op laatste periodedag",
+        "description": "Handmatige journaalpost op de laatste werkdag van het kwartaal boven drempel.",
+        "controlFamily": "timing",
+        "severity": "high",
+        "evaluationMode": "synchronous-warn",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "field-equals": [
+                "posting_channel",
+                "manual-by-user"
+              ]
+            },
+            {
+              "time-is-within": [
+                "posting_date",
+                "last-day-of-period",
+                1
+              ]
+            },
+            {
+              "field-greater-than": [
+                "amount",
+                50000
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "completeness",
+        "parameters": {
+          "thresholdAmount": 50000
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-tim-04"
+        },
+        "ruleCode": "TIM-04",
+        "name": "Terugdatering",
+        "description": "Boekdatum > 5 werkdagen voor de boekingsdatum.",
+        "controlFamily": "timing",
+        "severity": "medium",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "field-greater-than": [
+            "backdated_days",
+            5
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "completeness",
+        "parameters": {
+          "maxBackdateDays": 5
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-tim-05"
+        },
+        "ruleCode": "TIM-05",
+        "name": "Vooruitdatering",
+        "description": "Boekdatum ligt in de toekomst t.o.v. de boekingsdatum.",
+        "controlFamily": "timing",
+        "severity": "medium",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "field-greater-than": [
+            "forwarddated_days",
+            0
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "completeness"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-tim-06"
+        },
+        "ruleCode": "TIM-06",
+        "name": "Periode-eindeconcentratie",
+        "description": "Meer dan 30% van de maandelijkse handmatige journaalposten in de laatste 3 dagen.",
+        "controlFamily": "timing",
+        "severity": "medium",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "period-end-approaching"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "field-equals": [
+                "posting_channel",
+                "manual-by-user"
+              ]
+            },
+            {
+              "posted-while-period-closing": [
+                "posting_date",
+                "3-days"
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "completeness",
+        "parameters": {
+          "concentrationPct": 30
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-md-01"
+        },
+        "ruleCode": "MD-01",
+        "name": "Bankrekening leverancier gewijzigd vlak voor grote betaling",
+        "description": "Leveranciersbankrekening gewijzigd binnen 14 dagen voor een grote betaling.",
+        "controlFamily": "master-data",
+        "severity": "critical",
+        "evaluationMode": "synchronous-block",
+        "triggerEvents": [
+          "payment-instruction-created"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "event-matches": "payment-instruction-created"
+            },
+            {
+              "master-data-changed-within": [
+                "vendor",
+                "14-days",
+                "bank_account"
+              ]
+            },
+            {
+              "field-greater-than": [
+                "amount",
+                10000
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "existence",
+        "parameters": {
+          "lookback": "14-days",
+          "amountThreshold": 10000
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-md-02"
+        },
+        "ruleCode": "MD-02",
+        "name": "Naamswijziging leverancier kort na aanmaak",
+        "description": "Naamswijziging leverancier kort na aanmaak (mogelijke layering).",
+        "controlFamily": "master-data",
+        "severity": "high",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "vendor-modified"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "event-matches": "vendor-modified"
+            },
+            {
+              "master-data-changed-within": [
+                "vendor",
+                "30-days",
+                "vendor_name"
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "existence"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-md-03"
+        },
+        "ruleCode": "MD-03",
+        "name": "Leveranciersadres komt overeen met werknemersadres",
+        "description": "Leveranciersadres komt overeen met een werknemersadres.",
+        "controlFamily": "master-data",
+        "severity": "high",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "vendor-created"
+        ],
+        "ruleLogic": {
+          "duplicate-of-existing": [
+            "address",
+            "employee_address",
+            "all-time",
+            1.0
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "existence"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-md-04"
+        },
+        "ruleCode": "MD-04",
+        "name": "Leverancierstelefoon komt overeen met werknemerstelefoon",
+        "description": "Leverancierstelefoonnummer komt overeen met een werknemersnummer.",
+        "controlFamily": "master-data",
+        "severity": "high",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "vendor-created"
+        ],
+        "ruleLogic": {
+          "duplicate-of-existing": [
+            "phone",
+            "employee_phone",
+            "all-time",
+            1.0
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "existence"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-md-05"
+        },
+        "ruleCode": "MD-05",
+        "name": "Leverancier dezelfde dag aangemaakt en gebruikt",
+        "description": "Leverancier aangemaakt en op dezelfde dag gebruikt (spoedleverancier).",
+        "controlFamily": "master-data",
+        "severity": "medium",
+        "evaluationMode": "synchronous-warn",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "event-matches": "journal-entry-posted"
+            },
+            {
+              "master-data-changed-within": [
+                "vendor",
+                "1-days",
+                "created"
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "existence"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-md-06"
+        },
+        "ruleCode": "MD-06",
+        "name": "Slapende leverancier heractiveerd voor eerste betaling >12 maanden",
+        "description": "Slapende leverancier heractiveerd voor eerste betaling in meer dan 12 maanden.",
+        "controlFamily": "master-data",
+        "severity": "medium",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "payment-instruction-created"
+        ],
+        "ruleLogic": {
+          "field-greater-than": [
+            "dormant_months",
+            12
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "existence",
+        "parameters": {
+          "dormantMonths": 12
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-ab-01"
+        },
+        "ruleCode": "AB-01",
+        "name": "Noodoverride ingeroepen",
+        "description": "Noodoverride op de goedkeuringsketen ingeroepen.",
+        "controlFamily": "approval-bypass",
+        "severity": "high",
+        "evaluationMode": "synchronous-warn",
+        "triggerEvents": [
+          "approval-granted"
+        ],
+        "ruleLogic": {
+          "field-equals": [
+            "emergency_override",
+            "true"
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "rights-and-obligations"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-ab-02"
+        },
+        "ruleCode": "AB-02",
+        "name": "Goedkeuringsketen korter dan beleid vereist",
+        "description": "De goedkeuringsketen is korter dan het beleid vereist.",
+        "controlFamily": "approval-bypass",
+        "severity": "high",
+        "evaluationMode": "synchronous-block",
+        "triggerEvents": [
+          "approval-granted"
+        ],
+        "ruleLogic": {
+          "approval-chain-bypassed": [
+            "amount_threshold",
+            "policy"
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "rights-and-obligations"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-ab-03"
+        },
+        "ruleCode": "AB-03",
+        "name": "Goedkeurder afwezig maar approved",
+        "description": "Goedkeuring met tijdstempel tijdens een geregistreerde afwezigheid.",
+        "controlFamily": "approval-bypass",
+        "severity": "high",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "approval-granted"
+        ],
+        "ruleLogic": {
+          "field-equals": [
+            "approver_on_leave",
+            "true"
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "rights-and-obligations"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-ab-04"
+        },
+        "ruleCode": "AB-04",
+        "name": "Zelf-goedkeuring (goedkeurder = aanvrager)",
+        "description": "De goedkeurder is gelijk aan de aanvrager.",
+        "controlFamily": "approval-bypass",
+        "severity": "critical",
+        "evaluationMode": "synchronous-block",
+        "triggerEvents": [
+          "approval-granted"
+        ],
+        "ruleLogic": {
+          "same-user-as": [
+            "approver",
+            "requester",
+            "approval"
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "rights-and-obligations"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-ab-05"
+        },
+        "ruleCode": "AB-05",
+        "name": "Gesplitste PO",
+        "description": "Meerdere PO's aan dezelfde leverancier binnen 30 dagen die samen net boven de goedkeuringsgrens uitkomen.",
+        "controlFamily": "approval-bypass",
+        "severity": "high",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "count-of-similar-in-period-exceeds": [
+            "vendor",
+            "amount",
+            1,
+            "30-days"
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "rights-and-obligations",
+        "parameters": {
+          "thresholdAmount": 25000
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-mj-01"
+        },
+        "ruleCode": "MJ-01",
+        "name": "Handmatige JE door C-suite zonder secundaire goedkeuring",
+        "description": "Handmatige journaalpost door een C-suite-gebruiker zonder secundaire goedkeuring.",
+        "controlFamily": "manual-journal",
+        "severity": "high",
+        "evaluationMode": "synchronous-warn",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "field-equals": [
+                "posting_channel",
+                "manual-by-user"
+              ]
+            },
+            {
+              "user-is-in-role": [
+                "posting_user",
+                "cfo"
+              ]
+            },
+            {
+              "approval-chain-bypassed": [
+                "secondary-approval",
+                "policy"
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "accuracy"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-mj-02"
+        },
+        "ruleCode": "MJ-02",
+        "name": "Handmatige JE met eenzijdige toelichting",
+        "description": "Handmatige journaalpost met een vage toelichting ('aanpassing','correctie') zonder detail.",
+        "controlFamily": "manual-journal",
+        "severity": "medium",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "field-equals": [
+                "posting_channel",
+                "manual-by-user"
+              ]
+            },
+            {
+              "field-matches-regex": [
+                "narrative",
+                "^(aanpassing|correctie|adjustment|correction)$"
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "accuracy"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-mj-03"
+        },
+        "ruleCode": "MJ-03",
+        "name": "Handmatige JE binnen 5 dagen teruggeboekt",
+        "description": "Handmatige journaalpost binnen 5 dagen teruggeboekt (mogelijke verhulling).",
+        "controlFamily": "manual-journal",
+        "severity": "high",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "field-equals": [
+                "posting_channel",
+                "manual-by-user"
+              ]
+            },
+            {
+              "field-equals": [
+                "reversed_within_5d",
+                "true"
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "completeness"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-mj-04"
+        },
+        "ruleCode": "MJ-04",
+        "name": "Handmatige JE naar omzetrekening",
+        "description": "Handmatige journaalpost naar een omzetrekening.",
+        "controlFamily": "manual-journal",
+        "severity": "high",
+        "evaluationMode": "synchronous-warn",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "field-equals": [
+                "posting_channel",
+                "manual-by-user"
+              ]
+            },
+            {
+              "field-in-set": [
+                "account_code",
+                [
+                  "8000",
+                  "8100",
+                  "8200"
+                ]
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "completeness",
+        "parameters": {
+          "revenueAccounts": [
+            "8000",
+            "8100",
+            "8200"
+          ]
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-mj-05"
+        },
+        "ruleCode": "MJ-05",
+        "name": "Handmatige JE naar reserverekening",
+        "description": "Handmatige journaalpost naar een reserverekening.",
+        "controlFamily": "manual-journal",
+        "severity": "high",
+        "evaluationMode": "synchronous-warn",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "field-equals": [
+                "posting_channel",
+                "manual-by-user"
+              ]
+            },
+            {
+              "field-in-set": [
+                "account_code",
+                [
+                  "0500",
+                  "0510"
+                ]
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "valuation",
+        "parameters": {
+          "reserveAccounts": [
+            "0500",
+            "0510"
+          ]
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-mj-06"
+        },
+        "ruleCode": "MJ-06",
+        "name": "Round-trip JE via tussenrekening",
+        "description": "Dr/Cr dezelfde rekening via een tussenrekening (round-trip).",
+        "controlFamily": "manual-journal",
+        "severity": "high",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "field-equals": [
+                "posting_channel",
+                "manual-by-user"
+              ]
+            },
+            {
+              "field-equals": [
+                "round_trip_via_suspense",
+                "true"
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "accuracy"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-vc-01"
+        },
+        "ruleCode": "VC-01",
+        "name": "Betaling aan hoog-risicoland",
+        "description": "Betaling aan een land op de FATF/EU-hoogrisicolijst.",
+        "controlFamily": "value-chain",
+        "severity": "high",
+        "evaluationMode": "synchronous-warn",
+        "triggerEvents": [
+          "payment-instruction-created"
+        ],
+        "ruleLogic": {
+          "field-in-set": [
+            "beneficiary_country",
+            [
+              "IR",
+              "KP",
+              "MM",
+              "SY"
+            ]
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "existence",
+        "parameters": {
+          "highRiskCountries": [
+            "IR",
+            "KP",
+            "MM",
+            "SY"
+          ],
+          "screeningSource": "openconnector"
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-vc-02"
+        },
+        "ruleCode": "VC-02",
+        "name": "Betaling aan entiteit op EU-sanctielijst",
+        "description": "Betaling aan een entiteit op de EU-sanctielijst (automatisch geblokkeerd).",
+        "controlFamily": "value-chain",
+        "severity": "critical",
+        "evaluationMode": "synchronous-block",
+        "triggerEvents": [
+          "payment-instruction-created"
+        ],
+        "ruleLogic": {
+          "field-equals": [
+            "sanctions_match",
+            "true"
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "existence",
+        "parameters": {
+          "screeningSource": "openconnector"
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-vc-03"
+        },
+        "ruleCode": "VC-03",
+        "name": "Leverancier met PEP-match",
+        "description": "Leverancier met een match op een politiek prominente persoon (PEP).",
+        "controlFamily": "value-chain",
+        "severity": "high",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "vendor-created"
+        ],
+        "ruleLogic": {
+          "field-equals": [
+            "pep_match",
+            "true"
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": true,
+        "cosoAssertion": "existence",
+        "parameters": {
+          "screeningSource": "openconnector"
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-vc-04"
+        },
+        "ruleCode": "VC-04",
+        "name": "Klant met adverse-media-match",
+        "description": "Klant met een adverse-media-match (continue monitoring via openconnector).",
+        "controlFamily": "value-chain",
+        "severity": "medium",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [
+          "vendor-modified"
+        ],
+        "ruleLogic": {
+          "field-equals": [
+            "adverse_media_match",
+            "true"
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "existence",
+        "parameters": {
+          "screeningSource": "openconnector"
+        }
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-vc-05"
+        },
+        "ruleCode": "VC-05",
+        "name": "Factuur van nieuwe leverancier zonder KvK/btw-validatie",
+        "description": "Factuur van een nieuwe leverancier zonder gevalideerd KvK-/btw-nummer.",
+        "controlFamily": "value-chain",
+        "severity": "medium",
+        "evaluationMode": "synchronous-warn",
+        "triggerEvents": [
+          "journal-entry-posted"
+        ],
+        "ruleLogic": {
+          "all-of": [
+            {
+              "event-matches": "journal-entry-posted"
+            },
+            {
+              "none-of": [
+                {
+                  "field-equals": [
+                    "kvk_validated",
+                    "true"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "enabled": true,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false,
+        "cosoAssertion": "existence"
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-custom-01"
+        },
+        "ruleCode": "CUSTOM-01",
+        "name": "Custom rule slot 1",
+        "description": "Gereserveerde aanpasbare regelplek voor tenant-specifieke controles.",
+        "controlFamily": "custom",
+        "severity": "informational",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [],
+        "ruleLogic": {
+          "all-of": []
+        },
+        "enabled": false,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-custom-02"
+        },
+        "ruleCode": "CUSTOM-02",
+        "name": "Custom rule slot 2",
+        "description": "Gereserveerde aanpasbare regelplek voor tenant-specifieke controles.",
+        "controlFamily": "custom",
+        "severity": "informational",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [],
+        "ruleLogic": {
+          "all-of": []
+        },
+        "enabled": false,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-custom-03"
+        },
+        "ruleCode": "CUSTOM-03",
+        "name": "Custom rule slot 3",
+        "description": "Gereserveerde aanpasbare regelplek voor tenant-specifieke controles.",
+        "controlFamily": "custom",
+        "severity": "informational",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [],
+        "ruleLogic": {
+          "all-of": []
+        },
+        "enabled": false,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-custom-04"
+        },
+        "ruleCode": "CUSTOM-04",
+        "name": "Custom rule slot 4",
+        "description": "Gereserveerde aanpasbare regelplek voor tenant-specifieke controles.",
+        "controlFamily": "custom",
+        "severity": "informational",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [],
+        "ruleLogic": {
+          "all-of": []
+        },
+        "enabled": false,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-custom-05"
+        },
+        "ruleCode": "CUSTOM-05",
+        "name": "Custom rule slot 5",
+        "description": "Gereserveerde aanpasbare regelplek voor tenant-specifieke controles.",
+        "controlFamily": "custom",
+        "severity": "informational",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [],
+        "ruleLogic": {
+          "all-of": []
+        },
+        "enabled": false,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-custom-06"
+        },
+        "ruleCode": "CUSTOM-06",
+        "name": "Custom rule slot 6",
+        "description": "Gereserveerde aanpasbare regelplek voor tenant-specifieke controles.",
+        "controlFamily": "custom",
+        "severity": "informational",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [],
+        "ruleLogic": {
+          "all-of": []
+        },
+        "enabled": false,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-custom-07"
+        },
+        "ruleCode": "CUSTOM-07",
+        "name": "Custom rule slot 7",
+        "description": "Gereserveerde aanpasbare regelplek voor tenant-specifieke controles.",
+        "controlFamily": "custom",
+        "severity": "informational",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [],
+        "ruleLogic": {
+          "all-of": []
+        },
+        "enabled": false,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-custom-08"
+        },
+        "ruleCode": "CUSTOM-08",
+        "name": "Custom rule slot 8",
+        "description": "Gereserveerde aanpasbare regelplek voor tenant-specifieke controles.",
+        "controlFamily": "custom",
+        "severity": "informational",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [],
+        "ruleLogic": {
+          "all-of": []
+        },
+        "enabled": false,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-custom-09"
+        },
+        "ruleCode": "CUSTOM-09",
+        "name": "Custom rule slot 9",
+        "description": "Gereserveerde aanpasbare regelplek voor tenant-specifieke controles.",
+        "controlFamily": "custom",
+        "severity": "informational",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [],
+        "ruleLogic": {
+          "all-of": []
+        },
+        "enabled": false,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-custom-10"
+        },
+        "ruleCode": "CUSTOM-10",
+        "name": "Custom rule slot 10",
+        "description": "Gereserveerde aanpasbare regelplek voor tenant-specifieke controles.",
+        "controlFamily": "custom",
+        "severity": "informational",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [],
+        "ruleLogic": {
+          "all-of": []
+        },
+        "enabled": false,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-custom-11"
+        },
+        "ruleCode": "CUSTOM-11",
+        "name": "Custom rule slot 11",
+        "description": "Gereserveerde aanpasbare regelplek voor tenant-specifieke controles.",
+        "controlFamily": "custom",
+        "severity": "informational",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [],
+        "ruleLogic": {
+          "all-of": []
+        },
+        "enabled": false,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-custom-12"
+        },
+        "ruleCode": "CUSTOM-12",
+        "name": "Custom rule slot 12",
+        "description": "Gereserveerde aanpasbare regelplek voor tenant-specifieke controles.",
+        "controlFamily": "custom",
+        "severity": "informational",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [],
+        "ruleLogic": {
+          "all-of": []
+        },
+        "enabled": false,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-custom-13"
+        },
+        "ruleCode": "CUSTOM-13",
+        "name": "Custom rule slot 13",
+        "description": "Gereserveerde aanpasbare regelplek voor tenant-specifieke controles.",
+        "controlFamily": "custom",
+        "severity": "informational",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [],
+        "ruleLogic": {
+          "all-of": []
+        },
+        "enabled": false,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmRule",
+          "slug": "ccm-rule-custom-14"
+        },
+        "ruleCode": "CUSTOM-14",
+        "name": "Custom rule slot 14",
+        "description": "Gereserveerde aanpasbare regelplek voor tenant-specifieke controles.",
+        "controlFamily": "custom",
+        "severity": "informational",
+        "evaluationMode": "asynchronous-detect",
+        "triggerEvents": [],
+        "ruleLogic": {
+          "all-of": []
+        },
+        "enabled": false,
+        "ruleOwner": "internal-audit",
+        "soxKeyControl": false
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmSegregationMatrix",
+          "slug": "ccm-sod-vendor-create"
+        },
+        "functionCode": "VENDOR-CREATE",
+        "label": "Leverancier aanmaken",
+        "conflictingFunctions": [
+          "PAYMENT-RELEASE",
+          "VENDOR-PAY",
+          "BANK-RECONCILIATION"
+        ],
+        "conflictSeverity": "critical",
+        "rationale": "Preventie van fictieve leveranciers; geen vier-ogen-regel mogelijk.",
+        "compensatingControlsAllowed": [
+          "onafhankelijke stamdata-review"
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmSegregationMatrix",
+          "slug": "ccm-sod-vendor-modify"
+        },
+        "functionCode": "VENDOR-MODIFY",
+        "label": "Leverancier wijzigen",
+        "conflictingFunctions": [
+          "VENDOR-PAY",
+          "PAYMENT-RELEASE"
+        ],
+        "conflictSeverity": "high",
+        "rationale": "Bankrekeningwijziging vlak voor betaling is een klassiek fraudepatroon.",
+        "compensatingControlsAllowed": [
+          "secundaire goedkeuring stamdata"
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmSegregationMatrix",
+          "slug": "ccm-sod-vendor-pay"
+        },
+        "functionCode": "VENDOR-PAY",
+        "label": "Leverancier betalen",
+        "conflictingFunctions": [
+          "VENDOR-CREATE",
+          "VENDOR-MODIFY"
+        ],
+        "conflictSeverity": "critical",
+        "rationale": "Aanmaken/wijzigen en betalen door een persoon ondermijnt de controle.",
+        "compensatingControlsAllowed": [
+          "onafhankelijke betaalvrijgave"
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmSegregationMatrix",
+          "slug": "ccm-sod-invoice-create"
+        },
+        "functionCode": "INVOICE-CREATE",
+        "label": "Factuur aanmaken",
+        "conflictingFunctions": [
+          "INVOICE-APPROVE",
+          "INVOICE-POST"
+        ],
+        "conflictSeverity": "high",
+        "rationale": "Aanmaken en goedkeuren/boeken door een persoon ondermijnt de vier-ogen-regel.",
+        "compensatingControlsAllowed": [
+          "onafhankelijke goedkeuring"
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmSegregationMatrix",
+          "slug": "ccm-sod-invoice-approve"
+        },
+        "functionCode": "INVOICE-APPROVE",
+        "label": "Factuur goedkeuren",
+        "conflictingFunctions": [
+          "INVOICE-CREATE",
+          "INVOICE-POST"
+        ],
+        "conflictSeverity": "high",
+        "rationale": "Zelf-goedkeuring van facturen is een controlezwakte.",
+        "compensatingControlsAllowed": [
+          "beleidsmatige goedkeuringsketen"
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmSegregationMatrix",
+          "slug": "ccm-sod-invoice-post"
+        },
+        "functionCode": "INVOICE-POST",
+        "label": "Factuur boeken",
+        "conflictingFunctions": [
+          "INVOICE-CREATE",
+          "PAYMENT-RELEASE",
+          "BANK-RECONCILIATION"
+        ],
+        "conflictSeverity": "high",
+        "rationale": "Boeken en betalen/reconciliëren door een persoon ondermijnt de vier-ogen-regel.",
+        "compensatingControlsAllowed": [
+          "onafhankelijke boeking"
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmSegregationMatrix",
+          "slug": "ccm-sod-payment-auth"
+        },
+        "functionCode": "PAYMENT-AUTH",
+        "label": "Betaling autoriseren",
+        "conflictingFunctions": [
+          "PAYMENT-RELEASE"
+        ],
+        "conflictSeverity": "high",
+        "rationale": "Autoriseren en vrijgeven scheiden om verkeerde betalingen te voorkomen.",
+        "compensatingControlsAllowed": [
+          "dubbele autorisatie"
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmSegregationMatrix",
+          "slug": "ccm-sod-payment-release"
+        },
+        "functionCode": "PAYMENT-RELEASE",
+        "label": "Betaling vrijgeven",
+        "conflictingFunctions": [
+          "VENDOR-CREATE",
+          "INVOICE-POST",
+          "BANK-RECONCILIATION",
+          "PAYMENT-AUTH"
+        ],
+        "conflictSeverity": "critical",
+        "rationale": "Vrijgave gecombineerd met andere kritieke functies maakt fictieve betalingen mogelijk.",
+        "compensatingControlsAllowed": [
+          "onafhankelijke vrijgave"
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmSegregationMatrix",
+          "slug": "ccm-sod-bank-reconciliation"
+        },
+        "functionCode": "BANK-RECONCILIATION",
+        "label": "Bankreconciliatie",
+        "conflictingFunctions": [
+          "PAYMENT-RELEASE",
+          "INVOICE-POST",
+          "JOURNAL-MANUAL"
+        ],
+        "conflictSeverity": "high",
+        "rationale": "Reconciliëren en boeken/betalen door een persoon verbergt afwijkingen.",
+        "compensatingControlsAllowed": [
+          "onafhankelijke reconciliatie"
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmSegregationMatrix",
+          "slug": "ccm-sod-journal-manual"
+        },
+        "functionCode": "JOURNAL-MANUAL",
+        "label": "Handmatige journaalpost",
+        "conflictingFunctions": [
+          "JOURNAL-APPROVE",
+          "BANK-RECONCILIATION"
+        ],
+        "conflictSeverity": "high",
+        "rationale": "Boeken en goedkeuren van handmatige posten scheiden.",
+        "compensatingControlsAllowed": [
+          "secundaire goedkeuring JE"
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmSegregationMatrix",
+          "slug": "ccm-sod-journal-approve"
+        },
+        "functionCode": "JOURNAL-APPROVE",
+        "label": "Journaalpost goedkeuren",
+        "conflictingFunctions": [
+          "JOURNAL-MANUAL"
+        ],
+        "conflictSeverity": "high",
+        "rationale": "Zelf-goedkeuring van journaalposten is een controlezwakte.",
+        "compensatingControlsAllowed": [
+          "onafhankelijke goedkeuring"
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmSegregationMatrix",
+          "slug": "ccm-sod-master-data-change"
+        },
+        "functionCode": "MASTER-DATA-CHANGE",
+        "label": "Stamgegevens wijzigen",
+        "conflictingFunctions": [
+          "PAYMENT-RELEASE",
+          "VENDOR-PAY"
+        ],
+        "conflictSeverity": "high",
+        "rationale": "Stamdatawijziging en betaling door een persoon is een fraudevector.",
+        "compensatingControlsAllowed": [
+          "secundaire goedkeuring stamdata"
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmSegregationMatrix",
+          "slug": "ccm-sod-approval-expense"
+        },
+        "functionCode": "APPROVAL-EXPENSE",
+        "label": "Declaratie goedkeuren",
+        "conflictingFunctions": [
+          "EXPENSE-SUBMIT"
+        ],
+        "conflictSeverity": "medium",
+        "rationale": "Zelf-goedkeuring van declaraties ondermijnt de controle.",
+        "compensatingControlsAllowed": [
+          "onafhankelijke goedkeuring"
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmSegregationMatrix",
+          "slug": "ccm-sod-expense-submit"
+        },
+        "functionCode": "EXPENSE-SUBMIT",
+        "label": "Declaratie indienen",
+        "conflictingFunctions": [
+          "APPROVAL-EXPENSE"
+        ],
+        "conflictSeverity": "medium",
+        "rationale": "Indienen en goedkeuren scheiden.",
+        "compensatingControlsAllowed": [
+          "onafhankelijke goedkeuring"
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmSegregationMatrix",
+          "slug": "ccm-sod-dormant-reactivate"
+        },
+        "functionCode": "DORMANT-REACTIVATE",
+        "label": "Slapende rekening heractiveren",
+        "conflictingFunctions": [
+          "PAYMENT-RELEASE"
+        ],
+        "conflictSeverity": "high",
+        "rationale": "Heractivering gevolgd door betaling door een persoon is een fraudevector.",
+        "compensatingControlsAllowed": [
+          "vier-ogen-controle heractivering"
+        ]
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmBaseline",
+          "slug": "ccm-baseline-vendor-mean-fy2026q1"
+        },
+        "baselineScope": "vendor",
+        "scopeKey": "vendor-sample-001",
+        "baselineMetric": "mean",
+        "period": "2026-Q1",
+        "sampleSize": 450,
+        "computedValue": 8750.5,
+        "confidenceIntervalLow": 8200,
+        "confidenceIntervalHigh": 9300,
+        "refreshCadence": "daily",
+        "stable": true
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmBaseline",
+          "slug": "ccm-baseline-benford-tenant-fy2026q1"
+        },
+        "baselineScope": "tenant-wide",
+        "baselineMetric": "benford-leading-digit",
+        "period": "2026-Q1",
+        "sampleSize": 12000,
+        "distribution": {
+          "1": 0.301,
+          "2": 0.176,
+          "3": 0.125,
+          "4": 0.097,
+          "5": 0.079,
+          "6": 0.067,
+          "7": 0.058,
+          "8": 0.051,
+          "9": 0.046
+        },
+        "refreshCadence": "daily",
+        "stable": true
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmFinding",
+          "slug": "ccm-finding-sample-mj01"
+        },
+        "rule": "ccm-rule-mj-01",
+        "ruleCode": "MJ-01",
+        "fireTimestamp": "2026-03-31T22:14:00+02:00",
+        "triggeringEventType": "journal-entry",
+        "triggeringEventId": "je-sample-9981",
+        "severity": "high",
+        "title": "Handmatige JE EUR 487.000 geboekt door CFO op laatste dag Q1 zonder secundaire goedkeuring",
+        "evidence": {
+          "amount": 487000,
+          "poster": "cfo-user",
+          "postingChannel": "manual-by-user",
+          "approvalChain": [],
+          "glAccount": "8000",
+          "diagnostics": {
+            "reason": "manual JE by C-suite without secondary approval"
+          }
+        },
+        "suggestedInvestigationSteps": [
+          "Controleer de onderliggende documentatie",
+          "Bevestig business rationale met de CFO",
+          "Verifieer of secundaire goedkeuring vereist was"
+        ],
+        "assignee": "internal-audit",
+        "status": "open",
+        "escalated": false,
+        "statusHistory": [
+          {
+            "timestamp": "2026-03-31T22:14:00+02:00",
+            "user": "system",
+            "fromStatus": "",
+            "toStatus": "open",
+            "rationale": "Auto-created on rule fire."
+          }
+        ],
+        "investigationNotes": [],
+        "linkedFindings": []
+      },
+      {
+        "@self": {
+          "register": "shillinq",
+          "schema": "CcmAuditCommitteeReport",
+          "slug": "ccm-acr-sample-2026q1"
+        },
+        "period": "2026-Q1",
+        "reportingCadence": "quarterly",
+        "generatedAt": "2026-04-02T09:00:00+02:00",
+        "generator": "internal-audit",
+        "executiveSummary": "In Q1 2026 vuurden 47 controleregels; 12 bevindingen werden onderzocht, 3 als terecht bevestigd en geëscaleerd. De SoD-naleving bedroeg 96%. Geen materiële zwakheden geïdentificeerd.",
+        "ruleFiringsByFamily": {
+          "segregation-of-duties": 9,
+          "manual-journal": 14,
+          "anomalous-amount": 11,
+          "timing": 7,
+          "duplicate-detection": 4,
+          "approval-bypass": 2
+        },
+        "ruleFiringsBySeverity": {
+          "critical": 2,
+          "high": 15,
+          "medium": 21,
+          "low": 9
+        },
+        "findingsByStatus": {
+          "open": 2,
+          "under-investigation": 4,
+          "dismissed-false-positive": 3,
+          "confirmed-control-deficiency": 3
+        },
+        "unresolvedCriticals": [],
+        "topFindings": [
+          "ccm-finding-sample-mj01"
+        ],
+        "trendAnalysis": {
+          "firingRateVsPriorPeriod": "+8%",
+          "falsePositiveRate": "0.4%"
+        },
+        "sodComplianceScorecard": {
+          "usersCompliantPct": 96,
+          "conflictsBySeverity": {
+            "critical": 0,
+            "high": 1,
+            "medium": 3
+          }
+        },
+        "manualJeSummary": {
+          "total": 140,
+          "flagged": 14
+        },
+        "approverBypassSummary": {
+          "attempts": 2,
+          "blocked": 2
+        },
+        "recommendations": "Overweeg het verlagen van de Benford chi-kwadraat drempel voor de crediteurenadministratie.",
+        "state": "draft",
+        "distributionLog": []
+      }
+    ]
+  }
+}

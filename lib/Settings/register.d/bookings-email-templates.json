@@ -1,0 +1,824 @@
+{
+  "_meta": {
+    "spdx-license": "EUPL-1.2",
+    "spdx-copyright": "2026 Conduction B.V.",
+    "change": "bookings-email-templates",
+    "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
+    "description": "kind: config — declarative booking email template registry. Adds three schemas (BookingConfirmationTemplate, BookingReminderTemplate, BookingCancellationTemplate) each with draft → published → archived lifecycle per ADR-031, declarative variable substitution and validation via x-openregister-calculations, branding customization (logo, accent, footer), and OR notification-engine dispatch wiring per ADR-022. Includes 6 seed templates (Dutch + English locales for each of the three template types). No PHP template service class — rendering and validation are declarative."
+  },
+  "components": {
+    "schemas": {
+      "BookingConfirmationTemplate": {
+        "slug": "BookingConfirmationTemplate",
+        "icon": "EmailCheckOutline",
+        "version": "0.1.0",
+        "title": "Boekingsbevestigingssjabloon",
+        "description": "Branded email template dispatched immediately on booking confirmation (REQ-BET-001/010). Carries subject and body fields with {{variables}} substituted at dispatch time by OR's notification engine, plain-text fallback for non-HTML clients (REQ-BET-006), branding fields (logo URI, accent colour, footer) for per-template customization (REQ-BET-007), and a draft → published → archived lifecycle (REQ-BET-002/003/008). Variable substitution, subject length, and body size validation are declarative calculations (ADR-031); dispatch is consumed from OR's notification engine on booking.confirmed (ADR-022).",
+        "x-schema-org": "schema:EmailMessage",
+        "type": "object",
+        "required": [
+          "name",
+          "status",
+          "subjectLine",
+          "htmlBody",
+          "plainTextBody",
+          "locale"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "description": "Human-readable template name shown in the admin list (REQ-BET-001).",
+            "example": "Default Booking Confirmation",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "default": "draft",
+            "description": "Lifecycle state (REQ-BET-002/003/008). draft = editable, not dispatched; published = active and dispatched on booking.confirmed; archived = retired, no new dispatches but kept for audit/history.",
+            "title": "Status"
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "nl",
+              "en"
+            ],
+            "default": "nl",
+            "description": "Template language (REQ-BET-NFR-005). nl = Dutch, en = English. The notification engine selects the matching locale at dispatch using the customer language preference, falling back to nl when no preference is set.",
+            "title": "Locale"
+          },
+          "subjectLine": {
+            "type": "string",
+            "maxLength": 78,
+            "description": "Email subject (NFR-BET-002). Limited to 78 characters for cross-client compatibility; supports {{variables}} substituted at dispatch.",
+            "example": "Boeking bevestigd: {{bookingRef}}",
+            "title": "Subject Line"
+          },
+          "htmlBody": {
+            "type": "string",
+            "maxLength": 102400,
+            "description": "HTML email body (NFR-BET-001/003). Inline styles only — no external CSS, no JavaScript. Allowed elements limited to div, p, h1-h6, a, img, table, tr, td, ul, ol, li, br, span, strong, em. Combined html + plain-text size capped at 102 KB.",
+            "example": "<html><body><h1>Hallo {{customerName}}</h1><p>Uw boeking is bevestigd.</p></body></html>",
+            "title": "Html Body"
+          },
+          "plainTextBody": {
+            "type": "string",
+            "maxLength": 102400,
+            "description": "Plain-text fallback (REQ-BET-006). Required for email clients without HTML rendering; supports {{variables}}.",
+            "example": "Hallo {{customerName}},\nUw boeking is bevestigd.\nReferentie: {{bookingRef}}",
+            "title": "Plain Text Body"
+          },
+          "logoUri": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "URL of the organization logo image (NFR-BET-004). Loaded from CDN or document-store URI — never inline base64 (keeps email size small and supports updates without resending).",
+            "example": "https://cdn.example.org/logo.png",
+            "title": "Logo URI"
+          },
+          "accentColor": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "description": "Hex colour code for branding accents (REQ-BET-007). Six-digit hex.",
+            "example": "#0066cc",
+            "title": "Accent Color"
+          },
+          "footerText": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Custom footer text — typically address, contact information, legal notices.",
+            "example": "© 2026 Example BV, Postbus 123, 1000 AA Amsterdam",
+            "title": "Footer Text"
+          },
+          "senderName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "description": "Display name used as the From: header at dispatch.",
+            "title": "Sender Name"
+          },
+          "senderAddress": {
+            "type": "string",
+            "format": "email",
+            "nullable": true,
+            "description": "Email address used as the From: sender at dispatch.",
+            "title": "Sender Address"
+          },
+          "activatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp when the template was first published (REQ-BET-002). Set on the first draft → published transition.",
+            "title": "Activated At"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Editable, not yet dispatched. The default state for new templates and clones of published versions."
+            },
+            "published": {
+              "label": "Gepubliceerd",
+              "description": "Actively dispatched on booking.confirmed events. activatedAt is stamped at first transition into this state."
+            },
+            "archived": {
+              "label": "Gearchiveerd",
+              "description": "Retired. No new dispatches; previously sent instances remain visible in history. Terminal state."
+            }
+          },
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published",
+              "label": "Publiceren",
+              "description": "Activate the template for dispatch. Stamps activatedAt on first publish (REQ-BET-002)."
+            },
+            "archiveDraft": {
+              "from": "draft",
+              "to": "archived",
+              "label": "Concept archiveren",
+              "description": "Archive a draft that never went live."
+            },
+            "archivePublished": {
+              "from": "published",
+              "to": "archived",
+              "label": "Archiveren",
+              "description": "Retire an active template (REQ-BET-003). No new dispatches after archive."
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "renderedSubjectPreview": {
+            "expression": "renderTemplate(@self.subjectLine, {customerName: 'Femke Jansen', bookingRef: 'BK20260521042', bookingDate: '22 mei 2026', bookingTime: '10:00', bookingLocation: 'Kantoor Amsterdam, Kamer 3', organizationName: 'Example BV'})",
+            "type": "string",
+            "description": "Subject rendered with sample booking variables for operator validation (REQ-BET-004, T16). Variables are substituted via {{variable}} syntax; undefined variables render as empty string (T14)."
+          },
+          "renderedBodyPreview": {
+            "expression": "renderTemplate(@self.plainTextBody, {customerName: 'Femke Jansen', bookingRef: 'BK20260521042', bookingDate: '22 mei 2026', bookingTime: '10:00', bookingLocation: 'Kantoor Amsterdam, Kamer 3', organizationName: 'Example BV'})",
+            "type": "string",
+            "description": "Plain-text body rendered with sample variables (REQ-BET-004). Used by the admin preview surface; HTML preview is rendered identically by the manifest preview action."
+          },
+          "subjectLineLength": {
+            "expression": "strlen(@self.renderedSubjectPreview)",
+            "type": "integer",
+            "description": "Character count of the rendered subject (NFR-BET-002, T12). Used by the admin UI to warn when substituted variables could push the subject past 78 characters."
+          },
+          "totalBodySizeBytes": {
+            "expression": "strlen(@self.htmlBody) + strlen(@self.plainTextBody)",
+            "type": "integer",
+            "description": "Combined HTML + plain-text body size in bytes (NFR-BET-003, T13). Warns when approaching the 102 KB SMTP-safe ceiling."
+          },
+          "htmlBodySafe": {
+            "expression": "validateHtmlWhitelist(@self.htmlBody, ['div','p','h1','h2','h3','h4','h5','h6','a','img','table','tr','td','th','tbody','thead','ul','ol','li','br','span','strong','em','b','i','hr'])",
+            "type": "boolean",
+            "description": "Whether the HTML body contains only whitelisted elements with inline styles (NFR-BET-001, T11). External CSS (<link>, <style>), JavaScript (<script>), and unsupported tags fail validation."
+          }
+        },
+        "x-openregister-notifications": {
+          "onBookingConfirmed": {
+            "trigger": "booking.confirmed",
+            "channels": [
+              "email"
+            ],
+            "template": "@self",
+            "sender": "{{senderAddress}}",
+            "appliesWhen": {
+              "field": "status",
+              "in": [
+                "published"
+              ]
+            },
+            "selectBy": {
+              "schema": "BookingConfirmationTemplate",
+              "matchLocale": "recipient.languagePreference"
+            },
+            "fallback": {
+              "mode": "plain-text",
+              "field": "plainTextBody",
+              "description": "On render failure or missing HTML body fall back to plain-text dispatch; log error for operator review (T21)."
+            },
+            "description": "Declarative email dispatch consumed from OR's notification engine (ADR-022, REQ-BET-010). When booking.confirmed fires, the engine selects a published template matching the recipient locale, renders subject + html + plain-text with booking variables, and dispatches through the configured email provider — no direct SMTP from app code. Render failure falls back to plain-text (T21) and is logged for operator review."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "template-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "booking-administrator": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "permissionMap": {
+            "booking:template:list": "read",
+            "booking:template:create": "create",
+            "booking:template:edit": "update",
+            "booking:template:publish": "update",
+            "booking:template:delete": "delete"
+          },
+          "description": "Template administration is restricted to the template-administrator role (full CRUD), booking-administrator (read/update), and auditor (read-only) per T22. Permission slugs map onto OR CRUD permissions; publish is modelled as an update of the status field gated by the lifecycle state machine."
+        }
+      },
+      "BookingReminderTemplate": {
+        "slug": "BookingReminderTemplate",
+        "icon": "EmailOutline",
+        "version": "0.1.0",
+        "title": "Boekingsherinneringssjabloon",
+        "description": "Branded email template dispatched a configurable number of hours before booking start (REQ-BET-005/010). Carries hoursBeforeBooking timing, subject/body with {{variables}}, plain-text fallback, branding, and the same draft → published → archived lifecycle as the confirmation template. Multiple reminder templates can coexist (e.g. 24h and 2h) — the notification engine schedules one dispatch per published reminder per booking.",
+        "x-schema-org": "schema:EmailMessage",
+        "type": "object",
+        "required": [
+          "name",
+          "status",
+          "locale",
+          "hoursBeforeBooking",
+          "subjectLine",
+          "htmlBody",
+          "plainTextBody"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "description": "Human-readable template name shown in the admin list.",
+            "example": "24-Hour Booking Reminder",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "default": "draft",
+            "description": "Lifecycle state. Same semantics as BookingConfirmationTemplate.",
+            "title": "Status"
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "nl",
+              "en"
+            ],
+            "default": "nl",
+            "description": "Template language (NFR-BET-005).",
+            "title": "Locale"
+          },
+          "hoursBeforeBooking": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 720,
+            "description": "Hours before booking start to dispatch the reminder (REQ-BET-005). Common values: 1, 2, 24, 48, 72. OR's notification engine schedules dispatch at bookingStart − hoursBeforeBooking hours with a ±15 min tolerance; missed windows dispatch immediately (REQ-BET-005).",
+            "example": 24,
+            "title": "Hours Before Booking"
+          },
+          "subjectLine": {
+            "type": "string",
+            "maxLength": 78,
+            "description": "Email subject; ≤78 characters; supports {{variables}}.",
+            "example": "Herinnering: Uw boeking op {{bookingDate}}",
+            "title": "Subject Line"
+          },
+          "htmlBody": {
+            "type": "string",
+            "maxLength": 102400,
+            "description": "HTML body; inline styles only; whitelisted elements; combined html + plain-text ≤102 KB.",
+            "title": "Html Body"
+          },
+          "plainTextBody": {
+            "type": "string",
+            "maxLength": 102400,
+            "description": "Plain-text fallback (REQ-BET-006).",
+            "title": "Plain Text Body"
+          },
+          "logoUri": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Organization logo URI; loaded from CDN/doc-store; never inline base64 (NFR-BET-004).",
+            "title": "Logo URI"
+          },
+          "accentColor": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "description": "Six-digit hex colour code.",
+            "title": "Accent Color"
+          },
+          "footerText": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Custom footer text.",
+            "title": "Footer Text"
+          },
+          "senderName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "description": "Display name used as the From: header at dispatch.",
+            "title": "Sender Name"
+          },
+          "senderAddress": {
+            "type": "string",
+            "format": "email",
+            "nullable": true,
+            "description": "From: address.",
+            "title": "Sender Address"
+          },
+          "activatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "First-publish timestamp.",
+            "title": "Activated At"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Editable; not dispatched."
+            },
+            "published": {
+              "label": "Gepubliceerd",
+              "description": "Scheduled by the notification engine for active dispatch."
+            },
+            "archived": {
+              "label": "Gearchiveerd",
+              "description": "Retired; no further dispatches."
+            }
+          },
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published",
+              "label": "Publiceren",
+              "description": "Activate the template. Stamps activatedAt on first publish."
+            },
+            "archiveDraft": {
+              "from": "draft",
+              "to": "archived",
+              "label": "Concept archiveren",
+              "description": "Archive a draft that never went live."
+            },
+            "archivePublished": {
+              "from": "published",
+              "to": "archived",
+              "label": "Archiveren",
+              "description": "Retire an active template."
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "renderedSubjectPreview": {
+            "expression": "renderTemplate(@self.subjectLine, {customerName: 'Femke Jansen', bookingRef: 'BK20260521042', bookingDate: '22 mei 2026', bookingTime: '10:00', bookingLocation: 'Kantoor Amsterdam, Kamer 3', organizationName: 'Example BV', hoursUntilBooking: @self.hoursBeforeBooking})",
+            "type": "string",
+            "description": "Subject rendered with sample variables including hoursUntilBooking (REQ-BET-004)."
+          },
+          "renderedBodyPreview": {
+            "expression": "renderTemplate(@self.plainTextBody, {customerName: 'Femke Jansen', bookingRef: 'BK20260521042', bookingDate: '22 mei 2026', bookingTime: '10:00', bookingLocation: 'Kantoor Amsterdam, Kamer 3', organizationName: 'Example BV', hoursUntilBooking: @self.hoursBeforeBooking})",
+            "type": "string",
+            "description": "Plain-text body rendered with sample variables."
+          },
+          "subjectLineLength": {
+            "expression": "strlen(@self.renderedSubjectPreview)",
+            "type": "integer",
+            "description": "Rendered subject character count (NFR-BET-002)."
+          },
+          "totalBodySizeBytes": {
+            "expression": "strlen(@self.htmlBody) + strlen(@self.plainTextBody)",
+            "type": "integer",
+            "description": "Combined body byte count (NFR-BET-003)."
+          },
+          "htmlBodySafe": {
+            "expression": "validateHtmlWhitelist(@self.htmlBody, ['div','p','h1','h2','h3','h4','h5','h6','a','img','table','tr','td','th','tbody','thead','ul','ol','li','br','span','strong','em','b','i','hr'])",
+            "type": "boolean",
+            "description": "Whitelist validity (NFR-BET-001)."
+          }
+        },
+        "x-openregister-notifications": {
+          "onBookingReminderDue": {
+            "trigger": "booking.reminder-due",
+            "channels": [
+              "email"
+            ],
+            "template": "@self",
+            "sender": "{{senderAddress}}",
+            "scheduleOffsetHours": "{{hoursBeforeBooking}}",
+            "appliesWhen": {
+              "field": "status",
+              "in": [
+                "published"
+              ]
+            },
+            "selectBy": {
+              "schema": "BookingReminderTemplate",
+              "matchLocale": "recipient.languagePreference"
+            },
+            "fallback": {
+              "mode": "plain-text",
+              "field": "plainTextBody"
+            },
+            "description": "Reminder dispatch consumed from OR's notification engine (REQ-BET-005/010). The engine derives the dispatch time as bookingStart − scheduleOffsetHours; missed windows (e.g. activation after the scheduled time) dispatch immediately. Render failure falls back to plain-text and is logged for operator review (T21)."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "template-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "booking-administrator": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "permissionMap": {
+            "booking:template:list": "read",
+            "booking:template:create": "create",
+            "booking:template:edit": "update",
+            "booking:template:publish": "update",
+            "booking:template:delete": "delete"
+          },
+          "description": "Same RBAC as BookingConfirmationTemplate (T22)."
+        }
+      },
+      "BookingCancellationTemplate": {
+        "slug": "BookingCancellationTemplate",
+        "icon": "EmailRemoveOutline",
+        "version": "0.1.0",
+        "title": "Boekingsannuleringssjabloon",
+        "description": "Branded email template dispatched when a booking is cancelled (REQ-BET-009/010). Carries the standard subject/body/branding fields plus a cancellationReasonRequired flag that exposes {{cancellationReason}} as an available template variable; otherwise identical to the confirmation template shape. Lifecycle is draft → published → archived.",
+        "x-schema-org": "schema:EmailMessage",
+        "type": "object",
+        "required": [
+          "name",
+          "status",
+          "locale",
+          "subjectLine",
+          "htmlBody",
+          "plainTextBody"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "description": "Human-readable template name.",
+            "example": "Default Booking Cancellation",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "default": "draft",
+            "description": "Lifecycle state.",
+            "title": "Status"
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "nl",
+              "en"
+            ],
+            "default": "nl",
+            "description": "Template language (NFR-BET-005).",
+            "title": "Locale"
+          },
+          "subjectLine": {
+            "type": "string",
+            "maxLength": 78,
+            "description": "Email subject; ≤78 characters; supports {{variables}}.",
+            "example": "Boeking geannuleerd: {{bookingRef}}",
+            "title": "Subject Line"
+          },
+          "htmlBody": {
+            "type": "string",
+            "maxLength": 102400,
+            "description": "HTML body; inline styles only; whitelisted elements.",
+            "title": "Html Body"
+          },
+          "plainTextBody": {
+            "type": "string",
+            "maxLength": 102400,
+            "description": "Plain-text fallback.",
+            "title": "Plain Text Body"
+          },
+          "logoUri": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Organization logo URI.",
+            "title": "Logo URI"
+          },
+          "accentColor": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "description": "Hex colour code for branding accents.",
+            "title": "Accent Color"
+          },
+          "footerText": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Custom footer text.",
+            "title": "Footer Text"
+          },
+          "cancellationReasonRequired": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, {{cancellationReason}} is included in the template variable map at dispatch (REQ-BET-009). When false, the variable resolves to empty string per the standard substitution rule (T14).",
+            "title": "Cancellation Reason Required"
+          },
+          "senderName": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120,
+            "description": "Display name used as the From: header at dispatch.",
+            "title": "Sender Name"
+          },
+          "senderAddress": {
+            "type": "string",
+            "format": "email",
+            "nullable": true,
+            "description": "From: address.",
+            "title": "Sender Address"
+          },
+          "activatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "First-publish timestamp.",
+            "title": "Activated At"
+          }
+        },
+        "x-openregister-lifecycle": {
+          "field": "status",
+          "initialState": "draft",
+          "states": {
+            "draft": {
+              "label": "Concept",
+              "description": "Editable; not dispatched."
+            },
+            "published": {
+              "label": "Gepubliceerd",
+              "description": "Active and dispatched on booking.cancelled events."
+            },
+            "archived": {
+              "label": "Gearchiveerd",
+              "description": "Retired; no further dispatches."
+            }
+          },
+          "transitions": {
+            "publish": {
+              "from": "draft",
+              "to": "published",
+              "label": "Publiceren",
+              "description": "Activate the template; stamp activatedAt on first publish."
+            },
+            "archiveDraft": {
+              "from": "draft",
+              "to": "archived",
+              "label": "Concept archiveren",
+              "description": "Archive a draft that never went live."
+            },
+            "archivePublished": {
+              "from": "published",
+              "to": "archived",
+              "label": "Archiveren",
+              "description": "Retire an active template."
+            }
+          }
+        },
+        "x-openregister-calculations": {
+          "renderedSubjectPreview": {
+            "expression": "renderTemplate(@self.subjectLine, {customerName: 'Femke Jansen', bookingRef: 'BK20260521042', bookingDate: '22 mei 2026', bookingTime: '10:00', bookingLocation: 'Kantoor Amsterdam, Kamer 3', organizationName: 'Example BV', cancellationReason: 'Customer requested cancellation'})",
+            "type": "string",
+            "description": "Subject rendered with sample variables including cancellationReason (REQ-BET-004/009)."
+          },
+          "renderedBodyPreview": {
+            "expression": "renderTemplate(@self.plainTextBody, {customerName: 'Femke Jansen', bookingRef: 'BK20260521042', bookingDate: '22 mei 2026', bookingTime: '10:00', bookingLocation: 'Kantoor Amsterdam, Kamer 3', organizationName: 'Example BV', cancellationReason: 'Customer requested cancellation'})",
+            "type": "string",
+            "description": "Plain-text body rendered with sample variables."
+          },
+          "subjectLineLength": {
+            "expression": "strlen(@self.renderedSubjectPreview)",
+            "type": "integer",
+            "description": "Rendered subject character count (NFR-BET-002)."
+          },
+          "totalBodySizeBytes": {
+            "expression": "strlen(@self.htmlBody) + strlen(@self.plainTextBody)",
+            "type": "integer",
+            "description": "Combined body byte count (NFR-BET-003)."
+          },
+          "htmlBodySafe": {
+            "expression": "validateHtmlWhitelist(@self.htmlBody, ['div','p','h1','h2','h3','h4','h5','h6','a','img','table','tr','td','th','tbody','thead','ul','ol','li','br','span','strong','em','b','i','hr'])",
+            "type": "boolean",
+            "description": "Whitelist validity (NFR-BET-001)."
+          }
+        },
+        "x-openregister-notifications": {
+          "onBookingCancelled": {
+            "trigger": "booking.cancelled",
+            "channels": [
+              "email"
+            ],
+            "template": "@self",
+            "sender": "{{senderAddress}}",
+            "appliesWhen": {
+              "field": "status",
+              "in": [
+                "published"
+              ]
+            },
+            "selectBy": {
+              "schema": "BookingCancellationTemplate",
+              "matchLocale": "recipient.languagePreference"
+            },
+            "fallback": {
+              "mode": "plain-text",
+              "field": "plainTextBody"
+            },
+            "description": "Cancellation dispatch consumed from OR's notification engine (REQ-BET-009/010). When cancellationReasonRequired is true the engine injects the booking's cancellation reason into the variable map; otherwise {{cancellationReason}} resolves to empty string per the standard undefined-variable rule (T14)."
+          }
+        },
+        "x-openregister-rbac": {
+          "roles": {
+            "template-administrator": {
+              "permissions": [
+                "create",
+                "read",
+                "update",
+                "delete"
+              ]
+            },
+            "booking-administrator": {
+              "permissions": [
+                "read",
+                "update"
+              ]
+            },
+            "auditor": {
+              "permissions": [
+                "read"
+              ]
+            }
+          },
+          "permissionMap": {
+            "booking:template:list": "read",
+            "booking:template:create": "create",
+            "booking:template:edit": "update",
+            "booking:template:publish": "update",
+            "booking:template:delete": "delete"
+          },
+          "description": "Same RBAC as BookingConfirmationTemplate (T22)."
+        }
+      }
+    }
+  },
+  "objects": [
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingConfirmationTemplate",
+        "slug": "default-confirmation-nl"
+      },
+      "name": "Standaard boekingsbevestiging (NL)",
+      "status": "published",
+      "locale": "nl",
+      "subjectLine": "Boeking bevestigd: {{bookingRef}}",
+      "htmlBody": "<html><body><h1 style=\"color:#0066cc;\">Beste {{customerName}}</h1><p>Uw boeking is bevestigd.</p><table style=\"border-collapse:collapse;\"><tr><td><strong>Referentie</strong></td><td>{{bookingRef}}</td></tr><tr><td><strong>Datum</strong></td><td>{{bookingDate}}</td></tr><tr><td><strong>Tijd</strong></td><td>{{bookingTime}}</td></tr><tr><td><strong>Locatie</strong></td><td>{{bookingLocation}}</td></tr></table><p>Met vriendelijke groet,<br>{{organizationName}}</p></body></html>",
+      "plainTextBody": "Beste {{customerName}},\n\nUw boeking is bevestigd.\n\nReferentie: {{bookingRef}}\nDatum: {{bookingDate}}\nTijd: {{bookingTime}}\nLocatie: {{bookingLocation}}\n\nMet vriendelijke groet,\n{{organizationName}}",
+      "accentColor": "#0066cc",
+      "footerText": "© 2026 {{organizationName}}",
+      "activatedAt": "2026-06-06T00:00:00Z"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingConfirmationTemplate",
+        "slug": "default-confirmation-en"
+      },
+      "name": "Default booking confirmation (EN)",
+      "status": "published",
+      "locale": "en",
+      "subjectLine": "Booking confirmed: {{bookingRef}}",
+      "htmlBody": "<html><body><h1 style=\"color:#0066cc;\">Dear {{customerName}}</h1><p>Your booking has been confirmed.</p><table style=\"border-collapse:collapse;\"><tr><td><strong>Reference</strong></td><td>{{bookingRef}}</td></tr><tr><td><strong>Date</strong></td><td>{{bookingDate}}</td></tr><tr><td><strong>Time</strong></td><td>{{bookingTime}}</td></tr><tr><td><strong>Location</strong></td><td>{{bookingLocation}}</td></tr></table><p>Kind regards,<br>{{organizationName}}</p></body></html>",
+      "plainTextBody": "Dear {{customerName}},\n\nYour booking has been confirmed.\n\nReference: {{bookingRef}}\nDate: {{bookingDate}}\nTime: {{bookingTime}}\nLocation: {{bookingLocation}}\n\nKind regards,\n{{organizationName}}",
+      "accentColor": "#0066cc",
+      "footerText": "© 2026 {{organizationName}}",
+      "activatedAt": "2026-06-06T00:00:00Z"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingReminderTemplate",
+        "slug": "default-reminder-24h-nl"
+      },
+      "name": "Standaard 24-uurs herinnering (NL)",
+      "status": "published",
+      "locale": "nl",
+      "hoursBeforeBooking": 24,
+      "subjectLine": "Herinnering: uw boeking morgen om {{bookingTime}}",
+      "htmlBody": "<html><body><h1 style=\"color:#0066cc;\">Hallo {{customerName}}</h1><p>Dit is een herinnering: uw boeking is over {{hoursUntilBooking}} uur.</p><table style=\"border-collapse:collapse;\"><tr><td><strong>Referentie</strong></td><td>{{bookingRef}}</td></tr><tr><td><strong>Datum</strong></td><td>{{bookingDate}}</td></tr><tr><td><strong>Tijd</strong></td><td>{{bookingTime}}</td></tr><tr><td><strong>Locatie</strong></td><td>{{bookingLocation}}</td></tr></table><p>Tot dan,<br>{{organizationName}}</p></body></html>",
+      "plainTextBody": "Hallo {{customerName}},\n\nDit is een herinnering: uw boeking is over {{hoursUntilBooking}} uur.\n\nReferentie: {{bookingRef}}\nDatum: {{bookingDate}}\nTijd: {{bookingTime}}\nLocatie: {{bookingLocation}}\n\nTot dan,\n{{organizationName}}",
+      "accentColor": "#0066cc",
+      "footerText": "© 2026 {{organizationName}}",
+      "activatedAt": "2026-06-06T00:00:00Z"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingReminderTemplate",
+        "slug": "default-reminder-24h-en"
+      },
+      "name": "Default 24-hour reminder (EN)",
+      "status": "published",
+      "locale": "en",
+      "hoursBeforeBooking": 24,
+      "subjectLine": "Reminder: your booking tomorrow at {{bookingTime}}",
+      "htmlBody": "<html><body><h1 style=\"color:#0066cc;\">Hello {{customerName}}</h1><p>This is a reminder: your booking is in {{hoursUntilBooking}} hours.</p><table style=\"border-collapse:collapse;\"><tr><td><strong>Reference</strong></td><td>{{bookingRef}}</td></tr><tr><td><strong>Date</strong></td><td>{{bookingDate}}</td></tr><tr><td><strong>Time</strong></td><td>{{bookingTime}}</td></tr><tr><td><strong>Location</strong></td><td>{{bookingLocation}}</td></tr></table><p>See you then,<br>{{organizationName}}</p></body></html>",
+      "plainTextBody": "Hello {{customerName}},\n\nThis is a reminder: your booking is in {{hoursUntilBooking}} hours.\n\nReference: {{bookingRef}}\nDate: {{bookingDate}}\nTime: {{bookingTime}}\nLocation: {{bookingLocation}}\n\nSee you then,\n{{organizationName}}",
+      "accentColor": "#0066cc",
+      "footerText": "© 2026 {{organizationName}}",
+      "activatedAt": "2026-06-06T00:00:00Z"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingCancellationTemplate",
+        "slug": "default-cancellation-nl"
+      },
+      "name": "Standaard boekingsannulering (NL)",
+      "status": "published",
+      "locale": "nl",
+      "subjectLine": "Boeking geannuleerd: {{bookingRef}}",
+      "htmlBody": "<html><body><h1 style=\"color:#cc0000;\">Beste {{customerName}}</h1><p>Uw boeking is geannuleerd.</p><table style=\"border-collapse:collapse;\"><tr><td><strong>Referentie</strong></td><td>{{bookingRef}}</td></tr><tr><td><strong>Datum</strong></td><td>{{bookingDate}}</td></tr><tr><td><strong>Reden</strong></td><td>{{cancellationReason}}</td></tr></table><p>Met vriendelijke groet,<br>{{organizationName}}</p></body></html>",
+      "plainTextBody": "Beste {{customerName}},\n\nUw boeking is geannuleerd.\n\nReferentie: {{bookingRef}}\nDatum: {{bookingDate}}\nReden: {{cancellationReason}}\n\nMet vriendelijke groet,\n{{organizationName}}",
+      "accentColor": "#cc0000",
+      "footerText": "© 2026 {{organizationName}}",
+      "cancellationReasonRequired": true,
+      "activatedAt": "2026-06-06T00:00:00Z"
+    },
+    {
+      "@self": {
+        "register": "shillinq",
+        "schema": "BookingCancellationTemplate",
+        "slug": "default-cancellation-en"
+      },
+      "name": "Default booking cancellation (EN)",
+      "status": "published",
+      "locale": "en",
+      "subjectLine": "Booking cancelled: {{bookingRef}}",
+      "htmlBody": "<html><body><h1 style=\"color:#cc0000;\">Dear {{customerName}}</h1><p>Your booking has been cancelled.</p><table style=\"border-collapse:collapse;\"><tr><td><strong>Reference</strong></td><td>{{bookingRef}}</td></tr><tr><td><strong>Date</strong></td><td>{{bookingDate}}</td></tr><tr><td><strong>Reason</strong></td><td>{{cancellationReason}}</td></tr></table><p>Kind regards,<br>{{organizationName}}</p></body></html>",
+      "plainTextBody": "Dear {{customerName}},\n\nYour booking has been cancelled.\n\nReference: {{bookingRef}}\nDate: {{bookingDate}}\nReason: {{cancellationReason}}\n\nKind regards,\n{{organizationName}}",
+      "accentColor": "#cc0000",
+      "footerText": "© 2026 {{organizationName}}",
+      "cancellationReasonRequired": true,
+      "activatedAt": "2026-06-06T00:00:00Z"
+    }
+  ]
+}

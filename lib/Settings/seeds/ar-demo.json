@@ -1,0 +1,82 @@
+{
+  "description": "Demo accounts-receivable seed for bookkeeping-accounts-receivable-core (T2). 3 Dutch customers + 3 invoices in distinct lifecycle states. Amounts are integer cents. Seeded idempotently per administration only when ar_demo_seed is enabled in admin settings; never seeds under a contaminating default administrationId.",
+  "customers": [
+    {
+      "customerNumber": "CUST-001",
+      "legalName": "Gemeente Amsterdam",
+      "taxId": "NL856621669B01",
+      "contactPerson": "Jan Jansen",
+      "email": "jan.jansen@amsterdam.nl",
+      "billingAddress": "Stadhuis, Amstel 1, 1011 PN Amsterdam",
+      "paymentTerms": "Net 30",
+      "creditLimitCents": 5000000,
+      "iban": "NL91ABNA0417164300",
+      "lifecycleState": "active"
+    },
+    {
+      "customerNumber": "CUST-002",
+      "legalName": "VNG Realisatie",
+      "taxId": "NL002220061B12",
+      "contactPerson": "Maria Hendrix",
+      "email": "maria@vng.nl",
+      "billingAddress": "Nassaulaan 12, 2514 JS Den Haag",
+      "paymentTerms": "2/10 Net 30",
+      "creditLimitCents": 7500000,
+      "iban": "NL24ABNA0208500000",
+      "lifecycleState": "active"
+    },
+    {
+      "customerNumber": "CUST-003",
+      "legalName": "Consultancy De Bruyn",
+      "taxId": "NL856621668B02",
+      "contactPerson": "Peter de Bruyn",
+      "email": "peter@debruyn.nl",
+      "billingAddress": "Zeestraat 45, 2518 AA Den Haag",
+      "paymentTerms": "Net 14",
+      "creditLimitCents": 3000000,
+      "iban": "NL40RABO0123456789",
+      "lifecycleState": "active"
+    }
+  ],
+  "invoices": [
+    {
+      "invoiceNumber": "INV-2026-001",
+      "customerNumber": "CUST-001",
+      "invoiceDate": "2026-03-15",
+      "dueDate": "2026-04-14",
+      "description": "Consultancy services Q1 2026",
+      "netCents": 800000,
+      "taxCents": 168000,
+      "totalCents": 968000,
+      "currency": "EUR",
+      "status": "issued"
+    },
+    {
+      "invoiceNumber": "INV-2026-002",
+      "customerNumber": "CUST-002",
+      "invoiceDate": "2026-02-01",
+      "dueDate": "2026-03-02",
+      "description": "Platform support and maintenance",
+      "netCents": 500000,
+      "taxCents": 105000,
+      "totalCents": 605000,
+      "currency": "EUR",
+      "status": "overdue",
+      "notes": "Reminder sent 2026-03-10"
+    },
+    {
+      "invoiceNumber": "INV-2026-003",
+      "customerNumber": "CUST-003",
+      "invoiceDate": "2026-04-01",
+      "dueDate": "2026-04-15",
+      "description": "Training and implementation support",
+      "netCents": 350000,
+      "taxCents": 73500,
+      "totalCents": 423500,
+      "currency": "EUR",
+      "status": "paid",
+      "paidDate": "2026-04-10",
+      "paidCents": 423500
+    }
+  ]
+}

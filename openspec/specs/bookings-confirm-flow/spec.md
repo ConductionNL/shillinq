@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookings-confirm-flow
 
 **Status:** proposed
@@ -5,7 +9,11 @@
 **Tier:** T2 (customer journey completion)
 **Depends on:** bookings-create-appointment, bookings-notification-triggers
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookings confirm flow in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: appointment confirmation portal not yet implemented
 

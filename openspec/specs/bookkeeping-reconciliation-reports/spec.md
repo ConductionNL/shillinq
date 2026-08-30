@@ -1,3 +1,7 @@
+---
+status: done
+---
+
 # Spec: bookkeeping-reconciliation-reports
 
 **Status:** proposed
@@ -7,7 +11,11 @@
 `../bookkeeping-accounts-receivable-core/spec.md` (AR invoices),
 `../bookkeeping-accounts-payable-core/spec.md` (AP invoices)
 
-## ADDED Requirements
+## Purpose
+
+This specification defines the requirements for bookkeeping reconciliation reports in the Shillinq Nextcloud accounting application, establishing the data model, behaviour and acceptance scenarios for this capability.
+
+## Requirements
 
 @e2e exclude unbuilt UI: reconciliation reports pages not yet implemented
 
@@ -47,6 +55,8 @@ financial control artifact).
   `matchAlgorithm: "exact"` and `confidenceScore: 1.0`.
 
 ### REQ-REC-002: Statement balance verification SHALL be a precondition on `draft → in-progress` transition
+
+The system SHALL satisfy this requirement: Statement balance verification SHALL be a precondition on `draft → in-progress` transition.
 
 When a reconciliation is initiated (`draft → in-progress`), the system
 MUST verify that the statement closing balance equals the expected GL
@@ -112,6 +122,8 @@ All transitions MUST be audit-trailed with actor, timestamp, and reason (if prov
 
 ### REQ-REC-004: Unmatched items SHALL be resolved by classification or manual matching
 
+The system SHALL satisfy this requirement: Unmatched items SHALL be resolved by classification or manual matching.
+
 When a bank statement line has no corresponding GL transaction (or vice versa),
 the operator MUST classify the unmatched item as one of:
 
@@ -171,6 +183,8 @@ Each classification MUST include an audit-trailed reason text (operator-supplied
   `confidenceScore: 1.0`, and `manualOverride: false`.
 
 ### REQ-REC-006: Reconciliation closure SHALL require operator verification of all unmatched items
+
+The system SHALL satisfy this requirement: Reconciliation closure SHALL require operator verification of all unmatched items.
 
 Before transitioning `in-progress → verified` (REQ-REC-003), the operator
 MUST confirm that all unmatched items have been classified per REQ-REC-004.
@@ -304,6 +318,8 @@ These records MUST be queryable via the `BankReconciliation` audit trail
   - `signature: <digital signature or approval marker>`
 
 ### REQ-REC-010: T2 bank-reconciliation transaction-matching events SHALL drive T4 reconciliation matches
+
+The system SHALL satisfy this requirement: T2 bank-reconciliation transaction-matching events SHALL drive T4 reconciliation matches.
 
 When `bookkeeping-bank-reconciliation` (T2) emits a transaction-matching event
 (per REQ-BR-006), T4's reconciliation workflow MUST consume it and create a
