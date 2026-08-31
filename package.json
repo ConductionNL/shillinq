@@ -78,7 +78,7 @@
   "overrides": {
     "libxmljs2": "^0.37.0",
     "apexcharts": "4.7.0",
-    "@nextcloud/axios": "~2.5.2"
+    "@nextcloud/axios": "$@nextcloud/axios"
   },
   "devDependencies": {
     "@babel/core": "^7.22.9",
