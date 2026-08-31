@@ -570,7 +570,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Project",
+        "schema": "engagement",
         "slug": "proj-internal-platform"
       },
       "code": "PROJ-INT-PLAT",
@@ -584,7 +584,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Project",
+        "schema": "engagement",
         "slug": "proj-grant-research"
       },
       "code": "PROJ-GRANT-RND",

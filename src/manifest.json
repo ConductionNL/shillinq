@@ -2177,7 +2177,7 @@
 			"title": "Projects",
 			"config": {
 				"register": "shillinq",
-				"schema": "Project",
+				"schema": "engagement",
 				"columns": [
 					{
 						"key": "code",
@@ -2214,7 +2214,7 @@
 				"register": "shillinq",
 				"_note": "Project detail — a project costing dimension with contract value, WIP and revenue-recognition (RJ 270). Assignments and WIP history are listed (existing related lists); segment P&L aggregation and audit trail evidence recognition method changes.",
 				"auditTrail": true,
-				"schema": "Project",
+				"schema": "engagement",
 				"fields": [
 					{
 						"key": "code",

@@ -99,7 +99,7 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 			// Index every Project by every identifier a source object might
 			// reference (id / uuid / projectNumber / code). Values are kept
 			// as live mutable arrays so multiple lines fold into one save.
-			$projects = $this->readAllRows(objectService: $this->objectService, registerSlug: $registerSlug, schema: 'Project');
+			$projects = $this->readAllRows(objectService: $this->objectService, registerSlug: $registerSlug, schema: 'engagement');
 
 			if ($projects === []) {
 				$output->info('Shillinq: no Project records — expense/hours fold skipped.');
@@ -171,11 +171,11 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 				try {
 					$this->objectService
 						->setRegister($registerSlug)
-						->setSchema('Project')
+						->setSchema('engagement')
 						->saveObject(
 							object: $record,
 							register: $registerSlug,
-							schema: 'Project',
+							schema: 'engagement',
 							_rbac: false,
 							_multitenancy: false,
 						);
