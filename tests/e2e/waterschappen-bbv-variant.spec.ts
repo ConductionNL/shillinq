@@ -547,8 +547,10 @@ test.describe('BBV scoping + validation', () => {
 			.getByRole('button', { name: /^Actions$/i })
 			.first()
 			.click()
+		// NcActionButton renders the item as role=menuitem in the popover,
+		// not role=button.
 		await page
-			.getByRole('button', { name: /^Refresh$/i })
+			.getByRole('menuitem', { name: /^Refresh$/i })
 			.first()
 			.click()
 		const response = await requery
