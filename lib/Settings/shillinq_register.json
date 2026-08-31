@@ -15021,7 +15021,7 @@
       },
       "Subsidie": {
         "slug": "Subsidie",
-        "icon": "CashMultiple",
+        "icon": "HandHeartOutline",
         "version": "0.1.0",
         "title": "Subsidy",
         "description": "Grant administration record per Awb afdeling 4.2 + VNG ASV-model 2022. Covers the full lifecycle for both outgoing grants (gemeente grants to beneficiary) and incoming grants (gemeente receives from granting body). Lifecycle declared via x-openregister-lifecycle per ADR-031; no SubsidieLifecycleService.",

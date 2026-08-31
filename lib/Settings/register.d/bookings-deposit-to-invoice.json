@@ -402,7 +402,7 @@
       },
       "Invoice": {
         "slug": "Invoice",
-        "icon": "FileDocumentOutline",
+        "icon": "ReceiptTextOutline",
         "version": "0.1.0",
         "title": "Invoice",
         "description": "A final customer invoice materialised in Shillinq when a booking order completes. Carries a service line and, when a deposit was authorised, a negative deposit-credit line. Bidirectionally linked to its Order via sourceDocumentUri and to the credited DepositPayment via depositPaymentId (REQ-DI-001). Integrates into Shillinq AR aging with no special handling (REQ-DI-009).",

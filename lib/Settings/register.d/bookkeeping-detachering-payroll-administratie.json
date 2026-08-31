@@ -9,7 +9,7 @@
     "schemas": {
       "Employee": {
         "slug": "Employee",
-        "icon": "AccountTie",
+        "icon": "AccountTieOutline",
         "version": "0.1.0",
         "title": "Employee",
         "description": "Employee / detached worker / freelancer master record (REQ-PAY-001). Carries legal name, BSN (11-proef validated, masked on display per ADR-005), contract classification and onboarding/exit dates. A contact/person is a Nextcloud entity; this register holds the payroll-administration projection only.",
@@ -211,7 +211,7 @@
       },
       "Payroll": {
         "slug": "Payroll",
-        "icon": "CashMultiple",
+        "icon": "CashSync",
         "version": "0.1.0",
         "title": "Payroll",
         "description": "Payroll period sub-ledger record (REQ-PAY-002). Captures gross input and aggregated deduction totals; on issue it materialises a balanced GLTransaction (REQ-PAY-008) per the T1 JournalEntry pattern. UBL Peppol BIS 30 field shape is declared for T4 passthrough but NOT computed here (REQ-PAY-010).",
