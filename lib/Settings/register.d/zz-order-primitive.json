@@ -10,7 +10,7 @@
     "schemas": {
       "OrderPrimitive": {
         "slug": "OrderPrimitive",
-        "icon": "FileDocumentMultipleOutline",
+        "icon": "ClipboardListOutline",
         "version": "0.1.0",
         "title": "Order",
         "x-schema-org": "schema:Order",

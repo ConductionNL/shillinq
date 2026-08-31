@@ -16840,7 +16840,7 @@
 					{
 						"id": "cancel",
 						"label": "Cancel",
-						"icon": "Cancel",
+						"icon": "CloseCircleOutline",
 						"visibleWhen": {
 							"field": "reconciliationStatus",
 							"in": [

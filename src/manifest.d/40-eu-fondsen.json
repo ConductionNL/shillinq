@@ -302,7 +302,7 @@
 						{
 							"id": "file",
 							"label": "Document",
-							"icon": "FileCertificateOutline",
+							"icon": "FileDocumentOutline",
 							"order": 10,
 							"widgets": [
 								{
