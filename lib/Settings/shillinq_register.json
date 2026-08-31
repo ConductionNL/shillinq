@@ -5250,7 +5250,7 @@
           }
         }
       },
-      "Project": {
+      "engagement": {
         "slug": "engagement",
         "icon": "FolderOpenOutline",
         "version": "0.1.0",
@@ -8067,7 +8067,7 @@
                 "eventType": "nl.conduction.shillinq.fiscal-year.dimension-rollover",
                 "targets": [
                   "AnalyticalDimension",
-                  "Project"
+                  "engagement"
                 ],
                 "filter": {
                   "administrationId": "@self.administrationId",

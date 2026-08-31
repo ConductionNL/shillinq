@@ -90,6 +90,8 @@ class FoldExpensesAndHoursIntoProject implements IRepairStep {
 	 * @param IOutput $output The repair-step output (progress + warnings).
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/bookkeeping-consultancy-project-accounting/spec.md
 	 */
 	public function run(IOutput $output): void {
 		try {

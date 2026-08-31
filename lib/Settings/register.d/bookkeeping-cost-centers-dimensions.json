@@ -456,7 +456,7 @@
             ],
             "filter": {},
             "join": {
-              "through": "Project",
+              "through": "engagement",
               "on": "Project.code",
               "select": [
                 "Project.name",

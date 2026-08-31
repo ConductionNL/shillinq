@@ -542,7 +542,7 @@
 					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on PerDiemRate with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."
 				}
 			},
-			"Project": {
+			"engagement": {
 				"x-openregister-audit-trail": {
 					"enabled": true,
 					"description": "OR's audit-trail-immutable captures every create / update / lifecycle / delete event on Project with actor, timestamp, action, before/after snapshot, and hash chain per ADR-022 + REQ-AT-001..AT-002. Retention is governed by OR per REQ-AT-005 (no shillinq cleanup job)."

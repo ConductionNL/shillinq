@@ -2,7 +2,7 @@
   "x-shillinq-fragment": "abstract-project-cost-lines",
   "components": {
     "schemas": {
-      "Project": {
+      "engagement": {
         "version": "0.2.0",
         "properties": {
           "costLines": {
