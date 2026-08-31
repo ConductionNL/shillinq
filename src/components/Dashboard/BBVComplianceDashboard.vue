@@ -340,7 +340,7 @@ export default {
 	display: inline-flex;
 	align-items: center;
 	padding: 0.25rem 0.5rem;
-	margin-right: 0.5rem;
+	margin-inline-end: 0.5rem;
 	border-radius: var(--border-radius);
 	background: var(--color-primary-element-light);
 	color: var(--color-primary-element-light-text);
@@ -349,7 +349,7 @@ export default {
 }
 
 .bbv-dashboard__administration {
-	margin-right: 0.5rem;
+	margin-inline-end: 0.5rem;
 	max-width: 16rem;
 }
 
