@@ -44,7 +44,12 @@
 			:loading="loading"
 			:cellHeight="80"
 			:gridMargin="16"
-			:emptyLabel="t('shillinq', 'No widgets configured.')">
+			:emptyLabel="t('shillinq', 'No widgets configured.')"
+			:refreshing="loading"
+			@refresh="loadProgrammes">
+			<!-- Refresh is NOT repeated here: CnActionsMenu already carries
+			     it, and `@refresh` above routes that one item to
+			     loadProgrammes. -->
 			<template #header-actions>
 				<span
 					v-if="scope.fiscalYear"
@@ -66,13 +71,6 @@
 						{{ admin.label }}
 					</option>
 				</select>
-				<button
-					type="button"
-					data-testid="bbv-dashboard-refresh"
-					class="bbv-dashboard__refresh"
-					@click="loadProgrammes">
-					{{ t('shillinq', 'Refresh') }}
-				</button>
 			</template>
 
 			<template #widget-bbv-kpis>
@@ -338,16 +336,6 @@ export default {
 	min-height: 100%;
 }
 
-.bbv-dashboard__refresh {
-	border: 1px solid var(--color-border);
-	background: var(--color-main-background);
-	color: var(--color-main-text);
-	padding: 0.25rem 0.75rem;
-	border-radius: var(--border-radius);
-	cursor: pointer;
-	margin-left: 0.5rem;
-}
-
 .bbv-dashboard__fy {
 	display: inline-flex;
 	align-items: center;
@@ -363,10 +351,6 @@ export default {
 .bbv-dashboard__administration {
 	margin-right: 0.5rem;
 	max-width: 16rem;
-}
-
-.bbv-dashboard__refresh:hover {
-	background: var(--color-background-hover);
 }
 
 .bbv-dashboard__error {

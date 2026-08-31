@@ -533,11 +533,24 @@ test.describe('BBV scoping + validation', () => {
 		// 2. The scope is re-queryable: arm the response wait BEFORE the click,
 		//    then assert the dashboard endpoint was actually hit again. A
 		//    Refresh button that no longer re-queries fails here.
+		//
+		//    Refresh lives ONLY in the page-level Actions overflow menu. The
+		//    dashboard used to repeat it as a header button next to that menu,
+		//    shipping two Refreshes; the header one is gone and `@refresh` on
+		//    CnDashboardPage now routes the menu item to loadProgrammes. The
+		//    response assertion below is what proves that rewire is live.
 		const requery = page.waitForResponse(
 			(r) => /\/apps\/shillinq\/api\/bbv-dashboard/.test(r.url()),
 			{ timeout: 20_000 },
 		)
-		await page.getByTestId('bbv-dashboard-refresh').click()
+		await page
+			.getByRole('button', { name: /^Actions$/i })
+			.first()
+			.click()
+		await page
+			.getByRole('button', { name: /^Refresh$/i })
+			.first()
+			.click()
 		const response = await requery
 		expect(response.status()).toBeLessThan(400)
 
