@@ -2,8 +2,8 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Shillinq Register",
-    "description": "Register containing all schemas for the Shillinq application. v0.6.4 — re-authored 31 Dutch schema-level titles (entity display names) to English so manifest-driven UI labels are English-authored; Dutch display is now carried via l10n/nl.json per ADR i18n rule. Previous v0.6.3 — re-authored 254 Dutch schema-property titles (and none renamed keys) to English so manifest-driven UI labels are English-authored; Dutch display is now carried via l10n/nl.json per ADR i18n rule. Previous v0.6.2 — Register containing all schemas for the Shillinq application.",
-    "version": "0.6.4"
+    "description": "Shillinq register v0.7.0: retires the scaffold `example` schema and renames the `Project` slug to `engagement`. Planninq owns `project` as a container for tasks and kanban columns; this one is a consultancy engagement with RJ 270 percentage-of-completion revenue recognition, which is a different entity wearing the same word. Slugs are global on a shared OpenRegister. The schema KEY stays `Project`, so the register.d fragments that extend it by key are unaffected. PREVIOUSLY: Register containing all schemas for the Shillinq application. v0.6.4 — re-authored 31 Dutch schema-level titles (entity display names) to English so manifest-driven UI labels are English-authored; Dutch display is now carried via l10n/nl.json per ADR i18n rule. Previous v0.6.3 — re-authored 254 Dutch schema-property titles (and none renamed keys) to English so manifest-driven UI labels are English-authored; Dutch display is now carried via l10n/nl.json per ADR i18n rule. Previous v0.6.2 — Register containing all schemas for the Shillinq application.",
+    "version": "0.7.0"
   },
   "x-openregister": {
     "type": "application",
@@ -14,31 +14,7 @@
   "paths": {},
   "components": {
     "schemas": {
-      "example": {
-        "slug": "example",
-        "icon": "FileDocumentOutline",
-        "version": "0.1.0",
-        "title": "Example",
-        "description": "Example schema — replace with your app's actual schemas.",
-        "type": "object",
-        "required": [
-          "title"
-        ],
-        "properties": {
-          "title": {
-            "type": "string",
-            "description": "The title of the example object",
-            "example": "My example",
-            "title": "Title"
-          },
-          "description": {
-            "type": "string",
-            "description": "An optional description",
-            "example": "This is an example",
-            "title": "Description"
-          }
-        }
-      },
+
       "BankConnection": {
         "slug": "BankConnection",
         "icon": "BankOutline",
@@ -5274,8 +5250,8 @@
           }
         }
       },
-      "Project": {
-        "slug": "Project",
+      "engagement": {
+        "slug": "engagement",
         "icon": "FolderOpenOutline",
         "version": "0.1.0",
         "title": "Project",
@@ -7548,7 +7524,7 @@
             ],
             "source": {
               "register": "shillinq",
-              "schema": "Project",
+              "schema": "engagement",
               "foreignKey": "projectId"
             },
             "precondition": {
@@ -7741,7 +7717,7 @@
           "action": {
             "forEach": {
               "register": "@register",
-              "schema": "Project",
+              "schema": "engagement",
               "filter": {
                 "state": "active"
               }
@@ -8091,7 +8067,7 @@
                 "eventType": "nl.conduction.shillinq.fiscal-year.dimension-rollover",
                 "targets": [
                   "AnalyticalDimension",
-                  "Project"
+                  "engagement"
                 ],
                 "filter": {
                   "administrationId": "@self.administrationId",

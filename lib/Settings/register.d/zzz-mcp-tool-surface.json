@@ -168,7 +168,7 @@
           }
         }
       },
-      "Project": {
+      "engagement": {
         "configuration": {
           "x-openregister-mcp": {
             "enabled": true,
