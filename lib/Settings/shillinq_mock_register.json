@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "shillinq demo data",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Demo data covering every schema this app supplies, offered as the first step of the app's setup walkthrough. Generated from the schemas themselves, so every object satisfies the schema that will validate it."
   },
   "x-openregister": {
@@ -33566,33 +33566,6 @@
         "starterDeduction": 2.0,
         "mkbProfitExemptionPercentage": 1.0,
         "source": "Voorbeeld Source 3"
-      },
-      {
-        "@self": {
-          "register": "shillinq",
-          "schema": "example",
-          "slug": "example-voorbeeld-title-1-1"
-        },
-        "title": "Voorbeeld Title 1",
-        "description": "Voorbeeld Description 1"
-      },
-      {
-        "@self": {
-          "register": "shillinq",
-          "schema": "example",
-          "slug": "example-voorbeeld-title-2-2"
-        },
-        "title": "Voorbeeld Title 2",
-        "description": "Voorbeeld Description 2"
-      },
-      {
-        "@self": {
-          "register": "shillinq",
-          "schema": "example",
-          "slug": "example-voorbeeld-title-3-3"
-        },
-        "title": "Voorbeeld Title 3",
-        "description": "Voorbeeld Description 3"
       },
       {
         "@self": {
