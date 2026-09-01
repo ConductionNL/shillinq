@@ -41,7 +41,9 @@
  * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-11-testing/tasks.md
  */
 
-import { test, expect, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 const DASHBOARD_ROUTE = '/bbv-dashboard'
@@ -445,7 +447,6 @@ test.describe('BBV mapping detail — edit flow', () => {
 				{ headers: { 'OCS-APIRequest': 'true' } },
 			)
 			if (deleted.ok() === false) {
-				// eslint-disable-next-line no-console
 				console.warn(
 					`[bbv] failed to clean up seeded mapping ${id}: HTTP ${deleted.status()}`,
 				)

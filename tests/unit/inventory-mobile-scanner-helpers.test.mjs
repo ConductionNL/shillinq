@@ -15,9 +15,8 @@
  * @spec openspec/changes/inventory-mobile-scanner/tasks.md
  */
 
-import { test } from 'node:test'
 import assert from 'node:assert/strict'
-
+import { test } from 'node:test'
 // Import the source modules directly. These are plain ESM so node --test
 // can load them without a bundler. useInventorySync.js depends on
 // @nextcloud/axios at the top level; we replicate its newTransactionId()
@@ -45,9 +44,9 @@ function newTransactionId() {
 		} else if (i === 14) {
 			out += '4'
 		} else if (i === 19) {
-			out += hex[(Math.random() * 4 | 0) + 8]
+			out += hex[((Math.random() * 4) | 0) + 8]
 		} else {
-			out += hex[Math.random() * 16 | 0]
+			out += hex[(Math.random() * 16) | 0]
 		}
 	}
 	return out
@@ -60,9 +59,18 @@ test('composeStockKey produces a stable sku|location composite', () => {
 })
 
 test('isStrictlyLater returns true only when a is strictly later than b', () => {
-	assert.equal(isStrictlyLater('2026-05-21T14:23:00Z', '2026-05-21T14:22:59Z'), true)
-	assert.equal(isStrictlyLater('2026-05-21T14:22:59Z', '2026-05-21T14:23:00Z'), false)
-	assert.equal(isStrictlyLater('2026-05-21T14:23:00Z', '2026-05-21T14:23:00Z'), false)
+	assert.equal(
+		isStrictlyLater('2026-05-21T14:23:00Z', '2026-05-21T14:22:59Z'),
+		true,
+	)
+	assert.equal(
+		isStrictlyLater('2026-05-21T14:22:59Z', '2026-05-21T14:23:00Z'),
+		false,
+	)
+	assert.equal(
+		isStrictlyLater('2026-05-21T14:23:00Z', '2026-05-21T14:23:00Z'),
+		false,
+	)
 })
 
 test('isStrictlyLater is defensive against missing or unparseable timestamps', () => {
@@ -74,7 +82,10 @@ test('isStrictlyLater is defensive against missing or unparseable timestamps', (
 test('newTransactionId returns a UUID-shaped string usable as a dedup key', () => {
 	const id = newTransactionId()
 	assert.equal(typeof id, 'string')
-	assert.match(id, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
+	assert.match(
+		id,
+		/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+	)
 	const id2 = newTransactionId()
 	assert.notEqual(id, id2, 'consecutive ids must differ')
 })

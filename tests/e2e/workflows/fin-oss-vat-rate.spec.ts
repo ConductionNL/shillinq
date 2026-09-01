@@ -32,8 +32,10 @@
  * @spec openspec/specs/bookkeeping-btw-oss-eu/spec.md#REQ-OSS-001
  */
 
-import { test, expect, request as pwRequest } from '@playwright/test'
-import { UNIQUE_PREFIX, OrFixtures, money } from './_fixtures'
+import type { APIRequestContext } from '@playwright/test'
+
+import { expect, request as pwRequest, test } from '@playwright/test'
+import { money, OrFixtures, UNIQUE_PREFIX } from './_fixtures.ts'
 
 const APP = '/apps/shillinq'
 const ADMIN_ID = `${UNIQUE_PREFIX}-adm`
@@ -41,7 +43,7 @@ const NEEDED = ['EuVatRate']
 
 test.describe('shillinq finance — OSS/BTW VAT rate resolution (computed numbers)', () => {
 	let fx: OrFixtures
-	let api: import('@playwright/test').APIRequestContext
+	let api: APIRequestContext
 
 	test.beforeAll(async ({ baseURL }) => {
 		api = await pwRequest.newContext({

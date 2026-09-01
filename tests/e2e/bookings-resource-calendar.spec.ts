@@ -35,7 +35,9 @@
  * @spec openspec/changes/bookings-resource-calendar/tasks.md#task-11
  */
 
-import { test, expect, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 

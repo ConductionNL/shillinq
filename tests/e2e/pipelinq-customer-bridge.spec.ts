@@ -31,7 +31,7 @@
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-10-integration-e2e-tests/tasks.md
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const SHILLINQ_ADMIN_SETTINGS = '/settings/admin/shillinq'
 

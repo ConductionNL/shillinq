@@ -35,7 +35,10 @@
  * specs run for real the moment the register imports.
  */
 
-import { APIRequestContext, expect } from '@playwright/test'
+import type { APIResponse } from '@playwright/test'
+import type { APIRequestContext } from '@playwright/test'
+
+import { expect } from '@playwright/test'
 
 /** OpenRegister generic object API base. */
 const OR = '/index.php/apps/openregister/api'
@@ -210,10 +213,7 @@ export class OrFixtures {
 	 * @param id     The object id (uuid).
 	 * @param action The lifecycle action name (e.g. 'verleen', 'approve').
 	 */
-	async transition(
-		id: string,
-		action: string,
-	): Promise<import('@playwright/test').APIResponse> {
+	async transition(id: string, action: string): Promise<APIResponse> {
 		return this.api.post(`${OR}/objects/${id}/transition`, {
 			headers: await this.headers(),
 			data: { action },

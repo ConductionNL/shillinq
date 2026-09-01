@@ -20,18 +20,17 @@
  * @spec openspec/changes/bookings-pipelinq-customer-bridge-06-profile-card-ui/tasks.md
  */
 
-import { test } from 'node:test'
 import assert from 'node:assert/strict'
-
+import { test } from 'node:test'
 import {
-	classifyContact,
+	buildPipelinqLink,
 	buildProfileFields,
-	selectProfileState,
-	selectHistoryState,
+	classifyContact,
 	formatTransactionAmount,
 	formatTransactionDate,
 	nextPageParams,
-	buildPipelinqLink,
+	selectHistoryState,
+	selectProfileState,
 } from '../../src/composables/usePipelinqProfile.js'
 
 // ---------------------------------------------------------------------------
@@ -97,7 +96,10 @@ test('buildProfileFields omits missing optional fields entirely (no empty labels
 		found: true,
 	}
 	const fields = buildProfileFields(contact)
-	assert.deepEqual(fields.map((f) => f.key), ['legalName'])
+	assert.deepEqual(
+		fields.map((f) => f.key),
+		['legalName'],
+	)
 })
 
 test('buildProfileFields returns empty list for not-found contact', () => {
@@ -173,13 +175,15 @@ test('selectProfileState returns error for a missing payload', () => {
 // selectHistoryState — history rendering with up to 5 entries + load-more
 // ---------------------------------------------------------------------------
 
-const okPayload = (klantbeeld) => ({
-	booking: { appointmentId: 'apt-1', pipelinqContactId: 'cnt-1' },
-	contact: { externalId: 'cnt-1', legalName: 'Acme', found: true },
-	contactError: null,
-	notLinkedToPipelinq: false,
-	klantbeeld,
-})
+function okPayload(klantbeeld) {
+	return {
+		booking: { appointmentId: 'apt-1', pipelinqContactId: 'cnt-1' },
+		contact: { externalId: 'cnt-1', legalName: 'Acme', found: true },
+		contactError: null,
+		notLinkedToPipelinq: false,
+		klantbeeld,
+	}
+}
 
 test('selectHistoryState returns ok with up to 5 transactions', () => {
 	const klantbeeld = {
@@ -199,7 +203,13 @@ test('selectHistoryState returns ok with up to 5 transactions', () => {
 })
 
 test('selectHistoryState returns empty when envelope reports empty', () => {
-	const klantbeeld = { transactions: [], limit: 5, offset: 0, unavailable: false, empty: true }
+	const klantbeeld = {
+		transactions: [],
+		limit: 5,
+		offset: 0,
+		unavailable: false,
+		empty: true,
+	}
 	assert.equal(selectHistoryState(okPayload(klantbeeld)), 'empty')
 })
 
@@ -233,14 +243,14 @@ test('selectHistoryState returns hidden when klantbeeld envelope is missing', ()
 // ---------------------------------------------------------------------------
 
 test('nextPageParams advances offset by limit', () => {
-	assert.deepEqual(
-		nextPageParams({ limit: 5, offset: 0 }),
-		{ limit: 5, offset: 5 },
-	)
-	assert.deepEqual(
-		nextPageParams({ limit: 5, offset: 5 }),
-		{ limit: 5, offset: 10 },
-	)
+	assert.deepEqual(nextPageParams({ limit: 5, offset: 0 }), {
+		limit: 5,
+		offset: 5,
+	})
+	assert.deepEqual(nextPageParams({ limit: 5, offset: 5 }), {
+		limit: 5,
+		offset: 10,
+	})
 })
 
 test('nextPageParams falls back to defaults when envelope is missing fields', () => {
@@ -250,10 +260,10 @@ test('nextPageParams falls back to defaults when envelope is missing fields', ()
 })
 
 test('nextPageParams clamps limit to >= 1', () => {
-	assert.deepEqual(
-		nextPageParams({ limit: 0, offset: 0 }),
-		{ limit: 1, offset: 1 },
-	)
+	assert.deepEqual(nextPageParams({ limit: 0, offset: 0 }), {
+		limit: 1,
+		offset: 1,
+	})
 })
 
 // ---------------------------------------------------------------------------
@@ -261,8 +271,14 @@ test('nextPageParams clamps limit to >= 1', () => {
 // ---------------------------------------------------------------------------
 
 test('formatTransactionAmount renders the row currency with 2 decimals', () => {
-	assert.equal(formatTransactionAmount({ amount: 100, currency: 'EUR' }), 'EUR 100.00')
-	assert.equal(formatTransactionAmount({ amount: 12.5, currency: 'USD' }), 'USD 12.50')
+	assert.equal(
+		formatTransactionAmount({ amount: 100, currency: 'EUR' }),
+		'EUR 100.00',
+	)
+	assert.equal(
+		formatTransactionAmount({ amount: 12.5, currency: 'USD' }),
+		'USD 12.50',
+	)
 })
 
 test('formatTransactionAmount falls back to EUR when currency is missing', () => {
@@ -270,7 +286,10 @@ test('formatTransactionAmount falls back to EUR when currency is missing', () =>
 })
 
 test('formatTransactionAmount renders 0.00 when the amount is non-numeric', () => {
-	assert.equal(formatTransactionAmount({ amount: 'bogus', currency: 'EUR' }), 'EUR 0.00')
+	assert.equal(
+		formatTransactionAmount({ amount: 'bogus', currency: 'EUR' }),
+		'EUR 0.00',
+	)
 	assert.equal(formatTransactionAmount({}), 'EUR 0.00')
 })
 

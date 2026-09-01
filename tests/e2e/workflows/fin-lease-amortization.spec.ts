@@ -30,8 +30,10 @@
  * @spec openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md
  */
 
-import { test, expect, request as pwRequest } from '@playwright/test'
-import { OrFixtures, REGISTER_SLUG, UNIQUE_PREFIX, money } from './_fixtures'
+import type { APIRequestContext } from '@playwright/test'
+
+import { expect, request as pwRequest, test } from '@playwright/test'
+import { money, OrFixtures, UNIQUE_PREFIX } from './_fixtures.ts'
 
 const APP = '/apps/shillinq'
 const ADMIN_ID = `${UNIQUE_PREFIX}-adm`
@@ -51,7 +53,7 @@ interface ScheduleRow {
 
 test.describe('shillinq finance — IFRS 16 lease amortization (computed numbers)', () => {
 	let fx: OrFixtures
-	let api: import('@playwright/test').APIRequestContext
+	let api: APIRequestContext
 
 	test.beforeAll(async ({ baseURL }) => {
 		api = await pwRequest.newContext({

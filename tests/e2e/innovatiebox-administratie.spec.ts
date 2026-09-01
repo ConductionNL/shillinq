@@ -20,7 +20,7 @@
  * register fragment is imported into a running instance.
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 

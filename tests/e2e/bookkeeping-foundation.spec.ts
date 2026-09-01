@@ -30,7 +30,7 @@
  * "page mounted on the correct route", not "list has N rows".
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 
