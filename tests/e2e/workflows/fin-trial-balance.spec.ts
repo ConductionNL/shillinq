@@ -39,8 +39,10 @@
  * @e2e openspec/specs/bookkeeping-trial-balance/spec.md#balanced-trial-balance-returns-no-invariant-error
  */
 
-import { test, expect, request as pwRequest } from '@playwright/test'
-import { UNIQUE_PREFIX, OrFixtures, money } from './_fixtures'
+import type { APIRequestContext } from '@playwright/test'
+
+import { expect, request as pwRequest, test } from '@playwright/test'
+import { money, OrFixtures, UNIQUE_PREFIX } from './_fixtures.ts'
 
 const APP = '/apps/shillinq'
 const ADMIN_ID = `${UNIQUE_PREFIX}-adm`
@@ -55,7 +57,7 @@ interface TbRow {
 
 test.describe('shillinq finance — trial balance balances (debits == credits)', () => {
 	let fx: OrFixtures
-	let api: import('@playwright/test').APIRequestContext
+	let api: APIRequestContext
 
 	test.beforeAll(async ({ baseURL }) => {
 		api = await pwRequest.newContext({

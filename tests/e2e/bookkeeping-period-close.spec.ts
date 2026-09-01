@@ -27,7 +27,7 @@
  * @spec openspec/changes/bookkeeping-period-close/tasks.md#task-16
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 const INDEX_PATH = '/bookkeeping/period-close'

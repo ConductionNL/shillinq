@@ -30,7 +30,7 @@
  * @spec openspec/changes/compliance-deadline-calendar/specs/compliance-deadline-calendar/spec.md#req-cdc-006
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { becomesVisible } from './becomes-visible.js'
 
 const APP = '/apps/shillinq'

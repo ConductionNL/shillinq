@@ -25,7 +25,9 @@
  * @spec openspec/changes/integration-config-to-openconnector/specs/integration-config-to-openconnector/spec.md
  */
 
-import { test, expect, type Page, type ConsoleMessage } from '@playwright/test'
+import type { ConsoleMessage, Page } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 const STATUS_ROUTE = `${APP}/external-adapters`

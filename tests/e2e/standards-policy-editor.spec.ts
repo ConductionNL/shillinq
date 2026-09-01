@@ -38,7 +38,7 @@
  * @spec openspec/specs/accounting-standards-policy/spec.md#REQ-ASP-002
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 const ROUTE = '/settings/accounting-standards'

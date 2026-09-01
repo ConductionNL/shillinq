@@ -9,8 +9,8 @@
  * is aliased to a stub.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useSettingsStore } from '../../src/store/modules/settings.js'
 
 function mockFetchOnce({ ok = true, json = {} }) {

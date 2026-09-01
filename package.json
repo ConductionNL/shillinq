@@ -15,7 +15,7 @@
     "postdev": "[ -d ../openregister/custom_apps/shillinq/js ] && cp -r js/. ../openregister/custom_apps/shillinq/js/ || true",
     "prewatch": "node scripts/generate-manifest-shell.js",
     "watch": "NODE_ENV=development webpack --config webpack.config.js --progress --watch",
-    "lint": "eslint src",
+    "lint": "eslint src tests scripts",
     "lint-fix": "npm run lint -- --fix",
     "test:l10n": "node tests/l10n/check-l10n.js",
     "test:l10n-parity": "L10N_REQUIRED_LOCALES=nl node tests/l10n/check-l10n-parity.js",

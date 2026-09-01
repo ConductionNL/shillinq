@@ -22,7 +22,9 @@
  * @spec openspec/specs/shillinq-bill-import-modal/spec.md
  */
 
-import { test, expect, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 const ROUTE_FINANCIAL = '/financial'

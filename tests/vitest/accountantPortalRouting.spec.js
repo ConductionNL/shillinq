@@ -25,9 +25,9 @@
  * @spec openspec/specs/accountant-portal/spec.md
  */
 
-import { describe, it, expect } from 'vitest'
 import fs from 'fs'
 import path from 'path'
+import { describe, expect, it } from 'vitest'
 
 const repoRoot = path.resolve(__dirname, '..', '..')
 const routesSource = fs.readFileSync(

@@ -26,7 +26,7 @@
  * @spec openspec/specs/bookkeeping-provincies-bbv-variant/spec.md
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import BbvLinkerFilterBar from '../../src/components/bbv-provincie/BbvLinkerFilterBar.vue'
 
 /** The page's declared facets, verbatim from the manifest fragment. */

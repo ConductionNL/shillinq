@@ -13,26 +13,26 @@
  * invoiceQuickDraft.js pattern).
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
-	detectFormat,
-	isDeferredPdf,
 	buildImportFormData,
-	reviewFormFromRecord,
 	canSaveReview,
-	importErrorMessage,
-	refreshEventPayload,
-	CREDITORS_WIDGET,
-	PDF_DEFERRAL_MESSAGE,
-	isExtractionDraft,
 	confidenceForField,
-	isFieldCorrected,
-	requiresExplicitReview,
-	pendingDraftSummary,
-	REVIEW_THRESHOLD,
-	ONE_CLICK_CONFIDENCE_GATE,
-	hasKnownExtractionId,
+	CREDITORS_WIDGET,
+	detectFormat,
 	glAccountSuggestionSummary,
+	hasKnownExtractionId,
+	importErrorMessage,
+	isDeferredPdf,
+	isExtractionDraft,
+	isFieldCorrected,
+	ONE_CLICK_CONFIDENCE_GATE,
+	PDF_DEFERRAL_MESSAGE,
+	pendingDraftSummary,
+	refreshEventPayload,
+	requiresExplicitReview,
+	REVIEW_THRESHOLD,
+	reviewFormFromRecord,
 } from '../../src/modals/billImportModal.js'
 
 describe('billImportModal — format detection', () => {

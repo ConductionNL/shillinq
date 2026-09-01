@@ -11,11 +11,11 @@
  * @spec openspec/changes/shillinq-manifest-boot-payload-reduction/specs/manifest-boot-performance/spec.md#req-mbp-001
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { computed, reactive, toRaw } from 'vue'
 import {
-	mergeFullFragmentIntoManifest,
 	buildPageFragmentIndex,
+	mergeFullFragmentIntoManifest,
 } from '../../src/utils/mergeFragmentIntoManifest.js'
 
 describe('mergeFullFragmentIntoManifest — reactivity (the load-bearing contract)', () => {

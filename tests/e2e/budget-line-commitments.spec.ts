@@ -31,7 +31,9 @@
  * @spec openspec/changes/verplichtingen-commitment-accounting/specs/bookkeeping-verplichtingenadministratie/spec.md#req-vpl-011
  */
 
-import { test, expect, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
 import { becomesVisible } from './becomes-visible.js'
 
 const APP = '/apps/shillinq'

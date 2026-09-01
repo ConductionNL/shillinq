@@ -17,7 +17,7 @@
  * @spec openspec/changes/bookings-notification-triggers/tasks.md#task-17
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 const NOTIFICATION_TRIGGERS_ROUTE = '/communication/notification-triggers'
