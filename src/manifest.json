@@ -1008,7 +1008,7 @@
 			"icon": "MapMarkerPath",
 			"route": "FeaturesRoadmap",
 			"section": "footer",
-			"order": 91,
+			"order": 100,
 			"children": []
 		},
 		{
@@ -3349,7 +3349,7 @@
 						},
 						"type": "lifecycle-transition",
 						"transition": "complete-reconciliation",
-						"description": "All lines must be matched or routed-to-suspense."
+						"description": "All lines must be matched or routed-to-suspense (REQ-BR-008)."
 					},
 					{
 						"id": "audit-lock",
@@ -3363,7 +3363,7 @@
 						},
 						"type": "lifecycle-transition",
 						"transition": "audit-lock",
-						"description": "Auditor signs off; irreversible."
+						"description": "Auditor signs off; irreversible (REQ-BR-008)."
 					}
 				],
 				"indexRoute": "BankReconciliation",
@@ -3428,7 +3428,7 @@
 										"filter": {
 											"status": "pending"
 										},
-										"description": "Unconfirmed candidate matches for lines in this statement. One-click confirm or reject."
+										"description": "Unconfirmed candidate matches for lines in this statement (REQ-BR-010). One-click confirm or reject."
 									}
 								}
 							]
@@ -12707,7 +12707,7 @@
 				],
 				"defaultSort": "invoiceId",
 				"detailRoute": "IncassoKostenDetail",
-				"description": "BIK staffel + wettelijke rente per invoice.",
+				"description": "BIK staffel + wettelijke rente per invoice (REQ-CCD-003).",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
@@ -13113,7 +13113,7 @@
 						},
 						"successMessage": "Requisition submitted for approval.",
 						"errorMessage": "Could not submit the requisition.",
-						"description": "Submit the draft requisition for approval."
+						"description": "Submit the draft requisition for approval (REQ-REQ-002)."
 					},
 					{
 						"id": "approve-requisition",
@@ -13153,7 +13153,7 @@
 						},
 						"successMessage": "Requisition rejected.",
 						"errorMessage": "Could not reject the requisition — fill in the Rejection Reason field first.",
-						"description": "Reject the submitted requisition. Fill in the Rejection Reason field via edit before clicking Reject."
+						"description": "Reject the submitted requisition (REQ-REQ-004). Fill in the Rejection Reason field via edit before clicking Reject."
 					},
 					{
 						"id": "convert-to-purchase-order",
@@ -13172,7 +13172,7 @@
 						},
 						"successMessage": "Requisition converted to a purchase order.",
 						"errorMessage": "Could not convert the requisition — check preferred supplier and lines.",
-						"description": "Materialise the approved requisition into a PurchaseOrder via RequisitionConversionService."
+						"description": "Materialise the approved requisition into a PurchaseOrder via RequisitionConversionService (REQ-REQ-005)."
 					}
 				],
 				"indexRoute": "Requisitions",
@@ -15810,7 +15810,7 @@
 						"key": "parentActivityCode",
 						"label": "Parent Code",
 						"type": "string",
-						"help": "FK to baseline code if this is a custom administration variant"
+						"help": "FK to baseline code if this is a custom administration variant (REQ-WBSO-009)"
 					},
 					{
 						"key": "administrationId",
@@ -15962,7 +15962,7 @@
 						"key": "exportFilters",
 						"label": "Export Filters",
 						"type": "object",
-						"help": "Filters applied on generation: wbsoTagId, activityCodeId, isAllowed, employee, date range"
+						"help": "Filters applied on generation: wbsoTagId, activityCodeId, isAllowed, employee, date range (REQ-WBSO-008)"
 					},
 					{
 						"key": "generatedAt",
@@ -15978,7 +15978,7 @@
 						"key": "validationErrors",
 						"label": "Validation Errors",
 						"type": "array",
-						"help": "Empty if validated; lists untagged entry IDs and other validation failures"
+						"help": "Empty if validated; lists untagged entry IDs and other validation failures (REQ-WBSO-006)"
 					},
 					{
 						"key": "submittedAt",
@@ -16010,7 +16010,7 @@
 						},
 						"type": "lifecycle-transition",
 						"transition": "validate",
-						"description": "Run RVO validation: checks all included time entries carry WBSO tags and activity codes. Fails if any entry is untagged."
+						"description": "Run RVO validation: checks all included time entries carry WBSO tags and activity codes. Fails if any entry is untagged (REQ-WBSO-006)."
 					},
 					{
 						"id": "mark-submitted",
@@ -16678,7 +16678,7 @@
 				],
 				"defaultSort": "statementDate",
 				"detailRoute": "ReconciliationDetail",
-				"description": "Bank reconciliation sessions per REQ-REC-001. Each row is one account+period; click through to match, classify unresolved items, and produce a signed-off ReconciliationReport.",
+				"description": "Bank reconciliation sessions per REQ-REC-001. Each row is one account+period; click through to match, classify unresolved items, and produce a signed-off ReconciliationReport (REQ-REC-006).",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
 			}
 		},
@@ -16895,7 +16895,7 @@
 												"label": "Matched At"
 											}
 										],
-										"description": "Matches recorded for this reconciliation session. Filter to resolutionStatus=null to see unresolved items needing REQ-REC-004 classification."
+										"description": "Matches recorded for this reconciliation session (REQ-REC-005). Filter to resolutionStatus=null to see unresolved items needing REQ-REC-004 classification."
 									}
 								}
 							]
@@ -18390,13 +18390,13 @@
 						"id": "ensia-college-verklaring-generator",
 						"type": "action",
 						"title": "Generate college verklaring (DOCX)",
-						"description": "Renders a VNG-template Word document for college sign-off. The active ENSIA cyclus MUST be in college-akkoord status. Output is a downloadable DOCX archived on cyclus.verklaringFile via docudesk."
+						"description": "Renders a VNG-template Word document for college sign-off (REQ-ENSIA-006). The active ENSIA cyclus MUST be in college-akkoord status. Output is a downloadable DOCX archived on cyclus.verklaringFile via docudesk."
 					},
 					{
 						"id": "ensia-portal-xml-export",
 						"type": "action",
 						"title": "Export ENSIA-portal XML",
-						"description": "Renders an ENSIA-XSD-compliant XML payload for upload to the landelijke ENSIA-portal. The active ENSIA cyclus MUST be in college-akkoord with a signed verklaringFile."
+						"description": "Renders an ENSIA-XSD-compliant XML payload for upload to the landelijke ENSIA-portal (REQ-ENSIA-007). The active ENSIA cyclus MUST be in college-akkoord with a signed verklaringFile."
 					}
 				],
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"

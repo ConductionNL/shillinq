@@ -211,7 +211,7 @@
 						"key": "cancellationReasonRequired",
 						"label": "Include cancellation reason",
 						"type": "boolean",
-						"help": "When on, {{cancellationReason}} is included in the variable map at dispatch."
+						"help": "When on, {{cancellationReason}} is included in the variable map at dispatch (REQ-BET-009)."
 					},
 					{ "key": "renderedSubjectPreview", "label": "Subject preview (sample data)", "type": "calculated" },
 					{ "key": "renderedBodyPreview", "label": "Body preview (sample data)", "type": "calculated" },

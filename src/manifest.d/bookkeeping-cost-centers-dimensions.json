@@ -3,7 +3,7 @@
 		"spdx-license": "EUPL-1.2",
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "bookkeeping-cost-centers-dimensions + unify-analytical-dimensions",
-		"description": "Manifest navigation + index/detail pages for the unified AnalyticalDimension register. Three filtered views: CostCenters (dimensionType=cost-center), KostenDragers (dimensionType=cost-object), AnalyticalDimensions (dimensionType=custom). CostCenters / KostenDragers / Projects nav items already live in src/manifest.json; this fragment adds the AnalyticalDimensions (custom) nav leaf + its index/detail pages, plus the SegmentPnLDashboard. Labels unified per EN-primary convention: Cost centers / Kostenplaatsen, Cost objects / Kostendragers, Analytical dimensions / Analytische dimensies."
+		"description": "Manifest navigation + index/detail pages for the unified AnalyticalDimension register (REQ-ADIM-103). Three filtered views: CostCenters (dimensionType=cost-center), KostenDragers (dimensionType=cost-object), AnalyticalDimensions (dimensionType=custom). CostCenters / KostenDragers / Projects nav items already live in src/manifest.json; this fragment adds the AnalyticalDimensions (custom) nav leaf + its index/detail pages, plus the SegmentPnLDashboard. Labels unified per EN-primary convention: Cost centers / Kostenplaatsen, Cost objects / Kostendragers, Analytical dimensions / Analytische dimensies."
 	},
 	"menu": [
 		{

@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "compliance-deadline-calendar",
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
-		"description": "Per-user deadline-calendar settings page: category toggles (BTW/ICP/VPB filing, payment runs, opt-in AR due dates, contract deadlines) + reminder lead times. The menu leaf is a FLAT entry lifted into Nextcloud's settings foldout by menu-layout.json#settingsSection. It used to be declared as a child of a group also called 'Settings', which rendered as Settings > Settings inside the foldout (ADR-079 D4) and — because applyMenuRemovals never drops a node that has children — also kept the legacy base-manifest 'Settings' entry alive that menu-layout.json#removals had been trying to retire. The page component (kind:page DeadlineCalendarSettings in src/registry.js) talks to the strictly current-user-scoped /api/deadline-calendar/settings endpoints."
+		"description": "Per-user deadline-calendar settings page (REQ-CDC-006): category toggles (BTW/ICP/VPB filing, payment runs, opt-in AR due dates, contract deadlines) + reminder lead times. The menu leaf is a FLAT entry lifted into Nextcloud's settings foldout by menu-layout.json#settingsSection. It used to be declared as a child of a group also called 'Settings', which rendered as Settings > Settings inside the foldout (ADR-079 D4) and — because applyMenuRemovals never drops a node that has children — also kept the legacy base-manifest 'Settings' entry alive that menu-layout.json#removals had been trying to retire. The page component (kind:page DeadlineCalendarSettings in src/registry.js) talks to the strictly current-user-scoped /api/deadline-calendar/settings endpoints."
 	},
 	"menu": [
 		{
