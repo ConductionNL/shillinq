@@ -31,6 +31,21 @@ import { expect, test } from '@playwright/test'
 
 const APP_BASE = '/apps/shillinq'
 
+/**
+ * Escape a literal string for use inside a RegExp.
+ *
+ * Replacing only `/` (as a first draft did) leaves every other metacharacter
+ * — and the backslash itself — live, which CodeQL flags as
+ * js/incomplete-sanitization. These paths are constants today; the point is
+ * that the helper stays correct when one of them is not.
+ *
+ * @param literal The string to match literally.
+ * @return The escaped pattern source.
+ */
+function escapeRegExp(literal: string): string {
+	return literal.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')
+}
+
 test.describe('app chrome (ADR-114)', () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto(`${APP_BASE}/`, { waitUntil: 'domcontentloaded' })
@@ -104,7 +119,7 @@ test.describe('app chrome (ADR-114)', () => {
 		]) {
 			await page.goto(`${APP_BASE}${path}`)
 			await expect(page).toHaveURL(
-				new RegExp(`${path.replace(/\//g, '\\/')}(\\?|$)`),
+				new RegExp(`${escapeRegExp(path)}(\\?|$)`),
 				{ timeout: 15_000 },
 			)
 			await expect(page.locator('[data-testid="cn-nav"]')).toBeVisible()
