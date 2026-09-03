@@ -11,7 +11,7 @@
       "MaterialityAssessment": {
         "slug": "MaterialityAssessment",
         "icon": "ScaleBalance",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Materiality Assessment",
         "description": "Root governance record for the CSRD double-materiality determination per reporting period. Enumerates the ESRS topical taxonomy, captures impact + financial materiality scores, stakeholder-consultation evidence, and the locked double-materiality matrix. Mandatory before any topical disclosure is published (design D2). One per period; restatement via supersededBy self-FK.",
         "x-schema-org": "schema:GovernmentService",
@@ -157,6 +157,19 @@
             "description": "Self-FK (slug/uuid) to the assessment that supersedes this one on restatement.",
             "nullable": true,
             "title": "Superseded By"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "in-review",
+              "approved",
+              "locked"
+            ],
+            "default": "draft",
+            "description": "Where this assessment sits in its sign-off cycle.",
+            "example": "draft",
+            "title": "State"
           }
         },
         "x-openregister-lifecycle": {

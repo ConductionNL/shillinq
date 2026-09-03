@@ -20620,7 +20620,7 @@
         "assessmentScope": "legal-entity",
         "thresholdImpact": 1,
         "thresholdFinancial": 1,
-        "state": "Voorbeeld State 1",
+        "state": "draft",
         "methodologyVersion": "Voorbeeld Methodologyversion 1",
         "responsibleOwner": "Voorbeeld Responsibleowner 1",
         "stakeholderGroupsConsulted": [
@@ -20650,7 +20650,7 @@
         "assessmentScope": "consolidated-group",
         "thresholdImpact": 2,
         "thresholdFinancial": 2,
-        "state": "Voorbeeld State 2",
+        "state": "in-review",
         "methodologyVersion": "Voorbeeld Methodologyversion 2",
         "responsibleOwner": "Voorbeeld Responsibleowner 2",
         "stakeholderGroupsConsulted": [
@@ -20680,7 +20680,7 @@
         "assessmentScope": "legal-entity",
         "thresholdImpact": 3,
         "thresholdFinancial": 3,
-        "state": "Voorbeeld State 3",
+        "state": "approved",
         "methodologyVersion": "Voorbeeld Methodologyversion 3",
         "responsibleOwner": "Voorbeeld Responsibleowner 3",
         "stakeholderGroupsConsulted": [

@@ -147,9 +147,24 @@ final class XafAuditfileGeneratorTest extends TestCase {
 				['accountNumber' => '8000', 'name' => 'Omzet', 'accountType' => 'revenue', 'administrationId' => 'WERK-001'],
 				['accountNumber' => '9999', 'name' => 'Foreign account', 'accountType' => 'asset', 'administrationId' => 'WERK-002'],
 			],
+			// Written in the vocabulary CustomerMaster actually DECLARES —
+			// customerId / legalName / vatID / telephone. The fixture used to say
+			// customerNumber / name / vatNumber / phone, which is Payee's
+			// vocabulary, so it agreed with the generator's bug instead of
+			// catching it: no CustomerMaster row can ever carry those keys,
+			// because the schema does not declare them and OpenRegister drops
+			// what it cannot store.
 			'CustomerMaster' => [
-				['customerNumber' => 'D001', 'name' => 'Acme B.V.', 'kvkNumber' => '87654321', 'vatNumber' => 'NL876543210B01', 'email' => 'facturen@acme.nl', 'phone' => '+31201234567', 'administrationId' => 'WERK-001'],
-				['customerNumber' => 'DX', 'name' => 'Foreign customer', 'administrationId' => 'WERK-002'],
+				[
+					'customerId' => 'D001',
+					'legalName' => 'Acme B.V.',
+					'kvkNumber' => '87654321',
+					'vatID' => 'NL876543210B01',
+					'email' => 'facturen@acme.nl',
+					'telephone' => '+31201234567',
+					'administrationId' => 'WERK-001',
+				],
+				['customerId' => 'DX', 'legalName' => 'Foreign customer', 'administrationId' => 'WERK-002'],
 			],
 			'Payee' => [
 				['vendorNumber' => 'C001', 'name' => 'Leverancier XYZ B.V.', 'kvkNumber' => '11223344', 'administrationId' => 'WERK-001'],
@@ -271,4 +286,32 @@ final class XafAuditfileGeneratorTest extends TestCase {
 		$this->assertGreaterThan(0, $dom->getElementsByTagNameNS(XafAuditfileGenerator::XAF_NS, 'generalLedger')->length);
 		$this->assertSame(0, $dom->getElementsByTagNameNS(XafAuditfileGenerator::XAF_NS, 'ledgerAccount')->length);
 	}//end testEmptyBlocksAreWellFormed()
+
+	/**
+	 * REGRESSION: a CustomerMaster row reaches the XAF in ITS OWN vocabulary.
+	 *
+	 * `writeCustomerSupplier()` is shared with Payee, and Payee declares
+	 * vendorNumber / name / vatNumber / phone. CustomerMaster declares
+	 * customerId / legalName / vatID / telephone, and nothing else can ever
+	 * come out of the register for a customer: OpenRegister writes only the
+	 * properties the schema declares, so a read of `customerNumber` is a read
+	 * of a key no CustomerMaster row can hold. `custSupID` was therefore always
+	 * empty, and the empty-id guard at the top of writeCustomerSupplier()
+	 * returned before writing anything — every AR customer was missing from the
+	 * audit file, silently, on a run that reported success.
+	 *
+	 * @return void
+	 */
+	public function testCustomerMasterVocabularyReachesTheAuditFile(): void {
+		$rendered = $this->generator($this->fixture())->generate(['administrationId' => 'WERK-001', 'period' => '2026'], 'xml');
+		$content = $rendered->content;
+
+		$this->assertStringContainsString('<custSupID>D001</custSupID>', $content);
+		$this->assertStringContainsString('<companyName>Acme B.V.</companyName>', $content);
+		$this->assertStringContainsString('<taxRegIdent>NL876543210B01</taxRegIdent>', $content);
+		$this->assertStringContainsString('<telephone>+31201234567</telephone>', $content);
+
+		// The supplier half keeps working: Payee's vocabulary is untouched.
+		$this->assertStringContainsString('<custSupID>C001</custSupID>', $content);
+	}//end testCustomerMasterVocabularyReachesTheAuditFile()
 }//end class
