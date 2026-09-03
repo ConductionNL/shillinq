@@ -13,7 +13,7 @@
         "icon": "EmailCheckOutline",
         "version": "0.1.0",
         "title": "Boekingsbevestigingssjabloon",
-        "description": "Branded email template dispatched immediately on booking confirmation (REQ-BET-001/010). Carries subject and body fields with {{variables}} substituted at dispatch time by OR's notification engine, plain-text fallback for non-HTML clients (REQ-BET-006), branding fields (logo URI, accent colour, footer) for per-template customization (REQ-BET-007), and a draft → published → archived lifecycle (REQ-BET-002/003/008). Variable substitution, subject length, and body size validation are declarative calculations (ADR-031); dispatch is consumed from OR's notification engine on booking.confirmed (ADR-022).",
+        "description": "Branded email template dispatched immediately on booking confirmation (REQ-BET-001/010). Carries subject and body fields with {{variables}} substituted at dispatch time by OR's notification engine, plain-text fallback for non-HTML clients, branding fields (logo URI, accent colour, footer) for per-template customization, and a draft → published → archived lifecycle (REQ-BET-002/003/008). Variable substitution, subject length, and body size validation are declarative calculations (ADR-031); dispatch is consumed from OR's notification engine on booking.confirmed (ADR-022).",
         "x-schema-org": "schema:EmailMessage",
         "type": "object",
         "required": [
@@ -28,7 +28,7 @@
           "name": {
             "type": "string",
             "maxLength": 120,
-            "description": "Human-readable template name shown in the admin list (REQ-BET-001).",
+            "description": "Human-readable template name shown in the admin list.",
             "example": "Default Booking Confirmation",
             "title": "Name"
           },
@@ -70,7 +70,7 @@
           "plainTextBody": {
             "type": "string",
             "maxLength": 102400,
-            "description": "Plain-text fallback (REQ-BET-006). Required for email clients without HTML rendering; supports {{variables}}.",
+            "description": "Plain-text fallback. Required for email clients without HTML rendering; supports {{variables}}.",
             "example": "Hallo {{customerName}},\nUw boeking is bevestigd.\nReferentie: {{bookingRef}}",
             "title": "Plain Text Body"
           },
@@ -86,7 +86,7 @@
             "type": "string",
             "nullable": true,
             "pattern": "^#[0-9A-Fa-f]{6}$",
-            "description": "Hex colour code for branding accents (REQ-BET-007). Six-digit hex.",
+            "description": "Hex colour code for branding accents. Six-digit hex.",
             "example": "#0066cc",
             "title": "Accent Color"
           },
@@ -116,7 +116,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp when the template was first published (REQ-BET-002). Set on the first draft → published transition.",
+            "description": "Timestamp when the template was first published. Set on the first draft → published transition.",
             "title": "Activated At"
           }
         },
@@ -142,7 +142,7 @@
               "from": "draft",
               "to": "published",
               "label": "Publiceren",
-              "description": "Activate the template for dispatch. Stamps activatedAt on first publish (REQ-BET-002)."
+              "description": "Activate the template for dispatch. Stamps activatedAt on first publish."
             },
             "archiveDraft": {
               "from": "draft",
@@ -154,7 +154,7 @@
               "from": "published",
               "to": "archived",
               "label": "Archiveren",
-              "description": "Retire an active template (REQ-BET-003). No new dispatches after archive."
+              "description": "Retire an active template. No new dispatches after archive."
             }
           }
         },
@@ -167,7 +167,7 @@
           "renderedBodyPreview": {
             "expression": "renderTemplate(@self.plainTextBody, {customerName: 'Femke Jansen', bookingRef: 'BK20260521042', bookingDate: '22 mei 2026', bookingTime: '10:00', bookingLocation: 'Kantoor Amsterdam, Kamer 3', organizationName: 'Example BV'})",
             "type": "string",
-            "description": "Plain-text body rendered with sample variables (REQ-BET-004). Used by the admin preview surface; HTML preview is rendered identically by the manifest preview action."
+            "description": "Plain-text body rendered with sample variables. Used by the admin preview surface; HTML preview is rendered identically by the manifest preview action."
           },
           "subjectLineLength": {
             "expression": "strlen(@self.renderedSubjectPreview)",
@@ -293,7 +293,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 720,
-            "description": "Hours before booking start to dispatch the reminder (REQ-BET-005). Common values: 1, 2, 24, 48, 72. OR's notification engine schedules dispatch at bookingStart − hoursBeforeBooking hours with a ±15 min tolerance; missed windows dispatch immediately (REQ-BET-005).",
+            "description": "Hours before booking start to dispatch the reminder. Common values: 1, 2, 24, 48, 72. OR's notification engine schedules dispatch at bookingStart − hoursBeforeBooking hours with a ±15 min tolerance; missed windows dispatch immediately.",
             "example": 24,
             "title": "Hours Before Booking"
           },
@@ -313,7 +313,7 @@
           "plainTextBody": {
             "type": "string",
             "maxLength": 102400,
-            "description": "Plain-text fallback (REQ-BET-006).",
+            "description": "Plain-text fallback.",
             "title": "Plain Text Body"
           },
           "logoUri": {
@@ -401,7 +401,7 @@
           "renderedSubjectPreview": {
             "expression": "renderTemplate(@self.subjectLine, {customerName: 'Femke Jansen', bookingRef: 'BK20260521042', bookingDate: '22 mei 2026', bookingTime: '10:00', bookingLocation: 'Kantoor Amsterdam, Kamer 3', organizationName: 'Example BV', hoursUntilBooking: @self.hoursBeforeBooking})",
             "type": "string",
-            "description": "Subject rendered with sample variables including hoursUntilBooking (REQ-BET-004)."
+            "description": "Subject rendered with sample variables including hoursUntilBooking."
           },
           "renderedBodyPreview": {
             "expression": "renderTemplate(@self.plainTextBody, {customerName: 'Femke Jansen', bookingRef: 'BK20260521042', bookingDate: '22 mei 2026', bookingTime: '10:00', bookingLocation: 'Kantoor Amsterdam, Kamer 3', organizationName: 'Example BV', hoursUntilBooking: @self.hoursBeforeBooking})",
@@ -570,7 +570,7 @@
           "cancellationReasonRequired": {
             "type": "boolean",
             "default": false,
-            "description": "When true, {{cancellationReason}} is included in the template variable map at dispatch (REQ-BET-009). When false, the variable resolves to empty string per the standard substitution rule (T14).",
+            "description": "When true, {{cancellationReason}} is included in the template variable map at dispatch. When false, the variable resolves to empty string per the standard substitution rule (T14).",
             "title": "Cancellation Reason Required"
           },
           "senderName": {

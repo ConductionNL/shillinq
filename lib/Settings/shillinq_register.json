@@ -1465,7 +1465,7 @@
           },
           "vpbPligtig": {
             "type": "boolean",
-            "description": "Marks this account as Vpb-pligtig per Wet modernisering Vpb-plicht (2016). When true, postings against this account contribute to the Vpb-balans aggregation (REQ-VPB-001). Default false — only accounts explicitly tagged by the bookkeeper contribute.",
+            "description": "Marks this account as Vpb-pligtig per Wet modernisering Vpb-plicht (2016). When true, postings against this account contribute to the Vpb-balans aggregation. Default false — only accounts explicitly tagged by the bookkeeper contribute.",
             "default": false,
             "example": false,
             "title": "VPB Liable"
@@ -1481,7 +1481,7 @@
             "type": "string",
             "nullable": true,
             "readOnly": true,
-            "description": "Derived (do not set directly): stable SHA-256 audit hash over the contributing-GLLine count + esaClassifier for the last EMU computation (REQ-EMU-005). Materialised via x-openregister-calculations from the emuContributors aggregate-ref.",
+            "description": "Derived (do not set directly): stable SHA-256 audit hash over the contributing-GLLine count + esaClassifier for the last EMU computation. Materialised via x-openregister-calculations from the emuContributors aggregate-ref.",
             "example": null,
             "title": "Emu Aggregation Hash"
           }
@@ -1850,7 +1850,7 @@
           },
           "customRetentionYears": {
             "type": "integer",
-            "description": "Operator-defined extension of the statutory retention period (archiefverordening override). MUST be >= retentionYears — operators may extend retention but NEVER shorten below the Archiefwet floor (REQ-ARC-004).",
+            "description": "Operator-defined extension of the statutory retention period (archiefverordening override). MUST be >= retentionYears — operators may extend retention but NEVER shorten below the Archiefwet floor.",
             "minimum": 0,
             "x-openregister-validation": {
               "rule": "gte_field",
@@ -2004,7 +2004,7 @@
               "from": "draft",
               "to": "final",
               "label": "Finalise balance sheet",
-              "description": "Operator or scheduled workflow closes fiscal period. Triggers balance-sheet aggregation (REQ-FS-004).",
+              "description": "Operator or scheduled workflow closes fiscal period. Triggers balance-sheet aggregation.",
               "requires": "OCA\\Shillinq\\Service\\ConsolidationGuard::requireFiscalPeriodClosed"
             },
             "publish": {
@@ -2024,7 +2024,7 @@
           "hooks": {
             "onFinalise": {
               "trigger": "lifecycle:finalise",
-              "description": "Fire balance-sheet aggregation to populate totalAssets, totalLiabilities, totalEquity, and isBalanced from GL entries (REQ-FS-004). Also triggers TrialBalance finalisation for the same fiscalYearId and administrationId.",
+              "description": "Fire balance-sheet aggregation to populate totalAssets, totalLiabilities, totalEquity, and isBalanced from GL entries. Also triggers TrialBalance finalisation for the same fiscalYearId and administrationId.",
               "action": "x-openregister-aggregation-compute",
               "actionParameters": {
                 "aggregations": [
@@ -2216,7 +2216,7 @@
               "from": "draft",
               "to": "verified",
               "label": "Run trial-balance verification",
-              "description": "Triggers trial-balance aggregation (REQ-FS-005); sets isBalanced. Bookkeeper confirms result."
+              "description": "Triggers trial-balance aggregation; sets isBalanced. Bookkeeper confirms result."
             },
             "finalise": {
               "from": "verified",
@@ -2875,7 +2875,7 @@
             }
           },
           "emuBestandSaldo": {
-            "description": "EMU-bestand aggregation consuming the ESA-2010 classifier declared in bookkeeping-emu-reporting (REQ-EMU-002) and the EMU-bijlage inclusion/exclusion rules per REQ-CBSE-005. The reported EMU-saldo MUST equal the EMU-reporting saldo to the cent (€0 tolerance). XML output per CBS EMU layout; openconnector source: cbs-emu-bestand.",
+            "description": "EMU-bestand aggregation consuming the ESA-2010 classifier declared in bookkeeping-emu-reporting and the EMU-bijlage inclusion/exclusion rules per REQ-CBSE-005. The reported EMU-saldo MUST equal the EMU-reporting saldo to the cent (€0 tolerance). XML output per CBS EMU layout; openconnector source: cbs-emu-bestand.",
             "sourceSchema": "GLLine",
             "join": {
               "from": "GLLine.accountNumber",
@@ -3228,7 +3228,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Core Data Configuration is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Core Data Configuration is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "BBVProgramma": {
@@ -5383,7 +5383,7 @@
             "type": "number",
             "minimum": 0,
             "readOnly": true,
-            "description": "Derived from GL via x-openregister-aggregations: sum of GLLine amounts on expense accounts tagged to this project (REQ-CPA-006).",
+            "description": "Derived from GL via x-openregister-aggregations: sum of GLLine amounts on expense accounts tagged to this project.",
             "example": 35000,
             "title": "Costs Incurred To Date"
           },
@@ -5391,7 +5391,7 @@
             "type": "number",
             "minimum": 0,
             "readOnly": true,
-            "description": "Derived via x-openregister-calculations: RJ 270 / IFRS 15 percentage-of-completion formula (REQ-CPA-007).",
+            "description": "Derived via x-openregister-calculations: RJ 270 / IFRS 15 percentage-of-completion formula.",
             "example": 50000,
             "title": "Recognised Revenue"
           },
@@ -5406,7 +5406,7 @@
           "wipBalance": {
             "type": "number",
             "readOnly": true,
-            "description": "Derived: recognisedRevenue - billedRevenue (REQ-CPA-008).",
+            "description": "Derived: recognisedRevenue - billedRevenue.",
             "example": 10000,
             "title": "Wip Balance"
           },
@@ -5460,14 +5460,14 @@
           "wbsoTagId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to WBSOTag. When set, new Urenregistratie entries under this project auto-inherit this WBSO code (REQ-WBSO-004). Null for non-subsidized projects.",
+            "description": "FK to WBSOTag. When set, new Urenregistratie entries under this project auto-inherit this WBSO code. Null for non-subsidized projects.",
             "example": "wbso-tag-so-1",
             "title": "WBSO Tag ID"
           },
           "activityCodeId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to WBSOActivityCode. Combined with wbsoTagId, enables auto-tagging of Urenregistratie entries (REQ-WBSO-004). Null for non-subsidized projects.",
+            "description": "FK to WBSOActivityCode. Combined with wbsoTagId, enables auto-tagging of Urenregistratie entries. Null for non-subsidized projects.",
             "example": "wbso-code-a001-1",
             "title": "Activity Code ID"
           }
@@ -5551,12 +5551,12 @@
           "retention": {
             "rule": "selectielijst:5.1.2",
             "years": 7,
-            "description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-014)."
+            "description": "Financial records — 7 years per Selectielijst 5.1.2."
           }
         },
         "x-openregister-aggregations": {
           "segmentPnl": {
-            "description": "Segment P&L per project (REQ-CC-005): debit/credit sums of non-eliminated GLLine amounts, grouped by projectCode + periodId + accountNumber. Returns EVERY project; narrow to one with the extraFilter query params (?projectCode=...), which is what the REST endpoint passes through. It does not correlate on @self: no caller supplies a parent row, and an unanswerable @self reference now raises rather than filtering on null. Shape is sufficient for the WBSO time-per-project join per REQ-CC-007.",
+            "description": "Segment P&L per project: debit/credit sums of non-eliminated GLLine amounts, grouped by projectCode + periodId + accountNumber. Returns EVERY project; narrow to one with the extraFilter query params (?projectCode=...), which is what the REST endpoint passes through. It does not correlate on @self: no caller supplies a parent row, and an unanswerable @self reference now raises rather than filtering on null. Shape is sufficient for the WBSO time-per-project join per REQ-CC-007.",
             "from": "GLLine",
             "where": {
               "eliminationFlag": false
@@ -5586,7 +5586,7 @@
             ]
           },
           "costsIncurredToDate": {
-            "description": "Sum of GL expense-account postings tagged to this project via GLLine.subLedgerRef (REQ-CPA-006).",
+            "description": "Sum of GL expense-account postings tagged to this project via GLLine.subLedgerRef.",
             "operation": "sum",
             "field": "amount",
             "source": {
@@ -5614,7 +5614,7 @@
             }
           },
           "profitAndLoss": {
-            "description": "Project P&L: recognised revenue minus costs incurred to date (REQ-CPA-010).",
+            "description": "Project P&L: recognised revenue minus costs incurred to date.",
             "operation": "derived",
             "fields": {
               "recognisedRevenue": "@self.recognisedRevenue",
@@ -5657,7 +5657,7 @@
           "recognisedRevenue": {
             "materialise": true,
             "targetField": "recognisedRevenue",
-            "description": "RJ 270 / IFRS 15 percentage-of-completion recognised revenue (REQ-CPA-007). Clamped to [0, totalContractValue]. JSON-AST: completed-contract recognises 0 until state=closed then full value; percentage-of-completion-output uses percentageComplete; cost-to-cost (default) uses costsIncurredToDate/totalEstimatedCosts clamped >= 0 via max.",
+            "description": "RJ 270 / IFRS 15 percentage-of-completion recognised revenue. Clamped to [0, totalContractValue]. JSON-AST: completed-contract recognises 0 until state=closed then full value; percentage-of-completion-output uses percentageComplete; cost-to-cost (default) uses costsIncurredToDate/totalEstimatedCosts clamped >= 0 via max.",
             "type": "number",
             "expression": {
               "if": [
@@ -5769,7 +5769,7 @@
           "wipBalance": {
             "materialise": true,
             "targetField": "wipBalance",
-            "description": "Work-in-progress balance: recognised revenue minus billed revenue (REQ-CPA-008). JSON-AST: recognisedRevenue - billedRevenue.",
+            "description": "Work-in-progress balance: recognised revenue minus billed revenue. JSON-AST: recognisedRevenue - billedRevenue.",
             "type": "number",
             "expression": {
               "-": [
@@ -5903,7 +5903,7 @@
           "retention": {
             "rule": "selectielijst:5.1.2",
             "years": 7,
-            "description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-115)."
+            "description": "Financial records — 7 years per Selectielijst 5.1.2."
           }
         },
         "x-openregister-rbac": {
@@ -5933,7 +5933,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Project Budget is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Project Budget is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "AllocationRule": {
@@ -6166,7 +6166,7 @@
         "icon": "AccountArrowRightOutline",
         "version": "0.1.0",
         "title": "Project Assignment",
-        "description": "Assignment of a person to a project with rate-card reference and utilisation tracking (REQ-CPA-004).",
+        "description": "Assignment of a person to a project with rate-card reference and utilisation tracking.",
         "type": "object",
         "x-schema-org": "schema:JobPosting",
         "required": [
@@ -6251,7 +6251,7 @@
             "minimum": 0,
             "maximum": 1,
             "readOnly": true,
-            "description": "Derived: billableHoursThisPeriod / capacityHoursThisPeriod (REQ-CPA-011).",
+            "description": "Derived: billableHoursThisPeriod / capacityHoursThisPeriod.",
             "example": 0.75,
             "title": "Utilization"
           }
@@ -6296,7 +6296,7 @@
           "utilization": {
             "materialise": true,
             "targetField": "utilization",
-            "description": "Billable hours this period divided by capacity hours this period per person (REQ-CPA-011). JSON-AST: if(capacityHoursThisPeriod > 0, billableHoursThisPeriod / capacityHoursThisPeriod, 0).",
+            "description": "Billable hours this period divided by capacity hours this period per person. JSON-AST: if(capacityHoursThisPeriod > 0, billableHoursThisPeriod / capacityHoursThisPeriod, 0).",
             "type": "number",
             "expression": {
               "if": [
@@ -6331,7 +6331,7 @@
         "x-openregister-widgets": {
           "utilisatieWidget": {
             "title": "Utilisatie",
-            "description": "Per-person utilisation for the current period with green/yellow/red bands (REQ-CPA-013).",
+            "description": "Per-person utilisation for the current period with green/yellow/red bands.",
             "type": "chart",
             "dataSource": {
               "mode": "statistics",
@@ -6388,7 +6388,7 @@
         "icon": "CurrencyEur",
         "version": "0.1.0",
         "title": "Rate Card",
-        "description": "Rate card with per-level hourly rates and effectivity windows. Default templates seeded from rate-card-templates.json (REQ-CPA-005).",
+        "description": "Rate card with per-level hourly rates and effectivity windows. Default templates seeded from rate-card-templates.json.",
         "type": "object",
         "x-schema-org": "schema:PriceSpecification",
         "required": [
@@ -6649,7 +6649,7 @@
           "effectiveDate": {
             "type": "string",
             "format": "date",
-            "description": "Start date this version is active (inclusive). MUST be >= today at creation time (REQ-RATE-009).",
+            "description": "Start date this version is active (inclusive). MUST be >= today at creation time.",
             "example": "2026-01-01",
             "title": "Effective Date"
           },
@@ -6657,7 +6657,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "End date (inclusive); null = open-ended. Effective-date windows per template MUST NOT overlap (REQ-RATE-003).",
+            "description": "End date (inclusive); null = open-ended. Effective-date windows per template MUST NOT overlap.",
             "example": "2026-03-31",
             "title": "Expiry Date"
           },
@@ -6776,7 +6776,7 @@
         "icon": "TableRow",
         "version": "0.1.0",
         "title": "Rate Schedule",
-        "description": "Tier-specific rate entry for a RateCardVersion. Defines a fixed or volume-bracketed rate for a single tier (user / role / project / client / blended) within an effective-date window. Non-overlapping effective windows per (tier, entityId) are enforced (REQ-RATE-006). REQ-RATE-004.",
+        "description": "Tier-specific rate entry for a RateCardVersion. Defines a fixed or volume-bracketed rate for a single tier (user / role / project / client / blended) within an effective-date window. Non-overlapping effective windows per (tier, entityId) are enforced. REQ-RATE-004.",
         "type": "object",
         "x-schema-org": "schema:Thing",
         "required": [
@@ -6818,7 +6818,7 @@
           "entityId": {
             "type": "string",
             "nullable": true,
-            "description": "Entity identifier for user/role/project/client tiers. NULL for blended-default tier (REQ-RATE-004).",
+            "description": "Entity identifier for user/role/project/client tiers. NULL for blended-default tier.",
             "example": "user-alice",
             "title": "Entity ID"
           },
@@ -6844,7 +6844,7 @@
           "effectiveDate": {
             "type": "string",
             "format": "date",
-            "description": "Start date this schedule is active (inclusive). MUST be >= today at creation time (REQ-RATE-009).",
+            "description": "Start date this schedule is active (inclusive). MUST be >= today at creation time.",
             "example": "2026-01-01",
             "title": "Effective Date"
           },
@@ -6852,7 +6852,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "End date (inclusive); null = open-ended. (tier, entityId) pairs MUST NOT have overlapping effective-date windows (REQ-RATE-006).",
+            "description": "End date (inclusive); null = open-ended. (tier, entityId) pairs MUST NOT have overlapping effective-date windows.",
             "example": "2026-03-31",
             "title": "Expiry Date"
           },
@@ -6958,7 +6958,7 @@
               "from": "inactive",
               "to": "active",
               "label": "Reactivate",
-              "description": "Restore this schedule for rate lookups. Guard: no other active schedule for the same (tier, entityId) may have an overlapping effective-date window (REQ-RATE-006).",
+              "description": "Restore this schedule for rate lookups. Guard: no other active schedule for the same (tier, entityId) may have an overlapping effective-date window.",
               "requires": "OCA\\Shillinq\\Guard\\RateScheduleOverlapGuard::requireNonOverlappingWindow"
             },
             "archive": {
@@ -6974,7 +6974,7 @@
         },
         "x-openregister-aggregations": {
           "resolveRate": {
-            "description": "Rate-lookup aggregation (REQ-RATE-005): given (userId, roleId, projectId, clientId, lookupDate), resolves the most-specific applicable rate by tier precedence (user > role > project > client > blended). Filters by effectiveDate <= lookupDate <= expiryDate, status = active. Returns first match ranked by tier precedence. shillinq#425: the previously-declared `fallbackGuard` (OCA\\Shillinq\\Guard\\RateResolutionGuard) referenced a class that did not exist, AND OpenRegister's aggregation engine (openregister/lib/Service/Aggregation/AggregationRunner.php) never reads a `fallbackGuard` key on any aggregation at all — it was dead, unconsumed configuration regardless of the class. Removed rather than implemented; filed as shillinq#436 if/when the aggregation engine needs a real PHP-guard fallback seam.",
+            "description": "Rate-lookup aggregation: given (userId, roleId, projectId, clientId, lookupDate), resolves the most-specific applicable rate by tier precedence (user > role > project > client > blended). Filters by effectiveDate <= lookupDate <= expiryDate, status = active. Returns first match ranked by tier precedence. shillinq#425: the previously-declared `fallbackGuard` (OCA\\Shillinq\\Guard\\RateResolutionGuard) referenced a class that did not exist, AND OpenRegister's aggregation engine (openregister/lib/Service/Aggregation/AggregationRunner.php) never reads a `fallbackGuard` key on any aggregation at all — it was dead, unconsumed configuration regardless of the class. Removed rather than implemented; filed as shillinq#436 if/when the aggregation engine needs a real PHP-guard fallback seam.",
             "parameters": {
               "userId": {
                 "type": "string",
@@ -7272,7 +7272,7 @@
         },
         "x-openregister-aggregations": {
           "historicalRatesByUser": {
-            "description": "Historical rate audit aggregation (REQ-RATE-010): rate records grouped by resolvedTier and resolvedRate for a given userId and date range. Used by Rate Audit Trail page.",
+            "description": "Historical rate audit aggregation: rate records grouped by resolvedTier and resolvedRate for a given userId and date range. Used by Rate Audit Trail page.",
             "parameters": {
               "userId": {
                 "type": "string"
@@ -7431,7 +7431,7 @@
           "projectAssignmentId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the ProjectAssignment governing this hour entry. References the assignment for rate-card lookup and utilisation aggregation (REQ-CPA-009).",
+            "description": "FK to the ProjectAssignment governing this hour entry. References the assignment for rate-card lookup and utilisation aggregation.",
             "example": "pa-1",
             "title": "Project Assignment ID"
           },
@@ -7440,7 +7440,7 @@
             "minimum": 0,
             "nullable": true,
             "readOnly": true,
-            "description": "Snapshot of the applicable RateCard.hourlyRate at the time this record is written, per RJ 270 §3.2.4 (rate as of performance date, not invoice date). Immutable after creation — subsequent rate-card revisions do NOT retroactively change this field (REQ-CPA-009).",
+            "description": "Snapshot of the applicable RateCard.hourlyRate at the time this record is written, per RJ 270 §3.2.4 (rate as of performance date, not invoice date). Immutable after creation — subsequent rate-card revisions do NOT retroactively change this field.",
             "example": 180,
             "title": "Recognised Rate"
           },
@@ -7454,21 +7454,21 @@
           "wbsoTagId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to WBSOTag. Null-safe for non-subsidized hour entries. Auto-assigned from parent Project.wbsoTagId on creation if project metadata is complete (REQ-WBSO-004).",
+            "description": "FK to WBSOTag. Null-safe for non-subsidized hour entries. Auto-assigned from parent Project.wbsoTagId on creation if project metadata is complete.",
             "example": "wbso-tag-so-1",
             "title": "WBSO Tag ID"
           },
           "activityCodeId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to WBSOActivityCode. Null-safe for non-subsidized hour entries. Auto-assigned from parent Project.activityCodeId on creation if project metadata is complete (REQ-WBSO-004).",
+            "description": "FK to WBSOActivityCode. Null-safe for non-subsidized hour entries. Auto-assigned from parent Project.activityCodeId on creation if project metadata is complete.",
             "example": "wbso-code-a001-1",
             "title": "Activity Code ID"
           },
           "tagSource": {
             "type": "string",
             "nullable": true,
-            "description": "Indicates how WBSO tags were assigned: auto (inherited from project metadata), manual (operator assignment), or untagged (pending assignment) (REQ-WBSO-004).",
+            "description": "Indicates how WBSO tags were assigned: auto (inherited from project metadata), manual (operator assignment), or untagged (pending assignment).",
             "enum": [
               "auto",
               "manual",
@@ -7481,7 +7481,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp when WBSO tags were assigned — either automatically from project metadata or manually by operator (REQ-WBSO-004).",
+            "description": "Timestamp when WBSO tags were assigned — either automatically from project metadata or manually by operator.",
             "example": "2026-03-15T10:00:00Z",
             "title": "WBSO Tagged At"
           },
@@ -7517,7 +7517,7 @@
         },
         "x-openregister-aggregations": {
           "wbsoAutoTag": {
-            "description": "On Urenregistratie create/update: if parent Project.wbsoTagId and Project.activityCodeId are both non-null, auto-assign both to the entry and set tagSource=auto. Otherwise set tagSource=untagged and emit a warning to the operator (REQ-WBSO-004).",
+            "description": "On Urenregistratie create/update: if parent Project.wbsoTagId and Project.activityCodeId are both non-null, auto-assign both to the entry and set tagSource=auto. Otherwise set tagSource=untagged and emit a warning to the operator.",
             "trigger": [
               "create",
               "update"
@@ -7555,7 +7555,7 @@
             }
           },
           "wbsoEligibleHours": {
-            "description": "Sum of hours for entries where the linked WBSOActivityCode.isAllowed is true. Used for export totals (REQ-WBSO-008).",
+            "description": "Sum of hours for entries where the linked WBSOActivityCode.isAllowed is true. Used for export totals.",
             "type": "sum",
             "field": "hours",
             "filter": {
@@ -7570,7 +7570,7 @@
             }
           },
           "wbsoIneligibleHours": {
-            "description": "Sum of hours for entries where the linked WBSOActivityCode.isAllowed is false. Tracked but excluded from subsidy submission (REQ-WBSO-008).",
+            "description": "Sum of hours for entries where the linked WBSOActivityCode.isAllowed is false. Tracked but excluded from subsidy submission.",
             "type": "sum",
             "field": "hours",
             "filter": {
@@ -7653,7 +7653,7 @@
         "icon": "ChartLineVariant",
         "version": "0.1.0",
         "title": "WIP Balance",
-        "description": "Period-end work-in-progress snapshot per project, generated by an OR ScheduledWorkflow on T2 period close (REQ-CPA-008).",
+        "description": "Period-end work-in-progress snapshot per project, generated by an OR ScheduledWorkflow on T2 period close.",
         "type": "object",
         "x-schema-org": "schema:MonetaryAmount",
         "required": [
@@ -7713,7 +7713,7 @@
         "x-openregister-scheduled-workflow": {
           "trigger": "event",
           "event": "PeriodClosed",
-          "description": "Triggered by T2 PeriodClosed event. Generates one WipBalance record per active Project per period close (REQ-CPA-008).",
+          "description": "Triggered by T2 PeriodClosed event. Generates one WipBalance record per active Project per period close.",
           "action": {
             "forEach": {
               "register": "@register",
@@ -7742,7 +7742,7 @@
           "retention": {
             "rule": "selectielijst:5.1.2",
             "years": 7,
-            "description": "Financial records — 7 years per Selectielijst 5.1.2 (REQ-CPA-014)."
+            "description": "Financial records — 7 years per Selectielijst 5.1.2."
           }
         },
         "x-openregister-rbac": {
@@ -7883,7 +7883,7 @@
             },
             "closing": {
               "label": "Closing",
-              "description": "Year-end close is in progress (semantically the spec's in-progress state per REQ-YEC-005); retained-earnings transfer JournalEntry posted. GL still writable until the closed transition completes. The closing checklist (REQ-YEC-006) is being evaluated."
+              "description": "Year-end close is in progress (semantically the spec's in-progress state per REQ-YEC-005); retained-earnings transfer JournalEntry posted. GL still writable until the closed transition completes. The closing checklist is being evaluated."
             },
             "closed": {
               "label": "Closed",
@@ -7929,7 +7929,7 @@
               "from": "closing",
               "to": "closed",
               "label": "Complete year-end close",
-              "description": "Completes the year-end close. Emits an opening-balance JournalEntry for the next FiscalYear (balance-sheet accounts only; P&L accounts excluded per REQ-YEC-004). Auto-creates next FiscalYear record in state open if absent. Fires CloudEvents per dimension register (AnalyticalDimension, Project) for dimensional rollover; each subscriber carries active dimensions forward and skips archived per REQ-YEC-005. Re-targeted from the retired CostCenter + KostenDrager to the unified AnalyticalDimension per REQ-ADIM-101. The transition is gated by the closing checklist (REQ-YEC-006) declared in `requirePreconditions`; CFO override via `overrideChecklist: true` is audit-trailed.",
+              "description": "Completes the year-end close. Emits an opening-balance JournalEntry for the next FiscalYear (balance-sheet accounts only; P&L accounts excluded per REQ-YEC-004). Auto-creates next FiscalYear record in state open if absent. Fires CloudEvents per dimension register (AnalyticalDimension, Project) for dimensional rollover; each subscriber carries active dimensions forward and skips archived per REQ-YEC-005. Re-targeted from the retired CostCenter + KostenDrager to the unified AnalyticalDimension per REQ-ADIM-101. The transition is gated by the closing checklist declared in `requirePreconditions`; CFO override via `overrideChecklist: true` is audit-trailed.",
               "requirePreconditions": [
                 {
                   "id": "trial-balance-verified",
@@ -8729,7 +8729,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Closing Entry is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Closing Entry is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "RetainedEarnings": {
@@ -8875,7 +8875,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Retained Earnings is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Retained Earnings is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "ClosingAccount": {
@@ -8957,7 +8957,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Closing Account is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Closing Account is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "ClosingEntryTemplate": {
@@ -9146,7 +9146,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Closing Entry Template is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Closing Entry Template is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Receipt": {
@@ -10416,7 +10416,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a ZZP Deduction Amounts is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a ZZP Deduction Amounts is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "InventoryReorderRule": {
@@ -13020,7 +13020,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Compliance Audit Trail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Compliance Audit Trail is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "DepreciationSchedule": {
@@ -13184,7 +13184,7 @@
             "materialise": true,
             "type": "number",
             "targetField": "depreciationAmount",
-            "description": "Declarative (ADR-031): period depreciation per depreciationMethod (REQ-FA-005). degressive = acquisitionCost * degressiveRate; otherwise (linear/none) = (acquisitionCost - residualValue) * annualRate. Reads the related FixedAsset via the `asset` reference. Replaces the former imperative relatedObject('FixedAsset', ...) guard. NOTE: the legacy formula referenced purchaseCost/declineRate/productionUnits which do not exist on FixedAsset; this maps to the real fields acquisitionCost/residualValue/degressiveRate. The units-of-production branch is omitted because FixedAsset has no productionUnits field.",
+            "description": "Declarative (ADR-031): period depreciation per depreciationMethod. degressive = acquisitionCost * degressiveRate; otherwise (linear/none) = (acquisitionCost - residualValue) * annualRate. Reads the related FixedAsset via the `asset` reference. Replaces the former imperative relatedObject('FixedAsset', ...) guard. NOTE: the legacy formula referenced purchaseCost/declineRate/productionUnits which do not exist on FixedAsset; this maps to the real fields acquisitionCost/residualValue/degressiveRate. The units-of-production branch is omitted because FixedAsset has no productionUnits field.",
             "expression": {
               "if": [
                 {
@@ -13296,7 +13296,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Depreciation Schedule is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Depreciation Schedule is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Grant": {
@@ -13371,7 +13371,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Grant is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Grant is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "ManagementLetter": {
@@ -13509,7 +13509,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Management Letter is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Management Letter is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "SisaReport": {
@@ -13910,7 +13910,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a SiSa Report is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a SiSa Report is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "BankingRule": {
@@ -14730,7 +14730,7 @@
             ]
           },
           "glBalanceCheck": {
-            "description": "REQ-SBR-006 check 4: total GL debits must equal total GL credits per the standard GL invariant (REQ-GL-001). Validates the double-entry invariant before filing.",
+            "description": "REQ-SBR-006 check 4: total GL debits must equal total GL credits per the standard GL invariant. Validates the double-entry invariant before filing.",
             "join": {
               "schema": "GLLine",
               "condition": "GLLine.administrationId = @self.administrationId"
@@ -15184,7 +15184,7 @@
               "react-eu",
               "other"
             ],
-            "description": "R&D subsidie regeling variant. When set, per-regeling kostencategorie constraints (REQ-RDS-002) apply to linked Kostenpost records. Per REQ-RDS-001.",
+            "description": "R&D subsidie regeling variant. When set, per-regeling kostencategorie constraints apply to linked Kostenpost records. Per REQ-RDS-001.",
             "nullable": true,
             "example": "eu-horizon",
             "title": "Subsidy Scheme"
@@ -15244,13 +15244,13 @@
           "granteeOrganization": {
             "type": "string",
             "nullable": true,
-            "description": "Recipient organization name (REQ-SUB-002).",
+            "description": "Recipient organization name.",
             "title": "Grantee Organization"
           },
           "hasRepaymentPlan": {
             "type": "boolean",
             "default": false,
-            "description": "Sub-state indicator: a settlement plan exists (REQ-SUB-009).",
+            "description": "Sub-state indicator: a settlement plan exists.",
             "title": "Has Repayment Plan"
           },
           "notes": {
@@ -15286,7 +15286,7 @@
             "rule": "selectielijst:3.5.1",
             "triggerField": "determinationDate",
             "period": "P10Y",
-            "description": "Subsidie-records retained 10 years after vaststellingDate per Selectielijst Gemeenten 2020 + Awb 4:52 (REQ-SUB-009). Trigger: vaststellingDate or paidDate of last RepaymentInstallment."
+            "description": "Subsidie-records retained 10 years after vaststellingDate per Selectielijst Gemeenten 2020 + Awb 4:52. Trigger: vaststellingDate or paidDate of last RepaymentInstallment."
           },
           "states": {
             "request": {
@@ -15777,7 +15777,7 @@
           },
           "taskField": {
             "type": "string",
-            "description": "BBV taakveld code from the BbvTaakveld catalogue (REQ-BBV-005). e.g. '0.1', '5.3'.",
+            "description": "BBV taakveld code from the BbvTaakveld catalogue. e.g. '0.1', '5.3'.",
             "example": "5.3",
             "title": "Task Field"
           },
@@ -15860,7 +15860,7 @@
             "update": {
               "approval-workflow": {
                 "condition": "bcfCompensable_changed OR taakveld_changed",
-                "description": "bcfCompensable flag flips and taakveld reassignments may require approval per administration policy (REQ-BBV-009)."
+                "description": "bcfCompensable flag flips and taakveld reassignments may require approval per administration policy."
               }
             }
           }
@@ -15905,7 +15905,7 @@
             "metric": "count"
           },
           "bbvProgrammaSummary": {
-            "description": "Sum of GL debits and credits per programmaCode for BBV reporting (REQ-BBV-004). Joins BbvAccountMapping with GLLine via accountNumber.",
+            "description": "Sum of GL debits and credits per programmaCode for BBV reporting. Joins BbvAccountMapping with GLLine via accountNumber.",
             "operation": "sum",
             "groupBy": "programmeCode",
             "joinSchema": "GLLine",
@@ -16197,7 +16197,7 @@
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "Matching Rule",
-        "description": "Operator-authored rule declaring predicates for auto-matching bank statement lines against AP/AR invoices or GL transactions. Predicates are consumed by an x-openregister-aggregations query (REQ-BR-004). No MatchingService.php. x-openregister-audit: true per REQ-BR-001.",
+        "description": "Operator-authored rule declaring predicates for auto-matching bank statement lines against AP/AR invoices or GL transactions. Predicates are consumed by an x-openregister-aggregations query. No MatchingService.php. x-openregister-audit: true per REQ-BR-001.",
         "type": "object",
         "x-schema-org": "schema:Rule",
         "x-openregister-audit": true,
@@ -16769,7 +16769,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Provincial Fund Posting is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Provincial Fund Posting is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IPAssetValuation": {
@@ -16873,7 +16873,7 @@
               ]
             }
           },
-          "description": "Every create, update and delete of a IP Asset Valuation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a IP Asset Valuation is written to OpenRegister's immutable audit trail with actor and timestamp."
         },
         "x-openregister-rbac": {
           "roles": {
@@ -16962,7 +16962,7 @@
           },
           "operatingProfit": {
             "type": "number",
-            "description": "Operating profit for the fiscal year consumed by the forfaitair aggregation. Sourced from the Vpb-balans (REQ-VPB-003).",
+            "description": "Operating profit for the fiscal year consumed by the forfaitair aggregation. Sourced from the Vpb-balans.",
             "nullable": true,
             "example": 200000.0,
             "title": "Operating Profit"
@@ -17131,7 +17131,7 @@
               ]
             }
           },
-          "description": "Every create, update and delete of a Innovation Box Election is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Innovation Box Election is written to OpenRegister's immutable audit trail with actor and timestamp."
         },
         "x-openregister-rbac": {
           "roles": {
@@ -17244,7 +17244,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Innovation Box Rate is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Innovation Box Rate is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "WinstToerekening": {
@@ -17433,7 +17433,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Profit Allocation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Profit Allocation is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IcpStatement": {
@@ -18566,7 +18566,7 @@
           "deductions": {
             "type": "object",
             "nullable": true,
-            "description": "Snapshot of ZzpDeduction values at generation time: zelfstandigenaftrek, startersaftrek, mkbWinstvrijstelling, totalDeduction (REQ-ZZP-006).",
+            "description": "Snapshot of ZzpDeduction values at generation time: zelfstandigenaftrek, startersaftrek, mkbWinstvrijstelling, totalDeduction.",
             "properties": {
               "selfEmployedDeductionAmount": {
                 "type": "number",
@@ -18653,7 +18653,7 @@
           "retention": {
             "rule": "selectielijst:5.1.2",
             "period": "P7Y",
-            "description": "Financial records retained 7 years per AWR art. 52 (REQ-ZZP-009)."
+            "description": "Financial records retained 7 years per AWR art. 52."
           },
           "states": {
             "draft": {
@@ -18744,7 +18744,7 @@
             "type": "integer",
             "minimum": 2000,
             "maximum": 2100,
-            "description": "Calendar year for which this deduction record is computed (REQ-ZZP-005).",
+            "description": "Calendar year for which this deduction record is computed.",
             "example": 2026,
             "title": "Tax Year"
           },
@@ -19038,7 +19038,7 @@
           "retention": {
             "rule": "selectielijst:5.1.2",
             "period": "P7Y",
-            "description": "Financial records retained 7 years per AWR art. 52 (REQ-ZZP-009)."
+            "description": "Financial records retained 7 years per AWR art. 52."
           }
         },
         "x-openregister-notifications": {
@@ -19377,7 +19377,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Budget Amendment is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Budget Amendment is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "BeleidsIndicator": {
@@ -19385,7 +19385,7 @@
         "icon": "ChartLineVariant",
         "version": "0.1.0",
         "title": "Policy Indicator",
-        "description": "One of the 39 BBV-verplichte beleidsindicatoren per Regeling Vaststelling Beleidsindicatoren, tracked per programma per administratie (REQ-BBV-007).",
+        "description": "One of the 39 BBV-verplichte beleidsindicatoren per Regeling Vaststelling Beleidsindicatoren, tracked per programma per administratie.",
         "type": "object",
         "x-schema-org": "schema:DefinedTerm",
         "required": [
@@ -19455,7 +19455,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Policy Indicator is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Policy Indicator is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "EconomischeCategorie": {
@@ -19536,7 +19536,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Economic Category is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Economic Category is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "MaterieleVasteActiva": {
@@ -19686,7 +19686,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Tangible fixed assets is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Tangible fixed assets is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "MeerjarenBudget": {
@@ -19769,7 +19769,7 @@
           "incidentalRevenueCents": {
             "type": "integer",
             "minimum": 0,
-            "description": "Portion of baten that is incidenteel, shown apart per BBV-art. 19 (REQ-BBV-003).",
+            "description": "Portion of baten that is incidenteel, shown apart per BBV-art. 19.",
             "default": 0,
             "title": "Incidental Revenue (Cents)"
           },
@@ -19841,7 +19841,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Multi-Year Budget is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Multi-Year Budget is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Paragraaf": {
@@ -19922,7 +19922,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Paragraph is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Paragraph is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Programma": {
@@ -20118,7 +20118,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Programme is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Programme is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Reserve": {
@@ -20231,7 +20231,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Reserve is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Reserve is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Taakveld": {
@@ -20339,7 +20339,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Task Field is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Task Field is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Voorziening": {
@@ -20450,7 +20450,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Provision is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Provision is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "SalesOrder": {
@@ -20914,7 +20914,7 @@
       "slug": "APInvoice",
       "x-openregister-audit-trail": {
         "enabled": true,
-        "description": "Every create, update and delete of an AP Invoice is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        "description": "Every create, update and delete of an AP Invoice is written to OpenRegister's immutable audit trail with actor and timestamp."
       },
       "icon": "ReceiptTextOutline",
       "version": "0.1.0",
@@ -21462,7 +21462,7 @@
             "written_off",
             "reversed"
           ],
-          "description": "Which ARInvoice lifecycle transition this record captures. issued: VAT accrual on first issue (REQ-VAT-003). paid: payment match cleared via bank-reconciliation. written_off: bad-debt write-off (REQ-AR-007). reversed: compensating reversal / credit note.",
+          "description": "Which ARInvoice lifecycle transition this record captures. issued: VAT accrual on first issue. paid: payment match cleared via bank-reconciliation. written_off: bad-debt write-off. reversed: compensating reversal / credit note.",
           "example": "issued",
           "title": "Invoice Event"
         },
@@ -21557,7 +21557,7 @@
       "icon": "ShieldEditOutline",
       "version": "0.1.0",
       "title": "Service Category Override",
-      "description": "Per-administration exception to the default REQ-VAT-002 service-category / VAT-rate matrix. Append-only register; createdAt + createdBy are immutable once written. Lookup by (administrationId, serviceCategory, vatRate); the ARInvoice.issue precondition (REQ-VAT-002) consults this register before rejecting a non-default combination per REQ-VAT-002bis.",
+      "description": "Per-administration exception to the default REQ-VAT-002 service-category / VAT-rate matrix. Append-only register; createdAt + createdBy are immutable once written. Lookup by (administrationId, serviceCategory, vatRate); the ARInvoice.issue precondition consults this register before rejecting a non-default combination per REQ-VAT-002bis.",
       "x-openregister-audit-trail": {
         "enabled": true,
         "description": "VAT exception register; every override creation is audit-trailed on the OR audit-trail-immutable channel per ADR-022. The audit chain proves rare-rate authorisations to the Belastingdienst."
@@ -21762,12 +21762,12 @@
       "slug": "Kostenpost",
       "x-openregister-audit-trail": {
         "enabled": true,
-        "description": "Every create, update and delete of a Kostenpost is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        "description": "Every create, update and delete of a Kostenpost is written to OpenRegister's immutable audit trail with actor and timestamp."
       },
       "icon": "ReceiptTextOutline",
       "version": "0.1.0",
       "title": "Kostenpost",
-      "description": "Individual expense line item within a subsidie dossier. Linked to parent Subsidie via subsidieId. kostencategorie is constrained to the full enum on the property itself. The per-regeling NARROWING (REQ-RDS-002) is NOT ENFORCED: it was declared as a top-level JSON Schema allOf/if-then block, which OpenRegister's importer cannot read — SchemaMapper::resolveSchemaExtension() treats every allOf entry as a parent-schema identifier and throws on a subschema, aborting the import of the WHOLE register (openregister#2419). The block never ran: this schema sat above components.schemas until #511 and was never imported at all. The intended narrowing, for whoever restores it: MIT: personnel/materials/external-services/equipment-depreciation/other-direct. SBIR: personnel/materials/equipment-depreciation/other-direct. EU Horizon: personnel/subcontracting/other-direct/indirect-25-percent. EFRO: personnel/external-services/materials/equipment/other/indirect-flat-rate. REACT-EU: EFRO + green-recovery. No PHP category validator per ADR-031.",
+      "description": "Individual expense line item within a subsidie dossier. Linked to parent Subsidie via subsidieId. kostencategorie is constrained to the full enum on the property itself. The per-regeling NARROWING is NOT ENFORCED: it was declared as a top-level JSON Schema allOf/if-then block, which OpenRegister's importer cannot read — SchemaMapper::resolveSchemaExtension() treats every allOf entry as a parent-schema identifier and throws on a subschema, aborting the import of the WHOLE register (openregister#2419). The block never ran: this schema sat above components.schemas until #511 and was never imported at all. The intended narrowing, for whoever restores it: MIT: personnel/materials/external-services/equipment-depreciation/other-direct. SBIR: personnel/materials/equipment-depreciation/other-direct. EU Horizon: personnel/subcontracting/other-direct/indirect-25-percent. EFRO: personnel/external-services/materials/equipment/other/indirect-flat-rate. REACT-EU: EFRO + green-recovery. No PHP category validator per ADR-031.",
       "x-schema-org": "schema:MonetaryAmount",
       "type": "object",
       "required": [
@@ -21795,7 +21795,7 @@
             "react-eu",
             "other"
           ],
-          "description": "Denormalized regeling from parent Subsidie. Drives if/then kostencategorie constraint enforcement at save time (REQ-RDS-002).",
+          "description": "Denormalized regeling from parent Subsidie. Drives if/then kostencategorie constraint enforcement at save time.",
           "example": "eu-horizon",
           "title": "Subsidy Scheme"
         },
@@ -21814,7 +21814,7 @@
             "indirect-flat-rate",
             "green-recovery"
           ],
-          "description": "Expense category for this kostenpost. Allowed values are constrained per subsidieRegeling (REQ-RDS-002).",
+          "description": "Expense category for this kostenpost. Allowed values are constrained per subsidieRegeling.",
           "example": "personnel",
           "title": "Expense Category"
         },
@@ -22426,7 +22426,7 @@
       "slug": "WBSOTag",
       "x-openregister-audit-trail": {
         "enabled": true,
-        "description": "Every create, update and delete of a WBSO Tag is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        "description": "Every create, update and delete of a WBSO Tag is written to OpenRegister's immutable audit trail with actor and timestamp."
       },
       "icon": "TagCheckOutline",
       "version": "0.1.0",
@@ -22443,13 +22443,13 @@
       "properties": {
         "wbsoCode": {
           "type": "string",
-          "description": "Official WBSO project code (SO, TWO, SMART) or custom code per WBSO legislation. Not an enum — operators may add custom codes per subsidy agreement (REQ-WBSO-002).",
+          "description": "Official WBSO project code (SO, TWO, SMART) or custom code per WBSO legislation. Not an enum — operators may add custom codes per subsidy agreement.",
           "example": "SO",
           "title": "WBSO Code"
         },
         "displayName": {
           "type": "string",
-          "description": "Dutch display name of the WBSO code shown in UI and exports (REQ-WBSO-002).",
+          "description": "Dutch display name of the WBSO code shown in UI and exports.",
           "example": "Stand-alone Project",
           "title": "Display Name"
         },
@@ -22554,12 +22554,12 @@
       "slug": "WBSOActivityCode",
       "x-openregister-audit-trail": {
         "enabled": true,
-        "description": "Every create, update and delete of a WBSO Activity Code is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        "description": "Every create, update and delete of a WBSO Activity Code is written to OpenRegister's immutable audit trail with actor and timestamp."
       },
       "icon": "ClipboardListOutline",
       "version": "0.1.0",
       "title": "WBSO Activity Code",
-      "description": "Activity classification register per REQ-WBSO-003 — A-codes (allowed R&D activities) and B-codes (non-eligible overhead). Baseline codes ship with the app; administrations may add custom variants via parentActivityCode FK (REQ-WBSO-009).",
+      "description": "Activity classification register per REQ-WBSO-003 — A-codes (allowed R&D activities) and B-codes (non-eligible overhead). Baseline codes ship with the app; administrations may add custom variants via parentActivityCode FK.",
       "type": "object",
       "x-schema-org": "schema:DefinedTerm",
       "required": [
@@ -22573,19 +22573,19 @@
       "properties": {
         "activityCode": {
           "type": "string",
-          "description": "Activity code identifier: A001–A999 for allowed R&D activities, B001+ for restricted/overhead, or custom per subsidy agreement (REQ-WBSO-003).",
+          "description": "Activity code identifier: A001–A999 for allowed R&D activities, B001+ for restricted/overhead, or custom per subsidy agreement.",
           "example": "A001",
           "title": "Activity Code"
         },
         "description": {
           "type": "string",
-          "description": "Activity description per RVO guidelines (REQ-WBSO-003).",
+          "description": "Activity description per RVO guidelines.",
           "example": "Software development for R&D",
           "title": "Activity Description"
         },
         "category": {
           "type": "string",
-          "description": "RVO activity category for grouping and reporting (REQ-WBSO-003).",
+          "description": "RVO activity category for grouping and reporting.",
           "enum": [
             "research-development",
             "support",
@@ -22597,14 +22597,14 @@
         },
         "isAllowed": {
           "type": "boolean",
-          "description": "true = eligible for WBSO subsidy hours; false = tracked but excluded from RVO submission totals (REQ-WBSO-003).",
+          "description": "true = eligible for WBSO subsidy hours; false = tracked but excluded from RVO submission totals.",
           "example": true,
           "title": "Eligible for WBSO"
         },
         "parentActivityCode": {
           "type": "string",
           "nullable": true,
-          "description": "FK to the baseline WBSOActivityCode.activityCode this entry is a custom variant of. Custom variants inherit isAllowed from parent unless explicitly overridden (REQ-WBSO-009).",
+          "description": "FK to the baseline WBSOActivityCode.activityCode this entry is a custom variant of. Custom variants inherit isAllowed from parent unless explicitly overridden.",
           "example": "A001",
           "title": "Based on Baseline Code"
         },
@@ -22695,12 +22695,12 @@
       "slug": "WBSOExportLog",
       "x-openregister-audit-trail": {
         "enabled": true,
-        "description": "Every create, update and delete of a WBSO Export Log is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        "description": "Every create, update and delete of a WBSO Export Log is written to OpenRegister's immutable audit trail with actor and timestamp."
       },
       "icon": "FileExportOutline",
       "version": "0.1.0",
       "title": "WBSO Export Log",
-      "description": "Tracks WBSO uren-export operations and their RVO validation lifecycle per REQ-WBSO-005. Lifecycle: draft → generated → validated → submitted → archived (with generated → rejected fallback). Validation guards enforce complete WBSO tagging on all included Urenregistratie entries before allowing RVO submission (REQ-WBSO-006).",
+      "description": "Tracks WBSO uren-export operations and their RVO validation lifecycle per REQ-WBSO-005. Lifecycle: draft → generated → validated → submitted → archived (with generated → rejected fallback). Validation guards enforce complete WBSO tagging on all included Urenregistratie entries before allowing RVO submission.",
       "type": "object",
       "x-schema-org": "schema:DigitalDocument",
       "required": [
@@ -22716,27 +22716,27 @@
       "properties": {
         "exportId": {
           "type": "string",
-          "description": "Unique export identifier in the format EXP-{YEAR}-{PERIOD}-{SEQ} (REQ-WBSO-005).",
+          "description": "Unique export identifier in the format EXP-{YEAR}-{PERIOD}-{SEQ}.",
           "example": "EXP-2026-Q1-001",
           "title": "Export Reference"
         },
         "periodStart": {
           "type": "string",
           "format": "date",
-          "description": "Start of the export date range (inclusive), typically fiscal quarter start (REQ-WBSO-005).",
+          "description": "Start of the export date range (inclusive), typically fiscal quarter start.",
           "example": "2026-01-01",
           "title": "Period Start"
         },
         "periodEnd": {
           "type": "string",
           "format": "date",
-          "description": "End of the export date range (inclusive), typically fiscal quarter end (REQ-WBSO-005).",
+          "description": "End of the export date range (inclusive), typically fiscal quarter end.",
           "example": "2026-03-31",
           "title": "Period End"
         },
         "exportFormat": {
           "type": "string",
-          "description": "Output format for the RVO submission (REQ-WBSO-005, REQ-WBSO-007).",
+          "description": "Output format for the RVO submission.",
           "enum": [
             "csv",
             "pdf",
@@ -22747,7 +22747,7 @@
         },
         "status": {
           "type": "string",
-          "description": "Export lifecycle state (REQ-WBSO-005, REQ-WBSO-006).",
+          "description": "Export lifecycle state.",
           "enum": [
             "draft",
             "generated",
@@ -22763,14 +22763,14 @@
         "recordCount": {
           "type": "integer",
           "minimum": 0,
-          "description": "Number of Urenregistratie entries included in this export (REQ-WBSO-005).",
+          "description": "Number of Urenregistratie entries included in this export.",
           "example": 247,
           "title": "Time Entries Included"
         },
         "totalHours": {
           "type": "number",
           "minimum": 0,
-          "description": "Total eligible hours (A-codes) included in the export. Excludes B-code entries (REQ-WBSO-005).",
+          "description": "Total eligible hours (A-codes) included in the export. Excludes B-code entries.",
           "example": 320.5,
           "title": "Eligible Hours"
         },
@@ -22778,14 +22778,14 @@
           "type": "number",
           "minimum": 0,
           "nullable": true,
-          "description": "Total non-eligible hours (B-codes) tracked but excluded from RVO submission totals (REQ-WBSO-005).",
+          "description": "Total non-eligible hours (B-codes) tracked but excluded from RVO submission totals.",
           "example": 10.0,
           "title": "Non-Eligible Hours"
         },
         "exportFilters": {
           "type": "object",
           "nullable": true,
-          "description": "Filter parameters applied on export generation: wbsoTagId, activityCodeId, isAllowed, employee, date range (REQ-WBSO-008).",
+          "description": "Filter parameters applied on export generation: wbsoTagId, activityCodeId, isAllowed, employee, date range.",
           "example": {
             "wbsoTagId": "wbso-tag-so-1",
             "isAllowed": true
@@ -22796,7 +22796,7 @@
           "type": "string",
           "format": "date-time",
           "nullable": true,
-          "description": "Timestamp when the export file was materialized (REQ-WBSO-005).",
+          "description": "Timestamp when the export file was materialized.",
           "example": "2026-04-10T09:15:00Z",
           "title": "Generated At"
         },
@@ -22804,14 +22804,14 @@
           "type": "string",
           "format": "date-time",
           "nullable": true,
-          "description": "Timestamp when RVO validation passed (REQ-WBSO-005).",
+          "description": "Timestamp when RVO validation passed.",
           "example": "2026-04-10T09:20:00Z",
           "title": "Validated At"
         },
         "validationErrors": {
           "type": "array",
           "nullable": true,
-          "description": "List of validation error messages. Empty array if validated successfully; populated on rejection (REQ-WBSO-006).",
+          "description": "List of validation error messages. Empty array if validated successfully; populated on rejection.",
           "items": {
             "type": "string"
           },
@@ -22824,14 +22824,14 @@
           "type": "string",
           "format": "date-time",
           "nullable": true,
-          "description": "Timestamp when submitted to RVO portal or operator marked submission complete (REQ-WBSO-005).",
+          "description": "Timestamp when submitted to RVO portal or operator marked submission complete.",
           "example": "2026-04-10T10:30:00Z",
           "title": "Submitted At"
         },
         "fileUri": {
           "type": "string",
           "nullable": true,
-          "description": "Storage path or cloud URL of the generated export file (REQ-WBSO-005).",
+          "description": "Storage path or cloud URL of the generated export file.",
           "example": "s3://shillinq-exports/wbso-2026-q1.csv",
           "title": "Export File"
         },
@@ -22882,7 +22882,7 @@
             "from": "generated",
             "to": "validated",
             "label": "Valideer voor RVO",
-            "description": "Run RVO validation: all included Urenregistratie entries MUST have non-null wbsoTagId + activityCodeId; isAllowed MUST match entry eligibility (REQ-WBSO-006).",
+            "description": "Run RVO validation: all included Urenregistratie entries MUST have non-null wbsoTagId + activityCodeId; isAllowed MUST match entry eligibility.",
             "requires": "OCA\\Shillinq\\Lifecycle\\WBSOExportValidationGuard"
           },
           "submit": {
@@ -22913,7 +22913,7 @@
       },
       "x-openregister-aggregations": {
         "wbsoExportTotals": {
-          "description": "Compute totalHours (eligible) and totalHoursIneligible (non-eligible) from Urenregistratie entries matching this export's period range (REQ-WBSO-006).",
+          "description": "Compute totalHours (eligible) and totalHoursIneligible (non-eligible) from Urenregistratie entries matching this export's period range.",
           "type": "multi-sum",
           "source": {
             "register": "shillinq",
@@ -22955,7 +22955,7 @@
           }
         },
         "untaggedEntryCount": {
-          "description": "Count of Urenregistratie entries in the export period where wbsoTagId or activityCodeId is null. Used by the validation guard to detect incomplete tagging (REQ-WBSO-006).",
+          "description": "Count of Urenregistratie entries in the export period where wbsoTagId or activityCodeId is null. Used by the validation guard to detect incomplete tagging.",
           "type": "count",
           "source": {
             "register": "shillinq",
@@ -23009,7 +23009,7 @@
       "slug": "SisaRegelingIndicator",
       "x-openregister-audit-trail": {
         "enabled": true,
-        "description": "Every create, update and delete of a SiSa Regeling Indicator is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        "description": "Every create, update and delete of a SiSa Regeling Indicator is written to OpenRegister's immutable audit trail with actor and timestamp."
       },
       "icon": "FileCheckOutline",
       "version": "0.1.0",
@@ -23202,7 +23202,7 @@
       "slug": "SoProject",
       "x-openregister-audit-trail": {
         "enabled": true,
-        "description": "Every create, update and delete of an S&O-project is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        "description": "Every create, update and delete of an S&O-project is written to OpenRegister's immutable audit trail with actor and timestamp."
       },
       "icon": "FlaskOutline",
       "version": "0.1.0",
@@ -23303,7 +23303,7 @@
       "slug": "SoUrenStaat",
       "x-openregister-audit-trail": {
         "enabled": true,
-        "description": "Every create, update and delete of an S&O-uren-staat is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+        "description": "Every create, update and delete of an S&O-uren-staat is written to OpenRegister's immutable audit trail with actor and timestamp."
       },
       "icon": "ClockCheckOutline",
       "version": "0.1.0",
@@ -23369,7 +23369,7 @@
           "type": "number",
           "minimum": 0,
           "nullable": true,
-          "description": "The employee's R&D hourly wage, used to calculate the payroll-tax remittance reduction (REQ-WBSO-006). Captured as a snapshot when the timesheet is filled in, so a later wage change does not alter historical claims.",
+          "description": "The employee's R&D hourly wage, used to calculate the payroll-tax remittance reduction. Captured as a snapshot when the timesheet is filled in, so a later wage change does not alter historical claims.",
           "example": 48.5,
           "title": "R&D Hourly Wage"
         },
@@ -23410,7 +23410,7 @@
       },
       "x-openregister-aggregations": {
         "mededeling": {
-          "description": "Sommeert goedgekeurde S&O-uren per kwartaal per project voor de RvO-mededeling (REQ-WBSO-003). Alleen urenstaten met state ≠ draft worden meegeteld.",
+          "description": "Sommeert goedgekeurde S&O-uren per kwartaal per project voor de RvO-mededeling. Alleen urenstaten met state ≠ draft worden meegeteld.",
           "groupBy": [
             "soProjectId",
             "quarter"
@@ -23437,7 +23437,7 @@
           }
         },
         "jaarrapport": {
-          "description": "Sommeert alle vier kwartaalmededelingen per jaar per project voor het RvO-jaarrapport (REQ-WBSO-004). De som van jaarrapport.totaalUren MOET gelijk zijn aan de som van de vier kwartaalmededelingen.",
+          "description": "Sommeert alle vier kwartaalmededelingen per jaar per project voor het RvO-jaarrapport. De som van jaarrapport.totaalUren MOET gelijk zijn aan de som van de vier kwartaalmededelingen.",
           "groupBy": [
             "soProjectId",
             "year"
@@ -23471,7 +23471,7 @@
           "reconciliationWarningThreshold": 0.02
         },
         "rvoMededelingAfdracht": {
-          "description": "De gezaghebbende afdrachtvermindering zoals teruggekoppeld door RvO via de openconnector-bron. Wordt naast projectedAfdrachtvermindering getoond (REQ-WBSO-006).",
+          "description": "De gezaghebbende afdrachtvermindering zoals teruggekoppeld door RvO via de openconnector-bron. Wordt naast projectedAfdrachtvermindering getoond.",
           "outputField": "rvoMededelingAfdracht",
           "outputType": "number",
           "readOnly": true,

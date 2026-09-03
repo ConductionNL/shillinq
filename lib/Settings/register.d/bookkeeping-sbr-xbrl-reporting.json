@@ -27,33 +27,33 @@
         "properties": {
           "taxonomyId": {
             "type": "string",
-            "description": "Unique taxonomy identifier (REQ-SBR-002).",
+            "description": "Unique taxonomy identifier.",
             "example": "xbrl-gl-2026",
             "title": "Taxonomy ID"
           },
           "name": {
             "type": "string",
-            "description": "Human-readable taxonomy name (REQ-SBR-002).",
+            "description": "Human-readable taxonomy name.",
             "example": "XBRL GL 2026 — Belastingdienst Official",
             "title": "Name"
           },
           "taxonomyVersion": {
             "type": "string",
-            "description": "Official version code (REQ-SBR-002); referenced by XBRLMapping.taxonomyVersion.",
+            "description": "Official version code; referenced by XBRLMapping.taxonomyVersion.",
             "example": "2026-01",
             "title": "Taxonomy Version"
           },
           "publicationDate": {
             "type": "string",
             "format": "date",
-            "description": "Date Belastingdienst published this taxonomy version (REQ-SBR-002).",
+            "description": "Date Belastingdienst published this taxonomy version.",
             "example": "2025-12-15",
             "title": "Publication Date"
           },
           "effectiveDate": {
             "type": "string",
             "format": "date",
-            "description": "Date taxonomy becomes effective for filings (REQ-SBR-002).",
+            "description": "Date taxonomy becomes effective for filings.",
             "example": "2026-01-01",
             "title": "Effective Date"
           },
@@ -61,7 +61,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Date taxonomy is superseded; null = active indefinitely (REQ-SBR-002).",
+            "description": "Date taxonomy is superseded; null = active indefinitely.",
             "title": "Expiry Date"
           },
           "status": {
@@ -72,7 +72,7 @@
               "deprecated"
             ],
             "default": "active",
-            "description": "Taxonomy lifecycle state (REQ-SBR-002).",
+            "description": "Taxonomy lifecycle state.",
             "title": "Status"
           },
           "description": {
@@ -136,13 +136,13 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Human-readable filing name (REQ-SBR-003).",
+            "description": "Human-readable filing name.",
             "example": "Jaarverslag (Annual Report)",
             "title": "Name"
           },
           "code": {
             "type": "string",
-            "description": "Unique filing code (REQ-SBR-003).",
+            "description": "Unique filing code.",
             "example": "JAARVERSLAG",
             "title": "Code"
           },
@@ -157,7 +157,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Entity types requiring this filing (REQ-SBR-003).",
+            "description": "Entity types requiring this filing.",
             "example": [
               "BV",
               "NV",
@@ -168,7 +168,7 @@
           "filingDeadline": {
             "type": "string",
             "format": "date",
-            "description": "Regulatory deadline (REQ-SBR-003); notification fires 30 days prior per REQ-SBR-008.",
+            "description": "Regulatory deadline; notification fires 30 days prior per REQ-SBR-008.",
             "example": "2026-05-31",
             "title": "Filing Deadline"
           },
@@ -178,7 +178,7 @@
               "type": "string"
             },
             "nullable": true,
-            "description": "Mandatory GL accounts or data elements that MUST be present before validation (REQ-SBR-006).",
+            "description": "Mandatory GL accounts or data elements that MUST be present before validation.",
             "example": [
               "assets",
               "liabilities",
@@ -188,7 +188,7 @@
           },
           "submissionEndpoint": {
             "type": "string",
-            "description": "Belastingdienst / DNB submission endpoint URL (REQ-SBR-003); T4 outbound consumer.",
+            "description": "Belastingdienst / DNB submission endpoint URL; T4 outbound consumer.",
             "example": "https://belastingdienst.nl/xbrl-filing/submit",
             "title": "Submission Endpoint"
           },
@@ -200,7 +200,7 @@
               "pki-cert",
               "api-key"
             ],
-            "description": "Authentication scheme for the submission endpoint (REQ-SBR-003); T4 binds the actual credential.",
+            "description": "Authentication scheme for the submission endpoint; T4 binds the actual credential.",
             "example": "oauth2",
             "title": "Auth Method"
           },
@@ -221,7 +221,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the Administration this filing applies to (REQ-SBR-003).",
+            "description": "FK to the Administration this filing applies to.",
             "example": "adm-001",
             "title": "Administration ID"
           },
@@ -252,33 +252,33 @@
               "type": "string"
             },
             "nullable": true,
-            "description": "Recorded validation errors that blocked the validate transition (REQ-SBR-006); used to render the unmapped-account list to the operator.",
+            "description": "Recorded validation errors that blocked the validate transition; used to render the unmapped-account list to the operator.",
             "title": "Validation Errors"
           },
           "submittedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp when the filing was submitted (REQ-SBR-005).",
+            "description": "Timestamp when the filing was submitted.",
             "title": "Submitted At"
           },
           "approvedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp when Belastingdienst approved the filing (REQ-SBR-005).",
+            "description": "Timestamp when Belastingdienst approved the filing.",
             "title": "Approved At"
           },
           "rejectionReason": {
             "type": "string",
             "nullable": true,
-            "description": "Belastingdienst-supplied rejection reason for audit (REQ-SBR-005).",
+            "description": "Belastingdienst-supplied rejection reason for audit.",
             "title": "Rejection Reason"
           },
           "filingId": {
             "type": "string",
             "nullable": true,
-            "description": "Belastingdienst-supplied filing identifier returned on submission acceptance (REQ-SBR-005).",
+            "description": "Belastingdienst-supplied filing identifier returned on submission acceptance.",
             "title": "Filing ID"
           }
         },
@@ -300,7 +300,7 @@
           "states": {
             "draft": {
               "label": "Concept",
-              "description": "Filing created, GL not yet validated against XBRL mapping (REQ-SBR-005)."
+              "description": "Filing created, GL not yet validated against XBRL mapping."
             },
             "validated": {
               "label": "Gevalideerd",
@@ -308,15 +308,15 @@
             },
             "submitted": {
               "label": "Ingediend",
-              "description": "Operator has handed the filing to the T4 outbound pipeline; Digipoort/Belastingdienst submission in progress (REQ-SBR-005)."
+              "description": "Operator has handed the filing to the T4 outbound pipeline; Digipoort/Belastingdienst submission in progress."
             },
             "approved": {
               "label": "Geaccepteerd",
-              "description": "Belastingdienst webhook accepted the filing (REQ-SBR-005)."
+              "description": "Belastingdienst webhook accepted the filing."
             },
             "rejected": {
               "label": "Afgewezen",
-              "description": "Belastingdienst webhook rejected the filing; rejection reason recorded (REQ-SBR-005)."
+              "description": "Belastingdienst webhook rejected the filing; rejection reason recorded."
             }
           },
           "transitions": {
@@ -344,31 +344,31 @@
               "from": "validated",
               "to": "submitted",
               "label": "Indienen",
-              "description": "Hand the filing contract (GL snapshot, mapping rules, XBRL payload) to the T4 outbound pipeline via openconnector Digipoort source slug (REQ-SBR-005). T3 does NOT invoke the submission endpoint."
+              "description": "Hand the filing contract (GL snapshot, mapping rules, XBRL payload) to the T4 outbound pipeline via openconnector Digipoort source slug. T3 does NOT invoke the submission endpoint."
             },
             "approve": {
               "from": "submitted",
               "to": "approved",
               "label": "Accepteren",
-              "description": "Record Belastingdienst acceptance from the inbound webhook payload (REQ-SBR-005)."
+              "description": "Record Belastingdienst acceptance from the inbound webhook payload."
             },
             "reject": {
               "from": "submitted",
               "to": "rejected",
               "label": "Afwijzen",
-              "description": "Record Belastingdienst rejection reason from the inbound webhook payload (REQ-SBR-005)."
+              "description": "Record Belastingdienst rejection reason from the inbound webhook payload."
             },
             "revert": {
               "from": "validated",
               "to": "draft",
               "label": "Terug naar concept",
-              "description": "Operator returns the filing to draft for editing (REQ-SBR-005)."
+              "description": "Operator returns the filing to draft for editing."
             },
             "remediate": {
               "from": "rejected",
               "to": "validated",
               "label": "Hervalideren",
-              "description": "Operator remediates a rejected filing; revalidates per REQ-SBR-007 (REQ-SBR-005)."
+              "description": "Operator remediates a rejected filing; revalidates per REQ-SBR-007."
             }
           }
         },
@@ -390,7 +390,7 @@
             "count": true
           },
           "unmappedAccountList": {
-            "description": "List of unmapped Account UUIDs surfaced to the operator on validation failure (REQ-SBR-007).",
+            "description": "List of unmapped Account UUIDs surfaced to the operator on validation failure.",
             "source": "Account",
             "filter": {
               "status": "active",
@@ -410,7 +410,7 @@
             ]
           },
           "mappingCoveragePercent": {
-            "description": "Percentage of active accounts with active XBRLMapping for the selected taxonomy version (REQ-SBR-007). Surfaced in the Mapping Validation index.",
+            "description": "Percentage of active accounts with active XBRLMapping for the selected taxonomy version. Surfaced in the Mapping Validation index.",
             "source": "Account",
             "filter": {
               "status": "active"
@@ -495,7 +495,7 @@
             },
             "type": "boolean",
             "materialise": true,
-            "description": "True when the filing is still open (not submitted, not approved) and its deadline falls within the next 30 days (REQ-SBR-008). Materialised so the filingDeadlineApproaching scheduled notification can filter on it, and re-evaluated daily without an object write by OpenRegister's temporal calculation sweep (daysUntilFilingDeadline references `now`, which flags this schema as temporal). This is the declarative replacement for the legacy rule's `schedule.fireAt = filingDeadline - P30D` / `skipIf status in [submitted, approved]` pair."
+            "description": "True when the filing is still open (not submitted, not approved) and its deadline falls within the next 30 days. Materialised so the filingDeadlineApproaching scheduled notification can filter on it, and re-evaluated daily without an object write by OpenRegister's temporal calculation sweep (daysUntilFilingDeadline references `now`, which flags this schema as temporal). This is the declarative replacement for the legacy rule's `schedule.fireAt = filingDeadline - P30D` / `skipIf status in [submitted, approved]` pair."
           }
         },
         "x-openregister-notifications": {
@@ -534,7 +534,7 @@
               "type": "transition",
               "action": "reject"
             },
-            "description": "Notify finance-manager when Belastingdienst rejects a submitted filing (REQ-SBR-005).",
+            "description": "Notify finance-manager when Belastingdienst rejects a submitted filing.",
             "enabled": true,
             "channels": [
               "nc-notification"
@@ -603,26 +603,26 @@
             "type": "string",
             "format": "uuid",
             "$ref": "Account",
-            "description": "FK to Account.id (REQ-SBR-004).",
+            "description": "FK to Account.id.",
             "example": "acct-1000-current-assets",
             "title": "Source Account ID"
           },
           "targetXBRLConcept": {
             "type": "string",
-            "description": "XBRL GL concept URI (REQ-SBR-004).",
+            "description": "XBRL GL concept URI.",
             "example": "http://xbrl.gl/concept/CurrentAssets",
             "title": "Target XBRL Concept"
           },
           "taxonomyVersion": {
             "type": "string",
-            "description": "FK to XBRLTaxonomy.taxonomyVersion — mappings are version-scoped (REQ-SBR-004).",
+            "description": "FK to XBRLTaxonomy.taxonomyVersion — mappings are version-scoped.",
             "example": "2026-01",
             "title": "Taxonomy Version"
           },
           "mappingDate": {
             "type": "string",
             "format": "date",
-            "description": "Date this mapping was established (REQ-SBR-004).",
+            "description": "Date this mapping was established.",
             "example": "2026-01-01",
             "title": "Mapping Date"
           },
@@ -634,7 +634,7 @@
               "pending-review"
             ],
             "default": "active",
-            "description": "Mapping lifecycle state (REQ-SBR-004).",
+            "description": "Mapping lifecycle state.",
             "title": "Status"
           },
           "notes": {

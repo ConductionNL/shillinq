@@ -2,7 +2,7 @@
 	"_meta": {
 		"spdx-license": "EUPL-1.2",
 		"spdx-copyright": "2026 Conduction B.V.",
-		"description": "VNG ENSIA-vragenset 2026 — bundled seed gebruikt door ENSIAQuestionSetLoader (REQ-ENSIA-001) wanneer geen externe bron is geconfigureerd. Bevat een representatieve subset van de officiele BIO-1.04-2026 + DigiD + SUWI normatiek. Voor productie-instanties is een verse vraagset van de VNG portal aanbevolen; de loader leest dit bestand alleen als fallback."
+		"description": "VNG ENSIA-vragenset 2026 — bundled seed gebruikt door ENSIAQuestionSetLoader wanneer geen externe bron is geconfigureerd. Bevat een representatieve subset van de officiele BIO-1.04-2026 + DigiD + SUWI normatiek. Voor productie-instanties is een verse vraagset van de VNG portal aanbevolen; de loader leest dit bestand alleen als fallback."
 	},
 	"questionSetVersion": "BIO-1.04-2026",
 	"vragen": [

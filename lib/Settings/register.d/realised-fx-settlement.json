@@ -13,7 +13,7 @@
                 "icon": "CurrencyEur",
                 "version": "0.1.0",
                 "title": "Realised FX Posting",
-                "description": "Append-only audit record per foreign-currency ARInvoice settlement (REQ-MC-010). Carries the settled invoice, the foreign amount, the invoice-date and payment-date rates, the signed realised difference in functional cents, the direction (gain/loss) and the GL account attribution (realised gain/loss account plus AR-control clearing). The realised difference equals foreignAmount x (paymentRate - invoiceRate); a positive value is a gain, negative a loss. Distinct from FxRevaluationPosting which records the UNREALISED period-end mark of open balances.",
+                "description": "Append-only audit record per foreign-currency ARInvoice settlement. Carries the settled invoice, the foreign amount, the invoice-date and payment-date rates, the signed realised difference in functional cents, the direction (gain/loss) and the GL account attribution (realised gain/loss account plus AR-control clearing). The realised difference equals foreignAmount x (paymentRate - invoiceRate); a positive value is a gain, negative a loss. Distinct from FxRevaluationPosting which records the UNREALISED period-end mark of open balances.",
                 "x-schema-org": "schema:MonetaryAmount",
                 "x-spec": "openspec/changes/ar-billing-completeness/specs/bookkeeping-multi-currency/spec.md",
                 "x-openregister-audit-trail": {
@@ -39,7 +39,7 @@
                 "properties": {
                     "administrationId": {
                         "type": "string",
-                        "description": "Administration the settled ARInvoice belongs to (REQ-MC-010).",
+                        "description": "Administration the settled ARInvoice belongs to.",
                         "example": "adm-holding-nl",
                         "title": "Administration ID"
                     },
@@ -59,7 +59,7 @@
                     "foreignCurrency": {
                         "type": "string",
                         "pattern": "^[A-Z]{3}$",
-                        "description": "ISO 4217 currency the invoice was issued in (REQ-MC-010).",
+                        "description": "ISO 4217 currency the invoice was issued in.",
                         "example": "USD",
                         "title": "Foreign Currency"
                     },
@@ -150,7 +150,7 @@
                         },
                         "reversed": {
                             "label": "Reversed",
-                            "description": "Manually reversed by a controller to correct an erroneous posting; original entry preserved for audit (REQ-MC-010)."
+                            "description": "Manually reversed by a controller to correct an erroneous posting; original entry preserved for audit."
                         }
                     },
                     "transitions": {

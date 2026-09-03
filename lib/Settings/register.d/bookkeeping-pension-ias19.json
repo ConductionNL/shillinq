@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-pension-ias19",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — IAS 19 / RJ 271 employee-benefit pension accounting. Six new schemas (PensionPlan, ActuarialValuation, PensionMovement, PensionAssumptionSensitivity, PensionAssetDetail, PensionDisclosureTabel) declaring the defined-benefit (PUC) and defined-contribution measurement, roll-forward, sensitivity, fair-value asset breakdown and jaarrekening disclosure surface entirely as declarative metadata per ADR-031: schema fields + x-openregister-lifecycle (draft → approved → locked on ActuarialValuation, draft → active → terminated on PensionPlan) + x-openregister-aggregations (roll-forward closing balances, sensitivity deltas, disclosure-table generation). The lifecycle preconditions that require cross-field / cross-schema completeness checks the declarative requires: clause cannot yet express are referenced as OCA\\Shillinq\\Lifecycle\\PensionIas19Guard::<method> (ADR-031 exception path; fail-closed; real OpenRegister ObjectService API per ADR-022). DB plans MUST carry methodology=PUC (REQ-PEN-001); DC plans are blocked from DBO/sensitivity workflows (REQ-PEN-008); discount rate is flagged when sourced from government bonds (REQ-PEN-002); OCI remeasurements are non-recycling (REQ-PEN-004). Seed objects ship two pension plans (NL Standard DB Regeling, NL Standard DC Regeling) and one sensitivity template per design.md; operators customise per administration on first use. No PHP actuarial calculation service is authored."
+    "description": "Tier 3 — IAS 19 / RJ 271 employee-benefit pension accounting. Six new schemas (PensionPlan, ActuarialValuation, PensionMovement, PensionAssumptionSensitivity, PensionAssetDetail, PensionDisclosureTabel) declaring the defined-benefit (PUC) and defined-contribution measurement, roll-forward, sensitivity, fair-value asset breakdown and jaarrekening disclosure surface entirely as declarative metadata per ADR-031: schema fields + x-openregister-lifecycle (draft → approved → locked on ActuarialValuation, draft → active → terminated on PensionPlan) + x-openregister-aggregations (roll-forward closing balances, sensitivity deltas, disclosure-table generation). The lifecycle preconditions that require cross-field / cross-schema completeness checks the declarative requires: clause cannot yet express are referenced as OCA\\Shillinq\\Lifecycle\\PensionIas19Guard::<method> (ADR-031 exception path; fail-closed; real OpenRegister ObjectService API per ADR-022). DB plans MUST carry methodology=PUC; DC plans are blocked from DBO/sensitivity workflows; discount rate is flagged when sourced from government bonds; OCI remeasurements are non-recycling. Seed objects ship two pension plans (NL Standard DB Regeling, NL Standard DC Regeling) and one sensitivity template per design.md; operators customise per administration on first use. No PHP actuarial calculation service is authored."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "AccountCashOutline",
         "version": "0.1.0",
         "title": "Pension Plan",
-        "description": "Regeling description for an IAS 19 / RJ 271 employee-benefit pension plan: plan type (DB/DC/CDC/hybrid), accrual, eligibility, provider, governance, participant counts and the optional HRMQ deelnemersbestand link (REQ-PEN-001, REQ-PEN-008, REQ-PEN-010). DB plans drive full PUC measurement; DC plans get light disclosure only.",
+        "description": "Regeling description for an IAS 19 / RJ 271 employee-benefit pension plan: plan type (DB/DC/CDC/hybrid), accrual, eligibility, provider, governance, participant counts and the optional HRMQ deelnemersbestand link. DB plans drive full PUC measurement; DC plans get light disclosure only.",
         "x-schema-org": "schema:FinancialProduct",
         "x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md",
         "type": "object",
@@ -36,13 +36,13 @@
         "properties": {
           "planName": {
             "type": "string",
-            "description": "Human-readable plan name (REQ-PEN-001).",
+            "description": "Human-readable plan name.",
             "example": "DB Regeling Industrie BV",
             "title": "Plan Name"
           },
           "planType": {
             "type": "string",
-            "description": "Plan classification. DB drives full PUC measurement; DC gets light disclosure per IAS 19 §53 (REQ-PEN-001, REQ-PEN-008).",
+            "description": "Plan classification. DB drives full PUC measurement; DC gets light disclosure per IAS 19 §53.",
             "enum": [
               "DB",
               "DC",
@@ -73,7 +73,7 @@
           },
           "funded": {
             "type": "boolean",
-            "description": "Whether the plan has segregated plan assets (REQ-PEN-003).",
+            "description": "Whether the plan has segregated plan assets.",
             "example": true,
             "title": "Funded"
           },
@@ -111,14 +111,14 @@
           },
           "accrualRate": {
             "type": "number",
-            "description": "Annual DB accrual rate as a fraction of pensioengrondslag (e.g. 0.01875 for 1.875%) (REQ-PEN-001).",
+            "description": "Annual DB accrual rate as a fraction of pensioengrondslag (e.g. 0.01875 for 1.875%).",
             "nullable": true,
             "example": 0.01875,
             "title": "Accrual Rate"
           },
           "pensionableSalaryDefinition": {
             "type": "string",
-            "description": "Definition of salary used for accrual (REQ-PEN-001).",
+            "description": "Definition of salary used for accrual.",
             "example": "Bruto jaarsalaris inclusief vaste toeslagen, minus AOW-franchise",
             "title": "Pensionable Salary Definition"
           },
@@ -131,7 +131,7 @@
           "participantCountActive": {
             "type": "integer",
             "minimum": 0,
-            "description": "Active employees with accruing benefits (REQ-PEN-010).",
+            "description": "Active employees with accruing benefits.",
             "example": 150,
             "title": "Participant Count Active"
           },
@@ -151,7 +151,7 @@
           },
           "linkedHrmqGroup": {
             "type": "string",
-            "description": "Optional reference to an HRMQ pension-administration group for annual deelnemersbestand validation (REQ-PEN-010). The HRMQ contract is captured declaratively in the PensionPlan x-openregister-hrmq-roster-source block (Task 19).",
+            "description": "Optional reference to an HRMQ pension-administration group for annual deelnemersbestand validation. The HRMQ contract is captured declaratively in the PensionPlan x-openregister-hrmq-roster-source block (Task 19).",
             "nullable": true,
             "example": "vaste-staf-NL",
             "title": "Linked Hrmq Group"
@@ -171,7 +171,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Plan lifecycle status (REQ-PEN-001).",
+            "description": "Plan lifecycle status.",
             "enum": [
               "draft",
               "active",
@@ -190,7 +190,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the administration this plan belongs to; reads are scoped to the requesting user's administration (REQ-PEN-001).",
+            "description": "FK to the administration this plan belongs to; reads are scoped to the requesting user's administration.",
             "example": "adm-1",
             "title": "Administration ID"
           }
@@ -205,7 +205,7 @@
             },
             "active": {
               "label": "Active",
-              "description": "Live plan accruing benefits; actuarial valuations may be recorded against it (REQ-PEN-001)."
+              "description": "Live plan accruing benefits; actuarial valuations may be recorded against it."
             },
             "paused": {
               "label": "Paused",
@@ -221,7 +221,7 @@
               "from": "draft",
               "to": "active",
               "label": "Activate plan",
-              "description": "Activate once the plan type, framework and (for DB) accrual rate + pensionable-salary definition are complete (REQ-PEN-001).",
+              "description": "Activate once the plan type, framework and (for DB) accrual rate + pensionable-salary definition are complete.",
               "requires": "OCA\\Shillinq\\Lifecycle\\PensionIas19Guard::canActivatePlan"
             },
             "pause": {
@@ -251,7 +251,7 @@
           }
         },
         "x-openregister-hrmq-roster-source": {
-          "description": "Declarative HRMQ deelnemersbestand contract consumed by hrmq.pension-administration when PensionPlan.linkedHrmqGroup is set (REQ-PEN-010). The annual reconciliation job queries the linked HRMQ group for the active medewerkers and writes the count + roster-hash back into the most-recent draft ActuarialValuation; the roster is signed off via ValuationLifecycle.rosterReconciled, which is enforced by PensionIas19Guard::canLockValuation before the valuation can be locked into the jaarrekening. The contract is also the hook point for the >5% divergence warning required by the REQ-PEN-010 scenario.",
+          "description": "Declarative HRMQ deelnemersbestand contract consumed by hrmq.pension-administration when PensionPlan.linkedHrmqGroup is set. The annual reconciliation job queries the linked HRMQ group for the active medewerkers and writes the count + roster-hash back into the most-recent draft ActuarialValuation; the roster is signed off via ValuationLifecycle.rosterReconciled, which is enforced by PensionIas19Guard::canLockValuation before the valuation can be locked into the jaarrekening. The contract is also the hook point for the >5% divergence warning required by the REQ-PEN-010 scenario.",
           "sourceApp": "hrmq",
           "sourceSchema": "hrmq.pension-administration.group",
           "groupRef": "linkedHrmqGroup",
@@ -280,7 +280,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Pension Plan is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Pension Plan is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "ActuarialValuation": {
@@ -288,7 +288,7 @@
         "icon": "CalculatorVariantOutline",
         "version": "0.1.0",
         "title": "Actuarial Valuation",
-        "description": "Per-balansdatum measurement of a DB plan's defined-benefit obligation (DBO) and plan assets, with the actuarial assumptions and actuaris sign-off (REQ-PEN-001, REQ-PEN-002, REQ-PEN-005). Projected Unit Credit (PUC) methodology is mandatory for DB plans (REQ-PEN-001); the discount rate must be market-referenced and is flagged when a government-bond source is used (REQ-PEN-002). netPensionLiability = dboGross − planAssetsFairValue + assetCeilingApplied (IFRIC 14, REQ-PEN-005).",
+        "description": "Per-balansdatum measurement of a DB plan's defined-benefit obligation (DBO) and plan assets, with the actuarial assumptions and actuaris sign-off. Projected Unit Credit (PUC) methodology is mandatory for DB plans; the discount rate must be market-referenced and is flagged when a government-bond source is used. netPensionLiability = dboGross − planAssetsFairValue + assetCeilingApplied (IFRIC 14, REQ-PEN-005).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md",
         "type": "object",
@@ -316,20 +316,20 @@
         "properties": {
           "plan": {
             "type": "string",
-            "description": "FK to the PensionPlan being valued (REQ-PEN-001).",
+            "description": "FK to the PensionPlan being valued.",
             "example": "plan-db-1",
             "title": "Plan"
           },
           "valuationDate": {
             "type": "string",
             "format": "date",
-            "description": "As-of date, typically 31-12-yyyy (REQ-PEN-002).",
+            "description": "As-of date, typically 31-12-yyyy.",
             "example": "2026-12-31",
             "title": "Valuation Date"
           },
           "actuary": {
             "type": "string",
-            "description": "Actuaris / firm name (REQ-PEN-002).",
+            "description": "Actuaris / firm name.",
             "example": "Mercer Netherlands",
             "title": "Actuary"
           },
@@ -341,7 +341,7 @@
           },
           "methodology": {
             "type": "string",
-            "description": "Measurement methodology. MUST be PUC for DB plans per IAS 19 §67 (REQ-PEN-001); DC for contribution-only plans (REQ-PEN-008).",
+            "description": "Measurement methodology. MUST be PUC for DB plans per IAS 19 §67; DC for contribution-only plans.",
             "enum": [
               "PUC",
               "DC"
@@ -351,7 +351,7 @@
           },
           "dboGross": {
             "type": "number",
-            "description": "Total defined-benefit obligation in EUR (REQ-PEN-001).",
+            "description": "Total defined-benefit obligation in EUR.",
             "example": 8000000.0,
             "title": "Dbo Gross"
           },
@@ -369,26 +369,26 @@
           },
           "discountRate": {
             "type": "number",
-            "description": "Discount rate, percent per annum (REQ-PEN-002).",
+            "description": "Discount rate, percent per annum.",
             "example": 2.0,
             "title": "Discount Rate"
           },
           "discountRateSource": {
             "type": "string",
-            "description": "Market source for audit trail (REQ-PEN-002).",
+            "description": "Market source for audit trail.",
             "example": "iBoxx EUR AA 15-20Y on 2026-12-31: 2.03%",
             "title": "Discount Rate Source"
           },
           "discountRateGovernmentBondFlag": {
             "type": "boolean",
-            "description": "True when the discount rate is sourced from government bonds; surfaces the IAS 19 §83 warning for accountant review (REQ-PEN-002). Not an error — flagged, not blocked.",
+            "description": "True when the discount rate is sourced from government bonds; surfaces the IAS 19 §83 warning for accountant review. Not an error — flagged, not blocked.",
             "default": false,
             "example": false,
             "title": "Discount Rate Government Bond Flag"
           },
           "salaryGrowthAssumption": {
             "type": "number",
-            "description": "Expected annual salary increase, percent (REQ-PEN-006).",
+            "description": "Expected annual salary increase, percent.",
             "example": 2.5,
             "title": "Salary Growth Assumption"
           },
@@ -400,13 +400,13 @@
           },
           "inflationAssumption": {
             "type": "number",
-            "description": "General inflation assumption, percent (REQ-PEN-006).",
+            "description": "General inflation assumption, percent.",
             "example": 2.0,
             "title": "Inflation Assumption"
           },
           "mortalityTable": {
             "type": "string",
-            "description": "Mortality table used (REQ-PEN-006).",
+            "description": "Mortality table used.",
             "example": "AG-Prognosetafel 2026",
             "title": "Mortality Table"
           },
@@ -437,20 +437,20 @@
           },
           "planAssetsFairValue": {
             "type": "number",
-            "description": "Fair value of plan assets in EUR (REQ-PEN-003).",
+            "description": "Fair value of plan assets in EUR.",
             "example": 6500000.0,
             "title": "Plan Assets Fair Value"
           },
           "assetCeilingApplied": {
             "type": "number",
-            "description": "Asset-ceiling adjustment per IFRIC 14 when overfunded; negative reduces a net asset (REQ-PEN-005).",
+            "description": "Asset-ceiling adjustment per IFRIC 14 when overfunded; negative reduces a net asset.",
             "default": 0.0,
             "example": 0.0,
             "title": "Asset Ceiling Applied"
           },
           "netPensionLiability": {
             "type": "number",
-            "description": "Computed dboGross − planAssetsFairValue + assetCeilingApplied; positive = net liability, negative = net asset (REQ-PEN-005).",
+            "description": "Computed dboGross − planAssetsFairValue + assetCeilingApplied; positive = net liability, negative = net asset.",
             "example": 1500000.0,
             "title": "Net Pension Liability"
           },
@@ -462,7 +462,7 @@
           },
           "approvalStatus": {
             "type": "string",
-            "description": "Actuarial valuation lifecycle status (REQ-PEN-002). CONSUMED from decidesk Decision outcome (REQ-SIGN-002); the approvalStatus is driven by decisionOutcome — shillinq does not own the approval transition.",
+            "description": "Actuarial valuation lifecycle status. CONSUMED from decidesk Decision outcome; the approvalStatus is driven by decisionOutcome — shillinq does not own the approval transition.",
             "enum": [
               "draft",
               "approved",
@@ -491,7 +491,7 @@
           "decisionRef": {
             "type": "string",
             "nullable": true,
-            "description": "Decidesk Decision id for the actuaris sign-off (REQ-SIGN-002). Written only by the decidesk registry callback.",
+            "description": "Decidesk Decision id for the actuaris sign-off. Written only by the decidesk registry callback.",
             "title": "Decision Ref"
           },
           "decisionOutcome": {
@@ -502,12 +502,12 @@
               "rejected"
             ],
             "nullable": true,
-            "description": "Mirror of the decidesk decision outcome (REQ-SIGN-002). Written only by the registry callback.",
+            "description": "Mirror of the decidesk decision outcome. Written only by the registry callback.",
             "title": "Decision Outcome"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the administration; reads scoped to the requesting user's administration (REQ-PEN-002).",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
             "example": "adm-1",
             "title": "Administration ID"
           }
@@ -522,7 +522,7 @@
             },
             "approved": {
               "label": "Approved",
-              "description": "Accountant has approved the discount-rate assumption and methodology; ready for roll-forward and disclosure (REQ-PEN-002)."
+              "description": "Accountant has approved the discount-rate assumption and methodology; ready for roll-forward and disclosure."
             },
             "locked": {
               "label": "Locked",
@@ -534,14 +534,14 @@
               "from": "draft",
               "to": "approved",
               "label": "Approve valuation",
-              "description": "Approve once the discount-rate assumption is accountant-signed and (for DB plans) methodology=PUC (REQ-PEN-001, REQ-PEN-002).",
+              "description": "Approve once the discount-rate assumption is accountant-signed and (for DB plans) methodology=PUC.",
               "requires": "OCA\\Shillinq\\Lifecycle\\PensionIas19Guard::canApproveValuation"
             },
             "lock": {
               "from": "approved",
               "to": "locked",
               "label": "Lock valuation",
-              "description": "Lock the approved valuation when the jaarrekening is finalised; the HRMQ roster must be reconciled before lock (REQ-PEN-010).",
+              "description": "Lock the approved valuation when the jaarrekening is finalised; the HRMQ roster must be reconciled before lock.",
               "requires": "OCA\\Shillinq\\Lifecycle\\PensionIas19Guard::canLockValuation"
             },
             "reopen": {
@@ -614,7 +614,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Actuarial Valuation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Actuarial Valuation is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "PensionMovement": {
@@ -622,7 +622,7 @@
         "icon": "SwapVerticalBold",
         "version": "0.1.0",
         "title": "Pension Movement",
-        "description": "Per-period roll-forward of DBO and plan assets, split into the three IAS 19R buckets: service + past service + settlement (P&L), net interest (P&L) and actuarial gain/loss (OCI, non-recycling per IAS 19 §122) (REQ-PEN-003, REQ-PEN-004, REQ-PEN-009). dboClosing, planAssetsClosing, netPensionMovementPL and netPensionMovementOCI are computed roll-forward fields. Past service cost from a plan amendment is posted directly to P&L on the amendment date (REQ-PEN-009).",
+        "description": "Per-period roll-forward of DBO and plan assets, split into the three IAS 19R buckets: service + past service + settlement (P&L), net interest (P&L) and actuarial gain/loss (OCI, non-recycling per IAS 19 §122). dboClosing, planAssetsClosing, netPensionMovementPL and netPensionMovementOCI are computed roll-forward fields. Past service cost from a plan amendment is posted directly to P&L on the amendment date.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md",
         "type": "object",
@@ -651,7 +651,7 @@
         "properties": {
           "plan": {
             "type": "string",
-            "description": "FK to the PensionPlan (REQ-PEN-003).",
+            "description": "FK to the PensionPlan.",
             "example": "plan-db-1",
             "title": "Plan"
           },
@@ -669,13 +669,13 @@
           },
           "serviceCostCurrent": {
             "type": "number",
-            "description": "Current-period service cost (P&L) (REQ-PEN-003).",
+            "description": "Current-period service cost (P&L).",
             "example": 320000.0,
             "title": "Service Cost Current"
           },
           "pastServiceCost": {
             "type": "number",
-            "description": "Past service cost from a plan amendment, posted directly to P&L on the amendment date (REQ-PEN-009). Negative when a benefit reduction.",
+            "description": "Past service cost from a plan amendment, posted directly to P&L on the amendment date. Negative when a benefit reduction.",
             "default": 0.0,
             "example": 0.0,
             "title": "Past Service Cost"
@@ -689,13 +689,13 @@
           },
           "netInterestCost": {
             "type": "number",
-            "description": "Net interest = discount rate × opening net pension liability (P&L) (REQ-PEN-003).",
+            "description": "Net interest = discount rate × opening net pension liability (P&L).",
             "example": 30000.0,
             "title": "Net Interest Cost"
           },
           "actuarialLossGainDBO": {
             "type": "number",
-            "description": "Total actuarial change on DBO (OCI). Negative = gain, positive = loss on the obligation (REQ-PEN-003, REQ-PEN-004).",
+            "description": "Total actuarial change on DBO (OCI). Negative = gain, positive = loss on the obligation.",
             "example": -180000.0,
             "title": "Actuarial Loss Gain Dbo"
           },
@@ -726,7 +726,7 @@
           },
           "dboClosing": {
             "type": "number",
-            "description": "Computed dboOpening + serviceCostCurrent + pastServiceCost + netInterestCost + actuarialLossGainDBO − benefitsPaid (REQ-PEN-003).",
+            "description": "Computed dboOpening + serviceCostCurrent + pastServiceCost + netInterestCost + actuarialLossGainDBO − benefitsPaid.",
             "example": 7905000.0,
             "title": "Dbo Closing"
           },
@@ -750,13 +750,13 @@
           },
           "actuarialGainLossAssets": {
             "type": "number",
-            "description": "actualReturnOnAssets − expectedReturnOnAssets (OCI) (REQ-PEN-003).",
+            "description": "actualReturnOnAssets − expectedReturnOnAssets (OCI).",
             "example": 35000.0,
             "title": "Actuarial Gain Loss Assets"
           },
           "employerContributions": {
             "type": "number",
-            "description": "Contributions paid by the employer (EUR). For DC plans this is the only pension cost recognised (REQ-PEN-008).",
+            "description": "Contributions paid by the employer (EUR). For DC plans this is the only pension cost recognised.",
             "default": 0.0,
             "example": 400000.0,
             "title": "Employer Contributions"
@@ -777,19 +777,19 @@
           },
           "planAssetsClosing": {
             "type": "number",
-            "description": "Computed planAssetsOpening + expectedReturnOnAssets + actuarialGainLossAssets + employerContributions + employeeContributions − benefitsPaidFromAssets (REQ-PEN-003).",
+            "description": "Computed planAssetsOpening + expectedReturnOnAssets + actuarialGainLossAssets + employerContributions + employeeContributions − benefitsPaidFromAssets.",
             "example": 6835000.0,
             "title": "Plan Assets Closing"
           },
           "netPensionMovementPL": {
             "type": "number",
-            "description": "Computed serviceCostCurrent + pastServiceCost + netInterestCost − gainOnSettlement; total P&L charge (REQ-PEN-003).",
+            "description": "Computed serviceCostCurrent + pastServiceCost + netInterestCost − gainOnSettlement; total P&L charge.",
             "example": 350000.0,
             "title": "Net Pension Movement Pl"
           },
           "netPensionMovementOCI": {
             "type": "number",
-            "description": "Computed actuarialLossGainDBO − actuarialGainLossAssets; total OCI remeasurement, non-recycling (REQ-PEN-004).",
+            "description": "Computed actuarialLossGainDBO − actuarialGainLossAssets; total OCI remeasurement, non-recycling.",
             "example": -215000.0,
             "title": "Net Pension Movement Oci"
           },
@@ -804,7 +804,7 @@
           },
           "notes": {
             "type": "string",
-            "description": "Free-text narrative on the period (e.g. plan amendment, rate change) (REQ-PEN-009).",
+            "description": "Free-text narrative on the period (e.g. plan amendment, rate change).",
             "nullable": true,
             "title": "Notes"
           },
@@ -817,7 +817,7 @@
         },
         "x-openregister-aggregations": {
           "pensionRollForward": {
-            "description": "Declarative shape of the per-period DBO + plan-asset roll-forward (REQ-PEN-003). dboClosing carries the opening balance plus all movement buckets; planAssetsClosing rolls the asset side; netPensionMovementPL and netPensionMovementOCI partition the period charge into the disjoint P&L and OCI buckets per IAS 19R. When the OpenRegister aggregation engine cannot express the prior-period carry, the same arithmetic is recomputed from the prior PensionMovement closing balance + current ActuarialValuation via the real ObjectService API.",
+            "description": "Declarative shape of the per-period DBO + plan-asset roll-forward. dboClosing carries the opening balance plus all movement buckets; planAssetsClosing rolls the asset side; netPensionMovementPL and netPensionMovementOCI partition the period charge into the disjoint P&L and OCI buckets per IAS 19R. When the OpenRegister aggregation engine cannot express the prior-period carry, the same arithmetic is recomputed from the prior PensionMovement closing balance + current ActuarialValuation via the real ObjectService API.",
             "source": "PensionMovement",
             "groupBy": [
               "PensionMovement.plan",
@@ -848,7 +848,7 @@
           }
         },
         "x-openregister-posting-recipe": {
-          "description": "Declarative GL posting recipe for PensionMovement, consumed by the T1 bookkeeping-general-ledger JournalEntry materialiser (REQ-PEN-003, REQ-PEN-004, REQ-JE-007). Each bucket maps to a `bookkeeping-general-ledger` JournalEntry whose materialised GLTransaction posts the period charge to the configured chart-of-accounts range. The recipe is declarative: the JournalEntry orchestrator reads it on PensionMovement transition to `posted` and emits one JournalEntry per non-zero bucket; ids land in `PensionMovement.linkedJournalEntries`. Account ranges follow the standard Dutch SBR/RGS bookkeeping hierarchy (4xxx personeelslasten, 6xxx financiële lasten, 8xxx OCI/eigen vermogen) and may be overridden per administration via the chart-of-accounts mapping (REQ-COA-002).",
+          "description": "Declarative GL posting recipe for PensionMovement, consumed by the T1 bookkeeping-general-ledger JournalEntry materialiser. Each bucket maps to a `bookkeeping-general-ledger` JournalEntry whose materialised GLTransaction posts the period charge to the configured chart-of-accounts range. The recipe is declarative: the JournalEntry orchestrator reads it on PensionMovement transition to `posted` and emits one JournalEntry per non-zero bucket; ids land in `PensionMovement.linkedJournalEntries`. Account ranges follow the standard Dutch SBR/RGS bookkeeping hierarchy (4xxx personeelslasten, 6xxx financiële lasten, 8xxx OCI/eigen vermogen) and may be overridden per administration via the chart-of-accounts mapping.",
           "sourceSchema": "PensionMovement",
           "targetSchema": "JournalEntry",
           "trigger": "PensionMovement.status:posted",
@@ -892,7 +892,7 @@
           "x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md#REQ-PEN-003"
         },
         "x-openregister-deferred-tax-hint": {
-          "description": "Declarative deferred-tax detection hint consumed by bookkeeping-deferred-tax (REQ-DT-001). PensionMovement creates timing differences between the commercial (IFRS / RJ 271) measurement of the pension liability and its tax basis (in NL: pension provisions are typically only deductible when contributions are paid out, so the commercial provision creates a deductible temporary difference / DTA). The detector reads this hint and emits TemporaryDifference records with category=pension per fiscal period per administration; the OCI component flows to TaxProvision.recognisedInOCI per REQ-DT-009.",
+          "description": "Declarative deferred-tax detection hint consumed by bookkeeping-deferred-tax. PensionMovement creates timing differences between the commercial (IFRS / RJ 271) measurement of the pension liability and its tax basis (in NL: pension provisions are typically only deductible when contributions are paid out, so the commercial provision creates a deductible temporary difference / DTA). The detector reads this hint and emits TemporaryDifference records with category=pension per fiscal period per administration; the OCI component flows to TaxProvision.recognisedInOCI per REQ-DT-009.",
           "targetSchema": "TemporaryDifference",
           "category": "pension",
           "type": "deductible",
@@ -904,7 +904,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Pension Movement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Pension Movement is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "PensionAssumptionSensitivity": {
@@ -912,7 +912,7 @@
         "icon": "ChartBellCurveCumulative",
         "version": "0.1.0",
         "title": "Pension Assumption Sensitivity",
-        "description": "DBO sensitivity line for one assumption delta on one ActuarialValuation per IAS 19 §145 (REQ-PEN-006). Each DB valuation generates eight lines: discount rate ±0.5pp, salary growth ±0.5pp, mortality ±1yr, inflation ±0.5pp. Records the effect on DBO, service cost and (optionally) net interest.",
+        "description": "DBO sensitivity line for one assumption delta on one ActuarialValuation per IAS 19 §145. Each DB valuation generates eight lines: discount rate ±0.5pp, salary growth ±0.5pp, mortality ±1yr, inflation ±0.5pp. Records the effect on DBO, service cost and (optionally) net interest.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md",
         "type": "object",
@@ -927,13 +927,13 @@
         "properties": {
           "valuation": {
             "type": "string",
-            "description": "FK to the ActuarialValuation (REQ-PEN-006).",
+            "description": "FK to the ActuarialValuation.",
             "example": "val-db-2026",
             "title": "Valuation"
           },
           "assumption": {
             "type": "string",
-            "description": "The assumption being flexed (REQ-PEN-006).",
+            "description": "The assumption being flexed.",
             "enum": [
               "discount-rate",
               "salary-growth",
@@ -945,19 +945,19 @@
           },
           "direction": {
             "type": "string",
-            "description": "Delta applied, e.g. +0.5pp / -0.5pp for rates, +1yr / -1yr for mortality (REQ-PEN-006).",
+            "description": "Delta applied, e.g. +0.5pp / -0.5pp for rates, +1yr / -1yr for mortality.",
             "example": "+0.5pp",
             "title": "Direction"
           },
           "effectOnDBO": {
             "type": "number",
-            "description": "Impact on DBO in EUR; sign matches the direction's effect (REQ-PEN-006).",
+            "description": "Impact on DBO in EUR; sign matches the direction's effect.",
             "example": -700000.0,
             "title": "Effect On Dbo"
           },
           "effectOnServiceCost": {
             "type": "number",
-            "description": "Impact on service cost in EUR (REQ-PEN-006).",
+            "description": "Impact on service cost in EUR.",
             "example": 0.0,
             "title": "Effect On Service Cost"
           },
@@ -982,7 +982,7 @@
         },
         "x-openregister-aggregations": {
           "pensionSensitivityDeltas": {
-            "description": "Declarative shape of the per-assumption sensitivity recomputation (REQ-PEN-006). For each of the eight standard deltas the base DBO + service cost are recomputed and the difference stored as effectOnDBO / effectOnServiceCost. When the engine cannot recompute the actuarial base, the actuaris-supplied effect is entered directly and validated for completeness (eight lines per DB valuation).",
+            "description": "Declarative shape of the per-assumption sensitivity recomputation. For each of the eight standard deltas the base DBO + service cost are recomputed and the difference stored as effectOnDBO / effectOnServiceCost. When the engine cannot recompute the actuarial base, the actuaris-supplied effect is entered directly and validated for completeness (eight lines per DB valuation).",
             "source": "PensionAssumptionSensitivity",
             "groupBy": [
               "PensionAssumptionSensitivity.valuation",
@@ -993,7 +993,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Pension Assumption Sensitivity is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Pension Assumption Sensitivity is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "PensionAssetDetail": {
@@ -1001,7 +1001,7 @@
         "icon": "ChartPie",
         "version": "0.1.0",
         "title": "Pension Asset Detail",
-        "description": "Plan-asset breakdown by category with the IFRS 13 fair-value level (1 quoted / 2 observable / 3 unobservable) for one ActuarialValuation (REQ-PEN-007). The per-valuation category fair values must sum to ActuarialValuation.planAssetsFairValue.",
+        "description": "Plan-asset breakdown by category with the IFRS 13 fair-value level (1 quoted / 2 observable / 3 unobservable) for one ActuarialValuation. The per-valuation category fair values must sum to ActuarialValuation.planAssetsFairValue.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md",
         "type": "object",
@@ -1015,13 +1015,13 @@
         "properties": {
           "valuation": {
             "type": "string",
-            "description": "FK to the ActuarialValuation (REQ-PEN-007).",
+            "description": "FK to the ActuarialValuation.",
             "example": "val-db-2026",
             "title": "Valuation"
           },
           "assetCategory": {
             "type": "string",
-            "description": "Plan-asset category (REQ-PEN-007).",
+            "description": "Plan-asset category.",
             "enum": [
               "cash",
               "equities-quoted",
@@ -1036,13 +1036,13 @@
           },
           "fairValue": {
             "type": "number",
-            "description": "Fair value of assets in this category in EUR (REQ-PEN-007).",
+            "description": "Fair value of assets in this category in EUR.",
             "example": 2000000.0,
             "title": "Fair Value"
           },
           "level": {
             "type": "integer",
-            "description": "IFRS 13 fair-value level: 1 quoted, 2 observable, 3 unobservable (REQ-PEN-007).",
+            "description": "IFRS 13 fair-value level: 1 quoted, 2 observable, 3 unobservable.",
             "enum": [
               1,
               2,
@@ -1066,7 +1066,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Pension Asset Detail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Pension Asset Detail is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "PensionDisclosureTabel": {
@@ -1074,7 +1074,7 @@
         "icon": "TableLarge",
         "version": "0.1.0",
         "title": "Pension Disclosure Table",
-        "description": "Auto-generated jaarrekening disclosure table per IAS 19 §135–149 for a plan on a balansdatum (REQ-PEN-007, REQ-PEN-008). tableContent holds the structured disclosure (assumptions, DBO movement, asset movement, P&L + OCI summary, asset breakdown by category + fair-value level, duration, expected employer contribution) suitable for jaarrekening notes; for DC plans it carries only the contribution amount + regeling summary (REQ-PEN-008).",
+        "description": "Auto-generated jaarrekening disclosure table per IAS 19 §135–149 for a plan on a balansdatum. tableContent holds the structured disclosure (assumptions, DBO movement, asset movement, P&L + OCI summary, asset breakdown by category + fair-value level, duration, expected employer contribution) suitable for jaarrekening notes; for DC plans it carries only the contribution amount + regeling summary.",
         "x-schema-org": "schema:Table",
         "x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md",
         "type": "object",
@@ -1088,26 +1088,26 @@
         "properties": {
           "plan": {
             "type": "string",
-            "description": "FK to the PensionPlan (REQ-PEN-007).",
+            "description": "FK to the PensionPlan.",
             "example": "plan-db-1",
             "title": "Plan"
           },
           "valuationDate": {
             "type": "string",
             "format": "date",
-            "description": "Balansdatum (REQ-PEN-007).",
+            "description": "Balansdatum.",
             "example": "2026-12-31",
             "title": "Valuation Date"
           },
           "tableContent": {
             "type": "object",
-            "description": "Full disclosure table as structured JSON, auto-generated from PensionMovement + PensionAssetDetail + PensionAssumptionSensitivity records; renderable as Markdown/HTML for jaarrekening notes (REQ-PEN-007). For DC plans, only contribution + regeling summary (REQ-PEN-008).",
+            "description": "Full disclosure table as structured JSON, auto-generated from PensionMovement + PensionAssetDetail + PensionAssumptionSensitivity records; renderable as Markdown/HTML for jaarrekening notes. For DC plans, only contribution + regeling summary.",
             "additionalProperties": true,
             "title": "Table Content"
           },
           "status": {
             "type": "string",
-            "description": "Disclosure-table lifecycle status (REQ-PEN-007).",
+            "description": "Disclosure-table lifecycle status.",
             "enum": [
               "draft",
               "approved",
@@ -1139,7 +1139,7 @@
         },
         "x-openregister-aggregations": {
           "pensionDisclosureGeneration": {
-            "description": "Declarative shape of the disclosure-table generation (REQ-PEN-007). Consumes the completed PensionMovement (DBO + asset movement, P&L/OCI split), PensionAssetDetail (category + fair-value level) and PensionAssumptionSensitivity (eight sensitivity lines) records for the plan on the valuation date and emits a single PensionDisclosureTabel with all IAS 19 §135–149 line items. When the engine cannot template the merge, the same structure is built from the source records via the real ObjectService API.",
+            "description": "Declarative shape of the disclosure-table generation. Consumes the completed PensionMovement (DBO + asset movement, P&L/OCI split), PensionAssetDetail (category + fair-value level) and PensionAssumptionSensitivity (eight sensitivity lines) records for the plan on the valuation date and emits a single PensionDisclosureTabel with all IAS 19 §135–149 line items. When the engine cannot template the merge, the same structure is built from the source records via the real ObjectService API.",
             "source": "PensionMovement",
             "join": {
               "from": "PensionMovement.plan",
@@ -1158,7 +1158,7 @@
           }
         },
         "x-openregister-disclosure-source": {
-          "description": "Declarative data-source contract consumed by bookkeeping-financial-statements REQ-FS-004 jaarrekening Note renderer. The Note schema's pension disclosure section reads PensionDisclosureTabel.tableContent for the (administrationId, valuationDate) tuple when status is `approved` or `published`, eliminating any manual copy/paste into the jaarrekening (REQ-PEN-007). When the renderer cannot project the JSON column directly, the same data is fetched via the real ObjectService API per ADR-022.",
+          "description": "Declarative data-source contract consumed by bookkeeping-financial-statements REQ-FS-004 jaarrekening Note renderer. The Note schema's pension disclosure section reads PensionDisclosureTabel.tableContent for the (administrationId, valuationDate) tuple when status is `approved` or `published`, eliminating any manual copy/paste into the jaarrekening. When the renderer cannot project the JSON column directly, the same data is fetched via the real ObjectService API per ADR-022.",
           "consumerSpec": "bookkeeping-financial-statements",
           "consumerSchema": "Note",
           "consumerField": "noteContent.pensionDisclosure",
@@ -1179,7 +1179,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Pension Disclosure Table is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Pension Disclosure Table is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     },

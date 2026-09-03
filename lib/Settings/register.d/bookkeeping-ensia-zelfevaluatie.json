@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-ensia-zelfevaluatie",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json. ADR-022 reuse OR audit-trail-immutable, no parallel audit tables. ADR-031 declarative-lifecycle; orchestration via x-openregister-lifecycle, not a service class.",
-    "description": "T2 — ENSIA (Eenduidige Normatiek Single Information Audit) annual cycle for Dutch public-sector organisations. Declares the three registers (ENSIAJaarcyclus, Evaluatievraag, Bevinding) for REQ-ENSIA-001..010. ENSIAJaarcyclus carries a six-state x-openregister-lifecycle (in-voorbereiding → in-uitvoering → peer-review → college-akkoord → ingediend → afgerond) gated on peer-review completion (REQ-ENSIA-004 + REQ-ENSIA-007). Evaluatievraag carries a per-question peerReviewStatus state machine (nog-niet-beoordeeld → akkoord / wijziging-gevraagd) wired into the parent cycle's college-akkoord gate. Bevinding carries an open → in-behandeling → gerealiseerd / geaccepteerd lifecycle for mitigation tracking (REQ-ENSIA-005). All three schemas opt into OR audit-trail-immutable per REQ-ENSIA-008 (post-peer-review reden requirement is enforced by ENSIAValidationGuard, single-method ADR-031 exception). Bewijsstukken (REQ-ENSIA-009) point at docudesk via fileRef + sha256 + omschrijving so portal XML can include integrity hashes (REQ-ENSIA-007). Manifest navigation (REQ-ENSIA-010) lives in src/manifest.json — five entry pairs (ENSIA Cycles, Evaluations, Findings, Audit Trail, College Verklaring)."
+    "description": "T2 — ENSIA (Eenduidige Normatiek Single Information Audit) annual cycle for Dutch public-sector organisations. Declares the three registers (ENSIAJaarcyclus, Evaluatievraag, Bevinding) for REQ-ENSIA-001..010. ENSIAJaarcyclus carries a six-state x-openregister-lifecycle (in-voorbereiding → in-uitvoering → peer-review → college-akkoord → ingediend → afgerond) gated on peer-review completion (REQ-ENSIA-004 + REQ-ENSIA-007). Evaluatievraag carries a per-question peerReviewStatus state machine (nog-niet-beoordeeld → akkoord / wijziging-gevraagd) wired into the parent cycle's college-akkoord gate. Bevinding carries an open → in-behandeling → gerealiseerd / geaccepteerd lifecycle for mitigation tracking. All three schemas opt into OR audit-trail-immutable per REQ-ENSIA-008 (post-peer-review reden requirement is enforced by ENSIAValidationGuard, single-method ADR-031 exception). Bewijsstukken point at docudesk via fileRef + sha256 + omschrijving so portal XML can include integrity hashes. Manifest navigation lives in src/manifest.json — five entry pairs (ENSIA Cycles, Evaluations, Findings, Audit Trail, College Verklaring)."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "ShieldCheckOutline",
         "version": "0.1.0",
         "title": "ENSIA Jaarcyclus",
-        "description": "Annual ENSIA self-evaluation cycle for a Dutch public-sector organisation (REQ-ENSIA-001). One record per (organisatie, jaar). Carries the six-state lifecycle gating cycle intake → answering → peer-review → college-akkoord → portal submission → closure. The vraagSetVersion stamp records which BIO question set version was loaded at cycle initialisation so external auditors can trace the source (REQ-ENSIA-001 second scenario). procesEigenaar owns the assignment + transitions; per-question beantwoorder and peerReviewer are recorded on Evaluatievraag children.",
+        "description": "Annual ENSIA self-evaluation cycle for a Dutch public-sector organisation. One record per (organisatie, jaar). Carries the six-state lifecycle gating cycle intake → answering → peer-review → college-akkoord → portal submission → closure. The vraagSetVersion stamp records which BIO question set version was loaded at cycle initialisation so external auditors can trace the source (REQ-ENSIA-001 second scenario). procesEigenaar owns the assignment + transitions; per-question beantwoorder and peerReviewer are recorded on Evaluatievraag children.",
         "x-spec": "openspec/changes/bookkeeping-ensia-zelfevaluatie/specs/bookkeeping-ensia-zelfevaluatie/spec.md",
         "type": "object",
         "required": [
@@ -25,7 +25,7 @@
         "properties": {
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration — every ENSIA cycle scopes to exactly one administration (REQ-ENSIA-001).",
+            "description": "FK to Administration — every ENSIA cycle scopes to exactly one administration.",
             "example": "adm-gemeente-1",
             "title": "Administration ID"
           },
@@ -33,7 +33,7 @@
             "type": "integer",
             "minimum": 2020,
             "maximum": 2099,
-            "description": "Verslagjaar (REQ-ENSIA-001).",
+            "description": "Verslagjaar.",
             "example": 2026,
             "title": "Jaar"
           },
@@ -79,7 +79,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Cyclusstart — typisch 1 januari (REQ-ENSIA-001).",
+            "description": "Cyclusstart — typisch 1 januari.",
             "example": "2026-01-01",
             "title": "Start Datum"
           },
@@ -87,7 +87,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Deadline voor college-akkoord — typisch 1 april (REQ-ENSIA-006).",
+            "description": "Deadline voor college-akkoord — typisch 1 april.",
             "example": "2026-04-01",
             "title": "Deadline Colleges"
           },
@@ -95,13 +95,13 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Deadline voor indiening bij minister via ENSIA-portal — wettelijk 1 mei (REQ-ENSIA-007).",
+            "description": "Deadline voor indiening bij minister via ENSIA-portal — wettelijk 1 mei.",
             "example": "2026-05-01",
             "title": "Deadline Minister"
           },
           "accountabilityDomains": {
             "type": "array",
-            "description": "Geselecteerde verantwoordingsdomeinen voor deze cyclus, bv. BIO + DigiD + SUWI + BAG + BGT + BRP + WOZ (REQ-ENSIA-001).",
+            "description": "Geselecteerde verantwoordingsdomeinen voor deze cyclus, bv. BIO + DigiD + SUWI + BAG + BGT + BRP + WOZ.",
             "items": {
               "type": "string",
               "enum": [
@@ -127,7 +127,7 @@
           "processOwner": {
             "type": "string",
             "nullable": true,
-            "description": "Nextcloud user-id van de proces-eigenaar (typisch CISO of functionaris-informatiebeveiliging) verantwoordelijk voor cyclusvoortgang (REQ-ENSIA-002).",
+            "description": "Nextcloud user-id van de proces-eigenaar (typisch CISO of functionaris-informatiebeveiliging) verantwoordelijk voor cyclusvoortgang.",
             "example": "j.devries",
             "title": "Proces Eigenaar"
           },
@@ -149,7 +149,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Tijdstempel van XML-export download / portal-indiening (REQ-ENSIA-007).",
+            "description": "Tijdstempel van XML-export download / portal-indiening.",
             "example": null,
             "title": "Submitted At"
           },
@@ -197,7 +197,7 @@
           "states": {
             "in-voorbereiding": {
               "label": "In voorbereiding",
-              "description": "Cyclus aangemaakt; vragenset geladen; toewijzingen worden gemaakt (REQ-ENSIA-001)."
+              "description": "Cyclus aangemaakt; vragenset geladen; toewijzingen worden gemaakt."
             },
             "in-uitvoering": {
               "label": "In uitvoering",
@@ -205,15 +205,15 @@
             },
             "peer-review": {
               "label": "Peer-review",
-              "description": "Peer-reviewers beoordelen antwoorden; akkoord of wijziging-gevraagd per vraag (REQ-ENSIA-004)."
+              "description": "Peer-reviewers beoordelen antwoorden; akkoord of wijziging-gevraagd per vraag."
             },
             "college-akkoord": {
               "label": "College-akkoord",
-              "description": "Verklaring approved door college van B&W; klaar voor portal-export (REQ-ENSIA-006)."
+              "description": "Verklaring approved door college van B&W; klaar voor portal-export."
             },
             "submitted": {
               "label": "Ingediend",
-              "description": "XML-export gedownload en ingediend bij ENSIA-portal (REQ-ENSIA-007)."
+              "description": "XML-export gedownload en ingediend bij ENSIA-portal."
             },
             "afgerond": {
               "label": "Afgerond",
@@ -225,7 +225,7 @@
               "from": "in-voorbereiding",
               "to": "in-uitvoering",
               "label": "Start uitvoering",
-              "description": "Proceseigenaar opent de cyclus voor beantwoording (REQ-ENSIA-002).",
+              "description": "Proceseigenaar opent de cyclus voor beantwoording.",
               "roles": [
                 "functionaris-informatiebeveiliging",
                 "proces-eigenaar"
@@ -235,7 +235,7 @@
               "from": "in-uitvoering",
               "to": "peer-review",
               "label": "Naar peer-review",
-              "description": "Alle vragen zijn beantwoord; peer-reviewers krijgen toegang (REQ-ENSIA-004).",
+              "description": "Alle vragen zijn beantwoord; peer-reviewers krijgen toegang.",
               "roles": [
                 "proces-eigenaar"
               ]
@@ -256,7 +256,7 @@
               "from": "college-akkoord",
               "to": "submitted",
               "label": "Indienen bij ENSIA-portal",
-              "description": "XML-export gegenereerd en gedownload; verklaringFile vereist (REQ-ENSIA-007).",
+              "description": "XML-export gegenereerd en gedownload; verklaringFile vereist.",
               "roles": [
                 "proces-eigenaar"
               ],
@@ -338,7 +338,7 @@
         "properties": {
           "cyclusId": {
             "type": "string",
-            "description": "FK to ENSIAJaarcyclus (REQ-ENSIA-001).",
+            "description": "FK to ENSIAJaarcyclus.",
             "example": "ensia-2026-gemeente-1",
             "title": "Cyclus ID"
           },
@@ -359,26 +359,26 @@
               "BRP",
               "WOZ"
             ],
-            "description": "Verantwoordingsdomein waaraan deze vraag is gekoppeld (REQ-ENSIA-001).",
+            "description": "Verantwoordingsdomein waaraan deze vraag is gekoppeld.",
             "example": "BIO",
             "title": "Domein"
           },
           "subject": {
             "type": "string",
             "nullable": true,
-            "description": "Onderwerp / categorie van de vraag, bv. Toegangsbeveiliging, Logging, Continuïteit. Drijft worklist-groepering (REQ-ENSIA-002).",
+            "description": "Onderwerp / categorie van de vraag, bv. Toegangsbeveiliging, Logging, Continuïteit. Drijft worklist-groepering.",
             "example": "Toegangsbeveiliging",
             "title": "Onderwerp"
           },
           "questionCode": {
             "type": "string",
-            "description": "Canonieke VNG vraag-code, bv. BIO-9.1.1 (REQ-ENSIA-001). Stabiel referentiepunt naar VNG bron-vragenset.",
+            "description": "Canonieke VNG vraag-code, bv. BIO-9.1.1. Stabiel referentiepunt naar VNG bron-vragenset.",
             "example": "BIO-9.1.1",
             "title": "Vraag Code"
           },
           "questionText": {
             "type": "string",
-            "description": "Volledige vraagtekst zoals geladen uit VNG-vragenset (REQ-ENSIA-001).",
+            "description": "Volledige vraagtekst zoals geladen uit VNG-vragenset.",
             "example": "Is er een formeel beleid voor logische toegangsbeveiliging?",
             "title": "Vraagtekst"
           },
@@ -405,7 +405,7 @@
             "minimum": 1,
             "maximum": 5,
             "nullable": true,
-            "description": "Volwassenheidsscore 1..5 (REQ-ENSIA-003). Alleen gezet als antwoordType=volwassenheidsniveau-1-5. Score ≥ 3 vereist bewijsstukken non-empty AND toelichting ≥ 50 chars.",
+            "description": "Volwassenheidsscore 1..5. Alleen gezet als antwoordType=volwassenheidsniveau-1-5. Score ≥ 3 vereist bewijsstukken non-empty AND toelichting ≥ 50 chars.",
             "example": 3,
             "title": "Volwassenheids Score"
           },
@@ -414,28 +414,28 @@
             "minimum": 1,
             "maximum": 5,
             "nullable": true,
-            "description": "VNG normniveau voor deze vraag (typisch 3). Score lager dan normniveau triggert auto-Bevinding generatie (REQ-ENSIA-005).",
+            "description": "VNG normniveau voor deze vraag (typisch 3). Score lager dan normniveau triggert auto-Bevinding generatie.",
             "example": 3,
             "title": "Normniveau"
           },
           "notes": {
             "type": "string",
             "nullable": true,
-            "description": "Onderbouwing van het antwoord (REQ-ENSIA-003). Bij score ≥ 3 vereist ≥ 50 tekens.",
+            "description": "Onderbouwing van het antwoord. Bij score ≥ 3 vereist ≥ 50 tekens.",
             "example": "Toegangsbeveiliging is geregeld via formeel beleid d.d. 2025-01-01, met jaarlijkse review.",
             "title": "Toelichting"
           },
           "respondent": {
             "type": "string",
             "nullable": true,
-            "description": "Nextcloud user-id van de beantwoorder van deze vraag (REQ-ENSIA-002).",
+            "description": "Nextcloud user-id van de beantwoorder van deze vraag.",
             "example": "infra-teamlead",
             "title": "Beantwoorder"
           },
           "peerReviewer": {
             "type": "string",
             "nullable": true,
-            "description": "Nextcloud user-id van de peer-reviewer (REQ-ENSIA-004).",
+            "description": "Nextcloud user-id van de peer-reviewer.",
             "example": "ciso-deputy",
             "title": "Peer Reviewer"
           },
@@ -447,14 +447,14 @@
               "wijziging-gevraagd"
             ],
             "default": "nog-niet-beoordeeld",
-            "description": "Peer-review-status van de vraag (REQ-ENSIA-004). wijziging-gevraagd blokkeert college-akkoord transitie op de parent cyclus.",
+            "description": "Peer-review-status van de vraag. wijziging-gevraagd blokkeert college-akkoord transitie op de parent cyclus.",
             "example": "nog-niet-beoordeeld",
             "title": "Peer Review Status"
           },
           "peerReviewComment": {
             "type": "string",
             "nullable": true,
-            "description": "Commentaar van peer-reviewer, vereist bij wijziging-gevraagd. Wordt gerouted naar beantwoorder via notification (REQ-ENSIA-004).",
+            "description": "Commentaar van peer-reviewer, vereist bij wijziging-gevraagd. Wordt gerouted naar beantwoorder via notification.",
             "example": "Onderbouwing onvoldoende — graag bewijs van uitgevoerde access-review toevoegen.",
             "title": "Peer Review Commentaar"
           },
@@ -462,13 +462,13 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Tijdstempel laatste peer-review beoordeling (REQ-ENSIA-004).",
+            "description": "Tijdstempel laatste peer-review beoordeling.",
             "example": null,
             "title": "Peer Reviewed At"
           },
           "supportingDocuments": {
             "type": "array",
-            "description": "Bewijsstukken gekoppeld aan deze vraag (REQ-ENSIA-009). Elke entry is {fileRef, omschrijving, sha256}. fileRef wijst naar docudesk; sha256 dient als integriteitshash in REQ-ENSIA-007 XML-export.",
+            "description": "Bewijsstukken gekoppeld aan deze vraag. Elke entry is {fileRef, omschrijving, sha256}. fileRef wijst naar docudesk; sha256 dient als integriteitshash in REQ-ENSIA-007 XML-export.",
             "items": {
               "type": "object",
               "required": [
@@ -484,7 +484,7 @@
                 },
                 "description": {
                   "type": "string",
-                  "description": "Omschrijving van het bewijsstuk, bv. 'Access control policy effective 2025-01-01' (REQ-ENSIA-009).",
+                  "description": "Omschrijving van het bewijsstuk, bv. 'Access control policy effective 2025-01-01'.",
                   "example": "Access control policy effective 2025-01-01",
                   "title": "Omschrijving"
                 },
@@ -503,7 +503,7 @@
           "reason": {
             "type": "string",
             "nullable": true,
-            "description": "Wijzigingsreden — vereist bij post-peer-review edits (REQ-ENSIA-008). Voor pre-peer-review edits niet vereist. ENSIAValidationGuard enforced.",
+            "description": "Wijzigingsreden — vereist bij post-peer-review edits. Voor pre-peer-review edits niet vereist. ENSIAValidationGuard enforced.",
             "title": "Reden"
           }
         },
@@ -513,15 +513,15 @@
           "states": {
             "nog-niet-beoordeeld": {
               "label": "Nog niet beoordeeld",
-              "description": "Default — peer-reviewer heeft de vraag nog niet beoordeeld (REQ-ENSIA-004)."
+              "description": "Default — peer-reviewer heeft de vraag nog niet beoordeeld."
             },
             "akkoord": {
               "label": "Akkoord",
-              "description": "Peer-reviewer akkoord met antwoord + onderbouwing (REQ-ENSIA-004)."
+              "description": "Peer-reviewer akkoord met antwoord + onderbouwing."
             },
             "wijziging-gevraagd": {
               "label": "Wijziging gevraagd",
-              "description": "Peer-reviewer wenst aanpassing; commentaar route naar beantwoorder (REQ-ENSIA-004). Blokkeert parent cyclus college-akkoord transitie."
+              "description": "Peer-reviewer wenst aanpassing; commentaar route naar beantwoorder. Blokkeert parent cyclus college-akkoord transitie."
             }
           },
           "transitions": {
@@ -529,7 +529,7 @@
               "from": "nog-niet-beoordeeld",
               "to": "akkoord",
               "label": "Akkoord geven",
-              "description": "Peer-reviewer accepteert het antwoord (REQ-ENSIA-004).",
+              "description": "Peer-reviewer accepteert het antwoord.",
               "roles": [
                 "peer-reviewer"
               ],
@@ -548,7 +548,7 @@
               "from": "nog-niet-beoordeeld",
               "to": "wijziging-gevraagd",
               "label": "Wijziging vragen",
-              "description": "Peer-reviewer wenst aanpassing — commentaar vereist (REQ-ENSIA-004).",
+              "description": "Peer-reviewer wenst aanpassing — commentaar vereist.",
               "roles": [
                 "peer-reviewer"
               ],
@@ -567,7 +567,7 @@
               "from": "wijziging-gevraagd",
               "to": "nog-niet-beoordeeld",
               "label": "Heroverwegen",
-              "description": "Beantwoorder past antwoord aan; vraag terug naar peer-review (REQ-ENSIA-004).",
+              "description": "Beantwoorder past antwoord aan; vraag terug naar peer-review.",
               "roles": [
                 "respondent",
                 "proces-eigenaar"
@@ -577,7 +577,7 @@
               "from": "wijziging-gevraagd",
               "to": "akkoord",
               "label": "Alsnog akkoord",
-              "description": "Peer-reviewer akkoord na heroverweging zonder route via nog-niet-beoordeeld (REQ-ENSIA-004).",
+              "description": "Peer-reviewer akkoord na heroverweging zonder route via nog-niet-beoordeeld.",
               "roles": [
                 "peer-reviewer"
               ],
@@ -644,7 +644,7 @@
         "icon": "AlertCircleOutline",
         "version": "0.1.0",
         "title": "ENSIA Bevinding",
-        "description": "Audit finding emerging from an ENSIA cycle (REQ-ENSIA-005). Auto-generated as type=tekortkoming when a peer-reviewed Evaluatievraag has volwassenheidsScore < normniveau; manually created records (type=verbeterpunt or risico-acceptatie) MAY also be filed by operators. Lifecycle open → in-behandeling → gerealiseerd / geaccepteerd tracks mitigation; geaccepteerd records remain in register for audit trail but are excluded from open-compliance reports (REQ-ENSIA-005 second scenario).",
+        "description": "Audit finding emerging from an ENSIA cycle. Auto-generated as type=tekortkoming when a peer-reviewed Evaluatievraag has volwassenheidsScore < normniveau; manually created records (type=verbeterpunt or risico-acceptatie) MAY also be filed by operators. Lifecycle open → in-behandeling → gerealiseerd / geaccepteerd tracks mitigation; geaccepteerd records remain in register for audit trail but are excluded from open-compliance reports (REQ-ENSIA-005 second scenario).",
         "x-spec": "openspec/changes/bookkeeping-ensia-zelfevaluatie/specs/bookkeeping-ensia-zelfevaluatie/spec.md",
         "type": "object",
         "required": [
@@ -657,7 +657,7 @@
         "properties": {
           "cyclusId": {
             "type": "string",
-            "description": "FK to ENSIAJaarcyclus (REQ-ENSIA-005).",
+            "description": "FK to ENSIAJaarcyclus.",
             "example": "ensia-2026-gemeente-1",
             "title": "Cyclus ID"
           },
@@ -670,7 +670,7 @@
           "questionId": {
             "type": "string",
             "nullable": true,
-            "description": "Optionele FK naar Evaluatievraag die deze bevinding triggered (REQ-ENSIA-005). Niet vereist voor handmatige risico-acceptatie bevindingen.",
+            "description": "Optionele FK naar Evaluatievraag die deze bevinding triggered. Niet vereist voor handmatige risico-acceptatie bevindingen.",
             "example": "ensia-vraag-BIO-9.1.1",
             "title": "Vraag ID"
           },
@@ -681,41 +681,41 @@
               "verbeterpunt",
               "risico-acceptatie"
             ],
-            "description": "Type bevinding (REQ-ENSIA-005). tekortkoming = volwassenheidsscore onder norm; verbeterpunt = operator-gemarkeerde verbetering; risico-acceptatie = bewust geaccepteerd risico zonder mitigatie.",
+            "description": "Type bevinding. tekortkoming = volwassenheidsscore onder norm; verbeterpunt = operator-gemarkeerde verbetering; risico-acceptatie = bewust geaccepteerd risico zonder mitigatie.",
             "example": "tekortkoming",
             "title": "Type"
           },
           "description": {
             "type": "string",
-            "description": "Beschrijving van de bevinding (REQ-ENSIA-005). Bij auto-generatie automatisch gevuld met vraag + score-gap.",
+            "description": "Beschrijving van de bevinding. Bij auto-generatie automatisch gevuld met vraag + score-gap.",
             "example": "BIO-9.1.1 — Logische toegangsbeveiliging beleid: volwassenheidsscore 2 ligt onder VNG normniveau 3.",
             "title": "Beschrijving"
           },
           "impact": {
             "type": "string",
             "nullable": true,
-            "description": "Inschatting impact bij niet-mitigeren (REQ-ENSIA-005).",
+            "description": "Inschatting impact bij niet-mitigeren.",
             "example": "Verhoogd risico op ongeautoriseerde toegang tot SUWInet-gegevens.",
             "title": "Impact"
           },
           "kans": {
             "type": "string",
             "nullable": true,
-            "description": "Inschatting kans op optreden (REQ-ENSIA-005).",
+            "description": "Inschatting kans op optreden.",
             "example": "middel",
             "title": "Kans"
           },
           "mitigationAction": {
             "type": "string",
             "nullable": true,
-            "description": "Voorgenomen of uitgevoerde mitigatie-actie (REQ-ENSIA-005). Vereist voor transitie naar gerealiseerd.",
+            "description": "Voorgenomen of uitgevoerde mitigatie-actie. Vereist voor transitie naar gerealiseerd.",
             "example": "Implementeer formeel access-review proces per kwartaal.",
             "title": "Mitigatie Actie"
           },
           "responsible": {
             "type": "string",
             "nullable": true,
-            "description": "Nextcloud user-id van de mitigatie-eigenaar (REQ-ENSIA-005). Wordt typisch ingevuld bij transitie open → in-behandeling.",
+            "description": "Nextcloud user-id van de mitigatie-eigenaar. Wordt typisch ingevuld bij transitie open → in-behandeling.",
             "example": "infra-teamlead",
             "title": "Verantwoordelijke"
           },
@@ -723,7 +723,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Streefdatum mitigatie-voltooiing (REQ-ENSIA-005).",
+            "description": "Streefdatum mitigatie-voltooiing.",
             "example": "2026-09-30",
             "title": "Streef Datum"
           },
@@ -736,7 +736,7 @@
               "geaccepteerd"
             ],
             "default": "open",
-            "description": "Lifecycle state (REQ-ENSIA-005).",
+            "description": "Lifecycle state.",
             "example": "open",
             "title": "Status"
           },
@@ -754,15 +754,15 @@
           "states": {
             "open": {
               "label": "Open",
-              "description": "Bevinding geregistreerd; mitigatie nog niet gepland (REQ-ENSIA-005)."
+              "description": "Bevinding geregistreerd; mitigatie nog niet gepland."
             },
             "in-behandeling": {
               "label": "In behandeling",
-              "description": "Mitigatie-actie toegekend aan verantwoordelijke; in uitvoering (REQ-ENSIA-005)."
+              "description": "Mitigatie-actie toegekend aan verantwoordelijke; in uitvoering."
             },
             "gerealiseerd": {
               "label": "Gerealiseerd",
-              "description": "Mitigatie uitgevoerd; bevinding gesloten (REQ-ENSIA-005)."
+              "description": "Mitigatie uitgevoerd; bevinding gesloten."
             },
             "geaccepteerd": {
               "label": "Geaccepteerd",
@@ -774,7 +774,7 @@
               "from": "open",
               "to": "in-behandeling",
               "label": "Toewijzen",
-              "description": "Mitigatie-eigenaar + streefdatum toegekend (REQ-ENSIA-005).",
+              "description": "Mitigatie-eigenaar + streefdatum toegekend.",
               "roles": [
                 "proces-eigenaar",
                 "functionaris-informatiebeveiliging"
@@ -784,7 +784,7 @@
               "from": "in-behandeling",
               "to": "gerealiseerd",
               "label": "Sluiten",
-              "description": "Mitigatie voltooid (REQ-ENSIA-005).",
+              "description": "Mitigatie voltooid.",
               "roles": [
                 "responsible",
                 "proces-eigenaar"

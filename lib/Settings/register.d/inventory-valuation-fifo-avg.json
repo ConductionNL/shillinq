@@ -144,7 +144,7 @@
               "to": "adjusted",
               "label": "Adjust valuation",
               "labelNl": "Waardering aanpassen",
-              "description": "Operator-initiated manual correction OR system-initiated transition by CogsPosterService when GL accounts are not configured (REQ-INV-007)."
+              "description": "Operator-initiated manual correction OR system-initiated transition by CogsPosterService when GL accounts are not configured."
             },
             "confirmAdjustment": {
               "from": "adjusted",

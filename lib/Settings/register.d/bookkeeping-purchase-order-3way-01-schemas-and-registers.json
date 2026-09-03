@@ -13,7 +13,7 @@
         "icon": "ClipboardListOutline",
         "version": "0.1.0",
         "title": "Purchase Order",
-        "description": "Purchase order issued to a supplier (REQ-PO-001). Lifecycle draft → approved → sent → partial_received → fully_received → invoiced → closed, with cancelled terminal state (REQ-PO-002). Approval chain is operator-driven; Peppol metadata is populated by the transmission engine in member 03. cost_center + project_code propagate to lines, receipts, invoices and matches for dimensional reporting (REQ-PO-010).",
+        "description": "Purchase order issued to a supplier. Lifecycle draft → approved → sent → partial_received → fully_received → invoiced → closed, with cancelled terminal state. Approval chain is operator-driven; Peppol metadata is populated by the transmission engine in member 03. cost_center + project_code propagate to lines, receipts, invoices and matches for dimensional reporting.",
         "x-schema-org": "schema:Order",
         "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
         "type": "object",
@@ -27,7 +27,7 @@
         "properties": {
           "poNumber": {
             "type": "string",
-            "description": "Auto-generated CBS-conform purchase-order number, unique per administration (REQ-PO-001).",
+            "description": "Auto-generated CBS-conform purchase-order number, unique per administration.",
             "example": "PO-2026-0001",
             "title": "PO Number"
           },
@@ -64,14 +64,14 @@
           },
           "costCenter": {
             "type": "string",
-            "description": "Dimensional cost-centre tag propagated to all lines, GRNs, invoices and matches that descend from this PO (REQ-PO-010).",
+            "description": "Dimensional cost-centre tag propagated to all lines, GRNs, invoices and matches that descend from this PO.",
             "nullable": true,
             "example": "CC-IT-OPERATIONS",
             "title": "Cost Center"
           },
           "projectCode": {
             "type": "string",
-            "description": "Dimensional project tag propagated to all lines, GRNs, invoices and matches that descend from this PO (REQ-PO-010).",
+            "description": "Dimensional project tag propagated to all lines, GRNs, invoices and matches that descend from this PO.",
             "nullable": true,
             "example": "PRJ-OFFICE-REFRESH-2026",
             "title": "Project Code"
@@ -127,7 +127,7 @@
           },
           "approvalChain": {
             "type": "array",
-            "description": "Ordered list of approvers traversed for this order (REQ-PO-002). Operator-driven; downstream members 02 wire the routing.",
+            "description": "Ordered list of approvers traversed for this order. Operator-driven; downstream members 02 wire the routing.",
             "nullable": true,
             "items": {
               "type": "object",
@@ -204,7 +204,7 @@
               "closed",
               "cancelled"
             ],
-            "description": "Lifecycle state per x-openregister-lifecycle (REQ-PO-002).",
+            "description": "Lifecycle state per x-openregister-lifecycle.",
             "example": "draft",
             "title": "Status Code"
           },
@@ -311,7 +311,7 @@
         "icon": "FormatListBulleted",
         "version": "0.1.0",
         "title": "Purchase Order Line",
-        "description": "Line item on a PurchaseOrder (REQ-PO-001). Money fields are integer cents per ADR-022; unitPrice is also integer cents to keep arithmetic exact across quantity × price → lineTotal. VAT rate is stored in basis points (1/10000). cost_center + project_code inherit from the parent order and may be overridden per line for granular dimensional reporting.",
+        "description": "Line item on a PurchaseOrder. Money fields are integer cents per ADR-022; unitPrice is also integer cents to keep arithmetic exact across quantity × price → lineTotal. VAT rate is stored in basis points (1/10000). cost_center + project_code inherit from the parent order and may be overridden per line for granular dimensional reporting.",
         "x-schema-org": "schema:OrderItem",
         "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
         "type": "object",
@@ -460,7 +460,7 @@
         "icon": "PackageVariantClosed",
         "version": "0.1.0",
         "title": "Goods Receipt Note",
-        "description": "Goods Receipt Note (GRN) recording physical receipt of goods against one or more purchase orders (REQ-GRN-001). Multi-PO receipt is allowed (po_ids is an array). Lifecycle draft → received → quality_checked → accepted → rejected (REQ-GRN-002). Photos and temperatureLog support cold-chain quality evidence. cost_center + project_code propagate from the originating PO(s).",
+        "description": "Goods Receipt Note (GRN) recording physical receipt of goods against one or more purchase orders. Multi-PO receipt is allowed (po_ids is an array). Lifecycle draft → received → quality_checked → accepted → rejected. Photos and temperatureLog support cold-chain quality evidence. cost_center + project_code propagate from the originating PO(s).",
         "x-schema-org": "schema:ReceiveAction",
         "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
         "type": "object",
@@ -568,7 +568,7 @@
           },
           "qualityCheckPassed": {
             "type": "boolean",
-            "description": "Whether the post-receipt quality check passed (REQ-GRN-002).",
+            "description": "Whether the post-receipt quality check passed.",
             "nullable": true,
             "example": true,
             "title": "Quality Check Passed"
@@ -606,7 +606,7 @@
               "accepted",
               "rejected"
             ],
-            "description": "Lifecycle state per x-openregister-lifecycle (REQ-GRN-002).",
+            "description": "Lifecycle state per x-openregister-lifecycle.",
             "example": "draft",
             "title": "Status Code"
           },
@@ -671,7 +671,7 @@
         "icon": "FormatListNumbered",
         "version": "0.1.0",
         "title": "Goods Receipt Line",
-        "description": "Per-PO-line breakdown of a GoodsReceiptNote (REQ-GRN-003). Captures the quantities received, accepted and rejected against each PurchaseOrderLine plus the inspector identity and batch reference for traceability.",
+        "description": "Per-PO-line breakdown of a GoodsReceiptNote. Captures the quantities received, accepted and rejected against each PurchaseOrderLine plus the inspector identity and batch reference for traceability.",
         "x-schema-org": "schema:OrderItem",
         "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
         "type": "object",
@@ -701,7 +701,7 @@
           "quantityReceived": {
             "type": "number",
             "multipleOf": 0.001,
-            "description": "Quantity physically received (REQ-GRN-003). Three-decimal precision.",
+            "description": "Quantity physically received. Three-decimal precision.",
             "example": 10,
             "title": "Quantity Received"
           },
@@ -755,7 +755,7 @@
         "icon": "FileDocumentMultipleOutline",
         "version": "0.1.0",
         "title": "Supplier Invoice",
-        "description": "Inbound supplier invoice (REQ-SI-001). At slice-01 this is a read-only stub register: downstream members 05 (ingestion) and 06 (matching) own the population and lifecycle transitions. Lifecycle received → matching → matched → exception → approved → paid → rejected (REQ-SI-002). UBL / OCR / Peppol metadata records the ingestion provenance. Money fields are integer euro cents per ADR-022; multipleOf 0.01 not used because cents are integers by construction.",
+        "description": "Inbound supplier invoice. At slice-01 this is a read-only stub register: downstream members 05 (ingestion) and 06 (matching) own the population and lifecycle transitions. Lifecycle received → matching → matched → exception → approved → paid → rejected. UBL / OCR / Peppol metadata records the ingestion provenance. Money fields are integer euro cents per ADR-022; multipleOf 0.01 not used because cents are integers by construction.",
         "x-schema-org": "schema:Invoice",
         "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
         "type": "object",
@@ -879,7 +879,7 @@
               "paid",
               "rejected"
             ],
-            "description": "Lifecycle state per x-openregister-lifecycle (REQ-SI-002).",
+            "description": "Lifecycle state per x-openregister-lifecycle.",
             "example": "received",
             "title": "Status Code"
           },
@@ -972,7 +972,7 @@
         "icon": "VectorIntersection",
         "version": "0.1.0",
         "title": "3-way Match",
-        "description": "Result of a 3-way match between SupplierInvoice, PurchaseOrder(s), and GoodsReceiptNote(s) (REQ-MATCH-001). matchStatus enumerates auto-approval, within-tolerance success, the four exception types and a fraud alert (REQ-MATCH-002). divergenceDetails capture per-field price / quantity / date deltas for the exception workflow in member 08.",
+        "description": "Result of a 3-way match between SupplierInvoice, PurchaseOrder(s), and GoodsReceiptNote(s). matchStatus enumerates auto-approval, within-tolerance success, the four exception types and a fraud alert. divergenceDetails capture per-field price / quantity / date deltas for the exception workflow in member 08.",
         "x-schema-org": "schema:AssessAction",
         "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
         "type": "object",
@@ -1030,13 +1030,13 @@
               "exception_missing_po",
               "fraud_alert"
             ],
-            "description": "Match outcome (REQ-MATCH-002). exception_* and fraud_alert route to the exception workflow.",
+            "description": "Match outcome. exception_* and fraud_alert route to the exception workflow.",
             "example": "auto_approved",
             "title": "Match Status"
           },
           "divergenceDetails": {
             "type": "array",
-            "description": "Per-field divergence breakdown (price, quantity, date) used by the exception workflow (REQ-MATCH-003).",
+            "description": "Per-field divergence breakdown (price, quantity, date) used by the exception workflow.",
             "nullable": true,
             "items": {
               "type": "object",
@@ -1206,7 +1206,7 @@
         "icon": "TuneVariant",
         "version": "0.1.0",
         "title": "Tolerance Profile",
-        "description": "Config record defining the price / quantity / date tolerances a 3-way match must satisfy to auto-approve (REQ-TOL-001). Scope is global, per-supplier or per-category. Exception routing names a downstream queue. Status enum allows operators to retire old profiles without deleting historical references.",
+        "description": "Config record defining the price / quantity / date tolerances a 3-way match must satisfy to auto-approve. Scope is global, per-supplier or per-category. Exception routing names a downstream queue. Status enum allows operators to retire old profiles without deleting historical references.",
         "x-schema-org": "schema:DefinedTerm",
         "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
         "type": "object",
@@ -1230,7 +1230,7 @@
               "supplier",
               "category"
             ],
-            "description": "Scope at which the tolerance applies (REQ-TOL-001).",
+            "description": "Scope at which the tolerance applies.",
             "title": "Scope"
           },
           "scopeReference": {
@@ -1270,7 +1270,7 @@
           },
           "currencyRoundingTolerance": {
             "type": "integer",
-            "description": "Absolute currency-rounding tolerance in euro cents (REQ-TOL-001).",
+            "description": "Absolute currency-rounding tolerance in euro cents.",
             "nullable": true,
             "example": 1,
             "title": "Currency Rounding Tolerance"
@@ -1284,7 +1284,7 @@
           },
           "grIrClearingAccount": {
             "type": "string",
-            "description": "Optional per-profile override of the GR/IR clearing account code (REQ-PO3W-009). When set, GRIRClearingService uses this account for both the GRN-accept clearing posting and the match-approval settlement instead of the administration-wide default. Leaving this empty falls back to app config gr_ir_clearing_account (default 2910).",
+            "description": "Optional per-profile override of the GR/IR clearing account code. When set, GRIRClearingService uses this account for both the GRN-accept clearing posting and the match-approval settlement instead of the administration-wide default. Leaving this empty falls back to app config gr_ir_clearing_account (default 2910).",
             "nullable": true,
             "example": "2911",
             "title": "Gr Ir Clearing Account"
@@ -1311,7 +1311,7 @@
         "icon": "ChartTimelineVariant",
         "version": "0.1.0",
         "title": "Vendor Performance",
-        "description": "Vendor performance scorecard per supplier per period (REQ-VP-001). Rates are basis points (1/10000) so onTimeDeliveryRate of 9800 = 98.00 %. overallScore is a 0-10000 basis-point composite. score_trend reflects the period-over-period delta. automatedReviewEligible marks suppliers that may be auto-renewed without manual review (REQ-VP-005). Populated by member 10.",
+        "description": "Vendor performance scorecard per supplier per period. Rates are basis points (1/10000) so onTimeDeliveryRate of 9800 = 98.00 %. overallScore is a 0-10000 basis-point composite. score_trend reflects the period-over-period delta. automatedReviewEligible marks suppliers that may be auto-renewed without manual review. Populated by member 10.",
         "x-schema-org": "schema:AggregateRating",
         "x-spec": "openspec/changes/bookkeeping-purchase-order-3way-01-schemas-and-registers/specs/bookkeeping-purchase-order-3way-schemas/spec.md",
         "type": "object",
@@ -1398,7 +1398,7 @@
           },
           "automatedReviewEligible": {
             "type": "boolean",
-            "description": "Whether the supplier may be auto-renewed without manual review (REQ-VP-005).",
+            "description": "Whether the supplier may be auto-renewed without manual review.",
             "nullable": true,
             "example": true,
             "title": "Automated Review Eligible"

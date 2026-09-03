@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-ifrs-rj-dual-gaap",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json; ADR-031 declarative-first; ADR-022 real OpenRegister ObjectService API only",
-    "description": "Tier 3 — Dual GAAP reporting (IFRS naast Nederlandse Richtlijnen voor de Jaarverslaggeving). Adds six declarative schemas: AccountingFramework (REQ-DGAAP-001), ChartOfAccountsMapping (REQ-DGAAP-002), DualTransaction (REQ-DGAAP-003/006), ReconciliationBridge (REQ-DGAAP-005/006), StandardSpecificCalculation (REQ-DGAAP-004/005) and FrameworkElection (REQ-DGAAP-007/010). Parallel-ledger journal materialisation books every transaction under BOTH RJ and IFRS, classifies the divergence per standard (LEASE_IFRS16, PENSION_IAS19, ECL_IFRS9, REVENUE_IFRS15, IMPAIRMENT_IAS36, BORROWING_COST_IAS23, DEFERRED_TAX_IAS12, BUSINESS_COMBINATION_IFRS3), and explodes the RJ-to-IFRS bridge per period. The bulk of the surface is declarative metadata: x-openregister-lifecycle drives DualTransaction (open → classified → reconciled) and FrameworkElection (draft → active → superseded); x-openregister-aggregations documents the reconciliation-bridge roll-up. A single ADR-031 exception-path guard (OCA\\Shillinq\\Lifecycle\\DualGaapGuard) enforces the two cross-field preconditions the declarative DSL cannot yet express: a DualTransaction may only be reconciled once it carries a divergence reason code AND (for temporary differences) a deferred-tax effect, and a FrameworkElection may only activate once its comply-or-explain motivation and AVA-besluit reference are present and the elected variant matches the measured size criteria. Seed objects ship five worked examples (lease IFRS-16, pension IAS-19, ECL IFRS-9, deferred-tax temporary difference and a framework election) per design.md."
+    "description": "Tier 3 — Dual GAAP reporting (IFRS naast Nederlandse Richtlijnen voor de Jaarverslaggeving). Adds six declarative schemas: AccountingFramework, ChartOfAccountsMapping, DualTransaction (REQ-DGAAP-003/006), ReconciliationBridge (REQ-DGAAP-005/006), StandardSpecificCalculation (REQ-DGAAP-004/005) and FrameworkElection (REQ-DGAAP-007/010). Parallel-ledger journal materialisation books every transaction under BOTH RJ and IFRS, classifies the divergence per standard (LEASE_IFRS16, PENSION_IAS19, ECL_IFRS9, REVENUE_IFRS15, IMPAIRMENT_IAS36, BORROWING_COST_IAS23, DEFERRED_TAX_IAS12, BUSINESS_COMBINATION_IFRS3), and explodes the RJ-to-IFRS bridge per period. The bulk of the surface is declarative metadata: x-openregister-lifecycle drives DualTransaction (open → classified → reconciled) and FrameworkElection (draft → active → superseded); x-openregister-aggregations documents the reconciliation-bridge roll-up. A single ADR-031 exception-path guard (OCA\\Shillinq\\Lifecycle\\DualGaapGuard) enforces the two cross-field preconditions the declarative DSL cannot yet express: a DualTransaction may only be reconciled once it carries a divergence reason code AND (for temporary differences) a deferred-tax effect, and a FrameworkElection may only activate once its comply-or-explain motivation and AVA-besluit reference are present and the elected variant matches the measured size criteria. Seed objects ship five worked examples (lease IFRS-16, pension IAS-19, ECL IFRS-9, deferred-tax temporary difference and a framework election) per design.md."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "Earth",
         "version": "0.1.0",
         "title": "Accounting Framework",
-        "description": "A financial-reporting framework (IFRS-EU, NL-GAAP-RJ, US-GAAP) with its version, effective date, jurisdictions, regulator, base currency and statement templates (REQ-DGAAP-001). The basis for parallel-ledger materialisation: every GL posting is booked under each active framework.",
+        "description": "A financial-reporting framework (IFRS-EU, NL-GAAP-RJ, US-GAAP) with its version, effective date, jurisdictions, regulator, base currency and statement templates. The basis for parallel-ledger materialisation: every GL posting is booked under each active framework.",
         "x-schema-org": "schema:DefinedTerm",
         "x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
         "type": "object",
@@ -27,7 +27,7 @@
         "properties": {
           "identifier": {
             "type": "string",
-            "description": "Framework identifier (REQ-DGAAP-001).",
+            "description": "Framework identifier.",
             "enum": [
               "IFRS-EU",
               "NL-GAAP-RJ",
@@ -92,7 +92,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the administration; reads are scoped to the requesting user's administration (REQ-DGAAP-001).",
+            "description": "FK to the administration; reads are scoped to the requesting user's administration.",
             "example": "adm-holding-1",
             "title": "Administration ID"
           }
@@ -103,7 +103,7 @@
         "icon": "SwapHorizontal",
         "version": "0.1.0",
         "title": "Chart of Accounts Mapping",
-        "description": "Maps a source (RJ) account to one or more target (IFRS) accounts with an allocation rule (REQ-DGAAP-002). Supports one-to-one, one-to-many, many-to-one and recharacterization cardinalities; activation is blocked until a test-data reconciliation reaches ≥95% coverage or an explicit exception justification is recorded.",
+        "description": "Maps a source (RJ) account to one or more target (IFRS) accounts with an allocation rule. Supports one-to-one, one-to-many, many-to-one and recharacterization cardinalities; activation is blocked until a test-data reconciliation reaches ≥95% coverage or an explicit exception justification is recorded.",
         "x-schema-org": "schema:PropertyValue",
         "x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
         "type": "object",
@@ -117,7 +117,7 @@
         "properties": {
           "sourceAccount": {
             "type": "string",
-            "description": "Source RJ account number (FK to Account.accountNumber) (REQ-DGAAP-002).",
+            "description": "Source RJ account number (FK to Account.accountNumber).",
             "example": "1530",
             "title": "Source Account"
           },
@@ -136,7 +136,7 @@
           },
           "mappingType": {
             "type": "string",
-            "description": "Cardinality of the mapping (REQ-DGAAP-002).",
+            "description": "Cardinality of the mapping.",
             "enum": [
               "one-to-one",
               "one-to-many",
@@ -181,13 +181,13 @@
             "type": "number",
             "minimum": 0,
             "maximum": 100,
-            "description": "Percentage of existing RJ mutations the mapping converts successfully on the validation test-run (REQ-DGAAP-002). Activation requires ≥95 unless an exception is documented.",
+            "description": "Percentage of existing RJ mutations the mapping converts successfully on the validation test-run. Activation requires ≥95 unless an exception is documented.",
             "example": 98.5,
             "title": "Coverage Percent"
           },
           "exceptionJustification": {
             "type": "string",
-            "description": "Approver justification when coverage is below 95% (REQ-DGAAP-002).",
+            "description": "Approver justification when coverage is below 95%.",
             "nullable": true,
             "example": null,
             "title": "Exception Justification"
@@ -201,7 +201,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the administration; reads scoped to the requesting user's administration (REQ-DGAAP-002).",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
             "example": "adm-holding-1",
             "title": "Administration ID"
           }
@@ -212,7 +212,7 @@
         "icon": "ScaleBalance",
         "version": "0.1.0",
         "title": "Dual Transaction",
-        "description": "Links one base GL transaction to its parallel RJ and IFRS journal entries, with the divergence amount, reason code and permanence classification (REQ-DGAAP-003, REQ-DGAAP-006). Auto-populated on GL materialisation; the group-accountant may override the classification with an audit-trail reason. Lifecycle: open → classified → reconciled.",
+        "description": "Links one base GL transaction to its parallel RJ and IFRS journal entries, with the divergence amount, reason code and permanence classification. Auto-populated on GL materialisation; the group-accountant may override the classification with an audit-trail reason. Lifecycle: open → classified → reconciled.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
         "type": "object",
@@ -224,7 +224,7 @@
         "properties": {
           "baseTransactionId": {
             "type": "string",
-            "description": "FK to the base GLTransaction both ledgers derive from (REQ-DGAAP-003).",
+            "description": "FK to the base GLTransaction both ledgers derive from.",
             "example": "GL-2026-04-0512",
             "title": "Base Transaction ID"
           },
@@ -275,13 +275,13 @@
           },
           "divergenceAmount": {
             "type": "number",
-            "description": "Absolute value of the divergence between the RJ and IFRS treatment, in the administration currency (REQ-DGAAP-003).",
+            "description": "Absolute value of the divergence between the RJ and IFRS treatment, in the administration currency.",
             "example": 24300.0,
             "title": "Divergence Amount"
           },
           "divergenceReasonCode": {
             "type": "string",
-            "description": "Standard-specific reason for the divergence (REQ-DGAAP-003). Empty/absent while the transaction is still being classified.",
+            "description": "Standard-specific reason for the divergence. Empty/absent while the transaction is still being classified.",
             "enum": [
               "LEASE_IFRS16",
               "PENSION_IAS19",
@@ -298,7 +298,7 @@
           },
           "divergenceClassification": {
             "type": "string",
-            "description": "Permanence of the divergence; temporary differences drive deferred tax under IAS 12 (REQ-DGAAP-006).",
+            "description": "Permanence of the divergence; temporary differences drive deferred tax under IAS 12.",
             "enum": [
               "permanent",
               "temporary",
@@ -309,28 +309,28 @@
           },
           "deferredTaxEffect": {
             "type": "number",
-            "description": "Deferred-tax impact of a temporary difference (amount × statutory rate); zero for permanent differences and reclassifications (REQ-DGAAP-006).",
+            "description": "Deferred-tax impact of a temporary difference (amount × statutory rate); zero for permanent differences and reclassifications.",
             "nullable": true,
             "example": 6075.0,
             "title": "Deferred Tax Effect"
           },
           "classificationOverridden": {
             "type": "boolean",
-            "description": "True when a group-accountant manually overrode the auto-classification (REQ-DGAAP-003).",
+            "description": "True when a group-accountant manually overrode the auto-classification.",
             "default": false,
             "example": false,
             "title": "Classification Overridden"
           },
           "overrideReason": {
             "type": "string",
-            "description": "Audit-trail reason for a manual classification override (REQ-DGAAP-003).",
+            "description": "Audit-trail reason for a manual classification override.",
             "nullable": true,
             "example": null,
             "title": "Override Reason"
           },
           "state": {
             "type": "string",
-            "description": "Lifecycle state (REQ-DGAAP-003).",
+            "description": "Lifecycle state.",
             "enum": [
               "open",
               "classified",
@@ -342,7 +342,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the administration; reads scoped to the requesting user's administration (REQ-DGAAP-003).",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
             "example": "adm-holding-1",
             "title": "Administration ID"
           }
@@ -369,20 +369,20 @@
               "from": "open",
               "to": "classified",
               "label": "Classify divergence",
-              "description": "Assign the divergence reason code and permanence (REQ-DGAAP-003)."
+              "description": "Assign the divergence reason code and permanence."
             },
             "reconcile": {
               "from": "classified",
               "to": "reconciled",
               "label": "Mark reconciled",
-              "description": "Include in the period bridge; requires a reason code and (for temporary differences) a deferred-tax effect (REQ-DGAAP-006).",
+              "description": "Include in the period bridge; requires a reason code and (for temporary differences) a deferred-tax effect.",
               "requires": "OCA\\Shillinq\\Lifecycle\\DualGaapGuard::canReconcileTransaction"
             },
             "reopen": {
               "from": "classified",
               "to": "open",
               "label": "Reopen for reclassification",
-              "description": "Return to open to revise the divergence classification (REQ-DGAAP-003)."
+              "description": "Return to open to revise the divergence classification."
             }
           }
         }
@@ -392,7 +392,7 @@
         "icon": "TransitConnectionVariant",
         "version": "0.1.0",
         "title": "Reconciliation Bridge",
-        "description": "The RJ-to-IFRS conversion for one period and metric (equity or net result): opening RJ balance, adjustments per standard, tax effect per jurisdiction and closing IFRS balance (REQ-DGAAP-005, REQ-DGAAP-006). A declarative aggregation over the period's reconciled DualTransactions; each adjustment line is drill-down navigable to its StandardSpecificCalculation and GL entries (REQ-DGAAP-008).",
+        "description": "The RJ-to-IFRS conversion for one period and metric (equity or net result): opening RJ balance, adjustments per standard, tax effect per jurisdiction and closing IFRS balance. A declarative aggregation over the period's reconciled DualTransactions; each adjustment line is drill-down navigable to its StandardSpecificCalculation and GL entries.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
         "type": "object",
@@ -408,7 +408,7 @@
         "properties": {
           "period": {
             "type": "string",
-            "description": "Fiscal period the bridge covers (REQ-DGAAP-005).",
+            "description": "Fiscal period the bridge covers.",
             "example": "2026",
             "title": "Period"
           },
@@ -426,7 +426,7 @@
           },
           "metric": {
             "type": "string",
-            "description": "Which figure this bridge reconciles (REQ-DGAAP-005).",
+            "description": "Which figure this bridge reconciles.",
             "enum": [
               "equity",
               "net_result"
@@ -436,7 +436,7 @@
           },
           "openingBalanceRj": {
             "type": "number",
-            "description": "Opening RJ balance for the metric (REQ-DGAAP-005).",
+            "description": "Opening RJ balance for the metric.",
             "example": 1000000.0,
             "title": "Opening Balance Rj"
           },
@@ -464,19 +464,19 @@
           },
           "totalTemporaryDifferences": {
             "type": "number",
-            "description": "Sum of temporary differences in the period (REQ-DGAAP-006).",
+            "description": "Sum of temporary differences in the period.",
             "example": 24300.0,
             "title": "Total Temporary Differences"
           },
           "totalPermanentDifferences": {
             "type": "number",
-            "description": "Sum of permanent differences in the period (REQ-DGAAP-006).",
+            "description": "Sum of permanent differences in the period.",
             "example": 0.0,
             "title": "Total Permanent Differences"
           },
           "taxEffect": {
             "type": "array",
-            "description": "Deferred-tax effect per jurisdiction (jurisdiction, amount, statutoryRate) (REQ-DGAAP-006).",
+            "description": "Deferred-tax effect per jurisdiction (jurisdiction, amount, statutoryRate).",
             "items": {
               "type": "object"
             },
@@ -491,7 +491,7 @@
           },
           "closingBalanceIfrs": {
             "type": "number",
-            "description": "Closing IFRS balance = openingBalanceRj + sum(adjustments) (REQ-DGAAP-005).",
+            "description": "Closing IFRS balance = openingBalanceRj + sum(adjustments).",
             "example": 790300.0,
             "title": "Closing Balance Ifrs"
           },
@@ -511,14 +511,14 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the administration; reads scoped to the requesting user's administration (REQ-DGAAP-005).",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
             "example": "adm-holding-1",
             "title": "Administration ID"
           }
         },
         "x-openregister-aggregations": {
           "bridgeByPeriodStandard": {
-            "description": "Declarative shape of the reconciliation-bridge roll-up (REQ-DGAAP-005, REQ-DGAAP-006). Groups reconciled DualTransactions by (period, divergenceReasonCode) within an administration and framework pair, sums the divergence amounts per standard into adjustments[], sums temporary vs. permanent differences, and derives closingBalanceIfrs = openingBalanceRj + sum(adjustments). Deferred-tax effect is summed per jurisdiction from each temporary DualTransaction's deferredTaxEffect. When the OpenRegister aggregation engine cannot express the cross-schema join for per-jurisdiction tax effect, the same result is computed from the real ObjectService API (find/findAll).",
+            "description": "Declarative shape of the reconciliation-bridge roll-up. Groups reconciled DualTransactions by (period, divergenceReasonCode) within an administration and framework pair, sums the divergence amounts per standard into adjustments[], sums temporary vs. permanent differences, and derives closingBalanceIfrs = openingBalanceRj + sum(adjustments). Deferred-tax effect is summed per jurisdiction from each temporary DualTransaction's deferredTaxEffect. When the OpenRegister aggregation engine cannot express the cross-schema join for per-jurisdiction tax effect, the same result is computed from the real ObjectService API (find/findAll).",
             "source": "DualTransaction",
             "filter": {
               "period": "@self.period",
@@ -559,7 +559,7 @@
         "icon": "Calculator",
         "version": "0.1.0",
         "title": "Standard-Specific Calculation",
-        "description": "The supporting calculation behind a divergence: IFRS-16 incremental borrowing rate, IAS-19 projected-unit-credit, IFRS-9 expected-credit-loss staging, IFRS-15 revenue model (REQ-DGAAP-004, REQ-DGAAP-005). Stores inputs, outputs, revaluation frequency, actuary/validator signoff (IAS 19) and an audit-evidence URI to the source document (e.g. an actuarial report in docudesk).",
+        "description": "The supporting calculation behind a divergence: IFRS-16 incremental borrowing rate, IAS-19 projected-unit-credit, IFRS-9 expected-credit-loss staging, IFRS-15 revenue model. Stores inputs, outputs, revaluation frequency, actuary/validator signoff (IAS 19) and an audit-evidence URI to the source document (e.g. an actuarial report in docudesk).",
         "x-schema-org": "schema:Quantity",
         "x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
         "type": "object",
@@ -571,7 +571,7 @@
         "properties": {
           "standardCode": {
             "type": "string",
-            "description": "The standard this calculation supports (REQ-DGAAP-004).",
+            "description": "The standard this calculation supports.",
             "enum": [
               "IFRS-16",
               "IAS-19",
@@ -594,7 +594,7 @@
           },
           "calculationMethod": {
             "type": "string",
-            "description": "The valuation method applied (REQ-DGAAP-004).",
+            "description": "The valuation method applied.",
             "enum": [
               "incremental_borrowing_rate",
               "projected_unit_credit",
@@ -632,7 +632,7 @@
           },
           "revaluationFrequency": {
             "type": "string",
-            "description": "How often the calculation is re-run (REQ-DGAAP-005).",
+            "description": "How often the calculation is re-run.",
             "enum": [
               "monthly",
               "quarterly",
@@ -651,21 +651,21 @@
           },
           "actuarySignoff": {
             "type": "string",
-            "description": "Actuary / validator who signed off the calculation (required for IAS 19) (REQ-DGAAP-004).",
+            "description": "Actuary / validator who signed off the calculation (required for IAS 19).",
             "nullable": true,
             "example": null,
             "title": "Actuary Signoff"
           },
           "auditEvidenceUri": {
             "type": "string",
-            "description": "URI to the source evidence document (e.g. docudesk:// actuarial report) (REQ-DGAAP-008).",
+            "description": "URI to the source evidence document (e.g. docudesk:// actuarial report).",
             "nullable": true,
             "example": "docudesk://lease-contract-2026-AUTO-001.pdf",
             "title": "Audit Evidence URI"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the administration; reads scoped to the requesting user's administration (REQ-DGAAP-004).",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
             "example": "adm-holding-1",
             "title": "Administration ID"
           }
@@ -676,7 +676,7 @@
         "icon": "Gavel",
         "version": "0.1.0",
         "title": "Framework Election",
-        "description": "Records a legal entity's primary-framework election with comply-or-explain motivation, RJ variant, measured size criteria and AVA-besluit reference (REQ-DGAAP-007, REQ-DGAAP-010). Lifecycle: draft → active → superseded. Activation requires a motivation, an AVA-besluit reference and a variant consistent with the measured size criteria; the system warns when criteria breach the threshold for two consecutive years.",
+        "description": "Records a legal entity's primary-framework election with comply-or-explain motivation, RJ variant, measured size criteria and AVA-besluit reference. Lifecycle: draft → active → superseded. Activation requires a motivation, an AVA-besluit reference and a variant consistent with the measured size criteria; the system warns when criteria breach the threshold for two consecutive years.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-ifrs-rj-dual-gaap/specs/bookkeeping-ifrs-rj-dual-gaap/spec.md",
         "type": "object",
@@ -689,13 +689,13 @@
         "properties": {
           "legalEntityId": {
             "type": "string",
-            "description": "FK to the legal entity this election applies to (REQ-DGAAP-010).",
+            "description": "FK to the legal entity this election applies to.",
             "example": "entity-holding-bv",
             "title": "Legal Entity ID"
           },
           "primaryFramework": {
             "type": "string",
-            "description": "The primary reporting framework elected (REQ-DGAAP-010).",
+            "description": "The primary reporting framework elected.",
             "enum": [
               "IFRS-EU",
               "NL-GAAP-RJ"
@@ -705,14 +705,14 @@
           },
           "complyOrExplainMotivation": {
             "type": "string",
-            "description": "Comply-or-explain motivation for the election (e.g. small-entity exemption BW2 art 2:396) (REQ-DGAAP-010).",
+            "description": "Comply-or-explain motivation for the election (e.g. small-entity exemption BW2 art 2:396).",
             "nullable": true,
             "example": "Kleine rechtspersoon op basis van BW2 art 2:396.",
             "title": "Comply Or Explain Motivation"
           },
           "rjVariant": {
             "type": "string",
-            "description": "RJ variant elected (REQ-DGAAP-010).",
+            "description": "RJ variant elected.",
             "enum": [
               "rj-in_full",
               "RJk",
@@ -723,35 +723,35 @@
           },
           "sizeCriteriaBalanceSheetTotal": {
             "type": "number",
-            "description": "Measured balance-sheet total used for the size test (REQ-DGAAP-010).",
+            "description": "Measured balance-sheet total used for the size test.",
             "nullable": true,
             "example": 5800000.0,
             "title": "Size Criteria Balanstotaal"
           },
           "sizeCriteriaNetRevenue": {
             "type": "number",
-            "description": "Measured net turnover used for the size test (REQ-DGAAP-010).",
+            "description": "Measured net turnover used for the size test.",
             "nullable": true,
             "example": 11200000.0,
             "title": "Size Criteria Netto Omzet"
           },
           "sizeCriteriaAverageEmployees": {
             "type": "integer",
-            "description": "Measured average headcount used for the size test (REQ-DGAAP-010).",
+            "description": "Measured average headcount used for the size test.",
             "nullable": true,
             "example": 42,
             "title": "Size Criteria Gemiddeld Werknemers"
           },
           "sizeCriteriaBreachYears": {
             "type": "integer",
-            "description": "Number of consecutive years the size criteria have breached the variant threshold; a value ≥2 triggers a warning (REQ-DGAAP-010).",
+            "description": "Number of consecutive years the size criteria have breached the variant threshold; a value ≥2 triggers a warning.",
             "default": 0,
             "example": 0,
             "title": "Size Criteria Breach Years"
           },
           "avaDecisionReference": {
             "type": "string",
-            "description": "Reference to the AVA (general meeting) resolution recording the election (REQ-DGAAP-010).",
+            "description": "Reference to the AVA (general meeting) resolution recording the election.",
             "nullable": true,
             "example": "AVA-2026-03-12-besluit-4",
             "title": "Ava Besluit Reference"
@@ -772,7 +772,7 @@
           },
           "state": {
             "type": "string",
-            "description": "Lifecycle state (REQ-DGAAP-010).",
+            "description": "Lifecycle state.",
             "enum": [
               "draft",
               "active",
@@ -784,7 +784,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the administration; reads scoped to the requesting user's administration (REQ-DGAAP-010).",
+            "description": "FK to the administration; reads scoped to the requesting user's administration.",
             "example": "adm-holding-1",
             "title": "Administration ID"
           }
@@ -799,7 +799,7 @@
             },
             "active": {
               "label": "Active",
-              "description": "The entity's effective framework election; blocks publication of statements inconsistent with it (REQ-DGAAP-010)."
+              "description": "The entity's effective framework election; blocks publication of statements inconsistent with it."
             },
             "superseded": {
               "label": "Superseded",
@@ -811,14 +811,14 @@
               "from": "draft",
               "to": "active",
               "label": "Activate election",
-              "description": "Activate once the motivation, AVA-besluit reference and a variant consistent with the measured size criteria are present (REQ-DGAAP-010).",
+              "description": "Activate once the motivation, AVA-besluit reference and a variant consistent with the measured size criteria are present.",
               "requires": "OCA\\Shillinq\\Lifecycle\\DualGaapGuard::canActivateElection"
             },
             "supersede": {
               "from": "active",
               "to": "superseded",
               "label": "Supersede",
-              "description": "Supersede when a later election takes effect (REQ-DGAAP-007)."
+              "description": "Supersede when a later election takes effect."
             }
           }
         }

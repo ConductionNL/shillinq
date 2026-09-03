@@ -5,7 +5,7 @@
         "properties": {
           "isPublic": {
             "type": "boolean",
-            "description": "Whether this service is bookable via the public self-service widget (REQ-WSW-001). Services with isPublic=false are never returned by the widget API. Additive widget extension of the canonical bookings-service-catalog Service schema.",
+            "description": "Whether this service is bookable via the public self-service widget. Services with isPublic=false are never returned by the widget API. Additive widget extension of the canonical bookings-service-catalog Service schema.",
             "default": false,
             "title": "Is Public"
           },
@@ -17,7 +17,7 @@
           },
           "resourceId": {
             "type": "string",
-            "description": "Default Resource.resourceId this service is performed on for widget bookings. Slot availability is computed against this resource (REQ-WSW-002). Additive widget extension; the canonical Appointment still carries its own resourceId per booking.",
+            "description": "Default Resource.resourceId this service is performed on for widget bookings. Slot availability is computed against this resource. Additive widget extension; the canonical Appointment still carries its own resourceId per booking.",
             "nullable": true,
             "example": "wsw-res-001",
             "title": "Resource ID"
@@ -28,7 +28,7 @@
         "properties": {
           "timezone": {
             "type": "string",
-            "description": "IANA timezone the operational hours are expressed in (e.g. Europe/Amsterdam). Used to convert widget slots to/from UTC (REQ-WSW-007). Additive widget extension of the canonical bookings-resource-calendar Resource schema.",
+            "description": "IANA timezone the operational hours are expressed in (e.g. Europe/Amsterdam). Used to convert widget slots to/from UTC. Additive widget extension of the canonical bookings-resource-calendar Resource schema.",
             "default": "Europe/Amsterdam",
             "example": "Europe/Amsterdam",
             "title": "Timezone"
@@ -61,7 +61,7 @@
           },
           "source": {
             "type": "string",
-            "description": "Channel the appointment originated from. 'widget' marks self-service public bookings (REQ-WSW-003). Additive widget extension.",
+            "description": "Channel the appointment originated from. 'widget' marks self-service public bookings. Additive widget extension.",
             "nullable": true,
             "example": "widget",
             "title": "Source"
@@ -73,7 +73,7 @@
         "icon": "KeyOutline",
         "version": "0.1.0",
         "title": "Widget Access Key",
-        "description": "A per-business API access key for the public self-service widget (REQ-WSW-009). Only the password_hash() of the key is stored; the plaintext key is shown once on generation and never persisted.",
+        "description": "A per-business API access key for the public self-service widget. Only the password_hash() of the key is stored; the plaintext key is shown once on generation and never persisted.",
         "x-schema-org": "schema:DigitalDocument",
         "type": "object",
         "required": [
@@ -91,13 +91,13 @@
           },
           "apiKeyHash": {
             "type": "string",
-            "description": "password_hash() hash of the plaintext API key. Plaintext is never stored. Compared with password_verify() (REQ-WSW-009).",
+            "description": "password_hash() hash of the plaintext API key. Plaintext is never stored. Compared with password_verify().",
             "example": "$2y$10$...",
             "title": "API Key Hash"
           },
           "previousApiKeyHash": {
             "type": "string",
-            "description": "Hash of the prior key during the 7-day rotation grace window (REQ-WSW-009). Null outside the grace window.",
+            "description": "Hash of the prior key during the 7-day rotation grace window. Null outside the grace window.",
             "nullable": true,
             "example": null,
             "title": "Previous API Key Hash"
@@ -105,7 +105,7 @@
           "rateLimitPerMinute": {
             "type": "integer",
             "minimum": 1,
-            "description": "Maximum widget API requests per minute for this business (REQ-WSW-001).",
+            "description": "Maximum widget API requests per minute for this business.",
             "default": 100,
             "title": "Rate Limit Per Minute"
           },

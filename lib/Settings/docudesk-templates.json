@@ -11,7 +11,7 @@
     {
       "templateId": "vpb-aangifte-innovatiebox-sectie",
       "title": "Vpb-aangifte — Innovatiebox sectie",
-      "description": "Innovatiebox-sectie voor de Vpb-aangifte voorbereiding (REQ-IBA-006). Rendert per kwalificerend immaterieel activum de kwalificerende winst voor/na nexus, de nexusbreuk, het toegepaste tarief (0.09) en de Vpb-impact; het totaal levert de bijdrage aan Vpb-aangifte regel 23. Voor forfaitaire keuze wordt een enkele regel met het plafond (EUR 25.000) getoond. Gevoed door de innovatieboxAdministratie aggregatie op IBProfitAttribution.",
+      "description": "Innovatiebox-sectie voor de Vpb-aangifte voorbereiding. Rendert per kwalificerend immaterieel activum de kwalificerende winst voor/na nexus, de nexusbreuk, het toegepaste tarief (0.09) en de Vpb-impact; het totaal levert de bijdrage aan Vpb-aangifte regel 23. Voor forfaitaire keuze wordt een enkele regel met het plafond (EUR 25.000) getoond. Gevoed door de innovatieboxAdministratie aggregatie op IBProfitAttribution.",
       "register": "shillinq",
       "schema": "IBProfitAttribution",
       "aggregation": "innovatieboxAdministratie",
@@ -70,7 +70,7 @@
     {
       "templateId": "innovatiebox-administratie-summary",
       "title": "Innovatiebox administratie — overzicht",
-      "description": "Intern overzicht en bijlage voor de Belastingdienst VSO-onderbouwing (REQ-IBA-008): lijst van kwalificerende activa met status en toegangsticket, nexusbreuk per activum, en het voortwenteling-verliesschema per activum.",
+      "description": "Intern overzicht en bijlage voor de Belastingdienst VSO-onderbouwing: lijst van kwalificerende activa met status en toegangsticket, nexusbreuk per activum, en het voortwenteling-verliesschema per activum.",
       "register": "shillinq",
       "schema": "QualifyingAsset",
       "aggregation": "innovatieboxAdministratie",

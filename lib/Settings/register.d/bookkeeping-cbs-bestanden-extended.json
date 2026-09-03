@@ -49,7 +49,7 @@
           },
           "organizationLegalName": {
             "type": "string",
-            "description": "Legal name of the reporting organization (REQ-CBS-001).",
+            "description": "Legal name of the reporting organization.",
             "example": "Gemeente Amsterdam",
             "title": "Organization Legal Name"
           },
@@ -90,25 +90,25 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp when submission was sent to CBS (REQ-CBS-003).",
+            "description": "Timestamp when submission was sent to CBS.",
             "title": "Submission Date"
           },
           "iv3FileUri": {
             "type": "string",
             "nullable": true,
-            "description": "OpenRegister file reference to the generated IV3 JSON package (REQ-CBS-007).",
+            "description": "OpenRegister file reference to the generated IV3 JSON package.",
             "title": "Iv3File URI"
           },
           "iv3Checksum": {
             "type": "string",
             "nullable": true,
-            "description": "SHA-256 checksum of the generated IV3 file content (REQ-CBS-006).",
+            "description": "SHA-256 checksum of the generated IV3 file content.",
             "title": "Iv3Checksum"
           },
           "validationErrors": {
             "type": "array",
             "nullable": true,
-            "description": "Recorded validation errors that blocked the validate transition (REQ-CBS-008).",
+            "description": "Recorded validation errors that blocked the validate transition.",
             "items": {
               "type": "string"
             },
@@ -133,28 +133,28 @@
           "retention": {
             "rule": "selectielijst:5.1.4",
             "period": "P10Y",
-            "description": "CBS submission records retained 10 years per Archiefwet 1995 (REQ-CBS-010)."
+            "description": "CBS submission records retained 10 years per Archiefwet 1995."
           },
           "states": {
             "draft": {
               "label": "Concept",
-              "description": "Submission created, CBSLines computed, IV3 file not yet validated (REQ-CBS-003)."
+              "description": "Submission created, CBSLines computed, IV3 file not yet validated."
             },
             "validated": {
               "label": "Gevalideerd",
-              "description": "Structural validation passed; IV3 file attached; ready for CBS submission (REQ-CBS-003)."
+              "description": "Structural validation passed; IV3 file attached; ready for CBS submission."
             },
             "submitted": {
               "label": "Ingediend",
-              "description": "Operator has submitted the package to the CBS portal (REQ-CBS-003)."
+              "description": "Operator has submitted the package to the CBS portal."
             },
             "accepted": {
               "label": "Geaccepteerd",
-              "description": "CBS has accepted the submission (manual operator update or webhook) (REQ-CBS-003)."
+              "description": "CBS has accepted the submission (manual operator update or webhook)."
             },
             "rejected": {
               "label": "Afgewezen",
-              "description": "CBS has rejected the submission; correction submission required (REQ-CBS-003)."
+              "description": "CBS has rejected the submission; correction submission required."
             }
           },
           "transitions": {
@@ -162,31 +162,31 @@
               "from": "draft",
               "to": "validated",
               "label": "Valideren",
-              "description": "Run structural + balancing validation, attach IV3 file (REQ-CBS-008)."
+              "description": "Run structural + balancing validation, attach IV3 file."
             },
             "submit": {
               "from": "validated",
               "to": "submitted",
               "label": "Indienen",
-              "description": "Record submission timestamp and downstream delivery (REQ-CBS-003)."
+              "description": "Record submission timestamp and downstream delivery."
             },
             "accept": {
               "from": "submitted",
               "to": "accepted",
               "label": "Accepteren",
-              "description": "Record CBS acceptance (REQ-CBS-003)."
+              "description": "Record CBS acceptance."
             },
             "reject": {
               "from": "submitted",
               "to": "rejected",
               "label": "Afwijzen",
-              "description": "Record CBS rejection reason (REQ-CBS-003)."
+              "description": "Record CBS rejection reason."
             }
           }
         },
         "x-openregister-aggregations": {
           "totalAggregatedAmount": {
-            "description": "Sum of CBSLine.aggregatedAmount for this submission, used by validation to compare against GL totals (REQ-CBS-008).",
+            "description": "Sum of CBSLine.aggregatedAmount for this submission, used by validation to compare against GL totals.",
             "filter": {},
             "from": "CBSLine",
             "metric": "sum",
@@ -202,7 +202,7 @@
               "type": "transition",
               "action": "validate"
             },
-            "description": "Notify the finance manager when a CBS submission passes validation (REQ-CBS-009).",
+            "description": "Notify the finance manager when a CBS submission passes validation.",
             "enabled": true,
             "channels": [
               "nc-notification"
@@ -229,7 +229,7 @@
               "type": "transition",
               "action": "reject"
             },
-            "description": "Notify the finance manager when CBS rejects a submission (REQ-CBS-003).",
+            "description": "Notify the finance manager when CBS rejects a submission.",
             "enabled": true,
             "channels": [
               "nc-notification"
@@ -300,7 +300,7 @@
             "type": "string",
             "format": "uuid",
             "$ref": "CBSSubmission",
-            "description": "FK to CBSSubmission (REQ-CBS-002).",
+            "description": "FK to CBSSubmission.",
             "example": "cbs-sub-2025-org-001",
             "title": "CBS Submission ID"
           },
@@ -315,7 +315,7 @@
               "OtherIncome",
               "OtherExpenses"
             ],
-            "description": "CBS line category from IV3 format (REQ-CBS-002).",
+            "description": "CBS line category from IV3 format.",
             "title": "CBS Line Classification"
           },
           "cbsLineNumber": {
@@ -326,13 +326,13 @@
           },
           "accountRangeStart": {
             "type": "string",
-            "description": "GL account code range start (REQ-CBS-005).",
+            "description": "GL account code range start.",
             "example": "4000",
             "title": "Account Range Start"
           },
           "accountRangeEnd": {
             "type": "string",
-            "description": "GL account code range end (REQ-CBS-005).",
+            "description": "GL account code range end.",
             "example": "4999",
             "title": "Account Range End"
           },

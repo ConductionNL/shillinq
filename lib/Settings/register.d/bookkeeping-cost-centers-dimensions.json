@@ -2,7 +2,7 @@
   "_meta": {
     "adr": "ADR-037",
     "change": "bookkeeping-cost-centers-dimensions + unify-analytical-dimensions",
-    "description": "ONE canonical AnalyticalDimension register (discriminated by dimensionType: cost-center / cost-object / custom) replacing the prior CostCenter + KostenDrager + AnalyticalDimension triple. REQ-ADIM-001..008: dimensionType discriminator, cost-center-specific props (budget/spentToDate/allocatedBudget/organizationId/responsibleUser/ondernemingsActiviteit), shared hierarchy (parentCode) + lifecycle for all types, re-homed aggregations (segmentPnl/spentToDate/allocatedBudget scoped to cost-center; byCostCenter/byCostCenterHierarchy/byCostObject/byAnalyticalDimension on GLLine), idempotent migration via UnifyAnalyticalDimensions. Seeds carry dimensionType so greenfield installs land the unified shape. GLLine FK relations re-targeted (REQ-ADIM-101). Nav filtered views + label unification (REQ-ADIM-103).",
+    "description": "ONE canonical AnalyticalDimension register (discriminated by dimensionType: cost-center / cost-object / custom) replacing the prior CostCenter + KostenDrager + AnalyticalDimension triple. REQ-ADIM-001..008: dimensionType discriminator, cost-center-specific props (budget/spentToDate/allocatedBudget/organizationId/responsibleUser/ondernemingsActiviteit), shared hierarchy (parentCode) + lifecycle for all types, re-homed aggregations (segmentPnl/spentToDate/allocatedBudget scoped to cost-center; byCostCenter/byCostCenterHierarchy/byCostObject/byAnalyticalDimension on GLLine), idempotent migration via UnifyAnalyticalDimensions. Seeds carry dimensionType so greenfield installs land the unified shape. GLLine FK relations re-targeted. Nav filtered views + label unification.",
     "license": "EUPL-1.2",
     "copyright": "Conduction B.V."
   },
@@ -130,7 +130,7 @@
           },
           "enterpriseActivity": {
             "type": "boolean",
-            "description": "Marks this cost-center dimension as an ondernemingsactiviteit per Wet modernisering Vpb-plicht (2016). When true, the dimension MAY be referenced by a VpbBalansLink (REQ-VPB-002). Only meaningful when dimensionType = cost-center. Default false.",
+            "description": "Marks this cost-center dimension as an ondernemingsactiviteit per Wet modernisering Vpb-plicht (2016). When true, the dimension MAY be referenced by a VpbBalansLink. Only meaningful when dimensionType = cost-center. Default false.",
             "default": false,
             "example": false,
             "title": "Ondernemings Activiteit"
@@ -276,7 +276,7 @@
         },
         "x-openregister-aggregations": {
           "segmentPnl": {
-            "description": "Segment P&L per cost-center (REQ-CC-005): debit/credit sums of non-eliminated GLLine amounts, grouped by costCenterCode + periodId + accountNumber. Returns EVERY cost-center; narrow to one with the extraFilter query params (?costCenterCode=...). It does not correlate on @self — no caller supplies a parent row. Parent roll-up over the parentCode tree is NOT included here; byCostCenterHierarchy does that through the join.",
+            "description": "Segment P&L per cost-center: debit/credit sums of non-eliminated GLLine amounts, grouped by costCenterCode + periodId + accountNumber. Returns EVERY cost-center; narrow to one with the extraFilter query params (?costCenterCode=...). It does not correlate on @self — no caller supplies a parent row. Parent roll-up over the parentCode tree is NOT included here; byCostCenterHierarchy does that through the join.",
             "from": "GLLine",
             "where": {
               "eliminationFlag": false
@@ -306,7 +306,7 @@
             ]
           },
           "segmentPnlByCostObject": {
-            "description": "Segment P&L per cost-object (REQ-CC-005): debit/credit sums of non-eliminated GLLine amounts, grouped by costCarrierCode + periodId + accountNumber. Returns EVERY cost-object; narrow to one with the extraFilter query params (?costCarrierCode=...). Replaces the retired KostenDrager.segmentPnl; the field is costCarrierCode — kostenDragerCode is not declared on GLLine and matched nothing.",
+            "description": "Segment P&L per cost-object: debit/credit sums of non-eliminated GLLine amounts, grouped by costCarrierCode + periodId + accountNumber. Returns EVERY cost-object; narrow to one with the extraFilter query params (?costCarrierCode=...). Replaces the retired KostenDrager.segmentPnl; the field is costCarrierCode — kostenDragerCode is not declared on GLLine and matched nothing.",
             "from": "GLLine",
             "where": {
               "eliminationFlag": false

@@ -13,7 +13,7 @@
         "icon": "OfficeBuilding",
         "version": "0.1.0",
         "title": "Werkgever",
-        "description": "Employer payroll/fiscal setup (REQ-PAY-000): loonheffingsnummer, sectorcode, AWF/ZVW tariff selection, WKR budget and the configurable vakantiegeld payout month. One Werkgever scopes a set of LoonPeriode batches and Werknemer records. References the tenant Organization/Administration; never holds employee personal data itself.",
+        "description": "Employer payroll/fiscal setup: loonheffingsnummer, sectorcode, AWF/ZVW tariff selection, WKR budget and the configurable vakantiegeld payout month. One Werkgever scopes a set of LoonPeriode batches and Werknemer records. References the tenant Organization/Administration; never holds employee personal data itself.",
         "x-schema-org": "schema:Organization",
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-000-werkgever-setup.md",
         "type": "object",
@@ -115,7 +115,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "Tenant administration scope (FK to Administration). Reads are scoped to this value server-side (REQ-PAY-000).",
+            "description": "Tenant administration scope (FK to Administration). Reads are scoped to this value server-side.",
             "example": "adm-smb-1",
             "title": "Administration ID"
           }
@@ -126,7 +126,7 @@
         "icon": "AccountTie",
         "version": "0.1.0",
         "title": "Werknemer",
-        "description": "Employee fiscal master (REQ-PAY-000). References the tenant Person/contact (personId) for name/address — this engine never re-invents a person/contact schema; it carries only the fiscal/payroll attributes a payslip needs. BSN is special-category (AVG) — masked in API output, never logged raw. sectorSpecifiekeAttributen is an open JSON object reserved for the 600+ CAO variants without overloading the engine.",
+        "description": "Employee fiscal master. References the tenant Person/contact (personId) for name/address — this engine never re-invents a person/contact schema; it carries only the fiscal/payroll attributes a payslip needs. BSN is special-category (AVG) — masked in API output, never logged raw. sectorSpecifiekeAttributen is an open JSON object reserved for the 600+ CAO variants without overloading the engine.",
         "x-schema-org": "schema:Person",
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-000-werkgever-setup.md",
         "type": "object",
@@ -156,7 +156,7 @@
           "bsn": {
             "type": "string",
             "nullable": true,
-            "description": "Burgerservicenummer (special-category, AVG). Stored for the fiscal record; masked in API output and never logged raw (REQ-PAY-000).",
+            "description": "Burgerservicenummer (special-category, AVG). Stored for the fiscal record; masked in API output and never logged raw.",
             "example": "123456789",
             "title": "BSN"
           },
@@ -223,7 +223,7 @@
               "WIT_SPECIAL",
               "GREEN_SPECIAL"
             ],
-            "description": "Applicable wage-tax table colour/kind (REQ-PAY-002).",
+            "description": "Applicable wage-tax table colour/kind.",
             "example": "WIT_REGULAR",
             "title": "Loonheffingstabel"
           },
@@ -295,14 +295,14 @@
           "yearEndBonusPct": {
             "type": "number",
             "default": 0,
-            "description": "Year-end bonus percentage, if any (REQ-PAY-006).",
+            "description": "Year-end bonus percentage, if any.",
             "example": 0,
             "title": "Eindejaarsuitkering Pct"
           },
           "thirteenthMonth": {
             "type": "boolean",
             "default": false,
-            "description": "Whether a 13th month applies (REQ-PAY-006).",
+            "description": "Whether a 13th month applies.",
             "example": false,
             "title": "Dertiende Maand"
           },
@@ -343,28 +343,28 @@
           "is_dga": {
             "type": "boolean",
             "default": false,
-            "description": "Whether the employee is a DGA subject to the gebruikelijk-loon rule (REQ-PAY-009).",
+            "description": "Whether the employee is a DGA subject to the gebruikelijk-loon rule.",
             "example": false,
             "title": "Is Dga"
           },
           "expat30PctScheme": {
             "type": "boolean",
             "default": false,
-            "description": "Whether the 30%-ruling applies (REQ-PAY-015).",
+            "description": "Whether the 30%-ruling applies.",
             "example": false,
             "title": "Expat30Pct Regeling"
           },
           "customaryPayException": {
             "type": "string",
             "nullable": true,
-            "description": "Recorded justification when DGA wage is below the norm (REQ-PAY-009).",
+            "description": "Recorded justification when DGA wage is below the norm.",
             "example": null,
             "title": "Gebruikelijk Loon Uitzondering"
           },
           "sectorSpecifiekeAttributen": {
             "type": "object",
             "nullable": true,
-            "description": "Open JSON for CAO-specific elements (REQ-PAY-000); not interpreted by the engine.",
+            "description": "Open JSON for CAO-specific elements; not interpreted by the engine.",
             "title": "Sector Specifieke Attributen"
           },
           "administrationId": {
@@ -380,7 +380,7 @@
         "icon": "TableLarge",
         "version": "0.1.0",
         "title": "Loonheffingtabel 2026",
-        "description": "Immutable, versioned 2026 wage-tax table (REQ-PAY-002). One record per colour/period/korting combination; tabelRegels is the bracket array. readonly once geldigVan has passed — a Belastingdienst correction is a NEW record with a later geldigVan, never an edit (design.md D2). This guarantees reproducibility: in 2031 the engine can still answer 'what was the May-2026 table?'.",
+        "description": "Immutable, versioned 2026 wage-tax table. One record per colour/period/korting combination; tabelRegels is the bracket array. readonly once geldigVan has passed — a Belastingdienst correction is a NEW record with a later geldigVan, never an edit (design.md D2). This guarantees reproducibility: in 2031 the engine can still answer 'what was the May-2026 table?'.",
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-002-loonheffingstabellen.md",
         "x-openregister": {
           "readonly": true
@@ -474,7 +474,7 @@
         "icon": "CalendarRange",
         "version": "0.1.0",
         "title": "Loonperiode",
-        "description": "A payroll batch (week / 4-week / month) per employer (REQ-PAY-014). Owns the fiscal period; every payslip in it shares one loonheffingstabel version so employees never end up on mixed tariffs. Closing the period (status GESLOTEN) is what triggers payslip PDF, LH-afdracht and the GL journaalpost.",
+        "description": "A payroll batch (week / 4-week / month) per employer. Owns the fiscal period; every payslip in it shares one loonheffingstabel version so employees never end up on mixed tariffs. Closing the period (status GESLOTEN) is what triggers payslip PDF, LH-afdracht and the GL journaalpost.",
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-014-mutaties.md",
         "type": "object",
         "required": [
@@ -607,7 +607,7 @@
         "icon": "FileDocumentOutline",
         "version": "0.1.0",
         "title": "Loonstrook",
-        "description": "Full bruto->netto payslip per employee per period (REQ-PAY-001, REQ-PAY-010). Carries every line item (brutoComponenten), fiscaalLoon, premieloon_SV, loonheffing, inhoudingenSV, premiesSVWerkgever, zvw, pensioen, nettoBetaald, plus a read-only cumulatieven snapshot stamped at posting time (design.md D3) and the holiday-allowance reservation. Generated by PayrollService from PayrollCalculator output; art. 626 BW compliant.",
+        "description": "Full bruto->netto payslip per employee per period. Carries every line item (brutoComponenten), fiscaalLoon, premieloon_SV, loonheffing, inhoudingenSV, premiesSVWerkgever, zvw, pensioen, nettoBetaald, plus a read-only cumulatieven snapshot stamped at posting time (design.md D3) and the holiday-allowance reservation. Generated by PayrollService from PayrollCalculator output; art. 626 BW compliant.",
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-001-bruto-netto-berekening.md",
         "type": "object",
         "required": [
@@ -703,7 +703,7 @@
           },
           "netPaid": {
             "type": "number",
-            "description": "Net amount paid out (REQ-PAY-001).",
+            "description": "Net amount paid out.",
             "example": 3520.12,
             "title": "Netto Betaald"
           },
@@ -739,7 +739,7 @@
         "icon": "BankTransfer",
         "version": "0.1.0",
         "title": "Loonheffingen-afdracht",
-        "description": "Per-period Belastingdienst remittance aggregate (REQ-PAY-011): total wage tax + WKR eindheffingen + employer SV premiums + ZVW, with the due date and a status workflow VOORBEREID->GEVERIFIEERD->VERZONDEN->VERWERKT. Prepared (VOORBEREID) for the bookkeeping-loonaangifte-sbr app to convert to SBR/XBRL and submit via Digipoort — this engine never submits directly.",
+        "description": "Per-period Belastingdienst remittance aggregate: total wage tax + WKR eindheffingen + employer SV premiums + ZVW, with the due date and a status workflow VOORBEREID->GEVERIFIEERD->VERZONDEN->VERWERKT. Prepared (VOORBEREID) for the bookkeeping-loonaangifte-sbr app to convert to SBR/XBRL and submit via Digipoort — this engine never submits directly.",
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-011-lh-aangifte.md",
         "type": "object",
         "required": [
@@ -772,7 +772,7 @@
           "totalFinalLeviesWorkRelatedCosts": {
             "type": "number",
             "default": 0,
-            "description": "WKR final levy fetched from the WKR app (REQ-PAY-011).",
+            "description": "WKR final levy fetched from the WKR app.",
             "example": 0,
             "title": "Totaal Eindheffingen Wkr"
           },
@@ -837,7 +837,7 @@
         "icon": "BookOpenVariant",
         "version": "0.1.0",
         "title": "Loonjournaalpost",
-        "description": "Auto-generated, balanced GL posting per closed payroll period (REQ-PAY-012). regels is the array of {rekening, naam, debet, credit} lines mapping to RGS accounts (4001/4010/4020 debit, 1610/1620/1630/1640 credit). balanced is true only when sum(debet)==sum(credit) — PayrollService refuses to post an unbalanced journal.",
+        "description": "Auto-generated, balanced GL posting per closed payroll period. regels is the array of {rekening, naam, debet, credit} lines mapping to RGS accounts (4001/4010/4020 debit, 1610/1620/1630/1640 credit). balanced is true only when sum(debet)==sum(credit) — PayrollService refuses to post an unbalanced journal.",
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-012-gl-boeking.md",
         "type": "object",
         "required": [

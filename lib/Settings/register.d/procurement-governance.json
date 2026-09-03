@@ -13,7 +13,7 @@
         "icon": "AccountCheckOutline",
         "version": "0.1.0",
         "title": "Supplier Qualification",
-        "description": "Generic supplier onboarding/qualification record. A supplier must be qualified (all required documents provided and unexpired) before its first PurchaseOrder when the require_supplier_qualification_for_po policy is enabled (REQ-PG-002). Registration rejects a duplicate supplier on taxId or IBAN (REQ-PG-003). Abstracted from purchaseq's supplier-onboarding-vragenlijst as a jurisdiction-neutral control — no country-specific questionnaire is modelled.",
+        "description": "Generic supplier onboarding/qualification record. A supplier must be qualified (all required documents provided and unexpired) before its first PurchaseOrder when the require_supplier_qualification_for_po policy is enabled. Registration rejects a duplicate supplier on taxId or IBAN. Abstracted from purchaseq's supplier-onboarding-vragenlijst as a jurisdiction-neutral control — no country-specific questionnaire is modelled.",
         "x-schema-org": "schema:Organization",
         "x-spec": "openspec/specs/procurement-governance/spec.md",
         "type": "object",
@@ -125,7 +125,7 @@
               "from": "draft",
               "to": "qualified",
               "label": "Kwalificeren",
-              "description": "Qualify the supplier once every required document is provided and unexpired (REQ-PG-002), enforced by SupplierQualificationService::qualify()."
+              "description": "Qualify the supplier once every required document is provided and unexpired, enforced by SupplierQualificationService::qualify()."
             },
             "expire": {
               "from": "qualified",
@@ -163,7 +163,7 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Framework Agreement",
-        "description": "Generic framework agreement (raamovereenkomst abstracted): a supplier contract with a spend ceiling that PurchaseOrder call-offs draw down against. A call-off exceeding the remaining ceiling is blocked by FrameworkAgreementDrawdownGuard (REQ-PG-004). Distinct from the generic Contract (contract-lifecycle-management), which has no ceiling/drawdown accounting. Money is integer euro cents (ADR-022).",
+        "description": "Generic framework agreement (raamovereenkomst abstracted): a supplier contract with a spend ceiling that PurchaseOrder call-offs draw down against. A call-off exceeding the remaining ceiling is blocked by FrameworkAgreementDrawdownGuard. Distinct from the generic Contract (contract-lifecycle-management), which has no ceiling/drawdown accounting. Money is integer euro cents (ADR-022).",
         "x-schema-org": "schema:Contract",
         "x-spec": "openspec/specs/procurement-governance/spec.md",
         "type": "object",

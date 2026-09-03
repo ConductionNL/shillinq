@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "expense-reimbursement-or-passthrough",
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json. ADR-031 declarative-first: bulk classification is a manifest form page, no custom Vue component.",
-		"description": "Tier-2 dual-mode expense settlement UI per REQ-ERP-001 / REQ-ERP-002 / REQ-ERP-003. Adds two top-level navigation entries under Bookkeeping: (1) Expense Settlement Classifier — bulk form for assigning settlementMode + linkedCustomerId + markupRule to N expenses at once; (2) ReimbursementPolicy + PassThroughMarkupRule master-data index + detail pages for bookkeeper-driven configuration. Index columns reflect summary fields; detail pages drive the standard CRUD lifecycle; the classifier page submits via the OR approval-workflow if the resolved policy's markup-approval threshold is exceeded (REQ-ERP-006)."
+		"description": "Tier-2 dual-mode expense settlement UI per REQ-ERP-001 / REQ-ERP-002 / REQ-ERP-003. Adds two top-level navigation entries under Bookkeeping: (1) Expense Settlement Classifier — bulk form for assigning settlementMode + linkedCustomerId + markupRule to N expenses at once; (2) ReimbursementPolicy + PassThroughMarkupRule master-data index + detail pages for bookkeeper-driven configuration. Index columns reflect summary fields; detail pages drive the standard CRUD lifecycle; the classifier page submits via the OR approval-workflow if the resolved policy's markup-approval threshold is exceeded."
 	},
 	"menu": [
 		{
@@ -96,7 +96,7 @@
 								{"value": "reimbursable", "label": "Reimbursable (SEPA to employee)"},
 								{"value": "pass-through", "label": "Pass-through (bill customer at cost + markup)"}
 							],
-							"description": "REQ-ERP-001 dual-mode classification. Immutable after the parent ExpenseClaimEntry is submitted (REQ-ERP-010)."
+							"description": "REQ-ERP-001 dual-mode classification. Immutable after the parent ExpenseClaimEntry is submitted."
 						},
 						{
 							"key": "linkedCustomerId",

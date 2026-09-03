@@ -116,7 +116,7 @@
           "notes": {
             "type": "string",
             "nullable": true,
-            "description": "Free-text operator notes. Used to reference the original move on offset rows (REQ-SM-003): 'Offset for SM-YYYY-NNNN'.",
+            "description": "Free-text operator notes. Used to reference the original move on offset rows: 'Offset for SM-YYYY-NNNN'.",
             "example": "Pallet 4 of supplier delivery PO-2026-0042",
             "title": "Notes"
           },
@@ -152,7 +152,7 @@
           "locked": {
             "type": "boolean",
             "default": false,
-            "description": "Immutability flag set true on transition draft→posted (REQ-SM-003). Once locked, edits to quantity / unitCost / locations / movementType are rejected with HTTP 409 by StockMoveImmutabilityGuard; the operator must instead create an offsetting move via the `cancel` transition.",
+            "description": "Immutability flag set true on transition draft→posted. Once locked, edits to quantity / unitCost / locations / movementType are rejected with HTTP 409 by StockMoveImmutabilityGuard; the operator must instead create an offsetting move via the `cancel` transition.",
             "example": false,
             "title": "Locked"
           },
@@ -314,7 +314,7 @@
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "release-stock-reservation",
                   "condition": "@previous.lifecycleState == 'draft'",
-                  "description": "Draft-cancel path (REQ-SM-004): only the reservation needs releasing; no on-hand change since posting never happened.",
+                  "description": "Draft-cancel path: only the reservation needs releasing; no on-hand change since posting never happened.",
                   "actionParameters": {
                     "register": "shillinq",
                     "reservationSchema": "InventoryStock",
@@ -331,7 +331,7 @@
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "create-offset-move",
                   "condition": "@previous.lifecycleState == 'posted'",
-                  "description": "Posted-cancel path (REQ-SM-003): emit a balanced offsetting StockMove with sourceLocationId / destinationLocationId swapped, quantity preserved, movementReason='cancellation', notes='Offset for <original.movementNumber>', offsetOfMoveId=<original.id>. The original posted row stays immutable; the offset is itself posted (locked) so the InventoryStock.quantity nets to zero and the GLTransaction is reversed by the same materialise-gl-transaction rule applied to the offset.",
+                  "description": "Posted-cancel path: emit a balanced offsetting StockMove with sourceLocationId / destinationLocationId swapped, quantity preserved, movementReason='cancellation', notes='Offset for <original.movementNumber>', offsetOfMoveId=<original.id>. The original posted row stays immutable; the offset is itself posted (locked) so the InventoryStock.quantity nets to zero and the GLTransaction is reversed by the same materialise-gl-transaction rule applied to the offset.",
                   "actionParameters": {
                     "register": "shillinq",
                     "targetSchema": "StockMove",

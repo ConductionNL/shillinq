@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "bookkeeping-cbs-bestanden-extended",
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
-		"description": "Declarative manifest-v2 navigation for the CBS bestanden extended capability (REQ-CBS-009). Adds the CBS Submissions menu entry under Bookkeeping with an index page (filterable list) and detail page (header + lines + files/audit tabs). Pages are pure config rendered by the nc-vue manifest shell (createObjectStore against the shillinq register) — no Vue components, no router (ADR-024 / manifest-v2)."
+		"description": "Declarative manifest-v2 navigation for the CBS bestanden extended capability. Adds the CBS Submissions menu entry under Bookkeeping with an index page (filterable list) and detail page (header + lines + files/audit tabs). Pages are pure config rendered by the nc-vue manifest shell (createObjectStore against the shillinq register) — no Vue components, no router (ADR-024 / manifest-v2)."
 	},
 	"menu": [
 		{

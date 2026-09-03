@@ -4,12 +4,12 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "add-shillinq-bbv-compliance",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "T3 BBV (Besluit Begroting en Verantwoording) municipality-level compliance overlay (REQ-BBV-001..009). Additively enriches the BbvAccountMapping and BbvTaakveld schemas already declared by add-shillinq-bookkeeping-operations: BbvTaakveld gains the REQ-BBV-005 catalogue fields (name, category, legalBasis, effectiveFrom, effectiveTo, bbvVersion) so it doubles as the canonical Besluit BBV bijlage IV master per design.md D2; BbvAccountMapping gains _meta.source plus a stronger uniqueness constraint so per-administration overrides are first-class. Extends T1 GLTransaction.post lifecycle with the BBV-mapping precondition scoped to gemeente/provincie/waterschap administration types and forward-only by postingDate (REQ-BBV-003 / design D3) — declared via x-openregister-lifecycle.preconditions per ADR-031, not a service class. No source-code orchestrator: a thin OCA\\Shillinq\\Lifecycle\\BbvComplianceGuard provides the single declarative seam OR's lifecycle engine cannot yet express (cross-schema FK presence + administration-type scope + postingDate gating). x-openregister-aggregations on BbvAccountMapping documents the standard BBV reporting roll-ups (REQ-BBV-004) — operator views consume them; no PHP BbvReportingService walks the GL. Sibling specs bookkeeping-iv3-reporting and bookkeeping-bcf-vat-compensation already consume BbvAccountMapping fields (iv3Bucket, bcfCompensable, compensablePercentage) so this fragment does not redeclare them; it only adds the missing REQ-BBV-005/REQ-BBV-008 surface. Manifest navigation lives in src/manifest.json (already declared); the repair step seeder lives in lib/Repair/InitializeSettings.php (extended in this change)."
+    "description": "T3 BBV (Besluit Begroting en Verantwoording) municipality-level compliance overlay (REQ-BBV-001..009). Additively enriches the BbvAccountMapping and BbvTaakveld schemas already declared by add-shillinq-bookkeeping-operations: BbvTaakveld gains the REQ-BBV-005 catalogue fields (name, category, legalBasis, effectiveFrom, effectiveTo, bbvVersion) so it doubles as the canonical Besluit BBV bijlage IV master per design.md D2; BbvAccountMapping gains _meta.source plus a stronger uniqueness constraint so per-administration overrides are first-class. Extends T1 GLTransaction.post lifecycle with the BBV-mapping precondition scoped to gemeente/provincie/waterschap administration types and forward-only by postingDate (REQ-BBV-003 / design D3) — declared via x-openregister-lifecycle.preconditions per ADR-031, not a service class. No source-code orchestrator: a thin OCA\\Shillinq\\Lifecycle\\BbvComplianceGuard provides the single declarative seam OR's lifecycle engine cannot yet express (cross-schema FK presence + administration-type scope + postingDate gating). x-openregister-aggregations on BbvAccountMapping documents the standard BBV reporting roll-ups — operator views consume them; no PHP BbvReportingService walks the GL. Sibling specs bookkeeping-iv3-reporting and bookkeeping-bcf-vat-compensation already consume BbvAccountMapping fields (iv3Bucket, bcfCompensable, compensablePercentage) so this fragment does not redeclare them; it only adds the missing REQ-BBV-005/REQ-BBV-008 surface. Manifest navigation lives in src/manifest.json (already declared); the repair step seeder lives in lib/Repair/InitializeSettings.php (extended in this change)."
   },
   "components": {
     "schemas": {
       "BbvTaakveld": {
-        "description": "Canonical BBV taakveld catalogue entry per Besluit BBV bijlage IV (REQ-BBV-005). Seeded from bbv-taakvelden-2024.json with _meta.bbvVersion: \"2024\". Versioned: a future revision ships as bbv-taakvelden-YYYY.json with a new _meta.bbvVersion stamp; both coexist (design.md D2). Each record carries the canonical Bestuur..VHROSV category structure plus a legal-basis citation and a validity window for catalogue revisions. The schema doubles as the enum source for BbvAccountMapping.taakveld (T3 bookkeeping-bbv-compliance).",
+        "description": "Canonical BBV taakveld catalogue entry per Besluit BBV bijlage IV. Seeded from bbv-taakvelden-2024.json with _meta.bbvVersion: \"2024\". Versioned: a future revision ships as bbv-taakvelden-YYYY.json with a new _meta.bbvVersion stamp; both coexist (design.md D2). Each record carries the canonical Bestuur..VHROSV category structure plus a legal-basis citation and a validity window for catalogue revisions. The schema doubles as the enum source for BbvAccountMapping.taakveld (T3 bookkeeping-bbv-compliance).",
         "required": [
           "code",
           "description"
@@ -18,7 +18,7 @@
           "name": {
             "type": "string",
             "nullable": true,
-            "description": "Official taakveld name per Besluit BBV bijlage IV (REQ-BBV-005). Mirrors `description` for catalogue revisions that want a distinct short label; defaults to the description value when omitted.",
+            "description": "Official taakveld name per Besluit BBV bijlage IV. Mirrors `description` for catalogue revisions that want a distinct short label; defaults to the description value when omitted.",
             "example": "Bestuur",
             "title": "Name"
           },
@@ -38,7 +38,7 @@
               "algemene-dekkingsmiddelen",
               "overhead"
             ],
-            "description": "Canonical category structure per Besluit BBV bijlage IV (REQ-BBV-005). The enum mirrors the bijlage IV chapter ordering — every record SHOULD carry exactly one. Operators MAY add records without a category to track sub-taakvelden, but those records are excluded from the standard category roll-ups.",
+            "description": "Canonical category structure per Besluit BBV bijlage IV. The enum mirrors the bijlage IV chapter ordering — every record SHOULD carry exactly one. Operators MAY add records without a category to track sub-taakvelden, but those records are excluded from the standard category roll-ups.",
             "example": "bestuur",
             "title": "Category"
           },
@@ -53,7 +53,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "First date this taakveld code is valid per the BBV revision in _meta.bbvVersion (REQ-BBV-005). Records without effectiveFrom default to the BBV revision's effective date.",
+            "description": "First date this taakveld code is valid per the BBV revision in _meta.bbvVersion. Records without effectiveFrom default to the BBV revision's effective date.",
             "example": "2024-01-01",
             "title": "Effective From"
           },
@@ -61,19 +61,19 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Last date this taakveld code is valid (REQ-BBV-005). null = currently valid. A revised code is added as a new record with effectiveFrom set; the prior record is closed by setting effectiveTo to the day before.",
+            "description": "Last date this taakveld code is valid. null = currently valid. A revised code is added as a new record with effectiveFrom set; the prior record is closed by setting effectiveTo to the day before.",
             "example": null,
             "title": "Effective To"
           }
         }
       },
       "BbvAccountMapping": {
-        "description": "Per-administration mapping from an RGS account to its BBV taakveld + programma + paragraaf + autorisatieniveau (REQ-BBV-002). Operator-overrideable; default seeded from lib/Settings/seeds/rgs-to-bbv-mapping.json. Carries bcfCompensable + compensablePercentage driving BCF claim aggregation (REQ-BCF-002/004) and iv3Bucket driving IV3 export (REQ-IV3-003). Unique per (administrationId, accountNumber) — exactly one mapping per account per administration (REQ-BBV-002 scenario). T3 bookkeeping-bbv-compliance.",
+        "description": "Per-administration mapping from an RGS account to its BBV taakveld + programma + paragraaf + autorisatieniveau. Operator-overrideable; default seeded from lib/Settings/seeds/rgs-to-bbv-mapping.json. Carries bcfCompensable + compensablePercentage driving BCF claim aggregation (REQ-BCF-002/004) and iv3Bucket driving IV3 export. Unique per (administrationId, accountNumber) — exactly one mapping per account per administration (REQ-BBV-002 scenario). T3 bookkeeping-bbv-compliance.",
         "properties": {
           "_meta": {
             "type": "object",
             "nullable": true,
-            "description": "Audit-traceability metadata per REQ-BBV-002 / REQ-BBV-006. `_meta.source = \"seeded\"` on records created by the repair step from rgs-to-bbv-mapping.json; `_meta.source = \"operator-edited\"` after operator override. The repair-step idempotency check uses this flag to skip operator-edited records on re-run (REQ-BBV-006).",
+            "description": "Audit-traceability metadata per REQ-BBV-002 / REQ-BBV-006. `_meta.source = \"seeded\"` on records created by the repair step from rgs-to-bbv-mapping.json; `_meta.source = \"operator-edited\"` after operator override. The repair-step idempotency check uses this flag to skip operator-edited records on re-run.",
             "properties": {
               "source": {
                 "type": "string",
@@ -98,7 +98,7 @@
         },
         "x-openregister-aggregations": {
           "byProgrammaCode": {
-            "description": "Per-programmaCode roll-up of posted GL amounts within an administration, sourced via the BbvAccountMapping → GLLine join (REQ-BBV-004). Drives the BBV programma-summary view; sibling spec bookkeeping-iv3-reporting consumes a similar shape for IV3 export. Declared declaratively per ADR-031 — no PHP BbvReportingService walks the GL.",
+            "description": "Per-programmaCode roll-up of posted GL amounts within an administration, sourced via the BbvAccountMapping → GLLine join. Drives the BBV programma-summary view; sibling spec bookkeeping-iv3-reporting consumes a similar shape for IV3 export. Declared declaratively per ADR-031 — no PHP BbvReportingService walks the GL.",
             "source": "GLLine",
             "groupBy": [
               "BbvAccountMapping.programmeCode"

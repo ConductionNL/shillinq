@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "add-shillinq-multi-currency",
     "adr": "ADR-037 modular register fragment",
-    "description": "Tier-4 multi-currency envelope: FxRate register (REQ-MC-002), GLLine multi-currency overlay (MODIFIED REQ-GL-003: amount → transactionAmount + baseCurrencyAmount/baseCurrency/fxRate/fxRateSource/fxRateDate), and the two ScheduledWorkflow records that drive ECB ingestion (REQ-MC-003) + period-end FX revaluation (REQ-MC-004). Sibling change bookkeeping-multi-currency already shipped BankAccount.primaryCurrency + CurrencyBalance (T3 surface); this fragment adds the T4 envelope surface those build notes (Tasks 5-10) deferred. Declarative per ADR-031 — no FxRateImportJob extends TimedJob and no FxRevaluationService PHP class."
+    "description": "Tier-4 multi-currency envelope: FxRate register, GLLine multi-currency overlay (MODIFIED REQ-GL-003: amount → transactionAmount + baseCurrencyAmount/baseCurrency/fxRate/fxRateSource/fxRateDate), and the two ScheduledWorkflow records that drive ECB ingestion + period-end FX revaluation. Sibling change bookkeeping-multi-currency already shipped BankAccount.primaryCurrency + CurrencyBalance (T3 surface); this fragment adds the T4 envelope surface those build notes (Tasks 5-10) deferred. Declarative per ADR-031 — no FxRateImportJob extends TimedJob and no FxRevaluationService PHP class."
   },
   "components": {
     "schemas": {

@@ -6,7 +6,7 @@
 		"variant": "kvk-jaarrekening",
 		"taxonomyVersion": "nt18",
 		"entryPoint": "kvk-jaarrekening",
-		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt18 concepts for the KvK deponering jaarrekening entry point (REQ-SBR-005, REQ-SBR-006). Successor to kvk-jaarrekening-nt17.json — both coexist so historical filings remain reproducible. Operator edits persist across re-runs (idempotent on (entryPoint, taxonomyVersion)).",
+		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt18 concepts for the KvK deponering jaarrekening entry point. Successor to kvk-jaarrekening-nt17.json — both coexist so historical filings remain reproducible. Operator edits persist across re-runs (idempotent on (entryPoint, taxonomyVersion)).",
 		"imported": "2026-06-09T00:00:00Z"
 	},
 	"mapping": {

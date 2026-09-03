@@ -23,7 +23,7 @@
         "icon": "FileDocumentOutline",
         "version": "0.1.0",
         "title": "BTW-aangifte",
-        "description": "Periodic VAT return (BTW-aangifte) per administration and period. Tracks the draft → submitted → accepted → corrected lifecycle (REQ-VBTW-005), aggregates GL postings by VAT rate into rubrieken (REQ-VBTW-004), and submits via the digipoort-sbr OpenConnector source (REQ-VBTW-010). ADR-022 audit/approval, ADR-031 declarative lifecycle.",
+        "description": "Periodic VAT return (BTW-aangifte) per administration and period. Tracks the draft → submitted → accepted → corrected lifecycle, aggregates GL postings by VAT rate into rubrieken, and submits via the digipoort-sbr OpenConnector source. ADR-022 audit/approval, ADR-031 declarative lifecycle.",
         "x-schema-org": "schema:GovernmentService",
         "type": "object",
         "required": [
@@ -61,7 +61,7 @@
             "minimum": 1,
             "maximum": 12,
             "nullable": true,
-            "description": "Month 1-12; required when periodType=month (REQ-VBTW-002).",
+            "description": "Month 1-12; required when periodType=month.",
             "title": "Period Month"
           },
           "periodQuarter": {
@@ -69,7 +69,7 @@
             "minimum": 1,
             "maximum": 4,
             "nullable": true,
-            "description": "Quarter 1-4; required when periodType=quarter (REQ-VBTW-002).",
+            "description": "Quarter 1-4; required when periodType=quarter.",
             "title": "Period Quarter"
           },
           "state": {
@@ -99,7 +99,7 @@
           "approvalThreshold": {
             "type": "number",
             "nullable": true,
-            "description": "Operator-configurable liability above which submission needs approval (REQ-VBTW-006).",
+            "description": "Operator-configurable liability above which submission needs approval.",
             "title": "Approval Threshold"
           },
           "submittedAt": {
@@ -160,7 +160,7 @@
               "from": "draft",
               "to": "submitted",
               "label": "Indienen via Digipoort",
-              "description": "Operator submits the return; requires approval above approvalThreshold (REQ-VBTW-006).",
+              "description": "Operator submits the return; requires approval above approvalThreshold.",
               "requires": "OCA\\Shillinq\\Guard\\VatSubmissionGuard::requireApproval"
             },
             "accept": {
@@ -367,7 +367,7 @@
         },
         "x-openregister-aggregations": {
           "icpTransactions": {
-            "description": "Intra-community supply lines aggregated per counterparty VAT number for the period (REQ-VBTW-007).",
+            "description": "Intra-community supply lines aggregated per counterparty VAT number for the period.",
             "source": "GLLine",
             "groupBy": [
               "counterpartyVatNumber"
@@ -465,7 +465,7 @@
               "calculation-error",
               "late-discovery"
             ],
-            "description": "Reason for the suppletie (REQ-VBTW-008).",
+            "description": "Reason for the suppletie.",
             "title": "Correction Reason"
           },
           "originalReturnId": {
@@ -568,7 +568,7 @@
         "icon": "PercentOutline",
         "version": "0.1.0",
         "title": "BTW-tarief",
-        "description": "VAT rate definition (REQ-VBTW-003). Seeded from btw-tariffs-2026.json with the current statutory rates (21%, 9%, 0%, vrijgesteld, verlegd) and RGS account hints per Wet OB 1968.",
+        "description": "VAT rate definition. Seeded from btw-tariffs-2026.json with the current statutory rates (21%, 9%, 0%, vrijgesteld, verlegd) and RGS account hints per Wet OB 1968.",
         "x-schema-org": "schema:DefinedTerm",
         "type": "object",
         "required": [
@@ -604,7 +604,7 @@
           "reverseCharge": {
             "type": "boolean",
             "default": false,
-            "description": "True for verleggingsregeling rates (REQ-VBTW-009).",
+            "description": "True for verleggingsregeling rates.",
             "title": "Reverse Charge"
           },
           "effectiveFrom": {
@@ -655,7 +655,7 @@
         "icon": "TableArrowRight",
         "version": "0.1.0",
         "title": "BBV-toewijzing",
-        "description": "Maps an RGS account to a BBV taakveld/programma/paragraaf for municipal administrations (REQ-BBV-002). Operator-overrideable per administration; default seeded from rgs-bbv.json. Carries bcfCompensable + compensablePercentage driving BCF claim aggregation (REQ-BCF-003/005) and iv3Bucket driving IV3 export (REQ-BBV-008).",
+        "description": "Maps an RGS account to a BBV taakveld/programma/paragraaf for municipal administrations. Operator-overrideable per administration; default seeded from rgs-bbv.json. Carries bcfCompensable + compensablePercentage driving BCF claim aggregation (REQ-BCF-003/005) and iv3Bucket driving IV3 export.",
         "x-schema-org": "schema:PropertyValue",
         "type": "object",
         "required": [
@@ -699,7 +699,7 @@
           "bcfCompensable": {
             "type": "boolean",
             "default": false,
-            "description": "True if postings on this account are BCF-compensable (REQ-BCF-003).",
+            "description": "True if postings on this account are BCF-compensable.",
             "title": "Bcf Compensable"
           },
           "compensablePercentage": {
@@ -707,13 +707,13 @@
             "minimum": 0,
             "maximum": 100,
             "default": 0,
-            "description": "Percentage of VAT recoverable from the Compensatiefonds (REQ-BCF-005).",
+            "description": "Percentage of VAT recoverable from the Compensatiefonds.",
             "title": "Compensable Percentage"
           },
           "iv3Bucket": {
             "type": "string",
             "nullable": true,
-            "description": "CBS IV3-bestand bucket name (REQ-BBV-008).",
+            "description": "CBS IV3-bestand bucket name.",
             "example": "2.1",
             "title": "Iv3Bucket"
           },
@@ -739,7 +739,7 @@
         },
         "x-openregister-aggregations": {
           "byTaakveld": {
-            "description": "GL postings grouped by taakveld for programma roll-up reporting (REQ-BBV-007).",
+            "description": "GL postings grouped by taakveld for programma roll-up reporting.",
             "source": "GLLine",
             "groupBy": [
               "taskField"
@@ -778,7 +778,7 @@
         "icon": "FormatListBulletedType",
         "version": "0.1.0",
         "title": "BBV-taakveld",
-        "description": "Canonical BBV taakveld catalogue entry per Besluit BBV bijlage IV (REQ-BBV-004). Seeded from bbv-taakvelden-2024.json.",
+        "description": "Canonical BBV taakveld catalogue entry per Besluit BBV bijlage IV. Seeded from bbv-taakvelden-2024.json.",
         "x-schema-org": "schema:DefinedTerm",
         "type": "object",
         "required": [
@@ -837,7 +837,7 @@
         "icon": "CashRefund",
         "version": "0.1.0",
         "title": "BCF-claim",
-        "description": "BTW-Compensatiefonds claim per quarter for municipalities (REQ-BCF-001). Aggregates compensable VAT across BbvAccountMapping entries (REQ-BCF-004), tracks draft → submitted → accepted → settled lifecycle, and submits via the digikoppeling-bcf OpenConnector source (REQ-BCF-007).",
+        "description": "BTW-Compensatiefonds claim per quarter for municipalities. Aggregates compensable VAT across BbvAccountMapping entries, tracks draft → submitted → accepted → settled lifecycle, and submits via the digikoppeling-bcf OpenConnector source.",
         "x-schema-org": "schema:GovernmentService",
         "type": "object",
         "required": [
@@ -869,7 +869,7 @@
           },
           "claimNumber": {
             "type": "string",
-            "description": "Unique claim identifier (REQ-BCF-002).",
+            "description": "Unique claim identifier.",
             "example": "BCF-2026-Q1-0001",
             "title": "Claim Number"
           },
@@ -882,7 +882,7 @@
               "settled"
             ],
             "default": "draft",
-            "description": "Lifecycle state (REQ-BCF-006).",
+            "description": "Lifecycle state.",
             "title": "State"
           },
           "totalClaimAmount": {
@@ -900,7 +900,7 @@
           "approvalThreshold": {
             "type": "number",
             "nullable": true,
-            "description": "Operator-configurable amount above which submission needs approval (REQ-BCF-009).",
+            "description": "Operator-configurable amount above which submission needs approval.",
             "title": "Approval Threshold"
           },
           "claimDate": {
@@ -968,7 +968,7 @@
               "from": "draft",
               "to": "submitted",
               "label": "Indienen via DigiKoppeling",
-              "description": "Operator submits the claim; requires approval above approvalThreshold (REQ-BCF-009).",
+              "description": "Operator submits the claim; requires approval above approvalThreshold.",
               "requires": "OCA\\Shillinq\\Guard\\BcfSubmissionGuard::requireApproval"
             },
             "accept": {
@@ -987,7 +987,7 @@
         },
         "x-openregister-aggregations": {
           "compensableVatByAccount": {
-            "description": "Sum of GLLine.amount × BbvAccountMapping.compensablePercentage for compensable accounts in the claim quarter (REQ-BCF-004).",
+            "description": "Sum of GLLine.amount × BbvAccountMapping.compensablePercentage for compensable accounts in the claim quarter.",
             "source": "GLLine",
             "groupBy": [
               "accountNumber"
@@ -1058,7 +1058,7 @@
         "icon": "AccountCashOutline",
         "version": "0.1.0",
         "title": "ZZP-aftrek",
-        "description": "ZZP tax deduction eligibility per freelancer per year (REQ-ZZP-004). Derives ytdQualifyingHours from UrenRegistratie (REQ-ZZP-003) and computes zelfstandigenaftrek + startersaftrek + MKB-winstvrijstelling from the zzp-deduction-amounts seed (REQ-ZZP-006).",
+        "description": "ZZP tax deduction eligibility per freelancer per year. Derives ytdQualifyingHours from UrenRegistratie and computes zelfstandigenaftrek + startersaftrek + MKB-winstvrijstelling from the zzp-deduction-amounts seed.",
         "x-schema-org": "schema:MonetaryAmount",
         "type": "object",
         "required": [
@@ -1094,7 +1094,7 @@
           "qualifies1225": {
             "type": "boolean",
             "default": false,
-            "description": "True when ytdQualifyingHours ≥ 1225 (REQ-ZZP-004).",
+            "description": "True when ytdQualifyingHours ≥ 1225.",
             "title": "Qualifies1225"
           },
           "qualifiesStarters": {
@@ -1136,12 +1136,12 @@
         },
         "x-openregister-calculations": {
           "ytdQualifyingHours": {
-            "description": "Sum of UrenRegistratie.hours where category != excluded for the year, per personId (REQ-ZZP-003). ADR-031 exception: if OR cannot span fiscal periods, OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours provides the fallback.",
+            "description": "Sum of UrenRegistratie.hours where category != excluded for the year, per personId. ADR-031 exception: if OR cannot span fiscal periods, OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours provides the fallback.",
             "expr": "sum(UrenRegistratie.hours where category != 'excluded' and personId == @self.personId and year(workDate) == @self.year)",
             "guard": "OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours"
           },
           "totalAllowableDeduction": {
-            "description": "zelfstandigenaftrek + (startersaftrek if qualifiesStarters) + mkbWinstvrijstelling (REQ-ZZP-006).",
+            "description": "zelfstandigenaftrek + (startersaftrek if qualifiesStarters) + mkbWinstvrijstelling.",
             "expr": "@self.zelfstandigenaftrek + (@self.qualifiesStarters ? @self.startersaftrek : 0) + @self.mkbWinstvrijstelling"
           }
         },
@@ -1172,7 +1172,7 @@
         "icon": "FileExportOutline",
         "version": "0.1.0",
         "title": "IB-aangifte-export",
-        "description": "Inkomstenbelastingaangifte export for a freelancer (REQ-ZZP-007). Prepares the income/deduction/taxable-income fields for the Dutch income tax return and references a generated PDF via docudesk.",
+        "description": "Inkomstenbelastingaangifte export for a freelancer. Prepares the income/deduction/taxable-income fields for the Dutch income tax return and references a generated PDF via docudesk.",
         "x-schema-org": "schema:GovernmentService",
         "type": "object",
         "required": [
@@ -1232,7 +1232,7 @@
         },
         "x-openregister-calculations": {
           "taxableIncome": {
-            "description": "totalIncome minus allowableDeductions (REQ-ZZP-007).",
+            "description": "totalIncome minus allowableDeductions.",
             "expr": "@self.totalIncome - @self.allowableDeductions"
           }
         },
@@ -1263,7 +1263,7 @@
         "icon": "BankOutline",
         "version": "0.1.0",
         "title": "Schatkist-positie",
-        "description": "Daily aggregated Treasury banking position per administration (REQ-SBK-003). Not a parallel ledger (REQ-SBK-011): position is aggregated from GL postings on accounts flagged isSchatkistAccount (REQ-SBK-004) and compared against the drempelbedrag (REQ-SBK-008).",
+        "description": "Daily aggregated Treasury banking position per administration. Not a parallel ledger: position is aggregated from GL postings on accounts flagged isSchatkistAccount and compared against the drempelbedrag.",
         "x-schema-org": "schema:MonetaryAmount",
         "type": "object",
         "required": [
@@ -1299,7 +1299,7 @@
           "thresholdAmountApplies": {
             "type": "boolean",
             "default": false,
-            "description": "Whether the drempelbedrag applies for this administration (REQ-SBK-006).",
+            "description": "Whether the drempelbedrag applies for this administration.",
             "title": "Drempelbedrag Applies"
           },
           "thresholdAmountAmount": {
@@ -1312,13 +1312,13 @@
           "aboveThreshold": {
             "type": "boolean",
             "default": false,
-            "description": "True when position > drempelbedragAmount (REQ-SBK-008).",
+            "description": "True when position > drempelbedragAmount.",
             "title": "Above Threshold"
           }
         },
         "x-openregister-aggregations": {
           "position": {
-            "description": "Sum of GLLine net postings on accounts where isSchatkistAccount=true for the business day (REQ-SBK-004).",
+            "description": "Sum of GLLine net postings on accounts where isSchatkistAccount=true for the business day.",
             "filter": {
               "isTreasuryAccount": true,
               "postingDate": "@self.businessDate"
@@ -1354,7 +1354,7 @@
                 "value": true
               }
             },
-            "description": "Alert the treasury-officer when the daily position exceeds the drempelbedrag (REQ-SBK-008).",
+            "description": "Alert the treasury-officer when the daily position exceeds the drempelbedrag.",
             "enabled": true,
             "channels": [
               "nc-notification"
@@ -1479,7 +1479,7 @@
               "paid"
             ],
             "default": "pending",
-            "description": "Instalment status (REQ-SUB-007).",
+            "description": "Instalment status.",
             "title": "Status"
           }
         },

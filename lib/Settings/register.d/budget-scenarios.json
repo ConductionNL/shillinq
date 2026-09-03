@@ -12,7 +12,7 @@
 				"icon": "SourceBranch",
 				"version": "0.1.0",
 				"title": "Budget Scenario",
-				"description": "A named cluster of dated BudgetScenarioModifiers compared side-by-side against the real AnnualBudget/BudgetLine data, never mutating it (REQ-BSC-001, REQ-BSC-005). At most one BudgetScenario per administrationId may carry isDefault=true, enforced by BudgetScenarioDefaultPromoter's atomic-demotion service call — not a lifecycle transition, because demoting a DIFFERENT sibling object cannot be expressed as a single-object x-openregister-lifecycle precondition (design.md §2a, §3b).",
+				"description": "A named cluster of dated BudgetScenarioModifiers compared side-by-side against the real AnnualBudget/BudgetLine data, never mutating it. At most one BudgetScenario per administrationId may carry isDefault=true, enforced by BudgetScenarioDefaultPromoter's atomic-demotion service call — not a lifecycle transition, because demoting a DIFFERENT sibling object cannot be expressed as a single-object x-openregister-lifecycle precondition (design.md §2a, §3b).",
 				"x-schema-org": "schema:Thing",
 				"x-spec": "openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md",
 				"type": "object",
@@ -25,7 +25,7 @@
 				"properties": {
 					"administrationId": {
 						"type": "string",
-						"description": "FK to the Administration this scenario belongs to. The one-default invariant (REQ-BSC-002) is scoped to this field alone, not to any fiscal year — a scenario's own modifiers may span multiple fiscal years (design.md §2b).",
+						"description": "FK to the Administration this scenario belongs to. The one-default invariant is scoped to this field alone, not to any fiscal year — a scenario's own modifiers may span multiple fiscal years (design.md §2b).",
 						"example": "adm-1",
 						"title": "Administration ID"
 					},
@@ -45,7 +45,7 @@
 					"isDefault": {
 						"type": "boolean",
 						"default": false,
-						"description": "Whether this is the default scenario shown when nobody explicitly picked one. Set exclusively via BudgetScenarioDefaultPromoter::promote(), which atomically demotes any previously-default scenario for the same administrationId in the same service call (REQ-BSC-002). When zero scenarios carry isDefault=true, no scenario overlay is applied anywhere — the real AnnualBudget/BudgetLine data is shown unmodified (design.md §3c).",
+						"description": "Whether this is the default scenario shown when nobody explicitly picked one. Set exclusively via BudgetScenarioDefaultPromoter::promote(), which atomically demotes any previously-default scenario for the same administrationId in the same service call. When zero scenarios carry isDefault=true, no scenario overlay is applied anywhere — the real AnnualBudget/BudgetLine data is shown unmodified (design.md §3c).",
 						"example": false,
 						"title": "Is Default"
 					},
@@ -116,7 +116,7 @@
 				},
 				"x-openregister-audit-trail": {
 					"enabled": true,
-					"description": "Every create, update and delete of a BudgetScenario is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+					"description": "Every create, update and delete of a BudgetScenario is written to OpenRegister's immutable audit trail with actor and timestamp."
 				}
 			},
 			"BudgetScenarioModifier": {
@@ -124,7 +124,7 @@
 				"icon": "TuneVariant",
 				"version": "0.1.0",
 				"title": "Budget Scenario Modifier",
-				"description": "One dated modifier belonging to one BudgetScenario (REQ-BSC-003): RECURRING_END (a CashflowRecurring row's schedule hypothetically capped at effectiveDate — models \"employee A+B leave the org\" as GL-recognised cost lines ending, never as an HR concept), RECURRING_AMOUNT_CHANGE (a CashflowRecurring row's standardAmount hypothetically replaced from effectiveDate forward — \"recurring drops X from date X\"), or LEDGER_AMOUNT_DELTA (a one-off signed adjustment to one LedgerGroup for effectiveDate's own month only — \"amount X transferred to the bank at date X\"). BudgetScenarioModifierGuard rejects two RECURRING_* modifiers in the same scenario targeting the same targetRecurId with overlapping effect (REQ-BSC-004, ADR-031 exception path); everything else sums additively, order-independent, at evaluation time.",
+				"description": "One dated modifier belonging to one BudgetScenario: RECURRING_END (a CashflowRecurring row's schedule hypothetically capped at effectiveDate — models \"employee A+B leave the org\" as GL-recognised cost lines ending, never as an HR concept), RECURRING_AMOUNT_CHANGE (a CashflowRecurring row's standardAmount hypothetically replaced from effectiveDate forward — \"recurring drops X from date X\"), or LEDGER_AMOUNT_DELTA (a one-off signed adjustment to one LedgerGroup for effectiveDate's own month only — \"amount X transferred to the bank at date X\"). BudgetScenarioModifierGuard rejects two RECURRING_* modifiers in the same scenario targeting the same targetRecurId with overlapping effect (REQ-BSC-004, ADR-031 exception path); everything else sums additively, order-independent, at evaluation time.",
 				"x-spec": "openspec/changes/budget-scenarios/specs/budget-scenarios/spec.md",
 				"type": "object",
 				"required": [
@@ -168,7 +168,7 @@
 					"targetRecurId": {
 						"type": "string",
 						"nullable": true,
-						"description": "FK to CashflowRecurring.recurId (budget-known-costs's own dated planned-cost primitive). Required for RECURRING_END/RECURRING_AMOUNT_CHANGE; unused for LEDGER_AMOUNT_DELTA. This change never declares a second dated-cost primitive (REQ-BSC-003).",
+						"description": "FK to CashflowRecurring.recurId (budget-known-costs's own dated planned-cost primitive). Required for RECURRING_END/RECURRING_AMOUNT_CHANGE; unused for LEDGER_AMOUNT_DELTA. This change never declares a second dated-cost primitive.",
 						"example": null,
 						"title": "Target Recurring Cost ID"
 					},
@@ -225,7 +225,7 @@
 				},
 				"x-openregister-audit-trail": {
 					"enabled": true,
-					"description": "Every create, update and delete of a BudgetScenarioModifier is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+					"description": "Every create, update and delete of a BudgetScenarioModifier is written to OpenRegister's immutable audit trail with actor and timestamp."
 				}
 			}
 		}

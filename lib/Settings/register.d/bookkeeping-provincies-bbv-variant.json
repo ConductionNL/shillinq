@@ -5,7 +5,7 @@
         "properties": {
           "programmeStructure": {
             "type": "string",
-            "description": "BBV provincie programma-indeling this GL line is allocated to (REQ-BBL-001). One of the seven canonical provincie programmes per the BBV-provincies handleiding. Null until the line is mapped via the Budget-to-Programme Linker. Distinct from the BBVProgramma.programmaStructure discriminator (taakveld/kostentoedeling); on provincie administrations the seven values below are the canonical programme codes.",
+            "description": "BBV provincie programma-indeling this GL line is allocated to. One of the seven canonical provincie programmes per the BBV-provincies handleiding. Null until the line is mapped via the Budget-to-Programme Linker. Distinct from the BBVProgramma.programmaStructure discriminator (taakveld/kostentoedeling); on provincie administrations the seven values below are the canonical programme codes.",
             "enum": [
               "ruimte",
               "mobiliteit",
@@ -35,7 +35,7 @@
         },
         "x-openregister-aggregations": {
           "programmeBudgetVsActuals": {
-            "description": "Spend and commitment roll-up per BBV provincie programme, consumed by the BBV Compliance Dashboard (REQ-BBC-001). Groups posted/committed GL lines by programmaStructure and fiscalYearId so the dashboard can compute Spent, Committed and Remaining against the matching Budget records. Lines with a null programmaStructure are excluded (unmapped).",
+            "description": "Spend and commitment roll-up per BBV provincie programme, consumed by the BBV Compliance Dashboard. Groups posted/committed GL lines by programmaStructure and fiscalYearId so the dashboard can compute Spent, Committed and Remaining against the matching Budget records. Lines with a null programmaStructure are excluded (unmapped).",
             "filter": {
               "programmeStructure": {
                 "operator": "isNotNull"
@@ -76,7 +76,7 @@
         "icon": "CashMultiple",
         "version": "0.1.0",
         "title": "BBV Programme Budget",
-        "description": "A BBV programme budget for a Dutch provincie administration (REQ-BBC-001). Each budget allocates a fiscal-year amount to exactly one of the seven canonical BBV provincie programmes. The BBV Compliance Dashboard aggregates Spent and Committed GL lines (matched on GLLine.programmaStructure + fiscalYear) against the budget Total to derive Remaining and the traffic-light status. Provincie-scoped; gemeente/waterschap administrations use taakveld/kostentoedeling mappings instead.",
+        "description": "A BBV programme budget for a Dutch provincie administration. Each budget allocates a fiscal-year amount to exactly one of the seven canonical BBV provincie programmes. The BBV Compliance Dashboard aggregates Spent and Committed GL lines (matched on GLLine.programmaStructure + fiscalYear) against the budget Total to derive Remaining and the traffic-light status. Provincie-scoped; gemeente/waterschap administrations use taakveld/kostentoedeling mappings instead.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-provincies-bbv-variant/spec.md",
         "type": "object",
@@ -98,7 +98,7 @@
           "totalAmount": {
             "type": "number",
             "minimum": 0,
-            "description": "Total budgeted amount in EUR for the programme + fiscal year (REQ-BBC-001).",
+            "description": "Total budgeted amount in EUR for the programme + fiscal year.",
             "example": 500000,
             "title": "Total Amount"
           },
@@ -111,7 +111,7 @@
           },
           "programmeStructure": {
             "type": "string",
-            "description": "The canonical BBV provincie programme this budget allocates to (REQ-BBC-001). Locked to the seven legislated programmes; provinces with local variations map to this taxonomy (design D3).",
+            "description": "The canonical BBV provincie programme this budget allocates to. Locked to the seven legislated programmes; provinces with local variations map to this taxonomy (design D3).",
             "enum": [
               "ruimte",
               "mobiliteit",
@@ -126,7 +126,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Budget approval status used by the dashboard Budget-status filter (REQ-BBC-002).",
+            "description": "Budget approval status used by the dashboard Budget-status filter.",
             "enum": [
               "approved",
               "provisional",
@@ -138,7 +138,7 @@
           },
           "fiscalYear": {
             "type": "integer",
-            "description": "Fiscal year this budget applies to (REQ-BBC-002).",
+            "description": "Fiscal year this budget applies to.",
             "example": 2026,
             "title": "Fiscal Year"
           },
@@ -195,7 +195,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Budget is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Budget is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

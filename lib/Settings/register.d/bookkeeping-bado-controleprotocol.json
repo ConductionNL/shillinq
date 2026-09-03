@@ -270,7 +270,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Controleprotocol is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Controleprotocol is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "ToleranceMatrix": {
@@ -377,7 +377,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Tolerantiematrix is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Tolerantiematrix is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Materialiteit": {
@@ -499,7 +499,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Materialiteit is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Materialiteit is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "AuditSample": {
@@ -593,7 +593,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Steekproef is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Steekproef is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "AuditFinding": {
@@ -818,7 +818,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Bevinding is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Bevinding is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "VerklaringDraft": {
@@ -991,7 +991,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Controleverklaring is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Controleverklaring is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "SiSaAssurance": {
@@ -1079,7 +1079,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a SiSa-assurance is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a SiSa-assurance is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     },

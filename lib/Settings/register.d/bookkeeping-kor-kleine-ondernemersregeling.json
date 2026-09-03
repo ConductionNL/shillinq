@@ -13,7 +13,7 @@
         "icon": "ShieldCheckOutline",
         "version": "0.1.0",
         "title": "KOR Registration",
-        "description": "Eén KOR-registratie per onderneming per regime (NL-KOR of KOR-EU): aanmeldgegevens, ingangsdatum, drie-jaars-lock-in einddatum, status, en de Belastingdienst-referentie (REQ-KOR-001, REQ-KOR-007). Status verloopt via de declaratieve lifecycle (ADR-031): draft -> ACTIEF -> GEEINDIGD_OVERSCHRIJDING | GEEINDIGD_VRIJWILLIG. Wet OB 1968 art. 25 (NL-KOR) / art. 25a-25d (KOR-EU).",
+        "description": "Eén KOR-registratie per onderneming per regime (NL-KOR of KOR-EU): aanmeldgegevens, ingangsdatum, drie-jaars-lock-in einddatum, status, en de Belastingdienst-referentie. Status verloopt via de declaratieve lifecycle (ADR-031): draft -> ACTIEF -> GEEINDIGD_OVERSCHRIJDING | GEEINDIGD_VRIJWILLIG. Wet OB 1968 art. 25 (NL-KOR) / art. 25a-25d (KOR-EU).",
         "x-schema-org": "schema:DefinedTerm",
         "x-spec": "openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md",
         "x-openregister-audit-trail": {
@@ -31,7 +31,7 @@
         "properties": {
           "enterpriseId": {
             "type": "string",
-            "description": "FK naar de onderneming (Corporation / Entity) waarvoor de KOR geldt. KOR geldt per onderneming per KvK-nummer (REQ-KOR-010).",
+            "description": "FK naar de onderneming (Corporation / Entity) waarvoor de KOR geldt. KOR geldt per onderneming per KvK-nummer.",
             "example": "ond-nl-001234",
             "title": "Onderneming ID"
           },
@@ -48,7 +48,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Levenscyclus-status van de registratie (REQ-KOR-007). ACTIEF tot lockInEindDatum, daarna GEEINDIGD_VRIJWILLIG via opt-out, of GEEINDIGD_OVERSCHRIJDING bij drempel >100% (REQ-KOR-004).",
+            "description": "Levenscyclus-status van de registratie. ACTIEF tot lockInEindDatum, daarna GEEINDIGD_VRIJWILLIG via opt-out, of GEEINDIGD_OVERSCHRIJDING bij drempel >100%.",
             "enum": [
               "draft",
               "ACTIEF",
@@ -62,7 +62,7 @@
           "registrationDate": {
             "type": "string",
             "format": "date",
-            "description": "Datum waarop de ondernemer de KOR-aanmelding indiende bij mijnbelastingdienst.nl/zakelijk (REQ-KOR-001).",
+            "description": "Datum waarop de ondernemer de KOR-aanmelding indiende bij mijnbelastingdienst.nl/zakelijk.",
             "nullable": true,
             "example": "2025-11-15",
             "title": "Aanmeld Datum"
@@ -70,7 +70,7 @@
           "effectiveDate": {
             "type": "string",
             "format": "date",
-            "description": "Ingangsdatum van de KOR (REQ-KOR-001). Doorgaans 1-1 van het volgende kalenderjaar; onveranderlijk (design D1).",
+            "description": "Ingangsdatum van de KOR. Doorgaans 1-1 van het volgende kalenderjaar; onveranderlijk (design D1).",
             "example": "2026-01-01",
             "title": "Ingangs Datum"
           },
@@ -85,14 +85,14 @@
           "earliestTerminationDate": {
             "type": "string",
             "format": "date",
-            "description": "Vroegste datum waarop een opt-out-verzoek kan worden ingediend; drie maanden vóór lockInEindDatum (REQ-KOR-007).",
+            "description": "Vroegste datum waarop een opt-out-verzoek kan worden ingediend; drie maanden vóór lockInEindDatum.",
             "nullable": true,
             "example": "2028-10-01",
             "title": "Vroegste Opzeg Datum"
           },
           "taxAuthorityReference": {
             "type": "string",
-            "description": "Referentie/kenmerk van de Belastingdienst-aanvraag (REQ-KOR-001).",
+            "description": "Referentie/kenmerk van de Belastingdienst-aanvraag.",
             "nullable": true,
             "example": "KOR-2025-NL-89231",
             "title": "Belastingdienst Referentie"
@@ -117,7 +117,7 @@
           },
           "previousRevenue": {
             "type": "object",
-            "description": "Historische omzet per jaar (jaar -> bedrag) voor de scenario-analyse in de aanmeldstroom (REQ-KOR-001).",
+            "description": "Historische omzet per jaar (jaar -> bedrag) voor de scenario-analyse in de aanmeldstroom.",
             "nullable": true,
             "example": {
               "2024": 15200.0,
@@ -134,7 +134,7 @@
           },
           "fiscalUnitId": {
             "type": "string",
-            "description": "FK naar fiscale eenheid; gevuld blokkeert individuele KOR-aanmelding (REQ-KOR-010). Null voor niet-eenheid.",
+            "description": "FK naar fiscale eenheid; gevuld blokkeert individuele KOR-aanmelding. Null voor niet-eenheid.",
             "nullable": true,
             "example": null,
             "title": "Fiscal Eenheid ID"
@@ -152,19 +152,19 @@
           "states": {
             "draft": {
               "label": "Concept",
-              "description": "Aanmelding voorbereid in de aanmeldstroom; nog niet ingegaan (REQ-KOR-001)."
+              "description": "Aanmelding voorbereid in de aanmeldstroom; nog niet ingegaan."
             },
             "ACTIEF": {
               "label": "Actief",
-              "description": "KOR is ingegaan op ingangsDatum. Voorbelasting-aftrek geblokkeerd (REQ-KOR-006), facturen zonder btw met artikel 25-vermelding (REQ-KOR-005), btw-aangifte opgeschort (REQ-KOR cross-app)."
+              "description": "KOR is ingegaan op ingangsDatum. Voorbelasting-aftrek geblokkeerd, facturen zonder btw met artikel 25-vermelding, btw-aangifte opgeschort (REQ-KOR cross-app)."
             },
             "GEEINDIGD_OVERSCHRIJDING": {
               "label": "Geëindigd (overschrijding)",
-              "description": "Drempel >100% overschreden; gedwongen revocatie per leveringsdatum van de triggerfactuur (REQ-KOR-004). Een KORRevocation is gematerialiseerd met suppletie-bedrag."
+              "description": "Drempel >100% overschreden; gedwongen revocatie per leveringsdatum van de triggerfactuur. Een KORRevocation is gematerialiseerd met suppletie-bedrag."
             },
             "GEEINDIGD_VRIJWILLIG": {
               "label": "Geëindigd (vrijwillig)",
-              "description": "Vrijwillige opt-out na de drie-jaars-lock-in; effectief per 1-1 van het volgende kalenderjaar (REQ-KOR-007)."
+              "description": "Vrijwillige opt-out na de drie-jaars-lock-in; effectief per 1-1 van het volgende kalenderjaar."
             }
           },
           "transitions": {
@@ -184,7 +184,7 @@
               "from": "ACTIEF",
               "to": "GEEINDIGD_VRIJWILLIG",
               "label": "Vrijwillige opt-out",
-              "description": "Alleen toegestaan vanaf vroegsteOpzegDatum (REQ-KOR-007). KORRevocation met type=VRIJWILLIG_NA_LOCKOUT, revocatieDatum = 1-1 van het volgende kalenderjaar."
+              "description": "Alleen toegestaan vanaf vroegsteOpzegDatum. KORRevocation met type=VRIJWILLIG_NA_LOCKOUT, revocatieDatum = 1-1 van het volgende kalenderjaar."
             }
           }
         }
@@ -194,12 +194,12 @@
         "icon": "ChartLineVariant",
         "version": "0.1.0",
         "title": "KOR Annual Turnover",
-        "description": "Lopende KOR-relevante omzet per kalenderjaar met drempel-benutting en maandprognose (REQ-KOR-002). Niet alle omzet telt mee: vrijgestelde prestaties (art. 11 OB), intracommunautaire leveringen en onroerend goed worden uitgesloten. Drempel-benutting wordt door KorMonitorService na elke geboekte AR-factuur herrekend; de x-openregister-aggregations-blok documenteert de equivalente declaratieve vorm (ADR-031).",
+        "description": "Lopende KOR-relevante omzet per kalenderjaar met drempel-benutting en maandprognose. Niet alle omzet telt mee: vrijgestelde prestaties (art. 11 OB), intracommunautaire leveringen en onroerend goed worden uitgesloten. Drempel-benutting wordt door KorMonitorService na elke geboekte AR-factuur herrekend; de x-openregister-aggregations-blok documenteert de equivalente declaratieve vorm (ADR-031).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "KORAnnualTurnover updates (post-invoice recalcs, uitgesloten-posten herclassificatie, prognose-status flips) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — the running drempel-benutting is the fiscaal trigger for de revocatie-flow (REQ-KOR-004) en alert-dispatch (REQ-KOR-003)."
+          "description": "KORAnnualTurnover updates (post-invoice recalcs, uitgesloten-posten herclassificatie, prognose-status flips) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — the running drempel-benutting is the fiscaal trigger for de revocatie-flow en alert-dispatch."
         },
         "type": "object",
         "required": [
@@ -225,7 +225,7 @@
           },
           "currentRevenue": {
             "type": "number",
-            "description": "Lopende KOR-relevante omzet (SUM van KOR-eligible AR-facturen met leveringsDatum in dit jaar, status != draft) (REQ-KOR-002).",
+            "description": "Lopende KOR-relevante omzet (SUM van KOR-eligible AR-facturen met leveringsDatum in dit jaar, status != draft).",
             "minimum": 0,
             "example": 16420.0,
             "title": "Lopende Omzet"
@@ -239,14 +239,14 @@
           },
           "thresholdUtilisation": {
             "type": "number",
-            "description": "lopendeOmzet / drempel, als fractie (0-1+) (REQ-KOR-002).",
+            "description": "lopendeOmzet / drempel, als fractie (0-1+).",
             "minimum": 0,
             "example": 0.821,
             "title": "Drempel Benutting"
           },
           "perMonth": {
             "type": "object",
-            "description": "Omzet per maand (YYYY-MM -> bedrag), basis voor de lineaire eindejaars-prognose (REQ-KOR-002).",
+            "description": "Omzet per maand (YYYY-MM -> bedrag), basis voor de lineaire eindejaars-prognose.",
             "nullable": true,
             "example": {
               "2026-01": 1380.0,
@@ -256,7 +256,7 @@
           },
           "excludedItems": {
             "type": "array",
-            "description": "Posten die NIET meetellen voor de KOR-drempel (REQ-KOR-002): vrijgestelde prestaties, intracommunautaire leveringen, onroerend goed.",
+            "description": "Posten die NIET meetellen voor de KOR-drempel: vrijgestelde prestaties, intracommunautaire leveringen, onroerend goed.",
             "nullable": true,
             "items": {
               "type": "object",
@@ -289,14 +289,14 @@
           },
           "forecastYearEnd": {
             "type": "number",
-            "description": "Lineaire eindejaars-prognose op basis van maandgemiddelde year-to-date (REQ-KOR-002).",
+            "description": "Lineaire eindejaars-prognose op basis van maandgemiddelde year-to-date.",
             "nullable": true,
             "example": 24630.0,
             "title": "Prognose Einde Jaar"
           },
           "prognoseStatus": {
             "type": "string",
-            "description": "Status van de prognose t.o.v. de drempel (REQ-KOR-002).",
+            "description": "Status van de prognose t.o.v. de drempel.",
             "enum": [
               "UNDER_THRESHOLD",
               "WARNING",
@@ -315,7 +315,7 @@
         },
         "x-openregister-aggregations": {
           "korTurnoverByYear": {
-            "description": "Declaratieve vorm van de KOR-drempel-benutting die KorMonitorService berekent (REQ-KOR-002). Somt KOR-eligible AR-omzet (vrijstellingsGrondslag = KOR_ART25_OB, status != draft, leveringsDatum in jaar) per administratie + jaar, exclusief uitgeslotenPosten; drempelBenutting = lopendeOmzet / drempel; prognoseEindeJaar via lineaire trend op maandgemiddelde. Wanneer de aggregatie-engine de maand-trend + uitsluitingen niet native kan uitdrukken, berekent KorMonitorService hetzelfde resultaat in PHP via de echte ObjectService API.",
+            "description": "Declaratieve vorm van de KOR-drempel-benutting die KorMonitorService berekent. Somt KOR-eligible AR-omzet (vrijstellingsGrondslag = KOR_ART25_OB, status != draft, leveringsDatum in jaar) per administratie + jaar, exclusief uitgeslotenPosten; drempelBenutting = lopendeOmzet / drempel; prognoseEindeJaar via lineaire trend op maandgemiddelde. Wanneer de aggregatie-engine de maand-trend + uitsluitingen niet native kan uitdrukken, berekent KorMonitorService hetzelfde resultaat in PHP via de echte ObjectService API.",
             "source": "ARInvoice",
             "filter": {
               "vrijstellingsGrondslag": "KOR_ART25_OB",
@@ -345,7 +345,7 @@
         "icon": "AlertOutline",
         "version": "0.1.0",
         "title": "KOR Threshold Alert",
-        "description": "Waarschuwingsevent zodra de drempel-benutting een schijf passeert (REQ-KOR-003): 80% (VROEG), 90% (KRITIEK), 100% (OVERSCHRIJDING -> synchrone revocatie). Elke schijf vuurt eenmalig. Logt omzet-op-moment, ernst, kanaal en aanbeveling; publiceert naar notifications.dispatch.",
+        "description": "Waarschuwingsevent zodra de drempel-benutting een schijf passeert: 80% (VROEG), 90% (KRITIEK), 100% (OVERSCHRIJDING -> synchrone revocatie). Elke schijf vuurt eenmalig. Logt omzet-op-moment, ernst, kanaal en aanbeveling; publiceert naar notifications.dispatch.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md",
         "x-openregister-audit-trail": {
@@ -370,7 +370,7 @@
           },
           "trigger": {
             "type": "string",
-            "description": "Drempelschijf die werd gepasseerd (REQ-KOR-003).",
+            "description": "Drempelschijf die werd gepasseerd.",
             "enum": [
               "THRESHOLD_80_PCT",
               "THRESHOLD_90_PCT",
@@ -388,7 +388,7 @@
           },
           "revenueAtMoment": {
             "type": "number",
-            "description": "Exacte lopende omzet op het moment van uitlokken (REQ-KOR-003).",
+            "description": "Exacte lopende omzet op het moment van uitlokken.",
             "example": 18120.0,
             "title": "Omzet Op Moment"
           },
@@ -408,7 +408,7 @@
           },
           "severity": {
             "type": "string",
-            "description": "Ernstniveau gekoppeld aan de schijf (REQ-KOR-003).",
+            "description": "Ernstniveau gekoppeld aan de schijf.",
             "enum": [
               "EARLY",
               "CRITICAL",
@@ -419,14 +419,14 @@
           },
           "recommendation": {
             "type": "string",
-            "description": "Aanbevolen actie-tekst (REQ-KOR-003).",
+            "description": "Aanbevolen actie-tekst.",
             "nullable": true,
             "example": "Overweeg opt-out of factureer strategisch.",
             "title": "Aanbeveling"
           },
           "channel": {
             "type": "array",
-            "description": "Dispatch-kanalen, afhankelijk van ernst (REQ-KOR-003).",
+            "description": "Dispatch-kanalen, afhankelijk van ernst.",
             "items": {
               "type": "string",
               "enum": [
@@ -469,7 +469,7 @@
         "icon": "FileDocumentRemoveOutline",
         "version": "0.1.0",
         "title": "KOR Revocation",
-        "description": "Beëindiging van de KOR (REQ-KOR-004, REQ-KOR-007): gedwongen bij overschrijding of vrijwillig na de lock-in. Bij overschrijding is revocatieDatum ALTIJD de leveringsdatum van de triggerfactuur — niet einde-maand/kwartaal/jaar (design D4). Bevat het berekende suppletie-bedrag en de drie-jaars blokkade op heraanmelding.",
+        "description": "Beëindiging van de KOR: gedwongen bij overschrijding of vrijwillig na de lock-in. Bij overschrijding is revocatieDatum ALTIJD de leveringsdatum van de triggerfactuur — niet einde-maand/kwartaal/jaar (design D4). Bevat het berekende suppletie-bedrag en de drie-jaars blokkade op heraanmelding.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md",
         "x-openregister-audit-trail": {
@@ -530,14 +530,14 @@
           },
           "vatSupplementaryAmount": {
             "type": "number",
-            "description": "Berekend suppletie-bedrag: SUM over KOR-facturen tussen ingangsDatum en revocatieDatum-1 van bedrag * 0.21 / 1.21 (REQ-KOR-004).",
+            "description": "Berekend suppletie-bedrag: SUM over KOR-facturen tussen ingangsDatum en revocatieDatum-1 van bedrag * 0.21 / 1.21.",
             "nullable": true,
             "example": 4250.4,
             "title": "BTW Suppletie Bedrag"
           },
           "recalculationRange": {
             "type": "object",
-            "description": "Periode waarover btw herrekend moet worden (van revocatieDatum tot fiscaal jaareinde) (REQ-KOR-004).",
+            "description": "Periode waarover btw herrekend moet worden (van revocatieDatum tot fiscaal jaareinde).",
             "nullable": true,
             "properties": {
               "van": {
@@ -572,14 +572,14 @@
           "blockReRegistration": {
             "type": "string",
             "format": "date",
-            "description": "Datum tot wanneer heraanmelding KOR geblokkeerd is (revocatieDatum + 3 jaar) (REQ-KOR-004).",
+            "description": "Datum tot wanneer heraanmelding KOR geblokkeerd is (revocatieDatum + 3 jaar).",
             "nullable": true,
             "example": "2029-09-04",
             "title": "Blokkade Heraanmelding"
           },
           "taxAuthorityNotification": {
             "type": "object",
-            "description": "Status van de Belastingdienst-notificatie-intentie (geen automatische indiening; ondernemer-verantwoordelijkheid) (REQ-KOR-004).",
+            "description": "Status van de Belastingdienst-notificatie-intentie (geen automatische indiening; ondernemer-verantwoordelijkheid).",
             "nullable": true,
             "properties": {
               "verzonden": {
@@ -619,7 +619,7 @@
         "icon": "EarthArrowRight",
         "version": "0.1.0",
         "title": "KOR-EU Turnover",
-        "description": "Grensoverschrijdende KOR-EU omzetregistratie (alleen bij regime KOR_EU) per 1-1-2025 (REQ-KOR-008): EX-nummer, EU-brede EUR 100.000-drempel en omzet/drempel/benutting per lidstaat. Per-lidstaat drempels zijn DATA, niet code (design D7). Bevat de kwartaalopgaaf-status (Q1-Q4). Vermelding artikel 284 VAT-richtlijn 2006/112/EG.",
+        "description": "Grensoverschrijdende KOR-EU omzetregistratie (alleen bij regime KOR_EU) per 1-1-2025: EX-nummer, EU-brede EUR 100.000-drempel en omzet/drempel/benutting per lidstaat. Per-lidstaat drempels zijn DATA, niet code (design D7). Bevat de kwartaalopgaaf-status (Q1-Q4). Vermelding artikel 284 VAT-richtlijn 2006/112/EG.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md",
         "x-openregister-audit-trail": {
@@ -642,7 +642,7 @@
           },
           "exNumber": {
             "type": "string",
-            "description": "EX-nummer toegekend door de Belastingdienst KOR-EU portal (handmatige invoer; SBR auto-assign out of scope) (REQ-KOR-008).",
+            "description": "EX-nummer toegekend door de Belastingdienst KOR-EU portal (handmatige invoer; SBR auto-assign out of scope).",
             "nullable": true,
             "example": "EX-NL-2026-019234",
             "title": "Ex Nummer"
@@ -655,21 +655,21 @@
           },
           "totalEuRevenue": {
             "type": "number",
-            "description": "Totale EU-brede omzet (REQ-KOR-008).",
+            "description": "Totale EU-brede omzet.",
             "minimum": 0,
             "example": 47800.0,
             "title": "Totaal Eu Omzet"
           },
           "thresholdEUBrut": {
             "type": "number",
-            "description": "EU-brede drempel in EUR (REQ-KOR-008).",
+            "description": "EU-brede drempel in EUR.",
             "default": 100000,
             "example": 100000,
             "title": "Drempel Eu Brut"
           },
           "perMemberState": {
             "type": "object",
-            "description": "Per EU-lidstaat: omzet, nationale KOR-drempel en benutting (data, niet code — design D7). Overschrijding van één lidstaat-drempel revoceert KOR-EU alleen voor die lidstaat (REQ-KOR-008).",
+            "description": "Per EU-lidstaat: omzet, nationale KOR-drempel en benutting (data, niet code — design D7). Overschrijding van één lidstaat-drempel revoceert KOR-EU alleen voor die lidstaat.",
             "nullable": true,
             "example": {
               "BE": {
@@ -692,7 +692,7 @@
           },
           "quarterlyReturnStatus": {
             "type": "object",
-            "description": "Status per kwartaal van de verplichte kwartaalopgaaf (REQ-KOR-008). Geen automatische indiening (design D8).",
+            "description": "Status per kwartaal van de verplichte kwartaalopgaaf. Geen automatische indiening (design D8).",
             "nullable": true,
             "properties": {
               "Q1": {

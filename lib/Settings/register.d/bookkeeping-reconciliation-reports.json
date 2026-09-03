@@ -35,7 +35,7 @@
         "properties": {
           "bankAccountId": {
             "type": "string",
-            "description": "FK to the bank account / IBAN this reconciliation belongs to (REQ-REC-001).",
+            "description": "FK to the bank account / IBAN this reconciliation belongs to.",
             "example": "EUR-0001",
             "title": "Bank Account ID"
           },
@@ -62,13 +62,13 @@
           },
           "openingBalance": {
             "type": "number",
-            "description": "Statement opening balance in account currency (REQ-REC-001). Stored as a decimal but compared in integer cents per ADR-005 server-authority and to avoid IEEE-754 drift.",
+            "description": "Statement opening balance in account currency. Stored as a decimal but compared in integer cents per ADR-005 server-authority and to avoid IEEE-754 drift.",
             "example": 100000.0,
             "title": "Opening Balance"
           },
           "closingBalance": {
             "type": "number",
-            "description": "Statement closing balance in account currency (REQ-REC-001). Compared against expectedGLBalance to compute variance.",
+            "description": "Statement closing balance in account currency. Compared against expectedGLBalance to compute variance.",
             "example": 75000.0,
             "title": "Closing Balance"
           },
@@ -103,14 +103,14 @@
           "preparedBy": {
             "type": "string",
             "nullable": true,
-            "description": "Nextcloud UID of the operator who initiated the reconciliation. Populated on the `initiate` transition (REQ-REC-009).",
+            "description": "Nextcloud UID of the operator who initiated the reconciliation. Populated on the `initiate` transition.",
             "example": "alice",
             "title": "Prepared By"
           },
           "verifiedBy": {
             "type": "string",
             "nullable": true,
-            "description": "Nextcloud UID of the verifier who confirmed all unmatched items resolved (REQ-REC-006). Populated on the `verify` transition.",
+            "description": "Nextcloud UID of the verifier who confirmed all unmatched items resolved. Populated on the `verify` transition.",
             "example": "bob",
             "title": "Verified By"
           },
@@ -166,7 +166,7 @@
             },
             "in-progress": {
               "label": "In Progress",
-              "description": "Statement balance verified; operator is matching transactions and resolving unmatched items. T2 match events accepted (REQ-REC-010)."
+              "description": "Statement balance verified; operator is matching transactions and resolving unmatched items. T2 match events accepted."
             },
             "verified": {
               "label": "Verified",
@@ -174,7 +174,7 @@
             },
             "closed": {
               "label": "Closed",
-              "description": "Period closed; reconciliation immutable. Appears in variance aggregations (REQ-REC-007). No further edits per REQ-REC-003."
+              "description": "Period closed; reconciliation immutable. Appears in variance aggregations. No further edits per REQ-REC-003."
             },
             "cancelled": {
               "label": "Cancelled",
@@ -279,19 +279,19 @@
         "properties": {
           "reconId": {
             "type": "string",
-            "description": "FK to the BankReconciliation session this match belongs to (REQ-REC-005). Empty when the match was emitted before T4 sessions existed (legacy T2-only records).",
+            "description": "FK to the BankReconciliation session this match belongs to. Empty when the match was emitted before T4 sessions existed (legacy T2-only records).",
             "title": "Recon ID"
           },
           "glTransactionId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to GLTransaction.id (REQ-REC-005). Null for bank-only matches (statement line with no GL counterpart — handled via resolutionStatus).",
+            "description": "FK to GLTransaction.id. Null for bank-only matches (statement line with no GL counterpart — handled via resolutionStatus).",
             "title": "GL Transaction ID"
           },
           "bankLineId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to BankStatementLine.lineId (REQ-REC-005). Alias of T2's bankStatementLineId for the T4 session schema; populated by the T2→T4 event consumer (REQ-REC-010).",
+            "description": "FK to BankStatementLine.lineId. Alias of T2's bankStatementLineId for the T4 session schema; populated by the T2→T4 event consumer.",
             "title": "Bank Line ID"
           },
           "matchAlgorithm": {
@@ -302,7 +302,7 @@
               "manual"
             ],
             "nullable": true,
-            "description": "Algorithm that produced the match (REQ-REC-005). T4 supports `exact` (T2 rules engine) and `manual` (operator override). `fuzzy` is reserved for T5.",
+            "description": "Algorithm that produced the match. T4 supports `exact` (T2 rules engine) and `manual` (operator override). `fuzzy` is reserved for T5.",
             "title": "Match Algorithm"
           },
           "confidenceScoreT4": {
@@ -310,14 +310,14 @@
             "minimum": 0,
             "maximum": 1,
             "nullable": true,
-            "description": "Confidence in [0.0, 1.0] for the T4 record (REQ-REC-005). 1.0 = certain; <0.9 = low-confidence (operator review recommended). Distinct from the T2 confidenceScore so legacy fragments do not clash.",
+            "description": "Confidence in [0.0, 1.0] for the T4 record. 1.0 = certain; <0.9 = low-confidence (operator review recommended). Distinct from the T2 confidenceScore so legacy fragments do not clash.",
             "title": "Confidence Score T4"
           },
           "matchedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "When the T4 ReconciliationMatch record was created (REQ-REC-005). Distinct from T2's confirmedAt (which is the operator-confirm timestamp).",
+            "description": "When the T4 ReconciliationMatch record was created. Distinct from T2's confirmedAt (which is the operator-confirm timestamp).",
             "title": "Matched At"
           },
           "manualOverride": {
@@ -347,13 +347,13 @@
           "arInvoiceId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to ARInvoice.id when the match is AR-based (REQ-REC-005). Semantic shortcut to T2's polymorphic matchedObjectId for query convenience.",
+            "description": "FK to ARInvoice.id when the match is AR-based. Semantic shortcut to T2's polymorphic matchedObjectId for query convenience.",
             "title": "AR Invoice ID"
           },
           "apTransactionId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to APInvoice/APTransaction id when the match is AP-based (REQ-REC-005). Semantic shortcut to T2's polymorphic matchedObjectId.",
+            "description": "FK to APInvoice/APTransaction id when the match is AP-based. Semantic shortcut to T2's polymorphic matchedObjectId.",
             "title": "AP Transaction ID"
           }
         },
@@ -414,7 +414,7 @@
         "properties": {
           "reconId": {
             "type": "string",
-            "description": "FK to the BankReconciliation this report finalises (REQ-REC-001).",
+            "description": "FK to the BankReconciliation this report finalises.",
             "title": "Recon ID"
           },
           "reportDate": {
@@ -459,7 +459,7 @@
           "signOffComment": {
             "type": "string",
             "nullable": true,
-            "description": "Verifier sign-off note copied from the parent reconciliation at close time (REQ-REC-006).",
+            "description": "Verifier sign-off note copied from the parent reconciliation at close time.",
             "title": "Sign Off Comment"
           },
           "administrationId": {

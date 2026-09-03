@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-ifrs15-revenue",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 2 — IFRS 15 / ASC 606 five-step revenue recognition. Adds eleven new schemas (RevenueContract, PerformanceObligation, TransactionPrice, PriceAllocation, RevenueRecognitionEvent, ContractAsset, ContractLiability, ContractModification, VariableConsiderationAdjustment, ContractCostAsset, RevenueWaterfall) implementing the five-step model: (1) identify the contract, (2) identify separate performance obligations, (3) determine the transaction price, (4) allocate the price across POs using relative stand-alone selling price (SSP), (5) recognise revenue when/as each PO is satisfied (REQ-IFRS15-001..011). RevenueContract is named to avoid colliding with contract-lifecycle-management's generic Contract schema, the fleet's canonical ADR-051 ns#Contract implementer (contracts-single-home); the two are deliberately separate registers for separate bounded contexts and MUST NOT be merged, aliased, or share a slug. RevenueContract carries an x-openregister-lifecycle (draft -> signed -> in-delivery -> completed / cancelled); posting a RevenueRecognitionEvent materialises a balanced GLTransaction via the T1 materialisation extension (debit accrued-revenue / credit revenue, REQ-IFRS15-007). RevenueWaterfall declares an x-openregister-aggregations block documenting the per-contract, per-period roll-up of recognised + remaining transaction price for 60+ months (REQ-IFRS15-008). The nightly contract asset/liability cut-off (idempotent reverse-then-post), the relative-SSP / residual price allocation, the cost-to-cost percentage-of-completion, and the variable-consideration constraint + re-estimation are computed by OCA\\Shillinq\\Service\\RevenueCutoffService + RevenueRecognitionCalculator + VariableConsiderationReestimationService via the real OpenRegister ObjectService API (find / findAll / saveObject), with the declarative shapes documented on the schemas per ADR-031. ContractAsset / ContractLiability / RevenueWaterfall are read-only (derived nightly, never authored by operators). Seed objects provide the four worked examples from design.md (36-month SaaS bundle, cost-to-cost construction, multi-year maintenance with escalation, distinct-scope modification = new contract)."
+    "description": "Tier 2 — IFRS 15 / ASC 606 five-step revenue recognition. Adds eleven new schemas (RevenueContract, PerformanceObligation, TransactionPrice, PriceAllocation, RevenueRecognitionEvent, ContractAsset, ContractLiability, ContractModification, VariableConsiderationAdjustment, ContractCostAsset, RevenueWaterfall) implementing the five-step model: (1) identify the contract, (2) identify separate performance obligations, (3) determine the transaction price, (4) allocate the price across POs using relative stand-alone selling price (SSP), (5) recognise revenue when/as each PO is satisfied (REQ-IFRS15-001..011). RevenueContract is named to avoid colliding with contract-lifecycle-management's generic Contract schema, the fleet's canonical ADR-051 ns#Contract implementer (contracts-single-home); the two are deliberately separate registers for separate bounded contexts and MUST NOT be merged, aliased, or share a slug. RevenueContract carries an x-openregister-lifecycle (draft -> signed -> in-delivery -> completed / cancelled); posting a RevenueRecognitionEvent materialises a balanced GLTransaction via the T1 materialisation extension (debit accrued-revenue / credit revenue, REQ-IFRS15-007). RevenueWaterfall declares an x-openregister-aggregations block documenting the per-contract, per-period roll-up of recognised + remaining transaction price for 60+ months. The nightly contract asset/liability cut-off (idempotent reverse-then-post), the relative-SSP / residual price allocation, the cost-to-cost percentage-of-completion, and the variable-consideration constraint + re-estimation are computed by OCA\\Shillinq\\Service\\RevenueCutoffService + RevenueRecognitionCalculator + VariableConsiderationReestimationService via the real OpenRegister ObjectService API (find / findAll / saveObject), with the declarative shapes documented on the schemas per ADR-031. ContractAsset / ContractLiability / RevenueWaterfall are read-only (derived nightly, never authored by operators). Seed objects provide the four worked examples from design.md (36-month SaaS bundle, cost-to-cost construction, multi-year maintenance with escalation, distinct-scope modification = new contract)."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Revenue Contract",
-        "description": "A customer revenue contract under IFRS 15 — the legal instrument that bundles one or more performance obligations (REQ-IFRS15-001). Named RevenueContract (not the bare Contract) specifically to avoid colliding with contract-lifecycle-management's generic Contract schema, which is the fleet's canonical ADR-051 ns#Contract implementer; the two are deliberately separate registers for separate bounded contexts (revenue recognition vs. generic contract lifecycle) and MUST NOT be merged, aliased, or share a slug (contracts-single-home). Carries identification, dates, the decomposed transaction price (fixed + estimated variable), currency, the signed-at date, the originating quote/order reference, and a contractGroupId for IFRS 15.17 combination-of-contracts treatment (REQ-IFRS15-011). Revenue contracts are first-class entities with their own lifecycle and modification history; they are never embedded in GL transactions or invoice rows.",
+        "description": "A customer revenue contract under IFRS 15 — the legal instrument that bundles one or more performance obligations. Named RevenueContract (not the bare Contract) specifically to avoid colliding with contract-lifecycle-management's generic Contract schema, which is the fleet's canonical ADR-051 ns#Contract implementer; the two are deliberately separate registers for separate bounded contexts (revenue recognition vs. generic contract lifecycle) and MUST NOT be merged, aliased, or share a slug (contracts-single-home). Carries identification, dates, the decomposed transaction price (fixed + estimated variable), currency, the signed-at date, the originating quote/order reference, and a contractGroupId for IFRS 15.17 combination-of-contracts treatment. Revenue contracts are first-class entities with their own lifecycle and modification history; they are never embedded in GL transactions or invoice rows.",
         "x-schema-org": "schema:Contract",
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
@@ -34,7 +34,7 @@
         "properties": {
           "contractNumber": {
             "type": "string",
-            "description": "Human-readable contract identifier, unique within the administration (REQ-IFRS15-001).",
+            "description": "Human-readable contract identifier, unique within the administration.",
             "example": "C-2026-001",
             "title": "Contract Number"
           },
@@ -53,14 +53,14 @@
           },
           "quoteOrderReference": {
             "type": "string",
-            "description": "FK to the originating SalesOrder / Quote (bookkeeping-quote-order-invoice); the contract is the same legal instrument as the order (REQ-IFRS15-001).",
+            "description": "FK to the originating SalesOrder / Quote (bookkeeping-quote-order-invoice); the contract is the same legal instrument as the order.",
             "nullable": true,
             "example": "SO-2026-0042",
             "title": "Quote Order Reference"
           },
           "contractGroupId": {
             "type": "string",
-            "description": "Combination-of-contracts group per IFRS 15.17; contracts sharing a contractGroupId are negotiated as a package and their transaction prices are combined for allocation (REQ-IFRS15-011). Null for stand-alone contracts.",
+            "description": "Combination-of-contracts group per IFRS 15.17; contracts sharing a contractGroupId are negotiated as a package and their transaction prices are combined for allocation. Null for stand-alone contracts.",
             "nullable": true,
             "example": null,
             "title": "Contract Group ID"
@@ -89,13 +89,13 @@
           },
           "fixedConsideration": {
             "type": "number",
-            "description": "Guaranteed (fixed) consideration component of the total transaction price (REQ-IFRS15-002).",
+            "description": "Guaranteed (fixed) consideration component of the total transaction price.",
             "example": 360000.0,
             "title": "Fixed Consideration"
           },
           "variableConsideration": {
             "type": "number",
-            "description": "Estimated variable consideration (rebates, usage, bonuses) before constraint; constrained amount lives on TransactionPrice (REQ-IFRS15-002, REQ-IFRS15-003).",
+            "description": "Estimated variable consideration (rebates, usage, bonuses) before constraint; constrained amount lives on TransactionPrice.",
             "default": 0,
             "example": 0.0,
             "title": "Variable Consideration"
@@ -109,7 +109,7 @@
           },
           "modificationHistory": {
             "type": "array",
-            "description": "Ordered list of ContractModification slugs applied to this contract (REQ-IFRS15-006); the authoritative records are ContractModification entities, this is a denormalised pointer list for the audit timeline.",
+            "description": "Ordered list of ContractModification slugs applied to this contract; the authoritative records are ContractModification entities, this is a denormalised pointer list for the audit timeline.",
             "items": {
               "type": "string"
             },
@@ -119,7 +119,7 @@
           },
           "lifecycleState": {
             "type": "string",
-            "description": "Contract lifecycle state (REQ-IFRS15-001); see x-openregister-lifecycle.",
+            "description": "Contract lifecycle state; see x-openregister-lifecycle.",
             "enum": [
               "draft",
               "signed",
@@ -144,7 +144,7 @@
             "sign": {
               "from": "draft",
               "to": "signed",
-              "description": "Contract is signed; the transaction price is locked and price allocation across POs is computed once (REQ-IFRS15-004)."
+              "description": "Contract is signed; the transaction price is locked and price allocation across POs is computed once."
             },
             "beginDelivery": {
               "from": "signed",
@@ -173,7 +173,7 @@
         "icon": "FormatListChecks",
         "version": "0.1.0",
         "title": "Performance Obligation",
-        "description": "A distinct promised good or service within a contract (IFRS 15.22-30, REQ-IFRS15-005). Carries the satisfaction pattern (point-in-time | over-time) and, for over-time POs, the output method (units-delivered, milestones, time-elapsed, percentage-of-completion) or input method (cost-to-cost, labour-hours, machine-hours, units-produced). For cost-to-cost it sources actual + estimated cost from the project-accounting module (costBasis FK) and derives percentageComplete = actualCostToDate / revisedTotalEstimatedCost (REQ-IFRS15-005). Holds the stand-alone selling price (SSP) used for relative allocation and the resulting allocated price.",
+        "description": "A distinct promised good or service within a contract (IFRS 15.22-30, REQ-IFRS15-005). Carries the satisfaction pattern (point-in-time | over-time) and, for over-time POs, the output method (units-delivered, milestones, time-elapsed, percentage-of-completion) or input method (cost-to-cost, labour-hours, machine-hours, units-produced). For cost-to-cost it sources actual + estimated cost from the project-accounting module (costBasis FK) and derives percentageComplete = actualCostToDate / revisedTotalEstimatedCost. Holds the stand-alone selling price (SSP) used for relative allocation and the resulting allocated price.",
         "x-schema-org": "schema:Service",
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
@@ -221,7 +221,7 @@
           },
           "outputMethod": {
             "type": "string",
-            "description": "Output method of measuring progress for over-time POs (IFRS 15.B15); mutually informative with inputMethod (REQ-IFRS15-005).",
+            "description": "Output method of measuring progress for over-time POs (IFRS 15.B15); mutually informative with inputMethod.",
             "enum": [
               "units-delivered",
               "milestones",
@@ -234,7 +234,7 @@
           },
           "inputMethod": {
             "type": "string",
-            "description": "Input method of measuring progress for over-time POs (IFRS 15.B18); cost-to-cost sources cost from the project module (REQ-IFRS15-005).",
+            "description": "Input method of measuring progress for over-time POs (IFRS 15.B18); cost-to-cost sources cost from the project module.",
             "enum": [
               "cost-to-cost",
               "labour-hours",
@@ -247,28 +247,28 @@
           },
           "costBasis": {
             "type": "string",
-            "description": "FK to the project-accounting cost register supplying actual + estimated cost-to-date for input-method recognition (REQ-IFRS15-005); resolves cross-module per the consultancy/project-accounting dependency.",
+            "description": "FK to the project-accounting cost register supplying actual + estimated cost-to-date for input-method recognition; resolves cross-module per the consultancy/project-accounting dependency.",
             "nullable": true,
             "example": null,
             "title": "Cost Basis"
           },
           "estimatedTotalCost": {
             "type": "number",
-            "description": "Original estimated total cost for an input-method PO (REQ-IFRS15-005).",
+            "description": "Original estimated total cost for an input-method PO.",
             "nullable": true,
             "example": null,
             "title": "Estimated Total Cost"
           },
           "actualCostToDate": {
             "type": "number",
-            "description": "Cumulative actual cost incurred to date, sourced from the project module (REQ-IFRS15-005).",
+            "description": "Cumulative actual cost incurred to date, sourced from the project module.",
             "nullable": true,
             "example": null,
             "title": "Actual Cost To Date"
           },
           "revisedTotalEstimatedCost": {
             "type": "number",
-            "description": "Revised estimate-at-completion total cost; a change triggers margin recalculation and an impairment/onerous-contract test (REQ-IFRS15-005, REQ-IFRS15-009).",
+            "description": "Revised estimate-at-completion total cost; a change triggers margin recalculation and an impairment/onerous-contract test.",
             "nullable": true,
             "example": null,
             "title": "Revised Total Estimated Cost"
@@ -277,7 +277,7 @@
             "type": "number",
             "minimum": 0,
             "maximum": 100,
-            "description": "Derived progress for input-method POs = actualCostToDate / revisedTotalEstimatedCost * 100 (REQ-IFRS15-005).",
+            "description": "Derived progress for input-method POs = actualCostToDate / revisedTotalEstimatedCost * 100.",
             "nullable": true,
             "example": null,
             "title": "Percentage Complete"
@@ -290,14 +290,14 @@
           },
           "allocatedPrice": {
             "type": "number",
-            "description": "Transaction price allocated to this PO; computed by the allocation step and stored for audit (REQ-IFRS15-004).",
+            "description": "Transaction price allocated to this PO; computed by the allocation step and stored for audit.",
             "nullable": true,
             "example": 257142.86,
             "title": "Allocated Price"
           },
           "statusAtPeriodEnd": {
             "type": "string",
-            "description": "Satisfaction status of the PO at period end (REQ-IFRS15-005).",
+            "description": "Satisfaction status of the PO at period end.",
             "enum": [
               "not-started",
               "in-progress",
@@ -344,20 +344,20 @@
           },
           "fixedConsideration": {
             "type": "number",
-            "description": "Guaranteed cash/near-cash component (REQ-IFRS15-002).",
+            "description": "Guaranteed cash/near-cash component.",
             "example": 360000.0,
             "title": "Fixed Consideration"
           },
           "variableConsideration": {
             "type": "number",
-            "description": "Unconstrained estimate for rebates, discounts, bonuses, refunds (REQ-IFRS15-002).",
+            "description": "Unconstrained estimate for rebates, discounts, bonuses, refunds.",
             "nullable": true,
             "example": 0.0,
             "title": "Variable Consideration"
           },
           "estimationMethod": {
             "type": "string",
-            "description": "Method of estimating variable consideration (IFRS 15.53): expected value or most-likely amount (REQ-IFRS15-003).",
+            "description": "Method of estimating variable consideration (IFRS 15.53): expected value or most-likely amount.",
             "enum": [
               "expectedValue",
               "mostLikelyAmount"
@@ -375,7 +375,7 @@
           },
           "constraintReason": {
             "type": "string",
-            "description": "Documented justification for the constraint level (market volatility, return rates, etc.), auditable in the disclosure pack (REQ-IFRS15-003).",
+            "description": "Documented justification for the constraint level (market volatility, return rates, etc.), auditable in the disclosure pack.",
             "nullable": true,
             "example": null,
             "title": "Constraint Reason"
@@ -452,7 +452,7 @@
           },
           "allocatedAmount": {
             "type": "number",
-            "description": "Amount of the transaction price allocated to this PO (REQ-IFRS15-004).",
+            "description": "Amount of the transaction price allocated to this PO.",
             "example": 257142.86,
             "title": "Allocated Amount"
           },
@@ -488,7 +488,7 @@
         "icon": "CashCheck",
         "version": "0.1.0",
         "title": "Revenue Recognition Event",
-        "description": "Evidence that a performance obligation moved toward satisfaction in a period (REQ-IFRS15-005, REQ-IFRS15-007). Records the recognised amount, the basis (units delivered, % complete, milestone), and the supporting evidence (delivery note, timesheet, sign-off). Posting a RevenueRecognitionEvent materialises exactly one balanced GLTransaction (debit accrued-revenue / credit revenue) via the T1 materialisation extension, linked by glTransactionId.",
+        "description": "Evidence that a performance obligation moved toward satisfaction in a period. Records the recognised amount, the basis (units delivered, % complete, milestone), and the supporting evidence (delivery note, timesheet, sign-off). Posting a RevenueRecognitionEvent materialises exactly one balanced GLTransaction (debit accrued-revenue / credit revenue) via the T1 materialisation extension, linked by glTransactionId.",
         "x-schema-org": "schema:Event",
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
@@ -534,7 +534,7 @@
           },
           "recognisedAmount": {
             "type": "number",
-            "description": "Revenue recognised for this PO in this period (REQ-IFRS15-005).",
+            "description": "Revenue recognised for this PO in this period.",
             "example": 7143.87,
             "title": "Recognised Amount"
           },
@@ -546,14 +546,14 @@
           },
           "evidenceReference": {
             "type": "string",
-            "description": "URI / identifier of supporting evidence (delivery note, timesheet entry, sign-off document) (REQ-IFRS15-005).",
+            "description": "URI / identifier of supporting evidence (delivery note, timesheet entry, sign-off document).",
             "nullable": true,
             "example": "deliverynote://C-2026-001/2026-01",
             "title": "Evidence Reference"
           },
           "glTransactionId": {
             "type": "string",
-            "description": "FK to the GLTransaction materialised when this event posted (REQ-IFRS15-007); set by the materialisation, read-only thereafter.",
+            "description": "FK to the GLTransaction materialised when this event posted; set by the materialisation, read-only thereafter.",
             "nullable": true,
             "example": null,
             "title": "GL Transaction ID"
@@ -567,7 +567,7 @@
         },
         "x-openregister-materialisations": {
           "recognitionGlPosting": {
-            "description": "Posting a RevenueRecognitionEvent materialises exactly one balanced GLTransaction via the T1 materialisation extension (REQ-IFRS15-007): debit the accrued-revenue control account and credit the revenue account for recognisedAmount. RevenueCutoffService is the engine-side writer when the declarative materialisation engine cannot resolve the cross-schema control-account lookup; it writes through the real OpenRegister ObjectService saveObject API and stores the resulting GLTransaction id back onto glTransactionId.",
+            "description": "Posting a RevenueRecognitionEvent materialises exactly one balanced GLTransaction via the T1 materialisation extension: debit the accrued-revenue control account and credit the revenue account for recognisedAmount. RevenueCutoffService is the engine-side writer when the declarative materialisation engine cannot resolve the cross-schema control-account lookup; it writes through the real OpenRegister ObjectService saveObject API and stores the resulting GLTransaction id back onto glTransactionId.",
             "trigger": "create",
             "register": "shillinq",
             "target": "GLTransaction",
@@ -634,7 +634,7 @@
           "assetAmount": {
             "type": "number",
             "minimum": 0,
-            "description": "Contract asset = max(0, cumulativeRecognised - cumulativeBilled) (REQ-IFRS15-007).",
+            "description": "Contract asset = max(0, cumulativeRecognised - cumulativeBilled).",
             "example": 0.0,
             "title": "Asset Amount"
           },
@@ -722,7 +722,7 @@
           "liabilityAmount": {
             "type": "number",
             "minimum": 0,
-            "description": "Contract liability = max(0, cumulativeBilled - cumulativeRecognised) (REQ-IFRS15-007).",
+            "description": "Contract liability = max(0, cumulativeBilled - cumulativeRecognised).",
             "example": 857.0,
             "title": "Liability Amount"
           },
@@ -760,7 +760,7 @@
         "icon": "FileDocumentEdit",
         "version": "0.1.0",
         "title": "Contract Modification",
-        "description": "An amendment to a contract, recorded as a separate entity (never an inline edit) and classified per IFRS 15.18-21 (REQ-IFRS15-006): new-contract (distinct goods/services at SSP), not-distinct-cumulative (combine + catch-up), or prospective (price-only). Carries before/after snapshots for audit and the new transaction price. Classification may be auto-proposed and overridden with a documented reason.",
+        "description": "An amendment to a contract, recorded as a separate entity (never an inline edit) and classified per IFRS 15.18-21: new-contract (distinct goods/services at SSP), not-distinct-cumulative (combine + catch-up), or prospective (price-only). Carries before/after snapshots for audit and the new transaction price. Classification may be auto-proposed and overridden with a documented reason.",
         "x-schema-org": "schema:UpdateAction",
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
@@ -791,7 +791,7 @@
           },
           "modificationType": {
             "type": "string",
-            "description": "IFRS 15.18-21 classification (REQ-IFRS15-006).",
+            "description": "IFRS 15.18-21 classification.",
             "enum": [
               "new-contract",
               "not-distinct-cumulative",
@@ -813,7 +813,7 @@
           },
           "classificationReason": {
             "type": "string",
-            "description": "Required documented reason when classificationSource = manual (REQ-IFRS15-006).",
+            "description": "Required documented reason when classificationSource = manual.",
             "nullable": true,
             "example": null,
             "title": "Classification Reason"
@@ -827,7 +827,7 @@
           },
           "newTransactionPrice": {
             "type": "number",
-            "description": "Transaction price introduced by the modification (REQ-IFRS15-006).",
+            "description": "Transaction price introduced by the modification.",
             "nullable": true,
             "example": 25000.0,
             "title": "New Transaction Price"
@@ -847,13 +847,13 @@
           },
           "beforeSnapshot": {
             "type": "object",
-            "description": "Snapshot of the contract's price/allocation before the modification, for audit (REQ-IFRS15-006).",
+            "description": "Snapshot of the contract's price/allocation before the modification, for audit.",
             "nullable": true,
             "title": "Before Snapshot"
           },
           "afterSnapshot": {
             "type": "object",
-            "description": "Snapshot of the contract's price/allocation after the modification, for audit (REQ-IFRS15-006).",
+            "description": "Snapshot of the contract's price/allocation after the modification, for audit.",
             "nullable": true,
             "title": "After Snapshot"
           },
@@ -877,7 +877,7 @@
         "icon": "SwapVerticalBold",
         "version": "0.1.0",
         "title": "Variable Consideration Adjustment",
-        "description": "A periodic re-estimation of variable consideration (rebates, refunds, bonuses, penalties, volume discounts) per IFRS 15.50-58 (REQ-IFRS15-003). Each entry records the prior and new constrained estimate, the constraint reason, the delta, the operator who recorded it, and the GLTransaction posted to recognise additional revenue (delta > 0) or reverse revenue (delta < 0).",
+        "description": "A periodic re-estimation of variable consideration (rebates, refunds, bonuses, penalties, volume discounts) per IFRS 15.50-58. Each entry records the prior and new constrained estimate, the constraint reason, the delta, the operator who recorded it, and the GLTransaction posted to recognise additional revenue (delta > 0) or reverse revenue (delta < 0).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
@@ -909,13 +909,13 @@
           },
           "priorEstimate": {
             "type": "number",
-            "description": "Constrained variable-consideration estimate before this re-estimation (REQ-IFRS15-003).",
+            "description": "Constrained variable-consideration estimate before this re-estimation.",
             "example": 30000.0,
             "title": "Prior Estimate"
           },
           "newEstimate": {
             "type": "number",
-            "description": "Constrained variable-consideration estimate after this re-estimation (REQ-IFRS15-003).",
+            "description": "Constrained variable-consideration estimate after this re-estimation.",
             "example": 25000.0,
             "title": "New Estimate"
           },
@@ -928,13 +928,13 @@
           },
           "deltaAmount": {
             "type": "number",
-            "description": "newEstimate - priorEstimate; positive recognises additional revenue, negative reverses (REQ-IFRS15-003).",
+            "description": "newEstimate - priorEstimate; positive recognises additional revenue, negative reverses.",
             "example": -5000.0,
             "title": "Delta Amount"
           },
           "glTransactionId": {
             "type": "string",
-            "description": "FK to the compensating GLTransaction posted for the delta (REQ-IFRS15-007); set by the engine, read-only.",
+            "description": "FK to the compensating GLTransaction posted for the delta; set by the engine, read-only.",
             "nullable": true,
             "example": null,
             "title": "GL Transaction ID"
@@ -959,7 +959,7 @@
         "icon": "BriefcaseUpload",
         "version": "0.1.0",
         "title": "Contract Cost Asset",
-        "description": "Incremental costs to obtain (sales commission, proposal costs) or fulfil (setup, customisation) a contract, capitalised when the IFRS 15.91-95 criteria are met (REQ-IFRS15-009). Amortised on the same pattern as the related PO satisfaction and tested for impairment each reporting date; if the contract becomes onerous the carried amount is written down with a GL posting.",
+        "description": "Incremental costs to obtain (sales commission, proposal costs) or fulfil (setup, customisation) a contract, capitalised when the IFRS 15.91-95 criteria are met. Amortised on the same pattern as the related PO satisfaction and tested for impairment each reporting date; if the contract becomes onerous the carried amount is written down with a GL posting.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
@@ -1000,13 +1000,13 @@
           },
           "initialCapitalisation": {
             "type": "number",
-            "description": "Amount capitalised at contract inception (REQ-IFRS15-009).",
+            "description": "Amount capitalised at contract inception.",
             "example": 18000.0,
             "title": "Initial Capitalisation"
           },
           "amortisationSchedule": {
             "type": "string",
-            "description": "Amortisation pattern; matching-po-satisfaction aligns to the related PO's recognition curve (REQ-IFRS15-009).",
+            "description": "Amortisation pattern; matching-po-satisfaction aligns to the related PO's recognition curve.",
             "enum": [
               "straight-line",
               "matching-po-satisfaction"
@@ -1017,7 +1017,7 @@
           },
           "poSatisfactionPattern": {
             "type": "string",
-            "description": "FK to the related PerformanceObligation whose satisfaction pattern drives amortisation (REQ-IFRS15-009).",
+            "description": "FK to the related PerformanceObligation whose satisfaction pattern drives amortisation.",
             "nullable": true,
             "example": "po-c2026001-saas",
             "title": "PO Satisfaction Pattern"
@@ -1031,7 +1031,7 @@
           },
           "carriedAmount": {
             "type": "number",
-            "description": "initialCapitalisation - amortisedToDate, reduced by any impairment (REQ-IFRS15-009).",
+            "description": "initialCapitalisation - amortisedToDate, reduced by any impairment.",
             "nullable": true,
             "example": 18000.0,
             "title": "Carried Amount"
@@ -1039,14 +1039,14 @@
           "impairmentTestDate": {
             "type": "string",
             "format": "date",
-            "description": "Date of the last impairment assessment (REQ-IFRS15-009).",
+            "description": "Date of the last impairment assessment.",
             "nullable": true,
             "example": null,
             "title": "Impairment Test Date"
           },
           "impairmentIndicators": {
             "type": "string",
-            "description": "Notes on recoverability; populated when margin compresses or the contract turns onerous (REQ-IFRS15-009).",
+            "description": "Notes on recoverability; populated when margin compresses or the contract turns onerous.",
             "nullable": true,
             "example": null,
             "title": "Impairment Indicators"
@@ -1095,28 +1095,28 @@
           },
           "contractGroupId": {
             "type": "string",
-            "description": "Combination-of-contracts group; when set the waterfall MAY be displayed at group level (REQ-IFRS15-011).",
+            "description": "Combination-of-contracts group; when set the waterfall MAY be displayed at group level.",
             "nullable": true,
             "example": null,
             "title": "Contract Group ID"
           },
           "segmentCustomer": {
             "type": "string",
-            "description": "Customer dimension for disaggregation (REQ-IFRS15-008).",
+            "description": "Customer dimension for disaggregation.",
             "nullable": true,
             "example": "ABC SaaS BV",
             "title": "Segment Customer"
           },
           "segmentGeography": {
             "type": "string",
-            "description": "Geography dimension for disaggregation (REQ-IFRS15-008).",
+            "description": "Geography dimension for disaggregation.",
             "nullable": true,
             "example": "Netherlands",
             "title": "Segment Geography"
           },
           "segmentProduct": {
             "type": "string",
-            "description": "Product/line dimension for disaggregation (REQ-IFRS15-008).",
+            "description": "Product/line dimension for disaggregation.",
             "nullable": true,
             "example": "SaaS",
             "title": "Segment Product"
@@ -1137,7 +1137,7 @@
           },
           "transactionPriceAllocated": {
             "type": "number",
-            "description": "Total transaction price allocated to POs active in this period (REQ-IFRS15-008).",
+            "description": "Total transaction price allocated to POs active in this period.",
             "example": 360000.0,
             "title": "Transaction Price Allocated"
           },
@@ -1156,19 +1156,19 @@
           },
           "cumulativeRecognised": {
             "type": "number",
-            "description": "Total recognised through period end (REQ-IFRS15-008).",
+            "description": "Total recognised through period end.",
             "example": 89143.0,
             "title": "Cumulative Recognised"
           },
           "remainingAmount": {
             "type": "number",
-            "description": "transactionPriceAllocated - cumulativeRecognised (REQ-IFRS15-008).",
+            "description": "transactionPriceAllocated - cumulativeRecognised.",
             "example": 270857.0,
             "title": "Remaining Amount"
           },
           "remainingMonths": {
             "type": "integer",
-            "description": "Estimated months until all POs complete; for contracts beyond 60 months a tail bucket aggregates years 6+ (REQ-IFRS15-008).",
+            "description": "Estimated months until all POs complete; for contracts beyond 60 months a tail bucket aggregates years 6+.",
             "nullable": true,
             "example": 30,
             "title": "Remaining Months"
@@ -1196,7 +1196,7 @@
         },
         "x-openregister-aggregations": {
           "revenueWaterfallByContractPeriod": {
-            "description": "Declarative shape of the per-contract, per-period revenue roll-up RevenueCutoffService computes (REQ-IFRS15-008). Groups RevenueRecognitionEvent by (contractId, period) within an administration, sums recognisedAmount into periodRecognised, carries priorCumulativeRecognised from the prior period, derives cumulativeRecognised = priorCumulativeRecognised + periodRecognised and remainingAmount = transactionPriceAllocated - cumulativeRecognised, and forecasts the remaining amount forward over remainingMonths (60+, IFRS 15.120). contractGroupId enables group-level rollup for combination-of-contracts (REQ-IFRS15-011). When the OpenRegister aggregation engine cannot express the prior-period carry or the forward forecast, RevenueCutoffService computes the same result in PHP via the real ObjectService API.",
+            "description": "Declarative shape of the per-contract, per-period revenue roll-up RevenueCutoffService computes. Groups RevenueRecognitionEvent by (contractId, period) within an administration, sums recognisedAmount into periodRecognised, carries priorCumulativeRecognised from the prior period, derives cumulativeRecognised = priorCumulativeRecognised + periodRecognised and remainingAmount = transactionPriceAllocated - cumulativeRecognised, and forecasts the remaining amount forward over remainingMonths (60+, IFRS 15.120). contractGroupId enables group-level rollup for combination-of-contracts. When the OpenRegister aggregation engine cannot express the prior-period carry or the forward forecast, RevenueCutoffService computes the same result in PHP via the real ObjectService API.",
             "filter": {},
             "groupBy": [
               "contractId",

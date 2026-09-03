@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-period-close",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 2 — guided period close. Declares the canonical FiscalPeriod schema (REQ-PC-001, REQ-PC-002) with an open → closing → closed → audit-locked x-openregister-lifecycle (REQ-PC-003): closed is reversible by a period-closer with an audit-trailed close reason, audit-locked is irreversible (auditor only). Additively augments the monolith GLTransaction.post transition with a declarative precondition (REQ-PC-004) referencing OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::periodOpen, which rejects a posting whose periodId resolves to a FiscalPeriod in state closed or audit-locked (backdating prevention, matches Exact/AFAS/Twinfield). The AI close assistant (REQ-PC-007) — open AP/AR transactions, unreconciled bank receipts, outstanding expense claims — is computed on demand by OCA\\Shillinq\\Service\\PeriodCloseAssistantService via the real OpenRegister ObjectService API (find/findAll); flags surface as non-blocking warnings (design D3). Seed objects provide five worked example periods (open, closing, closed, audit-locked, reopened) across realistic Dutch administrations. The schema slug FiscalPeriod is the canonical fleet name referenced by AR / AP / VAT / WIP / ICP / R&D-subsidies sibling schemas. Year-end close (opening-balance journal, retained-earnings rollover) is deferred to T3."
+    "description": "Tier 2 — guided period close. Declares the canonical FiscalPeriod schema with an open → closing → closed → audit-locked x-openregister-lifecycle: closed is reversible by a period-closer with an audit-trailed close reason, audit-locked is irreversible (auditor only). Additively augments the monolith GLTransaction.post transition with a declarative precondition referencing OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::periodOpen, which rejects a posting whose periodId resolves to a FiscalPeriod in state closed or audit-locked (backdating prevention, matches Exact/AFAS/Twinfield). The AI close assistant — open AP/AR transactions, unreconciled bank receipts, outstanding expense claims — is computed on demand by OCA\\Shillinq\\Service\\PeriodCloseAssistantService via the real OpenRegister ObjectService API (find/findAll); flags surface as non-blocking warnings (design D3). Seed objects provide five worked example periods (open, closing, closed, audit-locked, reopened) across realistic Dutch administrations. The schema slug FiscalPeriod is the canonical fleet name referenced by AR / AP / VAT / WIP / ICP / R&D-subsidies sibling schemas. Year-end close (opening-balance journal, retained-earnings rollover) is deferred to T3."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "CalendarLock",
         "version": "0.3.0",
         "title": "Fiscal Period",
-        "description": "An accounting period with lifecycle state, close audit-trail, and task checklist for guided month-end / quarter-end close workflows (REQ-PC-001). The open → closing → closed → audit-locked lifecycle freezes the period for audit; postings against a closed or audit-locked period are rejected by the GLTransaction.post precondition (REQ-PC-004). Canonical fleet schema referenced by AR / AP / VAT / WIP / ICP / R&D-subsidies sibling schemas (per add-shillinq-period-close).",
+        "description": "An accounting period with lifecycle state, close audit-trail, and task checklist for guided month-end / quarter-end close workflows. The open → closing → closed → audit-locked lifecycle freezes the period for audit; postings against a closed or audit-locked period are rejected by the GLTransaction.post precondition. Canonical fleet schema referenced by AR / AP / VAT / WIP / ICP / R&D-subsidies sibling schemas (per add-shillinq-period-close).",
         "x-schema-org": "schema:DateRange",
         "x-spec": "openspec/changes/add-shillinq-period-close/specs/bookkeeping-period-close/spec.md",
         "type": "object",
@@ -29,39 +29,39 @@
         "properties": {
           "periodId": {
             "type": "string",
-            "description": "Stable identifier for the period within an administration; e.g. `2026-Q1`, `2026-M03`, `2026-W12` (REQ-PC-002). The administration MAY choose calendar quarter, calendar month, broken fiscal month, or 13-period retail.",
+            "description": "Stable identifier for the period within an administration; e.g. `2026-Q1`, `2026-M03`, `2026-W12`. The administration MAY choose calendar quarter, calendar month, broken fiscal month, or 13-period retail.",
             "example": "2026-Q1",
             "title": "Period ID"
           },
           "name": {
             "type": "string",
-            "description": "Human-readable name for the period, surfaced in the index page columns and the detail page header (REQ-PC-002).",
+            "description": "Human-readable name for the period, surfaced in the index page columns and the detail page header.",
             "example": "Q1 2026",
             "title": "Name"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the Administration this period belongs to; reads are scoped to the requesting user's administration (REQ-PC-008).",
+            "description": "FK to the Administration this period belongs to; reads are scoped to the requesting user's administration.",
             "example": "adm-smb-1",
             "title": "Administration ID"
           },
           "startDate": {
             "type": "string",
             "format": "date",
-            "description": "First day of the period (REQ-PC-001).",
+            "description": "First day of the period.",
             "example": "2026-01-01",
             "title": "Start Date"
           },
           "endDate": {
             "type": "string",
             "format": "date",
-            "description": "Last day of the period (REQ-PC-001).",
+            "description": "Last day of the period.",
             "example": "2026-01-31",
             "title": "End Date"
           },
           "fiscalYear": {
             "type": "integer",
-            "description": "Fiscal year the period falls in (REQ-PC-001).",
+            "description": "Fiscal year the period falls in.",
             "example": 2026,
             "title": "Fiscal Year"
           },
@@ -74,7 +74,7 @@
               "audit-locked"
             ],
             "default": "open",
-            "description": "Lifecycle state. open: postings allowed; closing: close checklist in progress; closed: frozen, postings rejected, reversible by a period-closer; audit-locked: irreversibly frozen by an auditor (REQ-PC-002).",
+            "description": "Lifecycle state. open: postings allowed; closing: close checklist in progress; closed: frozen, postings rejected, reversible by a period-closer; audit-locked: irreversibly frozen by an auditor.",
             "example": "open",
             "title": "State"
           },
@@ -82,14 +82,14 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp the period was closed; set by the close side effect (REQ-PC-002).",
+            "description": "Timestamp the period was closed; set by the close side effect.",
             "example": null,
             "title": "Closed At"
           },
           "closedBy": {
             "type": "string",
             "nullable": true,
-            "description": "UserId who closed the period; set by the close side effect (REQ-PC-002).",
+            "description": "UserId who closed the period; set by the close side effect.",
             "example": null,
             "title": "Closed By"
           },
@@ -97,27 +97,27 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp the period was audit-locked; set by the audit-lock side effect (REQ-PC-002).",
+            "description": "Timestamp the period was audit-locked; set by the audit-lock side effect.",
             "example": null,
             "title": "Audit Locked At"
           },
           "auditLockedBy": {
             "type": "string",
             "nullable": true,
-            "description": "UserId of the auditor who audit-locked the period (REQ-PC-002).",
+            "description": "UserId of the auditor who audit-locked the period.",
             "example": null,
             "title": "Audit Locked By"
           },
           "closeReason": {
             "type": "string",
             "nullable": true,
-            "description": "Operator-supplied reason captured when a closed period is reopened (REQ-PC-006).",
+            "description": "Operator-supplied reason captured when a closed period is reopened.",
             "example": null,
             "title": "Close Reason"
           },
           "reopenedHistory": {
             "type": "array",
-            "description": "Append-only audit trail of close/reopen cycles (REQ-PC-006). Each entry preserves the original close timestamp + actor.",
+            "description": "Append-only audit trail of close/reopen cycles. Each entry preserves the original close timestamp + actor.",
             "items": {
               "type": "object",
               "properties": {
@@ -155,7 +155,7 @@
           },
           "taskChecklistItems": {
             "type": "array",
-            "description": "Pre-close checklist rows operators mark resolved before closing (REQ-PC-005).",
+            "description": "Pre-close checklist rows operators mark resolved before closing.",
             "items": {
               "type": "object",
               "properties": {
@@ -203,7 +203,7 @@
           },
           "aiFlags": {
             "type": "array",
-            "description": "Close-assistant warnings detected for this period (REQ-PC-004); non-blocking, audit-trailed.",
+            "description": "Close-assistant warnings detected for this period; non-blocking, audit-trailed.",
             "items": {
               "type": "object",
               "properties": {
@@ -275,7 +275,7 @@
               "from": "open",
               "to": "closing",
               "label": "Start close",
-              "description": "Begin the guided close for this period (REQ-PC-002). Requires the period-closer role.",
+              "description": "Begin the guided close for this period. Requires the period-closer role.",
               "roles": [
                 "period-closer"
               ]
@@ -284,7 +284,7 @@
               "from": "closing",
               "to": "closed",
               "label": "Close period",
-              "description": "Freeze the period after the mandatory checklist items are resolved (REQ-PC-002) and the bank-reconciliation suspense worklist is empty (payment-control-guards REQ-PCG-003). Sets closedAt / closedBy.",
+              "description": "Freeze the period after the mandatory checklist items are resolved and the bank-reconciliation suspense worklist is empty (payment-control-guards REQ-PCG-003). Sets closedAt / closedBy.",
               "roles": [
                 "period-closer"
               ],
@@ -296,7 +296,7 @@
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "set-fields",
-                  "description": "Stamp closedAt=now and closedBy=current user on the close transition (REQ-PC-002).",
+                  "description": "Stamp closedAt=now and closedBy=current user on the close transition.",
                   "actionParameters": {
                     "closedAt": "@now",
                     "closedBy": "@currentUser"
@@ -308,7 +308,7 @@
               "from": "closed",
               "to": "open",
               "label": "Reopen period",
-              "description": "Reopen a closed period for corrections (REQ-PC-006). Requires the period-closer role and a non-empty close reason; appends the prior close to reopenedHistory.",
+              "description": "Reopen a closed period for corrections. Requires the period-closer role and a non-empty close reason; appends the prior close to reopenedHistory.",
               "roles": [
                 "period-closer"
               ],
@@ -319,7 +319,7 @@
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "OCA\\Shillinq\\Lifecycle\\Action\\AppendReopenHistoryAction",
-                  "description": "Append {closedAt, closedBy, reopenedAt, reopenedBy, closeReason} to reopenedHistory and clear closedAt/closedBy (REQ-PC-006).",
+                  "description": "Append {closedAt, closedBy, reopenedAt, reopenedBy, closeReason} to reopenedHistory and clear closedAt/closedBy.",
                   "actionParameters": {
                     "target": "reopenedHistory"
                   }
@@ -330,7 +330,7 @@
               "from": "closed",
               "to": "audit-locked",
               "label": "Lock for audit",
-              "description": "Irreversibly freeze a closed period (REQ-PC-002). Requires the auditor role. Sets auditLockedAt / auditLockedBy.",
+              "description": "Irreversibly freeze a closed period. Requires the auditor role. Sets auditLockedAt / auditLockedBy.",
               "roles": [
                 "auditor"
               ],
@@ -338,7 +338,7 @@
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "set-fields",
-                  "description": "Stamp auditLockedAt=now and auditLockedBy=current user on the audit-lock transition (REQ-PC-002).",
+                  "description": "Stamp auditLockedAt=now and auditLockedBy=current user on the audit-lock transition.",
                   "actionParameters": {
                     "auditLockedAt": "@now",
                     "auditLockedBy": "@currentUser"

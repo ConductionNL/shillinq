@@ -6,7 +6,7 @@
         "icon": "CalendarSync",
         "version": "0.1.0",
         "title": "Recurring Invoice Profile",
-        "description": "A recurring (periodic) billing definition — the template Shillinq uses to generate ordinary ARInvoice records on a schedule (REQ-RIN-001). The customer is a Nextcloud addressbook contact (customerReference), never an invented party schema. Generation produces standard ARInvoice records carrying recurringProfileId + billingPeriod provenance; there is no parallel invoice type. Numbering, per-line BTW and Peppol delivery are owned by bookkeeping-quote-order-invoice (CHAINED); SEPA collection is owned by bookkeeping-sepa-direct-debit (CHAINED).",
+        "description": "A recurring (periodic) billing definition — the template Shillinq uses to generate ordinary ARInvoice records on a schedule. The customer is a Nextcloud addressbook contact (customerReference), never an invented party schema. Generation produces standard ARInvoice records carrying recurringProfileId + billingPeriod provenance; there is no parallel invoice type. Numbering, per-line BTW and Peppol delivery are owned by bookkeeping-quote-order-invoice (CHAINED); SEPA collection is owned by bookkeeping-sepa-direct-debit (CHAINED).",
         "x-schema-org": "schema:Invoice",
         "x-openregister-audit": true,
         "x-openregister-audit-trail": {
@@ -42,7 +42,7 @@
           },
           "lines": {
             "type": "array",
-            "description": "Embedded recurring line items. Period tokens ({period}/{month}/{year}) in description are expanded at generation, localized to the customer document language (REQ-RIN-002).",
+            "description": "Embedded recurring line items. Period tokens ({period}/{month}/{year}) in description are expanded at generation, localized to the customer document language.",
             "items": {
               "type": "object",
               "required": [
@@ -102,13 +102,13 @@
               "semi-annually",
               "annually"
             ],
-            "description": "Billing cadence (REQ-RIN-001).",
+            "description": "Billing cadence.",
             "default": "monthly",
             "title": "Frequency"
           },
           "interval": {
             "type": "integer",
-            "description": "Cadence multiplier — frequency=monthly, interval=2 means every 2 months (REQ-RIN-001).",
+            "description": "Cadence multiplier — frequency=monthly, interval=2 means every 2 months.",
             "minimum": 1,
             "default": 1,
             "title": "Interval"
@@ -121,7 +121,7 @@
           },
           "endCondition": {
             "type": "object",
-            "description": "Termination rule: { endDate } or { occurrenceCount }; absent = open-ended (REQ-RIN-005).",
+            "description": "Termination rule: { endDate } or { occurrenceCount }; absent = open-ended.",
             "nullable": true,
             "properties": {
               "endDate": {
@@ -136,7 +136,7 @@
                 "minimum": 1,
                 "nullable": true,
                 "title": "Occurrence Count",
-                "description": "Total number of invoices this profile generates before it ends. Counted from the first generated period; when it is reached the profile transitions to ended (REQ-RIN-005)."
+                "description": "Total number of invoices this profile generates before it ends. Counted from the first generated period; when it is reached the profile transitions to ended."
               }
             },
             "title": "End Condition"
@@ -152,19 +152,19 @@
           "nextRunDate": {
             "type": "string",
             "format": "date",
-            "description": "Computed: the next civil date a generation run is due (REQ-RIN-003).",
+            "description": "Computed: the next civil date a generation run is due.",
             "nullable": true,
             "title": "Next Run Date"
           },
           "lastBillingPeriod": {
             "type": "string",
-            "description": "The most recently generated billing period key (YYYY-MM or YYYY-Www). Drives nextRunDate and idempotency (REQ-RIN-004).",
+            "description": "The most recently generated billing period key (YYYY-MM or YYYY-Www). Drives nextRunDate and idempotency.",
             "nullable": true,
             "title": "Last Billing Period"
           },
           "remainingOccurrences": {
             "type": "integer",
-            "description": "When endCondition.occurrenceCount is set, the count still to generate. Decremented per generated period (REQ-RIN-005).",
+            "description": "When endCondition.occurrenceCount is set, the count still to generate. Decremented per generated period.",
             "nullable": true,
             "title": "Remaining Occurrences"
           },
@@ -174,7 +174,7 @@
               "draft-for-review",
               "auto-issue"
             ],
-            "description": "draft-for-review (default) creates drafts; auto-issue issues immediately and catches up at most one missed period (REQ-RIN-004).",
+            "description": "draft-for-review (default) creates drafts; auto-issue issues immediately and catches up at most one missed period.",
             "default": "draft-for-review",
             "title": "Issue Mode"
           },
@@ -198,13 +198,13 @@
           },
           "indexationPercent": {
             "type": "number",
-            "description": "Annual price indexation percentage applied once per startDate anniversary (REQ-RIN-006).",
+            "description": "Annual price indexation percentage applied once per startDate anniversary.",
             "nullable": true,
             "title": "Indexation Percent"
           },
           "indexationHistory": {
             "type": "array",
-            "description": "Applied indexations (date, percent, per-line old->new). Never retroactive; idempotent per anniversary year (REQ-RIN-006).",
+            "description": "Applied indexations (date, percent, per-line old->new). Never retroactive; idempotent per anniversary year.",
             "items": {
               "type": "object",
               "properties": {
@@ -262,7 +262,7 @@
               "failed",
               "skipped"
             ],
-            "description": "Outcome of the last generation run; a field-change to failed triggers a notification (REQ-RIN-007).",
+            "description": "Outcome of the last generation run; a field-change to failed triggers a notification.",
             "nullable": true,
             "title": "Last Run Status"
           },
@@ -280,7 +280,7 @@
               "paused",
               "ended"
             ],
-            "description": "Profile lifecycle state (REQ-RIN-005).",
+            "description": "Profile lifecycle state.",
             "default": "draft",
             "title": "Status"
           }
@@ -299,7 +299,7 @@
             },
             "paused": {
               "label": "Paused",
-              "description": "Generation frozen. nextRunDate is not advanced while paused; resume recomputes forward and lists skipped periods (REQ-RIN-005)."
+              "description": "Generation frozen. nextRunDate is not advanced while paused; resume recomputes forward and lists skipped periods."
             },
             "ended": {
               "label": "Ended",
@@ -337,7 +337,7 @@
               "from": "paused",
               "to": "active",
               "label": "Resume",
-              "description": "Resume generation; recompute nextRunDate forward and surface skipped periods (REQ-RIN-005)."
+              "description": "Resume generation; recompute nextRunDate forward and surface skipped periods."
             },
             "endFromActive": {
               "from": "active",
@@ -362,7 +362,7 @@
             ]
           },
           "nextRunDate": {
-            "description": "The next civil date a generation run is due, derived from frequency * interval, invoiceDay (clamped to month length) and the last generated billing period. Feb-29 anniversaries fall to Feb-28 in non-leap years; arithmetic is on civil dates in the administration timezone, never UTC (REQ-RIN-003).",
+            "description": "The next civil date a generation run is due, derived from frequency * interval, invoiceDay (clamped to month length) and the last generated billing period. Feb-29 anniversaries fall to Feb-28 in non-leap years; arithmetic is on civil dates in the administration timezone, never UTC.",
             "expression": "recurringNextRunDate(@self.frequency, @self.interval, @self.invoiceDay, @self.startDate, @self.lastBillingPeriod)",
             "dependsOn": [
               "frequency",
@@ -381,7 +381,7 @@
             ]
           },
           "isEndingSoon": {
-            "description": "True when an active profile is within 30 days of its endCondition.endDate, or has 1 occurrence left of an endCondition.occurrenceCount run (REQ-RIN-005). An open-ended profile (no endCondition) and an already-ended profile both resolve false. Materialised so the onProfileEndingSoon scheduled notification can filter on it.",
+            "description": "True when an active profile is within 30 days of its endCondition.endDate, or has 1 occurrence left of an endCondition.occurrenceCount run. An open-ended profile (no endCondition) and an already-ended profile both resolve false. Materialised so the onProfileEndingSoon scheduled notification can filter on it.",
             "expression": "(status == 'active') && (((endCondition.endDate != null) && (endCondition.endDate <= addDays(today(), 30))) || ((endCondition.occurrenceCount != null) && (remainingOccurrences != null) && (remainingOccurrences <= 1)))",
             "materialise": true,
             "dependsOn": [
@@ -394,7 +394,7 @@
         "x-openregister-scheduled-workflows": {
           "shillinq-recurring-invoice-generation": {
             "name": "Recurring invoice generation",
-            "description": "Evaluated at least daily by OpenRegister's scheduled machinery. Selects RecurringInvoiceProfile records with status=active AND nextRunDate<=today and asks the RecurringInvoiceGenerator to generate the due period's ordinary ARInvoice (REQ-RIN-002). No app-local TimedJob/cron and no invalid IRegistrationContext::registerJob registration; generation is idempotent on the (profile, billingPeriod) key (REQ-RIN-004).",
+            "description": "Evaluated at least daily by OpenRegister's scheduled machinery. Selects RecurringInvoiceProfile records with status=active AND nextRunDate<=today and asks the RecurringInvoiceGenerator to generate the due period's ordinary ARInvoice. No app-local TimedJob/cron and no invalid IRegistrationContext::registerJob registration; generation is idempotent on the (profile, billingPeriod) key.",
             "cron": "0 6 * * *",
             "register": "shillinq",
             "schema": "RecurringInvoiceProfile",

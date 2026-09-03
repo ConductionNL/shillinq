@@ -29,7 +29,7 @@
           "confirmationTokenId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the currently-active ConfirmationToken.tokenId per REQ-BCF-001. Updated on token resend (REQ-BCF-006). Null for admin-created appointments that start as confirmed.",
+            "description": "FK to the currently-active ConfirmationToken.tokenId per REQ-BCF-001. Updated on token resend. Null for admin-created appointments that start as confirmed.",
             "example": "tok-001",
             "title": "Confirmation Token ID"
           }
@@ -76,13 +76,13 @@
           },
           "appointmentId": {
             "type": "string",
-            "description": "FK to Appointment.appointmentId — the appointment this token confirms (REQ-BCF-002).",
+            "description": "FK to Appointment.appointmentId — the appointment this token confirms.",
             "example": "apt-001",
             "title": "Appointment ID"
           },
           "tokenString": {
             "type": "string",
-            "description": "Salted bcrypt hash of the 32-character URL-safe random token (REQ-BCF-002). Never stored in plaintext. Validated in constant time by TokenValidator::validate per REQ-BCF-004.",
+            "description": "Salted bcrypt hash of the 32-character URL-safe random token. Never stored in plaintext. Validated in constant time by TokenValidator::validate per REQ-BCF-004.",
             "example": "$2y$12$abcdefghijklmnopqrstuvwxyzABCDEF1234567890",
             "title": "Token String"
           },
@@ -139,11 +139,11 @@
             },
             "redeemed": {
               "label": "Redeemed",
-              "description": "Token has been used to confirm the appointment; cannot be reused (REQ-BCF-004)."
+              "description": "Token has been used to confirm the appointment; cannot be reused."
             },
             "revoked": {
               "label": "Revoked",
-              "description": "Token has been invalidated by a resend request (REQ-BCF-006); a fresh active token replaces it."
+              "description": "Token has been invalidated by a resend request; a fresh active token replaces it."
             },
             "expired": {
               "label": "Expired",
@@ -155,13 +155,13 @@
               "from": "active",
               "to": "redeemed",
               "label": "Redeem token",
-              "description": "Customer presented the matching token to confirm the appointment (REQ-BCF-004)."
+              "description": "Customer presented the matching token to confirm the appointment."
             },
             "revoke": {
               "from": "active",
               "to": "revoked",
               "label": "Revoke token",
-              "description": "Customer requested a fresh confirmation email; old token invalidated (REQ-BCF-006)."
+              "description": "Customer requested a fresh confirmation email; old token invalidated."
             },
             "expire": {
               "from": "active",

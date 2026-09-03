@@ -31,7 +31,7 @@
         "properties": {
           "code": {
             "type": "string",
-            "description": "Stable slug identifier unique per administration (REQ-SC-008). Once assigned MUST NOT change — dependent specs reference it for reporting, mapping and external integrations.",
+            "description": "Stable slug identifier unique per administration. Once assigned MUST NOT change — dependent specs reference it for reporting, mapping and external integrations.",
             "maxLength": 64,
             "pattern": "^[a-z0-9][a-z0-9-]*$",
             "example": "haircut",
@@ -39,7 +39,7 @@
           },
           "prepareTime": {
             "type": "integer",
-            "description": "Setup/preparation time in minutes applied BEFORE the service window (REQ-SC-003). Total calendar block = prepareTime + duration + bufferAfter.",
+            "description": "Setup/preparation time in minutes applied BEFORE the service window. Total calendar block = prepareTime + duration + bufferAfter.",
             "minimum": 0,
             "default": 0,
             "example": 5,
@@ -47,7 +47,7 @@
           },
           "bufferBefore": {
             "type": "integer",
-            "description": "Gap in minutes required before this service begins (REQ-SC-003); typically 0 for collocated resources, > 0 for travelling staff.",
+            "description": "Gap in minutes required before this service begins; typically 0 for collocated resources, > 0 for travelling staff.",
             "minimum": 0,
             "default": 0,
             "example": 0,
@@ -55,7 +55,7 @@
           },
           "bufferAfter": {
             "type": "integer",
-            "description": "Gap in minutes after this service ends for turnover/cleaning (REQ-SC-003). Dutch SMB default: 15 minutes for high-turnover services (salons), 0 for low-turnover (consulting).",
+            "description": "Gap in minutes after this service ends for turnover/cleaning. Dutch SMB default: 15 minutes for high-turnover services (salons), 0 for low-turnover (consulting).",
             "minimum": 0,
             "default": 0,
             "example": 15,
@@ -63,7 +63,7 @@
           },
           "basePrice": {
             "type": "number",
-            "description": "Base unit price in the specified currency (REQ-SC-004). Stored as decimal with two-cent precision (multipleOf 0.01). If dynamicPricing = false this is the final price; if dynamicPricing = true this is a fallback / reference only and dependent pricing specs MUST compute actual price via rules.",
+            "description": "Base unit price in the specified currency. Stored as decimal with two-cent precision (multipleOf 0.01). If dynamicPricing = false this is the final price; if dynamicPricing = true this is a fallback / reference only and dependent pricing specs MUST compute actual price via rules.",
             "minimum": 0,
             "multipleOf": 0.01,
             "default": 0,
@@ -72,7 +72,7 @@
           },
           "currency": {
             "type": "string",
-            "description": "ISO 4217 currency code (REQ-SC-002); default EUR for Dutch organisations.",
+            "description": "ISO 4217 currency code; default EUR for Dutch organisations.",
             "pattern": "^[A-Z]{3}$",
             "default": "EUR",
             "example": "EUR",
@@ -80,7 +80,7 @@
           },
           "dynamicPricing": {
             "type": "boolean",
-            "description": "If true (REQ-SC-004), dependent pricing specs (T2+) MUST compute actual price via time-of-day, volume, surge or other rules; basePrice MUST NOT be used as the final price. If false, basePrice is the final price and no further pricing lookup is required.",
+            "description": "If true, dependent pricing specs (T2+) MUST compute actual price via time-of-day, volume, surge or other rules; basePrice MUST NOT be used as the final price. If false, basePrice is the final price and no further pricing lookup is required.",
             "default": false,
             "example": false,
             "title": "Dynamic Pricing"
@@ -135,19 +135,19 @@
               "from": "draft",
               "to": "active",
               "label": "Activate service",
-              "description": "Publish a draft service so it becomes bookable (REQ-SC-005)."
+              "description": "Publish a draft service so it becomes bookable."
             },
             "archive": {
               "from": "active",
               "to": "archived",
               "label": "Archive service",
-              "description": "Retire an active service. Past bookings remain queryable (REQ-SC-005)."
+              "description": "Retire an active service. Past bookings remain queryable."
             },
             "restore": {
               "from": "archived",
               "to": "active",
               "label": "Restore service",
-              "description": "Re-publish an archived service (REQ-SC-005)."
+              "description": "Re-publish an archived service."
             }
           }
         },
@@ -157,7 +157,7 @@
               "administrationId",
               "code"
             ],
-            "description": "Service code MUST be unique per administration (REQ-SC-008). Same code MAY exist in different administrations."
+            "description": "Service code MUST be unique per administration. Same code MAY exist in different administrations."
           }
         ],
         "x-openregister-aggregations": {
@@ -170,7 +170,7 @@
           "countByCategory": {
             "field": "serviceCategory",
             "metric": "count",
-            "description": "Number of services per flat category grouping (REQ-SC-006).",
+            "description": "Number of services per flat category grouping.",
             "groupBy": ["serviceCategory"]
           }
         }

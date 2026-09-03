@@ -4,7 +4,7 @@
         "spdx-copyright": "2026 Conduction B.V.",
         "change": "recurring-invoicing",
         "adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
-        "description": "Recurring Invoicing (Periodieke Facturen) — navigation + index/detail pages for RecurringInvoiceProfile, plus the create/edit modal launched from the index. Generated invoices are ordinary ARInvoice records; the detail page lists them via the recurringProfileId provenance filter (REQ-RIN-008)."
+        "description": "Recurring Invoicing (Periodieke Facturen) — navigation + index/detail pages for RecurringInvoiceProfile, plus the create/edit modal launched from the index. Generated invoices are ordinary ARInvoice records; the detail page lists them via the recurringProfileId provenance filter."
     },
     "menu": [
         {

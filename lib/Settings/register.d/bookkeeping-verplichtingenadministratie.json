@@ -9,7 +9,7 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Commitment",
-        "description": "A financial commitment (verplichting) tracked from the moment it becomes legally binding (purchase order signed, framework agreement agreed, employment contract executed, grant decision awarded) through delivery, invoicing, payment, and closure. Drives budget-blocking at commitment-time (REQ-VPL-001) and mandate enforcement on aangaan (REQ-VPL-002). The status field is the lifecycle field; every state change is recorded as an immutable CommitmentMovement (D1). The tegenpartij is an embedded vendor reference (kvk/naam/iban) — not a bespoke customer schema; a customer/contact is a Nextcloud entity (ADR). THIS FRAGMENT IS THE SINGLE OWNER OF THIS SCHEMA'S `required` LIST: ADR-037's deepMergeConfig() CONCATENATES list values, so a second fragment declaring `required` makes the effective list the UNION of both and no payload of either model can satisfy it. Overlay fragments (20-bookkeeping-tenderned-integratie.json) contribute properties only.",
+        "description": "A financial commitment (verplichting) tracked from the moment it becomes legally binding (purchase order signed, framework agreement agreed, employment contract executed, grant decision awarded) through delivery, invoicing, payment, and closure. Drives budget-blocking at commitment-time and mandate enforcement on aangaan. The status field is the lifecycle field; every state change is recorded as an immutable CommitmentMovement (D1). The tegenpartij is an embedded vendor reference (kvk/naam/iban) — not a bespoke customer schema; a customer/contact is a Nextcloud entity (ADR). THIS FRAGMENT IS THE SINGLE OWNER OF THIS SCHEMA'S `required` LIST: ADR-037's deepMergeConfig() CONCATENATES list values, so a second fragment declaring `required` makes the effective list the UNION of both and no payload of either model can satisfy it. Overlay fragments (20-bookkeeping-tenderned-integratie.json) contribute properties only.",
         "x-schema-org": "schema:Order",
         "x-openregister-purpose": "fact",
         "type": "object",
@@ -35,7 +35,7 @@
           "sourceReference": {
             "type": "string",
             "nullable": true,
-            "description": "Provenance reference for auto-materialised commitments (REQ-VPL-010): the poNumber of the approved PurchaseOrder or the contractNumber of the signed Contract this Commitment was raised from. Used as the idempotency key so a repeated approval/signature transition never creates a duplicate commitment. Null for manually-created commitments.",
+            "description": "Provenance reference for auto-materialised commitments: the poNumber of the approved PurchaseOrder or the contractNumber of the signed Contract this Commitment was raised from. Used as the idempotency key so a repeated approval/signature transition never creates a duplicate commitment. Null for manually-created commitments.",
             "example": "PO-2026-0207",
             "title": "Bron Referentie"
           },
@@ -66,7 +66,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Start of the commitment term. Used to derive per-boekjaar regels for multi-year raamovereenkomsten (REQ-VPL-004).",
+            "description": "Start of the commitment term. Used to derive per-boekjaar regels for multi-year raamovereenkomsten.",
             "example": "2026-05-01",
             "title": "Looptijd Van"
           },
@@ -186,14 +186,14 @@
           "mandate_applied": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the Mandate under whose authority this commitment was signed (REQ-VPL-002).",
+            "description": "FK to the Mandate under whose authority this commitment was signed.",
             "example": "M-INKOOP-50K",
             "title": "Mandaat Toegepast"
           },
           "override_reason": {
             "type": "string",
             "nullable": true,
-            "description": "Audit-trail reason recorded when a budget-exceeding commitment is force-accepted under an override-mandate (REQ-VPL-001).",
+            "description": "Audit-trail reason recorded when a budget-exceeding commitment is force-accepted under an override-mandate.",
             "example": "Spoedlevering approved door CFO",
             "title": "Override Reden"
           },
@@ -207,7 +207,7 @@
           "lawfulnessTests": {
             "type": "array",
             "nullable": true,
-            "description": "Optional FKs to rechtmatigheidstoetsen attached at commitment-time (REQ-VPL-010). Nullable; gated on bookkeeping-rechtmatigheidsverantwoording being installed.",
+            "description": "Optional FKs to rechtmatigheidstoetsen attached at commitment-time. Nullable; gated on bookkeeping-rechtmatigheidsverantwoording being installed.",
             "items": {
               "type": "string"
             },
@@ -247,23 +247,23 @@
             },
             "partially_delivered": {
               "label": "Deels geleverd",
-              "description": "Goods/services partially received (performance_received). Informational; no budget change (REQ-VPL-003)."
+              "description": "Goods/services partially received (performance_received). Informational; no budget change."
             },
             "partially_invoiced": {
               "label": "Deels gefactureerd",
-              "description": "Partially invoiced; remaining_committed reduced and AP invoice matched (REQ-VPL-003)."
+              "description": "Partially invoiced; remaining_committed reduced and AP invoice matched."
             },
             "partially_paid": {
               "label": "Deels betaald",
-              "description": "Partially paid; no further budget impact (REQ-VPL-003)."
+              "description": "Partially paid; no further budget impact."
             },
             "closed": {
               "label": "Afgesloten",
-              "description": "Closed; remaining restant released back to budget (REQ-VPL-006)."
+              "description": "Closed; remaining restant released back to budget."
             },
             "cancelled": {
               "label": "Geannuleerd",
-              "description": "Cancelled; reversal mutatie posted and openstaande_verplichtingen reduced (REQ-VPL-006). Remains queryable for audit."
+              "description": "Cancelled; reversal mutatie posted and openstaande_verplichtingen reduced. Remains queryable for audit."
             }
           },
           "transitions": {
@@ -271,7 +271,7 @@
               "from": "draft",
               "to": "in_approval",
               "label": "Ter goedkeuring aanbieden",
-              "description": "Offer for approval when the signer's mandaat is insufficient. Gated by MandateEnforcer (REQ-VPL-002).",
+              "description": "Offer for approval when the signer's mandaat is insufficient. Gated by MandateEnforcer.",
               "requires": "OCA\\Shillinq\\Lifecycle\\MandateEnforcer::requiresApproval"
             },
             "aangaan": {
@@ -297,20 +297,20 @@
               "from": "in_approval",
               "to": "committed",
               "label": "Goedkeuren",
-              "description": "Approval chain completed; the commitment becomes binding. Gated by BudgetBlocker (REQ-VPL-002).",
+              "description": "Approval chain completed; the commitment becomes binding. Gated by BudgetBlocker.",
               "requires": "OCA\\Shillinq\\Lifecycle\\BudgetBlocker::canCommit"
             },
             "ontvangen": {
               "from": "committed",
               "to": "partially_delivered",
               "label": "Prestatie ontvangen",
-              "description": "Record (partial) receipt. Informational; budget unchanged (REQ-VPL-003)."
+              "description": "Record (partial) receipt. Informational; budget unchanged."
             },
             "factureren": {
               "from": "partially_delivered",
               "to": "partially_invoiced",
               "label": "Factureren",
-              "description": "Invoice matched against the commitment; remaining_committed reduced (REQ-VPL-003)."
+              "description": "Invoice matched against the commitment; remaining_committed reduced."
             },
             "betalen": {
               "from": "partially_invoiced",
@@ -322,19 +322,19 @@
               "from": "committed",
               "to": "closed",
               "label": "Afsluiten",
-              "description": "Close the commitment; restant released back to budget (REQ-VPL-006)."
+              "description": "Close the commitment; restant released back to budget."
             },
             "annuleren": {
               "from": "committed",
               "to": "cancelled",
               "label": "Annuleren",
-              "description": "Cancel; reversal mutatie posted, openstaande_verplichtingen reduced (REQ-VPL-006)."
+              "description": "Cancel; reversal mutatie posted, openstaande_verplichtingen reduced."
             }
           }
         },
         "x-openregister-approval-chains": {
           "commitment-approval": {
-            "description": "Approval chain that gates the Commitment in_approval -> committed `goedkeuren` transition (REQ-VPL-013). A commitment reaches in_approval only when MandateEnforcer::requiresApproval routed it there because the signer's mandaat was insufficient (REQ-VPL-002); this chain then runs the finance approval workflow that releases it. Threshold-routed on totaalbedrag_excl_btw (EUR cents): a single commitment-administrator approves from EUR 0, and a finance-director approves commitments at or above EUR 250.000. Separation of duties is enforced - the requester who submitted the commitment cannot approve their own step. On completion the goedkeuren transition auto-advances (BudgetBlocker still gates the budget). Declarative metadata only: OpenRegister's approval-workflow primitive (x-openregister-approval-chains, ApprovalChainGateListener/ApprovalChainAdvanceListener) materialises and gates the actual steps; this app ships no PHP approval-chain implementation. INERT until the OpenRegister release carrying the declarative approval-chains capability (PR #396/#397) is deployed - see openspec/changes/migrate-mandaat-to-approval-chains/design.md for the sequencing and the named follow-up.",
+            "description": "Approval chain that gates the Commitment in_approval -> committed `goedkeuren` transition. A commitment reaches in_approval only when MandateEnforcer::requiresApproval routed it there because the signer's mandaat was insufficient; this chain then runs the finance approval workflow that releases it. Threshold-routed on totaalbedrag_excl_btw (EUR cents): a single commitment-administrator approves from EUR 0, and a finance-director approves commitments at or above EUR 250.000. Separation of duties is enforced - the requester who submitted the commitment cannot approve their own step. On completion the goedkeuren transition auto-advances (BudgetBlocker still gates the budget). Declarative metadata only: OpenRegister's approval-workflow primitive (x-openregister-approval-chains, ApprovalChainGateListener/ApprovalChainAdvanceListener) materialises and gates the actual steps; this app ships no PHP approval-chain implementation. INERT until the OpenRegister release carrying the declarative approval-chains capability (PR #396/#397) is deployed - see openspec/changes/migrate-mandaat-to-approval-chains/design.md for the sequencing and the named follow-up.",
             "transition": "goedkeuren",
             "amountField": "total_amount_excl_vat",
             "separationOfDuties": true,
@@ -429,7 +429,7 @@
           },
           "financialYear": {
             "type": "integer",
-            "description": "Fiscal year this line's budget is consumed from (REQ-VPL-004).",
+            "description": "Fiscal year this line's budget is consumed from.",
             "example": 2026,
             "title": "Boekjaar"
           },
@@ -463,7 +463,7 @@
           "programme": {
             "type": "string",
             "nullable": true,
-            "description": "BBV taakveld / programma code, ties the commitment to a budget bucket (REQ-VPL-009).",
+            "description": "BBV taakveld / programma code, ties the commitment to a budget bucket.",
             "example": "5.1",
             "title": "Programma"
           },
@@ -505,14 +505,14 @@
           },
           "remaining_committed": {
             "type": "integer",
-            "description": "Outstanding committed amount = bedrag_excl_btw - gefactureerd_bedrag (REQ-VPL-003).",
+            "description": "Outstanding committed amount = bedrag_excl_btw - gefactureerd_bedrag.",
             "default": 0,
             "example": 4700000,
             "title": "Restant Verplicht"
           },
           "afgesloten": {
             "type": "boolean",
-            "description": "Whether this line is closed (REQ-VPL-006).",
+            "description": "Whether this line is closed.",
             "default": false,
             "example": false,
             "title": "Afgesloten"
@@ -549,7 +549,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a CommitmentLine is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a CommitmentLine is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "CommitmentMovement": {
@@ -663,7 +663,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a CommitmentMovement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a CommitmentMovement is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Mandate": {
@@ -747,7 +747,7 @@
           },
           "is_override": {
             "type": "boolean",
-            "description": "Whether this mandate may force-accept a budget-exceeding commitment with an audit-trail reason (REQ-VPL-001).",
+            "description": "Whether this mandate may force-accept a budget-exceeding commitment with an audit-trail reason.",
             "default": false,
             "example": false,
             "title": "Is Override"
@@ -774,7 +774,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Mandate validity end. Expired mandates are treated as absent (REQ-VPL-002).",
+            "description": "Mandate validity end. Expired mandates are treated as absent.",
             "example": "2027-12-31",
             "title": "Geldig Tot"
           },
@@ -788,7 +788,7 @@
           "required_second_signature_above": {
             "type": "integer",
             "nullable": true,
-            "description": "Amount above which a second signature is required, in minor units (REQ-VPL-002).",
+            "description": "Amount above which a second signature is required, in minor units.",
             "example": 2500000,
             "title": "Vereist Tweede Handtekening Boven"
           }
@@ -814,7 +814,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Mandate is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Mandate is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "ApprovalStep": {
@@ -917,7 +917,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a ApprovalStep is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a ApprovalStep is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "CommitmentBudget": {
@@ -1056,7 +1056,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a CommitmentBudget is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001). Pre-existing gap fixed while renaming this schema in the same edit (budget-core-schema) — the flag was missing under the retired 'Budget' slug too."
+          "description": "Every create, update and delete of a CommitmentBudget is written to OpenRegister's immutable audit trail with actor and timestamp. Pre-existing gap fixed while renaming this schema in the same edit (budget-core-schema) — the flag was missing under the retired 'Budget' slug too."
         }
       }
     }

@@ -12,7 +12,7 @@
         "icon": "AccountTieOutline",
         "version": "0.1.0",
         "title": "Employee",
-        "description": "Employee / detached worker / freelancer master record (REQ-PAY-001). Carries legal name, BSN (11-proef validated, masked on display per ADR-005), contract classification and onboarding/exit dates. A contact/person is a Nextcloud entity; this register holds the payroll-administration projection only.",
+        "description": "Employee / detached worker / freelancer master record. Carries legal name, BSN (11-proef validated, masked on display per ADR-005), contract classification and onboarding/exit dates. A contact/person is a Nextcloud entity; this register holds the payroll-administration projection only.",
         "x-schema-org": "schema:Person",
         "x-spec": "openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md",
         "type": "object",
@@ -28,7 +28,7 @@
         "properties": {
           "employeeNumber": {
             "type": "string",
-            "description": "Employee number, unique per administration (REQ-PAY-001).",
+            "description": "Employee number, unique per administration.",
             "example": "EMP-001",
             "title": "Employee Number"
           },
@@ -40,7 +40,7 @@
           },
           "bsn": {
             "type": "string",
-            "description": "Burgerservicenummer. Special-category PII (ADR-005): validated by 11-proef on write, masked as ***<last4> on display, never written to the audit trail. Null for B2B contractors (REQ-PAY-012). The 11-proef checksum is not expressible declaratively — ADR-031 exception guard OCA\\Shillinq\\Validation\\BsnValidator::isValid is invoked on write.",
+            "description": "Burgerservicenummer. Special-category PII (ADR-005): validated by 11-proef on write, masked as ***<last4> on display, never written to the audit trail. Null for B2B contractors. The 11-proef checksum is not expressible declaratively — ADR-031 exception guard OCA\\Shillinq\\Validation\\BsnValidator::isValid is invoked on write.",
             "nullable": true,
             "pii": true,
             "x-pii": "bsn",
@@ -57,7 +57,7 @@
               "freelancer",
               "detached"
             ],
-            "description": "Employment relationship type (REQ-PAY-001). detached = gedetacheerde werknemer placed via an agency.",
+            "description": "Employment relationship type. detached = gedetacheerde werknemer placed via an agency.",
             "default": "employee",
             "example": "detached",
             "title": "Contract Type"
@@ -69,7 +69,7 @@
               "detached-worker",
               "b2b-contractor"
             ],
-            "description": "Fiscal classification driving deduction treatment (REQ-PAY-001).",
+            "description": "Fiscal classification driving deduction treatment.",
             "default": "employee",
             "example": "detached-worker",
             "title": "Tax Classification"
@@ -84,7 +84,7 @@
           "onboardingDate": {
             "type": "string",
             "format": "date",
-            "description": "Date the employee started (REQ-PAY-007).",
+            "description": "Date the employee started.",
             "example": "2026-05-01",
             "title": "Onboarding Date"
           },
@@ -105,14 +105,14 @@
           },
           "placementAgencyId": {
             "type": "string",
-            "description": "FK to the placement agency supplier (detached workers only). Used for placement-fee AP materialisation (REQ-PAY-007).",
+            "description": "FK to the placement agency supplier (detached workers only). Used for placement-fee AP materialisation.",
             "nullable": true,
             "example": "supplier-staffing-001",
             "title": "Placement Agency ID"
           },
           "salaryExpenseAccount": {
             "type": "string",
-            "description": "GL salary-expense account derived from contractType when omitted: employee->4100, detached->4110, freelancer->4120 (REQ-PAY-008).",
+            "description": "GL salary-expense account derived from contractType when omitted: employee->4100, detached->4110, freelancer->4120.",
             "nullable": true,
             "example": "4110",
             "title": "Salary Expense Account"
@@ -144,7 +144,7 @@
               "active",
               "inactive"
             ],
-            "description": "Employment lifecycle (REQ-PAY-001). Setting exitDate transitions to inactive; records are never deleted.",
+            "description": "Employment lifecycle. Setting exitDate transitions to inactive; records are never deleted.",
             "default": "active",
             "example": "active",
             "title": "State"
@@ -165,7 +165,7 @@
             },
             "inactive": {
               "label": "Inactive",
-              "description": "Exited. Payroll records before exitDate remain queryable; new payroll after exitDate is rejected (REQ-PAY-001)."
+              "description": "Exited. Payroll records before exitDate remain queryable; new payroll after exitDate is rejected."
             }
           },
           "transitions": {
@@ -173,7 +173,7 @@
               "from": "active",
               "to": "inactive",
               "label": "Exit employee",
-              "description": "Mark the employee as exited. Requires exitDate set (REQ-PAY-007)."
+              "description": "Mark the employee as exited. Requires exitDate set."
             },
             "reinstate": {
               "from": "inactive",
@@ -206,7 +206,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Employee is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Employee is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Payroll": {
@@ -214,7 +214,7 @@
         "icon": "CashSync",
         "version": "0.1.0",
         "title": "Payroll",
-        "description": "Payroll period sub-ledger record (REQ-PAY-002). Captures gross input and aggregated deduction totals; on issue it materialises a balanced GLTransaction (REQ-PAY-008) per the T1 JournalEntry pattern. UBL Peppol BIS 30 field shape is declared for T4 passthrough but NOT computed here (REQ-PAY-010).",
+        "description": "Payroll period sub-ledger record. Captures gross input and aggregated deduction totals; on issue it materialises a balanced GLTransaction per the T1 JournalEntry pattern. UBL Peppol BIS 30 field shape is declared for T4 passthrough but NOT computed here.",
         "x-schema-org": "schema:Invoice",
         "x-spec": "openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md",
         "type": "object",
@@ -232,7 +232,7 @@
         "properties": {
           "payrollNumber": {
             "type": "string",
-            "description": "Payroll number, unique per administration (REQ-PAY-002). Maps to UBL cbc:ID for T4 (REQ-PAY-010).",
+            "description": "Payroll number, unique per administration. Maps to UBL cbc:ID for T4.",
             "example": "PAY-2026-05-001",
             "title": "Payroll Number"
           },
@@ -267,14 +267,14 @@
           "grossAmount": {
             "type": "number",
             "minimum": 0,
-            "description": "Gross salary/wage in the administration's base currency (REQ-PAY-002).",
+            "description": "Gross salary/wage in the administration's base currency.",
             "example": 3500.0,
             "title": "Gross Amount"
           },
           "netAmount": {
             "type": "number",
             "minimum": 0,
-            "description": "Net amount = grossAmount - SUM(employee-borne deductions). Computed via aggregation (REQ-PAY-002); no PHP math service.",
+            "description": "Net amount = grossAmount - SUM(employee-borne deductions). Computed via aggregation; no PHP math service.",
             "nullable": true,
             "example": 2500.0,
             "title": "Net Amount"
@@ -282,7 +282,7 @@
           "placementFeeAmount": {
             "type": "number",
             "minimum": 0,
-            "description": "Placement fee owed to the staffing agency for detached workers only (REQ-PAY-007). Materialises a separate AP posting on issue.",
+            "description": "Placement fee owed to the staffing agency for detached workers only. Materialises a separate AP posting on issue.",
             "nullable": true,
             "example": 350.0,
             "title": "Placement Fee Amount"
@@ -311,7 +311,7 @@
           },
           "glTransactionId": {
             "type": "string",
-            "description": "Back-reference to the materialised salary-expense GLTransaction once issued (REQ-PAY-008).",
+            "description": "Back-reference to the materialised salary-expense GLTransaction once issued.",
             "nullable": true,
             "example": "gl-2026-05-payroll-001",
             "title": "GL Transaction ID",
@@ -325,7 +325,7 @@
           },
           "externalReference": {
             "type": "string",
-            "description": "Idempotency / source reference from external payroll software webhooks (REQ-PAY-009).",
+            "description": "Idempotency / source reference from external payroll software webhooks.",
             "nullable": true,
             "example": "ext-payroll-2026-05-001",
             "title": "External Reference"
@@ -344,7 +344,7 @@
               "issued",
               "paid"
             ],
-            "description": "Payroll lifecycle (REQ-PAY-004). calculated and later are immutable except status. issued materialises GL + loonstrookje.",
+            "description": "Payroll lifecycle. calculated and later are immutable except status. issued materialises GL + loonstrookje.",
             "default": "draft",
             "example": "draft",
             "title": "Status"
@@ -365,7 +365,7 @@
             },
             "calculated": {
               "label": "Calculated",
-              "description": "Deductions assigned and net computed (REQ-PAY-004). Immutable; awaiting issuance."
+              "description": "Deductions assigned and net computed. Immutable; awaiting issuance."
             },
             "issued": {
               "label": "Issued",
@@ -373,7 +373,7 @@
             },
             "paid": {
               "label": "Paid",
-              "description": "Confirmed paid via bank reconciliation; payroll-paid event published (REQ-PAY-004)."
+              "description": "Confirmed paid via bank reconciliation; payroll-paid event published."
             }
           },
           "transitions": {
@@ -394,7 +394,7 @@
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "materialise-gl-transaction",
-                  "description": "Materialise one balanced salary-expense GLTransaction (debit salary-expense account by contractType, credit payroll-liability) and set glTransactionId (REQ-PAY-008).",
+                  "description": "Materialise one balanced salary-expense GLTransaction (debit salary-expense account by contractType, credit payroll-liability) and set glTransactionId.",
                   "actionParameters": {
                     "register": "shillinq",
                     "schema": "GLTransaction",
@@ -407,7 +407,7 @@
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "generate-determination-letter",
-                  "description": "Generate a loonstrookje DeterminationLetter record with 7-year retention (REQ-PAY-006). PDF rendering is delegated to an external service; no template engine in Shillinq.",
+                  "description": "Generate a loonstrookje DeterminationLetter record with 7-year retention. PDF rendering is delegated to an external service; no template engine in Shillinq.",
                   "actionParameters": {
                     "register": "shillinq",
                     "schema": "DeterminationLetter",
@@ -418,7 +418,7 @@
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "publish-cloudevent",
-                  "description": "Publish the nl.conduction.payroll.issued CloudEvent to the configured external endpoint (REQ-PAY-009).",
+                  "description": "Publish the nl.conduction.payroll.issued CloudEvent to the configured external endpoint.",
                   "actionParameters": {
                     "eventType": "nl.conduction.payroll.issued",
                     "source": "shillinq/payroll"
@@ -435,7 +435,7 @@
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "publish-cloudevent",
-                  "description": "Publish the nl.conduction.payroll.paid CloudEvent (REQ-PAY-009).",
+                  "description": "Publish the nl.conduction.payroll.paid CloudEvent.",
                   "actionParameters": {
                     "eventType": "nl.conduction.payroll.paid",
                     "source": "shillinq/payroll"
@@ -447,7 +447,7 @@
         },
         "x-openregister-aggregations": {
           "netAmount": {
-            "description": "Net amount = grossAmount minus the sum of employee-borne deductions for this payroll (REQ-PAY-002). Employer SV is excluded from net.",
+            "description": "Net amount = grossAmount minus the sum of employee-borne deductions for this payroll. Employer SV is excluded from net.",
             "groupBy": [
               "payrollId"
             ],
@@ -465,7 +465,7 @@
             "field": "amount"
           },
           "annualEmployeeDeductions": {
-            "description": "Per-employee annual deduction totals grouped by type for the payroll year, used by the calculate precondition to validate statutory limits and for tax/SV reporting (REQ-PAY-005).",
+            "description": "Per-employee annual deduction totals grouped by type for the payroll year, used by the calculate precondition to validate statutory limits and for tax/SV reporting.",
             "groupBy": [
               "taxYear",
               "deductionType"
@@ -479,7 +479,7 @@
         "x-openregister-ubl": {
           "profile": "peppol-bis-30",
           "computed": false,
-          "description": "Declared field shape for T4 payroll-disbursement passthrough; NOT emitted in T2 (REQ-PAY-010).",
+          "description": "Declared field shape for T4 payroll-disbursement passthrough; NOT emitted in T2.",
           "mapping": {
             "cbc:ID": "payrollNumber",
             "cbc:IssueDate": "payDate",
@@ -512,7 +512,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Payroll is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Payroll is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Deduction": {
@@ -520,7 +520,7 @@
         "icon": "CashMinus",
         "version": "0.1.0",
         "title": "Deduction",
-        "description": "Granular, auditable payroll deduction line item (REQ-PAY-003): loonbelasting, employee/employer SV, pension, garnishment. Each carries its statutory rate reference and taxYear for annual aggregation (REQ-PAY-005).",
+        "description": "Granular, auditable payroll deduction line item: loonbelasting, employee/employer SV, pension, garnishment. Each carries its statutory rate reference and taxYear for annual aggregation.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md",
         "type": "object",
@@ -550,7 +550,7 @@
               "garnishment",
               "other"
             ],
-            "description": "Deduction category (REQ-PAY-003). social-security-employer is an employer cost, NOT deducted from employee net.",
+            "description": "Deduction category. social-security-employer is an employer cost, NOT deducted from employee net.",
             "example": "income-tax",
             "title": "Deduction Type"
           },
@@ -577,14 +577,14 @@
           },
           "rateSource": {
             "type": "string",
-            "description": "Statutory table or court-order reference (REQ-PAY-003).",
+            "description": "Statutory table or court-order reference.",
             "nullable": true,
             "example": "statutory-2026",
             "title": "Rate Source"
           },
           "taxYear": {
             "type": "integer",
-            "description": "Calendar year for annual aggregation (REQ-PAY-005).",
+            "description": "Calendar year for annual aggregation.",
             "example": 2026,
             "title": "Tax Year"
           },
@@ -618,7 +618,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Deduction is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Deduction is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "DeterminationLetter": {
@@ -626,7 +626,7 @@
         "icon": "FileDocumentOutline",
         "version": "0.1.0",
         "title": "Determination Letter",
-        "description": "Immutable archival payroll document (REQ-PAY-006): loonstrookje, werkgeversverklaring or salary certificate. Generated on payroll issue; PDF rendering delegated to an external service and attached via OR files relation. 7-year retention per Archiefwet.",
+        "description": "Immutable archival payroll document: loonstrookje, werkgeversverklaring or salary certificate. Generated on payroll issue; PDF rendering delegated to an external service and attached via OR files relation. 7-year retention per Archiefwet.",
         "x-schema-org": "schema:DigitalDocument",
         "x-spec": "openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md",
         "type": "object",
@@ -652,7 +652,7 @@
               "werkgeversverklaring",
               "salary-certificate"
             ],
-            "description": "Letter type (REQ-PAY-006).",
+            "description": "Letter type.",
             "example": "loonstrookje",
             "title": "Letter Type"
           },
@@ -690,7 +690,7 @@
               "current",
               "archived"
             ],
-            "description": "Archival state (REQ-PAY-006).",
+            "description": "Archival state.",
             "default": "current",
             "example": "current",
             "title": "Archive Status"
@@ -725,7 +725,7 @@
             },
             "archived": {
               "label": "Archived",
-              "description": "Read-only after the retention review (REQ-PAY-006)."
+              "description": "Read-only after the retention review."
             }
           },
           "transitions": {
@@ -760,7 +760,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Determination Letter is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Determination Letter is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

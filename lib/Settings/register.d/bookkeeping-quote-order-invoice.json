@@ -48,7 +48,7 @@
           "validUntil": {
             "type": "string",
             "format": "date",
-            "description": "Validity expiry date — quote auto-expires after this (REQ-QOI-002).",
+            "description": "Validity expiry date — quote auto-expires after this.",
             "nullable": true,
             "title": "Valid Until"
           },
@@ -145,7 +145,7 @@
               "declined",
               "expired"
             ],
-            "description": "Quote lifecycle state (REQ-QOI-001).",
+            "description": "Quote lifecycle state.",
             "default": "draft",
             "title": "Status"
           }
@@ -180,7 +180,7 @@
               "from": "draft",
               "to": "sent",
               "label": "Send quote",
-              "description": "Send the quote to the customer (REQ-QOI-001). Blocked unless at least one quote line is present and the customer reference is set.",
+              "description": "Send the quote to the customer. Blocked unless at least one quote line is present and the customer reference is set.",
               "requires": "OCA\\Shillinq\\Lifecycle\\QuoteOrderInvoiceGuard::canSendQuote"
             },
             "accept": {
@@ -200,7 +200,7 @@
               "from": "sent",
               "to": "expired",
               "label": "Expire quote",
-              "description": "Validity period lapsed (REQ-QOI-002)."
+              "description": "Validity period lapsed."
             },
             "revise": {
               "from": "sent",
@@ -212,7 +212,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Quote is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Quote is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "QuoteLine": {
@@ -220,7 +220,7 @@
         "icon": "FormatListBulletedSquare",
         "version": "0.1.0",
         "title": "Quote Line",
-        "description": "A line on a Quote (REQ-QOI-001). FK to Quote.",
+        "description": "A line on a Quote. FK to Quote.",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
         "required": [
@@ -308,7 +308,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Quote Line is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Quote Line is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "SalesOrder": {
@@ -337,7 +337,7 @@
           },
           "sourceQuoteReference": {
             "type": "string",
-            "description": "FK (slug/uuid) to the accepted Quote this order was converted from (REQ-QOI-003).",
+            "description": "FK (slug/uuid) to the accepted Quote this order was converted from.",
             "nullable": true,
             "title": "Source Quote Reference"
           },
@@ -449,7 +449,7 @@
               "closed",
               "cancelled"
             ],
-            "description": "Sales-order lifecycle state (REQ-QOI-004).",
+            "description": "Sales-order lifecycle state.",
             "default": "draft",
             "title": "Status"
           }
@@ -720,7 +720,7 @@
               "confirmed",
               "shipped"
             ],
-            "description": "Delivery lifecycle state (REQ-QOI-005).",
+            "description": "Delivery lifecycle state.",
             "default": "draft",
             "title": "Status"
           }
@@ -760,7 +760,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Delivery is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Delivery is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Invoice": {
@@ -888,7 +888,7 @@
           },
           "viesValidated": {
             "type": "boolean",
-            "description": "Whether the customer EU VAT number was VIES-validated for reverse-charge (REQ-QOI-006).",
+            "description": "Whether the customer EU VAT number was VIES-validated for reverse-charge.",
             "nullable": true,
             "title": "Vies Validated"
           },
@@ -906,7 +906,7 @@
           },
           "peppolMessageId": {
             "type": "string",
-            "description": "Peppol message id returned by the access point on dispatch (REQ-QOI-008).",
+            "description": "Peppol message id returned by the access point on dispatch.",
             "nullable": true,
             "title": "Peppol Message ID"
           },
@@ -1029,7 +1029,7 @@
         "icon": "FormatListChecks",
         "version": "0.1.0",
         "title": "Invoice Line",
-        "description": "A line on an Invoice (REQ-QOI-005). FK to Invoice.",
+        "description": "A line on an Invoice. FK to Invoice.",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
         "required": [
@@ -1204,7 +1204,7 @@
               "issued",
               "applied"
             ],
-            "description": "Credit-note lifecycle state (REQ-QOI-010).",
+            "description": "Credit-note lifecycle state.",
             "default": "draft",
             "title": "Status"
           }
@@ -1315,7 +1315,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Pricing Tier is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Pricing Tier is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "VolumeDiscount": {
@@ -1412,7 +1412,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Volume Discount is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Volume Discount is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "BlanketOrder": {
@@ -1510,7 +1510,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Blanket Order is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Blanket Order is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "CreditHold": {
@@ -1633,7 +1633,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Credit Hold is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Credit Hold is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     },

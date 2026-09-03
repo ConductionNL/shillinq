@@ -3,7 +3,7 @@
 		"spdx-license": "EUPL-1.2",
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "bookkeeping-voorzieningen-claims",
-		"description": "Manifest navigation + index pages for IAS 37 / RJ 252 Provisions, Movements and Contingent Liabilities (REQ-PROV-008). Adds three children under Bookkeeping that list the Provision, ProvisionMovement and ContingentLiability registers declared in lib/Settings/register.d/bookkeeping-voorzieningen-claims.json."
+		"description": "Manifest navigation + index pages for IAS 37 / RJ 252 Provisions, Movements and Contingent Liabilities. Adds three children under Bookkeeping that list the Provision, ProvisionMovement and ContingentLiability registers declared in lib/Settings/register.d/bookkeeping-voorzieningen-claims.json."
 	},
 	"menu": [
 		{

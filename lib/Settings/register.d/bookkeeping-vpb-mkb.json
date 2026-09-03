@@ -14,7 +14,7 @@
         "icon": "OfficeBuildingOutline",
         "version": "0.1.0",
         "title": "Belastingplichtige",
-        "description": "Vpb-plichtige onderneming (BV/NV/coop/onderlinge) met haar fiscale identiteit en Digipoort-/eHerkenning-gegevens (REQ-VPB-001, REQ-VPB-009). Per Belastingplichtige bestaat hoogstens een lopende VpbAangifte per belastingjaar. eHerkenningsNiveau moet EH3 of hoger zijn voor Belastingdienst-aangifte (Logius-directive). digipoortCertificaat verwijst naar de credential vault (geen secret in dit record). Geen BelastingplichtigeService PHP-class; gedrag is schema-metadata per ADR-022/ADR-031.",
+        "description": "Vpb-plichtige onderneming (BV/NV/coop/onderlinge) met haar fiscale identiteit en Digipoort-/eHerkenning-gegevens. Per Belastingplichtige bestaat hoogstens een lopende VpbAangifte per belastingjaar. eHerkenningsNiveau moet EH3 of hoger zijn voor Belastingdienst-aangifte (Logius-directive). digipoortCertificaat verwijst naar de credential vault (geen secret in dit record). Geen BelastingplichtigeService PHP-class; gedrag is schema-metadata per ADR-022/ADR-031.",
         "x-schema-org": "schema:Organization",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
@@ -105,7 +105,7 @@
               "EH3",
               "EH4"
             ],
-            "description": "eHerkenning-betrouwbaarheidsniveau. EH3 is Logius-minimum voor Vpb-aangifte; EH2 wordt geweigerd (REQ-VPB-009).",
+            "description": "eHerkenning-betrouwbaarheidsniveau. EH3 is Logius-minimum voor Vpb-aangifte; EH2 wordt geweigerd.",
             "example": "EH3",
             "title": "E Herkennings Niveau"
           },
@@ -150,7 +150,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Belastingplichtige is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Belastingplichtige is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "VpbTariefcatalogus": {
@@ -259,7 +259,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Vpb-tariefcatalogus is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Vpb-tariefcatalogus is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "VpbAangifte": {
@@ -331,14 +331,14 @@
               "onherroepelijk"
             ],
             "default": "draft",
-            "description": "Levenscyclusstatus van de aangifte (REQ-VPB-001, REQ-VPB-010).",
+            "description": "Levenscyclusstatus van de aangifte.",
             "example": "draft",
             "title": "Status"
           },
           "commercialProfit": {
             "type": "string",
             "nullable": true,
-            "description": "FK naar de vastgestelde jaarrekening-version (AnnualReport, bookkeeping-financial-statements). De commerciële winst hieruit is het uitgangspunt voor de fiscale correcties (REQ-VPB-002).",
+            "description": "FK naar de vastgestelde jaarrekening-version (AnnualReport, bookkeeping-financial-statements). De commerciële winst hieruit is het uitgangspunt voor de fiscale correcties.",
             "example": "annual-report-adm-001-2026",
             "title": "Commerciele Winst"
           },
@@ -352,14 +352,14 @@
           "fiscalProfitForLosses": {
             "type": "number",
             "nullable": true,
-            "description": "Berekende fiscale winst vóór verliesverrekening = commerciële winst + som van de fiscale correcties (REQ-VPB-002). Declaratief berekend.",
+            "description": "Berekende fiscale winst vóór verliesverrekening = commerciële winst + som van de fiscale correcties. Declaratief berekend.",
             "example": 450000,
             "title": "Fiscale Winst Voor Verliezen"
           },
           "preConsolidationLossApplied": {
             "type": "number",
             "default": 0,
-            "description": "Bedrag aan toegepaste voorvoegingsverliezen dit jaar (EUR), onderworpen aan het regime van het verliesjaar (REQ-VPB-006).",
+            "description": "Bedrag aan toegepaste voorvoegingsverliezen dit jaar (EUR), onderworpen aan het regime van het verliesjaar.",
             "example": 0,
             "title": "Voorvoegingsverlies Toegepast"
           },
@@ -373,7 +373,7 @@
           "dueVpb": {
             "type": "number",
             "nullable": true,
-            "description": "Verschuldigde vennootschapsbelasting tegen de schijftarieven van VpbTariefcatalogus[belastingjaar] (REQ-VPB-003). Declaratief berekend.",
+            "description": "Verschuldigde vennootschapsbelasting tegen de schijftarieven van VpbTariefcatalogus[belastingjaar]. Declaratief berekend.",
             "example": 99440,
             "title": "Verschuldigde VpB"
           },
@@ -402,7 +402,7 @@
           "digipoortReceiptId": {
             "type": "string",
             "nullable": true,
-            "description": "Digipoort-ontvangstbevestiging-ID, persistent bewijs van indiening (REQ-VPB-009).",
+            "description": "Digipoort-ontvangstbevestiging-ID, persistent bewijs van indiening.",
             "example": null,
             "title": "Digipoort Receipt ID"
           },
@@ -419,7 +419,7 @@
         },
         "x-openregister-calculations": {
           "fiscalProfitForLosses": {
-            "description": "Commerciële winst plus de som van alle correctieBedragen van de gekoppelde FiscaleCorrectie-records (REQ-VPB-002).",
+            "description": "Commerciële winst plus de som van alle correctieBedragen van de gekoppelde FiscaleCorrectie-records.",
             "expr": "(@self.commercieleWinstBedrag ?? 0) + sum(FiscaleCorrectie.correctieBedrag where aangifte == @self.id)"
           },
           "fiscalProfitTaxable": {
@@ -427,12 +427,12 @@
             "expr": "max(0, (@self.fiscaleWinstVoorVerliezen ?? 0) - (@self.voorvoegingsverliesToegepast ?? 0) - sum(Innovatiebox.innovatieboxWinst where aangifte == @self.id))"
           },
           "dueVpb": {
-            "description": "Schijftarief-toepassing tegen VpbTariefcatalogus van het belastingjaar: tarief1 over min(belastbaar, grens) + tarief2 over het meerdere (REQ-VPB-003). ADR-031 exception: VpbBerekeningGuard::berekenVerschuldigdeVpb levert de fallback wanneer OR de tariefcatalogus-lookup niet kan uitvoeren.",
+            "description": "Schijftarief-toepassing tegen VpbTariefcatalogus van het belastingjaar: tarief1 over min(belastbaar, grens) + tarief2 over het meerdere. ADR-031 exception: VpbBerekeningGuard::berekenVerschuldigdeVpb levert de fallback wanneer OR de tariefcatalogus-lookup niet kan uitvoeren.",
             "expr": "lookup(VpbTariefcatalogus, belastingjaar == @self.belastingjaar).tarief1 * min(@self.fiscaleWinstBelastbaar, lookup(VpbTariefcatalogus, belastingjaar == @self.belastingjaar).belastbaarBedragGrens) + lookup(VpbTariefcatalogus, belastingjaar == @self.belastingjaar).tarief2 * max(0, @self.fiscaleWinstBelastbaar - lookup(VpbTariefcatalogus, belastingjaar == @self.belastingjaar).belastbaarBedragGrens)",
             "guard": "OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::berekenVerschuldigdeVpb"
           },
           "tePay": {
-            "description": "Verschuldigde Vpb minus verrekenbare voorheffingen (REQ-VPB-003).",
+            "description": "Verschuldigde Vpb minus verrekenbare voorheffingen.",
             "expr": "(@self.verschuldigdeVpb ?? 0) - (@self.voorheffingen ?? 0)"
           }
         },
@@ -442,23 +442,23 @@
           "states": {
             "draft": {
               "label": "Concept",
-              "description": "Aangifte in opbouw; correcties en faciliteiten worden ingevoerd; bedragen herrekenen mee (REQ-VPB-001)."
+              "description": "Aangifte in opbouw; correcties en faciliteiten worden ingevoerd; bedragen herrekenen mee."
             },
             "submitted": {
               "label": "Ingediend",
-              "description": "Via Digipoort ingediend met eHerkenning EH3; Digipoort-receipt vastgelegd (REQ-VPB-009)."
+              "description": "Via Digipoort ingediend met eHerkenning EH3; Digipoort-receipt vastgelegd."
             },
             "aanslag-ontvangen": {
               "label": "Aanslag ontvangen",
-              "description": "Definitieve aanslag van de inspecteur ontvangen; bezwaartermijn van 6 weken loopt (REQ-VPB-010)."
+              "description": "Definitieve aanslag van de inspecteur ontvangen; bezwaartermijn van 6 weken loopt."
             },
             "bezwaar": {
               "label": "Bezwaar",
-              "description": "Bezwaar ingediend tegen de aanslag; uitspraaktermijn inspecteur loopt (REQ-VPB-010)."
+              "description": "Bezwaar ingediend tegen de aanslag; uitspraaktermijn inspecteur loopt."
             },
             "beroep": {
               "label": "Beroep",
-              "description": "Beroep/hoger beroep/cassatie aanhangig na uitspraak inspecteur (REQ-VPB-010)."
+              "description": "Beroep/hoger beroep/cassatie aanhangig na uitspraak inspecteur."
             },
             "onherroepelijk": {
               "label": "Onherroepelijk",
@@ -470,27 +470,27 @@
               "from": "draft",
               "to": "submitted",
               "label": "Aangifte indienen via Digipoort",
-              "description": "Indienen mag alleen wanneer de gekoppelde jaarrekening vastgesteld is, de S&O-verklaring bij een innovatiebox-claim aanwezig is, de Belastingplichtige eHerkenning EH3+ en een geldig Digipoort-certificaat heeft, en de faciliteit-eligibility slaagt (REQ-VPB-002, REQ-VPB-004, REQ-VPB-009). Cross-schema check: VpbAangifteGuard::canIndienen.",
+              "description": "Indienen mag alleen wanneer de gekoppelde jaarrekening vastgesteld is, de S&O-verklaring bij een innovatiebox-claim aanwezig is, de Belastingplichtige eHerkenning EH3+ en een geldig Digipoort-certificaat heeft, en de faciliteit-eligibility slaagt. Cross-schema check: VpbAangifteGuard::canIndienen.",
               "requires": "OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard::canIndienen"
             },
             "aanslagOntvangen": {
               "from": "submitted",
               "to": "aanslag-ontvangen",
               "label": "Definitieve aanslag ontvangen",
-              "description": "Registratie van de ontvangen DefinitieveAanslag; start van de 6-weken-bezwaartermijn (REQ-VPB-010)."
+              "description": "Registratie van de ontvangen DefinitieveAanslag; start van de 6-weken-bezwaartermijn."
             },
             "bezwaarMaken": {
               "from": "aanslag-ontvangen",
               "to": "bezwaar",
               "label": "Bezwaar maken",
-              "description": "Bezwaar mag alleen binnen de wettelijke termijn van 6 weken na de dagtekening van de aanslag (REQ-VPB-010). Cross-schema termijn-check: ObjectionPeriodGuard::canFileObjection.",
+              "description": "Bezwaar mag alleen binnen de wettelijke termijn van 6 weken na de dagtekening van de aanslag. Cross-schema termijn-check: ObjectionPeriodGuard::canFileObjection.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileObjection"
             },
             "beroepInstellen": {
               "from": "bezwaar",
               "to": "beroep",
               "label": "Beroep instellen",
-              "description": "Na (gedeeltelijke) afwijzing van het bezwaar beroep instellen bij de rechtbank binnen 6 weken na de uitspraak (REQ-VPB-010)."
+              "description": "Na (gedeeltelijke) afwijzing van het bezwaar beroep instellen bij de rechtbank binnen 6 weken na de uitspraak."
             },
             "onherroepelijkWorden": {
               "from": "aanslag-ontvangen",
@@ -534,7 +534,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Vpb-aangifte is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Vpb-aangifte is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "FiscaleCorrectie": {
@@ -542,7 +542,7 @@
         "icon": "SwapHorizontalBold",
         "version": "0.1.0",
         "title": "Fiscale correctie",
-        "description": "Regel-voor-regel fiscale correctie van commerciële naar fiscale winst (REQ-VPB-002). code is een NT-taxonomie/NTP-classificatie (bv. afschrijvingsbeperking-art-3-30a, niet-aftrekbare-kosten-art-3-14). correctieBedrag = fiscaalBedrag − commercieelBedrag (declaratief). Elke correctie verwijst naar een Wet Vpb-artikel in toelichting voor de Belastingdienst-navordering. Audit-trail (wie/wanneer/wat) automatisch via OR.",
+        "description": "Regel-voor-regel fiscale correctie van commerciële naar fiscale winst. code is een NT-taxonomie/NTP-classificatie (bv. afschrijvingsbeperking-art-3-30a, niet-aftrekbare-kosten-art-3-14). correctieBedrag = fiscaalBedrag − commercieelBedrag (declaratief). Elke correctie verwijst naar een Wet Vpb-artikel in toelichting voor de Belastingdienst-navordering. Audit-trail (wie/wanneer/wat) automatisch via OR.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
@@ -610,7 +610,7 @@
         },
         "x-openregister-calculations": {
           "correctionAmount": {
-            "description": "Fiscaal bedrag minus commercieel bedrag (REQ-VPB-002).",
+            "description": "Fiscaal bedrag minus commercieel bedrag.",
             "expr": "(@self.fiscaalBedrag ?? 0) - (@self.commercieelBedrag ?? 0)"
           }
         },
@@ -638,7 +638,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Fiscale correctie is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Fiscale correctie is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Innovatiebox": {
@@ -646,7 +646,7 @@
         "icon": "LightbulbOnOutline",
         "version": "0.1.0",
         "title": "Innovatiebox-claim",
-        "description": "R&D-faciliteit-claim per Wet Vpb art. 12b/12bd (REQ-VPB-004). methodType onderscheidt forfaitair (maximaal innovatieboxForfaitDrempel voordeel, alleen eerste 3 jaar na S&O-verklaring) en werkelijke-winst (nexusFactor R&D-eigen/R&D-totaal, ongemaximeerd). soVerklaringReferentie (RVO) is verplicht; de claim wordt geweigerd bij indiening als deze ontbreekt (VpbAangifteGuard::canIndienen). effectiefTarief = innovatieboxTarief uit VpbTariefcatalogus (2026: 9%).",
+        "description": "R&D-faciliteit-claim per Wet Vpb art. 12b/12bd. methodType onderscheidt forfaitair (maximaal innovatieboxForfaitDrempel voordeel, alleen eerste 3 jaar na S&O-verklaring) en werkelijke-winst (nexusFactor R&D-eigen/R&D-totaal, ongemaximeerd). soVerklaringReferentie (RVO) is verplicht; de claim wordt geweigerd bij indiening als deze ontbreekt (VpbAangifteGuard::canIndienen). effectiefTarief = innovatieboxTarief uit VpbTariefcatalogus (2026: 9%).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
@@ -724,7 +724,7 @@
           },
           "soDeclarationReference": {
             "type": "string",
-            "description": "RVO-uitgegeven S&O-verklaring-referentie (WBSO); verplicht (REQ-VPB-004).",
+            "description": "RVO-uitgegeven S&O-verklaring-referentie (WBSO); verplicht.",
             "example": "SO-2026-0001234",
             "title": "So Verklaring Referentie"
           },
@@ -738,7 +738,7 @@
         },
         "x-openregister-calculations": {
           "innovationBoxAmount": {
-            "description": "Innovatieboxwinst maal het tariefverschil tussen het reguliere schijf-2-tarief en het innovatiebox-tarief (REQ-VPB-004).",
+            "description": "Innovatieboxwinst maal het tariefverschil tussen het reguliere schijf-2-tarief en het innovatiebox-tarief.",
             "expr": "(@self.innovatieboxWinst ?? 0) * (lookup(VpbTariefcatalogus, belastingjaar == VpbAangifte[@self.aangifte].belastingjaar).tarief2 - (@self.effectiefTarief ?? 0.09))"
           }
         },
@@ -748,11 +748,11 @@
           "states": {
             "flatRate": {
               "label": "Forfaitair",
-              "description": "Forfaitaire benadering; gemaximeerd op de catalogusdrempel en beperkt tot de eerste 3 jaar na S&O-afgifte (REQ-VPB-004)."
+              "description": "Forfaitaire benadering; gemaximeerd op de catalogusdrempel en beperkt tot de eerste 3 jaar na S&O-afgifte."
             },
             "actual-profit": {
               "label": "Werkelijke winst",
-              "description": "Werkelijke-winst-methode met nexus-factor; ongemaximeerd (REQ-VPB-004)."
+              "description": "Werkelijke-winst-methode met nexus-factor; ongemaximeerd."
             }
           },
           "transitions": {}
@@ -781,7 +781,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Innovatiebox-claim is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Innovatiebox-claim is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Deelneming": {
@@ -789,7 +789,7 @@
         "icon": "SitemapOutline",
         "version": "0.1.0",
         "title": "Deelneming",
-        "description": "Aandelenbezit in een andere vennootschap met de deelnemingsvrijstelling-toets per art. 13 Wet Vpb (REQ-VPB-005). kwalificerendeDeelneming = >=5% nominaal gestort kapitaal. deelnemingsvrijstellingVanToepassing vereist motivatie op de drie cumulatieve toetsen (oogmerk-, onderworpenheids-, bezittingentoets). Een mogelijke low-taxed-portfolio-investment wordt gevlagd maar het eindoordeel ligt bij de fiscalist (jurisprudentie casuïstisch).",
+        "description": "Aandelenbezit in een andere vennootschap met de deelnemingsvrijstelling-toets per art. 13 Wet Vpb. kwalificerendeDeelneming = >=5% nominaal gestort kapitaal. deelnemingsvrijstellingVanToepassing vereist motivatie op de drie cumulatieve toetsen (oogmerk-, onderworpenheids-, bezittingentoets). Een mogelijke low-taxed-portfolio-investment wordt gevlagd maar het eindoordeel ligt bij de fiscalist (jurisprudentie casuïstisch).",
         "x-schema-org": "schema:OwnershipInfo",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
@@ -866,7 +866,7 @@
           "participationExemptionFromApplication": {
             "type": "boolean",
             "default": false,
-            "description": "Of de deelnemingsvrijstelling wordt geclaimd (REQ-VPB-005).",
+            "description": "Of de deelnemingsvrijstelling wordt geclaimd.",
             "example": true,
             "title": "Deelnemingsvrijstelling Van Toepassing"
           },
@@ -894,7 +894,7 @@
         },
         "x-openregister-calculations": {
           "qualifyingParticipation": {
-            "description": "True wanneer het belang ten minste 5% bedraagt (REQ-VPB-005).",
+            "description": "True wanneer het belang ten minste 5% bedraagt.",
             "expr": "(@self.aandeelhouderschapPercentage ?? 0) >= 5"
           }
         },
@@ -922,7 +922,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Deelneming is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Deelneming is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "FiscaleEenheid": {
@@ -930,7 +930,7 @@
         "icon": "FamilyTree",
         "version": "0.1.0",
         "title": "Fiscale eenheid",
-        "description": "Geconsolideerde fiscale eenheid per art. 15 Wet Vpb met voegingen en ontvoegingen (REQ-VPB-007). Voeging vereist >=95% bezit, gelijke boekjaren en vestiging in NL (VpbAangifteGuard::canVoegen). Per dochter wordt voorvoegingsverlies apart geadministreerd zodat een ontvoeging dormante verliezen niet vernietigt.",
+        "description": "Geconsolideerde fiscale eenheid per art. 15 Wet Vpb met voegingen en ontvoegingen. Voeging vereist >=95% bezit, gelijke boekjaren en vestiging in NL (VpbAangifteGuard::canVoegen). Per dochter wordt voorvoegingsverlies apart geadministreerd zodat een ontvoeging dormante verliezen niet vernietigt.",
         "x-schema-org": "schema:Organization",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
@@ -983,7 +983,7 @@
             "minimum": 0,
             "maximum": 100,
             "default": 100,
-            "description": "Bezitspercentage moeder in dochter; moet >=95 voor voeging (REQ-VPB-007).",
+            "description": "Bezitspercentage moeder in dochter; moet >=95 voor voeging.",
             "example": 100,
             "title": "Bezit Percentage"
           },
@@ -1036,7 +1036,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Fiscale eenheid is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Fiscale eenheid is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Voorvoegingsverlies": {
@@ -1044,7 +1044,7 @@
         "icon": "TrendingDown",
         "version": "0.1.0",
         "title": "Voorvoegingsverlies",
-        "description": "Voorwaarts verrekenbaar verlies per verliesjaar (REQ-VPB-006). regime wordt automatisch bepaald door verliesjaar: t/m 2018 = 9 jaar voorwaarts; 2019-2021 = 6 jaar; vanaf 2022 = onbeperkt met 50%-beperking boven de catalogusdrempel. restant = oorspronkelijkBedrag − reedsVerrekend. verjaartIn wordt declaratief berekend; een UI-waarschuwing verschijnt 12 maanden voor verjaring. Verlopen verliezen worden bewaard (niet verwijderd) voor navordering.",
+        "description": "Voorwaarts verrekenbaar verlies per verliesjaar. regime wordt automatisch bepaald door verliesjaar: t/m 2018 = 9 jaar voorwaarts; 2019-2021 = 6 jaar; vanaf 2022 = onbeperkt met 50%-beperking boven de catalogusdrempel. restant = oorspronkelijkBedrag − reedsVerrekend. verjaartIn wordt declaratief berekend; een UI-waarschuwing verschijnt 12 maanden voor verjaring. Verlopen verliezen worden bewaard (niet verwijderd) voor navordering.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
@@ -1125,16 +1125,16 @@
         },
         "x-openregister-calculations": {
           "remainder": {
-            "description": "Oorspronkelijk bedrag minus reeds verrekend (REQ-VPB-006).",
+            "description": "Oorspronkelijk bedrag minus reeds verrekend.",
             "expr": "(@self.oorspronkelijkBedrag ?? 0) - (@self.reedsVerrekend ?? 0)"
           },
           "regime": {
-            "description": "Regime-bepaling per verliesjaar: <=2018 -> 9jr, 2019-2021 -> 6jr, >=2022 -> onbeperkt-50pct (REQ-VPB-006). ADR-031 exception: VpbBerekeningGuard::bepaalVerliesRegime levert de fallback.",
+            "description": "Regime-bepaling per verliesjaar: <=2018 -> 9jr, 2019-2021 -> 6jr, >=2022 -> onbeperkt-50pct. ADR-031 exception: VpbBerekeningGuard::bepaalVerliesRegime levert de fallback.",
             "expr": "@self.verliesjaar <= 2018 ? '9jr' : (@self.verliesjaar <= 2021 ? '6jr' : 'onbeperkt-50pct')",
             "guard": "OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::bepaalVerliesRegime"
           },
           "expiresIn": {
-            "description": "Verjaringsdatum: 31-12 van (verliesjaar + 9) voor het 9jr-regime, (verliesjaar + 6) voor het 6jr-regime, null bij onbeperkt (REQ-VPB-006). ADR-031 exception: VpbBerekeningGuard::bepaalVerjaardatum levert de fallback.",
+            "description": "Verjaringsdatum: 31-12 van (verliesjaar + 9) voor het 9jr-regime, (verliesjaar + 6) voor het 6jr-regime, null bij onbeperkt. ADR-031 exception: VpbBerekeningGuard::bepaalVerjaardatum levert de fallback.",
             "expr": "@self.verliesjaar <= 2018 ? date((@self.verliesjaar + 9) + '-12-31') : (@self.verliesjaar <= 2021 ? date((@self.verliesjaar + 6) + '-12-31') : null)",
             "guard": "OCA\\Shillinq\\Lifecycle\\VpbBerekeningGuard::bepaalVerjaardatum"
           }
@@ -1163,7 +1163,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Voorvoegingsverlies is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Voorvoegingsverlies is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "InvesteringsAftrek": {
@@ -1171,7 +1171,7 @@
         "icon": "CashPlus",
         "version": "0.1.0",
         "title": "Investeringsaftrek",
-        "description": "Investeringsaftrek-claim KIA/EIA/MIA/Vamil (REQ-VPB-008). Cumulatieregels: KIA+EIA mag, KIA+MIA mag, EIA+MIA NIET op dezelfde investering. aftrekPercentage komt per belastingjaar uit VpbTariefcatalogus.facilityPercents. cumulatieConflict markeert ongeldige stapeling; faciliteit-eligibility blokkeert indiening via VpbAangifteGuard::canIndienen.",
+        "description": "Investeringsaftrek-claim KIA/EIA/MIA/Vamil. Cumulatieregels: KIA+EIA mag, KIA+MIA mag, EIA+MIA NIET op dezelfde investering. aftrekPercentage komt per belastingjaar uit VpbTariefcatalogus.facilityPercents. cumulatieConflict markeert ongeldige stapeling; faciliteit-eligibility blokkeert indiening via VpbAangifteGuard::canIndienen.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
@@ -1267,11 +1267,11 @@
         },
         "x-openregister-calculations": {
           "deductionAmount": {
-            "description": "Investeringsbedrag maal aftrekpercentage (REQ-VPB-008).",
+            "description": "Investeringsbedrag maal aftrekpercentage.",
             "expr": "(@self.investeringsbedrag ?? 0) * (@self.aftrekPercentage ?? 0)"
           },
           "cumulationConflict": {
-            "description": "Verboden stapeling EIA+MIA op dezelfde investering (REQ-VPB-008).",
+            "description": "Verboden stapeling EIA+MIA op dezelfde investering.",
             "expr": "(@self.type == 'EIA' and contains(@self.gecombineerdMet, 'MIA')) or (@self.type == 'MIA' and contains(@self.gecombineerdMet, 'EIA'))"
           }
         },
@@ -1299,7 +1299,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Investeringsaftrek is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Investeringsaftrek is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "VoorlopigeAanslag": {
@@ -1307,7 +1307,7 @@
         "icon": "FileClockOutline",
         "version": "0.1.0",
         "title": "Voorlopige aanslag",
-        "description": "Door de inspecteur opgelegde voorlopige aanslag op geschat belastbaar bedrag (REQ-VPB-009). Ondersteunt het herzieningsverzoek (Verzoek wijziging voorlopige aanslag Vpb) met inspecteur-uitslag. voorlopigVerschuldigd stuurt de cashflow-planning.",
+        "description": "Door de inspecteur opgelegde voorlopige aanslag op geschat belastbaar bedrag. Ondersteunt het herzieningsverzoek (Verzoek wijziging voorlopige aanslag Vpb) met inspecteur-uitslag. voorlopigVerschuldigd stuurt de cashflow-planning.",
         "x-schema-org": "schema:Invoice",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
@@ -1420,7 +1420,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Voorlopige aanslag is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Voorlopige aanslag is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "DefinitieveAanslag": {
@@ -1428,7 +1428,7 @@
         "icon": "FileCheckOutline",
         "version": "0.1.0",
         "title": "Definitieve aanslag",
-        "description": "Door de inspecteur vastgestelde definitieve aanslag (REQ-VPB-009, REQ-VPB-010). bezwaartermijnEinde = dagtekening + 6 weken (declaratief berekend). bezwaarTermijnVerstreken markeert of de termijn is verlopen. Levenscyclus concept -> ontvangen.",
+        "description": "Door de inspecteur vastgestelde definitieve aanslag. bezwaartermijnEinde = dagtekening + 6 weken (declaratief berekend). bezwaarTermijnVerstreken markeert of de termijn is verlopen. Levenscyclus concept -> ontvangen.",
         "x-schema-org": "schema:Invoice",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
@@ -1531,15 +1531,15 @@
         },
         "x-openregister-calculations": {
           "tePoints": {
-            "description": "Vastgesteld verschuldigd minus verrekende voorheffingen en voorlopige aanslagen (REQ-VPB-010).",
+            "description": "Vastgesteld verschuldigd minus verrekende voorheffingen en voorlopige aanslagen.",
             "expr": "(@self.vastgesteldVerschuldigd ?? 0) - (@self.verrekendeVoorheffingen ?? 0) - (@self.verrekendeVoorlopigeAanslagen ?? 0)"
           },
           "objectionPeriodEnd": {
-            "description": "Dagtekening plus 6 weken (REQ-VPB-010).",
+            "description": "Dagtekening plus 6 weken.",
             "expr": "dateAdd(@self.dagtekening, '6 weeks')"
           },
           "objectionTermElapsed": {
-            "description": "Of de bezwaartermijn verstreken is (REQ-VPB-010).",
+            "description": "Of de bezwaartermijn verstreken is.",
             "expr": "today() > @self.bezwaartermijnEinde"
           }
         },
@@ -1553,7 +1553,7 @@
             },
             "ontvangen": {
               "label": "Ontvangen",
-              "description": "Aanslag bevestigd ontvangen; bezwaartermijn loopt (REQ-VPB-010)."
+              "description": "Aanslag bevestigd ontvangen; bezwaartermijn loopt."
             }
           },
           "transitions": {
@@ -1561,7 +1561,7 @@
               "from": "draft",
               "to": "ontvangen",
               "label": "Aanslag ontvangen bevestigen",
-              "description": "Bevestig de ontvangst; de gekoppelde VpbAangifte moet in de status ingediend staan (REQ-VPB-010). Cross-schema check: VpbAangifteGuard::canAanslagOntvangen.",
+              "description": "Bevestig de ontvangst; de gekoppelde VpbAangifte moet in de status ingediend staan. Cross-schema check: VpbAangifteGuard::canAanslagOntvangen.",
               "requires": "OCA\\Shillinq\\Lifecycle\\VpbAangifteGuard::canAanslagOntvangen"
             }
           }
@@ -1589,7 +1589,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Definitieve aanslag is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Definitieve aanslag is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "BezwaarBeroep": {
@@ -1597,7 +1597,7 @@
         "icon": "Gavel",
         "version": "0.1.0",
         "title": "Bezwaar / Beroep",
-        "description": "Geschilprocedure tegen een aanslag (REQ-VPB-010): bezwaar -> uitspraak inspecteur -> beroep -> hoger beroep -> cassatie, met wettelijke termijnen per Awb (6 weken bezwaar; 6 weken uitspraak inspecteur, verlengbaar tot 12; 6 weken beroep). termijnEinde wordt per type berekend; termijnVerstreken markeert overschrijding. Escalatie-alerts op T-7d/T-3d/op-de-dag worden door de termijn-bewaking gegenereerd.",
+        "description": "Geschilprocedure tegen een aanslag: bezwaar -> uitspraak inspecteur -> beroep -> hoger beroep -> cassatie, met wettelijke termijnen per Awb (6 weken bezwaar; 6 weken uitspraak inspecteur, verlengbaar tot 12; 6 weken beroep). termijnEinde wordt per type berekend; termijnVerstreken markeert overschrijding. Escalatie-alerts op T-7d/T-3d/op-de-dag worden door de termijn-bewaking gegenereerd.",
         "x-schema-org": "schema:LegalForceStatus",
         "x-spec": "openspec/changes/bookkeeping-vpb-mkb/specs/bookkeeping-vpb-mkb/spec.md",
         "type": "object",
@@ -1722,18 +1722,18 @@
               "afgerond"
             ],
             "default": "submitted",
-            "description": "Procedurestatus (REQ-VPB-010).",
+            "description": "Procedurestatus.",
             "example": "submitted",
             "title": "Status"
           }
         },
         "x-openregister-calculations": {
           "termEnd": {
-            "description": "Indieningsdatum plus 6 weken; de wettelijke standaardtermijn voor bezwaar en beroep (REQ-VPB-010).",
+            "description": "Indieningsdatum plus 6 weken; de wettelijke standaardtermijn voor bezwaar en beroep.",
             "expr": "dateAdd(@self.ingediendOp, '6 weeks')"
           },
           "termElapsed": {
-            "description": "Of de termijn is verstreken (REQ-VPB-010).",
+            "description": "Of de termijn is verstreken.",
             "expr": "today() > @self.termijnEinde"
           }
         },
@@ -1799,7 +1799,7 @@
               "from": "uitspraak-inspecteur-ontvangen",
               "to": "beroep-pending",
               "label": "Beroep instellen",
-              "description": "Beroep bij de rechtbank binnen 6 weken na uitspraak (REQ-VPB-010). Termijn-check: ObjectionPeriodGuard::canFileAppeal.",
+              "description": "Beroep bij de rechtbank binnen 6 weken na uitspraak. Termijn-check: ObjectionPeriodGuard::canFileAppeal.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ObjectionPeriodGuard::canFileAppeal"
             },
             "beroepUitspraak": {
@@ -1874,7 +1874,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Bezwaar / Beroep is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Bezwaar / Beroep is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     },

@@ -5,7 +5,7 @@
     "source": "SBR/Logius RGS-decentraal publicatie",
     "iv3Version": "2025-1.0",
     "effectiveDate": "2025-01-01",
-    "description": "RGS-decentraal D-codes met default taakveld + economische categorie + Iv3-bucket koppeling (BbvAccountMapping templates). Representatieve subset; de volledige catalogus (ca. 200 D-codes) wordt via openconnector geimporteerd (REQ-BBV-001).",
+    "description": "RGS-decentraal D-codes met default taakveld + economische categorie + Iv3-bucket koppeling (BbvAccountMapping templates). Representatieve subset; de volledige catalogus (ca. 200 D-codes) wordt via openconnector geimporteerd.",
     "url": "https://www.referentiegrootboekschema.nl"
   },
   "mappings": [

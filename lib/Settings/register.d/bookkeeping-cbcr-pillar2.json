@@ -13,7 +13,7 @@
         "icon": "Sitemap",
         "version": "0.1.0",
         "title": "Group Entity Registry",
-        "description": "Constituent entity of a multinational group within the consolidation perimeter (REQ-CBC-002). Holds incorporation + tax-residency jurisdiction, consolidation method/percentage, CbCR/Pillar 2 scope flags, and identification (LEI, VAT). The per-jurisdiction CbCR summary is the sum of all in-scope entities sharing a jurisdiction. A person/owner is a Nextcloud entity (responsibleOwner FK to the NC user directory) — never an invented contact schema.",
+        "description": "Constituent entity of a multinational group within the consolidation perimeter. Holds incorporation + tax-residency jurisdiction, consolidation method/percentage, CbCR/Pillar 2 scope flags, and identification (LEI, VAT). The per-jurisdiction CbCR summary is the sum of all in-scope entities sharing a jurisdiction. A person/owner is a Nextcloud entity (responsibleOwner FK to the NC user directory) — never an invented contact schema.",
         "x-schema-org": "schema:Organization",
         "x-spec": "openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md",
         "x-openregister-audit-trail": {
@@ -30,7 +30,7 @@
         "properties": {
           "entityName": {
             "type": "string",
-            "description": "Legal name of the constituent entity (REQ-CBC-002).",
+            "description": "Legal name of the constituent entity.",
             "title": "Entity Name"
           },
           "legalForm": {
@@ -98,7 +98,7 @@
               "regulated-financial-service",
               "other"
             ],
-            "description": "OESO CbCR main business activity classification (REQ-CBC-002).",
+            "description": "OESO CbCR main business activity classification.",
             "title": "Main Business Activity"
           },
           "lei": {
@@ -113,26 +113,26 @@
           },
           "cbcrIncluded": {
             "type": "boolean",
-            "description": "Whether the entity is included in CbCR aggregation. Set group-wide by the prior-year EUR 750M threshold watcher (REQ-CBC-001) — see x-openregister-threshold-watcher on the UltimateParentEntity record.",
+            "description": "Whether the entity is included in CbCR aggregation. Set group-wide by the prior-year EUR 750M threshold watcher — see x-openregister-threshold-watcher on the UltimateParentEntity record.",
             "default": true,
             "title": "Cbcr Included"
           },
           "pillar2Included": {
             "type": "boolean",
-            "description": "Whether the entity is in Pillar 2 scope. Set group-wide by the prior-year EUR 750M threshold watcher (REQ-CBC-001) — see x-openregister-threshold-watcher on the UltimateParentEntity record.",
+            "description": "Whether the entity is in Pillar 2 scope. Set group-wide by the prior-year EUR 750M threshold watcher — see x-openregister-threshold-watcher on the UltimateParentEntity record.",
             "default": true,
             "title": "Pillar2Included"
           },
           "thresholdCrossed": {
             "type": "boolean",
-            "description": "UPE-only flag: did the group cross the EUR 750M consolidated-revenue threshold in the prior fiscal year, bringing it into CbCR / Pillar 2 scope for the current period (REQ-CBC-001)? Maintained by the openconnector-owned threshold watcher (see x-openregister-threshold-watcher); read-only for human operators. Null until the watcher first runs; ignored on non-UPE records.",
+            "description": "UPE-only flag: did the group cross the EUR 750M consolidated-revenue threshold in the prior fiscal year, bringing it into CbCR / Pillar 2 scope for the current period? Maintained by the openconnector-owned threshold watcher (see x-openregister-threshold-watcher); read-only for human operators. Null until the watcher first runs; ignored on non-UPE records.",
             "nullable": true,
             "title": "Threshold Crossed"
           },
           "thresholdCrossedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "UPE-only: timestamp at which the threshold watcher first flagged the group as in-scope (REQ-CBC-001). Used for the first-CbCR (12 months after FYE) and first-GIR (18 months) deadline warnings.",
+            "description": "UPE-only: timestamp at which the threshold watcher first flagged the group as in-scope. Used for the first-CbCR (12 months after FYE) and first-GIR (18 months) deadline warnings.",
             "nullable": true,
             "title": "Threshold Crossed At"
           },
@@ -256,7 +256,7 @@
         "icon": "EarthBox",
         "version": "0.1.0",
         "title": "CbCR Jurisdiction Summary",
-        "description": "Per-jurisdiction aggregation of the seven mandatory CbCR fields for a fiscal year (REQ-CBC-002). totalRevenue is derived declaratively from unrelated + related party revenue (ADR-031). One summary per jurisdiction per period; the sum of all in-scope GroupEntityRegistry records sharing a jurisdiction. Intra-jurisdiction transactions eliminate; cross-jurisdiction intra-group revenue survives as relatedPartyRevenue.",
+        "description": "Per-jurisdiction aggregation of the seven mandatory CbCR fields for a fiscal year. totalRevenue is derived declaratively from unrelated + related party revenue (ADR-031). One summary per jurisdiction per period; the sum of all in-scope GroupEntityRegistry records sharing a jurisdiction. Intra-jurisdiction transactions eliminate; cross-jurisdiction intra-group revenue survives as relatedPartyRevenue.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md",
         "x-openregister-audit-trail": {
@@ -272,7 +272,7 @@
         "properties": {
           "period": {
             "type": "string",
-            "description": "Fiscal year, e.g. FY2026 (REQ-CBC-002).",
+            "description": "Fiscal year, e.g. FY2026.",
             "example": "FY2026",
             "title": "Period"
           },
@@ -286,13 +286,13 @@
           },
           "unrelatedPartyRevenue": {
             "type": "number",
-            "description": "Revenue from unrelated (third) parties (REQ-CBC-002).",
+            "description": "Revenue from unrelated (third) parties.",
             "default": 0,
             "title": "Unrelated Party Revenue"
           },
           "relatedPartyRevenue": {
             "type": "number",
-            "description": "Revenue from related (intra-group, cross-jurisdiction) parties (REQ-CBC-002).",
+            "description": "Revenue from related (intra-group, cross-jurisdiction) parties.",
             "default": 0,
             "title": "Related Party Revenue"
           },
@@ -392,7 +392,7 @@
           }
         },
         "x-openregister-consolidation-source": {
-          "description": "Declarative consolidation feed for the 7 mandatory CbCR fields (REQ-CBC-002). Per-entity consolidation data is sourced from the bookkeeping-consolidation-commercial app: revenue, profit before tax, income tax, capital, and accumulated earnings are summed per (period, jurisdiction) tuple, with elimination logic that drops intra-jurisdictie transactions while preserving cross-jurisdictie related-party revenue (split into related vs unrelated). The runtime consumer ships with the bookkeeping-consolidation-commercial integration apply cycle on a live instance.",
+          "description": "Declarative consolidation feed for the 7 mandatory CbCR fields. Per-entity consolidation data is sourced from the bookkeeping-consolidation-commercial app: revenue, profit before tax, income tax, capital, and accumulated earnings are summed per (period, jurisdiction) tuple, with elimination logic that drops intra-jurisdictie transactions while preserving cross-jurisdictie related-party revenue (split into related vs unrelated). The runtime consumer ships with the bookkeeping-consolidation-commercial integration apply cycle on a live instance.",
           "sourceApp": "bookkeeping-consolidation-commercial",
           "sourceSchemas": {
             "perEntity": "EntityConsolidationLine",
@@ -432,7 +432,7 @@
             },
             "reconciled": {
               "label": "Reconciled",
-              "description": "Reconciled against the consolidated financial statements (REQ-CBC-010)."
+              "description": "Reconciled against the consolidated financial statements."
             },
             "locked": {
               "label": "Locked",
@@ -497,13 +497,13 @@
           },
           "commercialProfitBeforeTax": {
             "type": "number",
-            "description": "Commercial (accounting) profit before tax — the starting point for GloBE income (REQ-CBC-003).",
+            "description": "Commercial (accounting) profit before tax — the starting point for GloBE income.",
             "default": 0,
             "title": "Commercial Profit Before Tax"
           },
           "globeIncomeAdjustments": {
             "type": "array",
-            "description": "Audit trail of the OESO-prescribed GloBE income corrections (REQ-CBC-003). Each line is signed: a negative amount excludes income, a positive amount adds it back.",
+            "description": "Audit trail of the OESO-prescribed GloBE income corrections. Each line is signed: a negative amount excludes income, a positive amount adds it back.",
             "items": {
               "type": "object",
               "required": [
@@ -554,7 +554,7 @@
           },
           "globeIncome": {
             "type": "number",
-            "description": "Computed: commercialProfitBeforeTax + globeIncomeAdjustmentTotal (REQ-CBC-003).",
+            "description": "Computed: commercialProfitBeforeTax + globeIncomeAdjustmentTotal.",
             "title": "Globe Income"
           },
           "coveredTaxAdjustments": {
@@ -584,13 +584,13 @@
           },
           "adjustedCoveredTaxes": {
             "type": "number",
-            "description": "Adjusted covered taxes (Vpb current + deferred + similar levies with corrections) (REQ-CBC-004).",
+            "description": "Adjusted covered taxes (Vpb current + deferred + similar levies with corrections).",
             "default": 0,
             "title": "Adjusted Covered Taxes"
           },
           "etrJurisdiction": {
             "type": "number",
-            "description": "Computed: min(max(0, adjustedCoveredTaxes / globeIncome), 1.0) (REQ-CBC-004).",
+            "description": "Computed: min(max(0, adjustedCoveredTaxes / globeIncome), 1.0).",
             "title": "Etr Jurisdiction"
           },
           "minimumRate": {
@@ -601,51 +601,51 @@
           },
           "topUpTaxRate": {
             "type": "number",
-            "description": "Computed: max(0, minimumRate - etrJurisdiction) (REQ-CBC-004).",
+            "description": "Computed: max(0, minimumRate - etrJurisdiction).",
             "title": "Top Up Tax Rate"
           },
           "payroll": {
             "type": "number",
-            "description": "Eligible payroll costs in the jurisdiction for the SBIE carve-out (REQ-CBC-005).",
+            "description": "Eligible payroll costs in the jurisdiction for the SBIE carve-out.",
             "default": 0,
             "title": "Payroll"
           },
           "tangibleAssetsNbv": {
             "type": "number",
-            "description": "Net book value of eligible tangible assets for the SBIE carve-out (REQ-CBC-005).",
+            "description": "Net book value of eligible tangible assets for the SBIE carve-out.",
             "default": 0,
             "title": "Tangible Assets Nbv"
           },
           "carveOutRatePayroll": {
             "type": "number",
-            "description": "SBIE payroll carve-out percentage for the period (phased 10% in 2023 to 5% in 2033) (REQ-CBC-005).",
+            "description": "SBIE payroll carve-out percentage for the period (phased 10% in 2023 to 5% in 2033).",
             "default": 0.096,
             "title": "Carve Out Rate Payroll"
           },
           "carveOutRateTangible": {
             "type": "number",
-            "description": "SBIE tangible-asset carve-out percentage for the period (phased 8% in 2023 to 5% in 2033) (REQ-CBC-005).",
+            "description": "SBIE tangible-asset carve-out percentage for the period (phased 8% in 2023 to 5% in 2033).",
             "default": 0.076,
             "title": "Carve Out Rate Tangible"
           },
           "payrollCarveOut": {
             "type": "number",
-            "description": "Computed: payroll * carveOutRatePayroll (REQ-CBC-005).",
+            "description": "Computed: payroll * carveOutRatePayroll.",
             "title": "Payroll Carve Out"
           },
           "tangibleAssetCarveOut": {
             "type": "number",
-            "description": "Computed: tangibleAssetsNbv * carveOutRateTangible (REQ-CBC-005).",
+            "description": "Computed: tangibleAssetsNbv * carveOutRateTangible.",
             "title": "Tangible Asset Carve Out"
           },
           "substanceBasedIncomeExclusion": {
             "type": "number",
-            "description": "Computed: payrollCarveOut + tangibleAssetCarveOut (REQ-CBC-005).",
+            "description": "Computed: payrollCarveOut + tangibleAssetCarveOut.",
             "title": "Substance Based Income Exclusion"
           },
           "excessProfit": {
             "type": "number",
-            "description": "Computed: max(0, globeIncome - substanceBasedIncomeExclusion) (REQ-CBC-005).",
+            "description": "Computed: max(0, globeIncome - substanceBasedIncomeExclusion).",
             "title": "Excess Profit"
           },
           "topUpTaxAmount": {
@@ -655,19 +655,19 @@
           },
           "qdmttApplicable": {
             "type": "boolean",
-            "description": "Whether a Qualified Domestic Minimum Top-up Tax applies (NL-resident, ETR < 15%) (REQ-CBC-006).",
+            "description": "Whether a Qualified Domestic Minimum Top-up Tax applies (NL-resident, ETR < 15%).",
             "default": false,
             "title": "Qdmtt Applicable"
           },
           "qdmttAmount": {
             "type": "number",
-            "description": "Top-up tax levied by the jurisdiction itself via QDMTT (REQ-CBC-006).",
+            "description": "Top-up tax levied by the jurisdiction itself via QDMTT.",
             "default": 0,
             "title": "Qdmtt Amount"
           },
           "iirAmount": {
             "type": "number",
-            "description": "Top-up tax allocated to the UPE jurisdiction via IIR, net of QDMTT credit (REQ-CBC-006).",
+            "description": "Top-up tax allocated to the UPE jurisdiction via IIR, net of QDMTT credit.",
             "default": 0,
             "title": "Iir Amount"
           },
@@ -679,13 +679,13 @@
           },
           "safeHarbourApplied": {
             "type": "boolean",
-            "description": "Whether a transitional safe harbour replaced the full computation (REQ-CBC-007).",
+            "description": "Whether a transitional safe harbour replaced the full computation.",
             "default": false,
             "title": "Safe Harbour Applied"
           },
           "safeHarbourTest": {
             "type": "string",
-            "description": "Which safe harbour applied and the supporting rationale (REQ-CBC-007).",
+            "description": "Which safe harbour applied and the supporting rationale.",
             "title": "Safe Harbour Test"
           },
           "state": {
@@ -704,42 +704,42 @@
         "x-openregister-calculations": {
           "globeIncomeAdjustmentTotal": {
             "type": "number",
-            "description": "Sum of all GloBE income corrections (REQ-CBC-003).",
+            "description": "Sum of all GloBE income corrections.",
             "expr": "SUM(@self.globeIncomeAdjustments[].amount)"
           },
           "globeIncome": {
             "type": "number",
-            "description": "GloBE income = commercial PBT + sum of corrections (REQ-CBC-003).",
+            "description": "GloBE income = commercial PBT + sum of corrections.",
             "expr": "@self.commercialProfitBeforeTax + @self.globeIncomeAdjustmentTotal"
           },
           "etrJurisdiction": {
             "type": "number",
-            "description": "ETR = adjustedCoveredTaxes / globeIncome, floored at 0 and capped at 1 (REQ-CBC-004).",
+            "description": "ETR = adjustedCoveredTaxes / globeIncome, floored at 0 and capped at 1.",
             "expr": "MIN(MAX(0, @self.adjustedCoveredTaxes / @self.globeIncome), 1.0)"
           },
           "topUpTaxRate": {
             "type": "number",
-            "description": "Top-up rate = max(0, 15% - ETR) (REQ-CBC-004).",
+            "description": "Top-up rate = max(0, 15% - ETR).",
             "expr": "MAX(0, @self.minimumRate - @self.etrJurisdiction)"
           },
           "payrollCarveOut": {
             "type": "number",
-            "description": "Payroll carve-out = payroll * carve-out%% (REQ-CBC-005).",
+            "description": "Payroll carve-out = payroll * carve-out%%.",
             "expr": "@self.payroll * @self.carveOutRatePayroll"
           },
           "tangibleAssetCarveOut": {
             "type": "number",
-            "description": "Tangible-asset carve-out = NBV * carve-out%% (REQ-CBC-005).",
+            "description": "Tangible-asset carve-out = NBV * carve-out%%.",
             "expr": "@self.tangibleAssetsNbv * @self.carveOutRateTangible"
           },
           "substanceBasedIncomeExclusion": {
             "type": "number",
-            "description": "SBIE = payroll carve-out + tangible-asset carve-out (REQ-CBC-005).",
+            "description": "SBIE = payroll carve-out + tangible-asset carve-out.",
             "expr": "@self.payrollCarveOut + @self.tangibleAssetCarveOut"
           },
           "excessProfit": {
             "type": "number",
-            "description": "Excess profit = max(0, GloBE income - SBIE) (REQ-CBC-005).",
+            "description": "Excess profit = max(0, GloBE income - SBIE).",
             "expr": "MAX(0, @self.globeIncome - @self.substanceBasedIncomeExclusion)"
           },
           "topUpTaxAmount": {
@@ -749,7 +749,7 @@
           }
         },
         "x-openregister-hrmq-payroll-source": {
-          "description": "Declarative HRMQ payroll feed for the SBIE payroll carve-out base (REQ-CBC-005). Eligible payroll costs per jurisdiction (wages, salaries, payroll taxes, employer pension contributions; bonus, severance, equity comp per OESO Model Rules Art. 5.3.3 with stock-based compensation kept aligned with the GloBE income adjustment) sourced from the hrmq app: each PayrollLine record carries an employeeJurisdiction field; the feed sums eligible payroll across all PayrollLine records per (period, jurisdiction). Intercompany seconded staff use the operating-jurisdiction (not legal-employer-jurisdiction) per Art. 5.3.3.4. Optional feed — when hrmq is not provisioned, the carve-out base remains 0 and the carve-out collapses to the tangible-assets component only.",
+          "description": "Declarative HRMQ payroll feed for the SBIE payroll carve-out base. Eligible payroll costs per jurisdiction (wages, salaries, payroll taxes, employer pension contributions; bonus, severance, equity comp per OESO Model Rules Art. 5.3.3 with stock-based compensation kept aligned with the GloBE income adjustment) sourced from the hrmq app: each PayrollLine record carries an employeeJurisdiction field; the feed sums eligible payroll across all PayrollLine records per (period, jurisdiction). Intercompany seconded staff use the operating-jurisdiction (not legal-employer-jurisdiction) per Art. 5.3.3.4. Optional feed — when hrmq is not provisioned, the carve-out base remains 0 and the carve-out collapses to the tangible-assets component only.",
           "sourceApp": "hrmq",
           "optional": true,
           "sourceSchemas": {
@@ -776,7 +776,7 @@
             ]
           },
           "numberOfEmployeesFeed": {
-            "description": "Concurrent feed of FTE per jurisdiction into the CbCR 7-field roll-up (REQ-CBC-002).",
+            "description": "Concurrent feed of FTE per jurisdiction into the CbCR 7-field roll-up.",
             "writeBack": {
               "schema": "CbcrJurisdictionSummary",
               "filter": "period = @sourcePeriod AND jurisdiction = @sourceJurisdiction",
@@ -796,7 +796,7 @@
           "status": "DEFERRED — optional declarative contract only; live integration ships with the not-yet-merged hrmq apply cycle on a live instance."
         },
         "x-openregister-tangible-assets-source": {
-          "description": "Declarative tangible-assets-NBV feed for the SBIE carve-out base (REQ-CBC-005). Per-jurisdiction net book value of eligible tangible assets (excluding cash, cash equivalents, intangibles, and held-for-sale assets per OESO Model Rules Art. 5.3) sourced from the bookkeeping-fixed-assets-depreciation app: each FixedAsset record carries a jurisdictionOfUse field; the feed sums NBV across all in-scope assets per (period, jurisdiction). Inventory, financial assets, and IFRS 16 right-of-use lease assets are EXCLUDED from the OESO definition unless held in long-term operating use — the feed honours the OESO carve-out scoping flag on FixedAsset.sbieEligible.",
+          "description": "Declarative tangible-assets-NBV feed for the SBIE carve-out base. Per-jurisdiction net book value of eligible tangible assets (excluding cash, cash equivalents, intangibles, and held-for-sale assets per OESO Model Rules Art. 5.3) sourced from the bookkeeping-fixed-assets-depreciation app: each FixedAsset record carries a jurisdictionOfUse field; the feed sums NBV across all in-scope assets per (period, jurisdiction). Inventory, financial assets, and IFRS 16 right-of-use lease assets are EXCLUDED from the OESO definition unless held in long-term operating use — the feed honours the OESO carve-out scoping flag on FixedAsset.sbieEligible.",
           "sourceApp": "bookkeeping-fixed-assets-depreciation",
           "sourceSchemas": {
             "fixedAsset": "FixedAsset",
@@ -833,7 +833,7 @@
           "status": "DEFERRED — declarative contract only; live integration ships with the not-yet-merged bookkeeping-fixed-assets-depreciation apply cycle on a live instance."
         },
         "x-openregister-vpb-current-source": {
-          "description": "Declarative NL Vpb (vennootschapsbelasting) current-tax feed for the adjustedCoveredTaxes input on NL-resident jurisdiction computations (REQ-CBC-004). Per-entity Vpb current-year + prior-year amounts sourced from the bookkeeping-vpb-mkb app; the NL fiscal-unity consolidation collapses fiscale-eenheid members into a single entity-level current-tax line before the per-jurisdiction sum, so intra-fiscale-eenheid Vpb double-counting cannot occur. Only the NL jurisdiction record is fed; non-NL jurisdiction computations continue to source their covered tax from local-jurisdiction tax provisions.",
+          "description": "Declarative NL Vpb (vennootschapsbelasting) current-tax feed for the adjustedCoveredTaxes input on NL-resident jurisdiction computations. Per-entity Vpb current-year + prior-year amounts sourced from the bookkeeping-vpb-mkb app; the NL fiscal-unity consolidation collapses fiscale-eenheid members into a single entity-level current-tax line before the per-jurisdiction sum, so intra-fiscale-eenheid Vpb double-counting cannot occur. Only the NL jurisdiction record is fed; non-NL jurisdiction computations continue to source their covered tax from local-jurisdiction tax provisions.",
           "sourceApp": "bookkeeping-vpb-mkb",
           "sourceSchemas": {
             "currentTax": "VpbAangifte",
@@ -861,7 +861,7 @@
           "status": "DEFERRED — declarative contract only; live integration ships with the not-yet-merged bookkeeping-vpb-mkb apply cycle on a live instance."
         },
         "x-openregister-deferred-tax-source": {
-          "description": "Declarative deferred-tax feed for the adjusted covered taxes (REQ-CBC-004) and the GloBE income corrections (REQ-CBC-003). Per-jurisdiction DTA timing differences sourced from the bookkeeping-deferred-tax app: commercial-fiscaal divergence (IFRS valuation vs Vpb box 1 valuation) is recast on the GloBE basis per OESO Model Rules Art. 4.4 (covered-tax effect) + Art. 3.2.7 (DTA effect on GloBE income). The DTA effect is appended to globeIncomeAdjustments as type=deferred-tax-effect; the covered-tax effect is appended to coveredTaxAdjustments and folded into adjustedCoveredTaxes.",
+          "description": "Declarative deferred-tax feed for the adjusted covered taxes and the GloBE income corrections. Per-jurisdiction DTA timing differences sourced from the bookkeeping-deferred-tax app: commercial-fiscaal divergence (IFRS valuation vs Vpb box 1 valuation) is recast on the GloBE basis per OESO Model Rules Art. 4.4 (covered-tax effect) + Art. 3.2.7 (DTA effect on GloBE income). The DTA effect is appended to globeIncomeAdjustments as type=deferred-tax-effect; the covered-tax effect is appended to coveredTaxAdjustments and folded into adjustedCoveredTaxes.",
           "sourceApp": "bookkeeping-deferred-tax",
           "sourceSchemas": {
             "temporaryDifference": "TemporaryDifference",
@@ -906,7 +906,7 @@
             },
             "approved": {
               "label": "Approved",
-              "description": "Reviewed; QDMTT priority enforced before IIR allocation (REQ-CBC-006)."
+              "description": "Reviewed; QDMTT priority enforced before IIR allocation."
             },
             "locked": {
               "label": "Locked",
@@ -924,7 +924,7 @@
               "from": "computed",
               "to": "approved",
               "label": "Approve allocation",
-              "description": "Enforce QDMTT priority over IIR for NL-resident low-taxed income before approval (REQ-CBC-006).",
+              "description": "Enforce QDMTT priority over IIR for NL-resident low-taxed income before approval.",
               "requires": "OCA\\Shillinq\\Lifecycle\\CbcrPillar2Guard::canApproveComputation"
             },
             "lock": {
@@ -947,12 +947,12 @@
         "icon": "ShieldCheckOutline",
         "version": "0.1.0",
         "title": "Pillar 2 Safe Harbour",
-        "description": "Transitional CbCR safe harbour test result per jurisdiction per period (REQ-CBC-007). A pass on any of the three tests (de-minimis, simplified-ETR, routine-profits) replaces the full Pillar 2 computation with a simplified return for the period (FY2024-2026 transition window).",
+        "description": "Transitional CbCR safe harbour test result per jurisdiction per period. A pass on any of the three tests (de-minimis, simplified-ETR, routine-profits) replaces the full Pillar 2 computation with a simplified return for the period (FY2024-2026 transition window).",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Pillar2SafeHarbour changes (testApplied, testResult, dataSource, supportingCalculations) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — a safe-harbour pass replaces the full Pillar 2 computation for the jurisdiction and is the substantiation of choice in any Belastingdienst follow-up audit (REQ-CBC-007)."
+          "description": "Pillar2SafeHarbour changes (testApplied, testResult, dataSource, supportingCalculations) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — a safe-harbour pass replaces the full Pillar 2 computation for the jurisdiction and is the substantiation of choice in any Belastingdienst follow-up audit."
         },
         "type": "object",
         "required": [
@@ -983,7 +983,7 @@
               "simplified-etr",
               "routine-profits"
             ],
-            "description": "Which transitional safe-harbour test was applied (REQ-CBC-007).",
+            "description": "Which transitional safe-harbour test was applied.",
             "title": "Test Applied"
           },
           "testResult": {
@@ -992,7 +992,7 @@
               "pass",
               "fail"
             ],
-            "description": "Whether the jurisdiction qualifies for the safe harbour (REQ-CBC-007).",
+            "description": "Whether the jurisdiction qualifies for the safe harbour.",
             "title": "Test Result"
           },
           "dataSource": {
@@ -1022,7 +1022,7 @@
         "x-spec": "openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "QdmttReturn changes (taxableGlobeIncome, qualifyingDomesticEtr, qdmttPayable, paymentDueDate, filingDueDate, belastingdienstReference, xbrlSubmission file slot, lifecycle transitions submit / accept / reject) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — Wet minimumbelasting 2024 requires the Belastingdienst to be able to reconstruct the basis of the QDMTT charge for any open assessment year (REQ-CBC-006)."
+          "description": "QdmttReturn changes (taxableGlobeIncome, qualifyingDomesticEtr, qdmttPayable, paymentDueDate, filingDueDate, belastingdienstReference, xbrlSubmission file slot, lifecycle transitions submit / accept / reject) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — Wet minimumbelasting 2024 requires the Belastingdienst to be able to reconstruct the basis of the QDMTT charge for any open assessment year."
         },
         "type": "object",
         "required": [
@@ -1039,7 +1039,7 @@
           },
           "entity": {
             "type": "string",
-            "description": "FK to the NL-resident GroupEntityRegistry record (REQ-CBC-006).",
+            "description": "FK to the NL-resident GroupEntityRegistry record.",
             "title": "Entity"
           },
           "taxableGlobeIncome": {
@@ -1055,7 +1055,7 @@
           },
           "qdmttPayable": {
             "type": "number",
-            "description": "QDMTT amount payable in NL (REQ-CBC-006).",
+            "description": "QDMTT amount payable in NL.",
             "default": 0,
             "title": "Qdmtt Payable"
           },
@@ -1101,7 +1101,7 @@
           }
         },
         "x-openregister-export-target": {
-          "description": "NL QDMTT-aangifte XML export contract (REQ-CBC-006). Declarative contract for the openconnector-owned XML renderer that generates the Dutch Qualified Domestic Minimum Top-up Tax filing on lifecycle transition `submit` (draft → submitted). Format follows the Belastingdienst Wet minimumbelasting 2024 filing spec; data is merged from this `qdmtt-return` record + the linked NL-resident `group-entity-registry` record + the per-jurisdiction `pillar2-jurisdiction-computation` for jurisdiction=NL. The rendered XML is stored to `xbrlSubmission` (FileService FK); the Belastingdienst SBR/Digipoort token is stored to `belastingdienstReference`.",
+          "description": "NL QDMTT-aangifte XML export contract. Declarative contract for the openconnector-owned XML renderer that generates the Dutch Qualified Domestic Minimum Top-up Tax filing on lifecycle transition `submit` (draft → submitted). Format follows the Belastingdienst Wet minimumbelasting 2024 filing spec; data is merged from this `qdmtt-return` record + the linked NL-resident `group-entity-registry` record + the per-jurisdiction `pillar2-jurisdiction-computation` for jurisdiction=NL. The rendered XML is stored to `xbrlSubmission` (FileService FK); the Belastingdienst SBR/Digipoort token is stored to `belastingdienstReference`.",
           "format": "NL-QDMTT-XML",
           "schemaVersion": "Wet minimumbelasting 2024 v1",
           "schemaUrl": "https://www.belastingdienst.nl/wps/wcm/connect/bldcontentnl/themaoverstijgend/brochures_en_publicaties/wet-minimumbelasting-2024",
@@ -1190,7 +1190,7 @@
         "icon": "FileChartOutline",
         "version": "0.1.0",
         "title": "GloBE Information Return",
-        "description": "GIR for a group for a period (REQ-CBC-009). References all per-jurisdiction Pillar 2 computations and carries the top-up tax allocation (IIR/UTPR/QDMTT credit per entity). The OESO GIR XML schema export + validation is openconnector-owned (T4) and DEFERRED; this schema is the data-merge source.",
+        "description": "GIR for a group for a period. References all per-jurisdiction Pillar 2 computations and carries the top-up tax allocation (IIR/UTPR/QDMTT credit per entity). The OESO GIR XML schema export + validation is openconnector-owned (T4) and DEFERRED; this schema is the data-merge source.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md",
         "x-openregister-audit-trail": {
@@ -1212,7 +1212,7 @@
           },
           "ultimateParent": {
             "type": "string",
-            "description": "FK to the UPE GroupEntityRegistry record (REQ-CBC-009).",
+            "description": "FK to the UPE GroupEntityRegistry record.",
             "title": "Ultimate Parent"
           },
           "mneGroupSummary": {
@@ -1230,7 +1230,7 @@
           },
           "topUpTaxAllocation": {
             "type": "object",
-            "description": "IIR/UTPR/QDMTT distribution per entity (section 3) (REQ-CBC-009).",
+            "description": "IIR/UTPR/QDMTT distribution per entity (section 3).",
             "title": "Top Up Tax Allocation"
           },
           "globeXmlSubmission": {
@@ -1306,7 +1306,7 @@
           }
         },
         "x-openregister-export-target": {
-          "description": "OESO GloBE Information Return (GIR) XML export contract (REQ-CBC-009). Declarative contract for the openconnector-owned XML renderer that generates the OESO GIR XML on lifecycle transition `submit` (approved → submitted). Data is merged from `globe-information-return` + `pillar2-jurisdiction-computation` + `pillar2-safe-harbour` records; the rendered XML is stored to `globeXmlSubmission` (FileService FK); the renderer validates against the OESO GIR XML schema before export.",
+          "description": "OESO GloBE Information Return (GIR) XML export contract. Declarative contract for the openconnector-owned XML renderer that generates the OESO GIR XML on lifecycle transition `submit` (approved → submitted). Data is merged from `globe-information-return` + `pillar2-jurisdiction-computation` + `pillar2-safe-harbour` records; the rendered XML is stored to `globeXmlSubmission` (FileService FK); the renderer validates against the OESO GIR XML schema before export.",
           "format": "OESO-GIR-XML",
           "schemaVersion": "v1.0",
           "schemaUrl": "https://www.oecd.org/tax/beps/globe-information-return-xml-schema/",
@@ -1343,7 +1343,7 @@
         "icon": "FileDocumentMultipleOutline",
         "version": "0.1.0",
         "title": "CbCR Return",
-        "description": "CbCR report in the OESO CbC schema for a group for a period (REQ-CBC-008). References the jurisdiction summaries and the constituent-entity list, and carries the mandatory reconciliation to the consolidated financial statements (REQ-CBC-010). OESO CbC XML v2.0 export + SBR submission is openconnector-owned (T4) and DEFERRED.",
+        "description": "CbCR report in the OESO CbC schema for a group for a period. References the jurisdiction summaries and the constituent-entity list, and carries the mandatory reconciliation to the consolidated financial statements. OESO CbC XML v2.0 export + SBR submission is openconnector-owned (T4) and DEFERRED.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md",
         "x-openregister-audit-trail": {
@@ -1365,7 +1365,7 @@
           },
           "reportingEntity": {
             "type": "string",
-            "description": "FK to the reporting GroupEntityRegistry record (REQ-CBC-008).",
+            "description": "FK to the reporting GroupEntityRegistry record.",
             "title": "Reporting Entity"
           },
           "jurisdictionSummaries": {
@@ -1386,13 +1386,13 @@
           },
           "reconciliationResidual": {
             "type": "number",
-            "description": "Residual difference between CbCR totals and the consolidated P&L (REQ-CBC-010).",
+            "description": "Residual difference between CbCR totals and the consolidated P&L.",
             "default": 0,
             "title": "Reconciliation Residual"
           },
           "reconciliationUnreconciled": {
             "type": "boolean",
-            "description": "Computed: residual > EUR 1M is flagged unreconciled (REQ-CBC-010).",
+            "description": "Computed: residual > EUR 1M is flagged unreconciled.",
             "title": "Reconciliation Unreconciled"
           },
           "reconciliationItems": {
@@ -1460,7 +1460,7 @@
         "x-openregister-calculations": {
           "reconciliationUnreconciled": {
             "type": "boolean",
-            "description": "Residual difference greater than EUR 1M is flagged unreconciled (REQ-CBC-010).",
+            "description": "Residual difference greater than EUR 1M is flagged unreconciled.",
             "expr": "ABS(@self.reconciliationResidual) > 1000000"
           }
         },
@@ -1474,7 +1474,7 @@
             },
             "reconciled": {
               "label": "Reconciled",
-              "description": "Reconciled to the consolidated financial statements (REQ-CBC-010)."
+              "description": "Reconciled to the consolidated financial statements."
             },
             "submitted": {
               "label": "Submitted",
@@ -1490,7 +1490,7 @@
               "from": "draft",
               "to": "reconciled",
               "label": "Mark reconciled",
-              "description": "Confirm reconciliation; residual > EUR 1M must be explained before sign-off (REQ-CBC-010).",
+              "description": "Confirm reconciliation; residual > EUR 1M must be explained before sign-off.",
               "requires": "OCA\\Shillinq\\Lifecycle\\CbcrPillar2Guard::canReconcileCbcrReturn"
             },
             "submit": {
@@ -1514,7 +1514,7 @@
           }
         },
         "x-openregister-export-target": {
-          "description": "OESO CbCR XML v2.0 export contract (REQ-CBC-008). Declarative contract for the openconnector-owned XML renderer that generates the OESO Country-by-Country Report XML on lifecycle transition `submit` (reconciled → submitted). Data is merged from `cbcr-return` + `cbcr-jurisdiction-summary` + `group-entity-registry` records; the rendered XML is stored to `cbcrXmlSubmission` (FileService FK); the SBR/Digipoort submission token returned by the Belastingdienst is stored to `belastingdienstReference`.",
+          "description": "OESO CbCR XML v2.0 export contract. Declarative contract for the openconnector-owned XML renderer that generates the OESO Country-by-Country Report XML on lifecycle transition `submit` (reconciled → submitted). Data is merged from `cbcr-return` + `cbcr-jurisdiction-summary` + `group-entity-registry` records; the rendered XML is stored to `cbcrXmlSubmission` (FileService FK); the SBR/Digipoort submission token returned by the Belastingdienst is stored to `belastingdienstReference`.",
           "format": "OESO-CBC-XML",
           "schemaVersion": "v2.0",
           "schemaUrl": "https://www.oecd.org/tax/beps/beps-actions/action13/cbc-xml-schema-v2-0/",
@@ -1553,12 +1553,12 @@
         "icon": "HandshakeOutline",
         "version": "0.1.0",
         "title": "Tax Treaty Overview",
-        "description": "Reference register of double-taxation agreements (DTAs) used when allocating withholding taxes to jurisdictions within adjusted covered taxes (REQ-CBC-004). Reference data only; no lifecycle.",
+        "description": "Reference register of double-taxation agreements (DTAs) used when allocating withholding taxes to jurisdictions within adjusted covered taxes. Reference data only; no lifecycle.",
         "x-schema-org": "schema:Legislation",
         "x-spec": "openspec/changes/bookkeeping-cbcr-pillar2/specs/bookkeeping-cbcr-pillar2/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "TaxTreatyOverview changes (treatyName, treatyDate, withholdingRates, mliApplicability flip) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — the treaty references drive withholding allocation in adjusted covered taxes (REQ-CBC-004); a stale rate would silently misstate the per-jurisdiction ETR. Reference data, but each amendment must reproduce on demand for auditor review."
+          "description": "TaxTreatyOverview changes (treatyName, treatyDate, withholdingRates, mliApplicability flip) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — the treaty references drive withholding allocation in adjusted covered taxes; a stale rate would silently misstate the per-jurisdiction ETR. Reference data, but each amendment must reproduce on demand for auditor review."
         },
         "type": "object",
         "required": [

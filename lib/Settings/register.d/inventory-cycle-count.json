@@ -49,7 +49,7 @@
               "full",
               "partial"
             ],
-            "description": "Closed enum per REQ-ICC-002. `full` = all SKUs in the administration; `partial` = scoped to a single location or product category (REQ-ICC-008).",
+            "description": "Closed enum per REQ-ICC-002. `full` = all SKUs in the administration; `partial` = scoped to a single location or product category.",
             "example": "partial",
             "title": "Count Type"
           },
@@ -412,7 +412,7 @@
         "icon": "FormatListNumberedRtl",
         "version": "0.1.0",
         "title": "Inventory Cycle Count Line",
-        "description": "One snapshot row inside an InventoryCycleCount per REQ-ICC-003. Each line captures the (sku, locationId) pair, the expectedQuantity snapshotted from InventoryStock at submission, the operator-entered countedQuantity, and the derived variance fields. The flagging field requiresReason is computed against the configurable thresholds in InventoryCycleCount.x-openregister-metadata (quantityVarianceThresholdPercent + valueVarianceThresholdAbsolute) per REQ-ICC-004 and reused by the post transition's VarianceGate (REQ-ICC-005). All money/quantity fields are integer-cent (multipleOf 0.01) per the shillinq Money discipline.",
+        "description": "One snapshot row inside an InventoryCycleCount per REQ-ICC-003. Each line captures the (sku, locationId) pair, the expectedQuantity snapshotted from InventoryStock at submission, the operator-entered countedQuantity, and the derived variance fields. The flagging field requiresReason is computed against the configurable thresholds in InventoryCycleCount.x-openregister-metadata (quantityVarianceThresholdPercent + valueVarianceThresholdAbsolute) per REQ-ICC-004 and reused by the post transition's VarianceGate. All money/quantity fields are integer-cent (multipleOf 0.01) per the shillinq Money discipline.",
         "x-schema-org": "schema:Quantity",
         "x-openregister-purpose": "ledger",
         "x-spec": "openspec/changes/inventory-cycle-count/specs/inventory-cycle-count/spec.md",
@@ -596,7 +596,7 @@
               "countId",
               "requiresReason"
             ],
-            "description": "Powers the VarianceGate check on counting → posted (REQ-ICC-004)."
+            "description": "Powers the VarianceGate check on counting → posted."
           }
         ],
         "x-openregister-rbac": {

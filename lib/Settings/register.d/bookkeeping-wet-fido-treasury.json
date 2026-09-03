@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-wet-fido-treasury",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json; ADR-031 declarative-first; ADR-022 real OpenRegister ObjectService API only",
-    "description": "Tier 3 — Wet Fido & Treasurystatuut compliance for Dutch decentralised governments (gemeenten/provincies/waterschappen/GR). Declares eight schemas: Treasurystatuut (REQ-FDO-001), KasgeldLimiet (REQ-FDO-002), RenteRisicoNorm (REQ-FDO-003), SchatkistbankierenSaldo (REQ-FDO-005), Lening (REQ-FDO-001/002/008), Derivaat (REQ-FDO-004), QuartaalrapportageFido (REQ-FDO-006) and TreasuryParagraaf (REQ-FDO-007). All limiet-math (kasgeldlimiet rolling-3-month average, rente-risiconorm 4-year forward projection, schatkistbankieren drempelbedrag, quarterly-rapportage roll-up) is declarative metadata: x-openregister-aggregations + x-openregister-lifecycle. The single ADR-031 exception-path guard (OCA\\Shillinq\\Lifecycle\\FidoTreasuryGuard) enforces the three cross-field preconditions the declarative DSL cannot yet express: a Lening may only be recorded once any kasgeldlimiet / rente-risiconorm / signing-mandate breach carries an override-rationale (REQ-FDO-008), a Derivaat may only be recorded with a RUDDO hedging-link whose notional does not exceed the hedged exposure and whose counterparty rating is single-A or better (REQ-FDO-004), and a QuartaalrapportageFido may only be submitted once both the treasurer and concerncontroller sign-offs are present (REQ-FDO-006). Seed objects ship one Treasurystatuut, one Lening, one KasgeldLimiet template, one Derivaat, one RenteRisicoNorm and one SchatkistbankierenSaldo worked example per design.md.",
+    "description": "Tier 3 — Wet Fido & Treasurystatuut compliance for Dutch decentralised governments (gemeenten/provincies/waterschappen/GR). Declares eight schemas: Treasurystatuut, KasgeldLimiet, RenteRisicoNorm, SchatkistbankierenSaldo, Lening (REQ-FDO-001/002/008), Derivaat, QuartaalrapportageFido and TreasuryParagraaf. All limiet-math (kasgeldlimiet rolling-3-month average, rente-risiconorm 4-year forward projection, schatkistbankieren drempelbedrag, quarterly-rapportage roll-up) is declarative metadata: x-openregister-aggregations + x-openregister-lifecycle. The single ADR-031 exception-path guard (OCA\\Shillinq\\Lifecycle\\FidoTreasuryGuard) enforces the three cross-field preconditions the declarative DSL cannot yet express: a Lening may only be recorded once any kasgeldlimiet / rente-risiconorm / signing-mandate breach carries an override-rationale, a Derivaat may only be recorded with a RUDDO hedging-link whose notional does not exceed the hedged exposure and whose counterparty rating is single-A or better, and a QuartaalrapportageFido may only be submitted once both the treasurer and concerncontroller sign-offs are present. Seed objects ship one Treasurystatuut, one Lening, one KasgeldLimiet template, one Derivaat, one RenteRisicoNorm and one SchatkistbankierenSaldo worked example per design.md.",
     "fido-normcatalogus": {
       "description": "FidoNormcatalogus statutory kasgeldlimiet percentages per organisatie-type (REQ-FDO-009, Wet Fido Annex II). Maintained as fragment metadata so a wets-wijziging is a data-edit, not a code-deploy; the kasgeld-limiet percentage default is auto-selected from the organisation's organisationType on first KasgeldLimiet record.",
       "municipality": 8.5,
@@ -21,7 +21,7 @@
         "icon": "FileDocumentOutline",
         "version": "0.1.0",
         "title": "Treasurystatuut",
-        "description": "Versioned local treasury risk policy adopted by raad/staten/AB once per term (REQ-FDO-001). Encodes the signing-mandate matrix (role × amount × instrument), permitted instruments and counterparty allowlist within the Wet Fido envelope. Exactly one version is 'adopted' per organisation at any moment; adopting a new version supersedes the prior one. Lifecycle: draft → approved → adopted → superseded.",
+        "description": "Versioned local treasury risk policy adopted by raad/staten/AB once per term. Encodes the signing-mandate matrix (role × amount × instrument), permitted instruments and counterparty allowlist within the Wet Fido envelope. Exactly one version is 'adopted' per organisation at any moment; adopting a new version supersedes the prior one. Lifecycle: draft → approved → adopted → superseded.",
         "x-schema-org": "schema:Legislation",
         "x-spec": "openspec/changes/bookkeeping-wet-fido-treasury/specs/bookkeeping-wet-fido-treasury/spec.md",
         "type": "object",
@@ -34,19 +34,19 @@
         "properties": {
           "version": {
             "type": "string",
-            "description": "Statuut version label (REQ-FDO-001).",
+            "description": "Statuut version label.",
             "example": "1.0",
             "title": "Version"
           },
           "organisationId": {
             "type": "string",
-            "description": "FK to the organisation this statuut governs; reads are scoped to the requesting user's organisation (REQ-FDO-001).",
+            "description": "FK to the organisation this statuut governs; reads are scoped to the requesting user's organisation.",
             "example": "org-gemeente-1",
             "title": "Organisation ID"
           },
           "organisationType": {
             "type": "string",
-            "description": "Organisation type, drives the kasgeldlimiet percentage via FidoNormcatalogus (REQ-FDO-009).",
+            "description": "Organisation type, drives the kasgeldlimiet percentage via FidoNormcatalogus.",
             "enum": [
               "municipality",
               "province",
@@ -59,7 +59,7 @@
           },
           "adoptionDecision": {
             "type": "string",
-            "description": "Reference to the raad/staten/AB besluit adopting this statuut (REQ-FDO-001).",
+            "description": "Reference to the raad/staten/AB besluit adopting this statuut.",
             "nullable": true,
             "example": "Raadsbesluit 2025-11-30/14",
             "title": "Adoption Decision"
@@ -87,7 +87,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Lifecycle status of the statuut version (REQ-FDO-001).",
+            "description": "Lifecycle status of the statuut version.",
             "enum": [
               "draft",
               "approved",
@@ -110,7 +110,7 @@
           },
           "signingMandates": {
             "type": "array",
-            "description": "Signing-mandate matrix: per row a role, an amount band and a permitted instrument set, plus the authority required (zelfstandig / co-sign-required / college-besluit-required) (REQ-FDO-001, REQ-FDO-009).",
+            "description": "Signing-mandate matrix: per row a role, an amount band and a permitted instrument set, plus the authority required (zelfstandig / co-sign-required / college-besluit-required).",
             "items": {
               "type": "object"
             },
@@ -149,7 +149,7 @@
           },
           "permittedInstruments": {
             "type": "array",
-            "description": "Instruments permitted under this statuut (REQ-FDO-001).",
+            "description": "Instruments permitted under this statuut.",
             "items": {
               "type": "string",
               "enum": [
@@ -170,7 +170,7 @@
           },
           "counterpartyAllowlist": {
             "type": "array",
-            "description": "Permitted counterparty categories (REQ-FDO-001).",
+            "description": "Permitted counterparty categories.",
             "items": {
               "type": "string",
               "enum": [
@@ -224,13 +224,13 @@
               "from": "draft",
               "to": "approved",
               "label": "Approve statuut",
-              "description": "Concerncontroller approves the draft for adoption (REQ-FDO-001)."
+              "description": "Concerncontroller approves the draft for adoption."
             },
             "adopt": {
               "from": "approved",
               "to": "adopted",
               "label": "Adopt statuut",
-              "description": "Record the raad/staten/AB besluit adopting the statuut; the prior adopted version is superseded (REQ-FDO-001)."
+              "description": "Record the raad/staten/AB besluit adopting the statuut; the prior adopted version is superseded."
             },
             "supersede": {
               "from": "adopted",
@@ -242,7 +242,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Treasurystatuut is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Treasurystatuut is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "KasgeldLimiet": {
@@ -250,7 +250,7 @@
         "icon": "ChartLine",
         "version": "0.1.0",
         "title": "Kasgeldlimiet",
-        "description": "Daily short-term debt ceiling per Wet Fido (REQ-FDO-002). The ceiling is percentage × vastgestelde begroting per 1 januari, where percentage is the FidoNormcatalogus statutory value for the organisatie-type (REQ-FDO-009). Current exposure is the rolling 3-month average of net short-term debt; a declarative aggregation (kasgeldRolling3Month) recomputes it daily from the GL short-term debt postings. The enforcement ladder runs binnen-norm → overschrijding-1-kwartaal → overschrijding-2-kwartalen → sanering-verplicht (REQ-FDO-002).",
+        "description": "Daily short-term debt ceiling per Wet Fido. The ceiling is percentage × vastgestelde begroting per 1 januari, where percentage is the FidoNormcatalogus statutory value for the organisatie-type. Current exposure is the rolling 3-month average of net short-term debt; a declarative aggregation (kasgeldRolling3Month) recomputes it daily from the GL short-term debt postings. The enforcement ladder runs binnen-norm → overschrijding-1-kwartaal → overschrijding-2-kwartalen → sanering-verplicht.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-wet-fido-treasury/specs/bookkeeping-wet-fido-treasury/spec.md",
         "type": "object",
@@ -267,7 +267,7 @@
         "properties": {
           "auditYear": {
             "type": "integer",
-            "description": "Boekjaar the limiet applies to (REQ-FDO-002).",
+            "description": "Boekjaar the limiet applies to.",
             "example": 2026,
             "title": "Audit Year"
           },
@@ -279,25 +279,25 @@
           },
           "baseBudget": {
             "type": "number",
-            "description": "Vastgestelde begroting per 1 januari (REQ-FDO-002).",
+            "description": "Vastgestelde begroting per 1 januari.",
             "example": 200000000.0,
             "title": "Base Begroting"
           },
           "percentage": {
             "type": "number",
-            "description": "Statutory kasgeldlimiet percentage per organisatie-type, sourced from FidoNormcatalogus (REQ-FDO-009).",
+            "description": "Statutory kasgeldlimiet percentage per organisatie-type, sourced from FidoNormcatalogus.",
             "example": 8.5,
             "title": "Percentage"
           },
           "calculatedCeiling": {
             "type": "number",
-            "description": "Computed ceiling = percentage/100 × baseBegroting (REQ-FDO-002).",
+            "description": "Computed ceiling = percentage/100 × baseBegroting.",
             "example": 17000000.0,
             "title": "Calculated Ceiling"
           },
           "currentExposure": {
             "type": "number",
-            "description": "Rolling 3-month average of net short-term debt; daily recompute via kasgeldRolling3Month aggregation (REQ-FDO-002).",
+            "description": "Rolling 3-month average of net short-term debt; daily recompute via kasgeldRolling3Month aggregation.",
             "example": 16800000.0,
             "title": "Current Exposure"
           },
@@ -309,7 +309,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Enforcement-ladder status (REQ-FDO-002).",
+            "description": "Enforcement-ladder status.",
             "enum": [
               "binnen-norm",
               "overschrijding-1-kwartaal",
@@ -336,7 +336,7 @@
         },
         "x-openregister-aggregations": {
           "kasgeldRolling3Month": {
-            "description": "Declarative shape of the daily kasgeldlimiet recompute (REQ-FDO-002). Sums net short-term debt = (opgenomen kasgeldleningen + rekening-courant draws + schuld RO + overige korte schuld < 1 jaar) − (korte vorderingen < 1 jaar) from the prior 90 banking days of GL short-term debt postings, divides by the number of banking days to obtain the rolling 3-month average, sets currentExposure and derives headroom = calculatedCeiling − currentExposure. status follows the enforcement ladder over consecutive quarters. When the engine cannot express the rolling window, the same result is computed from the real ObjectService API (find/findAll) over the GL ledger.",
+            "description": "Declarative shape of the daily kasgeldlimiet recompute. Sums net short-term debt = (opgenomen kasgeldleningen + rekening-courant draws + schuld RO + overige korte schuld < 1 jaar) − (korte vorderingen < 1 jaar) from the prior 90 banking days of GL short-term debt postings, divides by the number of banking days to obtain the rolling 3-month average, sets currentExposure and derives headroom = calculatedCeiling − currentExposure. status follows the enforcement ladder over consecutive quarters. When the engine cannot express the rolling window, the same result is computed from the real ObjectService API (find/findAll) over the GL ledger.",
             "source": "GLLine",
             "filter": {
               "shortTermDebt": true,
@@ -359,7 +359,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Kasgeldlimiet is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Kasgeldlimiet is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "RenteRisicoNorm": {
@@ -367,7 +367,7 @@
         "icon": "ChartBellCurve",
         "version": "0.1.0",
         "title": "Rente-risiconorm",
-        "description": "4-year rolling interest-rate herfinanciering + rate-reset exposure ceiling per Wet Fido (REQ-FDO-003). Ceiling = 20% × uitstaande vaste schuld per 1 januari. The forward-looking 4-year per-year exposure is projected declaratively (renteRisico4YearProjection) from recorded Leningen with repayment schedules and floating-rate reset dates; a new lening whose forward exposure would breach 20% in any of the next four years is refused (or recorded with an override, REQ-FDO-008).",
+        "description": "4-year rolling interest-rate herfinanciering + rate-reset exposure ceiling per Wet Fido. Ceiling = 20% × uitstaande vaste schuld per 1 januari. The forward-looking 4-year per-year exposure is projected declaratively (renteRisico4YearProjection) from recorded Leningen with repayment schedules and floating-rate reset dates; a new lening whose forward exposure would breach 20% in any of the next four years is refused (or recorded with an override, REQ-FDO-008).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-wet-fido-treasury/specs/bookkeeping-wet-fido-treasury/spec.md",
         "type": "object",
@@ -384,7 +384,7 @@
         "properties": {
           "auditYear": {
             "type": "integer",
-            "description": "Boekjaar the norm applies to (REQ-FDO-003).",
+            "description": "Boekjaar the norm applies to.",
             "example": 2026,
             "title": "Audit Year"
           },
@@ -396,26 +396,26 @@
           },
           "baseFixedDebt": {
             "type": "number",
-            "description": "Uitstaande vaste schuld per 1 januari (REQ-FDO-003).",
+            "description": "Uitstaande vaste schuld per 1 januari.",
             "example": 500000000.0,
             "title": "Base Vaste Schuld"
           },
           "percentage": {
             "type": "number",
-            "description": "Statutory rente-risiconorm percentage; fixed at 20% per Wet Fido (REQ-FDO-003).",
+            "description": "Statutory rente-risiconorm percentage; fixed at 20% per Wet Fido.",
             "default": 20.0,
             "example": 20.0,
             "title": "Percentage"
           },
           "calculatedCeiling": {
             "type": "number",
-            "description": "Computed per-year ceiling = percentage/100 × baseVasteSchuld (REQ-FDO-003).",
+            "description": "Computed per-year ceiling = percentage/100 × baseVasteSchuld.",
             "example": 100000000.0,
             "title": "Calculated Ceiling"
           },
           "forwardLooking4Year": {
             "type": "array",
-            "description": "Per-year projected herfinanciering + rate-reset exposure for the next four years (REQ-FDO-003).",
+            "description": "Per-year projected herfinanciering + rate-reset exposure for the next four years.",
             "items": {
               "type": "object"
             },
@@ -463,7 +463,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Norm status: binnen-norm or overschrijding-jaar-N where N is the first breaching projection year (REQ-FDO-003).",
+            "description": "Norm status: binnen-norm or overschrijding-jaar-N where N is the first breaching projection year.",
             "example": "binnen-norm",
             "title": "Status"
           },
@@ -477,7 +477,7 @@
         },
         "x-openregister-aggregations": {
           "renteRisico4YearProjection": {
-            "description": "Declarative shape of the 4-year forward rente-risiconorm projection (REQ-FDO-003). Reads recorded Leningen with repaymentSchedule and floating-rate renteherzieningsmoment, projects per-year herfinanciering (maturing principal) + rate-reset volume for the next four years, sets forwardLooking4Year and derives headroomPerYear = ceiling − exposure per year. Recomputed on every lening-entry and floating-rate reset-event. When the engine cannot express the forward arithmetic, the same result is computed from the real ObjectService API (find/findAll) over recorded Leningen.",
+            "description": "Declarative shape of the 4-year forward rente-risiconorm projection. Reads recorded Leningen with repaymentSchedule and floating-rate renteherzieningsmoment, projects per-year herfinanciering (maturing principal) + rate-reset volume for the next four years, sets forwardLooking4Year and derives headroomPerYear = ceiling − exposure per year. Recomputed on every lening-entry and floating-rate reset-event. When the engine cannot express the forward arithmetic, the same result is computed from the real ObjectService API (find/findAll) over recorded Leningen.",
             "source": "Lening",
             "filter": {
               "type": [
@@ -499,7 +499,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Rente-risiconorm is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Rente-risiconorm is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "SchatkistbankierenSaldo": {
@@ -507,7 +507,7 @@
         "icon": "BankTransfer",
         "version": "0.1.0",
         "title": "Schatkistbankieren-saldo",
-        "description": "Daily cash-park position to the Agentschap van de Generale Thesaurie (AGT) with drempelbedrag automation (REQ-FDO-005). drempelbedrag = max(0.75% × begrotingstotaal, €1,000,000) capped at €1bn (computed declaratively). When the rekening-courant saldo exceeds the drempelbedrag for the third consecutive banking day, the daily sweep job parks the excess to AGT; the sweep is idempotent. Sweep failures are logged for the audit trail and alert the treasurer.",
+        "description": "Daily cash-park position to the Agentschap van de Generale Thesaurie (AGT) with drempelbedrag automation. drempelbedrag = max(0.75% × begrotingstotaal, €1,000,000) capped at €1bn (computed declaratively). When the rekening-courant saldo exceeds the drempelbedrag for the third consecutive banking day, the daily sweep job parks the excess to AGT; the sweep is idempotent. Sweep failures are logged for the audit trail and alert the treasurer.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-wet-fido-treasury/specs/bookkeeping-wet-fido-treasury/spec.md",
         "type": "object",
@@ -524,13 +524,13 @@
           },
           "baseBudget": {
             "type": "number",
-            "description": "Begrotingstotaal driving the drempelbedrag (REQ-FDO-005).",
+            "description": "Begrotingstotaal driving the drempelbedrag.",
             "example": 150000000.0,
             "title": "Base Begroting"
           },
           "thresholdAmount": {
             "type": "number",
-            "description": "Computed drempelbedrag = max(0.75% × baseBegroting, 1000000) capped at 1000000000 (REQ-FDO-005).",
+            "description": "Computed drempelbedrag = max(0.75% × baseBegroting, 1000000) capped at 1000000000.",
             "example": 1125000.0,
             "title": "Drempelbedrag"
           },
@@ -542,14 +542,14 @@
           },
           "daysAboveThreshold": {
             "type": "integer",
-            "description": "Consecutive banking days the saldo has been above the drempelbedrag; a sweep triggers on the third consecutive day (REQ-FDO-005).",
+            "description": "Consecutive banking days the saldo has been above the drempelbedrag; a sweep triggers on the third consecutive day.",
             "default": 0,
             "example": 3,
             "title": "Days Above Drempel"
           },
           "parkedAtTreasury": {
             "type": "number",
-            "description": "Amount parked at AGT in the latest sweep (REQ-FDO-005).",
+            "description": "Amount parked at AGT in the latest sweep.",
             "nullable": true,
             "example": 375000.0,
             "title": "Parked At Schatkist"
@@ -563,7 +563,7 @@
           },
           "lastSweepStatus": {
             "type": "string",
-            "description": "Outcome of the latest sweep (REQ-FDO-005).",
+            "description": "Outcome of the latest sweep.",
             "enum": [
               "success",
               "failure"
@@ -581,7 +581,7 @@
           },
           "submissionReceipt": {
             "type": "string",
-            "description": "Digital receipt number returned by AGT for the latest sweep (REQ-FDO-005).",
+            "description": "Digital receipt number returned by AGT for the latest sweep.",
             "nullable": true,
             "example": "AGT-2026-03-31-00412",
             "title": "Submission Receipt"
@@ -596,7 +596,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Schatkistbankieren-saldo is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Schatkistbankieren-saldo is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Lening": {
@@ -604,7 +604,7 @@
         "icon": "CashMultiple",
         "version": "0.1.0",
         "title": "Lening",
-        "description": "Short-term (kasgeld) and long-term loans with instrument type, maturity and signing-mandate enforcement (REQ-FDO-001, REQ-FDO-002, REQ-FDO-008). At entry the lening is validated against the live kasgeldlimiet, rente-risiconorm and the adopted Treasurystatuut signing-mandate matrix; a breach is not hard-blocked but requires an override-rationale recorded in the audit trail (the FidoTreasuryGuard enforces the override precondition). Lifecycle: draft → recorded → locked.",
+        "description": "Short-term (kasgeld) and long-term loans with instrument type, maturity and signing-mandate enforcement. At entry the lening is validated against the live kasgeldlimiet, rente-risiconorm and the adopted Treasurystatuut signing-mandate matrix; a breach is not hard-blocked but requires an override-rationale recorded in the audit trail (the FidoTreasuryGuard enforces the override precondition). Lifecycle: draft → recorded → locked.",
         "x-schema-org": "schema:LoanOrCredit",
         "x-spec": "openspec/changes/bookkeeping-wet-fido-treasury/specs/bookkeeping-wet-fido-treasury/spec.md",
         "type": "object",
@@ -623,13 +623,13 @@
           },
           "counterparty": {
             "type": "string",
-            "description": "Lender / counterparty name (REQ-FDO-001).",
+            "description": "Lender / counterparty name.",
             "example": "ABN AMRO Bank N.V.",
             "title": "Counterparty"
           },
           "type": {
             "type": "string",
-            "description": "Loan instrument type (REQ-FDO-002).",
+            "description": "Loan instrument type.",
             "enum": [
               "kasgeld",
               "rekening-courant",
@@ -643,7 +643,7 @@
           },
           "principal": {
             "type": "number",
-            "description": "Principal amount (REQ-FDO-002).",
+            "description": "Principal amount.",
             "example": 2500000.0,
             "title": "Principal"
           },
@@ -656,7 +656,7 @@
           },
           "rateType": {
             "type": "string",
-            "description": "Fixed or floating rate (REQ-FDO-003).",
+            "description": "Fixed or floating rate.",
             "enum": [
               "fixed",
               "floating"
@@ -680,14 +680,14 @@
           },
           "maturityDate": {
             "type": "string",
-            "description": "Maturity date; drives the herfinanciering year for the rente-risiconorm projection (REQ-FDO-003).",
+            "description": "Maturity date; drives the herfinanciering year for the rente-risiconorm projection.",
             "nullable": true,
             "example": "2027-01-15",
             "title": "Maturity Date"
           },
           "repaymentSchedule": {
             "type": "string",
-            "description": "Amortisation profile (REQ-FDO-003).",
+            "description": "Amortisation profile.",
             "enum": [
               "lineair",
               "annuitair",
@@ -699,21 +699,21 @@
           },
           "interestResetMoment": {
             "type": "string",
-            "description": "Floating-rate reset date feeding the rente-risiconorm projection (REQ-FDO-003).",
+            "description": "Floating-rate reset date feeding the rente-risiconorm projection.",
             "nullable": true,
             "example": null,
             "title": "Renteherzieningsmoment"
           },
           "signingMandateRole": {
             "type": "string",
-            "description": "Role recorded as signing this lening; validated against the Treasurystatuut signing-mandate matrix (REQ-FDO-001, REQ-FDO-009).",
+            "description": "Role recorded as signing this lening; validated against the Treasurystatuut signing-mandate matrix.",
             "nullable": true,
             "example": "treasurer",
             "title": "Signing Mandate Role"
           },
           "treasuryStatuteId": {
             "type": "string",
-            "description": "FK to the adopted Treasurystatuut the lening is validated against (REQ-FDO-001).",
+            "description": "FK to the adopted Treasurystatuut the lening is validated against.",
             "nullable": true,
             "example": "statuut-gemeente-2026",
             "title": "Treasurystatuut ID"
@@ -734,14 +734,14 @@
           },
           "limitBreach": {
             "type": "boolean",
-            "description": "True when the entry breaches the kasgeldlimiet, rente-risiconorm or signing-mandate at recording time (REQ-FDO-008).",
+            "description": "True when the entry breaches the kasgeldlimiet, rente-risiconorm or signing-mandate at recording time.",
             "default": false,
             "example": false,
             "title": "Limiet Breach"
           },
           "overrideRationale": {
             "type": "string",
-            "description": "Mandatory rationale when limietBreach is true; recorded in the audit trail and flagged in the next QuartaalrapportageFido (REQ-FDO-008).",
+            "description": "Mandatory rationale when limietBreach is true; recorded in the audit trail and flagged in the next QuartaalrapportageFido.",
             "nullable": true,
             "example": null,
             "title": "Override Rationale"
@@ -755,7 +755,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Lifecycle status (REQ-FDO-008).",
+            "description": "Lifecycle status.",
             "enum": [
               "draft",
               "recorded",
@@ -780,7 +780,7 @@
             },
             "recorded-with-override": {
               "label": "Recorded with override",
-              "description": "A limiet or mandate breach was acknowledged with an override-rationale (REQ-FDO-008)."
+              "description": "A limiet or mandate breach was acknowledged with an override-rationale."
             },
             "locked": {
               "label": "Locked",
@@ -792,14 +792,14 @@
               "from": "draft",
               "to": "recorded",
               "label": "Record lening",
-              "description": "Record a lening that is within the limieten and the signing-mandate matrix (REQ-FDO-008).",
+              "description": "Record a lening that is within the limieten and the signing-mandate matrix.",
               "requires": "OCA\\Shillinq\\Lifecycle\\FidoTreasuryGuard::canRecordLening"
             },
             "recordWithOverride": {
               "from": "draft",
               "to": "recorded-with-override",
               "label": "Record with override",
-              "description": "Record a breaching lening together with the mandatory override-rationale (REQ-FDO-008).",
+              "description": "Record a breaching lening together with the mandatory override-rationale.",
               "requires": "OCA\\Shillinq\\Lifecycle\\FidoTreasuryGuard::canRecordLening"
             },
             "lock": {
@@ -818,7 +818,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Lening is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Lening is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Derivaat": {
@@ -826,7 +826,7 @@
         "icon": "SwapHorizontalBold",
         "version": "0.1.0",
         "title": "Derivaat",
-        "description": "Interest-rate swaps / caps / floors / collars restricted to hedging-only purposes per RUDDO (REQ-FDO-004). A derivaat may only be recorded with a RUDDOJustification demonstrating a hedge-relationship to an existing Lening or KasgeldPositie, a notional that does not exceed the hedged exposure, and a counterparty rating of single-A or better; speculative derivatives are never recorded. The FidoTreasuryGuard enforces these cross-field preconditions. Lifecycle: draft → recorded → matured.",
+        "description": "Interest-rate swaps / caps / floors / collars restricted to hedging-only purposes per RUDDO. A derivaat may only be recorded with a RUDDOJustification demonstrating a hedge-relationship to an existing Lening or KasgeldPositie, a notional that does not exceed the hedged exposure, and a counterparty rating of single-A or better; speculative derivatives are never recorded. The FidoTreasuryGuard enforces these cross-field preconditions. Lifecycle: draft → recorded → matured.",
         "x-schema-org": "schema:FinancialProduct",
         "x-spec": "openspec/changes/bookkeeping-wet-fido-treasury/specs/bookkeeping-wet-fido-treasury/spec.md",
         "type": "object",
@@ -844,7 +844,7 @@
           },
           "type": {
             "type": "string",
-            "description": "Derivative type (REQ-FDO-004).",
+            "description": "Derivative type.",
             "enum": [
               "IRS",
               "cap",
@@ -856,20 +856,20 @@
           },
           "notional": {
             "type": "number",
-            "description": "Notional amount; must not exceed the hedged exposure (REQ-FDO-004).",
+            "description": "Notional amount; must not exceed the hedged exposure.",
             "example": 8000000.0,
             "title": "Notional"
           },
           "hedgedExposureId": {
             "type": "string",
-            "description": "FK to the underlying Lening (or KasgeldPositie) being hedged; mandatory per RUDDO (REQ-FDO-004).",
+            "description": "FK to the underlying Lening (or KasgeldPositie) being hedged; mandatory per RUDDO.",
             "nullable": true,
             "example": "lening-floating-10m",
             "title": "Hedged Exposure ID"
           },
           "hedgedExposureAmount": {
             "type": "number",
-            "description": "Amount of the hedged exposure the notional is checked against (REQ-FDO-004).",
+            "description": "Amount of the hedged exposure the notional is checked against.",
             "nullable": true,
             "example": 10000000.0,
             "title": "Hedged Exposure Amount"
@@ -897,14 +897,14 @@
           },
           "RUDDOJustification": {
             "type": "string",
-            "description": "Narrative demonstrating the hedge-relationship per RUDDO Article 2 (REQ-FDO-004). Mandatory; a derivaat without a hedging justification is never recorded.",
+            "description": "Narrative demonstrating the hedge-relationship per RUDDO Article 2. Mandatory; a derivaat without a hedging justification is never recorded.",
             "nullable": true,
             "example": "IRS to hedge floating-rate risk on the €10M floating-rate lening maturing 2028-06-30",
             "title": "Ruddo Justification"
           },
           "counterpartyRating": {
             "type": "string",
-            "description": "Counterparty long-term credit rating; must be single-A or better per RUDDO (REQ-FDO-004).",
+            "description": "Counterparty long-term credit rating; must be single-A or better per RUDDO.",
             "enum": [
               "AAA",
               "AA",
@@ -925,7 +925,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Lifecycle status (REQ-FDO-004).",
+            "description": "Lifecycle status.",
             "enum": [
               "draft",
               "recorded",
@@ -957,7 +957,7 @@
               "from": "draft",
               "to": "recorded",
               "label": "Record derivaat",
-              "description": "Record the derivaat once RUDDO hedging-only validation passes: justification + hedge-link + notional ≤ hedged exposure + counterparty rating ≥ A (REQ-FDO-004).",
+              "description": "Record the derivaat once RUDDO hedging-only validation passes: justification + hedge-link + notional ≤ hedged exposure + counterparty rating ≥ A.",
               "requires": "OCA\\Shillinq\\Lifecycle\\FidoTreasuryGuard::canRecordDerivaat"
             },
             "mature": {
@@ -970,7 +970,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Derivaat is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Derivaat is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "QuartaalrapportageFido": {
@@ -978,7 +978,7 @@
         "icon": "FileChartOutline",
         "version": "0.1.0",
         "title": "Kwartaalrapportage Fido",
-        "description": "Verplichte kwartaalrapportage to the toezichthouder (provincie for gemeente, ministerie BZK for provincie/waterschap), auto-generated within 10 working days after quarter-end (REQ-FDO-006). Aggregates that quarter's leningen + derivaten mutations, kasgeldlimiet / rente-risiconorm / schatkistbankieren status snapshots and any overrides into the report (quarterlyFidoRollup), then requires co-sign by the treasurer and concerncontroller before transmission. The FidoTreasuryGuard enforces the dual sign-off submit precondition. Lifecycle: draft → signed → submitted → archived.",
+        "description": "Verplichte kwartaalrapportage to the toezichthouder (provincie for gemeente, ministerie BZK for provincie/waterschap), auto-generated within 10 working days after quarter-end. Aggregates that quarter's leningen + derivaten mutations, kasgeldlimiet / rente-risiconorm / schatkistbankieren status snapshots and any overrides into the report (quarterlyFidoRollup), then requires co-sign by the treasurer and concerncontroller before transmission. The FidoTreasuryGuard enforces the dual sign-off submit precondition. Lifecycle: draft → signed → submitted → archived.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-wet-fido-treasury/specs/bookkeeping-wet-fido-treasury/spec.md",
         "type": "object",
@@ -990,13 +990,13 @@
         "properties": {
           "auditYear": {
             "type": "integer",
-            "description": "Boekjaar of the quarter (REQ-FDO-006).",
+            "description": "Boekjaar of the quarter.",
             "example": 2025,
             "title": "Audit Year"
           },
           "quarter": {
             "type": "string",
-            "description": "Quarter identifier (REQ-FDO-006).",
+            "description": "Quarter identifier.",
             "enum": [
               "Q1",
               "Q2",
@@ -1014,7 +1014,7 @@
           },
           "cashStatus": {
             "type": "object",
-            "description": "Kasgeldlimiet snapshot for the quarter (ceiling, exposure, status, headroom) (REQ-FDO-006).",
+            "description": "Kasgeldlimiet snapshot for the quarter (ceiling, exposure, status, headroom).",
             "nullable": true,
             "example": {
               "ceiling": 17000000,
@@ -1026,7 +1026,7 @@
           },
           "renteRiskStatus": {
             "type": "object",
-            "description": "Rente-risiconorm snapshot (per-year exposures, headroom per year, status) (REQ-FDO-006).",
+            "description": "Rente-risiconorm snapshot (per-year exposures, headroom per year, status).",
             "nullable": true,
             "example": {
               "ceiling": 100000000,
@@ -1036,7 +1036,7 @@
           },
           "treasuryStatus": {
             "type": "object",
-            "description": "Schatkistbankieren snapshot (average daily parked, sweep count, failures) (REQ-FDO-006).",
+            "description": "Schatkistbankieren snapshot (average daily parked, sweep count, failures).",
             "nullable": true,
             "example": {
               "averageDailyParked": 300000,
@@ -1047,7 +1047,7 @@
           },
           "loansMovements": {
             "type": "object",
-            "description": "Lening mutation summary for the quarter (count, total amount, by-type breakdown) (REQ-FDO-006).",
+            "description": "Lening mutation summary for the quarter (count, total amount, by-type breakdown).",
             "nullable": true,
             "example": {
               "count": 3,
@@ -1061,7 +1061,7 @@
           },
           "derivativesMovements": {
             "type": "object",
-            "description": "Derivaat mutation summary (count, total notional, hedging-links verified) (REQ-FDO-006).",
+            "description": "Derivaat mutation summary (count, total notional, hedging-links verified).",
             "nullable": true,
             "example": {
               "count": 1,
@@ -1072,7 +1072,7 @@
           },
           "overridesApplied": {
             "type": "array",
-            "description": "Leningen recorded with an override that quarter (lening id + override-rationale) (REQ-FDO-006, REQ-FDO-008).",
+            "description": "Leningen recorded with an override that quarter (lening id + override-rationale).",
             "items": {
               "type": "object"
             },
@@ -1081,49 +1081,49 @@
           },
           "narrative": {
             "type": "string",
-            "description": "Narrative explaining any breaches or material changes (REQ-FDO-006).",
+            "description": "Narrative explaining any breaches or material changes.",
             "nullable": true,
             "example": "No limiet-breaches; all transactions executed per Treasurystatuut.",
             "title": "Narrative"
           },
           "signOffTreasurer": {
             "type": "object",
-            "description": "Treasurer sign-off (person + timestamp) (REQ-FDO-006).",
+            "description": "Treasurer sign-off (person + timestamp).",
             "nullable": true,
             "example": null,
             "title": "Sign Off Treasurer"
           },
           "signOffGroupController": {
             "type": "object",
-            "description": "Concerncontroller sign-off (person + timestamp) (REQ-FDO-006).",
+            "description": "Concerncontroller sign-off (person + timestamp).",
             "nullable": true,
             "example": null,
             "title": "Sign Off Concerncontroller"
           },
           "submittedToSupervisor": {
             "type": "string",
-            "description": "Timestamp of transmission to the toezichthouder (REQ-FDO-006).",
+            "description": "Timestamp of transmission to the toezichthouder.",
             "nullable": true,
             "example": null,
             "title": "Submitted To Toezichthouder"
           },
           "supervisorName": {
             "type": "string",
-            "description": "Name of the receiving toezichthouder (REQ-FDO-006).",
+            "description": "Name of the receiving toezichthouder.",
             "nullable": true,
             "example": "Provincie Noord-Holland",
             "title": "Toezichthouder Name"
           },
           "submissionReceipt": {
             "type": "string",
-            "description": "Digital receipt returned by the toezichthouder (REQ-FDO-006).",
+            "description": "Digital receipt returned by the toezichthouder.",
             "nullable": true,
             "example": null,
             "title": "Submission Receipt"
           },
           "status": {
             "type": "string",
-            "description": "Lifecycle status (REQ-FDO-006).",
+            "description": "Lifecycle status.",
             "enum": [
               "draft",
               "signed",
@@ -1160,14 +1160,14 @@
               "from": "draft",
               "to": "signed",
               "label": "Sign rapportage",
-              "description": "Record the treasurer + concerncontroller sign-off (REQ-FDO-006).",
+              "description": "Record the treasurer + concerncontroller sign-off.",
               "requires": "OCA\\Shillinq\\Lifecycle\\FidoTreasuryGuard::canSubmitRapportage"
             },
             "submit": {
               "from": "signed",
               "to": "submitted",
               "label": "Submit to toezichthouder",
-              "description": "Transmit the signed rapportage to the toezichthouder and log the digital receipt (REQ-FDO-006).",
+              "description": "Transmit the signed rapportage to the toezichthouder and log the digital receipt.",
               "requires": "OCA\\Shillinq\\Lifecycle\\FidoTreasuryGuard::canSubmitRapportage"
             },
             "archive": {
@@ -1180,7 +1180,7 @@
         },
         "x-openregister-aggregations": {
           "quarterlyFidoRollup": {
-            "description": "Declarative shape of the quarterly-rapportage auto-generation (REQ-FDO-006). Aggregates the quarter's Leningen + Derivaten mutations, the closing kasgeldlimiet / rente-risiconorm / schatkistbankieren snapshots and the overridesApplied list into a draft rapportage on Day 10 after quarter-end. When the engine cannot express the cross-schema roll-up, the same result is computed from the real ObjectService API (find/findAll).",
+            "description": "Declarative shape of the quarterly-rapportage auto-generation. Aggregates the quarter's Leningen + Derivaten mutations, the closing kasgeldlimiet / rente-risiconorm / schatkistbankieren snapshots and the overridesApplied list into a draft rapportage on Day 10 after quarter-end. When the engine cannot express the cross-schema roll-up, the same result is computed from the real ObjectService API (find/findAll).",
             "source": "Lening",
             "filter": {
               "quarter": "@self.kwartaal",
@@ -1197,7 +1197,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Kwartaalrapportage Fido is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Kwartaalrapportage Fido is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "TreasuryParagraaf": {
@@ -1205,7 +1205,7 @@
         "icon": "TextBoxOutline",
         "version": "0.1.0",
         "title": "Treasury-paragraaf",
-        "description": "Jaarrekening treasury narrative & projection per BBV Article 13 (REQ-FDO-007). Auto-populated from the current limiet-status, projected liquiditeit and the adopted Treasurystatuut narrative when the jaarrekening notes-renderer calls the data source; the concerncontroller may add a manual annotation. Lifecycle: draft → reviewed → published.",
+        "description": "Jaarrekening treasury narrative & projection per BBV Article 13. Auto-populated from the current limiet-status, projected liquiditeit and the adopted Treasurystatuut narrative when the jaarrekening notes-renderer calls the data source; the concerncontroller may add a manual annotation. Lifecycle: draft → reviewed → published.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-wet-fido-treasury/specs/bookkeeping-wet-fido-treasury/spec.md",
         "type": "object",
@@ -1216,7 +1216,7 @@
         "properties": {
           "auditYear": {
             "type": "integer",
-            "description": "Boekjaar of the jaarrekening (REQ-FDO-007).",
+            "description": "Boekjaar of the jaarrekening.",
             "example": 2025,
             "title": "Audit Year"
           },
@@ -1228,28 +1228,28 @@
           },
           "budgetVersion": {
             "type": "string",
-            "description": "Begroting version the projection is based on (REQ-FDO-007).",
+            "description": "Begroting version the projection is based on.",
             "nullable": true,
             "example": "2026-vastgesteld",
             "title": "Begroting Version"
           },
           "narrativeAuto": {
             "type": "string",
-            "description": "Auto-generated narrative from limiet-status + Treasurystatuut (REQ-FDO-007).",
+            "description": "Auto-generated narrative from limiet-status + Treasurystatuut.",
             "nullable": true,
             "example": "Het kasgeldlimiet bedraagt 8,5% van de begroting (€17,0M).",
             "title": "Narrative Auto"
           },
           "narrativeManual": {
             "type": "string",
-            "description": "Concerncontroller-entered annotation merged into the final narrative (REQ-FDO-007).",
+            "description": "Concerncontroller-entered annotation merged into the final narrative.",
             "nullable": true,
             "example": null,
             "title": "Narrative Manual"
           },
           "cashProjection": {
             "type": "object",
-            "description": "Kasgeldlimiet projection (ceiling, current-exposure, headroom-days-until-breach) (REQ-FDO-007).",
+            "description": "Kasgeldlimiet projection (ceiling, current-exposure, headroom-days-until-breach).",
             "nullable": true,
             "example": {
               "ceiling": 17000000,
@@ -1260,7 +1260,7 @@
           },
           "renteRiskProjection": {
             "type": "object",
-            "description": "Rente-risiconorm 4-year per-year exposure summary (REQ-FDO-007).",
+            "description": "Rente-risiconorm 4-year per-year exposure summary.",
             "nullable": true,
             "example": {
               "status": "binnen-norm"
@@ -1269,14 +1269,14 @@
           },
           "liquidityPlanning": {
             "type": "object",
-            "description": "Next-12-months cash-flow projection from the begroting (REQ-FDO-007).",
+            "description": "Next-12-months cash-flow projection from the begroting.",
             "nullable": true,
             "example": null,
             "title": "Liquiditeitsplanning"
           },
           "treasuryExpectation": {
             "type": "object",
-            "description": "Expected parked-amount and sweep-forecast (REQ-FDO-007).",
+            "description": "Expected parked-amount and sweep-forecast.",
             "nullable": true,
             "example": {
               "averageDailyParked": 300000
@@ -1285,7 +1285,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Lifecycle status (REQ-FDO-007).",
+            "description": "Lifecycle status.",
             "enum": [
               "draft",
               "reviewed",
@@ -1297,7 +1297,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Treasury-paragraaf is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Treasury-paragraaf is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     },

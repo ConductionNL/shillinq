@@ -13,7 +13,7 @@
         "icon": "OfficeBuilding",
         "version": "0.1.0",
         "title": "Administration",
-        "description": "A legally self-contained bookkeeping entity (juridisch-onafhankelijke boekhouding). The first-class multi-tenant isolation boundary: every financial record carries an administrationId FK to this schema (REQ-MA-001). Each Administration owns its own chart-of-accounts, fiscal-year cycle, presentation currency and VAT regime independently of other administrations (REQ-MA-002). Holding/werkmij structures link via parentAdministrationId / childAdministrationIds.",
+        "description": "A legally self-contained bookkeeping entity (juridisch-onafhankelijke boekhouding). The first-class multi-tenant isolation boundary: every financial record carries an administrationId FK to this schema. Each Administration owns its own chart-of-accounts, fiscal-year cycle, presentation currency and VAT regime independently of other administrations. Holding/werkmij structures link via parentAdministrationId / childAdministrationIds.",
         "x-schema-org": "schema:Organization",
         "x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
         "type": "object",
@@ -26,7 +26,7 @@
         "properties": {
           "administrationCode": {
             "type": "string",
-            "description": "Operator-facing unique identifier for the administration (REQ-MA-001).",
+            "description": "Operator-facing unique identifier for the administration.",
             "example": "WERK-001",
             "title": "Administration Code"
           },
@@ -60,7 +60,7 @@
           },
           "kvkNumber": {
             "type": "string",
-            "description": "KvK Handelsregister registration number; null until filled by operator or KvK pre-fill (REQ-MA-010).",
+            "description": "KvK Handelsregister registration number; null until filled by operator or KvK pre-fill.",
             "nullable": true,
             "example": "12345678",
             "title": "KvK Number"
@@ -88,14 +88,14 @@
           },
           "fiscalUnitVpbId": {
             "type": "string",
-            "description": "FK to the Administration acting as fiscale eenheid VPB head, if this entity is part of one (REQ-MA-008). The data structure only; VPB consolidation logic is delegated to bookkeeping-tax-filing.",
+            "description": "FK to the Administration acting as fiscale eenheid VPB head, if this entity is part of one. The data structure only; VPB consolidation logic is delegated to bookkeeping-tax-filing.",
             "nullable": true,
             "example": null,
             "title": "Fiscal Unit VpB ID"
           },
           "fiscalUnitVatId": {
             "type": "string",
-            "description": "FK to the Administration acting as fiscale eenheid BTW head, if any (REQ-MA-008). Intercompany BTW handling is delegated to bookkeeping-vat-return.",
+            "description": "FK to the Administration acting as fiscale eenheid BTW head, if any. Intercompany BTW handling is delegated to bookkeeping-vat-return.",
             "nullable": true,
             "example": null,
             "title": "Fiscal Unit VAT ID"
@@ -126,7 +126,7 @@
           },
           "fiscalYearStartMonth": {
             "type": "integer",
-            "description": "Month (1-12) on which the boekjaar starts; 1 = calendar year (REQ-MA-002).",
+            "description": "Month (1-12) on which the boekjaar starts; 1 = calendar year.",
             "minimum": 1,
             "maximum": 12,
             "default": 1,
@@ -144,7 +144,7 @@
           },
           "nonCalendarFiscalYear": {
             "type": "boolean",
-            "description": "True when the administration runs an afwijkend (non-calendar) boekjaar (REQ-MA-002).",
+            "description": "True when the administration runs an afwijkend (non-calendar) boekjaar.",
             "default": false,
             "example": false,
             "title": "Non Calendar Fiscal Year"
@@ -165,7 +165,7 @@
           },
           "vatRegime": {
             "type": "string",
-            "description": "BTW regime of the administration (REQ-MA-002).",
+            "description": "BTW regime of the administration.",
             "enum": [
               "standard",
               "kleine_ondernemers_regeling",
@@ -192,14 +192,14 @@
           },
           "chartOfAccountsId": {
             "type": "string",
-            "description": "FK to the chart-of-accounts (Account set) this administration validates journals against (REQ-MA-002). Null until accounts are seeded.",
+            "description": "FK to the chart-of-accounts (Account set) this administration validates journals against. Null until accounts are seeded.",
             "nullable": true,
             "example": null,
             "title": "Chart Of Accounts ID"
           },
           "consolidationMappingId": {
             "type": "string",
-            "description": "FK to a ConsolidationMapping used when consolidating this administration into its parent (REQ-MA-005).",
+            "description": "FK to a ConsolidationMapping used when consolidating this administration into its parent.",
             "nullable": true,
             "example": null,
             "title": "Consolidation Mapping ID",
@@ -243,7 +243,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Lifecycle status of the administration. Archived/opgeheven administrations are read-only (REQ-MA-007).",
+            "description": "Lifecycle status of the administration. Archived/opgeheven administrations are read-only.",
             "enum": [
               "actief",
               "gearchiveerd",
@@ -256,7 +256,7 @@
           },
           "backupSchedule": {
             "type": "string",
-            "description": "Per-administratie backup cadence; routes the incremental backup scheduler (REQ-MA-007).",
+            "description": "Per-administratie backup cadence; routes the incremental backup scheduler.",
             "enum": [
               "dagelijks",
               "wekelijks",
@@ -301,7 +301,7 @@
             },
             "gearchiveerd": {
               "label": "Gearchiveerd",
-              "description": "Read-only: historical data remains queryable for the retention period but no new mutations are accepted (REQ-MA-007)."
+              "description": "Read-only: historical data remains queryable for the retention period but no new mutations are accepted."
             },
             "opgeheven": {
               "label": "Opgeheven",
@@ -313,7 +313,7 @@
               "from": "actief",
               "to": "gearchiveerd",
               "label": "Archiveren",
-              "description": "Move an active administration to read-only archival; starts the dataRetentionYears counter (REQ-MA-007)."
+              "description": "Move an active administration to read-only archival; starts the dataRetentionYears counter."
             },
             "liquidate": {
               "from": "actief",
@@ -341,7 +341,7 @@
         "icon": "AccountKey",
         "version": "0.1.0",
         "title": "Administration Membership",
-        "description": "Join record granting a Nextcloud user a role in a single Administration (REQ-MA-003). One user may hold many memberships with a different role per administration; access is the administratie-aware RBAC boundary. The userId is the Nextcloud account uid (a contact/person is a Nextcloud entity — no person schema is invented).",
+        "description": "Join record granting a Nextcloud user a role in a single Administration. One user may hold many memberships with a different role per administration; access is the administratie-aware RBAC boundary. The userId is the Nextcloud account uid (a contact/person is a Nextcloud entity — no person schema is invented).",
         "x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
         "type": "object",
         "required": [
@@ -352,7 +352,7 @@
         "properties": {
           "userId": {
             "type": "string",
-            "description": "Nextcloud user uid that this membership grants access for (REQ-MA-003).",
+            "description": "Nextcloud user uid that this membership grants access for.",
             "example": "controller",
             "title": "User ID"
           },
@@ -390,7 +390,7 @@
           },
           "mayPostJournalEntries": {
             "type": "boolean",
-            "description": "Whether the membership may post journaalposten in this administration (REQ-MA-003).",
+            "description": "Whether the membership may post journaalposten in this administration.",
             "default": false,
             "example": true,
             "title": "May Post Journal Entries"
@@ -432,7 +432,7 @@
         "icon": "SwapHorizontal",
         "version": "0.1.0",
         "title": "Intercompany Journal Entry",
-        "description": "Tracking record linking the two mirrored GLTransactions of an intercompany transaction across two administrations (REQ-MA-004). The two journal entries themselves live in each administration's own journal (Dutch GAAP: each entity keeps a self-contained journaal); this record holds the link, the reconciliation variance and the consolidation-elimination flag.",
+        "description": "Tracking record linking the two mirrored GLTransactions of an intercompany transaction across two administrations. The two journal entries themselves live in each administration's own journal (Dutch GAAP: each entity keeps a self-contained journaal); this record holds the link, the reconciliation variance and the consolidation-elimination flag.",
         "x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
         "type": "object",
         "required": [
@@ -447,7 +447,7 @@
         "properties": {
           "intercompanyNumber": {
             "type": "string",
-            "description": "Unique intercompany identifier linking both sides (REQ-MA-004).",
+            "description": "Unique intercompany identifier linking both sides.",
             "example": "IC-2026-00042",
             "title": "Intercompany Number"
           },
@@ -543,7 +543,7 @@
           },
           "eliminateOnConsolidation": {
             "type": "boolean",
-            "description": "Marks the matching P&L lines on both sides for elimination at consolidation time (REQ-MA-005). Consumed by the future bookkeeping-consolidatie spec.",
+            "description": "Marks the matching P&L lines on both sides for elimination at consolidation time. Consumed by the future bookkeeping-consolidatie spec.",
             "default": false,
             "example": true,
             "title": "Eliminate On Consolidation"
@@ -557,7 +557,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Mirroring status. draft = one side drafted; gekoppeld = both sides exist; bevestigd_beide = both confirmed; eliminatie_geboekt = consolidation elimination processed (REQ-MA-004).",
+            "description": "Mirroring status. draft = one side drafted; gekoppeld = both sides exist; bevestigd_beide = both confirmed; eliminatie_geboekt = consolidation elimination processed.",
             "enum": [
               "draft",
               "gekoppeld",
@@ -570,7 +570,7 @@
           },
           "varianceAmount": {
             "type": "number",
-            "description": "Reconciliation variance (afwijking) between the two sides; non-zero flags the pair for manual review (REQ-MA-004).",
+            "description": "Reconciliation variance (afwijking) between the two sides; non-zero flags the pair for manual review.",
             "default": 0.0,
             "example": 0.0,
             "title": "Variance Amount"
@@ -594,7 +594,7 @@
             },
             "eliminatie_geboekt": {
               "label": "Eliminatie geboekt",
-              "description": "Consolidation elimination has been applied (REQ-MA-005)."
+              "description": "Consolidation elimination has been applied."
             }
           },
           "transitions": {
@@ -614,7 +614,7 @@
               "from": "bevestigd_beide",
               "to": "draft",
               "label": "Heropenen",
-              "description": "An edit on one unconfirmed-mirror side returns the pair to concept; the counterparty must re-confirm (REQ-MA-004)."
+              "description": "An edit on one unconfirmed-mirror side returns the pair to concept; the counterparty must re-confirm."
             },
             "eliminate": {
               "from": "bevestigd_beide",
@@ -631,7 +631,7 @@
         "icon": "Sitemap",
         "version": "0.1.0",
         "title": "Consolidation Mapping",
-        "description": "Maps a dochter administration's chart-of-accounts onto the moeder's for consolidation, plus the intercompany elimination account and currency-translation method (REQ-MA-005). Mapping rules are stored as a JSON array (ADR-031 declarative — no separate line-item schema). Consumed by the future bookkeeping-consolidatie spec; no consolidation rendering logic lives here.",
+        "description": "Maps a dochter administration's chart-of-accounts onto the moeder's for consolidation, plus the intercompany elimination account and currency-translation method. Mapping rules are stored as a JSON array (ADR-031 declarative — no separate line-item schema). Consumed by the future bookkeeping-consolidatie spec; no consolidation rendering logic lives here.",
         "x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
         "type": "object",
         "required": [
@@ -662,7 +662,7 @@
           },
           "rules": {
             "type": "array",
-            "description": "Account-mapping rules: each maps a source GL account to a destination GL account (REQ-MA-005).",
+            "description": "Account-mapping rules: each maps a source GL account to a destination GL account.",
             "items": {
               "type": "object",
               "required": [
@@ -724,7 +724,7 @@
         "icon": "TransitConnectionVariant",
         "version": "0.1.0",
         "title": "Administration Migration",
-        "description": "Audit record of an asset / contract / employee transfer between two administrations during internal restructuring (REQ-MA-006). Captures boekwaarde vs marktwaarde, the juridische grondslag, the fiscale behandeling, and the paired GLTransaction references on both sides so the transfer is reversible without breaking the audit trail.",
+        "description": "Audit record of an asset / contract / employee transfer between two administrations during internal restructuring. Captures boekwaarde vs marktwaarde, the juridische grondslag, the fiscale behandeling, and the paired GLTransaction references on both sides so the transfer is reversible without breaking the audit trail.",
         "x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
         "type": "object",
         "required": [
@@ -738,7 +738,7 @@
         "properties": {
           "migrationNumber": {
             "type": "string",
-            "description": "Unique migration identifier (REQ-MA-006).",
+            "description": "Unique migration identifier.",
             "example": "MIG-2026-007",
             "title": "Migration Number"
           },
@@ -821,7 +821,7 @@
           },
           "legalBasis": {
             "type": "string",
-            "description": "Juridische grondslag (e.g. notariële akte reference) underpinning the transfer (REQ-MA-006).",
+            "description": "Juridische grondslag (e.g. notariële akte reference) underpinning the transfer.",
             "nullable": true,
             "example": "Akte van inbreng dd 2026-08-15 notaris X",
             "title": "Legal Basis"
@@ -851,7 +851,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Migration lifecycle. voorbereid = drafted; uitgevoerd = one side posted; geboekt_beide = both posted (atomic); teruggedraaid = reversed (REQ-MA-006).",
+            "description": "Migration lifecycle. voorbereid = drafted; uitgevoerd = one side posted; geboekt_beide = both posted (atomic); teruggedraaid = reversed.",
             "enum": [
               "voorbereid",
               "uitgevoerd",
@@ -881,7 +881,7 @@
             },
             "teruggedraaid": {
               "label": "Teruggedraaid",
-              "description": "Both journal entries reversed; both administrations returned to their pre-migration state (REQ-MA-006)."
+              "description": "Both journal entries reversed; both administrations returned to their pre-migration state."
             }
           },
           "transitions": {
@@ -917,7 +917,7 @@
         "icon": "DatabaseClock",
         "version": "0.1.0",
         "title": "Administration Backup Run",
-        "description": "Audit record of one per-administration backup run (REQ-MA-007). Each row carries exactly one administrationId — backups are scoped per administratie so no cross-tenant data leaks into a single backup file (REQ-MA-001). Written by AdministrationBackupSchedulerJob (BackgroundJob, Task 15).",
+        "description": "Audit record of one per-administration backup run. Each row carries exactly one administrationId — backups are scoped per administratie so no cross-tenant data leaks into a single backup file. Written by AdministrationBackupSchedulerJob (BackgroundJob, Task 15).",
         "x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
         "type": "object",
         "required": [
@@ -999,7 +999,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Administration Backup Run is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Administration Backup Run is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     },

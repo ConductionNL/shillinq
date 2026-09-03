@@ -11,13 +11,13 @@
       "AuditFindingTemplate": {
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of an Audit Finding Template is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of an Audit Finding Template is written to OpenRegister's immutable audit trail with actor and timestamp."
         },
         "slug": "AuditFindingTemplate",
         "icon": "FormatListChecks",
         "version": "0.1.0",
         "title": "Audit Finding Template",
-        "description": "Reusable audit-finding category with a default severity and remediation template, used when an auditor adds findings to an AuditorStatement (REQ-SUBV-007). Seeded from audit-finding-templates.json (Awb 4.2 + VNG guidelines); operator-editable per administration.",
+        "description": "Reusable audit-finding category with a default severity and remediation template, used when an auditor adds findings to an AuditorStatement. Seeded from audit-finding-templates.json (Awb 4.2 + VNG guidelines); operator-editable per administration.",
         "x-schema-org": "schema:DefinedTerm",
         "x-spec": "openspec/changes/bookkeeping-subsidie-verantwoording/specs.md",
         "type": "object",
@@ -29,7 +29,7 @@
         "properties": {
           "categoryId": {
             "type": "string",
-            "description": "Stable category identifier referenced by AuditorStatement.findings[].categoryId (REQ-SUBV-007).",
+            "description": "Stable category identifier referenced by AuditorStatement.findings[].categoryId.",
             "example": "documentation",
             "title": "Category ID"
           },
@@ -47,7 +47,7 @@
               "medium",
               "low"
             ],
-            "description": "Default severity for findings in this category (REQ-SUBV-007).",
+            "description": "Default severity for findings in this category.",
             "title": "Severity"
           },
           "defaultRemediationTemplate": {
@@ -81,13 +81,13 @@
       "SubsidieVerantwoording": {
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Subsidie Verantwoording is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Subsidie Verantwoording is written to OpenRegister's immutable audit trail with actor and timestamp."
         },
         "slug": "SubsidieVerantwoording",
         "icon": "FileDocumentCheckOutline",
         "version": "0.1.0",
         "title": "Subsidie Verantwoording",
-        "description": "Accountability record (verantwoording) for a Subsidie grant per Awb 4.2 (REQ-SUBV-002). Auto-generated in draft on grant award/disbursement (REQ-SUBV-009), submitted for approval, approved (gated when a blocking AuditorStatement exists on a large grant — REQ-SUBV-003), and finalised. Distinct from the Subsidie grant master it references via grantId.",
+        "description": "Accountability record (verantwoording) for a Subsidie grant per Awb 4.2. Auto-generated in draft on grant award/disbursement, submitted for approval, approved (gated when a blocking AuditorStatement exists on a large grant — REQ-SUBV-003), and finalised. Distinct from the Subsidie grant master it references via grantId.",
         "x-schema-org": "schema:GovernmentService",
         "x-spec": "openspec/changes/bookkeeping-subsidie-verantwoording/specs.md",
         "type": "object",
@@ -102,7 +102,7 @@
         "properties": {
           "accountabilityId": {
             "type": "string",
-            "description": "Unique accountability record identifier (REQ-SUBV-002).",
+            "description": "Unique accountability record identifier.",
             "example": "SV-2026-0001",
             "title": "Verantwoording ID"
           },
@@ -115,13 +115,13 @@
           "reportDate": {
             "type": "string",
             "format": "date",
-            "description": "Date the accountability report was generated (REQ-SUBV-002).",
+            "description": "Date the accountability report was generated.",
             "example": "2026-03-01",
             "title": "Report Date"
           },
           "reportingPeriod": {
             "type": "string",
-            "description": "Period covered, auto-calculated from grant award date to report date (REQ-SUBV-009).",
+            "description": "Period covered, auto-calculated from grant award date to report date.",
             "example": "2024-01-01 to 2024-12-31",
             "title": "Reporting Period"
           },
@@ -134,7 +134,7 @@
               "final"
             ],
             "default": "draft",
-            "description": "Accountability report lifecycle state (REQ-SUBV-003).",
+            "description": "Accountability report lifecycle state.",
             "example": "draft",
             "title": "Status"
           },
@@ -167,7 +167,7 @@
           "awardedAmount": {
             "type": "number",
             "nullable": true,
-            "description": "Awarded amount snapshot copied from the Subsidie grant, used to evaluate the auditor threshold (REQ-SUBV-006) without a cross-schema join at transition time.",
+            "description": "Awarded amount snapshot copied from the Subsidie grant, used to evaluate the auditor threshold without a cross-schema join at transition time.",
             "example": 50000,
             "title": "Awarded Amount"
           },
@@ -175,7 +175,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Grant award date snapshot copied from the Subsidie grant at verantwoording creation, used by the isOverdue calculation (REQ-SUBV-010) to evaluate the 90-day accountability deadline without a cross-schema join at evaluation time. Null on records created before this field existed; isOverdue treats a null awardDate as never-overdue rather than guessing a fallback date.",
+            "description": "Grant award date snapshot copied from the Subsidie grant at verantwoording creation, used by the isOverdue calculation to evaluate the 90-day accountability deadline without a cross-schema join at evaluation time. Null on records created before this field existed; isOverdue treats a null awardDate as never-overdue rather than guessing a fallback date.",
             "example": "2026-01-01",
             "title": "Award Date"
           },
@@ -200,15 +200,15 @@
           "states": {
             "draft": {
               "label": "Draft",
-              "description": "Editable accountability report; auto-generated on grant award/disbursement (REQ-SUBV-009)."
+              "description": "Editable accountability report; auto-generated on grant award/disbursement."
             },
             "submitted": {
               "label": "Submitted",
-              "description": "Submitted for finance-officer approval (REQ-SUBV-003)."
+              "description": "Submitted for finance-officer approval."
             },
             "approved": {
               "label": "Approved",
-              "description": "Approved by the finance officer. Approval is blocked while a large grant has a non-approved AuditorStatement (REQ-SUBV-003)."
+              "description": "Approved by the finance officer. Approval is blocked while a large grant has a non-approved AuditorStatement."
             },
             "final": {
               "label": "Final",
@@ -220,26 +220,26 @@
               "from": "draft",
               "to": "submitted",
               "label": "Submit for Approval",
-              "description": "Operator submits the draft report for finance-officer approval (REQ-SUBV-003). Audit-logged."
+              "description": "Operator submits the draft report for finance-officer approval. Audit-logged."
             },
             "approve": {
               "from": "submitted",
               "to": "approved",
               "label": "Approve",
-              "description": "Finance officer approves. Gated when the grant is above the auditor threshold and its AuditorStatement is not yet approved/conditional (REQ-SUBV-003). No app-local approval table (ADR-022).",
+              "description": "Finance officer approves. Gated when the grant is above the auditor threshold and its AuditorStatement is not yet approved/conditional. No app-local approval table (ADR-022).",
               "requires": "OCA\\Shillinq\\Lifecycle\\SubsidieVerantwoordingGuard::canApprove"
             },
             "finalize": {
               "from": "approved",
               "to": "final",
               "label": "Finalize",
-              "description": "Publish the approved accountability report; timestamp recorded (REQ-SUBV-003)."
+              "description": "Publish the approved accountability report; timestamp recorded."
             },
             "resubmit": {
               "from": "final",
               "to": "submitted",
               "label": "Re-submit",
-              "description": "Resubmission when corrections are needed after finalisation (REQ-SUBV-003)."
+              "description": "Resubmission when corrections are needed after finalisation."
             }
           }
         },
@@ -253,7 +253,7 @@
             },
             "type": "integer",
             "materialise": true,
-            "description": "Elapsed whole days since the grant award date (REQ-SUBV-010). Null when awardDate is not set, which flows through to isOverdue resolving false (diffDays returns null on an unparseable/missing operand; gt(null, 90) is false) rather than guessing a fallback reference date."
+            "description": "Elapsed whole days since the grant award date. Null when awardDate is not set, which flows through to isOverdue resolving false (diffDays returns null on an unparseable/missing operand; gt(null, 90) is false) rather than guessing a fallback reference date."
           },
           "isOverdue": {
             "expression": {
@@ -264,7 +264,7 @@
             },
             "type": "boolean",
             "materialise": true,
-            "description": "True when this accountability report is in a non-final state (draft/submitted/approved) and more than 90 days have elapsed since the grant award date (REQ-SUBV-010) — the declarative restoration of the retired OverdueVerantwoordingJob::isOverdue() rule. Materialised so the onOverdue scheduled notification can filter on it, and re-evaluated daily without an object write by OpenRegister's TemporalCalculationSweepJob (daysSinceAward references `now`, which flags this schema as temporal); `final` is declared as x-openregister-lifecycle's terminal state so already-finalised records are excluded from the sweep."
+            "description": "True when this accountability report is in a non-final state (draft/submitted/approved) and more than 90 days have elapsed since the grant award date — the declarative restoration of the retired OverdueVerantwoordingJob::isOverdue() rule. Materialised so the onOverdue scheduled notification can filter on it, and re-evaluated daily without an object write by OpenRegister's TemporalCalculationSweepJob (daysSinceAward references `now`, which flags this schema as temporal); `final` is declared as x-openregister-lifecycle's terminal state so already-finalised records are excluded from the sweep."
           }
         },
         "x-openregister-notifications": {
@@ -337,7 +337,7 @@
                 "isOverdue": true
               }
             },
-            "description": "Daily reminder to the assigned approver while an accountability report remains overdue (REQ-SUBV-010) — restores the retired OverdueVerantwoordingJob's 24h re-check cadence declaratively (ADR-031). Skips records with no assigned approverUserId, matching the job's original behaviour: the `field` recipient kind resolves an empty field value to zero recipients.",
+            "description": "Daily reminder to the assigned approver while an accountability report remains overdue — restores the retired OverdueVerantwoordingJob's 24h re-check cadence declaratively (ADR-031). Skips records with no assigned approverUserId, matching the job's original behaviour: the `field` recipient kind resolves an empty field value to zero recipients.",
             "recipients": [
               {
                 "kind": "field",
@@ -379,13 +379,13 @@
       "AuditorStatement": {
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of an Auditor Statement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of an Auditor Statement is written to OpenRegister's immutable audit trail with actor and timestamp."
         },
         "slug": "AuditorStatement",
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "Auditor Statement",
-        "description": "Auditor verification record for a large Subsidie grant (>= configurable threshold, default EUR 25k) per SISA + Awb 4.2 (REQ-SUBV-004). Auto-created in pending when a SubsidieVerantwoording is created for a grant above the threshold (REQ-SUBV-006); auditor accepts (under-review), then approves / rejects / approves-conditionally (REQ-SUBV-005).",
+        "description": "Auditor verification record for a large Subsidie grant (>= configurable threshold, default EUR 25k) per SISA + Awb 4.2. Auto-created in pending when a SubsidieVerantwoording is created for a grant above the threshold; auditor accepts (under-review), then approves / rejects / approves-conditionally.",
         "x-schema-org": "schema:GovernmentService",
         "x-spec": "openspec/changes/bookkeeping-subsidie-verantwoording/specs.md",
         "type": "object",
@@ -401,7 +401,7 @@
         "properties": {
           "statementId": {
             "type": "string",
-            "description": "Unique auditor statement identifier (REQ-SUBV-004).",
+            "description": "Unique auditor statement identifier.",
             "example": "AS-2026-0001",
             "title": "Statement ID"
           },
@@ -414,19 +414,19 @@
           "auditThresholdApplied": {
             "type": "boolean",
             "default": true,
-            "description": "Whether the grant exceeded the auditor threshold and verification is mandatory (REQ-SUBV-004).",
+            "description": "Whether the grant exceeded the auditor threshold and verification is mandatory.",
             "title": "Audit Threshold Applied"
           },
           "auditDate": {
             "type": "string",
             "format": "date",
-            "description": "Date of audit verification (REQ-SUBV-004).",
+            "description": "Date of audit verification.",
             "example": "2026-03-15",
             "title": "Audit Date"
           },
           "auditorUserId": {
             "type": "string",
-            "description": "User (auditor) who performs verification (REQ-SUBV-004).",
+            "description": "User (auditor) who performs verification.",
             "example": "auditor-jansen",
             "title": "Auditor User ID"
           },
@@ -440,14 +440,14 @@
               "conditional"
             ],
             "default": "pending",
-            "description": "Auditor verification lifecycle state (REQ-SUBV-005).",
+            "description": "Auditor verification lifecycle state.",
             "example": "pending",
             "title": "Status"
           },
           "findings": {
             "type": "array",
             "nullable": true,
-            "description": "Audit findings: FK to audit-finding-template categoryId plus per-finding notes and resolution status (REQ-SUBV-005).",
+            "description": "Audit findings: FK to audit-finding-template categoryId plus per-finding notes and resolution status.",
             "items": {
               "type": "object",
               "required": [
@@ -484,7 +484,7 @@
                     "resolved"
                   ],
                   "default": "open",
-                  "description": "Per-finding resolution status. All findings must be resolved (or none present) before approval (REQ-SUBV-005).",
+                  "description": "Per-finding resolution status. All findings must be resolved (or none present) before approval.",
                   "title": "Resolution"
                 }
               }
@@ -495,7 +495,7 @@
             "type": "string",
             "format": "uri",
             "nullable": true,
-            "description": "URI to the docudesk PDF of the auditor sign-off (REQ-SUBV-004). The file lives in docudesk; no blob embedded (ADR-022).",
+            "description": "URI to the docudesk PDF of the auditor sign-off. The file lives in docudesk; no blob embedded (ADR-022).",
             "example": "docudesk://attachments/aabbccdd-1122-3344-5566-778899aabbcc/auditor-signoff.pdf",
             "title": "Attestation Document URI"
           },
@@ -507,7 +507,7 @@
               "rejected",
               "conditional-with-caveats"
             ],
-            "description": "Final auditor verdict (REQ-SUBV-004).",
+            "description": "Final auditor verdict.",
             "title": "Verdict"
           },
           "administrationId": {
@@ -528,23 +528,23 @@
           "states": {
             "pending": {
               "label": "Pending",
-              "description": "Auto-created when a SubsidieVerantwoording is created for a large grant (REQ-SUBV-006). Awaiting auditor acceptance."
+              "description": "Auto-created when a SubsidieVerantwoording is created for a large grant. Awaiting auditor acceptance."
             },
             "under-review": {
               "label": "Under Review",
-              "description": "Auditor has accepted the task and is verifying (REQ-SUBV-005)."
+              "description": "Auditor has accepted the task and is verifying."
             },
             "approved": {
               "label": "Approved",
-              "description": "Auditor signed off; grant settlement may proceed (REQ-SUBV-005)."
+              "description": "Auditor signed off; grant settlement may proceed."
             },
             "rejected": {
               "label": "Rejected",
-              "description": "Auditor identified blocking issues; grant settlement is blocked (REQ-SUBV-005)."
+              "description": "Auditor identified blocking issues; grant settlement is blocked."
             },
             "conditional": {
               "label": "Conditional",
-              "description": "Auditor approved with caveats; SubsidieVerantwoording may proceed with a compliance flag (REQ-SUBV-005)."
+              "description": "Auditor approved with caveats; SubsidieVerantwoording may proceed with a compliance flag."
             }
           },
           "transitions": {
@@ -552,26 +552,26 @@
               "from": "pending",
               "to": "under-review",
               "label": "Accept for Review",
-              "description": "Auditor accepts the verification task (REQ-SUBV-005)."
+              "description": "Auditor accepts the verification task."
             },
             "approve": {
               "from": "under-review",
               "to": "approved",
               "label": "Approve",
-              "description": "Auditor signs off and uploads the attestation document. Requires no findings, or all findings resolved (REQ-SUBV-005).",
+              "description": "Auditor signs off and uploads the attestation document. Requires no findings, or all findings resolved.",
               "requires": "OCA\\Shillinq\\Lifecycle\\AuditorStatementGuard::canApprove"
             },
             "reject": {
               "from": "under-review",
               "to": "rejected",
               "label": "Reject",
-              "description": "Auditor identifies issues and blocks grant settlement (REQ-SUBV-005)."
+              "description": "Auditor identifies issues and blocks grant settlement."
             },
             "conditional": {
               "from": "under-review",
               "to": "conditional",
               "label": "Approve with Caveats",
-              "description": "Auditor approves with caveats requiring follow-up (REQ-SUBV-005)."
+              "description": "Auditor approves with caveats requiring follow-up."
             }
           }
         },

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "expense-reimbursement-or-passthrough",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json. ADR-031 declarative-first (lifecycle annotations + calculations + aggregations). ADR-022 approval-workflow consumption (no app-local approval table).",
-    "description": "Tier-2 dual-mode settlement extension on expense-capture-core. Adds the settlementMode enum (reimbursable | pass-through) + pass-through linking fields (linkedCustomerId, markupRuleId, markupRateApplied, markupAmountCalculated, passthroughDebitAccountCode) to Receipt / MileageEntry / PerDiem (REQ-ERP-001, REQ-ERP-002). Extends ExpenseClaimEntry with claim-level settlementMode, dual-path aggregate totals (totalReimbursableAmount, totalPassThroughAmount), unique customer IDs, and two GL transaction back-references (glReimbursableTransactionId, glPassThroughTransactionId) plus invoiced lifecycle state for the pass-through path (REQ-ERP-003, REQ-ERP-007). Declares two new master-data schemas — ReimbursementPolicy (per-administration auto-approve thresholds + markup-approval thresholds + employee bank account mapping, REQ-ERP-004 / REQ-ERP-006) and PassThroughMarkupRule (per-customer / per-category percentage or fixed markup with priority (customer+category > customer > global), REQ-ERP-005). Money fields use multipleOf 0.01 (Euro / percent 2-decimal precision). Markup calculation is declared as x-openregister-calculations on each expense schema (declarative lookup of the matching PassThroughMarkupRule); claim aggregates are declared as x-openregister-aggregations on ExpenseClaimEntry (sum + unique). GL materialisation branches on settlementMode via a dual-path action set on the post transition (REQ-ERP-007, REQ-ERP-008, REQ-ERP-009): reimbursable debits the expense-payable account + emits ExpenseClaimReimbursementNotification for the treasury module, pass-through debits the customer AR account + credits revenue-deferral. Markup rate locking is enforced by declarative immutability metadata (locked on submit per REQ-ERP-010); settlement-mode change post-posting requires GL reversal per REQ-ERP-011 (T1 REQ-GL-004 pattern)."
+    "description": "Tier-2 dual-mode settlement extension on expense-capture-core. Adds the settlementMode enum (reimbursable | pass-through) + pass-through linking fields (linkedCustomerId, markupRuleId, markupRateApplied, markupAmountCalculated, passthroughDebitAccountCode) to Receipt / MileageEntry / PerDiem. Extends ExpenseClaimEntry with claim-level settlementMode, dual-path aggregate totals (totalReimbursableAmount, totalPassThroughAmount), unique customer IDs, and two GL transaction back-references (glReimbursableTransactionId, glPassThroughTransactionId) plus invoiced lifecycle state for the pass-through path. Declares two new master-data schemas — ReimbursementPolicy (per-administration auto-approve thresholds + markup-approval thresholds + employee bank account mapping, REQ-ERP-004 / REQ-ERP-006) and PassThroughMarkupRule (per-customer / per-category percentage or fixed markup with priority (customer+category > customer > global), REQ-ERP-005). Money fields use multipleOf 0.01 (Euro / percent 2-decimal precision). Markup calculation is declared as x-openregister-calculations on each expense schema (declarative lookup of the matching PassThroughMarkupRule); claim aggregates are declared as x-openregister-aggregations on ExpenseClaimEntry (sum + unique). GL materialisation branches on settlementMode via a dual-path action set on the post transition: reimbursable debits the expense-payable account + emits ExpenseClaimReimbursementNotification for the treasury module, pass-through debits the customer AR account + credits revenue-deferral. Markup rate locking is enforced by declarative immutability metadata (locked on submit per REQ-ERP-010); settlement-mode change post-posting requires GL reversal per REQ-ERP-011 (T1 REQ-GL-004 pattern)."
   },
   "info": {
     "version": "0.1.0-expense-reimbursement-or-passthrough"
@@ -19,21 +19,21 @@
               "reimbursable",
               "pass-through"
             ],
-            "description": "Dual-mode settlement classification per REQ-ERP-001. reimbursable = pay employee via SEPA + GL debit expense-payable. pass-through = bill linked customer at cost + markup via AR. Immutable after parent ExpenseClaimEntry is submitted (REQ-ERP-010).",
+            "description": "Dual-mode settlement classification per REQ-ERP-001. reimbursable = pay employee via SEPA + GL debit expense-payable. pass-through = bill linked customer at cost + markup via AR. Immutable after parent ExpenseClaimEntry is submitted.",
             "nullable": true,
             "example": "pass-through",
             "title": "Settlement Mode"
           },
           "linkedCustomerId": {
             "type": "string",
-            "description": "FK to Organization (customer) when settlementMode = pass-through; null when reimbursable. Validated at claim submission (REQ-ERP-002).",
+            "description": "FK to Organization (customer) when settlementMode = pass-through; null when reimbursable. Validated at claim submission.",
             "nullable": true,
             "example": "CUST-123",
             "title": "Linked Customer ID"
           },
           "markupRuleId": {
             "type": "string",
-            "description": "FK to PassThroughMarkupRule applied to this expense; populated when settlementMode = pass-through. Locked at claim submission for audit immutability (REQ-ERP-010).",
+            "description": "FK to PassThroughMarkupRule applied to this expense; populated when settlementMode = pass-through. Locked at claim submission for audit immutability.",
             "nullable": true,
             "example": "RULE-002",
             "title": "Markup Rule ID"
@@ -42,7 +42,7 @@
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "Actual markup percentage applied (e.g. 0.15 for 15%) or fixed amount when markupType=fixedAmount. Resolved from PassThroughMarkupRule.markupValue at calculation time; locked on claim submission (REQ-ERP-010).",
+            "description": "Actual markup percentage applied (e.g. 0.15 for 15%) or fixed amount when markupType=fixedAmount. Resolved from PassThroughMarkupRule.markupValue at calculation time; locked on claim submission.",
             "nullable": true,
             "example": 0.15,
             "title": "Markup Rate Applied"
@@ -51,14 +51,14 @@
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "Calculated pass-through amount: amount × (1 + markupRateApplied) for percentage or amount + markupValue for fixedAmount. Derived via x-openregister-calculations; locked on claim submission (REQ-ERP-002, REQ-ERP-010).",
+            "description": "Calculated pass-through amount: amount × (1 + markupRateApplied) for percentage or amount + markupValue for fixedAmount. Derived via x-openregister-calculations; locked on claim submission.",
             "nullable": true,
             "example": 115.0,
             "title": "Markup Amount Calculated"
           },
           "passthroughDebitAccountCode": {
             "type": "string",
-            "description": "GL account code for the pass-through debit line (customer AR or deferred revenue). Defaults from ReimbursementPolicy.passthroughDebitAccountCode for the administration; overridable per claim. Required when settlementMode = pass-through (REQ-ERP-002).",
+            "description": "GL account code for the pass-through debit line (customer AR or deferred revenue). Defaults from ReimbursementPolicy.passthroughDebitAccountCode for the administration; overridable per claim. Required when settlementMode = pass-through.",
             "nullable": true,
             "example": "1300",
             "title": "Passthrough Debit Account Code"
@@ -86,21 +86,21 @@
               "reimbursable",
               "pass-through"
             ],
-            "description": "Dual-mode settlement classification per REQ-ERP-001. Mileage may be reimbursed to employee (SEPA) or billed to client (cost + markup). Immutable after parent ExpenseClaimEntry is submitted (REQ-ERP-010).",
+            "description": "Dual-mode settlement classification per REQ-ERP-001. Mileage may be reimbursed to employee (SEPA) or billed to client (cost + markup). Immutable after parent ExpenseClaimEntry is submitted.",
             "nullable": true,
             "example": "reimbursable",
             "title": "Settlement Mode"
           },
           "linkedCustomerId": {
             "type": "string",
-            "description": "FK to Organization (customer) when settlementMode = pass-through (REQ-ERP-002).",
+            "description": "FK to Organization (customer) when settlementMode = pass-through.",
             "nullable": true,
             "example": "CUST-456",
             "title": "Linked Customer ID"
           },
           "markupRuleId": {
             "type": "string",
-            "description": "FK to PassThroughMarkupRule. Locked at claim submission (REQ-ERP-010).",
+            "description": "FK to PassThroughMarkupRule. Locked at claim submission.",
             "nullable": true,
             "title": "Markup Rule ID"
           },
@@ -108,7 +108,7 @@
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "Markup percentage or fixed amount applied at calculation time; locked on submission (REQ-ERP-010).",
+            "description": "Markup percentage or fixed amount applied at calculation time; locked on submission.",
             "nullable": true,
             "title": "Markup Rate Applied"
           },
@@ -116,20 +116,20 @@
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "Pass-through amount: totalAmount × (1 + markupRateApplied) or totalAmount + markupValue (REQ-ERP-002).",
+            "description": "Pass-through amount: totalAmount × (1 + markupRateApplied) or totalAmount + markupValue.",
             "nullable": true,
             "title": "Markup Amount Calculated"
           },
           "passthroughDebitAccountCode": {
             "type": "string",
-            "description": "GL account code for pass-through debit (customer AR or deferred revenue). Defaults from ReimbursementPolicy (REQ-ERP-002).",
+            "description": "GL account code for pass-through debit (customer AR or deferred revenue). Defaults from ReimbursementPolicy.",
             "nullable": true,
             "title": "Passthrough Debit Account Code"
           }
         },
         "x-openregister-calculations": {
           "markupLookup": {
-            "description": "Mirrors Receipt.markupLookup for mileage lines (REQ-ERP-005). Looks up PassThroughMarkupRule matching linkedCustomerId + category (mileage category resolves to 'travel') with priority customer+category > customer-only > global; calculates cost + markup; locks on claim submission per REQ-ERP-010.",
+            "description": "Mirrors Receipt.markupLookup for mileage lines. Looks up PassThroughMarkupRule matching linkedCustomerId + category (mileage category resolves to 'travel') with priority customer+category > customer-only > global; calculates cost + markup; locks on claim submission per REQ-ERP-010.",
             "expression": "@self.settlementMode == 'pass-through' ? lookup('PassThroughMarkupRule', {targetCustomerId: @self.linkedCustomerId, targetCategory: 'travel', administrationId: @self.administrationId, effectiveFromYear: year(@self.travelDate)}, {priority: ['targetCustomerId+targetCategory', 'targetCustomerId', 'global']}) : null",
             "targets": {
               "markupRuleId": "@matched.ruleId",
@@ -149,20 +149,20 @@
               "reimbursable",
               "pass-through"
             ],
-            "description": "Dual-mode settlement classification per REQ-ERP-001. Per-diem may be reimbursed to employee (SEPA) or billed to client (cost + markup). Immutable after parent ExpenseClaimEntry is submitted (REQ-ERP-010).",
+            "description": "Dual-mode settlement classification per REQ-ERP-001. Per-diem may be reimbursed to employee (SEPA) or billed to client (cost + markup). Immutable after parent ExpenseClaimEntry is submitted.",
             "nullable": true,
             "example": "pass-through",
             "title": "Settlement Mode"
           },
           "linkedCustomerId": {
             "type": "string",
-            "description": "FK to Organization (customer) when settlementMode = pass-through (REQ-ERP-002).",
+            "description": "FK to Organization (customer) when settlementMode = pass-through.",
             "nullable": true,
             "title": "Linked Customer ID"
           },
           "markupRuleId": {
             "type": "string",
-            "description": "FK to PassThroughMarkupRule. Locked at claim submission (REQ-ERP-010).",
+            "description": "FK to PassThroughMarkupRule. Locked at claim submission.",
             "nullable": true,
             "title": "Markup Rule ID"
           },
@@ -170,7 +170,7 @@
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "Markup percentage or fixed amount; locked on submission (REQ-ERP-010).",
+            "description": "Markup percentage or fixed amount; locked on submission.",
             "nullable": true,
             "title": "Markup Rate Applied"
           },
@@ -178,20 +178,20 @@
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "Pass-through amount: allowanceAmount × (1 + markupRateApplied) or allowanceAmount + markupValue (REQ-ERP-002).",
+            "description": "Pass-through amount: allowanceAmount × (1 + markupRateApplied) or allowanceAmount + markupValue.",
             "nullable": true,
             "title": "Markup Amount Calculated"
           },
           "passthroughDebitAccountCode": {
             "type": "string",
-            "description": "GL account code for pass-through debit. Defaults from ReimbursementPolicy (REQ-ERP-002).",
+            "description": "GL account code for pass-through debit. Defaults from ReimbursementPolicy.",
             "nullable": true,
             "title": "Passthrough Debit Account Code"
           }
         },
         "x-openregister-calculations": {
           "markupLookup": {
-            "description": "Mirrors Receipt.markupLookup for per-diem lines (REQ-ERP-005). Per-diem category resolves to 'meals' for rule matching unless overridden by the operator.",
+            "description": "Mirrors Receipt.markupLookup for per-diem lines. Per-diem category resolves to 'meals' for rule matching unless overridden by the operator.",
             "expression": "@self.settlementMode == 'pass-through' ? lookup('PassThroughMarkupRule', {targetCustomerId: @self.linkedCustomerId, targetCategory: 'meals', administrationId: @self.administrationId, effectiveFromYear: year(@self.fromDate)}, {priority: ['targetCustomerId+targetCategory', 'targetCustomerId', 'global']}) : null",
             "targets": {
               "markupRuleId": "@matched.ruleId",
@@ -221,7 +221,7 @@
             "multipleOf": 0.01,
             "minimum": 0,
             "default": 0,
-            "description": "Sum of Receipt.amountInBaseCurrency + MileageEntry.totalAmount + PerDiem.allowanceAmount where settlementMode = reimbursable. Aggregated declaratively (REQ-ERP-003).",
+            "description": "Sum of Receipt.amountInBaseCurrency + MileageEntry.totalAmount + PerDiem.allowanceAmount where settlementMode = reimbursable. Aggregated declaratively.",
             "example": 50.0,
             "title": "Total Reimbursable Amount"
           },
@@ -230,7 +230,7 @@
             "multipleOf": 0.01,
             "minimum": 0,
             "default": 0,
-            "description": "Sum of line markupAmountCalculated values where settlementMode = pass-through (cost + markup). Aggregated declaratively (REQ-ERP-003).",
+            "description": "Sum of line markupAmountCalculated values where settlementMode = pass-through (cost + markup). Aggregated declaratively.",
             "example": 150.25,
             "title": "Total Pass Through Amount"
           },
@@ -239,7 +239,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Unique list of linkedCustomerId values across pass-through line items. Populated declaratively for multi-customer pass-through claims (REQ-ERP-003, REQ-ERP-009).",
+            "description": "Unique list of linkedCustomerId values across pass-through line items. Populated declaratively for multi-customer pass-through claims.",
             "nullable": true,
             "example": [
               "CUST-123",
@@ -249,21 +249,21 @@
           },
           "glReimbursableTransactionId": {
             "type": "string",
-            "description": "Back-reference to materialised GLTransaction for the reimbursable path (debit expense-payable, credit cost centres). Set by the reimbursable-path post action (REQ-ERP-007).",
+            "description": "Back-reference to materialised GLTransaction for the reimbursable path (debit expense-payable, credit cost centres). Set by the reimbursable-path post action.",
             "nullable": true,
             "example": "txn-2026-erp-r-0001",
             "title": "GL Reimbursable Transaction ID"
           },
           "glPassThroughTransactionId": {
             "type": "string",
-            "description": "Back-reference to materialised GLTransaction for the pass-through path (debit customer AR, credit cost centres + revenue-deferral). Set by the pass-through path post action (REQ-ERP-007).",
+            "description": "Back-reference to materialised GLTransaction for the pass-through path (debit customer AR, credit cost centres + revenue-deferral). Set by the pass-through path post action.",
             "nullable": true,
             "example": "txn-2026-erp-p-0001",
             "title": "GL Pass Through Transaction ID"
           },
           "reimbursementPolicyId": {
             "type": "string",
-            "description": "FK to the ReimbursementPolicy applied to this claim — determines auto-approve threshold, optional markup-approval threshold, and the employee bank account mapping (REQ-ERP-004). Defaults to the administration's single active policy when null.",
+            "description": "FK to the ReimbursementPolicy applied to this claim — determines auto-approve threshold, optional markup-approval threshold, and the employee bank account mapping. Defaults to the administration's single active policy when null.",
             "nullable": true,
             "example": "POL-NL-01",
             "title": "Reimbursement Policy ID"
@@ -271,7 +271,7 @@
         },
         "x-openregister-aggregations": {
           "settlementTotals": {
-            "description": "Auto-aggregates dual-path totals across linked Receipt + MileageEntry + PerDiem records grouped by settlementMode (REQ-ERP-003). Recomputed on every line-item save, frozen on submit per REQ-ERP-010. Also derives the unique passThroughCustomerIds list for downstream AR linking (REQ-ERP-009).",
+            "description": "Auto-aggregates dual-path totals across linked Receipt + MileageEntry + PerDiem records grouped by settlementMode. Recomputed on every line-item save, frozen on submit per REQ-ERP-010. Also derives the unique passThroughCustomerIds list for downstream AR linking.",
             "sources": [
               {
                 "schema": "Receipt",
@@ -325,7 +325,7 @@
           "states": {
             "invoiced": {
               "label": "Invoiced (pass-through)",
-              "description": "Pass-through path closure: claim cost + markup included on customer invoice; AR updated (REQ-ERP-007, REQ-ERP-009)."
+              "description": "Pass-through path closure: claim cost + markup included on customer invoice; AR updated."
             }
           },
           "transitions": {
@@ -411,7 +411,7 @@
               "from": "posted",
               "to": "invoiced",
               "label": "Mark as invoiced (pass-through)",
-              "description": "REQ-ERP-007 pass-through path closure: customer invoice generation cycle includes claim cost + markup on next AR invoice. Available only when settlementMode = pass-through (REQ-ERP-009).",
+              "description": "REQ-ERP-007 pass-through path closure: customer invoice generation cycle includes claim cost + markup on next AR invoice. Available only when settlementMode = pass-through.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ExpenseReimbursementGuard::requirePassThroughMode"
             },
             "changeSettlementMode": {
@@ -442,7 +442,7 @@
         "icon": "ShieldCheckOutline",
         "version": "0.1.0",
         "title": "Reimbursement Policy",
-        "description": "Per-administration master-data record configuring expense settlement policy: auto-approve threshold for reimbursable claims, optional markup-approval threshold for pass-through claims, default GL account code for the pass-through debit, and the employee bank-account mapping reference for the SEPA reimbursement event (REQ-ERP-004, REQ-ERP-006, REQ-ERP-008). One active policy per administration; consumed by OR approval-workflow (ADR-022) and by the dual-path GL post action.",
+        "description": "Per-administration master-data record configuring expense settlement policy: auto-approve threshold for reimbursable claims, optional markup-approval threshold for pass-through claims, default GL account code for the pass-through debit, and the employee bank-account mapping reference for the SEPA reimbursement event. One active policy per administration; consumed by OR approval-workflow (ADR-022) and by the dual-path GL post action.",
         "x-schema-org": "schema:Thing",
         "x-spec": "openspec/changes/expense-reimbursement-or-passthrough/specs/expense-reimbursement-or-passthrough/spec.md",
         "type": "object",
@@ -475,7 +475,7 @@
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "Expense claims with totalAmount ≤ this value auto-approve (skip approval-workflow gating). Consumed by OR approval-workflow per ADR-022 (REQ-ERP-004).",
+            "description": "Expense claims with totalAmount ≤ this value auto-approve (skip approval-workflow gating). Consumed by OR approval-workflow per ADR-022.",
             "nullable": true,
             "example": 500.0,
             "title": "Auto Approve Threshold"
@@ -484,21 +484,21 @@
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "Pass-through claims with markup amount (totalPassThroughAmount × markupRateApplied — totalPassThroughAmount/(1+markupRateApplied)) ≥ this value require an extra approver on submitted → approved (REQ-ERP-006). Null = no extra gate. Consumed by OR approval-workflow.",
+            "description": "Pass-through claims with markup amount (totalPassThroughAmount × markupRateApplied — totalPassThroughAmount/(1+markupRateApplied)) ≥ this value require an extra approver on submitted → approved. Null = no extra gate. Consumed by OR approval-workflow.",
             "nullable": true,
             "example": 100.0,
             "title": "Requires Markup Approval Threshold"
           },
           "passthroughDebitAccountCode": {
             "type": "string",
-            "description": "Default GL account code for the pass-through debit line (customer AR / deferred revenue). Per-claim override via Receipt/MileageEntry/PerDiem.passthroughDebitAccountCode (REQ-ERP-002, REQ-ERP-007).",
+            "description": "Default GL account code for the pass-through debit line (customer AR / deferred revenue). Per-claim override via Receipt/MileageEntry/PerDiem.passthroughDebitAccountCode.",
             "nullable": true,
             "example": "1300",
             "title": "Passthrough Debit Account Code"
           },
           "employeeBankAccountMapping": {
             "type": "string",
-            "description": "Reference for resolving the employee SEPA account in the reimbursement notification payload. 'standard' = lookup Person.bankAccount; named overrides allow per-deployment mapping (REQ-ERP-008).",
+            "description": "Reference for resolving the employee SEPA account in the reimbursement notification payload. 'standard' = lookup Person.bankAccount; named overrides allow per-deployment mapping.",
             "nullable": true,
             "default": "standard",
             "example": "standard",
@@ -548,7 +548,7 @@
         "icon": "PercentOutline",
         "version": "0.1.0",
         "title": "Pass-through Markup Rule",
-        "description": "Per-administration master-data record defining the markup applied to pass-through expenses. Rules target (targetCustomerId + targetCategory), (targetCustomerId only), or null+null (global default). Lookup priority — customer+category > customer-only > global default — is enforced declaratively in the lookup() expression on Receipt/MileageEntry/PerDiem x-openregister-calculations (REQ-ERP-005). markupType=percentage applies amount × (1 + markupValue); markupType=fixedAmount adds markupValue to amount. Effective per fiscal year; rate locks on claim submission per REQ-ERP-010 (rule changes never affect historical claims).",
+        "description": "Per-administration master-data record defining the markup applied to pass-through expenses. Rules target (targetCustomerId + targetCategory), (targetCustomerId only), or null+null (global default). Lookup priority — customer+category > customer-only > global default — is enforced declaratively in the lookup() expression on Receipt/MileageEntry/PerDiem x-openregister-calculations. markupType=percentage applies amount × (1 + markupValue); markupType=fixedAmount adds markupValue to amount. Effective per fiscal year; rate locks on claim submission per REQ-ERP-010 (rule changes never affect historical claims).",
         "x-schema-org": "schema:Offer",
         "x-spec": "openspec/changes/expense-reimbursement-or-passthrough/specs/expense-reimbursement-or-passthrough/spec.md",
         "type": "object",
@@ -587,7 +587,7 @@
               "percentage",
               "fixedAmount"
             ],
-            "description": "Markup application mode. percentage: amount × (1 + markupValue). fixedAmount: amount + markupValue per receipt/item (REQ-ERP-005).",
+            "description": "Markup application mode. percentage: amount × (1 + markupValue). fixedAmount: amount + markupValue per receipt/item.",
             "example": "percentage",
             "title": "Markup Type"
           },
@@ -612,7 +612,7 @@
             "type": "integer",
             "minimum": 2020,
             "maximum": 2099,
-            "description": "Fiscal year this rule applies to. Rules with earlier effectiveFromYear are matched only when no later rule exists for the same target (REQ-ERP-005).",
+            "description": "Fiscal year this rule applies to. Rules with earlier effectiveFromYear are matched only when no later rule exists for the same target.",
             "example": 2026,
             "title": "Effective From Year"
           },

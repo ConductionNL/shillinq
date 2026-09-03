@@ -13,7 +13,7 @@
         "icon": "ClipboardTextOutline",
         "version": "0.1.0",
         "title": "Purchase Requisition",
-        "description": "Internal purchase requisition (aanvraag) raised by an employee before a PurchaseOrder exists (REQ-REQ-001). Lifecycle draft -> submitted -> approved|rejected -> converted. Approval reuses BudgetBlocker (budget availability + override-mandate) and MandateEnforcer (mandate resolution) from bookkeeping-verplichtingenadministratie via a shared field contract (programma/boekjaar/totaalbedrag_excl_btw/soort) — no parallel approval engine is built. An approved Requisition converts to a PurchaseOrder via RequisitionConversionService, which reuses PurchaseOrderService::createPurchaseOrder() unmodified.",
+        "description": "Internal purchase requisition (aanvraag) raised by an employee before a PurchaseOrder exists. Lifecycle draft -> submitted -> approved|rejected -> converted. Approval reuses BudgetBlocker (budget availability + override-mandate) and MandateEnforcer (mandate resolution) from bookkeeping-verplichtingenadministratie via a shared field contract (programma/boekjaar/totaalbedrag_excl_btw/soort) — no parallel approval engine is built. An approved Requisition converts to a PurchaseOrder via RequisitionConversionService, which reuses PurchaseOrderService::createPurchaseOrder() unmodified.",
         "x-schema-org": "schema:OrderAction",
         "x-spec": "openspec/specs/purchase-requisition/spec.md",
         "type": "object",
@@ -92,7 +92,7 @@
             "type": "string",
             "format": "uuid",
             "$ref": "PurchaseOrder",
-            "description": "FK to the PurchaseOrder materialised by convertToPurchaseOrder(), populated only once statusCode reaches 'converted'. Traceability link (REQ-REQ-005).",
+            "description": "FK to the PurchaseOrder materialised by convertToPurchaseOrder(), populated only once statusCode reaches 'converted'. Traceability link.",
             "nullable": true,
             "example": null,
             "title": "Converted Purchase Order"
@@ -143,7 +143,7 @@
               "rejected",
               "converted"
             ],
-            "description": "Lifecycle state per x-openregister-lifecycle (REQ-REQ-002).",
+            "description": "Lifecycle state per x-openregister-lifecycle.",
             "example": "draft",
             "title": "Status Code"
           },
@@ -184,13 +184,13 @@
               "from": "draft",
               "to": "submitted",
               "label": "Indienen",
-              "description": "Submit the requisition for approval. Always routed through human approval regardless of mandate sufficiency (REQ-REQ-002) — unlike Commitment, a Requisition never skips straight to approved."
+              "description": "Submit the requisition for approval. Always routed through human approval regardless of mandate sufficiency — unlike Commitment, a Requisition never skips straight to approved."
             },
             "approve": {
               "from": "submitted",
               "to": "approved",
               "label": "Goedkeuren",
-              "description": "Approve the requisition. Gated by BudgetBlocker::canCommit (budget availability for programma/boekjaar, or a valid override-mandate) reused unmodified from bookkeeping-verplichtingenadministratie (REQ-REQ-003).",
+              "description": "Approve the requisition. Gated by BudgetBlocker::canCommit (budget availability for programma/boekjaar, or a valid override-mandate) reused unmodified from bookkeeping-verplichtingenadministratie.",
               "requires": "OCA\\Shillinq\\Lifecycle\\BudgetBlocker::canCommit"
             },
             "reject": {
@@ -203,14 +203,14 @@
               "from": "approved",
               "to": "converted",
               "label": "Omzetten naar inkooporder",
-              "description": "Materialise a PurchaseOrder from the approved requisition via RequisitionConversionService::convertToPurchaseOrder(), which reuses PurchaseOrderService::createPurchaseOrder() unmodified (REQ-REQ-005). Guarded by RequisitionConversionGuard::canConvert (status must be 'approved'); the actual PO creation is imperative (creates a new cross-schema record and writes back its id) and is performed by the service, mirroring how PurchaseOrderService::blockSendUntilApproved() itself mutates lifecycleState outside the generic transition engine.",
+              "description": "Materialise a PurchaseOrder from the approved requisition via RequisitionConversionService::convertToPurchaseOrder(), which reuses PurchaseOrderService::createPurchaseOrder() unmodified. Guarded by RequisitionConversionGuard::canConvert (status must be 'approved'); the actual PO creation is imperative (creates a new cross-schema record and writes back its id) and is performed by the service, mirroring how PurchaseOrderService::blockSendUntilApproved() itself mutates lifecycleState outside the generic transition engine.",
               "requires": "OCA\\Shillinq\\Lifecycle\\RequisitionConversionGuard::canConvert"
             }
           }
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create/update/lifecycle transition of a Requisition (submit/approve/reject/convertToPO) is logged to OR's immutable audit trail, including actor + timestamp (REQ-AT-001)."
+          "description": "Every create/update/lifecycle transition of a Requisition (submit/approve/reject/convertToPO) is logged to OR's immutable audit trail, including actor + timestamp."
         },
         "x-openregister-rbac": {
           "roles": {
@@ -251,7 +251,7 @@
         "icon": "FormatListBulleted",
         "version": "0.1.0",
         "title": "Requisition Line",
-        "description": "Line item on a Requisition (REQ-REQ-001). Money fields are integer cents per ADR-022; unitPrice is integer cents so quantity * unitPrice -> lineTotal stays exact. glAccountSuggestion is carried forward as the PurchaseOrderLine.glAccount when the parent Requisition converts.",
+        "description": "Line item on a Requisition. Money fields are integer cents per ADR-022; unitPrice is integer cents so quantity * unitPrice -> lineTotal stays exact. glAccountSuggestion is carried forward as the PurchaseOrderLine.glAccount when the parent Requisition converts.",
         "x-schema-org": "schema:OrderItem",
         "x-openregister-purpose": "fact",
         "x-spec": "openspec/specs/purchase-requisition/spec.md",
@@ -308,7 +308,7 @@
           },
           "glAccountSuggestion": {
             "type": "string",
-            "description": "Suggested RGS general-ledger account code for this line; carried forward as PurchaseOrderLine.glAccount on conversion (REQ-REQ-005).",
+            "description": "Suggested RGS general-ledger account code for this line; carried forward as PurchaseOrderLine.glAccount on conversion.",
             "example": "4400",
             "title": "GL Account Suggestion"
           },
@@ -328,7 +328,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create/update/delete of a RequisitionLine is logged to OR's immutable audit trail (REQ-AT-001)."
+          "description": "Every create/update/delete of a RequisitionLine is logged to OR's immutable audit trail."
         }
       }
     }

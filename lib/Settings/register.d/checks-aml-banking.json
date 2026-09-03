@@ -184,7 +184,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Cash Transaction (AML) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Cash Transaction (AML) is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "AmlReport": {
@@ -288,7 +288,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a AML Report (CTR / SAR / 8300 / CMIR / FBAR / unusual) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a AML Report (CTR / SAR / 8300 / CMIR / FBAR / unusual) is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "SanctionsScreening": {
@@ -367,7 +367,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Sanctions Screening (OFAC / EU / national) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Sanctions Screening (OFAC / EU / national) is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "CddRecord": {
@@ -447,7 +447,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Customer Due Diligence Record is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Customer Due Diligence Record is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "FundsTransfer": {
@@ -509,7 +509,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Funds Transfer (travel rule) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Funds Transfer (travel rule) is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "TrustLedger": {
@@ -574,7 +574,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Trust / Escrow Ledger is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Trust / Escrow Ledger is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "CashCount": {
@@ -636,7 +636,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Cash Count (kasadministratie / Z-report) is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Cash Count (kasadministratie / Z-report) is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }
