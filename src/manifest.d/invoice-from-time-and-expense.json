@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "invoice-from-time-and-expense",
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
-		"description": "Tier-2 invoice-from-time-and-expense UI surface (issue #111). Adds two custom routes — InvoiceList (admin list) and InvoiceGenerate (drafting form) — under a single navigation entry. Detail view InvoiceDetail is parameterised on:id. Pages are kind=custom (the InvoiceGenerator + lookup wizard does not fit any built-in manifest page type — see design.md D1)."
+		"description": "Tier-2 invoice-from-time-and-expense UI surface (issue #111). Adds two custom routes — InvoiceList (admin list) and InvoiceGenerate (drafting form) — under a single navigation entry. Detail view InvoiceDetail is parameterised on :id. Pages are kind=custom (the InvoiceGenerator + lookup wizard does not fit any built-in manifest page type — see design.md D1)."
 	},
 	"menu": [
 		{

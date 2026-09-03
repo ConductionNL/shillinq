@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "bookkeeping-schatkistbankieren",
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json. ADR-024 reachability gate satisfied: every menu.route points at an existing pages[].id within this fragment.",
-		"description": "T2 schatkistbankieren — Governance menu group with Treasury Accounts / Banking Rules / Compliance Reports. Three index/detail page pairs dispatch to the manifest-v2 Cn{Index,Detail}Page renderers against the shillinq register; route names equal page ids per the manifest contract. Per ADR-024 Tier 4 / rendering uses generic @conduction/nextcloud-vue components — no bespoke Vue files."
+		"description": "T2 schatkistbankieren — Governance menu group with Treasury Accounts / Banking Rules / Compliance Reports. Three index/detail page pairs dispatch to the manifest-v2 Cn{Index,Detail}Page renderers against the shillinq register; route names equal page ids per the manifest contract. Per ADR-024 Tier 4 / REQ-SCHATKIST-009 rendering uses generic @conduction/nextcloud-vue components — no bespoke Vue files."
 	},
 	"menu": [
 		{

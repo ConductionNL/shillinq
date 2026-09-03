@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "administration-import-migration",
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json. ADR-004 NcSelect inputLabel + modal-isolation gates.",
-		"description": "Tier 2 — Administration Import & Migration navigation. Adds the 'Import & migration' menu with the import wizard, batch list, batch detail (reports + reversal action via lifecycleActions), and the mapping review grid, bound to the canonical ImportBatch / ImportMapping schemas. The multi-step wizard (upload via NC Files picker → profile selection → mapping review → validation findings → dry-run report → post) is described as a sequence over the batch detail + mapping grid; the single-screen wizard host references a custom component noted as deferred until the wizard component lands."
+		"description": "Tier 2 — Administration Import & Migration navigation per REQ-AIM-010. Adds the 'Import & migration' menu with the import wizard, batch list, batch detail (reports + reversal action via lifecycleActions), and the mapping review grid, bound to the canonical ImportBatch / ImportMapping schemas. The multi-step wizard (upload via NC Files picker → profile selection → mapping review → validation findings → dry-run report → post) is described as a sequence over the batch detail + mapping grid; the single-screen wizard host references a custom component noted as deferred until the wizard component lands."
 	},
 	"menu": [
 		{

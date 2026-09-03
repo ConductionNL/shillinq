@@ -3,7 +3,7 @@
 		"spdx-license": "EUPL-1.2",
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "add-shillinq-multi-currency",
-		"description": "T4 envelope manifest fragment: adds the FXRates child entry to the existing BookkeepingMultiCurrency menu (BankAccounts + CurrencyBalances were shipped by the T3 sibling fragment) plus the FXRates index + FXRateDetail detail page pair binding to the FxRate register declared in lib/Settings/register.d/add-shillinq-multi-currency-t4.json."
+		"description": "T4 envelope manifest fragment per REQ-MC-006: adds the FXRates child entry to the existing BookkeepingMultiCurrency menu (BankAccounts + CurrencyBalances were shipped by the T3 sibling fragment) plus the FXRates index + FXRateDetail detail page pair binding to the FxRate register declared in lib/Settings/register.d/add-shillinq-multi-currency-t4.json."
 	},
 	"menu": [
 		{

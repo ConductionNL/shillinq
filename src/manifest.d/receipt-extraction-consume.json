@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "receipt-extraction-consume",
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json. Overlays the existing native ReceiptDetail page (mergePages replaces by id, mirrors AfspraakDetail).",
-		"description": "Swaps the native ReceiptDetail (type: detail) for a custom ReceiptCapture component: per-field docudesk-extraction confidence, correction, and re-request on top of the same fields the native page already showed."
+		"description": "Swaps the native ReceiptDetail (type: detail) for a custom ReceiptCapture component (REQ-RXC-003): per-field docudesk-extraction confidence, correction, and re-request on top of the same fields the native page already showed."
 	},
 	"pages": [
 		{

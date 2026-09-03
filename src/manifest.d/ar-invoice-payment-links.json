@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "ar-invoice-payment-links",
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
-		"description": "Tier 2 — AR Invoice Payment Links UI. Adds a Payment Requests overview (index over PaymentRequest with a state filter incl. an exceptions filter for failed / captured_unapplied, per-administration scope) + a Payment Request detail page (state badge, the paymentLink with copy + QR, expiry, regenerate action, failure reason, request history). One menu entry under the existing AR / Bookkeeping group (order 24). NOTE: the invoice-detail payment panel itself is described here as a sidebarProps tab note — the AR invoice detail page is owned by bookkeeping-accounts-receivable-core, so the panel is additive/deferred to that page; this fragment ships the standalone overview + detail pages and the menu entry."
+		"description": "Tier 2 — AR Invoice Payment Links UI per REQ-APL-008. Adds a Payment Requests overview (index over PaymentRequest with a state filter incl. an exceptions filter for failed / captured_unapplied, per-administration scope) + a Payment Request detail page (state badge, the paymentLink with copy + QR, expiry, regenerate action, failure reason, request history). One menu entry under the existing AR / Bookkeeping group (order 24). NOTE: the invoice-detail payment panel itself is described here as a sidebarProps tab note — the AR invoice detail page is owned by bookkeeping-accounts-receivable-core, so the panel is additive/deferred to that page; this fragment ships the standalone overview + detail pages and the menu entry."
 	},
 	"menu": [
 		{
@@ -54,7 +54,7 @@
 						"label": "Exceptions only",
 						"inputLabel": "Show exceptions only",
 						"type": "preset",
-						"description": "Per: surface failed + captured_unapplied payment requests for operator action.",
+						"description": "Per REQ-APL-008: surface failed + captured_unapplied payment requests for operator action.",
 						"filter": {"state": {"in": ["failed", "captured_unapplied"]}}
 					}
 				]
@@ -94,7 +94,7 @@
 						"id": "regenerate",
 						"label": "Regenerate payment link",
 						"icon": "Refresh",
-						"description": "Per: creates a NEW pending payment request with the current outstanding amount; the panel shows its link and the expired request remains visible in history. History is preserved (a new record, not a mutation)."
+						"description": "Per REQ-APL-008: creates a NEW pending payment request with the current outstanding amount; the panel shows its link and the expired request remains visible in history. History is preserved (a new record, not a mutation)."
 					}
 				],
 				"sidebarProps": {

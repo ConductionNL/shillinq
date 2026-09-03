@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "contract-lifecycle-management",
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
-		"description": "Tier 2 — Contract Lifecycle Management navigation. Adds a 'Contracts' menu group with Contracts (repository index), Contract Obligations (cross-contract deadline overview), and Contract Spend (committed-vs-invoiced dashboard) plus their backing pages bound to the canonical Contract / ContractObligation schemas. The spend dashboard renders an honest empty state until the chained PurchaseOrder / APInvoice / ARInvoice schemas land. No bespoke router work; modals/dialogs (where added) live under src/modals/ / src/dialogs/ and NcSelect carries inputLabel (ADR-004)."
+		"description": "Tier 2 — Contract Lifecycle Management navigation per REQ-CLM-008. Adds a 'Contracts' menu group with Contracts (repository index), Contract Obligations (cross-contract deadline overview), and Contract Spend (committed-vs-invoiced dashboard) plus their backing pages bound to the canonical Contract / ContractObligation schemas. The spend dashboard renders an honest empty state until the chained PurchaseOrder / APInvoice / ARInvoice schemas land (REQ-CLM-006). No bespoke router work; modals/dialogs (where added) live under src/modals/ / src/dialogs/ and NcSelect carries inputLabel (ADR-004)."
 	},
 	"menu": [
 		{
@@ -49,7 +49,7 @@
 				"search": {
 					"enabled": true,
 					"fields": ["contractNumber", "title", "tags"],
-					"description": "Repository search via OR _search over contract number, title, and tags (no app-local search endpoint)."
+					"description": "Repository search via OR _search over contract number, title, and tags per REQ-CLM-008 (no app-local search endpoint)."
 				},
 				"columns": [
 					{"key": "contractNumber", "label": "Contract #", "sortable": true},
@@ -71,7 +71,7 @@
 					{
 						"id": "expiringSoon",
 						"label": "Expiring soon",
-						"description": "Default smart filter surfacing contracts inside the renewal-decision window (status in {active, expiring} and renewalDecisionDate within 30 days or past).",
+						"description": "Default smart filter surfacing contracts inside the renewal-decision window (status in {active, expiring} and renewalDecisionDate within 30 days or past) per REQ-CLM-008.",
 						"filter": {
 							"all": [
 								{"field": "status", "operator": "in", "values": ["active", "expiring"]},
@@ -172,7 +172,7 @@
 										"schema": "Contract",
 										"field": "documents",
 										"objectId": ":id",
-										"description": "NC Files references (link, don't store); opens in the NC Files viewer."
+										"description": "NC Files references (link, don't store) per REQ-CLM-005; opens in the NC Files viewer."
 									}
 								}
 							]
@@ -262,7 +262,7 @@
 										"schema": "ContractObligation",
 										"field": "evidence",
 										"objectId": ":id",
-										"description": "NC Files references (link, don't store)."
+										"description": "NC Files references (link, don't store) per REQ-CLM-005."
 									}
 								}
 							]

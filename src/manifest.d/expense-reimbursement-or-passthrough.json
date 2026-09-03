@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "expense-reimbursement-or-passthrough",
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json. ADR-031 declarative-first: bulk classification is a manifest form page, no custom Vue component.",
-		"description": "Tier-2 dual-mode expense settlement UI. Adds two top-level navigation entries under Bookkeeping: (1) Expense Settlement Classifier — bulk form for assigning settlementMode + linkedCustomerId + markupRule to N expenses at once; (2) ReimbursementPolicy + PassThroughMarkupRule master-data index + detail pages for bookkeeper-driven configuration. Index columns reflect summary fields; detail pages drive the standard CRUD lifecycle; the classifier page submits via the OR approval-workflow if the resolved policy's markup-approval threshold is exceeded."
+		"description": "Tier-2 dual-mode expense settlement UI per REQ-ERP-001 / REQ-ERP-002 / REQ-ERP-003. Adds two top-level navigation entries under Bookkeeping: (1) Expense Settlement Classifier — bulk form for assigning settlementMode + linkedCustomerId + markupRule to N expenses at once; (2) ReimbursementPolicy + PassThroughMarkupRule master-data index + detail pages for bookkeeper-driven configuration. Index columns reflect summary fields; detail pages drive the standard CRUD lifecycle; the classifier page submits via the OR approval-workflow if the resolved policy's markup-approval threshold is exceeded (REQ-ERP-006)."
 	},
 	"menu": [
 		{
@@ -46,7 +46,7 @@
 			"_note": "Was declared as `type: \"bulk-form\"`, which is not one of the 14 page types: CnPageRenderer looked it up in the pageTypes registry, found nothing, logged 'Unknown page type' and rendered NOTHING, so this page has never worked. There is no standard type to move it to — it selects rows across THREE schemas at once (Receipt, MileageEntry, PerDiem, each with its own column set and its own 'unclassified' filter) and writes one shared form (settlementMode, linked customer, markup rule) to every selected row, whereas `type: form` edits a single object of a single schema and `type: index` has mass actions but no shared form. Declared `custom` and left without a component until the bulk classifier is built — the page renders the empty state, which is the same thing it does today but no longer behind a page type that does not exist. Flow, sources and submit contract are retained below under config so the implementation stays manifest-owned (REQ-ERP-001 / REQ-ERP-003 / REQ-ERP-006).",
 			"config": {
 				"register": "shillinq",
-				"description": "Bulk-classify uncategorised receipts, mileage entries, and per-diem records as reimbursable (paid via SEPA) or pass-through (billed to a customer at cost + markup). The selected markup rule + customer are written to every selected line item; child items inherit the claim mode at parent-claim submission.",
+				"description": "Bulk-classify uncategorised receipts, mileage entries, and per-diem records as reimbursable (paid via SEPA) or pass-through (billed to a customer at cost + markup). The selected markup rule + customer are written to every selected line item; child items inherit the claim mode at parent-claim submission per REQ-ERP-001 / REQ-ERP-003.",
 				"sources": [
 					{
 						"id": "receipts",
@@ -96,7 +96,7 @@
 								{"value": "reimbursable", "label": "Reimbursable (SEPA to employee)"},
 								{"value": "pass-through", "label": "Pass-through (bill customer at cost + markup)"}
 							],
-							"description": "Dual-mode classification. Immutable after the parent ExpenseClaimEntry is submitted."
+							"description": "REQ-ERP-001 dual-mode classification. Immutable after the parent ExpenseClaimEntry is submitted (REQ-ERP-010)."
 						},
 						{
 							"key": "linkedCustomerId",
@@ -105,7 +105,7 @@
 							"schema": "Organization",
 							"required": false,
 							"visibleWhen": "settlementMode == 'pass-through'",
-							"description": "Customer FK. Required when settlementMode = pass-through."
+							"description": "REQ-ERP-002 customer FK. Required when settlementMode = pass-through."
 						},
 						{
 							"key": "markupRuleId",
@@ -114,7 +114,7 @@
 							"schema": "PassThroughMarkupRule",
 							"required": false,
 							"visibleWhen": "settlementMode == 'pass-through'",
-							"description": "Optional explicit rule selection; defaults to the highest-priority rule matching (customer, category, fiscal year)."
+							"description": "Optional explicit rule selection; defaults to the highest-priority rule matching (customer, category, fiscal year) per REQ-ERP-005."
 						},
 						{
 							"key": "passthroughDebitAccountCode",
@@ -122,7 +122,7 @@
 							"type": "string",
 							"required": false,
 							"visibleWhen": "settlementMode == 'pass-through'",
-							"description": "Optional override of the ReimbursementPolicy default; the customer AR / deferred revenue GL account that will be debited on claim post."
+							"description": "Optional override of the ReimbursementPolicy default; the customer AR / deferred revenue GL account that will be debited on claim post (REQ-ERP-002 / REQ-ERP-007)."
 						}
 					]
 				},
@@ -130,7 +130,7 @@
 					"verb": "POST",
 					"endpoint": "lifecycle.bulkUpdate",
 					"targetField": "settlementMode",
-					"description": "Bulk-write the form values to every selected line item across all sources. Triggers the parent ExpenseClaimEntry approval-workflow extra-approver gate if the resolved policy threshold is exceeded."
+					"description": "Bulk-write the form values to every selected line item across all sources. Triggers the parent ExpenseClaimEntry approval-workflow extra-approver gate per REQ-ERP-006 if the resolved policy threshold is exceeded."
 				}
 			}
 		},
