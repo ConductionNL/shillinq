@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookings-email-templates",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "kind: config — declarative booking email template registry. Adds three schemas (BookingConfirmationTemplate, BookingReminderTemplate, BookingCancellationTemplate) each with draft → published → archived lifecycle per ADR-031, declarative variable substitution and validation via x-openregister-calculations, branding customization (logo, accent, footer), and OR notification-engine dispatch wiring per ADR-022. Includes 6 seed templates (Dutch + English locales for each of the three template types). No PHP template service class — rendering and validation are declarative."
+    "description": "kind: config. Declarative booking email template registry. Adds three schemas (BookingConfirmationTemplate, BookingReminderTemplate, BookingCancellationTemplate) each with draft → published → archived lifecycle per ADR-031, declarative variable substitution and validation via x-openregister-calculations, branding customization (logo, accent, footer), and OR notification-engine dispatch wiring per ADR-022. Includes 6 seed templates (Dutch + English locales for each of the three template types). No PHP template service class. Rendering and validation are declarative."
   },
   "components": {
     "schemas": {
@@ -63,7 +63,7 @@
           "htmlBody": {
             "type": "string",
             "maxLength": 102400,
-            "description": "HTML email body. Inline styles only — no external CSS, no JavaScript. Allowed elements limited to div, p, h1-h6, a, img, table, tr, td, ul, ol, li, br, span, strong, em. Combined html + plain-text size capped at 102 KB.",
+            "description": "HTML email body. Inline styles only: no external CSS, no JavaScript. Allowed elements limited to div, p, h1-h6, a, img, table, tr, td, ul, ol, li, br, span, strong, em. Combined html + plain-text size capped at 102 KB.",
             "example": "<html><body><h1>Hallo {{customerName}}</h1><p>Uw boeking is bevestigd.</p></body></html>",
             "title": "Html Body"
           },
@@ -78,7 +78,7 @@
             "type": "string",
             "format": "uri",
             "nullable": true,
-            "description": "URL of the organization logo image. Loaded from CDN or document-store URI — never inline base64 (keeps email size small and supports updates without resending).",
+            "description": "URL of the organization logo image. Loaded from CDN or document-store URI: never inline base64 (keeps email size small and supports updates without resending).",
             "example": "https://cdn.example.org/logo.png",
             "title": "Logo URI"
           },
@@ -94,7 +94,7 @@
             "type": "string",
             "nullable": true,
             "maxLength": 500,
-            "description": "Custom footer text — typically address, contact information, legal notices.",
+            "description": "Custom footer text: typically address, contact information, legal notices.",
             "example": "© 2026 Example BV, Postbus 123, 1000 AA Amsterdam",
             "title": "Footer Text"
           },
@@ -208,7 +208,7 @@
               "field": "plainTextBody",
               "description": "On render failure or missing HTML body fall back to plain-text dispatch; log error for operator review (T21)."
             },
-            "description": "Declarative email dispatch consumed from OR's notification engine (ADR-022). When booking.confirmed fires, the engine selects a published template matching the recipient locale, renders subject + html + plain-text with booking variables, and dispatches through the configured email provider — no direct SMTP from app code. Render failure falls back to plain-text (T21) and is logged for operator review."
+            "description": "Declarative email dispatch consumed from OR's notification engine (ADR-022). When booking.confirmed fires, the engine selects a published template matching the recipient locale, renders subject + html + plain-text with booking variables, and dispatches through the configured email provider: no direct SMTP from app code. Render failure falls back to plain-text (T21) and is logged for operator review."
           }
         },
         "x-openregister-rbac": {
@@ -248,7 +248,7 @@
         "icon": "EmailOutline",
         "version": "0.1.0",
         "title": "Boekingsherinneringssjabloon",
-        "description": "Branded email template dispatched a configurable number of hours before booking start. Carries hoursBeforeBooking timing, subject/body with {{variables}}, plain-text fallback, branding, and the same draft → published → archived lifecycle as the confirmation template. Multiple reminder templates can coexist (e.g. 24h and 2h) — the notification engine schedules one dispatch per published reminder per booking.",
+        "description": "Branded email template dispatched a configurable number of hours before booking start. Carries hoursBeforeBooking timing, subject/body with {{variables}}, plain-text fallback, branding, and the same draft → published → archived lifecycle as the confirmation template. Multiple reminder templates can coexist (e.g. 24h and 2h): the notification engine schedules one dispatch per published reminder per booking.",
         "x-schema-org": "schema:EmailMessage",
         "type": "object",
         "required": [

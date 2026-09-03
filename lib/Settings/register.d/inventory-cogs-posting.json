@@ -10,13 +10,13 @@
         "version": "0.1.0",
         "title": "Inventory GL Posting Configuration",
         "titleNl": "Voorraad GL Boekingsconfiguratie",
-        "description": "Per-administration mapping from inventory stock-movement event types (sale dispatch, goods receipt, count variance) to General Ledger account numbers. One active record per administrationId. Drives the declarative posting lifecycle on InventoryValuation. Holds FK account numbers (cogsAccountNumber, inventoryAssetAccountNumber, grIrClearingAccountNumber, inventoryAdjustmentAccountNumber) that MUST resolve to existing Account records in the same administration (FK invariant). When isActive=false or any account is missing, the lifecycle action skips the GLTransaction materialisation and emits a structured warning event — no zero-cost or unmatched GL entries are written. Schema.org Thing.",
+        "description": "Per-administration mapping from inventory stock-movement event types (sale dispatch, goods receipt, count variance) to General Ledger account numbers. One active record per administrationId. Drives the declarative posting lifecycle on InventoryValuation. Holds FK account numbers (cogsAccountNumber, inventoryAssetAccountNumber, grIrClearingAccountNumber, inventoryAdjustmentAccountNumber) that MUST resolve to existing Account records in the same administration (FK invariant). When isActive=false or any account is missing, the lifecycle action skips the GLTransaction materialisation and emits a structured warning event: no zero-cost or unmatched GL entries are written. Schema.org Thing.",
         "x-schema-org": "schema:Thing",
         "x-openregister-purpose": "config",
         "x-spec": "openspec/changes/inventory-cogs-posting/specs/inventory-cogs-posting/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "InventoryGLConfig changes (account number remapping, isActive toggle) MUST be audit-trail-immutable / ADR-022 — every change to a GL account routing is bookkeeping-relevant: it changes where future COGS / inventory-asset / count-variance postings land and is subject to operator + auditor review."
+          "description": "InventoryGLConfig changes (account number remapping, isActive toggle) MUST be audit-trail-immutable / ADR-022: every change to a GL account routing is bookkeeping-relevant: it changes where future COGS / inventory-asset / count-variance postings land and is subject to operator + auditor review."
         },
         "type": "object",
         "required": [
@@ -36,25 +36,25 @@
           },
           "cogsAccountNumber": {
             "type": "string",
-            "description": "FK to Account.accountNumber — debited on sale/dispatch event (Dr COGS). Default RGS 3.5 MKB '7000' Kostprijs omzet. MUST resolve to an existing Account in the same administration (FK invariant).",
+            "description": "FK to Account.accountNumber: debited on sale/dispatch event (Dr COGS). Default RGS 3.5 MKB '7000' Kostprijs omzet. MUST resolve to an existing Account in the same administration (FK invariant).",
             "example": "7000",
             "title": "COGS Account Number"
           },
           "inventoryAssetAccountNumber": {
             "type": "string",
-            "description": "FK to Account.accountNumber — debited on goods receipt (Dr Inventory Asset) and credited on COGS posting / negative variance. Default RGS 3.5 MKB '1400' Voorraden. MUST resolve to an existing Account in the same administration.",
+            "description": "FK to Account.accountNumber: debited on goods receipt (Dr Inventory Asset) and credited on COGS posting / negative variance. Default RGS 3.5 MKB '1400' Voorraden. MUST resolve to an existing Account in the same administration.",
             "example": "1400",
             "title": "Inventory Asset Account Number"
           },
           "grIrClearingAccountNumber": {
             "type": "string",
-            "description": "FK to Account.accountNumber — credited on goods receipt (Cr GR/IR clearing); subsequently debited by AP invoice posting. Default RGS 3.5 MKB '1800' GR/IR clearing. MUST resolve to an existing Account in the same administration. Two-step pattern avoids double-posting.",
+            "description": "FK to Account.accountNumber: credited on goods receipt (Cr GR/IR clearing); subsequently debited by AP invoice posting. Default RGS 3.5 MKB '1800' GR/IR clearing. MUST resolve to an existing Account in the same administration. Two-step pattern avoids double-posting.",
             "example": "1800",
             "title": "Gr Ir Clearing Account Number"
           },
           "inventoryAdjustmentAccountNumber": {
             "type": "string",
-            "description": "FK to Account.accountNumber — debited on negative count variance / credited on positive count variance. Default RGS 3.5 MKB '7100' Voorraadmutaties. MUST resolve to an existing Account in the same administration.",
+            "description": "FK to Account.accountNumber: debited on negative count variance / credited on positive count variance. Default RGS 3.5 MKB '7100' Voorraadmutaties. MUST resolve to an existing Account in the same administration.",
             "example": "7100",
             "title": "Inventory Adjustment Account Number"
           },
@@ -67,7 +67,7 @@
           "description": {
             "type": "string",
             "nullable": true,
-            "description": "Operator notes — e.g. 'NL RGS 3.5 MKB defaults applied' or 'overridden to match parent corporate chart'.",
+            "description": "Operator notes: e.g. 'NL RGS 3.5 MKB defaults applied' or 'overridden to match parent corporate chart'.",
             "example": "Shillinq demo administratie 2026",
             "title": "Description"
           }

@@ -1,6 +1,6 @@
 {
 	"_meta": {
-		"description": "InventoryStock seed for Utrecht Store (smaller retail outlet). Lower on-hand quantities and a higher reservation rate than the warehouses — demonstrates location-type variance (retail vs. distribution centre) per design.md seed-data table +. Idempotent dedupe.",
+		"description": "InventoryStock seed for Utrecht Store (smaller retail outlet). Lower on-hand quantities and a higher reservation rate than the warehouses: demonstrates location-type variance (retail vs. Distribution centre) per design.md seed-data table +. Idempotent dedupe.",
 		"spec": "openspec/changes/inventory-stock-tracking/specs/inventory-stock-tracking/spec.md",
 		"req": "REQ-IST-009",
 		"source": "Nextcloud Inventory",

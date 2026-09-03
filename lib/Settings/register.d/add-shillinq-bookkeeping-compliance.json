@@ -1326,7 +1326,7 @@
                 "value": {
                   "type": "string",
                   "nullable": true,
-                  "description": "Legacy match target or pattern for op=exact/contains/regex. Declared as a string: OpenRegister rejects a property with no `type` outright (\"Property at '/predicates/items/properties/value' must have a 'type' field\"), which failed the whole MatchingRule schema and — because ImportHandler's PASS 1 empties schemasMap around each importSchema call and only restores it on the success path — silently dropped every schema imported BEFORE it from the register, 74 of them. Numeric legacy values are carried as their string form; the typed successors (amount/min/max/days/threshold) are the non-legacy path.",
+                  "description": "Legacy match target or pattern for op=exact/contains/regex. Declared as a string: OpenRegister rejects a property with no `type` outright (\"Property at '/predicates/items/properties/value' must have a 'type' field\"), which failed the whole MatchingRule schema and. Because ImportHandler's PASS 1 empties schemasMap around each importSchema call and only restores it on the success path. Silently dropped every schema imported BEFORE it from the register, 74 of them. Numeric legacy values are carried as their string form; the typed successors (amount/min/max/days/threshold) are the non-legacy path.",
                   "title": "Value"
                 },
                 "matchTarget": {

@@ -183,7 +183,7 @@
         "icon": "ClockTimeFourOutline",
         "version": "0.1.0",
         "title": "Uren dagregistratie",
-        "description": "Dagelijkse fiscaal-gecategoriseerde uren-ledger voor het urencriterium. Apart van — en gevoed door — de billable UrenRegistratie (time-tracking) uit bookkeeping-time-tracking: time-tracking-uren stromen in als BILLABLE_KLANTWERK, niet-billable overhead (acquisitie, administratie, scholing, reistijd) wordt handmatig of agenda-afgeleid geregistreerd. De reistijd-cap (max 4 uur/dag) en backfill-regels worden afgedwongen door UrenDagregistratieGuard (ADR-031). Naamkeuze UrenDagregistratie vermijdt botsing met de bestaande monolith-schema UrenRegistratie (ADR-037).",
+        "description": "Dagelijkse fiscaal-gecategoriseerde uren-ledger voor het urencriterium. Apart van: en gevoed door. De billable UrenRegistratie (time-tracking) uit bookkeeping-time-tracking: time-tracking-uren stromen in als BILLABLE_KLANTWERK, niet-billable overhead (acquisitie, administratie, scholing, reistijd) wordt handmatig of agenda-afgeleid geregistreerd. De reistijd-cap (max 4 uur/dag) en backfill-regels worden afgedwongen door UrenDagregistratieGuard (ADR-031). Naamkeuze UrenDagregistratie vermijdt botsing met de bestaande monolith-schema UrenRegistratie (ADR-037).",
         "x-schema-org": "schema:HowToStep",
         "x-openregister-purpose": "transaction",
         "type": "object",

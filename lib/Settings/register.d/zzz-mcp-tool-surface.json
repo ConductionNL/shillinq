@@ -4,7 +4,7 @@
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "shillinq-mcp-adoption",
-    "description": "ADR-063 read-only x-openregister-mcp dialect on the 12 curated schemas (design.md D2). Adds only configuration[\"x-openregister-mcp\"] per schema via ADR-037 key-union merge -- no property, lifecycle, or required-list is restated or altered. search+get only, scope:read, readOnlyHint:true. Zero write verbs. Sorts last of all fragments (zzz- prefix) so nothing merged afterwards can overwrite the declaration."
+    "description": "ADR-063 read-only x-openregister-mcp dialect on the 12 curated schemas (design.md D2). Adds only configuration[\"x-openregister-mcp\"] per schema via ADR-037 key-union merge: no property, lifecycle, or required-list is restated or altered. Search+get only, scope:read, readOnlyHint:true. Zero write verbs. Sorts last of all fragments (zzz- prefix) so nothing merged afterwards can overwrite the declaration."
   },
   "components": {
     "schemas": {
@@ -14,7 +14,7 @@
             "enabled": true,
             "tools": {
               "search": {
-                "description": "Search accounts-receivable invoices (the AR sub-ledger record of account -- the only place amountDue/paidAmount/dunning live). Use for 'which invoices are overdue?' and similar debtor/AR questions.",
+                "description": "Search accounts-receivable invoices (the AR sub-ledger record of account: the only place amountDue/paidAmount/dunning live). Use for 'which invoices are overdue?' and similar debtor/AR questions.",
                 "scope": "read",
                 "readOnlyHint": true,
                 "filters": ["customerId", "invoiceNumber", "lifecycleState", "invoiceType", "administrationId"]
@@ -74,7 +74,7 @@
             "enabled": true,
             "tools": {
               "search": {
-                "description": "Search payments. Use to answer 'has invoice X been paid?' -- the read that closes the loop on an AR or AP invoice.",
+                "description": "Search payments. Use to answer 'has invoice X been paid?': the read that closes the loop on an AR or AP invoice.",
                 "scope": "read",
                 "readOnlyHint": true,
                 "filters": ["linkedInvoiceId", "status", "paymentType", "paymentDate", "administrationId"]
@@ -114,7 +114,7 @@
             "enabled": true,
             "tools": {
               "search": {
-                "description": "Search general-ledger transactions -- the double-entry posting of record. Use for 'what was booked in period 6?' and similar posting-history questions.",
+                "description": "Search general-ledger transactions: the double-entry posting of record. Use for 'what was booked in period 6?' and similar posting-history questions.",
                 "scope": "read",
                 "readOnlyHint": true,
                 "filters": ["transactionNumber", "state", "journalType", "fiscalYearId", "periodId"]
@@ -134,7 +134,7 @@
             "enabled": true,
             "tools": {
               "search": {
-                "description": "Search booked hours. Use for 'how many hours did I book on project Y this month?' -- the top ZZP/consultancy question and the urencriterium input.",
+                "description": "Search booked hours. Use for 'how many hours did I book on project Y this month?': the top ZZP/consultancy question and the urencriterium input.",
                 "scope": "read",
                 "readOnlyHint": true,
                 "filters": ["personId", "projectId", "date", "taskId", "administrationId"]
@@ -174,7 +174,7 @@
             "enabled": true,
             "tools": {
               "search": {
-                "description": "Search projects, including percentageComplete, wipBalance, and recognisedRevenue -- the RJ 270 / IFRS 15 revenue-recognition answers.",
+                "description": "Search projects, including percentageComplete, wipBalance, and recognisedRevenue: the RJ 270 / IFRS 15 revenue-recognition answers.",
                 "scope": "read",
                 "readOnlyHint": true,
                 "filters": ["customerId", "state", "projectNumber", "code", "administrationId"]
@@ -214,7 +214,7 @@
             "enabled": true,
             "tools": {
               "search": {
-                "description": "Search trial balances. Use for 'is the trial balance balanced?' -- a closing-check read against isBalanced, totalDebits, totalCredits.",
+                "description": "Search trial balances. Use for 'is the trial balance balanced?': a closing-check read against isBalanced, totalDebits, totalCredits.",
                 "scope": "read",
                 "readOnlyHint": true,
                 "filters": ["fiscalYearId", "reportDate", "status", "administrationId"]

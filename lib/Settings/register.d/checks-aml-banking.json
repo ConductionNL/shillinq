@@ -4,7 +4,7 @@
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "checks-aml-banking",
-    "description": "AML / cash-handling / bank-integrity rule-engine overlay. Adds the structured fields the AmlBankingChecks provider reads onto the existing GLTransaction (period state / electronic-payment support) and Account (trust/escrow segregation) schemas, and declares the new object types the bookkeeping core does not already model — CashTransaction, AmlReport, SanctionsScreening, CddRecord, FundsTransfer, TrustLedger and CashCount — so the cash-payment-limit, CTR/SAR/Form 8300, sanctions-screening, travel-rule, retention, cash-administration and trust-segregation rules in lib/Standards/rules/banking-aml.json become machine-checkable."
+    "description": "AML / cash-handling / bank-integrity rule-engine overlay. Adds the structured fields the AmlBankingChecks provider reads onto the existing GLTransaction (period state / electronic-payment support) and Account (trust/escrow segregation) schemas, and declares the new object types the bookkeeping core does not already model: CashTransaction, AmlReport, SanctionsScreening, CddRecord, FundsTransfer, TrustLedger and CashCount. So the cash-payment-limit, CTR/SAR/Form 8300, sanctions-screening, travel-rule, retention, cash-administration and trust-segregation rules in lib/Standards/rules/banking-aml.json become machine-checkable."
   },
   "components": {
     "schemas": {
@@ -79,7 +79,7 @@
           "commingled": {
             "type": "boolean",
             "default": false,
-            "description": "True when client monies are commingled with the firm's own funds — a violation for a trust/escrow account (nl-derdengelden-segregation, us-iolta-escrow-segregation).",
+            "description": "True when client monies are commingled with the firm's own funds: a violation for a trust/escrow account (nl-derdengelden-segregation, us-iolta-escrow-segregation).",
             "title": "Commingled"
           }
         }

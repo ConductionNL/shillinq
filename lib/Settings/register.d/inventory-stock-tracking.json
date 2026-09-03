@@ -10,7 +10,7 @@
         "version": "0.1.0",
         "title": "Inventory Stock",
         "titleNl": "Voorraad",
-        "description": "Stock-on-hand snapshot per Product per Location (Tryton / Odoo style aggregate). Carries the four quantity states required by Dutch SMB warehouse operators: quantityOnHand (physical), quantityReserved (allocated to pending orders / production), quantityInTransit (en route from supplier or between locations) and quantityAvailable (computed: quantityOnHand - quantityReserved, read-only at query time). One row per (productSku, locationCode, administrationId) — enforced via x-openregister-unique. Updated declaratively by downstream inventory-stock-movement-ledger StockMove postings (the materialisation hook documented in design.md D5); pre-StockMove the records are seeded by SettingsService:seedInventoryStockExamples and edited manually. Multi-tenancy is scoped by administrationId. The reservation guard (StockReservationGuard:checkReservationDoesNotExceedOnHand) refuses quantityReserved > quantityOnHand at create + update — the only ADR-031 exception in this fragment. No PHP InventoryStockMapper / lib/Db table per ADR-024 — the register IS the persistence.",
+        "description": "Stock-on-hand snapshot per Product per Location (Tryton / Odoo style aggregate). Carries the four quantity states required by Dutch SMB warehouse operators: quantityOnHand (physical), quantityReserved (allocated to pending orders / production), quantityInTransit (en route from supplier or between locations) and quantityAvailable (computed: quantityOnHand - quantityReserved, read-only at query time). One row per (productSku, locationCode, administrationId): enforced via x-openregister-unique. Updated declaratively by downstream inventory-stock-movement-ledger StockMove postings (the materialisation hook documented in design.md D5); pre-StockMove the records are seeded by SettingsService:seedInventoryStockExamples and edited manually. Multi-tenancy is scoped by administrationId. The reservation guard (StockReservationGuard:checkReservationDoesNotExceedOnHand) refuses quantityReserved > quantityOnHand at create + update. The only ADR-031 exception in this fragment. No PHP InventoryStockMapper / lib/Db table per ADR-024. The register IS the persistence.",
         "x-schema-org": "schema:OfferCatalog",
         "x-openregister-purpose": "snapshot",
         "x-spec": "openspec/changes/inventory-stock-tracking/specs/inventory-stock-tracking/spec.md",
@@ -41,13 +41,13 @@
             "type": "string",
             "nullable": true,
             "readOnly": true,
-            "description": "TRANSITIONAL ALIAS: deprecated — use productId. Retained for 3-way-match fallback only. Will be removed after pipelinq-product-vendor-master is confirmed live.",
+            "description": "TRANSITIONAL ALIAS: deprecated. Use productId. Retained for 3-way-match fallback only. Will be removed after pipelinq-product-vendor-master is confirmed live.",
             "deprecated": true,
             "title": "Product SKU"
           },
           "locationCode": {
             "type": "string",
-            "description": "FK to Location.code (budget-planning-control). Required. Represents a physical container — warehouse, regional distribution centre, retail store, repair depot, returns bin. Operators define the master data; this snapshot is scoped per code.",
+            "description": "FK to Location.code (budget-planning-control). Required. Represents a physical container: warehouse, regional distribution centre, retail store, repair depot, returns bin. Operators define the master data; this snapshot is scoped per code.",
             "example": "WH-AMS-001",
             "title": "Location Code"
           },
@@ -62,7 +62,7 @@
             "type": "number",
             "multipleOf": 0.01,
             "default": 0,
-            "description": "Physical quantity in the location. Decimal (2-decimal precision) to support fractional units (0.5 L, 2.25 kg) per design.md D1. May briefly be negative on backorder edge cases — application-level enforcement blocks the common case.",
+            "description": "Physical quantity in the location. Decimal (2-decimal precision) to support fractional units (0.5 L, 2.25 kg) per design.md D1. May briefly be negative on backorder edge cases: application-level enforcement blocks the common case.",
             "example": 15.0,
             "title": "Quantity On Hand"
           },
@@ -80,7 +80,7 @@
             "multipleOf": 0.01,
             "default": 0,
             "minimum": 0,
-            "description": "Quantity en route from a supplier or between this app's locations. Not yet in the destination's quantityOnHand — increments on transfer dispatch, decrements (transferring to quantityOnHand) on transfer receipt per design.md D1 +.",
+            "description": "Quantity en route from a supplier or between this app's locations. Not yet in the destination's quantityOnHand: increments on transfer dispatch, decrements (transferring to quantityOnHand) on transfer receipt per design.md D1 +.",
             "example": 5.0,
             "title": "Quantity In Transit"
           },
@@ -119,7 +119,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration owning this stock record (multi-tenant scope). Cross-administration reads / writes are masked 404 by AdministrationContextService — organisation A's 'Amsterdam Warehouse' is invisible to organisation B.",
+            "description": "FK to Administration owning this stock record (multi-tenant scope). Cross-administration reads / writes are masked 404 by AdministrationContextService: organisation A's 'Amsterdam Warehouse' is invisible to organisation B.",
             "example": "adm-default",
             "title": "Administration ID"
           }
@@ -129,7 +129,7 @@
             "expression": "quantityOnHand - quantityReserved",
             "type": "number",
             "readOnly": true,
-            "description": "quantityAvailable = quantityOnHand - quantityReserved. Computed at every retrieval (list, detail and aggregation paths) — never stored. The expression is the declarative DSL form; the runtime evaluator falls back to PHP-level computation in InventoryStockService:computeAvailableQuantity when an aggregation or filter targets the field."
+            "description": "quantityAvailable = quantityOnHand - quantityReserved. Computed at every retrieval (list, detail and aggregation paths): never stored. The expression is the declarative DSL form; the runtime evaluator falls back to PHP-level computation in InventoryStockService:computeAvailableQuantity when an aggregation or filter targets the field."
           }
         },
         "x-openregister-lifecycle": {
@@ -144,7 +144,7 @@
             "discontinued": {
               "label": "Discontinued",
               "labelNl": "Vervallen",
-              "description": "Mirrors Product.status = discontinued. Historical only — excluded from new transactions (enforcement delegated to downstream specs). Rows remain queryable for audit and aging reports."
+              "description": "Mirrors Product.status = discontinued. Historical only: excluded from new transactions (enforcement delegated to downstream specs). Rows remain queryable for audit and aging reports."
             }
           },
           "transitions": {

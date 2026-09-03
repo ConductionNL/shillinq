@@ -755,7 +755,7 @@
           "postingDate": {
             "type": "string",
             "format": "date",
-            "description": "Posting date of the source journal entry — drives geldende-OverheadDistributionRule selection.",
+            "description": "Posting date of the source journal entry: drives geldende-OverheadDistributionRule selection.",
             "title": "Posting Date"
           },
           "materialised": {
@@ -1380,7 +1380,7 @@
           "signatureFingerprint": {
             "type": "string",
             "nullable": true,
-            "description": "Deprecated — retained for legacy provenance. Superseded by signingRequestRef / signingStatus.",
+            "description": "Deprecated: retained for legacy provenance. Superseded by signingRequestRef / signingStatus.",
             "x-delegated-to": "docudesk",
             "deprecated": true,
             "title": "Signature Fingerprint"

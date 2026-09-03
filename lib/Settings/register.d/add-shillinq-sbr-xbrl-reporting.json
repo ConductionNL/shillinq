@@ -106,7 +106,7 @@
           },
           "instanceHash": {
             "type": "string",
-            "description": "SHA-256 of the canonicalised XML for tamper-evidence (— historical instances stay verifiable after mapping evolution).",
+            "description": "SHA-256 of the canonicalised XML for tamper-evidence (: historical instances stay verifiable after mapping evolution).",
             "example": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
             "title": "Instance Hash"
           },
@@ -134,7 +134,7 @@
             "type": "string",
             "nullable": true,
             "default": "digipoort-prod",
-            "description": "Slug of the openconnector Source record that fronts the Digipoort gateway for this filing. No HTTP/SOAP code in shillinq — the source carries the WS-Security stack.",
+            "description": "Slug of the openconnector Source record that fronts the Digipoort gateway for this filing. No HTTP/SOAP code in shillinq: the source carries the WS-Security stack.",
             "example": "digipoort-prod",
             "title": "Digipoort Source Slug"
           },

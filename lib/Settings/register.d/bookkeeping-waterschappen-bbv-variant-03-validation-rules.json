@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-waterschappen-bbv-variant-03-validation-rules",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Member 03 of the bookkeeping-waterschappen-bbv-variant chain. Declares schema-level validation for BBVProgramme + BudgetBBVMapping. Validation lives at the OpenRegister schema layer so invalid data cannot be persisted regardless of which client writes it. Constraints declared here: BBVProgramme.programmeName required + non-empty + ≤ 255 chars; BBVProgramme.programmeCode regex ^\\d+\\.\\d+(\\.\\d+)?$ + uniqueness per (administrationId, fiscalYear); BBVProgramme.fiscalYear integer 1900–2100 (broader than slice 01/02's 2000–2100 to satisfy the historical-amendment use case); BBVProgramme.status enum validated by slice 02 (draft|active|archived); BudgetBBVMapping.glAccountNumber FK existence against Chart of Accounts (Account.accountNumber within the same administrationId); BudgetBBVMapping.allocationPercentage number 0–100 with 0.01 precision (multipleOf 0.01); BudgetBBVMapping.effectiveFrom required ISO-8601 date; BudgetBBVMapping.effectiveTo optional ISO-8601 date that MUST be ≥ effectiveFrom when present; per-account allocation sum MUST stay ≤ 100% per (administrationId, glAccountNumber, fiscalYear) within ±0.1% rounding tolerance (the tolerance window 99.9–100.1% interpretation from — sums above 100.1% are rejected). Cross-field rules use x-openregister-calculations validator expressions per ADR-031 (mirrors the convention used by bookings-availability-rules.json). FK existence and the cross-record allocation-sum invariant use x-openregister-validation declarative rules — these are honoured by the OpenRegister save pipeline, return HTTP 400 with the declared error message on violation, and are never enforced from a Vue/PHP service layer (ADR-022 / giant D2). Slug additions only re-declare the schemas the chain owns (BBVProgramme + BudgetBBVMapping); ADR-037 deep-merge unions on schema key so this fragment overlays slice 01 + 02 cleanly. This member ships no controllers, services, or UI — those land in slices 04+."
+    "description": "Member 03 of the bookkeeping-waterschappen-bbv-variant chain. Declares schema-level validation for BBVProgramme + BudgetBBVMapping. Validation lives at the OpenRegister schema layer so invalid data cannot be persisted regardless of which client writes it. Constraints declared here: BBVProgramme.programmeName required + non-empty + ≤ 255 chars; BBVProgramme.programmeCode regex ^\\d+\\.\\d+(\\.\\d+)?$ + uniqueness per (administrationId, fiscalYear); BBVProgramme.fiscalYear integer 1900–2100 (broader than slice 01/02's 2000–2100 to satisfy the historical-amendment use case); BBVProgramme.status enum validated by slice 02 (draft|active|archived); BudgetBBVMapping.glAccountNumber FK existence against Chart of Accounts (Account.accountNumber within the same administrationId); BudgetBBVMapping.allocationPercentage number 0–100 with 0.01 precision (multipleOf 0.01); BudgetBBVMapping.effectiveFrom required ISO-8601 date; BudgetBBVMapping.effectiveTo optional ISO-8601 date that MUST be ≥ effectiveFrom when present; per-account allocation sum MUST stay ≤ 100% per (administrationId, glAccountNumber, fiscalYear) within ±0.1% rounding tolerance (the tolerance window 99.9–100.1% interpretation from: sums above 100.1% are rejected). Cross-field rules use x-openregister-calculations validator expressions per ADR-031 (mirrors the convention used by bookings-availability-rules.json). FK existence and the cross-record allocation-sum invariant use x-openregister-validation declarative rules. These are honoured by the OpenRegister save pipeline, return HTTP 400 with the declared error message on violation, and are never enforced from a Vue/PHP service layer (ADR-022 / giant D2). Slug additions only re-declare the schemas the chain owns (BBVProgramme + BudgetBBVMapping); ADR-037 deep-merge unions on schema key so this fragment overlays slice 01 + 02 cleanly. This member ships no controllers, services, or UI. Those land in slices 04+."
   },
   "components": {
     "schemas": {
@@ -65,14 +65,14 @@
         "properties": {
           "glAccountNumber": {
             "type": "string",
-            "description": "GL account number contributing to the programme. MUST exist in the Chart of Accounts (Account.accountNumber) within the same administrationId — enforced by the glAccountForeignKey rule in x-openregister-validation below.",
+            "description": "GL account number contributing to the programme. MUST exist in the Chart of Accounts (Account.accountNumber) within the same administrationId: enforced by the glAccountForeignKey rule in x-openregister-validation below.",
             "minLength": 1,
             "example": "4100",
             "title": "GL Account Number"
           },
           "allocationPercentage": {
             "type": "number",
-            "description": "Share of the GL account's budget + spend allocated to this programme. Number in [0, 100] with 0.01 precision. Multiple mappings for one (administrationId, glAccountNumber, fiscalYear) MUST not exceed 100% (±0.1% tolerance) — enforced by the allocationSumPerAccount rule in x-openregister-validation below.",
+            "description": "Share of the GL account's budget + spend allocated to this programme. Number in [0, 100] with 0.01 precision. Multiple mappings for one (administrationId, glAccountNumber, fiscalYear) MUST not exceed 100% (±0.1% tolerance): enforced by the allocationSumPerAccount rule in x-openregister-validation below.",
             "minimum": 0,
             "maximum": 100,
             "multipleOf": 0.01,
@@ -91,7 +91,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Last date the mapping is in effect (inclusive). Optional ISO-8601 calendar date (YYYY-MM-DD). When present MUST be ≥ effectiveFrom — enforced by the effectiveToOnOrAfterFrom cross-field validator below.",
+            "description": "Last date the mapping is in effect (inclusive). Optional ISO-8601 calendar date (YYYY-MM-DD). When present MUST be ≥ effectiveFrom: enforced by the effectiveToOnOrAfterFrom cross-field validator below.",
             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
             "example": "2026-12-31",
             "title": "Effective To"

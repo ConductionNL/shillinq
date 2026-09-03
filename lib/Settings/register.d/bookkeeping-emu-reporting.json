@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-emu-reporting",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "EMU-saldo & EMU-schuld reporting pipeline for Dutch decentrale overheden under Wet Houdbare Overheidsfinanciën. Adds four entities — EMUReport (concept/ingediend/herzien aangifte), EMUAdjustment (accrual→kas conversie per Wet Hof art. 3), CashFlowItem (IV3-geclassificeerde kasstroom, shared taxonomy with bookkeeping-iv3-reporting), DebtPosition (ESA2010 bruto schuld per instrument per peildatum). Declarative lifecycle, aggregations, calculations, notifications, RBAC and retention per ADR-022/ADR-031. The prior add-shillinq-emu-reporting change shipped only the esaClassifier field + EmuCalculator aggregation guard; this fragment adds the full pipeline entities. Slugs mirror the existing fragment convention (PascalCase schema key + slug)."
+    "description": "EMU-saldo & EMU-schuld reporting pipeline for Dutch decentrale overheden under Wet Houdbare Overheidsfinanciën. Adds four entities: EMUReport (concept/ingediend/herzien aangifte), EMUAdjustment (accrual→kas conversie per Wet Hof art. 3), CashFlowItem (IV3-geclassificeerde kasstroom, shared taxonomy with bookkeeping-iv3-reporting), DebtPosition (ESA2010 bruto schuld per instrument per peildatum). Declarative lifecycle, aggregations, calculations, notifications, RBAC and retention per ADR-022/ADR-031. The prior add-shillinq-emu-reporting change shipped only the esaClassifier field + EmuCalculator aggregation guard; this fragment adds the full pipeline entities. Slugs mirror the existing fragment convention (PascalCase schema key + slug)."
   },
   "components": {
     "schemas": {
@@ -372,7 +372,7 @@
           },
           "amount": {
             "type": "number",
-            "description": "Adjustment amount (MonetaryAmount, EUR; always non-negative — richting carries the sign).",
+            "description": "Adjustment amount (MonetaryAmount, EUR; always non-negative: richting carries the sign).",
             "example": 1240000,
             "title": "Bedrag"
           },

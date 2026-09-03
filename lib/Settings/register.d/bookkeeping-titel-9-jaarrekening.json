@@ -238,7 +238,7 @@
               "rejected"
             ],
             "nullable": true,
-            "description": "Mirror of the adoption Decision outcome. The vaststellen transition is OUTCOME-DRIVEN — fires only when decisionOutcome==approved.",
+            "description": "Mirror of the adoption Decision outcome. The vaststellen transition is OUTCOME-DRIVEN: fires only when decisionOutcome==approved.",
             "title": "Decision Outcome"
           }
         },

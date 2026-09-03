@@ -31,7 +31,7 @@
         "properties": {
           "code": {
             "type": "string",
-            "description": "Stable slug identifier unique per administration. Once assigned MUST NOT change — dependent specs reference it for reporting, mapping and external integrations.",
+            "description": "Stable slug identifier unique per administration. Once assigned MUST NOT change: dependent specs reference it for reporting, mapping and external integrations.",
             "maxLength": 64,
             "pattern": "^[a-z0-9][a-z0-9-]*$",
             "example": "haircut",

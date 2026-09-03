@@ -135,7 +135,7 @@
                     },
                     "postedBy": {
                         "type": "string",
-                        "description": "Actor attribution — always SYSTEM:RealisedFxSettlementService.",
+                        "description": "Actor attribution: always SYSTEM:RealisedFxSettlementService.",
                         "example": "SYSTEM:RealisedFxSettlementService",
                         "title": "Posted By"
                     }

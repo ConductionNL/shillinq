@@ -34,7 +34,7 @@
           },
           "resource": {
             "type": "string",
-            "description": "FK to Resource.resourceId — the resource this rule applies to. Declared by bookings-resource-calendar.",
+            "description": "FK to Resource.resourceId: the resource this rule applies to. Declared by bookings-resource-calendar.",
             "example": "res-001",
             "title": "Resource"
           },
@@ -458,7 +458,7 @@
       "status": "active",
       "effectiveFrom": "2026-01-01",
       "effectiveUntil": null,
-      "description": "Behandelstoel 1 — standaardrooster"
+      "description": "Behandelstoel 1: standaardrooster"
     },
     {
       "@self": {

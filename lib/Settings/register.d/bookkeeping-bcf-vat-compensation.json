@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-bcf-vat-compensation",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — Btw-compensatiefonds (BCF) VAT compensation claims. Adds one BcfClaim schema with a draft → submitted → accepted → settled lifecycle for the quarterly recovery of non-recoverable VAT by Dutch public bodies (gemeenten, waterschappen). The compensable-VAT total and per-account breakdown are computed server-side by OCA\\Shillinq\\Service\\BcfClaimService from existing GLLine + GLTransaction + BbvAccountMapping data via the real OpenRegister ObjectService API (findAll), weighting each compensable account by its BbvAccountMapping.compensablePercentage; the x-openregister-aggregations block documents the equivalent declarative shape. The draft → submitted transition is gated by OCA\\Shillinq\\Lifecycle\\BcfClaimGuard:canSubmit (non-empty claim + closed quarter). BbvAccountMapping already carries the bcfCompensable + compensablePercentage flags from add-shillinq-bookkeeping-operations; this fragment also re-asserts their descriptions for completeness. Seed objects provide four worked example claims across the lifecycle states for two municipal administrations per design.md."
+    "description": "Tier 3: Btw-compensatiefonds (BCF) VAT compensation claims. Adds one BcfClaim schema with a draft → submitted → accepted → settled lifecycle for the quarterly recovery of non-recoverable VAT by Dutch public bodies (gemeenten, waterschappen). The compensable-VAT total and per-account breakdown are computed server-side by OCA\\Shillinq\\Service\\BcfClaimService from existing GLLine + GLTransaction + BbvAccountMapping data via the real OpenRegister ObjectService API (findAll), weighting each compensable account by its BbvAccountMapping.compensablePercentage; the x-openregister-aggregations block documents the equivalent declarative shape. The draft → submitted transition is gated by OCA\\Shillinq\\Lifecycle\\BcfClaimGuard:canSubmit (non-empty claim + closed quarter). BbvAccountMapping already carries the bcfCompensable + compensablePercentage flags from add-shillinq-bookkeeping-operations; this fragment also re-asserts their descriptions for completeness. Seed objects provide four worked example claims across the lifecycle states for two municipal administrations per design.md."
   },
   "components": {
     "schemas": {
@@ -31,7 +31,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "Administration this claim belongs to (FK to Administration). A public body — gemeente or waterschap. Single administration per claim.",
+            "description": "Administration this claim belongs to (FK to Administration). A public body: gemeente or waterschap. Single administration per claim.",
             "example": "adm-gemeente-amsterdam",
             "title": "Administration ID"
           },
@@ -175,7 +175,7 @@
         },
         "x-openregister-approval-chains": {
           "bcf-claim-submit-approval": {
-            "description": "Approval chain that gates the BcfClaim draft → submitted transition. The transition runs through OpenRegister's approval-workflow primitive: a single approver with the role bcf-administrator must approve within 7 days (configurable). On approval the claim advances to submitted and is queued for the next quarterly digikoppeling-bcf ScheduledWorkflow run; on rejection the claim stays draft and the operator is notified with the rejection comment. Declarative metadata only — OR materialises the actual approval task; this app ships no PHP approval-chain implementation.",
+            "description": "Approval chain that gates the BcfClaim draft → submitted transition. The transition runs through OpenRegister's approval-workflow primitive: a single approver with the role bcf-administrator must approve within 7 days (configurable). On approval the claim advances to submitted and is queued for the next quarterly digikoppeling-bcf ScheduledWorkflow run; on rejection the claim stays draft and the operator is notified with the rejection comment. Declarative metadata only: OR materialises the actual approval task; this app ships no PHP approval-chain implementation.",
             "transition": "submit",
             "approvers": [
               {
@@ -196,7 +196,7 @@
         },
         "x-openregister-webhooks": {
           "bcf-claim-settled": {
-            "description": "Settlement webhook routing. OR's generic webhook handler routes inbound CloudEvents of type nl.conduction.bcf-claim-settled to BcfClaim and applies the settle transition. The event payload is { type, objectId, data: { state: 'settled', settledAmount, settledDate } }. The handler verifies the OpenConnector signature, looks the BcfClaim up by objectId (administration scope enforced via the audit-trail context), sets state=settled + settledOn=settledDate + settledAmount=settledAmount, and records the webhook event in the audit trail (source=webhook, event-id, timestamp, payload-hash). Lost webhooks do not block — the operator can transition accepted → settled manually via the detail page as a fallback.",
+            "description": "Settlement webhook routing. OR's generic webhook handler routes inbound CloudEvents of type nl.conduction.bcf-claim-settled to BcfClaim and applies the settle transition. The event payload is { type, objectId, data: { state: 'settled', settledAmount, settledDate } }. The handler verifies the OpenConnector signature, looks the BcfClaim up by objectId (administration scope enforced via the audit-trail context), sets state=settled + settledOn=settledDate + settledAmount=settledAmount, and records the webhook event in the audit trail (source=webhook, event-id, timestamp, payload-hash). Lost webhooks do not block: the operator can transition accepted → settled manually via the detail page as a fallback.",
             "eventType": "nl.conduction.bcf-claim-settled",
             "source": "openconnector:digikoppeling-bcf",
             "transition": "settle",

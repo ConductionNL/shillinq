@@ -6,7 +6,7 @@
         "icon": "AccountHardHatOutline",
         "version": "0.1.0",
         "title": "Resource",
-        "description": "A bookable resource: a staff member, a room, a piece of equipment, or furniture. Foundation entity for the booking module per bookings-resource-calendar REQ-001. Each resource is owned by an administration and has a lifecycle status. NOTE: `organization` below is the RETIRED alias of `administrationId` (the field CalendarController actually filters on, and the one the bookings-resource-calendar fragment requires). It is kept as an OPTIONAL property for backwards compatibility and MUST NOT be listed in `required`: register fragments are merged by schema key and `required` is a LIST, so ADR-037's deep merge CONCATENATES it — requiring both the alias and the canonical field made this schema unsatisfiable by every seed either fragment ships.",
+        "description": "A bookable resource: a staff member, a room, a piece of equipment, or furniture. Foundation entity for the booking module per bookings-resource-calendar REQ-001. Each resource is owned by an administration and has a lifecycle status. NOTE: `organization` below is the RETIRED alias of `administrationId` (the field CalendarController actually filters on, and the one the bookings-resource-calendar fragment requires). It is kept as an OPTIONAL property for backwards compatibility and MUST NOT be listed in `required`: register fragments are merged by schema key and `required` is a LIST, so ADR-037's deep merge CONCATENATES it. Requiring both the alias and the canonical field made this schema unsatisfiable by every seed either fragment ships.",
         "x-schema-org": "schema:Thing",
         "type": "object",
         "required": [
@@ -59,7 +59,7 @@
         "icon": "CalendarOutline",
         "version": "0.1.0",
         "title": "Calendar",
-        "description": "A per-resource calendar carrying time-zone and working-hours configuration per bookings-resource-calendar REQ-002. Bound to exactly one Resource. All booking times are stored in UTC; the timeZone field drives display conversion on the client. NOTE: `organization` below is the RETIRED alias of `administrationId` and is OPTIONAL — see the same note on Resource above. Requiring it here is what made every seeded Calendar (cal-001.cal-003) fail to import, so GET /api/v2/calendars answered `{\"calendars\":[]}` and GET /api/v2/calendars/{id} answered 404 for calendars this app ships.",
+        "description": "A per-resource calendar carrying time-zone and working-hours configuration per bookings-resource-calendar REQ-002. Bound to exactly one Resource. All booking times are stored in UTC; the timeZone field drives display conversion on the client. NOTE: `organization` below is the RETIRED alias of `administrationId` and is OPTIONAL. See the same note on Resource above. Requiring it here is what made every seeded Calendar (cal-001.cal-003) fail to import, so GET /api/v2/calendars answered `{\"calendars\":[]}` and GET /api/v2/calendars/{id} answered 404 for calendars this app ships.",
         "x-schema-org": "schema:Schedule",
         "type": "object",
         "required": [
@@ -84,7 +84,7 @@
           "workingHours": {
             "type": "object",
             "nullable": true,
-            "description": "Optional working-hours template keyed by weekday (e.g. {\"monday\": \"09:00-17:00\"}). A weekday that is OMITTED means the resource is closed that day. Omit it, do not send null: OpenRegister's validator reads JSON-Schema types and rejects null against type \"string\" regardless of the OpenAPI `nullable` keyword, which is honoured only at the TOP level of a schema and never inside a nested object's additionalProperties. Sending null is what dropped the seeded Calendar below (\"Property 'workingHours.saturday' should be type 'string' but is 'null'\"). A null value for the whole workingHours object still means 24/7 availability — that is top-level and is accepted.",
+            "description": "Optional working-hours template keyed by weekday (e.g. {\"monday\": \"09:00-17:00\"}). A weekday that is OMITTED means the resource is closed that day. Omit it, do not send null: OpenRegister's validator reads JSON-Schema types and rejects null against type \"string\" regardless of the OpenAPI `nullable` keyword, which is honoured only at the TOP level of a schema and never inside a nested object's additionalProperties. Sending null is what dropped the seeded Calendar below (\"Property 'workingHours.saturday' should be type 'string' but is 'null'\"). A null value for the whole workingHours object still means 24/7 availability: that is top-level and is accepted.",
             "additionalProperties": {
               "type": "string",
               "nullable": true

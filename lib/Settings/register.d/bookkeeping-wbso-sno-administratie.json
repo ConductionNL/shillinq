@@ -11,7 +11,7 @@
         "x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs.md#req-wbso-001",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Beschikking changes (rate corrections, granted-hour adjustments, state flips) MUST be audit-trail-immutable per ADR-022 — the granted ceiling governs every downstream realisatie and the closing mededeling."
+          "description": "Beschikking changes (rate corrections, granted-hour adjustments, state flips) MUST be audit-trail-immutable per ADR-022: the granted ceiling governs every downstream realisatie and the closing mededeling."
         },
         "x-openregister-lifecycle": {
           "field": "state",
@@ -149,7 +149,7 @@
         "x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs.md#req-wbso-002",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "S&O hour registrations MUST be audit-trail-immutable per ADR-022 — locked registrations form the realisatie reported in the WBSO mededeling."
+          "description": "S&O hour registrations MUST be audit-trail-immutable per ADR-022: locked registrations form the realisatie reported in the WBSO mededeling."
         },
         "x-openregister-lifecycle": {
           "field": "state",
@@ -272,12 +272,12 @@
         "icon": "FileSendOutline",
         "version": "0.1.0",
         "title": "WBSO Mededeling",
-        "description": "WBSO realisatie mededeling reporting the realised S&O hours for a beschikking period to RVO. The realised hours may never exceed the beschikking's granted ceiling — the submit and resubmit transitions are guarded by WbsoMededeligGuard:canSubmit which enforces this ceiling.",
+        "description": "WBSO realisatie mededeling reporting the realised S&O hours for a beschikking period to RVO. The realised hours may never exceed the beschikking's granted ceiling: the submit and resubmit transitions are guarded by WbsoMededeligGuard:canSubmit which enforces this ceiling.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs.md#req-wbso-003",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Mededeling submissions MUST be audit-trail-immutable per ADR-022 — the mededeling is the statutory realisatie report filed with RVO."
+          "description": "Mededeling submissions MUST be audit-trail-immutable per ADR-022: the mededeling is the statutory realisatie report filed with RVO."
         },
         "x-openregister-lifecycle": {
           "field": "state",

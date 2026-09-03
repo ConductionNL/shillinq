@@ -1,7 +1,7 @@
 {
   "_meta": {
     "change": "bookkeeping-reconciliation-reports",
-    "description": "T4 advanced engine feature — reconciliation sessions, reports, and variance aggregations on top of the T2 bookkeeping-bank-reconciliation matching engine. ADR-031 declarative: lifecycle, aggregations, manifest-only rendering; one PHP guard (StatementVerifyGuard) per ADR-031 §exception for GL-balance lookup that the declarative engine cannot express.",
+    "description": "T4 advanced engine feature: reconciliation sessions, reports, and variance aggregations on top of the T2 bookkeeping-bank-reconciliation matching engine. ADR-031 declarative: lifecycle, aggregations, manifest-only rendering; one PHP guard (StatementVerifyGuard) per ADR-031 §exception for GL-balance lookup that the declarative engine cannot express.",
     "dedup-note": "T4 is the OUTCOME RECORDER, not a matcher. The bank-statement-line ↔ AR/AP/GL match decision is owned by T2 bookkeeping-bank-reconciliation (its MatchingRule register, x-openregister-aggregations on ReconciliationMatch, and the operator-confirm lifecycle). T4 consumes T2's confirm event via ReconciliationMatchToReportListener and stamps the BankReconciliation session (reconId) + resolution semantics (resolutionStatus/resolutionReason for unmatched items) on the same ReconciliationMatch register. There is intentionally no parallel match table, no T4 matching algorithm, and no VarianceReportService — REQ-REC-007 variance is pure x-openregister-aggregations metadata on closed sessions. Verified against lib/Service/* on 2026-06-09: no Reconcil*Engine, no Variance*Service, no BankMatch* mapper, no parallel reconciliation Db classes.",
     "specs": [
       "openspec/specs/bookkeeping-reconciliation-reports/spec.md"
@@ -14,7 +14,7 @@
         "icon": "BankCheck",
         "version": "0.1.0",
         "title": "Bank Reconciliation",
-        "description": "A bounded reconciliation session for one bank account + one statement period. Captures opening/closing balances, expected GL balance, computed variance, lifecycle status (draft → in-progress → verified → closed), preparer/verifier signatures, and the closedAt timestamp. NOT a live dashboard — an immutable audit artifact once closed. Per ADR-022/ADR-031 declarative-first: matching is delegated to the T2 bookkeeping-bank-reconciliation engine; T4 records outcomes and closes the audit loop.",
+        "description": "A bounded reconciliation session for one bank account + one statement period. Captures opening/closing balances, expected GL balance, computed variance, lifecycle status (draft → in-progress → verified → closed), preparer/verifier signatures, and the closedAt timestamp. NOT a live dashboard: an immutable audit artifact once closed. Per ADR-022/ADR-031 declarative-first: matching is delegated to the T2 bookkeeping-bank-reconciliation engine; T4 records outcomes and closes the audit loop.",
         "x-schema-org": "schema:Report",
         "type": "object",
         "x-openregister-audit": true,
@@ -75,7 +75,7 @@
           "expectedGLBalance": {
             "type": "number",
             "nullable": true,
-            "description": "Expected GL balance computed formula: Account.balanceAtPeriodStart + SUM(GLLine.debit - GLLine.credit) for the period. Server-authoritative — populated by StatementVerifyGuard, never trusted from the client.",
+            "description": "Expected GL balance computed formula: Account.balanceAtPeriodStart + SUM(GLLine.debit - GLLine.credit) for the period. Server-authoritative: populated by StatementVerifyGuard, never trusted from the client.",
             "example": 75000.0,
             "title": "Expected GL Balance"
           },
@@ -229,7 +229,7 @@
           "varianceByPeriod": {
             "field": "variance",
             "metric": "sum",
-            "description": "Variance by (bankAccountId, statementPeriodEnd). Used for trend analysis — accountants spot drift across multiple closing periods.",
+            "description": "Variance by (bankAccountId, statementPeriodEnd). Used for trend analysis: accountants spot drift across multiple closing periods.",
             "groupBy": [
               "bankAccountId",
               "statementPeriodEnd"
@@ -272,7 +272,7 @@
         }
       },
       "ReconciliationMatch": {
-        "description": "T4 extension of the T2 ReconciliationMatch schema declared in add-shillinq-bookkeeping-compliance. T4 adds reconId (FK to BankReconciliation session), matchAlgorithm (exact/fuzzy/manual — T4 supports exact + manual only per), matchedAt timestamp, manualOverride, resolutionStatus + resolutionReason (unmatched-item resolution), and the AR/AP shortcut FKs (arInvoiceId, apTransactionId). Pre-existing T2 fields (matchId, bankStatementLineId, matchType, matchedObjectId, status, confirmedBy, confirmedAt, rejectedReason) are preserved untouched — this fragment deep-merges per ADR-037.",
+        "description": "T4 extension of the T2 ReconciliationMatch schema declared in add-shillinq-bookkeeping-compliance. T4 adds reconId (FK to BankReconciliation session), matchAlgorithm (exact/fuzzy/manual: T4 supports exact + manual only per), matchedAt timestamp, manualOverride, resolutionStatus + resolutionReason (unmatched-item resolution), and the AR/AP shortcut FKs (arInvoiceId, apTransactionId). Pre-existing T2 fields (matchId, bankStatementLineId, matchType, matchedObjectId, status, confirmedBy, confirmedAt, rejectedReason) are preserved untouched. This fragment deep-merges per ADR-037.",
         "required": [
           "reconId"
         ],
@@ -285,7 +285,7 @@
           "glTransactionId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to GLTransaction.id. Null for bank-only matches (statement line with no GL counterpart — handled via resolutionStatus).",
+            "description": "FK to GLTransaction.id. Null for bank-only matches (statement line with no GL counterpart: handled via resolutionStatus).",
             "title": "GL Transaction ID"
           },
           "bankLineId": {

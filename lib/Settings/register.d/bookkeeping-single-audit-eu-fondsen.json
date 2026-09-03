@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-single-audit-eu-fondsen",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "T3 regulatory + compliance: Single Audit voor EU-fondsen (ERDF, ESF+, JTF, RRF). Seven EU-fondsen-specific schemas (EuProject, EligibilityRule, SegregatedLedger, EuExpenditure, SupportingDocument, IrregularityReport, AuditTrail) per Verordening (EU) 2021/1060. Declarative lifecycle + cost-eligibility + VAT-treatment per ADR-031; cross-schema preconditions delegated to lib/Lifecycle EU-fondsen guards (ADR-031 exception path). Bewijsstukken stored externally in docudesk (ADR-022) — only URI + SHA-256 hash kept here."
+    "description": "T3 regulatory + compliance: Single Audit voor EU-fondsen (ERDF, ESF+, JTF, RRF). Seven EU-fondsen-specific schemas (EuProject, EligibilityRule, SegregatedLedger, EuExpenditure, SupportingDocument, IrregularityReport, AuditTrail) per Verordening (EU) 2021/1060. Declarative lifecycle + cost-eligibility + VAT-treatment per ADR-031; cross-schema preconditions delegated to lib/Lifecycle EU-fondsen guards (ADR-031 exception path). Bewijsstukken stored externally in docudesk (ADR-022): only URI + SHA-256 hash kept here."
   },
   "components": {
     "schemas": {
@@ -39,7 +39,7 @@
           },
           "cciNumber": {
             "type": "string",
-            "description": "Common Code for Identification — unique EC programme-identifier.",
+            "description": "Common Code for Identification: unique EC programme-identifier.",
             "example": "2021NL16RFPR007",
             "title": "Cci Number"
           },
@@ -160,7 +160,7 @@
               "onderwijsinstelling",
               "private_partij"
             ],
-            "description": "Beneficiary-type — bepaalt aanbestedings-threshold (€143k centraal / €221k decentraal).",
+            "description": "Beneficiary-type: bepaalt aanbestedings-threshold (€143k centraal / €221k decentraal).",
             "nullable": true,
             "title": "Beneficiary Type"
           },
@@ -226,7 +226,7 @@
           "retention": {
             "rule": "cpr:art82",
             "period": "P15Y",
-            "description": "EU-fondsen records bewaard tot 5 year na programme-sluiting — effectief 12–15 year voor langlopende projecten (art 82 CPR + art 46 Verordening 2021/1060)."
+            "description": "EU-fondsen records bewaard tot 5 year na programme-sluiting: effectief 12–15 year voor langlopende projecten (art 82 CPR + art 46 Verordening 2021/1060)."
           },
           "states": {
             "in_voorbereiding": {
@@ -238,7 +238,7 @@
               "description": "Project loopt; uitgaven worden geboekt en gedeclareerd."
             },
             "afgerond_in_audit": {
-              "label": "Afgerond — in audit",
+              "label": "Afgerond: in audit",
               "description": "Project afgerond; accounts-package submitted, audit loopt."
             },
             "gesloten": {
@@ -309,7 +309,7 @@
         "icon": "ScaleBalance",
         "version": "0.1.0",
         "title": "Eligibility-rule",
-        "description": "Fonds- en regelgeving-specifieke cost-eligibility rule per regelgevingsartikel (ERDF 2021/1058 art 7, ESF+ 2021/1057 art 5, JTF 2021/1056 art 12, RRF 2021/241 art 4). Declaratieve cost-category mapping + SCO + drempelbedragen + bewijsvereisten (ADR-031 — geen PHP-rekenservice).",
+        "description": "Fonds- en regelgeving-specifieke cost-eligibility rule per regelgevingsartikel (ERDF 2021/1058 art 7, ESF+ 2021/1057 art 5, JTF 2021/1056 art 12, RRF 2021/241 art 4). Declaratieve cost-category mapping + SCO + drempelbedragen + bewijsvereisten (ADR-031: geen PHP-rekenservice).",
         "x-schema-org": "schema:Legislation",
         "type": "object",
         "required": [
@@ -984,7 +984,7 @@
         "icon": "FileCertificateOutline",
         "version": "0.1.0",
         "title": "Bewijsstuk",
-        "description": "Bewijsstuk met SHA-256 hash-integriteit, digitale handtekening en 12–15 year bewaarplicht. Origineel wordt extern bewaard in docudesk (ADR-022) — alleen URI + hash hier. Subtypes dekken ook zichtbaarheidsbewijs.",
+        "description": "Bewijsstuk met SHA-256 hash-integriteit, digitale handtekening en 12–15 year bewaarplicht. Origineel wordt extern bewaard in docudesk (ADR-022): alleen URI + hash hier. Subtypes dekken ook zichtbaarheidsbewijs.",
         "x-schema-org": "schema:DigitalDocument",
         "type": "object",
         "required": [
@@ -1342,7 +1342,7 @@
               "from": "initieel",
               "to": "ingetrokken",
               "label": "Intrekken",
-              "description": "Melding ingetrokken — geen onregelmatigheid."
+              "description": "Melding ingetrokken: geen onregelmatigheid."
             }
           }
         },

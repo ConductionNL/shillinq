@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-voorzieningen-claims",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — IAS 37 / RJ 252 Provisions, Contingent Liabilities and Contingent Assets. Nine new schemas (Provision, ProvisionMovement, ContingentLiability, PensioenvoorzieningDetail, JubileumvoorzieningDetail, HerstructureringsvoorzieningDetail, GarantievoorzieningDetail, MilieuvoorzieningDetail, ClaimsVoorzieningDetail) declaring the recognition, measurement (best-estimate + range, discontering), period roll-forward, type-specific extensions and jaarrekening disclosure surface entirely as declarative metadata per ADR-031: schema fields + x-openregister-lifecycle (draft → active on Provision with materiality + three-criteria gating; open → closed on ProvisionMovement; draft → published on ContingentLiability) + x-openregister-aggregations (provisionRollForward roll-forward, provisionDisclosureGeneration disclosure-table) + x-openregister-calculations (discountedValue, unwindingOfDiscount). Lifecycle preconditions that the declarative requires: clause cannot yet express are referenced as OCA\\Shillinq\\Lifecycle\\ProvisionGuard:<method> (ADR-031 exception path; fail-closed; real OpenRegister ObjectService API per ADR-022). enforces three-criteria recognition at the schema validator level (legalOrConstructiveObligation enum, obligatingEvent text, probabilityOfOutflow ≥ 0.5, bestEstimate + bestEstimateRationale). blocks Herstructureringsvoorziening recognition when detailedPlanDate post-dates balansdatum. blocks Claims-voorziening when legalAdviceMemo FK is missing. + require peer-reviewer + CFO sign-off above EUR 100K / 1 % balanstotaal. Seeds ship three Provision specimen records (garantie, milieu, claims), two ContingentLiability specimen records (fiscaal geschil, borgstelling) and one ProvisionMovement template per design.md; operators customise per administration on first use. No PHP valuation service is authored."
+    "description": "Tier 3: IAS 37 / RJ 252 Provisions, Contingent Liabilities and Contingent Assets. Nine new schemas (Provision, ProvisionMovement, ContingentLiability, PensioenvoorzieningDetail, JubileumvoorzieningDetail, HerstructureringsvoorzieningDetail, GarantievoorzieningDetail, MilieuvoorzieningDetail, ClaimsVoorzieningDetail) declaring the recognition, measurement (best-estimate + range, discontering), period roll-forward, type-specific extensions and jaarrekening disclosure surface entirely as declarative metadata per ADR-031: schema fields + x-openregister-lifecycle (draft → active on Provision with materiality + three-criteria gating; open → closed on ProvisionMovement; draft → published on ContingentLiability) + x-openregister-aggregations (provisionRollForward roll-forward, provisionDisclosureGeneration disclosure-table) + x-openregister-calculations (discountedValue, unwindingOfDiscount). Lifecycle preconditions that the declarative requires: clause cannot yet express are referenced as OCA\\Shillinq\\Lifecycle\\ProvisionGuard:<method> (ADR-031 exception path; fail-closed; real OpenRegister ObjectService API per ADR-022). Enforces three-criteria recognition at the schema validator level (legalOrConstructiveObligation enum, obligatingEvent text, probabilityOfOutflow ≥ 0.5, bestEstimate + bestEstimateRationale). Blocks Herstructureringsvoorziening recognition when detailedPlanDate post-dates balansdatum. Blocks Claims-voorziening when legalAdviceMemo FK is missing. + require peer-reviewer + CFO sign-off above EUR 100K / 1 % balanstotaal. Seeds ship three Provision specimen records (garantie, milieu, claims), two ContingentLiability specimen records (fiscaal geschil, borgstelling) and one ProvisionMovement template per design.md; operators customise per administration on first use. No PHP valuation service is authored."
   },
   "components": {
     "schemas": {
@@ -399,7 +399,7 @@
           },
           "releasedUnused": {
             "type": "number",
-            "description": "Vrijval — amount released because the obligation no longer exists or has been reduced.",
+            "description": "Vrijval: amount released because the obligation no longer exists or has been reduced.",
             "default": 0,
             "example": 25000.0,
             "title": "Released Unused"
@@ -1199,7 +1199,7 @@
           },
           "provisionType": {
             "type": "string",
-            "description": "Aggregation key — provision type.",
+            "description": "Aggregation key: provision type.",
             "example": "guarantee",
             "title": "Provision Type"
           },

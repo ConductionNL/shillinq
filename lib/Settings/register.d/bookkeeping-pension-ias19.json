@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-pension-ias19",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — IAS 19 / RJ 271 employee-benefit pension accounting. Six new schemas (PensionPlan, ActuarialValuation, PensionMovement, PensionAssumptionSensitivity, PensionAssetDetail, PensionDisclosureTabel) declaring the defined-benefit (PUC) and defined-contribution measurement, roll-forward, sensitivity, fair-value asset breakdown and jaarrekening disclosure surface entirely as declarative metadata per ADR-031: schema fields + x-openregister-lifecycle (draft → approved → locked on ActuarialValuation, draft → active → terminated on PensionPlan) + x-openregister-aggregations (roll-forward closing balances, sensitivity deltas, disclosure-table generation). The lifecycle preconditions that require cross-field / cross-schema completeness checks the declarative requires: clause cannot yet express are referenced as OCA\\Shillinq\\Lifecycle\\PensionIas19Guard:<method> (ADR-031 exception path; fail-closed; real OpenRegister ObjectService API per ADR-022). DB plans MUST carry methodology=PUC; DC plans are blocked from DBO/sensitivity workflows; discount rate is flagged when sourced from government bonds; OCI remeasurements are non-recycling. Seed objects ship two pension plans (NL Standard DB Regeling, NL Standard DC Regeling) and one sensitivity template per design.md; operators customise per administration on first use. No PHP actuarial calculation service is authored."
+    "description": "Tier 3: IAS 19 / RJ 271 employee-benefit pension accounting. Six new schemas (PensionPlan, ActuarialValuation, PensionMovement, PensionAssumptionSensitivity, PensionAssetDetail, PensionDisclosureTabel) declaring the defined-benefit (PUC) and defined-contribution measurement, roll-forward, sensitivity, fair-value asset breakdown and jaarrekening disclosure surface entirely as declarative metadata per ADR-031: schema fields + x-openregister-lifecycle (draft → approved → locked on ActuarialValuation, draft → active → terminated on PensionPlan) + x-openregister-aggregations (roll-forward closing balances, sensitivity deltas, disclosure-table generation). The lifecycle preconditions that require cross-field / cross-schema completeness checks the declarative requires: clause cannot yet express are referenced as OCA\\Shillinq\\Lifecycle\\PensionIas19Guard:<method> (ADR-031 exception path; fail-closed; real OpenRegister ObjectService API per ADR-022). DB plans MUST carry methodology=PUC; DC plans are blocked from DBO/sensitivity workflows; discount rate is flagged when sourced from government bonds; OCI remeasurements are non-recycling. Seed objects ship two pension plans (NL Standard DB Regeling, NL Standard DC Regeling) and one sensitivity template per design.md; operators customise per administration on first use. No PHP actuarial calculation service is authored."
   },
   "components": {
     "schemas": {
@@ -158,14 +158,14 @@
           },
           "linkedProvisionId": {
             "type": "string",
-            "description": "Optional FK to the bookkeeping-voorzieningen-claims Provision record that carries the cumulative DBO on the balance sheet. When set, the voorzieningen-claims provision-closure flow consumes the latest PensionMovement.dboClosing for the linked plan and updates the provision balance accordingly (— pension provision linkage). Null when voorzieningen-claims is not yet provisioned in the administration; the linkage falls back to the standard DBO balance-sheet line.",
+            "description": "Optional FK to the bookkeeping-voorzieningen-claims Provision record that carries the cumulative DBO on the balance sheet. When set, the voorzieningen-claims provision-closure flow consumes the latest PensionMovement.dboClosing for the linked plan and updates the provision balance accordingly (: pension provision linkage). Null when voorzieningen-claims is not yet provisioned in the administration; the linkage falls back to the standard DBO balance-sheet line.",
             "nullable": true,
             "example": "provision-pensioen-db-2026",
             "title": "Linked Provision ID"
           },
           "governanceDocument": {
             "type": "string",
-            "description": "File URI to the regeling / governance charter, archived in docudesk (ADR-022 — no app-local storage).",
+            "description": "File URI to the regeling / governance charter, archived in docudesk (ADR-022: no app-local storage).",
             "nullable": true,
             "title": "Governance Document"
           },
@@ -381,7 +381,7 @@
           },
           "discountRateGovernmentBondFlag": {
             "type": "boolean",
-            "description": "True when the discount rate is sourced from government bonds; surfaces the IAS 19 §83 warning for accountant review. Not an error — flagged, not blocked.",
+            "description": "True when the discount rate is sourced from government bonds; surfaces the IAS 19 §83 warning for accountant review. Not an error: flagged, not blocked.",
             "default": false,
             "example": false,
             "title": "Discount Rate Government Bond Flag"
@@ -462,7 +462,7 @@
           },
           "approvalStatus": {
             "type": "string",
-            "description": "Actuarial valuation lifecycle status. CONSUMED from decidesk Decision outcome; the approvalStatus is driven by decisionOutcome — shillinq does not own the approval transition.",
+            "description": "Actuarial valuation lifecycle status. CONSUMED from decidesk Decision outcome; the approvalStatus is driven by decisionOutcome: shillinq does not own the approval transition.",
             "enum": [
               "draft",
               "approved",
@@ -475,7 +475,7 @@
           },
           "approvedBy": {
             "type": "string",
-            "description": "Name/email of the approver — mirrored from the decidesk Decision record.",
+            "description": "Name/email of the approver: mirrored from the decidesk Decision record.",
             "nullable": true,
             "x-mirror-of": "decidesk-decision",
             "title": "Approved By"
@@ -483,7 +483,7 @@
           "approvedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp of approval — mirrored from the decidesk Decision outcome.",
+            "description": "Timestamp of approval: mirrored from the decidesk Decision outcome.",
             "nullable": true,
             "x-mirror-of": "decidesk-decision",
             "title": "Approved At"

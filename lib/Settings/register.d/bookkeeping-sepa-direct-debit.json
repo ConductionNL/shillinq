@@ -870,13 +870,13 @@
         }
       },
       "CustomerMaster": {
-        "description": "Customer master overlay adding the default SEPA mandate link. When a customer has a `defaultMandateId`, the AR billing flow proposes direct-debit collection by default; the field is OPTIONAL — collections may still be scheduled against any mandate the customer holds. Owning fragment: `add-shillinq-bookkeeping-compliance.json` (shillinq CustomerMaster is the AR-core analogue of the company-wide `Counterparty` entity referenced in design D1).",
+        "description": "Customer master overlay adding the default SEPA mandate link. When a customer has a `defaultMandateId`, the AR billing flow proposes direct-debit collection by default; the field is OPTIONAL: collections may still be scheduled against any mandate the customer holds. Owning fragment: `add-shillinq-bookkeeping-compliance.json` (shillinq CustomerMaster is the AR-core analogue of the company-wide `Counterparty` entity referenced in design D1).",
         "x-spec": "openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md",
         "properties": {
           "defaultMandateId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the customer's default SEPA mandate UUID; when set the AR billing flow proposes direct-debit collection by default. Optional — collections may still be scheduled against any active mandate held by the customer. Cleared automatically when the referenced mandate transitions to `cancelled` or `expired`.",
+            "description": "FK to the customer's default SEPA mandate UUID; when set the AR billing flow proposes direct-debit collection by default. Optional: collections may still be scheduled against any active mandate held by the customer. Cleared automatically when the referenced mandate transitions to `cancelled` or `expired`.",
             "title": "Default Mandate ID",
             "$ref": "SepaMandate"
           }

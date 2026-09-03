@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-bado-controleprotocol",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — BADO (Besluit Accountantscontrole Decentrale Overheden) audit protocol framework. Declares 7 schemas (Controleprotocol, ToleranceMatrix, Materialiteit, AuditSample, AuditFinding, VerklaringDraft, SiSaAssurance) with declarative lifecycle (ADR-031), RBAC (ADR-022), finding aggregation, and BADO-statutory tolerance ceilings. Opinion derivation + severity classification mirror lib/Service/BadoControleprotocolService.php (ADR-031 read-only exception)."
+    "description": "Tier 3: BADO (Besluit Accountantscontrole Decentrale Overheden) audit protocol framework. Declares 7 schemas (Controleprotocol, ToleranceMatrix, Materialiteit, AuditSample, AuditFinding, VerklaringDraft, SiSaAssurance) with declarative lifecycle (ADR-031), RBAC (ADR-022), finding aggregation, and BADO-statutory tolerance ceilings. Opinion derivation + severity classification mirror lib/Service/BadoControleprotocolService.php (ADR-031 read-only exception)."
   },
   "components": {
     "schemas": {
@@ -601,7 +601,7 @@
         "icon": "AlertCircleOutline",
         "version": "0.1.0",
         "title": "Bevinding",
-        "description": "Per-transaction audit finding classified on both axes — rechtmatigheid × getrouwheid (REQ-006). Severity (acceptabel/te-corrigeren/materieel) is derived from the exception amount vs the ToleranceMatrix ceilings by BadoControleprotocolService:classifySeverity. Four-eye workflow: controllerResponse + auditorConclusion both required before resolution.",
+        "description": "Per-transaction audit finding classified on both axes: rechtmatigheid × getrouwheid (REQ-006). Severity (acceptabel/te-corrigeren/materieel) is derived from the exception amount vs the ToleranceMatrix ceilings by BadoControleprotocolService:classifySeverity. Four-eye workflow: controllerResponse + auditorConclusion both required before resolution.",
         "x-schema-org": "schema:Dataset",
         "type": "object",
         "required": [
@@ -955,7 +955,7 @@
         },
         "x-openregister-calculations": {
           "proposedOpinion": {
-            "description": "REQ-007 BADO decision tree (NV COS 700-serie). Mirrors BadoControleprotocolCalculator:deriveOpinion — first match wins: pervasive scope limitation → oordeelonthouding; materieel findings across the majority of topics → afkeurend; any materieel finding → met-beperking; otherwise → goedkeurend. The conditional cross-topic aggregation is not yet expressible declaratively, so the calculator is the engine-side fallback (ADR-031).",
+            "description": "REQ-007 BADO decision tree (NV COS 700-serie). Mirrors BadoControleprotocolCalculator:deriveOpinion. First match wins: pervasive scope limitation → oordeelonthouding; materieel findings across the majority of topics → afkeurend; any materieel finding → met-beperking; otherwise → goedkeurend. The conditional cross-topic aggregation is not yet expressible declaratively, so the calculator is the engine-side fallback (ADR-031).",
             "expression": "IF scopeLimitation THEN oordeelonthouding ELSE IF materieelTopics*2 > topicCount THEN afkeurend ELSE IF materieelTopics > 0 THEN met-beperking ELSE goedkeurend",
             "inputs": {
               "scopeLimitation": "#/properties/opinionOverride",

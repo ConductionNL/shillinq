@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"source": "BZK SiSa-controleprotocol",
 		"year": 2026,
-		"description": "BZK SiSa controleprotocol 2026 — indicatoren per specifieke uitkering regeling. Loaded via ConfigurationService:importFromApp in the repair step; idempotent. Missing verplicht: true indicatoren surface as warnings in the SiSa-rapportage audit preview.",
+		"description": "BZK SiSa controleprotocol 2026: indicatoren per specifieke uitkering regeling. Loaded via ConfigurationService:importFromApp in the repair step; idempotent. Missing verplicht: true indicatoren surface as warnings in the SiSa-rapportage audit preview.",
 		"imported": "2026-06-03T00:00:00Z"
 	},
 	"indicatoren": [

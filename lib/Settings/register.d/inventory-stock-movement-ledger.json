@@ -9,7 +9,7 @@
         "icon": "SwapHorizontalBold",
         "version": "0.1.0",
         "title": "Stock Move",
-        "description": "Immutable double-entry stock-movement ledger entry (Odoo / Tryton Stock Move pattern). One StockMove atomically debits source location and credits destination location for a single (item + quantity + unit cost) tuple. Movement type taxonomy: receipt (null source = goods inbound), transfer (both locations populated = lateral move), issue (null destination = goods outbound), manufacture (assembly), repack (consolidation). Lifecycle draft → posted → cancelled; posting flips `locked = true` and triggers GL materialisation (asset / COGS) via x-openregister-lifecycle-action. Cancellation creates an offsetting StockMove (not patch) so the original posted row remains immutable per IAS 2 + Dutch CTR. No PHP StockMoveService — the lifecycle, GL materialisation and audit trail are declarative per ADR-031 (ADR-031 exception path: StockReservationGuard + StockMoveImmutabilityGuard + StockMoveOffsetCreator for the optimistic-lock CAS, the locked-after-post guard, and the offset-row materialisation that the declarative DSL cannot yet express). Reserved quantity is held against InventoryStock.reservedQuantity on draft and released on post or cancel.",
+        "description": "Immutable double-entry stock-movement ledger entry (Odoo / Tryton Stock Move pattern). One StockMove atomically debits source location and credits destination location for a single (item + quantity + unit cost) tuple. Movement type taxonomy: receipt (null source = goods inbound), transfer (both locations populated = lateral move), issue (null destination = goods outbound), manufacture (assembly), repack (consolidation). Lifecycle draft → posted → cancelled; posting flips `locked = true` and triggers GL materialisation (asset / COGS) via x-openregister-lifecycle-action. Cancellation creates an offsetting StockMove (not patch) so the original posted row remains immutable per IAS 2 + Dutch CTR. No PHP StockMoveService: the lifecycle, GL materialisation and audit trail are declarative per ADR-031 (ADR-031 exception path: StockReservationGuard + StockMoveImmutabilityGuard + StockMoveOffsetCreator for the optimistic-lock CAS, the locked-after-post guard, and the offset-row materialisation that the declarative DSL cannot yet express). Reserved quantity is held against InventoryStock.reservedQuantity on draft and released on post or cancel.",
         "x-schema-org": "schema:Event",
         "x-openregister-purpose": "ledger",
         "x-spec": "openspec/changes/inventory-stock-movement-ledger/specs/inventory-stock-movement-ledger/spec.md",
@@ -203,7 +203,7 @@
             "posted": {
               "label": "Posted",
               "labelNl": "Geboekt",
-              "description": "Immutable. locked=true; postedAt set; InventoryStock.quantity updated at source (debit) and destination (credit); GL transaction materialised when movementType is receipt / issue / manufacture. Subsequent edits are rejected with HTTP 409 — cancellation creates an offsetting move."
+              "description": "Immutable. Locked=true; postedAt set; InventoryStock.quantity updated at source (debit) and destination (credit); GL transaction materialised when movementType is receipt / issue / manufacture. Subsequent edits are rejected with HTTP 409: cancellation creates an offsetting move."
             },
             "cancelled": {
               "label": "Cancelled",
@@ -297,7 +297,7 @@
               "to": "cancelled",
               "label": "Cancel move",
               "labelNl": "Annuleren",
-              "description": "From draft: release reservation, mark cancelled, no offset row. From posted: emit an offsetting StockMove (StockMoveOffsetCreator) that reverses the on-hand effect with swapped source/destination, then reverse the original GLTransaction +. The original posted row is NOT patched — immutability preserved.",
+              "description": "From draft: release reservation, mark cancelled, no offset row. From posted: emit an offsetting StockMove (StockMoveOffsetCreator) that reverses the on-hand effect with swapped source/destination, then reverse the original GLTransaction +. The original posted row is NOT patched: immutability preserved.",
               "requires": "OCA\\Shillinq\\Lifecycle\\StockMoveImmutabilityGuard::canCancel",
               "actions": [
                 {

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "btw-suppletie-detection",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Additive extension of the already-landed VatCorrection register with the fields VatSuppletieDetectionService needs to persist a filed/current rubriek snapshot, per-rubriek deltas, the suppletie-threshold decision, the 8-week filing deadline, and a link to the compiled GL correction posting. audit coverage is already satisfied for VatCorrection/VatReturn by add-shillinq-audit-trail.json's x-openregister-audit-trail.enabled flag — not touched here. Merged additively onto the monolith per ADR-037 — no existing field, state, or transition is touched."
+    "description": "Additive extension of the already-landed VatCorrection register with the fields VatSuppletieDetectionService needs to persist a filed/current rubriek snapshot, per-rubriek deltas, the suppletie-threshold decision, the 8-week filing deadline, and a link to the compiled GL correction posting. Audit coverage is already satisfied for VatCorrection/VatReturn by add-shillinq-audit-trail.json's x-openregister-audit-trail.enabled flag: not touched here. Merged additively onto the monolith per ADR-037. No existing field, state, or transition is touched."
   },
   "components": {
     "schemas": {
@@ -116,14 +116,14 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp VatSuppletieDetectionService:detect created this record (the 'detected' sub-state —).",
+            "description": "Timestamp VatSuppletieDetectionService:detect created this record (the 'detected' sub-state. ).",
             "title": "Detected At"
           },
           "preparedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp VatSuppletieDetectionService:prepare finished compiling deltas + the GL posting (the 'prepared' sub-state — record is draft but operator-reviewable and ready to file).",
+            "description": "Timestamp VatSuppletieDetectionService:prepare finished compiling deltas + the GL posting (the 'prepared' sub-state. Record is draft but operator-reviewable and ready to file).",
             "title": "Prepared At"
           },
           "thresholdExceeded": {
@@ -136,7 +136,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "preparedAt + 8 weeks — the statutory suppletie filing deadline once a threshold-exceeding correction is discovered.",
+            "description": "preparedAt + 8 weeks: the statutory suppletie filing deadline once a threshold-exceeding correction is discovered.",
             "title": "Filing Deadline"
           },
           "glCorrectionTransactionId": {

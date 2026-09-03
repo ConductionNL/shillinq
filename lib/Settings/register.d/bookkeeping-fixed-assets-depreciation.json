@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-fixed-assets-depreciation",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 2 / 3 — fixed-assets capability carrying forward asset management as a core bookkeeping function. Adds the DepreciationSchedule register (per-asset, per-fiscal-year tracking) alongside additive extensions on the existing FixedAsset schema (operator-facing field aliases assetType/usefulLifeYears/purchaseDate/purchaseCost/status/declineRate/productionUnits + capitalization GL account + location + costCenterCode + retirementDate; cost-center / method / status aggregations). Carry-forward note: the FixedAsset schema (assetCategory + usefulLifeMonths + lifecycleState shape) was first declared by `add-shillinq-fixed-assets-depreciation`; this fragment unions field-set aliases on top of it without rename so existing records and DepreciationCalculator math remain valid. The DepreciationCalculator (ADR-031 §exception, single-method) honours the Nextcloud System Settings Float Precision setting at calculation time and is the deterministic kernel for the lifecycle-driven acquisition, yearly depreciation, internal transfer and retirement GL postings.",
+    "description": "Tier 2 / 3: fixed-assets capability carrying forward asset management as a core bookkeeping function. Adds the DepreciationSchedule register (per-asset, per-fiscal-year tracking) alongside additive extensions on the existing FixedAsset schema (operator-facing field aliases assetType/usefulLifeYears/purchaseDate/purchaseCost/status/declineRate/productionUnits + capitalization GL account + location + costCenterCode + retirementDate; cost-center / method / status aggregations). Carry-forward note: the FixedAsset schema (assetCategory + usefulLifeMonths + lifecycleState shape) was first declared by `add-shillinq-fixed-assets-depreciation`; this fragment unions field-set aliases on top of it without rename so existing records and DepreciationCalculator math remain valid. The DepreciationCalculator (ADR-031 §exception, single-method) honours the Nextcloud System Settings Float Precision setting at calculation time and is the deterministic kernel for the lifecycle-driven acquisition, yearly depreciation, internal transfer and retirement GL postings.",
     "spec": "openspec/changes/bookkeeping-fixed-assets-depreciation/specs/bookkeeping-fixed-assets-depreciation/spec.md"
   },
   "components": {
@@ -51,7 +51,7 @@
           "purchaseDate": {
             "type": "string",
             "format": "date",
-            "description": "Operator-facing alias of acquisitionDate. Identical semantic — the date the asset entered service.",
+            "description": "Operator-facing alias of acquisitionDate. Identical semantic: the date the asset entered service.",
             "nullable": true,
             "example": "2026-01-15",
             "title": "Purchase Date"
@@ -59,7 +59,7 @@
           "purchaseCost": {
             "type": "number",
             "minimum": 0,
-            "description": "Operator-facing alias of acquisitionCost. Identical semantic — original cost in base currency.",
+            "description": "Operator-facing alias of acquisitionCost. Identical semantic: original cost in base currency.",
             "nullable": true,
             "example": 25000,
             "title": "Purchase Cost"
@@ -139,7 +139,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration — the tenant scope this asset belongs to. Already written by SettingsService:seedFixedAssetsDemo and required by the disposal GL posting (revive-gl-tax-capabilities) to scope the GLTransaction; declared here so the record shape is honest.",
+            "description": "FK to Administration: the tenant scope this asset belongs to. Already written by SettingsService:seedFixedAssetsDemo and required by the disposal GL posting (revive-gl-tax-capabilities) to scope the GLTransaction; declared here so the record shape is honest.",
             "nullable": true,
             "example": "adm-1",
             "title": "Administration Id"
@@ -225,7 +225,7 @@
               ],
               "to": "retired",
               "label": "Dispose",
-              "description": "Retire the asset and post its closing journal. Before revive-gl-tax-capabilities this transition declared neither `from` nor `to`, so OpenRegister's TransitionEngine rejected every attempt with \"Transition dispose is not allowed from current state ''\" and no ObjectTransitionedEvent was ever dispatched — the disposal journal could not fire even in principle.",
+              "description": "Retire the asset and post its closing journal. Before revive-gl-tax-capabilities this transition declared neither `from` nor `to`, so OpenRegister's TransitionEngine rejected every attempt with \"Transition dispose is not allowed from current state ''\" and no ObjectTransitionedEvent was ever dispatched: the disposal journal could not fire even in principle.",
               "action": {
                 "type": "emit-journal-entry",
                 "subType": "disposal",
@@ -250,7 +250,7 @@
         },
         "x-openregister-aggregations": {
           "depreciationByMethod": {
-            "description": "(1) — count of active assets grouped by depreciationMethod. Drives the Depreciation Expense report method-mix breakdown.",
+            "description": "(1): count of active assets grouped by depreciationMethod. Drives the Depreciation Expense report method-mix breakdown.",
             "field": "depreciationMethod",
             "metric": "count",
             "groupBy": ["depreciationMethod"],
@@ -259,7 +259,7 @@
             }
           },
           "depreciationByCostCenter": {
-            "description": "(2) — sum of acquisitionCost grouped by costCenterCode (proxy for current-fiscal-year depreciation allocation). Drives the Depreciation Expense cost-center report.",
+            "description": "(2): sum of acquisitionCost grouped by costCenterCode (proxy for current-fiscal-year depreciation allocation). Drives the Depreciation Expense cost-center report.",
             "field": "acquisitionCost",
             "metric": "sum",
             "groupBy": ["costCenterCode"],
@@ -268,7 +268,7 @@
             }
           },
           "bookValuesByStatus": {
-            "description": "(4) — count of assets grouped by lifecycleState (proxy for book-value buckets). Drives balance-sheet reporting splits.",
+            "description": "(4): count of assets grouped by lifecycleState (proxy for book-value buckets). Drives balance-sheet reporting splits.",
             "field": "lifecycleState",
             "metric": "count",
             "groupBy": ["lifecycleState"]
@@ -307,7 +307,7 @@
           },
           "assetRef": {
             "type": "string",
-            "description": "FK to FixedAsset UUID — the asset this schedule covers.",
+            "description": "FK to FixedAsset UUID: the asset this schedule covers.",
             "example": "uuid-of-fixed-asset",
             "title": "Asset Ref",
             "$ref": "FixedAsset"
@@ -395,7 +395,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration — scoping field for multi-administratie installs.",
+            "description": "FK to Administration: scoping field for multi-administratie installs.",
             "example": "adm-sample",
             "title": "Administration ID",
             "$ref": "Administration"
@@ -454,7 +454,7 @@
         },
         "x-openregister-aggregations": {
           "depreciationAmountByCostCenter": {
-            "description": "(2) — sum of depreciationAmount grouped by costCenterCode for the current fiscal year. Drives the Depreciation Expense cost-center report.",
+            "description": "(2): sum of depreciationAmount grouped by costCenterCode for the current fiscal year. Drives the Depreciation Expense cost-center report.",
             "field": "depreciationAmount",
             "metric": "sum",
             "groupBy": ["costCenterCode"],
@@ -463,7 +463,7 @@
             }
           },
           "depreciationAmountByMethod": {
-            "description": "(1) — sum of depreciationAmount grouped by depreciationMethod for the current fiscal year. Drives the Depreciation Expense method-mix report.",
+            "description": "(1): sum of depreciationAmount grouped by depreciationMethod for the current fiscal year. Drives the Depreciation Expense method-mix report.",
             "field": "depreciationAmount",
             "metric": "sum",
             "groupBy": ["depreciationMethod"],
@@ -472,7 +472,7 @@
             }
           },
           "accumulatedDepreciationByAsset": {
-            "description": "(3) — sum of depreciationAmount grouped by assetRef across all closed periods. Drives the asset-by-asset accumulated-depreciation report.",
+            "description": "(3): sum of depreciationAmount grouped by assetRef across all closed periods. Drives the asset-by-asset accumulated-depreciation report.",
             "field": "depreciationAmount",
             "metric": "sum",
             "groupBy": ["assetRef"]

@@ -13,7 +13,7 @@
         "icon": "CurrencyEur",
         "version": "0.1.0",
         "title": "FX Revaluation Posting",
-        "description": "Append-only audit record per FXPosition period-end revaluation. Carries the source position, the closing rate used (and how it was resolved), the incremental unrealised movement posted, and the GL account attribution. Lifecycle: posted → reversed (manual controller correction only — this is NOT an automatic month-start reversal; see design.md 'Reversing-entry vs cumulative-adjustment decision').",
+        "description": "Append-only audit record per FXPosition period-end revaluation. Carries the source position, the closing rate used (and how it was resolved), the incremental unrealised movement posted, and the GL account attribution. Lifecycle: posted → reversed (manual controller correction only. This is NOT an automatic month-start reversal; see design.md 'Reversing-entry vs cumulative-adjustment decision').",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/fx-period-end-revaluation/specs/bookkeeping-multi-currency/spec.md",
         "type": "object",
@@ -122,7 +122,7 @@
           },
           "journalEntryId": {
             "type": "string",
-            "description": "Synthesised journal-entry linkage id for audit trail, mirroring AutoAccrualPosting.journalEntryId — no literal JournalEntry object is created.",
+            "description": "Synthesised journal-entry linkage id for audit trail, mirroring AutoAccrualPosting.journalEntryId: no literal JournalEntry object is created.",
             "example": "je-2026-03-fx-usd-adm-holding-nl",
             "title": "Journal Entry ID"
           },
@@ -185,7 +185,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "FxRevaluationPosting is append-only audit evidence / ADR-022 — original posted entry MUST be preserved when a reversal is recorded; the reversal links back to the original via reversalId."
+          "description": "FxRevaluationPosting is append-only audit evidence / ADR-022: original posted entry MUST be preserved when a reversal is recorded; the reversal links back to the original via reversalId."
         }
       }
     }

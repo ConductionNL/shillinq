@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-icp-opgaaf",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json; ADR-031 declarative-first (schemas + lifecycle + calculations + aggregations); ADR-022 OpenRegister approval-workflow (no app-local submission table)",
-    "description": "Tier 3 — intra-community supplies (ICP) filing. Adds four new schemas that union additively onto the monolith: ViesValidation (immutable VIES verification evidence per Implementing Regulation 282/2011 Art. 18), IcpSupply (the first-class, invoice-derived supply record), IcpOpgaaf (the recapitulative statement / ICP-opgaaf with draft → finalized → submitted → accepted/rejected/corrected lifecycle), and PeriodicitySwitch (the quarterly↔monthly transition log per Art. 263 §1bis Directive 2006/112/EC). IcpOpgaaf carries an x-openregister-lifecycle (reconciliation + SBR-schema gate on finalize, approval-workflow on submit) and x-openregister-calculations for SBR/Digipoort XBRL composition. IcpSupply carries the x-openregister-aggregations shape that groups supplies by (buyerVatId, supplyType) — the ICP ledger. The engine-side fallback (prior-period opening carry, cross-schema reconciliation join, periodicity threshold) is OCA\\Shillinq\\Service\\IcpService + IcpCalculator using the real OpenRegister ObjectService API (find/findAll/saveObject). Also seeds three zero-rated RGS chart-of-accounts Account objects (8190 Omzet ICP goederen, 8195 Omzet ICP diensten, 8196 Omzet ICP driehoekstransacties) and worked ViesValidation / IcpSupply / IcpOpgaaf / PeriodicitySwitch example objects per design.md Seed Data. The pre-existing minimal IcpStatement schema (period metadata only, from add-shillinq-bookkeeping-operations) is left untouched; IcpOpgaaf is the richer line-bearing filing register the T3 spec requires. Tasks 9-10: ARInvoice.icpContext and CustomerMaster.vatId* extension fields are now landed as deep-merge property additions on the AR-core schemas (ADR-037 — properties unioned by key, monolith untouched); ARInvoice gets the icpContext sub-object (treatAsIcp, supplyType, viesValidationId, triangulation) for, CustomerMaster gets canonical vatId + vatIdValidatedAt + vatIdValidUntil + vatIdValidationStatus for."
+    "description": "Tier 3: intra-community supplies (ICP) filing. Adds four new schemas that union additively onto the monolith: ViesValidation (immutable VIES verification evidence per Implementing Regulation 282/2011 Art. 18), IcpSupply (the first-class, invoice-derived supply record), IcpOpgaaf (the recapitulative statement / ICP-opgaaf with draft → finalized → submitted → accepted/rejected/corrected lifecycle), and PeriodicitySwitch (the quarterly↔monthly transition log per Art. 263 §1bis Directive 2006/112/EC). IcpOpgaaf carries an x-openregister-lifecycle (reconciliation + SBR-schema gate on finalize, approval-workflow on submit) and x-openregister-calculations for SBR/Digipoort XBRL composition. IcpSupply carries the x-openregister-aggregations shape that groups supplies by (buyerVatId, supplyType). The ICP ledger. The engine-side fallback (prior-period opening carry, cross-schema reconciliation join, periodicity threshold) is OCA\\Shillinq\\Service\\IcpService + IcpCalculator using the real OpenRegister ObjectService API (find/findAll/saveObject). Also seeds three zero-rated RGS chart-of-accounts Account objects (8190 Omzet ICP goederen, 8195 Omzet ICP diensten, 8196 Omzet ICP driehoekstransacties) and worked ViesValidation / IcpSupply / IcpOpgaaf / PeriodicitySwitch example objects per design.md Seed Data. The pre-existing minimal IcpStatement schema (period metadata only, from add-shillinq-bookkeeping-operations) is left untouched; IcpOpgaaf is the richer line-bearing filing register the T3 spec requires. Tasks 9-10: ARInvoice.icpContext and CustomerMaster.vatId* extension fields are now landed as deep-merge property additions on the AR-core schemas (ADR-037. Properties unioned by key, monolith untouched); ARInvoice gets the icpContext sub-object (treatAsIcp, supplyType, viesValidationId, triangulation) for, CustomerMaster gets canonical vatId + vatIdValidatedAt + vatIdValidUntil + vatIdValidationStatus for."
   },
   "components": {
     "schemas": {
@@ -70,7 +70,7 @@
           },
           "requestId": {
             "type": "string",
-            "description": "VIES consultation number — Belastingdienst audit proof per Implementing Regulation 282/2011 Art. 18.",
+            "description": "VIES consultation number: Belastingdienst audit proof per Implementing Regulation 282/2011 Art. 18.",
             "nullable": true,
             "example": "BE-2026-06-15-001",
             "title": "Request ID"
@@ -129,7 +129,7 @@
           "supplyDate": {
             "type": "string",
             "format": "date",
-            "description": "Time of supply per Art. 64 — determines the filing period.",
+            "description": "Time of supply per Art. 64: determines the filing period.",
             "example": "2026-06-15",
             "title": "Supply Date"
           },

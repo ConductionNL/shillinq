@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "purchase-requisition",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Purchase requisition (aanvraag) capability: an employee raises a Requisition with RequisitionLine items, it is submitted for approval, approved/rejected, and an approved Requisition converts to a PurchaseOrder (member 02 of bookkeeping-purchase-order-3way, unchanged). Approval routing deliberately reuses the existing commitment mandate/budget infrastructure from bookkeeping-verplichtingenadministratie (OCA\\Shillinq\\Lifecycle\\MandateEnforcer, OCA\\Shillinq\\Lifecycle\\BudgetBlocker) rather than inventing a parallel approval system: Requisition carries the same `programma` / `boekjaar` / `totaalbedrag_excl_btw` / `soort` field contract those guards already read (schema-agnostic — they operate on the passed object array, not a hardcoded Commitment lookup, whenever the lifecycle engine supplies the object being transitioned), so BudgetBlocker:canCommit runs unmodified against a Requisition exactly as it does against a Commitment. Money fields are integer euro cents (ADR-022)."
+    "description": "Purchase requisition (aanvraag) capability: an employee raises a Requisition with RequisitionLine items, it is submitted for approval, approved/rejected, and an approved Requisition converts to a PurchaseOrder (member 02 of bookkeeping-purchase-order-3way, unchanged). Approval routing deliberately reuses the existing commitment mandate/budget infrastructure from bookkeeping-verplichtingenadministratie (OCA\\Shillinq\\Lifecycle\\MandateEnforcer, OCA\\Shillinq\\Lifecycle\\BudgetBlocker) rather than inventing a parallel approval system: Requisition carries the same `programma` / `boekjaar` / `totaalbedrag_excl_btw` / `soort` field contract those guards already read (schema-agnostic. They operate on the passed object array, not a hardcoded Commitment lookup, whenever the lifecycle engine supplies the object being transitioned), so BudgetBlocker:canCommit runs unmodified against a Requisition exactly as it does against a Commitment. Money fields are integer euro cents (ADR-022)."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "ClipboardTextOutline",
         "version": "0.1.0",
         "title": "Purchase Requisition",
-        "description": "Internal purchase requisition (aanvraag) raised by an employee before a PurchaseOrder exists. Lifecycle draft -> submitted -> approved|rejected -> converted. Approval reuses BudgetBlocker (budget availability + override-mandate) and MandateEnforcer (mandate resolution) from bookkeeping-verplichtingenadministratie via a shared field contract (programma/boekjaar/totaalbedrag_excl_btw/soort) — no parallel approval engine is built. An approved Requisition converts to a PurchaseOrder via RequisitionConversionService, which reuses PurchaseOrderService:createPurchaseOrder unmodified.",
+        "description": "Internal purchase requisition (aanvraag) raised by an employee before a PurchaseOrder exists. Lifecycle draft -> submitted -> approved|rejected -> converted. Approval reuses BudgetBlocker (budget availability + override-mandate) and MandateEnforcer (mandate resolution) from bookkeeping-verplichtingenadministratie via a shared field contract (programma/boekjaar/totaalbedrag_excl_btw/soort): no parallel approval engine is built. An approved Requisition converts to a PurchaseOrder via RequisitionConversionService, which reuses PurchaseOrderService:createPurchaseOrder unmodified.",
         "x-schema-org": "schema:OrderAction",
         "x-spec": "openspec/specs/purchase-requisition/spec.md",
         "type": "object",
@@ -37,7 +37,7 @@
           },
           "requester": {
             "type": "string",
-            "description": "User ID of the employee raising the requisition. Server-authoritative — always derived from the authenticated session, never trusted from the request body (ADR-005).",
+            "description": "User ID of the employee raising the requisition. Server-authoritative: always derived from the authenticated session, never trusted from the request body (ADR-005).",
             "example": "employee-01",
             "title": "Requester"
           },
@@ -76,7 +76,7 @@
             "type": "string",
             "format": "uuid",
             "$ref": "Payee",
-            "description": "Optional preferred supplier. Required at conversion time — convertToPurchaseOrder refuses to convert a Requisition with no preferred supplier (a PurchaseOrder always needs one).",
+            "description": "Optional preferred supplier. Required at conversion time: convertToPurchaseOrder refuses to convert a Requisition with no preferred supplier (a PurchaseOrder always needs one).",
             "nullable": true,
             "example": "vendor-001",
             "title": "Preferred Supplier"
@@ -168,7 +168,7 @@
             },
             "approved": {
               "label": "Goedgekeurd",
-              "description": "Approved — budget available (or override-mandate held). May be converted to a PurchaseOrder."
+              "description": "Approved: budget available (or override-mandate held). May be converted to a PurchaseOrder."
             },
             "rejected": {
               "label": "Afgewezen",
@@ -184,7 +184,7 @@
               "from": "draft",
               "to": "submitted",
               "label": "Indienen",
-              "description": "Submit the requisition for approval. Always routed through human approval regardless of mandate sufficiency — unlike Commitment, a Requisition never skips straight to approved."
+              "description": "Submit the requisition for approval. Always routed through human approval regardless of mandate sufficiency: unlike Commitment, a Requisition never skips straight to approved."
             },
             "approve": {
               "from": "submitted",

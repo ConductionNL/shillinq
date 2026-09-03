@@ -9,7 +9,7 @@
           "lotId": {
             "type": "string",
             "nullable": true,
-            "description": "Optional FK to the InventoryLot created/replenished by this receipt. Required when the receipt's product (Product.requiresLotTracking == true) is lot-tracked — the LotTrackingReceiptGuard enforces this on save.",
+            "description": "Optional FK to the InventoryLot created/replenished by this receipt. Required when the receipt's product (Product.requiresLotTracking == true) is lot-tracked: the LotTrackingReceiptGuard enforces this on save.",
             "example": "lot-2026-001",
             "title": "Lot ID",
             "$ref": "InventoryLot"
@@ -33,7 +33,7 @@
         "icon": "Barcode",
         "version": "0.1.0",
         "title": "Inventory Lot",
-        "description": "Lot/batch identifier for a homogeneous quantity of a Product received together (one supplier, one date, one expiry). Sits below InventoryStock — InventoryStock is the aggregate position per (sku, locationId); InventoryLot adds the per-lot granularity required for FEFO (First-Expiry-First-Out) picking, expiry tracking, quality quarantine, and recall traceability.009. Lifecycle: active → quarantined (release back) | expired (terminal) | exhausted (terminal, qty == 0). FEFO order is declared via x-openregister-sort on expiryDate ASC NULLS LAST so all consumers (pick list, expiry dashboard, batch reports) inherit FEFO ordering. ADR-031 exception path: if the declarative sort directive is advisory rather than enforced at the OR API layer, the single-method FefoSort:sortLots PHP guard in lib/Sort/ applies the order before the response leaves the controller. No bespoke PHP CRUD — spec prohibits parallel storage. Spec: inventory-lot-batch-expiry. The 'InventoryItem' wording in the spec refers to the shillinq Product schema.",
+        "description": "Lot/batch identifier for a homogeneous quantity of a Product received together (one supplier, one date, one expiry). Sits below InventoryStock: InventoryStock is the aggregate position per (sku, locationId); InventoryLot adds the per-lot granularity required for FEFO (First-Expiry-First-Out) picking, expiry tracking, quality quarantine, and recall traceability.009. Lifecycle: active → quarantined (release back) | expired (terminal) | exhausted (terminal, qty == 0). FEFO order is declared via x-openregister-sort on expiryDate ASC NULLS LAST so all consumers (pick list, expiry dashboard, batch reports) inherit FEFO ordering. ADR-031 exception path: if the declarative sort directive is advisory rather than enforced at the OR API layer, the single-method FefoSort:sortLots PHP guard in lib/Sort/ applies the order before the response leaves the controller. No bespoke PHP CRUD. Spec prohibits parallel storage. Spec: inventory-lot-batch-expiry. The 'InventoryItem' wording in the spec refers to the shillinq Product schema.",
         "x-schema-org": "schema:Product",
         "x-openregister-purpose": "ledger",
         "x-spec": "openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md",
@@ -76,7 +76,7 @@
             "type": "string",
             "nullable": true,
             "readOnly": true,
-            "description": "TRANSITIONAL ALIAS: deprecated — use productId. Retained for 3-way-match fallback only. Will be removed after pipelinq-product-vendor-master is confirmed live.",
+            "description": "TRANSITIONAL ALIAS: deprecated. Use productId. Retained for 3-way-match fallback only. Will be removed after pipelinq-product-vendor-master is confirmed live.",
             "deprecated": true,
             "title": "Product SKU"
           },
@@ -92,7 +92,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Legal expiry date. Drives FEFO sort (ASC NULLS LAST) and the expired-state lifecycle transition. May be null for non-perishable items — FEFO order sorts null-expiry lots last.",
+            "description": "Legal expiry date. Drives FEFO sort (ASC NULLS LAST) and the expired-state lifecycle transition. May be null for non-perishable items: FEFO order sorts null-expiry lots last.",
             "example": "2027-01-15",
             "title": "Expiry Date"
           },
@@ -159,7 +159,7 @@
           "goodsReceiptId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the GoodsReceipt event that introduced this lot to the warehouse. Optional — lots may also be created manually (e.g. initial stock-take).",
+            "description": "FK to the GoodsReceipt event that introduced this lot to the warehouse. Optional: lots may also be created manually (e.g. Initial stock-take).",
             "example": "gr-2026-0001",
             "title": "Goods Receipt ID",
             "$ref": "GoodsReceipt"
@@ -183,7 +183,7 @@
             "field": "expiryDate",
             "direction": "asc",
             "nulls": "last",
-            "description": "FEFO (First-Expiry-First-Out) default order. Lots without an expiryDate sort after all dated lots. ADR-031 exception: if OR's sort directive is advisory at the API query layer, OCA\\Shillinq\\Sort\\FefoSort:sortLots applies the same order before the response is returned — documented in openspec/changes/inventory-lot-batch-expiry/design.md §D2."
+            "description": "FEFO (First-Expiry-First-Out) default order. Lots without an expiryDate sort after all dated lots. ADR-031 exception: if OR's sort directive is advisory at the API query layer, OCA\\Shillinq\\Sort\\FefoSort:sortLots applies the same order before the response is returned. Documented in openspec/changes/inventory-lot-batch-expiry/design.md §D2."
           }
         ],
         "x-openregister-lifecycle": {
@@ -346,7 +346,7 @@
         "properties": {
           "lotId": {
             "type": "string",
-            "description": "FK to InventoryLot.id — the lot triggering the alert. Resolves via ?expand=lotId.",
+            "description": "FK to InventoryLot.id: the lot triggering the alert. Resolves via ?expand=lotId.",
             "example": "lot-2025-099",
             "title": "Lot ID",
             "$ref": "InventoryLot"
@@ -400,7 +400,7 @@
           "recipientId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to Person.id — the operator notified. Optional; alerts may be dashboard-only (no individual recipient).",
+            "description": "FK to Person.id: the operator notified. Optional; alerts may be dashboard-only (no individual recipient).",
             "example": "user-warehouse-01",
             "title": "Recipient ID"
           },
@@ -413,7 +413,7 @@
           "notes": {
             "type": "string",
             "nullable": true,
-            "description": "Operator acknowledgement notes — free text recorded on the acknowledge or resolve transition.",
+            "description": "Operator acknowledgement notes: free text recorded on the acknowledge or resolve transition.",
             "example": "Geconstateerd, lot in quarantaine geplaatst voor inspectie.",
             "title": "Notes"
           }

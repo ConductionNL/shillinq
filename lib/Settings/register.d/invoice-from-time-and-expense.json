@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "invoice-from-time-and-expense",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json or other fragments",
-    "description": "Tier-2 invoice generation from approved time entries and expense records (issue #111). Adds three companion schemas: BillableInvoice (the time+expense materialisation of the canonical Invoice), BillableInvoiceLine (line items with sourceType + rateApplied snapshot), and RetainerSchedule (monthly recurring fee with optional T&M overage threshold). Supports five billing models — t_and_m, fixed_fee, milestone, retainer, mixed — selectable per invoice (D1). Rates from RateCard are snapshot'd into rateApplied at generation time so historical invoices retain original rates if the rate card is later amended (D2). Retainer charges render as a mandatory separate line item per month (D3). Time entries reference the existing UrenRegistratie schema (closest equivalent to the spec's TimeEntry); expenses reference ExpenseClaimEntry. Monetary fields use multipleOf 0.01 with integer-cent persistence per the Money type used elsewhere in shillinq (e.g. VATReturn.totalVATCollected)."
+    "description": "Tier-2 invoice generation from approved time entries and expense records (issue #111). Adds three companion schemas: BillableInvoice (the time+expense materialisation of the canonical Invoice), BillableInvoiceLine (line items with sourceType + rateApplied snapshot), and RetainerSchedule (monthly recurring fee with optional T&M overage threshold). Supports five billing models: t_and_m, fixed_fee, milestone, retainer, mixed. Selectable per invoice (D1). Rates from RateCard are snapshot'd into rateApplied at generation time so historical invoices retain original rates if the rate card is later amended (D2). Retainer charges render as a mandatory separate line item per month (D3). Time entries reference the existing UrenRegistratie schema (closest equivalent to the spec's TimeEntry); expenses reference ExpenseClaimEntry. Monetary fields use multipleOf 0.01 with integer-cent persistence per the Money type used elsewhere in shillinq (e.g. VATReturn.totalVATCollected)."
   },
   "components": {
     "schemas": {
@@ -111,14 +111,14 @@
           "rateCardId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the RateCard applied — required for t_and_m and mixed, optional for retainer overage, null for fixed_fee/milestone (D2).",
+            "description": "FK to the RateCard applied: required for t_and_m and mixed, optional for retainer overage, null for fixed_fee/milestone (D2).",
             "example": "rate-card-consulting",
             "title": "Rate Card ID"
           },
           "retainerScheduleId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the RetainerSchedule applied — required for retainer and mixed, null for the others.",
+            "description": "FK to the RetainerSchedule applied: required for retainer and mixed, null for the others.",
             "example": "retainer-support-monthly",
             "title": "Retainer Schedule ID"
           },

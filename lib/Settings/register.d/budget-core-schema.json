@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "description": "budget-core-schema — the data foundation for begroting (budgeting): LedgerGroup (verzamelpost), AnnualBudget (the fiscal-year budget container + one-default invariant), and BudgetLine (AnnualBudget x LedgerGroup crossed with 12 monthly phased amounts + a source marker). Seeded from lib/Settings/statements/rj270-pl.json (P&L-shaped, not the balance sheet — a begroting is a monthly-phased flow plan, design.md §3c). The budget-vs-actuals roll-up is a PHP service (BudgetVsActualsReader/Calculator), not a declarative aggregation — see design.md §6."
+    "description": "budget-core-schema: the data foundation for begroting (budgeting): LedgerGroup (verzamelpost), AnnualBudget (the fiscal-year budget container + one-default invariant), and BudgetLine (AnnualBudget x LedgerGroup crossed with 12 monthly phased amounts + a source marker). Seeded from lib/Settings/statements/rj270-pl.json (P&L-shaped, not the balance sheet. A begroting is a monthly-phased flow plan, design.md §3c). The budget-vs-actuals roll-up is a PHP service (BudgetVsActualsReader/Calculator), not a declarative aggregation. See design.md §6."
   },
   "components": {
     "schemas": {
@@ -9,7 +9,7 @@
         "icon": "FormatListGroup",
         "version": "0.1.0",
         "title": "Ledger Group",
-        "description": "A per-administration, ordered, nestable grouping of GL accounts (verzamelpost) — the reusable grouping unit both the RJ270 statement manifests and the begroting grid need. Members are resolved at evaluation time from an optional accountRanges array plus explicit includedAccountNumbers/excludedAccountNumbers — never a declarative filter (design.md §3a). No lifecycle: a LedgerGroup is configuration, edited directly, consistent with Account/AllocationRule/the rubriek-mapping precedent.",
+        "description": "A per-administration, ordered, nestable grouping of GL accounts (verzamelpost): the reusable grouping unit both the RJ270 statement manifests and the begroting grid need. Members are resolved at evaluation time from an optional accountRanges array plus explicit includedAccountNumbers/excludedAccountNumbers. Never a declarative filter (design.md §3a). No lifecycle: a LedgerGroup is configuration, edited directly, consistent with Account/AllocationRule/the rubriek-mapping precedent.",
         "x-schema-org": "schema:DefinedTermSet",
         "x-spec": "openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md",
         "type": "object",
@@ -48,14 +48,14 @@
           "parentLedgerGroupId": {
             "type": "string",
             "nullable": true,
-            "description": "Self-FK holding the parent LedgerGroup's `code` — a flat business key, exactly as the description says it mirrors: Account.parentAccountNumber references an accountNumber, not an object id. Null for a root group. WHY A BUSINESS KEY AND NOT AN ID: a real object id is not known at seed-authoring time, and OpenRegister's `@ref:` seed-token mechanism (which would mint one) is unusable here — it only walks `components.objects`, a bucket shillinq's fragment merge currently corrupts (see _objects_placement_note). A `code` is the only parent identity BOTH the PHP rollup and the manifest's declarative filter engine can resolve: the LedgerGroupDetail `children` relatedCollection filters `parentLedgerGroupId == @object.code`, and `@object.<field>` reads a FLAT payload field only — it cannot reach `@self.slug`. `code` is unique within an administration, which is the scope BudgetVsActualsReader loads. BudgetVsActualsReader keeps its id|slug|code lookup so hand-authored id or slug references still resolve. A parent with children uses its OWN BudgetLine if one exists; otherwise its value is the recursive sum of its children's resolved values (design.md §3d) — no double counting when both exist.",
+            "description": "Self-FK holding the parent LedgerGroup's `code`: a flat business key, exactly as the description says it mirrors: Account.parentAccountNumber references an accountNumber, not an object id. Null for a root group. WHY A BUSINESS KEY AND NOT AN ID: a real object id is not known at seed-authoring time, and OpenRegister's `@ref:` seed-token mechanism (which would mint one) is unusable here. It only walks `components.objects`, a bucket shillinq's fragment merge currently corrupts (see _objects_placement_note). A `code` is the only parent identity BOTH the PHP rollup and the manifest's declarative filter engine can resolve: the LedgerGroupDetail `children` relatedCollection filters `parentLedgerGroupId == @object.code`, and `@object.<field>` reads a FLAT payload field only. It cannot reach `@self.slug`. `code` is unique within an administration, which is the scope BudgetVsActualsReader loads. BudgetVsActualsReader keeps its id|slug|code lookup so hand-authored id or slug references still resolve. A parent with children uses its OWN BudgetLine if one exists; otherwise its value is the recursive sum of its children's resolved values (design.md §3d). No double counting when both exist.",
             "example": null,
             "title": "Parent Ledger Group Code"
           },
           "accountRanges": {
             "type": "array",
             "default": [],
-            "description": "Inclusive numeric-string account-number range pairs (RJ270 array-pair convention, not the rubriek-mapping hyphenated string). Default membership before includedAccountNumbers/excludedAccountNumbers are applied (design.md §3a). A group with none of the three (accountRanges/includedAccountNumbers/excludedAccountNumbers) has no members — a valid, if useless, state the schema does not forbid.",
+            "description": "Inclusive numeric-string account-number range pairs (RJ270 array-pair convention, not the rubriek-mapping hyphenated string). Default membership before includedAccountNumbers/excludedAccountNumbers are applied (design.md §3a). A group with none of the three (accountRanges/includedAccountNumbers/excludedAccountNumbers) has no members: a valid, if useless, state the schema does not forbid.",
             "items": {
               "type": "object",
               "properties": {
@@ -84,7 +84,7 @@
           "includedAccountNumbers": {
             "type": "array",
             "default": [],
-            "description": "Explicit account-number adds, regardless of accountRanges — the escape hatch for a chart of accounts that does not align perfectly to RGS ranges.",
+            "description": "Explicit account-number adds, regardless of accountRanges: the escape hatch for a chart of accounts that does not align perfectly to RGS ranges.",
             "items": {
               "type": "string"
             },
@@ -148,7 +148,7 @@
         "icon": "CalendarRange",
         "version": "0.1.0",
         "title": "Annual Budget",
-        "description": "The fiscal-year budget container (begroting), crossed with LedgerGroup via BudgetLine. Carries the one-default invariant AnnualBudgetDefaultGuard enforces on the activate transition: at most one AnnualBudget per administrationId + fiscalYear may have isDefault=true — aligned now so the budget-scenarios follow-up change does not need to retrofit it (design.md §4b).",
+        "description": "The fiscal-year budget container (begroting), crossed with LedgerGroup via BudgetLine. Carries the one-default invariant AnnualBudgetDefaultGuard enforces on the activate transition: at most one AnnualBudget per administrationId + fiscalYear may have isDefault=true. Aligned now so the budget-scenarios follow-up change does not need to retrofit it (design.md §4b).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md",
         "type": "object",
@@ -181,7 +181,7 @@
           "isDefault": {
             "type": "boolean",
             "default": false,
-            "description": "Whether this is the default AnnualBudget for its administrationId + fiscalYear. Governs WHICH ONE WINS when more than one active budget could theoretically exist for the same year (e.g. a draft alternate/scenario budget under budget-scenarios) — a separate axis from state, which governs editability (design.md §4b).",
+            "description": "Whether this is the default AnnualBudget for its administrationId + fiscalYear. Governs WHICH ONE WINS when more than one active budget could theoretically exist for the same year (e.g. A draft alternate/scenario budget under budget-scenarios): a separate axis from state, which governs editability (design.md §4b).",
             "example": true,
             "title": "Is Default"
           },
@@ -263,7 +263,7 @@
         "icon": "TableColumn",
         "version": "0.1.0",
         "title": "Budget Line",
-        "description": "AnnualBudget x LedgerGroup crossed with 12 monthly phased amounts and a source marker — the spreadsheet mental model's row. This change writes only source=manual lines (an operator typing a number); contract/recurring/projected/scenario are declared for budget-known-costs, budget-projection-engine and budget-scenarios to populate later. The cumulative 13th-column total is a UI concern (budget-grid-view), not a stored field, per design.md §5b.",
+        "description": "AnnualBudget x LedgerGroup crossed with 12 monthly phased amounts and a source marker: the spreadsheet mental model's row. This change writes only source=manual lines (an operator typing a number); contract/recurring/projected/scenario are declared for budget-known-costs, budget-projection-engine and budget-scenarios to populate later. The cumulative 13th-column total is a UI concern (budget-grid-view), not a stored field, per design.md §5b.",
         "x-spec": "openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md",
         "type": "object",
         "required": [
@@ -401,7 +401,7 @@
         },
         "x-openregister-aggregations": {
           "budgetVsActuals": {
-            "description": "DOCUMENTATION-ONLY declarative shape for the budget-vs-actuals roll-up. This is NOT the computed path this change depends on — BudgetVsActualsReader/BudgetVsActualsCalculator (PHP) is the primary, PHPUnit-tested path, because AggregationAnnotationValidator validates cross-schema filter fields against the DECLARING schema's own properties rather than the TARGET schema's, silently discarding the annotation on a mismatch (design.md §6a). UNVERIFIED / EXPECTED-DISCARDED pending the positive-control task (grep nextcloud.log for \"annotation on schema\" after a fresh import) — do not wire any page to depend on this block.",
+            "description": "DOCUMENTATION-ONLY declarative shape for the budget-vs-actuals roll-up. This is NOT the computed path this change depends on: BudgetVsActualsReader/BudgetVsActualsCalculator (PHP) is the primary, PHPUnit-tested path, because AggregationAnnotationValidator validates cross-schema filter fields against the DECLARING schema's own properties rather than the TARGET schema's, silently discarding the annotation on a mismatch (design.md §6a). UNVERIFIED / EXPECTED-DISCARDED pending the positive-control task (grep nextcloud.log for \"annotation on schema\" after a fresh import). Do not wire any page to depend on this block.",
             "source": "GLLine",
             "groupBy": [
               "accountNumber"

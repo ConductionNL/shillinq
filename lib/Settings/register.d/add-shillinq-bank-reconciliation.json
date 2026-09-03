@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "add-shillinq-bank-reconciliation",
     "adr": "ADR-037 fragment — additive overlays for T1 Account.isSuspenseAccount per REQ-BR-007 (suspense-account designation, design.md D3) without editing the shillinq_register.json monolith.",
-    "description": "Bank-reconciliation overlay for the suspense-account designation decision (design.md D3): adds an additive `isSuspenseAccount` boolean to T1's Account schema so the bookkeeper can flag exactly one Account per administration (or per bank account) as the bank-reconciliation suspense account. Unmatched lines route to this account via the BankStatementLine `routed-to-suspense` lifecycle action. The T2 GLTransaction materialisation is declarative per the same T1 pattern — no PHP service is authored. Existing Account fields are unchanged."
+    "description": "Bank-reconciliation overlay for the suspense-account designation decision (design.md D3): adds an additive `isSuspenseAccount` boolean to T1's Account schema so the bookkeeper can flag exactly one Account per administration (or per bank account) as the bank-reconciliation suspense account. Unmatched lines route to this account via the BankStatementLine `routed-to-suspense` lifecycle action. The T2 GLTransaction materialisation is declarative per the same T1 pattern: no PHP service is authored. Existing Account fields are unchanged."
   },
   "components": {
     "schemas": {

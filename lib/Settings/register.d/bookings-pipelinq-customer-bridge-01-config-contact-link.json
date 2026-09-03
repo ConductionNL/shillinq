@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookings-pipelinq-customer-bridge-01-config-contact-link",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "kind: config — member 1 of 11 in the bookings-pipelinq-customer-bridge chain (ADR-032). Declares the optional pipelinqContactId link on the Appointment schema so member 03+ can fetch the pipelinq Contact profile and surface it in detail views. The field stores a pipelinq Contact externalId (KvK for orgs, opaque pipelinq id for individuals — design D1). Additive merge via SettingsService:deepMergeConfig (ADR-037)."
+    "description": "kind: config. Member 1 of 11 in the bookings-pipelinq-customer-bridge chain (ADR-032). Declares the optional pipelinqContactId link on the Appointment schema so member 03+ can fetch the pipelinq Contact profile and surface it in detail views. The field stores a pipelinq Contact externalId (KvK for orgs, opaque pipelinq id for individuals. Design D1). Additive merge via SettingsService:deepMergeConfig (ADR-037)."
   },
   "info": {
     "version": "0.1.0-bookings-pipelinq-customer-bridge-01"
@@ -16,7 +16,7 @@
           "pipelinqContactId": {
             "type": "string",
             "nullable": true,
-            "description": "Optional pipelinq Contact externalId linking this booking to the authoritative customer record in pipelinq (KvK for organisations, opaque pipelinq id for individuals — design D1). Null when the booking has no linked pipelinq Contact; detail views render without a customer profile card in that case (member 06). Many bookings MAY reference the same Contact (non-unique). The HTTP read paths land in members 03-04; this member only declares the link.",
+            "description": "Optional pipelinq Contact externalId linking this booking to the authoritative customer record in pipelinq (KvK for organisations, opaque pipelinq id for individuals: design D1). Null when the booking has no linked pipelinq Contact; detail views render without a customer profile card in that case (member 06). Many bookings MAY reference the same Contact (non-unique). The HTTP read paths land in members 03-04; this member only declares the link.",
             "example": "org-kvk-12345678",
             "title": "Pipelinq Contact ID"
           }

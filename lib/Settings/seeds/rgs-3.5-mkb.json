@@ -1335,7 +1335,7 @@
       "administrationId": "template",
       "lifecycleState": "active",
       "vatApplicable": false,
-      "description": "Exportomzet (intracommunautair of buiten EU — 0% BTW)."
+      "description": "Exportomzet (intracommunautair of buiten EU: 0% BTW)."
     },
     {
       "accountNumber": "8060",

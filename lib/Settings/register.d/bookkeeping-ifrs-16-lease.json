@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-ifrs-16-lease",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 4-specialized — IFRS 16 Leases. Adds five new schemas (LeaseContract master register, LeasePaymentSchedule derived amortization rows, LeaseReassessmentEvent modification/remeasurement log, LeaseDisclosureTable period-end snapshot, LeasePortfolioExemption policy elections) per design.md D1–D5. RoU asset and lease-liability recognition, period interest/principal split and straight-line depreciation are computed by OCA\\Shillinq\\Service\\LeaseAmortizationCalculator + LeasePaymentScheduleService + LeaseRecognitionService via the real OpenRegister ObjectService API (find/findAll/saveObject); disclosure aggregation by LeaseDisclosureService. LeaseContract carries an x-openregister-lifecycle state machine (draft→active→modified→terminated/expired); LeasePaymentSchedule and LeaseReassessmentEvent are read-only / immutable-once-posted. A contact/lessor counterparty is a Nextcloud-synced contact (ADR-022) referenced by FK, never a new person schema; source documents reference docudesk via FK URIs. Seed objects provide worked examples (vehicle lease, real-estate lease, short-term-exempt copier, derived schedule rows, a disclosure table and an exemption policy) per design.md."
+    "description": "Tier 4-specialized: IFRS 16 Leases. Adds five new schemas (LeaseContract master register, LeasePaymentSchedule derived amortization rows, LeaseReassessmentEvent modification/remeasurement log, LeaseDisclosureTable period-end snapshot, LeasePortfolioExemption policy elections) per design.md D1–D5. RoU asset and lease-liability recognition, period interest/principal split and straight-line depreciation are computed by OCA\\Shillinq\\Service\\LeaseAmortizationCalculator + LeasePaymentScheduleService + LeaseRecognitionService via the real OpenRegister ObjectService API (find/findAll/saveObject); disclosure aggregation by LeaseDisclosureService. LeaseContract carries an x-openregister-lifecycle state machine (draft→active→modified→terminated/expired); LeasePaymentSchedule and LeaseReassessmentEvent are read-only / immutable-once-posted. A contact/lessor counterparty is a Nextcloud-synced contact (ADR-022) referenced by FK, never a new person schema; source documents reference docudesk via FK URIs. Seed objects provide worked examples (vehicle lease, real-estate lease, short-term-exempt copier, derived schedule rows, a disclosure table and an exemption policy) per design.md."
   },
   "components": {
     "schemas": {
@@ -88,7 +88,7 @@
           },
           "counterparty": {
             "type": "string",
-            "description": "Lessor counterparty — FK to the Nextcloud-synced contact / organisations register (ADR-022); never a new person schema.",
+            "description": "Lessor counterparty: FK to the Nextcloud-synced contact / organisations register (ADR-022); never a new person schema.",
             "example": "contact:lease-hire-bv",
             "title": "Counterparty"
           },
@@ -908,7 +908,7 @@
         },
         "leaseNumber": "VH-2024-001",
         "counterparty": "contact:lease-hire-bv",
-        "description": "Company car lease – Mercedes E-class, 3-year term with 2-year extension option",
+        "description": "Company car lease: Mercedes E-class, 3-year term with 2-year extension option",
         "assetClass": "vehicle",
         "commencementDate": "2024-01-15",
         "endDate": "2027-01-14",
@@ -948,7 +948,7 @@
         },
         "leaseNumber": "RE-2023-005",
         "counterparty": "contact:property-partners-nv",
-        "description": "Headquarters lease – Amsterdam, 8-story office building, 5-year non-cancellable term",
+        "description": "Headquarters lease: Amsterdam, 8-story office building, 5-year non-cancellable term",
         "assetClass": "real-estate",
         "commencementDate": "2023-03-01",
         "endDate": "2028-02-28",
@@ -988,7 +988,7 @@
         },
         "leaseNumber": "IT-2024-032",
         "counterparty": "contact:copier-rental-solutions-bv",
-        "description": "Copier/printer lease – Xerox AltaLink, 12-month non-cancellable term",
+        "description": "Copier/printer lease: Xerox AltaLink, 12-month non-cancellable term",
         "assetClass": "IT-hardware",
         "commencementDate": "2024-06-01",
         "endDate": "2025-05-31",

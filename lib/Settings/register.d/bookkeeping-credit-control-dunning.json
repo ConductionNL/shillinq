@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-credit-control-dunning",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 2 — Credit Control & Dunning Ladder. Declares seven new registers per ADR-024: DunningLadder (configuration of N-stage ladder per ondernemer/klantgroep), KlantLadderOverride (per-klant exception with motivatie + audit-trail), DunningRun (per-invoice per-stage execution log with evidence, immutable post-execute), IncassoKostenBerekening (BIK-staffel per Besluit BIK + wettelijke rente B2B/B2C per art. 6:119/6:119a BW), DunningPauseDispute (dispute-pause with optional 60-day hard deadline), CreditScore (optional Graydon/Creditsafe/Atradius Insights snapshot), OninbaarAfschrijving (write-off + BTW-teruggaaf per art. 29 OB). Per ADR-031 the BIK-staffel + rente calculations are captured as declarative x-openregister-aggregations on IncassoKostenBerekening; a thin PHP guard (BIKStaffelCalculator + DunningRunService + DunningPauseService) materialises the record when the OR aggregation engine cannot express the staffel arithmetic. Seed objects illustrate a 5-stage default ZZP ladder, overheid override, sample dunning run, BIK calc for €8.400, and sample dispute-pause."
+    "description": "Tier 2: Credit Control & Dunning Ladder. Declares seven new registers per ADR-024: DunningLadder (configuration of N-stage ladder per ondernemer/klantgroep), KlantLadderOverride (per-klant exception with motivatie + audit-trail), DunningRun (per-invoice per-stage execution log with evidence, immutable post-execute), IncassoKostenBerekening (BIK-staffel per Besluit BIK + wettelijke rente B2B/B2C per art. 6:119/6:119a BW), DunningPauseDispute (dispute-pause with optional 60-day hard deadline), CreditScore (optional Graydon/Creditsafe/Atradius Insights snapshot), OninbaarAfschrijving (write-off + BTW-teruggaaf per art. 29 OB). Per ADR-031 the BIK-staffel + rente calculations are captured as declarative x-openregister-aggregations on IncassoKostenBerekening; a thin PHP guard (BIKStaffelCalculator + DunningRunService + DunningPauseService) materialises the record when the OR aggregation engine cannot express the staffel arithmetic. Seed objects illustrate a 5-stage default ZZP ladder, overheid override, sample dunning run, BIK calc for €8.400, and sample dispute-pause."
   },
   "components": {
     "schemas": {
@@ -202,7 +202,7 @@
         "icon": "AccountSwitchOutline",
         "version": "0.1.0",
         "title": "Klant Ladder Override",
-        "description": "Per-klant exception on a base DunningLadder — overheid extended terms, VIP-skip stage 4/5, aggressive ladder for risk customers. Captures reden + createdBy/createdAt + approvedBy/approvedAt for audit-trail.",
+        "description": "Per-klant exception on a base DunningLadder: overheid extended terms, VIP-skip stage 4/5, aggressive ladder for risk customers. Captures reden + createdBy/createdAt + approvedBy/approvedAt for audit-trail.",
         "x-schema-org": "schema:Service",
         "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-001",
         "type": "object",
@@ -569,7 +569,7 @@
               "from": "executed",
               "to": "locked",
               "label": "Lock dunning run",
-              "description": "Seal the run — used when the invoice moves to in_incasso or written_off."
+              "description": "Seal the run: used when the invoice moves to in_incasso or written_off."
             }
           },
           "retention": {
@@ -745,7 +745,7 @@
               "applied": {
                 "type": "number",
                 "multipleOf": 0.01,
-                "description": "min(max(totaal, minimum), maximum) — the normed fee excl. BTW.",
+                "description": "min(max(totaal, minimum), maximum): the normed fee excl. BTW.",
                 "title": "Toegepast"
               },
               "vatOffsettable": {
@@ -770,7 +770,7 @@
               "appliedInclVat": {
                 "type": "number",
                 "multipleOf": 0.01,
-                "description": "toegepast + btwBedrag — the incassokosten actually owed.",
+                "description": "toegepast + btwBedrag: the incassokosten actually owed.",
                 "title": "Toegepast Incl BTW"
               }
             },
@@ -824,7 +824,7 @@
                 "type": "number",
                 "multipleOf": 0.01,
                 "minimum": 0,
-                "description": "Total rente in EUR — sum over per-rate sub-periods of (hoofdsom × tarief × dagen / 365), rounded to cents.",
+                "description": "Total rente in EUR: sum over per-rate sub-periods of (hoofdsom × tarief × dagen / 365), rounded to cents.",
                 "title": "Bedrag"
               },
               "periods": {
@@ -877,7 +877,7 @@
               "B2C",
               "GOVERNMENT"
             ],
-            "description": "Counterparty type — controls the rente rate and the B2C 14-day grace block.",
+            "description": "Counterparty type: controls the rente rate and the B2C 14-day grace block.",
             "title": "Party Type"
           },
           "totalDue": {
@@ -1040,7 +1040,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Auto-resume timestamp — pauzeStart + dunning.dispute_pause_hard_deadline_days (default 60).",
+            "description": "Auto-resume timestamp: pauzeStart + dunning.dispute_pause_hard_deadline_days (default 60).",
             "title": "Hard Deadline Eindigt"
           },
           "administrationId": {

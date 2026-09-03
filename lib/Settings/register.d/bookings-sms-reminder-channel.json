@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookings-sms-reminder-channel",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "kind: config — declarative SMS reminder channel for bookings. Adds one BookingSmsReminderChannel schema (provider config via openconnector, message template with {{variables}}, active → inactive → archived lifecycle per ADR-031, delivery scheduling, retry config, dispatch via OR notification engine per ADR-022) plus two seed channels (MessageBird active, Twilio inactive). No PHP SMS service class — dispatch and rendering are declarative (x-openregister-calculations / x-openregister-notifications). Provider credentials live in the openconnector connector referenced by providerConfig.connectorId, never in this register."
+    "description": "kind: config. Declarative SMS reminder channel for bookings. Adds one BookingSmsReminderChannel schema (provider config via openconnector, message template with {{variables}}, active → inactive → archived lifecycle per ADR-031, delivery scheduling, retry config, dispatch via OR notification engine per ADR-022) plus two seed channels (MessageBird active, Twilio inactive). No PHP SMS service class. Dispatch and rendering are declarative (x-openregister-calculations / x-openregister-notifications). Provider credentials live in the openconnector connector referenced by providerConfig.connectorId, never in this register."
   },
   "components": {
     "schemas": {
@@ -239,7 +239,7 @@
               "count": "{{retryCount}}",
               "intervalSeconds": "{{retryIntervalSeconds}}"
             },
-            "description": "Declarative SMS dispatch consumed from OR's notification engine (ADR-022). When a booking.reminder-due event fires, active channels render their template with booking variables and dispatch via the referenced openconnector connector — unless the recipient has opted out (skipWhen, respected when respectOptOut is true). Retries on transient provider error per retryCount/retryIntervalSeconds; failures are logged with a masked phone number. The pure-logic gating/rendering/normalization is implemented in Shillinq's SmsReminderDispatcher helper (provider-adapter interface), keeping the orchestration unit-tested while live dispatch stays in OR's engine."
+            "description": "Declarative SMS dispatch consumed from OR's notification engine (ADR-022). When a booking.reminder-due event fires, active channels render their template with booking variables and dispatch via the referenced openconnector connector: unless the recipient has opted out (skipWhen, respected when respectOptOut is true). Retries on transient provider error per retryCount/retryIntervalSeconds; failures are logged with a masked phone number. The pure-logic gating/rendering/normalization is implemented in Shillinq's SmsReminderDispatcher helper (provider-adapter interface), keeping the orchestration unit-tested while live dispatch stays in OR's engine."
           }
         },
         "x-openregister-rbac": {

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-deferred-tax",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — deferred tax assets, liabilities and provisions per IAS 12 / RJ 272. Five new schemas: TemporaryDifference (per-account balance-sheet timing difference), TaxLossCarryForward (compensable losses per jurisdiction + regime per Wet Vpb art. 20/20a), TaxRateReconciliation (ETR disclosure table per), DeferredTaxMovement (roll-forward per category/jurisdiction per), TaxProvision (aggregated balance-sheet DTA/DTL position per). Additive extensions on T1 Account (taxBasisDifferenceCategory hint) and FiscalPeriod (enactedTaxRates for rate-change handling per). TaxRateReconciliation is produced by x-openregister-calculations (ADR-031, design D2); no PHP report service. TaxCalculationService orchestrates detection, loss-compensation and rate-change re-measurement and is the thin engine-side fallback per design D1. No seed data required — records accumulate from GL on balansdatum."
+    "description": "Tier 3: deferred tax assets, liabilities and provisions per IAS 12 / RJ 272. Five new schemas: TemporaryDifference (per-account balance-sheet timing difference), TaxLossCarryForward (compensable losses per jurisdiction + regime per Wet Vpb art. 20/20a), TaxRateReconciliation (ETR disclosure table per), DeferredTaxMovement (roll-forward per category/jurisdiction per), TaxProvision (aggregated balance-sheet DTA/DTL position per). Additive extensions on T1 Account (taxBasisDifferenceCategory hint) and FiscalPeriod (enactedTaxRates for rate-change handling per). TaxRateReconciliation is produced by x-openregister-calculations (ADR-031, design D2); no PHP report service. TaxCalculationService orchestrates detection, loss-compensation and rate-change re-measurement and is the thin engine-side fallback per design D1. No seed data required. Records accumulate from GL on balansdatum."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "ScaleBalance",
         "version": "0.1.0",
         "title": "Temporary Difference",
-        "description": "Per-account, per-period detection of a timing difference between commercial carrying amount and tax basis at balansdatum. Taxable differences create DTL; deductible differences create DTA. Permanent differences (deelnemingsvrijstelling etc.) must NOT be stored here — they appear in TaxRateReconciliation.reconciliationItems with type=permanent.",
+        "description": "Per-account, per-period detection of a timing difference between commercial carrying amount and tax basis at balansdatum. Taxable differences create DTL; deductible differences create DTA. Permanent differences (deelnemingsvrijstelling etc.) must NOT be stored here: they appear in TaxRateReconciliation.reconciliationItems with type=permanent.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md",
         "type": "object",

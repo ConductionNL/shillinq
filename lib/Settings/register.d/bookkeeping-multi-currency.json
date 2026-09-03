@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-multi-currency",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — Multi-currency bank account management. Declares the BankAccount schema with an additive optional primaryCurrency field (— ISO 4217 code, nullable, defaults EUR on read) and the CurrencyBalance register that captures point-in-time per-currency balance snapshots per (accountId, currency) pair (— balance, previousBalance, lastUpdated). Per-currency queries ride on the OpenRegister ObjectService findAll filter engine (no app-local PHP balance calculator), backed by an x-openregister-aggregations declaration on CurrencyBalance for the multi-account aggregation scenario. Seed objects provide three demo BankAccount + CurrencyBalance pairs covering the EUR / USD / GBP scenarios in design.md."
+    "description": "Tier 3: Multi-currency bank account management. Declares the BankAccount schema with an additive optional primaryCurrency field (. ISO 4217 code, nullable, defaults EUR on read) and the CurrencyBalance register that captures point-in-time per-currency balance snapshots per (accountId, currency) pair (. Balance, previousBalance, lastUpdated). Per-currency queries ride on the OpenRegister ObjectService findAll filter engine (no app-local PHP balance calculator), backed by an x-openregister-aggregations declaration on CurrencyBalance for the multi-account aggregation scenario. Seed objects provide three demo BankAccount + CurrencyBalance pairs covering the EUR / USD / GBP scenarios in design.md."
   },
   "components": {
     "schemas": {
@@ -14,13 +14,13 @@
         "version": "0.1.0",
         "title": "Bank Account",
         "titleNl": "Bankrekening",
-        "description": "A bank account held by a Shillinq administration. Holds the IBAN / BIC / bank name plus the optional `primaryCurrency` (ISO 4217) declaration. Existing single-currency deployments may leave `primaryCurrency` null — the system treats null as EUR on read (scenario 'Single-currency account without primaryCurrency declared'). Multi-currency tracking is delegated to CurrencyBalance snapshots keyed on (accountId, currency).",
+        "description": "A bank account held by a Shillinq administration. Holds the IBAN / BIC / bank name plus the optional `primaryCurrency` (ISO 4217) declaration. Existing single-currency deployments may leave `primaryCurrency` null: the system treats null as EUR on read (scenario 'Single-currency account without primaryCurrency declared'). Multi-currency tracking is delegated to CurrencyBalance snapshots keyed on (accountId, currency).",
         "x-schema-org": "schema:BankAccount",
         "x-openregister-purpose": "config",
         "x-spec": "openspec/changes/bookkeeping-multi-currency/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "BankAccount changes (IBAN remapping, primaryCurrency reclassification, lifecycle transitions) MUST be audit-trail-immutable / ADR-022 — every change is bookkeeping-relevant (it influences cash-position reporting, reconciliation, FX scope) and is subject to operator + auditor review."
+          "description": "BankAccount changes (IBAN remapping, primaryCurrency reclassification, lifecycle transitions) MUST be audit-trail-immutable / ADR-022: every change is bookkeeping-relevant (it influences cash-position reporting, reconciliation, FX scope) and is subject to operator + auditor review."
         },
         "type": "object",
         "required": [
@@ -42,7 +42,7 @@
           },
           "bic": {
             "type": "string",
-            "description": "BIC / SWIFT code of the bank holding the account (ISO 9362). Optional — only required for non-SEPA payments.",
+            "description": "BIC / SWIFT code of the bank holding the account (ISO 9362). Optional: only required for non-SEPA payments.",
             "example": "ABNANL2A",
             "title": "BIC"
           },
@@ -90,17 +90,17 @@
         "version": "0.1.0",
         "title": "Currency Balance",
         "titleNl": "Wisselkoers-saldo",
-        "description": "Point-in-time per-currency balance snapshot for a (BankAccount, currency) pair. Snapshots are operator-entered or refreshed by T4 bank-connector synchronisation (no app-local balance calculator —). One latest record per (accountId, currency); on duplicate writes the latest timestamp wins (scenario 'Prevent duplicate (accountId, currency) records'). `previousBalance` is captured automatically on update so the detail page can render variance + percentage change without a separate audit query.",
+        "description": "Point-in-time per-currency balance snapshot for a (BankAccount, currency) pair. Snapshots are operator-entered or refreshed by T4 bank-connector synchronisation (no app-local balance calculator: ). One latest record per (accountId, currency); on duplicate writes the latest timestamp wins (scenario 'Prevent duplicate (accountId, currency) records'). `previousBalance` is captured automatically on update so the detail page can render variance + percentage change without a separate audit query.",
         "x-schema-org": "schema:Thing",
         "x-openregister-purpose": "data",
         "x-spec": "openspec/changes/bookkeeping-multi-currency/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "CurrencyBalance updates MUST be audit-trail-immutable / ADR-022 — each balance change feeds cash-position dashboards and end-of-period reconciliation; operators and auditors MUST see who changed which (accountId, currency) snapshot, when, and from / to which amount (detail-page audit-trail scenario)."
+          "description": "CurrencyBalance updates MUST be audit-trail-immutable / ADR-022: each balance change feeds cash-position dashboards and end-of-period reconciliation; operators and auditors MUST see who changed which (accountId, currency) snapshot, when, and from / to which amount (detail-page audit-trail scenario)."
         },
         "x-openregister-aggregations": {
           "balanceByCurrency": {
-            "description": "Group CurrencyBalance records by `currency` and sum `balance`. Powers 'Query aggregate balance by currency across accounts' — declarative replacement for a custom PHP aggregator.",
+            "description": "Group CurrencyBalance records by `currency` and sum `balance`. Powers 'Query aggregate balance by currency across accounts': declarative replacement for a custom PHP aggregator.",
             "groupBy": [
               "currency"
             ],
@@ -135,7 +135,7 @@
           },
           "accountId": {
             "type": "string",
-            "description": "FK to BankAccount.slug (or BankAccount.id) — the bank account this snapshot belongs to. MUST resolve to an existing BankAccount record. Forms one half of the (accountId, currency) uniqueness constraint.",
+            "description": "FK to BankAccount.slug (or BankAccount.id): the bank account this snapshot belongs to. MUST resolve to an existing BankAccount record. Forms one half of the (accountId, currency) uniqueness constraint.",
             "example": "bank-usd-export",
             "title": "Account ID"
           },
@@ -154,14 +154,14 @@
           },
           "previousBalance": {
             "type": "number",
-            "description": "Previous balance amount, captured automatically on update so detail-page variance and percentage-change rendering does not need to re-query the audit trail. Optional — first-ever snapshot for a (accountId, currency) pair has no previous value.",
+            "description": "Previous balance amount, captured automatically on update so detail-page variance and percentage-change rendering does not need to re-query the audit trail. Optional: first-ever snapshot for a (accountId, currency) pair has no previous value.",
             "example": 20000.0,
             "title": "Previous Balance"
           },
           "lastUpdated": {
             "type": "string",
             "format": "date-time",
-            "description": "ISO 8601 timestamp of the most recent balance update. Used by 'upsert — latest timestamp wins' tiebreaker and by cash-managers to gauge snapshot freshness before relying on the figure for reconciliation.",
+            "description": "ISO 8601 timestamp of the most recent balance update. Used by 'upsert: latest timestamp wins' tiebreaker and by cash-managers to gauge snapshot freshness before relying on the figure for reconciliation.",
             "example": "2026-05-21T09:00:00Z",
             "title": "Last Updated"
           },

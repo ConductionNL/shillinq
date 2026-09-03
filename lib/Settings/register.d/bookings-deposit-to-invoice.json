@@ -249,7 +249,7 @@
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "materialise-final-invoice",
-                  "description": "Materialise exactly one final Invoice (with InvoiceLine children: a service line at the order tax rate and, when a deposit is authorised, a negative 0%-VAT deposit-credit line) and set Order.invoiceId. Declarative outcome — line amounts and the deposit credit are computed by InvoiceFromBookingGuard before persistence.",
+                  "description": "Materialise exactly one final Invoice (with InvoiceLine children: a service line at the order tax rate and, when a deposit is authorised, a negative 0%-VAT deposit-credit line) and set Order.invoiceId. Declarative outcome: line amounts and the deposit credit are computed by InvoiceFromBookingGuard before persistence.",
                   "actionParameters": {
                     "register": "shillinq",
                     "schema": "Invoice",

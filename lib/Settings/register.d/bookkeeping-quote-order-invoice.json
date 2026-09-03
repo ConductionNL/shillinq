@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-quote-order-invoice",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — Sales Funnel: Quote -> Order -> Invoice (Q2C). Eleven new schemas (Quote, QuoteLine, SalesOrder, SalesOrderLine, Delivery, Invoice, InvoiceLine, CreditNote, PricingTier, VolumeDiscount, BlanketOrder, CreditHold) covering the quote-to-cash workflow for Dutch SMEs: versioned non-binding quotes with multi-channel acceptance, binding sales orders with partial delivery / backorder tracking, delivery (Levering) shipments, delivery/advance/consolidated invoicing with Dutch sequential numbering, BTW per line (binnenland / intracommunautair reverse-charge), Peppol BIS 3.0 / UBL 2.1 outbound e-invoicing, customer-specific pricing tiers + volume discounts, blanket-order call-off, automated AR-ageing credit holds, and credit notes with AR offset. All quantitative + reporting logic is declarative (x-openregister-calculations / x-openregister-aggregations) per ADR-031 — no QuoteService.php / OrderService.php / InvoiceService.php. Cross-field / cross-schema lifecycle preconditions delegate to OCA\\Shillinq\\Lifecycle\\QuoteOrderInvoiceGuard (ADR-031 exception path). A customer/contact is a Nextcloud entity (NC addressbook / AR customer master) referenced by customerReference FK — never re-declared here. GL posting, AR open-item creation, IFRS 15 Contract/PO linking, VIES validation, e-signature, Peppol dispatch, shipping and CRM integrations are FK references / openconnector calls delegated to the dependency apps (bookkeeping-general-ledger, bookkeeping-accounts-receivable-core, bookkeeping-ifrs15-revenue, openconnector, docudesk) — see tasks.md for deferred items. Seed data pre-loads a worked B2B / retail / public-sector quote -> order -> delivery -> invoice scenario set.",
+    "description": "Tier 3: Sales Funnel: Quote -> Order -> Invoice (Q2C). Eleven new schemas (Quote, QuoteLine, SalesOrder, SalesOrderLine, Delivery, Invoice, InvoiceLine, CreditNote, PricingTier, VolumeDiscount, BlanketOrder, CreditHold) covering the quote-to-cash workflow for Dutch SMEs: versioned non-binding quotes with multi-channel acceptance, binding sales orders with partial delivery / backorder tracking, delivery (Levering) shipments, delivery/advance/consolidated invoicing with Dutch sequential numbering, BTW per line (binnenland / intracommunautair reverse-charge), Peppol BIS 3.0 / UBL 2.1 outbound e-invoicing, customer-specific pricing tiers + volume discounts, blanket-order call-off, automated AR-ageing credit holds, and credit notes with AR offset. All quantitative + reporting logic is declarative (x-openregister-calculations / x-openregister-aggregations) per ADR-031. No QuoteService.php / OrderService.php / InvoiceService.php. Cross-field / cross-schema lifecycle preconditions delegate to OCA\\Shillinq\\Lifecycle\\QuoteOrderInvoiceGuard (ADR-031 exception path). A customer/contact is a Nextcloud entity (NC addressbook / AR customer master) referenced by customerReference FK. Never re-declared here. GL posting, AR open-item creation, IFRS 15 Contract/PO linking, VIES validation, e-signature, Peppol dispatch, shipping and CRM integrations are FK references / openconnector calls delegated to the dependency apps (bookkeeping-general-ledger, bookkeeping-accounts-receivable-core, bookkeeping-ifrs15-revenue, openconnector, docudesk). See tasks.md for deferred items. Seed data pre-loads a worked B2B / retail / public-sector quote -> order -> delivery -> invoice scenario set.",
     "spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md"
   },
   "components": {
@@ -14,7 +14,7 @@
         "icon": "FileDocumentOutline",
         "version": "0.1.0",
         "title": "Quote",
-        "description": "Verkoopofferte — a versioned, non-binding sales offer with multi-channel acceptance (design D1). schema:Offer per ADR-011.",
+        "description": "Verkoopofferte: a versioned, non-binding sales offer with multi-channel acceptance (design D1). Schema:Offer per ADR-011.",
         "x-schema-org": "schema:Offer",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
@@ -30,7 +30,7 @@
           },
           "customerReference": {
             "type": "string",
-            "description": "FK (slug/uuid) to the customer — a Nextcloud addressbook contact / AR customer master. Never a re-declared Customer schema (guardrail).",
+            "description": "FK (slug/uuid) to the customer: a Nextcloud addressbook contact / AR customer master. Never a re-declared Customer schema (guardrail).",
             "title": "Customer Reference"
           },
           "version": {
@@ -48,7 +48,7 @@
           "validUntil": {
             "type": "string",
             "format": "date",
-            "description": "Validity expiry date — quote auto-expires after this.",
+            "description": "Validity expiry date: quote auto-expires after this.",
             "nullable": true,
             "title": "Valid Until"
           },
@@ -302,7 +302,7 @@
         "x-openregister-calculations": {
           "lineNet": {
             "type": "number",
-            "description": "lineNet = quantity * unitPrice * (1 - discount/100). Declarative per ADR-031 — no PHP pricing service.",
+            "description": "lineNet = quantity * unitPrice * (1 - discount/100). Declarative per ADR-031: no PHP pricing service.",
             "expr": "@self.quantity * @self.unitPrice * (1 - (@self.discount / 100))"
           }
         },
@@ -316,7 +316,7 @@
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "Sales Order",
-        "description": "Verkooporder — a binding sales commitment with partial-delivery / backorder tracking (design D2). schema:Order per ADR-011.",
+        "description": "Verkooporder: a binding sales commitment with partial-delivery / backorder tracking (design D2). Schema:Order per ADR-011.",
         "x-schema-org": "schema:Order",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
@@ -655,7 +655,7 @@
         "icon": "TruckDeliveryOutline",
         "version": "0.1.0",
         "title": "Delivery",
-        "description": "Levering — a shipment record linking a SalesOrder to invoicing (design D3). schema:ParcelDelivery per ADR-011.",
+        "description": "Levering: a shipment record linking a SalesOrder to invoicing (design D3). Schema:ParcelDelivery per ADR-011.",
         "x-schema-org": "schema:ParcelDelivery",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
@@ -768,7 +768,7 @@
         "icon": "ReceiptTextOutline",
         "version": "0.1.0",
         "title": "Invoice",
-        "description": "Factuur — a sales invoice with Dutch sequential numbering, BTW, and Peppol BIS 3.0 / UBL 2.1 dispatch (design D4/D5/D11). schema:Invoice per ADR-011. No deletion (Belastingdienst) — reverse with a CreditNote only.",
+        "description": "Factuur: a sales invoice with Dutch sequential numbering, BTW, and Peppol BIS 3.0 / UBL 2.1 dispatch (design D4/D5/D11). Schema:Invoice per ADR-011. No deletion (Belastingdienst). Reverse with a CreditNote only.",
         "x-schema-org": "schema:Invoice",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
@@ -989,7 +989,7 @@
               "from": "draft",
               "to": "cancelled",
               "label": "Cancel draft",
-              "description": "Cancel a draft invoice before issue (issued invoices are never deleted — Belastingdienst)."
+              "description": "Cancel a draft invoice before issue (issued invoices are never deleted: Belastingdienst)."
             },
             "registerPartialPayment": {
               "from": "sent",
@@ -1128,7 +1128,7 @@
         "icon": "ReceiptTextMinusOutline",
         "version": "0.1.0",
         "title": "Credit Note",
-        "description": "Creditfactuur — reverses an invoice with automatic AR offset (design D10). schema:Invoice per ADR-011. Dutch sequential numbering; no deletion.",
+        "description": "Creditfactuur: reverses an invoice with automatic AR offset (design D10). Schema:Invoice per ADR-011. Dutch sequential numbering; no deletion.",
         "x-schema-org": "schema:Invoice",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
@@ -1248,7 +1248,7 @@
         "icon": "TagMultipleOutline",
         "version": "0.1.0",
         "title": "Pricing Tier",
-        "description": "Prijsniveaus — customer / customer-group / product-group quantity-break pricing resolved in priority order (design D6).",
+        "description": "Prijsniveaus: customer / customer-group / product-group quantity-break pricing resolved in priority order (design D6).",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
         "required": [
@@ -1323,7 +1323,7 @@
         "icon": "SaleOutline",
         "version": "0.1.0",
         "title": "Volume Discount",
-        "description": "Volumekortingen — time-bounded, customer-eligible promotional rules applied automatically (design D7).",
+        "description": "Volumekortingen: time-bounded, customer-eligible promotional rules applied automatically (design D7).",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
         "required": [
@@ -1420,7 +1420,7 @@
         "icon": "ClipboardListOutline",
         "version": "0.1.0",
         "title": "Blanket Order",
-        "description": "Blancokorder — a master commitment with call-off releases drawn over months and remaining-quantity tracking (design D8).",
+        "description": "Blancokorder: a master commitment with call-off releases drawn over months and remaining-quantity tracking (design D8).",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
         "required": [
@@ -1518,7 +1518,7 @@
         "icon": "AccountCancelOutline",
         "version": "0.1.0",
         "title": "Credit Hold",
-        "description": "Kredietstop — an automated, audit-trailed customer credit hold triggered by AR-ageing thresholds (design D9).",
+        "description": "Kredietstop: an automated, audit-trailed customer credit hold triggered by AR-ageing thresholds (design D9).",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
         "required": [

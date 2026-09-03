@@ -73,25 +73,25 @@
           "internalGoodwillRecognised": {
             "type": "boolean",
             "nullable": true,
-            "description": "True when internally generated goodwill is recognised as an asset. IAS 38.48 prohibits this — compliant statements set this false.",
+            "description": "True when internally generated goodwill is recognised as an asset. IAS 38.48 prohibits this: compliant statements set this false.",
             "title": "Internal Goodwill Recognised"
           },
           "internalBrandsRecognised": {
             "type": "boolean",
             "nullable": true,
-            "description": "True when internally generated brands, mastheads, customer lists, etc., are recognised as intangible assets. IAS 38.63 prohibits this — compliant statements set this false.",
+            "description": "True when internally generated brands, mastheads, customer lists, etc., are recognised as intangible assets. IAS 38.63 prohibits this: compliant statements set this false.",
             "title": "Internal Brands Recognised"
           },
           "goodwillImpairmentReversed": {
             "type": "boolean",
             "nullable": true,
-            "description": "True when a goodwill impairment loss has been reversed. IAS 36.124 prohibits this — compliant statements set this false.",
+            "description": "True when a goodwill impairment loss has been reversed. IAS 36.124 prohibits this: compliant statements set this false.",
             "title": "Goodwill Impairment Reversed"
           },
           "contingentLiabilityRecognised": {
             "type": "boolean",
             "nullable": true,
-            "description": "True when a contingent liability has been recognised. IAS 37.27 forbids recognition (disclosure only) — compliant statements set this false.",
+            "description": "True when a contingent liability has been recognised. IAS 37.27 forbids recognition (disclosure only): compliant statements set this false.",
             "title": "Contingent Liability Recognised"
           },
           "fxInitialMeasurement": {
@@ -166,7 +166,7 @@
           "deferredTaxDiscounted": {
             "type": "boolean",
             "nullable": true,
-            "description": "True when deferred tax assets/liabilities are discounted. IAS 12.53 prohibits discounting — compliant statements set this false.",
+            "description": "True when deferred tax assets/liabilities are discounted. IAS 12.53 prohibits discounting: compliant statements set this false.",
             "title": "Deferred Tax Discounted"
           },
           "deferredTaxClassification": {
@@ -183,7 +183,7 @@
           "shortTermBenefitsDiscounted": {
             "type": "boolean",
             "nullable": true,
-            "description": "True when short-term employee benefits are discounted. IAS 19.11 requires the undiscounted amount — compliant statements set this false.",
+            "description": "True when short-term employee benefits are discounted. IAS 19.11 requires the undiscounted amount: compliant statements set this false.",
             "title": "Short Term Benefits Discounted"
           },
           "creditRiskExposure": {

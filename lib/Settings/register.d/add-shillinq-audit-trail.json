@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "add-shillinq-audit-trail",
 		"adr": "ADR-022 — opt every shillinq bookkeeping schema into OR's audit-trail-immutable abstraction; no app-local audit tables",
-		"description": "Audit-trail opt-in fragment for every shillinq bookkeeping register of capability bookkeeping-audit-trail. Adds x-openregister-audit-trail: { enabled: true } to every bookkeeping schema so OR's audit-trail-immutable captures actor + before/after + timestamp + hash chain on every create / update / lifecycle transition / delete. Per ADR-022 D2 no app-local audit table is authored. PO-3-way schemas (PurchaseOrder, GoodsReceiptNote, SupplierInvoice, ThreeWayMatch) are already opted-in via bookkeeping-purchase-order-3way-11-audit-trail-export.json — they are deliberately omitted here. Non-bookkeeping schemas (bookings, inventory, notifications) are out of scope."
+		"description": "Audit-trail opt-in fragment for every shillinq bookkeeping register of capability bookkeeping-audit-trail. Adds x-openregister-audit-trail: { enabled: true } to every bookkeeping schema so OR's audit-trail-immutable captures actor + before/after + timestamp + hash chain on every create / update / lifecycle transition / delete. Per ADR-022 D2 no app-local audit table is authored. PO-3-way schemas (PurchaseOrder, GoodsReceiptNote, SupplierInvoice, ThreeWayMatch) are already opted-in via bookkeeping-purchase-order-3way-11-audit-trail-export.json: they are deliberately omitted here. Non-bookkeeping schemas (bookings, inventory, notifications) are out of scope."
 	},
 	"components": {
 		"schemas": {

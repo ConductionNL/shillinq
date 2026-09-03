@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "retainer-billing-engine",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "T2 — monthly retainer-billing engine per client/project. Declares four schemas: RetainerPool (monthly allocation with effective-period + rollover policy + operator-driven lifecycle draft→active→closed→archived per), RetainerDrawdown (immutable per-time-entry consumption tracking, status enum pending|materialized|reversed|adjusted), RetainerRollover (immutable carryover-or-reset between consecutive periods, with carryoverCapApplied audit flag), and RetainerTrueUp (period-end reconciliation with operator-driven generated→pending-approval→approved→invoiced→settled→reversed lifecycle and approver attribution per). Amounts (poolAmount, drawdownAmount, carryoverAmount, actualDrawdown, overageAmount, overageInvoiceAmount) are MonetaryAmount-typed numbers persisted with multipleOf 0.01 (2-decimal Euro precision); rates (retainerRate, drawdownRate, overageRate) use multipleOf 0.01. Aggregations declared via x-openregister-aggregations: RetainerPool exposes drawdownsByPool (sum of RetainerDrawdown.drawdownAmount + rollover carryover for available-balance queries per) and trueUpByPool (count of materialized RetainerTrueUp records); RetainerTrueUp exposes drawdownsForPeriod (actualDrawdown = sum of in-period RetainerDrawdown for true-up generation per). Non-overlapping (clientId, projectId, period) validation enforced through x-openregister-uniqueness preconditions. Approvals wire to ADR-023 mandate-delegation via x-openregister-rbac roles retainer-administrator/bookkeeper/approver/auditor. Seeds load two example pools (Gemeente Amsterdam Jan-2026 with overspend, TechStartup BV Jan-2026 partial-spend with reset policy), four matching drawdowns, two true-ups (Gemeente Jan with €375 overage @ €85/h standard rate = €425 billable; TechStartup Jan partial-spend with no overage, settled), and two rollovers (Gemeente Feb opening with carryover=0 after overspend, TechStartup Feb opening with reset). Reuses existing RateCardTemplate / RateCardVersion / RateSchedule from rate-card-engine for overage-rate lookup (no rate model is duplicated)."
+    "description": "T2: monthly retainer-billing engine per client/project. Declares four schemas: RetainerPool (monthly allocation with effective-period + rollover policy + operator-driven lifecycle draft→active→closed→archived per), RetainerDrawdown (immutable per-time-entry consumption tracking, status enum pending|materialized|reversed|adjusted), RetainerRollover (immutable carryover-or-reset between consecutive periods, with carryoverCapApplied audit flag), and RetainerTrueUp (period-end reconciliation with operator-driven generated→pending-approval→approved→invoiced→settled→reversed lifecycle and approver attribution per). Amounts (poolAmount, drawdownAmount, carryoverAmount, actualDrawdown, overageAmount, overageInvoiceAmount) are MonetaryAmount-typed numbers persisted with multipleOf 0.01 (2-decimal Euro precision); rates (retainerRate, drawdownRate, overageRate) use multipleOf 0.01. Aggregations declared via x-openregister-aggregations: RetainerPool exposes drawdownsByPool (sum of RetainerDrawdown.drawdownAmount + rollover carryover for available-balance queries per) and trueUpByPool (count of materialized RetainerTrueUp records); RetainerTrueUp exposes drawdownsForPeriod (actualDrawdown = sum of in-period RetainerDrawdown for true-up generation per). Non-overlapping (clientId, projectId, period) validation enforced through x-openregister-uniqueness preconditions. Approvals wire to ADR-023 mandate-delegation via x-openregister-rbac roles retainer-administrator/bookkeeper/approver/auditor. Seeds load two example pools (Gemeente Amsterdam Jan-2026 with overspend, TechStartup BV Jan-2026 partial-spend with reset policy), four matching drawdowns, two true-ups (Gemeente Jan with €375 overage @ €85/h standard rate = €425 billable; TechStartup Jan partial-spend with no overage, settled), and two rollovers (Gemeente Feb opening with carryover=0 after overspend, TechStartup Feb opening with reset). Reuses existing RateCardTemplate / RateCardVersion / RateSchedule from rate-card-engine for overage-rate lookup (no rate model is duplicated)."
   },
   "components": {
     "schemas": {
@@ -82,7 +82,7 @@
             "type": "number",
             "multipleOf": 0.01,
             "minimum": 0,
-            "description": "Rate (per hour or per day, see retainerRateUnit) used to convert time-entry hours into drawdownAmount for this pool (Design D2). NOT the standard billing rate — that is resolved per RateCard for overage.",
+            "description": "Rate (per hour or per day, see retainerRateUnit) used to convert time-entry hours into drawdownAmount for this pool (Design D2). NOT the standard billing rate: that is resolved per RateCard for overage.",
             "example": 75.0,
             "title": "Retainer Rate"
           },
@@ -321,7 +321,7 @@
         "icon": "ArrowDownBoldOutline",
         "version": "0.1.0",
         "title": "Retainer Drawdown",
-        "description": "Immutable per-time-entry consumption record against a RetainerPool. Created automatically by the TimeEntry create lifecycle hook (Design D2). drawdownAmount = hoursOrAmount × drawdownRate where drawdownRate is the pool's retainerRate at materialization time — NOT the timesheet's billable rate (Design D2 +). Once status=materialized, the record is read-only; reversal/adjustment creates a new record linking back via reversalOfDrawdownId.",
+        "description": "Immutable per-time-entry consumption record against a RetainerPool. Created automatically by the TimeEntry create lifecycle hook (Design D2). DrawdownAmount = hoursOrAmount × drawdownRate where drawdownRate is the pool's retainerRate at materialization time: NOT the timesheet's billable rate (Design D2 +). Once status=materialized, the record is read-only; reversal/adjustment creates a new record linking back via reversalOfDrawdownId.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/retainer-billing-engine/specs/retainer-billing-management/spec.md",
         "type": "object",
@@ -904,7 +904,7 @@
         },
         "administrationId": "adm-smb-1",
         "status": "closed",
-        "description": "TechStartup BV platform-migratie retainer januari 2026 — reset-balance policy."
+        "description": "TechStartup BV platform-migratie retainer januari 2026: reset-balance policy."
       },
       {
         "@self": {
@@ -929,7 +929,7 @@
         "administrationId": "adm-smb-1",
         "status": "active",
         "sourcePoolId": "RETN-2026-01-001",
-        "description": "Gemeente Amsterdam consulting retainer februari 2026 — rollover van januari (overspend, geen carryover)."
+        "description": "Gemeente Amsterdam consulting retainer februari 2026: rollover van januari (overspend, geen carryover)."
       },
       {
         "@self": {
@@ -946,7 +946,7 @@
         "drawdownAmount": 750.0,
         "administrationId": "adm-smb-1",
         "status": "materialized",
-        "description": "Adviesgesprek gemeente — 10 uur"
+        "description": "Adviesgesprek gemeente: 10 uur"
       },
       {
         "@self": {
@@ -963,7 +963,7 @@
         "drawdownAmount": 1125.0,
         "administrationId": "adm-smb-1",
         "status": "materialized",
-        "description": "Workshop dataplatform — 15 uur"
+        "description": "Workshop dataplatform: 15 uur"
       },
       {
         "@self": {
@@ -980,7 +980,7 @@
         "drawdownAmount": 1500.0,
         "administrationId": "adm-smb-1",
         "status": "materialized",
-        "description": "Implementatie roadmap — 20 uur (pool overschreden)"
+        "description": "Implementatie roadmap: 20 uur (pool overschreden)"
       },
       {
         "@self": {
@@ -997,7 +997,7 @@
         "drawdownAmount": 2500.0,
         "administrationId": "adm-smb-1",
         "status": "materialized",
-        "description": "Platform-migratie sprint 1 — 25 uur"
+        "description": "Platform-migratie sprint 1: 25 uur"
       },
       {
         "@self": {

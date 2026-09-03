@@ -6,7 +6,7 @@
         "icon": "CalendarSync",
         "version": "0.1.0",
         "title": "Recurring Invoice Profile",
-        "description": "A recurring (periodic) billing definition — the template Shillinq uses to generate ordinary ARInvoice records on a schedule. The customer is a Nextcloud addressbook contact (customerReference), never an invented party schema. Generation produces standard ARInvoice records carrying recurringProfileId + billingPeriod provenance; there is no parallel invoice type. Numbering, per-line BTW and Peppol delivery are owned by bookkeeping-quote-order-invoice (CHAINED); SEPA collection is owned by bookkeeping-sepa-direct-debit (CHAINED).",
+        "description": "A recurring (periodic) billing definition: the template Shillinq uses to generate ordinary ARInvoice records on a schedule. The customer is a Nextcloud addressbook contact (customerReference), never an invented party schema. Generation produces standard ARInvoice records carrying recurringProfileId + billingPeriod provenance; there is no parallel invoice type. Numbering, per-line BTW and Peppol delivery are owned by bookkeeping-quote-order-invoice (CHAINED); SEPA collection is owned by bookkeeping-sepa-direct-debit (CHAINED).",
         "x-schema-org": "schema:Invoice",
         "x-openregister-audit": true,
         "x-openregister-audit-trail": {
@@ -108,7 +108,7 @@
           },
           "interval": {
             "type": "integer",
-            "description": "Cadence multiplier — frequency=monthly, interval=2 means every 2 months.",
+            "description": "Cadence multiplier: frequency=monthly, interval=2 means every 2 months.",
             "minimum": 1,
             "default": 1,
             "title": "Interval"

@@ -15,16 +15,16 @@
         "properties": {
           "docudeskExtractionId": {
             "type": "string",
-            "description": "The docudesk `financialExtraction` object id, learned from the synchronous response of DocudeskExtractionClient:requestExtraction. Absent when the draft's extraction was never (re-)requested through shillinq's own proxy (e.g. seeded before this change) — the GL-account suggestion feature degrades gracefully to plain manual booking when unset.",
+            "description": "The docudesk `financialExtraction` object id, learned from the synchronous response of DocudeskExtractionClient:requestExtraction. Absent when the draft's extraction was never (re-)requested through shillinq's own proxy (e.g. Seeded before this change): the GL-account suggestion feature degrades gracefully to plain manual booking when unset.",
             "nullable": true,
             "example": "00000000-0000-0000-0000-000000000099",
             "title": "Docudesk Extraction Id"
           },
           "suggestedGlAccount": {
             "type": "object",
-            "description": "The last-fetched docudesk GL-account suggestion: {code, label, confidence, rationale, source}. Cached on the draft so the operator's eventual booking choice can be compared against it without a live round-trip. Never auto-applied to glAccount — informational only.",
+            "description": "The last-fetched docudesk GL-account suggestion: {code, label, confidence, rationale, source}. Cached on the draft so the operator's eventual booking choice can be compared against it without a live round-trip. Never auto-applied to glAccount: informational only.",
             "properties": {
-              "code": { "type": "string", "title": "Account Code", "description": "The suggested grootboekrekening code from the chart of accounts (bookkeeping-chart-of-accounts), e.g. '4300'. Informational only — never written to glAccount without operator confirmation." },
+              "code": { "type": "string", "title": "Account Code", "description": "The suggested grootboekrekening code from the chart of accounts (bookkeeping-chart-of-accounts), e.g. '4300'. Informational only: never written to glAccount without operator confirmation." },
               "label": { "type": "string", "nullable": true, "title": "Account Label", "description": "Human-readable name of the suggested account as docudesk knew it at suggestion time. Cached so the suggestion still reads sensibly if the account is later renamed; null when docudesk returned no name." },
               "confidence": { "type": "number", "minimum": 0, "maximum": 1, "title": "Confidence", "description": "How strongly docudesk backs this suggestion, from 0 (no confidence) to 1 (certain). A decimal fraction, not a percentage." },
               "rationale": { "type": "string", "title": "Rationale", "description": "Docudesk's own plain-language explanation of why this account was suggested, shown to the operator so the suggestion can be judged rather than merely accepted." },
@@ -40,7 +40,7 @@
         "properties": {
           "glAccount": {
             "type": "string",
-            "description": "The grootboekrekening (GL account) code the operator books this receipt to (mirrors SupplierInvoice.glAccount). Opaque string per the chart of accounts (bookkeeping-chart-of-accounts) — never auto-filled from a suggestion without operator confirmation.",
+            "description": "The grootboekrekening (GL account) code the operator books this receipt to (mirrors SupplierInvoice.glAccount). Opaque string per the chart of accounts (bookkeeping-chart-of-accounts): never auto-filled from a suggestion without operator confirmation.",
             "nullable": true,
             "example": "4400",
             "title": "GL Account"
@@ -56,7 +56,7 @@
             "type": "object",
             "description": "The last-fetched docudesk GL-account suggestion: {code, label, confidence, rationale, source}. Never auto-applied to glAccount.",
             "properties": {
-              "code": { "type": "string", "title": "Account Code", "description": "The suggested grootboekrekening code from the chart of accounts (bookkeeping-chart-of-accounts), e.g. '4400'. Informational only — never written to glAccount without operator confirmation." },
+              "code": { "type": "string", "title": "Account Code", "description": "The suggested grootboekrekening code from the chart of accounts (bookkeeping-chart-of-accounts), e.g. '4400'. Informational only: never written to glAccount without operator confirmation." },
               "label": { "type": "string", "nullable": true, "title": "Account Label", "description": "Human-readable name of the suggested account as docudesk knew it at suggestion time. Cached so the suggestion still reads sensibly if the account is later renamed; null when docudesk returned no name." },
               "confidence": { "type": "number", "minimum": 0, "maximum": 1, "title": "Confidence", "description": "How strongly docudesk backs this suggestion, from 0 (no confidence) to 1 (certain). A decimal fraction, not a percentage." },
               "rationale": { "type": "string", "title": "Rationale", "description": "Docudesk's own plain-language explanation of why this account was suggested, shown to the operator so the suggestion can be judged rather than merely accepted." },

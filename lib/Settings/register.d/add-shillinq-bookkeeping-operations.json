@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "add-shillinq-bookkeeping-operations",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — NL compliance core: VAT/BTW filing, BBV account mapping, BCF compensation, ZZP deductions, schatkistbankieren, subsidie-verantwoording. Sibling schemas (KorRegime, Iv3Export, Project, RetentionRule, UrenRegistratie, RateCard, WipBalance) already live in the monolith from prior changes; this fragment adds only the missing schemas and extends Account/BbvAccountMapping additively."
+    "description": "Tier 3: NL compliance core: VAT/BTW filing, BBV account mapping, BCF compensation, ZZP deductions, schatkistbankieren, subsidie-verantwoording. Sibling schemas (KorRegime, Iv3Export, Project, RetentionRule, UrenRegistratie, RateCard, WipBalance) already live in the monolith from prior changes; this fragment adds only the missing schemas and extends Account/BbvAccountMapping additively."
   },
   "components": {
     "schemas": {

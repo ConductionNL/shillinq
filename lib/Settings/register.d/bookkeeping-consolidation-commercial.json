@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-consolidation-commercial",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — Commercial consolidation (RJ 217 / IAS 27 / IFRS 10). Ten new schemas (ConsolidationGroup, GroupEntity, IntercompanyRelation, ConsolidationPeriod, EliminationEntry, TranslationAdjustment, MinorityInterest, Goodwill, ConsolidatedBalance, ConsolidatedIncomeStatement) enabling Dutch MKB holding companies to consolidate multi-entity financial statements. All quantitative logic is declarative (x-openregister-aggregations) per ADR-031 — no ConsolidationCalculator.php / EliminationMatcher.php services. Lifecycle automation per x-openregister-lifecycle; cross-schema preconditions (status-transition gates, accountant-review presence, balance-sheet equation, minority split) delegated to OCA\\Shillinq\\Lifecycle\\ConsolidationGuard. Reuses the existing Administration register (per-entiteit GL) and the Nextcloud user directory for executor/reviewer FKs — a person is an NC entity, never an invented schema (ADR-022)."
+    "description": "Tier 3: Commercial consolidation (RJ 217 / IAS 27 / IFRS 10). Ten new schemas (ConsolidationGroup, GroupEntity, IntercompanyRelation, ConsolidationPeriod, EliminationEntry, TranslationAdjustment, MinorityInterest, Goodwill, ConsolidatedBalance, ConsolidatedIncomeStatement) enabling Dutch MKB holding companies to consolidate multi-entity financial statements. All quantitative logic is declarative (x-openregister-aggregations) per ADR-031. No ConsolidationCalculator.php / EliminationMatcher.php services. Lifecycle automation per x-openregister-lifecycle; cross-schema preconditions (status-transition gates, accountant-review presence, balance-sheet equation, minority split) delegated to OCA\\Shillinq\\Lifecycle\\ConsolidationGuard. Reuses the existing Administration register (per-entiteit GL) and the Nextcloud user directory for executor/reviewer FKs. A person is an NC entity, never an invented schema (ADR-022)."
   },
   "components": {
     "schemas": {
@@ -35,7 +35,7 @@
           },
           "parentAdministrationId": {
             "type": "string",
-            "description": "FK to the moeder Administration (existing Administration register) — the holding whose GL anchors the group.",
+            "description": "FK to the moeder Administration (existing Administration register): the holding whose GL anchors the group.",
             "title": "Parent Administration ID"
           },
           "reportingCurrency": {
@@ -159,7 +159,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the entity's Administration (existing Administration register) — the source GL for aggregation.",
+            "description": "FK to the entity's Administration (existing Administration register): the source GL for aggregation.",
             "title": "Administration ID"
           },
           "entityType": {
@@ -402,7 +402,7 @@
           },
           "executor": {
             "type": "string",
-            "description": "Nextcloud user id of the user who initiated the consolidation (FK to the NC user directory — a person is an NC entity, never an invented schema).",
+            "description": "Nextcloud user id of the user who initiated the consolidation (FK to the NC user directory: a person is an NC entity, never an invented schema).",
             "title": "Executor"
           },
           "executionTimestamp": {
@@ -761,7 +761,7 @@
         "icon": "CurrencyUsd",
         "version": "0.1.0",
         "title": "Translation Adjustment",
-        "description": "Currency revaluation (CTA) for a foreign-currency entity per the current-rate method (RJ 122 / IAS 21). Records the functional- and reporting-currency amounts and the isolated CTA component posted to OCI/eigen vermogen — never to the P&L (design D4).",
+        "description": "Currency revaluation (CTA) for a foreign-currency entity per the current-rate method (RJ 122 / IAS 21). Records the functional- and reporting-currency amounts and the isolated CTA component posted to OCI/eigen vermogen: never to the P&L (design D4).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
         "type": "object",
@@ -884,7 +884,7 @@
         "x-openregister-calculations": {
           "closingBalance": {
             "type": "number",
-            "description": "closingBalance = openingBalance + periodResultShare − dividendToMinority (design D6). Declarative per ADR-031 — no MinorityInterestCalculator.php.",
+            "description": "closingBalance = openingBalance + periodResultShare − dividendToMinority (design D6). Declarative per ADR-031: no MinorityInterestCalculator.php.",
             "expr": "@self.openingBalance + @self.periodResultShare - @self.dividendToMinority"
           }
         },
@@ -997,7 +997,7 @@
         "x-openregister-calculations": {
           "goodwillAmount": {
             "type": "number",
-            "description": "goodwillAmount = purchasePrice − fairValueNetAssetsAcquired (positive = goodwill, negative = badwill) per RJ 216 / IFRS 3 (design D5). Declarative per ADR-031 — no GoodwillCalculator.php.",
+            "description": "goodwillAmount = purchasePrice − fairValueNetAssetsAcquired (positive = goodwill, negative = badwill) per RJ 216 / IFRS 3 (design D5). Declarative per ADR-031: no GoodwillCalculator.php.",
             "expr": "@self.purchasePrice - @self.fairValueNetAssetsAcquired"
           }
         },

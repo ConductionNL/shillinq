@@ -7,7 +7,7 @@
 			"grIrClearingAccountNumber": "1800",
 			"inventoryAdjustmentAccountNumber": "7100",
 			"isActive": true,
-			"description": "Shillinq demo administratie — NL RGS 3.5 MKB defaults (7000 Kostprijs omzet / 1400 Voorraden / 1800 GR/IR clearing / 7100 Voorraadmutaties)."
+			"description": "Shillinq demo administratie: NL RGS 3.5 MKB defaults (7000 Kostprijs omzet / 1400 Voorraden / 1800 GR/IR clearing / 7100 Voorraadmutaties)."
 		}
 	]
 }

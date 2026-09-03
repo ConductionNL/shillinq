@@ -3,7 +3,7 @@
 	"_meta": {
 		"source": "shillinq-default",
 		"variant": "fixed-percentage",
-		"description": "Example facility-cost allocation rule that spreads facility accounts 4800-4899 across three cost centers at fixed 50/30/20 percentage split. Target percentages sum to 100. Shipped in lifecycleState: paused — activate after operator review per design Seed Data section."
+		"description": "Example facility-cost allocation rule that spreads facility accounts 4800-4899 across three cost centers at fixed 50/30/20 percentage split. Target percentages sum to 100. Shipped in lifecycleState: paused. Activate after operator review per design Seed Data section."
 	},
 	"register": "shillinq",
 	"schema": "AllocationRule",

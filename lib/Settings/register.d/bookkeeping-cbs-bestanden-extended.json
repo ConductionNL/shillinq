@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-cbs-bestanden-extended",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "CBS bestanden (Statistics Netherlands statistical reporting) extended pipeline beyond the mandatory IV3-bestand. Adds two entities — CBSSubmission (header tracking submission metadata, lifecycle draft → validated → submitted → accepted/rejected per) and CBSLine (aggregated financial line items per CBS classification, computed from GL transactions per). Declarative lifecycle, RBAC and retention per ADR-022/ADR-031. The prior add-shillinq-cbs-bestanden-extended change shipped only the proposal/design/spec authoring; this fragment is the executable schema + seed-data delivery."
+    "description": "CBS bestanden (Statistics Netherlands statistical reporting) extended pipeline beyond the mandatory IV3-bestand. Adds two entities: CBSSubmission (header tracking submission metadata, lifecycle draft → validated → submitted → accepted/rejected per) and CBSLine (aggregated financial line items per CBS classification, computed from GL transactions per). Declarative lifecycle, RBAC and retention per ADR-022/ADR-031. The prior add-shillinq-cbs-bestanden-extended change shipped only the proposal/design/spec authoring; this fragment is the executable schema + seed-data delivery."
   },
   "components": {
     "schemas": {
@@ -406,7 +406,7 @@
       "status": "draft",
       "submissionDate": null,
       "administrationId": "adm-001",
-      "description": "IV3 submission for FY2025 — Municipality reporting",
+      "description": "IV3 submission for FY2025: Municipality reporting",
       "currency": "EUR"
     },
     {
@@ -424,7 +424,7 @@
       "status": "validated",
       "submissionDate": "2026-03-15T09:00:00+01:00",
       "administrationId": "adm-002",
-      "description": "IV3 submission for FY2025 — Private enterprise",
+      "description": "IV3 submission for FY2025: Private enterprise",
       "currency": "EUR"
     },
     {
@@ -442,7 +442,7 @@
       "status": "submitted",
       "submissionDate": "2027-03-10T10:30:00+01:00",
       "administrationId": "adm-003",
-      "description": "IV3 submission for FY2026 — Large enterprise",
+      "description": "IV3 submission for FY2026: Large enterprise",
       "currency": "EUR"
     },
     {

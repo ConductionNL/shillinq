@@ -9,7 +9,7 @@
           "sourceLocationId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to Location.id — the warehouse a stock-tracked line is issued from on confirm (inventory-sales-issue-cogs-trigger REQ-003). Per-line override supported via `lines[].sourceLocationId`. When unset anywhere, the SalesDispatchStockIssueService falls back to the InventoryStock row with the largest available quantity for the SKU.",
+            "description": "FK to Location.id: the warehouse a stock-tracked line is issued from on confirm (inventory-sales-issue-cogs-trigger REQ-003). Per-line override supported via `lines[].sourceLocationId`. When unset anywhere, the SalesDispatchStockIssueService falls back to the InventoryStock row with the largest available quantity for the SKU.",
             "example": "loc-w01-z01-b100",
             "title": "Source Location ID"
           }
@@ -19,7 +19,7 @@
             "cancelled": {
               "label": "Cancelled",
               "labelNl": "Geannuleerd",
-              "description": "Terminal. Cancelled before shipment — any StockMove issued by this delivery on confirm is reversed via the existing StockMove.cancel transition (inventory-sales-issue-cogs-trigger REQ-006)."
+              "description": "Terminal. Cancelled before shipment: any StockMove issued by this delivery on confirm is reversed via the existing StockMove.cancel transition (inventory-sales-issue-cogs-trigger REQ-006)."
             }
           },
           "transitions": {

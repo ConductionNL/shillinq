@@ -40,7 +40,7 @@
           },
           "bsn": {
             "type": "string",
-            "description": "Burgerservicenummer. Special-category PII (ADR-005): validated by 11-proef on write, masked as ***<last4> on display, never written to the audit trail. Null for B2B contractors. The 11-proef checksum is not expressible declaratively — ADR-031 exception guard OCA\\Shillinq\\Validation\\BsnValidator:isValid is invoked on write.",
+            "description": "Burgerservicenummer. Special-category PII (ADR-005): validated by 11-proef on write, masked as ***<last4> on display, never written to the audit trail. Null for B2B contractors. The 11-proef checksum is not expressible declaratively: ADR-031 exception guard OCA\\Shillinq\\Validation\\BsnValidator:isValid is invoked on write.",
             "nullable": true,
             "pii": true,
             "x-pii": "bsn",

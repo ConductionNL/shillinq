@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-purchase-order-3way-07-multi-po-consolidation",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Member 7 of 11 in the bookkeeping-purchase-order-3way chain. Extends the ThreeWayMatch schema declared by slice 01 with the per-trio identifiers (poLineId, grnLineId, invoiceLineNumber, productCode) and the operator's persisted disambiguationChoice that the multi-PO consolidation engine writes when one supplier invoice consolidates lines from multiple POs. Each (PO line, GRN line, invoice line) trio gets its own ThreeWayMatch record so the matching engine in slice 06 can process each independently through the tolerance path. The disambiguationChoice captures the candidate-tuple snapshot the crediteuren-administrateur picked plus the user id and timestamp so the audit trail in slice 11 can reconstruct the decision. Also extends the SupplierInvoice schema declared by slice 01 with header-level matchedPoIds + consolidatedAt and embeds the per-line PO link fields (linkedPoLineId / linkedPoId / linkedGrnLineId / linkedMatchId) on each invoice line so the SupplierInvoice document itself records which POs it consolidates — consumers reading the invoice see the PO links without traversing ThreeWayMatch records."
+    "description": "Member 7 of 11 in the bookkeeping-purchase-order-3way chain. Extends the ThreeWayMatch schema declared by slice 01 with the per-trio identifiers (poLineId, grnLineId, invoiceLineNumber, productCode) and the operator's persisted disambiguationChoice that the multi-PO consolidation engine writes when one supplier invoice consolidates lines from multiple POs. Each (PO line, GRN line, invoice line) trio gets its own ThreeWayMatch record so the matching engine in slice 06 can process each independently through the tolerance path. The disambiguationChoice captures the candidate-tuple snapshot the crediteuren-administrateur picked plus the user id and timestamp so the audit trail in slice 11 can reconstruct the decision. Also extends the SupplierInvoice schema declared by slice 01 with header-level matchedPoIds + consolidatedAt and embeds the per-line PO link fields (linkedPoLineId / linkedPoId / linkedGrnLineId / linkedMatchId) on each invoice line so the SupplierInvoice document itself records which POs it consolidates: consumers reading the invoice see the PO links without traversing ThreeWayMatch records."
   },
   "components": {
     "schemas": {
@@ -33,7 +33,7 @@
           },
           "lines": {
             "type": "array",
-            "description": "Embedded invoice lines parsed from UBL or OCR. Each line MAY carry the slice-07 PO-link fields (linkedPoLineId, linkedPoId, linkedGrnLineId, linkedMatchId) populated by the consolidation engine — the invoice document is the canonical surface for line→PO traceability so the UI does not have to traverse ThreeWayMatch records.",
+            "description": "Embedded invoice lines parsed from UBL or OCR. Each line MAY carry the slice-07 PO-link fields (linkedPoLineId, linkedPoId, linkedGrnLineId, linkedMatchId) populated by the consolidation engine: the invoice document is the canonical surface for line→PO traceability so the UI does not have to traverse ThreeWayMatch records.",
             "items": {
               "type": "object",
               "properties": {

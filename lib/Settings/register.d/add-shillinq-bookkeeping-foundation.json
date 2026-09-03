@@ -243,7 +243,7 @@
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "materialise-gl-transaction",
-                  "description": "Materialise exactly one balanced GLTransaction (with GLLine children derived 1:1 from `lines`) and set glTransactionId. Declarative outcome / design D3 — no PHP orchestration.",
+                  "description": "Materialise exactly one balanced GLTransaction (with GLLine children derived 1:1 from `lines`) and set glTransactionId. Declarative outcome / design D3: no PHP orchestration.",
                   "actionParameters": {
                     "register": "shillinq",
                     "schema": "GLTransaction",

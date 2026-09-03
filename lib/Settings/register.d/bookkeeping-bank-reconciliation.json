@@ -4,7 +4,7 @@
     "tier": "T1",
     "license": "EUPL-1.2",
     "copyright": "2026 Conduction B.V. <info@conduction.nl>",
-    "description": "ADR-037 register fragment for the bookkeeping-bank-reconciliation capability — declares the BankReconciliation (session) and BankReconciliationMatch (pairing) schemas with lifecycle, RBAC and aggregations. Restores Tasks 1-5 / hydra-build #50 after the schemas were dropped during a sibling union-merge; the BankReconciliationGuard (lib/Guard/BankReconciliationGuard.php) and its 10 unit tests already reference these slugs. Per ADR-031 derived monetary fields (reconciledBalance, variance) are server-authoritative — recomputed in integer cents by the guard, never trusted from the client."
+    "description": "ADR-037 register fragment for the bookkeeping-bank-reconciliation capability: declares the BankReconciliation (session) and BankReconciliationMatch (pairing) schemas with lifecycle, RBAC and aggregations. Restores Tasks 1-5 / hydra-build #50 after the schemas were dropped during a sibling union-merge; the BankReconciliationGuard (lib/Guard/BankReconciliationGuard.php) and its 10 unit tests already reference these slugs. Per ADR-031 derived monetary fields (reconciledBalance, variance) are server-authoritative. Recomputed in integer cents by the guard, never trusted from the client."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "BankOutline",
         "version": "0.1.0",
         "title": "Bank Reconciliation",
-        "description": "One bank-account reconciliation session for a fiscal period. Tracks statement opening/closing balance, the server-recomputed reconciled balance, the residual variance, and an auditable status lifecycle (draft → in-progress → reconciled → archived). Per. All monetary fields are stored as EUR with 2-decimal precision; reconciledBalance and variance are server-authoritative — recomputed by BankReconciliationGuard in integer cents and never trusted from the client.",
+        "description": "One bank-account reconciliation session for a fiscal period. Tracks statement opening/closing balance, the server-recomputed reconciled balance, the residual variance, and an auditable status lifecycle (draft → in-progress → reconciled → archived). Per. All monetary fields are stored as EUR with 2-decimal precision; reconciledBalance and variance are server-authoritative: recomputed by BankReconciliationGuard in integer cents and never trusted from the client.",
         "x-schema-org": "schema:Invoice",
         "type": "object",
         "required": [
@@ -28,7 +28,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Human-readable session name (e.g. 'Checking Account — May 2026').",
+            "description": "Human-readable session name (e.g. 'Checking Account: May 2026').",
             "example": "ABC Checking — May 2026",
             "title": "Name"
           },
@@ -73,7 +73,7 @@
           },
           "reconciledBalance": {
             "type": "number",
-            "description": "Derived: openingBalance + sum(approved match amounts). Server-authoritative — recomputed by BankReconciliationGuard:recalculateBalance in integer cents on every match change; never accepted from the client.",
+            "description": "Derived: openingBalance + sum(approved match amounts). Server-authoritative: recomputed by BankReconciliationGuard:recalculateBalance in integer cents on every match change; never accepted from the client.",
             "nullable": true,
             "example": 6250.49,
             "title": "Reconciled Balance"
@@ -118,7 +118,7 @@
               "archived"
             ],
             "default": "draft",
-            "description": "Lifecycle state. Driven by x-openregister-lifecycle; do not set directly to reconciled/archived — use the approve/archive transitions.",
+            "description": "Lifecycle state. Driven by x-openregister-lifecycle; do not set directly to reconciled/archived: use the approve/archive transitions.",
             "title": "Status"
           },
           "approvedBy": {
@@ -167,7 +167,7 @@
             },
             "reconciled": {
               "label": "Reconciled",
-              "description": "Approved and locked for audit. Immutable — no further match changes; corrections require a new session."
+              "description": "Approved and locked for audit. Immutable: no further match changes; corrections require a new session."
             },
             "archived": {
               "label": "Archived",
@@ -236,7 +236,7 @@
         "icon": "BankTransfer",
         "version": "0.1.0",
         "title": "Bank Reconciliation Match",
-        "description": "One paired transaction: a bank-statement line matched to a journal entry (APTransaction, GLLine, or Payment). Auto-matching is deterministic by amount + date ± reference; ambiguous and orphaned items are flagged pending-review for operator resolution. Every decision is timestamped and attributed. The bank transaction is NOT embedded as a full object — only a reference key + cached amount are stored (design D3).",
+        "description": "One paired transaction: a bank-statement line matched to a journal entry (APTransaction, GLLine, or Payment). Auto-matching is deterministic by amount + date ± reference; ambiguous and orphaned items are flagged pending-review for operator resolution. Every decision is timestamped and attributed. The bank transaction is NOT embedded as a full object: only a reference key + cached amount are stored (design D3).",
         "x-schema-org": "schema:Action",
         "type": "object",
         "required": [

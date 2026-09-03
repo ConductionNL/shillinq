@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-treasury-ihb",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "T3 strategic + compliance — Treasury / In-house Bank (IHB) / Cash Pooling. Declares nine new schemas (CashPool, CashPoolMembership, IntercompanyLoan, IntercompanyTransaction, FXContract, FXPosition, CashForecast, BankReconciliationGroup, LiquidityKPI) plus their lifecycles, aggregation formulas, RBAC and seed objects. Per ADR-031 all treasury calculation is declarative metadata; the only PHP seam is the period-close precondition guard for IntercompanyTransaction posting."
+    "description": "T3 strategic + compliance: Treasury / In-house Bank (IHB) / Cash Pooling. Declares nine new schemas (CashPool, CashPoolMembership, IntercompanyLoan, IntercompanyTransaction, FXContract, FXPosition, CashForecast, BankReconciliationGroup, LiquidityKPI) plus their lifecycles, aggregation formulas, RBAC and seed objects. Per ADR-031 all treasury calculation is declarative metadata; the only PHP seam is the period-close precondition guard for IntercompanyTransaction posting."
   },
   "components": {
     "schemas": {

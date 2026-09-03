@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-ib-aangifte-zzp",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "T3 — IB-aangifte (income tax return) assembly for ZZP. Declares 8 P-formulier entities (IBAangifte header + IBWinstOpgave/IBOndernemersaftrek/IBHeffingskortingenAlgemeen/IBLijfrenteAOV/IBBijtellingAuto/IBBox3Vermogen/IBAuditTrail) plus the IBTaxParameterYear metadata entity that holds annually-versioned tariffs/franchises so deployments never need a code change. Per ADR-031 all fiscal logic is declarative metadata (x-openregister-lifecycle / -aggregations / -calculations); the only PHP seam is the existing UrencriteriumGuard reused for the 1225-hour gate. Distinct from the lightweight IbAangifteExport export schema."
+    "description": "T3: IB-aangifte (income tax return) assembly for ZZP. Declares 8 P-formulier entities (IBAangifte header + IBWinstOpgave/IBOndernemersaftrek/IBHeffingskortingenAlgemeen/IBLijfrenteAOV/IBBijtellingAuto/IBBox3Vermogen/IBAuditTrail) plus the IBTaxParameterYear metadata entity that holds annually-versioned tariffs/franchises so deployments never need a code change. Per ADR-031 all fiscal logic is declarative metadata (x-openregister-lifecycle / -aggregations / -calculations); the only PHP seam is the existing UrencriteriumGuard reused for the 1225-hour gate. Distinct from the lightweight IbAangifteExport export schema."
   },
   "components": {
     "schemas": {
@@ -33,7 +33,7 @@
           },
           "bsn": {
             "type": "string",
-            "description": "Burgerservicenummer of the ondernemer. Special-category identifier — masked in UI lists and never logged raw (ADR-005).",
+            "description": "Burgerservicenummer of the ondernemer. Special-category identifier: masked in UI lists and never logged raw (ADR-005).",
             "nullable": true,
             "example": "******789",
             "title": "BSN"
@@ -437,7 +437,7 @@
           },
           "fiscalDeviationsLog": {
             "type": "array",
-            "description": "Discrete fiscal adjustment records with grondslag (design D3). GL is never altered — adjustments are logged here.",
+            "description": "Discrete fiscal adjustment records with grondslag (design D3). GL is never altered: adjustments are logged here.",
             "items": {
               "type": "object",
               "required": [

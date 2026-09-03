@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-schatkistbankieren",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json; ADR-031 declarative-first; ADR-022 consume OR audit-trail / RBAC; ADR-024 register-not-table.",
-    "description": "T2 schatkistbankieren (treasury banking compliance) — declarative TreasuryAccount + BankingRule + ComplianceReport registers with x-openregister-lifecycle (TreasuryAccount draft→configured→active→monitored→compliant with suspended/archived), x-openregister-calculations (ComplianceReport.complianceScore + criteriaResults weighted-rule-match), x-openregister-aggregations (by administration+period, by ruleType, aging buckets), and x-openregister-audit-trail per ADR-022. Seeds three baseline BankingRule records (rule-iban-format, rule-segregation, rule-approval-required) loaded idempotently by ConfigurationService:importFromApp. Multi-criteria compliance precondition on TreasuryAccount.activate is declared in x-openregister-lifecycle.transitions.activate.preconditions; if OR's engine cannot evaluate multi-criteria preconditions declaratively, the ADR-031 exception path is OCA\\Shillinq\\Lifecycle\\ComplianceValidator:isCompliant (single-method, registered out-of-band — not authored by this spec by default). No PHP ComplianceService, ComplianceReportService, ComplianceScoringService, ComplianceAggregationService is shipped — scoring and aggregation are calculation/aggregation extensions."
+    "description": "T2 schatkistbankieren (treasury banking compliance): declarative TreasuryAccount + BankingRule + ComplianceReport registers with x-openregister-lifecycle (TreasuryAccount draft→configured→active→monitored→compliant with suspended/archived), x-openregister-calculations (ComplianceReport.complianceScore + criteriaResults weighted-rule-match), x-openregister-aggregations (by administration+period, by ruleType, aging buckets), and x-openregister-audit-trail per ADR-022. Seeds three baseline BankingRule records (rule-iban-format, rule-segregation, rule-approval-required) loaded idempotently by ConfigurationService:importFromApp. Multi-criteria compliance precondition on TreasuryAccount.activate is declared in x-openregister-lifecycle.transitions.activate.preconditions; if OR's engine cannot evaluate multi-criteria preconditions declaratively, the ADR-031 exception path is OCA\\Shillinq\\Lifecycle\\ComplianceValidator:isCompliant (single-method, registered out-of-band. Not authored by this spec by default). No PHP ComplianceService, ComplianceReportService, ComplianceScoringService, ComplianceAggregationService is shipped. Scoring and aggregation are calculation/aggregation extensions."
   },
   "components": {
     "schemas": {
@@ -337,7 +337,7 @@
           },
           "evaluationCriteria": {
             "type": "object",
-            "description": "Criteria payload — shape varies by ruleType. iban-format: { pattern: string }. segregation: { checkDuplicates: boolean }. approval-required: { requiresTreasurerApproval: boolean }. transaction-limit: { maxAmount: number, currency: string }. reporting-period: { cadence: enum }.",
+            "description": "Criteria payload: shape varies by ruleType. Iban-format: { pattern: string }. Segregation: { checkDuplicates: boolean }. Approval-required: { requiresTreasurerApproval: boolean }. Transaction-limit: { maxAmount: number, currency: string }. Reporting-period: { cadence: enum }.",
             "example": {
               "pattern": "^NL[0-9]{2}[A-Z]{4}[0-9]{10}$"
             },
@@ -378,7 +378,7 @@
         "icon": "FileChartOutline",
         "version": "0.1.0",
         "title": "Compliance Report",
-        "description": "Periodic compliance snapshot for schatkistbankieren reporting. complianceScore + criteriaResults are declarative calculations (x-openregister-calculations) — weighted rule-match aggregation against the BankingRule register. status follows draft → reviewed → approved-for-export → exported. Optional regulatoryExportFormat + regulatoryExportUri capture the docudesk handover. NO ComplianceReportService.php / ComplianceScoringService.php / ReportGeneratorService.php is shipped — scoring is a calculation, not a service.",
+        "description": "Periodic compliance snapshot for schatkistbankieren reporting. ComplianceScore + criteriaResults are declarative calculations (x-openregister-calculations): weighted rule-match aggregation against the BankingRule register. Status follows draft → reviewed → approved-for-export → exported. Optional regulatoryExportFormat + regulatoryExportUri capture the docudesk handover. NO ComplianceReportService.php / ComplianceScoringService.php / ReportGeneratorService.php is shipped. Scoring is a calculation, not a service.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-schatkistbankieren/specs/bookkeeping-schatkistbankieren/spec.md",
         "type": "object",
@@ -422,7 +422,7 @@
           },
           "complianceScore": {
             "type": "number",
-            "description": "Automated score (0-100) from weighted BankingRule criteria match — declarative x-openregister-calculations output.",
+            "description": "Automated score (0-100) from weighted BankingRule criteria match: declarative x-openregister-calculations output.",
             "minimum": 0,
             "maximum": 100,
             "example": 80,
@@ -500,7 +500,7 @@
         },
         "x-openregister-calculations": {
           "complianceScore": {
-            "description": "Weighted rule-match aggregation — sums the per-rule weight contribution of every PASSING BankingRule (where isActive=true AND administrationId=@self.administrationId), scaled to 0-100. With N active rules each rule contributes 100/N points on pass and 0 on fail (uniform weighting baseline). Operator-configurable per-rule weight overrides are out of scope for the T2 baseline.",
+            "description": "Weighted rule-match aggregation: sums the per-rule weight contribution of every PASSING BankingRule (where isActive=true AND administrationId=@self.administrationId), scaled to 0-100. With N active rules each rule contributes 100/N points on pass and 0 on fail (uniform weighting baseline). Operator-configurable per-rule weight overrides are out of scope for the T2 baseline.",
             "target": "complianceScore",
             "source": "BankingRule",
             "filter": {
@@ -511,7 +511,7 @@
             "expression": "100 * (count(rules where status=pass) / count(rules where isActive=true))"
           },
           "criteriaResults": {
-            "description": "Per-rule evaluation status array — one entry per active BankingRule with { ruleNumber, ruleType, severity, status: pass|fail, evaluatedAt }. Evaluator: each ruleType maps to the rule's evaluationCriteria payload applied to the associated TreasuryAccount(s) for the period.",
+            "description": "Per-rule evaluation status array: one entry per active BankingRule with { ruleNumber, ruleType, severity, status: pass|fail, evaluatedAt }. Evaluator: each ruleType maps to the rule's evaluationCriteria payload applied to the associated TreasuryAccount(s) for the period.",
             "target": "criteriaResults",
             "source": "BankingRule",
             "filter": {
@@ -585,7 +585,7 @@
             ]
           },
           "agingByLastCompliantDate": {
-            "description": "Aging-by-compliance metric. GROUP BY TreasuryAccount.lastCompliantDate bucketed into 0-30d / 31-60d / 60+d to surface accounts that need revalidation. NO PHP aggregation service — the engine handles bucketing.",
+            "description": "Aging-by-compliance metric. GROUP BY TreasuryAccount.lastCompliantDate bucketed into 0-30d / 31-60d / 60+d to surface accounts that need revalidation. NO PHP aggregation service: the engine handles bucketing.",
             "source": "TreasuryAccount",
             "bucket": {
               "field": "lastCompliantDate",
@@ -649,7 +649,7 @@
         },
         "ruleNumber": "rule-segregation",
         "name": "Treasury IBAN Segregation",
-        "description": "Enforces IBAN uniqueness per administration — prevents two treasury accounts within the same administration from sharing an IBAN.",
+        "description": "Enforces IBAN uniqueness per administration: prevents two treasury accounts within the same administration from sharing an IBAN.",
         "ruleType": "segregation",
         "evaluationCriteria": {
           "checkDuplicates": true

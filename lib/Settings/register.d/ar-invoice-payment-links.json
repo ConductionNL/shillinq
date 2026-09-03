@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "ar-invoice-payment-links",
     "adr": "ADR-037 modular register fragment + ADR-031 declarative business logic + ADR-022 OR notification engine — never edit shillinq_register.json",
-    "description": "Tier 2 — AR Invoice Payment Links (EXPECTED-GAP 2 of 2026-06-11 re-evaluation). Adds the PaymentRequest schema: an online payment link (iDEAL via Mollie, cards via Stripe) on every AR invoice, reconciled back to ARInvoice.paid automatically. Generalizes the bookings-deposits payment plumbing to ARInvoice records WITHOUT forking it — the shared PaymentReconciliationService + PaymentRequestWebhookController handle BOTH DepositPayment and PaymentRequest through one code path. Stores NO PCI data: OpenConnector (PCI-certified) owns card details, tokens, hosted payment UI and refunds; the register stores only opaque references (paymentIntentId, settlementReference), mirroring DepositPayment. The paymentLink is a declarative x-openregister-calculations field resolving to OpenConnector's hosted payment UI with a short-lived signed token — no Mollie/Stripe URL is ever constructed in app code. On capture the linked ARInvoice settles through its existing matchPaid lifecycle transition (AR core owns GL posting); a capture that cannot apply lands in captured_unapplied — surfaced, never silently dropped. Settlement by other means voids open requests; capture records the gateway payout reference for bank-reconciliation auto-matching. Two declarative x-openregister-notifications rules (paymentReceived / paymentFailed) — no imperative dispatch (gate-18). Seed data ships 3 demo PaymentRequest records spanning pending / captured / failed."
+    "description": "Tier 2: AR Invoice Payment Links (EXPECTED-GAP 2 of 2026-06-11 re-evaluation). Adds the PaymentRequest schema: an online payment link (iDEAL via Mollie, cards via Stripe) on every AR invoice, reconciled back to ARInvoice.paid automatically. Generalizes the bookings-deposits payment plumbing to ARInvoice records WITHOUT forking it. The shared PaymentReconciliationService + PaymentRequestWebhookController handle BOTH DepositPayment and PaymentRequest through one code path. Stores NO PCI data: OpenConnector (PCI-certified) owns card details, tokens, hosted payment UI and refunds; the register stores only opaque references (paymentIntentId, settlementReference), mirroring DepositPayment. The paymentLink is a declarative x-openregister-calculations field resolving to OpenConnector's hosted payment UI with a short-lived signed token. No Mollie/Stripe URL is ever constructed in app code. On capture the linked ARInvoice settles through its existing matchPaid lifecycle transition (AR core owns GL posting); a capture that cannot apply lands in captured_unapplied. Surfaced, never silently dropped. Settlement by other means voids open requests; capture records the gateway payout reference for bank-reconciliation auto-matching. Two declarative x-openregister-notifications rules (paymentReceived / paymentFailed). No imperative dispatch (gate-18). Seed data ships 3 demo PaymentRequest records spanning pending / captured / failed."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "CreditCardOutline",
         "version": "0.1.1",
         "title": "Payment Request",
-        "description": "An online payment attempt against an AR invoice. One AR invoice can carry several payment requests over its life (link expired and regenerated, a failed attempt then a new link, a link voided after partial credit) — each request has its own lifecycle, gateway identity and audit needs, so payment state lives here and never folds onto ARInvoice (design D1). Mirrors the proven DepositPayment shape minus booking fields, FK'd to ARInvoice. STORES NO PCI DATA: no card number, CVV, PAN, IBAN credential, or authorization token is ever persisted — OpenConnector (PCI-certified) handles all sensitive payment data and only opaque references (paymentIntentId, settlementReference) are stored here, identical to DepositPayment. v0.1.1 (portal-payment-initiation) adds confirmationSummary — a subject-safe settlement receipt written on capture and surfaced through the customer portal's read-only paymentRequests collection.",
+        "description": "An online payment attempt against an AR invoice. One AR invoice can carry several payment requests over its life (link expired and regenerated, a failed attempt then a new link, a link voided after partial credit): each request has its own lifecycle, gateway identity and audit needs, so payment state lives here and never folds onto ARInvoice (design D1). Mirrors the proven DepositPayment shape minus booking fields, FK'd to ARInvoice. STORES NO PCI DATA: no card number, CVV, PAN, IBAN credential, or authorization token is ever persisted. OpenConnector (PCI-certified) handles all sensitive payment data and only opaque references (paymentIntentId, settlementReference) are stored here, identical to DepositPayment. V0.1.1 (portal-payment-initiation) adds confirmationSummary. A subject-safe settlement receipt written on capture and surfaced through the customer portal's read-only paymentRequests collection.",
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Payment-attempt register; every create / update / lifecycle transition (authorize / capture / markUnapplied / fail / expire / void) is recorded on the OR audit-trail-immutable channel + ADR-022. The captured PaymentRequest is the canonical payment-evidence chain linked to the settled ARInvoice."
@@ -64,7 +64,7 @@
           "paymentIntentId": {
             "type": "string",
             "nullable": true,
-            "description": "OPAQUE gateway/OpenConnector payment-intent reference. NOT a PCI field — no card data, no token, just the opaque correlation id the webhook + polling fallback resolve the record by. Mirrors DepositPayment.paymentIntentId.",
+            "description": "OPAQUE gateway/OpenConnector payment-intent reference. NOT a PCI field: no card data, no token, just the opaque correlation id the webhook + polling fallback resolve the record by. Mirrors DepositPayment.paymentIntentId.",
             "example": "tr_WDqYK6vllg",
             "title": "Payment Intent ID"
           },
@@ -80,7 +80,7 @@
               "voided"
             ],
             "default": "pending",
-            "description": "Payment-request lifecycle state. captured_unapplied is the exception state for a capture that could not settle its invoice — surfaced, never silently dropped.",
+            "description": "Payment-request lifecycle state. Captured_unapplied is the exception state for a capture that could not settle its invoice: surfaced, never silently dropped.",
             "example": "pending",
             "title": "State"
           },
@@ -95,7 +95,7 @@
           "failureReason": {
             "type": "string",
             "nullable": true,
-            "description": "Last gateway error, operator-readable. The gateway error code/message only — never raw card data (mirrors DepositPayment). Required on the fail transition.",
+            "description": "Last gateway error, operator-readable. The gateway error code/message only: never raw card data (mirrors DepositPayment). Required on the fail transition.",
             "example": "Payment failed at gateway.",
             "title": "Failure Reason"
           },
@@ -131,13 +131,13 @@
           "paymentLink": {
             "type": "string",
             "x-openconnector-resolved": true,
-            "description": "COMPUTED: the customer-facing payment URL embedding the payment-request id, the invoice id, and a short-lived signed token, resolving to the OpenConnector hosted payment UI — resolved by the shared payment adapter (the pattern). The app MUST NOT construct a direct Mollie/Stripe URL anywhere. Null unless state=pending AND the invoice is unsettled (visibleWhen); following a link for a non-pending request shows a friendly already-paid/expired page from the hosted UI, never a second charge.",
+            "description": "COMPUTED: the customer-facing payment URL embedding the payment-request id, the invoice id, and a short-lived signed token, resolving to the OpenConnector hosted payment UI. Resolved by the shared payment adapter (the pattern). The app MUST NOT construct a direct Mollie/Stripe URL anywhere. Null unless state=pending AND the invoice is unsettled (visibleWhen); following a link for a non-pending request shows a friendly already-paid/expired page from the hosted UI, never a second charge.",
             "title": "Payment Link"
           },
           "confirmationSummary": {
             "type": "string",
             "nullable": true,
-            "description": "Subject-safe, plain-language settlement receipt written by PaymentReconciliationService on capture (portal-payment-initiation) — e.g. 'Invoice INV-2026-014 paid on 2026-07-23, reference tr_xxx'. Surfaced through the customer portal's read-only paymentRequests collection so the debtor sees a receipt without a dedicated portal inbox. Never overwritten by a replayed/idempotent webhook.",
+            "description": "Subject-safe, plain-language settlement receipt written by PaymentReconciliationService on capture (portal-payment-initiation): e.g. 'Invoice INV-2026-014 paid on 2026-07-23, reference tr_xxx'. Surfaced through the customer portal's read-only paymentRequests collection so the debtor sees a receipt without a dedicated portal inbox. Never overwritten by a replayed/idempotent webhook.",
             "example": "Invoice INV-2026-0042 paid on 2026-07-23, reference tr_WDqYK6vllg.",
             "title": "Confirmation Summary"
           }
@@ -146,7 +146,7 @@
           "paymentLink": {
             "type": "string",
             "x-openconnector-resolved": true,
-            "description": "OpenConnector hosted payment UI URL with a short-lived signed token, resolved by the shared payment adapter following the bookings-deposits pattern. Embeds the payment-request id + invoice id + signed token; resolves to OpenConnector's hosted payment UI. NO Mollie/Stripe URL is constructed in app PHP/JS — the calculation delegates to OpenConnector. Null unless state=pending and the invoice unsettled.",
+            "description": "OpenConnector hosted payment UI URL with a short-lived signed token, resolved by the shared payment adapter following the bookings-deposits pattern. Embeds the payment-request id + invoice id + signed token; resolves to OpenConnector's hosted payment UI. NO Mollie/Stripe URL is constructed in app PHP/JS: the calculation delegates to OpenConnector. Null unless state=pending and the invoice unsettled.",
             "visibleWhen": {
               "all": [
                 {
@@ -176,7 +176,7 @@
             },
             "captured_unapplied": {
               "label": "Captured (unapplied)",
-              "description": "Capture succeeded at the gateway but the invoice could not be settled (already credited / written-off / paid by other means). EXCEPTION state — surfaced prominently on the payment-requests overview's exceptions filter, never silently dropped, and refundable via the adapter's existing refund call."
+              "description": "Capture succeeded at the gateway but the invoice could not be settled (already credited / written-off / paid by other means). EXCEPTION state: surfaced prominently on the payment-requests overview's exceptions filter, never silently dropped, and refundable via the adapter's existing refund call."
             },
             "failed": {
               "label": "Failed",
@@ -188,7 +188,7 @@
             },
             "voided": {
               "label": "Voided",
-              "description": "The invoice was settled by other means (bank match, credit note, write-off) or its outstanding amount changed — open pending requests are voided immediately so the link stops resolving to a payable session (design D5)."
+              "description": "The invoice was settled by other means (bank match, credit note, write-off) or its outstanding amount changed: open pending requests are voided immediately so the link stops resolving to a payable session (design D5)."
             }
           },
           "transitions": {
@@ -205,13 +205,13 @@
               ],
               "to": "captured",
               "label": "Capture payment",
-              "description": "Payment captured at the gateway. Settles the linked ARInvoice through its existing matchPaid lifecycle transition (AR core owns GL settlement posting, dunning stop, ageing — this change posts nothing) with the PaymentRequest as payment evidence; records capturedAt, settlementReference and gatewayFeeAmount for bank-reconciliation auto-matching. Idempotent: a replayed capture webhook is a no-op."
+              "description": "Payment captured at the gateway. Settles the linked ARInvoice through its existing matchPaid lifecycle transition (AR core owns GL settlement posting, dunning stop, ageing: this change posts nothing) with the PaymentRequest as payment evidence; records capturedAt, settlementReference and gatewayFeeAmount for bank-reconciliation auto-matching. Idempotent: a replayed capture webhook is a no-op."
             },
             "markUnapplied": {
               "from": "captured",
               "to": "captured_unapplied",
               "label": "Mark captured but unapplied",
-              "description": "The capture succeeded but the linked ARInvoice settlement transition was impossible (already credited / written-off / paid by other means). The request is surfaced as an exception — never silently dropped — and offers a refund via the adapter's existing refund call."
+              "description": "The capture succeeded but the linked ARInvoice settlement transition was impossible (already credited / written-off / paid by other means). The request is surfaced as an exception: never silently dropped. And offers a refund via the adapter's existing refund call."
             },
             "fail": {
               "from": [
@@ -220,14 +220,14 @@
               ],
               "to": "failed",
               "label": "Fail payment",
-              "description": "The gateway rejected the payment. Requires failureReason (the gateway error code/message — never raw card data).",
+              "description": "The gateway rejected the payment. Requires failureReason (the gateway error code/message: never raw card data).",
               "requires": "failureReason"
             },
             "expire": {
               "from": "pending",
               "to": "expired",
               "label": "Expire link",
-              "description": "Time-based transition fired when now > expiresAt and no payment captured. The shared polling job already wakes for pending requests (design D7) — no app-local cron."
+              "description": "Time-based transition fired when now > expiresAt and no payment captured. The shared polling job already wakes for pending requests (design D7): no app-local cron."
             },
             "void": {
               "from": [
@@ -236,7 +236,7 @@
               ],
               "to": "voided",
               "label": "Void request",
-              "description": "The invoice was settled by other means (bank match, credit note, write-off) or its outstanding amount changed — open requests are voided immediately so the link stops resolving. The voiding hook rides the invoice lifecycle transitions declaratively (design D5)."
+              "description": "The invoice was settled by other means (bank match, credit note, write-off) or its outstanding amount changed: open requests are voided immediately so the link stops resolving. The voiding hook rides the invoice lifecycle transitions declaratively (design D5)."
             }
           }
         },

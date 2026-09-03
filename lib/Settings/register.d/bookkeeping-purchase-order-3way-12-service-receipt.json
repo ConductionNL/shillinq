@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "prestatieverklaring-service-receipt",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Member 12 of the bookkeeping-purchase-order-3way chain. Declares SvcReceipt + SvcReceiptLine — the service-entry-sheet (prestatieverklaring) third leg for service PurchaseOrderLines, symmetric to member 01's GoodsReceiptNote/GoodsReceiptLine pair for goods. SvcReceipt carries an x-openregister-lifecycle state machine (ADR-031): draft -> confirmed -> accepted / rejected (no quality-check step; services have nothing to physically inspect). Slugs are abbreviated (SvcReceipt/SvcReceiptLine rather than ServiceReceipt/ServiceReceiptLine) to stay at or under the fleet's existing 40-character magic-table-name high-water mark (oc_openregister_shillinq_supplierinvoice)."
+    "description": "Member 12 of the bookkeeping-purchase-order-3way chain. Declares SvcReceipt + SvcReceiptLine: the service-entry-sheet (prestatieverklaring) third leg for service PurchaseOrderLines, symmetric to member 01's GoodsReceiptNote/GoodsReceiptLine pair for goods. SvcReceipt carries an x-openregister-lifecycle state machine (ADR-031): draft -> confirmed -> accepted / rejected (no quality-check step; services have nothing to physically inspect). Slugs are abbreviated (SvcReceipt/SvcReceiptLine rather than ServiceReceipt/ServiceReceiptLine) to stay at or under the fleet's existing 40-character magic-table-name high-water mark (oc_openregister_shillinq_supplierinvoice)."
   },
   "components": {
     "schemas": {

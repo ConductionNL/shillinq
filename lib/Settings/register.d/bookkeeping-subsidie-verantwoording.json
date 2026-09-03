@@ -87,7 +87,7 @@
         "icon": "FileDocumentCheckOutline",
         "version": "0.1.0",
         "title": "Subsidie Verantwoording",
-        "description": "Accountability record (verantwoording) for a Subsidie grant per Awb 4.2. Auto-generated in draft on grant award/disbursement, submitted for approval, approved (gated when a blocking AuditorStatement exists on a large grant —), and finalised. Distinct from the Subsidie grant master it references via grantId.",
+        "description": "Accountability record (verantwoording) for a Subsidie grant per Awb 4.2. Auto-generated in draft on grant award/disbursement, submitted for approval, approved (gated when a blocking AuditorStatement exists on a large grant: ), and finalised. Distinct from the Subsidie grant master it references via grantId.",
         "x-schema-org": "schema:GovernmentService",
         "x-spec": "openspec/changes/bookkeeping-subsidie-verantwoording/specs.md",
         "type": "object",
@@ -264,7 +264,7 @@
             },
             "type": "boolean",
             "materialise": true,
-            "description": "True when this accountability report is in a non-final state (draft/submitted/approved) and more than 90 days have elapsed since the grant award date — the declarative restoration of the retired OverdueVerantwoordingJob:isOverdue rule. Materialised so the onOverdue scheduled notification can filter on it, and re-evaluated daily without an object write by OpenRegister's TemporalCalculationSweepJob (daysSinceAward references `now`, which flags this schema as temporal); `final` is declared as x-openregister-lifecycle's terminal state so already-finalised records are excluded from the sweep."
+            "description": "True when this accountability report is in a non-final state (draft/submitted/approved) and more than 90 days have elapsed since the grant award date: the declarative restoration of the retired OverdueVerantwoordingJob:isOverdue rule. Materialised so the onOverdue scheduled notification can filter on it, and re-evaluated daily without an object write by OpenRegister's TemporalCalculationSweepJob (daysSinceAward references `now`, which flags this schema as temporal); `final` is declared as x-openregister-lifecycle's terminal state so already-finalised records are excluded from the sweep."
           }
         },
         "x-openregister-notifications": {
@@ -337,7 +337,7 @@
                 "isOverdue": true
               }
             },
-            "description": "Daily reminder to the assigned approver while an accountability report remains overdue — restores the retired OverdueVerantwoordingJob's 24h re-check cadence declaratively (ADR-031). Skips records with no assigned approverUserId, matching the job's original behaviour: the `field` recipient kind resolves an empty field value to zero recipients.",
+            "description": "Daily reminder to the assigned approver while an accountability report remains overdue: restores the retired OverdueVerantwoordingJob's 24h re-check cadence declaratively (ADR-031). Skips records with no assigned approverUserId, matching the job's original behaviour: the `field` recipient kind resolves an empty field value to zero recipients.",
             "recipients": [
               {
                 "kind": "field",

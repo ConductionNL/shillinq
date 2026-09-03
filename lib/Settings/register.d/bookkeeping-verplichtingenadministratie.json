@@ -9,7 +9,7 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Commitment",
-        "description": "A financial commitment (verplichting) tracked from the moment it becomes legally binding (purchase order signed, framework agreement agreed, employment contract executed, grant decision awarded) through delivery, invoicing, payment, and closure. Drives budget-blocking at commitment-time and mandate enforcement on aangaan. The status field is the lifecycle field; every state change is recorded as an immutable CommitmentMovement (D1). The tegenpartij is an embedded vendor reference (kvk/naam/iban) — not a bespoke customer schema; a customer/contact is a Nextcloud entity (ADR). THIS FRAGMENT IS THE SINGLE OWNER OF THIS SCHEMA'S `required` LIST: ADR-037's deepMergeConfig CONCATENATES list values, so a second fragment declaring `required` makes the effective list the UNION of both and no payload of either model can satisfy it. Overlay fragments (20-bookkeeping-tenderned-integratie.json) contribute properties only.",
+        "description": "A financial commitment (verplichting) tracked from the moment it becomes legally binding (purchase order signed, framework agreement agreed, employment contract executed, grant decision awarded) through delivery, invoicing, payment, and closure. Drives budget-blocking at commitment-time and mandate enforcement on aangaan. The status field is the lifecycle field; every state change is recorded as an immutable CommitmentMovement (D1). The tegenpartij is an embedded vendor reference (kvk/naam/iban): not a bespoke customer schema; a customer/contact is a Nextcloud entity (ADR). THIS FRAGMENT IS THE SINGLE OWNER OF THIS SCHEMA'S `required` LIST: ADR-037's deepMergeConfig CONCATENATES list values, so a second fragment declaring `required` makes the effective list the UNION of both and no payload of either model can satisfy it. Overlay fragments (20-bookkeeping-tenderned-integratie.json) contribute properties only.",
         "x-schema-org": "schema:Order",
         "x-openregister-purpose": "fact",
         "type": "object",
@@ -28,7 +28,7 @@
           },
           "commitmentNumber": {
             "type": "string",
-            "description": "Operator-assigned unique commitment number within the administration. This is the single spelling: the camelCase `verplichtingNummer` variant that TenderNedAwardDetectedListener once wrote is gone — every writer (CommitmentMaterialisationService, TenderNedAwardDetectedListener) and every reader (BudgetBlocker:canCommit, MandateEnforcer:hasSufficientMandate, CommitmentGuard, RequisitionService) now agrees on `commitmentNumber`.",
+            "description": "Operator-assigned unique commitment number within the administration. This is the single spelling: the camelCase `verplichtingNummer` variant that TenderNedAwardDetectedListener once wrote is gone. Every writer (CommitmentMaterialisationService, TenderNedAwardDetectedListener) and every reader (BudgetBlocker:canCommit, MandateEnforcer:hasSufficientMandate, CommitmentGuard, RequisitionService) now agrees on `commitmentNumber`.",
             "example": "PO-2026-00874",
             "title": "Verplichtingsnummer"
           },
@@ -520,7 +520,7 @@
         },
         "x-openregister-aggregations": {
           "committedVsRealisedPerBudgetLine": {
-            "description": "Per-budget-line committed-vs-realised rollup, grouped by budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Excludes afgesloten regels. verplicht = sum(restant_verplicht); gerealiseerd = sum(gefactureerd_bedrag); geautoriseerd is joined from the matching CommitmentBudget (administrationId + programmaCode = programma + boekjaar); vrij = geautoriseerd - verplicht - gerealiseerd is computed by the drilldown view (BudgetLineCommitments.vue) from these three declared figures — no parallel PHP reporting service (ADR-031).",
+            "description": "Per-budget-line committed-vs-realised rollup, grouped by budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Excludes afgesloten regels. Verplicht = sum(restant_verplicht); gerealiseerd = sum(gefactureerd_bedrag); geautoriseerd is joined from the matching CommitmentBudget (administrationId + programmaCode = programma + boekjaar); vrij = geautoriseerd - verplicht - gerealiseerd is computed by the drilldown view (BudgetLineCommitments.vue) from these three declared figures: no parallel PHP reporting service (ADR-031).",
             "_grammar_note": "Rewritten into OpenRegister's actual annotation vocabulary (openregister#2846 + #2849). It previously used `source` and a `sum` list, neither of which the engine reads — the runner recognised the aggregation by NAME and understood none of its body, returning metric:\"\", field:null, groups:[] against live objects with no error at all (issue #1216). `source` is dropped because this is an intra-schema aggregation declared ON CommitmentLine; `from` is the cross-schema key and would have sent it down a different path. `sum: [a, b]` becomes `metrics: [{metric, field}, ...]`, the multi-metric spelling. `on` uses the explicit {parentField: joinedField} map rather than the string shorthand: the shorthand names only the joined side and leaves the parent side to be inferred from the group fields, which happens to give the right answer here but is a guess, and the map is the only spelling that could express a composite key later.",
             "groupBy": [
               "programme",
@@ -1056,7 +1056,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a CommitmentBudget is written to OpenRegister's immutable audit trail with actor and timestamp. Pre-existing gap fixed while renaming this schema in the same edit (budget-core-schema) — the flag was missing under the retired 'Budget' slug too."
+          "description": "Every create, update and delete of a CommitmentBudget is written to OpenRegister's immutable audit trail with actor and timestamp. Pre-existing gap fixed while renaming this schema in the same edit (budget-core-schema): the flag was missing under the retired 'Budget' slug too."
         }
       }
     }

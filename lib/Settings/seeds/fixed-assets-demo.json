@@ -11,7 +11,7 @@
 		{
 			"assetNumber": "FA-DEMO-V-2026-0001",
 			"name": "Company Vehicle – License ABC-123",
-			"description": "Volkswagen ID.4 — primary management lease vehicle",
+			"description": "Volkswagen ID.4: primary management lease vehicle",
 			"assetCategory": "vehicles",
 			"assetType": "vehicle",
 			"acquisitionDate": "2026-01-15",
@@ -36,7 +36,7 @@
 		{
 			"assetNumber": "FA-DEMO-B-2026-0001",
 			"name": "Office Building – Amsterdam",
-			"description": "Hoofdkantoor — 1,200 m2 in Amsterdam Zuidoost",
+			"description": "Hoofdkantoor: 1,200 m2 in Amsterdam Zuidoost",
 			"assetCategory": "buildings",
 			"assetType": "building",
 			"acquisitionDate": "2020-06-01",

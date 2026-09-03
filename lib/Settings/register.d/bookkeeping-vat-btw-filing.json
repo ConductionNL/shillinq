@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-vat-btw-filing",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier-3 — Dutch BTW (VAT) filing capability per Wet OB 1968. Declares three new schemas (VATReturn, VATDeclaration, VATLine) for quarterly/monthly aangifte preparation. VATReturn carries the operator-driven lifecycle draft → submitted → verified → filed (x-openregister-lifecycle). VATDeclaration groups lines by (rate, type=collected|paid|reverse-charge); VATLine is derived from GL transactions where Account.vatApplicable = true. Amounts (totalVATCollected/Paid, vatBalance, taxableAmount, vatAmount) are MonetaryAmount-typed numbers persisted with multipleOf 0.01 (2-decimal Euro precision); rates use multipleOf 0.01 (2-decimal percent). Regime variants are an enum on VATReturn.regime (standard | kor | reverse-charge) and the pos-nl-btw-engine rate model (21% standard / 9% reduced / 0% zero, KOR exemption). Aggregations (totalVATCollected, totalVATPaid, lineCount) are declared via x-openregister-aggregations for the lifecycle to consume; VATReturnService composes them in PHP from the real OpenRegister ObjectService API (find/findAll/saveObject/deleteObject) when the OR engine cannot express the per-return grouping. Seeds load three example returns (Q1-2026 standard owed; Q1-2026 KOR exempt; Q2-2026 reverse-charge refund), six matching declarations, and twelve VATLine rows showing 21%/9%/0% + reverse-charge across Account.accountNumbers 4000/4010/4020/5000/5010."
+    "description": "Tier-3: Dutch BTW (VAT) filing capability per Wet OB 1968. Declares three new schemas (VATReturn, VATDeclaration, VATLine) for quarterly/monthly aangifte preparation. VATReturn carries the operator-driven lifecycle draft → submitted → verified → filed (x-openregister-lifecycle). VATDeclaration groups lines by (rate, type=collected|paid|reverse-charge); VATLine is derived from GL transactions where Account.vatApplicable = true. Amounts (totalVATCollected/Paid, vatBalance, taxableAmount, vatAmount) are MonetaryAmount-typed numbers persisted with multipleOf 0.01 (2-decimal Euro precision); rates use multipleOf 0.01 (2-decimal percent). Regime variants are an enum on VATReturn.regime (standard | kor | reverse-charge) and the pos-nl-btw-engine rate model (21% standard / 9% reduced / 0% zero, KOR exemption). Aggregations (totalVATCollected, totalVATPaid, lineCount) are declared via x-openregister-aggregations for the lifecycle to consume; VATReturnService composes them in PHP from the real OpenRegister ObjectService API (find/findAll/saveObject/deleteObject) when the OR engine cannot express the per-return grouping. Seeds load three example returns (Q1-2026 standard owed; Q1-2026 KOR exempt; Q2-2026 reverse-charge refund), six matching declarations, and twelve VATLine rows showing 21%/9%/0% + reverse-charge across Account.accountNumbers 4000/4010/4020/5000/5010."
   },
   "components": {
     "schemas": {
@@ -132,7 +132,7 @@
             "multipleOf": 0.01,
             "minimum": 0,
             "default": 0,
-            "description": "Total VAT payable from sales / AR (rubrieken 1a/1b/1c) — derived by VATReturnService:deriveVATLines.",
+            "description": "Total VAT payable from sales / AR (rubrieken 1a/1b/1c): derived by VATReturnService:deriveVATLines.",
             "example": 3150.0,
             "title": "Total VAT Collected"
           },
@@ -141,7 +141,7 @@
             "multipleOf": 0.01,
             "minimum": 0,
             "default": 0,
-            "description": "Total VAT deductible from purchases / AP — derived by VATReturnService:deriveVATLines.",
+            "description": "Total VAT deductible from purchases / AP: derived by VATReturnService:deriveVATLines.",
             "example": 2100.0,
             "title": "Total VAT Paid"
           },
@@ -296,7 +296,7 @@
         "icon": "ViewListOutline",
         "version": "0.1.0",
         "title": "BTW-rubriek",
-        "description": "Grouping of VATLine records within one VATReturn by (type, taxRate) — one row per rubriek on the aangifte. Carries totalVATAmount and totalTaxableAmount as aggregations over its child VATLine records.",
+        "description": "Grouping of VATLine records within one VATReturn by (type, taxRate): one row per rubriek on the aangifte. Carries totalVATAmount and totalTaxableAmount as aggregations over its child VATLine records.",
         "x-schema-org": "schema:DigitalDocument",
         "x-spec": "openspec/changes/bookkeeping-vat-btw-filing/specs/bookkeeping-vat-btw-filing.md",
         "type": "object",
@@ -858,7 +858,7 @@
         "taxableAmount": 0.0,
         "taxRate": 0.0,
         "vatAmount": 0.0,
-        "description": "Export 0% — informational line",
+        "description": "Export 0%: informational line",
         "reverseChargeApplicable": false,
         "administrationId": "adm-smb-1"
       }

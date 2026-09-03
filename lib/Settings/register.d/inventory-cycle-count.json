@@ -9,7 +9,7 @@
         "icon": "ClipboardListOutline",
         "version": "0.1.0",
         "title": "Inventory Cycle Count",
-        "description": "Periodic stock-take batch. A cycle count is a count BATCH covering an operator-selected scope (full or partial by location/category). On transition draft → submitted the engine snapshots the in-scope InventoryStock into InventoryCycleCountLine rows; on counting → posted the VarianceGate (ADR-031 exception) enforces that every line with requiresReason=true carries a reasonCode FK; on posted → reconciled the CycleCountService emits one StockMove per non-zero-variance line with movementType='adjustment-style' (issue/receipt depending on sign) and movementReason='cycle-count-variance' so the existing inventory-stock-movement-ledger lifecycle handles InventoryStock update + GL materialisation. The original posted CycleCount row stays immutable; reconciliation is one-shot and idempotent on countId. No app-local CycleCountMapper / lib/Db table per ADR-024 — the register IS the persistence. xLifecycle states + the variance threshold metadata live in this fragment so the change is fully declarative.",
+        "description": "Periodic stock-take batch. A cycle count is a count BATCH covering an operator-selected scope (full or partial by location/category). On transition draft → submitted the engine snapshots the in-scope InventoryStock into InventoryCycleCountLine rows; on counting → posted the VarianceGate (ADR-031 exception) enforces that every line with requiresReason=true carries a reasonCode FK; on posted → reconciled the CycleCountService emits one StockMove per non-zero-variance line with movementType='adjustment-style' (issue/receipt depending on sign) and movementReason='cycle-count-variance' so the existing inventory-stock-movement-ledger lifecycle handles InventoryStock update + GL materialisation. The original posted CycleCount row stays immutable; reconciliation is one-shot and idempotent on countId. No app-local CycleCountMapper / lib/Db table per ADR-024: the register IS the persistence. XLifecycle states + the variance threshold metadata live in this fragment so the change is fully declarative.",
         "x-schema-org": "schema:InventoryAction",
         "x-openregister-purpose": "ledger",
         "x-spec": "openspec/changes/inventory-cycle-count/specs/inventory-cycle-count/spec.md",
@@ -196,7 +196,7 @@
             "submitted": {
               "label": "Submitted",
               "labelNl": "Ingediend",
-              "description": "Scope is frozen. InventoryCycleCountLine rows have been created — one per in-scope (sku, locationId) pair with expectedQuantity populated from InventoryStock and countedQuantity null."
+              "description": "Scope is frozen. InventoryCycleCountLine rows have been created: one per in-scope (sku, locationId) pair with expectedQuantity populated from InventoryStock and countedQuantity null."
             },
             "counting": {
               "label": "Counting",
@@ -260,7 +260,7 @@
               "to": "counting",
               "label": "Begin counting",
               "labelNl": "Telling starten",
-              "description": "Warehouse staff begin data entry. No engine work required — a pure state flip."
+              "description": "Warehouse staff begin data entry. No engine work required: a pure state flip."
             },
             "post": {
               "from": "counting",
@@ -308,7 +308,7 @@
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "emit-variance-adjustments",
-                  "description": "Declarative materialisation: for each InventoryCycleCountLine with quantityVariance != 0, emit a StockMove via inventory-stock-movement-ledger. Sign rules: countedQuantity > expectedQuantity → movementType='receipt' (destinationLocationId = line.locationId, sourceLocationId=null); countedQuantity < expectedQuantity → movementType='issue' (sourceLocationId = line.locationId, destinationLocationId=null). movementReason='cycle-count-variance' always; referenceDocumentUri stamps the originating countId. Delegated to CycleCountService:emitAdjustments — the engine cannot express the fan-out + per-line sign branching natively (ADR-031 exception path).",
+                  "description": "Declarative materialisation: for each InventoryCycleCountLine with quantityVariance != 0, emit a StockMove via inventory-stock-movement-ledger. Sign rules: countedQuantity > expectedQuantity → movementType='receipt' (destinationLocationId = line.locationId, sourceLocationId=null); countedQuantity < expectedQuantity → movementType='issue' (sourceLocationId = line.locationId, destinationLocationId=null). MovementReason='cycle-count-variance' always; referenceDocumentUri stamps the originating countId. Delegated to CycleCountService:emitAdjustments. The engine cannot express the fan-out + per-line sign branching natively (ADR-031 exception path).",
                   "actionParameters": {
                     "register": "shillinq",
                     "sourceSchema": "InventoryCycleCountLine",
@@ -579,7 +579,7 @@
           },
           "requiresReason": {
             "expression": "ABS(quantityVariance) > expectedQuantity * @metadata.quantityVarianceThresholdPercent / 100 OR ABS(valueVariance) > @metadata.valueVarianceThresholdAbsolute",
-            "description": "Declarative threshold. CycleCountService:recalculateLine mirrors the same arithmetic when the engine cannot evaluate the expression (ADR-031 exception path — VarianceGate uses the PHP mirror for the post-time check)."
+            "description": "Declarative threshold. CycleCountService:recalculateLine mirrors the same arithmetic when the engine cannot evaluate the expression (ADR-031 exception path. VarianceGate uses the PHP mirror for the post-time check)."
           }
         },
         "x-openregister-indexes": [
@@ -637,7 +637,7 @@
         "icon": "TagOutline",
         "version": "0.1.0",
         "title": "Inventory Variance Reason",
-        "description": "Configurable reason-code taxonomy for cycle-count variance. Each administration maintains its own active reason-code set (seeded with seven standard codes — DMG, OBS, ERR-COUNT, ERR-STOCK, THEFT, SYS, OTHER — by the system on first count); the operator chooses one per requiresReason=true line. Inactive codes (isActive=false) remain queryable for audit but are hidden from the UI dropdown and rejected by the VarianceGate so historical lines retain their FK while new lines cannot pick them. The category enum is closed so variance reports can roll up consistently across administrations.",
+        "description": "Configurable reason-code taxonomy for cycle-count variance. Each administration maintains its own active reason-code set (seeded with seven standard codes: DMG, OBS, ERR-COUNT, ERR-STOCK, THEFT, SYS, OTHER. By the system on first count); the operator chooses one per requiresReason=true line. Inactive codes (isActive=false) remain queryable for audit but are hidden from the UI dropdown and rejected by the VarianceGate so historical lines retain their FK while new lines cannot pick them. The category enum is closed so variance reports can roll up consistently across administrations.",
         "x-schema-org": "schema:DefinedTerm",
         "x-openregister-purpose": "dimension",
         "x-spec": "openspec/changes/inventory-cycle-count/specs/inventory-cycle-count/spec.md",
@@ -766,7 +766,7 @@
               "repack",
               "cycle-count-variance"
             ],
-            "description": "Admin-configurable reason code +. inventory-cycle-count extends the enum with `cycle-count-variance` (emitted by CycleCountService:emitAdjustments on InventoryCycleCount reconcile — the originating countId is preserved in the StockMove.referenceDocumentUri as shillinq://cycle-count/<countId>).",
+            "description": "Admin-configurable reason code +. Inventory-cycle-count extends the enum with `cycle-count-variance` (emitted by CycleCountService:emitAdjustments on InventoryCycleCount reconcile. The originating countId is preserved in the StockMove.referenceDocumentUri as shillinq://cycle-count/<countId>).",
             "title": "Movement Reason"
           }
         }

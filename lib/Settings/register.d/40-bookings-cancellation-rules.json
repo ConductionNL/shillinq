@@ -380,7 +380,7 @@
       },
       "Appointment": {
         "slug": "Appointment",
-        "description": "Partial overlay (ADR-037 additive merge) onto the Appointment register owned by the bookings-create-appointment fragment (10-bookings-create-appointment.json). Adds the phase-2 cancellation fields the cancellation flow snapshots onto an appointment when it is cancelled (REQ-BCR Appointment Schema Extensions). These fields are all optional — set only at cancellation time — so they are deliberately NOT added to the base schema's required list. The base schema already declares cancelledAt and cancelledReason.",
+        "description": "Partial overlay (ADR-037 additive merge) onto the Appointment register owned by the bookings-create-appointment fragment (10-bookings-create-appointment.json). Adds the phase-2 cancellation fields the cancellation flow snapshots onto an appointment when it is cancelled (REQ-BCR Appointment Schema Extensions). These fields are all optional: set only at cancellation time. So they are deliberately NOT added to the base schema's required list. The base schema already declares cancelledAt and cancelledReason.",
         "properties": {
           "appliedPolicy": {
             "type": "object",

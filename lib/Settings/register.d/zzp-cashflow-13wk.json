@@ -878,7 +878,7 @@
           "contractReference": {
             "type": "string",
             "nullable": true,
-            "description": "FK to Contract (contract-lifecycle-management); null means this recurring cost has no originating contract — a dated planned cost (budget-known-costs). Additive, optional field.",
+            "description": "FK to Contract (contract-lifecycle-management); null means this recurring cost has no originating contract: a dated planned cost (budget-known-costs). Additive, optional field.",
             "example": null,
             "title": "Contract Reference",
             "$ref": "Contract"

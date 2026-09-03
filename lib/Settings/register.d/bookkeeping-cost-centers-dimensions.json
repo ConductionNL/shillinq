@@ -190,7 +190,7 @@
           },
           "projectNumber": {
             "type": "string",
-            "description": "Operator-facing project label (was CostProject.projectNumber). Non-unique — code remains the unique key. Applies when dimensionType = project; ignored for plain cost centers.",
+            "description": "Operator-facing project label (was CostProject.projectNumber). Non-unique: code remains the unique key. Applies when dimensionType = project; ignored for plain cost centers.",
             "nullable": true,
             "example": "CP-2026-001",
             "title": "Project Number"
@@ -226,7 +226,7 @@
           },
           "migratedFrom": {
             "type": "string",
-            "description": "Migration provenance marker written by RetireCostProjectStep. Contains the source CostProject id from which this AnalyticalDimension was created. Used for idempotency — dimensions with this marker are skipped on repair re-runs. Not editable.",
+            "description": "Migration provenance marker written by RetireCostProjectStep. Contains the source CostProject id from which this AnalyticalDimension was created. Used for idempotency: dimensions with this marker are skipped on repair re-runs. Not editable.",
             "nullable": true,
             "readOnly": true,
             "example": "cp-2026-001",
@@ -276,7 +276,7 @@
         },
         "x-openregister-aggregations": {
           "segmentPnl": {
-            "description": "Segment P&L per cost-center: debit/credit sums of non-eliminated GLLine amounts, grouped by costCenterCode + periodId + accountNumber. Returns EVERY cost-center; narrow to one with the extraFilter query params (?costCenterCode=.). It does not correlate on @self — no caller supplies a parent row. Parent roll-up over the parentCode tree is NOT included here; byCostCenterHierarchy does that through the join.",
+            "description": "Segment P&L per cost-center: debit/credit sums of non-eliminated GLLine amounts, grouped by costCenterCode + periodId + accountNumber. Returns EVERY cost-center; narrow to one with the extraFilter query params (?costCenterCode=.). It does not correlate on @self: no caller supplies a parent row. Parent roll-up over the parentCode tree is NOT included here; byCostCenterHierarchy does that through the join.",
             "from": "GLLine",
             "where": {
               "eliminationFlag": false
@@ -306,7 +306,7 @@
             ]
           },
           "segmentPnlByCostObject": {
-            "description": "Segment P&L per cost-object: debit/credit sums of non-eliminated GLLine amounts, grouped by costCarrierCode + periodId + accountNumber. Returns EVERY cost-object; narrow to one with the extraFilter query params (?costCarrierCode=.). Replaces the retired KostenDrager.segmentPnl; the field is costCarrierCode — kostenDragerCode is not declared on GLLine and matched nothing.",
+            "description": "Segment P&L per cost-object: debit/credit sums of non-eliminated GLLine amounts, grouped by costCarrierCode + periodId + accountNumber. Returns EVERY cost-object; narrow to one with the extraFilter query params (?costCarrierCode=.). Replaces the retired KostenDrager.segmentPnl; the field is costCarrierCode: kostenDragerCode is not declared on GLLine and matched nothing.",
             "from": "GLLine",
             "where": {
               "eliminationFlag": false
@@ -383,7 +383,7 @@
       "GLLine": {
         "x-openregister-aggregations": {
           "byCostCenter": {
-            "description": "Per-cost-center roll-up of posted GL amounts within an administration. Surfaces segment P&L per AnalyticalDimension[dimensionType=cost-center].code (joined to name for drill-down). Declared declaratively per ADR-031 — no PHP SegmentReportService. Re-targeted from CostCenter to AnalyticalDimension.",
+            "description": "Per-cost-center roll-up of posted GL amounts within an administration. Surfaces segment P&L per AnalyticalDimension[dimensionType=cost-center].code (joined to name for drill-down). Declared declaratively per ADR-031: no PHP SegmentReportService. Re-targeted from CostCenter to AnalyticalDimension.",
             "metric": "sum",
             "field": "amount",
             "groupBy": [

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-payroll-engine-nl",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Full NL Loonadministratie engine. Adds seven payroll schemas to the shillinq register via the ADR-037 fragment loader (SettingsService:deepMergeConfig unions components.schemas / components.objects by key/list): Werkgever (employer fiscal setup), Werknemer (employee fiscal master — references the existing NC/OR Person; BSN is a special-category identifier, masked in API output and never logged raw), LoonPeriode (week/4-week/month payroll batch per employer), LoonStrook (full bruto->netto payslip with all line items, cumulatieven snapshot, vakantiegeld reservation), LoonheffingTabel2026 (immutable, versioned 2026 wage-tax table), LHAfdracht (per-period Belastingdienst remittance aggregate, VOORBEREID for the SBR app), and Loonjournaalpost (auto-balanced GL posting, debit==credit). The bruto->netto arithmetic, SV/ZVW premium caps, vakantietoeslag opbouw, pro-rata mutaties, DGA gebruikelijk-loon check and belastingvrije toelagen live in OCA\\Shillinq\\Service\\PayrollCalculator (pure logic, no OR dependency); OCA\\Shillinq\\Service\\PayrollService wires that helper to live OR data via the real ObjectService API (find / findAll / saveObject). Seed objects ship a worked Conduction B.V. May-2026 example (employer, fulltime + parttime + DGA employees, a closed period, payslips, the LH-afdracht and the balanced journaalpost) per design.md."
+    "description": "Full NL Loonadministratie engine. Adds seven payroll schemas to the shillinq register via the ADR-037 fragment loader (SettingsService:deepMergeConfig unions components.schemas / components.objects by key/list): Werkgever (employer fiscal setup), Werknemer (employee fiscal master. References the existing NC/OR Person; BSN is a special-category identifier, masked in API output and never logged raw), LoonPeriode (week/4-week/month payroll batch per employer), LoonStrook (full bruto->netto payslip with all line items, cumulatieven snapshot, vakantiegeld reservation), LoonheffingTabel2026 (immutable, versioned 2026 wage-tax table), LHAfdracht (per-period Belastingdienst remittance aggregate, VOORBEREID for the SBR app), and Loonjournaalpost (auto-balanced GL posting, debit==credit). The bruto->netto arithmetic, SV/ZVW premium caps, vakantietoeslag opbouw, pro-rata mutaties, DGA gebruikelijk-loon check and belastingvrije toelagen live in OCA\\Shillinq\\Service\\PayrollCalculator (pure logic, no OR dependency); OCA\\Shillinq\\Service\\PayrollService wires that helper to live OR data via the real ObjectService API (find / findAll / saveObject). Seed objects ship a worked Conduction B.V. May-2026 example (employer, fulltime + parttime + DGA employees, a closed period, payslips, the LH-afdracht and the balanced journaalpost) per design.md."
   },
   "components": {
     "schemas": {
@@ -126,7 +126,7 @@
         "icon": "AccountTie",
         "version": "0.1.0",
         "title": "Werknemer",
-        "description": "Employee fiscal master. References the tenant Person/contact (personId) for name/address — this engine never re-invents a person/contact schema; it carries only the fiscal/payroll attributes a payslip needs. BSN is special-category (AVG) — masked in API output, never logged raw. sectorSpecifiekeAttributen is an open JSON object reserved for the 600+ CAO variants without overloading the engine.",
+        "description": "Employee fiscal master. References the tenant Person/contact (personId) for name/address: this engine never re-invents a person/contact schema; it carries only the fiscal/payroll attributes a payslip needs. BSN is special-category (AVG). Masked in API output, never logged raw. SectorSpecifiekeAttributen is an open JSON object reserved for the 600+ CAO variants without overloading the engine.",
         "x-schema-org": "schema:Person",
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-000-werkgever-setup.md",
         "type": "object",
@@ -149,7 +149,7 @@
           },
           "personId": {
             "type": "string",
-            "description": "FK to the tenant Person/contact (NC-addressbook/OR Person) for name/address. The engine reuses the existing person entity (ADR — a person is a Nextcloud entity), it does not duplicate it.",
+            "description": "FK to the tenant Person/contact (NC-addressbook/OR Person) for name/address. The engine reuses the existing person entity (ADR: a person is a Nextcloud entity), it does not duplicate it.",
             "example": "person-jansen",
             "title": "Person ID"
           },
@@ -380,7 +380,7 @@
         "icon": "TableLarge",
         "version": "0.1.0",
         "title": "Loonheffingtabel 2026",
-        "description": "Immutable, versioned 2026 wage-tax table. One record per colour/period/korting combination; tabelRegels is the bracket array. readonly once geldigVan has passed — a Belastingdienst correction is a NEW record with a later geldigVan, never an edit (design.md D2). This guarantees reproducibility: in 2031 the engine can still answer 'what was the May-2026 table?'.",
+        "description": "Immutable, versioned 2026 wage-tax table. One record per colour/period/korting combination; tabelRegels is the bracket array. Readonly once geldigVan has passed: a Belastingdienst correction is a NEW record with a later geldigVan, never an edit (design.md D2). This guarantees reproducibility: in 2031 the engine can still answer 'what was the May-2026 table?'.",
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-002-loonheffingstabellen.md",
         "x-openregister": {
           "readonly": true
@@ -739,7 +739,7 @@
         "icon": "BankTransfer",
         "version": "0.1.0",
         "title": "Loonheffingen-afdracht",
-        "description": "Per-period Belastingdienst remittance aggregate: total wage tax + WKR eindheffingen + employer SV premiums + ZVW, with the due date and a status workflow VOORBEREID->GEVERIFIEERD->VERZONDEN->VERWERKT. Prepared (VOORBEREID) for the bookkeeping-loonaangifte-sbr app to convert to SBR/XBRL and submit via Digipoort — this engine never submits directly.",
+        "description": "Per-period Belastingdienst remittance aggregate: total wage tax + WKR eindheffingen + employer SV premiums + ZVW, with the due date and a status workflow VOORBEREID->GEVERIFIEERD->VERZONDEN->VERWERKT. Prepared (VOORBEREID) for the bookkeeping-loonaangifte-sbr app to convert to SBR/XBRL and submit via Digipoort: this engine never submits directly.",
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-011-lh-aangifte.md",
         "type": "object",
         "required": [
@@ -837,7 +837,7 @@
         "icon": "BookOpenVariant",
         "version": "0.1.0",
         "title": "Loonjournaalpost",
-        "description": "Auto-generated, balanced GL posting per closed payroll period. regels is the array of {rekening, naam, debet, credit} lines mapping to RGS accounts (4001/4010/4020 debit, 1610/1620/1630/1640 credit). balanced is true only when sum(debet)==sum(credit) — PayrollService refuses to post an unbalanced journal.",
+        "description": "Auto-generated, balanced GL posting per closed payroll period. Regels is the array of {rekening, naam, debet, credit} lines mapping to RGS accounts (4001/4010/4020 debit, 1610/1620/1630/1640 credit). Balanced is true only when sum(debet)==sum(credit): PayrollService refuses to post an unbalanced journal.",
         "x-spec": "openspec/changes/bookkeeping-payroll-engine-nl/specs/req-pay-012-gl-boeking.md",
         "type": "object",
         "required": [

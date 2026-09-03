@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-ifrs15-revenue",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 2 — IFRS 15 / ASC 606 five-step revenue recognition. Adds eleven new schemas (RevenueContract, PerformanceObligation, TransactionPrice, PriceAllocation, RevenueRecognitionEvent, ContractAsset, ContractLiability, ContractModification, VariableConsiderationAdjustment, ContractCostAsset, RevenueWaterfall) implementing the five-step model: (1) identify the contract, (2) identify separate performance obligations, (3) determine the transaction price, (4) allocate the price across POs using relative stand-alone selling price (SSP), (5) recognise revenue when/as each PO is satisfied. RevenueContract is named to avoid colliding with contract-lifecycle-management's generic Contract schema, the fleet's canonical ADR-051 ns#Contract implementer (contracts-single-home); the two are deliberately separate registers for separate bounded contexts and MUST NOT be merged, aliased, or share a slug. RevenueContract carries an x-openregister-lifecycle (draft -> signed -> in-delivery -> completed / cancelled); posting a RevenueRecognitionEvent materialises a balanced GLTransaction via the T1 materialisation extension (debit accrued-revenue / credit revenue). RevenueWaterfall declares an x-openregister-aggregations block documenting the per-contract, per-period roll-up of recognised + remaining transaction price for 60+ months. The nightly contract asset/liability cut-off (idempotent reverse-then-post), the relative-SSP / residual price allocation, the cost-to-cost percentage-of-completion, and the variable-consideration constraint + re-estimation are computed by OCA\\Shillinq\\Service\\RevenueCutoffService + RevenueRecognitionCalculator + VariableConsiderationReestimationService via the real OpenRegister ObjectService API (find / findAll / saveObject), with the declarative shapes documented on the schemas per ADR-031. ContractAsset / ContractLiability / RevenueWaterfall are read-only (derived nightly, never authored by operators). Seed objects provide the four worked examples from design.md (36-month SaaS bundle, cost-to-cost construction, multi-year maintenance with escalation, distinct-scope modification = new contract)."
+    "description": "Tier 2: IFRS 15 / ASC 606 five-step revenue recognition. Adds eleven new schemas (RevenueContract, PerformanceObligation, TransactionPrice, PriceAllocation, RevenueRecognitionEvent, ContractAsset, ContractLiability, ContractModification, VariableConsiderationAdjustment, ContractCostAsset, RevenueWaterfall) implementing the five-step model: (1) identify the contract, (2) identify separate performance obligations, (3) determine the transaction price, (4) allocate the price across POs using relative stand-alone selling price (SSP), (5) recognise revenue when/as each PO is satisfied. RevenueContract is named to avoid colliding with contract-lifecycle-management's generic Contract schema, the fleet's canonical ADR-051 ns#Contract implementer (contracts-single-home); the two are deliberately separate registers for separate bounded contexts and MUST NOT be merged, aliased, or share a slug. RevenueContract carries an x-openregister-lifecycle (draft -> signed -> in-delivery -> completed / cancelled); posting a RevenueRecognitionEvent materialises a balanced GLTransaction via the T1 materialisation extension (debit accrued-revenue / credit revenue). RevenueWaterfall declares an x-openregister-aggregations block documenting the per-contract, per-period roll-up of recognised + remaining transaction price for 60+ months. The nightly contract asset/liability cut-off (idempotent reverse-then-post), the relative-SSP / residual price allocation, the cost-to-cost percentage-of-completion, and the variable-consideration constraint + re-estimation are computed by OCA\\Shillinq\\Service\\RevenueCutoffService + RevenueRecognitionCalculator + VariableConsiderationReestimationService via the real OpenRegister ObjectService API (find / findAll / saveObject), with the declarative shapes documented on the schemas per ADR-031. ContractAsset / ContractLiability / RevenueWaterfall are read-only (derived nightly, never authored by operators). Seed objects provide the four worked examples from design.md (36-month SaaS bundle, cost-to-cost construction, multi-year maintenance with escalation, distinct-scope modification = new contract)."
   },
   "components": {
     "schemas": {
@@ -13,12 +13,12 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Revenue Contract",
-        "description": "A customer revenue contract under IFRS 15 — the legal instrument that bundles one or more performance obligations. Named RevenueContract (not the bare Contract) specifically to avoid colliding with contract-lifecycle-management's generic Contract schema, which is the fleet's canonical ADR-051 ns#Contract implementer; the two are deliberately separate registers for separate bounded contexts (revenue recognition vs. generic contract lifecycle) and MUST NOT be merged, aliased, or share a slug (contracts-single-home). Carries identification, dates, the decomposed transaction price (fixed + estimated variable), currency, the signed-at date, the originating quote/order reference, and a contractGroupId for IFRS 15.17 combination-of-contracts treatment. Revenue contracts are first-class entities with their own lifecycle and modification history; they are never embedded in GL transactions or invoice rows.",
+        "description": "A customer revenue contract under IFRS 15: the legal instrument that bundles one or more performance obligations. Named RevenueContract (not the bare Contract) specifically to avoid colliding with contract-lifecycle-management's generic Contract schema, which is the fleet's canonical ADR-051 ns#Contract implementer; the two are deliberately separate registers for separate bounded contexts (revenue recognition vs. Generic contract lifecycle) and MUST NOT be merged, aliased, or share a slug (contracts-single-home). Carries identification, dates, the decomposed transaction price (fixed + estimated variable), currency, the signed-at date, the originating quote/order reference, and a contractGroupId for IFRS 15.17 combination-of-contracts treatment. Revenue contracts are first-class entities with their own lifecycle and modification history; they are never embedded in GL transactions or invoice rows.",
         "x-schema-org": "schema:Contract",
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022: every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
         },
         "type": "object",
         "required": [
@@ -178,7 +178,7 @@
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022: every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
         },
         "type": "object",
         "required": [
@@ -326,7 +326,7 @@
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022: every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
         },
         "type": "object",
         "required": [
@@ -426,7 +426,7 @@
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022: every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
         },
         "type": "object",
         "required": [
@@ -493,7 +493,7 @@
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022: every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
         },
         "type": "object",
         "required": [
@@ -596,7 +596,7 @@
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022: every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
         },
         "x-openregister": {
           "readonly": true
@@ -684,7 +684,7 @@
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022: every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
         },
         "x-openregister": {
           "readonly": true
@@ -765,7 +765,7 @@
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022: every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
         },
         "type": "object",
         "required": [
@@ -882,7 +882,7 @@
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022: every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
         },
         "type": "object",
         "required": [
@@ -964,7 +964,7 @@
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022: every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
         },
         "type": "object",
         "required": [
@@ -1069,7 +1069,7 @@
         "x-spec": "openspec/changes/bookkeeping-ifrs15-revenue/specs/bookkeeping-ifrs15-revenue/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022 — every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
+          "description": "IFRS 15 revenue-recognition records MUST be audit-trail-immutable / ADR-022: every change feeds the IFRS 15.116-119 contract-balance reconciliation, the IFRS 15.120 RPO disclosure, and the variable-consideration constraint trail that auditors review per IFRS 15.123-126 significant-judgements disclosure."
         },
         "x-openregister": {
           "readonly": true

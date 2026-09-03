@@ -67,21 +67,21 @@
           "socialePremies": {
             "type": "number",
             "minimum": 0,
-            "description": "Employer social premiums (WW, ZW, WAO/WIA etc.) — CR side.",
+            "description": "Employer social premiums (WW, ZW, WAO/WIA etc.): CR side.",
             "example": 600.0,
             "title": "Sociale Premies"
           },
           "payrollTax": {
             "type": "number",
             "minimum": 0,
-            "description": "Wage tax withheld (loonbelasting + premie volksverzekeringen) — CR side.",
+            "description": "Wage tax withheld (loonbelasting + premie volksverzekeringen): CR side.",
             "example": 500.0,
             "title": "Loonheffing"
           },
           "pensioen": {
             "type": "number",
             "minimum": 0,
-            "description": "Employer pension contribution — CR side.",
+            "description": "Employer pension contribution: CR side.",
             "example": 200.0,
             "title": "Pensioen"
           },
@@ -249,7 +249,7 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Opdrachtgevers Verklaring",
-        "description": "Wet DBA (Deregulering Beoordeling Arbeidsrelaties) position record per ZZP assignment. Declares the opdrachtgever-opdrachtnemer relationship and risicobeoordeling. No PHP DBA service — lifecycle and document rendering are declarative per ADR-031.",
+        "description": "Wet DBA (Deregulering Beoordeling Arbeidsrelaties) position record per ZZP assignment. Declares the opdrachtgever-opdrachtnemer relationship and risicobeoordeling. No PHP DBA service: lifecycle and document rendering are declarative per ADR-031.",
         "type": "object",
         "x-schema-org": "schema:DigitalDocument",
         "required": [
@@ -651,7 +651,7 @@
             ],
             "subject": "IB47 batch submitted",
             "template": "ib47-batch-submitted",
-            "description": "Notify the payroll-officer when the IB47 yearly batch has been transmitted to the Belastingdienst via openconnector. Declarative fan-out per ADR-031. KNOWN GAP (migrate-legacy-notification-dialect): trigger is still the bare-string legacy shape — IB47Record has no status/lifecycle field for a canonical `transition` trigger to hook into; the batch-submitted event is fired by the openconnector transmission step, not an object state change. Needs a schema decision (add a submission-status field, or a new non-transition trigger type) before this rule can dispatch through the declarative engine; tracked as follow-up, not fixed by this change."
+            "description": "Notify the payroll-officer when the IB47 yearly batch has been transmitted to the Belastingdienst via openconnector. Declarative fan-out per ADR-031. KNOWN GAP (migrate-legacy-notification-dialect): trigger is still the bare-string legacy shape. IB47Record has no status/lifecycle field for a canonical `transition` trigger to hook into; the batch-submitted event is fired by the openconnector transmission step, not an object state change. Needs a schema decision (add a submission-status field, or a new non-transition trigger type) before this rule can dispatch through the declarative engine; tracked as follow-up, not fixed by this change."
           }
         },
         "x-openregister-audit-trail": {

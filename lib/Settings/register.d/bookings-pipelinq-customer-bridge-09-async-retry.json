@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookings-pipelinq-customer-bridge-09-async-retry",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "kind: code — member 9 of 11 in the bookings-pipelinq-customer-bridge chain (ADR-032). Declares the two persistent registers the async-retry pipeline needs: TimelinePublishRetryEntry (events queued for retry after a synchronous publish failure) and TimelineDeadLetter (events that exhausted their retry budget, parked for admin follow-up). The retry queue (PersistentTimelineRetryQueue) writes a TimelinePublishRetryEntry and adds a PipelinqTimelineRetryJob to the Nextcloud IJobList; the job re-attempts publish on each tick with exponential backoff (1m, 5m, 30m) and dead-letters on max retries (D3 — sync publish, async fallback). Additive merge via SettingsService:deepMergeConfig (ADR-037). Both schemas are write-only operator-facing: humans never edit these in the UI, but the DeadLetter admin view (member 09) lists + manual-retries records."
+    "description": "kind: code. Member 9 of 11 in the bookings-pipelinq-customer-bridge chain (ADR-032). Declares the two persistent registers the async-retry pipeline needs: TimelinePublishRetryEntry (events queued for retry after a synchronous publish failure) and TimelineDeadLetter (events that exhausted their retry budget, parked for admin follow-up). The retry queue (PersistentTimelineRetryQueue) writes a TimelinePublishRetryEntry and adds a PipelinqTimelineRetryJob to the Nextcloud IJobList; the job re-attempts publish on each tick with exponential backoff (1m, 5m, 30m) and dead-letters on max retries (D3. Sync publish, async fallback). Additive merge via SettingsService:deepMergeConfig (ADR-037). Both schemas are write-only operator-facing: humans never edit these in the UI, but the DeadLetter admin view (member 09) lists + manual-retries records."
   },
   "info": {
     "version": "0.1.0-bookings-pipelinq-customer-bridge-09"
@@ -110,7 +110,7 @@
         "icon": "EmailAlertOutline",
         "version": "0.1.0",
         "title": "Timeline Dead-Letter Entry",
-        "description": "Terminal parking lot for timeline events that exhausted their async-retry budget (retryCount > maxRetries on TimelinePublishRetryEntry). Populated by PipelinqTimelineRetryJob, listed by the TimelineDeadLetterController admin view, and re-queued via the controller's `retry` action which copies the entry back into TimelinePublishRetryEntry (retryCount reset to 0, fresh nextRetryAt). lastError captures the final failure reason recorded by the retry job. dispatchedAt is set when an admin manually re-queues — supports the audit trail of admin intervention without deleting the dead-letter row immediately (kept for post-mortem).",
+        "description": "Terminal parking lot for timeline events that exhausted their async-retry budget (retryCount > maxRetries on TimelinePublishRetryEntry). Populated by PipelinqTimelineRetryJob, listed by the TimelineDeadLetterController admin view, and re-queued via the controller's `retry` action which copies the entry back into TimelinePublishRetryEntry (retryCount reset to 0, fresh nextRetryAt). LastError captures the final failure reason recorded by the retry job. DispatchedAt is set when an admin manually re-queues: supports the audit trail of admin intervention without deleting the dead-letter row immediately (kept for post-mortem).",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookings-pipelinq-customer-bridge-09-async-retry/specs/bookings-pipelinq-integration/spec.md",
         "type": "object",
@@ -143,7 +143,7 @@
           "timestampIso": {
             "type": "string",
             "format": "date-time",
-            "description": "Original event timestamp in ISO-8601 UTC — preserved so a manual re-queue rebuilds an identical timeline entry (idempotent deduplication downstream).",
+            "description": "Original event timestamp in ISO-8601 UTC: preserved so a manual re-queue rebuilds an identical timeline entry (idempotent deduplication downstream).",
             "example": "2026-06-07T12:34:56Z",
             "title": "Timestamp ISO"
           },

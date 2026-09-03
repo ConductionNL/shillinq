@@ -11,7 +11,7 @@
   "retentionRules": [
     {
       "selectionListCode": "5.1.1",
-      "description": "Begroting, jaarrekening, rekeningschema en meerjarenraming — financiële grondslagen van de administratie",
+      "description": "Begroting, jaarrekening, rekeningschema en meerjarenraming: financiële grondslagen van de administratie",
       "recordCategory": "financial",
       "retentionYears": null,
       "disposition": "keep_indefinite",

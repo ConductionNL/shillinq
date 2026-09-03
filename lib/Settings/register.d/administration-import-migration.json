@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "administration-import-migration",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json. ADR-031 declarative-first lifecycle + notifications. ADR-022 consume OR object/contact surfaces (no parallel PHP model).",
-    "description": "Tier 2 — Administration Import & Migration. Declares ImportBatch (XAF/CSV migration unit with a fail-closed lifecycle: draft → parsing → staged → mapping → validated | validation_failed → dry_run_complete → posting → posted | posting_failed → reversed; NO validated→posting edge so a dry-run is mandatory; reversal only while the period is open, guarded by OCA\\Shillinq\\Lifecycle\\ImportBatchGuard:canReverse) and ImportMapping (per-account source→target mapping rows with RGS-based auto-suggestion; unmapped/unconfirmed rows block validation). Source files live in NC Files (link, don't store). The five x-openregister-notifications rules fire on ImportBatch.status changes (validation_failed / dry_run_complete / posted / posting_failed / reversed), metadata-only nl+en. Distinct from AdministrationMigrationService (bookkeeping-multi-administratie) which handles GL inter-administration migration journal drafts — no overlap. Seed data ships demo ImportBatch + ImportMapping rows under administrationId 'adm-shillinq-demo'."
+    "description": "Tier 2: Administration Import & Migration. Declares ImportBatch (XAF/CSV migration unit with a fail-closed lifecycle: draft → parsing → staged → mapping → validated | validation_failed → dry_run_complete → posting → posted | posting_failed → reversed; NO validated→posting edge so a dry-run is mandatory; reversal only while the period is open, guarded by OCA\\Shillinq\\Lifecycle\\ImportBatchGuard:canReverse) and ImportMapping (per-account source→target mapping rows with RGS-based auto-suggestion; unmapped/unconfirmed rows block validation). Source files live in NC Files (link, don't store). The five x-openregister-notifications rules fire on ImportBatch.status changes (validation_failed / dry_run_complete / posted / posting_failed / reversed), metadata-only nl+en. Distinct from AdministrationMigrationService (bookkeeping-multi-administratie) which handles GL inter-administration migration journal drafts. No overlap. Seed data ships demo ImportBatch + ImportMapping rows under administrationId 'adm-shillinq-demo'."
   },
   "components": {
     "schemas": {
@@ -48,7 +48,7 @@
           },
           "sourceFiles": {
             "type": "array",
-            "description": "Nextcloud Files references (XAF auditfile + optional companion CSVs). Link, don't store — the file bytes are never copied into the register.",
+            "description": "Nextcloud Files references (XAF auditfile + optional companion CSVs). Link, don't store: the file bytes are never copied into the register.",
             "items": {
               "type": "object",
               "required": [
@@ -309,7 +309,7 @@
               "from": "validated",
               "to": "dry_run_complete",
               "label": "Dry-run",
-              "description": "Generate and persist the full would-be result on dryRunReport and record the staged-state hash. MANDATORY before posting — there is deliberately NO validated→posting edge."
+              "description": "Generate and persist the full would-be result on dryRunReport and record the staged-state hash. MANDATORY before posting: there is deliberately NO validated→posting edge."
             },
             "post": {
               "from": "dry_run_complete",
@@ -333,7 +333,7 @@
               "from": "posted",
               "to": "reversed",
               "label": "Reverse import",
-              "description": "Post the reversing journal, soft-delete imported open items and master rows, mark the batch reversed; contacts are reported but never deleted. ONLY while the target period is open — guarded.",
+              "description": "Post the reversing journal, soft-delete imported open items and master rows, mark the batch reversed; contacts are reported but never deleted. ONLY while the target period is open: guarded.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ImportBatchGuard::canReverse",
               "x-adr-031-exception": "Open-period precondition for reversal is a cross-schema FiscalPeriod check the declarative requires: DSL cannot yet express; ImportBatchGuard::canReverse is the documented ADR-031 PHP-guard seam (mirrors APGuard / StatementParser). Replace with a declarative condition when OR gains the primitive."
             }

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookings-confirm-flow",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "kind: feature — appointment confirmation flow. Adds the ConfirmationToken schema with token lifecycle (active → redeemed | revoked | expired) and extends the Appointment schema with confirmation fields (confirmationDeadline, confirmedAt, confirmationTokenId) and the matching pending_confirmation → confirmed lifecycle transitions. Both schemas are additive over bookings-create-appointment (which already owns the Appointment monolith), merged via SettingsService:deepMergeConfig (ADR-037). No PHP model classes — tokens are managed as OR objects through ConfirmationApiController + ConfirmationTokenService."
+    "description": "kind: feature. Appointment confirmation flow. Adds the ConfirmationToken schema with token lifecycle (active → redeemed | revoked | expired) and extends the Appointment schema with confirmation fields (confirmationDeadline, confirmedAt, confirmationTokenId) and the matching pending_confirmation → confirmed lifecycle transitions. Both schemas are additive over bookings-create-appointment (which already owns the Appointment monolith), merged via SettingsService:deepMergeConfig (ADR-037). No PHP model classes. Tokens are managed as OR objects through ConfirmationApiController + ConfirmationTokenService."
   },
   "components": {
     "schemas": {
@@ -76,7 +76,7 @@
           },
           "appointmentId": {
             "type": "string",
-            "description": "FK to Appointment.appointmentId — the appointment this token confirms.",
+            "description": "FK to Appointment.appointmentId: the appointment this token confirms.",
             "example": "apt-001",
             "title": "Appointment ID"
           },

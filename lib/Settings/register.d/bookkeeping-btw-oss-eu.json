@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-btw-oss-eu",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 2 — Union One-Stop-Shop (OSS) cross-border EU VAT compliance per Council Directive 2006/112/EC Articles 358a-369x + Council Implementing Regulation (EU) 282/2011. Declares five new schemas (OssRegistration, EuVatRate, OssThresholdCounter, OssReturn, OssPayment), additively extends the Invoice schema (owned by bookings-deposit-to-invoice) with an ossContext sub-object via key-union merge (ADR-037 deepMergeConfig), and seeds the EuVatRate table from the EU Commission TEDB v3 plus example OSS registrations and a worked quarterly return. The OSS pipeline runs alongside (not inside) the domestic BTW pipeline (VatReturn): OSS turnover (8xxx Omzet OSS {country}) and OSS VAT-payable (1xxx BTW af te dragen OSS {country}) are booked to dedicated per-country grootboekrekeningen that are excluded from the regular BTW-aangifte rubrieken 3a/3b/4a/4b (OssLedgerGuard:assertNoOssAccountsOnBtwReturn). Destination-country VAT-rate resolution, threshold monitoring, quarterly aangifte generation, XSD/CSV formatting and payment reconciliation are the ADR-031 exception-path services in lib/Service (OssRateResolver, OssReturnGenerator, OssReturnFormatter, OssPaymentReconciliation) + lib/Guard (OssThresholdGuard, OssLedgerGuard) which use the real OpenRegister ObjectService API (find/findAll). B2B intra-community supplies are explicitly excluded and route to the reverse-charge / ICP path (IcpStatement)."
+    "description": "Tier 2: Union One-Stop-Shop (OSS) cross-border EU VAT compliance per Council Directive 2006/112/EC Articles 358a-369x + Council Implementing Regulation (EU) 282/2011. Declares five new schemas (OssRegistration, EuVatRate, OssThresholdCounter, OssReturn, OssPayment), additively extends the Invoice schema (owned by bookings-deposit-to-invoice) with an ossContext sub-object via key-union merge (ADR-037 deepMergeConfig), and seeds the EuVatRate table from the EU Commission TEDB v3 plus example OSS registrations and a worked quarterly return. The OSS pipeline runs alongside (not inside) the domestic BTW pipeline (VatReturn): OSS turnover (8xxx Omzet OSS {country}) and OSS VAT-payable (1xxx BTW af te dragen OSS {country}) are booked to dedicated per-country grootboekrekeningen that are excluded from the regular BTW-aangifte rubrieken 3a/3b/4a/4b (OssLedgerGuard:assertNoOssAccountsOnBtwReturn). Destination-country VAT-rate resolution, threshold monitoring, quarterly aangifte generation, XSD/CSV formatting and payment reconciliation are the ADR-031 exception-path services in lib/Service (OssRateResolver, OssReturnGenerator, OssReturnFormatter, OssPaymentReconciliation) + lib/Guard (OssThresholdGuard, OssLedgerGuard) which use the real OpenRegister ObjectService API (find/findAll). B2B intra-community supplies are explicitly excluded and route to the reverse-charge / ICP path (IcpStatement)."
   },
   "components": {
     "schemas": {
@@ -47,7 +47,7 @@
           "homeMemberState": {
             "type": "string",
             "default": "NL",
-            "description": "Member state of identification — always NL for Shillinq tenants.",
+            "description": "Member state of identification: always NL for Shillinq tenants.",
             "example": "NL",
             "title": "Home Member State"
           },
@@ -300,7 +300,7 @@
         "icon": "Gauge",
         "version": "0.1.0",
         "title": "OSS-drempelteller",
-        "description": "Per-tenant running calendar-year sum of B2C-to-EU turnover, excluding NL domestic and excluding B2B intra-community supplies. A derived view recomputed from the journal whenever an invoice is booked, credited or voided — never authored directly by operators (readonly). The OssThresholdGuard evaluates the EUR 10,000 threshold against this counter.",
+        "description": "Per-tenant running calendar-year sum of B2C-to-EU turnover, excluding NL domestic and excluding B2B intra-community supplies. A derived view recomputed from the journal whenever an invoice is booked, credited or voided: never authored directly by operators (readonly). The OssThresholdGuard evaluates the EUR 10,000 threshold against this counter.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md",
         "x-openregister": {
@@ -404,7 +404,7 @@
         "icon": "FileDocumentOutline",
         "version": "0.1.0",
         "title": "OSS-aangifte",
-        "description": "A single quarterly Union OSS aangifte. Line items are grouped by destination country and rate category; corrections are modelled as separate records of type 'correction' linked to the original period via correctsPeriod — never as in-place amendments. The generated XSD/CSV payload is archived for the 10-year bewaarplicht.",
+        "description": "A single quarterly Union OSS aangifte. Line items are grouped by destination country and rate category; corrections are modelled as separate records of type 'correction' linked to the original period via correctsPeriod: never as in-place amendments. The generated XSD/CSV payload is archived for the 10-year bewaarplicht.",
         "x-schema-org": "schema:GovernmentService",
         "x-spec": "openspec/changes/bookkeeping-btw-oss-eu/specs/bookkeeping-btw-oss-eu/spec.md",
         "type": "object",
@@ -755,7 +755,7 @@
           "distributionDifferences": {
             "type": "object",
             "nullable": true,
-            "description": "Revive-gl-tax-capabilities — the per-country differences (confirmed minus declared, in euro) OssPaymentReconciliation:reconcileDistribution found between the Belastingdienst's confirmed perCountryDistribution and the OssReturn's declared line items. Empty when the payment reconciles; populated (and reconciliationStatus = discrepancy) when it does not, so the divergence is stored on the record instead of only being logged.",
+            "description": "Revive-gl-tax-capabilities: the per-country differences (confirmed minus declared, in euro) OssPaymentReconciliation:reconcileDistribution found between the Belastingdienst's confirmed perCountryDistribution and the OssReturn's declared line items. Empty when the payment reconciles; populated (and reconciliationStatus = discrepancy) when it does not, so the divergence is stored on the record instead of only being logged.",
             "additionalProperties": {
               "type": "number"
             },

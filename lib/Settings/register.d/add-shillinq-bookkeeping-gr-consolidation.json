@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-gr-consolidation",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "T5 Gemeenschappelijke Regeling (GR) consolidation — inter-company posting layer. Adds the IntercompanyTransaction and EliminationRule schemas plus seed objects. The ConsolidationGroup and ConsolidatedReport schemas already live in the monolith from bookkeeping-financial-statements; this fragment adds only the inter-company elimination surface (REQ-ICP-*) on top of that consolidation container."
+    "description": "T5 Gemeenschappelijke Regeling (GR) consolidation: inter-company posting layer. Adds the IntercompanyTransaction and EliminationRule schemas plus seed objects. The ConsolidationGroup and ConsolidatedReport schemas already live in the monolith from bookkeeping-financial-statements; this fragment adds only the inter-company elimination surface (REQ-ICP-*) on top of that consolidation container."
   },
   "components": {
     "schemas": {
@@ -249,7 +249,7 @@
             },
             "excluded": {
               "label": "Excluded",
-              "description": "Manual override — matches a rule but intentionally retained in consolidated totals at fair-market value."
+              "description": "Manual override: matches a rule but intentionally retained in consolidated totals at fair-market value."
             }
           },
           "transitions": {
