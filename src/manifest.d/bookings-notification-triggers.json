@@ -194,7 +194,7 @@
 			"label": "Notifications",
 			"icon": "BellOutline",
 			"modal": "BookingNotificationConfigModal",
-			"description": "Open per-booking notification configuration. Loads triggers whose triggerType matches one of the booking lifecycle events plus any triggers scoped to this booking; lets the organiser toggle each on/off and pick its channels (REQ-BNT-007)."
+			"description": "Open the per-booking notification configuration. It loads the triggers whose triggerType matches a booking lifecycle event, plus any trigger scoped to this booking, and lets the organiser switch each one on or off and pick its channels."
 		}
 	]
 }

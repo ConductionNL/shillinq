@@ -49,7 +49,7 @@
 				"search": {
 					"enabled": true,
 					"fields": ["contractNumber", "title", "tags"],
-					"description": "Repository search via OR _search over contract number, title, and tags per REQ-CLM-008 (no app-local search endpoint)."
+					"description": "Repository search through OpenRegister's _search over contract number, title and tags. There is no app-local search endpoint."
 				},
 				"columns": [
 					{"key": "contractNumber", "label": "Contract #", "sortable": true},
@@ -71,7 +71,7 @@
 					{
 						"id": "expiringSoon",
 						"label": "Expiring soon",
-						"description": "Default smart filter surfacing contracts inside the renewal-decision window (status in {active, expiring} and renewalDecisionDate within 30 days or past) per REQ-CLM-008.",
+						"description": "Default smart filter showing contracts inside the renewal-decision window: status active or expiring, and a renewalDecisionDate within 30 days or already past.",
 						"filter": {
 							"all": [
 								{"field": "status", "operator": "in", "values": ["active", "expiring"]},
@@ -172,7 +172,7 @@
 										"schema": "Contract",
 										"field": "documents",
 										"objectId": ":id",
-										"description": "NC Files references (link, don't store) per REQ-CLM-005; opens in the NC Files viewer."
+										"description": "Nextcloud Files references. They link rather than store, and open in the Files viewer."
 									}
 								}
 							]
@@ -262,7 +262,7 @@
 										"schema": "ContractObligation",
 										"field": "evidence",
 										"objectId": ":id",
-										"description": "NC Files references (link, don't store) per REQ-CLM-005."
+										"description": "Nextcloud Files references. They link rather than store."
 									}
 								}
 							]
