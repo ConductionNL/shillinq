@@ -214,7 +214,7 @@
           "itemsNetted": {
             "type": "boolean",
             "nullable": true,
-            "description": "True when items have been offset/netted against each other. The gross principle forbids netting unless permitted (NL BW 2:363 / DE HGB 246 Saldierungsverbot) — compliant statements set this false.",
+            "description": "True when items have been offset/netted against each other. The gross principle forbids netting unless permitted (NL BW 2:363 / DE HGB 246 Saldierungsverbot). Compliant statements set this false.",
             "title": "Items Netted"
           },
           "components": {
@@ -293,7 +293,7 @@
               "properties": {
                 "entryNum": {
                   "type": "string",
-                  "description": "EcritureNum — sequential entry number.",
+                  "description": "EcritureNum: sequential entry number.",
                   "title": "Entry Num"
                 },
                 "debit": {

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-ifrs-16-lease",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 4-specialized — IFRS 16 Leases. Adds five new schemas (LeaseContract master register, LeasePaymentSchedule derived amortization rows, LeaseReassessmentEvent modification/remeasurement log, LeaseDisclosureTable period-end snapshot, LeasePortfolioExemption policy elections) per design.md D1–D5. RoU asset and lease-liability recognition, period interest/principal split and straight-line depreciation are computed by OCA\\Shillinq\\Service\\LeaseAmortizationCalculator + LeasePaymentScheduleService + LeaseRecognitionService via the real OpenRegister ObjectService API (find/findAll/saveObject); disclosure aggregation by LeaseDisclosureService. LeaseContract carries an x-openregister-lifecycle state machine (draft→active→modified→terminated/expired, REQ-LC-004); LeasePaymentSchedule and LeaseReassessmentEvent are read-only / immutable-once-posted. A contact/lessor counterparty is a Nextcloud-synced contact (ADR-022) referenced by FK, never a new person schema; source documents reference docudesk via FK URIs. Seed objects provide worked examples (vehicle lease, real-estate lease, short-term-exempt copier, derived schedule rows, a disclosure table and an exemption policy) per design.md."
+    "description": "Tier 4-specialized: IFRS 16 Leases. Adds five new schemas (LeaseContract master register, LeasePaymentSchedule derived amortization rows, LeaseReassessmentEvent modification/remeasurement log, LeaseDisclosureTable period-end snapshot, LeasePortfolioExemption policy elections) per design.md D1–D5. RoU asset and lease-liability recognition, period interest/principal split and straight-line depreciation are computed by OCA\\Shillinq\\Service\\LeaseAmortizationCalculator + LeasePaymentScheduleService + LeaseRecognitionService via the real OpenRegister ObjectService API (find/findAll/saveObject); disclosure aggregation by LeaseDisclosureService. LeaseContract carries an x-openregister-lifecycle state machine (draft→active→modified→terminated/expired); LeasePaymentSchedule and LeaseReassessmentEvent are read-only / immutable-once-posted. A contact/lessor counterparty is a Nextcloud-synced contact (ADR-022) referenced by FK, never a new person schema; source documents reference docudesk via FK URIs. Seed objects provide worked examples (vehicle lease, real-estate lease, short-term-exempt copier, derived schedule rows, a disclosure table and an exemption policy) per design.md."
   },
   "components": {
     "schemas": {
@@ -88,7 +88,7 @@
           },
           "counterparty": {
             "type": "string",
-            "description": "Lessor counterparty — FK to the Nextcloud-synced contact / organisations register (ADR-022); never a new person schema.",
+            "description": "Lessor counterparty: FK to the Nextcloud-synced contact / organisations register (ADR-022); never a new person schema.",
             "example": "contact:lease-hire-bv",
             "title": "Counterparty"
           },
@@ -413,7 +413,7 @@
           "fxRate": {
             "type": "number",
             "nullable": true,
-            "description": "FX rate to functional currency for non-functional-currency leases (REQ-LA-004; full revaluation deferred to Phase 2).",
+            "description": "FX rate to functional currency for non-functional-currency leases (full revaluation deferred to Phase 2).",
             "title": "Fx Rate"
           },
           "openingLeaseLiability": {
@@ -497,7 +497,7 @@
         "icon": "FileDocumentEditOutline",
         "version": "0.1.0",
         "title": "Lease Reassessment Event",
-        "description": "First-class IFRS 16 modification / remeasurement record (REQ-LR-001, design.md D4): event type, before/after snapshots, IBR reset, liability/RoU adjustment, approver sign-off and GL posting FK. Immutable once posted; corrections are new events.",
+        "description": "First-class IFRS 16 modification / remeasurement record (design.md D4): event type, before/after snapshots, IBR reset, liability/RoU adjustment, approver sign-off and GL posting FK. Immutable once posted; corrections are new events.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-reassessment/spec.md",
         "type": "object",
@@ -669,7 +669,7 @@
         "icon": "TableLarge",
         "version": "0.1.0",
         "title": "IFRS 16 Disclosure Table",
-        "description": "Period-end disclosure snapshot (REQ-LD-001, design.md D5): RoU additions/depreciation/disposals and closing balance by asset class, current/non-current lease liability, maturity analysis buckets, weighted-average IBR per class, and the expense breakdown (interest, short-term, low-value, variable). Materialised at period close so prior-period restatements do not retroactively change a published disclosure.",
+        "description": "Period-end disclosure snapshot (design.md D5): RoU additions/depreciation/disposals and closing balance by asset class, current/non-current lease liability, maturity analysis buckets, weighted-average IBR per class, and the expense breakdown (interest, short-term, low-value, variable). Materialised at period close so prior-period restatements do not retroactively change a published disclosure.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md",
         "type": "object",
@@ -908,7 +908,7 @@
         },
         "leaseNumber": "VH-2024-001",
         "counterparty": "contact:lease-hire-bv",
-        "description": "Company car lease – Mercedes E-class, 3-year term with 2-year extension option",
+        "description": "Company car lease: Mercedes E-class, 3-year term with 2-year extension option",
         "assetClass": "vehicle",
         "commencementDate": "2024-01-15",
         "endDate": "2027-01-14",
@@ -948,7 +948,7 @@
         },
         "leaseNumber": "RE-2023-005",
         "counterparty": "contact:property-partners-nv",
-        "description": "Headquarters lease – Amsterdam, 8-story office building, 5-year non-cancellable term",
+        "description": "Headquarters lease: Amsterdam, 8-story office building, 5-year non-cancellable term",
         "assetClass": "real-estate",
         "commencementDate": "2023-03-01",
         "endDate": "2028-02-28",
@@ -988,7 +988,7 @@
         },
         "leaseNumber": "IT-2024-032",
         "counterparty": "contact:copier-rental-solutions-bv",
-        "description": "Copier/printer lease – Xerox AltaLink, 12-month non-cancellable term",
+        "description": "Copier/printer lease: Xerox AltaLink, 12-month non-cancellable term",
         "assetClass": "IT-hardware",
         "commencementDate": "2024-06-01",
         "endDate": "2025-05-31",

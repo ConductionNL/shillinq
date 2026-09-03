@@ -3,7 +3,7 @@
     "change": "bookkeeping-detachering-payroll-administratie",
     "spec": "openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md",
     "tier": "T2",
-    "description": "Payroll + detachering bridge. ADR-037 register fragment: declares Employee, Payroll, Deduction and DeterminationLetter schemas plus their lifecycle, aggregations, relations and RBAC. Merged additively into shillinq_register.json at load (SettingsService::deepMergeConfig)."
+    "description": "Payroll + detachering bridge. ADR-037 register fragment: declares Employee, Payroll, Deduction and DeterminationLetter schemas plus their lifecycle, aggregations, relations and RBAC. Merged additively into shillinq_register.json at load (SettingsService:deepMergeConfig)."
   },
   "components": {
     "schemas": {
@@ -40,7 +40,7 @@
           },
           "bsn": {
             "type": "string",
-            "description": "Burgerservicenummer. Special-category PII (ADR-005): validated by 11-proef on write, masked as ***<last4> on display, never written to the audit trail. Null for B2B contractors. The 11-proef checksum is not expressible declaratively — ADR-031 exception guard OCA\\Shillinq\\Validation\\BsnValidator::isValid is invoked on write.",
+            "description": "Burgerservicenummer. Special-category PII (ADR-005): validated by 11-proef on write, masked as ***<last4> on display, never written to the audit trail. Null for B2B contractors. The 11-proef checksum is not expressible declaratively: ADR-031 exception guard OCA\\Shillinq\\Validation\\BsnValidator:isValid is invoked on write.",
             "nullable": true,
             "pii": true,
             "x-pii": "bsn",
@@ -91,7 +91,7 @@
           "exitDate": {
             "type": "string",
             "format": "date",
-            "description": "Exit date; once set, no payroll may be created with a period after it (REQ-PAY-001 / REQ-PAY-007).",
+            "description": "Exit date; once set, no payroll may be created with a period after it.",
             "nullable": true,
             "example": "2026-12-31",
             "title": "Exit Date"
@@ -319,7 +319,7 @@
           },
           "placementGlTransactionId": {
             "type": "string",
-            "description": "Back-reference to the placement-fee AP GLTransaction (detached workers only, REQ-PAY-008).",
+            "description": "Back-reference to the placement-fee AP GLTransaction (detached workers only).",
             "nullable": true,
             "title": "Placement GL Transaction ID"
           },
@@ -369,7 +369,7 @@
             },
             "issued": {
               "label": "Issued",
-              "description": "GLTransaction materialised, loonstrookje generated, payroll-issued event published (REQ-PAY-004 / REQ-PAY-008)."
+              "description": "GLTransaction materialised, loonstrookje generated, payroll-issued event published."
             },
             "paid": {
               "label": "Paid",
@@ -381,14 +381,14 @@
               "from": "draft",
               "to": "calculated",
               "label": "Calculate",
-              "description": "Aggregate deductions, compute net and validate annual statutory totals before issuance (REQ-PAY-004 / REQ-PAY-005).",
+              "description": "Aggregate deductions, compute net and validate annual statutory totals before issuance.",
               "requires": "OCA\\Shillinq\\Lifecycle\\PayrollGuard::canCalculate"
             },
             "issue": {
               "from": "calculated",
               "to": "issued",
               "label": "Issue payroll",
-              "description": "Materialise the salary-expense GLTransaction, generate the loonstrookje and publish payroll-issued (REQ-PAY-004 / REQ-PAY-006 / REQ-PAY-008).",
+              "description": "Materialise the salary-expense GLTransaction, generate the loonstrookje and publish payroll-issued.",
               "requires": "OCA\\Shillinq\\Lifecycle\\PayrollGuard::canIssue",
               "actions": [
                 {
@@ -430,7 +430,7 @@
               "from": "issued",
               "to": "paid",
               "label": "Confirm paid",
-              "description": "Mark the payroll paid after bank reconciliation; publish payroll-paid (REQ-PAY-004 / REQ-PAY-009).",
+              "description": "Mark the payroll paid after bank reconciliation; publish payroll-paid.",
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",

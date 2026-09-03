@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-consolidation-commercial",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — Commercial consolidation (RJ 217 / IAS 27 / IFRS 10). Ten new schemas (ConsolidationGroup, GroupEntity, IntercompanyRelation, ConsolidationPeriod, EliminationEntry, TranslationAdjustment, MinorityInterest, Goodwill, ConsolidatedBalance, ConsolidatedIncomeStatement) enabling Dutch MKB holding companies to consolidate multi-entity financial statements. All quantitative logic is declarative (x-openregister-aggregations) per ADR-031 — no ConsolidationCalculator.php / EliminationMatcher.php services. Lifecycle automation per x-openregister-lifecycle; cross-schema preconditions (status-transition gates, accountant-review presence, balance-sheet equation, minority split) delegated to OCA\\Shillinq\\Lifecycle\\ConsolidationGuard. Reuses the existing Administration register (per-entiteit GL) and the Nextcloud user directory for executor/reviewer FKs — a person is an NC entity, never an invented schema (ADR-022)."
+    "description": "Tier 3: Commercial consolidation (RJ 217 / IAS 27 / IFRS 10). Ten new schemas (ConsolidationGroup, GroupEntity, IntercompanyRelation, ConsolidationPeriod, EliminationEntry, TranslationAdjustment, MinorityInterest, Goodwill, ConsolidatedBalance, ConsolidatedIncomeStatement) enabling Dutch MKB holding companies to consolidate multi-entity financial statements. All quantitative logic is declarative (x-openregister-aggregations) per ADR-031. No ConsolidationCalculator.php / EliminationMatcher.php services. Lifecycle automation per x-openregister-lifecycle; cross-schema preconditions (status-transition gates, accountant-review presence, balance-sheet equation, minority split) delegated to OCA\\Shillinq\\Lifecycle\\ConsolidationGuard. Reuses the existing Administration register (per-entiteit GL) and the Nextcloud user directory for executor/reviewer FKs. A person is an NC entity, never an invented schema (ADR-022)."
   },
   "components": {
     "schemas": {
@@ -35,7 +35,7 @@
           },
           "parentAdministrationId": {
             "type": "string",
-            "description": "FK to the moeder Administration (existing Administration register) — the holding whose GL anchors the group.",
+            "description": "FK to the moeder Administration (existing Administration register): the holding whose GL anchors the group.",
             "title": "Parent Administration ID"
           },
           "reportingCurrency": {
@@ -159,7 +159,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the entity's Administration (existing Administration register) — the source GL for aggregation (REQ-CONS-001 / REQ-CONS-002).",
+            "description": "FK to the entity's Administration (existing Administration register): the source GL for aggregation.",
             "title": "Administration ID"
           },
           "entityType": {
@@ -178,7 +178,7 @@
             "minimum": 0,
             "maximum": 100,
             "default": 100,
-            "description": "Eigendomspercentage held by the group (REQ-CONS-001 / REQ-CONS-006).",
+            "description": "Eigendomspercentage held by the group.",
             "title": "Ownership Percentage"
           },
           "votingPercentage": {
@@ -286,7 +286,7 @@
         "icon": "SwapHorizontal",
         "version": "0.1.0",
         "title": "Intercompany Relation",
-        "description": "Mapping of an internal trade relationship between two group entities for elimination matching (REQ-CONS-003 / REQ-CONS-004). The \"wegwijzer\" that tells the eliminatie-engine which debtor account in entity A corresponds to which creditor account in entity B, with the matching tolerance.",
+        "description": "Mapping of an internal trade relationship between two group entities for elimination matching. The \"wegwijzer\" that tells the eliminatie-engine which debtor account in entity A corresponds to which creditor account in entity B, with the matching tolerance.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
         "type": "object",
@@ -323,7 +323,7 @@
               "loan",
               "marginInInventory"
             ],
-            "description": "Type of intercompany transaction the relation eliminates (REQ-CONS-003 / REQ-CONS-004).",
+            "description": "Type of intercompany transaction the relation eliminates.",
             "title": "Transaction Type"
           },
           "defaultEliminationAccount": {
@@ -402,7 +402,7 @@
           },
           "executor": {
             "type": "string",
-            "description": "Nextcloud user id of the user who initiated the consolidation (FK to the NC user directory — a person is an NC entity, never an invented schema).",
+            "description": "Nextcloud user id of the user who initiated the consolidation (FK to the NC user directory: a person is an NC entity, never an invented schema).",
             "title": "Executor"
           },
           "executionTimestamp": {
@@ -487,7 +487,7 @@
               "archived"
             ],
             "default": "open",
-            "description": "Consolidation workflow status (design D10, REQ-CONS-008).",
+            "description": "Consolidation workflow status (design D10).",
             "title": "Status"
           }
         },
@@ -592,7 +592,7 @@
         "icon": "BookMinusOutline",
         "version": "0.1.0",
         "title": "Elimination Entry",
-        "description": "An individual elimination booking within a consolidation period (REQ-CONS-003 / REQ-CONS-004). Carries debit/credit lines per GL account, the source entities/transactions for drill-down, the auto-generated flag and the full accountant-review audit trail (who/when/why, design D7). Immutable once the period closes; a reversal is a new entry, never an overwrite.",
+        "description": "An individual elimination booking within a consolidation period. Carries debit/credit lines per GL account, the source entities/transactions for drill-down, the auto-generated flag and the full accountant-review audit trail (who/when/why, design D7). Immutable once the period closes; a reversal is a new entry, never an overwrite.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
         "type": "object",
@@ -624,7 +624,7 @@
               "minorityInterestSplit",
               "roundingDifference"
             ],
-            "description": "Type of elimination booking (REQ-CONS-003 / REQ-CONS-004 / REQ-CONS-005 / REQ-CONS-006 / REQ-CONS-007).",
+            "description": "Type of elimination booking.",
             "title": "Elimination Type"
           },
           "bookingDate": {
@@ -761,7 +761,7 @@
         "icon": "CurrencyUsd",
         "version": "0.1.0",
         "title": "Translation Adjustment",
-        "description": "Currency revaluation (CTA) for a foreign-currency entity per the current-rate method (RJ 122 / IAS 21, REQ-CONS-005). Records the functional- and reporting-currency amounts and the isolated CTA component posted to OCI/eigen vermogen — never to the P&L (design D4).",
+        "description": "Currency revaluation (CTA) for a foreign-currency entity per the current-rate method (RJ 122 / IAS 21). Records the functional- and reporting-currency amounts and the isolated CTA component posted to OCI/eigen vermogen: never to the P&L (design D4).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
         "type": "object",
@@ -884,7 +884,7 @@
         "x-openregister-calculations": {
           "closingBalance": {
             "type": "number",
-            "description": "closingBalance = openingBalance + periodResultShare − dividendToMinority (REQ-CONS-006, design D6). Declarative per ADR-031 — no MinorityInterestCalculator.php.",
+            "description": "closingBalance = openingBalance + periodResultShare − dividendToMinority (design D6). Declarative per ADR-031: no MinorityInterestCalculator.php.",
             "expr": "@self.openingBalance + @self.periodResultShare - @self.dividendToMinority"
           }
         },
@@ -934,7 +934,7 @@
           },
           "fairValueNetAssetsAcquired": {
             "type": "number",
-            "description": "Fair value of identifiable net assets acquired (RJ 216 / IFRS 3, REQ-CONS-007).",
+            "description": "Fair value of identifiable net assets acquired (RJ 216 / IFRS 3).",
             "title": "Fair Value Net Assets Acquired"
           },
           "goodwillAmount": {
@@ -997,7 +997,7 @@
         "x-openregister-calculations": {
           "goodwillAmount": {
             "type": "number",
-            "description": "goodwillAmount = purchasePrice − fairValueNetAssetsAcquired (positive = goodwill, negative = badwill) per RJ 216 / IFRS 3 (REQ-CONS-007, design D5). Declarative per ADR-031 — no GoodwillCalculator.php.",
+            "description": "goodwillAmount = purchasePrice − fairValueNetAssetsAcquired (positive = goodwill, negative = badwill) per RJ 216 / IFRS 3 (design D5). Declarative per ADR-031: no GoodwillCalculator.php.",
             "expr": "@self.purchasePrice - @self.fairValueNetAssetsAcquired"
           }
         },
@@ -1011,7 +1011,7 @@
         "icon": "ScaleBalance",
         "version": "0.1.0",
         "title": "Consolidated Balance",
-        "description": "Output object with aggregated + eliminated balance totals per RGS-rapportageregel, with comparative prior-year columns (REQ-CONS-002 / REQ-CONS-009). The balance-sheet equation totalAssets = totalLiabilities + totalEquity must hold (design D10, validated by ConsolidationGuard).",
+        "description": "Output object with aggregated + eliminated balance totals per RGS-rapportageregel, with comparative prior-year columns. The balance-sheet equation totalAssets = totalLiabilities + totalEquity must hold (design D10, validated by ConsolidationGuard).",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
         "type": "object",
@@ -1160,7 +1160,7 @@
         "icon": "ChartLine",
         "version": "0.1.0",
         "title": "Consolidated Income Statement",
-        "description": "Output object with consolidated V&W per RGS-rapportageregel, split between parent shareholders and minority interest, with comparative prior-year columns (REQ-CONS-002 / REQ-CONS-006 / REQ-CONS-009). The split netProfitTotal = attributedToParent + attributedToMinority must hold (validated by ConsolidationGuard).",
+        "description": "Output object with consolidated V&W per RGS-rapportageregel, split between parent shareholders and minority interest, with comparative prior-year columns. The split netProfitTotal = attributedToParent + attributedToMinority must hold (validated by ConsolidationGuard).",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-consolidation-commercial/specs/bookkeeping-consolidation-commercial/index.md",
         "type": "object",

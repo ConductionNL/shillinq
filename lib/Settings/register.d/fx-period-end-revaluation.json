@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "fx-period-end-revaluation",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Declares FxRevaluationPosting, the append-only audit record produced by OCA\\Shillinq\\Service\\Treasury\\FxRevaluationService at period-end (REQ-MC-006/007/008 of bookkeeping-multi-currency). Fills the SoftCloseExecutor::delegateFxRevaluation() call-site (lib/Service/SoftCloseExecutor.php) that has existed since bookkeeping-soft-close-flux shipped but always returned 0 because the delegate class never existed."
+    "description": "Declares FxRevaluationPosting, the append-only audit record produced by OCA\\Shillinq\\Service\\Treasury\\FxRevaluationService at period-end (008 of bookkeeping-multi-currency). Fills the SoftCloseExecutor:delegateFxRevaluation call-site (lib/Service/SoftCloseExecutor.php) that has existed since bookkeeping-soft-close-flux shipped but always returned 0 because the delegate class never existed."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "CurrencyEur",
         "version": "0.1.0",
         "title": "FX Revaluation Posting",
-        "description": "Append-only audit record per FXPosition period-end revaluation. Carries the source position, the closing rate used (and how it was resolved), the incremental unrealised movement posted, and the GL account attribution. Lifecycle: posted → reversed (manual controller correction only — this is NOT an automatic month-start reversal; see design.md 'Reversing-entry vs cumulative-adjustment decision').",
+        "description": "Append-only audit record per FXPosition period-end revaluation. Carries the source position, the closing rate used (and how it was resolved), the incremental unrealised movement posted, and the GL account attribution. Lifecycle: posted → reversed (manual controller correction only. This is NOT an automatic month-start reversal; see design.md 'Reversing-entry vs cumulative-adjustment decision').",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/fx-period-end-revaluation/specs/bookkeeping-multi-currency/spec.md",
         "type": "object",
@@ -122,7 +122,7 @@
           },
           "journalEntryId": {
             "type": "string",
-            "description": "Synthesised journal-entry linkage id for audit trail, mirroring AutoAccrualPosting.journalEntryId — no literal JournalEntry object is created.",
+            "description": "Synthesised journal-entry linkage id for audit trail, mirroring AutoAccrualPosting.journalEntryId: no literal JournalEntry object is created.",
             "example": "je-2026-03-fx-usd-adm-holding-nl",
             "title": "Journal Entry ID"
           },
@@ -135,7 +135,7 @@
           },
           "postedBy": {
             "type": "string",
-            "description": "Posting actor, FxRevaluationService::SYSTEM_ACTOR.",
+            "description": "Posting actor, FxRevaluationService:SYSTEM_ACTOR.",
             "example": "SYSTEM:FxRevaluationService",
             "title": "Posted By"
           },
@@ -185,7 +185,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "FxRevaluationPosting is append-only audit evidence per REQ-MC-008 / ADR-022 — original posted entry MUST be preserved when a reversal is recorded; the reversal links back to the original via reversalId."
+          "description": "FxRevaluationPosting is append-only audit evidence / ADR-022: original posted entry MUST be preserved when a reversal is recorded; the reversal links back to the original via reversalId."
         }
       }
     }

@@ -6,7 +6,7 @@
         "icon": "EmailCheckOutline",
         "version": "0.1.0",
         "title": "Booking Confirmation Template",
-        "description": "Branded email template dispatched immediately when a booking is created. Operators customise subject, HTML/plain-text body, logo, accent colour and footer without code access. Body and subject support {{variable}} placeholders rendered at dispatch by the OpenRegister notification engine (ADR-022). Lifecycle draft -> published -> archived controls which version is active (REQ-BET-001/002/003).",
+        "description": "Branded email template dispatched immediately when a booking is created. Operators customise subject, HTML/plain-text body, logo, accent colour and footer without code access. Body and subject support {{variable}} placeholders rendered at dispatch by the OpenRegister notification engine (ADR-022). Lifecycle draft -> published -> archived controls which version is active.",
         "x-schema-org": "schema:EmailMessage",
         "type": "object",
         "required": [
@@ -104,7 +104,7 @@
           "renderedHtmlBody": {
             "expression": "substitute(@self.htmlBody, @variables)",
             "type": "string",
-            "description": "HTML body with {{variableName}} placeholders replaced from the supplied variable map. Variable values are HTML-escaped to prevent injection (REQ-BET-004, Task 25)."
+            "description": "HTML body with {{variableName}} placeholders replaced from the supplied variable map. Variable values are HTML-escaped to prevent injection (Task 25)."
           },
           "renderedPlainTextBody": {
             "expression": "substitute(@self.plainTextBody, @variables)",
@@ -114,12 +114,12 @@
           "subjectLineLength": {
             "expression": "length(@self.subjectLine)",
             "type": "integer",
-            "description": "Character count of the raw subject line. Validated against the 78-character cross-client limit (NFR-BET-002, Task 12)."
+            "description": "Character count of the raw subject line. Validated against the 78-character cross-client limit (Task 12)."
           },
           "bodySizeBytes": {
             "expression": "byteLength(@self.htmlBody) + byteLength(@self.plainTextBody)",
             "type": "integer",
-            "description": "Combined HTML + plain-text body size in bytes. Validated against the 102 KB (104448 bytes) SMTP limit (NFR-BET-003, Task 13)."
+            "description": "Combined HTML + plain-text body size in bytes. Validated against the 102 KB (104448 bytes) SMTP limit (Task 13)."
           }
         },
         "properties": {
@@ -144,14 +144,14 @@
           },
           "subjectLine": {
             "type": "string",
-            "description": "Email subject. Supports {{variable}} placeholders. Limited to 78 characters after substitution for cross-client compatibility (NFR-BET-002).",
+            "description": "Email subject. Supports {{variable}} placeholders. Limited to 78 characters after substitution for cross-client compatibility.",
             "example": "Boeking bevestigd: {{bookingRef}}",
             "maxLength": 255,
             "title": "Subject Line"
           },
           "htmlBody": {
             "type": "string",
-            "description": "HTML email body. Inline styles only, no external CSS or JavaScript. Supports {{variable}} placeholders (NFR-BET-001).",
+            "description": "HTML email body. Inline styles only, no external CSS or JavaScript. Supports {{variable}} placeholders.",
             "example": "<h1>Hallo {{customerName}}</h1><p>Uw boeking is bevestigd.</p>",
             "title": "Html Body"
           },
@@ -164,7 +164,7 @@
           "logoUri": {
             "type": "string",
             "format": "uri",
-            "description": "URL to the organization logo image. Loaded from a CDN or document store; inline base64 is not used (NFR-BET-004).",
+            "description": "URL to the organization logo image. Loaded from a CDN or document store; inline base64 is not used.",
             "example": "https://cdn.example.org/logo.png",
             "title": "Logo URI"
           },
@@ -196,7 +196,7 @@
           },
           "locale": {
             "type": "string",
-            "description": "BCP-47 language tag the template is authored in. Used to select the template for a customer's language preference (NFR-BET-005).",
+            "description": "BCP-47 language tag the template is authored in. Used to select the template for a customer's language preference.",
             "enum": [
               "nl",
               "en"
@@ -332,12 +332,12 @@
           "subjectLineLength": {
             "expression": "length(@self.subjectLine)",
             "type": "integer",
-            "description": "Subject character count, validated against the 78-character limit (NFR-BET-002)."
+            "description": "Subject character count, validated against the 78-character limit."
           },
           "bodySizeBytes": {
             "expression": "byteLength(@self.htmlBody) + byteLength(@self.plainTextBody)",
             "type": "integer",
-            "description": "Combined body size validated against the 102 KB limit (NFR-BET-003)."
+            "description": "Combined body size validated against the 102 KB limit."
           }
         },
         "properties": {
@@ -362,7 +362,7 @@
           },
           "hoursBeforeBooking": {
             "type": "integer",
-            "description": "Number of hours before booking start at which the reminder is dispatched (e.g. 24, 2, 1). Configures timing per REQ-BET-005.",
+            "description": "Number of hours before booking start at which the reminder is dispatched (e.g. 24, 2, 1). Configures timing.",
             "minimum": 0,
             "maximum": 8760,
             "example": 24,
@@ -370,14 +370,14 @@
           },
           "subjectLine": {
             "type": "string",
-            "description": "Email subject. Supports {{variable}} placeholders (NFR-BET-002).",
+            "description": "Email subject. Supports {{variable}} placeholders.",
             "example": "Herinnering: uw boeking op {{bookingDate}}",
             "maxLength": 255,
             "title": "Subject Line"
           },
           "htmlBody": {
             "type": "string",
-            "description": "HTML email body, inline styles only (NFR-BET-001).",
+            "description": "HTML email body, inline styles only.",
             "example": "<p>Hallo {{customerName}}, over {{hoursUntilBooking}} uur start uw boeking.</p>",
             "title": "Html Body"
           },
@@ -390,7 +390,7 @@
           "logoUri": {
             "type": "string",
             "format": "uri",
-            "description": "URL to the organization logo image (NFR-BET-004).",
+            "description": "URL to the organization logo image.",
             "example": "https://cdn.example.org/logo.png",
             "title": "Logo URI"
           },
@@ -422,7 +422,7 @@
           },
           "locale": {
             "type": "string",
-            "description": "BCP-47 language tag the template is authored in (NFR-BET-005).",
+            "description": "BCP-47 language tag the template is authored in.",
             "enum": [
               "nl",
               "en"
@@ -557,12 +557,12 @@
           "subjectLineLength": {
             "expression": "length(@self.subjectLine)",
             "type": "integer",
-            "description": "Subject character count, validated against the 78-character limit (NFR-BET-002)."
+            "description": "Subject character count, validated against the 78-character limit."
           },
           "bodySizeBytes": {
             "expression": "byteLength(@self.htmlBody) + byteLength(@self.plainTextBody)",
             "type": "integer",
-            "description": "Combined body size validated against the 102 KB limit (NFR-BET-003)."
+            "description": "Combined body size validated against the 102 KB limit."
           }
         },
         "properties": {
@@ -587,14 +587,14 @@
           },
           "subjectLine": {
             "type": "string",
-            "description": "Email subject. Supports {{variable}} placeholders (NFR-BET-002).",
+            "description": "Email subject. Supports {{variable}} placeholders.",
             "example": "Boeking geannuleerd: {{bookingRef}}",
             "maxLength": 255,
             "title": "Subject Line"
           },
           "htmlBody": {
             "type": "string",
-            "description": "HTML email body, inline styles only (NFR-BET-001).",
+            "description": "HTML email body, inline styles only.",
             "example": "<p>Uw boeking {{bookingRef}} is geannuleerd.</p>",
             "title": "Html Body"
           },
@@ -614,7 +614,7 @@
           "logoUri": {
             "type": "string",
             "format": "uri",
-            "description": "URL to the organization logo image (NFR-BET-004).",
+            "description": "URL to the organization logo image.",
             "example": "https://cdn.example.org/logo.png",
             "title": "Logo URI"
           },
@@ -646,7 +646,7 @@
           },
           "locale": {
             "type": "string",
-            "description": "BCP-47 language tag the template is authored in (NFR-BET-005).",
+            "description": "BCP-47 language tag the template is authored in.",
             "enum": [
               "nl",
               "en"

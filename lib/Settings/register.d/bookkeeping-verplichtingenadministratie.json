@@ -9,7 +9,7 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Commitment",
-        "description": "A financial commitment (verplichting) tracked from the moment it becomes legally binding (purchase order signed, framework agreement agreed, employment contract executed, grant decision awarded) through delivery, invoicing, payment, and closure. Drives budget-blocking at commitment-time and mandate enforcement on aangaan. The status field is the lifecycle field; every state change is recorded as an immutable CommitmentMovement (D1). The tegenpartij is an embedded vendor reference (kvk/naam/iban) — not a bespoke customer schema; a customer/contact is a Nextcloud entity (ADR). THIS FRAGMENT IS THE SINGLE OWNER OF THIS SCHEMA'S `required` LIST: ADR-037's deepMergeConfig() CONCATENATES list values, so a second fragment declaring `required` makes the effective list the UNION of both and no payload of either model can satisfy it. Overlay fragments (20-bookkeeping-tenderned-integratie.json) contribute properties only.",
+        "description": "A financial commitment (verplichting) tracked from the moment it becomes legally binding (purchase order signed, framework agreement agreed, employment contract executed, grant decision awarded) through delivery, invoicing, payment, and closure. Drives budget-blocking at commitment-time and mandate enforcement on aangaan. The status field is the lifecycle field; every state change is recorded as an immutable CommitmentMovement (D1). The tegenpartij is an embedded vendor reference (kvk/naam/iban): not a bespoke customer schema; a customer/contact is a Nextcloud entity (ADR). THIS FRAGMENT IS THE SINGLE OWNER OF THIS SCHEMA'S `required` LIST: ADR-037's deepMergeConfig CONCATENATES list values, so a second fragment declaring `required` makes the effective list the UNION of both and no payload of either model can satisfy it. Overlay fragments (20-bookkeeping-tenderned-integratie.json) contribute properties only.",
         "x-schema-org": "schema:Order",
         "x-openregister-purpose": "fact",
         "type": "object",
@@ -28,7 +28,7 @@
           },
           "commitmentNumber": {
             "type": "string",
-            "description": "Operator-assigned unique commitment number within the administration. This is the single spelling: the camelCase `verplichtingNummer` variant that TenderNedAwardDetectedListener once wrote is gone — every writer (CommitmentMaterialisationService, TenderNedAwardDetectedListener) and every reader (BudgetBlocker::canCommit, MandateEnforcer::hasSufficientMandate, CommitmentGuard, RequisitionService) now agrees on `commitmentNumber`.",
+            "description": "Operator-assigned unique commitment number within the administration. This is the single spelling: the camelCase `verplichtingNummer` variant that TenderNedAwardDetectedListener once wrote is gone. Every writer (CommitmentMaterialisationService, TenderNedAwardDetectedListener) and every reader (BudgetBlocker:canCommit, MandateEnforcer:hasSufficientMandate, CommitmentGuard, RequisitionService) now agrees on `commitmentNumber`.",
             "example": "PO-2026-00874",
             "title": "Verplichtingsnummer"
           },
@@ -239,11 +239,11 @@
             },
             "in_approval": {
               "label": "In goedkeuring",
-              "description": "Mandate exceeded; routed to a goedkeuringsstap approval chain (REQ-VPL-002, D7)."
+              "description": "Mandate exceeded; routed to a goedkeuringsstap approval chain (D7)."
             },
             "committed": {
               "label": "Aangegaan",
-              "description": "Signed/legally binding. Budget is blocked; a `committed` CommitmentMovement is recorded (REQ-VPL-001/003)."
+              "description": "Signed/legally binding. Budget is blocked; a `committed` CommitmentMovement is recorded."
             },
             "partially_delivered": {
               "label": "Deels geleverd",
@@ -278,13 +278,13 @@
               "from": "draft",
               "to": "committed",
               "label": "Verplichting aangaan",
-              "description": "Sign the commitment within mandaat and budget. Gated by MandateEnforcer (mandaat sufficient) and BudgetBlocker (vrije_ruimte sufficient or override). A `committed` CommitmentMovement is recorded (REQ-VPL-001/002).",
+              "description": "Sign the commitment within mandaat and budget. Gated by MandateEnforcer (mandaat sufficient) and BudgetBlocker (vrije_ruimte sufficient or override). A `committed` CommitmentMovement is recorded.",
               "requires": "OCA\\Shillinq\\Lifecycle\\BudgetBlocker::canCommit",
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "record-mutatie",
-                  "description": "Record a `committed` CommitmentMovement and increase openstaande_verplichtingen on the matching budgets (REQ-VPL-001/003).",
+                  "description": "Record a `committed` CommitmentMovement and increase openstaande_verplichtingen on the matching budgets.",
                   "actionParameters": {
                     "register": "shillinq",
                     "schema": "CommitmentMovement",
@@ -316,7 +316,7 @@
               "from": "partially_invoiced",
               "to": "partially_paid",
               "label": "Betalen",
-              "description": "Payment settled; openstaande_verplichtingen unchanged (already released at gefactureerd, REQ-VPL-003)."
+              "description": "Payment settled; openstaande_verplichtingen unchanged (already released at gefactureerd)."
             },
             "afsluiten": {
               "from": "committed",
@@ -334,7 +334,7 @@
         },
         "x-openregister-approval-chains": {
           "commitment-approval": {
-            "description": "Approval chain that gates the Commitment in_approval -> committed `goedkeuren` transition. A commitment reaches in_approval only when MandateEnforcer::requiresApproval routed it there because the signer's mandaat was insufficient; this chain then runs the finance approval workflow that releases it. Threshold-routed on totaalbedrag_excl_btw (EUR cents): a single commitment-administrator approves from EUR 0, and a finance-director approves commitments at or above EUR 250.000. Separation of duties is enforced - the requester who submitted the commitment cannot approve their own step. On completion the goedkeuren transition auto-advances (BudgetBlocker still gates the budget). Declarative metadata only: OpenRegister's approval-workflow primitive (x-openregister-approval-chains, ApprovalChainGateListener/ApprovalChainAdvanceListener) materialises and gates the actual steps; this app ships no PHP approval-chain implementation. INERT until the OpenRegister release carrying the declarative approval-chains capability (PR #396/#397) is deployed - see openspec/changes/migrate-mandaat-to-approval-chains/design.md for the sequencing and the named follow-up.",
+            "description": "Approval chain that gates the Commitment in_approval -> committed `goedkeuren` transition. A commitment reaches in_approval only when MandateEnforcer:requiresApproval routed it there because the signer's mandaat was insufficient; this chain then runs the finance approval workflow that releases it. Threshold-routed on totaalbedrag_excl_btw (EUR cents): a single commitment-administrator approves from EUR 0, and a finance-director approves commitments at or above EUR 250.000. Separation of duties is enforced - the requester who submitted the commitment cannot approve their own step. On completion the goedkeuren transition auto-advances (BudgetBlocker still gates the budget). Declarative metadata only: OpenRegister's approval-workflow primitive (x-openregister-approval-chains, ApprovalChainGateListener/ApprovalChainAdvanceListener) materialises and gates the actual steps; this app ships no PHP approval-chain implementation. INERT until the OpenRegister release carrying the declarative approval-chains capability (PR #396/#397) is deployed - see openspec/changes/migrate-mandaat-to-approval-chains/design.md for the sequencing and the named follow-up.",
             "transition": "goedkeuren",
             "amountField": "total_amount_excl_vat",
             "separationOfDuties": true,
@@ -391,7 +391,7 @@
         "icon": "FormatListNumbered",
         "version": "0.1.0",
         "title": "CommitmentLine",
-        "description": "A budget-tracking line on a Commitment, one per budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Each regel tracks its own delivery, invoicing, and payment independently so multi-year raamovereenkomsten block budget per boekjaar (D2, REQ-VPL-004).",
+        "description": "A budget-tracking line on a Commitment, one per budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Each regel tracks its own delivery, invoicing, and payment independently so multi-year raamovereenkomsten block budget per boekjaar (D2).",
         "x-openregister-purpose": "fact",
         "type": "object",
         "required": [
@@ -520,7 +520,7 @@
         },
         "x-openregister-aggregations": {
           "committedVsRealisedPerBudgetLine": {
-            "description": "REQ-VPL-011: per-budget-line committed-vs-realised rollup, grouped by budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Excludes afgesloten regels. verplicht = sum(restant_verplicht); gerealiseerd = sum(gefactureerd_bedrag); geautoriseerd is joined from the matching CommitmentBudget (administrationId + programmaCode = programma + boekjaar); vrij = geautoriseerd - verplicht - gerealiseerd is computed by the drilldown view (BudgetLineCommitments.vue) from these three declared figures — no parallel PHP reporting service (ADR-031).",
+            "description": "Per-budget-line committed-vs-realised rollup, grouped by budget coderingscombinatie (programma + kostenplaats + boekjaar + grootboekrekening). Excludes afgesloten regels. Verplicht = sum(restant_verplicht); gerealiseerd = sum(gefactureerd_bedrag); geautoriseerd is joined from the matching CommitmentBudget (administrationId + programmaCode = programma + boekjaar); vrij = geautoriseerd - verplicht - gerealiseerd is computed by the drilldown view (BudgetLineCommitments.vue) from these three declared figures: no parallel PHP reporting service (ADR-031).",
             "_grammar_note": "Rewritten into OpenRegister's actual annotation vocabulary (openregister#2846 + #2849). It previously used `source` and a `sum` list, neither of which the engine reads — the runner recognised the aggregation by NAME and understood none of its body, returning metric:\"\", field:null, groups:[] against live objects with no error at all (issue #1216). `source` is dropped because this is an intra-schema aggregation declared ON CommitmentLine; `from` is the cross-schema key and would have sent it down a different path. `sum: [a, b]` becomes `metrics: [{metric, field}, ...]`, the multi-metric spelling. `on` uses the explicit {parentField: joinedField} map rather than the string shorthand: the shorthand names only the joined side and leaves the parent side to be inferred from the group fields, which happens to give the right answer here but is a guess, and the map is the only spelling that could express a composite key later.",
             "groupBy": [
               "programme",
@@ -557,7 +557,7 @@
         "icon": "History",
         "version": "0.1.0",
         "title": "CommitmentMovement",
-        "description": "Immutable audit-log entry for every change to a Commitment (D1, REQ-VPL-010). The commitment.status is derived from the latest mutatie. Bedrag may be negative for cancelled/decreased/reclaimed; aggregations track sign explicitly.",
+        "description": "Immutable audit-log entry for every change to a Commitment (D1). The commitment.status is derived from the latest mutatie. Bedrag may be negative for cancelled/decreased/reclaimed; aggregations track sign explicitly.",
         "x-openregister-purpose": "fact",
         "x-openregister-immutable": true,
         "type": "object",
@@ -671,7 +671,7 @@
         "icon": "AccountKey",
         "version": "0.1.0",
         "title": "Mandate",
-        "description": "Authorization record defining who may sign commitments up to what amount, for which soort_verplichting, with optional second-signature thresholds (D6, REQ-VPL-002). Enforced by MandateEnforcer on the verplichting aangaan transition. A register (not an enum) so operators can manage mandates over time.",
+        "description": "Authorization record defining who may sign commitments up to what amount, for which soort_verplichting, with optional second-signature thresholds (D6). Enforced by MandateEnforcer on the verplichting aangaan transition. A register (not an enum) so operators can manage mandates over time.",
         "x-openregister-purpose": "dimension",
         "type": "object",
         "required": [
@@ -726,7 +726,7 @@
           },
           "kind_commitment": {
             "type": "array",
-            "description": "Commitment kinds this mandate applies to. MUST use the same vocabulary as Commitment.kind: MandateEnforcer::mandateApplies() matches the commitment's `kind` against this list with in_array(strict), so a value that drifts from Commitment.kind's enum makes the mandate silently stop applying rather than error.",
+            "description": "Commitment kinds this mandate applies to. MUST use the same vocabulary as Commitment.kind: MandateEnforcer:mandateApplies matches the commitment's `kind` against this list with in_array(strict), so a value that drifts from Commitment.kind's enum makes the mandate silently stop applying rather than error.",
             "items": {
               "type": "string",
               "enum": [
@@ -822,7 +822,7 @@
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "ApprovalStep",
-        "description": "A workflow step in a commitment's approval chain when the signer's mandaat is exceeded (D7, REQ-VPL-002). Created by MandateEnforcer when a verplichting moves to in_approval; gives finance a clear view of pending approvals.",
+        "description": "A workflow step in a commitment's approval chain when the signer's mandaat is exceeded (D7). Created by MandateEnforcer when a verplichting moves to in_approval; gives finance a clear view of pending approvals.",
         "x-openregister-purpose": "fact",
         "type": "object",
         "required": [
@@ -925,7 +925,7 @@
         "icon": "Wallet",
         "version": "0.1.0",
         "title": "Commitment Budget",
-        "description": "Per-programma / per-boekjaar budget bucket. Verplichtingenadministratie introduces this register (no prior Budget schema exists in shillinq) so budget can be blocked at commitment-time. vrije_ruimte = geautoriseerd_bedrag - gerealiseerd_bedrag - openstaande_verplichtingen, evaluated on-demand (D4/D9, REQ-VPL-001).",
+        "description": "Per-programma / per-boekjaar budget bucket. Verplichtingenadministratie introduces this register (no prior Budget schema exists in shillinq) so budget can be blocked at commitment-time. vrije_ruimte = geautoriseerd_bedrag - gerealiseerd_bedrag - openstaande_verplichtingen, evaluated on-demand (D4/D9).",
         "x-openregister-purpose": "dimension",
         "type": "object",
         "required": [
@@ -982,7 +982,7 @@
           },
           "outstanding_commitments": {
             "type": "integer",
-            "description": "Outstanding commitments aggregated from CommitmentLines, in minor units (D9, REQ-VPL-001).",
+            "description": "Outstanding commitments aggregated from CommitmentLines, in minor units (D9).",
             "default": 0,
             "example": 0,
             "title": "Openstaande Verplichtingen"
@@ -1022,7 +1022,7 @@
                 "value": false
               }
             ],
-            "description": "On-demand sum of outstanding committed amounts for this programma + boekjaar; not cached (D9, REQ-VPL-001)."
+            "description": "On-demand sum of outstanding committed amounts for this programma + boekjaar; not cached (D9)."
           },
           "free_capacity": {
             "type": "calculation",
@@ -1056,7 +1056,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a CommitmentBudget is written to OpenRegister's immutable audit trail with actor and timestamp. Pre-existing gap fixed while renaming this schema in the same edit (budget-core-schema) — the flag was missing under the retired 'Budget' slug too."
+          "description": "Every create, update and delete of a CommitmentBudget is written to OpenRegister's immutable audit trail with actor and timestamp. Pre-existing gap fixed while renaming this schema in the same edit (budget-core-schema): the flag was missing under the retired 'Budget' slug too."
         }
       }
     }

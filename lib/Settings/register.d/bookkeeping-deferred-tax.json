@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-deferred-tax",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — deferred tax assets, liabilities and provisions per IAS 12 / RJ 272. Five new schemas: TemporaryDifference (per-account balance-sheet timing difference), TaxLossCarryForward (compensable losses per jurisdiction + regime per Wet Vpb art. 20/20a), TaxRateReconciliation (ETR disclosure table per REQ-DT-006), DeferredTaxMovement (roll-forward per category/jurisdiction per REQ-DT-009), TaxProvision (aggregated balance-sheet DTA/DTL position per REQ-DT-008). Additive extensions on T1 Account (taxBasisDifferenceCategory hint) and FiscalPeriod (enactedTaxRates for rate-change handling per REQ-DT-005). TaxRateReconciliation is produced by x-openregister-calculations (ADR-031, design D2); no PHP report service. TaxCalculationService orchestrates detection, loss-compensation and rate-change re-measurement and is the thin engine-side fallback per design D1. No seed data required — records accumulate from GL on balansdatum."
+    "description": "Tier 3: deferred tax assets, liabilities and provisions per IAS 12 / RJ 272. Five new schemas: TemporaryDifference (per-account balance-sheet timing difference), TaxLossCarryForward (compensable losses per jurisdiction + regime per Wet Vpb art. 20/20a), TaxRateReconciliation (ETR disclosure table per), DeferredTaxMovement (roll-forward per category/jurisdiction per), TaxProvision (aggregated balance-sheet DTA/DTL position per). Additive extensions on T1 Account (taxBasisDifferenceCategory hint) and FiscalPeriod (enactedTaxRates for rate-change handling per). TaxRateReconciliation is produced by x-openregister-calculations (ADR-031, design D2); no PHP report service. TaxCalculationService orchestrates detection, loss-compensation and rate-change re-measurement and is the thin engine-side fallback per design D1. No seed data required. Records accumulate from GL on balansdatum."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "ScaleBalance",
         "version": "0.1.0",
         "title": "Temporary Difference",
-        "description": "Per-account, per-period detection of a timing difference between commercial carrying amount and tax basis at balansdatum. Taxable differences create DTL; deductible differences create DTA. Permanent differences (deelnemingsvrijstelling etc.) must NOT be stored here — they appear in TaxRateReconciliation.reconciliationItems with type=permanent.",
+        "description": "Per-account, per-period detection of a timing difference between commercial carrying amount and tax basis at balansdatum. Taxable differences create DTL; deductible differences create DTA. Permanent differences (deelnemingsvrijstelling etc.) must NOT be stored here: they appear in TaxRateReconciliation.reconciliationItems with type=permanent.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md",
         "type": "object",
@@ -46,7 +46,7 @@
           },
           "accountNumber": {
             "type": "string",
-            "description": "RGS general-ledger account code (FK to Account.accountNumber, REQ-DT-001).",
+            "description": "RGS general-ledger account code (FK to Account.accountNumber).",
             "example": "0600",
             "title": "Account Number"
           },
@@ -154,7 +154,7 @@
         "icon": "AccountGroup",
         "version": "0.1.0",
         "title": "Tax-loss Carry-forward",
-        "description": "Compensable tax loss per jurisdiction per origination year, tracked under the applicable Wet Vpb compensation regime (pre-2019 6-year, 2019–2021 transitional, 2022+ unlimited with 50%-above-EUR-1M cap per REQ-DT-003). remainingAmount is computed as originalAmount − utilisedAmount.",
+        "description": "Compensable tax loss per jurisdiction per origination year, tracked under the applicable Wet Vpb compensation regime (pre-2019 6-year, 2019–2021 transitional, 2022+ unlimited with 50%-above-EUR-1M cap per). remainingAmount is computed as originalAmount − utilisedAmount.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md",
         "type": "object",
@@ -177,7 +177,7 @@
           },
           "originatingYear": {
             "type": "integer",
-            "description": "Fiscal year in which the loss originated (determines which regime applies per REQ-DT-003).",
+            "description": "Fiscal year in which the loss originated (determines which regime applies per).",
             "example": 2024,
             "title": "Originating Year"
           },
@@ -266,7 +266,7 @@
         "icon": "ChartBar",
         "version": "0.1.0",
         "title": "Tax Rate Reconciliation",
-        "description": "Complete ETR reconciliation per period per jurisdiction (REQ-DT-006 / IAS 12 §81(c) / RJ 272). Produced as x-openregister-calculations output (ADR-031, design D2). Starts at statutory rate × profitBeforeTax and adjusts for permanent differences, temporary differences, rate changes and prior-year items to arrive at effectiveTaxExpense and effectiveTaxRate.",
+        "description": "Complete ETR reconciliation per period per jurisdiction (IAS 12 §81(c) / RJ 272). Produced as x-openregister-calculations output (ADR-031, design D2). Starts at statutory rate × profitBeforeTax and adjusts for permanent differences, temporary differences, rate changes and prior-year items to arrive at effectiveTaxExpense and effectiveTaxRate.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md",
         "x-openregister": {
@@ -287,7 +287,7 @@
         "properties": {
           "periodId": {
             "type": "string",
-            "description": "Fiscal period for the ETR reconciliation (FK to FiscalPeriod, REQ-DT-006).",
+            "description": "Fiscal period for the ETR reconciliation (FK to FiscalPeriod).",
             "example": "2026-FY",
             "title": "Period ID"
           },
@@ -431,7 +431,7 @@
         "properties": {
           "periodId": {
             "type": "string",
-            "description": "Fiscal period for this roll-forward row (FK to FiscalPeriod, REQ-DT-009).",
+            "description": "Fiscal period for this roll-forward row (FK to FiscalPeriod).",
             "example": "2026-FY",
             "title": "Period ID"
           },
@@ -477,7 +477,7 @@
           },
           "rateChangeAdjustment": {
             "type": "integer",
-            "description": "Adjustment resulting from an enacted tax-rate change per REQ-DT-005 in euro cents. Integer cents.",
+            "description": "Adjustment resulting from an enacted tax-rate change in euro cents. Integer cents.",
             "example": 800000,
             "title": "Rate Change Adjustment"
           },
@@ -546,7 +546,7 @@
         "icon": "CurrencyEur",
         "version": "0.1.0",
         "title": "Tax Provision",
-        "description": "Aggregated balance-sheet deferred-tax position per fiscal period per jurisdiction (REQ-DT-008 / IAS 12 §71–78). Holds current-tax payable/prepaid, total DTA and DTL, the computed net position, the saldering presentation choice (gross/net) and the FK to the Vpb return for reconciliation.",
+        "description": "Aggregated balance-sheet deferred-tax position per fiscal period per jurisdiction (IAS 12 §71–78). Holds current-tax payable/prepaid, total DTA and DTL, the computed net position, the saldering presentation choice (gross/net) and the FK to the Vpb return for reconciliation.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md",
         "type": "object",
@@ -564,7 +564,7 @@
         "properties": {
           "periodId": {
             "type": "string",
-            "description": "Fiscal period for this provision record (FK to FiscalPeriod, REQ-DT-010).",
+            "description": "Fiscal period for this provision record (FK to FiscalPeriod).",
             "example": "2026-FY",
             "title": "Period ID"
           },
@@ -637,7 +637,7 @@
       },
       "Account": {
         "x-openspec-extend": true,
-        "description": "ADR-037 additive extension: adds optional taxBasisDifferenceCategory enum hint on Account (REQ-DT-001/REQ-DT-002). When set, TaxCalculationService uses this hint to automatically classify the account's commercial/tax difference; without it the operator specifies the category directly in TemporaryDifference.",
+        "description": "ADR-037 additive extension: adds optional taxBasisDifferenceCategory enum hint on Account. When set, TaxCalculationService uses this hint to automatically classify the account's commercial/tax difference; without it the operator specifies the category directly in TemporaryDifference.",
         "properties": {
           "taxBasisDifferenceCategory": {
             "type": "string",
@@ -661,7 +661,7 @@
       },
       "FiscalPeriod": {
         "x-openspec-extend": true,
-        "description": "ADR-037 additive extension: adds enactedTaxRates object on FiscalPeriod for rate-change adjustment per REQ-DT-005. Keyed by jurisdiction (ISO 3166-1 alpha-2); each entry carries rate in basis points and the effective date of the enacted law.",
+        "description": "ADR-037 additive extension: adds enactedTaxRates object on FiscalPeriod for rate-change adjustment. Keyed by jurisdiction (ISO 3166-1 alpha-2); each entry carries rate in basis points and the effective date of the enacted law.",
         "properties": {
           "enactedTaxRates": {
             "type": "object",

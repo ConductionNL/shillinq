@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "source": "Besluit BBV bijlage IV (Commissie BBV)",
     "version": "2024",
-    "description": "Canonical BBV taakveld catalogue per Besluit BBV bijlage IV. Versioned seed: a future revision ships as bbv-taakvelden-YYYY.json with a new bbvVersion stamp; both coexist. Operator-overrideable; this catalogue is the enum source for BbvAccountMapping.taakveld. Every record carries the REQ-BBV-005 fields (name, category, legalBasis, effectiveFrom) so the Schema.org schema:DefinedTerm contract is honoured.",
+    "description": "Canonical BBV taakveld catalogue per Besluit BBV bijlage IV. Versioned seed: a future revision ships as bbv-taakvelden-YYYY.json with a new bbvVersion stamp; both coexist. Operator-overrideable; this catalogue is the enum source for BbvAccountMapping.taakveld. Every record carries the fields (name, category, legalBasis, effectiveFrom) so the Schema.org schema:DefinedTerm contract is honoured.",
     "imported": "2026-06-01T00:00:00Z",
     "bbvVersion": "2024",
     "translationNote": "`name`, `description` and `programmaFocus` are the STATUTORY Dutch strings from Besluit BBV bijlage IV. They are what a CBS Iv3 submission carries and what `legalBasis` cites — identifiers, not display text — so they are never replaced by a translation. `nameEn`, `descriptionEn` and `programmaFocusEn` are display-only, for an English UI locale. This is the 'translation handling' the BbvTaakveld schema description anticipates when it explains why the catalogue is a register rather than an enum. `description` mirrors `name` exactly in every record of this file; `descriptionEn` preserves that same invariant rather than inventing a second phrasing."

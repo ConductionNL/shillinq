@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "fix-log-noise-schemas",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Declares the RJ270Stage schema that SettingsService::seedRj270Stages() has been seeding into since add-shillinq-consultancy-project-accounting task-14, but which was never declared in any register config. Without this schema every InitializeSettings run logged 'Shillinq: RJ-270 stages seeding failed' because OpenRegister could not resolve the RJ270Stage schema slug. The shape mirrors lib/Settings/seeds/rj-270-stages.json (4 canonical percentage-of-completion stages per RJ 270 / IFRS 15 §B14-B19); deduplication key is stageId. Project.recognitionStage mirrors the recognitionStage values of this catalogue."
+    "description": "Declares the RJ270Stage schema that SettingsService:seedRj270Stages has been seeding into since add-shillinq-consultancy-project-accounting task-14, but which was never declared in any register config. Without this schema every InitializeSettings run logged 'Shillinq: RJ-270 stages seeding failed' because OpenRegister could not resolve the RJ270Stage schema slug. The shape mirrors lib/Settings/seeds/rj-270-stages.json (4 canonical percentage-of-completion stages per RJ 270 / IFRS 15 §B14-B19); deduplication key is stageId. Project.recognitionStage mirrors the recognitionStage values of this catalogue."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "ChartTimelineVariant",
         "version": "0.1.0",
         "title": "RJ-270 Stage",
-        "description": "Canonical percentage-of-completion stage definition for consultancy project revenue recognition under RJ 270 (Richtlijnen voor de Jaarverslaggeving §270) and IFRS 15 §B14-B19. Seeded idempotently from lib/Settings/seeds/rj-270-stages.json by SettingsService::seedRj270Stages() (dedupe key: stageId). Project.recognitionStage mirrors the recognitionStage values of this catalogue.",
+        "description": "Canonical percentage-of-completion stage definition for consultancy project revenue recognition under RJ 270 (Richtlijnen voor de Jaarverslaggeving §270) and IFRS 15 §B14-B19. Seeded idempotently from lib/Settings/seeds/rj-270-stages.json by SettingsService:seedRj270Stages (dedupe key: stageId). Project.recognitionStage mirrors the recognitionStage values of this catalogue.",
         "x-schema-org": "schema:DefinedTerm",
         "type": "object",
         "required": [

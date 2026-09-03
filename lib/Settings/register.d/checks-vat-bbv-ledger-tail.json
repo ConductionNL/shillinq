@@ -91,7 +91,7 @@
           "proRataPercent": {
             "type": "number",
             "nullable": true,
-            "description": "Deductible proportion (0..100) of the input VAT under the pro-rata rule (art. 173).",
+            "description": "Deductible proportion (0.100) of the input VAT under the pro-rata rule (art. 173).",
             "title": "Pro Rata Percent"
           },
           "taxAmount": {

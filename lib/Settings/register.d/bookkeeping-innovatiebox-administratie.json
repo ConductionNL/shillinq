@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-innovatiebox-administratie",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 4 — Innovatiebox administratie (Wet Vpb art. 12b-12bg). Declares the five interconnected registers QualifyingAsset (kwalificerend immaterieel activum with validated toegangsticket), NexusCalculation (OECD BEPS Action 5 modified nexus per asset per boekjaar, immutable), IBProfitAttribution (per-asset winsttoerekening: afpelmethode / forfaitair / cost-plus), IBExpenseAllocation (kostentoerekening with doorsnijdingsverbod flag), and CarryForwardLoss (asset-specific voortwenteling verlies). The declarative x-openregister-aggregations document the nexus / profit-attribution / loss-carry-forward / doorsnijdingsverbod shapes; the PHP service layer (NexusCalculationService, ProfitAttributionService, CarryForwardLossService, DoorsnijdingsVerbodValidator, QualifyingAssetValidator, InnovatieboxAggregationService) computes the same results from the real OpenRegister ObjectService API (find/findAll). Tariff 0.09 is hard-coded per Wet Vpb art. 12b 2026. Seed objects provide the worked nexus / afpelmethode / forfaitair / loss-carry-forward examples from spec.md."
+    "description": "Tier 4: Innovatiebox administratie (Wet Vpb art. 12b-12bg). Declares the five interconnected registers QualifyingAsset (kwalificerend immaterieel activum with validated toegangsticket), NexusCalculation (OECD BEPS Action 5 modified nexus per asset per boekjaar, immutable), IBProfitAttribution (per-asset winsttoerekening: afpelmethode / forfaitair / cost-plus), IBExpenseAllocation (kostentoerekening with doorsnijdingsverbod flag), and CarryForwardLoss (asset-specific voortwenteling verlies). The declarative x-openregister-aggregations document the nexus / profit-attribution / loss-carry-forward / doorsnijdingsverbod shapes; the PHP service layer (NexusCalculationService, ProfitAttributionService, CarryForwardLossService, DoorsnijdingsVerbodValidator, QualifyingAssetValidator, InnovatieboxAggregationService) computes the same results from the real OpenRegister ObjectService API (find/findAll). Tariff 0.09 is hard-coded per Wet Vpb art. 12b 2026. Seed objects provide the worked nexus / afpelmethode / forfaitair / loss-carry-forward examples from spec.md."
   },
   "components": {
     "schemas": {
@@ -461,7 +461,7 @@
           },
           "effective_rate": {
             "type": "number",
-            "description": "Innovatiebox tariff 0.09 (Wet Vpb art. 12b 2026, REQ-IBA-010).",
+            "description": "Innovatiebox tariff 0.09 (Wet Vpb art. 12b 2026).",
             "default": 0.09,
             "example": 0.09,
             "title": "Effectief Tarief"
@@ -804,7 +804,7 @@
         "icon": "TextBoxCheckOutline",
         "version": "0.1.0",
         "title": "Innovatiebox Audit Event",
-        "description": "Immutable audit event for innovatiebox lifecycle transitions (REQ-IBA-008 + REQ-IBA-009). One record per nexus calculation, profit-attribution write, year-end finalisation, VSO-locked amendment attempt, doorsnijdingsverbod check and forfaitair-cap application. Append-only by x-openregister.immutable. Used by Belastingdienst VSO audit-reproducibility and by the internal audit log.",
+        "description": "Immutable audit event for innovatiebox lifecycle transitions (+). One record per nexus calculation, profit-attribution write, year-end finalisation, VSO-locked amendment attempt, doorsnijdingsverbod check and forfaitair-cap application. Append-only by x-openregister.immutable. Used by Belastingdienst VSO audit-reproducibility and by the internal audit log.",
         "x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008",
         "x-openregister": {
           "immutable": true

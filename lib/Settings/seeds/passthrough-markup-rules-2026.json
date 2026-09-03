@@ -5,7 +5,7 @@
 		"source": "openspec/changes/expense-reimbursement-or-passthrough/design.md Seed Data tables",
 		"version": "2026",
 		"change": "expense-reimbursement-or-passthrough",
-		"description": "Seed PassThroughMarkupRule master-data records per design.md. priority is auto-derived from rule shape (customer+category=100, customer-only=50, global=0) and used as the tie-breaker when multiple rules match. Lookup priority — customer+category > customer-only > global default — is enforced declaratively by the Receipt/MileageEntry/PerDiem markupLookup expression.",
+		"description": "Seed PassThroughMarkupRule master-data records per design.md. Priority is auto-derived from rule shape (customer+category=100, customer-only=50, global=0) and used as the tie-breaker when multiple rules match. Lookup priority: customer+category > customer-only > global default. Is enforced declaratively by the Receipt/MileageEntry/PerDiem markupLookup expression.",
 		"imported": "2026-06-07T00:00:00Z"
 	},
 	"rules": [

@@ -173,13 +173,13 @@
           "snapshotHash": {
             "type": "string",
             "nullable": true,
-            "description": "Cryptographic hash of the immutable snapshot taken at opmaak (REQ-T9-010, design D2). Set by the opmaak action.",
+            "description": "Cryptographic hash of the immutable snapshot taken at opmaak (design D2). Set by the opmaak action.",
             "title": "Snapshot Hash"
           },
           "auditorsStatementRequired": {
             "type": "boolean",
             "default": false,
-            "description": "True when an accountantsverklaring is wettelijk verplicht (middelgroot+; REQ-T9-007/REQ-T9-009).",
+            "description": "True when an accountantsverklaring is wettelijk verplicht (middelgroot+).",
             "title": "Accountantsverklaring Vereist"
           },
           "auditorsStatementStatus": {
@@ -195,19 +195,19 @@
               "beoordeling"
             ],
             "default": "niet-vereist",
-            "description": "Status/type of the accountantsverklaring (NV-COS 700/4410/2400) per REQ-T9-007.",
+            "description": "Status/type of the accountantsverklaring (NV-COS 700/4410/2400).",
             "title": "Accountantsverklaring Status"
           },
           "cashFlowStatementRequired": {
             "type": "boolean",
             "default": false,
-            "description": "True for middelgroot+ where a kasstroomoverzicht is verplicht (REQ-T9-005/REQ-T9-009).",
+            "description": "True for middelgroot+ where a kasstroomoverzicht is verplicht.",
             "title": "Kasstroomoverzicht Vereist"
           },
           "boardReportRequired": {
             "type": "boolean",
             "default": false,
-            "description": "True for middelgroot+ where a bestuursverslag is verplicht (REQ-T9-006/REQ-T9-009).",
+            "description": "True for middelgroot+ where a bestuursverslag is verplicht.",
             "title": "Bestuursverslag Vereist"
           },
           "boardMembers": {
@@ -238,7 +238,7 @@
               "rejected"
             ],
             "nullable": true,
-            "description": "Mirror of the adoption Decision outcome. The vaststellen transition is OUTCOME-DRIVEN — fires only when decisionOutcome==approved.",
+            "description": "Mirror of the adoption Decision outcome. The vaststellen transition is OUTCOME-DRIVEN: fires only when decisionOutcome==approved.",
             "title": "Decision Outcome"
           }
         },
@@ -272,7 +272,7 @@
               "from": "draft",
               "to": "opgemaakt",
               "label": "Opmaken door bestuur",
-              "description": "Bestuur signs the concept; an immutable snapshot is created (REQ-T9-010, design D2). Requires the balans to balance (activa = passiva).",
+              "description": "Bestuur signs the concept; an immutable snapshot is created (design D2). Requires the balans to balance (activa = passiva).",
               "requires": "OCA\\Shillinq\\Lifecycle\\AnnualReportGuard::canOpmaken"
             },
             "naarReview": {
@@ -291,14 +291,14 @@
               "from": "opgemaakt",
               "to": "determined",
               "label": "Vaststellen door AV",
-              "description": "AV approves directly where no accountantsverklaring is verplicht (klein/micro; REQ-T9-007/REQ-T9-009). OUTCOME-DRIVEN per REQ-SIGN-003: requires adoption decisionOutcome==approved from decidesk.",
+              "description": "AV approves directly where no accountantsverklaring is verplicht (klein/micro). OUTCOME-DRIVEN: requires adoption decisionOutcome==approved from decidesk.",
               "requires": "OCA\\Shillinq\\Lifecycle\\AnnualReportGuard::canVaststellen"
             },
             "vaststellen": {
               "from": "in-review",
               "to": "determined",
               "label": "Vaststellen na review",
-              "description": "AV approves after accountant sign-off; an accountantsverklaring MUST be attached for middelgroot+ (REQ-T9-007/REQ-T9-010). OUTCOME-DRIVEN per REQ-SIGN-003: requires adoption decisionOutcome==approved from decidesk.",
+              "description": "AV approves after accountant sign-off; an accountantsverklaring MUST be attached for middelgroot+. OUTCOME-DRIVEN: requires adoption decisionOutcome==approved from decidesk.",
               "requires": "OCA\\Shillinq\\Lifecycle\\AnnualReportGuard::canVaststellen"
             },
             "deponeren": {
@@ -614,7 +614,7 @@
           "accountingPolicyChangeRationale": {
             "type": "string",
             "nullable": true,
-            "description": "Required motivatie when the model changes year-on-year (stelselwijziging, REQ-T9-003).",
+            "description": "Required motivatie when the model changes year-on-year (stelselwijziging).",
             "title": "Stelselwijziging Motivatie"
           },
           "rubrieken": {
@@ -911,7 +911,7 @@
           "mandatory": {
             "type": "boolean",
             "default": false,
-            "description": "True when this note is wettelijk verplicht for the report's groottecategorie (REQ-T9-004/REQ-T9-009).",
+            "description": "True when this note is wettelijk verplicht for the report's groottecategorie.",
             "title": "Verplicht"
           }
         },
@@ -1173,7 +1173,7 @@
           },
           "overdrachtenLog": {
             "type": "array",
-            "description": "Immutable handover/state-transition log (REQ-T9-007/REQ-T9-010).",
+            "description": "Immutable handover/state-transition log.",
             "items": {
               "type": "object",
               "properties": {

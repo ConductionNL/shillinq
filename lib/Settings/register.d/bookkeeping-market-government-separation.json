@@ -16,7 +16,7 @@
         "icon": "StoreOutline",
         "version": "0.1.0",
         "title": "Commercial Activity",
-        "description": "Per-bestuursorgaan commercial activity register. First-class record (not a free-form GL tag) so ACM meldingstatus, ABB exemption, kostprijsmethode, kostenplaats/kostendrager coupling, marktcontext and audit trail attach declaratively. An annual review-task is auto-generated when lastReviewedAt is > 365 days old (REQ-WMO-001 §c).",
+        "description": "Per-bestuursorgaan commercial activity register. First-class record (not a free-form GL tag) so ACM meldingstatus, ABB exemption, kostprijsmethode, kostenplaats/kostendrager coupling, marktcontext and audit trail attach declaratively. An annual review-task is auto-generated when lastReviewedAt is > 365 days old (§c).",
         "x-schema-org": "schema:Service",
         "x-spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
         "type": "object",
@@ -180,7 +180,7 @@
           },
           "deelnemers": {
             "type": "array",
-            "description": "Multi-bestuursorgaan participants (REQ-WMO-011, Phase 3). Empty for single-deelnemer activities.",
+            "description": "Multi-bestuursorgaan participants (Phase 3). Empty for single-deelnemer activities.",
             "items": {
               "type": "object",
               "required": [
@@ -232,7 +232,7 @@
           "lastReviewedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp of last annual compliance review (REQ-WMO-001 §c).",
+            "description": "Timestamp of last annual compliance review (§c).",
             "nullable": true,
             "title": "Last Reviewed At"
           },
@@ -308,7 +308,7 @@
             "from": "IntegralCostPrice"
           },
           "totalManualOverrides": {
-            "description": "Cumulative count of handmatige overrides for this activity, used by REQ-WMO-007 detector scenario 5.",
+            "description": "Cumulative count of handmatige overrides for this activity, used by detector scenario 5.",
             "groupBy": [
               "commercialActivityId"
             ],
@@ -351,7 +351,7 @@
         "x-openregister-scheduled-workflows": {
           "wmo-annual-review-detector": {
             "name": "Annual review-task generator",
-            "description": "Daily walker over all active CommercialActivity records. Emits a 'wmo-annual-review' task whenever lastReviewedAt is > 365 days old (REQ-WMO-001 §c). Composed by CommercialActivityReviewService and dispatched via the Nextcloud notification + IJobList task surface.",
+            "description": "Daily walker over all active CommercialActivity records. Emits a 'wmo-annual-review' task whenever lastReviewedAt is > 365 days old (§c). Composed by CommercialActivityReviewService and dispatched via the Nextcloud notification + IJobList task surface.",
             "cron": "0 6 * * *",
             "register": "shillinq",
             "schema": "CommercialActivity",
@@ -365,7 +365,7 @@
           },
           "wmo-cross-subsidy-detector": {
             "name": "Cross-subsidy detector",
-            "description": "Monthly walker per CommercialActivity, evaluating the 6 REQ-WMO-007 cross-subsidy risk scenarios (loss-financing, omzet-spike-no-IKP-update, overhead-under-allocation, ABB-stale, manual-override-accumulation, potentiele-overhead-onderschatting) plus the REQ-WMO-012 Phase-3 bevoordeling-risk scenario. Emits AlertLog records via CrossSubsidyDetector for any match. Runs the 1st of the month at 02:00 UTC.",
+            "description": "Monthly walker per CommercialActivity, evaluating the 6 cross-subsidy risk scenarios (loss-financing, omzet-spike-no-IKP-update, overhead-under-allocation, ABB-stale, manual-override-accumulation, potentiele-overhead-onderschatting) plus the Phase-3 bevoordeling-risk scenario. Emits AlertLog records via CrossSubsidyDetector for any match. Runs the 1st of the month at 02:00 UTC.",
             "cron": "0 2 1 * *",
             "register": "shillinq",
             "schema": "CommercialActivity",
@@ -542,7 +542,7 @@
           "finalSignedBy": {
             "type": "string",
             "nullable": true,
-            "description": "Nextcloud user-id of accountant who signed off on a definitief record (REQ-WMO-002 §year-end lock).",
+            "description": "Nextcloud user-id of accountant who signed off on a definitief record (§year-end lock).",
             "title": "Definitief Signed By"
           },
           "finalSignedAt": {
@@ -597,7 +597,7 @@
           },
           "wmo-ikp-year-end-lock": {
             "name": "Year-end IKP definitief lock",
-            "description": "On 31 March of the following fiscal year, aggregates all monthly voorlopig IKP records for the closed FY into a single definitief IKP-YTD record, locked by accountant digital signature (REQ-WMO-002 §year-end lock).",
+            "description": "On 31 March of the following fiscal year, aggregates all monthly voorlopig IKP records for the closed FY into a single definitief IKP-YTD record, locked by accountant digital signature (§year-end lock).",
             "cron": "0 4 31 3 *",
             "register": "shillinq",
             "schema": "IntegralCostPrice",
@@ -715,7 +715,7 @@
           },
           "handmatigeOverride": {
             "type": "object",
-            "description": "Override record when automatischToegepast=false. Requires 2-eye sign-off (REQ-WMO-003 §override).",
+            "description": "Override record when automatischToegepast=false. Requires 2-eye sign-off (§override).",
             "nullable": true,
             "properties": {
               "approvedBy": {
@@ -755,12 +755,12 @@
           "postingDate": {
             "type": "string",
             "format": "date",
-            "description": "Posting date of the source journal entry — drives geldende-OverheadDistributionRule selection.",
+            "description": "Posting date of the source journal entry: drives geldende-OverheadDistributionRule selection.",
             "title": "Posting Date"
           },
           "materialised": {
             "type": "boolean",
-            "description": "True when the split was posted to the ledger as balanced GL lines (REQ-WMO-003 §materialise mode).",
+            "description": "True when the split was posted to the ledger as balanced GL lines (§materialise mode).",
             "default": false,
             "title": "Materialised"
           },
@@ -839,7 +839,7 @@
         "x-openregister-event-listeners": {
           "journal-entry-posted": {
             "name": "Activity cost allocation splitter",
-            "description": "On JournalEntry.created / .transitioned to status=posted, resolve the geldende OverheadDistributionRule for the posting date, match the CommercialActivity by kostenplaats/kostendrager, and persist an ActivityCostAllocation record carrying the PUBL / MO splits. Materialise mode (post splits as additional balanced GL lines) is operator-configurable per administration.",
+            "description": "On JournalEntry.created /.transitioned to status=posted, resolve the geldende OverheadDistributionRule for the posting date, match the CommercialActivity by kostenplaats/kostendrager, and persist an ActivityCostAllocation record carrying the PUBL / MO splits. Materialise mode (post splits as additional balanced GL lines) is operator-configurable per administration.",
             "sourceSchema": "JournalEntry",
             "trigger": "transitioned",
             "toState": "posted",
@@ -906,7 +906,7 @@
           "dropVerification": {
             "type": "object",
             "nullable": true,
-            "description": "DROP-API verification record (REQ-WMO-005 §automatic publication verification).",
+            "description": "DROP-API verification record (§automatic publication verification).",
             "properties": {
               "verifiedAt": {
                 "type": "string",
@@ -1200,12 +1200,12 @@
         "x-openregister-lifecycle-actions": {
           "validateTransition": {
             "trigger": "beforeTransition",
-            "description": "Validate ABB status transition preconditions (e.g. publicatie requires gemeenteblad + datum; geldig requires ACM kenmerk). Implemented by AbbLifecycleService::canTransition.",
+            "description": "Validate ABB status transition preconditions (e.g. publicatie requires gemeenteblad + datum; geldig requires ACM kenmerk). Implemented by AbbLifecycleService:canTransition.",
             "handler": "OCA\\Shillinq\\Service\\AbbLifecycleService::canTransition"
           },
           "generateTasks": {
             "trigger": "afterTransition",
-            "description": "Emit the auto-generated task envelope (publish-gemeenteblad, notify-acm, review-bezwaarschriften, evaluate-abb) per REQ-WMO-005 §c.",
+            "description": "Emit the auto-generated task envelope (publish-gemeenteblad, notify-acm, review-bezwaarschriften, evaluate-abb) §c.",
             "handler": "OCA\\Shillinq\\Service\\AbbLifecycleService::generateTasks"
           },
           "verifyDrop": {
@@ -1213,7 +1213,7 @@
             "transitions": [
               "publicatie"
             ],
-            "description": "On publicatie, look up the gemeenteblad reference via the DROP API (openconnector OC-source) and write the verification envelope back onto dropVerification (REQ-WMO-005 §automatic verification). Fail-soft: an unavailable DROP API logs a verification record with success=false but does NOT block the transition.",
+            "description": "On publicatie, look up the gemeenteblad reference via the DROP API (openconnector OC-source) and write the verification envelope back onto dropVerification (§automatic verification). Fail-soft: an unavailable DROP API logs a verification record with success=false but does NOT block the transition.",
             "handler": "OCA\\Shillinq\\Service\\DropApiVerificationService::composeLookupRequest"
           },
           "flagDependentActivities": {
@@ -1222,7 +1222,7 @@
               "intrekking",
               "herziening"
             ],
-            "description": "When an ABB enters intrekking or herziening, flag dependent CommercialActivity records (those whose exemptionBesluitId points at this ABB) for operator review (REQ-WMO-005 §dependents).",
+            "description": "When an ABB enters intrekking or herziening, flag dependent CommercialActivity records (those whose exemptionBesluitId points at this ABB) for operator review (§dependents).",
             "handler": "OCA\\Shillinq\\Service\\AbbLifecycleService::flagDependentActivities"
           }
         },
@@ -1380,7 +1380,7 @@
           "signatureFingerprint": {
             "type": "string",
             "nullable": true,
-            "description": "Deprecated — retained for legacy provenance. Superseded by signingRequestRef / signingStatus.",
+            "description": "Deprecated: retained for legacy provenance. Superseded by signingRequestRef / signingStatus.",
             "x-delegated-to": "docudesk",
             "deprecated": true,
             "title": "Signature Fingerprint"
@@ -1553,12 +1553,12 @@
             "transitions": [
               "verzonden"
             ],
-            "description": "On transition ready-for-submission -> verzonden, set verzondenAanAcm=true, optionally publish to gemeenteblad via openconnector, copy to write-once archive store, begin 7-year retention countdown (REQ-WMO-006 §submission + immutability).",
+            "description": "On transition ready-for-submission -> verzonden, set verzondenAanAcm=true, optionally publish to gemeenteblad via openconnector, copy to write-once archive store, begin 7-year retention countdown (§submission + immutability).",
             "handler": "OCA\\Shillinq\\Service\\AcmReportGenerator::submit"
           },
           "jaarrekeningWiring": {
             "trigger": "afterCreate",
-            "description": "Wire annual ACM-rapport generation into the bookkeeping-financial-reporting T4 jaarrekening-generator: when an annual ACMReport (period ending in -YTD) is created, the financial-reporting export pipeline includes the WMO-bijlage produced by WmoJaarrekeningBijlageService (REQ-WMO-004 wiring, P1-15).",
+            "description": "Wire annual ACM-rapport generation into the bookkeeping-financial-reporting T4 jaarrekening-generator: when an annual ACMReport (period ending in -YTD) is created, the financial-reporting export pipeline includes the WMO-bijlage produced by WmoJaarrekeningBijlageService (wiring, P1-15).",
             "handler": "OCA\\Shillinq\\Service\\WmoJaarrekeningBijlageService::compose"
           }
         },
@@ -1715,7 +1715,7 @@
               "potentiele-overhead-onderschatting",
               "bevoordeling-risk"
             ],
-            "description": "One of the 6 REQ-WMO-007 scenarios plus REQ-WMO-012 bevoordeling-risk (Phase 3).",
+            "description": "One of the 6 scenarios plus bevoordeling-risk (Phase 3).",
             "title": "Alert Type"
           },
           "commercialActivityId": {
@@ -1852,7 +1852,7 @@
         "x-openregister-scheduled-workflows": {
           "wmo-alert-escalation": {
             "name": "Cross-subsidy alert escalation",
-            "description": "Weekly walker over open AlertLog records. Any alert older than 4 weeks transitions status open -> escalation-due, is reassigned to gemeentesecretaris, and emits an escalation notification (REQ-WMO-007 §escalation).",
+            "description": "Weekly walker over open AlertLog records. Any alert older than 4 weeks transitions status open -> escalation-due, is reassigned to gemeentesecretaris, and emits an escalation notification (§escalation).",
             "cron": "0 5 * * 1",
             "register": "shillinq",
             "schema": "AlertLog",
@@ -1872,7 +1872,7 @@
               "reviewed-no-action",
               "remediated"
             ],
-            "description": "Validate resolution notes are non-empty and write the operator's motivation onto resolutionNotes (REQ-WMO-007 §resolution).",
+            "description": "Validate resolution notes are non-empty and write the operator's motivation onto resolutionNotes (§resolution).",
             "handler": "OCA\\Shillinq\\Service\\CrossSubsidyDetector::resolve"
           }
         },
@@ -2033,7 +2033,7 @@
         "x-openregister-scheduled-workflows": {
           "wmo-audit-log-retention-archival": {
             "name": "WMO audit-log retention archival",
-            "description": "Daily walker over logged WMOAuditLog entries. Entries crossing the 7-year retention boundary transition status logged -> archived; entries may then be purged per Mededingingswet bewaartermijn (REQ-WMO-010 §retention).",
+            "description": "Daily walker over logged WMOAuditLog entries. Entries crossing the 7-year retention boundary transition status logged -> archived; entries may then be purged per Mededingingswet bewaartermijn (§retention).",
             "cron": "30 4 * * *",
             "register": "shillinq",
             "schema": "WMOAuditLog",
@@ -2056,7 +2056,7 @@
         "icon": "ChartLine",
         "version": "0.1.0",
         "title": "Market Benchmark",
-        "description": "Market-benchmark observation for tariff validation and Art. 25j bevoordeling-risk detection (REQ-WMO-012, Phase 3). The IKP calculation step retrieves benchmarks within last 12 months, computes a median, and raises a bevoordeling-risk alert when gehanteerdTarief < median × 0.85 despite gehanteerdTarief >= kostprijsPerEenheid.",
+        "description": "Market-benchmark observation for tariff validation and Art. 25j bevoordeling-risk detection (Phase 3). The IKP calculation step retrieves benchmarks within last 12 months, computes a median, and raises a bevoordeling-risk alert when gehanteerdTarief < median × 0.85 despite gehanteerdTarief >= kostprijsPerEenheid.",
         "x-schema-org": "schema:PriceSpecification",
         "x-spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
         "type": "object",

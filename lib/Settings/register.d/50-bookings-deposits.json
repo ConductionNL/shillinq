@@ -6,7 +6,7 @@
         "icon": "CashClock",
         "version": "0.1.0",
         "title": "Deposit Payment",
-        "description": "A deposit (partial or full prepayment) collected at booking time via Mollie or Stripe, routed through OpenConnector. On authorization a Shillinq AR invoice is materialised; on void an AR credit note reverses it. Payment routing, tokenization and gateway selection are OpenConnector's responsibility — this register never stores card data.",
+        "description": "A deposit (partial or full prepayment) collected at booking time via Mollie or Stripe, routed through OpenConnector. On authorization a Shillinq AR invoice is materialised; on void an AR credit note reverses it. Payment routing, tokenization and gateway selection are OpenConnector's responsibility: this register never stores card data.",
         "x-schema-org": "schema:PaymentMethod",
         "type": "object",
         "required": [
@@ -404,7 +404,7 @@
           "byState": {
             "field": "state",
             "metric": "count",
-            "description": "Number of deposits per lifecycle state — drives the Deposits overview state filter.",
+            "description": "Number of deposits per lifecycle state: drives the Deposits overview state filter.",
             "groupBy": ["state"]
           },
           "pendingByDueDate": {

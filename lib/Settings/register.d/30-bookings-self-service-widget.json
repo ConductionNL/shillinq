@@ -73,7 +73,7 @@
         "icon": "KeyOutline",
         "version": "0.1.0",
         "title": "Widget Access Key",
-        "description": "A per-business API access key for the public self-service widget. Only the password_hash() of the key is stored; the plaintext key is shown once on generation and never persisted.",
+        "description": "A per-business API access key for the public self-service widget. Only the password_hash of the key is stored; the plaintext key is shown once on generation and never persisted.",
         "x-schema-org": "schema:DigitalDocument",
         "type": "object",
         "required": [
@@ -91,7 +91,7 @@
           },
           "apiKeyHash": {
             "type": "string",
-            "description": "password_hash() hash of the plaintext API key. Plaintext is never stored. Compared with password_verify().",
+            "description": "password_hash hash of the plaintext API key. Plaintext is never stored. Compared with password_verify.",
             "example": "$2y$10$...",
             "title": "API Key Hash"
           },

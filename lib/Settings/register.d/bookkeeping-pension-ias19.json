@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-pension-ias19",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — IAS 19 / RJ 271 employee-benefit pension accounting. Six new schemas (PensionPlan, ActuarialValuation, PensionMovement, PensionAssumptionSensitivity, PensionAssetDetail, PensionDisclosureTabel) declaring the defined-benefit (PUC) and defined-contribution measurement, roll-forward, sensitivity, fair-value asset breakdown and jaarrekening disclosure surface entirely as declarative metadata per ADR-031: schema fields + x-openregister-lifecycle (draft → approved → locked on ActuarialValuation, draft → active → terminated on PensionPlan) + x-openregister-aggregations (roll-forward closing balances, sensitivity deltas, disclosure-table generation). The lifecycle preconditions that require cross-field / cross-schema completeness checks the declarative requires: clause cannot yet express are referenced as OCA\\Shillinq\\Lifecycle\\PensionIas19Guard::<method> (ADR-031 exception path; fail-closed; real OpenRegister ObjectService API per ADR-022). DB plans MUST carry methodology=PUC; DC plans are blocked from DBO/sensitivity workflows; discount rate is flagged when sourced from government bonds; OCI remeasurements are non-recycling. Seed objects ship two pension plans (NL Standard DB Regeling, NL Standard DC Regeling) and one sensitivity template per design.md; operators customise per administration on first use. No PHP actuarial calculation service is authored."
+    "description": "Tier 3: IAS 19 / RJ 271 employee-benefit pension accounting. Six new schemas (PensionPlan, ActuarialValuation, PensionMovement, PensionAssumptionSensitivity, PensionAssetDetail, PensionDisclosureTabel) declaring the defined-benefit (PUC) and defined-contribution measurement, roll-forward, sensitivity, fair-value asset breakdown and jaarrekening disclosure surface entirely as declarative metadata per ADR-031: schema fields + x-openregister-lifecycle (draft → approved → locked on ActuarialValuation, draft → active → terminated on PensionPlan) + x-openregister-aggregations (roll-forward closing balances, sensitivity deltas, disclosure-table generation). The lifecycle preconditions that require cross-field / cross-schema completeness checks the declarative requires: clause cannot yet express are referenced as OCA\\Shillinq\\Lifecycle\\PensionIas19Guard:<method> (ADR-031 exception path; fail-closed; real OpenRegister ObjectService API per ADR-022). DB plans MUST carry methodology=PUC; DC plans are blocked from DBO/sensitivity workflows; discount rate is flagged when sourced from government bonds; OCI remeasurements are non-recycling. Seed objects ship two pension plans (NL Standard DB Regeling, NL Standard DC Regeling) and one sensitivity template per design.md; operators customise per administration on first use. No PHP actuarial calculation service is authored."
   },
   "components": {
     "schemas": {
@@ -158,14 +158,14 @@
           },
           "linkedProvisionId": {
             "type": "string",
-            "description": "Optional FK to the bookkeeping-voorzieningen-claims Provision record that carries the cumulative DBO on the balance sheet. When set, the voorzieningen-claims provision-closure flow consumes the latest PensionMovement.dboClosing for the linked plan and updates the provision balance accordingly (REQ-PEN-003 — pension provision linkage). Null when voorzieningen-claims is not yet provisioned in the administration; the linkage falls back to the standard DBO balance-sheet line.",
+            "description": "Optional FK to the bookkeeping-voorzieningen-claims Provision record that carries the cumulative DBO on the balance sheet. When set, the voorzieningen-claims provision-closure flow consumes the latest PensionMovement.dboClosing for the linked plan and updates the provision balance accordingly (: pension provision linkage). Null when voorzieningen-claims is not yet provisioned in the administration; the linkage falls back to the standard DBO balance-sheet line.",
             "nullable": true,
             "example": "provision-pensioen-db-2026",
             "title": "Linked Provision ID"
           },
           "governanceDocument": {
             "type": "string",
-            "description": "File URI to the regeling / governance charter, archived in docudesk (ADR-022 — no app-local storage).",
+            "description": "File URI to the regeling / governance charter, archived in docudesk (ADR-022: no app-local storage).",
             "nullable": true,
             "title": "Governance Document"
           },
@@ -251,7 +251,7 @@
           }
         },
         "x-openregister-hrmq-roster-source": {
-          "description": "Declarative HRMQ deelnemersbestand contract consumed by hrmq.pension-administration when PensionPlan.linkedHrmqGroup is set. The annual reconciliation job queries the linked HRMQ group for the active medewerkers and writes the count + roster-hash back into the most-recent draft ActuarialValuation; the roster is signed off via ValuationLifecycle.rosterReconciled, which is enforced by PensionIas19Guard::canLockValuation before the valuation can be locked into the jaarrekening. The contract is also the hook point for the >5% divergence warning required by the REQ-PEN-010 scenario.",
+          "description": "Declarative HRMQ deelnemersbestand contract consumed by hrmq.pension-administration when PensionPlan.linkedHrmqGroup is set. The annual reconciliation job queries the linked HRMQ group for the active medewerkers and writes the count + roster-hash back into the most-recent draft ActuarialValuation; the roster is signed off via ValuationLifecycle.rosterReconciled, which is enforced by PensionIas19Guard:canLockValuation before the valuation can be locked into the jaarrekening. The contract is also the hook point for the >5% divergence warning required by the scenario.",
           "sourceApp": "hrmq",
           "sourceSchema": "hrmq.pension-administration.group",
           "groupRef": "linkedHrmqGroup",
@@ -288,7 +288,7 @@
         "icon": "CalculatorVariantOutline",
         "version": "0.1.0",
         "title": "Actuarial Valuation",
-        "description": "Per-balansdatum measurement of a DB plan's defined-benefit obligation (DBO) and plan assets, with the actuarial assumptions and actuaris sign-off. Projected Unit Credit (PUC) methodology is mandatory for DB plans; the discount rate must be market-referenced and is flagged when a government-bond source is used. netPensionLiability = dboGross − planAssetsFairValue + assetCeilingApplied (IFRIC 14, REQ-PEN-005).",
+        "description": "Per-balansdatum measurement of a DB plan's defined-benefit obligation (DBO) and plan assets, with the actuarial assumptions and actuaris sign-off. Projected Unit Credit (PUC) methodology is mandatory for DB plans; the discount rate must be market-referenced and is flagged when a government-bond source is used. netPensionLiability = dboGross − planAssetsFairValue + assetCeilingApplied (IFRIC 14).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md",
         "type": "object",
@@ -381,7 +381,7 @@
           },
           "discountRateGovernmentBondFlag": {
             "type": "boolean",
-            "description": "True when the discount rate is sourced from government bonds; surfaces the IAS 19 §83 warning for accountant review. Not an error — flagged, not blocked.",
+            "description": "True when the discount rate is sourced from government bonds; surfaces the IAS 19 §83 warning for accountant review. Not an error: flagged, not blocked.",
             "default": false,
             "example": false,
             "title": "Discount Rate Government Bond Flag"
@@ -462,7 +462,7 @@
           },
           "approvalStatus": {
             "type": "string",
-            "description": "Actuarial valuation lifecycle status. CONSUMED from decidesk Decision outcome; the approvalStatus is driven by decisionOutcome — shillinq does not own the approval transition.",
+            "description": "Actuarial valuation lifecycle status. CONSUMED from decidesk Decision outcome; the approvalStatus is driven by decisionOutcome: shillinq does not own the approval transition.",
             "enum": [
               "draft",
               "approved",
@@ -475,7 +475,7 @@
           },
           "approvedBy": {
             "type": "string",
-            "description": "Name/email of the approver — mirrored from the decidesk Decision record.",
+            "description": "Name/email of the approver: mirrored from the decidesk Decision record.",
             "nullable": true,
             "x-mirror-of": "decidesk-decision",
             "title": "Approved By"
@@ -483,7 +483,7 @@
           "approvedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp of approval — mirrored from the decidesk Decision outcome.",
+            "description": "Timestamp of approval: mirrored from the decidesk Decision outcome.",
             "nullable": true,
             "x-mirror-of": "decidesk-decision",
             "title": "Approved At"
@@ -861,7 +861,7 @@
               "accountCategory": "personeelslasten",
               "counterAccountRange": "1700-1799",
               "counterAccountCategory": "pensioenvoorziening",
-              "description": "IAS 19 service cost + past service cost - gain on settlement → personeelslasten (REQ-PEN-003 P&L bucket 1).",
+              "description": "IAS 19 service cost + past service cost - gain on settlement → personeelslasten (P&L bucket 1).",
               "requirement": "REQ-PEN-003"
             },
             {
@@ -872,7 +872,7 @@
               "accountCategory": "financiele-lasten",
               "counterAccountRange": "1700-1799",
               "counterAccountCategory": "pensioenvoorziening",
-              "description": "IAS 19 net interest on the net pension liability → financiële lasten (REQ-PEN-003 P&L bucket 2).",
+              "description": "IAS 19 net interest on the net pension liability → financiële lasten (P&L bucket 2).",
               "requirement": "REQ-PEN-003"
             },
             {
@@ -883,7 +883,7 @@
               "accountCategory": "oci-remeasurement-pension",
               "counterAccountRange": "1700-1799",
               "counterAccountCategory": "pensioenvoorziening",
-              "description": "Actuarieel resultaat (DBO + assets) → OCI account (REQ-PEN-003 OCI bucket 3); marked non-recycling per REQ-PEN-004 so the GL engine MUST refuse any later JournalEntry that moves this balance to a P&L account.",
+              "description": "Actuarieel resultaat (DBO + assets) → OCI account (OCI bucket 3); marked non-recycling so the GL engine MUST refuse any later JournalEntry that moves this balance to a P&L account.",
               "requirement": "REQ-PEN-004",
               "recyclable": false
             }
@@ -892,7 +892,7 @@
           "x-spec": "openspec/changes/bookkeeping-pension-ias19/specs/bookkeeping-pension-ias19/spec.md#REQ-PEN-003"
         },
         "x-openregister-deferred-tax-hint": {
-          "description": "Declarative deferred-tax detection hint consumed by bookkeeping-deferred-tax. PensionMovement creates timing differences between the commercial (IFRS / RJ 271) measurement of the pension liability and its tax basis (in NL: pension provisions are typically only deductible when contributions are paid out, so the commercial provision creates a deductible temporary difference / DTA). The detector reads this hint and emits TemporaryDifference records with category=pension per fiscal period per administration; the OCI component flows to TaxProvision.recognisedInOCI per REQ-DT-009.",
+          "description": "Declarative deferred-tax detection hint consumed by bookkeeping-deferred-tax. PensionMovement creates timing differences between the commercial (IFRS / RJ 271) measurement of the pension liability and its tax basis (in NL: pension provisions are typically only deductible when contributions are paid out, so the commercial provision creates a deductible temporary difference / DTA). The detector reads this hint and emits TemporaryDifference records with category=pension per fiscal period per administration; the OCI component flows to TaxProvision.recognisedInOCI.",
           "targetSchema": "TemporaryDifference",
           "category": "pension",
           "type": "deductible",
@@ -1158,7 +1158,7 @@
           }
         },
         "x-openregister-disclosure-source": {
-          "description": "Declarative data-source contract consumed by bookkeeping-financial-statements REQ-FS-004 jaarrekening Note renderer. The Note schema's pension disclosure section reads PensionDisclosureTabel.tableContent for the (administrationId, valuationDate) tuple when status is `approved` or `published`, eliminating any manual copy/paste into the jaarrekening. When the renderer cannot project the JSON column directly, the same data is fetched via the real ObjectService API per ADR-022.",
+          "description": "Declarative data-source contract consumed by bookkeeping-financial-statements jaarrekening Note renderer. The Note schema's pension disclosure section reads PensionDisclosureTabel.tableContent for the (administrationId, valuationDate) tuple when status is `approved` or `published`, eliminating any manual copy/paste into the jaarrekening. When the renderer cannot project the JSON column directly, the same data is fetched via the real ObjectService API per ADR-022.",
           "consumerSpec": "bookkeeping-financial-statements",
           "consumerSchema": "Note",
           "consumerField": "noteContent.pensionDisclosure",

@@ -4,9 +4,9 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-wet-fido-treasury",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json; ADR-031 declarative-first; ADR-022 real OpenRegister ObjectService API only",
-    "description": "Tier 3 — Wet Fido & Treasurystatuut compliance for Dutch decentralised governments (gemeenten/provincies/waterschappen/GR). Declares eight schemas: Treasurystatuut, KasgeldLimiet, RenteRisicoNorm, SchatkistbankierenSaldo, Lening (REQ-FDO-001/002/008), Derivaat, QuartaalrapportageFido and TreasuryParagraaf. All limiet-math (kasgeldlimiet rolling-3-month average, rente-risiconorm 4-year forward projection, schatkistbankieren drempelbedrag, quarterly-rapportage roll-up) is declarative metadata: x-openregister-aggregations + x-openregister-lifecycle. The single ADR-031 exception-path guard (OCA\\Shillinq\\Lifecycle\\FidoTreasuryGuard) enforces the three cross-field preconditions the declarative DSL cannot yet express: a Lening may only be recorded once any kasgeldlimiet / rente-risiconorm / signing-mandate breach carries an override-rationale, a Derivaat may only be recorded with a RUDDO hedging-link whose notional does not exceed the hedged exposure and whose counterparty rating is single-A or better, and a QuartaalrapportageFido may only be submitted once both the treasurer and concerncontroller sign-offs are present. Seed objects ship one Treasurystatuut, one Lening, one KasgeldLimiet template, one Derivaat, one RenteRisicoNorm and one SchatkistbankierenSaldo worked example per design.md.",
+    "description": "Tier 3: Wet Fido & Treasurystatuut compliance for Dutch decentralised governments (gemeenten/provincies/waterschappen/GR). Declares eight schemas: Treasurystatuut, KasgeldLimiet, RenteRisicoNorm, SchatkistbankierenSaldo, Lening, Derivaat, QuartaalrapportageFido and TreasuryParagraaf. All limiet-math (kasgeldlimiet rolling-3-month average, rente-risiconorm 4-year forward projection, schatkistbankieren drempelbedrag, quarterly-rapportage roll-up) is declarative metadata: x-openregister-aggregations + x-openregister-lifecycle. The single ADR-031 exception-path guard (OCA\\Shillinq\\Lifecycle\\FidoTreasuryGuard) enforces the three cross-field preconditions the declarative DSL cannot yet express: a Lening may only be recorded once any kasgeldlimiet / rente-risiconorm / signing-mandate breach carries an override-rationale, a Derivaat may only be recorded with a RUDDO hedging-link whose notional does not exceed the hedged exposure and whose counterparty rating is single-A or better, and a QuartaalrapportageFido may only be submitted once both the treasurer and concerncontroller sign-offs are present. Seed objects ship one Treasurystatuut, one Lening, one KasgeldLimiet template, one Derivaat, one RenteRisicoNorm and one SchatkistbankierenSaldo worked example per design.md.",
     "fido-normcatalogus": {
-      "description": "FidoNormcatalogus statutory kasgeldlimiet percentages per organisatie-type (REQ-FDO-009, Wet Fido Annex II). Maintained as fragment metadata so a wets-wijziging is a data-edit, not a code-deploy; the kasgeld-limiet percentage default is auto-selected from the organisation's organisationType on first KasgeldLimiet record.",
+      "description": "FidoNormcatalogus statutory kasgeldlimiet percentages per organisatie-type (Wet Fido Annex II). Maintained as fragment metadata so a wets-wijziging is a data-edit, not a code-deploy; the kasgeld-limiet percentage default is auto-selected from the organisation's organisationType on first KasgeldLimiet record.",
       "municipality": 8.5,
       "provincie": 7.0,
       "waterschap": 23.0,
@@ -367,7 +367,7 @@
         "icon": "ChartBellCurve",
         "version": "0.1.0",
         "title": "Rente-risiconorm",
-        "description": "4-year rolling interest-rate herfinanciering + rate-reset exposure ceiling per Wet Fido. Ceiling = 20% × uitstaande vaste schuld per 1 januari. The forward-looking 4-year per-year exposure is projected declaratively (renteRisico4YearProjection) from recorded Leningen with repayment schedules and floating-rate reset dates; a new lening whose forward exposure would breach 20% in any of the next four years is refused (or recorded with an override, REQ-FDO-008).",
+        "description": "4-year rolling interest-rate herfinanciering + rate-reset exposure ceiling per Wet Fido. Ceiling = 20% × uitstaande vaste schuld per 1 januari. The forward-looking 4-year per-year exposure is projected declaratively (renteRisico4YearProjection) from recorded Leningen with repayment schedules and floating-rate reset dates; a new lening whose forward exposure would breach 20% in any of the next four years is refused (or recorded with an override).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-wet-fido-treasury/specs/bookkeeping-wet-fido-treasury/spec.md",
         "type": "object",
@@ -727,7 +727,7 @@
           },
           "bbvPassportId": {
             "type": "string",
-            "description": "FK to the BBV-paspoort metadata for treasury GL posting; classifies uitzetting > 1 jaar vs ≤ 1 jaar (REQ-FDO-002, bookkeeping-bbv-compliance).",
+            "description": "FK to the BBV-paspoort metadata for treasury GL posting; classifies uitzetting > 1 jaar vs ≤ 1 jaar (bookkeeping-bbv-compliance).",
             "nullable": true,
             "example": null,
             "title": "BBV Paspoort ID"

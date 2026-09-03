@@ -112,7 +112,7 @@
               "properties": {
                 "category": {
                   "type": "string",
-                  "description": "GHG-Protocol Scope 3 category code 3-cat-01 .. 3-cat-15.",
+                  "description": "GHG-Protocol Scope 3 category code 3-cat-01. 3-cat-15.",
                   "example": "3-cat-01",
                   "title": "Category"
                 },

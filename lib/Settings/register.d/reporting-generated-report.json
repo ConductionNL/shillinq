@@ -56,7 +56,7 @@
           "filePath": {
             "type": "string",
             "nullable": true,
-            "description": "Nextcloud path of the stored file (e.g. /Shillinq/Reports/...).",
+            "description": "Nextcloud path of the stored file (e.g. /Shillinq/Reports/.).",
             "title": "File Path"
           },
           "fileId": {
@@ -92,7 +92,7 @@
               "failed",
               "unavailable"
             ],
-            "description": "Generation status. 'unavailable' means the render step could not run because its renderer (docudesk, for document-kind reports) was not installed/reachable -- a visible, retryable outcome, distinct from 'failed' (REQ-RVD-005, ADR-081 rule 7).",
+            "description": "Generation status. 'unavailable' means the render step could not run because its renderer (docudesk, for document-kind reports) was not installed/reachable: a visible, retryable outcome, distinct from 'failed' (ADR-081 rule 7).",
             "title": "Status"
           },
           "tags": {

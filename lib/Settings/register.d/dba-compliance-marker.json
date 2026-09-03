@@ -184,7 +184,7 @@
           "realisedRevenue": {
             "type": "integer",
             "minimum": 0,
-            "description": "Tot dusver gerealiseerde omzet in eurocenten (gevoed door AP/AR factuurfrequentie-hook, REQ-DBA-004).",
+            "description": "Tot dusver gerealiseerde omzet in eurocenten (gevoed door AP/AR factuurfrequentie-hook).",
             "default": 0,
             "example": 1820000,
             "title": "Gerealiseerde Omzet"
@@ -231,13 +231,13 @@
             "minimum": 0,
             "maximum": 100,
             "nullable": true,
-            "description": "Lopende DBA-risicoscore (0-100) per REQ-DBA-003.",
+            "description": "Lopende DBA-risicoscore (0-100).",
             "example": 34,
             "title": "Actuele Risicoscore"
           },
           "riskLevel": {
             "type": "string",
-            "description": "Risico-band afgeleid van actueleRisicoscore per REQ-DBA-003.",
+            "description": "Risico-band afgeleid van actueleRisicoscore.",
             "enum": [
               "LOW",
               "LOW_MIDDEN",
@@ -268,7 +268,7 @@
           "wbaAssessmentResult": {
             "type": "string",
             "nullable": true,
-            "description": "Geuploade Belastingdienst-WBA-beoordeling (indicatie binnen/buiten dienstbetrekking) per REQ-DBA-013.",
+            "description": "Geuploade Belastingdienst-WBA-beoordeling (indicatie binnen/buiten dienstbetrekking).",
             "enum": [
               "OUTSIDE_EMPLOYMENT",
               "WITHIN_EMPLOYMENT",
@@ -288,14 +288,14 @@
           },
           "intermediaryMode": {
             "type": "boolean",
-            "description": "Indien true: tussenkomst-driehoek modelleren (ZZP-intermediair + intermediair-eindklant), REQ-DBA-017.",
+            "description": "Indien true: tussenkomst-driehoek modelleren (ZZP-intermediair + intermediair-eindklant).",
             "default": false,
             "example": false,
             "title": "Intermediair Mode"
           },
           "perspective": {
             "type": "string",
-            "description": "ZZP-perspectief (opdrachtnemer) of opdrachtgever-perspectief (inhuur-flow), REQ-DBA-010.",
+            "description": "ZZP-perspectief (opdrachtnemer) of opdrachtgever-perspectief (inhuur-flow).",
             "enum": [
               "CONTRACTOR",
               "CLIENT"
@@ -308,7 +308,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Datum waarna evidence-dossier verwijderbaar is (7 jaar na feitelijkeEindDatum per AWR art. 52, REQ-DBA-018).",
+            "description": "Datum waarna evidence-dossier verwijderbaar is (7 jaar na feitelijkeEindDatum per AWR art. 52).",
             "example": "2033-09-30",
             "title": "Retentie Deadline"
           }
@@ -331,7 +331,7 @@
             },
             "ACTIVE": {
               "label": "Actief",
-              "description": "Opdracht loopt; periodieke monitoring (REQ-DBA-004/005/006) is actief."
+              "description": "Opdracht loopt; periodieke monitoring is actief."
             },
             "ENDED": {
               "label": "Beeindigd",
@@ -399,7 +399,7 @@
           "omzetPerKlant": {
             "field": "realisedRevenue",
             "metric": "sum",
-            "description": "Totale gerealiseerde omzet per klant (eurocenten); voedt concentratie-aggregatie REQ-DBA-005.",
+            "description": "Totale gerealiseerde omzet per klant (eurocenten); voedt concentratie-aggregatie.",
             "groupBy": ["customerId"]
           }
         },
@@ -507,7 +507,7 @@
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 10,
-                "description": "Feitelijk doorgevoerde vervanging (0=meerdere keren, 10=nooit), REQ-DBA-014.",
+                "description": "Feitelijk doorgevoerde vervanging (0=meerdere keren, 10=nooit).",
                 "title": "Vervanging Feitelijk Score"
               },
               "subtotal": {
@@ -698,7 +698,7 @@
           },
           "interpretation": {
             "formula": "case when totaalScore < 25 then 'LAAG' when totaalScore < 50 then 'LAAG_MIDDEN' when totaalScore < 75 then 'MIDDEN_HOOG' else 'HOOG' end",
-            "description": "Risico-band afgeleid van totaalScore per REQ-DBA-003."
+            "description": "Risico-band afgeleid van totaalScore."
           }
         },
         "x-openregister-rbac": {
@@ -875,7 +875,7 @@
         "icon": "FlagVariantOutline",
         "version": "0.1.0",
         "title": "DBA risico-flag",
-        "description": "Per-opdracht append-only flag, automatisch gegenereerd door de dagelijkse monitoring-engine (REQ-DBA-004/005/006/014/015/016). Bevat type, ernst, detectiemoment, fiscale grondslag en actie-suggestie. Immutabel (audit-trail).",
+        "description": "Per-opdracht append-only flag, automatisch gegenereerd door de dagelijkse monitoring-engine. Bevat type, ernst, detectiemoment, fiscale grondslag en actie-suggestie. Immutabel (audit-trail).",
         "x-schema-org": "schema:AlertSpecification",
         "x-openregister-purpose": "audit",
         "x-spec": "openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md",
@@ -1082,7 +1082,7 @@
         "icon": "ChartDonutVariant",
         "version": "0.1.0",
         "title": "DBA portfolio-risico",
-        "description": "Maandelijkse / on-demand aggregatie van alle actieve opdrachten van een ondernemer: omzetconcentratie (>70%), langjarige relaties (>2 jaar), exclusiviteit-patronen, multiple-engagement-zelfde-concern (REQ-DBA-005/006).",
+        "description": "Maandelijkse / on-demand aggregatie van alle actieve opdrachten van een ondernemer: omzetconcentratie (>70%), langjarige relaties (>2 jaar), exclusiviteit-patronen, multiple-engagement-zelfde-concern.",
         "x-schema-org": "schema:Quantity",
         "x-openregister-purpose": "aggregation",
         "x-spec": "openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md",

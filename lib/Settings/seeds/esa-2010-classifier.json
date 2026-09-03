@@ -2,7 +2,7 @@
   "_meta": {
     "source": "ESA 2010 Eurostat",
     "year": 2010,
-    "description": "Canonical ESA 2010 sector classifier codes for Dutch decentrale overheden EMU reporting per BBV handleiding EMU-saldo. Loaded via ConfigurationService::importFromApp() in the repair step.",
+    "description": "Canonical ESA 2010 sector classifier codes for Dutch decentrale overheden EMU reporting per BBV handleiding EMU-saldo. Loaded via ConfigurationService:importFromApp in the repair step.",
     "spdx": "EUPL-1.2",
     "copyright": "2026 Conduction B.V."
   },

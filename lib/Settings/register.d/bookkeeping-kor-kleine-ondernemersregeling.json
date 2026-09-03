@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-kor-kleine-ondernemersregeling",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 2 — KOR (Kleine Ondernemersregeling). Declares the full KOR lifecycle as declarative metadata (ADR-031/ADR-037): five new schemas — KORRegistration (aanmelding + drie-jaars-lock-in + status lifecycle), KORAnnualTurnover (lopende KOR-omzet, drempel-benutting, maandprognose), KORThresholdAlert (80/90/100 %-schijven), KORRevocation (beëindiging + suppletie + revocatie-datum = leveringsdatum), KOREUTurnover (grensoverschrijdend per lidstaat + kwartaalopgaaf). The monolith already ships a lightweight KorRegime schema (YTD-revenue threshold from add-shillinq-bookkeeping-operations); these five formalise the complete T2 capability per Wet OB 1968 art. 25 & 25a-25d and Richtlijn (EU) 2020/285. KORRegistration carries an x-openregister-lifecycle (ACTIEF -> GEEINDIGD_OVERSCHRIJDING | GEEINDIGD_VRIJWILLIG). KORAnnualTurnover carries an x-openregister-aggregations block documenting the post-invoice SUM(KOR-eligible AR omzet) + LINEAR_TREND prognose the OCA\\Shillinq\\Service\\KorMonitorService computes via the real OpenRegister ObjectService API (find/findAll). Seed objects provide the spec's worked examples (ZZP-fotograaf borderline, kapper Maria escalation, webshop overschrijding, cross-border KOR-EU, year-end onder-drempel)."
+    "description": "Tier 2: KOR (Kleine Ondernemersregeling). Declares the full KOR lifecycle as declarative metadata (ADR-031/ADR-037): five new schemas. KORRegistration (aanmelding + drie-jaars-lock-in + status lifecycle), KORAnnualTurnover (lopende KOR-omzet, drempel-benutting, maandprognose), KORThresholdAlert (80/90/100 %-schijven), KORRevocation (beëindiging + suppletie + revocatie-datum = leveringsdatum), KOREUTurnover (grensoverschrijdend per lidstaat + kwartaalopgaaf). The monolith already ships a lightweight KorRegime schema (YTD-revenue threshold from add-shillinq-bookkeeping-operations); these five formalise the complete T2 capability per Wet OB 1968 art. 25 & 25a-25d and Richtlijn (EU) 2020/285. KORRegistration carries an x-openregister-lifecycle (ACTIEF -> GEEINDIGD_OVERSCHRIJDING | GEEINDIGD_VRIJWILLIG). KORAnnualTurnover carries an x-openregister-aggregations block documenting the post-invoice SUM(KOR-eligible AR omzet) + LINEAR_TREND prognose the OCA\\Shillinq\\Service\\KorMonitorService computes via the real OpenRegister ObjectService API (find/findAll). Seed objects provide the spec's worked examples (ZZP-fotograaf borderline, kapper Maria escalation, webshop overschrijding, cross-border KOR-EU, year-end onder-drempel)."
   },
   "components": {
     "schemas": {
@@ -18,7 +18,7 @@
         "x-spec": "openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "KORRegistration changes (status transitions, lock-in evolution, Belastingdienst-referentie updates) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022. Every change is fiscaal relevant — it gates voorbelasting-aftrek, factuurvermelding, en suppletie-berekening, and feeds into auditor + Belastingdienst review at year-end."
+          "description": "KORRegistration changes (status transitions, lock-in evolution, Belastingdienst-referentie updates) MUST be audit-trail-immutable / ADR-022. Every change is fiscaal relevant: it gates voorbelasting-aftrek, factuurvermelding, en suppletie-berekening, and feeds into auditor + Belastingdienst review at year-end."
         },
         "type": "object",
         "required": [
@@ -77,7 +77,7 @@
           "lockInEndDate": {
             "type": "string",
             "format": "date",
-            "description": "Laatste dag van het derde kalenderjaar na ingangsDatum; opzegging is geblokkeerd tot deze datum (REQ-KOR-007, design D10).",
+            "description": "Laatste dag van het derde kalenderjaar na ingangsDatum; opzegging is geblokkeerd tot deze datum (design D10).",
             "nullable": true,
             "example": "2028-12-31",
             "title": "Lock In Eind Datum"
@@ -110,7 +110,7 @@
           },
           "thresholdYear": {
             "type": "number",
-            "description": "Jaardrempel in EUR. NL-KOR: 20000 (geen pro-rata bij start halverwege het jaar — context-brief edge case). KOR-EU: per-lidstaat in KOREUTurnover.",
+            "description": "Jaardrempel in EUR. NL-KOR: 20000 (geen pro-rata bij start halverwege het jaar. Context-brief edge case). KOR-EU: per-lidstaat in KOREUTurnover.",
             "default": 20000,
             "example": 20000,
             "title": "Drempel Jaar"
@@ -172,13 +172,13 @@
               "from": "draft",
               "to": "ACTIEF",
               "label": "Activeer KOR",
-              "description": "KOR gaat in op ingangsDatum. Publiceert kor.registration.activated zodat AP de voorbelasting-aftrek blokkeert en VAT-filing de aangifte opschort (REQ-KOR-006, cross-app)."
+              "description": "KOR gaat in op ingangsDatum. Publiceert kor.registration.activated zodat AP de voorbelasting-aftrek blokkeert en VAT-filing de aangifte opschort (cross-app)."
             },
             "revokeOverschrijding": {
               "from": "ACTIEF",
               "to": "GEEINDIGD_OVERSCHRIJDING",
               "label": "Beëindig wegens overschrijding",
-              "description": "Synchroon getriggerd door KorMonitorService bij drempel >100% (REQ-KOR-003/004). revocatieDatum = leveringsdatum van de triggerfactuur; KORRevocation met type=OVERSCHRIJDING + suppletie-bedrag wordt gematerialiseerd."
+              "description": "Synchroon getriggerd door KorMonitorService bij drempel >100%. revocatieDatum = leveringsdatum van de triggerfactuur; KORRevocation met type=OVERSCHRIJDING + suppletie-bedrag wordt gematerialiseerd."
             },
             "optOut": {
               "from": "ACTIEF",
@@ -199,7 +199,7 @@
         "x-spec": "openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "KORAnnualTurnover updates (post-invoice recalcs, uitgesloten-posten herclassificatie, prognose-status flips) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — the running drempel-benutting is the fiscaal trigger for de revocatie-flow en alert-dispatch."
+          "description": "KORAnnualTurnover updates (post-invoice recalcs, uitgesloten-posten herclassificatie, prognose-status flips) MUST be audit-trail-immutable / ADR-022: the running drempel-benutting is the fiscaal trigger for de revocatie-flow en alert-dispatch."
         },
         "type": "object",
         "required": [
@@ -350,7 +350,7 @@
         "x-spec": "openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "KORThresholdAlert events MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — alert dispatch + acknowledgment is the operator-visible compliance trail (Belastingdienst review of the drempel-bewaking workflow), and 100% events synchronously gate REQ-KOR-004 revocatie."
+          "description": "KORThresholdAlert events MUST be audit-trail-immutable / ADR-022: alert dispatch + acknowledgment is the operator-visible compliance trail (Belastingdienst review of the drempel-bewaking workflow), and 100% events synchronously gate revocatie."
         },
         "type": "object",
         "required": [
@@ -469,12 +469,12 @@
         "icon": "FileDocumentRemoveOutline",
         "version": "0.1.0",
         "title": "KOR Revocation",
-        "description": "Beëindiging van de KOR: gedwongen bij overschrijding of vrijwillig na de lock-in. Bij overschrijding is revocatieDatum ALTIJD de leveringsdatum van de triggerfactuur — niet einde-maand/kwartaal/jaar (design D4). Bevat het berekende suppletie-bedrag en de drie-jaars blokkade op heraanmelding.",
+        "description": "Beëindiging van de KOR: gedwongen bij overschrijding of vrijwillig na de lock-in. Bij overschrijding is revocatieDatum ALTIJD de leveringsdatum van de triggerfactuur: niet einde-maand/kwartaal/jaar (design D4). Bevat het berekende suppletie-bedrag en de drie-jaars blokkade op heraanmelding.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "KORRevocation records MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — the revocatie-datum (leveringsdatum, niet einde-jaar), suppletie-bedrag and Belastingdienst-notificatie are fiscale documenten van de Belastingdienst en moeten onveranderlijk zijn voor audit + bezwaar."
+          "description": "KORRevocation records MUST be audit-trail-immutable / ADR-022: the revocatie-datum (leveringsdatum, niet einde-jaar), suppletie-bedrag and Belastingdienst-notificatie are fiscale documenten van de Belastingdienst en moeten onveranderlijk zijn voor audit + bezwaar."
         },
         "type": "object",
         "required": [
@@ -492,7 +492,7 @@
           },
           "type": {
             "type": "string",
-            "description": "Soort beëindiging (REQ-KOR-004/007).",
+            "description": "Soort beëindiging.",
             "enum": [
               "OVERRUN",
               "VOLUNTARY_AFTER_LOCKOUT"
@@ -503,7 +503,7 @@
           "revocationDate": {
             "type": "string",
             "format": "date",
-            "description": "KRITISCH: bij OVERSCHRIJDING de leveringsdatum van de triggerfactuur (NIET postingDatum/maand/kwartaal/jaar) (design D4, REQ-KOR-004). Bij VRIJWILLIG_NA_LOCKOUT de 1-1 van het volgende kalenderjaar.",
+            "description": "KRITISCH: bij OVERSCHRIJDING de leveringsdatum van de triggerfactuur (NIET postingDatum/maand/kwartaal/jaar) (design D4). Bij VRIJWILLIG_NA_LOCKOUT de 1-1 van het volgende kalenderjaar.",
             "example": "2026-09-04",
             "title": "Revocatie Datum"
           },
@@ -624,7 +624,7 @@
         "x-spec": "openspec/changes/bookkeeping-kor-kleine-ondernemersregeling/specs.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "KOREUTurnover updates MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — per-lidstaat drempel-benutting en kwartaalopgaaf-status voeden de Q1-Q4 EU-aangiftes (art. 284 BTW-richtlijn) en gaan per OSS-route naar de Belastingdienst; correctie-historie is auditplichtig."
+          "description": "KOREUTurnover updates MUST be audit-trail-immutable / ADR-022: per-lidstaat drempel-benutting en kwartaalopgaaf-status voeden de Q1-Q4 EU-aangiftes (art. 284 BTW-richtlijn) en gaan per OSS-route naar de Belastingdienst; correctie-historie is auditplichtig."
         },
         "type": "object",
         "required": [
@@ -669,7 +669,7 @@
           },
           "perMemberState": {
             "type": "object",
-            "description": "Per EU-lidstaat: omzet, nationale KOR-drempel en benutting (data, niet code — design D7). Overschrijding van één lidstaat-drempel revoceert KOR-EU alleen voor die lidstaat.",
+            "description": "Per EU-lidstaat: omzet, nationale KOR-drempel en benutting (data, niet code. Design D7). Overschrijding van één lidstaat-drempel revoceert KOR-EU alleen voor die lidstaat.",
             "nullable": true,
             "example": {
               "BE": {

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-bado-controleprotocol",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — BADO (Besluit Accountantscontrole Decentrale Overheden) audit protocol framework. Declares 7 schemas (Controleprotocol, ToleranceMatrix, Materialiteit, AuditSample, AuditFinding, VerklaringDraft, SiSaAssurance) with declarative lifecycle (ADR-031), RBAC (ADR-022), finding aggregation, and BADO-statutory tolerance ceilings. Opinion derivation + severity classification mirror lib/Service/BadoControleprotocolService.php (ADR-031 read-only exception)."
+    "description": "Tier 3: BADO (Besluit Accountantscontrole Decentrale Overheden) audit protocol framework. Declares 7 schemas (Controleprotocol, ToleranceMatrix, Materialiteit, AuditSample, AuditFinding, VerklaringDraft, SiSaAssurance) with declarative lifecycle (ADR-031), RBAC (ADR-022), finding aggregation, and BADO-statutory tolerance ceilings. Opinion derivation + severity classification mirror lib/Service/BadoControleprotocolService.php (ADR-031 read-only exception)."
   },
   "components": {
     "schemas": {
@@ -278,7 +278,7 @@
         "icon": "TableLarge",
         "version": "0.1.0",
         "title": "Tolerantiematrix",
-        "description": "Per-programma / per-taakveld / per-SiSa-regeling BADO tolerance ceilings (REQ-002). Defaults from BADO statutory maxima (1% approval, 3% qualification on getrouwheid + rechtmatigheid, 3% onzekerheden); a protocol may tighten but never loosen. Ceiling validation enforced by BadoControleprotocolService::validateCeilings.",
+        "description": "Per-programma / per-taakveld / per-SiSa-regeling BADO tolerance ceilings (REQ-002). Defaults from BADO statutory maxima (1% approval, 3% qualification on getrouwheid + rechtmatigheid, 3% onzekerheden); a protocol may tighten but never loosen. Ceiling validation enforced by BadoControleprotocolService:validateCeilings.",
         "x-schema-org": "schema:Dataset",
         "type": "object",
         "required": [
@@ -601,7 +601,7 @@
         "icon": "AlertCircleOutline",
         "version": "0.1.0",
         "title": "Bevinding",
-        "description": "Per-transaction audit finding classified on both axes — rechtmatigheid × getrouwheid (REQ-006). Severity (acceptabel/te-corrigeren/materieel) is derived from the exception amount vs the ToleranceMatrix ceilings by BadoControleprotocolService::classifySeverity. Four-eye workflow: controllerResponse + auditorConclusion both required before resolution.",
+        "description": "Per-transaction audit finding classified on both axes: rechtmatigheid × getrouwheid (REQ-006). Severity (acceptabel/te-corrigeren/materieel) is derived from the exception amount vs the ToleranceMatrix ceilings by BadoControleprotocolService:classifySeverity. Four-eye workflow: controllerResponse + auditorConclusion both required before resolution.",
         "x-schema-org": "schema:Dataset",
         "type": "object",
         "required": [
@@ -771,7 +771,7 @@
         },
         "x-openregister-aggregations": {
           "findingsByTopic": {
-            "description": "Declarative shape of the per-topic finding roll-up BadoControleprotocolService::computeAggregation computes (REQ-006). Groups agreed/resolved AuditFinding by topic, counts by severity (acceptabel/te-corrigeren/materieel) and sums the rechtmatigheid + getrouwheid exception amounts. The per-topic verdict (acceptable/qualified/adverse) and the derived opinion require the materialiteit-relative ceiling comparison + the BADO decision tree, which the declarative engine cannot yet express, so the service is the engine-side fallback (ADR-031).",
+            "description": "Declarative shape of the per-topic finding roll-up BadoControleprotocolService:computeAggregation computes (REQ-006). Groups agreed/resolved AuditFinding by topic, counts by severity (acceptabel/te-corrigeren/materieel) and sums the rechtmatigheid + getrouwheid exception amounts. The per-topic verdict (acceptable/qualified/adverse) and the derived opinion require the materialiteit-relative ceiling comparison + the BADO decision tree, which the declarative engine cannot yet express, so the service is the engine-side fallback (ADR-031).",
             "source": "AuditFinding",
             "groupBy": "topic",
             "filter": {
@@ -826,7 +826,7 @@
         "icon": "FileCertificateOutline",
         "version": "0.1.0",
         "title": "Controleverklaring",
-        "description": "Aggregated findings + mechanically-derived proposedOpinion (REQ-007) on the four-point BADO scale. Opinion derivation mirrors BadoControleprotocolService::deriveOpinion. Sign-off carries the auditor identity + AFM-vergunningsnummer. draft → signed → published; cannot sign until all findings are agreed/resolved and all in-scope SiSa-regelingen have a SiSaAssurance child (REQ-008).",
+        "description": "Aggregated findings + mechanically-derived proposedOpinion (REQ-007) on the four-point BADO scale. Opinion derivation mirrors BadoControleprotocolService:deriveOpinion. Sign-off carries the auditor identity + AFM-vergunningsnummer. draft → signed → published; cannot sign until all findings are agreed/resolved and all in-scope SiSa-regelingen have a SiSaAssurance child (REQ-008).",
         "x-schema-org": "schema:GovernmentService",
         "type": "object",
         "required": [
@@ -955,7 +955,7 @@
         },
         "x-openregister-calculations": {
           "proposedOpinion": {
-            "description": "REQ-007 BADO decision tree (NV COS 700-serie). Mirrors BadoControleprotocolCalculator::deriveOpinion — first match wins: pervasive scope limitation → oordeelonthouding; materieel findings across the majority of topics → afkeurend; any materieel finding → met-beperking; otherwise → goedkeurend. The conditional cross-topic aggregation is not yet expressible declaratively, so the calculator is the engine-side fallback (ADR-031).",
+            "description": "REQ-007 BADO decision tree (NV COS 700-serie). Mirrors BadoControleprotocolCalculator:deriveOpinion. First match wins: pervasive scope limitation → oordeelonthouding; materieel findings across the majority of topics → afkeurend; any materieel finding → met-beperking; otherwise → goedkeurend. The conditional cross-topic aggregation is not yet expressible declaratively, so the calculator is the engine-side fallback (ADR-031).",
             "expression": "IF scopeLimitation THEN oordeelonthouding ELSE IF materieelTopics*2 > topicCount THEN afkeurend ELSE IF materieelTopics > 0 THEN met-beperking ELSE goedkeurend",
             "inputs": {
               "scopeLimitation": "#/properties/opinionOverride",

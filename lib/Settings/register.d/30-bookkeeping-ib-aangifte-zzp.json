@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-ib-aangifte-zzp",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "T3 — IB-aangifte (income tax return) assembly for ZZP. Declares 8 P-formulier entities (IBAangifte header + IBWinstOpgave/IBOndernemersaftrek/IBHeffingskortingenAlgemeen/IBLijfrenteAOV/IBBijtellingAuto/IBBox3Vermogen/IBAuditTrail) plus the IBTaxParameterYear metadata entity that holds annually-versioned tariffs/franchises so deployments never need a code change. Per ADR-031 all fiscal logic is declarative metadata (x-openregister-lifecycle / -aggregations / -calculations); the only PHP seam is the existing UrencriteriumGuard reused for the 1225-hour gate. Distinct from the lightweight IbAangifteExport export schema."
+    "description": "T3: IB-aangifte (income tax return) assembly for ZZP. Declares 8 P-formulier entities (IBAangifte header + IBWinstOpgave/IBOndernemersaftrek/IBHeffingskortingenAlgemeen/IBLijfrenteAOV/IBBijtellingAuto/IBBox3Vermogen/IBAuditTrail) plus the IBTaxParameterYear metadata entity that holds annually-versioned tariffs/franchises so deployments never need a code change. Per ADR-031 all fiscal logic is declarative metadata (x-openregister-lifecycle / -aggregations / -calculations); the only PHP seam is the existing UrencriteriumGuard reused for the 1225-hour gate. Distinct from the lightweight IbAangifteExport export schema."
   },
   "components": {
     "schemas": {
@@ -33,7 +33,7 @@
           },
           "bsn": {
             "type": "string",
-            "description": "Burgerservicenummer of the ondernemer. Special-category identifier — masked in UI lists and never logged raw (ADR-005).",
+            "description": "Burgerservicenummer of the ondernemer. Special-category identifier: masked in UI lists and never logged raw (ADR-005).",
             "nullable": true,
             "example": "******789",
             "title": "BSN"
@@ -57,7 +57,7 @@
               "CORRECTIE_SUPPLETIE"
             ],
             "default": "CONCEPT",
-            "description": "Lifecycle state per REQ-IB-001/007/008/009.",
+            "description": "Lifecycle state.",
             "title": "Status"
           },
           "submissionChannel": {
@@ -81,7 +81,7 @@
               "CORRECTION_SUPPLEMENT"
             ],
             "default": "P_FORM",
-            "description": "Form type; auto-detected from profiel attributes (REQ-IB-012 routing).",
+            "description": "Form type; auto-detected from profiel attributes (routing).",
             "title": "Aangifte Type"
           },
           "taxAdvisorBeconNumber": {
@@ -227,7 +227,7 @@
             },
             "GEVALIDEERD_MET_WAARSCHUWING": {
               "label": "Gevalideerd met waarschuwing",
-              "description": "Validated but a blocking warning is present (e.g. urencriterium niet behaald, REQ-IB-002)."
+              "description": "Validated but a blocking warning is present (e.g. urencriterium niet behaald)."
             },
             "GEVALIDEERD_DOOR_FISCALIST": {
               "label": "Gevalideerd door fiscalist",
@@ -255,7 +255,7 @@
               "from": "CONCEPT",
               "to": "GEVALIDEERD",
               "label": "Valideren",
-              "description": "Run business validation gates (REQ-IB-001/002/003)."
+              "description": "Run business validation gates."
             },
             "valideren-met-waarschuwing": {
               "from": "CONCEPT",
@@ -279,7 +279,7 @@
               "from": "XBRL_GEVALIDEERD",
               "to": "INGEDIEND",
               "label": "Indienen via Digipoort",
-              "description": "Submit the signed XBRL; freezes the audit trail (REQ-IB-008/009)."
+              "description": "Submit the signed XBRL; freezes the audit trail."
             },
             "correctie-starten": {
               "from": "INGEDIEND",
@@ -437,7 +437,7 @@
           },
           "fiscalDeviationsLog": {
             "type": "array",
-            "description": "Discrete fiscal adjustment records with grondslag (REQ-IB-001, design D3). GL is never altered — adjustments are logged here.",
+            "description": "Discrete fiscal adjustment records with grondslag (design D3). GL is never altered: adjustments are logged here.",
             "items": {
               "type": "object",
               "required": [
@@ -530,7 +530,7 @@
         "icon": "AccountCashOutline",
         "version": "0.1.0",
         "title": "IB-ondernemersaftrek",
-        "description": "Self-employed deductions: zelfstandigenaftrek (gated on the 1225-urencriterium, REQ-IB-002), startersaftrek, MKB-winstvrijstelling and investeringsaftrek KIA/EIA/MIA/VAMIL pulled from bookkeeping-investeringsaftrek.",
+        "description": "Self-employed deductions: zelfstandigenaftrek (gated on the 1225-urencriterium), startersaftrek, MKB-winstvrijstelling and investeringsaftrek KIA/EIA/MIA/VAMIL pulled from bookkeeping-investeringsaftrek.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
@@ -719,7 +719,7 @@
             "guard": "OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours"
           },
           "mkbProfitExemption": {
-            "description": "MKB-winstvrijstelling rate is read from IBTaxParameterYear.mkbExemptionRate for the belastingjaar; no rate is hard-coded (REQ-IB-003, design D5). Not applied when winst < 0.",
+            "description": "MKB-winstvrijstelling rate is read from IBTaxParameterYear.mkbExemptionRate for the belastingjaar; no rate is hard-coded (design D5). Not applied when winst < 0.",
             "basis": "art. 3.79a Wet IB 2001",
             "parameterSource": "IBTaxParameterYear.mkbExemptionRate"
           }
@@ -931,7 +931,7 @@
         },
         "x-openregister-calculations": {
           "annualAllowance": {
-            "description": "jaarruimte = lijfrenteRate × (min(winst_na_MKB, premiegrondslagMax) − lijfrenteFranchise); all parameters from IBTaxParameterYear (REQ-IB-005, design D6). System computes the default; the accountant may override with grondslag.",
+            "description": "jaarruimte = lijfrenteRate × (min(winst_na_MKB, premiegrondslagMax) − lijfrenteFranchise); all parameters from IBTaxParameterYear (design D6). System computes the default; the accountant may override with grondslag.",
             "basis": "art. 3.127 Wet IB 2001",
             "parameterSource": "IBTaxParameterYear.lijfrenteRate,lijfrenteFranchise,lijfrenteReserveringsruimteCap"
           }
@@ -1168,7 +1168,7 @@
         },
         "x-openregister-calculations": {
           "taxableBasis": {
-            "description": "belastbareGrondslag = max(totaalRendementsgrondslag − box3HeffingvrijVermogen, 0). System computes both forfait and werkelijk rendement and selects the lower for the taxpayer (REQ-IB-015, design D8).",
+            "description": "belastbareGrondslag = max(totaalRendementsgrondslag − box3HeffingvrijVermogen, 0). System computes both forfait and werkelijk rendement and selects the lower for the taxpayer (design D8).",
             "basis": "Overbruggingswet box 3 / hoofdstuk 5 Wet IB 2001",
             "parameterSource": "IBTaxParameterYear.box3HeffingvrijVermogen"
           }

@@ -141,7 +141,7 @@
                 },
                 "recognized": {
                   "type": "boolean",
-                  "description": "Whether recognized on the face — must be false (IPSAS 19.35).",
+                  "description": "Whether recognized on the face: must be false (IPSAS 19.35).",
                   "title": "Recognized"
                 },
                 "disclosed": {
@@ -361,7 +361,7 @@
                 },
                 "discounted": {
                   "type": "boolean",
-                  "description": "Whether the amount is discounted — must be false for short-term benefits.",
+                  "description": "Whether the amount is discounted: must be false for short-term benefits.",
                   "title": "Discounted"
                 }
               }
@@ -387,7 +387,7 @@
                 },
                 "recognized": {
                   "type": "boolean",
-                  "description": "Whether recognized — tracks partyToContract.",
+                  "description": "Whether recognized: tracks partyToContract.",
                   "title": "Recognized"
                 }
               }

@@ -6,7 +6,7 @@
         "icon": "BookEditOutline",
         "version": "0.1.0",
         "title": "Journal Entry",
-        "description": "A human-authored bookkeeping construct (memoriaalboeking / recurring template / reversing accrual). Posting one materialises exactly one balanced GLTransaction with its GLLine children per REQ-JE-007. Distinct from the GLTransaction it produces.",
+        "description": "A human-authored bookkeeping construct (memoriaalboeking / recurring template / reversing accrual). Posting one materialises exactly one balanced GLTransaction with its GLLine children. Distinct from the GLTransaction it produces.",
         "x-schema-org": "schema:AccountingTransaction",
         "x-spec": "openspec/changes/add-shillinq-bookkeeping-foundation/specs/bookkeeping-journal-entries/spec.md",
         "type": "object",
@@ -237,13 +237,13 @@
               "from": "pending",
               "to": "posted",
               "label": "Post journal entry",
-              "description": "Approve and post. Gated by OR's approval-workflow extension; on approval, materialises exactly one balanced GLTransaction per REQ-JE-007. No app-local approval logic (ADR-022).",
+              "description": "Approve and post. Gated by OR's approval-workflow extension; on approval, materialises exactly one balanced GLTransaction. No app-local approval logic (ADR-022).",
               "requires": "OCA\\Shillinq\\Lifecycle\\JournalEntryGuard::canPost",
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "materialise-gl-transaction",
-                  "description": "Materialise exactly one balanced GLTransaction (with GLLine children derived 1:1 from `lines`) and set glTransactionId. Declarative outcome per REQ-JE-007 / design D3 — no PHP orchestration.",
+                  "description": "Materialise exactly one balanced GLTransaction (with GLLine children derived 1:1 from `lines`) and set glTransactionId. Declarative outcome / design D3: no PHP orchestration.",
                   "actionParameters": {
                     "register": "shillinq",
                     "schema": "GLTransaction",
@@ -259,13 +259,13 @@
               "from": "draft",
               "to": "posted",
               "label": "Post without approval",
-              "description": "Post directly when administration policy does not require approval. approvalState must be `not-required`. Materialises one balanced GLTransaction per REQ-JE-007.",
+              "description": "Post directly when administration policy does not require approval. approvalState must be `not-required`. Materialises one balanced GLTransaction.",
               "requires": "OCA\\Shillinq\\Lifecycle\\JournalEntryGuard::canPost",
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "materialise-gl-transaction",
-                  "description": "Materialise exactly one balanced GLTransaction (with GLLine children derived 1:1 from `lines`) and set glTransactionId per REQ-JE-007.",
+                  "description": "Materialise exactly one balanced GLTransaction (with GLLine children derived 1:1 from `lines`) and set glTransactionId.",
                   "actionParameters": {
                     "register": "shillinq",
                     "schema": "GLTransaction",
@@ -287,7 +287,7 @@
               "from": "posted",
               "to": "voided",
               "label": "Void",
-              "description": "Void a posted journal. Requires the materialised GLTransaction to already be reversed per REQ-GL-004 / REQ-JE-010.",
+              "description": "Void a posted journal. Requires the materialised GLTransaction to already be reversed.",
               "requires": "OCA\\Shillinq\\Lifecycle\\JournalEntryGuard::canVoid"
             }
           }

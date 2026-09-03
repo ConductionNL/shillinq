@@ -4,7 +4,7 @@
   },
   "_meta": {
     "x-spec": "openspec/changes/zzp-cashflow-13wk/specs/bookkeeping-cashflow-13wk/spec.md",
-    "description": "13-weeks rolling cashflow forecast for ZZP'ers and small MKB (REQ-CF-000..017). Declarative per ADR-031; merged additively per ADR-037. Field naming normalised to the app-wide administrationId convention (the spec's administrazioneId/amministrazioneId variants are typos)."
+    "description": "13-weeks rolling cashflow forecast for ZZP'ers and small MKB. Declarative per ADR-031; merged additively per ADR-037. Field naming normalised to the app-wide administrationId convention (the spec's administrazioneId/amministrazioneId variants are typos)."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "ChartTimelineVariant",
         "version": "0.1.0",
         "title": "Cashflow Forecast Horizon",
-        "description": "The 13-week rolling cashflow window for one administration (REQ-CF-000/001). Rolls forward every Monday 02:00 UTC: week-1 is archived, week-13 is appended. Categorisation follows IAS 7 / RJ 360 (operationeel / investering / financiering).",
+        "description": "The 13-week rolling cashflow window for one administration. Rolls forward every Monday 02:00 UTC: week-1 is archived, week-13 is appended. Categorisation follows IAS 7 / RJ 360 (operationeel / investering / financiering).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-openregister-purpose": "transaction",
         "x-spec": "openspec/changes/zzp-cashflow-13wk/specs/bookkeeping-cashflow-13wk/spec.md",
@@ -64,7 +64,7 @@
           },
           "openingBalance": {
             "type": "object",
-            "description": "Opening balance breakdown across the operational account and the three spaardoel buckets (REQ-CF-001/014).",
+            "description": "Opening balance breakdown across the operational account and the three spaardoel buckets.",
             "required": [
               "businessAccount",
               "savings_goal_vat",
@@ -116,7 +116,7 @@
             "type": "number",
             "minimum": 0,
             "maximum": 1,
-            "description": "Overall prior-month forecast accuracy (0-1, MAPE-weighted) (REQ-CF-001/013).",
+            "description": "Overall prior-month forecast accuracy (0-1, MAPE-weighted).",
             "example": 0.94,
             "title": "Kalibratie Score"
           },
@@ -277,13 +277,13 @@
           },
           "inflows_ar_geprognosticeerd": {
             "type": "number",
-            "description": "Projected AR receipts, customer-specific betalingsgedrag-based (REQ-CF-002/003).",
+            "description": "Projected AR receipts, customer-specific betalingsgedrag-based.",
             "example": 11500.0,
             "title": "Inflows AR Geprognosticeerd"
           },
           "inflows_ar_gerealiseerd": {
             "type": "number",
-            "description": "Actual AR receipts from bankfeed, filled post-settlement (REQ-CF-002/012).",
+            "description": "Actual AR receipts from bankfeed, filled post-settlement.",
             "example": 0.0,
             "title": "Inflows AR Gerealiseerd"
           },
@@ -307,49 +307,49 @@
           },
           "outflows_ap_geprognosticeerd": {
             "type": "number",
-            "description": "Projected AP payments, due-date scheduled (REQ-CF-002/006).",
+            "description": "Projected AP payments, due-date scheduled.",
             "example": 2100.0,
             "title": "Outflows AP Geprognosticeerd"
           },
           "outflows_recurring_rent": {
             "type": "number",
-            "description": "Recurring rent for the week (REQ-CF-002/005).",
+            "description": "Recurring rent for the week.",
             "example": 0.0,
             "title": "Outflows Recurring Huur"
           },
           "outflows_recurring_insurance": {
             "type": "number",
-            "description": "Recurring insurance for the week (REQ-CF-002/005).",
+            "description": "Recurring insurance for the week.",
             "example": 0.0,
             "title": "Outflows Recurring Verzekering"
           },
           "outflows_recurring_abonnementen": {
             "type": "number",
-            "description": "Recurring subscriptions/software for the week (REQ-CF-002/005).",
+            "description": "Recurring subscriptions/software for the week.",
             "example": 0.0,
             "title": "Outflows Recurring Abonnementen"
           },
           "outflows_recurring_dga_pay": {
             "type": "number",
-            "description": "DGA salary withdrawal for the week (REQ-CF-002/005).",
+            "description": "DGA salary withdrawal for the week.",
             "example": 0.0,
             "title": "Outflows Recurring Dga Loon"
           },
           "outflows_recurring_annuity_premium": {
             "type": "number",
-            "description": "Pension/annuity contribution for the week (REQ-CF-002/005).",
+            "description": "Pension/annuity contribution for the week.",
             "example": 0.0,
             "title": "Outflows Recurring Lijfrentepremie"
           },
           "outflows_vat_remittance": {
             "type": "number",
-            "description": "Quarterly BTW settlement, if due this week (REQ-CF-002/007).",
+            "description": "Quarterly BTW settlement, if due this week.",
             "example": 0.0,
             "title": "Outflows BTW Afdracht"
           },
           "outflows_ib_assessment": {
             "type": "number",
-            "description": "Annual IB/VPB settlement, if due this week (REQ-CF-002/008).",
+            "description": "Annual IB/VPB settlement, if due this week.",
             "example": 0.0,
             "title": "Outflows Ib Aanslag"
           },
@@ -384,12 +384,12 @@
               "PRE_ALERT",
               "CRISIS"
             ],
-            "description": "Buffer status per the active buffer policy (REQ-CF-002/009).",
+            "description": "Buffer status per the active buffer policy.",
             "title": "Buffer Status"
           },
           "alerts": {
             "type": "array",
-            "description": "Alert records raised for this week (REQ-CF-009/010).",
+            "description": "Alert records raised for this week.",
             "items": {
               "type": "object",
               "required": [
@@ -457,13 +457,13 @@
             "field": "inflows_ar_geprognosticeerd",
             "metric": "sum",
             "groupBy": ["weekNumber"],
-            "description": "Projected AR inflows summed per week (REQ-CF-002 weekly aggregation). Feeds the bar chart inflows series."
+            "description": "Projected AR inflows summed per week (weekly aggregation). Feeds the bar chart inflows series."
           },
           "outflowsByWeek": {
             "field": "outflows_total",
             "metric": "sum",
             "groupBy": ["weekNumber"],
-            "description": "Total outflows summed per week (REQ-CF-006/007). Feeds the bar chart outflows series."
+            "description": "Total outflows summed per week. Feeds the bar chart outflows series."
           },
           "countByBufferStatus": {
             "field": "bufferStatus",
@@ -478,7 +478,7 @@
         "icon": "CashClock",
         "version": "0.1.0",
         "title": "Cashflow AR Projection",
-        "description": "One record per open AR invoice projecting the expected receipt date from customer-specific betalingsgedrag history rather than the contractual due date (REQ-CF-003/004).",
+        "description": "One record per open AR invoice projecting the expected receipt date from customer-specific betalingsgedrag history rather than the contractual due date.",
         "x-schema-org": "schema:Invoice",
         "x-openregister-purpose": "transaction",
         "x-spec": "openspec/changes/zzp-cashflow-13wk/specs/bookkeeping-cashflow-13wk/spec.md",
@@ -541,7 +541,7 @@
           "expectedReceiptDate": {
             "type": "string",
             "format": "date",
-            "description": "Projected receipt date = vervalDatum + mean betalingsgedrag offset (REQ-CF-003/004).",
+            "description": "Projected receipt date = vervalDatum + mean betalingsgedrag offset.",
             "example": "2026-05-28",
             "title": "Verwacht Ontvangst Datum"
           },
@@ -560,7 +560,7 @@
           "payment_history_invoices12m": {
             "type": "integer",
             "minimum": 0,
-            "description": "Count of settled invoices in the 12-month sample (REQ-CF-003/004).",
+            "description": "Count of settled invoices in the 12-month sample.",
             "example": 9,
             "title": "Betalingshistorie Facturen12Mnd"
           },
@@ -575,7 +575,7 @@
             "type": "number",
             "minimum": 0,
             "maximum": 1,
-            "description": "Confidence score = min(1.0, count/12); below 5 samples this is marked LAAG (REQ-CF-003/004).",
+            "description": "Confidence score = min(1.0, count/12); below 5 samples this is marked LAAG.",
             "example": 0.75,
             "title": "Betrouwbaarheid Score"
           },
@@ -612,7 +612,7 @@
             "field": "outstandingAmount",
             "metric": "sum",
             "groupBy": ["expectedReceiptWeek"],
-            "description": "Sum of outstanding AR amounts grouped by projected receipt week (REQ-CF-002/003). This is the source aggregation for CashflowWeek.inflows_ar_geprognosticeerd."
+            "description": "Sum of outstanding AR amounts grouped by projected receipt week. This is the source aggregation for CashflowWeek.inflows_ar_geprognosticeerd."
           }
         }
       },
@@ -878,7 +878,7 @@
           "contractReference": {
             "type": "string",
             "nullable": true,
-            "description": "FK to Contract (contract-lifecycle-management); null means this recurring cost has no originating contract — a dated planned cost (budget-known-costs REQ-BKC-001). Additive, optional field.",
+            "description": "FK to Contract (contract-lifecycle-management); null means this recurring cost has no originating contract: a dated planned cost (budget-known-costs). Additive, optional field.",
             "example": null,
             "title": "Contract Reference",
             "$ref": "Contract"
@@ -886,7 +886,7 @@
           "cpiRatePercent": {
             "type": "number",
             "nullable": true,
-            "description": "Operator-supplied annual indexation rate (e.g. 2.5 for 2.5%), consumed when indexationRule = CPI_PAST_YEAR; null means the rate is not yet known and CPI_PAST_YEAR indexation cannot be computed until it is supplied (budget-known-costs REQ-BKC-003). Additive, optional field.",
+            "description": "Operator-supplied annual indexation rate (e.g. 2.5 for 2.5%), consumed when indexationRule = CPI_PAST_YEAR; null means the rate is not yet known and CPI_PAST_YEAR indexation cannot be computed until it is supplied (budget-known-costs). Additive, optional field.",
             "example": 2.5,
             "title": "CPI Rate Percent"
           }

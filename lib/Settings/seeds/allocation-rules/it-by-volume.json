@@ -3,7 +3,7 @@
 	"_meta": {
 		"source": "shillinq-default",
 		"variant": "volume",
-		"description": "Example IT-spend allocation rule that spreads IT accounts 4500-4599 across cost centers weighted by transaction volume. Shipped in lifecycleState: paused — activate after operator review per design Seed Data section."
+		"description": "Example IT-spend allocation rule that spreads IT accounts 4500-4599 across cost centers weighted by transaction volume. Shipped in lifecycleState: paused. Activate after operator review per design Seed Data section."
 	},
 	"register": "shillinq",
 	"schema": "AllocationRule",

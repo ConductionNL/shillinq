@@ -8,7 +8,7 @@
   "x-openregister": {
     "type": "mock",
     "app": "shillinq",
-    "description": "Demo data for shillinq. NOT installed automatically — a mock register is imported on demand, from the setup walkthrough or `occ openregister:descriptors:list --app=shillinq --import=<slug>`."
+    "description": "Demo data for shillinq. NOT installed automatically: a mock register is imported on demand, from the setup walkthrough or `occ openregister:descriptors:list --app=shillinq --import=<slug>`."
   },
   "paths": {},
   "components": {
@@ -17,7 +17,7 @@
         "slug": "shillinq",
         "title": "Shillinq Register (demo)",
         "version": "0.7.0",
-        "description": "Demo data for Shillinq Register. Generated from the register's own schemas — see hydra-gates/scripts/lib/generate_mock_register.py."
+        "description": "Demo data for Shillinq Register. Generated from the register's own schemas: see hydra-gates/scripts/lib/generate_mock_register.py."
       }
     },
     "objects": [

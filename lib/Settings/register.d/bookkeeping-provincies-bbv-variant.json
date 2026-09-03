@@ -22,7 +22,7 @@
           "programmeAssignedAt": {
             "type": "string",
             "format": "date",
-            "description": "Effective date on which programmaStructure was assigned via the Budget-to-Programme Linker or a manual detail edit (REQ-BBL-001/003). Null when unmapped.",
+            "description": "Effective date on which programmaStructure was assigned via the Budget-to-Programme Linker or a manual detail edit. Null when unmapped.",
             "nullable": true,
             "example": "2026-05-21",
             "title": "Programma Assigned At"

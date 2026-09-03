@@ -3224,7 +3224,7 @@
 				],
 				"defaultSort": "periodEnd",
 				"detailRoute": "BankReconciliationDetail",
-				"description": "Bank statements imported via CAMT.053, MT940, or manual CSV upload. Operators reconcile lines against AR/AP invoices or route to suspense (REQ-BR-002/REQ-BR-010).",
+				"description": "Bank statements imported via CAMT.053, MT940, or manual CSV upload. Operators reconcile lines against AR/AP invoices or route to suspense.",
 				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bank-statements"
 			}
 		},
@@ -3321,7 +3321,7 @@
 						"id": "import-statement",
 						"label": "Import statement",
 						"icon": "Upload",
-						"description": "Operator uploads a CAMT.053 / MT940 / CSV file; statement + lines created per REQ-BR-002. Original file archived via docudesk."
+						"description": "Operator uploads a CAMT.053 / MT940 / CSV file; statement + lines created. Original file archived via docudesk."
 					},
 					{
 						"id": "open-reconciliation",
@@ -3514,7 +3514,7 @@
 				],
 				"defaultSort": "priority",
 				"detailRoute": "MatchingRuleDetail",
-				"description": "Operator-authored matching rules consumed by the ReconciliationMatch aggregation (REQ-BR-004/REQ-BR-005/REQ-BR-010). Lower priority = earlier evaluation.",
+				"description": "Operator-authored matching rules consumed by the ReconciliationMatch aggregation. Lower priority = earlier evaluation.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/matching-rules"
 			}
 		},
@@ -8072,7 +8072,7 @@
 					}
 				],
 				"defaultSort": "agingBucket",
-				"description": "AR aging report grouping open invoices by customer and aging bucket per REQ-AR-008. Excludes paid, voided, and written-off invoices.",
+				"description": "AR aging report grouping open invoices by customer and aging bucket. Excludes paid, voided, and written-off invoices.",
 				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices"
 			}
 		},
@@ -10529,7 +10529,7 @@
 			"type": "index",
 			"title": "VAT by Period",
 			"config": {
-				"description": "REQ-VAT-010 + REQ-VAT-009: lists all settlement periods for the active administration with VAT totals broken down by rate. Aggregation source: VATAuditRecord.vatByPeriod (declarative x-openregister-aggregations).",
+				"description": "Lists all settlement periods for the active administration with VAT totals broken down by rate. Aggregation source: VATAuditRecord.vatByPeriod (declarative x-openregister-aggregations).",
 				"register": "shillinq",
 				"schema": "VATAuditRecord",
 				"aggregation": "vatByPeriod",
@@ -10595,7 +10595,7 @@
 			"type": "detail",
 			"title": "VAT Reconciliation",
 			"config": {
-				"description": "REQ-VAT-010: per-period VAT reconciliation page. Shows the contributing invoices, line-by-line VATAuditRecord entries, the four VATGLAccounts balances for the period, and a 'Ready for Filing' checklist.",
+				"description": "Per-period VAT reconciliation page. Shows the contributing invoices, line-by-line VATAuditRecord entries, the four VATGLAccounts balances for the period, and a 'Ready for Filing' checklist.",
 				"register": "shillinq",
 				"_note": "VAT Reconciliation detail — per-settlement-period VAT reconciliation (REQ-VAT-010). vatByPeriod aggregation surfaces net/VAT-per-rate/gross totals; sidebar tabs list contributing VAT audit records, the four VATGLAccounts balances and a ready-for-filing checklist. Audit trail evidences the reconciliation before the BTW-aangifte is filed.",
 				"schema": "VATAuditRecord",
@@ -11995,7 +11995,7 @@
 						"aggregation": "bufferPolicyEvaluation",
 						"schema": "CashflowWeek",
 						"register": "shillinq",
-						"description": "Stacked weekly inflows / outflows with the net saldo as overlay line and the buffer-policy band highlighted. REQ-CF-015."
+						"description": "Stacked weekly inflows / outflows with the net saldo as overlay line and the buffer-policy band highlighted."
 					},
 					{
 						"id": "buffer-status",
@@ -12148,7 +12148,7 @@
 						"type": "string"
 					}
 				],
-				"description": "Configure the cash buffer threshold and two-tier alert levels. REQ-CF-009.",
+				"description": "Configure the cash buffer threshold and two-tier alert levels.",
 				"sidebarProps": {
 					"tabs": [
 						{
@@ -12269,7 +12269,7 @@
 				],
 				"defaultSort": "name",
 				"detailRoute": "DunningLadderDetail",
-				"description": "Configure the multi-stage dunning ladder per customer group. REQ-CCD-001.",
+				"description": "Configure the multi-stage dunning ladder per customer group.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
@@ -12410,7 +12410,7 @@
 				],
 				"defaultSort": "customerId",
 				"detailRoute": "DunningKlantOverrideDetail",
-				"description": "Per-customer exceptions on the base ladder (overheid extended terms, VIP skip stage 4/5). REQ-CCD-001.",
+				"description": "Per-customer exceptions on the base ladder (overheid extended terms, VIP skip stage 4/5).",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
@@ -12538,7 +12538,7 @@
 				],
 				"defaultSort": "executedOn",
 				"detailRoute": "DunningRunDetail",
-				"description": "Per-invoice per-stage execution log with evidence trail. Immutable post-execute. REQ-CCD-002.",
+				"description": "Per-invoice per-stage execution log with evidence trail. Immutable post-execute.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
@@ -12819,7 +12819,7 @@
 				],
 				"defaultSort": "invoiceId",
 				"detailRoute": "OninbareAfschrijvingDetail",
-				"description": "Write-offs + BTW-teruggaaf voorbereiding per art. 29 OB. REQ-CCD-010.",
+				"description": "Write-offs + BTW-teruggaaf voorbereiding per art. 29 OB.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
@@ -14030,7 +14030,7 @@
 					}
 				],
 				"defaultSort": "-created",
-				"description": "Pre-filtered OR audit-log view showing only signing/approval lifecycle decisions for bookkeeping records per REQ-RAP-002. Source filter scopes results to lifecycle:*->signed transitions and updates on signedBy/approvedBy fields. Use this surface to answer 'who approved this document and when?' for accountantscontrole."
+				"description": "Pre-filtered OR audit-log view showing only signing/approval lifecycle decisions for bookkeeping records. Source filter scopes results to lifecycle:*->signed transitions and updates on signedBy/approvedBy fields. Use this surface to answer 'who approved this document and when?' for accountantscontrole."
 			}
 		},
 		{
@@ -14116,7 +14116,7 @@
 					}
 				],
 				"defaultSort": "-created",
-				"description": "Pre-filtered OR audit-log view of all mutations (create / update / delete / lifecycle) across bookkeeping records per REQ-RAP-004. The OR audit-log component renders the before/after snapshot inline; this surface is the bookkeeper's first stop for 'what changed in this record?' inquiries."
+				"description": "Pre-filtered OR audit-log view of all mutations (create / update / delete / lifecycle) across bookkeeping records. The OR audit-log component renders the before/after snapshot inline; this surface is the bookkeeper's first stop for 'what changed in this record?' inquiries."
 			}
 		},
 		{
@@ -15810,7 +15810,7 @@
 						"key": "parentActivityCode",
 						"label": "Parent Code",
 						"type": "string",
-						"help": "FK to baseline code if this is a custom administration variant (REQ-WBSO-009)"
+						"help": "FK to baseline code if this is a custom administration variant"
 					},
 					{
 						"key": "administrationId",
@@ -15962,7 +15962,7 @@
 						"key": "exportFilters",
 						"label": "Export Filters",
 						"type": "object",
-						"help": "Filters applied on generation: wbsoTagId, activityCodeId, isAllowed, employee, date range (REQ-WBSO-008)"
+						"help": "Filters applied on generation: wbsoTagId, activityCodeId, isAllowed, employee, date range"
 					},
 					{
 						"key": "generatedAt",
@@ -15978,7 +15978,7 @@
 						"key": "validationErrors",
 						"label": "Validation Errors",
 						"type": "array",
-						"help": "Empty if validated; lists untagged entry IDs and other validation failures (REQ-WBSO-006)"
+						"help": "Empty if validated; lists untagged entry IDs and other validation failures"
 					},
 					{
 						"key": "submittedAt",
@@ -16678,7 +16678,7 @@
 				],
 				"defaultSort": "statementDate",
 				"detailRoute": "ReconciliationDetail",
-				"description": "Bank reconciliation sessions per REQ-REC-001. Each row is one account+period; click through to match, classify unresolved items, and produce a signed-off ReconciliationReport.",
+				"description": "Bank reconciliation sessions. Each row is one account+period; click through to match, classify unresolved items, and produce a signed-off ReconciliationReport.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
 			}
 		},
@@ -16793,7 +16793,7 @@
 						},
 						"type": "lifecycle-transition",
 						"transition": "initiate",
-						"description": "REQ-REC-002 statement-balance verification runs server-side; non-zero variance surfaces a warning but does not block."
+						"description": "Statement-balance verification runs server-side; non-zero variance surfaces a warning but does not block."
 					},
 					{
 						"id": "verify",
@@ -16807,7 +16807,7 @@
 						},
 						"type": "lifecycle-transition",
 						"transition": "verify",
-						"description": "REQ-REC-006 closure check: all matches must be classified, sign-off comment is required."
+						"description": "Closure check: all matches must be classified, sign-off comment is required."
 					},
 					{
 						"id": "close",
@@ -16821,7 +16821,7 @@
 						},
 						"type": "lifecycle-transition",
 						"transition": "close",
-						"description": "Seal the reconciliation. After this, the session is immutable per REQ-REC-003."
+						"description": "Seal the reconciliation. After this, the session is immutable."
 					},
 					{
 						"id": "revert",
@@ -16895,7 +16895,7 @@
 												"label": "Matched At"
 											}
 										],
-										"description": "Matches recorded for this reconciliation session. Filter to resolutionStatus=null to see unresolved items needing REQ-REC-004 classification."
+										"description": "Matches recorded for this reconciliation session. Filter to resolutionStatus=null to see unresolved items needing classification."
 									}
 								}
 							]
@@ -17062,7 +17062,7 @@
 						}
 					}
 				],
-				"description": "REQ-REC-008: unresolved items across all open reconciliations, grouped by session. Bulk-classify multiple items at once with a shared reason.",
+				"description": "Unresolved items across all open reconciliations, grouped by session. Bulk-classify multiple items at once with a shared reason.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
 			}
 		},
@@ -17187,7 +17187,7 @@
 				],
 				"lifecycleActions": false,
 				"indexRoute": "Reconciliations",
-				"description": "REQ-REC-001 + REQ-REC-006 sealed audit artifact. Immutable once created.",
+				"description": "Sealed audit artifact. Immutable once created.",
 				"sidebarProps": {
 					"tabs": [
 						{
@@ -18374,7 +18374,7 @@
 					}
 				],
 				"defaultSort": "-created",
-				"description": "Read-only ENSIA audit-trail view for external IT auditors per REQ-ENSIA-008. Shows every create/update/delete/lifecycle event across ENSIAJaarcyclus + Evaluatievraag + Bevinding with before/after diff rendering. Post-peer-review edits carry a `reden` field enforced by ENSIAValidationGuard."
+				"description": "Read-only ENSIA audit-trail view for external IT auditors. Shows every create/update/delete/lifecycle event across ENSIAJaarcyclus + Evaluatievraag + Bevinding with before/after diff rendering. Post-peer-review edits carry a `reden` field enforced by ENSIAValidationGuard."
 			}
 		},
 		{

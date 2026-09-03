@@ -32,13 +32,13 @@
                     "serviceId": {
                         "type": "string",
                         "$ref": "Service",
-                        "description": "FK to Service.serviceId — the booked service for every occurrence.",
+                        "description": "FK to Service.serviceId: the booked service for every occurrence.",
                         "title": "Service"
                     },
                     "resourceId": {
                         "type": "string",
                         "$ref": "Resource",
-                        "description": "FK to Resource.resourceId — the resource every occurrence is booked against.",
+                        "description": "FK to Resource.resourceId: the resource every occurrence is booked against.",
                         "title": "Resource"
                     },
                     "customerId": {

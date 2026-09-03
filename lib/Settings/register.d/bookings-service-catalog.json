@@ -9,7 +9,7 @@
         "icon": "BriefcaseOutline",
         "version": "0.2.0",
         "title": "Service",
-        "description": "A bookable service offering with full catalogue dimensions per bookings-service-catalog (REQ-SC-001..008). Extends the minimal Service declared by bookings-create-appointment with stable per-administration `code` slug, temporal dimensions (`prepareTime`, `bufferBefore`, `bufferAfter`), pricing (`basePrice`, `currency`, `dynamicPricing` flag), categorisation (`serviceCategory`, `resourceTypeRef`), and a three-state lifecycle (`draft` → `active` → `archived`). `dynamicPricing: true` signals to dependent specs (T2+) that base price is a fallback; rule-based pricing must be applied. `resourceTypeRef` is a forward FK to dependent resource-type specs (skill/room/staff specialty/equipment class) and is interpreted by `bookings-resource-calendar` / `bookings-availability-rules` / future resource-allocation specs. Multi-tenant isolation via `administrationId` per ADR-005. Total calendar block per scheduled service = `prepareTime + duration + bufferAfter`; the next allowed slot starts after `bufferBefore + duration + bufferAfter` per REQ-SC-003 worked examples.",
+        "description": "A bookable service offering with full catalogue dimensions per bookings-service-catalog. Extends the minimal Service declared by bookings-create-appointment with stable per-administration `code` slug, temporal dimensions (`prepareTime`, `bufferBefore`, `bufferAfter`), pricing (`basePrice`, `currency`, `dynamicPricing` flag), categorisation (`serviceCategory`, `resourceTypeRef`), and a three-state lifecycle (`draft` → `active` → `archived`). `dynamicPricing: true` signals to dependent specs (T2+) that base price is a fallback; rule-based pricing must be applied. `resourceTypeRef` is a forward FK to dependent resource-type specs (skill/room/staff specialty/equipment class) and is interpreted by `bookings-resource-calendar` / `bookings-availability-rules` / future resource-allocation specs. Multi-tenant isolation via `administrationId` per ADR-005. Total calendar block per scheduled service = `prepareTime + duration + bufferAfter`; the next allowed slot starts after `bufferBefore + duration + bufferAfter` worked examples.",
         "x-schema-org": "schema:Service",
         "x-openregister-purpose": "dimension",
         "type": "object",
@@ -31,7 +31,7 @@
         "properties": {
           "code": {
             "type": "string",
-            "description": "Stable slug identifier unique per administration. Once assigned MUST NOT change — dependent specs reference it for reporting, mapping and external integrations.",
+            "description": "Stable slug identifier unique per administration. Once assigned MUST NOT change: dependent specs reference it for reporting, mapping and external integrations.",
             "maxLength": 64,
             "pattern": "^[a-z0-9][a-z0-9-]*$",
             "example": "haircut",
@@ -87,7 +87,7 @@
           },
           "serviceCategory": {
             "type": "string",
-            "description": "Flat category grouping per REQ-SC-006 (e.g. \"Hair Services\", \"Consulting\", \"Catering\", \"Subscriptions\"). Nested hierarchies deferred to T2.",
+            "description": "Flat category grouping (e.g. \"Hair Services\", \"Consulting\", \"Catering\", \"Subscriptions\"). Nested hierarchies deferred to T2.",
             "maxLength": 128,
             "example": "Hair Services",
             "title": "Service Category"
@@ -95,14 +95,14 @@
           "resourceTypeRef": {
             "type": "string",
             "nullable": true,
-            "description": "Optional forward FK to resource-type concepts (skill, room, staff specialty, equipment class) per REQ-SC-007. Resolved by dependent specs (bookings-resource-calendar, bookings-availability-rules). Null for services with no specific resource requirement (subscriptions, products).",
+            "description": "Optional forward FK to resource-type concepts (skill, room, staff specialty, equipment class). Resolved by dependent specs (bookings-resource-calendar, bookings-availability-rules). Null for services with no specific resource requirement (subscriptions, products).",
             "maxLength": 128,
             "example": "hairdresser",
             "title": "Resource Type Ref"
           },
           "status": {
             "type": "string",
-            "description": "Three-state lifecycle per REQ-SC-005. `draft` = under construction, NOT bookable; `active` = live and bookable, visible in catalogs; `archived` = retired, retained for audit, NOT bookable.",
+            "description": "Three-state lifecycle. `draft` = under construction, NOT bookable; `active` = live and bookable, visible in catalogs; `archived` = retired, retained for audit, NOT bookable.",
             "enum": [
               "draft",
               "active",

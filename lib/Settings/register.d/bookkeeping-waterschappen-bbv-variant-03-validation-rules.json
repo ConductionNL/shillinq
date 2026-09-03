@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-waterschappen-bbv-variant-03-validation-rules",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Member 03 of the bookkeeping-waterschappen-bbv-variant chain. Declares schema-level validation for BBVProgramme + BudgetBBVMapping per REQ-BBVW-008 / giant Phase 4. Validation lives at the OpenRegister schema layer so invalid data cannot be persisted regardless of which client writes it (ADR-022). Constraints declared here: BBVProgramme.programmeName required + non-empty + ≤ 255 chars; BBVProgramme.programmeCode regex ^\\d+\\.\\d+(\\.\\d+)?$ + uniqueness per (administrationId, fiscalYear); BBVProgramme.fiscalYear integer 1900–2100 (broader than slice 01/02's 2000–2100 to satisfy REQ-BBVW-008's historical-amendment use case); BBVProgramme.status enum validated by slice 02 (draft|active|archived); BudgetBBVMapping.glAccountNumber FK existence against Chart of Accounts (Account.accountNumber within the same administrationId); BudgetBBVMapping.allocationPercentage number 0–100 with 0.01 precision (multipleOf 0.01); BudgetBBVMapping.effectiveFrom required ISO-8601 date; BudgetBBVMapping.effectiveTo optional ISO-8601 date that MUST be ≥ effectiveFrom when present; per-account allocation sum MUST stay ≤ 100% per (administrationId, glAccountNumber, fiscalYear) within ±0.1% rounding tolerance (the tolerance window 99.9–100.1% interpretation from REQ-BBVW-008 — sums above 100.1% are rejected). Cross-field rules use x-openregister-calculations validator expressions per ADR-031 (mirrors the convention used by bookings-availability-rules.json). FK existence and the cross-record allocation-sum invariant use x-openregister-validation declarative rules — these are honoured by the OpenRegister save pipeline, return HTTP 400 with the declared error message on violation, and are never enforced from a Vue/PHP service layer (ADR-022 / giant D2). Slug additions only re-declare the schemas the chain owns (BBVProgramme + BudgetBBVMapping); ADR-037 deep-merge unions on schema key so this fragment overlays slice 01 + 02 cleanly. This member ships no controllers, services, or UI — those land in slices 04+."
+    "description": "Member 03 of the bookkeeping-waterschappen-bbv-variant chain. Declares schema-level validation for BBVProgramme + BudgetBBVMapping. Validation lives at the OpenRegister schema layer so invalid data cannot be persisted regardless of which client writes it. Constraints declared here: BBVProgramme.programmeName required + non-empty + ≤ 255 chars; BBVProgramme.programmeCode regex ^\\d+\\.\\d+(\\.\\d+)?$ + uniqueness per (administrationId, fiscalYear); BBVProgramme.fiscalYear integer 1900–2100 (broader than slice 01/02's 2000–2100 to satisfy the historical-amendment use case); BBVProgramme.status enum validated by slice 02 (draft|active|archived); BudgetBBVMapping.glAccountNumber FK existence against Chart of Accounts (Account.accountNumber within the same administrationId); BudgetBBVMapping.allocationPercentage number 0–100 with 0.01 precision (multipleOf 0.01); BudgetBBVMapping.effectiveFrom required ISO-8601 date; BudgetBBVMapping.effectiveTo optional ISO-8601 date that MUST be ≥ effectiveFrom when present; per-account allocation sum MUST stay ≤ 100% per (administrationId, glAccountNumber, fiscalYear) within ±0.1% rounding tolerance (the tolerance window 99.9–100.1% interpretation from: sums above 100.1% are rejected). Cross-field rules use x-openregister-calculations validator expressions per ADR-031 (mirrors the convention used by bookings-availability-rules.json). FK existence and the cross-record allocation-sum invariant use x-openregister-validation declarative rules. These are honoured by the OpenRegister save pipeline, return HTTP 400 with the declared error message on violation, and are never enforced from a Vue/PHP service layer (ADR-022 / giant D2). Slug additions only re-declare the schemas the chain owns (BBVProgramme + BudgetBBVMapping); ADR-037 deep-merge unions on schema key so this fragment overlays slice 01 + 02 cleanly. This member ships no controllers, services, or UI. Those land in slices 04+."
   },
   "components": {
     "schemas": {
@@ -12,7 +12,7 @@
         "slug": "BBVProgramme",
         "version": "0.3.0",
         "title": "BBV Programme",
-        "description": "Slice-03 augments BBVProgramme with declarative validation per REQ-BBVW-008: programmeName non-empty + ≤ 255 chars; programmeCode regex ^\\d+\\.\\d+(\\.\\d+)?$ + unique per (administrationId, fiscalYear); fiscalYear 1900–2100. Lifecycle, aggregations, and RBAC remain owned by slices 01 + 02. Invalid writes return HTTP 400 (ADR-005 fail-closed).",
+        "description": "Slice-03 augments BBVProgramme with declarative validation: programmeName non-empty + ≤ 255 chars; programmeCode regex ^\\d+\\.\\d+(\\.\\d+)?$ + unique per (administrationId, fiscalYear); fiscalYear 1900–2100. Lifecycle, aggregations, and RBAC remain owned by slices 01 + 02. Invalid writes return HTTP 400 (ADR-005 fail-closed).",
         "x-spec": "openspec/changes/bookkeeping-waterschappen-bbv-variant-03-validation-rules/specs/bookkeeping-waterschappen-bbv-variant/spec.md",
         "properties": {
           "programmeCode": {
@@ -26,7 +26,7 @@
           },
           "programmeName": {
             "type": "string",
-            "description": "Operator-facing programme name displayed in dashboards and exports. Required, non-empty, capped at 255 characters per REQ-BBVW-008.",
+            "description": "Operator-facing programme name displayed in dashboards and exports. Required, non-empty, capped at 255 characters.",
             "minLength": 1,
             "maxLength": 255,
             "example": "Water Quality Monitoring",
@@ -34,7 +34,7 @@
           },
           "fiscalYear": {
             "type": "integer",
-            "description": "Fiscal year the programme applies to. Bounded 1900–2100 per REQ-BBVW-008 to accommodate historical amendments and future-year planning.",
+            "description": "Fiscal year the programme applies to. Bounded 1900–2100 to accommodate historical amendments and future-year planning.",
             "minimum": 1900,
             "maximum": 2100,
             "example": 2026,
@@ -43,7 +43,7 @@
         },
         "x-openregister-validation": {
           "programmeCodeUniquePerYear": {
-            "description": "Per REQ-BBVW-008, programmeCode SHALL be unique within (administrationId, fiscalYear). Two BBVProgramme records sharing all three values MUST be rejected on save.",
+            "description": "Per, programmeCode SHALL be unique within (administrationId, fiscalYear). Two BBVProgramme records sharing all three values MUST be rejected on save.",
             "rule": "unique",
             "fields": [
               "administrationId",
@@ -60,19 +60,19 @@
         "slug": "BudgetBBVMapping",
         "version": "0.3.0",
         "title": "Budget BBV Mapping",
-        "description": "Slice-03 augments BudgetBBVMapping with declarative validation per REQ-BBVW-008: glAccountNumber FK existence against Chart of Accounts; allocationPercentage 0–100 with 0.01 precision; effectiveFrom required ISO-8601 date; effectiveTo optional, MUST be ≥ effectiveFrom; per-account allocation sum MUST stay ≤ 100% within ±0.1% tolerance per (administrationId, glAccountNumber, fiscalYear). Invalid writes return HTTP 400 (ADR-005 fail-closed).",
+        "description": "Slice-03 augments BudgetBBVMapping with declarative validation: glAccountNumber FK existence against Chart of Accounts; allocationPercentage 0–100 with 0.01 precision; effectiveFrom required ISO-8601 date; effectiveTo optional, MUST be ≥ effectiveFrom; per-account allocation sum MUST stay ≤ 100% within ±0.1% tolerance per (administrationId, glAccountNumber, fiscalYear). Invalid writes return HTTP 400 (ADR-005 fail-closed).",
         "x-spec": "openspec/changes/bookkeeping-waterschappen-bbv-variant-03-validation-rules/specs/bookkeeping-waterschappen-bbv-variant/spec.md",
         "properties": {
           "glAccountNumber": {
             "type": "string",
-            "description": "GL account number contributing to the programme. MUST exist in the Chart of Accounts (Account.accountNumber) within the same administrationId — enforced by the glAccountForeignKey rule in x-openregister-validation below.",
+            "description": "GL account number contributing to the programme. MUST exist in the Chart of Accounts (Account.accountNumber) within the same administrationId: enforced by the glAccountForeignKey rule in x-openregister-validation below.",
             "minLength": 1,
             "example": "4100",
             "title": "GL Account Number"
           },
           "allocationPercentage": {
             "type": "number",
-            "description": "Share of the GL account's budget + spend allocated to this programme. Number in [0, 100] with 0.01 precision. Multiple mappings for one (administrationId, glAccountNumber, fiscalYear) MUST not exceed 100% (±0.1% tolerance) — enforced by the allocationSumPerAccount rule in x-openregister-validation below.",
+            "description": "Share of the GL account's budget + spend allocated to this programme. Number in [0, 100] with 0.01 precision. Multiple mappings for one (administrationId, glAccountNumber, fiscalYear) MUST not exceed 100% (±0.1% tolerance): enforced by the allocationSumPerAccount rule in x-openregister-validation below.",
             "minimum": 0,
             "maximum": 100,
             "multipleOf": 0.01,
@@ -82,7 +82,7 @@
           "effectiveFrom": {
             "type": "string",
             "format": "date",
-            "description": "First date the mapping is in effect (inclusive). Required ISO-8601 calendar date (YYYY-MM-DD) per REQ-BBVW-008.",
+            "description": "First date the mapping is in effect (inclusive). Required ISO-8601 calendar date (YYYY-MM-DD).",
             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
             "example": "2026-01-01",
             "title": "Effective From"
@@ -91,7 +91,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Last date the mapping is in effect (inclusive). Optional ISO-8601 calendar date (YYYY-MM-DD). When present MUST be ≥ effectiveFrom — enforced by the effectiveToOnOrAfterFrom cross-field validator below.",
+            "description": "Last date the mapping is in effect (inclusive). Optional ISO-8601 calendar date (YYYY-MM-DD). When present MUST be ≥ effectiveFrom: enforced by the effectiveToOnOrAfterFrom cross-field validator below.",
             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
             "example": "2026-12-31",
             "title": "Effective To"
@@ -105,7 +105,7 @@
         },
         "x-openregister-validation": {
           "glAccountForeignKey": {
-            "description": "Per REQ-BBVW-008 / REQ-BBVW-002, glAccountNumber SHALL reference an existing Chart-of-Accounts entry (Account.accountNumber) within the same administrationId. Mappings referencing an unknown GL account MUST be rejected on save.",
+            "description": "Per, glAccountNumber SHALL reference an existing Chart-of-Accounts entry (Account.accountNumber) within the same administrationId. Mappings referencing an unknown GL account MUST be rejected on save.",
             "rule": "foreignKeyExists",
             "localField": "glAccountNumber",
             "foreignSchema": "Account",
@@ -117,7 +117,7 @@
             "errorMessage": "Referenced GL account does not exist in the Chart of Accounts for this administration."
           },
           "allocationSumPerAccount": {
-            "description": "Per REQ-BBVW-008 / giant Phase 4: the sum of allocationPercentage across all BudgetBBVMapping records for a single GL account in a single fiscal year SHALL NOT exceed 100% within a ±0.1% rounding tolerance (i.e. sums in (100.1, ∞) are rejected; sums in [99.9, 100.1] are accepted; sums in [0, 99.9) are accepted as work-in-progress). The check runs on every create/update and considers the proposed record together with all sibling records sharing the same (administrationId, glAccountNumber, fiscalYear).",
+            "description": "Per / giant Phase 4: the sum of allocationPercentage across all BudgetBBVMapping records for a single GL account in a single fiscal year SHALL NOT exceed 100% within a ±0.1% rounding tolerance (i.e. sums in (100.1, ∞) are rejected; sums in [99.9, 100.1] are accepted; sums in [0, 99.9) are accepted as work-in-progress). The check runs on every create/update and considers the proposed record together with all sibling records sharing the same (administrationId, glAccountNumber, fiscalYear).",
             "rule": "sumWithinBounds",
             "sumField": "allocationPercentage",
             "groupBy": [

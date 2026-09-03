@@ -27,7 +27,7 @@
         "icon": "CalendarOutline",
         "version": "0.1.0",
         "title": "Calendar",
-        "description": "Per-resource calendar carrying time-zone and weekly working-hours configuration. Introduced by bookings-resource-calendar (REQ-002). Each Calendar is bound to exactly one Resource via the resource FK. timeZone is an IANA identifier (default Europe/Amsterdam for Dutch context); workingHours is an optional JSON template keyed by weekday — null entries mean the resource is closed that day. Multi-tenant isolation via administrationId per ADR-005. Status follows the standard active → inactive → archived OR lifecycle.",
+        "description": "Per-resource calendar carrying time-zone and weekly working-hours configuration. Introduced by bookings-resource-calendar (REQ-002). Each Calendar is bound to exactly one Resource via the resource FK. TimeZone is an IANA identifier (default Europe/Amsterdam for Dutch context); workingHours is an optional JSON template keyed by weekday: null entries mean the resource is closed that day. Multi-tenant isolation via administrationId per ADR-005. Status follows the standard active → inactive → archived OR lifecycle.",
         "x-schema-org": "schema:Schedule",
         "x-openregister-purpose": "dimension",
         "type": "object",
@@ -53,7 +53,7 @@
           },
           "resource": {
             "type": "string",
-            "description": "FK to Resource.resourceId — the resource this calendar represents.",
+            "description": "FK to Resource.resourceId: the resource this calendar represents.",
             "example": "res-001",
             "title": "Resource"
           },
@@ -176,7 +176,7 @@
           },
           "resource": {
             "type": "string",
-            "description": "FK to Resource.resourceId — denormalised from calendar.resource for direct query (design D4). API write path validates the denormalisation invariant.",
+            "description": "FK to Resource.resourceId: denormalised from calendar.resource for direct query (design D4). API write path validates the denormalisation invariant.",
             "example": "res-001",
             "title": "Resource"
           },

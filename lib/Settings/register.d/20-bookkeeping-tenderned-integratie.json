@@ -20,7 +20,7 @@
         "properties": {
           "tenderId": {
             "type": "string",
-            "description": "TenderNed identifier of the tender dossier — unique per administration (REQ-001).",
+            "description": "TenderNed identifier of the tender dossier: unique per administration (REQ-001).",
             "example": "TN-2026-0001",
             "title": "Aanbesteding ID"
           },
@@ -56,14 +56,14 @@
           },
           "contractingService": {
             "type": "string",
-            "description": "Contracting authority — KvK number plus name of the public buyer running the procurement.",
+            "description": "Contracting authority: KvK number plus name of the public buyer running the procurement.",
             "example": "30280353 Gemeente Utrecht",
             "title": "Aanbestedende Dienst"
           },
           "awardDate": {
             "type": "string",
             "format": "date",
-            "description": "Award date (gunningsbeslissing) — mandatory publication per Aanbestedingswet 2012 artikel 2.135.",
+            "description": "Award date (gunningsbeslissing): mandatory publication per Aanbestedingswet 2012 artikel 2.135.",
             "nullable": true,
             "title": "Gunnings Datum"
           },
@@ -77,20 +77,20 @@
           "termStart": {
             "type": "string",
             "format": "date",
-            "description": "Contract term start date — drives milestone-plan generation (REQ-003).",
+            "description": "Contract term start date: drives milestone-plan generation (REQ-003).",
             "nullable": true,
             "title": "Looptijd Start"
           },
           "termEnd": {
             "type": "string",
             "format": "date",
-            "description": "Contract term end date — drives milestone-plan generation (REQ-003).",
+            "description": "Contract term end date: drives milestone-plan generation (REQ-003).",
             "nullable": true,
             "title": "Looptijd Eind"
           },
           "awardedSupplier": {
             "type": "string",
-            "description": "Awarded supplier — KvK number plus name. Vendor visibility filtering matches this KvK against the tenant organisation (design D6 / REQ-008).",
+            "description": "Awarded supplier: KvK number plus name. Vendor visibility filtering matches this KvK against the tenant organisation (design D6 / REQ-008).",
             "nullable": true,
             "example": "76741850 Conduction B.V.",
             "title": "Gegunde Leverancier"
@@ -115,7 +115,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "Owning administration — scopes the record for multi-tenant isolation (design Q3).",
+            "description": "Owning administration: scopes the record for multi-tenant isolation (design Q3).",
             "title": "Administration ID"
           },
           "status": {
@@ -229,14 +229,14 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Commitment",
-        "description": "A financial obligation (commitment) that reserves budget. The obligation may originate manually, from an inkooporder, or from a won TenderNed tender (bron field, REQ-001). A concept obligation must be enriched (kostenplaats, grootboekrekening) and activated by a contractmanager before it locks budget (design D2). This fragment is the TenderNed OVERLAY on the Commitment schema: bookkeeping-verplichtingenadministratie.json owns the schema and is the single place its `required` list is declared, because ADR-037's deepMergeConfig() CONCATENATES list values — two `required` declarations become an unsatisfiable union. Everything below is additive: TenderNed provenance (bron, bronReferentie, gegundeLeverancierKvk), the milestone plan, and the concept -> active enrichment lifecycle.",
+        "description": "A financial obligation (commitment) that reserves budget. The obligation may originate manually, from an inkooporder, or from a won TenderNed tender (bron field, REQ-001). A concept obligation must be enriched (kostenplaats, grootboekrekening) and activated by a contractmanager before it locks budget (design D2). This fragment is the TenderNed OVERLAY on the Commitment schema: bookkeeping-verplichtingenadministratie.json owns the schema and is the single place its `required` list is declared, because ADR-037's deepMergeConfig CONCATENATES list values: two `required` declarations become an unsatisfiable union. Everything below is additive: TenderNed provenance (bron, bronReferentie, gegundeLeverancierKvk), the milestone plan, and the concept -> active enrichment lifecycle.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
         "properties": {
           "commitmentNumber": {
             "type": "string",
-            "description": "Sequential obligation number unique per administration, as written by TenderNedAwardDetectedListener and read by CommitmentGuard. This is the camelCase half of a LIVE TWO-SPELLING SPLIT — bookkeeping-verplichtingenadministratie.json owns this schema and declares `verplichtingsnummer` for the commitment-accounting path, which is the spelling in the merged `required` list. Until the two collapse, a record written through the TenderNed path does not satisfy that requirement. Resolving the split belongs to the English domain rename (Commitment -> Commitment), which owns the repair step that migrates stored values; renaming here without one would make every stored value invisible, because OpenRegister's MagicMapper discards undeclared properties.",
+            "description": "Sequential obligation number unique per administration, as written by TenderNedAwardDetectedListener and read by CommitmentGuard. This is the camelCase half of a LIVE TWO-SPELLING SPLIT: bookkeeping-verplichtingenadministratie.json owns this schema and declares `verplichtingsnummer` for the commitment-accounting path, which is the spelling in the merged `required` list. Until the two collapse, a record written through the TenderNed path does not satisfy that requirement. Resolving the split belongs to the English domain rename (Commitment -> Commitment), which owns the repair step that migrates stored values; renaming here without one would make every stored value invisible, because OpenRegister's MagicMapper discards undeclared properties.",
             "example": "VPL-2026-0001",
             "title": "Commitment Nummer"
           },
@@ -273,13 +273,13 @@
           },
           "costCentre": {
             "type": "string",
-            "description": "Cost centre (FK to CostCenter.costCentreCode) — enriched by the contractmanager before activation (design D2).",
+            "description": "Cost centre (FK to CostCenter.costCentreCode): enriched by the contractmanager before activation (design D2).",
             "nullable": true,
             "title": "Kostenplaats"
           },
           "generalLedgerAccount": {
             "type": "string",
-            "description": "GL account (FK to Account.accountNumber) — enriched by the contractmanager before activation (design D2).",
+            "description": "GL account (FK to Account.accountNumber): enriched by the contractmanager before activation (design D2).",
             "nullable": true,
             "title": "Grootboekrekening"
           },
@@ -299,7 +299,7 @@
           },
           "awardedSupplierKvk": {
             "type": "string",
-            "description": "KvK number of the awarded supplier — used for vendor visibility filtering of bron=tenderned obligations (REQ-008 / design D6).",
+            "description": "KvK number of the awarded supplier: used for vendor visibility filtering of bron=tenderned obligations (REQ-008 / design D6).",
             "nullable": true,
             "title": "Gegunde Leverancier KvK"
           },
@@ -325,7 +325,7 @@
                 "date": {
                   "type": "string",
                   "format": "date",
-                  "description": "Planned milestone date; must fall within looptijdStart..looptijdEind (design validation rules).",
+                  "description": "Planned milestone date; must fall within looptijdStart.looptijdEind (design validation rules).",
                   "title": "Datum"
                 },
                 "description": {
@@ -365,7 +365,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "Owning administration — scopes the record for multi-tenant isolation.",
+            "description": "Owning administration: scopes the record for multi-tenant isolation.",
             "title": "Administration ID"
           },
           "status": {
@@ -537,7 +537,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "Owning administration — scopes the record for multi-tenant isolation.",
+            "description": "Owning administration: scopes the record for multi-tenant isolation.",
             "title": "Administration ID"
           },
           "status": {

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "time-expense-invoice-intake",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json or other fragments. ADR-031 external-integration imperative exception (ingress adapter).",
-    "description": "Adds the ingress ledger schema TimeIntakeBatch (idempotency key = administrationId+batchId, records the batch → draft-invoice link) and extends the canonical UrenRegistratie schema with three provenance fields (externalId, sourceApp, sourceBatchId) so time entries materialised from an authenticated POST /apps/shillinq/api/billing/time-intake batch (pipelinq's time-billing-handoff-emit) are traceable back to their source. Deliberately does NOT declare a 'required' key on UrenRegistratie's merge fragment — the three provenance fields stay optional so pre-existing, manually-entered UrenRegistratie rows are unaffected (deep-merge concatenates 'required' arrays, so omitting the key here is load-bearing). Also seeds two CustomerMaster rows (cust-5432, cust-7788) beyond design.md's Seed Data section: the orchestrator's binding ruling requires organisationRef to resolve to a real shillinq customer/organisation record (422 otherwise), and no CustomerMaster seed data existed anywhere in the register prior to this change — without these two rows the seeded TimeIntakeBatch/UrenRegistratie demo objects would reference an organisationRef that can never resolve."
+    "description": "Adds the ingress ledger schema TimeIntakeBatch (idempotency key = administrationId+batchId, records the batch → draft-invoice link) and extends the canonical UrenRegistratie schema with three provenance fields (externalId, sourceApp, sourceBatchId) so time entries materialised from an authenticated POST /apps/shillinq/api/billing/time-intake batch (pipelinq's time-billing-handoff-emit) are traceable back to their source. Deliberately does NOT declare a 'required' key on UrenRegistratie's merge fragment: the three provenance fields stay optional so pre-existing, manually-entered UrenRegistratie rows are unaffected (deep-merge concatenates 'required' arrays, so omitting the key here is load-bearing). Also seeds two CustomerMaster rows (cust-5432, cust-7788) beyond design.md's Seed Data section: the orchestrator's binding ruling requires organisationRef to resolve to a real shillinq customer/organisation record (422 otherwise), and no CustomerMaster seed data existed anywhere in the register prior to this change. Without these two rows the seeded TimeIntakeBatch/UrenRegistratie demo objects would reference an organisationRef that can never resolve."
   },
   "components": {
     "schemas": {
@@ -33,7 +33,7 @@
         "properties": {
           "administrationId": {
             "type": "string",
-            "description": "FK to the Administration this batch was ingested into (server-resolved from the session, never client-supplied — ADR-005).",
+            "description": "FK to the Administration this batch was ingested into (server-resolved from the session, never client-supplied: ADR-005).",
             "example": "adm-1",
             "title": "Administration ID"
           },
@@ -59,7 +59,7 @@
           "projectId": {
             "type": "string",
             "nullable": true,
-            "description": "Optional FK to Project — the batch's projectRef, if supplied.",
+            "description": "Optional FK to Project: the batch's projectRef, if supplied.",
             "example": "proj-widget-api",
             "title": "Project ID"
           },
@@ -101,7 +101,7 @@
               "failed"
             ],
             "default": "received",
-            "description": "Ingress ledger state, not a business-object lifecycle (design.md). 'invoiced' once draftInvoice() has succeeded and this row is persisted.",
+            "description": "Ingress ledger state, not a business-object lifecycle (design.md). 'invoiced' once draftInvoice has succeeded and this row is persisted.",
             "example": "invoiced",
             "title": "Status"
           },

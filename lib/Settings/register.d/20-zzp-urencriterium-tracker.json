@@ -42,7 +42,7 @@
           },
           "purposeNorm": {
             "type": "integer",
-            "description": "De toe te passen urennorm: 1.225 (regulier, art. 3.6 lid 1), 800 (arbeidsongeschiktheid, art. 3.6 lid 5) of 525 (meewerkaftrek). Automatisch bepaald op init (REQ-URC-000/006).",
+            "description": "De toe te passen urennorm: 1.225 (regulier, art. 3.6 lid 1), 800 (arbeidsongeschiktheid, art. 3.6 lid 5) of 525 (meewerkaftrek). Automatisch bepaald op init.",
             "enum": [
               1225,
               800,
@@ -183,7 +183,7 @@
         "icon": "ClockTimeFourOutline",
         "version": "0.1.0",
         "title": "Uren dagregistratie",
-        "description": "Dagelijkse fiscaal-gecategoriseerde uren-ledger voor het urencriterium. Apart van — en gevoed door — de billable UrenRegistratie (time-tracking) uit bookkeeping-time-tracking: time-tracking-uren stromen in als BILLABLE_KLANTWERK, niet-billable overhead (acquisitie, administratie, scholing, reistijd) wordt handmatig of agenda-afgeleid geregistreerd. De reistijd-cap (max 4 uur/dag, REQ-URC-001) en backfill-regels worden afgedwongen door UrenDagregistratieGuard (ADR-031). Naamkeuze UrenDagregistratie vermijdt botsing met de bestaande monolith-schema UrenRegistratie (ADR-037).",
+        "description": "Dagelijkse fiscaal-gecategoriseerde uren-ledger voor het urencriterium. Apart van: en gevoed door. De billable UrenRegistratie (time-tracking) uit bookkeeping-time-tracking: time-tracking-uren stromen in als BILLABLE_KLANTWERK, niet-billable overhead (acquisitie, administratie, scholing, reistijd) wordt handmatig of agenda-afgeleid geregistreerd. De reistijd-cap (max 4 uur/dag) en backfill-regels worden afgedwongen door UrenDagregistratieGuard (ADR-031). Naamkeuze UrenDagregistratie vermijdt botsing met de bestaande monolith-schema UrenRegistratie (ADR-037).",
         "x-schema-org": "schema:HowToStep",
         "x-openregister-purpose": "transaction",
         "type": "object",
@@ -232,7 +232,7 @@
           "hours": {
             "type": "number",
             "minimum": 0,
-            "description": "Aantal uren in deze categorie op deze dag. Voor REISTIJD_ZAKELIJK wordt maximaal 4 uur geteld (cap per dag, REQ-URC-001).",
+            "description": "Aantal uren in deze categorie op deze dag. Voor REISTIJD_ZAKELIJK wordt maximaal 4 uur geteld (cap per dag).",
             "example": 3,
             "title": "Uren"
           },
@@ -269,7 +269,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Tijdstip waarop deze regel is geregistreerd (gebruikt voor backfill-detectie, REQ-URC-017).",
+            "description": "Tijdstip waarop deze regel is geregistreerd (gebruikt voor backfill-detectie).",
             "example": "2026-05-21T18:00:00Z",
             "title": "Registratie Moment"
           },
@@ -393,7 +393,7 @@
           },
           "evidenceRequired": {
             "type": "boolean",
-            "description": "Of registratie in deze categorie pas definitief wordt na evidence-upload (bijv. scholing, REQ-URC-004).",
+            "description": "Of registratie in deze categorie pas definitief wordt na evidence-upload (bijv. scholing).",
             "default": false,
             "example": false,
             "title": "Bewijs Vereist"
@@ -641,7 +641,7 @@
           "cause": {
             "type": "string",
             "nullable": true,
-            "description": "Toelichting op de oorzaak van de omslag (bijv. verwijzing naar een ziekteperiode, REQ-URC-003).",
+            "description": "Toelichting op de oorzaak van de omslag (bijv. verwijzing naar een ziekteperiode).",
             "example": "Ziekteperiode 1-14 september verlaagde de prognose",
             "title": "Oorzaak"
           },

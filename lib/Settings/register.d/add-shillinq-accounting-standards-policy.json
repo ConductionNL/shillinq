@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "add-accounting-standards-policy",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Adds the StandardsPolicy schema: a per-administration, ordered declaration of which accounting/reporting frameworks the administration follows and in which order of precedence. A single StandardsPolicy object holds a frameworks[] list, each entry carrying a framework key (fixed enum mirroring docs/standards/), an enabled flag and an integer precedence (lower = higher priority). Business logic consults the highest-precedence enabled framework via OCA\\Shillinq\\Service\\StandardsPolicyService.resolve(topic) when frameworks conflict (revenue, leases, inventory, development costs — see docs/standards/comparisons.md). The resolver ships unit-tested but is not yet applied to real posting/valuation paths (out of scope per proposal). No lifecycle/orchestrator is needed: this is configuration data edited via the StandardsPolicyEditor settings page and read by the resolver."
+    "description": "Adds the StandardsPolicy schema: a per-administration, ordered declaration of which accounting/reporting frameworks the administration follows and in which order of precedence. A single StandardsPolicy object holds a frameworks[] list, each entry carrying a framework key (fixed enum mirroring docs/standards/), an enabled flag and an integer precedence (lower = higher priority). Business logic consults the highest-precedence enabled framework via OCA\\Shillinq\\Service\\StandardsPolicyService.resolve(topic) when frameworks conflict (revenue, leases, inventory, development costs: see docs/standards/comparisons.md). The resolver ships unit-tested but is not yet applied to real posting/valuation paths (out of scope per proposal). No lifecycle/orchestrator is needed: this is configuration data edited via the StandardsPolicyEditor settings page and read by the resolver."
   },
   "components": {
     "schemas": {
@@ -44,7 +44,7 @@
               "properties": {
                 "key": {
                   "type": "string",
-                  "description": "Framework identifier — fixed enum mirroring the docs/standards/ pages. Covers bases of accounting (Category A): international (IFRS IASB / EU-endorsed), national GAAPs (Dutch, German, French, Italian, Spanish), tax bases (Dutch, US tax/cash/modified-cash, FRF for SMEs), public sector (IPSAS, Dutch BBV, US GASB/FASAB) and sustainability (ESRS, IFRS S1/S2). Digital-compliance obligations (e-invoicing, SAF-T, VAT) are NOT here — they are additive regulatory facts modelled by the versioned static OCA\\Shillinq\\Standards\\ComplianceCatalogue (code, not OpenRegister).",
+                  "description": "Framework identifier: fixed enum mirroring the docs/standards/ pages. Covers bases of accounting (Category A): international (IFRS IASB / EU-endorsed), national GAAPs (Dutch, German, French, Italian, Spanish), tax bases (Dutch, US tax/cash/modified-cash, FRF for SMEs), public sector (IPSAS, Dutch BBV, US GASB/FASAB) and sustainability (ESRS, IFRS S1/S2). Digital-compliance obligations (e-invoicing, SAF-T, VAT) are NOT here. They are additive regulatory facts modelled by the versioned static OCA\\Shillinq\\Standards\\ComplianceCatalogue (code, not OpenRegister).",
                   "enum": [
                     "ifrs",
                     "ifrs-eu",
@@ -78,7 +78,7 @@
                 },
                 "precedence": {
                   "type": "integer",
-                  "description": "Order of precedence — lower wins. The highest-priority enabled framework (lowest precedence) is returned by resolve().",
+                  "description": "Order of precedence: lower wins. The highest-priority enabled framework (lowest precedence) is returned by resolve.",
                   "minimum": 0,
                   "example": 1,
                   "title": "Precedence"

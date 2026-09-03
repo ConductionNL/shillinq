@@ -4,7 +4,7 @@
         "spdx-copyright": "2026 Conduction B.V.",
         "change": "ar-billing-completeness",
         "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-        "description": "Declares the two schemas for consumption-based (usage) billing: UsageRatePlan (the flat or graduated-tier price book) and MeterReading (a metered quantity over a period). OCA\\Shillinq\\Service\\UsageRatingCalculator rates a reading against its plan, and OCA\\Shillinq\\Service\\InvoiceGenerationService drives the new 'usage' billing model through the EXISTING draftInvoice/postInvoice pipeline (BillingModelEngine::calculateUsage) — no fork of invoicing. Extends shillinq's flat recurring + retainer billing to metered/usage billing (REQ-UMB-001..004)."
+        "description": "Declares the two schemas for consumption-based (usage) billing: UsageRatePlan (the flat or graduated-tier price book) and MeterReading (a metered quantity over a period). OCA\\Shillinq\\Service\\UsageRatingCalculator rates a reading against its plan, and OCA\\Shillinq\\Service\\InvoiceGenerationService drives the new 'usage' billing model through the EXISTING draftInvoice/postInvoice pipeline (BillingModelEngine:calculateUsage). No fork of invoicing. Extends shillinq's flat recurring + retainer billing to metered/usage billing."
     },
     "components": {
         "schemas": {
@@ -307,7 +307,7 @@
             "ratePlanId": "urp-api-standard",
             "periodStart": "2026-03-01",
             "periodEnd": "2026-03-31",
-            "description": "API calls — March 2026",
+            "description": "API calls: March 2026",
             "status": "unrated"
         }
     ]

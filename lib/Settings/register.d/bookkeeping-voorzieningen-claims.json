@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-voorzieningen-claims",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — IAS 37 / RJ 252 Provisions, Contingent Liabilities and Contingent Assets. Nine new schemas (Provision, ProvisionMovement, ContingentLiability, PensioenvoorzieningDetail, JubileumvoorzieningDetail, HerstructureringsvoorzieningDetail, GarantievoorzieningDetail, MilieuvoorzieningDetail, ClaimsVoorzieningDetail) declaring the recognition, measurement (best-estimate + range, discontering), period roll-forward, type-specific extensions and jaarrekening disclosure surface entirely as declarative metadata per ADR-031: schema fields + x-openregister-lifecycle (draft → active on Provision with materiality + three-criteria gating; open → closed on ProvisionMovement; draft → published on ContingentLiability) + x-openregister-aggregations (provisionRollForward roll-forward, provisionDisclosureGeneration disclosure-table) + x-openregister-calculations (discountedValue, unwindingOfDiscount). Lifecycle preconditions that the declarative requires: clause cannot yet express are referenced as OCA\\Shillinq\\Lifecycle\\ProvisionGuard::<method> (ADR-031 exception path; fail-closed; real OpenRegister ObjectService API per ADR-022). REQ-PROV-001 enforces three-criteria recognition at the schema validator level (legalOrConstructiveObligation enum, obligatingEvent text, probabilityOfOutflow ≥ 0.5, bestEstimate + bestEstimateRationale). REQ-PROV-005 blocks Herstructureringsvoorziening recognition when detailedPlanDate post-dates balansdatum. REQ-PROV-006 blocks Claims-voorziening when legalAdviceMemo FK is missing. REQ-PROV-018 + REQ-PROV-010 require peer-reviewer + CFO sign-off above EUR 100K / 1 % balanstotaal. Seeds ship three Provision specimen records (garantie, milieu, claims), two ContingentLiability specimen records (fiscaal geschil, borgstelling) and one ProvisionMovement template per design.md; operators customise per administration on first use. No PHP valuation service is authored."
+    "description": "Tier 3: IAS 37 / RJ 252 Provisions, Contingent Liabilities and Contingent Assets. Nine new schemas (Provision, ProvisionMovement, ContingentLiability, PensioenvoorzieningDetail, JubileumvoorzieningDetail, HerstructureringsvoorzieningDetail, GarantievoorzieningDetail, MilieuvoorzieningDetail, ClaimsVoorzieningDetail) declaring the recognition, measurement (best-estimate + range, discontering), period roll-forward, type-specific extensions and jaarrekening disclosure surface entirely as declarative metadata per ADR-031: schema fields + x-openregister-lifecycle (draft → active on Provision with materiality + three-criteria gating; open → closed on ProvisionMovement; draft → published on ContingentLiability) + x-openregister-aggregations (provisionRollForward roll-forward, provisionDisclosureGeneration disclosure-table) + x-openregister-calculations (discountedValue, unwindingOfDiscount). Lifecycle preconditions that the declarative requires: clause cannot yet express are referenced as OCA\\Shillinq\\Lifecycle\\ProvisionGuard:<method> (ADR-031 exception path; fail-closed; real OpenRegister ObjectService API per ADR-022). Enforces three-criteria recognition at the schema validator level (legalOrConstructiveObligation enum, obligatingEvent text, probabilityOfOutflow ≥ 0.5, bestEstimate + bestEstimateRationale). Blocks Herstructureringsvoorziening recognition when detailedPlanDate post-dates balansdatum. Blocks Claims-voorziening when legalAdviceMemo FK is missing. + require peer-reviewer + CFO sign-off above EUR 100K / 1 % balanstotaal. Seeds ship three Provision specimen records (garantie, milieu, claims), two ContingentLiability specimen records (fiscaal geschil, borgstelling) and one ProvisionMovement template per design.md; operators customise per administration on first use. No PHP valuation service is authored."
   },
   "components": {
     "schemas": {
@@ -81,13 +81,13 @@
           },
           "obligatingEvent": {
             "type": "string",
-            "description": "Past event that created the obligation (IAS 37 §17, REQ-PROV-001).",
+            "description": "Past event that created the obligation (IAS 37 §17).",
             "example": "Verkoop goederen met waarborg 12 maanden per contractvoorwaarden",
             "title": "Obligating Event"
           },
           "probabilityOfOutflow": {
             "type": "number",
-            "description": "Decimal 0–1 probability of outflow of economic resources (IAS 37 §23, REQ-PROV-001, REQ-PROV-007). Must be > 0.5 for balance-sheet recognition; 0.05–0.5 routes to ContingentLiability; ≤ 0.05 is remote.",
+            "description": "Decimal 0–1 probability of outflow of economic resources (IAS 37 §23). Must be > 0.5 for balance-sheet recognition; 0.05–0.5 routes to ContingentLiability; ≤ 0.05 is remote.",
             "minimum": 0,
             "maximum": 1,
             "example": 0.8,
@@ -95,7 +95,7 @@
           },
           "bestEstimate": {
             "type": "number",
-            "description": "Management's best estimate of the outflow in EUR (IAS 37 §36, REQ-PROV-002). REQ-PROV-018 triggers peer-review when > EUR 100K or > 1% of prior-year balance total.",
+            "description": "Management's best estimate of the outflow in EUR (IAS 37 §36). triggers peer-review when > EUR 100K or > 1% of prior-year balance total.",
             "example": 120000.0,
             "title": "Best Estimate"
           },
@@ -107,21 +107,21 @@
           },
           "rangeLow": {
             "type": "number",
-            "description": "Lower bound of the sensitivity range in EUR (IAS 37 §39, REQ-PROV-002).",
+            "description": "Lower bound of the sensitivity range in EUR (IAS 37 §39).",
             "nullable": true,
             "example": 80000.0,
             "title": "Range Low"
           },
           "rangeHigh": {
             "type": "number",
-            "description": "Upper bound of the sensitivity range in EUR (IAS 37 §39, REQ-PROV-002).",
+            "description": "Upper bound of the sensitivity range in EUR (IAS 37 §39).",
             "nullable": true,
             "example": 150000.0,
             "title": "Range High"
           },
           "expectedTiming": {
             "type": "object",
-            "description": "Horizon split of expected outflows. longTerm > 0 triggers REQ-PROV-003 disconteringsvoet.",
+            "description": "Horizon split of expected outflows. longTerm > 0 triggers disconteringsvoet.",
             "required": [
               "shortTerm",
               "mediumTerm",
@@ -148,7 +148,7 @@
           },
           "discountRateApplied": {
             "type": "number",
-            "description": "Risk-adjusted disconteringsvoet applied when expected timing > 1 year is material (IAS 37 §45, REQ-PROV-003). Pre-tax rate reflecting current market assessments + risk specific to the liability.",
+            "description": "Risk-adjusted disconteringsvoet applied when expected timing > 1 year is material (IAS 37 §45). Pre-tax rate reflecting current market assessments + risk specific to the liability.",
             "nullable": true,
             "example": 0.03,
             "title": "Discount Rate Applied"
@@ -179,7 +179,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Lifecycle state (REQ-PROV-001 / REQ-PROV-009 / REQ-PROV-010).",
+            "description": "Lifecycle state.",
             "enum": [
               "draft",
               "under-review",
@@ -342,7 +342,7 @@
         "icon": "TableArrowRight",
         "version": "0.1.0",
         "title": "Provision Movement",
-        "description": "Per-period roll-forward of a single Provision per IAS 37 §84. Carries the opening balance, dotation, onttrekking, vrijval, unwinding of discount, effect of change in discount rate, effect of change in estimate, translation differences and the computed closing balance. Once status=closed the record is immutable; corrections are recorded as prospective effectOfChangeInEstimate on the next open period (REQ-PROV-019 / IAS 8). linkedJournalEntries connect every bucket to the GL journal entries that posted it.",
+        "description": "Per-period roll-forward of a single Provision per IAS 37 §84. Carries the opening balance, dotation, onttrekking, vrijval, unwinding of discount, effect of change in discount rate, effect of change in estimate, translation differences and the computed closing balance. Once status=closed the record is immutable; corrections are recorded as prospective effectOfChangeInEstimate on the next open period (IAS 8). linkedJournalEntries connect every bucket to the GL journal entries that posted it.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md",
         "type": "object",
@@ -399,7 +399,7 @@
           },
           "releasedUnused": {
             "type": "number",
-            "description": "Vrijval — amount released because the obligation no longer exists or has been reduced.",
+            "description": "Vrijval: amount released because the obligation no longer exists or has been reduced.",
             "default": 0,
             "example": 25000.0,
             "title": "Released Unused"
@@ -456,7 +456,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Movement lifecycle. Once status=closed the record is immutable per REQ-PROV-004 / REQ-PROV-019.",
+            "description": "Movement lifecycle. Once status=closed the record is immutable.",
             "enum": [
               "open",
               "closed"
@@ -567,7 +567,7 @@
           },
           "estimatedAmount": {
             "type": "number",
-            "description": "Estimated amount when available; null when no reliable estimate (IAS 37 §86, REQ-PROV-015).",
+            "description": "Estimated amount when available; null when no reliable estimate (IAS 37 §86).",
             "nullable": true,
             "example": 400000.0,
             "title": "Estimated Amount"
@@ -592,7 +592,7 @@
           },
           "disclosureNarrative": {
             "type": "string",
-            "description": "Narrative for the jaarrekening note 'Niet uit de balans blijkende verplichtingen' (IAS 37 §86, RJ 252 §407, REQ-PROV-008, REQ-PROV-015).",
+            "description": "Narrative for the jaarrekening note 'Niet uit de balans blijkende verplichtingen' (IAS 37 §86, RJ 252 §407).",
             "example": "Het belastingdienst heeft een voorstellingscorrectie opgelegd. Naar schatting van onze belastingadviseur is er 30% kans dat deze in hoger beroep zal worden gehandhaafd. Geen reliable estimate beschikbaar.",
             "title": "Disclosure Narrative"
           },
@@ -686,7 +686,7 @@
           },
           "actuarialMethod": {
             "type": "string",
-            "description": "Actuarial method (PUC mandatory for DB plans per IAS 19, REQ-PROV-014).",
+            "description": "Actuarial method (PUC mandatory for DB plans per IAS 19).",
             "enum": [
               "PUC"
             ],
@@ -817,7 +817,7 @@
         "icon": "OfficeBuildingMarkerOutline",
         "version": "0.1.0",
         "title": "Herstructureringsvoorziening Detail",
-        "description": "Type-specific detail register for herstructureringsvoorzieningen (IAS 37 §72–83 / RJ 252 §327–336, REQ-PROV-005). FK back to a Provision with provisionType=herstructurering. detailedPlanDate MUST be on or before balansdatum and planCommunicatedTo MUST list the affected parties; the activation guard enforces both before status=active.",
+        "description": "Type-specific detail register for herstructureringsvoorzieningen (IAS 37 §72–83 / RJ 252 §327–336). FK back to a Provision with provisionType=herstructurering. detailedPlanDate MUST be on or before balansdatum and planCommunicatedTo MUST list the affected parties; the activation guard enforces both before status=active.",
         "x-schema-org": "schema:Thing",
         "x-spec": "openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md",
         "type": "object",
@@ -879,7 +879,7 @@
           },
           "expectedLeaseExitCosts": {
             "type": "number",
-            "description": "Expected onerous-lease exit costs in EUR (IFRS 16, REQ-PROV-005).",
+            "description": "Expected onerous-lease exit costs in EUR (IFRS 16).",
             "nullable": true,
             "default": 0,
             "title": "Expected Lease Exit Costs"
@@ -1076,7 +1076,7 @@
         "icon": "Gavel",
         "version": "0.1.0",
         "title": "Claims Voorziening Detail",
-        "description": "Type-specific detail register for claims- en geschillen-voorzieningen (IAS 37 §37, REQ-PROV-006). FK back to a Provision with provisionType=claims. legalAdviceMemo is mandatory and stored under restricted access (CFO / audit committee / accountant only) to preserve legal privilege. The activation guard blocks status=active when the memo FK is missing.",
+        "description": "Type-specific detail register for claims- en geschillen-voorzieningen (IAS 37 §37). FK back to a Provision with provisionType=claims. legalAdviceMemo is mandatory and stored under restricted access (CFO / audit committee / accountant only) to preserve legal privilege. The activation guard blocks status=active when the memo FK is missing.",
         "x-schema-org": "schema:LegalAction",
         "x-spec": "openspec/changes/bookkeeping-voorzieningen-claims/specs/bookkeeping-voorzieningen-claims/spec.md",
         "type": "object",
@@ -1199,7 +1199,7 @@
           },
           "provisionType": {
             "type": "string",
-            "description": "Aggregation key — provision type.",
+            "description": "Aggregation key: provision type.",
             "example": "guarantee",
             "title": "Provision Type"
           },

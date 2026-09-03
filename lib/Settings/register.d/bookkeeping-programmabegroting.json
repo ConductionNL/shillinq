@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-programmabegroting",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 2 — BBV programmabegroting & meerjarenraming. Adds ten registers (Programmabegroting, Programma, Taakveld, Indicator, Investering, Reserve, Voorziening, Paragraaf, Meerjarenraming, Begrotingswijziging) that operationalise the complete Dutch municipal/provincial/waterschap begrotingsproces (opstellen → behandeling → vaststelling → wijzigingen → exports) per the Besluit begroting en verantwoording. The Programmabegroting carries a declarative x-openregister-lifecycle (draft → in-behandeling → vastgesteld → superseded) whose behandel- and vaststellings-transitions are gated by OCA\\Shillinq\\Lifecycle\\ProgrammabegrotingGuard (ADR-031 exception path: cross-schema paragraaf/meerjarenraming aggregation is not yet expressible in the declarative requires clause). The Begrotingswijziging carries a draft → vastgesteld lifecycle gated by OCA\\Shillinq\\Lifecycle\\BegrotingswijzigingGuard (raadsbesluit FK required). Computations (sluitend-criterium struktureel/reëel flags, toezichtRegime, Programma roll-up from child Taakvelden, Investering kapitaallastenschedule, Begrotingswijziging delta stacking, iv3/EMU/JSON exports) are pure integer-cent PHP calculators in OCA\\Shillinq\\Service, tested in isolation; the x-openregister-aggregations blocks document the equivalent declarative shape. Seed objects provide a worked gemeente example (Programmabegroting 2027 with two Programma's, their Taakvelden, paragrafen, meerjarenraming and one begrotingswijziging) per design.md."
+    "description": "Tier 2: BBV programmabegroting & meerjarenraming. Adds ten registers (Programmabegroting, Programma, Taakveld, Indicator, Investering, Reserve, Voorziening, Paragraaf, Meerjarenraming, Begrotingswijziging) that operationalise the complete Dutch municipal/provincial/waterschap begrotingsproces (opstellen → behandeling → vaststelling → wijzigingen → exports) per the Besluit begroting en verantwoording. The Programmabegroting carries a declarative x-openregister-lifecycle (draft → in-behandeling → vastgesteld → superseded) whose behandel- and vaststellings-transitions are gated by OCA\\Shillinq\\Lifecycle\\ProgrammabegrotingGuard (ADR-031 exception path: cross-schema paragraaf/meerjarenraming aggregation is not yet expressible in the declarative requires clause). The Begrotingswijziging carries a draft → vastgesteld lifecycle gated by OCA\\Shillinq\\Lifecycle\\BegrotingswijzigingGuard (raadsbesluit FK required). Computations (sluitend-criterium struktureel/reëel flags, toezichtRegime, Programma roll-up from child Taakvelden, Investering kapitaallastenschedule, Begrotingswijziging delta stacking, iv3/EMU/JSON exports) are pure integer-cent PHP calculators in OCA\\Shillinq\\Service, tested in isolation; the x-openregister-aggregations blocks document the equivalent declarative shape. Seed objects provide a worked gemeente example (Programmabegroting 2027 with two Programma's, their Taakvelden, paragrafen, meerjarenraming and one begrotingswijziging) per design.md."
   },
   "components": {
     "schemas": {
@@ -64,7 +64,7 @@
             "type": "integer",
             "minimum": 1,
             "default": 4,
-            "description": "Number of meerjarenraming jaren T+1..T+N (default 4). REQ-001.",
+            "description": "Number of meerjarenraming jaren T+1.T+N (default 4). REQ-001.",
             "example": 4,
             "title": "Meerjaren Horizon"
           },
@@ -99,14 +99,14 @@
           "structurallyBalanced": {
             "type": "boolean",
             "default": false,
-            "description": "Computed flag: recurring lasten ≤ recurring baten for all jaren T+1..T+4 (REQ-008 / REQ-011). Set by SluitendCalculator on vaststelling.",
+            "description": "Computed flag: recurring lasten ≤ recurring baten for all jaren T+1.T+4 (REQ-008 / REQ-011). Set by SluitendCalculator on vaststelling.",
             "example": true,
             "title": "Sluitend Structureel"
           },
           "sluitendReëel": {
             "type": "boolean",
             "default": false,
-            "description": "Computed flag: saldoReëel ≥ 0 (after nominale-ontwikkeling correction) for all jaren T+1..T+4 (REQ-008 / REQ-011). Set by SluitendCalculator on vaststelling.",
+            "description": "Computed flag: saldoReëel ≥ 0 (after nominale-ontwikkeling correction) for all jaren T+1.T+4 (REQ-008 / REQ-011). Set by SluitendCalculator on vaststelling.",
             "example": true,
             "title": "Sluitend Reëel"
           },
@@ -156,7 +156,7 @@
             },
             "determined": {
               "label": "Vastgesteld",
-              "description": "Adopted by raadsbesluit. Immutable — mutaties only via vastgestelde Begrotingswijzigingen."
+              "description": "Adopted by raadsbesluit. Immutable: mutaties only via vastgestelde Begrotingswijzigingen."
             },
             "superseded": {
               "label": "Vervangen",
@@ -188,7 +188,7 @@
         },
         "x-openregister-aggregations": {
           "sluitendByBegroting": {
-            "description": "Declarative shape of the sluitend-criterium SluitendCalculator computes (REQ-008, REQ-011). Walks the Meerjarenraming records for jaren T+1..T+4 of this begroting and sets sluitendStructureel = (every jaar has lastenStructureel ≤ batenStructureel) and sluitendReëel = (every jaar has saldoReëel ≥ 0 after nominaleOntwikkeling correction). When the aggregation engine cannot express the per-year all-quantifier with the cross-schema nominale correction, SluitendCalculator computes the same result in PHP from the real ObjectService API.",
+            "description": "Declarative shape of the sluitend-criterium SluitendCalculator computes (REQ-008, REQ-011). Walks the Meerjarenraming records for jaren T+1.T+4 of this begroting and sets sluitendStructureel = (every jaar has lastenStructureel ≤ batenStructureel) and sluitendReëel = (every jaar has saldoReëel ≥ 0 after nominaleOntwikkeling correction). When the aggregation engine cannot express the per-year all-quantifier with the cross-schema nominale correction, SluitendCalculator computes the same result in PHP from the real ObjectService API.",
             "filter": {},
             "from": "Meerjarenraming",
             "groupBy": [
@@ -265,19 +265,19 @@
           },
           "revenueTotal": {
             "type": "number",
-            "description": "Aggregated Σ(child Taakveld.baten) — computed by ProgrammaAggregator (REQ-002).",
+            "description": "Aggregated Σ(child Taakveld.baten): computed by ProgrammaAggregator (REQ-002).",
             "example": 250000.0,
             "title": "Baten Totaal"
           },
           "expensesTotal": {
             "type": "number",
-            "description": "Aggregated Σ(child Taakveld.lasten) — computed (REQ-002).",
+            "description": "Aggregated Σ(child Taakveld.lasten): computed (REQ-002).",
             "example": 2500000.0,
             "title": "Lasten Totaal"
           },
           "balanceBeforeMovements": {
             "type": "number",
-            "description": "batenTotaal - lastenTotaal — computed (REQ-002).",
+            "description": "batenTotaal - lastenTotaal: computed (REQ-002).",
             "example": -2250000.0,
             "title": "Saldo Voor Mutaties"
           },
@@ -291,7 +291,7 @@
           },
           "balanceAfterMovements": {
             "type": "number",
-            "description": "saldoVoorMutaties + mutatiesReserves — computed (REQ-002).",
+            "description": "saldoVoorMutaties + mutatiesReserves: computed (REQ-002).",
             "example": -2250000.0,
             "title": "Saldo Na Mutaties"
           },
@@ -547,7 +547,7 @@
           },
           "capitalChargesSchedule": {
             "type": "object",
-            "description": "Per-year depreciation/capital cost breakdown {year: amount} — computed by KapitaallastenCalculator (REQ-005).",
+            "description": "Per-year depreciation/capital cost breakdown {year: amount}. Computed by KapitaallastenCalculator (REQ-005).",
             "example": {
               "2027": 20000.0,
               "2028": 20000.0
@@ -821,7 +821,7 @@
           },
           "year": {
             "type": "integer",
-            "description": "Year within the meerjarenraming (T+1..T+4 relative to begrotingsjaar). REQ-008.",
+            "description": "Year within the meerjarenraming (T+1.T+4 relative to begrotingsjaar). REQ-008.",
             "example": 2028,
             "title": "Jaar"
           },
@@ -859,20 +859,20 @@
           },
           "balanceStructural": {
             "type": "number",
-            "description": "batenStructureel - lastenStructureel — computed (REQ-008).",
+            "description": "batenStructureel - lastenStructureel: computed (REQ-008).",
             "example": 100000.0,
             "title": "Saldo Structureel"
           },
           "balanceIncidental": {
             "type": "number",
             "nullable": true,
-            "description": "batenIncidenteel - lastenIncidenteel — computed (REQ-008).",
+            "description": "batenIncidenteel - lastenIncidenteel: computed (REQ-008).",
             "example": 0.0,
             "title": "Saldo Incidenteel"
           },
           "saldoReëel": {
             "type": "number",
-            "description": "(saldoStructureel + saldoIncidenteel) corrected for nominaleOntwikkeling — computed (REQ-008).",
+            "description": "(saldoStructureel + saldoIncidenteel) corrected for nominaleOntwikkeling: computed (REQ-008).",
             "example": 100000.0,
             "title": "Saldo Reëel"
           },

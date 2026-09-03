@@ -3,7 +3,7 @@
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
     "source": "Raad voor de Jaarverslaggeving (RJ) richtlijnen + BW Boek 2 art. 2:381-388",
-    "description": "Mandatory/optional toelichting-template registry keyed to groottecategorie and RJ guideline (REQ-T9-004/REQ-T9-009). Each entry declares its applicability, required-flag, content type and structured fields. The toelichting generator reads this to know which notes to produce per category (design D4).",
+    "description": "Mandatory/optional toelichting-template registry keyed to groottecategorie and RJ guideline. Each entry declares its applicability, required-flag, content type and structured fields. The toelichting generator reads this to know which notes to produce per category (design D4).",
     "imported": "2026-06-05T00:00:00Z",
     "url": "https://www.rjnet.nl/"
   },

@@ -11,7 +11,7 @@
         "x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs.md#req-wbso-001",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Beschikking changes (rate corrections, granted-hour adjustments, state flips) MUST be audit-trail-immutable per ADR-022 — the granted ceiling governs every downstream realisatie and the closing mededeling."
+          "description": "Beschikking changes (rate corrections, granted-hour adjustments, state flips) MUST be audit-trail-immutable per ADR-022: the granted ceiling governs every downstream realisatie and the closing mededeling."
         },
         "x-openregister-lifecycle": {
           "field": "state",
@@ -114,7 +114,7 @@
           "grantedSoHours": {
             "type": "number",
             "minimum": 0,
-            "description": "Ceiling of S&O hours granted by RVO. The closing mededeling realisatie may never exceed this value (REQ-WBSO-001 / REQ-WBSO-005).",
+            "description": "Ceiling of S&O hours granted by RVO. The closing mededeling realisatie may never exceed this value.",
             "example": 1200,
             "title": "Granted So Hours"
           },
@@ -149,7 +149,7 @@
         "x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs.md#req-wbso-002",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "S&O hour registrations MUST be audit-trail-immutable per ADR-022 — locked registrations form the realisatie reported in the WBSO mededeling."
+          "description": "S&O hour registrations MUST be audit-trail-immutable per ADR-022: locked registrations form the realisatie reported in the WBSO mededeling."
         },
         "x-openregister-lifecycle": {
           "field": "state",
@@ -223,7 +223,7 @@
           },
           "employeeId": {
             "type": "string",
-            "description": "Nextcloud user id of the employee who performed the S&O work (REQ-WBSO-002 / ADR-022). The Nextcloud identity is reused, not an app-local person schema.",
+            "description": "Nextcloud user id of the employee who performed the S&O work (ADR-022). The Nextcloud identity is reused, not an app-local person schema.",
             "example": "alice",
             "title": "Employee ID"
           },
@@ -272,12 +272,12 @@
         "icon": "FileSendOutline",
         "version": "0.1.0",
         "title": "WBSO Mededeling",
-        "description": "WBSO realisatie mededeling reporting the realised S&O hours for a beschikking period to RVO. The realised hours may never exceed the beschikking's granted ceiling — the submit and resubmit transitions are guarded by WbsoMededeligGuard::canSubmit which enforces this ceiling.",
+        "description": "WBSO realisatie mededeling reporting the realised S&O hours for a beschikking period to RVO. The realised hours may never exceed the beschikking's granted ceiling: the submit and resubmit transitions are guarded by WbsoMededeligGuard:canSubmit which enforces this ceiling.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-wbso-sno-administratie/specs.md#req-wbso-003",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Mededeling submissions MUST be audit-trail-immutable per ADR-022 — the mededeling is the statutory realisatie report filed with RVO."
+          "description": "Mededeling submissions MUST be audit-trail-immutable per ADR-022: the mededeling is the statutory realisatie report filed with RVO."
         },
         "x-openregister-lifecycle": {
           "field": "state",
@@ -305,14 +305,14 @@
               "from": "draft",
               "to": "submitted",
               "label": "Submit mededeling",
-              "description": "Submit the realisatie mededeling to RVO. Guarded to ensure the realised S&O hours never exceed the beschikking's granted ceiling (REQ-WBSO-003 / REQ-WBSO-005).",
+              "description": "Submit the realisatie mededeling to RVO. Guarded to ensure the realised S&O hours never exceed the beschikking's granted ceiling.",
               "requires": "OCA\\Shillinq\\Lifecycle\\WbsoMededelingGuard::canSubmit"
             },
             "resubmit": {
               "from": "rejected",
               "to": "submitted",
               "label": "Resubmit mededeling",
-              "description": "Resubmit a corrected mededeling after an RVO rejection. Re-applies the realisatie-ceiling guard (REQ-WBSO-003 / REQ-WBSO-005).",
+              "description": "Resubmit a corrected mededeling after an RVO rejection. Re-applies the realisatie-ceiling guard.",
               "requires": "OCA\\Shillinq\\Lifecycle\\WbsoMededelingGuard::canSubmit"
             },
             "accept": {
@@ -377,7 +377,7 @@
           "realisedSoHours": {
             "type": "number",
             "minimum": 0,
-            "description": "Total realised S&O hours reported to RVO. May never exceed the beschikking's granted ceiling (REQ-WBSO-003 / REQ-WBSO-005).",
+            "description": "Total realised S&O hours reported to RVO. May never exceed the beschikking's granted ceiling.",
             "example": 1100,
             "title": "Realised So Hours"
           },

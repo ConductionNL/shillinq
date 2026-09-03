@@ -268,7 +268,7 @@
           },
           "dataRetentionYears": {
             "type": "integer",
-            "description": "Wettelijke bewaartermijn in years (default 7; 10 for onroerende zaken) (REQ-MA-007, AWR art. 52).",
+            "description": "Wettelijke bewaartermijn in years (default 7; 10 for onroerende zaken) (AWR art. 52).",
             "default": 7,
             "example": 7,
             "title": "Data Retention Years"
@@ -341,7 +341,7 @@
         "icon": "AccountKey",
         "version": "0.1.0",
         "title": "Administration Membership",
-        "description": "Join record granting a Nextcloud user a role in a single Administration. One user may hold many memberships with a different role per administration; access is the administratie-aware RBAC boundary. The userId is the Nextcloud account uid (a contact/person is a Nextcloud entity — no person schema is invented).",
+        "description": "Join record granting a Nextcloud user a role in a single Administration. One user may hold many memberships with a different role per administration; access is the administratie-aware RBAC boundary. The userId is the Nextcloud account uid (a contact/person is a Nextcloud entity: no person schema is invented).",
         "x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
         "type": "object",
         "required": [
@@ -620,7 +620,7 @@
               "from": "bevestigd_beide",
               "to": "eliminatie_geboekt",
               "label": "Elimineren",
-              "description": "Consolidation elimination is booked for this intercompany pair. REQ-MA-004 / revive-gl-tax-capabilities REQ-GLTAX-002 — guarded: the pair must reconcile (zero varianceAmount between the source and the counter-side entry) before the elimination may be booked. Fail-closed when the counter-side entry cannot be resolved.",
+              "description": "Consolidation elimination is booked for this intercompany pair. / revive-gl-tax-capabilities: guarded: the pair must reconcile (zero varianceAmount between the source and the counter-side entry) before the elimination may be booked. Fail-closed when the counter-side entry cannot be resolved.",
               "requires": "OCA\\Shillinq\\Guard\\IntercompanyEliminationGuard::requireReconciledPair"
             }
           }
@@ -631,7 +631,7 @@
         "icon": "Sitemap",
         "version": "0.1.0",
         "title": "Consolidation Mapping",
-        "description": "Maps a dochter administration's chart-of-accounts onto the moeder's for consolidation, plus the intercompany elimination account and currency-translation method. Mapping rules are stored as a JSON array (ADR-031 declarative — no separate line-item schema). Consumed by the future bookkeeping-consolidatie spec; no consolidation rendering logic lives here.",
+        "description": "Maps a dochter administration's chart-of-accounts onto the moeder's for consolidation, plus the intercompany elimination account and currency-translation method. Mapping rules are stored as a JSON array (ADR-031 declarative: no separate line-item schema). Consumed by the future bookkeeping-consolidatie spec; no consolidation rendering logic lives here.",
         "x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
         "type": "object",
         "required": [
@@ -917,7 +917,7 @@
         "icon": "DatabaseClock",
         "version": "0.1.0",
         "title": "Administration Backup Run",
-        "description": "Audit record of one per-administration backup run. Each row carries exactly one administrationId — backups are scoped per administratie so no cross-tenant data leaks into a single backup file. Written by AdministrationBackupSchedulerJob (BackgroundJob, Task 15).",
+        "description": "Audit record of one per-administration backup run. Each row carries exactly one administrationId: backups are scoped per administratie so no cross-tenant data leaks into a single backup file. Written by AdministrationBackupSchedulerJob (BackgroundJob, Task 15).",
         "x-spec": "openspec/changes/bookkeeping-multi-administratie/specs/bookkeeping-multi-administratie/spec.md",
         "type": "object",
         "required": [
