@@ -1340,7 +1340,7 @@
       "Account": {
         "slug": "Account",
         "icon": "NotebookOutline",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Account",
         "description": "A hierarchical chart-of-accounts entry conforming to the RGS (Referentie Grootboek Schema) standard for Dutch bookkeeping.",
         "type": "object",
@@ -1430,6 +1430,15 @@
             "description": "Whether VAT/BTW applies to transactions posted to this account.",
             "default": false,
             "title": "VAT Applicable"
+          },
+          "vatRate": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Default VAT percentage for postings on this account that carry no rate of their own.",
+            "example": 21,
+            "title": "VAT rate"
           },
           "esaClassifier": {
             "type": "string",
@@ -24986,12 +24995,12 @@
         "slug": "customer-master-demo",
         "id": "f7289fb3-3597-4d68-8e84-9b4c73200abe"
       },
-      "customerNumber": "C-2026-001",
+      "customerId": "C-2026-001",
       "name": "Demo Klant BV",
+      "legalName": "Demo Klant B.V.",
       "kvkNumber": "87654321",
-      "vatNumber": "NL876543210B01",
-      "paymentTermDays": 30,
-      "defaultRevenueAccountNumber": "8000",
+      "vatID": "NL876543210B01",
+      "defaultGlAccount": "8000",
       "email": "facturen@democonsult.nl",
       "administrationId": "adm-consultancy-nl",
       "lifecycleState": "active"
@@ -25008,19 +25017,22 @@
       "invoiceDate": "2026-01-15",
       "dueDate": "2026-02-14",
       "currency": "EUR",
-      "totalAmount": 12100.0,
-      "taxAmount": 2100.0,
-      "lines": [
+      "netAmount": 10000.0,
+      "vatAmount": 2100.0,
+      "grossAmount": 12100.0,
+      "invoiceLines": [
         {
-          "description": "Q1 consulting services",
-          "accountNumber": "8000",
-          "amount": 10000.0,
-          "vatRate": 21,
-          "vatAmount": 2100.0,
-          "serviceCategory": "service"
+          "lineId": "1",
+          "itemName": "Q1 consulting services",
+          "quantity": 1,
+          "unitCode": "C62",
+          "netPrice": 10000.0,
+          "netAmount": 10000.0,
+          "vatCategory": "S",
+          "vatRate": 21
         }
       ],
-      "state": "issued",
+      "lifecycleState": "issued",
       "glTransactionId": "b05aafc6-0987-4b44-bbf8-3efaa32cf2d8",
       "periodId": "2026-Q1",
       "administrationId": "adm-consultancy-nl"

@@ -11,7 +11,7 @@
             "RealisedFxPosting": {
                 "slug": "RealisedFxPosting",
                 "icon": "CurrencyEur",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "Realised FX Posting",
                 "description": "Append-only audit record per foreign-currency ARInvoice settlement. Carries the settled invoice, the foreign amount, the invoice-date and payment-date rates, the signed realised difference in functional cents, the direction (gain/loss) and the GL account attribution (realised gain/loss account plus AR-control clearing). The realised difference equals foreignAmount x (paymentRate - invoiceRate); a positive value is a gain, negative a loss. Distinct from FxRevaluationPosting which records the UNREALISED period-end mark of open balances.",
                 "x-schema-org": "schema:MonetaryAmount",
@@ -138,6 +138,17 @@
                         "description": "Actor attribution: always SYSTEM:RealisedFxSettlementService.",
                         "example": "SYSTEM:RealisedFxSettlementService",
                         "title": "Posted By"
+                    },
+                    "reversalState": {
+                        "type": "string",
+                        "enum": [
+                            "posted",
+                            "reversed"
+                        ],
+                        "default": "posted",
+                        "description": "Whether this posting is still live in the trial balance, or reversed.",
+                        "example": "posted",
+                        "title": "Reversal state"
                     }
                 },
                 "x-openregister-lifecycle": {

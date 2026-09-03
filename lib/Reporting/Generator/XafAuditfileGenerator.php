@@ -195,7 +195,7 @@ final class XafAuditfileGenerator implements ReportGeneratorInterface {
 			$this->writeCustomerSupplier(
 				$writer,
 				'C',
-				(string)($customer['customerNumber'] ?? ''),
+				(string)($customer['customerId'] ?? ($customer['customerNumber'] ?? '')),
 				$customer
 			);
 		}
@@ -275,13 +275,16 @@ final class XafAuditfileGenerator implements ReportGeneratorInterface {
 		$writer->startElement('customerSupplier');
 		$writer->writeElement('custSupID', $id);
 		$writer->writeElement('custSupTp', $type);
-		$writer->writeElement('companyName', (string)($row['name'] ?? $row['tradingName'] ?? ''));
+		$writer->writeElement(
+			'companyName',
+			(string)($row['name'] ?? ($row['legalName'] ?? ($row['tradingName'] ?? ($row['tradeName'] ?? ''))))
+		);
 		$kvk = (string)($row['kvkNumber'] ?? '');
 		if ($kvk !== '') {
 			$writer->writeElement('companyIdent', $kvk);
 		}
 
-		$vat = (string)($row['vatNumber'] ?? '');
+		$vat = (string)($row['vatNumber'] ?? ($row['vatID'] ?? ($row['vatId'] ?? '')));
 		if ($vat !== '') {
 			$writer->startElement('taxRegistration');
 			$writer->writeElement('taxRegIdent', $vat);
@@ -289,7 +292,7 @@ final class XafAuditfileGenerator implements ReportGeneratorInterface {
 		}
 
 		$email = (string)($row['email'] ?? '');
-		$phone = (string)($row['phone'] ?? '');
+		$phone = (string)($row['phone'] ?? ($row['telephone'] ?? ''));
 		if ($email !== '' || $phone !== '') {
 			$writer->startElement('contact');
 			if ($email !== '') {

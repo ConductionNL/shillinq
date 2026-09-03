@@ -136,7 +136,7 @@
                 },
                 "slug": "MeterReading",
                 "icon": "Counter",
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "title": "Meter Reading",
                 "description": "A metered quantity of a resource consumed by a customer over a billing period. Rated by UsageRatingCalculator against its UsageRatePlan into a BillableInvoiceLine through the existing invoice pipeline. Lifecycle: unrated -> rated -> invoiced so a reading is never double-billed.",
                 "x-schema-org": "schema:QuantitativeValue",
@@ -224,6 +224,18 @@
                         "description": "FK to the BillableInvoice this reading was billed on (set on transition to invoiced).",
                         "example": "bil-2026-0042",
                         "title": "Invoice ID"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "unrated",
+                            "rated",
+                            "invoiced"
+                        ],
+                        "default": "unrated",
+                        "description": "How far the reading has moved from captured to billed.",
+                        "example": "unrated",
+                        "title": "Status"
                     }
                 },
                 "x-openregister-lifecycle": {

@@ -1,5 +1,10 @@
 {
     "translations": {
+        "Reversal state": "Reversal state",
+        "Default VAT percentage for postings on this account that carry no rate of their own.": "Default VAT percentage for postings on this account that carry no rate of their own.",
+        "How far the reading has moved from captured to billed.": "How far the reading has moved from captured to billed.",
+        "Where this assessment sits in its sign-off cycle.": "Where this assessment sits in its sign-off cycle.",
+        "Whether this posting is still live in the trial balance, or reversed.": "Whether this posting is still live in the trial balance, or reversed.",
         "(no invoice number)": "(no invoice number)",
         "(not recorded)": "(not recorded)",
         "1 to 2 year": "1 to 2 year",

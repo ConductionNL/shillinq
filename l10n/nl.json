@@ -1,5 +1,10 @@
 {
     "translations": {
+        "Default VAT percentage for postings on this account that carry no rate of their own.": "Standaard btw-percentage voor boekingen op deze rekening zonder eigen tarief.",
+        "How far the reading has moved from captured to billed.": "Hoe ver de meterstand is van geregistreerd naar gefactureerd.",
+        "Reversal state": "Terugboekstatus",
+        "Where this assessment sits in its sign-off cycle.": "Waar deze beoordeling staat in de goedkeuringscyclus.",
+        "Whether this posting is still live in the trial balance, or reversed.": "Of deze boeking nog in de proefbalans staat, of is teruggeboekt.",
         "(no invoice number)": "(geen factuurnummer)",
         "(not recorded)": "(niet geregistreerd)",
         "1 to 2 year": "1 tot 2 jaar",
