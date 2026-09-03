@@ -361,38 +361,7 @@
 					{
 						"id": "link-to-programme",
 						"label": "Link to Programme",
-						"icon": "LinkVariant",
-						"requiresSelection": true,
-						"dialog": {
-							"title": "Link to Programme",
-							"submitLabel": "Link",
-							"cancelLabel": "Cancel",
-							"fields": [
-								{
-									"key": "programmeStructure",
-									"label": "Target programme",
-									"type": "select",
-									"required": true,
-									"options": [
-										"ruimte",
-										"mobiliteit",
-										"water",
-										"milieu",
-										"cultuur",
-										"economie",
-										"bestuur"
-									]
-								},
-								{
-									"key": "programmeAssignedAt",
-									"label": "Effective date",
-									"type": "date",
-									"required": true,
-									"default": "@today",
-									"maxDate": "@today"
-								}
-							]
-						}
+						"icon": "LinkVariant"
 					}
 				],
 				"detailRoute": "BudgetToProgrammeLinkerDetail"
