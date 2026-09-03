@@ -1555,7 +1555,24 @@
         "_%n invoice outstanding_::_%n invoices outstanding_": [
             "%n faturë e papaguar",
             "%n fatura të papaguara"
-        ]
+        ],
+        "Reports": "Raportet",
+        "Pick a report to open it.": "Zgjidhni një raport për ta hapur.",
+        "Due": "Afati",
+        "Assignee": "Caktuar për",
+        "Iv3 returns": "Deklaratat Iv3",
+        "SiSa returns": "Deklaratat SiSa",
+        "EMU return": "Deklarata EMU",
+        "Consolidated statements": "Pasqyrat e konsoliduara",
+        "Budget variance": "Devijimi buxhetor",
+        "Generated reports": "Raportet e gjeneruara",
+        "The quarterly Iv3 returns, and how far each one got.": "Deklaratat tremujore Iv3 dhe sa larg shkoi secila.",
+        "Single information, single audit returns per scheme.": "Deklaratat single information, single audit sipas skemës.",
+        "The EMU balance return.": "Deklarata e bilancit EMU.",
+        "The group figures, consolidated across participations.": "Shifrat e grupit, të konsoliduara ndër pjesëmarrjet.",
+        "Where the books sit against budget, and by how much.": "Ku qëndrojnë librat kundrejt buxhetit dhe me sa.",
+        "Everything Reporting & Compliance has already produced.": "Gjithçka që Raportimi dhe pajtueshmëria ka prodhuar tashmë.",
+        "What retention destroyed, and when.": "Çfarë shkatërroi ruajtja dhe kur."
     },
     "plurals": null
 }

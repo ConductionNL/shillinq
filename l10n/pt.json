@@ -1555,7 +1555,24 @@
         "_%n invoice outstanding_::_%n invoices outstanding_": [
             "%n fatura em aberto",
             "%n faturas em aberto"
-        ]
+        ],
+        "Reports": "Relatórios",
+        "Pick a report to open it.": "Escolha um relatório para o abrir.",
+        "Due": "Prazo",
+        "Assignee": "Atribuído a",
+        "Iv3 returns": "Declarações Iv3",
+        "SiSa returns": "Declarações SiSa",
+        "EMU return": "Declaração EMU",
+        "Consolidated statements": "Demonstrações consolidadas",
+        "Budget variance": "Desvio orçamental",
+        "Generated reports": "Relatórios gerados",
+        "The quarterly Iv3 returns, and how far each one got.": "As declarações Iv3 trimestrais e até onde cada uma chegou.",
+        "Single information, single audit returns per scheme.": "Declarações single information, single audit por regime.",
+        "The EMU balance return.": "A declaração do saldo EMU.",
+        "The group figures, consolidated across participations.": "Os números do grupo, consolidados nas participações.",
+        "Where the books sit against budget, and by how much.": "Onde estão as contas face ao orçamento, e por quanto.",
+        "Everything Reporting & Compliance has already produced.": "Tudo o que Relatórios e conformidade já produziu.",
+        "What retention destroyed, and when.": "O que a retenção destruiu, e quando."
     },
     "plurals": null
 }

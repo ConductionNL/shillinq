@@ -1553,7 +1553,24 @@ OC.L10N.register(
         "Margin per month": "Fedezet havonta",
         "Cashflow": "Pénzforgalom",
         "Billable hours": "Számlázható órák",
-        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n kintlévő számla","%n kintlévő számla"]
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n kintlévő számla","%n kintlévő számla"],
+        "Reports": "Jelentések",
+        "Pick a report to open it.": "Válasszon egy jelentést a megnyitáshoz.",
+        "Due": "Határidő",
+        "Assignee": "Felelős",
+        "Iv3 returns": "Iv3 jelentések",
+        "SiSa returns": "SiSa jelentések",
+        "EMU return": "EMU jelentés",
+        "Consolidated statements": "Konszolidált beszámoló",
+        "Budget variance": "Költségvetési eltérés",
+        "Generated reports": "Generált jelentések",
+        "The quarterly Iv3 returns, and how far each one got.": "A negyedéves Iv3 jelentések, és mindegyik meddig jutott.",
+        "Single information, single audit returns per scheme.": "Single information, single audit jelentések programonként.",
+        "The EMU balance return.": "Az EMU-egyenleg jelentés.",
+        "The group figures, consolidated across participations.": "A csoportszámok, a részesedéseken átívelően konszolidálva.",
+        "Where the books sit against budget, and by how much.": "Hol állnak a könyvek a költségvetéshez képest, és mennyivel.",
+        "Everything Reporting & Compliance has already produced.": "Minden, amit a Jelentés és megfelelés már létrehozott.",
+        "What retention destroyed, and when.": "Mit semmisített meg a megőrzés, és mikor."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1553,7 +1553,24 @@ OC.L10N.register(
         "Margin per month": "Маржа в месяц",
         "Cashflow": "Денежный поток",
         "Billable hours": "Оплачиваемые часы",
-        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n счёт не оплачен","%n счёта не оплачено","%n счетов не оплачено"]
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n счёт не оплачен","%n счёта не оплачено","%n счетов не оплачено"],
+        "Reports": "Отчёты",
+        "Pick a report to open it.": "Выберите отчёт, чтобы открыть его.",
+        "Due": "Срок",
+        "Assignee": "Назначено",
+        "Iv3 returns": "Отчёты Iv3",
+        "SiSa returns": "Отчёты SiSa",
+        "EMU return": "Отчёт EMU",
+        "Consolidated statements": "Консолидированная отчётность",
+        "Budget variance": "Отклонение от бюджета",
+        "Generated reports": "Сгенерированные отчёты",
+        "The quarterly Iv3 returns, and how far each one got.": "Квартальные отчёты Iv3 и насколько продвинулся каждый.",
+        "Single information, single audit returns per scheme.": "Отчёты single information, single audit по схеме.",
+        "The EMU balance return.": "Отчёт о сальдо EMU.",
+        "The group figures, consolidated across participations.": "Групповые показатели, консолидированные по участиям.",
+        "Where the books sit against budget, and by how much.": "Где книги стоят относительно бюджета и на сколько.",
+        "Everything Reporting & Compliance has already produced.": "Всё, что Отчётность и соответствие уже создали.",
+        "What retention destroyed, and when.": "Что уничтожило хранение и когда."
     },
     "nplurals=2; plural=(n != 1);"
 )

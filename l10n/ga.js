@@ -1553,7 +1553,24 @@ OC.L10N.register(
         "Margin per month": "Corrlaigh in aghaidh na míosa",
         "Cashflow": "Sreabhadh airgid",
         "Billable hours": "Uaireanta in-billeáilte",
-        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n sonrasc gan íoc","%n sonrasc gan íoc","%n sonrasc gan íoc","%n sonrasc gan íoc","%n sonrasc gan íoc"]
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n sonrasc gan íoc","%n sonrasc gan íoc","%n sonrasc gan íoc","%n sonrasc gan íoc","%n sonrasc gan íoc"],
+        "Reports": "Tuairiscí",
+        "Pick a report to open it.": "Roghnaigh tuairisc chun í a oscailt.",
+        "Due": "Spriocdháta",
+        "Assignee": "Sannta do",
+        "Iv3 returns": "Tuairisceáin Iv3",
+        "SiSa returns": "Tuairisceáin SiSa",
+        "EMU return": "Tuairisceán EMU",
+        "Consolidated statements": "Ráitis chomhdhlúite",
+        "Budget variance": "Athrú buiséid",
+        "Generated reports": "Tuairiscí ginte",
+        "The quarterly Iv3 returns, and how far each one got.": "Na tuairisceáin ráithiúla Iv3, agus cé chomh fada is a chuaigh gach ceann.",
+        "Single information, single audit returns per scheme.": "Tuairisceáin single information, single audit de réir scéime.",
+        "The EMU balance return.": "An tuairisceán ar iarmhéid EMU.",
+        "The group figures, consolidated across participations.": "Figiúirí an ghrúpa, comhdhlúite thar rannpháirtíochtaí.",
+        "Where the books sit against budget, and by how much.": "Cá bhfuil na leabhair i gcoinne an bhuiséid, agus cé mhéad.",
+        "Everything Reporting & Compliance has already produced.": "Gach rud atá táirgthe cheana ag Tuairisciú & comhlíonadh.",
+        "What retention destroyed, and when.": "Cad a scrios an coinneáil, agus cathain."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -5227,7 +5227,20 @@
         "Bulk-write the form values to every selected line item across all sources. If the resolved policy threshold is exceeded, this triggers the extra-approver gate on the parent ExpenseClaimEntry's approval workflow.": "Schrijf de ingevulde waarden weg naar elke geselecteerde regel uit alle bronnen. Bij overschrijding van de beleidsdrempel wordt een extra goedkeurder toegevoegd aan de hoofddeclaratie.",
         "Periodic stock-take batches. Each row drills down to the line snapshot, the variance review and the reconciliation actions. Filter by status, type, date range and, for partial counts, location.": "Periodieke voorraadtellingen. Elke regel geeft toegang tot de getelde regels, de verschillenbeoordeling en de correctieacties. Filter op status, soort, periode en, bij deeltellingen, locatie.",
         "Aggregated view of every flagged variance line. Grouping by reasonCode produces the count-by-reason rollup, and clicking a row drills back to the originating count and its adjustment StockMove.": "Overzicht van alle gemarkeerde verschilregels. Groeperen op redencode geeft de telling per reden; klik op een regel om terug te gaan naar de oorspronkelijke telling en de bijbehorende correctiemutatie.",
-        "Detail view. Posted moves show the materialised GLTransaction link, and cancelling creates an offsetting move rather than patching the original.": "Detailweergave. Bij geboekte mutaties staat de koppeling naar de grootboektransactie; annuleren maakt een tegenboeking in plaats van de oorspronkelijke mutatie aan te passen."
+        "Detail view. Posted moves show the materialised GLTransaction link, and cancelling creates an offsetting move rather than patching the original.": "Detailweergave. Bij geboekte mutaties staat de koppeling naar de grootboektransactie; annuleren maakt een tegenboeking in plaats van de oorspronkelijke mutatie aan te passen.",
+        "Reports": "Rapporten",
+        "Pick a report to open it.": "Kies een rapport om het te openen.",
+        "Iv3 returns": "Iv3-rapportages",
+        "SiSa returns": "SiSa-rapportages",
+        "EMU return": "EMU-rapportage",
+        "Consolidated statements": "Geconsolideerde jaarrekening",
+        "The quarterly Iv3 returns, and how far each one got.": "De kwartaal-Iv3-rapportages, en hoe ver elke is gekomen.",
+        "Single information, single audit returns per scheme.": "Single information, single audit-rapportages per regeling.",
+        "The EMU balance return.": "De EMU-saldorapportage.",
+        "The group figures, consolidated across participations.": "De groepscijfers, geconsolideerd over de deelnemingen.",
+        "Where the books sit against budget, and by how much.": "Waar de boeken staan ten opzichte van de begroting, en met hoeveel verschil.",
+        "Everything Reporting & Compliance has already produced.": "Alles wat Rapportage & compliance al heeft opgeleverd.",
+        "What retention destroyed, and when.": "Wat de bewaartermijn heeft vernietigd, en wanneer."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
