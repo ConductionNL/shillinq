@@ -77,7 +77,6 @@
 	},
 	"_settingsSection_note": "Ids lifted into Nextcloud's settings foldout (the bottom-left gear / NcAppNavigationSettings, OUTSIDE the scrollable nav) by applySettingsSection in main.js — each becomes a flat top-level item with section:'settings'. This is the special settings position, not a normal menu group. ⚠️ THESE ARE MENU IDS, NOT PAGE IDS. An id here that matches no menu entry is INERT — it lifts nothing and reports nothing. That is exactly what happened to External Connections: the list carried the PAGE id `ExternalAdaptersStatus` while the MENU id is `ExternalConnections`, so the intended demotion silently did nothing and the entry kept its top-level slot. It was the only inert id in this list; verify a new id against the merged menu before adding it.",
 	"settingsSection": [
-		"GeneralSettings",
 		"DeadlineCalendarSettings",
 		"BankImportPage",
 		"MatchingRules",

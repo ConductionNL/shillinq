@@ -4887,18 +4887,6 @@
 		{
 			"menu": [
 				{
-					"id": "GeneralSettings",
-					"label": "General",
-					"icon": "CogOutline",
-					"href": "/index.php/settings/admin/shillinq",
-					"order": 1
-				}
-			],
-			"pages": []
-		},
-		{
-			"menu": [
-				{
 					"id": "Cashflow",
 					"label": "Cashflow",
 					"icon": "ChartTimelineVariant",
