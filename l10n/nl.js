@@ -5208,7 +5208,15 @@ OC.L10N.register(
         "Materialise the approved requisition into a PurchaseOrder via RequisitionConversionService.": "Zet de goedgekeurde aanvraag om in een inkooporder.",
         "Empty if validated; lists untagged entry IDs and other validation failures": "Leeg als de validatie slaagt. Anders een lijst met ongetagde invoer-ID's en andere validatiefouten",
         "FK to baseline code if this is a custom administration variant": "Verwijzing naar de basiscode als dit een eigen administratievariant is",
-        "Filters applied on generation: wbsoTagId, activityCodeId, isAllowed, employee, date range": "Filters toegepast bij het genereren: wbsoTagId, activityCodeId, isAllowed, medewerker, datumbereik"
+        "Filters applied on generation: wbsoTagId, activityCodeId, isAllowed, employee, date range": "Filters toegepast bij het genereren: wbsoTagId, activityCodeId, isAllowed, medewerker, datumbereik",
+        "Pipelinq customer-bridge integration counters and gauges": "Tellers en meters van de Pipelinq-klantkoppeling",
+        "Remaining days on the PSD2 consent. Negative when expired.": "Resterend aantal dagen op de PSD2-toestemming. Negatief wanneer de toestemming verlopen is.",
+        "Decimal rate (e.g. 0.25 for 25%)": "Decimaal tarief (bijvoorbeeld 0,25 voor 25%)",
+        "Map GL account ranges (e.g. '4000-4099') or individual accounts to statutory tax categories.": "Koppel reeksen grootboekrekeningen (bijvoorbeeld '4000-4099') of losse rekeningen aan wettelijke belastingcategorieën.",
+        "forfaitair (Wet Vpb art. 12bg) of afpelmethode (Wet Vpb art. 12b)": "forfaitair (Wet Vpb art. 12bg) of afpelmethode (Wet Vpb art. 12b)",
+        "Huidig wettelijk tarief: 0.09 (9%) per Wet Vpb art. 12b 2026": "Huidig wettelijk tarief: 0,09 (9%) per Wet Vpb art. 12b 2026",
+        "Maximaal in aanmerking komende winst (default EUR 25.000)": "Maximaal in aanmerking komende winst (standaard EUR 25.000)",
+        "Percentage van fiscale winst (default 25% per Wet Vpb art. 12bg)": "Percentage van fiscale winst (standaard 25% per Wet Vpb art. 12bg)"
     },
     "nplurals=2; plural=(n != 1);"
 )
