@@ -4,7 +4,7 @@
         "spdx-copyright": "2026 Conduction B.V.",
         "change": "ar-billing-completeness",
         "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-        "description": "Declares RealisedFxPosting, the append-only audit record produced by OCA\\Shillinq\\Service\\Treasury\\RealisedFxSettlementService when a foreign-currency ARInvoice is settled at a payment-date rate different from its invoice-date rate (REQ-MC-010 of bookkeeping-multi-currency). Complements FxRevaluationPosting (the UNREALISED period-end leg from fx-period-end-revaluation) with the REALISED settlement leg. The balanced two-line GLTransaction is emitted by the service; this record is the parallel audit trail."
+        "description": "Declares RealisedFxPosting, the append-only audit record produced by OCA\\Shillinq\\Service\\Treasury\\RealisedFxSettlementService when a foreign-currency ARInvoice is settled at a payment-date rate different from its invoice-date rate (of bookkeeping-multi-currency). Complements FxRevaluationPosting (the UNREALISED period-end leg from fx-period-end-revaluation) with the REALISED settlement leg. The balanced two-line GLTransaction is emitted by the service; this record is the parallel audit trail."
     },
     "components": {
         "schemas": {
@@ -18,7 +18,7 @@
                 "x-spec": "openspec/changes/ar-billing-completeness/specs/bookkeeping-multi-currency/spec.md",
                 "x-openregister-audit-trail": {
                     "enabled": true,
-                    "description": "Realised FX postings drive the P&L and are immutable once posted (REQ-AT-001 / ADR-022)."
+                    "description": "Realised FX postings drive the P&L and are immutable once posted (ADR-022)."
                 },
                 "type": "object",
                 "required": [

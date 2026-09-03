@@ -59,7 +59,7 @@
         "icon": "CalendarOutline",
         "version": "0.1.0",
         "title": "Calendar",
-        "description": "A per-resource calendar carrying time-zone and working-hours configuration per bookings-resource-calendar REQ-002. Bound to exactly one Resource. All booking times are stored in UTC; the timeZone field drives display conversion on the client. NOTE: `organization` below is the RETIRED alias of `administrationId` and is OPTIONAL — see the same note on Resource above. Requiring it here is what made every seeded Calendar (cal-001..cal-003) fail to import, so GET /api/v2/calendars answered `{\"calendars\":[]}` and GET /api/v2/calendars/{id} answered 404 for calendars this app ships.",
+        "description": "A per-resource calendar carrying time-zone and working-hours configuration per bookings-resource-calendar REQ-002. Bound to exactly one Resource. All booking times are stored in UTC; the timeZone field drives display conversion on the client. NOTE: `organization` below is the RETIRED alias of `administrationId` and is OPTIONAL — see the same note on Resource above. Requiring it here is what made every seeded Calendar (cal-001.cal-003) fail to import, so GET /api/v2/calendars answered `{\"calendars\":[]}` and GET /api/v2/calendars/{id} answered 404 for calendars this app ships.",
         "x-schema-org": "schema:Schedule",
         "type": "object",
         "required": [

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "add-shillinq-multi-currency",
     "adr": "ADR-037 modular register fragment",
-    "description": "Tier-4 multi-currency envelope: FxRate register, GLLine multi-currency overlay (MODIFIED REQ-GL-003: amount → transactionAmount + baseCurrencyAmount/baseCurrency/fxRate/fxRateSource/fxRateDate), and the two ScheduledWorkflow records that drive ECB ingestion + period-end FX revaluation. Sibling change bookkeeping-multi-currency already shipped BankAccount.primaryCurrency + CurrencyBalance (T3 surface); this fragment adds the T4 envelope surface those build notes (Tasks 5-10) deferred. Declarative per ADR-031 — no FxRateImportJob extends TimedJob and no FxRevaluationService PHP class."
+    "description": "Tier-4 multi-currency envelope: FxRate register, GLLine multi-currency overlay (MODIFIED: amount → transactionAmount + baseCurrencyAmount/baseCurrency/fxRate/fxRateSource/fxRateDate), and the two ScheduledWorkflow records that drive ECB ingestion + period-end FX revaluation. Sibling change bookkeeping-multi-currency already shipped BankAccount.primaryCurrency + CurrencyBalance (T3 surface); this fragment adds the T4 envelope surface those build notes (Tasks 5-10) deferred. Declarative per ADR-031 — no FxRateImportJob extends TimedJob and no FxRevaluationService PHP class."
   },
   "components": {
     "schemas": {
@@ -14,13 +14,13 @@
         "version": "0.1.0",
         "title": "FX Rate",
         "titleNl": "Wisselkoers",
-        "description": "Daily exchange-rate snapshot per (transactionCurrency, baseCurrency, date, source) tuple per REQ-MC-002. The FX orientation contract is `baseCurrencyAmount = transactionAmount × fxRate` — i.e. `rate` is the price of 1 unit of transactionCurrency in baseCurrency. ECB publishes rates with baseCurrency=EUR per their canonical orientation; the ECB ingestion ScheduledWorkflow MUST invert exactly once on ingest so the stored `rate` always matches the FX orientation contract above. Manual operator overrides MUST carry a `manualOverrideReason`.",
+        "description": "Daily exchange-rate snapshot per (transactionCurrency, baseCurrency, date, source) tuple. The FX orientation contract is `baseCurrencyAmount = transactionAmount × fxRate` — i.e. `rate` is the price of 1 unit of transactionCurrency in baseCurrency. ECB publishes rates with baseCurrency=EUR per their canonical orientation; the ECB ingestion ScheduledWorkflow MUST invert exactly once on ingest so the stored `rate` always matches the FX orientation contract above. Manual operator overrides MUST carry a `manualOverrideReason`.",
         "x-schema-org": "schema:ExchangeRateSpecification",
         "x-openregister-purpose": "config",
         "x-spec": "openspec/changes/add-shillinq-multi-currency/specs/bookkeeping-multi-currency/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "FxRate snapshots are immutable per REQ-AT-001 / ADR-022 — they drive GL postings and consolidation translation. Manual overrides MUST be auditable (who, when, why)."
+          "description": "FxRate snapshots are immutable / ADR-022 — they drive GL postings and consolidation translation. Manual overrides MUST be auditable (who, when, why)."
         },
         "x-openregister-uniqueness": {
           "compositeKey": [
@@ -29,7 +29,7 @@
             "date",
             "source"
           ],
-          "description": "Per REQ-MC-002 a single rate per (transactionCurrency, baseCurrency, date, source) — duplicate ingest MUST be a no-op, not an overwrite."
+          "description": "Per a single rate per (transactionCurrency, baseCurrency, date, source) — duplicate ingest MUST be a no-op, not an overwrite."
         },
         "type": "object",
         "required": [
@@ -84,7 +84,7 @@
           "manualOverrideReason": {
             "type": "string",
             "nullable": true,
-            "description": "REQUIRED when source=manual per REQ-MC-002 precondition. Operator-supplied justification (e.g. 'ECB feed unavailable for 2026-03-08; using bank-quoted rate').",
+            "description": "REQUIRED when source=manual precondition. Operator-supplied justification (e.g. 'ECB feed unavailable for 2026-03-08; using bank-quoted rate').",
             "title": "Manual Override Reason"
           },
           "ingestedAt": {
@@ -125,7 +125,7 @@
         "properties": {
           "transactionAmount": {
             "type": "integer",
-            "description": "Amount in transactionCurrency, integer cents (positive). Per MODIFIED REQ-GL-003 the on-the-wire property name remains `amount` on legacy records; this declaration carries the new semantic name as an additive alias. The OR schema engine accepts both; existing single-currency callers keep working without rename.",
+            "description": "Amount in transactionCurrency, integer cents (positive). Per MODIFIED the on-the-wire property name remains `amount` on legacy records; this declaration carries the new semantic name as an additive alias. The OR schema engine accepts both; existing single-currency callers keep working without rename.",
             "title": "Transaction Amount"
           },
           "transactionCurrency": {
@@ -179,7 +179,7 @@
   },
   "x-openregister-scheduled-workflows": {
     "shillinq-fx-ecb-daily-ingest": {
-      "description": "Daily ECB FX-rate ingestion per REQ-MC-003. Reads the openconnector source `ecb-eurofxref-daily` (canonical orientation: 1 EUR = N FOREIGN), inverts each rate exactly once so the stored FxRate.rate matches the FX orientation contract (`baseCurrencyAmount = transactionAmount × rate`), and upserts the FxRate registry by composite key (transactionCurrency, baseCurrency=EUR, date, source=ecb). Idempotent — re-runs on the same calendar day are no-ops thanks to the composite-key uniqueness clause on FxRate.",
+      "description": "Daily ECB FX-rate ingestion. Reads the openconnector source `ecb-eurofxref-daily` (canonical orientation: 1 EUR = N FOREIGN), inverts each rate exactly once so the stored FxRate.rate matches the FX orientation contract (`baseCurrencyAmount = transactionAmount × rate`), and upserts the FxRate registry by composite key (transactionCurrency, baseCurrency=EUR, date, source=ecb). Idempotent — re-runs on the same calendar day are no-ops thanks to the composite-key uniqueness clause on FxRate.",
       "cron": "0 17 * * 1-5",
       "timezone": "Europe/Brussels",
       "connector": "openconnector://ecb-eurofxref-daily",
@@ -197,7 +197,7 @@
       }
     },
     "shillinq-fx-period-end-revaluation": {
-      "description": "Period-end FX revaluation per REQ-MC-004. Triggered at soft-close (PeriodStatus transitioning open → soft-closed), walks every open foreign-currency position (AR/AP receivable/payable still outstanding at period end, plus bank-account balances in non-base currency), revalues at the period-end FxRate.rate, and posts one balanced GLTransaction per administration carrying the unrealised gain/loss. Realised gain/loss on settlement is declared as an x-openregister-lifecycle action on the T2 Invoice / Receipt sub-ledger schemas (separate fragment).",
+      "description": "Period-end FX revaluation. Triggered at soft-close (PeriodStatus transitioning open → soft-closed), walks every open foreign-currency position (AR/AP receivable/payable still outstanding at period end, plus bank-account balances in non-base currency), revalues at the period-end FxRate.rate, and posts one balanced GLTransaction per administration carrying the unrealised gain/loss. Realised gain/loss on settlement is declared as an x-openregister-lifecycle action on the T2 Invoice / Receipt sub-ledger schemas (separate fragment).",
       "trigger": "PeriodStatus.transition.softClose",
       "action": {
         "type": "revalue-fx-positions",
@@ -219,7 +219,7 @@
   },
   "x-openregister-mappings": {
     "ias21-translation-functional-to-presentation": {
-      "description": "IAS 21 / RJ 122 functional-to-presentation currency translation per REQ-MC-005. Applied during consolidation when a subsidiary administratie's functional currency differs from the group's presentation currency. Balance-sheet items translate at closing rate (FxRate.rate at consolidation date), P&L items at average rate (mean of daily FxRate.rate over the period), equity at historical rate (FxRate.rate at original posting date). Cumulative translation adjustment (CTA) posts to a dedicated equity-OCI bucket per IFRS rule. Declarative Mapping — no ConsolidationTranslationService PHP class.",
+      "description": "IAS 21 / RJ 122 functional-to-presentation currency translation. Applied during consolidation when a subsidiary administratie's functional currency differs from the group's presentation currency. Balance-sheet items translate at closing rate (FxRate.rate at consolidation date), P&L items at average rate (mean of daily FxRate.rate over the period), equity at historical rate (FxRate.rate at original posting date). Cumulative translation adjustment (CTA) posts to a dedicated equity-OCI bucket per IFRS rule. Declarative Mapping — no ConsolidationTranslationService PHP class.",
       "sourceRegister": "FxRate",
       "sourceSchema": "FxRate",
       "targetSchema": "GLLine",

@@ -57,7 +57,7 @@
             "type": "string",
             "format": "uuid",
             "$ref": "Requisition",
-            "description": "FK to the Requisition (purchase-requisition change, REQ-REQ-005) this order was materialised from, when it was created via requisition conversion rather than directly. Blank for orders created by the pre-existing direct-create flow. When app config `require_approved_requisition_for_po` is enabled, PurchaseOrderService requires this to reference an approved/converted Requisition.",
+            "description": "FK to the Requisition (purchase-requisition change) this order was materialised from, when it was created via requisition conversion rather than directly. Blank for orders created by the pre-existing direct-create flow. When app config `require_approved_requisition_for_po` is enabled, PurchaseOrderService requires this to reference an approved/converted Requisition.",
             "nullable": true,
             "example": null,
             "title": "Requisition ID"
@@ -480,7 +480,7 @@
           },
           "poIds": {
             "type": "array",
-            "description": "FK references to PurchaseOrder records this GRN receipts against (multi-PO supported, REQ-GRN-001).",
+            "description": "FK references to PurchaseOrder records this GRN receipts against (multi-PO supported).",
             "items": {
               "type": "string",
               "format": "uuid",

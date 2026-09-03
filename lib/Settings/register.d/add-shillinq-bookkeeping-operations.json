@@ -13,7 +13,7 @@
           "isTreasuryAccount": {
             "type": "boolean",
             "default": false,
-            "description": "REQ-SBK-002: flags this account as a Treasury (schatkist) account so SchatkistPosition aggregates its postings. Additive extension merged onto the T1 Account schema via ADR-037 deep-merge.",
+            "description": "Flags this account as a Treasury (schatkist) account so SchatkistPosition aggregates its postings. Additive extension merged onto the T1 Account schema via ADR-037 deep-merge.",
             "title": "Is Schatkist Account"
           }
         }
@@ -81,7 +81,7 @@
               "corrected"
             ],
             "default": "draft",
-            "description": "Lifecycle state per REQ-VBTW-005.",
+            "description": "Lifecycle state.",
             "title": "State"
           },
           "amount": {
@@ -185,7 +185,7 @@
         },
         "x-openregister-aggregations": {
           "rubrieken": {
-            "description": "VAT buckets summed per rate (21%, 9%, 0%, verlegd/reverse-charge) over GL postings in the return period per REQ-VBTW-004 and REQ-VBTW-009.",
+            "description": "VAT buckets summed per rate (21%, 9%, 0%, verlegd/reverse-charge) over GL postings in the return period and.",
             "source": "GLLine",
             "groupBy": [
               "vatRate",
@@ -256,7 +256,7 @@
         "icon": "EarthArrowRight",
         "version": "0.1.0",
         "title": "ICP-opgaaf",
-        "description": "Intra-community supplies declaration (opgaaf intracommunautaire prestaties) per REQ-VBTW-007. Tracks draft → submitted → accepted lifecycle and aggregates ICP transactions for the period.",
+        "description": "Intra-community supplies declaration (opgaaf intracommunautaire prestaties). Tracks draft → submitted → accepted lifecycle and aggregates ICP transactions for the period.",
         "x-schema-org": "schema:GovernmentService",
         "type": "object",
         "required": [
@@ -408,7 +408,7 @@
         "icon": "FileDocumentEditOutline",
         "version": "0.1.0",
         "title": "BTW-correctie (suppletie)",
-        "description": "VAT correction submission (suppletie-aangifte) per REQ-VBTW-008. References the original VatReturn and carries an adjustment amount with a correction reason.",
+        "description": "VAT correction submission (suppletie-aangifte). References the original VatReturn and carries an adjustment amount with a correction reason.",
         "x-schema-org": "schema:GovernmentService",
         "type": "object",
         "required": [
@@ -655,7 +655,7 @@
         "icon": "TableArrowRight",
         "version": "0.1.0",
         "title": "BBV-toewijzing",
-        "description": "Maps an RGS account to a BBV taakveld/programma/paragraaf for municipal administrations. Operator-overrideable per administration; default seeded from rgs-bbv.json. Carries bcfCompensable + compensablePercentage driving BCF claim aggregation (REQ-BCF-003/005) and iv3Bucket driving IV3 export.",
+        "description": "Maps an RGS account to a BBV taakveld/programma/paragraaf for municipal administrations. Operator-overrideable per administration; default seeded from rgs-bbv.json. Carries bcfCompensable + compensablePercentage driving BCF claim aggregation and iv3Bucket driving IV3 export.",
         "x-schema-org": "schema:PropertyValue",
         "type": "object",
         "required": [
@@ -887,7 +887,7 @@
           },
           "totalClaimAmount": {
             "type": "number",
-            "description": "Sum of compensable VAT (derived, REQ-BCF-004).",
+            "description": "Sum of compensable VAT (derived).",
             "example": 18250.0,
             "title": "Total Claim Amount"
           },
@@ -1087,7 +1087,7 @@
           },
           "ytdQualifyingHours": {
             "type": "number",
-            "description": "YTD hours excluding excluded categories (derived, REQ-ZZP-003). Do not set directly.",
+            "description": "YTD hours excluding excluded categories (derived). Do not set directly.",
             "example": 1200,
             "title": "Ytd Qualifying Hours"
           },
@@ -1123,7 +1123,7 @@
           },
           "totalAllowableDeduction": {
             "type": "number",
-            "description": "Sum of allowable deductions (derived, REQ-ZZP-006).",
+            "description": "Sum of allowable deductions (derived).",
             "example": 6900,
             "title": "Total Allowable Deduction"
           },
@@ -1136,7 +1136,7 @@
         },
         "x-openregister-calculations": {
           "ytdQualifyingHours": {
-            "description": "Sum of UrenRegistratie.hours where category != excluded for the year, per personId. ADR-031 exception: if OR cannot span fiscal periods, OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours provides the fallback.",
+            "description": "Sum of UrenRegistratie.hours where category != excluded for the year, per personId. ADR-031 exception: if OR cannot span fiscal periods, OCA\\Shillinq\\Guard\\UrencriteriumGuard:currentYtdHours provides the fallback.",
             "expr": "sum(UrenRegistratie.hours where category != 'excluded' and personId == @self.personId and year(workDate) == @self.year)",
             "guard": "OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours"
           },
@@ -1286,7 +1286,7 @@
           },
           "position": {
             "type": "number",
-            "description": "Aggregated end-of-day position from flagged accounts (derived, REQ-SBK-004).",
+            "description": "Aggregated end-of-day position from flagged accounts (derived).",
             "example": 1250000,
             "title": "Position"
           },
@@ -1421,7 +1421,7 @@
         "icon": "CalendarClockOutline",
         "version": "0.1.0",
         "title": "Afbetalingstermijn",
-        "description": "Single instalment of a subsidie settlement plan (afbetalingsregeling) per REQ-SUB-007. Child of Subsidie via subsidieId.",
+        "description": "Single instalment of a subsidie settlement plan (afbetalingsregeling). Child of Subsidie via subsidieId.",
         "x-schema-org": "schema:PaymentChargeSpecification",
         "type": "object",
         "required": [

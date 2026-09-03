@@ -103,7 +103,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create/update/delete of an EliminationRule is logged to OR's immutable audit trail (REQ-AT-001 / REQ-ICP-007)."
+          "description": "Every create/update/delete of an EliminationRule is logged to OR's immutable audit trail."
         }
       },
       "IntercompanyTransaction": {
@@ -213,7 +213,7 @@
           "eliminatedByRuleId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the EliminationRule that eliminated this transaction, recorded for audit traceability (REQ-ICP-003 / REQ-ICP-007).",
+            "description": "FK to the EliminationRule that eliminated this transaction, recorded for audit traceability.",
             "title": "Eliminated By Rule ID"
           },
           "consolidatedReportId": {
@@ -231,7 +231,7 @@
               "excluded"
             ],
             "default": "pending",
-            "description": "pending: not yet consolidated, included in totals; eliminated: matched a rule and removed from group totals; excluded: manual override, intentionally retained in totals (REQ-ICP-001 / REQ-ICP-008).",
+            "description": "pending: not yet consolidated, included in totals; eliminated: matched a rule and removed from group totals; excluded: manual override, intentionally retained in totals.",
             "title": "Elimination Status"
           }
         },
@@ -309,7 +309,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create/update/delete and lifecycle transition (eliminate / exclude / restore / reinstate) of an IntercompanyTransaction is logged to OR's immutable audit trail (REQ-AT-001 / REQ-ICP-007)."
+          "description": "Every create/update/delete and lifecycle transition (eliminate / exclude / restore / reinstate) of an IntercompanyTransaction is logged to OR's immutable audit trail."
         }
       }
     }

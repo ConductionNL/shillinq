@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "expense-reimbursement-or-passthrough",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json. ADR-031 declarative-first (lifecycle annotations + calculations + aggregations). ADR-022 approval-workflow consumption (no app-local approval table).",
-    "description": "Tier-2 dual-mode settlement extension on expense-capture-core. Adds the settlementMode enum (reimbursable | pass-through) + pass-through linking fields (linkedCustomerId, markupRuleId, markupRateApplied, markupAmountCalculated, passthroughDebitAccountCode) to Receipt / MileageEntry / PerDiem. Extends ExpenseClaimEntry with claim-level settlementMode, dual-path aggregate totals (totalReimbursableAmount, totalPassThroughAmount), unique customer IDs, and two GL transaction back-references (glReimbursableTransactionId, glPassThroughTransactionId) plus invoiced lifecycle state for the pass-through path. Declares two new master-data schemas — ReimbursementPolicy (per-administration auto-approve thresholds + markup-approval thresholds + employee bank account mapping, REQ-ERP-004 / REQ-ERP-006) and PassThroughMarkupRule (per-customer / per-category percentage or fixed markup with priority (customer+category > customer > global), REQ-ERP-005). Money fields use multipleOf 0.01 (Euro / percent 2-decimal precision). Markup calculation is declared as x-openregister-calculations on each expense schema (declarative lookup of the matching PassThroughMarkupRule); claim aggregates are declared as x-openregister-aggregations on ExpenseClaimEntry (sum + unique). GL materialisation branches on settlementMode via a dual-path action set on the post transition: reimbursable debits the expense-payable account + emits ExpenseClaimReimbursementNotification for the treasury module, pass-through debits the customer AR account + credits revenue-deferral. Markup rate locking is enforced by declarative immutability metadata (locked on submit per REQ-ERP-010); settlement-mode change post-posting requires GL reversal per REQ-ERP-011 (T1 REQ-GL-004 pattern)."
+    "description": "Tier-2 dual-mode settlement extension on expense-capture-core. Adds the settlementMode enum (reimbursable | pass-through) + pass-through linking fields (linkedCustomerId, markupRuleId, markupRateApplied, markupAmountCalculated, passthroughDebitAccountCode) to Receipt / MileageEntry / PerDiem. Extends ExpenseClaimEntry with claim-level settlementMode, dual-path aggregate totals (totalReimbursableAmount, totalPassThroughAmount), unique customer IDs, and two GL transaction back-references (glReimbursableTransactionId, glPassThroughTransactionId) plus invoiced lifecycle state for the pass-through path. Declares two new master-data schemas — ReimbursementPolicy (per-administration auto-approve thresholds + markup-approval thresholds + employee bank account mapping) and PassThroughMarkupRule (per-customer / per-category percentage or fixed markup with priority (customer+category > customer > global)). Money fields use multipleOf 0.01 (Euro / percent 2-decimal precision). Markup calculation is declared as x-openregister-calculations on each expense schema (declarative lookup of the matching PassThroughMarkupRule); claim aggregates are declared as x-openregister-aggregations on ExpenseClaimEntry (sum + unique). GL materialisation branches on settlementMode via a dual-path action set on the post transition: reimbursable debits the expense-payable account + emits ExpenseClaimReimbursementNotification for the treasury module, pass-through debits the customer AR account + credits revenue-deferral. Markup rate locking is enforced by declarative immutability metadata (locked on submit per); settlement-mode change post-posting requires GL reversal (T1 pattern)."
   },
   "info": {
     "version": "0.1.0-expense-reimbursement-or-passthrough"
@@ -19,7 +19,7 @@
               "reimbursable",
               "pass-through"
             ],
-            "description": "Dual-mode settlement classification per REQ-ERP-001. reimbursable = pay employee via SEPA + GL debit expense-payable. pass-through = bill linked customer at cost + markup via AR. Immutable after parent ExpenseClaimEntry is submitted.",
+            "description": "Dual-mode settlement classification. reimbursable = pay employee via SEPA + GL debit expense-payable. pass-through = bill linked customer at cost + markup via AR. Immutable after parent ExpenseClaimEntry is submitted.",
             "nullable": true,
             "example": "pass-through",
             "title": "Settlement Mode"
@@ -66,7 +66,7 @@
         },
         "x-openregister-calculations": {
           "markupLookup": {
-            "description": "Resolves the matching PassThroughMarkupRule for this expense and populates markupRuleId + markupRateApplied + markupAmountCalculated when settlementMode = pass-through (REQ-ERP-002, REQ-ERP-005 priority: customer+category > customer-only > global default). When settlementMode != pass-through the targets are forced null. Declarative lookup; locked at claim submission per REQ-ERP-010.",
+            "description": "Resolves the matching PassThroughMarkupRule for this expense and populates markupRuleId + markupRateApplied + markupAmountCalculated when settlementMode = pass-through (priority: customer+category > customer-only > global default). When settlementMode != pass-through the targets are forced null. Declarative lookup; locked at claim submission.",
             "expression": "@self.settlementMode == 'pass-through' ? lookup('PassThroughMarkupRule', {targetCustomerId: @self.linkedCustomerId, targetCategory: @self.category, administrationId: @self.administrationId, effectiveFromYear: year(@self.receiptDate)}, {priority: ['targetCustomerId+targetCategory', 'targetCustomerId', 'global']}) : null",
             "targets": {
               "markupRuleId": "@matched.ruleId",
@@ -86,7 +86,7 @@
               "reimbursable",
               "pass-through"
             ],
-            "description": "Dual-mode settlement classification per REQ-ERP-001. Mileage may be reimbursed to employee (SEPA) or billed to client (cost + markup). Immutable after parent ExpenseClaimEntry is submitted.",
+            "description": "Dual-mode settlement classification. Mileage may be reimbursed to employee (SEPA) or billed to client (cost + markup). Immutable after parent ExpenseClaimEntry is submitted.",
             "nullable": true,
             "example": "reimbursable",
             "title": "Settlement Mode"
@@ -129,7 +129,7 @@
         },
         "x-openregister-calculations": {
           "markupLookup": {
-            "description": "Mirrors Receipt.markupLookup for mileage lines. Looks up PassThroughMarkupRule matching linkedCustomerId + category (mileage category resolves to 'travel') with priority customer+category > customer-only > global; calculates cost + markup; locks on claim submission per REQ-ERP-010.",
+            "description": "Mirrors Receipt.markupLookup for mileage lines. Looks up PassThroughMarkupRule matching linkedCustomerId + category (mileage category resolves to 'travel') with priority customer+category > customer-only > global; calculates cost + markup; locks on claim submission.",
             "expression": "@self.settlementMode == 'pass-through' ? lookup('PassThroughMarkupRule', {targetCustomerId: @self.linkedCustomerId, targetCategory: 'travel', administrationId: @self.administrationId, effectiveFromYear: year(@self.travelDate)}, {priority: ['targetCustomerId+targetCategory', 'targetCustomerId', 'global']}) : null",
             "targets": {
               "markupRuleId": "@matched.ruleId",
@@ -149,7 +149,7 @@
               "reimbursable",
               "pass-through"
             ],
-            "description": "Dual-mode settlement classification per REQ-ERP-001. Per-diem may be reimbursed to employee (SEPA) or billed to client (cost + markup). Immutable after parent ExpenseClaimEntry is submitted.",
+            "description": "Dual-mode settlement classification. Per-diem may be reimbursed to employee (SEPA) or billed to client (cost + markup). Immutable after parent ExpenseClaimEntry is submitted.",
             "nullable": true,
             "example": "pass-through",
             "title": "Settlement Mode"
@@ -211,7 +211,7 @@
               "reimbursable",
               "pass-through"
             ],
-            "description": "Claim-level dual-mode classification per REQ-ERP-001 / REQ-ERP-003. All line items (Receipt / MileageEntry / PerDiem) MUST have matching settlementMode (mixed-mode claims rejected per REQ-ERP-003). Immutable after submission unless an authorised operator triggers GL reversal per REQ-ERP-011.",
+            "description": "Claim-level dual-mode classification. All line items (Receipt / MileageEntry / PerDiem) MUST have matching settlementMode (mixed-mode claims rejected per). Immutable after submission unless an authorised operator triggers GL reversal.",
             "nullable": true,
             "example": "pass-through",
             "title": "Settlement Mode"
@@ -271,7 +271,7 @@
         },
         "x-openregister-aggregations": {
           "settlementTotals": {
-            "description": "Auto-aggregates dual-path totals across linked Receipt + MileageEntry + PerDiem records grouped by settlementMode. Recomputed on every line-item save, frozen on submit per REQ-ERP-010. Also derives the unique passThroughCustomerIds list for downstream AR linking.",
+            "description": "Auto-aggregates dual-path totals across linked Receipt + MileageEntry + PerDiem records grouped by settlementMode. Recomputed on every line-item save, frozen on submit. Also derives the unique passThroughCustomerIds list for downstream AR linking.",
             "sources": [
               {
                 "schema": "Receipt",
@@ -341,7 +341,7 @@
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "materialise-gl-transaction",
                   "condition": "@self.settlementMode == 'reimbursable'",
-                  "description": "REQ-ERP-007 reimbursable path: debit per expense line credit to expense-payable account (Account.isExpenseControlAccount=true); sets glReimbursableTransactionId. Identical to expense-capture-core REQ-EC-012 pattern but selected only when claim.settlementMode = reimbursable.",
+                  "description": "Reimbursable path: debit per expense line credit to expense-payable account (Account.isExpenseControlAccount=true); sets glReimbursableTransactionId. Identical to expense-capture-core pattern but selected only when claim.settlementMode = reimbursable.",
                   "actionParameters": {
                     "register": "shillinq",
                     "targetSchema": "GLTransaction",
@@ -361,7 +361,7 @@
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "emit-event",
                   "condition": "@self.settlementMode == 'reimbursable'",
-                  "description": "REQ-ERP-008 SEPA payment notification. Emits ExpenseClaimReimbursementNotification on the event bus for the treasury module to consume; logged in the OR audit trail; idempotent on (claimId, glReimbursableTransactionId). Treasury module is decoupled from Shillinq.",
+                  "description": "SEPA payment notification. Emits ExpenseClaimReimbursementNotification on the event bus for the treasury module to consume; logged in the OR audit trail; idempotent on (claimId, glReimbursableTransactionId). Treasury module is decoupled from Shillinq.",
                   "actionParameters": {
                     "event": "ExpenseClaimReimbursementNotification",
                     "payload": {
@@ -381,7 +381,7 @@
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "materialise-gl-transaction",
                   "condition": "@self.settlementMode == 'pass-through'",
-                  "description": "REQ-ERP-007 pass-through path: debit customer AR account (per Receipt/MileageEntry/PerDiem.passthroughDebitAccountCode, fallback ReimbursementPolicy.passthroughDebitAccountCode), credit cost centres + revenue-deferral on the markup delta. Sets glPassThroughTransactionId. Multiple GL entries are emitted when passThroughCustomerIds.length > 1 (REQ-ERP-009 multi-customer).",
+                  "description": "Pass-through path: debit customer AR account (per Receipt/MileageEntry/PerDiem.passthroughDebitAccountCode, fallback ReimbursementPolicy.passthroughDebitAccountCode), credit cost centres + revenue-deferral on the markup delta. Sets glPassThroughTransactionId. Multiple GL entries are emitted when passThroughCustomerIds.length > 1 (multi-customer).",
                   "actionParameters": {
                     "register": "shillinq",
                     "targetSchema": "GLTransaction",
@@ -405,26 +405,26 @@
               ]
             },
             "markReimbursed": {
-              "description": "REQ-ERP-007 reimbursable path closure: payment record matches claim total; SEPA instruction confirmed by treasury module. Available only when settlementMode = reimbursable."
+              "description": "Reimbursable path closure: payment record matches claim total; SEPA instruction confirmed by treasury module. Available only when settlementMode = reimbursable."
             },
             "markInvoiced": {
               "from": "posted",
               "to": "invoiced",
               "label": "Mark as invoiced (pass-through)",
-              "description": "REQ-ERP-007 pass-through path closure: customer invoice generation cycle includes claim cost + markup on next AR invoice. Available only when settlementMode = pass-through.",
+              "description": "Pass-through path closure: customer invoice generation cycle includes claim cost + markup on next AR invoice. Available only when settlementMode = pass-through.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ExpenseReimbursementGuard::requirePassThroughMode"
             },
             "changeSettlementMode": {
               "from": "posted",
               "to": "approved",
               "label": "Change settlement mode (requires GL reversal)",
-              "description": "REQ-ERP-011 high-privilege transition. Reverses the existing GL entry (glReimbursableTransactionId or glPassThroughTransactionId) per T1 REQ-GL-004 before allowing a re-post with the updated settlementMode. Markup rate stays locked per REQ-ERP-010 on the original GL entry; new mode triggers a fresh lookup on re-post.",
+              "description": "High-privilege transition. Reverses the existing GL entry (glReimbursableTransactionId or glPassThroughTransactionId) per T1 before allowing a re-post with the updated settlementMode. Markup rate stays locked on the original GL entry; new mode triggers a fresh lookup on re-post.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ExpenseReimbursementGuard::requireGlReversalForModeChange",
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "reverse-gl-transaction",
-                  "description": "Reverse the existing glReimbursableTransactionId or glPassThroughTransactionId per T1 REQ-GL-004.",
+                  "description": "Reverse the existing glReimbursableTransactionId or glPassThroughTransactionId per T1.",
                   "actionParameters": {
                     "register": "shillinq",
                     "sourceField": "@self.settlementMode == 'reimbursable' ? glReimbursableTransactionId : glPassThroughTransactionId",
@@ -548,7 +548,7 @@
         "icon": "PercentOutline",
         "version": "0.1.0",
         "title": "Pass-through Markup Rule",
-        "description": "Per-administration master-data record defining the markup applied to pass-through expenses. Rules target (targetCustomerId + targetCategory), (targetCustomerId only), or null+null (global default). Lookup priority — customer+category > customer-only > global default — is enforced declaratively in the lookup() expression on Receipt/MileageEntry/PerDiem x-openregister-calculations. markupType=percentage applies amount × (1 + markupValue); markupType=fixedAmount adds markupValue to amount. Effective per fiscal year; rate locks on claim submission per REQ-ERP-010 (rule changes never affect historical claims).",
+        "description": "Per-administration master-data record defining the markup applied to pass-through expenses. Rules target (targetCustomerId + targetCategory), (targetCustomerId only), or null+null (global default). Lookup priority — customer+category > customer-only > global default — is enforced declaratively in the lookup expression on Receipt/MileageEntry/PerDiem x-openregister-calculations. markupType=percentage applies amount × (1 + markupValue); markupType=fixedAmount adds markupValue to amount. Effective per fiscal year; rate locks on claim submission (rule changes never affect historical claims).",
         "x-schema-org": "schema:Offer",
         "x-spec": "openspec/changes/expense-reimbursement-or-passthrough/specs/expense-reimbursement-or-passthrough/spec.md",
         "type": "object",

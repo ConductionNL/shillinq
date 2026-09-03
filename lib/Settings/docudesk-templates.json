@@ -131,7 +131,7 @@
     {
       "templateId": "rd-subsidie-horizon-periodic-report",
       "title": "EU Horizon — Periodic Report",
-      "description": "EU Horizon Periodic Report layout per EC Grant Agreement. Groups approved kostenposten per Horizon kostencategorie (personnel/subcontracting/other-direct/indirect-25-percent) and periodId. Sourced from the Subsidie voortgangsrapportage aggregation. Per REQ-RDS-003.",
+      "description": "EU Horizon Periodic Report layout per EC Grant Agreement. Groups approved kostenposten per Horizon kostencategorie (personnel/subcontracting/other-direct/indirect-25-percent) and periodId. Sourced from the Subsidie voortgangsrapportage aggregation. Per.",
       "register": "shillinq",
       "schema": "Subsidie",
       "aggregation": "voortgangsrapportage",
@@ -228,7 +228,7 @@
     {
       "templateId": "rd-subsidie-mit-voortgangsrapport",
       "title": "MIT — Voortgangsrapport",
-      "description": "MIT voortgangsrapport per RVO vereisten. Groups approved kostenposten per MIT kostencategorie and periodId. Per REQ-RDS-003.",
+      "description": "MIT voortgangsrapport per RVO vereisten. Groups approved kostenposten per MIT kostencategorie and periodId. Per.",
       "register": "shillinq",
       "schema": "Subsidie",
       "aggregation": "voortgangsrapportage",
@@ -291,7 +291,7 @@
     {
       "templateId": "rd-subsidie-efro-progress-dossier",
       "title": "EFRO/REACT-EU — Progress Dossier",
-      "description": "EFRO/REACT-EU progress dossier per managing authority vereisten. Groups approved kostenposten per EFRO kostencategorie. Per REQ-RDS-003.",
+      "description": "EFRO/REACT-EU progress dossier per managing authority vereisten. Groups approved kostenposten per EFRO kostencategorie. Per.",
       "register": "shillinq",
       "schema": "Subsidie",
       "aggregation": "voortgangsrapportage",
@@ -350,7 +350,7 @@
     {
       "templateId": "rd-subsidie-horizon-audit-pack",
       "title": "EU Horizon — Audit Certificate Pack",
-      "description": "EU Horizon Audit Certificate pack assembling OR audit-trail-immutable + kostendossier + S&O-uren-staten URI refs per personnel kostenpost. Per REQ-RDS-004.",
+      "description": "EU Horizon Audit Certificate pack assembling OR audit-trail-immutable + kostendossier + S&O-uren-staten URI refs per personnel kostenpost. Per.",
       "register": "shillinq",
       "schema": "Subsidie",
       "aggregation": "voortgangsrapportage",
@@ -455,7 +455,7 @@
     {
       "templateId": "rd-subsidie-mit-declaration",
       "title": "MIT — Verklaring S&O / WBSO-administratie",
-      "description": "MIT subsidie declaration template referencing the WBSO/S&O administration records. Per REQ-RDS-004.",
+      "description": "MIT subsidie declaration template referencing the WBSO/S&O administration records. Per.",
       "register": "shillinq",
       "schema": "Subsidie",
       "aggregation": "voortgangsrapportage",
@@ -516,7 +516,7 @@
     {
       "templateId": "rd-subsidie-efro-procurement-dossier",
       "title": "EFRO — Aanbestedingsdossier",
-      "description": "EFRO procurement dossier per EFRO-vereisten. Per REQ-RDS-004.",
+      "description": "EFRO procurement dossier per EFRO-vereisten. Per.",
       "register": "shillinq",
       "schema": "Subsidie",
       "aggregation": "voortgangsrapportage",
@@ -573,7 +573,7 @@
     {
       "templateId": "tpl-dunning-stage1-nl",
       "title": "Dunning stage 1 — Vriendelijke reminder",
-      "description": "Stage 1 dunning template — vriendelijke herinnering op de vervaldatum. Toon: vriendelijk. REQ-CCD-002.",
+      "description": "Stage 1 dunning template — vriendelijke herinnering op de vervaldatum. Toon: vriendelijk.",
       "register": "shillinq",
       "schema": "DunningRun",
       "mergeFields": [
@@ -592,7 +592,7 @@
     {
       "templateId": "tpl-dunning-stage2-nl",
       "title": "Dunning stage 2 — Herinnering",
-      "description": "Stage 2 dunning template — herinnering 14 dagen na vervaldatum. Toon: zakelijk. REQ-CCD-002.",
+      "description": "Stage 2 dunning template — herinnering 14 dagen na vervaldatum. Toon: zakelijk.",
       "register": "shillinq",
       "schema": "DunningRun",
       "mergeFields": [
@@ -611,7 +611,7 @@
     {
       "templateId": "tpl-dunning-stage3-nl",
       "title": "Dunning stage 3 — Aanmaning + 14-dagen-brief (B2C)",
-      "description": "Stage 3 dunning template — aanmaning op dag 30. Voor B2C-debiteuren MOET de wettelijke 14-dagen-brief in de body staan (art. 6:96 lid 6 BW). REQ-CCD-006.",
+      "description": "Stage 3 dunning template — aanmaning op dag 30. Voor B2C-debiteuren MOET de wettelijke 14-dagen-brief in de body staan (art. 6:96 lid 6 BW).",
       "register": "shillinq",
       "schema": "DunningRun",
       "mergeFields": [
@@ -632,7 +632,7 @@
     {
       "templateId": "tpl-dunning-stage4-nl",
       "title": "Dunning stage 4 — Ingebrekestelling (aangetekend)",
-      "description": "Stage 4 dunning template — ingebrekestelling op dag 60 via aangetekende post (PostNL Track & Trace). Toon: juridisch. REQ-CCD-009.",
+      "description": "Stage 4 dunning template — ingebrekestelling op dag 60 via aangetekende post (PostNL Track & Trace). Toon: juridisch.",
       "register": "shillinq",
       "schema": "DunningRun",
       "mergeFields": [
@@ -653,7 +653,7 @@
     {
       "templateId": "tpl-dunning-stage5-nl",
       "title": "Dunning stage 5 — Overdracht incassobureau",
-      "description": "Stage 5 dunning template — kennisgeving van overdracht aan incassobureau op dag 90. REQ-CCD-008.",
+      "description": "Stage 5 dunning template — kennisgeving van overdracht aan incassobureau op dag 90.",
       "register": "shillinq",
       "schema": "DunningRun",
       "mergeFields": [
@@ -669,7 +669,7 @@
     {
       "templateId": "vpb-aangifte-voorbereiding",
       "title": "Vpb-aangifte voorbereiding",
-      "description": "Vpb-aangifte voorbereidingsdocument per ondernemingsactiviteit (REQ-VPB-004, add-shillinq-vpb-corporate-tax). Rendert de Vpb-balans (Activa / Passiva / Resultaat) van de vpbBalansFiltered aggregatie en de bijbehorende SBR-payload binding tegen de Belastingdienst Vpb XSD voor het geselecteerde boekjaar. De daadwerkelijke aangifte-transmissie verloopt via het T4-base bookkeeping-sbr-xbrl-reporting SBR-eindpunt (Digipoort/SBR) per ADR-019; deze template publiceert uitsluitend het voorbereidingsdocument + payload-binding. Per ADR-031 is er geen PHP Vpb-aangifte service. De template-versie volgt de Vpb XSD-versie per boekjaar; meerdere versies kunnen naast elkaar bestaan.",
+      "description": "Vpb-aangifte voorbereidingsdocument per ondernemingsactiviteit (add-shillinq-vpb-corporate-tax). Rendert de Vpb-balans (Activa / Passiva / Resultaat) van de vpbBalansFiltered aggregatie en de bijbehorende SBR-payload binding tegen de Belastingdienst Vpb XSD voor het geselecteerde boekjaar. De daadwerkelijke aangifte-transmissie verloopt via het T4-base bookkeeping-sbr-xbrl-reporting SBR-eindpunt (Digipoort/SBR) per ADR-019; deze template publiceert uitsluitend het voorbereidingsdocument + payload-binding. Per ADR-031 is er geen PHP Vpb-aangifte service. De template-versie volgt de Vpb XSD-versie per boekjaar; meerdere versies kunnen naast elkaar bestaan.",
       "register": "shillinq",
       "schema": "VpbBalansLink",
       "aggregation": "vpbBalansFiltered",
@@ -726,7 +726,7 @@
     {
       "templateId": "wbso-sno-document-storage",
       "title": "WBSO/SNO Bookkeeping Document Storage",
-      "description": "Generic document-storage template for bookkeeping documents declared by the bookkeeping-financial-administration spec (REQ-WBSO-003 / REQ-WBSO-007 / REQ-WBSO-009). Bound to the Document register so each upload from the Documents view persists as a `docudesk://` URI under one of the six supported documentTypes (invoice, receipt, contract, tax-form, bank-statement, memo). The template enforces draft → filed → archived lifecycle metadata in the rendered envelope, and surfaces the auditor-visible `filedAt` / `archivedAt` timestamps.",
+      "description": "Generic document-storage template for bookkeeping documents declared by the bookkeeping-financial-administration spec. Bound to the Document register so each upload from the Documents view persists as a `docudesk://` URI under one of the six supported documentTypes (invoice, receipt, contract, tax-form, bank-statement, memo). The template enforces draft → filed → archived lifecycle metadata in the rendered envelope, and surfaces the auditor-visible `filedAt` / `archivedAt` timestamps.",
       "register": "shillinq",
       "schema": "Document",
       "supportedDocumentTypes": [
@@ -763,7 +763,7 @@
     {
       "templateId": "shillinq-balans",
       "title": "Balans",
-      "description": "Balance sheet per peildatum (openspec/changes/reports-via-docudesk REQ-RVD-006). NOT yet a live docudesk Template object -- BalanceSheetReportGenerator::selectTemplate() looks up `namespace: \"shillinq\", category: \"shillinq-balans\"` in docudesk's own `template` register and fails closed with a diagnostic until that Template's Twig/HTML content is authored (hrmq `hrmq-docudesk-documents` precedent: template content authoring is a docudesk-side follow-up, not part of the consumption leaf). This entry documents the ReportSection block tree BalanceSheetReportGenerator hands to `DocumentService::generateDocument()` via `options.adHocData.report`, so a template author knows what to render.",
+      "description": "Balance sheet per peildatum (openspec/changes/reports-via-docudesk). NOT yet a live docudesk Template object -- BalanceSheetReportGenerator:selectTemplate looks up `namespace: \"shillinq\", category: \"shillinq-balans\"` in docudesk's own `template` register and fails closed with a diagnostic until that Template's Twig/HTML content is authored (hrmq `hrmq-docudesk-documents` precedent: template content authoring is a docudesk-side follow-up, not part of the consumption leaf). This entry documents the ReportSection block tree BalanceSheetReportGenerator hands to `DocumentService:generateDocument` via `options.adHocData.report`, so a template author knows what to render.",
       "register": "shillinq",
       "reportCatalogueId": "balance-sheet",
       "blockVocabulary": {
@@ -778,7 +778,7 @@
     {
       "templateId": "shillinq-winst-verlies",
       "title": "Winst- en verliesrekening",
-      "description": "Profit-and-loss account over the period (openspec/changes/reports-via-docudesk REQ-RVD-006). NOT yet a live docudesk Template object -- ProfitLossReportGenerator::selectTemplate() looks up `namespace: \"shillinq\", category: \"shillinq-winst-verlies\"`; see shillinq-balans's description for the fail-closed/follow-up rationale.",
+      "description": "Profit-and-loss account over the period (openspec/changes/reports-via-docudesk). NOT yet a live docudesk Template object -- ProfitLossReportGenerator:selectTemplate looks up `namespace: \"shillinq\", category: \"shillinq-winst-verlies\"`; see shillinq-balans's description for the fail-closed/follow-up rationale.",
       "register": "shillinq",
       "reportCatalogueId": "profit-loss",
       "blockVocabulary": {
@@ -791,7 +791,7 @@
     {
       "templateId": "shillinq-jaarrekening",
       "title": "Jaarrekening",
-      "description": "Titel 9 BW2 jaarrekening -- kerngegevens, balans, W&V, toelichting (openspec/changes/reports-via-docudesk REQ-RVD-006). NOT yet a live docudesk Template object -- AnnualAccountsReportGenerator::selectTemplate() looks up `namespace: \"shillinq\", category: \"shillinq-jaarrekening\"`; see shillinq-balans's description for the fail-closed/follow-up rationale.",
+      "description": "Titel 9 BW2 jaarrekening -- kerngegevens, balans, W&V, toelichting (openspec/changes/reports-via-docudesk). NOT yet a live docudesk Template object -- AnnualAccountsReportGenerator:selectTemplate looks up `namespace: \"shillinq\", category: \"shillinq-jaarrekening\"`; see shillinq-balans's description for the fail-closed/follow-up rationale.",
       "register": "shillinq",
       "reportCatalogueId": "annual-accounts",
       "blockVocabulary": {
@@ -806,7 +806,7 @@
     {
       "templateId": "shillinq-management-letter",
       "title": "Management letter",
-      "description": "Bevindingenrapport from RuleAuditService's compliance audit (openspec/changes/reports-via-docudesk REQ-RVD-006). NOT yet a live docudesk Template object -- ManagementLetterReportGenerator::selectTemplate() looks up `namespace: \"shillinq\", category: \"shillinq-management-letter\"`; see shillinq-balans's description for the fail-closed/follow-up rationale.",
+      "description": "Bevindingenrapport from RuleAuditService's compliance audit (openspec/changes/reports-via-docudesk). NOT yet a live docudesk Template object -- ManagementLetterReportGenerator:selectTemplate looks up `namespace: \"shillinq\", category: \"shillinq-management-letter\"`; see shillinq-balans's description for the fail-closed/follow-up rationale.",
       "register": "shillinq",
       "reportCatalogueId": "management-letter",
       "blockVocabulary": {
@@ -821,7 +821,7 @@
     {
       "templateId": "shillinq-bbv-jaarstukken",
       "title": "BBV-jaarstukken",
-      "description": "NL public-sector BBV jaarstukken / programmaverantwoording (openspec/changes/reports-via-docudesk REQ-RVD-006). NOT yet a live docudesk Template object -- BbvJaarstukkenReportGenerator::selectTemplate() looks up `namespace: \"shillinq\", category: \"shillinq-bbv-jaarstukken\"`; see shillinq-balans's description for the fail-closed/follow-up rationale.",
+      "description": "NL public-sector BBV jaarstukken / programmaverantwoording (openspec/changes/reports-via-docudesk). NOT yet a live docudesk Template object -- BbvJaarstukkenReportGenerator:selectTemplate looks up `namespace: \"shillinq\", category: \"shillinq-bbv-jaarstukken\"`; see shillinq-balans's description for the fail-closed/follow-up rationale.",
       "register": "shillinq",
       "reportCatalogueId": "bbv-jaarstukken",
       "blockVocabulary": {

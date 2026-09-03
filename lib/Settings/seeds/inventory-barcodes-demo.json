@@ -1,6 +1,6 @@
 {
 	"_meta": {
-		"description": "Demo Barcode records for inventory-barcode-sku. Five Dutch retail scenarios: pet food unit/carton/pallet (EAN/GTIN/SSCC), dietary supplement legacy internal code + UPC. References inventory-product-catalog demo SKUs (DV-KAT-SENIOR-2KG, VIT-C-1000MG-100CT). Idempotent: SettingsService::seedInventoryBarcodes() deduplicates on (barcode, uomCode).",
+		"description": "Demo Barcode records for inventory-barcode-sku. Five Dutch retail scenarios: pet food unit/carton/pallet (EAN/GTIN/SSCC), dietary supplement legacy internal code + UPC. References inventory-product-catalog demo SKUs (DV-KAT-SENIOR-2KG, VIT-C-1000MG-100CT). Idempotent: SettingsService:seedInventoryBarcodes deduplicates on (barcode, uomCode).",
 		"spec": "openspec/changes/inventory-barcode-sku/specs/inventory-barcode-sku/spec.md",
 		"req": "REQ-SKU-011"
 	},

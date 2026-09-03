@@ -13,7 +13,7 @@
         "icon": "FileDocumentEditOutline",
         "version": "0.1.0",
         "title": "Billable Invoice",
-        "description": "Invoice materialised from approved time entries + expenses with explicit billing-model semantics. Companion to the canonical Invoice (from bookings-deposit-to-invoice); the BillableInvoice carries the model-specific projection while the Invoice carries the AR-aging-facing record. The billingModel is set once at draft time and immutable after posting (REQ-ITE-001, D1). Source-id arrays (timeEntryIds, expenseIds) are checked for duplicates against existing posted/draft BillableInvoice rows before generation (REQ-ITE-006, D9).",
+        "description": "Invoice materialised from approved time entries + expenses with explicit billing-model semantics. Companion to the canonical Invoice (from bookings-deposit-to-invoice); the BillableInvoice carries the model-specific projection while the Invoice carries the AR-aging-facing record. The billingModel is set once at draft time and immutable after posting (D1). Source-id arrays (timeEntryIds, expenseIds) are checked for duplicates against existing posted/draft BillableInvoice rows before generation (D9).",
         "x-schema-org": "schema:Invoice",
         "x-openregister-purpose": "fact",
         "x-spec": "openspec/changes/invoice-from-time-and-expense/specs/spec.md",
@@ -52,7 +52,7 @@
               "retainer",
               "mixed"
             ],
-            "description": "Billing-model selector (REQ-ITE-001, D1). Drives line-item composition and revenue-account choice on GL posting.",
+            "description": "Billing-model selector (D1). Drives line-item composition and revenue-account choice on GL posting.",
             "example": "t_and_m",
             "title": "Billing Model"
           },
@@ -111,7 +111,7 @@
           "rateCardId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the RateCard applied — required for t_and_m and mixed, optional for retainer overage, null for fixed_fee/milestone (REQ-ITE-002, D2).",
+            "description": "FK to the RateCard applied — required for t_and_m and mixed, optional for retainer overage, null for fixed_fee/milestone (D2).",
             "example": "rate-card-consulting",
             "title": "Rate Card ID"
           },
@@ -196,7 +196,7 @@
               "cancelled"
             ],
             "default": "draft",
-            "description": "Lifecycle status. Moves draft → posted when postInvoice() runs; cancelled is operator-initiated and prevents GL posting.",
+            "description": "Lifecycle status. Moves draft → posted when postInvoice runs; cancelled is operator-initiated and prevents GL posting.",
             "title": "Status"
           },
           "posted": {
@@ -226,7 +226,7 @@
         "icon": "FormatListBulletedSquare",
         "version": "0.1.0",
         "title": "Billable Invoice Line",
-        "description": "Single line item on a BillableInvoice. sourceType identifies the originating record (time_entry, expense, retainer_charge, fixed_fee, manual). rateApplied snapshots the applicable RateCard rate so historical invoices preserve their original rates if the rate card is later amended (REQ-ITE-003, D2). modelSpecificFields carries milestone/retainer-month metadata when applicable.",
+        "description": "Single line item on a BillableInvoice. sourceType identifies the originating record (time_entry, expense, retainer_charge, fixed_fee, manual). rateApplied snapshots the applicable RateCard rate so historical invoices preserve their original rates if the rate card is later amended (D2). modelSpecificFields carries milestone/retainer-month metadata when applicable.",
         "x-schema-org": "schema:Service",
         "x-openregister-purpose": "fact",
         "x-spec": "openspec/changes/invoice-from-time-and-expense/specs/spec.md",

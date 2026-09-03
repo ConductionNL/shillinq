@@ -12,7 +12,7 @@
         "properties": {
           "matchedPoIds": {
             "type": "array",
-            "description": "PurchaseOrder ids the consolidation engine linked to at least one line of this invoice. Captured at consolidation time so a consumer reading the SupplierInvoice document directly can see which POs the maand-factuur covers without traversing ThreeWayMatch records. Empty until consolidation runs; never includes duplicates. REQ-PO3W-007.",
+            "description": "PurchaseOrder ids the consolidation engine linked to at least one line of this invoice. Captured at consolidation time so a consumer reading the SupplierInvoice document directly can see which POs the maand-factuur covers without traversing ThreeWayMatch records. Empty until consolidation runs; never includes duplicates.",
             "items": {
               "type": "string"
             },
@@ -110,7 +110,7 @@
         "properties": {
           "poLineId": {
             "type": "string",
-            "description": "FK to the PurchaseOrderLine in the matched (PO line, GRN line, invoice line) trio. NULL on legacy header-level matches (single-PO whole-invoice records). REQ-PO3W-007.",
+            "description": "FK to the PurchaseOrderLine in the matched (PO line, GRN line, invoice line) trio. NULL on legacy header-level matches (single-PO whole-invoice records).",
             "nullable": true,
             "example": "pol-1",
             "title": "PO Line ID"

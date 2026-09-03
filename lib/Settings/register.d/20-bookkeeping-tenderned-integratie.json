@@ -229,7 +229,7 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Commitment",
-        "description": "A financial obligation (commitment) that reserves budget. The obligation may originate manually, from an inkooporder, or from a won TenderNed tender (bron field, REQ-001). A concept obligation must be enriched (kostenplaats, grootboekrekening) and activated by a contractmanager before it locks budget (design D2). This fragment is the TenderNed OVERLAY on the Commitment schema: bookkeeping-verplichtingenadministratie.json owns the schema and is the single place its `required` list is declared, because ADR-037's deepMergeConfig() CONCATENATES list values — two `required` declarations become an unsatisfiable union. Everything below is additive: TenderNed provenance (bron, bronReferentie, gegundeLeverancierKvk), the milestone plan, and the concept -> active enrichment lifecycle.",
+        "description": "A financial obligation (commitment) that reserves budget. The obligation may originate manually, from an inkooporder, or from a won TenderNed tender (bron field, REQ-001). A concept obligation must be enriched (kostenplaats, grootboekrekening) and activated by a contractmanager before it locks budget (design D2). This fragment is the TenderNed OVERLAY on the Commitment schema: bookkeeping-verplichtingenadministratie.json owns the schema and is the single place its `required` list is declared, because ADR-037's deepMergeConfig CONCATENATES list values — two `required` declarations become an unsatisfiable union. Everything below is additive: TenderNed provenance (bron, bronReferentie, gegundeLeverancierKvk), the milestone plan, and the concept -> active enrichment lifecycle.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-tenderned-integratie/specs/bookkeeping-tenderned-integratie/spec.md",
         "type": "object",
@@ -325,7 +325,7 @@
                 "date": {
                   "type": "string",
                   "format": "date",
-                  "description": "Planned milestone date; must fall within looptijdStart..looptijdEind (design validation rules).",
+                  "description": "Planned milestone date; must fall within looptijdStart.looptijdEind (design validation rules).",
                   "title": "Datum"
                 },
                 "description": {

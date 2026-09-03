@@ -185,7 +185,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the owning administration (tenant scope; REQ-SDD-001).",
+            "description": "FK to the owning administration (tenant scope).",
             "example": "adm-consultancy-nl",
             "title": "Administration ID"
           }
@@ -329,7 +329,7 @@
               "OOFF",
               "FNAL"
             ],
-            "description": "Auto-derived from mandate history; operator input is rejected (REQ-SDD-002, design D2). FRST=first, RCUR=recurrent, OOFF=one-off, FNAL=final.",
+            "description": "Auto-derived from mandate history; operator input is rejected (design D2). FRST=first, RCUR=recurrent, OOFF=one-off, FNAL=final.",
             "title": "Sequence Type"
           },
           "requestedCollectionDate": {
@@ -388,7 +388,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the owning administration (tenant scope; REQ-SDD-002).",
+            "description": "FK to the owning administration (tenant scope).",
             "example": "adm-consultancy-nl",
             "title": "Administration ID"
           }
@@ -596,12 +596,12 @@
           "isArchived": {
             "type": "boolean",
             "default": true,
-            "description": "Retention flag; archived pain files must not be auto-deleted (REQ-SDD-010, design D11).",
+            "description": "Retention flag; archived pain files must not be auto-deleted (design D11).",
             "title": "Is Archived"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the owning administration (tenant scope; REQ-SDD-005).",
+            "description": "FK to the owning administration (tenant scope).",
             "example": "adm-consultancy-nl",
             "title": "Administration ID"
           }
@@ -764,7 +764,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the owning administration (tenant scope; REQ-SDD-007).",
+            "description": "FK to the owning administration (tenant scope).",
             "example": "adm-consultancy-nl",
             "title": "Administration ID"
           }
@@ -843,7 +843,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the owning administration (tenant scope; REQ-SDD-003).",
+            "description": "FK to the owning administration (tenant scope).",
             "example": "adm-consultancy-nl",
             "title": "Administration ID"
           }
@@ -883,7 +883,7 @@
         }
       },
       "ARInvoice": {
-        "description": "AR invoice overlay adding direct-debit payment-method linkage. When `paymentMethod = direct_debit`, `directDebitMandateId` MUST reference an `active` SepaMandate; the optional `directDebitPreNotificationInvoiceId` links back to the invoice whose line item carried the SEPA pre-notification (design D3 / REQ-SDD-003 invoice-line pre-notification channel). Owning fragment: `add-shillinq-bookkeeping-compliance.json`.",
+        "description": "AR invoice overlay adding direct-debit payment-method linkage. When `paymentMethod = direct_debit`, `directDebitMandateId` MUST reference an `active` SepaMandate; the optional `directDebitPreNotificationInvoiceId` links back to the invoice whose line item carried the SEPA pre-notification (design D3 / invoice-line pre-notification channel). Owning fragment: `add-shillinq-bookkeeping-compliance.json`.",
         "x-spec": "openspec/changes/bookkeeping-sepa-direct-debit/specs/bookkeeping-sepa-direct-debit/spec.md",
         "properties": {
           "paymentMethod": {
@@ -910,7 +910,7 @@
           "directDebitPreNotificationInvoiceId": {
             "type": "string",
             "nullable": true,
-            "description": "Optional FK to the ARInvoice whose line item carried the SEPA pre-notification text for this collection (REQ-SDD-003, design D3 invoice-line channel). When set, this invoice's pre-notification proof is sourced from the linked invoice's issue date + line text; the `PreNotification` register entry references the same invoice via `recipientAddress`.",
+            "description": "Optional FK to the ARInvoice whose line item carried the SEPA pre-notification text for this collection (design D3 invoice-line channel). When set, this invoice's pre-notification proof is sourced from the linked invoice's issue date + line text; the `PreNotification` register entry references the same invoice via `recipientAddress`.",
             "title": "Direct Debit Pre Notification Invoice ID",
             "$ref": "ARInvoice"
           }

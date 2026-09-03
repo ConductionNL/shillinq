@@ -113,7 +113,7 @@
 				},
 				"lifecycleActions": true,
 				"indexRoute": "StockMovements",
-				"description": "Detail view per REQ-SM-008. Posted moves show the materialised GLTransaction link; cancellation creates an offsetting move rather than patching the original (REQ-SM-003)."
+				"description": "Detail view. Posted moves show the materialised GLTransaction link; cancellation creates an offsetting move rather than patching the original."
 			}
 		},
 		{

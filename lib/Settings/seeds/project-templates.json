@@ -3,7 +3,7 @@
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
     "source": "Conduction consultancy defaults",
-    "description": "Default project-flavoured AnalyticalDimension templates (service engagement / product development / internal optimization) for consultancy and professional-services administrations. Formerly CostProject seeds — retargeted to AnalyticalDimension (dimensionType=project) by retire-cost-project per REQ-RCP-003. Operator overrides per administration — these are starting-point defaults only. Amounts are indicative; actual budgets vary by sector and administration. Money values are in integer cents (e.g. 5000000 = €50.000,00).",
+    "description": "Default project-flavoured AnalyticalDimension templates (service engagement / product development / internal optimization) for consultancy and professional-services administrations. Formerly CostProject seeds — retargeted to AnalyticalDimension (dimensionType=project) by retire-cost-project. Operator overrides per administration — these are starting-point defaults only. Amounts are indicative; actual budgets vary by sector and administration. Money values are in integer cents (e.g. 5000000 = €50.000,00).",
     "imported": "2026-06-14T00:00:00Z",
     "note": "administrationId left null; the repair-step phase stamps it from app config (administration_id) before persistence. Idempotent on projectNumber + administrationId."
   },

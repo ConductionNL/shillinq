@@ -2,7 +2,7 @@
 	"_meta": {
 		"source": "openspec/changes/bookkeeping-tenderned-integratie/design.md (Seed Data §1)",
 		"variant": "milestone-templates",
-		"description": "Milestone-plan templates keyed by opdrachttype. Consumed by MilestoneTemplateService::generatePlan to produce an initial mijlpalen plan when a TenderNed obligation is activated (REQ-003). Reference data, not register objects — templates are user-editable after generation.",
+		"description": "Milestone-plan templates keyed by opdrachttype. Consumed by MilestoneTemplateService:generatePlan to produce an initial mijlpalen plan when a TenderNed obligation is activated (REQ-003). Reference data, not register objects — templates are user-editable after generation.",
 		"license": "EUPL-1.2",
 		"copyright": "2026 Conduction B.V."
 	},

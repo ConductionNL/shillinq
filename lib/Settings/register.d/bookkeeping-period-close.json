@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-period-close",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 2 — guided period close. Declares the canonical FiscalPeriod schema with an open → closing → closed → audit-locked x-openregister-lifecycle: closed is reversible by a period-closer with an audit-trailed close reason, audit-locked is irreversible (auditor only). Additively augments the monolith GLTransaction.post transition with a declarative precondition referencing OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard::periodOpen, which rejects a posting whose periodId resolves to a FiscalPeriod in state closed or audit-locked (backdating prevention, matches Exact/AFAS/Twinfield). The AI close assistant — open AP/AR transactions, unreconciled bank receipts, outstanding expense claims — is computed on demand by OCA\\Shillinq\\Service\\PeriodCloseAssistantService via the real OpenRegister ObjectService API (find/findAll); flags surface as non-blocking warnings (design D3). Seed objects provide five worked example periods (open, closing, closed, audit-locked, reopened) across realistic Dutch administrations. The schema slug FiscalPeriod is the canonical fleet name referenced by AR / AP / VAT / WIP / ICP / R&D-subsidies sibling schemas. Year-end close (opening-balance journal, retained-earnings rollover) is deferred to T3."
+    "description": "Tier 2 — guided period close. Declares the canonical FiscalPeriod schema with an open → closing → closed → audit-locked x-openregister-lifecycle: closed is reversible by a period-closer with an audit-trailed close reason, audit-locked is irreversible (auditor only). Additively augments the monolith GLTransaction.post transition with a declarative precondition referencing OCA\\Shillinq\\Lifecycle\\PeriodCloseGuard:periodOpen, which rejects a posting whose periodId resolves to a FiscalPeriod in state closed or audit-locked (backdating prevention, matches Exact/AFAS/Twinfield). The AI close assistant — open AP/AR transactions, unreconciled bank receipts, outstanding expense claims — is computed on demand by OCA\\Shillinq\\Service\\PeriodCloseAssistantService via the real OpenRegister ObjectService API (find/findAll); flags surface as non-blocking warnings (design D3). Seed objects provide five worked example periods (open, closing, closed, audit-locked, reopened) across realistic Dutch administrations. The schema slug FiscalPeriod is the canonical fleet name referenced by AR / AP / VAT / WIP / ICP / R&D-subsidies sibling schemas. Year-end close (opening-balance journal, retained-earnings rollover) is deferred to T3."
   },
   "components": {
     "schemas": {
@@ -284,7 +284,7 @@
               "from": "closing",
               "to": "closed",
               "label": "Close period",
-              "description": "Freeze the period after the mandatory checklist items are resolved and the bank-reconciliation suspense worklist is empty (payment-control-guards REQ-PCG-003). Sets closedAt / closedBy.",
+              "description": "Freeze the period after the mandatory checklist items are resolved and the bank-reconciliation suspense worklist is empty (payment-control-guards). Sets closedAt / closedBy.",
               "roles": [
                 "period-closer"
               ],

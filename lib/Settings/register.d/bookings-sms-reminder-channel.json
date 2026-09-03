@@ -13,7 +13,7 @@
         "icon": "MessageTextOutline",
         "version": "0.1.0",
         "title": "SMS-herinneringskanaal",
-        "description": "Configurable SMS reminder channel for booking reminders. Selects an SMS provider (messagebird, twilio, or a custom openconnector connector), carries a ≤160-char message template with {{variables}}, an active → inactive → archived lifecycle (REQ-SMS-006/007), delivery timing (sendMinutesBefore) and retry config. SMS dispatch is consumed from OpenRegister's notification engine (ADR-022); message rendering and phone/length validation are declarative calculations (ADR-031). Provider API credentials are stored in the referenced openconnector connector, never in this register.",
+        "description": "Configurable SMS reminder channel for booking reminders. Selects an SMS provider (messagebird, twilio, or a custom openconnector connector), carries a ≤160-char message template with {{variables}}, an active → inactive → archived lifecycle, delivery timing (sendMinutesBefore) and retry config. SMS dispatch is consumed from OpenRegister's notification engine (ADR-022); message rendering and phone/length validation are declarative calculations (ADR-031). Provider API credentials are stored in the referenced openconnector connector, never in this register.",
         "x-schema-org": "schema:Service",
         "type": "object",
         "required": [
@@ -40,7 +40,7 @@
               "archived"
             ],
             "default": "active",
-            "description": "Lifecycle state (REQ-SMS-006/007). active = SMS enabled and dispatched; inactive = paused; archived = retired for audit, cannot be reactivated.",
+            "description": "Lifecycle state. active = SMS enabled and dispatched; inactive = paused; archived = retired for audit, cannot be reactivated.",
             "title": "Status"
           },
           "provider": {
@@ -81,7 +81,7 @@
           "messageTemplate": {
             "type": "string",
             "maxLength": 160,
-            "description": "SMS message text with {{variables}} (REQ-SMS-003/009). Constrained to ≤160 characters (single SMS). Allowed variables: customerName, bookingRef, bookingDate, bookingTime, bookingLocation, organizationName, bookingUrl.",
+            "description": "SMS message text with {{variables}}. Constrained to ≤160 characters (single SMS). Allowed variables: customerName, bookingRef, bookingDate, bookingTime, bookingLocation, organizationName, bookingUrl.",
             "example": "Hallo {{customerName}}, herinnering: uw boeking op {{bookingDate}} om {{bookingTime}}. Ref: {{bookingRef}}",
             "title": "Message Template"
           },
@@ -97,7 +97,7 @@
             "type": "string",
             "nullable": true,
             "pattern": "^(\\+31|06)[0-9]{8,9}$",
-            "description": "Default E.164/NL phone number used when the booking contact has none (REQ-SMS-004/012). Validated against E.164 + NL rules (+31… or 06…).",
+            "description": "Default E.164/NL phone number used when the booking contact has none. Validated against E.164 + NL rules (+31… or 06…).",
             "example": "+31612345678",
             "title": "Fallback Phone Number"
           },
@@ -239,7 +239,7 @@
               "count": "{{retryCount}}",
               "intervalSeconds": "{{retryIntervalSeconds}}"
             },
-            "description": "Declarative SMS dispatch consumed from OR's notification engine (ADR-022, REQ-SMS-005/008/018/021). When a booking.reminder-due event fires, active channels render their template with booking variables and dispatch via the referenced openconnector connector — unless the recipient has opted out (skipWhen, respected when respectOptOut is true). Retries on transient provider error per retryCount/retryIntervalSeconds; failures are logged with a masked phone number. The pure-logic gating/rendering/normalization is implemented in Shillinq's SmsReminderDispatcher helper (provider-adapter interface), keeping the orchestration unit-tested while live dispatch stays in OR's engine."
+            "description": "Declarative SMS dispatch consumed from OR's notification engine (ADR-022). When a booking.reminder-due event fires, active channels render their template with booking variables and dispatch via the referenced openconnector connector — unless the recipient has opted out (skipWhen, respected when respectOptOut is true). Retries on transient provider error per retryCount/retryIntervalSeconds; failures are logged with a masked phone number. The pure-logic gating/rendering/normalization is implemented in Shillinq's SmsReminderDispatcher helper (provider-adapter interface), keeping the orchestration unit-tested while live dispatch stays in OR's engine."
           }
         },
         "x-openregister-rbac": {

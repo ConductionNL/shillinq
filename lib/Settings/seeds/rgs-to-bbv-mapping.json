@@ -6,7 +6,7 @@
     "bbvVersion": "2024",
     "version": "2024-01-01",
     "origin": "seeded",
-    "description": "Default mapping of RGS 3.5 accounts to BBV taakveld + BCF-compensable flag + IV3 bucket + autorisatieniveau. Operator-overrideable per administration; operator edits are preserved across repair re-runs by the _meta.source = operator-edited flag. The records below cover the common municipal account ranges across the eight BBV programma-buckets (0..8) plus overhead; not every municipality uses every account so the seed is intentionally broad. Each record carries _meta.source = seeded so the repair step can distinguish operator overrides on re-run.",
+    "description": "Default mapping of RGS 3.5 accounts to BBV taakveld + BCF-compensable flag + IV3 bucket + autorisatieniveau. Operator-overrideable per administration; operator edits are preserved across repair re-runs by the _meta.source = operator-edited flag. The records below cover the common municipal account ranges across the eight BBV programma-buckets (0.8) plus overhead; not every municipality uses every account so the seed is intentionally broad. Each record carries _meta.source = seeded so the repair step can distinguish operator overrides on re-run.",
     "imported": "2026-06-01T00:00:00Z",
     "schema": "BbvAccountMapping"
   },

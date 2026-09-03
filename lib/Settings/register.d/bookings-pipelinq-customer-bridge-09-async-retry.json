@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookings-pipelinq-customer-bridge-09-async-retry",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "kind: code — member 9 of 11 in the bookings-pipelinq-customer-bridge chain (ADR-032). Declares the two persistent registers the async-retry pipeline needs: TimelinePublishRetryEntry (events queued for retry after a synchronous publish failure) and TimelineDeadLetter (events that exhausted their retry budget, parked for admin follow-up). The retry queue (PersistentTimelineRetryQueue) writes a TimelinePublishRetryEntry and adds a PipelinqTimelineRetryJob to the Nextcloud IJobList; the job re-attempts publish on each tick with exponential backoff (1m, 5m, 30m) and dead-letters on max retries (D3 — sync publish, async fallback). Additive merge via SettingsService::deepMergeConfig (ADR-037). Both schemas are write-only operator-facing: humans never edit these in the UI, but the DeadLetter admin view (member 09) lists + manual-retries records."
+    "description": "kind: code — member 9 of 11 in the bookings-pipelinq-customer-bridge chain (ADR-032). Declares the two persistent registers the async-retry pipeline needs: TimelinePublishRetryEntry (events queued for retry after a synchronous publish failure) and TimelineDeadLetter (events that exhausted their retry budget, parked for admin follow-up). The retry queue (PersistentTimelineRetryQueue) writes a TimelinePublishRetryEntry and adds a PipelinqTimelineRetryJob to the Nextcloud IJobList; the job re-attempts publish on each tick with exponential backoff (1m, 5m, 30m) and dead-letters on max retries (D3 — sync publish, async fallback). Additive merge via SettingsService:deepMergeConfig (ADR-037). Both schemas are write-only operator-facing: humans never edit these in the UI, but the DeadLetter admin view (member 09) lists + manual-retries records."
   },
   "info": {
     "version": "0.1.0-bookings-pipelinq-customer-bridge-09"
@@ -32,19 +32,19 @@
         "properties": {
           "type": {
             "type": "string",
-            "description": "Timeline event type (e.g. booking.created, booking.confirmed). Mirrors TimelineEventDto::type().",
+            "description": "Timeline event type (e.g. booking.created, booking.confirmed). Mirrors TimelineEventDto:type.",
             "example": "booking.created",
             "title": "Type"
           },
           "externalId": {
             "type": "string",
-            "description": "Booking externalId (UUID) the event references. Mirrors TimelineEventDto::externalId().",
+            "description": "Booking externalId (UUID) the event references. Mirrors TimelineEventDto:externalId.",
             "example": "booking-abc-123",
             "title": "External ID"
           },
           "contactId": {
             "type": "string",
-            "description": "Linked pipelinq Contact id. Mirrors TimelineEventDto::contactId().",
+            "description": "Linked pipelinq Contact id. Mirrors TimelineEventDto:contactId.",
             "example": "org-kvk-12345678",
             "title": "Contact ID"
           },
@@ -84,7 +84,7 @@
           "nextRetryAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Earliest ISO-8601 UTC timestamp the retry job may attempt this entry again. Initialised to now() on enqueue, then advanced per exponential backoff (now + 1m / 5m / 30m) on each failed retry.",
+            "description": "Earliest ISO-8601 UTC timestamp the retry job may attempt this entry again. Initialised to now on enqueue, then advanced per exponential backoff (now + 1m / 5m / 30m) on each failed retry.",
             "example": "2026-06-07T12:35:56Z",
             "title": "Next Retry At"
           },

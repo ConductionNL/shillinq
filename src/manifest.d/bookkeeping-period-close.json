@@ -214,7 +214,7 @@
 					{
 						"id": "trial-balance-preview",
 						"label": "Trial balance preview",
-						"description": "Open the trial balance filtered to this period; surfaces as the operator pre-close preview link per REQ-PC-007.",
+						"description": "Open the trial balance filtered to this period; surfaces as the operator pre-close preview link.",
 						"route": "/bookkeeping/trial-balance?periodId=:periodId",
 						"target": "TrialBalance",
 						"visibleWhen": {

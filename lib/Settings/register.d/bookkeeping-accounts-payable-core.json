@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-accounts-payable-core",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 2 — Accounts Payable (Core). Adds Payee, APTransaction, DunningNotice, PaymentRun schemas with x-openregister-lifecycle and x-openregister-aggregations per REQ-AP-001 .. REQ-AP-013. Mirrors the AR core. Consumes OR dunning-workflow (ADR-022) and OR scheduled-workflow for the issued → overdue transition (ADR-031 path 2). Sub-ledger materialises balanced GLTransaction via the T1 JournalEntry pattern. PaymentRun re-established as the canonical batch-payment schema (consolidate-accounts-payable). Seed data per REQ-AP-011 ships Dutch suppliers + a ZZP freelancer + a government payee + AP invoices spanning lifecycle states + an approved PaymentRun."
+    "description": "Tier 2 — Accounts Payable (Core). Adds Payee, APTransaction, DunningNotice, PaymentRun schemas with x-openregister-lifecycle and x-openregister-aggregations. Mirrors the AR core. Consumes OR dunning-workflow (ADR-022) and OR scheduled-workflow for the issued → overdue transition (ADR-031 path 2). Sub-ledger materialises balanced GLTransaction via the T1 JournalEntry pattern. PaymentRun re-established as the canonical batch-payment schema (consolidate-accounts-payable). Seed data ships Dutch suppliers + a ZZP freelancer + a government payee + AP invoices spanning lifecycle states + an approved PaymentRun."
   },
   "components": {
     "schemas": {
@@ -13,10 +13,10 @@
         "icon": "TruckOutline",
         "version": "0.2.0",
         "title": "Payee",
-        "description": "Canonical \"anyone we pay\" master for accounts payable per REQ-AP-002 + REQ-AP-012 — covers suppliers, vendors, AND freelancers (Dutch ZZP'ers / sole traders / contractors), plus government payees. Holds party contact details, payment terms, a structured bankAccount object (IBAN + BIC/SWIFT + account holder), payeeType, folded financial fields (creditLimit, apBalance), dunning policy reference, and default expense account. Folds in the retired VendorFinancialProfile duplicate. Symmetric to CustomerMaster on the AR side. Per REQ-AP-001 + ADR-024 (registers, not parallel PHP tables) + ADR-022 (consumes OR contact abstraction when available via contactRef).",
+        "description": "Canonical \"anyone we pay\" master for accounts payable + — covers suppliers, vendors, AND freelancers (Dutch ZZP'ers / sole traders / contractors), plus government payees. Holds party contact details, payment terms, a structured bankAccount object (IBAN + BIC/SWIFT + account holder), payeeType, folded financial fields (creditLimit, apBalance), dunning policy reference, and default expense account. Folds in the retired VendorFinancialProfile duplicate. Symmetric to CustomerMaster on the AR side. Per + ADR-024 (registers, not parallel PHP tables) + ADR-022 (consumes OR contact abstraction when available via contactRef).",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Vendor master register; every create / update / lifecycle transition is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022."
+          "description": "Vendor master register; every create / update / lifecycle transition is recorded on the OR audit-trail-immutable channel + ADR-022."
         },
         "x-schema-org": "schema:Organization",
         "configuration": {
@@ -57,7 +57,7 @@
               "government",
               "other"
             ],
-            "description": "Kind of party we pay per REQ-AP-012. supplier/vendor = trading companies; freelancer = Dutch ZZP'er / sole trader; contractor = subcontracted party; government = public-sector payee; other = anything else. The AP module treats every payeeType as a payable party.",
+            "description": "Kind of party we pay. supplier/vendor = trading companies; freelancer = Dutch ZZP'er / sole trader; contractor = subcontracted party; government = public-sector payee; other = anything else. The AP module treats every payeeType as a payable party.",
             "default": "supplier",
             "example": "supplier",
             "title": "Payee Type"
@@ -87,7 +87,7 @@
             "type": "integer",
             "minimum": 0,
             "default": 30,
-            "description": "Default payment term in days (auto-sets APTransaction.dueDate on creation per REQ-AP-003).",
+            "description": "Default payment term in days (auto-sets APTransaction.dueDate on creation per).",
             "example": 30,
             "title": "Payment Term Days"
           },
@@ -129,14 +129,14 @@
           },
           "creditLimit": {
             "type": "number",
-            "description": "Maximum outstanding AP balance permitted for this payee. Folded in from the retired VendorFinancialProfile per REQ-AP-012.",
+            "description": "Maximum outstanding AP balance permitted for this payee. Folded in from the retired VendorFinancialProfile.",
             "nullable": true,
             "example": 10000,
             "title": "Credit Limit"
           },
           "apBalance": {
             "type": "number",
-            "description": "Current open accounts-payable balance for this payee (derived open-AP total; mirrors the vendorOpenApBalance aggregation). Folded in from the retired VendorFinancialProfile per REQ-AP-012.",
+            "description": "Current open accounts-payable balance for this payee (derived open-AP total; mirrors the vendorOpenApBalance aggregation). Folded in from the retired VendorFinancialProfile.",
             "nullable": true,
             "example": 892.5,
             "title": "AP Balance"
@@ -150,7 +150,7 @@
           },
           "dunningPolicyRef": {
             "type": "string",
-            "description": "FK to OR dunning-workflow policy record if the extension is stable per ADR-022; else null. Drives REQ-AP-005 reminder cadence from the overdue state.",
+            "description": "FK to OR dunning-workflow policy record if the extension is stable per ADR-022; else null. Drives reminder cadence from the overdue state.",
             "nullable": true,
             "title": "Dunning Policy Ref"
           },
@@ -206,7 +206,7 @@
           },
           "contactRef": {
             "type": "string",
-            "description": "FK to OR contact abstraction if stable per ADR-022; else null. Symmetric to AR REQ-AR-002. Resolution deferred to implementing cycle.",
+            "description": "FK to OR contact abstraction if stable per ADR-022; else null. Symmetric to AR. Resolution deferred to implementing cycle.",
             "nullable": true,
             "title": "Contact Ref"
           },
@@ -300,10 +300,10 @@
         "icon": "ReceiptTextOutline",
         "version": "0.1.0",
         "title": "AP Transaction",
-        "description": "Accounts payable sub-ledger invoice recording vendor billing and payment obligation per REQ-AP-003. Posting (issued transition) materialises one balanced GLTransaction per T1 REQ-JE-007 (credit AP payable, debit expense per lines). Lifecycle: draft → received → issued → paid with partially-paid / overdue / disputed / written-off / voided branches per REQ-AP-004. The issued → overdue transition fires via OR ScheduledWorkflow (ADR-031 path 2 — no PHP cron job). Aged-payables aggregations (detail / summary / timeline) declared inline per REQ-AP-006 .. REQ-AP-008. Sub-ledger linkage: every GLLine emitted from issue or write-off carries subLedgerType=ap + subLedgerRef=<APTransaction UUID> (REQ-AP-001 scenario).",
+        "description": "Accounts payable sub-ledger invoice recording vendor billing and payment obligation. Posting (issued transition) materialises one balanced GLTransaction per T1 (credit AP payable, debit expense per lines). Lifecycle: draft → received → issued → paid with partially-paid / overdue / disputed / written-off / voided branches. The issued → overdue transition fires via OR ScheduledWorkflow (ADR-031 path 2 — no PHP cron job). Aged-payables aggregations (detail / summary / timeline) declared inline. Sub-ledger linkage: every GLLine emitted from issue or write-off carries subLedgerType=ap + subLedgerRef=<APTransaction UUID> (scenario).",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Bookkeeping sub-ledger register; every lifecycle transition (receive / issue / match / dispute / overdue / write-off / void) and every header/line edit is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. Audit trail is the canonical evidence chain for the AP write-off scenario per REQ-AP-005."
+          "description": "Bookkeeping sub-ledger register; every lifecycle transition (receive / issue / match / dispute / overdue / write-off / void) and every header/line edit is recorded on the OR audit-trail-immutable channel + ADR-022. Audit trail is the canonical evidence chain for the AP write-off scenario."
         },
         "x-schema-org": "schema:Invoice",
         "x-spec": "openspec/changes/bookkeeping-accounts-payable-core/specs/bookkeeping-accounts-payable-core/spec.md",
@@ -322,7 +322,7 @@
         "properties": {
           "invoiceNumber": {
             "type": "string",
-            "description": "Vendor invoice number. Unique per administration + vendorId (REQ-AP-003 scenario 2).",
+            "description": "Vendor invoice number. Unique per administration + vendorId (scenario 2).",
             "example": "ENECO-2026-04-0001",
             "title": "Invoice Number"
           },
@@ -440,34 +440,34 @@
               "written-off",
               "voided"
             ],
-            "description": "AP invoice lifecycle state per REQ-AP-004.",
+            "description": "AP invoice lifecycle state.",
             "default": "draft",
             "example": "received",
             "title": "State"
           },
           "glTransactionId": {
             "type": "string",
-            "description": "Back-reference to the materialised GLTransaction once the invoice is issued (REQ-AP-001 sub-ledger linkage).",
+            "description": "Back-reference to the materialised GLTransaction once the invoice is issued (sub-ledger linkage).",
             "nullable": true,
             "example": "gl-txn-2026-ap-0001",
             "title": "GL Transaction ID"
           },
           "writeOffReason": {
             "type": "string",
-            "description": "Operator-authored audit-trailed reason for write-off. Required on the writeOff lifecycle transition per REQ-AP-005.",
+            "description": "Operator-authored audit-trailed reason for write-off. Required on the writeOff lifecycle transition.",
             "nullable": true,
             "example": "Vendor administratie afgewikkeld; restant oninbaar per leveranciersbericht 2026-06-01.",
             "title": "Write Off Reason"
           },
           "writeOffGlTransactionId": {
             "type": "string",
-            "description": "Back-reference to the compensating GLTransaction emitted on write-off (debit AP payable, credit bad-debt recovery/write-off expense). Per REQ-AP-005.",
+            "description": "Back-reference to the compensating GLTransaction emitted on write-off (debit AP payable, credit bad-debt recovery/write-off expense). Per.",
             "nullable": true,
             "title": "Write Off GL Transaction ID"
           },
           "periodId": {
             "type": "string",
-            "description": "FK to the FiscalPeriod for GL posting (resolved on issue transition per REQ-AP-004 guard 2).",
+            "description": "FK to the FiscalPeriod for GL posting (resolved on issue transition guard 2).",
             "nullable": true,
             "title": "Period ID"
           },
@@ -509,7 +509,7 @@
             },
             "overdue": {
               "label": "Overdue",
-              "description": "today > dueDate and no full payment match yet. OR dunning-workflow drives REQ-AP-005 reminder cadence from this state."
+              "description": "today > dueDate and no full payment match yet. OR dunning-workflow drives reminder cadence from this state."
             },
             "disputed": {
               "label": "Disputed",
@@ -517,11 +517,11 @@
             },
             "written-off": {
               "label": "Written off",
-              "description": "Vendor restant uncollectible / waived; compensating GL posting emitted per REQ-AP-005. Terminal state."
+              "description": "Vendor restant uncollectible / waived; compensating GL posting emitted. Terminal state."
             },
             "voided": {
               "label": "Voided",
-              "description": "Issued invoice voided. The materialised issue GLTransaction MUST already be reversed per T1 REQ-GL-004."
+              "description": "Issued invoice voided. The materialised issue GLTransaction MUST already be reversed per T1."
             }
           },
           "transitions": {
@@ -529,7 +529,7 @@
               "from": "draft",
               "to": "received",
               "label": "Receive invoice",
-              "description": "Operator records vendor invoice receipt. Guard: vendor invoice number unique per (administrationId, vendorId) per REQ-AP-003 scenario 2.",
+              "description": "Operator records vendor invoice receipt. Guard: vendor invoice number unique per (administrationId, vendorId) scenario 2.",
               "requires": "OCA\\Shillinq\\Lifecycle\\APGuard::isInvoiceNumberUnique",
               "x-adr-031-exception": "Single-method guard pending OR's unique-key extension stabilisation. Documented per ADR-031 §'PHP guards remain a legitimate seam' and the spec's REQ-AP-005 fallback clause."
             },
@@ -537,7 +537,7 @@
               "from": "received",
               "to": "issued",
               "label": "Issue / post invoice",
-              "description": "Operator approves and posts the AP invoice. Guards: (1) balanced materialisation per T1 REQ-JE-007; (2) FiscalPeriod open per REQ-PC-004; (3) Payee.lifecycleState=active. Actions: (a) materialise one balanced GLTransaction (debit expense per line, credit AP payable account); (b) set glTransactionId back-reference; (c) set periodId from invoiceDate.",
+              "description": "Operator approves and posts the AP invoice. Guards: (1) balanced materialisation per T1; (2) FiscalPeriod open; (3) Payee.lifecycleState=active. Actions: (a) materialise one balanced GLTransaction (debit expense per line, credit AP payable account); (b) set glTransactionId back-reference; (c) set periodId from invoiceDate.",
               "requires": "OCA\\Shillinq\\Lifecycle\\BalanceGuard::isBalanced"
             },
             "matchFull": {
@@ -548,7 +548,7 @@
               ],
               "to": "paid",
               "label": "Match full payment",
-              "description": "Operator confirms a bank-reconciliation ReconciliationMatch per REQ-AP-009. Guard: cumulative matched amount = totalAmount."
+              "description": "Operator confirms a bank-reconciliation ReconciliationMatch. Guard: cumulative matched amount = totalAmount."
             },
             "matchPartial": {
               "from": [
@@ -557,7 +557,7 @@
               ],
               "to": "partially-paid",
               "label": "Match partial payment",
-              "description": "Operator confirms a bank-reconciliation ReconciliationMatch per REQ-AP-009 where matched amount < totalAmount."
+              "description": "Operator confirms a bank-reconciliation ReconciliationMatch where matched amount < totalAmount."
             },
             "markOverdue": {
               "from": [
@@ -566,7 +566,7 @@
               ],
               "to": "overdue",
               "label": "Mark overdue",
-              "description": "Scheduled lifecycle action fires when today > dueDate and no full payment match yet. Triggered by OR ScheduledWorkflow per REQ-AP-004 + ADR-031 path 2 — NOT a shillinq *Job PHP class.",
+              "description": "Scheduled lifecycle action fires when today > dueDate and no full payment match yet. Triggered by OR ScheduledWorkflow + ADR-031 path 2 — NOT a shillinq *Job PHP class.",
               "x-scheduled-workflow": {
                 "primitive": "OR.ScheduledWorkflow",
                 "cron": "0 1 * * *",
@@ -589,7 +589,7 @@
               "from": "overdue",
               "to": "written-off",
               "label": "Write off",
-              "description": "Operator in role controller writes off the residual balance. Action: materialise a compensating balanced GLTransaction (debit AP payable account, credit bad-debt recovery / write-off account). Audit-trailed reason required per REQ-AP-005. Sets writeOffGlTransactionId back-reference.",
+              "description": "Operator in role controller writes off the residual balance. Action: materialise a compensating balanced GLTransaction (debit AP payable account, credit bad-debt recovery / write-off account). Audit-trailed reason required. Sets writeOffGlTransactionId back-reference.",
               "requires": "OCA\\Shillinq\\Lifecycle\\APGuard::requireWriteOffReason",
               "x-rbac-role": "controller"
             },
@@ -597,19 +597,19 @@
               "from": "issued",
               "to": "voided",
               "label": "Void invoice",
-              "description": "Operator voids the issued invoice. Guard: materialised GLTransaction MUST already be reversed per T1 REQ-GL-004."
+              "description": "Operator voids the issued invoice. Guard: materialised GLTransaction MUST already be reversed per T1."
             }
           },
           "requires": {
             "dunning": {
               "source": "openregister-dunning-workflow",
-              "description": "Per REQ-AP-005 the dunning cadence (reminder-1 / reminder-2 / formal-notice / collection) is owned by OR's dunning-workflow extension. The policy referenced via Payee.dunningPolicyRef drives DunningNotice creation from the overdue state. If OR's extension is not yet stable at implementation time, ADR-031's exception path applies: OCA\\Shillinq\\Lifecycle\\APGuard ships a single-method fallback documented in the spec."
+              "description": "Per the dunning cadence (reminder-1 / reminder-2 / formal-notice / collection) is owned by OR's dunning-workflow extension. The policy referenced via Payee.dunningPolicyRef drives DunningNotice creation from the overdue state. If OR's extension is not yet stable at implementation time, ADR-031's exception path applies: OCA\\Shillinq\\Lifecycle\\APGuard ships a single-method fallback documented in the spec."
             }
           }
         },
         "x-openregister-aggregations": {
           "agedPayablesDetail": {
-            "description": "REQ-AP-006: Aged Payables Detail report — per-invoice breakdown grouped by vendor and due-date bucket. Excludes paid / written-off / voided. BLOCKED (cross-tab): OpenRegister's aggregation engine honours only a single-field groupBy ({field: <name>}) today — this multi-field groupBy [vendorId, dueDateBucket] plus the buckets/return projection are INERT engine-side and must not be read as a working capability. Tracked by openregister#432 (honour multi-field groupBy); the shillinq spend-analytics feature ships single-dimension views against the honoured path meanwhile.",
+            "description": "Aged Payables Detail report — per-invoice breakdown grouped by vendor and due-date bucket. Excludes paid / written-off / voided. BLOCKED (cross-tab): OpenRegister's aggregation engine honours only a single-field groupBy ({field: <name>}) today — this multi-field groupBy [vendorId, dueDateBucket] plus the buckets/return projection are INERT engine-side and must not be read as a working capability. Tracked by openregister#432 (honour multi-field groupBy); the shillinq spend-analytics feature ships single-dimension views against the honoured path meanwhile.",
             "source": "APTransaction",
             "where": {
               "state": {
@@ -671,7 +671,7 @@
             ]
           },
           "agedPayablesSummary": {
-            "description": "REQ-AP-007: Aged Payables Summary report — vendor totals grouped by aging bucket. Excludes paid / written-off / voided. BLOCKED (cross-tab): the multi-field groupBy [vendorId, agingBucket] and the aggregate/buckets/return projection maps are INERT — OpenRegister honours only a single-field groupBy ({field: <name>}) today. Tracked by openregister#432.",
+            "description": "Aged Payables Summary report — vendor totals grouped by aging bucket. Excludes paid / written-off / voided. BLOCKED (cross-tab): the multi-field groupBy [vendorId, agingBucket] and the aggregate/buckets/return projection maps are INERT — OpenRegister honours only a single-field groupBy ({field: <name>}) today. Tracked by openregister#432.",
             "source": "APTransaction",
             "where": {
               "state": {
@@ -729,7 +729,7 @@
             ]
           },
           "agedPayablesTimeline": {
-            "description": "REQ-AP-008: Aged Payables Timeline report — payment due dates with amounts and vendor summary. Excludes paid / written-off / voided.",
+            "description": "Aged Payables Timeline report — payment due dates with amounts and vendor summary. Excludes paid / written-off / voided.",
             "source": "APTransaction",
             "where": {
               "state": {
@@ -922,10 +922,10 @@
         "icon": "EmailAlertOutline",
         "version": "0.1.0",
         "title": "Dunning Notice",
-        "description": "Per-AP-invoice dunning timeline record per REQ-AP-005. One row per reminder dispatched against one APTransaction in the overdue state. Reminder cadence (reminder-1 at +14d, reminder-2 at +30d, formal-notice at +45d, collection at +60d — all customisable per administration via OR dunning-workflow policy) is owned by OR's dunning-workflow extension, NOT by an app-local PHP service (ADR-022 anti-pattern). This register is a thin audit-trail of what OR's engine emitted.",
+        "description": "Per-AP-invoice dunning timeline record. One row per reminder dispatched against one APTransaction in the overdue state. Reminder cadence (reminder-1 at +14d, reminder-2 at +30d, formal-notice at +45d, collection at +60d — all customisable per administration via OR dunning-workflow policy) is owned by OR's dunning-workflow extension, NOT by an app-local PHP service (ADR-022 anti-pattern). This register is a thin audit-trail of what OR's engine emitted.",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Dunning-notice timeline; every dispatch and acknowledgement is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022."
+          "description": "Dunning-notice timeline; every dispatch and acknowledgement is recorded on the OR audit-trail-immutable channel + ADR-022."
         },
         "x-schema-org": "schema:Message",
         "x-spec": "openspec/changes/bookkeeping-accounts-payable-core/specs/bookkeeping-accounts-payable-core/spec.md",
@@ -952,7 +952,7 @@
               "formal-notice",
               "collection"
             ],
-            "description": "Dunning escalation level per REQ-AP-005. Customisable cadence via OR dunning-workflow policy referenced from Payee.dunningPolicyRef.",
+            "description": "Dunning escalation level. Customisable cadence via OR dunning-workflow policy referenced from Payee.dunningPolicyRef.",
             "example": "reminder-1",
             "title": "Reminder Level"
           },
@@ -1019,10 +1019,10 @@
         "icon": "BankTransfer",
         "version": "0.3.0",
         "title": "Payment Run",
-        "description": "A batch of approved Payee payments per REQ-AP-013 (consolidate-accounts-payable). Groups open AP invoices into a single outgoing payment instruction with a declarative lifecycle draft → approved → exported → reconciled. Approval (RBAC controller) is a hard gate before export — there is NO direct draft → exported transition. The actual SEPA pain.001 / CSV bank-file GENERATION is the separate payment-run-sepa-export change (writes exportedFileRef); this schema models only the batch + its lifecycle. Each paymentLines[] entry references one Payee + one APTransaction. bankAccount.iban / bankAccount.bic on the referenced Payee are the SEPA creditor source of truth.",
+        "description": "A batch of approved Payee payments (consolidate-accounts-payable). Groups open AP invoices into a single outgoing payment instruction with a declarative lifecycle draft → approved → exported → reconciled. Approval (RBAC controller) is a hard gate before export — there is NO direct draft → exported transition. The actual SEPA pain.001 / CSV bank-file GENERATION is the separate payment-run-sepa-export change (writes exportedFileRef); this schema models only the batch + its lifecycle. Each paymentLines[] entry references one Payee + one APTransaction. bankAccount.iban / bankAccount.bic on the referenced Payee are the SEPA creditor source of truth.",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Payment-batch register; every create / approve / export / reconcile transition is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. Approval and export are the auditable control points before money leaves the administration."
+          "description": "Payment-batch register; every create / approve / export / reconcile transition is recorded on the OR audit-trail-immutable channel + ADR-022. Approval and export are the auditable control points before money leaves the administration."
         },
         "x-schema-org": "schema:PaymentService",
         "x-spec": "openspec/changes/bookkeeping-accounts-payable-core/specs/bookkeeping-accounts-payable-core/spec.md",
@@ -1203,7 +1203,7 @@
               "from": "draft",
               "to": "approved",
               "label": "Approve payment run",
-              "description": "Controller approves the batch. Four-eyes segregation of duties (payment-run-four-eyes, REQ-PR4E-001): the approver MUST differ from whoever prepared the batch — enforced server-side by FourEyesPaymentRunGuard, which derives the preparer from OpenRegister's immutable audit trail (ADR-022) and fails closed when the preparer is indeterminate. There is NO direct draft → exported transition. Approval is the control point before money leaves the administration.",
+              "description": "Controller approves the batch. Four-eyes segregation of duties (payment-run-four-eyes): the approver MUST differ from whoever prepared the batch — enforced server-side by FourEyesPaymentRunGuard, which derives the preparer from OpenRegister's immutable audit trail (ADR-022) and fails closed when the preparer is indeterminate. There is NO direct draft → exported transition. Approval is the control point before money leaves the administration.",
               "x-rbac-role": "controller",
               "requires": "OCA\\Shillinq\\Lifecycle\\FourEyesPaymentRunGuard"
             },
@@ -1211,7 +1211,7 @@
               "from": "approved",
               "to": "exported",
               "label": "Export payment run",
-              "description": "Generate the SEPA pain.001 / CSV bank file (payment-run-sepa-export change) and set exportedFileRef + exportedAt. Only an approved batch can be exported. Duplicate-payment control (payment-control-guards, REQ-PCG-001): PaymentRunDuplicateGuard rejects the export server-side when any paymentLines[].apTransactionRef settles an AP invoice that is already paid, or is already queued in another open/executed PaymentRun (draft/approved/exported). Export is the last declarative choke point before money leaves — the approve transition's requires slot is occupied by FourEyesPaymentRunGuard and the OR lifecycle engine resolves a single requires guard per transition. Fails closed on any indeterminate check.",
+              "description": "Generate the SEPA pain.001 / CSV bank file (payment-run-sepa-export change) and set exportedFileRef + exportedAt. Only an approved batch can be exported. Duplicate-payment control (payment-control-guards): PaymentRunDuplicateGuard rejects the export server-side when any paymentLines[].apTransactionRef settles an AP invoice that is already paid, or is already queued in another open/executed PaymentRun (draft/approved/exported). Export is the last declarative choke point before money leaves — the approve transition's requires slot is occupied by FourEyesPaymentRunGuard and the OR lifecycle engine resolves a single requires guard per transition. Fails closed on any indeterminate check.",
               "requires": "OCA\\Shillinq\\Lifecycle\\PaymentRunDuplicateGuard"
             },
             "reconcile": {

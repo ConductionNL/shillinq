@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "administration-import-migration",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json. ADR-031 declarative-first lifecycle + notifications. ADR-022 consume OR object/contact surfaces (no parallel PHP model).",
-    "description": "Tier 2 — Administration Import & Migration. Declares ImportBatch (XAF/CSV migration unit with a fail-closed lifecycle: draft → parsing → staged → mapping → validated | validation_failed → dry_run_complete → posting → posted | posting_failed → reversed; NO validated→posting edge so a dry-run is mandatory; reversal only while the period is open, guarded by OCA\\Shillinq\\Lifecycle\\ImportBatchGuard::canReverse) and ImportMapping (per-account source→target mapping rows with RGS-based auto-suggestion; unmapped/unconfirmed rows block validation) per REQ-AIM-001 .. REQ-AIM-010. Source files live in NC Files (link, don't store). The five x-openregister-notifications rules fire on ImportBatch.status changes (validation_failed / dry_run_complete / posted / posting_failed / reversed), metadata-only nl+en. Distinct from AdministrationMigrationService (bookkeeping-multi-administratie) which handles GL inter-administration migration journal drafts — no overlap. Seed data ships demo ImportBatch + ImportMapping rows under administrationId 'adm-shillinq-demo'."
+    "description": "Tier 2 — Administration Import & Migration. Declares ImportBatch (XAF/CSV migration unit with a fail-closed lifecycle: draft → parsing → staged → mapping → validated | validation_failed → dry_run_complete → posting → posted | posting_failed → reversed; NO validated→posting edge so a dry-run is mandatory; reversal only while the period is open, guarded by OCA\\Shillinq\\Lifecycle\\ImportBatchGuard:canReverse) and ImportMapping (per-account source→target mapping rows with RGS-based auto-suggestion; unmapped/unconfirmed rows block validation). Source files live in NC Files (link, don't store). The five x-openregister-notifications rules fire on ImportBatch.status changes (validation_failed / dry_run_complete / posted / posting_failed / reversed), metadata-only nl+en. Distinct from AdministrationMigrationService (bookkeeping-multi-administratie) which handles GL inter-administration migration journal drafts — no overlap. Seed data ships demo ImportBatch + ImportMapping rows under administrationId 'adm-shillinq-demo'."
   },
   "components": {
     "schemas": {
@@ -13,10 +13,10 @@
         "icon": "DatabaseImportOutline",
         "version": "0.1.0",
         "title": "Import Batch",
-        "description": "A single administration migration tracked end-to-end per REQ-AIM-001/002. The unit of lifecycle, idempotency, reporting, and reversal. Source files live in Nextcloud Files (link via sourceFiles, never copied into the register). Staged parse output, the validation report, the dry-run report, and posting references all live inline on the batch. CRUD goes through OpenRegister's generic object surface (ADR-022); there is NO parallel PHP model or import table.",
+        "description": "A single administration migration tracked end-to-end. The unit of lifecycle, idempotency, reporting, and reversal. Source files live in Nextcloud Files (link via sourceFiles, never copied into the register). Staged parse output, the validation report, the dry-run report, and posting references all live inline on the batch. CRUD goes through OpenRegister's generic object surface (ADR-022); there is NO parallel PHP model or import table.",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Import-batch register; every create / update / lifecycle transition (parse / stage / map / validate / dry-run / post / reverse) is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. The audit trail is the evidence chain for the migration dossier."
+          "description": "Import-batch register; every create / update / lifecycle transition (parse / stage / map / validate / dry-run / post / reverse) is recorded on the OR audit-trail-immutable channel + ADR-022. The audit trail is the evidence chain for the migration dossier."
         },
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/administration-import-migration/specs/administration-import-migration/spec.md",
@@ -92,7 +92,7 @@
           },
           "scope": {
             "type": "object",
-            "description": "Which artifacts to migrate per REQ-AIM-001. At least one flag must be true to leave draft.",
+            "description": "Which artifacts to migrate. At least one flag must be true to leave draft.",
             "properties": {
               "chartOfAccounts": {
                 "type": "boolean",
@@ -136,14 +136,14 @@
               "posting_failed",
               "reversed"
             ],
-            "description": "Import lifecycle state per REQ-AIM-002. Fail-closed; dry-run is mandatory before posting (no validated→posting edge).",
+            "description": "Import lifecycle state. Fail-closed; dry-run is mandatory before posting (no validated→posting edge).",
             "default": "draft",
             "example": "draft",
             "title": "Status"
           },
           "stagedCounts": {
             "type": "object",
-            "description": "Computed counts after parsing: accounts / journal lines / AR items / AP items / relations staged (REQ-AIM-002 scenario).",
+            "description": "Computed counts after parsing: accounts / journal lines / AR items / AP items / relations staged (scenario).",
             "nullable": true,
             "properties": {
               "ledgerAccounts": {
@@ -187,13 +187,13 @@
           },
           "validationReport": {
             "type": "object",
-            "description": "Structured findings from validate(): error-severity findings block (transition to validation_failed); warning-severity findings inform. Each finding carries code / severity / message / context.",
+            "description": "Structured findings from validate: error-severity findings block (transition to validation_failed); warning-severity findings inform. Each finding carries code / severity / message / context.",
             "nullable": true,
             "title": "Validation Report"
           },
           "dryRunReport": {
             "type": "object",
-            "description": "The exact would-be result per REQ-AIM-008: full opening journal (per mapped account), would-be AR/AP open-item lists, contact/master list with dedupe outcomes, warning findings, and a stagedHash. Posting must match this exactly or fail to posting_failed.",
+            "description": "The exact would-be result: full opening journal (per mapped account), would-be AR/AP open-item lists, contact/master list with dedupe outcomes, warning findings, and a stagedHash. Posting must match this exactly or fail to posting_failed.",
             "nullable": true,
             "title": "Dry Run Report"
           },
@@ -211,7 +211,7 @@
           },
           "mappingProfile": {
             "type": "string",
-            "description": "Saved mapping-profile name applied to this batch and reusable across batches/administrations (the accountant-with-50-clients case, REQ-AIM-004).",
+            "description": "Saved mapping-profile name applied to this batch and reusable across batches/administrations (the accountant-with-50-clients case).",
             "nullable": true,
             "example": "kantoor-standaard",
             "title": "Mapping Profile"
@@ -250,7 +250,7 @@
             },
             "validation_failed": {
               "label": "Validation failed",
-              "description": "At least one error-severity finding (e.g. unbalanced opening journal, control-account mismatch, unmapped account, closed period). Terminal review state; no journal/open item/contact written (REQ-AIM-002 scenario)."
+              "description": "At least one error-severity finding (e.g. unbalanced opening journal, control-account mismatch, unmapped account, closed period). Terminal review state; no journal/open item/contact written (scenario)."
             },
             "dry_run_complete": {
               "label": "Dry-run complete",
@@ -285,19 +285,19 @@
               "from": "parsing",
               "to": "staged",
               "label": "Staged",
-              "description": "Parse finished; stagedCounts + stagingPayload populated by ImportPipelineService::stage()."
+              "description": "Parse finished; stagedCounts + stagingPayload populated by ImportPipelineService:stage."
             },
             "startMapping": {
               "from": "staged",
               "to": "mapping",
               "label": "Start mapping",
-              "description": "Begin mapping resolution/review. ImportPipelineService::resolveMappings() persists ImportMapping rows."
+              "description": "Begin mapping resolution/review. ImportPipelineService:resolveMappings persists ImportMapping rows."
             },
             "validate": {
               "from": "mapping",
               "to": "validated",
               "label": "Validate",
-              "description": "Run all validation checks (balanced opening journal, open period, AR/AP control = open items, every referenced mapping confirmed & mapped). Fails closed to validation_failed on any error finding (REQ-AIM-005/006/007). Unmapped or unconfirmed referenced rows block this transition."
+              "description": "Run all validation checks (balanced opening journal, open period, AR/AP control = open items, every referenced mapping confirmed & mapped). Fails closed to validation_failed on any error finding. Unmapped or unconfirmed referenced rows block this transition."
             },
             "validationFailed": {
               "from": "mapping",
@@ -309,13 +309,13 @@
               "from": "validated",
               "to": "dry_run_complete",
               "label": "Dry-run",
-              "description": "Generate and persist the full would-be result on dryRunReport and record the staged-state hash. MANDATORY before posting — there is deliberately NO validated→posting edge (REQ-AIM-002/008)."
+              "description": "Generate and persist the full would-be result on dryRunReport and record the staged-state hash. MANDATORY before posting — there is deliberately NO validated→posting edge."
             },
             "post": {
               "from": "dry_run_complete",
               "to": "posting",
               "label": "Post import",
-              "description": "Begin posting. Idempotent under idempotencyKey; re-post returns existing postingRefs. Composes the existing journal-entry, AR/AP, and NC contacts surfaces (REQ-AIM-005/006/007/009). Runs under OR background machinery."
+              "description": "Begin posting. Idempotent under idempotencyKey; re-post returns existing postingRefs. Composes the existing journal-entry, AR/AP, and NC contacts surfaces. Runs under OR background machinery."
             },
             "posted": {
               "from": "posting",
@@ -511,10 +511,10 @@
         "icon": "SwapHorizontalBold",
         "version": "0.1.0",
         "title": "Import Mapping",
-        "description": "One source-account → Shillinq-account mapping row per REQ-AIM-004. Separate rows (not embedded on the batch) because a real chart has hundreds of accounts and the mapping needs its own review grid, per-row status, and reuse as a saved profile across an accountant's client migrations. Resolution order: source RGS code → target with same RGS (rgs-auto, pre-confirmed); saved profile hit (profile-default); code/name similarity (manual review); else unmapped. Unmapped or unconfirmed rows referenced by staged data block the mapping→validated transition (fail-closed).",
+        "description": "One source-account → Shillinq-account mapping row. Separate rows (not embedded on the batch) because a real chart has hundreds of accounts and the mapping needs its own review grid, per-row status, and reuse as a saved profile across an accountant's client migrations. Resolution order: source RGS code → target with same RGS (rgs-auto, pre-confirmed); saved profile hit (profile-default); code/name similarity (manual review); else unmapped. Unmapped or unconfirmed rows referenced by staged data block the mapping→validated transition (fail-closed).",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Mapping-review register; every resolution and operator confirmation is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022."
+          "description": "Mapping-review register; every resolution and operator confirmation is recorded on the OR audit-trail-immutable channel + ADR-022."
         },
         "x-schema-org": "schema:PropertyValue",
         "x-spec": "openspec/changes/administration-import-migration/specs/administration-import-migration/spec.md",

@@ -160,7 +160,7 @@
               "onderwijsinstelling",
               "private_partij"
             ],
-            "description": "Beneficiary-type — bepaalt aanbestedings-threshold (€143k centraal / €221k decentraal, REQ-EUF-005).",
+            "description": "Beneficiary-type — bepaalt aanbestedings-threshold (€143k centraal / €221k decentraal).",
             "nullable": true,
             "title": "Beneficiary Type"
           },
@@ -309,7 +309,7 @@
         "icon": "ScaleBalance",
         "version": "0.1.0",
         "title": "Eligibility-rule",
-        "description": "Fonds- en regelgeving-specifieke cost-eligibility rule per regelgevingsartikel (ERDF 2021/1058 art 7, ESF+ 2021/1057 art 5, JTF 2021/1056 art 12, RRF 2021/241 art 4). Declaratieve cost-category mapping + SCO + drempelbedragen + bewijsvereisten (REQ-EUF-001, REQ-EUF-011, ADR-031 — geen PHP-rekenservice).",
+        "description": "Fonds- en regelgeving-specifieke cost-eligibility rule per regelgevingsartikel (ERDF 2021/1058 art 7, ESF+ 2021/1057 art 5, JTF 2021/1056 art 12, RRF 2021/241 art 4). Declaratieve cost-category mapping + SCO + drempelbedragen + bewijsvereisten (ADR-031 — geen PHP-rekenservice).",
         "x-schema-org": "schema:Legislation",
         "type": "object",
         "required": [
@@ -371,7 +371,7 @@
           },
           "excludedActivities": {
             "type": "array",
-            "description": "Uitgesloten activiteiten (bv. politieke campagne onder ESF+ art 5(2)). Boekingen hierop worden geblokkeerd (REQ-EUF-011 scenario 2).",
+            "description": "Uitgesloten activiteiten (bv. politieke campagne onder ESF+ art 5(2)). Boekingen hierop worden geblokkeerd (scenario 2).",
             "items": {
               "type": "string"
             },
@@ -416,14 +416,14 @@
           },
           "vatRecoverableNotEligible": {
             "type": "boolean",
-            "description": "Indien true: terugvorderbare BTW is NIET subsidiabel voor deze cost-categories (dubbel-subsidy-preventie, REQ-EUF-002).",
+            "description": "Indien true: terugvorderbare BTW is NIET subsidiabel voor deze cost-categories (dubbel-subsidy-preventie).",
             "default": true,
             "title": "VAT Recoverable Not Eligible"
           },
           "procurementThresholdCentral": {
             "type": "number",
             "minimum": 0,
-            "description": "Aanbestedings-threshold centrale overheid leveringen/diensten in EUR (€143.000 voor 2026, REQ-EUF-005).",
+            "description": "Aanbestedings-threshold centrale overheid leveringen/diensten in EUR (€143.000 voor 2026).",
             "nullable": true,
             "example": 143000.0,
             "title": "Procurement Threshold Central"
@@ -431,7 +431,7 @@
           "procurementThresholdDecentral": {
             "type": "number",
             "minimum": 0,
-            "description": "Aanbestedings-threshold decentrale overheid leveringen in EUR (€221.000 voor 2026, REQ-EUF-005).",
+            "description": "Aanbestedings-threshold decentrale overheid leveringen in EUR (€221.000 voor 2026).",
             "nullable": true,
             "example": 221000.0,
             "title": "Procurement Threshold Decentral"
@@ -519,7 +519,7 @@
         "icon": "BankOutline",
         "version": "0.1.0",
         "title": "Gescheiden EU-administratie",
-        "description": "Per-project gescheiden EU-fondsen-sub-administratie met dedicated rekeningnummers, EU-vlag op alle transacties en tussenrekening-reconciliatie (REQ-EUF-002, art 61 CPR separate accounting).",
+        "description": "Per-project gescheiden EU-fondsen-sub-administratie met dedicated rekeningnummers, EU-vlag op alle transacties en tussenrekening-reconciliatie (art 61 CPR separate accounting).",
         "x-schema-org": "schema:BankAccount",
         "type": "object",
         "required": [
@@ -672,7 +672,7 @@
         "icon": "CashMultiple",
         "version": "0.1.0",
         "title": "EU-uitgave",
-        "description": "Individuele EU-fondsen-uitgave met cost-category, VAT-treatment, declaration-status en co-funding (REQ-EUF-002 t/m REQ-EUF-008). Dubbele boeking (reguliere GL + gesegregeerde EU-administratie). Status-lifecycle van geboekt → betaald_door_EC → eventueel gecorrigeerd.",
+        "description": "Individuele EU-fondsen-uitgave met cost-category, VAT-treatment, declaration-status en co-funding (t/m). Dubbele boeking (reguliere GL + gesegregeerde EU-administratie). Status-lifecycle van geboekt → betaald_door_EC → eventueel gecorrigeerd.",
         "x-schema-org": "schema:MonetaryAmount",
         "type": "object",
         "required": [
@@ -712,7 +712,7 @@
           },
           "glJournalEntryId": {
             "type": "string",
-            "description": "FK naar JournalEntry/GLTransaction in de reguliere GL (dubbele boeking, REQ-EUF-002).",
+            "description": "FK naar JournalEntry/GLTransaction in de reguliere GL (dubbele boeking).",
             "nullable": true,
             "example": "je-2026-0042",
             "title": "GL Journal Entry ID"
@@ -750,7 +750,7 @@
           "euCoFundingAmount": {
             "type": "number",
             "minimum": 0,
-            "description": "EU-co-financiering deel (declaredAmount × euProject.euCoFundingRate, REQ-EUF-002).",
+            "description": "EU-co-financiering deel (declaredAmount × euProject.euCoFundingRate).",
             "nullable": true,
             "example": 5000.0,
             "title": "Eu Co Funding Amount"
@@ -763,7 +763,7 @@
           },
           "procurementRequired": {
             "type": "boolean",
-            "description": "Aanbestedingsplichtig (grossAmount boven threshold voor beneficiary-type, REQ-EUF-005).",
+            "description": "Aanbestedingsplichtig (grossAmount boven threshold voor beneficiary-type).",
             "default": false,
             "title": "Procurement Required"
           },
@@ -819,7 +819,7 @@
               "in_audit",
               "gecorrigeerd"
             ],
-            "description": "Lifecycle state (REQ-EUF-002 t/m REQ-EUF-008).",
+            "description": "Lifecycle state (t/m).",
             "default": "posted",
             "title": "State"
           }
@@ -859,7 +859,7 @@
             },
             "gecorrigeerd": {
               "label": "Gecorrigeerd",
-              "description": "Financiële correctie applied (negatieve uitgave geboekt, REQ-EUF-008)."
+              "description": "Financiële correctie applied (negatieve uitgave geboekt)."
             }
           },
           "transitions": {
@@ -1010,7 +1010,7 @@
           },
           "euProjectId": {
             "type": "string",
-            "description": "FK naar EuProject.id, voor project-brede stukken (zichtbaarheidsdossier, REQ-EUF-010).",
+            "description": "FK naar EuProject.id, voor project-brede stukken (zichtbaarheidsdossier).",
             "nullable": true,
             "example": "eu-2026-kvw3",
             "title": "Eu Project ID"
@@ -1081,7 +1081,7 @@
           "capturedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Vastleggingsmoment (voor zichtbaarheidsbewijs: date foto/screenshot, REQ-EUF-010).",
+            "description": "Vastleggingsmoment (voor zichtbaarheidsbewijs: date foto/screenshot).",
             "nullable": true,
             "title": "Captured At"
           },
@@ -1181,7 +1181,7 @@
         "icon": "AlertOctagonOutline",
         "version": "0.1.0",
         "title": "Onregelmatigheid-melding",
-        "description": "Onregelmatigheden-detectie met OLAF-threshold €10k, IMS-schema-compliance en terugvordering (REQ-EUF-007, art 86 Verordening 2021/1060). Bij amount ≥ €10k geldt IMS-meldplicht; verdere declaraties op het betrokken project worden geblokkeerd tot correctie verwerkt.",
+        "description": "Onregelmatigheden-detectie met OLAF-threshold €10k, IMS-schema-compliance en terugvordering (art 86 Verordening 2021/1060). Bij amount ≥ €10k geldt IMS-meldplicht; verdere declaraties op het betrokken project worden geblokkeerd tot correctie verwerkt.",
         "x-schema-org": "schema:Report",
         "type": "object",
         "required": [
@@ -1247,7 +1247,7 @@
           },
           "imsReportable": {
             "type": "boolean",
-            "description": "Of het amount de OLAF-threshold van €10k overschrijdt en dus IMS-meldplichtig is (afgeleid bij creatie, REQ-EUF-007).",
+            "description": "Of het amount de OLAF-threshold van €10k overschrijdt en dus IMS-meldplichtig is (afgeleid bij creatie).",
             "default": false,
             "title": "Ims Reportable"
           },
@@ -1405,7 +1405,7 @@
         "icon": "History",
         "version": "0.1.0",
         "title": "Audit-trail",
-        "description": "Onveranderlijk append-only event-log voor alle EU-fondsen state-transities (boeking → declaratie → certificering → betaling → correctie → audit) met before/after-state en bewijs-URI (REQ-EUF-009, art 69 + 82 CPR). Maakt 5+ year reconstructie na project-sluiting mogelijk.",
+        "description": "Onveranderlijk append-only event-log voor alle EU-fondsen state-transities (boeking → declaratie → certificering → betaling → correctie → audit) met before/after-state en bewijs-URI (art 69 + 82 CPR). Maakt 5+ year reconstructie na project-sluiting mogelijk.",
         "x-schema-org": "schema:Action",
         "type": "object",
         "required": [

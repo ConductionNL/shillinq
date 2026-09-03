@@ -9,7 +9,7 @@
         "icon": "CalendarCheckOutline",
         "version": "0.4.0",
         "title": "Booking Order",
-        "description": "Base order/agreement primitive. Concrete kinds (booking, sales, purchase, grant, engagement, quote, blanket) discriminate via `orderType` and extend with their own tail; payments (deposits, disbursements) and lines are related objects (Payment / OrderLine), not fields. Booking orders (orderType=booking) keep the completed → invoiced lifecycle: on completion a final Invoice is materialised and linked via invoiceId; on cancellation after invoicing a reversing CreditNote is materialised (REQ-DI-001/002).",
+        "description": "Base order/agreement primitive. Concrete kinds (booking, sales, purchase, grant, engagement, quote, blanket) discriminate via `orderType` and extend with their own tail; payments (deposits, disbursements) and lines are related objects (Payment / OrderLine), not fields. Booking orders (orderType=booking) keep the completed → invoiced lifecycle: on completion a final Invoice is materialised and linked via invoiceId; on cancellation after invoicing a reversing CreditNote is materialised.",
         "x-schema-org": "schema:Order",
         "x-openregister-purpose": "fact",
         "type": "object",
@@ -131,7 +131,7 @@
           },
           "taxRate": {
             "type": "integer",
-            "description": "VAT percentage applied to the service line (21 standard, 9 reduced, 0 exempt) per REQ-DI-004.",
+            "description": "VAT percentage applied to the service line (21 standard, 9 reduced, 0 exempt).",
             "default": 21,
             "example": 21,
             "title": "Tax Rate"
@@ -174,7 +174,7 @@
           "invoiceId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the final Invoice created on completion. Null until completed; set by the complete transition action (REQ-DI-001/002).",
+            "description": "FK to the final Invoice created on completion. Null until completed; set by the complete transition action.",
             "example": "inv-final-2001",
             "title": "Invoice ID"
           },
@@ -243,13 +243,13 @@
               "from": "confirmed",
               "to": "completed",
               "label": "Complete order",
-              "description": "Operator confirms fulfilment/checkout. Gated by InvoiceFromBookingGuard (completedAt set, deposit authorised, not already invoiced) then materialises exactly one final Invoice with service + deposit-credit lines, linking Order.invoiceId back (REQ-DI-002, idempotent per REQ-DI-002).",
+              "description": "Operator confirms fulfilment/checkout. Gated by InvoiceFromBookingGuard (completedAt set, deposit authorised, not already invoiced) then materialises exactly one final Invoice with service + deposit-credit lines, linking Order.invoiceId back (idempotent per).",
               "requires": "OCA\\Shillinq\\Lifecycle\\InvoiceFromBookingGuard::canComplete",
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "materialise-final-invoice",
-                  "description": "Materialise exactly one final Invoice (with InvoiceLine children: a service line at the order tax rate and, when a deposit is authorised, a negative 0%-VAT deposit-credit line) and set Order.invoiceId. Declarative outcome per REQ-DI-002/003/004 — line amounts and the deposit credit are computed by InvoiceFromBookingGuard before persistence.",
+                  "description": "Materialise exactly one final Invoice (with InvoiceLine children: a service line at the order tax rate and, when a deposit is authorised, a negative 0%-VAT deposit-credit line) and set Order.invoiceId. Declarative outcome — line amounts and the deposit credit are computed by InvoiceFromBookingGuard before persistence.",
                   "actionParameters": {
                     "register": "shillinq",
                     "schema": "Invoice",
@@ -270,13 +270,13 @@
               "from": "completed",
               "to": "cancelled",
               "label": "Cancel invoiced order",
-              "description": "Cancel after a final Invoice was issued. Gated by BookingCancellationGuard and materialises exactly one reversing CreditNote against the linked Invoice (REQ-DI-006, idempotent).",
+              "description": "Cancel after a final Invoice was issued. Gated by BookingCancellationGuard and materialises exactly one reversing CreditNote against the linked Invoice (idempotent).",
               "requires": "OCA\\Shillinq\\Lifecycle\\BookingCancellationGuard::canCancel",
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "materialise-reversing-credit-note",
-                  "description": "Materialise exactly one CreditNote reversing the linked Invoice for the full invoice gross. Declarative outcome per REQ-DI-006; amounts computed by BookingCancellationGuard. The original Invoice is preserved.",
+                  "description": "Materialise exactly one CreditNote reversing the linked Invoice for the full invoice gross. Declarative outcome; amounts computed by BookingCancellationGuard. The original Invoice is preserved.",
                   "actionParameters": {
                     "register": "shillinq",
                     "schema": "CreditNote",
@@ -569,7 +569,7 @@
         "icon": "FormatListBulletedType",
         "version": "0.1.0",
         "title": "Invoice Line",
-        "description": "A single line on a final Invoice: either a positive service line (taxed at the order rate) or a negative deposit-credit line (0% VAT, because the deposit was already taxed at collection) per REQ-DI-003/004.",
+        "description": "A single line on a final Invoice: either a positive service line (taxed at the order rate) or a negative deposit-credit line (0% VAT, because the deposit was already taxed at collection).",
         "x-schema-org": "schema:TradeLineItem",
         "x-openregister-purpose": "fact",
         "type": "object",
@@ -697,7 +697,7 @@
           },
           "linkedInvoiceId": {
             "type": "string",
-            "description": "FK to the Invoice being reversed. Also the idempotency key (one CreditNote per invoice) per REQ-DI-006.",
+            "description": "FK to the Invoice being reversed. Also the idempotency key (one CreditNote per invoice).",
             "example": "inv-final-2001",
             "title": "Linked Invoice ID"
           },

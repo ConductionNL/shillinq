@@ -13,7 +13,7 @@
         "icon": "FileChartOutline",
         "version": "0.1.0",
         "title": "EMU-rapportage",
-        "description": "Ingediende of in-progress EMU-aangifte voor een periode (kwartaal of jaar) per REQ-EMU-001. Atomic versioned submission unit; carries the computed EMU-saldo, bruto EMU-schuld ultimo, BBV-aansluiting and CBS-bevestiging. Lifecycle concept → ingediend → herzien per Wet Hof art. 10 (REQ-EMU-001/006). Audit-trail + 10-jaar retention per Archiefwet 1995.",
+        "description": "Ingediende of in-progress EMU-aangifte voor een periode (kwartaal of jaar). Atomic versioned submission unit; carries the computed EMU-saldo, bruto EMU-schuld ultimo, BBV-aansluiting and CBS-bevestiging. Lifecycle concept → ingediend → herzien per Wet Hof art. 10. Audit-trail + 10-jaar retention per Archiefwet 1995.",
         "x-schema-org": "schema:GovernmentService",
         "type": "object",
         "required": [
@@ -56,7 +56,7 @@
               "year-emu-balance",
               "year-emu-debt"
             ],
-            "description": "Aangifte type per Wet Hof (REQ-EMU-001/004).",
+            "description": "Aangifte type per Wet Hof.",
             "title": "Periode Type"
           },
           "status": {
@@ -92,7 +92,7 @@
           "emuBalanceCalculated": {
             "type": "number",
             "nullable": true,
-            "description": "Computed EMU cash saldo for the period (MonetaryAmount, EUR; negative = tekort) per REQ-EMU-002.",
+            "description": "Computed EMU cash saldo for the period (MonetaryAmount, EUR; negative = tekort).",
             "example": -2300000,
             "title": "Emu Saldo Berekend"
           },
@@ -106,21 +106,21 @@
           "emuBalanceDeviation": {
             "type": "number",
             "nullable": true,
-            "description": "berekend − begroot (derived, REQ-EMU-007).",
+            "description": "berekend − begroot (derived).",
             "example": -500000,
             "title": "Emu Saldo Afwijking"
           },
           "emuBalanceDeviationPercentage": {
             "type": "number",
             "nullable": true,
-            "description": "(afwijking / abs(begroot)) × 100 (derived, REQ-EMU-007).",
+            "description": "(afwijking / abs(begroot)) × 100 (derived).",
             "example": -27.8,
             "title": "Emu Saldo Afwijking Percentage"
           },
           "emuDebtGross": {
             "type": "number",
             "nullable": true,
-            "description": "Bruto nominale EMU-schuld ultimo periode (sum AF.2+AF.3+AF.4) per REQ-EMU-004.",
+            "description": "Bruto nominale EMU-schuld ultimo periode (sum AF.2+AF.3+AF.4).",
             "example": 142500000,
             "title": "Emu Schuld Bruto"
           },
@@ -134,7 +134,7 @@
           "emuDebtCapacity": {
             "type": "number",
             "nullable": true,
-            "description": "wettelijkeNorm − bruto (derived, REQ-EMU-008).",
+            "description": "wettelijkeNorm − bruto (derived).",
             "example": 13500000,
             "title": "Emu Schuld Ruimte"
           },
@@ -148,7 +148,7 @@
           "bbvTotaleAdjustments": {
             "type": "number",
             "nullable": true,
-            "description": "Sum of all EMUAdjustment.bedrag for the year (derived, REQ-EMU-009).",
+            "description": "Sum of all EMUAdjustment.bedrag for the year (derived).",
             "example": -6500000,
             "title": "BBV Totale Adjustments"
           },
@@ -357,7 +357,7 @@
               "correction-transaction-moment",
               "intercompany-elimination"
             ],
-            "description": "Adjustment type per Wet Hof art. 3 (8 macro-rules, REQ-EMU-002/005).",
+            "description": "Adjustment type per Wet Hof art. 3 (8 macro-rules).",
             "title": "Type"
           },
           "direction": {
@@ -397,7 +397,7 @@
           "overridden": {
             "type": "boolean",
             "default": false,
-            "description": "True when a concerncontroller manually overrode the auto-computed bedrag (REQ-EMU-002, audit-trail logged).",
+            "description": "True when a concerncontroller manually overrode the auto-computed bedrag (audit-trail logged).",
             "title": "Overridden"
           },
           "consolidationEMU": {
@@ -455,7 +455,7 @@
         "icon": "CashFast",
         "version": "0.1.0",
         "title": "Kasstroomregel",
-        "description": "Kasstroomregel geclassificeerd naar IV3 (hoofdstuk-functie-categorie) per REQ-EMU-010. Shared entity with bookkeeping-iv3-reporting: één geclassificeerd dataset voedt zowel de IV3-kwartaalaangifte als de EMU-aangifte. EMU filtert op kas-basis (kasOfTransactiebasis=kas).",
+        "description": "Kasstroomregel geclassificeerd naar IV3 (hoofdstuk-functie-categorie). Shared entity with bookkeeping-iv3-reporting: één geclassificeerd dataset voedt zowel de IV3-kwartaalaangifte als de EMU-aangifte. EMU filtert op kas-basis (kasOfTransactiebasis=kas).",
         "x-schema-org": "schema:MonetaryAmount",
         "type": "object",
         "required": [
@@ -524,7 +524,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Invoice date when different from cash date (drives correctie-transactiemoment, REQ-EMU-002).",
+            "description": "Invoice date when different from cash date (drives correctie-transactiemoment).",
             "title": "Factuurmoment"
           },
           "currency": {
@@ -570,7 +570,7 @@
         "icon": "BankMinus",
         "version": "0.1.0",
         "title": "Schuldpositie",
-        "description": "Uitstaande schuld per instrument per peildatum (kwartaal- of jaar-ultimo) per REQ-EMU-004. Bruto nominaal bedrag classified per Eurostat ESA2010 (AF.2/AF.3/AF.4 tellen mee; AF.7 derivaten niet). Can be sourced from the schatkistbankieren daily sync or entered manually.",
+        "description": "Uitstaande schuld per instrument per peildatum (kwartaal- of jaar-ultimo). Bruto nominaal bedrag classified per Eurostat ESA2010 (AF.2/AF.3/AF.4 tellen mee; AF.7 derivaten niet). Can be sourced from the schatkistbankieren daily sync or entered manually.",
         "x-schema-org": "schema:MonetaryAmount",
         "type": "object",
         "required": [
@@ -606,13 +606,13 @@
               "derivaten-passief",
               "voorziening-juridisch"
             ],
-            "description": "Debt instrument type (REQ-EMU-004/011).",
+            "description": "Debt instrument type.",
             "title": "Instrument"
           },
           "counterparty": {
             "type": "object",
             "nullable": true,
-            "description": "Counterparty: naam, soort (sector-S122-bank / sector-S11-nfv / sector-S13-government), consolidatieEMU (extern/intern-S1313/internal-entity) (REQ-EMU-004/005).",
+            "description": "Counterparty: naam, soort (sector-S122-bank / sector-S11-nfv / sector-S13-government), consolidatieEMU (extern/intern-S1313/internal-entity).",
             "title": "Tegenpartij"
           },
           "principalOriginal": {

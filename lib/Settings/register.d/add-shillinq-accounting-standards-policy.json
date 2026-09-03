@@ -78,7 +78,7 @@
                 },
                 "precedence": {
                   "type": "integer",
-                  "description": "Order of precedence — lower wins. The highest-priority enabled framework (lowest precedence) is returned by resolve().",
+                  "description": "Order of precedence — lower wins. The highest-priority enabled framework (lowest precedence) is returned by resolve.",
                   "minimum": 0,
                   "example": 1,
                   "title": "Precedence"

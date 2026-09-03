@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-cbs-bestanden-extended",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "CBS bestanden (Statistics Netherlands statistical reporting) extended pipeline beyond the mandatory IV3-bestand. Adds two entities — CBSSubmission (header tracking submission metadata, lifecycle draft → validated → submitted → accepted/rejected per REQ-CBS-003) and CBSLine (aggregated financial line items per CBS classification, computed from GL transactions per REQ-CBS-002). Declarative lifecycle, RBAC and retention per ADR-022/ADR-031. The prior add-shillinq-cbs-bestanden-extended change shipped only the proposal/design/spec authoring; this fragment is the executable schema + seed-data delivery."
+    "description": "CBS bestanden (Statistics Netherlands statistical reporting) extended pipeline beyond the mandatory IV3-bestand. Adds two entities — CBSSubmission (header tracking submission metadata, lifecycle draft → validated → submitted → accepted/rejected per) and CBSLine (aggregated financial line items per CBS classification, computed from GL transactions per). Declarative lifecycle, RBAC and retention per ADR-022/ADR-031. The prior add-shillinq-cbs-bestanden-extended change shipped only the proposal/design/spec authoring; this fragment is the executable schema + seed-data delivery."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "FileChartCheckOutline",
         "version": "0.1.0",
         "title": "CBS-aangifte",
-        "description": "Complete CBS statistical submission package for a reporting period per REQ-CBS-001. Header for the IV3-extended report, linking organization metadata, reporting period, lifecycle state, and generated IV3 file. Audit-trail + 10-year retention per Archiefwet 1995 (REQ-CBS-008/010).",
+        "description": "Complete CBS statistical submission package for a reporting period. Header for the IV3-extended report, linking organization metadata, reporting period, lifecycle state, and generated IV3 file. Audit-trail + 10-year retention per Archiefwet 1995.",
         "x-schema-org": "schema:GovernmentService",
         "type": "object",
         "required": [
@@ -29,7 +29,7 @@
         "properties": {
           "submissionNumber": {
             "type": "string",
-            "description": "Unique submission identifier (e.g., CBS-2025-001) per REQ-CBS-001.",
+            "description": "Unique submission identifier (e.g., CBS-2025-001).",
             "example": "CBS-2025-001",
             "title": "Submission Number"
           },
@@ -56,14 +56,14 @@
           "kvkNumber": {
             "type": "string",
             "pattern": "^[0-9]{8}$",
-            "description": "Dutch Chamber of Commerce registration number (8 digits) per REQ-CBS-008.",
+            "description": "Dutch Chamber of Commerce registration number (8 digits).",
             "example": "34365416",
             "title": "KvK Number"
           },
           "taxIdentificationNumber": {
             "type": "string",
             "pattern": "^NL[0-9]{10}B[0-9]{2}$",
-            "description": "Dutch VAT/BTW identification number per REQ-CBS-008.",
+            "description": "Dutch VAT/BTW identification number.",
             "example": "NL814022818B01",
             "title": "Tax Identification Number"
           },
@@ -83,7 +83,7 @@
               "rejected"
             ],
             "default": "draft",
-            "description": "Lifecycle state per REQ-CBS-003.",
+            "description": "Lifecycle state.",
             "title": "Status"
           },
           "submissionDate": {
@@ -283,7 +283,7 @@
         "icon": "TableRow",
         "version": "0.1.0",
         "title": "CBS-regel",
-        "description": "Aggregated financial line item within a CBS submission per REQ-CBS-002. Each line sums GL transactions whose account number falls within the configured range, classified by CBS line code (Revenue, OperatingCosts, Depreciation, Interest, Taxes, OtherIncome, OtherExpenses).",
+        "description": "Aggregated financial line item within a CBS submission. Each line sums GL transactions whose account number falls within the configured range, classified by CBS line code (Revenue, OperatingCosts, Depreciation, Interest, Taxes, OtherIncome, OtherExpenses).",
         "x-schema-org": "schema:MonetaryAmount",
         "type": "object",
         "required": [
@@ -338,7 +338,7 @@
           },
           "aggregatedAmount": {
             "type": "number",
-            "description": "Sum of GL line amounts for this range (MonetaryAmount, integer-cent EUR) per REQ-CBS-002.",
+            "description": "Sum of GL line amounts for this range (MonetaryAmount, integer-cent EUR).",
             "example": 125000000,
             "title": "Aggregated Amount"
           },

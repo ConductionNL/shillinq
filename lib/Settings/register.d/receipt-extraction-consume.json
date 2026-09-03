@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "receipt-extraction-consume",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json. ADR-022 consumes docudesk's financial-document-field-extraction contract over the NC event bus (event + one outbound HTTP request); no OCR engine in shillinq.",
-    "description": "Adds the extraction-draft field set to SupplierInvoice and Receipt: fieldConfidence (per-field 0..1 map), overallConfidence (aggregate 0..1), extractedFieldsOriginal (immutable snapshot of the docudesk-extracted values + confidence, kept even after a correction so the original is never silently lost, REQ-RXC-004), humanCorrected (list of field names the operator overrode), extractionStatus (pending-review | confirmed), and sourceDocumentUri (docudesk FK URI, REQ-DA-002 shape). Seeds two SupplierInvoice extraction drafts (high- and low-confidence) and one Receipt extraction draft per design.md."
+    "description": "Adds the extraction-draft field set to SupplierInvoice and Receipt: fieldConfidence (per-field 0.1 map), overallConfidence (aggregate 0.1), extractedFieldsOriginal (immutable snapshot of the docudesk-extracted values + confidence, kept even after a correction so the original is never silently lost), humanCorrected (list of field names the operator overrode), extractionStatus (pending-review | confirmed), and sourceDocumentUri (docudesk FK URI, shape). Seeds two SupplierInvoice extraction drafts (high- and low-confidence) and one Receipt extraction draft per design.md."
   },
   "info": {
     "version": "0.1.0-receipt-extraction-consume"
@@ -20,7 +20,7 @@
               "minimum": 0,
               "maximum": 1
             },
-            "description": "Per-field extraction confidence (0..1), keyed by field name, as reported by docudesk's nl.conduction.docudesk.extraction.completed event. Null/absent for records not created from an extraction.",
+            "description": "Per-field extraction confidence (0.1), keyed by field name, as reported by docudesk's nl.conduction.docudesk.extraction.completed event. Null/absent for records not created from an extraction.",
             "nullable": true,
             "example": { "invoiceNumber": 0.97, "totalInclVat": 0.9 },
             "title": "Field Confidence"
@@ -29,7 +29,7 @@
             "type": "number",
             "minimum": 0,
             "maximum": 1,
-            "description": "Aggregate extraction confidence (0..1) reported by docudesk. Gates whether BillImportModal offers one-click commit or requires explicit review; never bypasses human confirmation.",
+            "description": "Aggregate extraction confidence (0.1) reported by docudesk. Gates whether BillImportModal offers one-click commit or requires explicit review; never bypasses human confirmation.",
             "nullable": true,
             "example": 0.93,
             "title": "Overall Confidence"
@@ -44,7 +44,7 @@
           "humanCorrected": {
             "type": "array",
             "items": { "type": "string" },
-            "description": "Names of fields the operator edited before commit, overriding the extracted value. Computed server-side by ExtractionPrefillService::recordCorrection so the provenance cannot be spoofed or silently dropped by the client.",
+            "description": "Names of fields the operator edited before commit, overriding the extracted value. Computed server-side by ExtractionPrefillService:recordCorrection so the provenance cannot be spoofed or silently dropped by the client.",
             "nullable": true,
             "example": ["glAccount"],
             "title": "Human-corrected Fields"
@@ -61,7 +61,7 @@
             "type": "string",
             "format": "uri",
             "pattern": "^docudesk://attachments/[a-f0-9-]{36}/.+$",
-            "description": "FK URI to the docudesk source document this invoice was extracted from (bookkeeping-document-attachment-integration REQ-DA-002). No file bytes are stored in shillinq.",
+            "description": "FK URI to the docudesk source document this invoice was extracted from (bookkeeping-document-attachment-integration). No file bytes are stored in shillinq.",
             "nullable": true,
             "example": "docudesk://attachments/0d4e9c7f-1234-4567-89ab-cdef01234567/invoice.pdf",
             "title": "Source Document URI"
@@ -77,7 +77,7 @@
               "minimum": 0,
               "maximum": 1
             },
-            "description": "Per-field extraction confidence (0..1), keyed by field name, as reported by docudesk's nl.conduction.docudesk.extraction.completed event. Null/absent for records not created from an extraction.",
+            "description": "Per-field extraction confidence (0.1), keyed by field name, as reported by docudesk's nl.conduction.docudesk.extraction.completed event. Null/absent for records not created from an extraction.",
             "nullable": true,
             "example": { "amount": 0.88, "receiptDate": 0.8 },
             "title": "Field Confidence"
@@ -86,7 +86,7 @@
             "type": "number",
             "minimum": 0,
             "maximum": 1,
-            "description": "Aggregate extraction confidence (0..1) reported by docudesk.",
+            "description": "Aggregate extraction confidence (0.1) reported by docudesk.",
             "nullable": true,
             "example": 0.88,
             "title": "Overall Confidence"
@@ -118,7 +118,7 @@
             "type": "string",
             "format": "uri",
             "pattern": "^docudesk://attachments/[a-f0-9-]{36}/.+$",
-            "description": "FK URI to the docudesk source document (photo) this receipt was extracted from (bookkeeping-document-attachment-integration REQ-DA-002); mirrors photoUri.",
+            "description": "FK URI to the docudesk source document (photo) this receipt was extracted from (bookkeeping-document-attachment-integration); mirrors photoUri.",
             "nullable": true,
             "example": "docudesk://attachments/00000000-0000-0000-0000-000000000002/receipt.jpg",
             "title": "Source Document URI"

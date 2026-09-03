@@ -6,7 +6,7 @@
 		"variant": "kvk-jaarrekening",
 		"taxonomyVersion": "nt17",
 		"entryPoint": "kvk-jaarrekening",
-		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt17 concepts for the KvK deponering jaarrekening entry point. Seeded once by InitializeSettings::seedSbrMappings; operator edits persist across re-runs (idempotent on (entryPoint, taxonomyVersion)). This is a starter template — extension concepts per company are operator-added.",
+		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt17 concepts for the KvK deponering jaarrekening entry point. Seeded once by InitializeSettings:seedSbrMappings; operator edits persist across re-runs (idempotent on (entryPoint, taxonomyVersion)). This is a starter template — extension concepts per company are operator-added.",
 		"imported": "2026-06-09T00:00:00Z"
 	},
 	"mapping": {

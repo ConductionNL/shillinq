@@ -10,7 +10,7 @@
         "properties": {
           "lawfulness": {
             "type": "object",
-            "description": "REQ-RV-001: mandatory rechtmatigheid sub-object tracking the legitimacy-assessment status of this journaalpost. Backward-compatible: existing journaalposten default to status niet_getoetst on first access. Embedded (not a separate register) to preserve the transaction-level audit-trail.",
+            "description": "Mandatory rechtmatigheid sub-object tracking the legitimacy-assessment status of this journaalpost. Backward-compatible: existing journaalposten default to status niet_getoetst on first access. Embedded (not a separate register) to preserve the transaction-level audit-trail.",
             "default": {
               "status": "niet_getoetst",
               "tests": [],
@@ -68,7 +68,7 @@
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "Rechtmatigheidstoets",
-        "description": "REQ-RV-001 / REQ-RV-002: one automatic or manual assessment of one journaalpost against one of the nine wettelijke BBV-criteria. The atomic unit of rechtmatigheidsverantwoording (BBV artikel 17a). Wettelijke verplichting sinds 2023; gating functionaliteit voor jaarrekening-export.",
+        "description": "One automatic or manual assessment of one journaalpost against one of the nine wettelijke BBV-criteria. The atomic unit of rechtmatigheidsverantwoording (BBV artikel 17a). Wettelijke verplichting sinds 2023; gating functionaliteit voor jaarrekening-export.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md",
         "type": "object",
@@ -143,13 +143,13 @@
               "manual",
               "extern"
             ],
-            "description": "How the toets was produced (REQ-RV-001 automatic / REQ-RV-002 manual).",
+            "description": "How the toets was produced (automatic / manual).",
             "title": "Toetstype"
           },
           "substantiation": {
             "type": "string",
             "nullable": true,
-            "description": "Substantiation. Minimaal 50 tekens vereist wanneer uitkomst = voldoet_niet (REQ-RV-002, enforced by RechtmatigheidGuard).",
+            "description": "Substantiation. Minimaal 50 tekens vereist wanneer uitkomst = voldoet_niet (enforced by RechtmatigheidGuard).",
             "example": "Factuur 2026-441 valt onder raamovereenkomst RO-2024-12 (TenderNed 2024/S-117-356721, eerder Europees aanbesteed).",
             "title": "Onderbouwing"
           },
@@ -162,7 +162,7 @@
           },
           "supportingDocuments": {
             "type": "array",
-            "description": "REQ-RV-002 / REQ-RV-004: file:uuid references to attached evidence (invoices, aanbestedingspublicaties, de-minimis-verklaringen) via OpenRegister files-attached-to-object. Immutable; deletion is audit-logged.",
+            "description": "File:uuid references to attached evidence (invoices, aanbestedingspublicaties, de-minimis-verklaringen) via OpenRegister files-attached-to-object. Immutable; deletion is audit-logged.",
             "items": {
               "type": "string",
               "description": "file:uuid reference."
@@ -195,7 +195,7 @@
           "frameworkAgreement": {
             "type": "string",
             "nullable": true,
-            "description": "REQ-RV-007: FK to a framework agreement; when present the europees_aanbesteden toets refers to the earlier aanbesteding and auto-voldoet.",
+            "description": "FK to a framework agreement; when present the europees_aanbesteden toets refers to the earlier aanbesteding and auto-voldoet.",
             "example": "RO-2024-12",
             "title": "Raamovereenkomst"
           }
@@ -230,7 +230,7 @@
         },
         "x-openregister-aggregations": {
           "clusteringPerLeverancier": {
-            "description": "REQ-RV-007: cumulative bedrag per leverancier per boekjaar, used by clustering-detection to flag europees_aanbesteden drempel-overschrijding.",
+            "description": "Cumulative bedrag per leverancier per boekjaar, used by clustering-detection to flag europees_aanbesteden drempel-overschrijding.",
             "source": "JournalEntry",
             "groupBy": [
               "administrationId"
@@ -284,7 +284,7 @@
         "icon": "AlertCircleOutline",
         "version": "0.1.0",
         "title": "Rechtmatigheidsbevinding",
-        "description": "REQ-RV-002 / REQ-RV-005: quantifies a fout (error) or onzekerheid (uncertainty) when one or more toetsen yield voldoet_niet / onzeker. Rolls up into the jaarrekening-required rechtmatigheidsparagraaf.",
+        "description": "Quantifies a fout (error) or onzekerheid (uncertainty) when one or more toetsen yield voldoet_niet / onzeker. Rolls up into the jaarrekening-required rechtmatigheidsparagraaf.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md",
         "type": "object",
@@ -387,7 +387,7 @@
               "opgelost"
             ],
             "default": "open",
-            "description": "Finding lifecycle status (REQ-RV-005 / REQ-RV-010).",
+            "description": "Finding lifecycle status.",
             "title": "Status"
           },
           "reported_in": {
@@ -418,7 +418,7 @@
           "correction_entry_id": {
             "type": "string",
             "nullable": true,
-            "description": "REQ-RV-010: FK to JournalEntry.id of the linked correctieboeking; setting it transitions the bevinding to opgelost.",
+            "description": "FK to JournalEntry.id of the linked correctieboeking; setting it transitions the bevinding to opgelost.",
             "title": "Correctieboeking ID"
           }
         },
@@ -460,7 +460,7 @@
         },
         "x-openregister-aggregations": {
           "foutenPerBoekjaar": {
-            "description": "REQ-RV-005: SUM bedrag_fout / bedrag_onzekerheid per boekjaar for openstaande bevindingen (status != opgelost), driving paragraaf tolerance comparison.",
+            "description": "SUM bedrag_fout / bedrag_onzekerheid per boekjaar for openstaande bevindingen (status != opgelost), driving paragraaf tolerance comparison.",
             "groupBy": [
               "financialYear"
             ],
@@ -486,7 +486,7 @@
             "trigger": {
               "type": "created"
             },
-            "description": "REQ-RV-001: notify the portefeuillehouder of the affected programma when a begroting-fout bevinding is created.",
+            "description": "Notify the portefeuillehouder of the affected programma when a begroting-fout bevinding is created.",
             "enabled": false,
             "channels": [
               "nc-notification"
@@ -546,7 +546,7 @@
         "icon": "FileDocumentCheckOutline",
         "version": "0.1.0",
         "title": "Rechtmatigheidsparagraaf",
-        "description": "REQ-RV-005 / REQ-RV-006: the aggregated jaarrekening statement per boekjaar. Compares totaal fouten/onzekerheden against toleranties, carries the college-verklaring, and transitions concept -> vastgesteld_college -> behandeld_raad -> definitief. Gating record for jaarrekening-export.",
+        "description": "The aggregated jaarrekening statement per boekjaar. Compares totaal fouten/onzekerheden against toleranties, carries the college-verklaring, and transitions concept -> vastgesteld_college -> behandeld_raad -> definitief. Gating record for jaarrekening-export.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md",
         "type": "object",
@@ -653,7 +653,7 @@
               "final"
             ],
             "default": "draft",
-            "description": "Paragraaf lifecycle status (REQ-RV-005 / REQ-RV-006).",
+            "description": "Paragraaf lifecycle status.",
             "title": "Status"
           }
         },
@@ -708,7 +708,7 @@
             "trigger": {
               "type": "created"
             },
-            "description": "REQ-RV-005: notify college secretaris + auditcommissie that the paragraaf is ready for review.",
+            "description": "Notify college secretaris + auditcommissie that the paragraaf is ready for review.",
             "enabled": true,
             "channels": [
               "nc-notification"
@@ -769,7 +769,7 @@
         "icon": "PercentOutline",
         "version": "0.1.0",
         "title": "Tolerantiegrens",
-        "description": "REQ-RV-003: per-boekjaar tolerance configuration set by raadsbesluit. Default 3% fout / 1% onzekerheid per BADO; the raad may set stricter limits. A tolerance change re-aggregates all paragraaf computations for the boekjaar.",
+        "description": "Per-boekjaar tolerance configuration set by raadsbesluit. Default 3% fout / 1% onzekerheid per BADO; the raad may set stricter limits. A tolerance change re-aggregates all paragraaf computations for the boekjaar.",
         "x-schema-org": "schema:PropertyValue",
         "x-spec": "openspec/changes/bookkeeping-rechtmatigheidsverantwoording/specs/bookkeeping-rechtmatigheidsverantwoording/spec.md",
         "type": "object",

@@ -14,7 +14,7 @@
         "icon": "FileDocumentOutline",
         "version": "0.1.0",
         "title": "Quote",
-        "description": "Verkoopofferte — a versioned, non-binding sales offer with multi-channel acceptance (REQ-QOI-001, design D1). schema:Offer per ADR-011.",
+        "description": "Verkoopofferte — a versioned, non-binding sales offer with multi-channel acceptance (design D1). schema:Offer per ADR-011.",
         "x-schema-org": "schema:Offer",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
@@ -316,7 +316,7 @@
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "Sales Order",
-        "description": "Verkooporder — a binding sales commitment with partial-delivery / backorder tracking (REQ-QOI-004, design D2). schema:Order per ADR-011.",
+        "description": "Verkooporder — a binding sales commitment with partial-delivery / backorder tracking (design D2). schema:Order per ADR-011.",
         "x-schema-org": "schema:Order",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
@@ -545,7 +545,7 @@
         "icon": "FormatListNumbered",
         "version": "0.1.0",
         "title": "Sales Order Line",
-        "description": "A line on a SalesOrder tracking ordered / delivered / invoiced / backorder quantities (REQ-QOI-004, design D2). FK to SalesOrder.",
+        "description": "A line on a SalesOrder tracking ordered / delivered / invoiced / backorder quantities (design D2). FK to SalesOrder.",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
         "required": [
@@ -655,7 +655,7 @@
         "icon": "TruckDeliveryOutline",
         "version": "0.1.0",
         "title": "Delivery",
-        "description": "Levering — a shipment record linking a SalesOrder to invoicing (REQ-QOI-005, design D3). schema:ParcelDelivery per ADR-011.",
+        "description": "Levering — a shipment record linking a SalesOrder to invoicing (design D3). schema:ParcelDelivery per ADR-011.",
         "x-schema-org": "schema:ParcelDelivery",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
@@ -768,7 +768,7 @@
         "icon": "ReceiptTextOutline",
         "version": "0.1.0",
         "title": "Invoice",
-        "description": "Factuur — a sales invoice with Dutch sequential numbering, BTW, and Peppol BIS 3.0 / UBL 2.1 dispatch (REQ-QOI-005..008, design D4/D5/D11). schema:Invoice per ADR-011. No deletion (Belastingdienst) — reverse with a CreditNote only.",
+        "description": "Factuur — a sales invoice with Dutch sequential numbering, BTW, and Peppol BIS 3.0 / UBL 2.1 dispatch (design D4/D5/D11). schema:Invoice per ADR-011. No deletion (Belastingdienst) — reverse with a CreditNote only.",
         "x-schema-org": "schema:Invoice",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
@@ -939,7 +939,7 @@
               "cancelled",
               "credited"
             ],
-            "description": "Invoice lifecycle state (REQ-QOI-005/007).",
+            "description": "Invoice lifecycle state.",
             "default": "draft",
             "title": "Status"
           }
@@ -982,7 +982,7 @@
               "from": "draft",
               "to": "sent",
               "label": "Issue invoice",
-              "description": "Issue: materialise the GL posting (debit AR, credit revenue, credit BTW; advance -> deferred revenue), create the AR open item, validate BTW (VIES if intracommunautair), generate UBL, and dispatch (Peppol if the customer has a Peppol id) (REQ-QOI-005..008). Blocked unless the invoice has at least one line, a sequential number, and a balanced net/vat/gross total.",
+              "description": "Issue: materialise the GL posting (debit AR, credit revenue, credit BTW; advance -> deferred revenue), create the AR open item, validate BTW (VIES if intracommunautair), generate UBL, and dispatch (Peppol if the customer has a Peppol id). Blocked unless the invoice has at least one line, a sequential number, and a balanced net/vat/gross total.",
               "requires": "OCA\\Shillinq\\Lifecycle\\QuoteOrderInvoiceGuard::canIssueInvoice"
             },
             "cancel": {
@@ -1128,7 +1128,7 @@
         "icon": "ReceiptTextMinusOutline",
         "version": "0.1.0",
         "title": "Credit Note",
-        "description": "Creditfactuur — reverses an invoice with automatic AR offset (REQ-QOI-010, design D10). schema:Invoice per ADR-011. Dutch sequential numbering; no deletion.",
+        "description": "Creditfactuur — reverses an invoice with automatic AR offset (design D10). schema:Invoice per ADR-011. Dutch sequential numbering; no deletion.",
         "x-schema-org": "schema:Invoice",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
@@ -1248,7 +1248,7 @@
         "icon": "TagMultipleOutline",
         "version": "0.1.0",
         "title": "Pricing Tier",
-        "description": "Prijsniveaus — customer / customer-group / product-group quantity-break pricing resolved in priority order (REQ-QOI-009, design D6).",
+        "description": "Prijsniveaus — customer / customer-group / product-group quantity-break pricing resolved in priority order (design D6).",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
         "required": [
@@ -1323,7 +1323,7 @@
         "icon": "SaleOutline",
         "version": "0.1.0",
         "title": "Volume Discount",
-        "description": "Volumekortingen — time-bounded, customer-eligible promotional rules applied automatically (REQ-QOI-009, design D7).",
+        "description": "Volumekortingen — time-bounded, customer-eligible promotional rules applied automatically (design D7).",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
         "required": [
@@ -1518,7 +1518,7 @@
         "icon": "AccountCancelOutline",
         "version": "0.1.0",
         "title": "Credit Hold",
-        "description": "Kredietstop — an automated, audit-trailed customer credit hold triggered by AR-ageing thresholds (REQ-QOI-010, design D9).",
+        "description": "Kredietstop — an automated, audit-trailed customer credit hold triggered by AR-ageing thresholds (design D9).",
         "x-spec": "openspec/changes/bookkeeping-quote-order-invoice/specs/bookkeeping-quote-order-invoice/spec.md",
         "type": "object",
         "required": [

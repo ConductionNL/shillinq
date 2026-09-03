@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-soft-close-flux",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 2 — continuous-close + flux analysis. Declares the 11 registers (PeriodStatus, AutoAccrualRule, AutoAccrualPosting, CloseChecklistTemplate, CloseChecklistInstance, FluxRun, FluxItem, FluxAttribution, MaterialityPolicy, ContinuousCloseAlert, CloseMetrics) for REQ-CLS-001..010 of the bookkeeping-continuous-close spec. PeriodStatus carries a five-stage x-openregister-lifecycle (open → soft-closed → hard-closed → audited → locked) with stage-change history; the soft-close transition is the entry point for OCA\\Shillinq\\Service\\SoftCloseExecutor (ADR-031 orchestration exception, REQ-CLS-002). CloseChecklistInstance carries a pending → in-progress → completed lifecycle with task-dependency enforcement and SLA escalation. AutoAccrualPosting carries a posted → reversed lifecycle linked to the original entry + reversal entry. GLTransaction.post is additively augmented with PeriodStatusGuard::postingAllowed enforcing the stage-based posting restrictions without dropping any existing precondition. Sibling to bookkeeping-period-close (FiscalPeriod) — both schemas coexist: FiscalPeriod is the T1 entity, PeriodStatus extends it with continuous-close stages."
+    "description": "Tier 2 — continuous-close + flux analysis. Declares the 11 registers (PeriodStatus, AutoAccrualRule, AutoAccrualPosting, CloseChecklistTemplate, CloseChecklistInstance, FluxRun, FluxItem, FluxAttribution, MaterialityPolicy, ContinuousCloseAlert, CloseMetrics) for.010 of the bookkeeping-continuous-close spec. PeriodStatus carries a five-stage x-openregister-lifecycle (open → soft-closed → hard-closed → audited → locked) with stage-change history; the soft-close transition is the entry point for OCA\\Shillinq\\Service\\SoftCloseExecutor (ADR-031 orchestration exception). CloseChecklistInstance carries a pending → in-progress → completed lifecycle with task-dependency enforcement and SLA escalation. AutoAccrualPosting carries a posted → reversed lifecycle linked to the original entry + reversal entry. GLTransaction.post is additively augmented with PeriodStatusGuard:postingAllowed enforcing the stage-based posting restrictions without dropping any existing precondition. Sibling to bookkeeping-period-close (FiscalPeriod) — both schemas coexist: FiscalPeriod is the T1 entity, PeriodStatus extends it with continuous-close stages."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "Restore",
         "version": "0.1.0",
         "title": "Period Status",
-        "description": "Continuous-close lifecycle wrapper around a FiscalPeriod. Carries the five-stage lifecycle (open → soft-closed → hard-closed → audited → locked), stage-change history, owner-per-stage, and posting-restriction flags. Posting into hard-closed/audited/locked stages is rejected by PeriodStatusGuard::postingAllowed unless the actor holds controller-override + exception-journal privilege. Sibling to the T1 FiscalPeriod entity; both can co-exist (FiscalPeriod is the period entity, PeriodStatus extends it with the continuous-close stage model).",
+        "description": "Continuous-close lifecycle wrapper around a FiscalPeriod. Carries the five-stage lifecycle (open → soft-closed → hard-closed → audited → locked), stage-change history, owner-per-stage, and posting-restriction flags. Posting into hard-closed/audited/locked stages is rejected by PeriodStatusGuard:postingAllowed unless the actor holds controller-override + exception-journal privilege. Sibling to the T1 FiscalPeriod entity; both can co-exist (FiscalPeriod is the period entity, PeriodStatus extends it with the continuous-close stage model).",
         "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
         "type": "object",
         "required": [
@@ -39,7 +39,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 12,
-            "description": "Calendar month 1..12.",
+            "description": "Calendar month 1.12.",
             "example": 3,
             "title": "Period Month"
           },
@@ -59,7 +59,7 @@
           },
           "stageChangeHistory": {
             "type": "array",
-            "description": "Append-only audit trail of stage transitions; each entry is {fromStage, toStage, actor, timestamp, reason} (REQ-CLS-001, ADR-022).",
+            "description": "Append-only audit trail of stage transitions; each entry is {fromStage, toStage, actor, timestamp, reason} (ADR-022).",
             "items": {
               "type": "object",
               "properties": {
@@ -195,7 +195,7 @@
               "from": "open",
               "to": "soft-closed",
               "label": "Soft-close",
-              "description": "Trigger the SoftCloseExecutor orchestration (ADR-031 exception, REQ-CLS-002).",
+              "description": "Trigger the SoftCloseExecutor orchestration (ADR-031 exception).",
               "roles": [
                 "controller",
                 "soft-close-operator"
@@ -298,7 +298,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "PeriodStatus stage transitions (open → soft-closed → hard-closed → audited → locked) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-001 — each transition controls which postings are permitted into the period; the stage change history + actor + timestamp is the canonical audit evidence."
+          "description": "PeriodStatus stage transitions (open → soft-closed → hard-closed → audited → locked) MUST be audit-trail-immutable / ADR-022 / — each transition controls which postings are permitted into the period; the stage change history + actor + timestamp is the canonical audit evidence."
         }
       },
       "AutoAccrualRule": {
@@ -423,7 +423,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "AutoAccrualRule changes (target GL account, calculation method, parameters, reversal pattern, lifecycle state) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-003 — each AutoAccrualPosting snapshots the ruleVersion at posting time so audit can reconstruct exactly which rule produced any historical accrual."
+          "description": "AutoAccrualRule changes (target GL account, calculation method, parameters, reversal pattern, lifecycle state) MUST be audit-trail-immutable / ADR-022 / — each AutoAccrualPosting snapshots the ruleVersion at posting time so audit can reconstruct exactly which rule produced any historical accrual."
         }
       },
       "AutoAccrualPosting": {
@@ -533,7 +533,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "AutoAccrualPosting is append-only audit evidence per REQ-AT-001 / ADR-022 / REQ-CLS-010 — original posted entry MUST be preserved when a reversal is recorded; the reversal links back to the original via reversalId."
+          "description": "AutoAccrualPosting is append-only audit evidence / ADR-022 / — original posted entry MUST be preserved when a reversal is recorded; the reversal links back to the original via reversalId."
         }
       },
       "CloseChecklistTemplate": {
@@ -617,7 +617,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "CloseChecklistTemplate changes (task list, owners, due-before, dependsOn, evidenceRequired) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-004 — close procedures are an SOX-relevant control; auditors trace which template version produced each CloseChecklistInstance."
+          "description": "CloseChecklistTemplate changes (task list, owners, due-before, dependsOn, evidenceRequired) MUST be audit-trail-immutable / ADR-022 / — close procedures are an SOX-relevant control; auditors trace which template version produced each CloseChecklistInstance."
         }
       },
       "CloseChecklistInstance": {
@@ -752,7 +752,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "CloseChecklistInstance per-task state (status, owner, completedAt, evidence, slaBreach) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-004 — task completion is internal-control evidence; the audit trail captures who completed what and when, including SLA breaches."
+          "description": "CloseChecklistInstance per-task state (status, owner, completedAt, evidence, slaBreach) MUST be audit-trail-immutable / ADR-022 / — task completion is internal-control evidence; the audit trail captures who completed what and when, including SLA breaches."
         }
       },
       "FluxRun": {
@@ -853,7 +853,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "FluxRun (scope, comparison basis, materiality thresholds, runTimestamp, status) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-005 — variance analysis feeds the board pack; auditors trace which run produced which narrative and against which baseline."
+          "description": "FluxRun (scope, comparison basis, materiality thresholds, runTimestamp, status) MUST be audit-trail-immutable / ADR-022 / — variance analysis feeds the board pack; auditors trace which run produced which narrative and against which baseline."
         }
       },
       "FluxItem": {
@@ -928,7 +928,7 @@
           },
           "autoExplanationCoverage": {
             "type": "number",
-            "description": "Fraction of variance covered by auto-explanation (0..1).",
+            "description": "Fraction of variance covered by auto-explanation (0.1).",
             "example": 0.95,
             "title": "Auto Explanation Coverage"
           },
@@ -968,7 +968,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "FluxItem variance figures, materiality classification, auto-explanation, and owner explanation MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-005 / REQ-CLS-006 — owner explanations are SOX-relevant attestations; the audit trail captures who explained what."
+          "description": "FluxItem variance figures, materiality classification, auto-explanation, and owner explanation MUST be audit-trail-immutable / ADR-022 / — owner explanations are SOX-relevant attestations; the audit trail captures who explained what."
         }
       },
       "FluxAttribution": {
@@ -1012,7 +1012,7 @@
           },
           "percentage": {
             "type": "number",
-            "description": "Share of the total variance attributable to this driver (0..1).",
+            "description": "Share of the total variance attributable to this driver (0.1).",
             "example": 0.44,
             "title": "Percentage"
           },
@@ -1025,7 +1025,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "FluxAttribution driver decomposition MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-006 — explained variances are the quantitative backing for the flux narrative; auditors review individual driver contributions."
+          "description": "FluxAttribution driver decomposition MUST be audit-trail-immutable / ADR-022 / — explained variances are the quantitative backing for the flux narrative; auditors review individual driver contributions."
         }
       },
       "MaterialityPolicy": {
@@ -1129,7 +1129,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "MaterialityPolicy thresholds MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-005 — thresholds determine which variances are escalated; auditors verify that no threshold change was used to suppress disclosable variances."
+          "description": "MaterialityPolicy thresholds MUST be audit-trail-immutable / ADR-022 / — thresholds determine which variances are escalated; auditors verify that no threshold change was used to suppress disclosable variances."
         }
       },
       "ContinuousCloseAlert": {
@@ -1217,7 +1217,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "ContinuousCloseAlert records (severity, message, routedTo, acknowledged) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-002 — soft-close failures and SLA breaches are operational-risk events; auditors review who was notified and when the alert was acknowledged."
+          "description": "ContinuousCloseAlert records (severity, message, routedTo, acknowledged) MUST be audit-trail-immutable / ADR-022 / — soft-close failures and SLA breaches are operational-risk events; auditors review who was notified and when the alert was acknowledged."
         }
       },
       "CloseMetrics": {
@@ -1265,7 +1265,7 @@
           },
           "fluxSLACompliance": {
             "type": "number",
-            "description": "% of material flux items explained within 24h SLA (0..1).",
+            "description": "% of material flux items explained within 24h SLA (0.1).",
             "example": 0.95,
             "title": "Flux Sla Compliance"
           },
@@ -1309,7 +1309,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "CloseMetrics KPI snapshots (time-to-close, post-close adjustment count, audit-correction ratio, flux-SLA compliance, unexplained item count, 12-month trend) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 / REQ-CLS-009 — these KPIs trend over 12 periods and are presented to the audit committee; tampering with historical KPI values defeats the entire metric."
+          "description": "CloseMetrics KPI snapshots (time-to-close, post-close adjustment count, audit-correction ratio, flux-SLA compliance, unexplained item count, 12-month trend) MUST be audit-trail-immutable / ADR-022 / — these KPIs trend over 12 periods and are presented to the audit committee; tampering with historical KPI values defeats the entire metric."
         }
       },
       "GLTransaction": {

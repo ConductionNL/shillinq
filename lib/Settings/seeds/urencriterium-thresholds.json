@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "source": "Wet IB 2001 art. 3.6",
     "version": "2026",
-    "description": "Urencriterium drempelwaarden per Wet IB 2001 art. 3.6. Versioned seed: updates shipped as urencriterium-thresholds-YYYY.json per REQ-ZZP-007.",
+    "description": "Urencriterium drempelwaarden per Wet IB 2001 art. 3.6. Versioned seed: updates shipped as urencriterium-thresholds-YYYY.json.",
     "imported": "2026-06-03T00:00:00Z"
   },
   "thresholds": [

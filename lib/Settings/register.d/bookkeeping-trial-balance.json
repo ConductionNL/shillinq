@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-trial-balance",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 2 — trial balance reporting. Adds one read-only per-account period-row schema (TrialBalanceLine) capturing opening balance (carried from the prior period close), period debit/credit movements, and the computed closing balance per general-ledger account. The monolith already ships a period-snapshot TrialBalance schema (totals + isBalanced) from add-shillinq-bookkeeping-operations; TrialBalanceLine is the complementary per-account breakdown the T2 spec (REQ-TB-001..REQ-TB-020) requires — opening/movement/closing per account, parent-account hierarchy roll-up, currency. The rows are computed by OCA\\Shillinq\\Service\\TrialBalanceService from existing GLTransaction + GLLine + Account data via the real OpenRegister ObjectService API (find/findAll); the x-openregister-aggregations block documents the equivalent declarative shape. The schema is read-only (no lifecycle, no create/update/delete from operators). Seed objects provide five worked example trial balances (SMB, ZZP, government BBV, mid-year close, post-reconciliation) per design.md."
+    "description": "Tier 2 — trial balance reporting. Adds one read-only per-account period-row schema (TrialBalanceLine) capturing opening balance (carried from the prior period close), period debit/credit movements, and the computed closing balance per general-ledger account. The monolith already ships a period-snapshot TrialBalance schema (totals + isBalanced) from add-shillinq-bookkeeping-operations; TrialBalanceLine is the complementary per-account breakdown the T2 spec requires — opening/movement/closing per account, parent-account hierarchy roll-up, currency. The rows are computed by OCA\\Shillinq\\Service\\TrialBalanceService from existing GLTransaction + GLLine + Account data via the real OpenRegister ObjectService API (find/findAll); the x-openregister-aggregations block documents the equivalent declarative shape. The schema is read-only (no lifecycle, no create/update/delete from operators). Seed objects provide five worked example trial balances (SMB, ZZP, government BBV, mid-year close, post-reconciliation) per design.md."
   },
   "components": {
     "schemas": {
@@ -34,7 +34,7 @@
         "properties": {
           "periodId": {
             "type": "string",
-            "description": "Fiscal period identifier this trial-balance row covers (FK to the GL period; string identifier for T1 compatibility). Single-period scope per REQ-TB-004.",
+            "description": "Fiscal period identifier this trial-balance row covers (FK to the GL period; string identifier for T1 compatibility). Single-period scope.",
             "example": "2026-Q1",
             "title": "Period ID"
           },

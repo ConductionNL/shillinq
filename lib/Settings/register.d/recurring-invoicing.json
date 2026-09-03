@@ -11,7 +11,7 @@
         "x-openregister-audit": true,
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create/update/delete of a RecurringInvoiceProfile is logged to OpenRegister's immutable audit trail (REQ-AT-001 / REQ-RIN-001)."
+          "description": "Every create/update/delete of a RecurringInvoiceProfile is logged to OpenRegister's immutable audit trail."
         },
         "type": "object",
         "required": [
@@ -143,7 +143,7 @@
           },
           "invoiceDay": {
             "type": "integer",
-            "description": "Day of the period on which to invoice (1-31). Clamped to month length per REQ-RIN-003.",
+            "description": "Day of the period on which to invoice (1-31). Clamped to month length.",
             "minimum": 1,
             "maximum": 31,
             "default": 1,
@@ -311,7 +311,7 @@
               "from": "draft",
               "to": "active",
               "label": "Activate",
-              "description": "Begin generating. Requires at least one line and a valid customer; auto-issue profiles additionally require the next-invoice preview to have been rendered and acknowledged (REQ-RIN-005/008).",
+              "description": "Begin generating. Requires at least one line and a valid customer; auto-issue profiles additionally require the next-invoice preview to have been rendered and acknowledged.",
               "guard": {
                 "type": "precondition",
                 "description": "Profile must be complete before it can generate.",
@@ -394,7 +394,7 @@
         "x-openregister-scheduled-workflows": {
           "shillinq-recurring-invoice-generation": {
             "name": "Recurring invoice generation",
-            "description": "Evaluated at least daily by OpenRegister's scheduled machinery. Selects RecurringInvoiceProfile records with status=active AND nextRunDate<=today and asks the RecurringInvoiceGenerator to generate the due period's ordinary ARInvoice. No app-local TimedJob/cron and no invalid IRegistrationContext::registerJob registration; generation is idempotent on the (profile, billingPeriod) key.",
+            "description": "Evaluated at least daily by OpenRegister's scheduled machinery. Selects RecurringInvoiceProfile records with status=active AND nextRunDate<=today and asks the RecurringInvoiceGenerator to generate the due period's ordinary ARInvoice. No app-local TimedJob/cron and no invalid IRegistrationContext:registerJob registration; generation is idempotent on the (profile, billingPeriod) key.",
             "cron": "0 6 * * *",
             "register": "shillinq",
             "schema": "RecurringInvoiceProfile",

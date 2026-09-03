@@ -461,7 +461,7 @@
           },
           "effective_rate": {
             "type": "number",
-            "description": "Innovatiebox tariff 0.09 (Wet Vpb art. 12b 2026, REQ-IBA-010).",
+            "description": "Innovatiebox tariff 0.09 (Wet Vpb art. 12b 2026).",
             "default": 0.09,
             "example": 0.09,
             "title": "Effectief Tarief"
@@ -804,7 +804,7 @@
         "icon": "TextBoxCheckOutline",
         "version": "0.1.0",
         "title": "Innovatiebox Audit Event",
-        "description": "Immutable audit event for innovatiebox lifecycle transitions (REQ-IBA-008 + REQ-IBA-009). One record per nexus calculation, profit-attribution write, year-end finalisation, VSO-locked amendment attempt, doorsnijdingsverbod check and forfaitair-cap application. Append-only by x-openregister.immutable. Used by Belastingdienst VSO audit-reproducibility and by the internal audit log.",
+        "description": "Immutable audit event for innovatiebox lifecycle transitions (+). One record per nexus calculation, profit-attribution write, year-end finalisation, VSO-locked amendment attempt, doorsnijdingsverbod check and forfaitair-cap application. Append-only by x-openregister.immutable. Used by Belastingdienst VSO audit-reproducibility and by the internal audit log.",
         "x-spec": "openspec/changes/bookkeeping-innovatiebox-administratie/specs/bookkeeping-innovatiebox-administratie/spec.md#req-iba-008",
         "x-openregister": {
           "immutable": true

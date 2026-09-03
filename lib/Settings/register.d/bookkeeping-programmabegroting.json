@@ -64,7 +64,7 @@
             "type": "integer",
             "minimum": 1,
             "default": 4,
-            "description": "Number of meerjarenraming jaren T+1..T+N (default 4). REQ-001.",
+            "description": "Number of meerjarenraming jaren T+1.T+N (default 4). REQ-001.",
             "example": 4,
             "title": "Meerjaren Horizon"
           },
@@ -99,14 +99,14 @@
           "structurallyBalanced": {
             "type": "boolean",
             "default": false,
-            "description": "Computed flag: recurring lasten ≤ recurring baten for all jaren T+1..T+4 (REQ-008 / REQ-011). Set by SluitendCalculator on vaststelling.",
+            "description": "Computed flag: recurring lasten ≤ recurring baten for all jaren T+1.T+4 (REQ-008 / REQ-011). Set by SluitendCalculator on vaststelling.",
             "example": true,
             "title": "Sluitend Structureel"
           },
           "sluitendReëel": {
             "type": "boolean",
             "default": false,
-            "description": "Computed flag: saldoReëel ≥ 0 (after nominale-ontwikkeling correction) for all jaren T+1..T+4 (REQ-008 / REQ-011). Set by SluitendCalculator on vaststelling.",
+            "description": "Computed flag: saldoReëel ≥ 0 (after nominale-ontwikkeling correction) for all jaren T+1.T+4 (REQ-008 / REQ-011). Set by SluitendCalculator on vaststelling.",
             "example": true,
             "title": "Sluitend Reëel"
           },
@@ -188,7 +188,7 @@
         },
         "x-openregister-aggregations": {
           "sluitendByBegroting": {
-            "description": "Declarative shape of the sluitend-criterium SluitendCalculator computes (REQ-008, REQ-011). Walks the Meerjarenraming records for jaren T+1..T+4 of this begroting and sets sluitendStructureel = (every jaar has lastenStructureel ≤ batenStructureel) and sluitendReëel = (every jaar has saldoReëel ≥ 0 after nominaleOntwikkeling correction). When the aggregation engine cannot express the per-year all-quantifier with the cross-schema nominale correction, SluitendCalculator computes the same result in PHP from the real ObjectService API.",
+            "description": "Declarative shape of the sluitend-criterium SluitendCalculator computes (REQ-008, REQ-011). Walks the Meerjarenraming records for jaren T+1.T+4 of this begroting and sets sluitendStructureel = (every jaar has lastenStructureel ≤ batenStructureel) and sluitendReëel = (every jaar has saldoReëel ≥ 0 after nominaleOntwikkeling correction). When the aggregation engine cannot express the per-year all-quantifier with the cross-schema nominale correction, SluitendCalculator computes the same result in PHP from the real ObjectService API.",
             "filter": {},
             "from": "Meerjarenraming",
             "groupBy": [
@@ -821,7 +821,7 @@
           },
           "year": {
             "type": "integer",
-            "description": "Year within the meerjarenraming (T+1..T+4 relative to begrotingsjaar). REQ-008.",
+            "description": "Year within the meerjarenraming (T+1.T+4 relative to begrotingsjaar). REQ-008.",
             "example": 2028,
             "title": "Jaar"
           },

@@ -268,7 +268,7 @@
           },
           "dataRetentionYears": {
             "type": "integer",
-            "description": "Wettelijke bewaartermijn in years (default 7; 10 for onroerende zaken) (REQ-MA-007, AWR art. 52).",
+            "description": "Wettelijke bewaartermijn in years (default 7; 10 for onroerende zaken) (AWR art. 52).",
             "default": 7,
             "example": 7,
             "title": "Data Retention Years"
@@ -620,7 +620,7 @@
               "from": "bevestigd_beide",
               "to": "eliminatie_geboekt",
               "label": "Elimineren",
-              "description": "Consolidation elimination is booked for this intercompany pair. REQ-MA-004 / revive-gl-tax-capabilities REQ-GLTAX-002 — guarded: the pair must reconcile (zero varianceAmount between the source and the counter-side entry) before the elimination may be booked. Fail-closed when the counter-side entry cannot be resolved.",
+              "description": "Consolidation elimination is booked for this intercompany pair. / revive-gl-tax-capabilities — guarded: the pair must reconcile (zero varianceAmount between the source and the counter-side entry) before the elimination may be booked. Fail-closed when the counter-side entry cannot be resolved.",
               "requires": "OCA\\Shillinq\\Guard\\IntercompanyEliminationGuard::requireReconciledPair"
             }
           }

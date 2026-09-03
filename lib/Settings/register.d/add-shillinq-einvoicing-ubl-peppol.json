@@ -4,7 +4,7 @@
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "add-invoice-pdf-export-with-ubl-peppol-support",
-    "description": "Outbound e-invoicing (T4 UBL/Peppol capability reserved by bookkeeping-accounts-receivable-core REQ-AR-009). Adds the Peppol delivery-status field group to ARInvoice plus a Peppol participant id on CustomerMaster so the transmission port can resolve a debtor's Peppol identity the same way PurchaseOrderService resolves a supplier's via the Vendor schema. IMPORTANT: this fragment intentionally does NOT declare a second `x-openregister-lifecycle` block on ARInvoice. OpenRegister supports exactly ONE `x-openregister-lifecycle` annotation per schema (single top-level key, deep-merged across register.d fragments); ARInvoice's existing lifecycle is already fully declared (field: lifecycleState) in add-shillinq-bookkeeping-compliance.json. A second full lifecycle block keyed on a different field would deep-merge into the SAME object and silently clobber the canonical `field`/`initialState` scalars (fragment merge is scalar-overwrite, filename-order-dependent — see add-shillinq-rule-compliance-guard.json for the safe pattern, which only ever adds a `transitions.<name>.requires` leaf onto the existing lifecycle). The delivery sub-lifecycle is therefore declared as DATA under the documentation-only `x-shillinq-delivery-substates` extension (ignored by OR's LifecycleAnnotationValidator/TransitionEngine — no merge collision risk) and enforced imperatively by EInvoiceService (not-sent -> queued) and PeppolDeliveryStatusListener (queued/sent -> sent/delivered/rejected/failed and back to queued on re-send). See tasks.md Deviations."
+    "description": "Outbound e-invoicing (T4 UBL/Peppol capability reserved by bookkeeping-accounts-receivable-core). Adds the Peppol delivery-status field group to ARInvoice plus a Peppol participant id on CustomerMaster so the transmission port can resolve a debtor's Peppol identity the same way PurchaseOrderService resolves a supplier's via the Vendor schema. IMPORTANT: this fragment intentionally does NOT declare a second `x-openregister-lifecycle` block on ARInvoice. OpenRegister supports exactly ONE `x-openregister-lifecycle` annotation per schema (single top-level key, deep-merged across register.d fragments); ARInvoice's existing lifecycle is already fully declared (field: lifecycleState) in add-shillinq-bookkeeping-compliance.json. A second full lifecycle block keyed on a different field would deep-merge into the SAME object and silently clobber the canonical `field`/`initialState` scalars (fragment merge is scalar-overwrite, filename-order-dependent — see add-shillinq-rule-compliance-guard.json for the safe pattern, which only ever adds a `transitions.<name>.requires` leaf onto the existing lifecycle). The delivery sub-lifecycle is therefore declared as DATA under the documentation-only `x-shillinq-delivery-substates` extension (ignored by OR's LifecycleAnnotationValidator/TransitionEngine — no merge collision risk) and enforced imperatively by EInvoiceService (not-sent -> queued) and PeppolDeliveryStatusListener (queued/sent -> sent/delivered/rejected/failed and back to queued on re-send). See tasks.md Deviations."
   },
   "components": {
     "schemas": {
@@ -29,13 +29,13 @@
           "transmissionId": {
             "type": "string",
             "nullable": true,
-            "description": "Peppol message/transmission id (URN, e.g. urn:uuid:...) returned by the transmission port on a successful submit (REQ-EINV-004/006).",
+            "description": "Peppol message/transmission id (URN, e.g. urn:uuid:.) returned by the transmission port on a successful submit.",
             "title": "Transmission ID"
           },
           "payloadFileUri": {
             "type": "string",
             "nullable": true,
-            "description": "Docudesk/Files FK URI of the stored UBL / PDF-A3 hybrid artefact transmitted over Peppol (REQ-EINV-002/006). Never inline XML on the event bus.",
+            "description": "Docudesk/Files FK URI of the stored UBL / PDF-A3 hybrid artefact transmitted over Peppol. Never inline XML on the event bus.",
             "title": "Payload File URI"
           },
           "deliveryDetail": {
@@ -47,7 +47,7 @@
           "buyerPeppolParticipantId": {
             "type": "string",
             "nullable": true,
-            "description": "Resolved Peppol participant id (scheme:identifier, e.g. 0106:00000000 for a B2G municipality) for the ARInvoice's debtor, mirroring the seller-side identifiers already carried by add-shillinq-invoice-lines.json. Populated from CustomerMaster.peppolParticipantId via the transmission port's lookupParticipant() and persisted here for audit once a send succeeds.",
+            "description": "Resolved Peppol participant id (scheme:identifier, e.g. 0106:00000000 for a B2G municipality) for the ARInvoice's debtor, mirroring the seller-side identifiers already carried by add-shillinq-invoice-lines.json. Populated from CustomerMaster.peppolParticipantId via the transmission port's lookupParticipant and persisted here for audit once a send succeeds.",
             "title": "Buyer Peppol Participant ID"
           }
         },
@@ -139,7 +139,7 @@
           "peppolParticipantId": {
             "type": "string",
             "nullable": true,
-            "description": "Debtor's Peppol participant id (scheme:identifier, e.g. 0106:00000000 for a Dutch municipality B2G participant, or 9944:nl123456789b01 for a commercial NL participant). Resolved by Peppol\\LogPeppolTransmissionAdapter::lookupParticipant(), mirroring Vendor.peppolParticipantId on the PO/supplier side. Absent = the debtor has no known Peppol identity; Send e-invoice falls back to PDF + email.",
+            "description": "Debtor's Peppol participant id (scheme:identifier, e.g. 0106:00000000 for a Dutch municipality B2G participant, or 9944:nl123456789b01 for a commercial NL participant). Resolved by Peppol\\LogPeppolTransmissionAdapter:lookupParticipant, mirroring Vendor.peppolParticipantId on the PO/supplier side. Absent = the debtor has no known Peppol identity; Send e-invoice falls back to PDF + email.",
             "title": "Peppol Participant ID"
           }
         }

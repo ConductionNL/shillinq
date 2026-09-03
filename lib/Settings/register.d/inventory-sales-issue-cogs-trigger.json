@@ -42,7 +42,7 @@
           "allowNegativeStockOnDispatch": {
             "type": "boolean",
             "default": false,
-            "description": "Per-administration policy toggle (inventory-sales-issue-cogs-trigger REQ-005): when false (default), confirming a Delivery whose stock-tracked line exceeds available InventoryStock quantity at the resolved warehouse is denied. When true, confirmation proceeds and the resulting negative on-hand condition is logged as a structured warning instead of blocking. Matches the block-by-default intent already documented in inventory-stock-tracking REQ-IST-013.",
+            "description": "Per-administration policy toggle (inventory-sales-issue-cogs-trigger REQ-005): when false (default), confirming a Delivery whose stock-tracked line exceeds available InventoryStock quantity at the resolved warehouse is denied. When true, confirmation proceeds and the resulting negative on-hand condition is logged as a structured warning instead of blocking. Matches the block-by-default intent already documented in inventory-stock-tracking.",
             "title": "Allow Negative Stock On Dispatch"
           }
         }

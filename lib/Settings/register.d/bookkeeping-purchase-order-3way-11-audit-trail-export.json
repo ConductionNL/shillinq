@@ -4,14 +4,14 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "bookkeeping-purchase-order-3way-11-audit-trail-export",
 		"adr": "ADR-022 + ADR-037 — opt every PO-3-way lifecycle schema into OR's audit-trail-immutable capability (no app-local audit tables)",
-		"description": "Member 11 of 11 in the bookkeeping-purchase-order-3way chain. Overlays the slice-01 schemas (PurchaseOrder, GoodsReceiptNote, SupplierInvoice, ThreeWayMatch) with x-openregister-audit-trail: { enabled: true } so every lifecycle transition + saveObject is captured server-side by OR per ADR-022 D2. No app-local audit tables are authored; the AuditExportService aggregates from OR's audit log. The fragment is additive — disjoint keys on the same schemas union cleanly via SettingsService::deepMergeConfig()."
+		"description": "Member 11 of 11 in the bookkeeping-purchase-order-3way chain. Overlays the slice-01 schemas (PurchaseOrder, GoodsReceiptNote, SupplierInvoice, ThreeWayMatch) with x-openregister-audit-trail: { enabled: true } so every lifecycle transition + saveObject is captured server-side by OR per ADR-022 D2. No app-local audit tables are authored; the AuditExportService aggregates from OR's audit log. The fragment is additive — disjoint keys on the same schemas union cleanly via SettingsService:deepMergeConfig."
 	},
 	"components": {
 		"schemas": {
 			"PurchaseOrder": {
 				"x-openregister-audit-trail": {
 					"enabled": true,
-					"description": "Every lifecycle transition (draft → pending_approval → approved → sent → partial_received → fully_received → invoiced → closed / cancelled) and every approval-chain mutation is captured by OR's audit-trail-immutable abstraction. Actor is the authenticated user; the AuditExportService::generateAuditPackage consumer reads these records via OR's audit-log API."
+					"description": "Every lifecycle transition (draft → pending_approval → approved → sent → partial_received → fully_received → invoiced → closed / cancelled) and every approval-chain mutation is captured by OR's audit-trail-immutable abstraction. Actor is the authenticated user; the AuditExportService:generateAuditPackage consumer reads these records via OR's audit-log API."
 				}
 			},
 			"GoodsReceiptNote": {

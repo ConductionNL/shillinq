@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "description": "budget-core-schema — the data foundation for begroting (budgeting): LedgerGroup (verzamelpost, REQ-BCS-004/005), AnnualBudget (the fiscal-year budget container + one-default invariant, REQ-BCS-006), and BudgetLine (AnnualBudget x LedgerGroup crossed with 12 monthly phased amounts + a source marker, REQ-BCS-007). Seeded from lib/Settings/statements/rj270-pl.json (P&L-shaped, not the balance sheet — a begroting is a monthly-phased flow plan, design.md §3c). The budget-vs-actuals roll-up is a PHP service (BudgetVsActualsReader/Calculator), not a declarative aggregation — see design.md §6."
+    "description": "budget-core-schema — the data foundation for begroting (budgeting): LedgerGroup (verzamelpost), AnnualBudget (the fiscal-year budget container + one-default invariant), and BudgetLine (AnnualBudget x LedgerGroup crossed with 12 monthly phased amounts + a source marker). Seeded from lib/Settings/statements/rj270-pl.json (P&L-shaped, not the balance sheet — a begroting is a monthly-phased flow plan, design.md §3c). The budget-vs-actuals roll-up is a PHP service (BudgetVsActualsReader/Calculator), not a declarative aggregation — see design.md §6."
   },
   "components": {
     "schemas": {

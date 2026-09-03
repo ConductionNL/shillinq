@@ -5,7 +5,7 @@
     "change": "add-shillinq-sbr-xbrl-reporting",
     "spec": "openspec/changes/add-shillinq-sbr-xbrl-reporting/specs/bookkeeping-sbr-xbrl-reporting/spec.md",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json; ADR-031 declarative-first (lifecycle on the schema, no XbrlReportService); ADR-022 cross-system integration via openconnector (Digipoort by source slug, no embedded SOAP/WS-Security client)",
-    "description": "Tier-4 umbrella SBR/XBRL annual reporting capability for Shillinq (REQ-SBR-001..REQ-SBR-007). Declares a single XbrlInstance schema with a declarative draft → validated → submitted → accepted/rejected lifecycle (x-openregister-lifecycle, ADR-031); the schema is the transformation-result store for the FinancialStatement (T3) → NL-taxonomie XBRL mapping. The five canonical SBR entry points (kvk-jaarrekening, belastingdienst-vpb, belastingdienst-ib, sbr-banken-kredietrapportage, sbr-wonen) are enumerated on entryPoint per REQ-SBR-005. Digipoort submission is consumed from openconnector by source slug `digipoort-prod`; no Digipoort HTTP client, no WS-Security certificate handling, no SBR SOAP code ships in shillinq. The line → NL-taxonomie concept mapping consumes the OpenRegister Mapping abstraction; mapping seed templates ship under lib/Settings/seeds/sbr-mappings/ per entry point + taxonomy version and are imported idempotently by the OCA\\Shillinq\\Repair\\InitializeSettings repair step. Sibling T3 changes (bookkeeping-vpb-mkb, bookkeeping-bcf-vat-compensation, bookkeeping-emu-reporting, bookkeeping-icp-opgaaf, bookkeeping-ib-aangifte-zzp) already declare entry-point-specific submission lifecycles; the XbrlInstance umbrella stores the canonicalised XBRL payload + Digipoort receipt + tamper-evidence hash for those flows.",
+    "description": "Tier-4 umbrella SBR/XBRL annual reporting capability for Shillinq. Declares a single XbrlInstance schema with a declarative draft → validated → submitted → accepted/rejected lifecycle (x-openregister-lifecycle, ADR-031); the schema is the transformation-result store for the FinancialStatement (T3) → NL-taxonomie XBRL mapping. The five canonical SBR entry points (kvk-jaarrekening, belastingdienst-vpb, belastingdienst-ib, sbr-banken-kredietrapportage, sbr-wonen) are enumerated on entryPoint. Digipoort submission is consumed from openconnector by source slug `digipoort-prod`; no Digipoort HTTP client, no WS-Security certificate handling, no SBR SOAP code ships in shillinq. The line → NL-taxonomie concept mapping consumes the OpenRegister Mapping abstraction; mapping seed templates ship under lib/Settings/seeds/sbr-mappings/ per entry point + taxonomy version and are imported idempotently by the OCA\\Shillinq\\Repair\\InitializeSettings repair step. Sibling T3 changes (bookkeeping-vpb-mkb, bookkeeping-bcf-vat-compensation, bookkeeping-emu-reporting, bookkeeping-icp-opgaaf, bookkeeping-ib-aangifte-zzp) already declare entry-point-specific submission lifecycles; the XbrlInstance umbrella stores the canonicalised XBRL payload + Digipoort receipt + tamper-evidence hash for those flows.",
     "imported": "2026-06-09T00:00:00Z"
   },
   "components": {
@@ -15,7 +15,7 @@
         "icon": "FileXmlBox",
         "version": "0.1.0",
         "title": "XBRL Instance",
-        "description": "An NL-taxonomie XBRL instance document derived from a posted T3 FinancialStatement (REQ-SBR-001/002). One record per filing event per administration + reporting period + entry point. Carries the canonicalised XML payload, its SHA-256 tamper-evidence hash, the resolved Mapping FK, the Digipoort acknowledgement receipt id when submitted, and the declarative draft → validated → submitted → accepted/rejected lifecycle (REQ-SBR-003 / ADR-031). No re-aggregation of ledger lines; the instance is a pure transformation on top of FinancialStatement (D1 in design.md).",
+        "description": "An NL-taxonomie XBRL instance document derived from a posted T3 FinancialStatement. One record per filing event per administration + reporting period + entry point. Carries the canonicalised XML payload, its SHA-256 tamper-evidence hash, the resolved Mapping FK, the Digipoort acknowledgement receipt id when submitted, and the declarative draft → validated → submitted → accepted/rejected lifecycle (ADR-031). No re-aggregation of ledger lines; the instance is a pure transformation on top of FinancialStatement (D1 in design.md).",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/add-shillinq-sbr-xbrl-reporting/specs/bookkeeping-sbr-xbrl-reporting/spec.md",
         "type": "object",
@@ -88,7 +88,7 @@
           },
           "sourceStatementId": {
             "type": "string",
-            "description": "FK to the posted FinancialStatement (T3) record this XBRL instance derives from (REQ-SBR-001/002).",
+            "description": "FK to the posted FinancialStatement (T3) record this XBRL instance derives from.",
             "example": "fin-stmt-adm-001-2026",
             "title": "Source Statement ID"
           },
@@ -100,13 +100,13 @@
           },
           "instanceXml": {
             "type": "string",
-            "description": "Canonicalised XBRL instance document, stored as a UTF-8 string. Validates against the published NL-taxonomie schema for the entry point + reporting period (REQ-SBR-001/003).",
+            "description": "Canonicalised XBRL instance document, stored as a UTF-8 string. Validates against the published NL-taxonomie schema for the entry point + reporting period.",
             "example": "<xbrl xmlns=\"http://www.xbrl.org/2003/instance\">...</xbrl>",
             "title": "Instance XML"
           },
           "instanceHash": {
             "type": "string",
-            "description": "SHA-256 of the canonicalised XML for tamper-evidence (REQ-SBR-002, REQ-SBR-006 — historical instances stay verifiable after mapping evolution).",
+            "description": "SHA-256 of the canonicalised XML for tamper-evidence (— historical instances stay verifiable after mapping evolution).",
             "example": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
             "title": "Instance Hash"
           },
@@ -174,7 +174,7 @@
             },
             "validated": {
               "label": "Gevalideerd",
-              "description": "XML validated against the published NL-taxonomie schema for the entry point + reporting period (REQ-SBR-003 guard)."
+              "description": "XML validated against the published NL-taxonomie schema for the entry point + reporting period (guard)."
             },
             "submitted": {
               "label": "Ingediend",

@@ -48,9 +48,9 @@
 				"_note": "CONFIG — the availability rule for a bookable resource. Body pairs the rule scope (resource, effective-from/until window, status) with its two child collections rendered inline: the recurring breaks that block time and the booking constraints (notice windows, buffers, cancellation deadline) that shape valid slots. Pure scheduling configuration — no files, KPIs or comms leaves; lifecycle actions drive activate/archive.",
 				"fields": [
 					{ "key": "availabilityRuleId", "label": "Rule ID", "type": "string" },
-					{ "key": "resource", "label": "Resource", "type": "string", "help": "FK to Resource.resourceId (REQ-BAR-006)." },
+					{ "key": "resource", "label": "Resource", "type": "string", "help": "FK to Resource.resourceId." },
 					{ "key": "status", "label": "Status", "type": "string" },
-					{ "key": "effectiveFrom", "label": "Effective from", "type": "date", "help": "Date the rule begins to apply (REQ-BAR-005). null = applies immediately on activation." },
+					{ "key": "effectiveFrom", "label": "Effective from", "type": "date", "help": "Date the rule begins to apply. null = applies immediately on activation." },
 					{ "key": "effectiveUntil", "label": "Effective until", "type": "date", "help": "Date the rule stops applying. null = permanent until archived." },
 					{ "key": "description", "label": "Description", "type": "string" }
 				],

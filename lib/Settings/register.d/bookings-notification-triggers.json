@@ -13,7 +13,7 @@
         "icon": "BellRingOutline",
         "version": "0.1.0",
         "title": "Boekingsnotificatie-trigger",
-        "description": "Configurable trigger for booking lifecycle notifications (REQ-BNT-001/003/004/006/007/009). Selects an event type (booking.created / booking.changed / booking.cancelled / booking.reminder), an ordered list of recipient rules (role + channels + optional condition), a fallback channel order, rate-limit + dedupe bounds and an opt-out gate. Dispatched through OR's notification engine (ADR-022); template selection delegates to the BookingConfirmationTemplate / BookingReminderTemplate / BookingCancellationTemplate schemas already declared by bookings-email-templates. Lifecycle: enabled → disabled → archived. No PHP listener class — trigger gating is declarative (x-openregister-notifications.appliesWhen / skipWhen).",
+        "description": "Configurable trigger for booking lifecycle notifications. Selects an event type (booking.created / booking.changed / booking.cancelled / booking.reminder), an ordered list of recipient rules (role + channels + optional condition), a fallback channel order, rate-limit + dedupe bounds and an opt-out gate. Dispatched through OR's notification engine (ADR-022); template selection delegates to the BookingConfirmationTemplate / BookingReminderTemplate / BookingCancellationTemplate schemas already declared by bookings-email-templates. Lifecycle: enabled → disabled → archived. No PHP listener class — trigger gating is declarative (x-openregister-notifications.appliesWhen / skipWhen).",
         "x-schema-org": "schema:Action",
         "type": "object",
         "required": [
@@ -39,7 +39,7 @@
               "archived"
             ],
             "default": "enabled",
-            "description": "Lifecycle state (REQ-BNT-007/008). enabled = trigger evaluates and dispatches; disabled = paused (admin disable-all toggle target); archived = retired for audit, cannot be re-enabled.",
+            "description": "Lifecycle state. enabled = trigger evaluates and dispatches; disabled = paused (admin disable-all toggle target); archived = retired for audit, cannot be re-enabled.",
             "title": "Status"
           },
           "triggerType": {
@@ -212,7 +212,7 @@
               "from": "enabled",
               "to": "disabled",
               "label": "Trigger uitschakelen",
-              "description": "Pause dispatch without losing config (admin emergency off-switch target, REQ-BNT-008)."
+              "description": "Pause dispatch without losing config (admin emergency off-switch target)."
             },
             "enable": {
               "from": "disabled",
@@ -253,7 +253,7 @@
           "rateLimitSummary": {
             "expression": "concat(@self.rateLimitPerBookingPerHour, '/booking/hour · ', @self.rateLimitPerOrganizerPerDay, '/organizer/day · dedupe ', @self.deduplicationWindowMinutes, ' min')",
             "type": "string",
-            "description": "Human-readable rate-limit summary for the admin list (REQ-BNT-006/008)."
+            "description": "Human-readable rate-limit summary for the admin list."
           }
         },
         "x-openregister-rbac": {
@@ -301,7 +301,7 @@
         "icon": "FileDocumentMultipleOutline",
         "version": "0.1.0",
         "title": "Notificatieleveringslogboek",
-        "description": "Immutable audit-trail record of a notification dispatch attempt (REQ-BNT-005, ADR-022). One record per (trigger, recipient, channel) attempt — fallback retries produce additional records linked by the same dispatchGroupId. Tamper-evidence is delegated to OR's audit-trail-immutable contract; the schema only declares the fields and the write-once lifecycle. Surfaces in the admin notification monitor and supports operator drill-down per booking.",
+        "description": "Immutable audit-trail record of a notification dispatch attempt (ADR-022). One record per (trigger, recipient, channel) attempt — fallback retries produce additional records linked by the same dispatchGroupId. Tamper-evidence is delegated to OR's audit-trail-immutable contract; the schema only declares the fields and the write-once lifecycle. Surfaces in the admin notification monitor and supports operator drill-down per booking.",
         "x-schema-org": "schema:DigitalDocument",
         "type": "object",
         "required": [
@@ -387,7 +387,7 @@
               "adapter-unavailable"
             ],
             "nullable": true,
-            "description": "Machine-readable reason when status=skipped or failed (REQ-BNT-005/006/009). Surfaced in the admin monitor for support drill-down.",
+            "description": "Machine-readable reason when status=skipped or failed. Surfaced in the admin monitor for support drill-down.",
             "title": "Skip Reason"
           },
           "failureReason": {
@@ -401,7 +401,7 @@
             "type": "integer",
             "minimum": 0,
             "default": 0,
-            "description": "Number of fallback / retry attempts before this record's outcome (REQ-BNT-004/005). 0 = first attempt.",
+            "description": "Number of fallback / retry attempts before this record's outcome. 0 = first attempt.",
             "title": "Retry Count"
           },
           "dispatchGroupId": {

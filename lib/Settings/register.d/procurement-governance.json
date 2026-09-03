@@ -125,7 +125,7 @@
               "from": "draft",
               "to": "qualified",
               "label": "Kwalificeren",
-              "description": "Qualify the supplier once every required document is provided and unexpired, enforced by SupplierQualificationService::qualify()."
+              "description": "Qualify the supplier once every required document is provided and unexpired, enforced by SupplierQualificationService:qualify."
             },
             "expire": {
               "from": "qualified",
@@ -201,7 +201,7 @@
           },
           "drawnAmount": {
             "type": "integer",
-            "description": "Cumulative amount already called off against the ceiling, in integer euro cents. Server-maintained by FrameworkAgreementService::recordCallOff().",
+            "description": "Cumulative amount already called off against the ceiling, in integer euro cents. Server-maintained by FrameworkAgreementService:recordCallOff.",
             "example": 0,
             "title": "Drawn Amount (cents)"
           },

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-waterschappen-bbv-variant-02-aggregation-compliance",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Member 02 of the bookkeeping-waterschappen-bbv-variant chain. Declares the BBVProgramme + BudgetBBVMapping registers and an x-openregister-aggregations block on BBVProgramme that computes TotalBudget (SUM GL-budget × allocation%), YTDSpend (SUM GL.amount where date ≤ today × allocation%), Utilization (YTDSpend / TotalBudget), and ComplianceStatus (unconfigured | on-track ≤75% | at-risk 75–90% | non-compliant >90%) per REQ-BBVW-005 / giant D3. The compliance status is computed at query time, never persisted as a stored column (ADR-031). This member is kind: config; no controller, service, or UI code lands here. Slice 01 (config-schemas-seed) may not yet be on the integrated branch — this fragment is therefore self-contained and re-declares the two registers safely (ADR-037 deep-merge unions schemas by key, so a coincident slice-01 fragment overlays cleanly)."
+    "description": "Member 02 of the bookkeeping-waterschappen-bbv-variant chain. Declares the BBVProgramme + BudgetBBVMapping registers and an x-openregister-aggregations block on BBVProgramme that computes TotalBudget (SUM GL-budget × allocation%), YTDSpend (SUM GL.amount where date ≤ today × allocation%), Utilization (YTDSpend / TotalBudget), and ComplianceStatus (unconfigured | on-track ≤75% | at-risk 75–90% | non-compliant >90%) / giant D3. The compliance status is computed at query time, never persisted as a stored column (ADR-031). This member is kind: config; no controller, service, or UI code lands here. Slice 01 (config-schemas-seed) may not yet be on the integrated branch — this fragment is therefore self-contained and re-declares the two registers safely (ADR-037 deep-merge unions schemas by key, so a coincident slice-01 fragment overlays cleanly)."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "FormatListChecks",
         "version": "0.2.0",
         "title": "BBV Programme",
-        "description": "BBV (Besluit Begroting en Verantwoording) programme record for waterschappen — one row per fiscal-year policy programme code (e.g. '2.3.2'). Admin-maintained governance anchor; never hard-deleted, only archived. The compliance status (unconfigured / on-track / at-risk / non-compliant) is COMPUTED at query time by the x-openregister-aggregations.complianceStatus block declared below — it is NEVER stored on this record (ADR-031 / giant D3 / REQ-BBVW-005).",
+        "description": "BBV (Besluit Begroting en Verantwoording) programme record for waterschappen — one row per fiscal-year policy programme code (e.g. '2.3.2'). Admin-maintained governance anchor; never hard-deleted, only archived. The compliance status (unconfigured / on-track / at-risk / non-compliant) is COMPUTED at query time by the x-openregister-aggregations.complianceStatus block declared below — it is NEVER stored on this record (ADR-031 / giant D3 /).",
         "x-schema-org": "schema:GovernmentService",
         "x-spec": "openspec/changes/bookkeeping-waterschappen-bbv-variant-02-aggregation-compliance/specs/bookkeeping-waterschappen-bbv-variant/spec.md",
         "type": "object",
@@ -72,7 +72,7 @@
         "x-openregister-aggregations": {
           "totalBudget": {
             "label": "Total budget per programme",
-            "description": "Sum of GL-budget × (allocation% / 100) over every BudgetBBVMapping pointing at this programme. Pure arithmetic — declarative per ADR-031. Carries REQ-BBVW-005 (TotalBudget(P) = Σ GL-budget × allocation%).",
+            "description": "Sum of GL-budget × (allocation% / 100) over every BudgetBBVMapping pointing at this programme. Pure arithmetic — declarative per ADR-031. Carries (TotalBudget(P) = Σ GL-budget × allocation%).",
             "register": "shillinq",
             "schema": "BudgetBBVMapping",
             "filter": {
@@ -99,7 +99,7 @@
           },
           "ytdSpend": {
             "label": "YTD spend per programme",
-            "description": "Sum of GL transaction amounts on mapped GL accounts (where postingDate ≤ today AND postingDate ≥ fiscalYear-start) × allocation%, per programme. Pure arithmetic — declarative per ADR-031. Carries REQ-BBVW-005 (YTDSpend(P) = Σ GL.amount × allocation% per mapping).",
+            "description": "Sum of GL transaction amounts on mapped GL accounts (where postingDate ≤ today AND postingDate ≥ fiscalYear-start) × allocation%, per programme. Pure arithmetic — declarative per ADR-031. Carries (YTDSpend(P) = Σ GL.amount × allocation% per mapping).",
             "register": "shillinq",
             "schema": "GLTransactionLine",
             "join": {
@@ -146,7 +146,7 @@
           },
           "utilization": {
             "label": "Utilization ratio",
-            "description": "Ratio of YTD spend to total budget per programme. Pure arithmetic over the two aggregations above. Carries REQ-BBVW-005 (Utilization(P) = YTDSpend / TotalBudget).",
+            "description": "Ratio of YTD spend to total budget per programme. Pure arithmetic over the two aggregations above. Carries (Utilization(P) = YTDSpend / TotalBudget).",
             "register": "shillinq",
             "schema": "BBVProgramme",
             "computedFields": {
@@ -166,7 +166,7 @@
           },
           "complianceStatus": {
             "label": "Compliance status",
-            "description": "Derived enum bucket per REQ-BBVW-005 thresholds. 'unconfigured' if no BudgetBBVMapping exists for the programme; otherwise the threshold against utilization. Computed at query time, NEVER persisted as a stored column (giant D3 / ADR-031).",
+            "description": "Derived enum bucket thresholds. 'unconfigured' if no BudgetBBVMapping exists for the programme; otherwise the threshold against utilization. Computed at query time, NEVER persisted as a stored column (giant D3 / ADR-031).",
             "register": "shillinq",
             "schema": "BBVProgramme",
             "dependsOn": [
@@ -189,7 +189,7 @@
                   "at-risk",
                   "non-compliant"
                 ],
-                "description": "Carries REQ-BBVW-005 thresholds: unconfigured | on-track ≤ 75% | at-risk 75–90% | non-compliant > 90%. Boundary semantics (≤ vs <) match the giant — utilization == 0.75 is on-track, utilization == 0.90 is at-risk, utilization > 0.90 is non-compliant."
+                "description": "Carries thresholds: unconfigured | on-track ≤ 75% | at-risk 75–90% | non-compliant > 90%. Boundary semantics (≤ vs <) match the giant — utilization == 0.75 is on-track, utilization == 0.90 is at-risk, utilization > 0.90 is non-compliant."
               }
             }
           }
@@ -227,7 +227,7 @@
         "icon": "ArrowDecisionOutline",
         "version": "0.2.0",
         "title": "Budget BBV Mapping",
-        "description": "Many-to-one mapping from a GL account to a BBVProgramme with an allocation percentage and effective-period guard. Drives both the TotalBudget and YTDSpend aggregations on BBVProgramme. REQ-BBVW-002.",
+        "description": "Many-to-one mapping from a GL account to a BBVProgramme with an allocation percentage and effective-period guard. Drives both the TotalBudget and YTDSpend aggregations on BBVProgramme.",
         "x-schema-org": "schema:DefinedTerm",
         "x-spec": "openspec/changes/bookkeeping-waterschappen-bbv-variant-02-aggregation-compliance/specs/bookkeeping-waterschappen-bbv-variant/spec.md",
         "type": "object",

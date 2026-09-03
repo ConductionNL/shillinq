@@ -3,7 +3,7 @@
 		"spdx-license": "EUPL-1.2",
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "bookkeeping-fixed-assets-depreciation",
-		"description": "Manifest navigation + pages for REQ-FA-010. Adds Depreciation Schedules (index + detail) and Depreciation Expense (report) alongside the existing Fixed Assets entry already declared in src/manifest.json (REQ-FA-010 explicitly states the Fixed Assets entry is part of the three-entry set; only the two additional entries land here to avoid duplicate menu entries)."
+		"description": "Manifest navigation + pages for. Adds Depreciation Schedules (index + detail) and Depreciation Expense (report) alongside the existing Fixed Assets entry already declared in src/manifest.json (explicitly states the Fixed Assets entry is part of the three-entry set; only the two additional entries land here to avoid duplicate menu entries)."
 	},
 	"menu": [
 		{
@@ -124,7 +124,7 @@
 			"config": {
 				"register": "shillinq",
 				"schema": "DepreciationSchedule",
-				"description": "REQ-FA-009 cost-centre and method-based depreciation reporting backed by the DepreciationSchedule register x-openregister-aggregations queries (depreciationAmountByCostCenter, depreciationAmountByMethod, accumulatedDepreciationByAsset).",
+				"description": "Cost-centre and method-based depreciation reporting backed by the DepreciationSchedule register x-openregister-aggregations queries (depreciationAmountByCostCenter, depreciationAmountByMethod, accumulatedDepreciationByAsset).",
 				"columns": [
 					{ "key": "costCenterCode", "label": "Cost Centre", "sortable": true },
 					{ "key": "depreciationMethod", "label": "Method", "sortable": true },

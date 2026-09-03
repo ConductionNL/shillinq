@@ -101,7 +101,7 @@
               "failed"
             ],
             "default": "received",
-            "description": "Ingress ledger state, not a business-object lifecycle (design.md). 'invoiced' once draftInvoice() has succeeded and this row is persisted.",
+            "description": "Ingress ledger state, not a business-object lifecycle (design.md). 'invoiced' once draftInvoice has succeeded and this row is persisted.",
             "example": "invoiced",
             "title": "Status"
           },

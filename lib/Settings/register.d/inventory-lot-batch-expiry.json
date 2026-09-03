@@ -9,7 +9,7 @@
           "lotId": {
             "type": "string",
             "nullable": true,
-            "description": "REQ-LOT-008: optional FK to the InventoryLot created/replenished by this receipt. Required when the receipt's product (Product.requiresLotTracking == true) is lot-tracked — the LotTrackingReceiptGuard enforces this on save.",
+            "description": "Optional FK to the InventoryLot created/replenished by this receipt. Required when the receipt's product (Product.requiresLotTracking == true) is lot-tracked — the LotTrackingReceiptGuard enforces this on save.",
             "example": "lot-2026-001",
             "title": "Lot ID",
             "$ref": "InventoryLot"
@@ -33,7 +33,7 @@
         "icon": "Barcode",
         "version": "0.1.0",
         "title": "Inventory Lot",
-        "description": "Lot/batch identifier for a homogeneous quantity of a Product received together (one supplier, one date, one expiry). Sits below InventoryStock — InventoryStock is the aggregate position per (sku, locationId); InventoryLot adds the per-lot granularity required for FEFO (First-Expiry-First-Out) picking, expiry tracking, quality quarantine, and recall traceability per REQ-LOT-001..009. Lifecycle: active → quarantined (release back) | expired (terminal) | exhausted (terminal, qty == 0). FEFO order is declared via x-openregister-sort on expiryDate ASC NULLS LAST so all consumers (pick list, expiry dashboard, batch reports) inherit FEFO ordering. ADR-031 exception path: if the declarative sort directive is advisory rather than enforced at the OR API layer, the single-method FefoSort::sortLots PHP guard in lib/Sort/ applies the order before the response leaves the controller. No bespoke PHP CRUD — spec REQ-LOT-001 prohibits parallel storage. Spec: inventory-lot-batch-expiry. The 'InventoryItem' wording in the spec refers to the shillinq Product schema.",
+        "description": "Lot/batch identifier for a homogeneous quantity of a Product received together (one supplier, one date, one expiry). Sits below InventoryStock — InventoryStock is the aggregate position per (sku, locationId); InventoryLot adds the per-lot granularity required for FEFO (First-Expiry-First-Out) picking, expiry tracking, quality quarantine, and recall traceability.009. Lifecycle: active → quarantined (release back) | expired (terminal) | exhausted (terminal, qty == 0). FEFO order is declared via x-openregister-sort on expiryDate ASC NULLS LAST so all consumers (pick list, expiry dashboard, batch reports) inherit FEFO ordering. ADR-031 exception path: if the declarative sort directive is advisory rather than enforced at the OR API layer, the single-method FefoSort:sortLots PHP guard in lib/Sort/ applies the order before the response leaves the controller. No bespoke PHP CRUD — spec prohibits parallel storage. Spec: inventory-lot-batch-expiry. The 'InventoryItem' wording in the spec refers to the shillinq Product schema.",
         "x-schema-org": "schema:Product",
         "x-openregister-purpose": "ledger",
         "x-spec": "openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md",
@@ -53,7 +53,7 @@
         "properties": {
           "lotNumber": {
             "type": "string",
-            "description": "Operator-visible lot/batch identifier per REQ-LOT-002. Unique per administration. Examples: LOT-2026-001, PF-KAT-A001.",
+            "description": "Operator-visible lot/batch identifier. Unique per administration. Examples: LOT-2026-001, PF-KAT-A001.",
             "example": "LOT-2026-001",
             "pattern": "^[A-Z0-9][A-Z0-9\\-_]{0,63}$",
             "title": "Lot Number"
@@ -92,7 +92,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Legal expiry date per REQ-LOT-002. Drives FEFO sort (ASC NULLS LAST) and the expired-state lifecycle transition. May be null for non-perishable items — FEFO order sorts null-expiry lots last.",
+            "description": "Legal expiry date. Drives FEFO sort (ASC NULLS LAST) and the expired-state lifecycle transition. May be null for non-perishable items — FEFO order sorts null-expiry lots last.",
             "example": "2027-01-15",
             "title": "Expiry Date"
           },
@@ -108,7 +108,7 @@
             "type": "number",
             "minimum": 0,
             "multipleOf": 0.01,
-            "description": "Current available (un-consumed) quantity in this lot per REQ-LOT-002. Decremented by StockMove postings; when it reaches 0 the exhausted-state transition fires per REQ-LOT-006.",
+            "description": "Current available (un-consumed) quantity in this lot. Decremented by StockMove postings; when it reaches 0 the exhausted-state transition fires.",
             "example": 240,
             "title": "Quantity"
           },
@@ -144,7 +144,7 @@
               "exhausted"
             ],
             "default": "active",
-            "description": "REQ-LOT-006 lifecycle state. active: available for picking; quarantined: held for quality inspection (not pickable); expired: past legal expiry (terminal, awaiting disposal); exhausted: quantity 0 (terminal, lot closed).",
+            "description": "Lifecycle state. active: available for picking; quarantined: held for quality inspection (not pickable); expired: past legal expiry (terminal, awaiting disposal); exhausted: quantity 0 (terminal, lot closed).",
             "example": "active",
             "title": "Lot Status"
           },
@@ -183,7 +183,7 @@
             "field": "expiryDate",
             "direction": "asc",
             "nulls": "last",
-            "description": "REQ-LOT-005: FEFO (First-Expiry-First-Out) default order. Lots without an expiryDate sort after all dated lots. ADR-031 exception: if OR's sort directive is advisory at the API query layer, OCA\\Shillinq\\Sort\\FefoSort::sortLots applies the same order before the response is returned — documented in openspec/changes/inventory-lot-batch-expiry/design.md §D2."
+            "description": "FEFO (First-Expiry-First-Out) default order. Lots without an expiryDate sort after all dated lots. ADR-031 exception: if OR's sort directive is advisory at the API query layer, OCA\\Shillinq\\Sort\\FefoSort:sortLots applies the same order before the response is returned — documented in openspec/changes/inventory-lot-batch-expiry/design.md §D2."
           }
         ],
         "x-openregister-lifecycle": {
@@ -198,7 +198,7 @@
             "quarantined": {
               "label": "Quarantined",
               "labelNl": "In quarantaine",
-              "description": "Held for quality inspection per REQ-LOT-006. Not pickable. May be released back to active or transitioned to expired."
+              "description": "Held for quality inspection. Not pickable. May be released back to active or transitioned to expired."
             },
             "expired": {
               "label": "Expired",
@@ -217,21 +217,21 @@
               "to": "quarantined",
               "label": "Quarantine lot",
               "labelNl": "In quarantaine plaatsen",
-              "description": "Operator or automated quality flag isolates a lot pending inspection per REQ-LOT-006."
+              "description": "Operator or automated quality flag isolates a lot pending inspection."
             },
             "release": {
               "from": "quarantined",
               "to": "active",
               "label": "Release from quarantine",
               "labelNl": "Vrijgeven uit quarantaine",
-              "description": "Operator quality release returns the lot to pickable per REQ-LOT-006."
+              "description": "Operator quality release returns the lot to pickable."
             },
             "expireFromActive": {
               "from": "active",
               "to": "expired",
               "label": "Mark expired",
               "labelNl": "Markeer als verlopen",
-              "description": "Daily expiry check OR operator transition. Requires today > expiryDate (guard) per REQ-LOT-006.",
+              "description": "Daily expiry check OR operator transition. Requires today > expiryDate (guard).",
               "validations": {
                 "expiryDateReached": {
                   "condition": "expiryDate IS NULL OR @now <= expiryDate",
@@ -245,7 +245,7 @@
               "to": "expired",
               "label": "Mark expired (from quarantine)",
               "labelNl": "Markeer als verlopen (uit quarantaine)",
-              "description": "Quarantined lots that cross their expiry date follow the same expired transition per REQ-LOT-006.",
+              "description": "Quarantined lots that cross their expiry date follow the same expired transition.",
               "validations": {
                 "expiryDateReached": {
                   "condition": "expiryDate IS NULL OR @now <= expiryDate",
@@ -259,7 +259,7 @@
               "to": "exhausted",
               "label": "Mark exhausted",
               "labelNl": "Markeer als uitgeput",
-              "description": "Automatic transition when StockMove drains the lot to zero per REQ-LOT-006 (postcondition: quantity == 0).",
+              "description": "Automatic transition when StockMove drains the lot to zero (postcondition: quantity == 0).",
               "validations": {
                 "quantityZero": {
                   "condition": "quantity > 0",
@@ -325,7 +325,7 @@
         "icon": "AlertCircleOutline",
         "version": "0.1.0",
         "title": "Expiry Alert",
-        "description": "Notification record for lots approaching expiry, lots that have crossed their expiry date, and lots received without an expiry date for tracked products per REQ-LOT-007. Distinct register (not embedded on InventoryLot) so multiple thresholds per lot can coexist (30-day + 7-day), acknowledgement is tracked independently of lot state, and the alert history remains queryable after a lot is exhausted or expired. Alert generation is the responsibility of a daily background job (LotExpiryAlertJob); the schema is read-only from the operator dashboard side except for the acknowledge / resolve transitions. Spec: inventory-lot-batch-expiry.",
+        "description": "Notification record for lots approaching expiry, lots that have crossed their expiry date, and lots received without an expiry date for tracked products. Distinct register (not embedded on InventoryLot) so multiple thresholds per lot can coexist (30-day + 7-day), acknowledgement is tracked independently of lot state, and the alert history remains queryable after a lot is exhausted or expired. Alert generation is the responsibility of a daily background job (LotExpiryAlertJob); the schema is read-only from the operator dashboard side except for the acknowledge / resolve transitions. Spec: inventory-lot-batch-expiry.",
         "x-schema-org": "schema:Action",
         "x-openregister-purpose": "audit",
         "x-spec": "openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md",
@@ -346,7 +346,7 @@
         "properties": {
           "lotId": {
             "type": "string",
-            "description": "REQ-LOT-007: FK to InventoryLot.id — the lot triggering the alert. Resolves via ?expand=lotId.",
+            "description": "FK to InventoryLot.id — the lot triggering the alert. Resolves via ?expand=lotId.",
             "example": "lot-2025-099",
             "title": "Lot ID",
             "$ref": "InventoryLot"
@@ -358,7 +358,7 @@
               "expired",
               "missing_expiry_date"
             ],
-            "description": "REQ-LOT-007 alert taxonomy. approaching_expiry: lot crosses a configured threshold (e.g. 30 days). expired: today > expiryDate. missing_expiry_date: requiresLotTracking item received without expiryDate.",
+            "description": "Alert taxonomy. approaching_expiry: lot crosses a configured threshold (e.g. 30 days). expired: today > expiryDate. missing_expiry_date: requiresLotTracking item received without expiryDate.",
             "example": "approaching_expiry",
             "title": "Alert Type"
           },
@@ -373,7 +373,7 @@
           "alertDate": {
             "type": "string",
             "format": "date",
-            "description": "REQ-LOT-007: date the alert was raised by the daily check.",
+            "description": "Date the alert was raised by the daily check.",
             "example": "2026-05-16",
             "title": "Alert Date"
           },

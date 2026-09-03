@@ -1,6 +1,6 @@
 {
 	"_meta": {
-		"description": "Demo InventoryLot records for inventory-lot-batch-expiry (REQ-LOT-002 + design.md seed data). Five Dutch pet-food lot examples covering FEFO order, quarantine state, and varied unit codes (ZAK, BLIK). Idempotent: SettingsService::seedInventoryLots() deduplicates on (administrationId, lotNumber).",
+		"description": "Demo InventoryLot records for inventory-lot-batch-expiry (+ design.md seed data). Five Dutch pet-food lot examples covering FEFO order, quarantine state, and varied unit codes (ZAK, BLIK). Idempotent: SettingsService:seedInventoryLots deduplicates on (administrationId, lotNumber).",
 		"spec": "openspec/changes/inventory-lot-batch-expiry/specs/inventory-lot-batch-expiry/spec.md",
 		"req": "REQ-LOT-002"
 	},

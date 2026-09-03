@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-bcf-vat-compensation",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — Btw-compensatiefonds (BCF) VAT compensation claims. Adds one BcfClaim schema with a draft → submitted → accepted → settled lifecycle for the quarterly recovery of non-recoverable VAT by Dutch public bodies (gemeenten, waterschappen). The compensable-VAT total and per-account breakdown are computed server-side by OCA\\Shillinq\\Service\\BcfClaimService from existing GLLine + GLTransaction + BbvAccountMapping data via the real OpenRegister ObjectService API (findAll), weighting each compensable account by its BbvAccountMapping.compensablePercentage; the x-openregister-aggregations block documents the equivalent declarative shape. The draft → submitted transition is gated by OCA\\Shillinq\\Lifecycle\\BcfClaimGuard::canSubmit (non-empty claim + closed quarter, REQ-BCF-003). BbvAccountMapping already carries the bcfCompensable + compensablePercentage flags from add-shillinq-bookkeeping-operations; this fragment also re-asserts their descriptions for completeness. Seed objects provide four worked example claims across the lifecycle states for two municipal administrations per design.md."
+    "description": "Tier 3 — Btw-compensatiefonds (BCF) VAT compensation claims. Adds one BcfClaim schema with a draft → submitted → accepted → settled lifecycle for the quarterly recovery of non-recoverable VAT by Dutch public bodies (gemeenten, waterschappen). The compensable-VAT total and per-account breakdown are computed server-side by OCA\\Shillinq\\Service\\BcfClaimService from existing GLLine + GLTransaction + BbvAccountMapping data via the real OpenRegister ObjectService API (findAll), weighting each compensable account by its BbvAccountMapping.compensablePercentage; the x-openregister-aggregations block documents the equivalent declarative shape. The draft → submitted transition is gated by OCA\\Shillinq\\Lifecycle\\BcfClaimGuard:canSubmit (non-empty claim + closed quarter). BbvAccountMapping already carries the bcfCompensable + compensablePercentage flags from add-shillinq-bookkeeping-operations; this fragment also re-asserts their descriptions for completeness. Seed objects provide four worked example claims across the lifecycle states for two municipal administrations per design.md."
   },
   "components": {
     "schemas": {
@@ -99,7 +99,7 @@
           "acceptedOn": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp when Belastingdienst accepted the claim (external actor; REQ-BCF-003).",
+            "description": "Timestamp when Belastingdienst accepted the claim (external actor).",
             "nullable": true,
             "title": "Accepted On"
           },
@@ -144,7 +144,7 @@
             },
             "accepted": {
               "label": "Geaccepteerd",
-              "description": "Belastingdienst accepted the claim (external actor; REQ-BCF-003)."
+              "description": "Belastingdienst accepted the claim (external actor)."
             },
             "settled": {
               "label": "Afgewikkeld",
@@ -163,7 +163,7 @@
               "from": "submitted",
               "to": "accepted",
               "label": "Geaccepteerd door Belastingdienst",
-              "description": "Belastingdienst accepts the claim (external actor; no local guard, REQ-BCF-003)."
+              "description": "Belastingdienst accepts the claim (external actor; no local guard)."
             },
             "settle": {
               "from": "accepted",

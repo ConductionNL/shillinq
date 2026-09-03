@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"change": "bookkeeping-accounts-payable-core",
 		"adr": "ADR-037 modular manifest fragment — never edit src/manifest.json",
-		"description": "Tier 2 — Accounts Payable (Core) navigation per REQ-AP-010 + REQ-AP-014 (consolidate-accounts-payable). Single Accounts Payable group with clean leaf labels (Payees, AP Invoices, AP Aging, Dunning Notices, Payment Runs) under the existing Bookkeeping menu and their backing index/detail pages bound to the canonical Payee / APTransaction / DunningNotice / PaymentRun schemas. The legacy base-monolith AP leaves + page definitions (Vendors/AccountsPayable/APAging/PaymentRuns) are removed from src/manifest.json by this change."
+		"description": "Tier 2 — Accounts Payable (Core) navigation + (consolidate-accounts-payable). Single Accounts Payable group with clean leaf labels (Payees, AP Invoices, AP Aging, Dunning Notices, Payment Runs) under the existing Bookkeeping menu and their backing index/detail pages bound to the canonical Payee / APTransaction / DunningNotice / PaymentRun schemas. The legacy base-monolith AP leaves + page definitions (Vendors/AccountsPayable/APAging/PaymentRuns) are removed from src/manifest.json by this change."
 	},
 	"menu": [
 		{
@@ -276,7 +276,7 @@
 					{
 						"id": "detail",
 						"label": "Detail",
-						"description": "Per-invoice breakdown grouped by vendor and due-date bucket per REQ-AP-006.",
+						"description": "Per-invoice breakdown grouped by vendor and due-date bucket.",
 						"aggregation": "agedPayablesDetail",
 						"columns": [
 							{"key": "vendorName", "label": "Vendor", "sortable": true},
@@ -293,7 +293,7 @@
 					{
 						"id": "summary",
 						"label": "Summary",
-						"description": "Vendor totals grouped by aging bucket per REQ-AP-007.",
+						"description": "Vendor totals grouped by aging bucket.",
 						"aggregation": "agedPayablesSummary",
 						"columns": [
 							{"key": "vendorName", "label": "Vendor", "sortable": true},
@@ -307,7 +307,7 @@
 					{
 						"id": "timeline",
 						"label": "Timeline",
-						"description": "Payment due dates with amounts and vendor summary per REQ-AP-008.",
+						"description": "Payment due dates with amounts and vendor summary.",
 						"aggregation": "agedPayablesTimeline",
 						"columns": [
 							{"key": "dueDate", "label": "Due Date", "sortable": true},
@@ -319,7 +319,7 @@
 					}
 				],
 				"defaultVariant": "summary",
-				"description": "AP aging report (3 variants: detail / summary / timeline) per REQ-AP-006 .. REQ-AP-008. Bucket thresholds configurable via IAppConfig['ap.aging.buckets'] (defaults 30/60/90)."
+				"description": "AP aging report (3 variants: detail / summary / timeline). Bucket thresholds configurable via IAppConfig['ap.aging.buckets'] (defaults 30/60/90)."
 			}
 		},
 		{

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-subsidie-verantwoording",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "T3 governance: subsidie administratie & verantwoording. Adds the SubsidieVerantwoording (accountability record) and AuditorStatement (auditor verification) schemas with declarative lifecycles (ADR-031), state-change notifications (ADR-031), and cross-schema approval/threshold guards (ADR-031 exception-path). Merged additively onto the monolith via ConfigFileLoaderService::deepMergeConfig (ADR-037)."
+    "description": "T3 governance: subsidie administratie & verantwoording. Adds the SubsidieVerantwoording (accountability record) and AuditorStatement (auditor verification) schemas with declarative lifecycles (ADR-031), state-change notifications (ADR-031), and cross-schema approval/threshold guards (ADR-031 exception-path). Merged additively onto the monolith via ConfigFileLoaderService:deepMergeConfig (ADR-037)."
   },
   "components": {
     "schemas": {
@@ -87,7 +87,7 @@
         "icon": "FileDocumentCheckOutline",
         "version": "0.1.0",
         "title": "Subsidie Verantwoording",
-        "description": "Accountability record (verantwoording) for a Subsidie grant per Awb 4.2. Auto-generated in draft on grant award/disbursement, submitted for approval, approved (gated when a blocking AuditorStatement exists on a large grant — REQ-SUBV-003), and finalised. Distinct from the Subsidie grant master it references via grantId.",
+        "description": "Accountability record (verantwoording) for a Subsidie grant per Awb 4.2. Auto-generated in draft on grant award/disbursement, submitted for approval, approved (gated when a blocking AuditorStatement exists on a large grant —), and finalised. Distinct from the Subsidie grant master it references via grantId.",
         "x-schema-org": "schema:GovernmentService",
         "x-spec": "openspec/changes/bookkeeping-subsidie-verantwoording/specs.md",
         "type": "object",
@@ -264,7 +264,7 @@
             },
             "type": "boolean",
             "materialise": true,
-            "description": "True when this accountability report is in a non-final state (draft/submitted/approved) and more than 90 days have elapsed since the grant award date — the declarative restoration of the retired OverdueVerantwoordingJob::isOverdue() rule. Materialised so the onOverdue scheduled notification can filter on it, and re-evaluated daily without an object write by OpenRegister's TemporalCalculationSweepJob (daysSinceAward references `now`, which flags this schema as temporal); `final` is declared as x-openregister-lifecycle's terminal state so already-finalised records are excluded from the sweep."
+            "description": "True when this accountability report is in a non-final state (draft/submitted/approved) and more than 90 days have elapsed since the grant award date — the declarative restoration of the retired OverdueVerantwoordingJob:isOverdue rule. Materialised so the onOverdue scheduled notification can filter on it, and re-evaluated daily without an object write by OpenRegister's TemporalCalculationSweepJob (daysSinceAward references `now`, which flags this schema as temporal); `final` is declared as x-openregister-lifecycle's terminal state so already-finalised records are excluded from the sweep."
           }
         },
         "x-openregister-notifications": {
@@ -273,7 +273,7 @@
               "type": "transition",
               "action": "submit"
             },
-            "description": "Notify the finance officer when an accountability report is ready for approval (REQ-SUBV-003 / ADR-031).",
+            "description": "Notify the finance officer when an accountability report is ready for approval (ADR-031).",
             "recipients": [
               {
                 "kind": "expression",
@@ -643,7 +643,7 @@
               "type": "transition",
               "action": "conditional"
             },
-            "description": "Notify the grant owner of conditional auditor approval (REQ-SUBV-005 / ADR-031).",
+            "description": "Notify the grant owner of conditional auditor approval (ADR-031).",
             "recipients": [
               {
                 "kind": "expression",

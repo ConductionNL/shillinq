@@ -14,13 +14,13 @@
         "icon": "BankCheck",
         "version": "0.1.0",
         "title": "Bank Reconciliation",
-        "description": "A bounded reconciliation session for one bank account + one statement period per REQ-REC-001. Captures opening/closing balances, expected GL balance, computed variance, lifecycle status (draft → in-progress → verified → closed), preparer/verifier signatures, and the closedAt timestamp. NOT a live dashboard — an immutable audit artifact once closed. Per ADR-022/ADR-031 declarative-first: matching is delegated to the T2 bookkeeping-bank-reconciliation engine; T4 records outcomes and closes the audit loop.",
+        "description": "A bounded reconciliation session for one bank account + one statement period. Captures opening/closing balances, expected GL balance, computed variance, lifecycle status (draft → in-progress → verified → closed), preparer/verifier signatures, and the closedAt timestamp. NOT a live dashboard — an immutable audit artifact once closed. Per ADR-022/ADR-031 declarative-first: matching is delegated to the T2 bookkeeping-bank-reconciliation engine; T4 records outcomes and closes the audit loop.",
         "x-schema-org": "schema:Report",
         "type": "object",
         "x-openregister-audit": true,
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "REQ-REC-009: every lifecycle transition (preparer, verifier, sign-off comment, timestamp) appended to an immutable audit trail per ADR-022."
+          "description": "Every lifecycle transition (preparer, verifier, sign-off comment, timestamp) appended to an immutable audit trail per ADR-022."
         },
         "required": [
           "bankAccountId",
@@ -75,20 +75,20 @@
           "expectedGLBalance": {
             "type": "number",
             "nullable": true,
-            "description": "Expected GL balance computed per REQ-REC-002 formula: Account.balanceAtPeriodStart + SUM(GLLine.debit - GLLine.credit) for the period. Server-authoritative — populated by StatementVerifyGuard, never trusted from the client.",
+            "description": "Expected GL balance computed formula: Account.balanceAtPeriodStart + SUM(GLLine.debit - GLLine.credit) for the period. Server-authoritative — populated by StatementVerifyGuard, never trusted from the client.",
             "example": 75000.0,
             "title": "Expected GL Balance"
           },
           "variance": {
             "type": "number",
             "nullable": true,
-            "description": "|closingBalance - expectedGLBalance|. Server-derived per REQ-REC-002. Zero when statement and GL agree; positive when they disagree (timing differences, adjustments, errors).",
+            "description": "|closingBalance - expectedGLBalance|. Server-derived. Zero when statement and GL agree; positive when they disagree (timing differences, adjustments, errors).",
             "example": 1.52,
             "title": "Variance"
           },
           "reconciliationStatus": {
             "type": "string",
-            "description": "Lifecycle state per REQ-REC-003. See x-openregister-lifecycle for the transition map and guards.",
+            "description": "Lifecycle state. See x-openregister-lifecycle for the transition map and guards.",
             "enum": [
               "draft",
               "in-progress",
@@ -118,14 +118,14 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "UTC datetime when the reconciliation transitioned `verified → closed`. Once set, no further edits per REQ-REC-003.",
+            "description": "UTC datetime when the reconciliation transitioned `verified → closed`. Once set, no further edits.",
             "example": "2026-06-05T12:00:00Z",
             "title": "Closed At"
           },
           "signOffComment": {
             "type": "string",
             "nullable": true,
-            "description": "Verifier sign-off note required on `in-progress → verified` per REQ-REC-006. Empty value blocks the transition.",
+            "description": "Verifier sign-off note required on `in-progress → verified`. Empty value blocks the transition.",
             "title": "Sign Off Comment"
           },
           "matchedCount": {
@@ -170,11 +170,11 @@
             },
             "verified": {
               "label": "Verified",
-              "description": "All matches confirmed and all unmatched items resolved per REQ-REC-004; verifier has signed off per REQ-REC-006. Awaiting period close."
+              "description": "All matches confirmed and all unmatched items resolved; verifier has signed off. Awaiting period close."
             },
             "closed": {
               "label": "Closed",
-              "description": "Period closed; reconciliation immutable. Appears in variance aggregations. No further edits per REQ-REC-003."
+              "description": "Period closed; reconciliation immutable. Appears in variance aggregations. No further edits."
             },
             "cancelled": {
               "label": "Cancelled",
@@ -186,14 +186,14 @@
               "from": "draft",
               "to": "in-progress",
               "label": "Initiate reconciliation",
-              "description": "Verify statement balance per REQ-REC-002 and unlock matching. The guard recomputes expectedGLBalance + variance server-side; non-zero variance surfaces a warning but does not block the transition (REQ-REC-002 scenario 'variance surfaces warning but allows proceed').",
+              "description": "Verify statement balance and unlock matching. The guard recomputes expectedGLBalance + variance server-side; non-zero variance surfaces a warning but does not block the transition (scenario 'variance surfaces warning but allows proceed').",
               "requires": "OCA\\Shillinq\\Guard\\StatementVerifyGuard::verifyStatementBalance"
             },
             "verify": {
               "from": "in-progress",
               "to": "verified",
               "label": "Verify reconciliation",
-              "description": "Confirm all unmatched items have been classified (timing/pending/adjustment/matched) per REQ-REC-004 AND the verifier has supplied a sign-off comment per REQ-REC-006. The guard rejects the transition when unresolved matches remain or signOffComment is empty.",
+              "description": "Confirm all unmatched items have been classified (timing/pending/adjustment/matched) AND the verifier has supplied a sign-off comment. The guard rejects the transition when unresolved matches remain or signOffComment is empty.",
               "requires": "OCA\\Shillinq\\Guard\\StatementVerifyGuard::requireResolvedAndSignedOff"
             },
             "close": {
@@ -220,7 +220,7 @@
           "varianceByAccount": {
             "field": "variance",
             "metric": "sum",
-            "description": "REQ-REC-007: Total absolute variance per bank account across all closed reconciliations. Open reconciliations are excluded (REQ-REC-007 scenario 'variance aggregation excludes open reconciliations').",
+            "description": "Total absolute variance per bank account across all closed reconciliations. Open reconciliations are excluded (scenario 'variance aggregation excludes open reconciliations').",
             "groupBy": ["bankAccountId"],
             "filter": {
               "reconciliationStatus": "closed"
@@ -229,7 +229,7 @@
           "varianceByPeriod": {
             "field": "variance",
             "metric": "sum",
-            "description": "REQ-REC-007: Variance by (bankAccountId, statementPeriodEnd). Used for trend analysis — accountants spot drift across multiple closing periods.",
+            "description": "Variance by (bankAccountId, statementPeriodEnd). Used for trend analysis — accountants spot drift across multiple closing periods.",
             "groupBy": [
               "bankAccountId",
               "statementPeriodEnd"
@@ -272,7 +272,7 @@
         }
       },
       "ReconciliationMatch": {
-        "description": "T4 extension of the T2 ReconciliationMatch schema declared in add-shillinq-bookkeeping-compliance. T4 adds reconId (FK to BankReconciliation session), matchAlgorithm (exact/fuzzy/manual — T4 supports exact + manual only per REQ-REC-005), matchedAt timestamp, manualOverride, resolutionStatus + resolutionReason (REQ-REC-004 unmatched-item resolution), and the AR/AP shortcut FKs (arInvoiceId, apTransactionId). Pre-existing T2 fields (matchId, bankStatementLineId, matchType, matchedObjectId, status, confirmedBy, confirmedAt, rejectedReason) are preserved untouched — this fragment deep-merges per ADR-037.",
+        "description": "T4 extension of the T2 ReconciliationMatch schema declared in add-shillinq-bookkeeping-compliance. T4 adds reconId (FK to BankReconciliation session), matchAlgorithm (exact/fuzzy/manual — T4 supports exact + manual only per), matchedAt timestamp, manualOverride, resolutionStatus + resolutionReason (unmatched-item resolution), and the AR/AP shortcut FKs (arInvoiceId, apTransactionId). Pre-existing T2 fields (matchId, bankStatementLineId, matchType, matchedObjectId, status, confirmedBy, confirmedAt, rejectedReason) are preserved untouched — this fragment deep-merges per ADR-037.",
         "required": [
           "reconId"
         ],
@@ -323,7 +323,7 @@
           "manualOverride": {
             "type": "boolean",
             "default": false,
-            "description": "True when the match was operator-created (or operator-corrected from an auto-match) per REQ-REC-004 scenario 'Operator manually matches GL transaction to bank line'.",
+            "description": "True when the match was operator-created (or operator-corrected from an auto-match) scenario 'Operator manually matches GL transaction to bank line'.",
             "title": "Manual Override"
           },
           "resolutionStatus": {
@@ -335,13 +335,13 @@
               "adjustment"
             ],
             "nullable": true,
-            "description": "Classification of unmatched items per REQ-REC-004. `matched` = operator manually matched; `timing` = expected to match in next period; `pending` = awaiting bank/GL confirmation; `adjustment` = non-transaction difference (fee, accrual). Null while the operator has not yet classified.",
+            "description": "Classification of unmatched items. `matched` = operator manually matched; `timing` = expected to match in next period; `pending` = awaiting bank/GL confirmation; `adjustment` = non-transaction difference (fee, accrual). Null while the operator has not yet classified.",
             "title": "Resolution Status"
           },
           "resolutionReason": {
             "type": "string",
             "nullable": true,
-            "description": "Operator-supplied reason for the resolution classification per REQ-REC-004 (audit-trailed). Required when resolutionStatus is set.",
+            "description": "Operator-supplied reason for the resolution classification (audit-trailed). Required when resolutionStatus is set.",
             "title": "Resolution Reason"
           },
           "arInvoiceId": {
@@ -370,7 +370,7 @@
           "varianceByType": {
             "field": "resolutionStatus",
             "metric": "count",
-            "description": "REQ-REC-007 variance-by-type aggregation: count of unmatched items by classification (timing/pending/adjustment). Excludes resolved 'matched' items.",
+            "description": "Variance-by-type aggregation: count of unmatched items by classification (timing/pending/adjustment). Excludes resolved 'matched' items.",
             "groupBy": [
               "reconId",
               "resolutionStatus"
@@ -379,7 +379,7 @@
           "unresolvedByRecon": {
             "field": "id",
             "metric": "count",
-            "description": "Count of unmatched (resolutionStatus=null) entries per reconciliation. Drives the REQ-REC-006 pre-close summary.",
+            "description": "Count of unmatched (resolutionStatus=null) entries per reconciliation. Drives the pre-close summary.",
             "groupBy": ["reconId"],
             "filter": {
               "resolutionStatus": null
@@ -392,13 +392,13 @@
         "icon": "FileDocumentCheckOutline",
         "version": "0.1.0",
         "title": "Reconciliation Report",
-        "description": "A signed-off audit artifact captured when a BankReconciliation transitions verified → closed per REQ-REC-001/REQ-REC-006. Records the matched/unmatched counts, total variance, preparer + verifier UIDs, and the verifier sign-off comment for permanent retention. Immutable once created.",
+        "description": "A signed-off audit artifact captured when a BankReconciliation transitions verified → closed. Records the matched/unmatched counts, total variance, preparer + verifier UIDs, and the verifier sign-off comment for permanent retention. Immutable once created.",
         "x-schema-org": "schema:Report",
         "type": "object",
         "x-openregister-audit": true,
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "REQ-REC-009: immutable audit trail per ADR-022."
+          "description": "Immutable audit trail per ADR-022."
         },
         "required": [
           "reconId",
@@ -426,24 +426,24 @@
           "matchedCount": {
             "type": "integer",
             "minimum": 0,
-            "description": "Final count of confirmed matches per REQ-REC-006.",
+            "description": "Final count of confirmed matches.",
             "title": "Matched Count"
           },
           "unmatchedGLCount": {
             "type": "integer",
             "minimum": 0,
-            "description": "Final count of unmatched GL transactions (timing + pending + adjustment classifications retained for audit) per REQ-REC-006.",
+            "description": "Final count of unmatched GL transactions (timing + pending + adjustment classifications retained for audit).",
             "title": "Unmatched GL Count"
           },
           "unmatchedBankCount": {
             "type": "integer",
             "minimum": 0,
-            "description": "Final count of unmatched bank lines per REQ-REC-006.",
+            "description": "Final count of unmatched bank lines.",
             "title": "Unmatched Bank Count"
           },
           "totalVariance": {
             "type": "number",
-            "description": "Final |closingBalance - expectedGLBalance| per REQ-REC-006. Server-derived from the parent reconciliation at close time.",
+            "description": "Final |closingBalance - expectedGLBalance|. Server-derived from the parent reconciliation at close time.",
             "title": "Total Variance"
           },
           "preparedBy": {
@@ -472,7 +472,7 @@
           "totalVarianceByAdmin": {
             "field": "totalVariance",
             "metric": "sum",
-            "description": "REQ-REC-007: Total variance booked across all closed reconciliations per administration. Drives the variance dashboard.",
+            "description": "Total variance booked across all closed reconciliations per administration. Drives the variance dashboard.",
             "groupBy": ["administrationId"]
           }
         },

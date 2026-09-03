@@ -13,7 +13,7 @@
         "icon": "StairsUp",
         "version": "0.1.0",
         "title": "Dunning Ladder",
-        "description": "Configuration of a multi-stage dunning ladder per ondernemer or per klantgroep (DEFAULT, OVERHEID, VIP, AGGRESSIVE). Each stage declares dagenNaVervalDatum, kanaal (EMAIL / EMAIL+POSTREGISTRATIE / AANGETEKENDE_POST / INCASSOBUREAU_API), template reference (docudesk), and optional wettelijkEffect marker (14_DAGEN_BRIEF_BIK or VERZUIM_INTREDEN). One ondernemer MAY define multiple ladders. The active flag determines whether the ladder participates in automated dunning runs. REQ-CCD-001.",
+        "description": "Configuration of a multi-stage dunning ladder per ondernemer or per klantgroep (DEFAULT, OVERHEID, VIP, AGGRESSIVE). Each stage declares dagenNaVervalDatum, kanaal (EMAIL / EMAIL+POSTREGISTRATIE / AANGETEKENDE_POST / INCASSOBUREAU_API), template reference (docudesk), and optional wettelijkEffect marker (14_DAGEN_BRIEF_BIK or VERZUIM_INTREDEN). One ondernemer MAY define multiple ladders. The active flag determines whether the ladder participates in automated dunning runs.",
         "x-schema-org": "schema:Service",
         "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-001",
         "type": "object",
@@ -202,7 +202,7 @@
         "icon": "AccountSwitchOutline",
         "version": "0.1.0",
         "title": "Klant Ladder Override",
-        "description": "Per-klant exception on a base DunningLadder — overheid extended terms, VIP-skip stage 4/5, aggressive ladder for risk customers. Captures reden + createdBy/createdAt + approvedBy/approvedAt for audit-trail. REQ-CCD-001.",
+        "description": "Per-klant exception on a base DunningLadder — overheid extended terms, VIP-skip stage 4/5, aggressive ladder for risk customers. Captures reden + createdBy/createdAt + approvedBy/approvedAt for audit-trail.",
         "x-schema-org": "schema:Service",
         "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-001",
         "type": "object",
@@ -357,7 +357,7 @@
         "icon": "EmailFastOutline",
         "version": "0.1.0",
         "title": "Dunning Run",
-        "description": "Per-invoice per-stage execution log with evidence trail (rendered subject/body, PDF SHA-256 hash, delivery status, optional digital signature, e-mail open tracking, PostNL barcode + delivery confirmation). Immutable once executed. Backs the proof-of-contact requirement of art. 6:96 BW. REQ-CCD-002.",
+        "description": "Per-invoice per-stage execution log with evidence trail (rendered subject/body, PDF SHA-256 hash, delivery status, optional digital signature, e-mail open tracking, PostNL barcode + delivery confirmation). Immutable once executed. Backs the proof-of-contact requirement of art. 6:96 BW.",
         "x-schema-org": "schema:Event",
         "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-002",
         "type": "object",
@@ -658,7 +658,7 @@
         "icon": "CalculatorVariantOutline",
         "version": "0.2.0",
         "title": "Incasso Kosten Berekening",
-        "description": "BIK-staffel + wettelijke rente computation per invoice. Implements the Besluit BIK staffel (15% / 10% / 5% / 1% / 0,5%, minimum €40, maximum €6.775 reached at €1.000.000) plus optional BTW-over-incassokosten (art. 2 lid 2 Besluit BIK, +21% when the creditor cannot offset VAT). Rente uses a maintained date-keyed rate table: handelsrente B2B per art. 6:119a BW (10,15% per 1-1-2026) or wettelijke rente B2C per art. 6:119 BW (4% per 1-1-2026); a window crossing a statutory rate boundary splits per sub-period. Recomputed on partial-payment against the remaining saldo. REQ-CCD-003.",
+        "description": "BIK-staffel + wettelijke rente computation per invoice. Implements the Besluit BIK staffel (15% / 10% / 5% / 1% / 0,5%, minimum €40, maximum €6.775 reached at €1.000.000) plus optional BTW-over-incassokosten (art. 2 lid 2 Besluit BIK, +21% when the creditor cannot offset VAT). Rente uses a maintained date-keyed rate table: handelsrente B2B per art. 6:119a BW (10,15% per 1-1-2026) or wettelijke rente B2C per art. 6:119 BW (4% per 1-1-2026); a window crossing a statutory rate boundary splits per sub-period. Recomputed on partial-payment against the remaining saldo.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-003",
         "type": "object",
@@ -849,7 +849,7 @@
                     "days": {
                       "type": "integer",
                       "minimum": 0,
-                      "description": "Whole days accrued in this sub-period (van..tot inclusive). The sub-period dagen sum to the parent dagen.",
+                      "description": "Whole days accrued in this sub-period (van.tot inclusive). The sub-period dagen sum to the parent dagen.",
                       "title": "Dagen"
                     },
                     "rate": {
@@ -896,7 +896,7 @@
         "x-openregister-aggregations": {
           "bikStaffel": {
             "label": "BIK staffel",
-            "description": "Declarative shape of the Besluit BIK staffel arithmetic (per REQ-CCD-003). The PHP BIKStaffelCalculator produces an identical record when the OR aggregation engine cannot express the multi-slab expression directly.",
+            "description": "Declarative shape of the Besluit BIK staffel arithmetic (per). The PHP BIKStaffelCalculator produces an identical record when the OR aggregation engine cannot express the multi-slab expression directly.",
             "register": "shillinq",
             "schema": "IncassoKostenBerekening",
             "computedFields": {
@@ -977,7 +977,7 @@
         "icon": "PauseCircleOutline",
         "version": "0.1.0",
         "title": "Dunning Pause / Dispute",
-        "description": "Pause registration on a dunning ladder for a specific invoice. Halts further DunningRun stage actions and IncassoKostenBerekening rente accrual. Resolved either by operator action or by the auto hard-deadline (default 60 days after pauzeStart). REQ-CCD-004.",
+        "description": "Pause registration on a dunning ladder for a specific invoice. Halts further DunningRun stage actions and IncassoKostenBerekening rente accrual. Resolved either by operator action or by the auto hard-deadline (default 60 days after pauzeStart).",
         "x-schema-org": "schema:Event",
         "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-004",
         "type": "object",
@@ -1119,7 +1119,7 @@
         "icon": "GaugeLow",
         "version": "0.1.0",
         "title": "Credit Score",
-        "description": "Optional external credit-score snapshot per klant (Graydon, Creditsafe, Atradius Insights). Cached for dunning.credit_score_cache_days days (default 30) to limit lookup cost. Triggers a UI warning when the score falls below the configured threshold. REQ-CCD-007.",
+        "description": "Optional external credit-score snapshot per klant (Graydon, Creditsafe, Atradius Insights). Cached for dunning.credit_score_cache_days days (default 30) to limit lookup cost. Triggers a UI warning when the score falls below the configured threshold.",
         "x-schema-org": "schema:Rating",
         "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-007",
         "type": "object",
@@ -1254,7 +1254,7 @@
         "icon": "FileRemoveOutline",
         "version": "0.1.0",
         "title": "Oninbare Afschrijving",
-        "description": "Definitive write-off + BTW-teruggaaf voorbereiding per art. 29 OB. Captures hoofdsomAfgeschreven, btwBedrag, art29OBVerklaring (e.g. 'Faillissement', 'Schuldsanering', '1 jaar onbetaald'), evidence ref (faillissementsvonnis / WSNP-besluit), GL boekingId, and the BTW-aangifte period the teruggaaf is queued for. REQ-CCD-010.",
+        "description": "Definitive write-off + BTW-teruggaaf voorbereiding per art. 29 OB. Captures hoofdsomAfgeschreven, btwBedrag, art29OBVerklaring (e.g. 'Faillissement', 'Schuldsanering', '1 jaar onbetaald'), evidence ref (faillissementsvonnis / WSNP-besluit), GL boekingId, and the BTW-aangifte period the teruggaaf is queued for.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-credit-control-dunning/spec.md#REQ-CCD-010",
         "type": "object",
@@ -1336,7 +1336,7 @@
               "from": "draft",
               "to": "posted",
               "label": "Post write-off",
-              "description": "Materialise the GL posting + queue BTW teruggaaf for the next aangifte period. Implements REQ-CCD-010."
+              "description": "Materialise the GL posting + queue BTW teruggaaf for the next aangifte period. Implements."
             },
             "void": {
               "from": "posted",

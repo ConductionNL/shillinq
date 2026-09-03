@@ -69,7 +69,7 @@
 					{ "key": "rateLimitPerBookingPerHour", "label": "Rate limit (per booking / hour)", "type": "number" },
 					{ "key": "rateLimitPerOrganizerPerDay", "label": "Rate limit (per organizer / day)", "type": "number" },
 					{ "key": "deduplicationWindowMinutes", "label": "Dedupe window (minutes)", "type": "number" },
-					{ "key": "respectOptOut", "label": "Respect recipient opt-out", "type": "boolean", "help": "When on (default), recipients that opted out of this trigger type are skipped (REQ-BNT-009). AVG / GDPR mandates honouring opt-out for non-transactional channels." },
+					{ "key": "respectOptOut", "label": "Respect recipient opt-out", "type": "boolean", "help": "When on (default), recipients that opted out of this trigger type are skipped. AVG / GDPR mandates honouring opt-out for non-transactional channels." },
 					{ "key": "templateOverrideSlug", "label": "Template override (slug)", "type": "string", "help": "Optional per-trigger override. When empty, the engine picks the locale-matched published template from bookings-email-templates." },
 					{ "key": "appliesToBookingSlug", "label": "Limits to one booking (slug)", "type": "string", "help": "When set, this trigger only fires for that single booking — used by the per-booking modal overrides." },
 					{ "key": "channelCount", "label": "Channel count", "type": "calculated" },
@@ -194,7 +194,7 @@
 			"label": "Notifications",
 			"icon": "BellOutline",
 			"modal": "BookingNotificationConfigModal",
-			"description": "Open per-booking notification configuration. Loads triggers whose triggerType matches one of the booking lifecycle events plus any triggers scoped to this booking; lets the organiser toggle each on/off and pick its channels (REQ-BNT-007)."
+			"description": "Open per-booking notification configuration. Loads triggers whose triggerType matches one of the booking lifecycle events plus any triggers scoped to this booking; lets the organiser toggle each on/off and pick its channels."
 		}
 	]
 }

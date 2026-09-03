@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "gl-account-suggestion-consume",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json. ADR-022 consumes docudesk's already-shipped ai-gl-account-suggestion contract over two outbound HTTP requests to docudesk's existing REST endpoints; docudesk never learns a chart of accounts, shillinq supplies its own.",
-    "description": "Adds docudeskExtractionId (the financialExtraction id, learned from the synchronous extraction-request response, REQ-GAC-001) and suggestedGlAccount (the cached last-fetched docudesk suggestion, REQ-GAC-003) to SupplierInvoice and Receipt. Also adds glAccount to Receipt (SupplierInvoice already has it) so a receipt draft can carry a booking-account suggestion/selection like a supplier invoice does."
+    "description": "Adds docudeskExtractionId (the financialExtraction id, learned from the synchronous extraction-request response) and suggestedGlAccount (the cached last-fetched docudesk suggestion) to SupplierInvoice and Receipt. Also adds glAccount to Receipt (SupplierInvoice already has it) so a receipt draft can carry a booking-account suggestion/selection like a supplier invoice does."
   },
   "info": {
     "version": "0.1.0-gl-account-suggestion-consume"
@@ -15,7 +15,7 @@
         "properties": {
           "docudeskExtractionId": {
             "type": "string",
-            "description": "The docudesk `financialExtraction` object id, learned from the synchronous response of DocudeskExtractionClient::requestExtraction(). Absent when the draft's extraction was never (re-)requested through shillinq's own proxy (e.g. seeded before this change) — the GL-account suggestion feature degrades gracefully to plain manual booking when unset.",
+            "description": "The docudesk `financialExtraction` object id, learned from the synchronous response of DocudeskExtractionClient:requestExtraction. Absent when the draft's extraction was never (re-)requested through shillinq's own proxy (e.g. seeded before this change) — the GL-account suggestion feature degrades gracefully to plain manual booking when unset.",
             "nullable": true,
             "example": "00000000-0000-0000-0000-000000000099",
             "title": "Docudesk Extraction Id"
@@ -47,7 +47,7 @@
           },
           "docudeskExtractionId": {
             "type": "string",
-            "description": "The docudesk `financialExtraction` object id, learned from the synchronous response of DocudeskExtractionClient::requestExtraction(). Absent when the draft's extraction was never (re-)requested through shillinq's own proxy.",
+            "description": "The docudesk `financialExtraction` object id, learned from the synchronous response of DocudeskExtractionClient:requestExtraction. Absent when the draft's extraction was never (re-)requested through shillinq's own proxy.",
             "nullable": true,
             "example": "00000000-0000-0000-0000-000000000098",
             "title": "Docudesk Extraction Id"

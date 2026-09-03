@@ -62,7 +62,7 @@
 				"defaultSort": "countDate",
 				"defaultSortDirection": "desc",
 				"detailRoute": "CycleCountDetail",
-				"description": "Periodic stock-take batches per REQ-ICC-010. Each row drills down to the line snapshot + variance review + reconciliation actions. Filter by status, type, date range, and (for partial counts) location."
+				"description": "Periodic stock-take batches. Each row drills down to the line snapshot + variance review + reconciliation actions. Filter by status, type, date range, and (for partial counts) location."
 			}
 		},
 		{
@@ -104,7 +104,7 @@
 				],
 				"lifecycleActions": true,
 				"indexRoute": "CycleCounts",
-				"description": "REQ-ICC-006 lifecycle controls: submit (snapshot scope), begin-counting, post (variance review), reconcile (emit StockMoves), cancel. Variance lines that require investigation are highlighted; reason-code dropdown drawn from the active set in InventoryVarianceReason."
+				"description": "Lifecycle controls: submit (snapshot scope), begin-counting, post (variance review), reconcile (emit StockMoves), cancel. Variance lines that require investigation are highlighted; reason-code dropdown drawn from the active set in InventoryVarianceReason."
 			}
 		},
 		{
@@ -167,7 +167,7 @@
 				"detailRoute": "CycleCountDetail",
 				"_note_rowRoute": "`detailRoute` is inert; the implicit fallback matches by register+schema and this index is bound to InventoryCycleCountLine. The description below promises a row-click drilldown that did nothing without `rowRoute`.",
 				"rowRoute": "CycleCountDetail",
-				"description": "Aggregated view of every flagged variance line per REQ-ICC-010. Group-by reasonCode produces the count-by-reason rollup; row click drills back to the originating count and its adjustment StockMove."
+				"description": "Aggregated view of every flagged variance line. Group-by reasonCode produces the count-by-reason rollup; row click drills back to the originating count and its adjustment StockMove."
 			}
 		}
 	]
