@@ -40,17 +40,29 @@ test.describe('shillinq — SPA smoke (v0.1.0 shell)', () => {
 		// ⚠️ This assertion used to read `cn-nav-entry-Settings`, and NO menu
 		// entry has ever carried the id `Settings`. The shillinq settings
 		// foldout is populated from `src/menu-layout.json#settingsSection`,
-		// whose first entry is `GeneralSettings`; the other shipped settings
-		// ids are `DeadlineCalendarSettings`, `VpbSettings`, … There is no
-		// `Settings`, so the locator matched nothing and the test failed for a
-		// reason that had nothing to do with the SPA shell it claims to smoke.
+		// whose entries are `DeadlineCalendarSettings`, `BankImportPage`,
+		// `MatchingRules`, … There is no `Settings`, so the locator matched
+		// nothing and the test failed for a reason that had nothing to do with
+		// the SPA shell it claims to smoke.
+		//
+		// ⚠️ It then read `cn-nav-entry-GeneralSettings`, which was real until
+		// ADR-114 Decision 2 deleted that entry. `GeneralSettings` hand-rolled
+		// a link to /settings/admin/shillinq that CnAppNav auto-prepends for
+		// instance admins anyway (ADR-079), so the app shipped two copies of
+		// one link and the app's copy missed the shell's isAdmin gating.
+		//
+		// So this asserts on `DeadlineCalendarSettings`, the first id the
+		// settingsSection list now carries. It is deliberately an id this app
+		// OWNS: the shell-drawn Personal settings and Admin settings entries
+		// would smoke the library rather than this app's manifest, and would
+		// keep passing over an app whose whole settings foldout went empty.
 		//
 		// The lib renders settings entries inside the collapsed
 		// `cn-app-nav__settings-list` footer (revealed by a toggle), so they
 		// are ATTACHED but not visible until the user opens that list — assert
 		// attachment, not viewport visibility.
 		await expect(
-			page.locator('[data-testid="cn-nav-entry-GeneralSettings"]'),
+			page.locator('[data-testid="cn-nav-entry-DeadlineCalendarSettings"]'),
 		).toBeAttached({ timeout: 10_000 })
 
 		// The main navigation must also have rendered its own entries — an
