@@ -13,7 +13,7 @@
           "filedSnapshot": {
             "type": "array",
             "nullable": true,
-            "description": "As-filed per-rubriek totals (audit trail of the original filed figures), captured from the VATDeclaration rows persisted at filing time. Populated by VatSuppletieDetectionService::detect() (REQ-VBTW-013).",
+            "description": "As-filed per-rubriek totals (audit trail of the original filed figures), captured from the VATDeclaration rows persisted at filing time. Populated by VatSuppletieDetectionService::detect().",
             "items": {
               "type": "object",
               "properties": {
@@ -45,7 +45,7 @@
           "currentSnapshot": {
             "type": "array",
             "nullable": true,
-            "description": "Per-rubriek totals recomputed live from GL at detection time, in the same shape as filedSnapshot. Populated by VatSuppletieDetectionService::detect() (REQ-VBTW-013).",
+            "description": "Per-rubriek totals recomputed live from GL at detection time, in the same shape as filedSnapshot. Populated by VatSuppletieDetectionService::detect().",
             "items": {
               "type": "object",
               "properties": {
@@ -77,7 +77,7 @@
           "categoryDeltas": {
             "type": "array",
             "nullable": true,
-            "description": "Per-rubriek delta (currentSnapshot minus filedSnapshot) for every bucket with a non-zero difference. Populated by VatSuppletieDetectionService::prepare() (REQ-VBTW-014).",
+            "description": "Per-rubriek delta (currentSnapshot minus filedSnapshot) for every bucket with a non-zero difference. Populated by VatSuppletieDetectionService::prepare().",
             "items": {
               "type": "object",
               "properties": {
@@ -136,13 +136,13 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "preparedAt + 8 weeks — the statutory suppletie filing deadline once a threshold-exceeding correction is discovered (REQ-VBTW-014).",
+            "description": "preparedAt + 8 weeks — the statutory suppletie filing deadline once a threshold-exceeding correction is discovered.",
             "title": "Filing Deadline"
           },
           "glCorrectionTransactionId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the draft GLTransaction booking this correction's delta, compiled by VatSuppletieDetectionService::prepare() (REQ-VBTW-014). Never auto-posted.",
+            "description": "FK to the draft GLTransaction booking this correction's delta, compiled by VatSuppletieDetectionService::prepare(). Never auto-posted.",
             "title": "GL Correction Transaction ID"
           }
         }

@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"source": "RvO Milieulijst 2026 per 1 januari (Aanwijzingsregeling willekeurige afschrijving en investeringsaftrek milieu-investeringen, Wet IB 2001 art. 3.42a)",
 		"version": "2026",
-		"description": "Representative baseline of the RvO Milieulijst 2026 (MIA/Vamil). Non-exhaustive starter set covering common MKB categories; operators extend it from the published RvO list for the full ~250 codes. miaPercentage is one of 27/36/45; vamilToegestaan flags whether willekeurige afschrijving applies. Codes are resolved against the opdrachtverleningDatum year (REQ-INV-002).",
+		"description": "Representative baseline of the RvO Milieulijst 2026 (MIA/Vamil). Non-exhaustive starter set covering common MKB categories; operators extend it from the published RvO list for the full ~250 codes. miaPercentage is one of 27/36/45; vamilToegestaan flags whether willekeurige afschrijving applies. Codes are resolved against the opdrachtverleningDatum year.",
 		"imported": "2026-06-05T00:00:00Z"
 	},
 	"milieulijstCodes": [

@@ -199,13 +199,13 @@
           },
           "postingRefs": {
             "type": "object",
-            "description": "References to created objects after posting (opening journal id, AR/AP item ids, contact ids, master ids). Used by reversal (REQ-AIM-009).",
+            "description": "References to created objects after posting (opening journal id, AR/AP item ids, contact ids, master ids). Used by reversal.",
             "nullable": true,
             "title": "Posting Refs"
           },
           "idempotencyKey": {
             "type": "string",
-            "description": "Computed hash of source files + scope + administration. Posting a key that already posted is a no-op returning the existing postingRefs (REQ-AIM-009).",
+            "description": "Computed hash of source files + scope + administration. Posting a key that already posted is a no-op returning the existing postingRefs.",
             "nullable": true,
             "title": "Idempotency Key"
           },
@@ -234,7 +234,7 @@
             },
             "parsing": {
               "label": "Parsing",
-              "description": "Auditfile + companion CSVs are being stream-parsed via OR background machinery (REQ-AIM-002). A multi-100MB file never parses inside the HTTP request."
+              "description": "Auditfile + companion CSVs are being stream-parsed via OR background machinery. A multi-100MB file never parses inside the HTTP request."
             },
             "staged": {
               "label": "Staged",
@@ -254,7 +254,7 @@
             },
             "dry_run_complete": {
               "label": "Dry-run complete",
-              "description": "The exact would-be result is persisted on dryRunReport for the accountant to verify before anything is written (REQ-AIM-008). The only legal predecessor of posting."
+              "description": "The exact would-be result is persisted on dryRunReport for the accountant to verify before anything is written. The only legal predecessor of posting."
             },
             "posting": {
               "label": "Posting",
@@ -266,11 +266,11 @@
             },
             "posting_failed": {
               "label": "Posting failed",
-              "description": "A staged-state change was detected (dry-run no longer matches) or a cross-service write failed mid-post. Requires a fresh validation + dry-run (REQ-AIM-008)."
+              "description": "A staged-state change was detected (dry-run no longer matches) or a cross-service write failed mid-post. Requires a fresh validation + dry-run."
             },
             "reversed": {
               "label": "Reversed",
-              "description": "Reversing journal posted, imported open items and masters soft-deleted, contacts reported (never deleted). Terminal state (REQ-AIM-009)."
+              "description": "Reversing journal posted, imported open items and masters soft-deleted, contacts reported (never deleted). Terminal state."
             }
           },
           "transitions": {
@@ -278,7 +278,7 @@
               "from": "draft",
               "to": "parsing",
               "label": "Parse",
-              "description": "Start parsing. Requires sourceFiles, administrationId, migrationDate, and at least one scope flag. Runs under OR background machinery; the initiating request returns immediately (REQ-AIM-002).",
+              "description": "Start parsing. Requires sourceFiles, administrationId, migrationDate, and at least one scope flag. Runs under OR background machinery; the initiating request returns immediately.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ImportBatchGuard::canParse"
             },
             "staged": {
@@ -297,7 +297,7 @@
               "from": "mapping",
               "to": "validated",
               "label": "Validate",
-              "description": "Run all validation checks (balanced opening journal, open period, AR/AP control = open items, every referenced mapping confirmed & mapped). Fails closed to validation_failed on any error finding (REQ-AIM-005/006/007). Unmapped or unconfirmed referenced rows block this transition (REQ-AIM-004)."
+              "description": "Run all validation checks (balanced opening journal, open period, AR/AP control = open items, every referenced mapping confirmed & mapped). Fails closed to validation_failed on any error finding (REQ-AIM-005/006/007). Unmapped or unconfirmed referenced rows block this transition."
             },
             "validationFailed": {
               "from": "mapping",
@@ -327,13 +327,13 @@
               "from": "posting",
               "to": "posting_failed",
               "label": "Posting failed",
-              "description": "Staged-state changed since the dry-run, or a cross-service write failed. Requires a fresh validation + dry-run before retrying (REQ-AIM-008)."
+              "description": "Staged-state changed since the dry-run, or a cross-service write failed. Requires a fresh validation + dry-run before retrying."
             },
             "reverse": {
               "from": "posted",
               "to": "reversed",
               "label": "Reverse import",
-              "description": "Post the reversing journal, soft-delete imported open items and master rows, mark the batch reversed; contacts are reported but never deleted. ONLY while the target period is open (REQ-AIM-009) — guarded.",
+              "description": "Post the reversing journal, soft-delete imported open items and master rows, mark the batch reversed; contacts are reported but never deleted. ONLY while the target period is open — guarded.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ImportBatchGuard::canReverse",
               "x-adr-031-exception": "Open-period precondition for reversal is a cross-schema FiscalPeriod check the declarative requires: DSL cannot yet express; ImportBatchGuard::canReverse is the documented ADR-031 PHP-guard seam (mirrors APGuard / StatementParser). Replace with a declarative condition when OR gains the primitive."
             }

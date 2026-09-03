@@ -48,13 +48,13 @@
           },
           "grIrClearingAccountNumber": {
             "type": "string",
-            "description": "FK to Account.accountNumber — credited on goods receipt (Cr GR/IR clearing); subsequently debited by AP invoice posting per REQ-AP-003. Default RGS 3.5 MKB '1800' GR/IR clearing. MUST resolve to an existing Account in the same administration. Two-step pattern avoids double-posting (REQ-CG-003).",
+            "description": "FK to Account.accountNumber — credited on goods receipt (Cr GR/IR clearing); subsequently debited by AP invoice posting per REQ-AP-003. Default RGS 3.5 MKB '1800' GR/IR clearing. MUST resolve to an existing Account in the same administration. Two-step pattern avoids double-posting.",
             "example": "1800",
             "title": "Gr Ir Clearing Account Number"
           },
           "inventoryAdjustmentAccountNumber": {
             "type": "string",
-            "description": "FK to Account.accountNumber — debited on negative count variance / credited on positive count variance (REQ-CG-004). Default RGS 3.5 MKB '7100' Voorraadmutaties. MUST resolve to an existing Account in the same administration.",
+            "description": "FK to Account.accountNumber — debited on negative count variance / credited on positive count variance. Default RGS 3.5 MKB '7100' Voorraadmutaties. MUST resolve to an existing Account in the same administration.",
             "example": "7100",
             "title": "Inventory Adjustment Account Number"
           },

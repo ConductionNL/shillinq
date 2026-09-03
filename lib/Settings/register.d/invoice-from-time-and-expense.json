@@ -118,7 +118,7 @@
           "retainerScheduleId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the RetainerSchedule applied — required for retainer and mixed, null for the others (REQ-ITE-005).",
+            "description": "FK to the RetainerSchedule applied — required for retainer and mixed, null for the others.",
             "example": "retainer-support-monthly",
             "title": "Retainer Schedule ID"
           },
@@ -267,7 +267,7 @@
               "fixed_fee",
               "manual"
             ],
-            "description": "What this line represents (REQ-ITE-003).",
+            "description": "What this line represents.",
             "example": "time_entry",
             "title": "Source Type"
           },
@@ -356,7 +356,7 @@
         "icon": "CalendarSyncOutline",
         "version": "0.1.0",
         "title": "Retainer Schedule",
-        "description": "Monthly recurring fee + optional T&M overage threshold. Referenced from BillableInvoice.retainerScheduleId when billingModel is retainer or mixed (REQ-ITE-005). monthlyAmount is locked in via effectiveDate so historical invoices retain the rate in force on their invoiceDate (D3).",
+        "description": "Monthly recurring fee + optional T&M overage threshold. Referenced from BillableInvoice.retainerScheduleId when billingModel is retainer or mixed. monthlyAmount is locked in via effectiveDate so historical invoices retain the rate in force on their invoiceDate (D3).",
         "x-schema-org": "schema:Service",
         "x-openregister-purpose": "config",
         "x-spec": "openspec/changes/invoice-from-time-and-expense/specs/spec.md",

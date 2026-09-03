@@ -3,7 +3,7 @@
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
     "source": "Burgerlijk Wetboek Boek 2, art. 2:373 (balansmodel)",
-    "description": "Maps GL account ranges to the wettelijke balans rubrieken per art. 2:373 BW (REQ-T9-002). GL-to-rubriek mapping is configuration, not code (design D3); operators may customise per administration. Three example variant maps are provided (small-manufacturing, services, retail).",
+    "description": "Maps GL account ranges to the wettelijke balans rubrieken per art. 2:373 BW. GL-to-rubriek mapping is configuration, not code (design D3); operators may customise per administration. Three example variant maps are provided (small-manufacturing, services, retail).",
     "imported": "2026-06-05T00:00:00Z",
     "url": "https://wetten.overheid.nl/BWBR0003045/"
   },

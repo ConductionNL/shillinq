@@ -27,7 +27,7 @@
                   "exempt"
                 ],
                 "default": "niet_getoetst",
-                "description": "Aggregate toets status across all linked rechtmatigheidstoets records (REQ-RV-001).",
+                "description": "Aggregate toets status across all linked rechtmatigheidstoets records.",
                 "title": "Status"
               },
               "tests": {
@@ -89,7 +89,7 @@
           },
           "journalEntry": {
             "type": "string",
-            "description": "FK to JournalEntry.id (journaalpost) being assessed (REQ-RV-001).",
+            "description": "FK to JournalEntry.id (journaalpost) being assessed.",
             "example": "je-2026-0441",
             "title": "Journaalpost"
           },
@@ -118,7 +118,7 @@
               "onzeker",
               "niet_van_toepassing"
             ],
-            "description": "Assessment outcome (REQ-RV-001). voldoet_niet/onzeker roll up into a rechtmatigheidsbevinding.",
+            "description": "Assessment outcome. voldoet_niet/onzeker roll up into a rechtmatigheidsbevinding.",
             "title": "Uitkomst"
           },
           "testDate": {
@@ -179,7 +179,7 @@
           "lawfulnessFinding": {
             "type": "string",
             "nullable": true,
-            "description": "FK to Rechtmatigheidsbevinding.id when uitkomst != voldoet (REQ-RV-002).",
+            "description": "FK to Rechtmatigheidsbevinding.id when uitkomst != voldoet.",
             "title": "Rechtmatigheidsbevinding"
           },
           "status": {
@@ -189,7 +189,7 @@
               "getoetst"
             ],
             "default": "in_behandeling",
-            "description": "Lifecycle status (REQ-RV-002). Synced from procest task completion for handmatige toetsen.",
+            "description": "Lifecycle status. Synced from procest task completion for handmatige toetsen.",
             "title": "Status"
           },
           "frameworkAgreement": {
@@ -223,7 +223,7 @@
               "from": "in_behandeling",
               "to": "getoetst",
               "label": "Toets afronden",
-              "description": "Operator/procest finalises the toets; requires onderbouwing >= 50 chars and a linked bevinding when uitkomst != voldoet (REQ-RV-002).",
+              "description": "Operator/procest finalises the toets; requires onderbouwing >= 50 chars and a linked bevinding when uitkomst != voldoet.",
               "requires": "OCA\\Shillinq\\Lifecycle\\RechtmatigheidGuard::canFinaliseToets"
             }
           }
@@ -276,7 +276,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Rechtmatigheidstoets is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Rechtmatigheidstoets is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Rechtmatigheidsbevinding": {
@@ -315,7 +315,7 @@
               "error",
               "uncertainty"
             ],
-            "description": "Finding type (REQ-RV-005).",
+            "description": "Finding type.",
             "title": "Soort"
           },
           "criterium": {
@@ -338,18 +338,18 @@
           "amount_error": {
             "type": "number",
             "default": 0,
-            "description": "Error amount (EUR). Counts towards the fout-tolerance aggregation (REQ-RV-005).",
+            "description": "Error amount (EUR). Counts towards the fout-tolerance aggregation.",
             "title": "Bedrag Fout"
           },
           "amount_uncertainty": {
             "type": "number",
             "default": 0,
-            "description": "Uncertainty amount (EUR). Counts towards the onzekerheid-tolerance aggregation (REQ-RV-005).",
+            "description": "Uncertainty amount (EUR). Counts towards the onzekerheid-tolerance aggregation.",
             "title": "Bedrag Onzekerheid"
           },
           "financialYear": {
             "type": "integer",
-            "description": "Fiscal year of the finding (REQ-RV-005).",
+            "description": "Fiscal year of the finding.",
             "example": 2026,
             "title": "Boekjaar"
           },
@@ -445,7 +445,7 @@
             },
             "opgelost": {
               "label": "Opgelost",
-              "description": "Resolved via correctieboeking (REQ-RV-010); original bedrag remains in the year-of-discovery paragraaf."
+              "description": "Resolved via correctieboeking; original bedrag remains in the year-of-discovery paragraaf."
             }
           },
           "transitions": {
@@ -453,7 +453,7 @@
               "from": "in_behandeling",
               "to": "opgelost",
               "label": "Markeren als opgelost",
-              "description": "Operator links a correctieboeking (REQ-RV-010); requires correctieboeking_id to be set.",
+              "description": "Operator links a correctieboeking; requires correctieboeking_id to be set.",
               "requires": "OCA\\Shillinq\\Lifecycle\\RechtmatigheidGuard::canResolveBevinding"
             }
           }
@@ -538,7 +538,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Rechtmatigheidsbevinding is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Rechtmatigheidsbevinding is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Rechtmatigheidsparagraaf": {
@@ -571,7 +571,7 @@
           "total_expenses_including_reserve_movements": {
             "type": "number",
             "default": 0,
-            "description": "Basis for tolerance computation (REQ-RV-005).",
+            "description": "Basis for tolerance computation.",
             "title": "Totaal Lasten Inclusief Mutaties Reserves"
           },
           "tolerance_limit_error_percentage": {
@@ -583,7 +583,7 @@
           "tolerance_error_amount": {
             "type": "number",
             "default": 0,
-            "description": "tolerantiegrens_fout_percentage% of totaal_lasten (REQ-RV-005).",
+            "description": "tolerantiegrens_fout_percentage% of totaal_lasten.",
             "title": "Tolerantiegrens Fout Bedrag"
           },
           "tolerance_limit_uncertainty_percentage": {
@@ -595,7 +595,7 @@
           "tolerance_uncertainty_amount": {
             "type": "number",
             "default": 0,
-            "description": "tolerantiegrens_onzekerheid_percentage% of totaal_lasten (REQ-RV-005).",
+            "description": "tolerantiegrens_onzekerheid_percentage% of totaal_lasten.",
             "title": "Tolerantiegrens Onzekerheid Bedrag"
           },
           "total_identified_errors": {
@@ -613,7 +613,7 @@
           "within_tolerance": {
             "type": "boolean",
             "default": true,
-            "description": "True when both fouten and onzekerheden are within their thresholds (REQ-RV-005).",
+            "description": "True when both fouten and onzekerheden are within their thresholds.",
             "title": "Binnen Tolerantie"
           },
           "declaration_college": {
@@ -680,7 +680,7 @@
             },
             "final": {
               "label": "Definitief",
-              "description": "Final; eligible for jaarrekening-export (REQ-RV-006)."
+              "description": "Final; eligible for jaarrekening-export."
             }
           },
           "transitions": {
@@ -688,7 +688,7 @@
               "from": "draft",
               "to": "vastgesteld_college",
               "label": "Vaststellen door college",
-              "description": "College vaststelling; when binnen_tolerantie is false a portefeuillehouder-toelichting (verklaring_college) is required before advancing (REQ-RV-005).",
+              "description": "College vaststelling; when binnen_tolerantie is false a portefeuillehouder-toelichting (verklaring_college) is required before advancing.",
               "requires": "OCA\\Shillinq\\Lifecycle\\RechtmatigheidGuard::canVaststellenParagraaf"
             },
             "behandelen_raad": {
@@ -761,7 +761,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Rechtmatigheidsparagraaf is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Rechtmatigheidsparagraaf is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Tolerantiegrens": {
@@ -841,7 +841,7 @@
               "total_expenses_including_reserve_movements"
             ],
             "default": "total_expenses_including_reserve_movements",
-            "description": "Basis for the tolerance calculation (REQ-RV-003).",
+            "description": "Basis for the tolerance calculation.",
             "title": "Berekeningsbasis"
           },
           "status": {
@@ -851,7 +851,7 @@
               "determined"
             ],
             "default": "draft",
-            "description": "Concept until a raadsbesluit-referentie is recorded (REQ-RV-003).",
+            "description": "Concept until a raadsbesluit-referentie is recorded.",
             "title": "Status"
           }
         },
@@ -884,7 +884,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Tolerantiegrens is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Tolerantiegrens is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

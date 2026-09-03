@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-soft-close-flux",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 2 — continuous-close + flux analysis. Declares the 11 registers (PeriodStatus, AutoAccrualRule, AutoAccrualPosting, CloseChecklistTemplate, CloseChecklistInstance, FluxRun, FluxItem, FluxAttribution, MaterialityPolicy, ContinuousCloseAlert, CloseMetrics) for REQ-CLS-001..010 of the bookkeeping-continuous-close spec. PeriodStatus carries a five-stage x-openregister-lifecycle (open → soft-closed → hard-closed → audited → locked) with stage-change history (REQ-CLS-001); the soft-close transition is the entry point for OCA\\Shillinq\\Service\\SoftCloseExecutor (ADR-031 orchestration exception, REQ-CLS-002). CloseChecklistInstance carries a pending → in-progress → completed lifecycle with task-dependency enforcement and SLA escalation (REQ-CLS-004). AutoAccrualPosting carries a posted → reversed lifecycle linked to the original entry + reversal entry (REQ-CLS-010). GLTransaction.post is additively augmented with PeriodStatusGuard::postingAllowed enforcing the stage-based posting restrictions (REQ-CLS-001) without dropping any existing precondition. Sibling to bookkeeping-period-close (FiscalPeriod) — both schemas coexist: FiscalPeriod is the T1 entity, PeriodStatus extends it with continuous-close stages."
+    "description": "Tier 2 — continuous-close + flux analysis. Declares the 11 registers (PeriodStatus, AutoAccrualRule, AutoAccrualPosting, CloseChecklistTemplate, CloseChecklistInstance, FluxRun, FluxItem, FluxAttribution, MaterialityPolicy, ContinuousCloseAlert, CloseMetrics) for REQ-CLS-001..010 of the bookkeeping-continuous-close spec. PeriodStatus carries a five-stage x-openregister-lifecycle (open → soft-closed → hard-closed → audited → locked) with stage-change history; the soft-close transition is the entry point for OCA\\Shillinq\\Service\\SoftCloseExecutor (ADR-031 orchestration exception, REQ-CLS-002). CloseChecklistInstance carries a pending → in-progress → completed lifecycle with task-dependency enforcement and SLA escalation. AutoAccrualPosting carries a posted → reversed lifecycle linked to the original entry + reversal entry. GLTransaction.post is additively augmented with PeriodStatusGuard::postingAllowed enforcing the stage-based posting restrictions without dropping any existing precondition. Sibling to bookkeeping-period-close (FiscalPeriod) — both schemas coexist: FiscalPeriod is the T1 entity, PeriodStatus extends it with continuous-close stages."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "Restore",
         "version": "0.1.0",
         "title": "Period Status",
-        "description": "Continuous-close lifecycle wrapper around a FiscalPeriod (REQ-CLS-001). Carries the five-stage lifecycle (open → soft-closed → hard-closed → audited → locked), stage-change history, owner-per-stage, and posting-restriction flags. Posting into hard-closed/audited/locked stages is rejected by PeriodStatusGuard::postingAllowed unless the actor holds controller-override + exception-journal privilege. Sibling to the T1 FiscalPeriod entity; both can co-exist (FiscalPeriod is the period entity, PeriodStatus extends it with the continuous-close stage model).",
+        "description": "Continuous-close lifecycle wrapper around a FiscalPeriod. Carries the five-stage lifecycle (open → soft-closed → hard-closed → audited → locked), stage-change history, owner-per-stage, and posting-restriction flags. Posting into hard-closed/audited/locked stages is rejected by PeriodStatusGuard::postingAllowed unless the actor holds controller-override + exception-journal privilege. Sibling to the T1 FiscalPeriod entity; both can co-exist (FiscalPeriod is the period entity, PeriodStatus extends it with the continuous-close stage model).",
         "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
         "type": "object",
         "required": [
@@ -25,13 +25,13 @@
         "properties": {
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration (REQ-CLS-001).",
+            "description": "FK to Administration.",
             "example": "adm-smb-1",
             "title": "Administration ID"
           },
           "periodYear": {
             "type": "integer",
-            "description": "Fiscal year (REQ-CLS-001).",
+            "description": "Fiscal year.",
             "example": 2026,
             "title": "Period Year"
           },
@@ -39,7 +39,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 12,
-            "description": "Calendar month 1..12 (REQ-CLS-001).",
+            "description": "Calendar month 1..12.",
             "example": 3,
             "title": "Period Month"
           },
@@ -53,7 +53,7 @@
               "locked"
             ],
             "default": "open",
-            "description": "Current lifecycle stage (REQ-CLS-001).",
+            "description": "Current lifecycle stage.",
             "example": "open",
             "title": "Stage"
           },
@@ -96,13 +96,13 @@
           },
           "ownerPerStage": {
             "type": "object",
-            "description": "Owner role per stage; e.g. {soft-closed: 'Controller', hard-closed: 'CFO'} (REQ-CLS-001).",
+            "description": "Owner role per stage; e.g. {soft-closed: 'Controller', hard-closed: 'CFO'}.",
             "default": {},
             "title": "Owner Per Stage"
           },
           "postingRestrictionsPerStage": {
             "type": "object",
-            "description": "Posting restriction map. Keys are stage names; values are {allow: ['accrual-reversal','correction'], requireOverride: bool} (REQ-CLS-001).",
+            "description": "Posting restriction map. Keys are stage names; values are {allow: ['accrual-reversal','correction'], requireOverride: bool}.",
             "default": {
               "open": {
                 "allow": [
@@ -136,7 +136,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp of the soft-close transition (REQ-CLS-002).",
+            "description": "Timestamp of the soft-close transition.",
             "example": null,
             "title": "Soft Closed At"
           },
@@ -171,23 +171,23 @@
           "states": {
             "open": {
               "label": "Open",
-              "description": "Default state; all posting allowed (REQ-CLS-001)."
+              "description": "Default state; all posting allowed."
             },
             "soft-closed": {
               "label": "Soft-closed",
-              "description": "Soft-close job completed; only accrual reversals + corrections allowed (REQ-CLS-001)."
+              "description": "Soft-close job completed; only accrual reversals + corrections allowed."
             },
             "hard-closed": {
               "label": "Hard-closed",
-              "description": "Operator manual transition; no posting except via controller override + exception journal (REQ-CLS-001)."
+              "description": "Operator manual transition; no posting except via controller override + exception journal."
             },
             "audited": {
               "label": "Audited",
-              "description": "External auditor sign-off; no posting (REQ-CLS-001)."
+              "description": "External auditor sign-off; no posting."
             },
             "locked": {
               "label": "Locked",
-              "description": "Period locked forever; no posting (REQ-CLS-001)."
+              "description": "Period locked forever; no posting."
             }
           },
           "transitions": {
@@ -215,7 +215,7 @@
               "from": "soft-closed",
               "to": "hard-closed",
               "label": "Hard-close",
-              "description": "Lock period for any posting except controller override (REQ-CLS-001).",
+              "description": "Lock period for any posting except controller override.",
               "roles": [
                 "controller"
               ],
@@ -234,7 +234,7 @@
               "from": "hard-closed",
               "to": "audited",
               "label": "Mark audited",
-              "description": "External auditor sign-off (REQ-CLS-001).",
+              "description": "External auditor sign-off.",
               "roles": [
                 "auditor"
               ],
@@ -253,7 +253,7 @@
               "from": "audited",
               "to": "locked",
               "label": "Lock",
-              "description": "Year-end terminal lock; no further posting (REQ-CLS-001).",
+              "description": "Year-end terminal lock; no further posting.",
               "roles": [
                 "controller"
               ],
@@ -306,7 +306,7 @@
         "icon": "CalendarSync",
         "version": "0.1.0",
         "title": "Auto-Accrual Rule",
-        "description": "Declarative auto-accrual rule (REQ-CLS-003) executed nightly by SoftCloseExecutor. Carries calculation method (fixed-amount, percentage-of-revenue, straight-line-from-contract, days-elapsed-of-period, external-lookup), reversal pattern (first-of-next-month, on-receipt-of-invoice, on-settlement), frequency, lifecycle state, and a JSON calculationParameters bag for method-specific inputs. Each execution emits an AutoAccrualPosting linking rule version + resulting JournalEntry for audit trail.",
+        "description": "Declarative auto-accrual rule executed nightly by SoftCloseExecutor. Carries calculation method (fixed-amount, percentage-of-revenue, straight-line-from-contract, days-elapsed-of-period, external-lookup), reversal pattern (first-of-next-month, on-receipt-of-invoice, on-settlement), frequency, lifecycle state, and a JSON calculationParameters bag for method-specific inputs. Each execution emits an AutoAccrualPosting linking rule version + resulting JournalEntry for audit trail.",
         "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
         "type": "object",
         "required": [
@@ -323,19 +323,19 @@
         "properties": {
           "ruleName": {
             "type": "string",
-            "description": "Human-readable name (REQ-CLS-003).",
+            "description": "Human-readable name.",
             "example": "Rent accrual",
             "title": "Rule Name"
           },
           "targetGLAccount": {
             "type": "string",
-            "description": "Target GL account code (REQ-CLS-003).",
+            "description": "Target GL account code.",
             "example": "4001-rent",
             "title": "Target GL Account"
           },
           "contraGLAccount": {
             "type": "string",
-            "description": "Contra / accrued-expense GL account (REQ-CLS-003).",
+            "description": "Contra / accrued-expense GL account.",
             "example": "2100-accrued-rent",
             "title": "Contra GL Account"
           },
@@ -348,13 +348,13 @@
               "days-elapsed-of-period",
               "external-lookup"
             ],
-            "description": "Calculation method (REQ-CLS-003).",
+            "description": "Calculation method.",
             "example": "fixed-amount",
             "title": "Calculation Method"
           },
           "calculationParameters": {
             "type": "object",
-            "description": "Method-specific parameters; e.g. {amount: 1200000} for fixed (integer-cent), {rate: 0.03, sourceField: 'revenue_mtd'} for percentage (REQ-CLS-003).",
+            "description": "Method-specific parameters; e.g. {amount: 1200000} for fixed (integer-cent), {rate: 0.03, sourceField: 'revenue_mtd'} for percentage.",
             "default": {},
             "title": "Calculation Parameters"
           },
@@ -366,7 +366,7 @@
               "on-settlement",
               "none"
             ],
-            "description": "Reversal pattern (REQ-CLS-003).",
+            "description": "Reversal pattern.",
             "example": "first-of-next-month",
             "title": "Reversal Pattern"
           },
@@ -383,7 +383,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration (REQ-CLS-003).",
+            "description": "FK to Administration.",
             "example": "adm-smb-1",
             "title": "Administration ID"
           },
@@ -401,7 +401,7 @@
           "ruleVersion": {
             "type": "integer",
             "default": 1,
-            "description": "Monotonic version stamped onto each AutoAccrualPosting for audit (REQ-CLS-010).",
+            "description": "Monotonic version stamped onto each AutoAccrualPosting for audit.",
             "title": "Rule Version"
           }
         },
@@ -431,7 +431,7 @@
         "icon": "DatabaseArrowDown",
         "version": "0.1.0",
         "title": "Auto-Accrual Posting",
-        "description": "Append-only audit record per AutoAccrualRule execution (REQ-CLS-010). Carries ruleId + ruleVersion + periodId + integer-cent amount + journalEntryId + postedAt + postedBy + reversalId. Lifecycle: posted → reversed. Once posted the original record is preserved; the reversal links back to the original posting and emits a fresh JournalEntry per IAS 8.",
+        "description": "Append-only audit record per AutoAccrualRule execution. Carries ruleId + ruleVersion + periodId + integer-cent amount + journalEntryId + postedAt + postedBy + reversalId. Lifecycle: posted → reversed. Once posted the original record is preserved; the reversal links back to the original posting and emits a fresh JournalEntry per IAS 8.",
         "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
         "type": "object",
         "required": [
@@ -446,19 +446,19 @@
         "properties": {
           "ruleId": {
             "type": "string",
-            "description": "FK to AutoAccrualRule (REQ-CLS-010).",
+            "description": "FK to AutoAccrualRule.",
             "example": "rule-rent-001",
             "title": "Rule ID"
           },
           "ruleVersion": {
             "type": "integer",
-            "description": "Snapshot of AutoAccrualRule.ruleVersion at posting time (REQ-CLS-010).",
+            "description": "Snapshot of AutoAccrualRule.ruleVersion at posting time.",
             "example": 1,
             "title": "Rule Version"
           },
           "periodId": {
             "type": "string",
-            "description": "FK to FiscalPeriod.periodId (REQ-CLS-010).",
+            "description": "FK to FiscalPeriod.periodId.",
             "example": "2026-03",
             "title": "Period ID"
           },
@@ -470,27 +470,27 @@
           },
           "journalEntryId": {
             "type": "string",
-            "description": "FK to JournalEntry written by the accrual (REQ-CLS-010).",
+            "description": "FK to JournalEntry written by the accrual.",
             "example": "je-2026-03-17-rent",
             "title": "Journal Entry ID"
           },
           "postedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Posting timestamp (REQ-CLS-010).",
+            "description": "Posting timestamp.",
             "example": "2026-03-17T00:30:00+01:00",
             "title": "Posted At"
           },
           "postedBy": {
             "type": "string",
-            "description": "Posting actor (SYSTEM:SoftCloseExecutor or specific service) (REQ-CLS-010).",
+            "description": "Posting actor (SYSTEM:SoftCloseExecutor or specific service).",
             "example": "SYSTEM:SoftCloseExecutor",
             "title": "Posted By"
           },
           "reversalId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the reversal AutoAccrualPosting once reversed (REQ-CLS-010).",
+            "description": "FK to the reversal AutoAccrualPosting once reversed.",
             "example": null,
             "title": "Reversal ID"
           },
@@ -515,7 +515,7 @@
             },
             "reversed": {
               "label": "Reversed",
-              "description": "Reversing entry has been posted; original entry preserved for audit (REQ-CLS-010)."
+              "description": "Reversing entry has been posted; original entry preserved for audit."
             }
           },
           "transitions": {
@@ -523,7 +523,7 @@
               "from": "posted",
               "to": "reversed",
               "label": "Reverse accrual",
-              "description": "Mark the accrual as reversed; original entry preserved (REQ-CLS-010).",
+              "description": "Mark the accrual as reversed; original entry preserved.",
               "roles": [
                 "controller",
                 "soft-close-operator"
@@ -541,7 +541,7 @@
         "icon": "FormatListChecks",
         "version": "0.1.0",
         "title": "Close Checklist Template",
-        "description": "Reusable list of close tasks per administratie type (BV, NV, eenmanszaak); instantiated per period as a CloseChecklistInstance (REQ-CLS-004). Each task carries owner, dueBefore, dependsOn (task-dependency graph), and evidenceRequired flag.",
+        "description": "Reusable list of close tasks per administratie type (BV, NV, eenmanszaak); instantiated per period as a CloseChecklistInstance. Each task carries owner, dueBefore, dependsOn (task-dependency graph), and evidenceRequired flag.",
         "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
         "type": "object",
         "required": [
@@ -552,19 +552,19 @@
         "properties": {
           "templateName": {
             "type": "string",
-            "description": "Template name (REQ-CLS-004).",
+            "description": "Template name.",
             "example": "Standard SMB Close",
             "title": "Template Name"
           },
           "administrationTypeId": {
             "type": "string",
-            "description": "FK to administration type (BV, NV, eenmanszaak) (REQ-CLS-004).",
+            "description": "FK to administration type (BV, NV, eenmanszaak).",
             "example": "BV",
             "title": "Administration Type ID"
           },
           "tasks": {
             "type": "array",
-            "description": "Task definitions (REQ-CLS-004).",
+            "description": "Task definitions.",
             "items": {
               "type": "object",
               "required": [
@@ -625,7 +625,7 @@
         "icon": "FormatListChecks",
         "version": "0.1.0",
         "title": "Close Checklist Instance",
-        "description": "Per-period instantiation of a CloseChecklistTemplate (REQ-CLS-004). Carries per-task status (pending | in-progress | completed | overdue), owner override, completedAt, evidence attachment, and slaBreach flag. Lifecycle: pending → in-progress → completed with SLA escalation on overdue.",
+        "description": "Per-period instantiation of a CloseChecklistTemplate. Carries per-task status (pending | in-progress | completed | overdue), owner override, completedAt, evidence attachment, and slaBreach flag. Lifecycle: pending → in-progress → completed with SLA escalation on overdue.",
         "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
         "type": "object",
         "required": [
@@ -636,13 +636,13 @@
         "properties": {
           "templateId": {
             "type": "string",
-            "description": "FK to CloseChecklistTemplate (REQ-CLS-004).",
+            "description": "FK to CloseChecklistTemplate.",
             "example": "tpl-smb-close",
             "title": "Template ID"
           },
           "periodId": {
             "type": "string",
-            "description": "FK to FiscalPeriod.periodId (REQ-CLS-004).",
+            "description": "FK to FiscalPeriod.periodId.",
             "example": "2026-03",
             "title": "Period ID"
           },
@@ -654,12 +654,12 @@
               "completed"
             ],
             "default": "pending",
-            "description": "Overall instance state (REQ-CLS-004).",
+            "description": "Overall instance state.",
             "title": "Instance State"
           },
           "tasks": {
             "type": "array",
-            "description": "Per-task state (REQ-CLS-004).",
+            "description": "Per-task state.",
             "items": {
               "type": "object",
               "required": [
@@ -718,7 +718,7 @@
           "states": {
             "pending": {
               "label": "Pending",
-              "description": "All tasks pending (REQ-CLS-004)."
+              "description": "All tasks pending."
             },
             "in-progress": {
               "label": "In progress",
@@ -760,7 +760,7 @@
         "icon": "ChartLine",
         "version": "0.1.0",
         "title": "Flux Run",
-        "description": "A single variance-analysis execution (REQ-CLS-005). Carries scope (administratie, segment, cost centre), comparison basis (budget | forecast | prior-period | prior-year), materiality thresholds, runTimestamp, status, and resultSummary aggregating the FluxItem outcomes.",
+        "description": "A single variance-analysis execution. Carries scope (administratie, segment, cost centre), comparison basis (budget | forecast | prior-period | prior-year), materiality thresholds, runTimestamp, status, and resultSummary aggregating the FluxItem outcomes.",
         "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
         "type": "object",
         "required": [
@@ -774,13 +774,13 @@
         "properties": {
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration (REQ-CLS-005).",
+            "description": "FK to Administration.",
             "example": "adm-smb-1",
             "title": "Administration ID"
           },
           "periodId": {
             "type": "string",
-            "description": "FK to FiscalPeriod.periodId (REQ-CLS-005).",
+            "description": "FK to FiscalPeriod.periodId.",
             "example": "2026-03",
             "title": "Period ID"
           },
@@ -792,7 +792,7 @@
               "cost-centre",
               "consolidated"
             ],
-            "description": "Scope of the run (REQ-CLS-005).",
+            "description": "Scope of the run.",
             "example": "administration",
             "title": "Scope"
           },
@@ -810,7 +810,7 @@
               "prior-period",
               "prior-year"
             ],
-            "description": "Comparison basis (REQ-CLS-005).",
+            "description": "Comparison basis.",
             "example": "budget",
             "title": "Comparison Basis"
           },
@@ -829,7 +829,7 @@
           "runTimestamp": {
             "type": "string",
             "format": "date-time",
-            "description": "Run start timestamp (REQ-CLS-005).",
+            "description": "Run start timestamp.",
             "example": "2026-04-01T07:00:00+02:00",
             "title": "Run Timestamp"
           },
@@ -841,12 +841,12 @@
               "failed"
             ],
             "default": "running",
-            "description": "Run status (REQ-CLS-005).",
+            "description": "Run status.",
             "title": "Status"
           },
           "resultSummary": {
             "type": "object",
-            "description": "Aggregated outcomes: {materialCount, autoExplainedCount, ownerExplainedCount, escalatedCount, totalVarianceCents} (REQ-CLS-005).",
+            "description": "Aggregated outcomes: {materialCount, autoExplainedCount, ownerExplainedCount, escalatedCount, totalVarianceCents}.",
             "default": {},
             "title": "Result Summary"
           }
@@ -861,7 +861,7 @@
         "icon": "ChartBoxOutline",
         "version": "0.1.0",
         "title": "Flux Item",
-        "description": "Per-GL-account variance row of a FluxRun (REQ-CLS-005). Carries budget/actual/variance in integer cents, percentage variance, materiality classification, autoExplanation, ownerExplanation, status, and owner SLA. Status lifecycle: open | auto-explained | owner-explained | escalated | accepted (REQ-CLS-006).",
+        "description": "Per-GL-account variance row of a FluxRun. Carries budget/actual/variance in integer cents, percentage variance, materiality classification, autoExplanation, ownerExplanation, status, and owner SLA. Status lifecycle: open | auto-explained | owner-explained | escalated | accepted.",
         "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
         "type": "object",
         "required": [
@@ -875,37 +875,37 @@
         "properties": {
           "fluxRunId": {
             "type": "string",
-            "description": "FK to FluxRun (REQ-CLS-005).",
+            "description": "FK to FluxRun.",
             "example": "flux-2026-03-1",
             "title": "Flux Run ID"
           },
           "glAccountNumber": {
             "type": "string",
-            "description": "GL account code under analysis (REQ-CLS-005).",
+            "description": "GL account code under analysis.",
             "example": "5001-cogs",
             "title": "GL Account Number"
           },
           "budgetCents": {
             "type": "integer",
-            "description": "Comparison-basis amount in cents (REQ-CLS-005).",
+            "description": "Comparison-basis amount in cents.",
             "example": 120000000,
             "title": "Budget Cents"
           },
           "actualCents": {
             "type": "integer",
-            "description": "Actual amount in cents (REQ-CLS-005).",
+            "description": "Actual amount in cents.",
             "example": 138000000,
             "title": "Actual Cents"
           },
           "varianceCents": {
             "type": "integer",
-            "description": "Signed variance in cents (actual - budget) (REQ-CLS-005).",
+            "description": "Signed variance in cents (actual - budget).",
             "example": 18000000,
             "title": "Variance Cents"
           },
           "percentageVariance": {
             "type": "number",
-            "description": "Percentage variance (variance / budget) (REQ-CLS-005).",
+            "description": "Percentage variance (variance / budget).",
             "example": 0.15,
             "title": "Percentage Variance"
           },
@@ -916,25 +916,25 @@
               "material",
               "highly-material"
             ],
-            "description": "Materiality bucket (REQ-CLS-005).",
+            "description": "Materiality bucket.",
             "example": "material",
             "title": "Materiality Classification"
           },
           "autoExplanation": {
             "type": "string",
-            "description": "Rule-based explanation (REQ-CLS-006).",
+            "description": "Rule-based explanation.",
             "example": "Volume +10%, price +6%, mix +20K, FX +20K",
             "title": "Auto Explanation"
           },
           "autoExplanationCoverage": {
             "type": "number",
-            "description": "Fraction of variance covered by auto-explanation (0..1) (REQ-CLS-006).",
+            "description": "Fraction of variance covered by auto-explanation (0..1).",
             "example": 0.95,
             "title": "Auto Explanation Coverage"
           },
           "ownerExplanation": {
             "type": "string",
-            "description": "Free-text owner explanation when escalated (REQ-CLS-006).",
+            "description": "Free-text owner explanation when escalated.",
             "example": "",
             "title": "Owner Explanation"
           },
@@ -948,20 +948,20 @@
               "accepted"
             ],
             "default": "open",
-            "description": "Item status (REQ-CLS-006).",
+            "description": "Item status.",
             "title": "Status"
           },
           "ownerEscalationSLA": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Deadline for owner response (typically run+24h) (REQ-CLS-006).",
+            "description": "Deadline for owner response (typically run+24h).",
             "example": null,
             "title": "Owner Escalation Sla"
           },
           "ownerEscalatedTo": {
             "type": "string",
-            "description": "Owner role/user routed for explanation (REQ-CLS-006).",
+            "description": "Owner role/user routed for explanation.",
             "example": "controller",
             "title": "Owner Escalated To"
           }
@@ -976,7 +976,7 @@
         "icon": "ChartScatterPlot",
         "version": "0.1.0",
         "title": "Flux Attribution",
-        "description": "Driver decomposition of a FluxItem variance (REQ-CLS-006). One row per driver (volume | price | mix | fx | one-off) with quantified contribution in cents and percentage share.",
+        "description": "Driver decomposition of a FluxItem variance. One row per driver (volume | price | mix | fx | one-off) with quantified contribution in cents and percentage share.",
         "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
         "type": "object",
         "required": [
@@ -987,7 +987,7 @@
         "properties": {
           "fluxItemId": {
             "type": "string",
-            "description": "FK to FluxItem (REQ-CLS-006).",
+            "description": "FK to FluxItem.",
             "example": "flux-item-cogs-2026-03",
             "title": "Flux Item ID"
           },
@@ -1000,19 +1000,19 @@
               "fx",
               "one-off"
             ],
-            "description": "Driver kind (REQ-CLS-006).",
+            "description": "Driver kind.",
             "example": "volume",
             "title": "Driver"
           },
           "contributionCents": {
             "type": "integer",
-            "description": "Signed contribution to the variance in cents (REQ-CLS-006).",
+            "description": "Signed contribution to the variance in cents.",
             "example": 8000000,
             "title": "Contribution Cents"
           },
           "percentage": {
             "type": "number",
-            "description": "Share of the total variance attributable to this driver (0..1) (REQ-CLS-006).",
+            "description": "Share of the total variance attributable to this driver (0..1).",
             "example": 0.44,
             "title": "Percentage"
           },
@@ -1033,7 +1033,7 @@
         "icon": "ScaleBalance",
         "version": "0.1.0",
         "title": "Materiality Policy",
-        "description": "Per-administratie + per-account-group materiality thresholds (REQ-CLS-005). Absolute floor (integer cents) + percentage floor; the max of both applies. Special-rule overrides for cash, tax, revenue groups (typically lower thresholds).",
+        "description": "Per-administratie + per-account-group materiality thresholds. Absolute floor (integer cents) + percentage floor; the max of both applies. Special-rule overrides for cash, tax, revenue groups (typically lower thresholds).",
         "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
         "type": "object",
         "required": [
@@ -1045,31 +1045,31 @@
         "properties": {
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration (REQ-CLS-005).",
+            "description": "FK to Administration.",
             "example": "adm-smb-1",
             "title": "Administration ID"
           },
           "accountGroupCode": {
             "type": "string",
-            "description": "GL account group code (operational, cash, tax, revenue, ...) (REQ-CLS-005).",
+            "description": "GL account group code (operational, cash, tax, revenue, ...).",
             "example": "operational",
             "title": "Account Group Code"
           },
           "absoluteThresholdCents": {
             "type": "integer",
-            "description": "Absolute floor in integer cents (REQ-CLS-005).",
+            "description": "Absolute floor in integer cents.",
             "example": 100000,
             "title": "Absolute Threshold Cents"
           },
           "percentageThreshold": {
             "type": "number",
-            "description": "Percentage floor (e.g. 0.02 = 2%) (REQ-CLS-005).",
+            "description": "Percentage floor (e.g. 0.02 = 2%).",
             "example": 0.02,
             "title": "Percentage Threshold"
           },
           "specialRules": {
             "type": "object",
-            "description": "Override rules for cash/tax/revenue groups (REQ-CLS-005).",
+            "description": "Override rules for cash/tax/revenue groups.",
             "properties": {
               "cash": {
                 "type": "object",
@@ -1137,7 +1137,7 @@
         "icon": "AlertCircleOutline",
         "version": "0.1.0",
         "title": "Continuous-Close Alert",
-        "description": "Alert raised by SoftCloseExecutor or the flux engine when a soft-close step fails or a flux SLA breaches (REQ-CLS-002, REQ-CLS-006). Carries severity, message, routedTo (list of roles), createdAt, and acknowledged flag.",
+        "description": "Alert raised by SoftCloseExecutor or the flux engine when a soft-close step fails or a flux SLA breaches. Carries severity, message, routedTo (list of roles), createdAt, and acknowledged flag.",
         "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
         "type": "object",
         "required": [
@@ -1225,7 +1225,7 @@
         "icon": "ChartTimelineVariant",
         "version": "0.1.0",
         "title": "Close Metrics",
-        "description": "Close-quality KPI snapshot per administratie + period (REQ-CLS-009). Carries time-to-close, post-close adjustment count, audit-correction ratio, flux-SLA compliance, and unexplained flux item count plus a rolling 12-month trend.",
+        "description": "Close-quality KPI snapshot per administratie + period. Carries time-to-close, post-close adjustment count, audit-correction ratio, flux-SLA compliance, and unexplained flux item count plus a rolling 12-month trend.",
         "x-spec": "openspec/changes/bookkeeping-soft-close-flux/specs/bookkeeping-continuous-close/spec.md",
         "type": "object",
         "required": [
@@ -1247,37 +1247,37 @@
           },
           "timeToCloseDays": {
             "type": "number",
-            "description": "Days from period-end to hard-close (REQ-CLS-009).",
+            "description": "Days from period-end to hard-close.",
             "example": 4,
             "title": "Time To Close Days"
           },
           "postCloseAdjustmentCount": {
             "type": "integer",
-            "description": "Count of entries posted to the period after hard-close (REQ-CLS-009).",
+            "description": "Count of entries posted to the period after hard-close.",
             "example": 2,
             "title": "Post Close Adjustment Count"
           },
           "auditCorrectionRatio": {
             "type": "number",
-            "description": "audit adjustments / total close adjustments (REQ-CLS-009).",
+            "description": "audit adjustments / total close adjustments.",
             "example": 0.0,
             "title": "Audit Correction Ratio"
           },
           "fluxSLACompliance": {
             "type": "number",
-            "description": "% of material flux items explained within 24h SLA (0..1) (REQ-CLS-009).",
+            "description": "% of material flux items explained within 24h SLA (0..1).",
             "example": 0.95,
             "title": "Flux Sla Compliance"
           },
           "unexplainedFluxItemCount": {
             "type": "integer",
-            "description": "Count of material variances still unexplained at board-pack publication (REQ-CLS-009).",
+            "description": "Count of material variances still unexplained at board-pack publication.",
             "example": 1,
             "title": "Unexplained Flux Item Count"
           },
           "trendData": {
             "type": "array",
-            "description": "Rolling 12-period trend; each entry {periodId, timeToCloseDays, postCloseAdjustmentCount, fluxSLACompliance} (REQ-CLS-009).",
+            "description": "Rolling 12-period trend; each entry {periodId, timeToCloseDays, postCloseAdjustmentCount, fluxSLACompliance}.",
             "items": {
               "type": "object",
               "properties": {

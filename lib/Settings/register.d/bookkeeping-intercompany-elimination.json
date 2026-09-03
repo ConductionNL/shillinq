@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-intercompany-elimination",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 2 — intercompany elimination engine. Adds seven schemas (IntercompanyRelation, IntercompanyTransaction, IntercompanyMatch, IntercompanyMismatch, ToleranceRule, CounterpartyBalance, EliminationJournal) implementing REQ-ICE-001..010. Matching (REQ-ICE-003) and counterparty roll-up (REQ-ICE-007) are declared as x-openregister-aggregations per ADR-031; tolerance evaluation (REQ-ICE-004), elimination-journal balance (REQ-ICE-006) and cross-period roll-forward (REQ-ICE-008) are enforced via x-openregister-lifecycle.requires guards on the ADR-031 exception path (cross-schema aggregation cannot yet be expressed in the declarative lifecycle DSL), implemented in lib/Lifecycle against the real OpenRegister ObjectService API (find/findAll/saveObject). Five default ToleranceRule template objects are seeded (sales-of-goods, sales-of-services, interest-on-loan, dividend, management-fee). Depends on bookkeeping-consolidation-commercial (ConsolidationGroup), bookkeeping-multi-administratie (Administration GL) and bookkeeping-grootboek (GLTransaction/GLLine)."
+    "description": "Tier 2 — intercompany elimination engine. Adds seven schemas (IntercompanyRelation, IntercompanyTransaction, IntercompanyMatch, IntercompanyMismatch, ToleranceRule, CounterpartyBalance, EliminationJournal) implementing REQ-ICE-001..010. Matching and counterparty roll-up are declared as x-openregister-aggregations per ADR-031; tolerance evaluation, elimination-journal balance and cross-period roll-forward are enforced via x-openregister-lifecycle.requires guards on the ADR-031 exception path (cross-schema aggregation cannot yet be expressed in the declarative lifecycle DSL), implemented in lib/Lifecycle against the real OpenRegister ObjectService API (find/findAll/saveObject). Five default ToleranceRule template objects are seeded (sales-of-goods, sales-of-services, interest-on-loan, dividend, management-fee). Depends on bookkeeping-consolidation-commercial (ConsolidationGroup), bookkeeping-multi-administratie (Administration GL) and bookkeeping-grootboek (GLTransaction/GLLine)."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "LinkVariant",
         "version": "0.1.0",
         "title": "Intercompany Relation",
-        "description": "Persistent registration of an intercompany relation between two entities in a consolidation group, including the relevant general-ledger accounts on both sides, the relation type, and tolerance settings the matching engine uses to pair transactions (REQ-ICE-001).",
+        "description": "Persistent registration of an intercompany relation between two entities in a consolidation group, including the relevant general-ledger accounts on both sides, the relation type, and tolerance settings the matching engine uses to pair transactions.",
         "x-schema-org": "schema:FinancialProduct",
         "x-spec": "openspec/changes/bookkeeping-intercompany-elimination/specs/bookkeeping-intercompany-elimination/spec.md#req-ice-001",
         "type": "object",
@@ -122,7 +122,7 @@
         "icon": "SwapHorizontal",
         "version": "0.1.0",
         "title": "Intercompany Transaction",
-        "description": "An auto-detected or explicitly-marked intercompany transaction sourced from a group entity's general ledger, carrying counterparty identification and detection confidence (REQ-ICE-002).",
+        "description": "An auto-detected or explicitly-marked intercompany transaction sourced from a group entity's general ledger, carrying counterparty identification and detection confidence.",
         "x-schema-org": "schema:FinancialProduct",
         "x-spec": "openspec/changes/bookkeeping-intercompany-elimination/specs/bookkeeping-intercompany-elimination/spec.md#req-ice-002",
         "type": "object",
@@ -241,7 +241,7 @@
         "icon": "Compare",
         "version": "0.1.0",
         "title": "Intercompany Match",
-        "description": "A paired set of intercompany transactions from two entities for one relation and period, with the aggregated A/B totals, the mismatch delta, and the tolerance-evaluated match status (REQ-ICE-003). Created via the matching aggregation; the create transition is guarded by IntercompanyToleranceGuard (REQ-ICE-004) and the roll-forward consistency check (REQ-ICE-008).",
+        "description": "A paired set of intercompany transactions from two entities for one relation and period, with the aggregated A/B totals, the mismatch delta, and the tolerance-evaluated match status. Created via the matching aggregation; the create transition is guarded by IntercompanyToleranceGuard and the roll-forward consistency check.",
         "x-schema-org": "schema:Thing",
         "x-spec": "openspec/changes/bookkeeping-intercompany-elimination/specs/bookkeeping-intercompany-elimination/spec.md#req-ice-003",
         "type": "object",
@@ -333,7 +333,7 @@
         },
         "x-openregister-aggregations": {
           "matchByRelationPeriod": {
-            "description": "Declarative shape of the per-relation, per-period matching the engine computes (REQ-ICE-003). Groups IntercompanyTransaction by (relationId, periodId) within the consolidation, sums entity-A-side and entity-B-side amounts (debit minus credit per side) into totalAmountA/totalAmountB, and derives mismatchAmount = totalAmountA - totalAmountB. The tolerance evaluation that sets matchStatus runs in the create lifecycle guard. When the OpenRegister aggregation engine cannot express the per-side conditional sum, the same result is computed in PHP from the real ObjectService API (findAll).",
+            "description": "Declarative shape of the per-relation, per-period matching the engine computes. Groups IntercompanyTransaction by (relationId, periodId) within the consolidation, sums entity-A-side and entity-B-side amounts (debit minus credit per side) into totalAmountA/totalAmountB, and derives mismatchAmount = totalAmountA - totalAmountB. The tolerance evaluation that sets matchStatus runs in the create lifecycle guard. When the OpenRegister aggregation engine cannot express the per-side conditional sum, the same result is computed in PHP from the real ObjectService API (findAll).",
             "filter": {},
             "groupBy": [
               "relationId",
@@ -391,14 +391,14 @@
               "from": "outside-tolerance",
               "to": "within-tolerance",
               "label": "Evaluate tolerance",
-              "description": "On match creation, evaluate the mismatch against the configured ToleranceRule (REQ-ICE-004) and verify cross-period roll-forward consistency (REQ-ICE-008). Implemented on the ADR-031 exception path because cross-schema aggregation is not yet expressible in the declarative lifecycle DSL.",
+              "description": "On match creation, evaluate the mismatch against the configured ToleranceRule and verify cross-period roll-forward consistency. Implemented on the ADR-031 exception path because cross-schema aggregation is not yet expressible in the declarative lifecycle DSL.",
               "requires": "OCA\\Shillinq\\Lifecycle\\IntercompanyToleranceGuard::isWithinTolerance"
             }
           }
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Intercompany Match is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Intercompany Match is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IntercompanyMismatch": {
@@ -406,7 +406,7 @@
         "icon": "AlertCircleOutline",
         "version": "0.1.0",
         "title": "Intercompany Mismatch",
-        "description": "An exception record for a discrepancy that fell outside tolerance, classified by cause and tracked through a semi-automated resolution path (REQ-ICE-005).",
+        "description": "An exception record for a discrepancy that fell outside tolerance, classified by cause and tracked through a semi-automated resolution path.",
         "x-schema-org": "schema:Thing",
         "x-spec": "openspec/changes/bookkeeping-intercompany-elimination/specs/bookkeeping-intercompany-elimination/spec.md#req-ice-005",
         "type": "object",
@@ -552,7 +552,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Intercompany Mismatch is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Intercompany Mismatch is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "ToleranceRule": {
@@ -560,7 +560,7 @@
         "icon": "Tune",
         "version": "0.1.0",
         "title": "Tolerance Rule",
-        "description": "A configurable mismatch-acceptance rule (absolute + relative thresholds combined via a tolerance method) optionally scoped to a relation type, with an auto-resolve flag (REQ-ICE-004).",
+        "description": "A configurable mismatch-acceptance rule (absolute + relative thresholds combined via a tolerance method) optionally scoped to a relation type, with an auto-resolve flag.",
         "x-schema-org": "schema:Thing",
         "x-spec": "openspec/changes/bookkeeping-intercompany-elimination/specs/bookkeeping-intercompany-elimination/spec.md#req-ice-004",
         "type": "object",
@@ -643,7 +643,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Tolerance Rule is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Tolerance Rule is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "CounterpartyBalance": {
@@ -651,7 +651,7 @@
         "icon": "ScaleBalance",
         "version": "0.1.0",
         "title": "Counterparty Balance",
-        "description": "An aggregated per-counterparty-pair, per-period view of outstanding intercompany receivables, payables, net position, flows and mismatch count (REQ-ICE-007). Read-only; refreshed by each matching run.",
+        "description": "An aggregated per-counterparty-pair, per-period view of outstanding intercompany receivables, payables, net position, flows and mismatch count. Read-only; refreshed by each matching run.",
         "x-schema-org": "schema:FinancialProduct",
         "x-spec": "openspec/changes/bookkeeping-intercompany-elimination/specs/bookkeeping-intercompany-elimination/spec.md#req-ice-007",
         "readonly": true,
@@ -748,7 +748,7 @@
         },
         "x-openregister-aggregations": {
           "counterpartyBalanceByPair": {
-            "description": "Declarative shape of the per-pair, per-period counterparty roll-up the engine computes (REQ-ICE-007). Groups IntercompanyTransaction by (entityAId, entityBId, periodId) within the consolidation and sums receivables, payables, sales and purchase flows, counting transactions and related mismatches. When the OpenRegister aggregation engine cannot express the multi-source roll-up, the same result is computed in PHP from the real ObjectService API (findAll).",
+            "description": "Declarative shape of the per-pair, per-period counterparty roll-up the engine computes. Groups IntercompanyTransaction by (entityAId, entityBId, periodId) within the consolidation and sums receivables, payables, sales and purchase flows, counting transactions and related mismatches. When the OpenRegister aggregation engine cannot express the multi-source roll-up, the same result is computed in PHP from the real ObjectService API (findAll).",
             "source": "IntercompanyTransaction",
             "filter": {
               "periodId": "@self.periodId"
@@ -783,7 +783,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Counterparty Balance is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Counterparty Balance is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "EliminationJournal": {
@@ -791,7 +791,7 @@
         "icon": "BookRemoveOutline",
         "version": "0.1.0",
         "title": "Elimination Journal",
-        "description": "A generated elimination journal entry living in the consolidation layer (never in the source administrations), with balanced debit/credit lines per matched transaction pair and an audit reference back to the triggering match (REQ-ICE-006). Lines MUST balance: totalDebit equals totalCredit, enforced by the EliminationBalanceGuard on the create transition.",
+        "description": "A generated elimination journal entry living in the consolidation layer (never in the source administrations), with balanced debit/credit lines per matched transaction pair and an audit reference back to the triggering match. Lines MUST balance: totalDebit equals totalCredit, enforced by the EliminationBalanceGuard on the create transition.",
         "x-schema-org": "schema:Thing",
         "x-spec": "openspec/changes/bookkeeping-intercompany-elimination/specs/bookkeeping-intercompany-elimination/spec.md#req-ice-006",
         "type": "object",
@@ -837,7 +837,7 @@
           "lines": {
             "type": "array",
             "minItems": 2,
-            "description": "Balanced debit/credit lines. The sum of debitAmount MUST equal the sum of creditAmount (REQ-ICE-006).",
+            "description": "Balanced debit/credit lines. The sum of debitAmount MUST equal the sum of creditAmount.",
             "items": {
               "type": "object",
               "required": [
@@ -928,14 +928,14 @@
               "from": "system",
               "to": "system",
               "label": "Verify balance",
-              "description": "On creation, verify the elimination lines balance (sum of debits equals sum of credits) before persisting (REQ-ICE-006). ADR-031 exception path: cross-line aggregation is not yet expressible in the declarative lifecycle DSL.",
+              "description": "On creation, verify the elimination lines balance (sum of debits equals sum of credits) before persisting. ADR-031 exception path: cross-line aggregation is not yet expressible in the declarative lifecycle DSL.",
               "requires": "OCA\\Shillinq\\Lifecycle\\EliminationBalanceGuard::isBalanced"
             }
           }
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Elimination Journal is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Elimination Journal is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     },

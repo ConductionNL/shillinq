@@ -13,7 +13,7 @@
         "icon": "ScaleBalance",
         "version": "0.1.0",
         "title": "Materiality Assessment",
-        "description": "Root governance record for the CSRD double-materiality determination per reporting period (REQ-CSR-001). Enumerates the ESRS topical taxonomy, captures impact + financial materiality scores, stakeholder-consultation evidence, and the locked double-materiality matrix. Mandatory before any topical disclosure is published (design D2). One per period; restatement via supersededBy self-FK.",
+        "description": "Root governance record for the CSRD double-materiality determination per reporting period. Enumerates the ESRS topical taxonomy, captures impact + financial materiality scores, stakeholder-consultation evidence, and the locked double-materiality matrix. Mandatory before any topical disclosure is published (design D2). One per period; restatement via supersededBy self-FK.",
         "x-schema-org": "schema:GovernmentService",
         "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
         "type": "object",
@@ -27,7 +27,7 @@
         "properties": {
           "reportingPeriod": {
             "type": "string",
-            "description": "Fiscal reporting period, e.g. FY2025 (REQ-CSR-001).",
+            "description": "Fiscal reporting period, e.g. FY2025.",
             "example": "FY2025",
             "title": "Reporting Period"
           },
@@ -53,7 +53,7 @@
           },
           "stakeholderGroupsConsulted": {
             "type": "array",
-            "description": "Stakeholder consultation evidence. At least one method per consulted group is mandatory before approval (REQ-CSR-001).",
+            "description": "Stakeholder consultation evidence. At least one method per consulted group is mandatory before approval.",
             "items": {
               "type": "object",
               "required": [
@@ -113,7 +113,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 5,
-            "description": "Impact-materiality threshold (1-5 scale). A topic is impact-material when its impact score is at or above this threshold (REQ-CSR-001).",
+            "description": "Impact-materiality threshold (1-5 scale). A topic is impact-material when its impact score is at or above this threshold.",
             "example": 3,
             "title": "Threshold Impact"
           },
@@ -127,7 +127,7 @@
           },
           "doubleMaterialityMatrixSnapshot": {
             "type": "object",
-            "description": "Locked snapshot keyed by ESRS topic → {impactScore, financialScore, material, rationale}. Built from the IroRecord children at sign-off (REQ-CSR-001).",
+            "description": "Locked snapshot keyed by ESRS topic → {impactScore, financialScore, material, rationale}. Built from the IroRecord children at sign-off.",
             "additionalProperties": true,
             "title": "Double Materiality Matrix Snapshot"
           },
@@ -173,7 +173,7 @@
             },
             "approved": {
               "label": "Approved",
-              "description": "Board-signed-off. Matrix frozen; material topics drive topical-module activation (REQ-CSR-001)."
+              "description": "Board-signed-off. Matrix frozen; material topics drive topical-module activation."
             },
             "locked": {
               "label": "Locked",
@@ -185,14 +185,14 @@
               "from": "draft",
               "to": "in-review",
               "label": "Submit for board review",
-              "description": "Submit once every topic is scored and at least one stakeholder group is consulted (REQ-CSR-001).",
+              "description": "Submit once every topic is scored and at least one stakeholder group is consulted.",
               "requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canSubmitMateriality"
             },
             "approve": {
               "from": "in-review",
               "to": "approved",
               "label": "Board sign-off",
-              "description": "Board approver signs off. Non-material topics must carry a written rationale (REQ-CSR-001).",
+              "description": "Board approver signs off. Non-material topics must carry a written rationale.",
               "requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canApproveMateriality"
             },
             "publish": {
@@ -369,7 +369,7 @@
           },
           "rationale": {
             "type": "string",
-            "description": "Mandatory rationale for non-material determinations (REQ-CSR-001).",
+            "description": "Mandatory rationale for non-material determinations.",
             "nullable": true,
             "title": "Rationale"
           }
@@ -382,7 +382,7 @@
           },
           "financialMaterialityScore": {
             "type": "number",
-            "description": "Financial-materiality composite. Average of severity and likelihood as financial proxies until the per-dimension financial inputs are split out (REQ-CSR-001).",
+            "description": "Financial-materiality composite. Average of severity and likelihood as financial proxies until the per-dimension financial inputs are split out.",
             "expr": "(@self.severityOrMagnitude + @self.likelihood) / 2"
           }
         }
@@ -560,7 +560,7 @@
             },
             "assured": {
               "label": "Assured",
-              "description": "Auditor signed off. Ready for XBRL mapping (REQ-CSR-005)."
+              "description": "Auditor signed off. Ready for XBRL mapping."
             },
             "published": {
               "label": "Published",
@@ -572,7 +572,7 @@
               "from": "draft",
               "to": "in-review",
               "label": "Submit for review",
-              "description": "Preparer submits the value for review (REQ-CSR-002)."
+              "description": "Preparer submits the value for review."
             },
             "approve": {
               "from": "in-review",
@@ -597,13 +597,13 @@
               "from": "locked-for-assurance",
               "to": "assured",
               "label": "Auditor sign-off",
-              "description": "Auditor signs off the data point (REQ-CSR-004)."
+              "description": "Auditor signs off the data point."
             },
             "publish": {
               "from": "assured",
               "to": "published",
               "label": "Publish",
-              "description": "Publish with the filed report (REQ-CSR-005)."
+              "description": "Publish with the filed report."
             },
             "restate": {
               "from": "published",
@@ -652,7 +652,7 @@
               "financial-control",
               "operational-control"
             ],
-            "description": "Consolidation approach (REQ-CSR-003).",
+            "description": "Consolidation approach.",
             "title": "Consolidation Approach"
           },
           "gasesIncluded": {
@@ -765,7 +765,7 @@
             ]
           },
           "scope2LocationBasedTotal": {
-            "description": "total-Scope-2-location-based = SUM(co2eResult) for scope=2 rows using grid-average factors (REQ-CSR-003).",
+            "description": "total-Scope-2-location-based = SUM(co2eResult) for scope=2 rows using grid-average factors.",
             "join": {
               "schema": "EmissionSource",
               "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope = '2' AND EmissionSource.scope2Method = 'location-based'"
@@ -779,7 +779,7 @@
             ]
           },
           "scope2MarketBasedTotal": {
-            "description": "total-Scope-2-market-based = SUM(co2eResult) for scope=2 rows using contract-specific factors (REQ-CSR-003).",
+            "description": "total-Scope-2-market-based = SUM(co2eResult) for scope=2 rows using contract-specific factors.",
             "join": {
               "schema": "EmissionSource",
               "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope = '2' AND EmissionSource.scope2Method = 'market-based'"
@@ -793,7 +793,7 @@
             ]
           },
           "scope3ByCategory": {
-            "description": "total-Scope-3 broken down by the 15 GHG Protocol categories: SUM(co2eResult) grouped by category for scope LIKE '3-cat-%' rows (REQ-CSR-003).",
+            "description": "total-Scope-3 broken down by the 15 GHG Protocol categories: SUM(co2eResult) grouped by category for scope LIKE '3-cat-%' rows.",
             "join": {
               "schema": "EmissionSource",
               "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope LIKE '3-cat-%'"
@@ -844,7 +844,7 @@
               "from": "draft",
               "to": "calculated",
               "label": "Roll up inventory",
-              "description": "Run the on-demand Scope 1/2/3 aggregation (REQ-CSR-003)."
+              "description": "Run the on-demand Scope 1/2/3 aggregation."
             },
             "approve": {
               "from": "calculated",
@@ -920,7 +920,7 @@
               "3-cat-14",
               "3-cat-15"
             ],
-            "description": "GHG Protocol scope / Scope 3 category (REQ-CSR-003).",
+            "description": "GHG Protocol scope / Scope 3 category.",
             "title": "Scope"
           },
           "category": {
@@ -935,7 +935,7 @@
               "location-based",
               "market-based"
             ],
-            "description": "For scope=2 rows: which Scope-2 accounting method this row contributes to (REQ-CSR-003).",
+            "description": "For scope=2 rows: which Scope-2 accounting method this row contributes to.",
             "nullable": true,
             "title": "Scope2Method"
           },
@@ -990,7 +990,7 @@
               "AR5",
               "AR6"
             ],
-            "description": "IPCC GWP version for comparability (REQ-CSR-003).",
+            "description": "IPCC GWP version for comparability.",
             "nullable": true,
             "title": "Gwp Version"
           },
@@ -1001,7 +1001,7 @@
               "medium",
               "low"
             ],
-            "description": "Uncertainty rating; spend-based proxies are typically high (REQ-CSR-003).",
+            "description": "Uncertainty rating; spend-based proxies are typically high.",
             "nullable": true,
             "title": "Uncertainty Rating"
           },
@@ -1484,7 +1484,7 @@
               "limited",
               "reasonable"
             ],
-            "description": "Assurance level (REQ-CSR-004).",
+            "description": "Assurance level.",
             "title": "Engagement Level"
           },
           "scopeStatement": {
@@ -1592,7 +1592,7 @@
           },
           "findings": {
             "type": "array",
-            "description": "Auditor findings tracked to management response (REQ-CSR-004).",
+            "description": "Auditor findings tracked to management response.",
             "items": {
               "type": "object",
               "required": [
@@ -1658,7 +1658,7 @@
           },
           "submissionKvkReceiptId": {
             "type": "string",
-            "description": "KvK ESEF submission receipt id (REQ-CSR-005).",
+            "description": "KvK ESEF submission receipt id.",
             "nullable": true,
             "title": "Submission KvK Receipt ID"
           },
@@ -1704,7 +1704,7 @@
             },
             "fieldwork": {
               "label": "Fieldwork",
-              "description": "Auditor performing controls + substantive testing on locked data points (REQ-CSR-004)."
+              "description": "Auditor performing controls + substantive testing on locked data points."
             },
             "findings-open": {
               "label": "Findings open",
@@ -1716,7 +1716,7 @@
             },
             "submitted": {
               "label": "Submitted",
-              "description": "iXBRL report deposited with KvK/AFM (REQ-CSR-005)."
+              "description": "iXBRL report deposited with KvK/AFM."
             }
           },
           "transitions": {
@@ -1724,7 +1724,7 @@
               "from": "draft",
               "to": "fieldwork",
               "label": "Start fieldwork",
-              "description": "Begin walkthrough once data points are locked-for-assurance (REQ-CSR-004)."
+              "description": "Begin walkthrough once data points are locked-for-assurance."
             },
             "raiseFindings": {
               "from": "fieldwork",
@@ -1736,7 +1736,7 @@
               "from": "findings-open",
               "to": "opinion-issued",
               "label": "Issue opinion",
-              "description": "Partner issues the opinion once all findings are resolved/accepted (REQ-CSR-004).",
+              "description": "Partner issues the opinion once all findings are resolved/accepted.",
               "requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canIssueOpinion"
             },
             "issueOpinionNoFindings": {
@@ -1749,7 +1749,7 @@
               "from": "opinion-issued",
               "to": "submitted",
               "label": "Submit to KvK/AFM",
-              "description": "Deposit the validated iXBRL report (REQ-CSR-005)."
+              "description": "Deposit the validated iXBRL report."
             }
           }
         }

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "source": "Wet OB 1968 + Belastingdienst tariefoverzicht 2026",
     "version": "2026",
-    "description": "Statutory Dutch VAT (BTW) tariffs for 2026 per Wet OB 1968 with RGS account hints (REQ-VBTW-003). Statutory rates; operators may add rates but not override the canonical Belastingdienst values.",
+    "description": "Statutory Dutch VAT (BTW) tariffs for 2026 per Wet OB 1968 with RGS account hints. Statutory rates; operators may add rates but not override the canonical Belastingdienst values.",
     "imported": "2026-06-01T00:00:00Z"
   },
   "tariffs": [

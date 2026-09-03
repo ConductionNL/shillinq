@@ -13,7 +13,7 @@
         "icon": "CalendarRangeOutline",
         "version": "0.1.0",
         "title": "Fiscal Period",
-        "description": "A monthly/quarterly accounting period. Promotes T1's GLLine.periodId stub-string to a real register with an open -> closing -> closed -> audit-locked lifecycle per REQ-PC-001/REQ-PC-003. Postings against a closed period are rejected (REQ-PC-004). Year-end close is deferred to T3. Per ADR-022 the audit trail and per ADR-031 the lifecycle are consumed/declared, not reimplemented.",
+        "description": "A monthly/quarterly accounting period. Promotes T1's GLLine.periodId stub-string to a real register with an open -> closing -> closed -> audit-locked lifecycle per REQ-PC-001/REQ-PC-003. Postings against a closed period are rejected. Year-end close is deferred to T3. Per ADR-022 the audit trail and per ADR-031 the lifecycle are consumed/declared, not reimplemented.",
         "x-schema-org": "schema:Duration",
         "type": "object",
         "x-openregister-audit": true,
@@ -147,15 +147,15 @@
             },
             "closing": {
               "label": "Closing",
-              "description": "Close in progress; trial-balance invariant being verified (REQ-TB-003)."
+              "description": "Close in progress; trial-balance invariant being verified."
             },
             "closed": {
               "label": "Closed",
-              "description": "Postings rejected (REQ-PC-004); reopenable by an elevated period-closer role with an audited reason."
+              "description": "Postings rejected; reopenable by an elevated period-closer role with an audited reason."
             },
             "audit-locked": {
               "label": "Audit Locked",
-              "description": "Terminal. Frozen after auditor sign-off; no further transitions permitted (REQ-PC-003)."
+              "description": "Terminal. Frozen after auditor sign-off; no further transitions permitted."
             }
           },
           "transitions": {
@@ -286,7 +286,7 @@
           "dunningPolicyRef": {
             "type": "string",
             "nullable": true,
-            "description": "FK to OR dunning-policy record (REQ-AR-005).",
+            "description": "FK to OR dunning-policy record.",
             "title": "Dunning Policy Ref"
           },
           "defaultGlAccount": {
@@ -389,7 +389,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Customer Master is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Customer Master is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "ARInvoice": {
@@ -397,7 +397,7 @@
         "icon": "FileDocumentOutline",
         "version": "0.1.0",
         "title": "AR Invoice",
-        "description": "A customer (accounts-receivable) invoice sub-ledger record per REQ-AR-003. On issue it materialises a balanced GLTransaction (T1 REQ-JE-007 pattern) and is subject to a credit-limit check (REQ-AR-006). Dunning is consumed from OR's dunning-workflow per REQ-AR-005 (DunningGuard fallback per ADR-031). Payment matching links to a BankStatementLine from bank-reconciliation.",
+        "description": "A customer (accounts-receivable) invoice sub-ledger record per REQ-AR-003. On issue it materialises a balanced GLTransaction (T1 REQ-JE-007 pattern) and is subject to a credit-limit check. Dunning is consumed from OR's dunning-workflow per REQ-AR-005 (DunningGuard fallback per ADR-031). Payment matching links to a BankStatementLine from bank-reconciliation.",
         "x-schema-org": "schema:Invoice",
         "type": "object",
         "x-openregister-audit-trail": {
@@ -524,7 +524,7 @@
           "writeOffReason": {
             "type": "string",
             "nullable": true,
-            "description": "Operator-authored, audit-trailed reason for declaring this invoice uncollectible. Read by WriteOffReasonGuard::requireReason, which blocks both write-off transitions until it is non-empty (REQ-AR-007).",
+            "description": "Operator-authored, audit-trailed reason for declaring this invoice uncollectible. Read by WriteOffReasonGuard::requireReason, which blocks both write-off transitions until it is non-empty.",
             "example": "Customer insolvency, court-confirmed uncollectible per ruling 2026-04-22.",
             "title": "Write-Off Reason"
           }
@@ -563,7 +563,7 @@
               "from": "draft",
               "to": "issued",
               "label": "Issue invoice",
-              "description": "Credit-limit check (REQ-AR-006); materialises a balanced GLTransaction and writes glTransactionId."
+              "description": "Credit-limit check; materialises a balanced GLTransaction and writes glTransactionId."
             },
             "mark-paid": {
               "from": "issued",
@@ -591,7 +591,7 @@
               "from": "issued",
               "to": "written-off",
               "label": "Write off",
-              "description": "Posts compensating GLTransaction; requires period-closer or ar-controller role. Blocked until writeOffReason is set (REQ-AR-007).",
+              "description": "Posts compensating GLTransaction; requires period-closer or ar-controller role. Blocked until writeOffReason is set.",
               "requires": "OCA\\Shillinq\\Lifecycle\\WriteOffReasonGuard::requireReason",
               "x-openregister-rbac-required-role": "ar-controller"
             },
@@ -599,7 +599,7 @@
               "from": "overdue",
               "to": "written-off",
               "label": "Write off overdue",
-              "description": "Posts compensating GLTransaction; requires period-closer or ar-controller role. Blocked until writeOffReason is set (REQ-AR-007).",
+              "description": "Posts compensating GLTransaction; requires period-closer or ar-controller role. Blocked until writeOffReason is set.",
               "requires": "OCA\\Shillinq\\Lifecycle\\WriteOffReasonGuard::requireReason",
               "x-openregister-rbac-required-role": "ar-controller"
             }
@@ -717,7 +717,7 @@
         "icon": "EmailAlertOutline",
         "version": "0.1.0",
         "title": "Dunning Record",
-        "description": "A single dunning (aanmaning) communication issued against an overdue AR invoice per REQ-AR-007. DunningRecord objects are written declaratively by OR's dunning-workflow (REQ-AR-005); shillinq carries no app-local dunning service or table per ADR-022.",
+        "description": "A single dunning (aanmaning) communication issued against an overdue AR invoice per REQ-AR-007. DunningRecord objects are written declaratively by OR's dunning-workflow; shillinq carries no app-local dunning service or table per ADR-022.",
         "x-schema-org": "schema:Message",
         "type": "object",
         "x-openregister-audit": true,
@@ -812,7 +812,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Dunning Record is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Dunning Record is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "BankStatement": {
@@ -951,11 +951,11 @@
             },
             "reconciled": {
               "label": "Reconciled",
-              "description": "All lines matched or routed to suspense; no unmatched lines remain (REQ-BR-008)."
+              "description": "All lines matched or routed to suspense; no unmatched lines remain."
             },
             "audit-locked": {
               "label": "Audit Locked",
-              "description": "Terminal. Frozen after auditor sign-off (REQ-BR-008)."
+              "description": "Terminal. Frozen after auditor sign-off."
             }
           },
           "transitions": {
@@ -975,7 +975,7 @@
               "from": "reconciled",
               "to": "audit-locked",
               "label": "Audit lock",
-              "description": "Auditor action; irreversible (REQ-BR-008).",
+              "description": "Auditor action; irreversible.",
               "x-openregister-rbac-required-role": "auditor"
             },
             "reopen": {
@@ -993,7 +993,7 @@
         "icon": "BankTransfer",
         "version": "0.1.0",
         "title": "Bank Statement Line",
-        "description": "A single transaction line within a BankStatement per REQ-BR-003. Parsed from CAMT.053, MT940, or manual CSV import. Matched against AR/AP via MatchingRule predicates (REQ-BR-004/REQ-BR-005/REQ-BR-006); unmatched lines route to a suspense account (REQ-BR-007).",
+        "description": "A single transaction line within a BankStatement per REQ-BR-003. Parsed from CAMT.053, MT940, or manual CSV import. Matched against AR/AP via MatchingRule predicates (REQ-BR-004/REQ-BR-005/REQ-BR-006); unmatched lines route to a suspense account.",
         "x-schema-org": "schema:MonetaryAmount",
         "type": "object",
         "x-openregister-audit": true,
@@ -1116,7 +1116,7 @@
             },
             "matched": {
               "label": "Matched",
-              "description": "A confirmed ReconciliationMatch covers this line (REQ-BR-006)."
+              "description": "A confirmed ReconciliationMatch covers this line."
             },
             "routed-to-suspense": {
               "label": "Routed to suspense",
@@ -1128,7 +1128,7 @@
               "from": "unmatched",
               "to": "matched",
               "label": "Mark matched",
-              "description": "Set when a ReconciliationMatch covering this line transitions to status=confirmed (REQ-BR-006)."
+              "description": "Set when a ReconciliationMatch covering this line transitions to status=confirmed."
             },
             "route-to-suspense": {
               "from": "unmatched",
@@ -1251,7 +1251,7 @@
           },
           "predicates": {
             "type": "array",
-            "description": "Ordered array of predicate objects per REQ-BR-005. Predicates in the same rule MUST be combined with logical AND; cross-rule combinations are handled by priority ordering (REQ-BR-004).",
+            "description": "Ordered array of predicate objects per REQ-BR-005. Predicates in the same rule MUST be combined with logical AND; cross-rule combinations are handled by priority ordering.",
             "items": {
               "type": "object",
               "required": [
@@ -1337,7 +1337,7 @@
                     "ap-invoice",
                     "journal"
                   ],
-                  "description": "Legacy per-predicate match target; superseded by the top-level targetType field (REQ-BR-004).",
+                  "description": "Legacy per-predicate match target; superseded by the top-level targetType field.",
                   "title": "Match Target"
                 }
               }
@@ -1502,7 +1502,7 @@
           "states": {
             "pending": {
               "label": "Pending",
-              "description": "Candidate emitted by the matching aggregation (REQ-BR-006); awaiting operator confirmation."
+              "description": "Candidate emitted by the matching aggregation; awaiting operator confirmation."
             },
             "confirmed": {
               "label": "Confirmed",

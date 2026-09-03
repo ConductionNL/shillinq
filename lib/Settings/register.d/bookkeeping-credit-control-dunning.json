@@ -562,7 +562,7 @@
               "from": "draft",
               "to": "executed",
               "label": "Execute dunning run",
-              "description": "Send via the configured kanaal. Captures uitgevoerdOp + deliveryStatus + evidence hashes. After this transition the record is immutable (REQ-CCD-002).",
+              "description": "Send via the configured kanaal. Captures uitgevoerdOp + deliveryStatus + evidence hashes. After this transition the record is immutable.",
               "requires": "OCA\\Shillinq\\Lifecycle\\DunningRunExecuteGuard::canExecute"
             },
             "lock": {
@@ -932,7 +932,7 @@
           },
           "renteAccrual": {
             "label": "Rente accrual",
-            "description": "Declarative shape of the wettelijke rente accrual (REQ-CCD-003). For B2B uses HANDELSRENTE_B2B_6_119A_BW (ECB+8pp → 10,15% per 1-1-2026); for B2C uses WETTELIJKE_RENTE_B2C_6_119_BW (4% per 1-1-2026). Rates are resolved from a maintained date-keyed table; the BIKStaffelCalculator PHP guard splits a boundary-crossing window per sub-period.",
+            "description": "Declarative shape of the wettelijke rente accrual. For B2B uses HANDELSRENTE_B2B_6_119A_BW (ECB+8pp → 10,15% per 1-1-2026); for B2C uses WETTELIJKE_RENTE_B2C_6_119_BW (4% per 1-1-2026). Rates are resolved from a maintained date-keyed table; the BIKStaffelCalculator PHP guard splits a boundary-crossing window per sub-period.",
             "register": "shillinq",
             "schema": "IncassoKostenBerekening",
             "computedFields": {

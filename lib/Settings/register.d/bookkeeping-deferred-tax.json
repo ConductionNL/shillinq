@@ -13,7 +13,7 @@
         "icon": "ScaleBalance",
         "version": "0.1.0",
         "title": "Temporary Difference",
-        "description": "Per-account, per-period detection of a timing difference between commercial carrying amount and tax basis at balansdatum (REQ-DT-001). Taxable differences create DTL; deductible differences create DTA. Permanent differences (deelnemingsvrijstelling etc.) must NOT be stored here — they appear in TaxRateReconciliation.reconciliationItems with type=permanent (REQ-DT-002).",
+        "description": "Per-account, per-period detection of a timing difference between commercial carrying amount and tax basis at balansdatum. Taxable differences create DTL; deductible differences create DTA. Permanent differences (deelnemingsvrijstelling etc.) must NOT be stored here — they appear in TaxRateReconciliation.reconciliationItems with type=permanent.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md",
         "type": "object",
@@ -40,7 +40,7 @@
           },
           "jurisdiction": {
             "type": "string",
-            "description": "ISO 3166-1 alpha-2 country code of the tax jurisdiction (REQ-DT-007). NL, DE, BE, etc.",
+            "description": "ISO 3166-1 alpha-2 country code of the tax jurisdiction. NL, DE, BE, etc.",
             "example": "NL",
             "title": "Jurisdiction"
           },
@@ -63,7 +63,7 @@
               "pension",
               "other"
             ],
-            "description": "Deferred-tax category. Drives roll-forward grouping in DeferredTaxMovement (REQ-DT-009). May be pre-tagged via Account.taxBasisDifferenceCategory.",
+            "description": "Deferred-tax category. Drives roll-forward grouping in DeferredTaxMovement. May be pre-tagged via Account.taxBasisDifferenceCategory.",
             "title": "Category"
           },
           "commercialCarryingAmount": {
@@ -90,7 +90,7 @@
               "taxable",
               "deductible"
             ],
-            "description": "Taxable differences create DTL; deductible differences create DTA (REQ-DT-001).",
+            "description": "Taxable differences create DTL; deductible differences create DTA.",
             "title": "Type"
           },
           "reversalPattern": {
@@ -100,19 +100,19 @@
               "long-term",
               "indefinite"
             ],
-            "description": "Expected reversal horizon. Used to determine whether a rate change applies (REQ-DT-005).",
+            "description": "Expected reversal horizon. Used to determine whether a rate change applies.",
             "title": "Reversal Pattern"
           },
           "expectedReversalYear": {
             "type": "integer",
-            "description": "Year in which the difference is expected to reverse. Required when reversalPattern is long-term (REQ-DT-005).",
+            "description": "Year in which the difference is expected to reverse. Required when reversalPattern is long-term.",
             "nullable": true,
             "example": 2035,
             "title": "Expected Reversal Year"
           },
           "taxRate": {
             "type": "integer",
-            "description": "Applied tax rate in basis points (1/10000). 2580 = 25.80%. Sourced from FiscalPeriod.enactedTaxRates[jurisdiction] for the expectedReversalYear (REQ-DT-005).",
+            "description": "Applied tax rate in basis points (1/10000). 2580 = 25.80%. Sourced from FiscalPeriod.enactedTaxRates[jurisdiction] for the expectedReversalYear.",
             "example": 2580,
             "title": "Tax Rate"
           },
@@ -131,7 +131,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to the administration this record belongs to; reads are scoped to the requesting user's administration (REQ-DT-007).",
+            "description": "FK to the administration this record belongs to; reads are scoped to the requesting user's administration.",
             "example": "adm-1",
             "title": "Administration ID"
           }
@@ -171,7 +171,7 @@
         "properties": {
           "jurisdiction": {
             "type": "string",
-            "description": "ISO 3166-1 alpha-2 country code of the tax jurisdiction (REQ-DT-007).",
+            "description": "ISO 3166-1 alpha-2 country code of the tax jurisdiction.",
             "example": "NL",
             "title": "Jurisdiction"
           },
@@ -213,32 +213,32 @@
               "2019-2021-transition",
               "2022-onwards"
             ],
-            "description": "Wet Vpb loss-compensation regime (REQ-DT-003). Determines expiry and the 50%-cap logic for 2022+.",
+            "description": "Wet Vpb loss-compensation regime. Determines expiry and the 50%-cap logic for 2022+.",
             "title": "Applicable Regime"
           },
           "dtaRecognised": {
             "type": "integer",
-            "description": "Deferred-tax asset recognised on this loss in euro cents. May be less than remainingAmount × taxRate if recoverability assessment limits recognition (REQ-DT-004). Integer cents.",
+            "description": "Deferred-tax asset recognised on this loss in euro cents. May be less than remainingAmount × taxRate if recoverability assessment limits recognition. Integer cents.",
             "example": 77400000,
             "title": "Dta Recognised"
           },
           "dtaRecoverabilityRationale": {
             "type": "string",
-            "description": "Mandatory documented rationale for the recognised DTA percentage (REQ-DT-004). Must cite the projection basis.",
+            "description": "Mandatory documented rationale for the recognised DTA percentage. Must cite the projection basis.",
             "nullable": true,
             "example": "Supported by 5-year budget projection; EUR 3M cumulative taxable profit expected.",
             "title": "Dta Recoverability Rationale"
           },
           "recoverabilityHorizon": {
             "type": "integer",
-            "description": "Number of years over which recoverability is projected (REQ-DT-004).",
+            "description": "Number of years over which recoverability is projected.",
             "nullable": true,
             "example": 5,
             "title": "Recoverability Horizon"
           },
           "linkedProjections": {
             "type": "array",
-            "description": "FK references to forecast records in bookkeeping-budget-multi-year supporting the recoverability assessment (REQ-DT-004).",
+            "description": "FK references to forecast records in bookkeeping-budget-multi-year supporting the recoverability assessment.",
             "nullable": true,
             "items": {
               "type": "string"
@@ -293,19 +293,19 @@
           },
           "jurisdiction": {
             "type": "string",
-            "description": "ISO 3166-1 alpha-2 country code (REQ-DT-007). One record per period per jurisdiction.",
+            "description": "ISO 3166-1 alpha-2 country code. One record per period per jurisdiction.",
             "example": "NL",
             "title": "Jurisdiction"
           },
           "profitBeforeTax": {
             "type": "integer",
-            "description": "Profit before income tax in euro cents per P&L (REQ-DT-006). Integer cents.",
+            "description": "Profit before income tax in euro cents per P&L. Integer cents.",
             "example": 420000000,
             "title": "Profit Before Tax"
           },
           "statutoryRate": {
             "type": "integer",
-            "description": "Blended statutory tax rate in basis points (1/10000). 2580 = 25.80%. For NL 2026: 1900 on first EUR 200k, 2580 above (REQ-DT-006).",
+            "description": "Blended statutory tax rate in basis points (1/10000). 2580 = 25.80%. For NL 2026: 1900 on first EUR 200k, 2580 above.",
             "example": 2580,
             "title": "Statutory Rate"
           },
@@ -317,7 +317,7 @@
           },
           "reconciliationItems": {
             "type": "array",
-            "description": "Ordered list of permanent-difference, temporary-difference, rate-change and prior-year items that bridge statutory to effective tax expense (REQ-DT-006).",
+            "description": "Ordered list of permanent-difference, temporary-difference, rate-change and prior-year items that bridge statutory to effective tax expense.",
             "nullable": true,
             "items": {
               "type": "object",
@@ -374,7 +374,7 @@
           },
           "disclosureNarrative": {
             "type": "string",
-            "description": "Free-form or structured narrative for jaarrekening note disclosure per RJ 272 / IAS 12 §81 (REQ-DT-006).",
+            "description": "Free-form or structured narrative for jaarrekening note disclosure per RJ 272 / IAS 12 §81.",
             "nullable": true,
             "example": null,
             "title": "Disclosure Narrative"
@@ -409,7 +409,7 @@
         "icon": "ArrowUpDown",
         "version": "0.1.0",
         "title": "Deferred Tax Movement",
-        "description": "Roll-forward of the deferred-tax balance per fiscal period per jurisdiction per category (REQ-DT-009). Captures opening balance, originations, reversals, rate-change effects, business-combination gains and FX adjustments; closingBalance and recognisedInPL are computed. One record per (periodId, jurisdiction, category, administrationId).",
+        "description": "Roll-forward of the deferred-tax balance per fiscal period per jurisdiction per category. Captures opening balance, originations, reversals, rate-change effects, business-combination gains and FX adjustments; closingBalance and recognisedInPL are computed. One record per (periodId, jurisdiction, category, administrationId).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md",
         "type": "object",
@@ -437,7 +437,7 @@
           },
           "jurisdiction": {
             "type": "string",
-            "description": "ISO 3166-1 alpha-2 country code (REQ-DT-007).",
+            "description": "ISO 3166-1 alpha-2 country code.",
             "example": "NL",
             "title": "Jurisdiction"
           },
@@ -454,7 +454,7 @@
               "pension",
               "other"
             ],
-            "description": "Deferred-tax category matching TemporaryDifference.category (REQ-DT-009).",
+            "description": "Deferred-tax category matching TemporaryDifference.category.",
             "title": "Category"
           },
           "openingBalance": {
@@ -495,7 +495,7 @@
           },
           "recognisedInPL": {
             "type": "integer",
-            "description": "Computed P&L income-statement effect: originatedInPeriod + reversedInPeriod + rateChangeAdjustment + acquiredViaBusinessCombination. Integer cents (REQ-DT-009).",
+            "description": "Computed P&L income-statement effect: originatedInPeriod + reversedInPeriod + rateChangeAdjustment + acquiredViaBusinessCombination. Integer cents.",
             "example": 6100000,
             "title": "Recognised In Pl"
           },
@@ -507,13 +507,13 @@
           },
           "closingBalance": {
             "type": "integer",
-            "description": "Computed closing deferred-tax balance: openingBalance + originatedInPeriod + reversedInPeriod + rateChangeAdjustment + acquiredViaBusinessCombination + translationAdjustment + recognisedInOCI. Integer cents (REQ-DT-009).",
+            "description": "Computed closing deferred-tax balance: openingBalance + originatedInPeriod + reversedInPeriod + rateChangeAdjustment + acquiredViaBusinessCombination + translationAdjustment + recognisedInOCI. Integer cents.",
             "example": 44100000,
             "title": "Closing Balance"
           },
           "linkedJournalEntries": {
             "type": "array",
-            "description": "FK references to GL journal entries posting the deferred-tax expense (REQ-DT-009, REQ-DT-010).",
+            "description": "FK references to GL journal entries posting the deferred-tax expense.",
             "nullable": true,
             "items": {
               "type": "string"
@@ -546,7 +546,7 @@
         "icon": "CurrencyEur",
         "version": "0.1.0",
         "title": "Tax Provision",
-        "description": "Aggregated balance-sheet deferred-tax position per fiscal period per jurisdiction (REQ-DT-008 / IAS 12 §71–78). Holds current-tax payable/prepaid, total DTA and DTL, the computed net position, the saldering presentation choice (gross/net) and the FK to the Vpb return for reconciliation (REQ-DT-010).",
+        "description": "Aggregated balance-sheet deferred-tax position per fiscal period per jurisdiction (REQ-DT-008 / IAS 12 §71–78). Holds current-tax payable/prepaid, total DTA and DTL, the computed net position, the saldering presentation choice (gross/net) and the FK to the Vpb return for reconciliation.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-deferred-tax/specs/bookkeeping-deferred-tax/spec.md",
         "type": "object",
@@ -570,7 +570,7 @@
           },
           "jurisdiction": {
             "type": "string",
-            "description": "ISO 3166-1 alpha-2 country code (REQ-DT-007). One record per period per jurisdiction.",
+            "description": "ISO 3166-1 alpha-2 country code. One record per period per jurisdiction.",
             "example": "NL",
             "title": "Jurisdiction"
           },
@@ -610,12 +610,12 @@
               "gross",
               "net"
             ],
-            "description": "Saldering choice per IAS 12 §71–78 (REQ-DT-008). Gross = separate DTA and DTL lines; net = combined position. Determined by legal right to offset within the same jurisdiction.",
+            "description": "Saldering choice per IAS 12 §71–78. Gross = separate DTA and DTL lines; net = combined position. Determined by legal right to offset within the same jurisdiction.",
             "title": "Presentation On Balance Sheet"
           },
           "linkedVpbReturn": {
             "type": "string",
-            "description": "FK to the Vpb-aangifte record in bookkeeping-vpb-mkb for current-tax reconciliation (REQ-DT-010).",
+            "description": "FK to the Vpb-aangifte record in bookkeeping-vpb-mkb for current-tax reconciliation.",
             "nullable": true,
             "example": null,
             "title": "Linked VpB Return"
@@ -652,7 +652,7 @@
               "pension",
               "other"
             ],
-            "description": "Optional hint for the deferred-tax GL detection logic (REQ-DT-001). Maps this account to a TemporaryDifference.category so detection is automatic. Leave null for accounts with no expected timing difference.",
+            "description": "Optional hint for the deferred-tax GL detection logic. Maps this account to a TemporaryDifference.category so detection is automatic. Leave null for accounts with no expected timing difference.",
             "nullable": true,
             "example": null,
             "title": "Tax Basis Difference Category"
@@ -665,7 +665,7 @@
         "properties": {
           "enactedTaxRates": {
             "type": "object",
-            "description": "Enacted tax rates per jurisdiction effective on or after balansdatum (REQ-DT-005). Key = ISO 3166-1 alpha-2. Rate in basis points (1/10000). Used by TaxCalculationService to re-measure positions reverting on/after effectiveDate.",
+            "description": "Enacted tax rates per jurisdiction effective on or after balansdatum. Key = ISO 3166-1 alpha-2. Rate in basis points (1/10000). Used by TaxCalculationService to re-measure positions reverting on/after effectiveDate.",
             "nullable": true,
             "additionalProperties": {
               "type": "object",

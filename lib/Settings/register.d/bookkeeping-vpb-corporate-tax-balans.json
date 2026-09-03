@@ -4,17 +4,17 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "add-shillinq-vpb-corporate-tax",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json; ADR-031 declarative-first (no PHP Vpb-balans service).",
-    "description": "Tier 4-specialized (MKB / innovation — Vpb). Declarative VPB-balans scope per add-shillinq-vpb-corporate-tax: adds the `vpbPligtig` flag on Account (REQ-VPB-001), declares the VpbBalansLink overlay tying ondernemingsactiviteit cost-centers (CostCenter.ondernemingsActiviteit = true) to Vpb-pligtige accountNumbers with vpbPligtigVanaf (REQ-VPB-002), and declares the Vpb-balans aggregation (output VpbBalansFiltered, schema:Dataset) filtering GLLine on (accountNumber IN VpbBalansLink.accountNumbers AND periodId IN fiscalYearPeriods) grouped per costCenterId, producing Activa/Passiva/Resultaat per ondernemingsactiviteit (REQ-VPB-003). Honours T1 REQ-GL-005 balance invariant per cost-center (Task 8). The orphan-Vpb-pligt warning aggregation flags accounts with vpbPligtig=true not referenced by any VpbBalansLink (Task 11). The Vpb-aangifte voorbereiding docudesk template and its SBR payload binding (REQ-VPB-004) are declared in lib/Settings/docudesk-templates.json; aangifte transmission rides the T4-base bookkeeping-sbr-xbrl-reporting SBR endpoint (Task 10, ADR-019, no new SBR client). Manifest navigation entry (Bookkeeping > Vennootschapsbelasting) sits behind featureFlags.mkb-vpb in src/manifest.d/bookkeeping-vpb-corporate-tax-balans.json (REQ-VPB-005). No PHP Vpb service (ADR-022/ADR-031)."
+    "description": "Tier 4-specialized (MKB / innovation — Vpb). Declarative VPB-balans scope per add-shillinq-vpb-corporate-tax: adds the `vpbPligtig` flag on Account, declares the VpbBalansLink overlay tying ondernemingsactiviteit cost-centers (CostCenter.ondernemingsActiviteit = true) to Vpb-pligtige accountNumbers with vpbPligtigVanaf, and declares the Vpb-balans aggregation (output VpbBalansFiltered, schema:Dataset) filtering GLLine on (accountNumber IN VpbBalansLink.accountNumbers AND periodId IN fiscalYearPeriods) grouped per costCenterId, producing Activa/Passiva/Resultaat per ondernemingsactiviteit. Honours T1 REQ-GL-005 balance invariant per cost-center (Task 8). The orphan-Vpb-pligt warning aggregation flags accounts with vpbPligtig=true not referenced by any VpbBalansLink (Task 11). The Vpb-aangifte voorbereiding docudesk template and its SBR payload binding are declared in lib/Settings/docudesk-templates.json; aangifte transmission rides the T4-base bookkeeping-sbr-xbrl-reporting SBR endpoint (Task 10, ADR-019, no new SBR client). Manifest navigation entry (Bookkeeping > Vennootschapsbelasting) sits behind featureFlags.mkb-vpb in src/manifest.d/bookkeeping-vpb-corporate-tax-balans.json. No PHP Vpb service (ADR-022/ADR-031)."
   },
   "components": {
     "schemas": {
       "Account": {
         "x-openspec-extend": true,
-        "description": "ADR-037 additive extension: adds optional `vpbPligtig` flag (default false) per REQ-VPB-001. Per Wet modernisering Vpb-plicht (2016), municipal ondernemingsactiviteiten and certain stichtingen/verenigingen are Vpb-pligtig. When true, postings against this account contribute to the Vpb-balans aggregation (REQ-VPB-003). Per ADR-031 the flag is schema metadata — no parallel VpbAccount register.",
+        "description": "ADR-037 additive extension: adds optional `vpbPligtig` flag (default false) per REQ-VPB-001. Per Wet modernisering Vpb-plicht (2016), municipal ondernemingsactiviteiten and certain stichtingen/verenigingen are Vpb-pligtig. When true, postings against this account contribute to the Vpb-balans aggregation. Per ADR-031 the flag is schema metadata — no parallel VpbAccount register.",
         "properties": {
           "vpbPligtig": {
             "type": "boolean",
-            "description": "Whether postings against this account contribute to the Vpb-balans (REQ-VPB-001). Defaults to false; flagged accounts are filtered into VpbBalansFiltered when they appear in a VpbBalansLink.accountNumbers list (REQ-VPB-003).",
+            "description": "Whether postings against this account contribute to the Vpb-balans. Defaults to false; flagged accounts are filtered into VpbBalansFiltered when they appear in a VpbBalansLink.accountNumbers list.",
             "default": false,
             "example": false,
             "title": "VpB Pligtig"
@@ -26,7 +26,7 @@
         "icon": "BankTransferIn",
         "version": "0.1.0",
         "title": "Vpb Balans Link",
-        "description": "Overlay register declaring per-ondernemingsactiviteit clusters of Vpb-pligtige accounts (REQ-VPB-002). One record per (costCenterId, vpbPligtigVanaf) tuple. `costCenterId` MUST reference a CostCenter with `ondernemingsActiviteit: true`. `accountNumbers` is the list of `Account.accountNumber` strings (each with `vpbPligtig: true`) belonging to this ondernemingsactiviteit. Per ADR-031 the linkage is schema overlay — no Vpb service.",
+        "description": "Overlay register declaring per-ondernemingsactiviteit clusters of Vpb-pligtige accounts. One record per (costCenterId, vpbPligtigVanaf) tuple. `costCenterId` MUST reference a CostCenter with `ondernemingsActiviteit: true`. `accountNumbers` is the list of `Account.accountNumber` strings (each with `vpbPligtig: true`) belonging to this ondernemingsactiviteit. Per ADR-031 the linkage is schema overlay — no Vpb service.",
         "x-schema-org": "schema:Intangible",
         "x-spec": "openspec/changes/add-shillinq-vpb-corporate-tax/specs/bookkeeping-vpb-corporate-tax/spec.md#req-vpb-002",
         "type": "object",
@@ -45,7 +45,7 @@
           },
           "accountNumbers": {
             "type": "array",
-            "description": "List of `Account.accountNumber` strings belonging to this ondernemingsactiviteit. Each referenced account MUST have `vpbPligtig: true` (REQ-VPB-001); an orphan-Vpb-pligt warning flags any `vpbPligtig` account not referenced by ANY VpbBalansLink (Task 11).",
+            "description": "List of `Account.accountNumber` strings belonging to this ondernemingsactiviteit. Each referenced account MUST have `vpbPligtig: true`; an orphan-Vpb-pligt warning flags any `vpbPligtig` account not referenced by ANY VpbBalansLink (Task 11).",
             "items": {
               "type": "string"
             },
@@ -62,7 +62,7 @@
           "vpbLiableFrom": {
             "type": "string",
             "format": "date",
-            "description": "Start date of Vpb-pligtigheid for this cluster. Used to bound the periodId range in the Vpb-balans aggregation (REQ-VPB-003).",
+            "description": "Start date of Vpb-pligtigheid for this cluster. Used to bound the periodId range in the Vpb-balans aggregation.",
             "example": "2026-01-01",
             "title": "VpB Pligtig Vanaf"
           },
@@ -149,7 +149,7 @@
             }
           },
           "orphanedVpbPligtigAccounts": {
-            "description": "Task 11 invariant warning: lists Account records with `vpbPligtig: true` that are NOT referenced by ANY VpbBalansLink.accountNumbers. Orphans signal a configuration gap — postings against an orphan account never appear in any ondernemingsactiviteit's Vpb-balans. Surfaced in the Vpb menu detail view (REQ-VPB-005).",
+            "description": "Task 11 invariant warning: lists Account records with `vpbPligtig: true` that are NOT referenced by ANY VpbBalansLink.accountNumbers. Orphans signal a configuration gap — postings against an orphan account never appear in any ondernemingsactiviteit's Vpb-balans. Surfaced in the Vpb menu detail view.",
             "source": "Account",
             "output": "OrphanedVpbPligtigAccounts",
             "x-schema-org": "schema:Dataset",
@@ -184,7 +184,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Vpb Balans Link is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Vpb Balans Link is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

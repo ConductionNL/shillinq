@@ -6,7 +6,7 @@
         "icon": "CashClock",
         "version": "0.1.0",
         "title": "Deposit Payment",
-        "description": "A deposit (partial or full prepayment) collected at booking time via Mollie or Stripe, routed through OpenConnector. On authorization a Shillinq AR invoice is materialised; on void an AR credit note reverses it. Payment routing, tokenization and gateway selection are OpenConnector's responsibility — this register never stores card data (REQ-DP-001).",
+        "description": "A deposit (partial or full prepayment) collected at booking time via Mollie or Stripe, routed through OpenConnector. On authorization a Shillinq AR invoice is materialised; on void an AR credit note reverses it. Payment routing, tokenization and gateway selection are OpenConnector's responsibility — this register never stores card data.",
         "x-schema-org": "schema:PaymentMethod",
         "type": "object",
         "required": [
@@ -39,7 +39,7 @@
           },
           "currencyCode": {
             "type": "string",
-            "description": "ISO 4217 currency code. Always EUR for now; a distinct field so T5 multi-currency does not break T2 logic (REQ-DP-009).",
+            "description": "ISO 4217 currency code. Always EUR for now; a distinct field so T5 multi-currency does not break T2 logic.",
             "minLength": 3,
             "maxLength": 3,
             "default": "EUR",
@@ -56,14 +56,14 @@
           "eventDate": {
             "type": "string",
             "format": "date",
-            "description": "Date of the booked event. Used together with dueOffsetDays to compute the deposit due date (REQ-DP-002, REQ-DP-003).",
+            "description": "Date of the booked event. Used together with dueOffsetDays to compute the deposit due date.",
             "nullable": true,
             "example": "2026-06-15",
             "title": "Event Date"
           },
           "dueOffsetDays": {
             "type": "integer",
-            "description": "Days before eventDate that the deposit is due, copied from the BookingType depositRule at creation. Range [0, 365] (REQ-DP-002).",
+            "description": "Days before eventDate that the deposit is due, copied from the BookingType depositRule at creation. Range [0, 365].",
             "minimum": 0,
             "maximum": 365,
             "default": 0,
@@ -94,7 +94,7 @@
           },
           "paymentIntentId": {
             "type": "string",
-            "description": "Opaque payment intent reference from the gateway (Mollie tr_XXXX or Stripe pi_XXXX). NOT a token; carries no card data (REQ-DP-001).",
+            "description": "Opaque payment intent reference from the gateway (Mollie tr_XXXX or Stripe pi_XXXX). NOT a token; carries no card data.",
             "nullable": true,
             "example": "tr_9h8g7f6e5d",
             "title": "Payment Intent ID"
@@ -128,7 +128,7 @@
             "type": "string",
             "format": "uuid",
             "$ref": "ARInvoice",
-            "description": "FK to the Shillinq AR invoice materialised on authorization (one-to-one). Populated by the authorize-transition action (REQ-DP-003).",
+            "description": "FK to the Shillinq AR invoice materialised on authorization (one-to-one). Populated by the authorize-transition action.",
             "nullable": true,
             "example": "inv-ar-9002",
             "title": "AR Invoice ID"
@@ -137,7 +137,7 @@
             "type": "string",
             "format": "uuid",
             "$ref": "CreditNote",
-            "description": "FK to the Shillinq AR credit note materialised on void (REQ-DP-008).",
+            "description": "FK to the Shillinq AR credit note materialised on void.",
             "nullable": true,
             "example": "cn-ar-9050",
             "title": "Credit Note ID"
@@ -148,21 +148,21 @@
               "automatic_on_cancellation",
               "operator_approval"
             ],
-            "description": "How a refund is handled on booking cancellation: automatic via OpenConnector, or queued for operator approval (REQ-DP-008).",
+            "description": "How a refund is handled on booking cancellation: automatic via OpenConnector, or queued for operator approval.",
             "default": "automatic_on_cancellation",
             "example": "automatic_on_cancellation",
             "title": "Refund Policy"
           },
           "lastErrorCode": {
             "type": "string",
-            "description": "Machine error code from the last failed authorization (e.g. insufficient_funds) (REQ-DP-011).",
+            "description": "Machine error code from the last failed authorization (e.g. insufficient_funds).",
             "nullable": true,
             "example": "insufficient_funds",
             "title": "Last Error Code"
           },
           "lastErrorMessage": {
             "type": "string",
-            "description": "Human-readable error message for the last failure, surfaced in the operator UI (REQ-DP-011). Never contains card data.",
+            "description": "Human-readable error message for the last failure, surfaced in the operator UI. Never contains card data.",
             "nullable": true,
             "example": "Insufficient funds. Please use a different card.",
             "title": "Last Error Message"
@@ -170,7 +170,7 @@
           "lastWebhookAttempt": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp of the last gateway webhook event received for this deposit. Used by the polling fallback to detect stalled deposits (REQ-DP-007).",
+            "description": "Timestamp of the last gateway webhook event received for this deposit. Used by the polling fallback to detect stalled deposits.",
             "nullable": true,
             "example": "2026-05-21T10:05:30Z",
             "title": "Last Webhook Attempt"
@@ -232,7 +232,7 @@
               "from": "draft",
               "to": "pending",
               "label": "Request payment",
-              "description": "Create the payment intent at the gateway through OpenConnector and present the customer payment link. Validates the deposit rule preconditions (REQ-DP-002) before allowing the transition.",
+              "description": "Create the payment intent at the gateway through OpenConnector and present the customer payment link. Validates the deposit rule preconditions before allowing the transition.",
               "guard": {
                 "type": "precondition",
                 "description": "Deposit rule must be valid: amount > 0, dueOffsetDays in [0,365], currencyCode is a 3-letter ISO code.",
@@ -249,7 +249,7 @@
               },
               "action": {
                 "type": "create-payment-intent",
-                "description": "Calls OpenConnector.createPaymentIntent(amount, currencyCode, orderId) and stores the returned paymentIntentId, paymentGateway and paymentMethod. No card data is stored (REQ-DP-001).",
+                "description": "Calls OpenConnector.createPaymentIntent(amount, currencyCode, orderId) and stores the returned paymentIntentId, paymentGateway and paymentMethod. No card data is stored.",
                 "connector": "openconnector",
                 "operation": "createPaymentIntent",
                 "requiredInput": [
@@ -263,13 +263,13 @@
               "from": "pending",
               "to": "authorized",
               "label": "Authorize",
-              "description": "Idempotently mark the deposit authorized when the gateway confirms (webhook or polling fallback). Materialises the AR invoice (REQ-DP-003).",
+              "description": "Idempotently mark the deposit authorized when the gateway confirms (webhook or polling fallback). Materialises the AR invoice.",
               "idempotent": true,
               "setsTimestamp": "authorizedAt",
               "action": {
                 "type": "materialize-ar-invoice",
                 "subType": "deposit",
-                "description": "Creates a Shillinq AR invoice for this deposit: customer derived from the Order, one line item (lineDescription, amount, taxRate), dueDate = eventDate minus dueOffsetDays, sourceDocumentUri = urn:nextcloud:booking:deposit-payment:@self.id. Stores the new invoice id in arInvoiceId (REQ-DP-003).",
+                "description": "Creates a Shillinq AR invoice for this deposit: customer derived from the Order, one line item (lineDescription, amount, taxRate), dueDate = eventDate minus dueOffsetDays, sourceDocumentUri = urn:nextcloud:booking:deposit-payment:@self.id. Stores the new invoice id in arInvoiceId.",
                 "targetSchema": "ARInvoice",
                 "writesBack": "arInvoiceId"
               }
@@ -285,7 +285,7 @@
               "from": "pending",
               "to": "failed",
               "label": "Fail",
-              "description": "Record an authorization failure. lastErrorCode/lastErrorMessage are set from the gateway response (REQ-DP-011). The booking Order is cancelled by the booking module.",
+              "description": "Record an authorization failure. lastErrorCode/lastErrorMessage are set from the gateway response. The booking Order is cancelled by the booking module.",
               "requiredInput": [
                 "lastErrorCode",
                 "lastErrorMessage"
@@ -295,11 +295,11 @@
               "from": "authorized",
               "to": "voided",
               "label": "Void (refund)",
-              "description": "Void an authorized deposit on booking cancellation. If refundPolicy = automatic_on_cancellation, initiate a refund via OpenConnector and create an AR credit note (REQ-DP-008).",
+              "description": "Void an authorized deposit on booking cancellation. If refundPolicy = automatic_on_cancellation, initiate a refund via OpenConnector and create an AR credit note.",
               "setsTimestamp": "voidedAt",
               "action": {
                 "type": "materialize-ar-credit-note",
-                "description": "Initiates OpenConnector.initiateRefund(paymentIntentId, amount) when refundPolicy is automatic_on_cancellation, then creates a Shillinq AR credit note reversing arInvoiceId and stores it in creditNoteId (REQ-DP-008).",
+                "description": "Initiates OpenConnector.initiateRefund(paymentIntentId, amount) when refundPolicy is automatic_on_cancellation, then creates a Shillinq AR credit note reversing arInvoiceId and stores it in creditNoteId.",
                 "connector": "openconnector",
                 "operation": "initiateRefund",
                 "targetSchema": "CreditNote",
@@ -314,11 +314,11 @@
               "from": "captured",
               "to": "voided",
               "label": "Void (refund captured)",
-              "description": "Void a captured deposit; same refund + credit-note behaviour as voidFromAuthorized (REQ-DP-008).",
+              "description": "Void a captured deposit; same refund + credit-note behaviour as voidFromAuthorized.",
               "setsTimestamp": "voidedAt",
               "action": {
                 "type": "materialize-ar-credit-note",
-                "description": "Refund via OpenConnector and create the reversing AR credit note (REQ-DP-008).",
+                "description": "Refund via OpenConnector and create the reversing AR credit note.",
                 "connector": "openconnector",
                 "operation": "initiateRefund",
                 "targetSchema": "CreditNote",
@@ -329,7 +329,7 @@
         },
         "x-openregister-calculations": {
           "dueDate": {
-            "description": "The date the deposit invoice is due: eventDate minus dueOffsetDays. If the event is within dueOffsetDays from today, the deposit is due immediately (REQ-DP-002).",
+            "description": "The date the deposit invoice is due: eventDate minus dueOffsetDays. If the event is within dueOffsetDays from today, the deposit is due immediately.",
             "expression": "(eventDate == null) ? null : addDays(@self.eventDate, -1 * dueOffsetDays)",
             "dependsOn": [
               "eventDate",
@@ -353,7 +353,7 @@
             ]
           },
           "paymentLink": {
-            "description": "Customer-facing payment URL embedded in the confirmation email. Embeds the deposit id, the AR invoice id and a short-lived signed token; clicking opens OpenConnector's hosted payment UI (REQ-DP-005). Only meaningful while state is pending.",
+            "description": "Customer-facing payment URL embedded in the confirmation email. Embeds the deposit id, the AR invoice id and a short-lived signed token; clicking opens OpenConnector's hosted payment UI. Only meaningful while state is pending.",
             "expression": "appUrl('/apps/booking/pay') + '?deposit=' + @self.id + '&invoice=' + arInvoiceId + '&token=' + signedToken(@self.id, 'deposit-pay', 3600)",
             "dependsOn": [
               "arInvoiceId",
@@ -404,13 +404,13 @@
           "byState": {
             "field": "state",
             "metric": "count",
-            "description": "Number of deposits per lifecycle state — drives the Deposits overview state filter (REQ-DP-010).",
+            "description": "Number of deposits per lifecycle state — drives the Deposits overview state filter.",
             "groupBy": ["state"]
           },
           "pendingByDueDate": {
             "field": "amount",
             "metric": "sum",
-            "description": "Total pending deposit value grouped by due date, for the operator follow-up worklist (REQ-DP-010).",
+            "description": "Total pending deposit value grouped by due date, for the operator follow-up worklist.",
             "groupBy": ["dueDate"],
             "filter": {
               "state": "pending"
@@ -419,7 +419,7 @@
           "failedCount": {
             "field": "state",
             "metric": "count",
-            "description": "Count of failed deposits requiring operator follow-up (REQ-DP-011).",
+            "description": "Count of failed deposits requiring operator follow-up.",
             "filter": {
               "state": "failed"
             }
@@ -514,7 +514,7 @@
         "x-openregister-scheduled-workflows": {
           "shillinq-deposit-polling-fallback": {
             "name": "Deposit polling fallback",
-            "description": "Every 5 minutes, queries all DepositPayment records with state=pending and reconciles them against OpenConnector.getPaymentStatus(paymentIntentId), so a lost or delayed gateway webhook never leaves a deposit pending indefinitely (REQ-DP-007). No app-local BackgroundJob extends TimedJob; reconciliation is idempotent (REQ-DP-006).",
+            "description": "Every 5 minutes, queries all DepositPayment records with state=pending and reconciles them against OpenConnector.getPaymentStatus(paymentIntentId), so a lost or delayed gateway webhook never leaves a deposit pending indefinitely. No app-local BackgroundJob extends TimedJob; reconciliation is idempotent.",
             "cron": "*/5 * * * *",
             "source": "openconnector",
             "operation": "getPaymentStatus",
@@ -530,7 +530,7 @@
           "depositStatus": {
             "id": "deposit-status",
             "title": "Deposit",
-            "description": "Booking-detail widget showing deposit state, amount, payment link and the linked AR invoice (REQ-DP-010).",
+            "description": "Booking-detail widget showing deposit state, amount, payment link and the linked AR invoice.",
             "type": "tile",
             "dataSource": {
               "mode": "statistics",

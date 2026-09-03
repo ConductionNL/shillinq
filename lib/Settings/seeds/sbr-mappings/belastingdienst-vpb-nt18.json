@@ -6,7 +6,7 @@
 		"variant": "belastingdienst-vpb",
 		"taxonomyVersion": "nt18",
 		"entryPoint": "belastingdienst-vpb",
-		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt18 concepts for the Belastingdienst Vpb aangifte entry point (REQ-SBR-005, REQ-SBR-006). nt18 successor of belastingdienst-vpb-nt17.json — both coexist for historical reproducibility.",
+		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt18 concepts for the Belastingdienst Vpb aangifte entry point. nt18 successor of belastingdienst-vpb-nt17.json — both coexist for historical reproducibility.",
 		"imported": "2026-06-09T00:00:00Z"
 	},
 	"mapping": {

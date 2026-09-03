@@ -6,7 +6,7 @@
 		"variant": "sbr-wonen",
 		"taxonomyVersion": "nt17",
 		"entryPoint": "sbr-wonen",
-		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt17 concepts for the SBR-Wonen (housing-corporation rapportage Aw/WSW) entry point (REQ-SBR-005, REQ-SBR-006). Toegelaten instellingen (woningcorporaties) file via this entry point; Aw and WSW consume the resulting XBRL. Vastgoed-categorie concepts (DAEB / niet-DAEB) reflect the woningwet split.",
+		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt17 concepts for the SBR-Wonen (housing-corporation rapportage Aw/WSW) entry point. Toegelaten instellingen (woningcorporaties) file via this entry point; Aw and WSW consume the resulting XBRL. Vastgoed-categorie concepts (DAEB / niet-DAEB) reflect the woningwet split.",
 		"imported": "2026-06-09T00:00:00Z"
 	},
 	"mapping": {

@@ -221,7 +221,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a TenderNed Aanbesteding is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a TenderNed Aanbesteding is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Commitment": {
@@ -443,7 +443,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Commitment is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Commitment is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "OrderFulfilment": {
@@ -614,7 +614,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Opdracht Uitvoering is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Opdracht Uitvoering is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

@@ -28,21 +28,21 @@
         "properties": {
           "administrationId": {
             "type": "string",
-            "description": "FK to the Administration owning this derivation (REQ-BKC-004).",
+            "description": "FK to the Administration owning this derivation.",
             "example": "adm-1",
             "title": "Administration ID"
           },
           "annualBudgetId": {
             "type": "string",
             "format": "uuid",
-            "description": "FK to the AnnualBudget this derivation's BudgetLine belongs to (REQ-BKC-004).",
+            "description": "FK to the AnnualBudget this derivation's BudgetLine belongs to.",
             "title": "Annual Budget ID",
             "$ref": "AnnualBudget"
           },
           "ledgerGroupId": {
             "type": "string",
             "format": "uuid",
-            "description": "FK to the LedgerGroup this derivation's BudgetLine phases amounts against (REQ-BKC-004).",
+            "description": "FK to the LedgerGroup this derivation's BudgetLine phases amounts against.",
             "title": "Ledger Group ID",
             "$ref": "LedgerGroup"
           },
@@ -59,7 +59,7 @@
           "budgetLineId": {
             "type": "string",
             "format": "uuid",
-            "description": "FK to the BudgetLine object this derivation run created/last upserted (REQ-BKC-004).",
+            "description": "FK to the BudgetLine object this derivation run created/last upserted.",
             "title": "Budget Line ID",
             "$ref": "BudgetLine"
           },
@@ -108,7 +108,7 @@
           "overridden": {
             "type": "boolean",
             "default": false,
-            "description": "True once a run detects the live BudgetLine no longer matches lastGeneratedMonthlyAmounts — an operator's own edit, which the writer then leaves alone until the BudgetLine is deleted (REQ-BKC-005).",
+            "description": "True once a run detects the live BudgetLine no longer matches lastGeneratedMonthlyAmounts — an operator's own edit, which the writer then leaves alone until the BudgetLine is deleted.",
             "example": false,
             "title": "Overridden"
           }
@@ -134,7 +134,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a BudgetLineDerivation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a BudgetLineDerivation is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

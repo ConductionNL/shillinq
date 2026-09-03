@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "description": "budget-core-schema — the data foundation for begroting (budgeting): LedgerGroup (verzamelpost, REQ-BCS-004/005), AnnualBudget (the fiscal-year budget container + one-default invariant, REQ-BCS-006), and BudgetLine (AnnualBudget x LedgerGroup crossed with 12 monthly phased amounts + a source marker, REQ-BCS-007). Seeded from lib/Settings/statements/rj270-pl.json (P&L-shaped, not the balance sheet — a begroting is a monthly-phased flow plan, design.md §3c). The budget-vs-actuals roll-up (REQ-BCS-008) is a PHP service (BudgetVsActualsReader/Calculator), not a declarative aggregation — see design.md §6."
+    "description": "budget-core-schema — the data foundation for begroting (budgeting): LedgerGroup (verzamelpost, REQ-BCS-004/005), AnnualBudget (the fiscal-year budget container + one-default invariant, REQ-BCS-006), and BudgetLine (AnnualBudget x LedgerGroup crossed with 12 monthly phased amounts + a source marker, REQ-BCS-007). Seeded from lib/Settings/statements/rj270-pl.json (P&L-shaped, not the balance sheet — a begroting is a monthly-phased flow plan, design.md §3c). The budget-vs-actuals roll-up is a PHP service (BudgetVsActualsReader/Calculator), not a declarative aggregation — see design.md §6."
   },
   "components": {
     "schemas": {
@@ -9,7 +9,7 @@
         "icon": "FormatListGroup",
         "version": "0.1.0",
         "title": "Ledger Group",
-        "description": "A per-administration, ordered, nestable grouping of GL accounts (verzamelpost) — the reusable grouping unit both the RJ270 statement manifests and the begroting grid need (REQ-BCS-004). Members are resolved at evaluation time from an optional accountRanges array plus explicit includedAccountNumbers/excludedAccountNumbers — never a declarative filter (design.md §3a). No lifecycle: a LedgerGroup is configuration, edited directly, consistent with Account/AllocationRule/the rubriek-mapping precedent.",
+        "description": "A per-administration, ordered, nestable grouping of GL accounts (verzamelpost) — the reusable grouping unit both the RJ270 statement manifests and the begroting grid need. Members are resolved at evaluation time from an optional accountRanges array plus explicit includedAccountNumbers/excludedAccountNumbers — never a declarative filter (design.md §3a). No lifecycle: a LedgerGroup is configuration, edited directly, consistent with Account/AllocationRule/the rubriek-mapping precedent.",
         "x-schema-org": "schema:DefinedTermSet",
         "x-spec": "openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md",
         "type": "object",
@@ -140,7 +140,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a LedgerGroup is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a LedgerGroup is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "AnnualBudget": {
@@ -148,7 +148,7 @@
         "icon": "CalendarRange",
         "version": "0.1.0",
         "title": "Annual Budget",
-        "description": "The fiscal-year budget container (begroting), crossed with LedgerGroup via BudgetLine (REQ-BCS-006). Carries the one-default invariant AnnualBudgetDefaultGuard enforces on the activate transition: at most one AnnualBudget per administrationId + fiscalYear may have isDefault=true — aligned now so the budget-scenarios follow-up change does not need to retrofit it (design.md §4b).",
+        "description": "The fiscal-year budget container (begroting), crossed with LedgerGroup via BudgetLine. Carries the one-default invariant AnnualBudgetDefaultGuard enforces on the activate transition: at most one AnnualBudget per administrationId + fiscalYear may have isDefault=true — aligned now so the budget-scenarios follow-up change does not need to retrofit it (design.md §4b).",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md",
         "type": "object",
@@ -220,7 +220,7 @@
               "from": "draft",
               "to": "active",
               "label": "Activate budget",
-              "description": "Requires no other AnnualBudget with isDefault=true for the same administrationId+fiscalYear (REQ-BCS-006).",
+              "description": "Requires no other AnnualBudget with isDefault=true for the same administrationId+fiscalYear.",
               "requires": "OCA\\Shillinq\\Lifecycle\\AnnualBudgetDefaultGuard::isUniqueDefault"
             },
             "close": {
@@ -255,7 +255,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of an AnnualBudget is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of an AnnualBudget is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "BudgetLine": {
@@ -263,7 +263,7 @@
         "icon": "TableColumn",
         "version": "0.1.0",
         "title": "Budget Line",
-        "description": "AnnualBudget x LedgerGroup crossed with 12 monthly phased amounts and a source marker (REQ-BCS-007) — the spreadsheet mental model's row. This change writes only source=manual lines (an operator typing a number); contract/recurring/projected/scenario are declared for budget-known-costs, budget-projection-engine and budget-scenarios to populate later. The cumulative 13th-column total is a UI concern (budget-grid-view), not a stored field, per design.md §5b.",
+        "description": "AnnualBudget x LedgerGroup crossed with 12 monthly phased amounts and a source marker — the spreadsheet mental model's row. This change writes only source=manual lines (an operator typing a number); contract/recurring/projected/scenario are declared for budget-known-costs, budget-projection-engine and budget-scenarios to populate later. The cumulative 13th-column total is a UI concern (budget-grid-view), not a stored field, per design.md §5b.",
         "x-spec": "openspec/changes/budget-core-schema/specs/budget-core-schema/spec.md",
         "type": "object",
         "required": [
@@ -401,7 +401,7 @@
         },
         "x-openregister-aggregations": {
           "budgetVsActuals": {
-            "description": "DOCUMENTATION-ONLY declarative shape for the budget-vs-actuals roll-up (REQ-BCS-008). This is NOT the computed path this change depends on — BudgetVsActualsReader/BudgetVsActualsCalculator (PHP) is the primary, PHPUnit-tested path, because AggregationAnnotationValidator validates cross-schema filter fields against the DECLARING schema's own properties rather than the TARGET schema's, silently discarding the annotation on a mismatch (design.md §6a). UNVERIFIED / EXPECTED-DISCARDED pending the positive-control task (grep nextcloud.log for \"annotation on schema\" after a fresh import) — do not wire any page to depend on this block.",
+            "description": "DOCUMENTATION-ONLY declarative shape for the budget-vs-actuals roll-up. This is NOT the computed path this change depends on — BudgetVsActualsReader/BudgetVsActualsCalculator (PHP) is the primary, PHPUnit-tested path, because AggregationAnnotationValidator validates cross-schema filter fields against the DECLARING schema's own properties rather than the TARGET schema's, silently discarding the annotation on a mismatch (design.md §6a). UNVERIFIED / EXPECTED-DISCARDED pending the positive-control task (grep nextcloud.log for \"annotation on schema\" after a fresh import) — do not wire any page to depend on this block.",
             "source": "GLLine",
             "groupBy": [
               "accountNumber"
@@ -446,7 +446,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a BudgetLine is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a BudgetLine is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

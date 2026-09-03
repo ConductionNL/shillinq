@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-multi-currency",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — Multi-currency bank account management. Declares the BankAccount schema with an additive optional primaryCurrency field (REQ-MC-001 / REQ-MC-002 — ISO 4217 code, nullable, defaults EUR on read) and the CurrencyBalance register that captures point-in-time per-currency balance snapshots per (accountId, currency) pair (REQ-MC-003 — balance, previousBalance, lastUpdated). Per-currency queries (REQ-MC-004) ride on the OpenRegister ObjectService findAll filter engine (no app-local PHP balance calculator), backed by an x-openregister-aggregations declaration on CurrencyBalance for the multi-account aggregation scenario. Seed objects provide three demo BankAccount + CurrencyBalance pairs covering the EUR / USD / GBP scenarios in design.md."
+    "description": "Tier 3 — Multi-currency bank account management. Declares the BankAccount schema with an additive optional primaryCurrency field (REQ-MC-001 / REQ-MC-002 — ISO 4217 code, nullable, defaults EUR on read) and the CurrencyBalance register that captures point-in-time per-currency balance snapshots per (accountId, currency) pair (REQ-MC-003 — balance, previousBalance, lastUpdated). Per-currency queries ride on the OpenRegister ObjectService findAll filter engine (no app-local PHP balance calculator), backed by an x-openregister-aggregations declaration on CurrencyBalance for the multi-account aggregation scenario. Seed objects provide three demo BankAccount + CurrencyBalance pairs covering the EUR / USD / GBP scenarios in design.md."
   },
   "components": {
     "schemas": {
@@ -54,7 +54,7 @@
           },
           "primaryCurrency": {
             "type": "string",
-            "description": "ISO 4217 currency code declaring the native currency of the account (REQ-MC-002). Optional; null is treated as 'EUR' on read for backward compatibility (REQ-MC-001 scenario 'Single-currency account without primaryCurrency declared'). MUST be exactly three uppercase letters when set. Examples: EUR, USD, GBP.",
+            "description": "ISO 4217 currency code declaring the native currency of the account. Optional; null is treated as 'EUR' on read for backward compatibility (REQ-MC-001 scenario 'Single-currency account without primaryCurrency declared'). MUST be exactly three uppercase letters when set. Examples: EUR, USD, GBP.",
             "pattern": "^[A-Z]{3}$",
             "example": "EUR",
             "title": "Primary Currency"
@@ -90,7 +90,7 @@
         "version": "0.1.0",
         "title": "Currency Balance",
         "titleNl": "Wisselkoers-saldo",
-        "description": "Point-in-time per-currency balance snapshot for a (BankAccount, currency) pair (REQ-MC-003). Snapshots are operator-entered or refreshed by T4 bank-connector synchronisation (no app-local balance calculator — REQ-MC-004). One latest record per (accountId, currency); on duplicate writes the latest timestamp wins (REQ-MC-003 scenario 'Prevent duplicate (accountId, currency) records'). `previousBalance` is captured automatically on update so the detail page can render variance + percentage change without a separate audit query.",
+        "description": "Point-in-time per-currency balance snapshot for a (BankAccount, currency) pair. Snapshots are operator-entered or refreshed by T4 bank-connector synchronisation (no app-local balance calculator — REQ-MC-004). One latest record per (accountId, currency); on duplicate writes the latest timestamp wins (REQ-MC-003 scenario 'Prevent duplicate (accountId, currency) records'). `previousBalance` is captured automatically on update so the detail page can render variance + percentage change without a separate audit query.",
         "x-schema-org": "schema:Thing",
         "x-openregister-purpose": "data",
         "x-spec": "openspec/changes/bookkeeping-multi-currency/spec.md",

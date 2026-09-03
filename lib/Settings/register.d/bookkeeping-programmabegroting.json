@@ -208,7 +208,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Programmabegroting is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Programmabegroting is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Programma": {
@@ -478,7 +478,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Beleidsindicator is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Beleidsindicator is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Investering": {
@@ -563,7 +563,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Investering is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Investering is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Reserve": {
@@ -892,7 +892,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Meerjarenraming is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Meerjarenraming is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Begrotingswijziging": {

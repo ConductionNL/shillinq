@@ -704,7 +704,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Public Sector Statement is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Public Sector Statement is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

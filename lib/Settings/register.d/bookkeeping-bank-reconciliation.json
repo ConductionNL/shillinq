@@ -73,14 +73,14 @@
           },
           "reconciledBalance": {
             "type": "number",
-            "description": "Derived: openingBalance + sum(approved match amounts). Server-authoritative — recomputed by BankReconciliationGuard::recalculateBalance in integer cents on every match change; never accepted from the client (REQ-BBR-005).",
+            "description": "Derived: openingBalance + sum(approved match amounts). Server-authoritative — recomputed by BankReconciliationGuard::recalculateBalance in integer cents on every match change; never accepted from the client.",
             "nullable": true,
             "example": 6250.49,
             "title": "Reconciled Balance"
           },
           "variance": {
             "type": "number",
-            "description": "Derived: closingBalance − reconciledBalance. Server-authoritative; recomputed alongside reconciledBalance (REQ-BBR-005).",
+            "description": "Derived: closingBalance − reconciledBalance. Server-authoritative; recomputed alongside reconciledBalance.",
             "nullable": true,
             "example": 0.01,
             "title": "Variance"
@@ -138,7 +138,7 @@
           },
           "varianceReason": {
             "type": "string",
-            "description": "Operator-documented explanation of a non-zero variance, captured at approval for the audit trail (REQ-BBR-006).",
+            "description": "Operator-documented explanation of a non-zero variance, captured at approval for the audit trail.",
             "nullable": true,
             "maxLength": 500,
             "example": "Bank charged €5.00 monthly fee (posted 2026-06-01, not yet journaled).",
@@ -167,11 +167,11 @@
             },
             "reconciled": {
               "label": "Reconciled",
-              "description": "Approved and locked for audit. Immutable — no further match changes (REQ-BBR-006); corrections require a new session."
+              "description": "Approved and locked for audit. Immutable — no further match changes; corrections require a new session."
             },
             "archived": {
               "label": "Archived",
-              "description": "Closed and moved to the archive view. Queryable for audit, not editable (REQ-BBR-009)."
+              "description": "Closed and moved to the archive view. Queryable for audit, not editable."
             }
           },
           "transitions": {
@@ -185,7 +185,7 @@
               "from": "in-progress",
               "to": "reconciled",
               "label": "Approve reconciliation",
-              "description": "Lock the reconciliation for audit. All pending-review matches must be resolved first; reconciledBalance and variance are recomputed server-side before locking (REQ-BBR-006).",
+              "description": "Lock the reconciliation for audit. All pending-review matches must be resolved first; reconciledBalance and variance are recomputed server-side before locking.",
               "requires": "OCA\\Shillinq\\Guard\\BankReconciliationGuard::requireResolvedMatches"
             },
             "approveFromDraft": {
@@ -199,7 +199,7 @@
               "from": "reconciled",
               "to": "archived",
               "label": "Archive reconciliation",
-              "description": "Move the reconciled session to the archive view (REQ-BBR-009)."
+              "description": "Move the reconciled session to the archive view."
             }
           },
           "preconditions": {
@@ -289,7 +289,7 @@
               "rejected"
             ],
             "default": "pending-review",
-            "description": "Match lifecycle state. Only approved matches contribute to reconciledBalance (REQ-BBR-005).",
+            "description": "Match lifecycle state. Only approved matches contribute to reconciledBalance.",
             "title": "Match Type"
           },
           "confidenceScore": {
@@ -356,19 +356,19 @@
               "from": "auto-matched",
               "to": "approved",
               "label": "Approve match",
-              "description": "Confirm an auto-matched pair (REQ-BBR-003)."
+              "description": "Confirm an auto-matched pair."
             },
             "approvePending": {
               "from": "pending-review",
               "to": "approved",
               "label": "Approve match",
-              "description": "Operator pairs a pending match and approves it (REQ-BBR-003)."
+              "description": "Operator pairs a pending match and approves it."
             },
             "rejectFromPending": {
               "from": "pending-review",
               "to": "rejected",
               "label": "Reject match",
-              "description": "Operator documents and rejects an orphaned/ambiguous item (REQ-BBR-004)."
+              "description": "Operator documents and rejects an orphaned/ambiguous item."
             },
             "rejectFromAuto": {
               "from": "auto-matched",
@@ -380,7 +380,7 @@
               "from": "approved",
               "to": "pending-review",
               "label": "Unmatch",
-              "description": "Revert an approved match for re-review (REQ-BBR-008). Blocked when the parent reconciliation is locked."
+              "description": "Revert an approved match for re-review. Blocked when the parent reconciliation is locked."
             }
           },
           "preconditions": {
@@ -405,7 +405,7 @@
         },
         "x-openregister-aggregations": {
           "approvedAmountTotal": {
-            "description": "Sum of approved match amounts per reconciliation, used as the declarative basis for reconciledBalance = openingBalance + this sum (REQ-BBR-005). The cross-period balance write itself is performed by BankReconciliationGuard per ADR-031 Risk-3.",
+            "description": "Sum of approved match amounts per reconciliation, used as the declarative basis for reconciledBalance = openingBalance + this sum. The cross-period balance write itself is performed by BankReconciliationGuard per ADR-031 Risk-3.",
             "filter": {
               "matchType": "approved"
             },
@@ -429,7 +429,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Bank Reconciliation Match is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Bank Reconciliation Match is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

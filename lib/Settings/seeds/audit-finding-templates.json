@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "source": "Awb 4.2 + VNG guidelines",
     "version": "2026.1",
-    "description": "Audit-finding category templates for AuditorStatement findings (REQ-SUBV-007). Categories follow Awb 4.2 + VNG grant-management guidance. Per-administration override allowed for categoryName/translations but not the severity mapping."
+    "description": "Audit-finding category templates for AuditorStatement findings. Categories follow Awb 4.2 + VNG grant-management guidance. Per-administration override allowed for categoryName/translations but not the severity mapping."
   },
   "auditFindingTemplates": [
     {

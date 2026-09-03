@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "contract-lifecycle-management",
     "adr": "ADR-037 modular register fragment + ADR-022 (link-don't-store / consume OR + NC abstractions) + ADR-031 (declarative business logic) — never edit shillinq_register.json",
-    "description": "Tier 2 — Generic Contract Lifecycle Management (CLM) per REQ-CLM-001 .. REQ-CLM-009. Declares Contract + ContractObligation schemas with x-openregister-audit-trail, x-openregister-lifecycle (draft → active → expiring → expired with renewed/terminated exits), x-openregister-calculations (renewalDecisionDate = endDate − renewalTerms.noticePeriodDays), and x-openregister-notifications (canonical ADR-031 dialect; lands the contract-renewal rule deferred by shillinq-notifications). Counterparty is an NC addressbook contact reference (no Party/Customer schema). Documents/evidence are NC Files references (link, don't store). The committed-vs-invoiced spend rollup (REQ-CLM-006) is CHAINED behind bookkeeping-purchase-order-3way / add-shillinq-accounts-payable-core / add-shillinq-accounts-receivable-core: it is documented as an x-chained-aggregations note here and intentionally declares NO active aggregation rules targeting absent schemas, so the spend dashboard renders an honest empty state until those schemas land. Lease contracts become a specialization by link via specializationReference → LeaseContract (no regression to the IFRS 16 lease suite). Seed data ships demo contracts + obligations clearly marked as demo."
+    "description": "Tier 2 — Generic Contract Lifecycle Management (CLM) per REQ-CLM-001 .. REQ-CLM-009. Declares Contract + ContractObligation schemas with x-openregister-audit-trail, x-openregister-lifecycle (draft → active → expiring → expired with renewed/terminated exits), x-openregister-calculations (renewalDecisionDate = endDate − renewalTerms.noticePeriodDays), and x-openregister-notifications (canonical ADR-031 dialect; lands the contract-renewal rule deferred by shillinq-notifications). Counterparty is an NC addressbook contact reference (no Party/Customer schema). Documents/evidence are NC Files references (link, don't store). The committed-vs-invoiced spend rollup is CHAINED behind bookkeeping-purchase-order-3way / add-shillinq-accounts-payable-core / add-shillinq-accounts-receivable-core: it is documented as an x-chained-aggregations note here and intentionally declares NO active aggregation rules targeting absent schemas, so the spend dashboard renders an honest empty state until those schemas land. Lease contracts become a specialization by link via specializationReference → LeaseContract (no regression to the IFRS 16 lease suite). Seed data ships demo contracts + obligations clearly marked as demo."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Contract",
-        "description": "Generic contract master record covering every contract type (purchase, sales, service, subscription, lease, employment, other) per REQ-CLM-001. CRUD goes through OpenRegister's generic object surface (ADR-022) — no custom PHP model, no parallel table. The counterparty is referenced as a Nextcloud addressbook contact (counterpartyReference); no Party/Customer/Supplier schema is invented. Renewal terms are an embedded object (D3); renewalDecisionDate is a declared calculation. Documents are NC Files references (link, don't store; REQ-CLM-005). Lease contracts become a specialization by link via specializationReference → LeaseContract (REQ-CLM-007); generic records never duplicate lease accounting fields. Lifecycle and notifications are declarative (REQ-CLM-002 / REQ-CLM-004).",
+        "description": "Generic contract master record covering every contract type (purchase, sales, service, subscription, lease, employment, other) per REQ-CLM-001. CRUD goes through OpenRegister's generic object surface (ADR-022) — no custom PHP model, no parallel table. The counterparty is referenced as a Nextcloud addressbook contact (counterpartyReference); no Party/Customer/Supplier schema is invented. Renewal terms are an embedded object (D3); renewalDecisionDate is a declared calculation. Documents are NC Files references (link, don't store; REQ-CLM-005). Lease contracts become a specialization by link via specializationReference → LeaseContract; generic records never duplicate lease accounting fields. Lifecycle and notifications are declarative (REQ-CLM-002 / REQ-CLM-004).",
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Contract repository register; every create / update / lifecycle transition (activate / markExpiring / expire / terminate / renew) is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022. The audit trail is the canonical evidence chain for renewal and termination decisions per REQ-CLM-002."
@@ -195,7 +195,7 @@
           },
           "documents": {
             "type": "array",
-            "description": "NC Files references for the signed contract PDF, amendments, and annexes. Link, don't store (REQ-CLM-005); bytes live in Nextcloud Files with versioning and full-text search.",
+            "description": "NC Files references for the signed contract PDF, amendments, and annexes. Link, don't store; bytes live in Nextcloud Files with versioning and full-text search.",
             "nullable": true,
             "items": {
               "type": "object",
@@ -326,7 +326,7 @@
               "from": "draft",
               "to": "active",
               "label": "Activate contract",
-              "description": "Put the contract in force. Guard: startDate, counterpartyReference, and contractOwner must all be present (REQ-CLM-002).",
+              "description": "Put the contract in force. Guard: startDate, counterpartyReference, and contractOwner must all be present.",
               "requires": "OCA\\Shillinq\\Lifecycle\\ContractLifecycleGuard::canActivate",
               "x-adr-031-exception": "Cross-field non-empty precondition over startDate + counterpartyReference + contractOwner is not yet expressible as a single declarative requires clause; single-method fail-closed guard per ADR-031 §'PHP guards remain a legitimate seam'. Replace with a declarative condition when the lifecycle DSL supports multi-field required guards."
             },
@@ -559,7 +559,7 @@
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "Contract Obligation",
-        "description": "Deadline-bearing obligation row owned by a Contract per REQ-CLM-003. The register row is the source of truth for the deadline and compliance status; the actionable to-do lives in NC Tasks (CalDAV VTODO) or a Deck card, created and linked by ObligationTaskBridge (taskUri). Evidence files are NC Files references (link, don't store). Shillinq declares NO task/todo schema of its own (ADR-022 / 'content types belong in leaves'). Deadline notifications fire from the OR notification engine on this row (REQ-CLM-004), so a deleted NC task never silences a deadline.",
+        "description": "Deadline-bearing obligation row owned by a Contract per REQ-CLM-003. The register row is the source of truth for the deadline and compliance status; the actionable to-do lives in NC Tasks (CalDAV VTODO) or a Deck card, created and linked by ObligationTaskBridge (taskUri). Evidence files are NC Files references (link, don't store). Shillinq declares NO task/todo schema of its own (ADR-022 / 'content types belong in leaves'). Deadline notifications fire from the OR notification engine on this row, so a deleted NC task never silences a deadline.",
         "x-openregister-audit-trail": {
           "enabled": true,
           "description": "Contract-obligation register; every create / update / status change is recorded on the OR audit-trail-immutable channel per REQ-AT-001 + ADR-022."
@@ -650,7 +650,7 @@
           },
           "evidence": {
             "type": "array",
-            "description": "NC Files references for compliance evidence (certificates, reports). Link, don't store (REQ-CLM-005).",
+            "description": "NC Files references for compliance evidence (certificates, reports). Link, don't store.",
             "nullable": true,
             "items": {
               "type": "object",

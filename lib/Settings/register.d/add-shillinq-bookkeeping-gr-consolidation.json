@@ -13,7 +13,7 @@
         "icon": "VectorDifference",
         "version": "0.1.0",
         "title": "Elimination Rule",
-        "description": "A per-ConsolidationGroup rule declaring which GL account pairs cancel out when inter-company transactions are matched at consolidation time (REQ-ICP-002). Rules are metadata; matching itself runs at consolidation time against IntercompanyTransaction records.",
+        "description": "A per-ConsolidationGroup rule declaring which GL account pairs cancel out when inter-company transactions are matched at consolidation time. Rules are metadata; matching itself runs at consolidation time against IntercompanyTransaction records.",
         "x-schema-org": "schema:Rule",
         "x-spec": "openspec/changes/bookkeeping-gr-consolidation/specs/bookkeeping-intercompany-posting.md",
         "type": "object",
@@ -27,7 +27,7 @@
         "properties": {
           "consolidationGroupId": {
             "type": "string",
-            "description": "FK to the ConsolidationGroup this rule applies to (REQ-ICP-002).",
+            "description": "FK to the ConsolidationGroup this rule applies to.",
             "example": "gr-afval-001",
             "title": "Consolidation Group ID",
             "$ref": "ConsolidationGroup"
@@ -39,7 +39,7 @@
               "reference-match",
               "manual-review"
             ],
-            "description": "auto-match: exact account + amount (within amountTolerance); reference-match: matches on invoice/reference; manual-review: pause and ask an operator before eliminating (REQ-ICP-002).",
+            "description": "auto-match: exact account + amount (within amountTolerance); reference-match: matches on invoice/reference; manual-review: pause and ask an operator before eliminating.",
             "default": "auto-match",
             "example": "auto-match",
             "title": "Rule Type"
@@ -60,7 +60,7 @@
             "type": "number",
             "minimum": 0,
             "default": 0,
-            "description": "For auto-match: maximum EUR difference allowed between paired amounts. 0 means exact match (REQ-ICP-002).",
+            "description": "For auto-match: maximum EUR difference allowed between paired amounts. 0 means exact match.",
             "example": 0.0,
             "title": "Amount Tolerance"
           },
@@ -73,7 +73,7 @@
           "isActive": {
             "type": "boolean",
             "default": true,
-            "description": "Whether this rule is enforced at consolidation time. Disable instead of deleting to preserve audit history (REQ-ICP-002).",
+            "description": "Whether this rule is enforced at consolidation time. Disable instead of deleting to preserve audit history.",
             "title": "Is Active"
           }
         },
@@ -111,7 +111,7 @@
         "icon": "SwapHorizontalBold",
         "version": "0.1.0",
         "title": "Inter-Company Transaction",
-        "description": "A sale or service between two members of a ConsolidationGroup. Serves as a routing label over the underlying GL posting and as the hook for elimination rules at consolidation time (REQ-ICP-001). Elimination happens at consolidation time, not at posting time.",
+        "description": "A sale or service between two members of a ConsolidationGroup. Serves as a routing label over the underlying GL posting and as the hook for elimination rules at consolidation time. Elimination happens at consolidation time, not at posting time.",
         "x-schema-org": "schema:MoneyTransfer",
         "x-spec": "openspec/changes/bookkeeping-gr-consolidation/specs/bookkeeping-intercompany-posting.md",
         "type": "object",
@@ -128,20 +128,20 @@
         "properties": {
           "consolidationGroupId": {
             "type": "string",
-            "description": "FK to the ConsolidationGroup this transaction belongs to (REQ-ICP-001).",
+            "description": "FK to the ConsolidationGroup this transaction belongs to.",
             "example": "gr-afval-001",
             "title": "Consolidation Group ID",
             "$ref": "ConsolidationGroup"
           },
           "fromMemberId": {
             "type": "string",
-            "description": "FK to the selling/providing member Organization (REQ-ICP-001).",
+            "description": "FK to the selling/providing member Organization.",
             "example": "amsterdam",
             "title": "From Member ID"
           },
           "toMemberId": {
             "type": "string",
-            "description": "FK to the buying/receiving member Organization (REQ-ICP-001).",
+            "description": "FK to the buying/receiving member Organization.",
             "example": "utrecht",
             "title": "To Member ID"
           },
@@ -180,7 +180,7 @@
           "reference": {
             "type": "string",
             "nullable": true,
-            "description": "Invoice/PO number or external identifier for manual or reference-match pairing (REQ-ICP-001).",
+            "description": "Invoice/PO number or external identifier for manual or reference-match pairing.",
             "example": "INV-2026-001",
             "title": "Reference"
           },
@@ -193,7 +193,7 @@
           "glTransactionId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the underlying GLTransaction once posted; may be null if the record is created post-facto (REQ-ICP-005).",
+            "description": "FK to the underlying GLTransaction once posted; may be null if the record is created post-facto.",
             "example": "gl-txn-2026-0001",
             "title": "GL Transaction ID",
             "$ref": "GLTransaction"
@@ -201,13 +201,13 @@
           "isManualOverride": {
             "type": "boolean",
             "default": false,
-            "description": "If true, this transaction is excluded from automatic elimination even if it matches an active rule (REQ-ICP-004).",
+            "description": "If true, this transaction is excluded from automatic elimination even if it matches an active rule.",
             "title": "Is Manual Override"
           },
           "overrideReason": {
             "type": "string",
             "nullable": true,
-            "description": "Operator note recorded when isManualOverride is set or a forced elimination is applied (REQ-ICP-004).",
+            "description": "Operator note recorded when isManualOverride is set or a forced elimination is applied.",
             "title": "Override Reason"
           },
           "eliminatedByRuleId": {
@@ -219,7 +219,7 @@
           "consolidatedReportId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the ConsolidatedReport this transaction was included in once consolidated. Once that report is finalized or published, eliminationStatus is immutable (REQ-ICP-006).",
+            "description": "FK to the ConsolidatedReport this transaction was included in once consolidated. Once that report is finalized or published, eliminationStatus is immutable.",
             "title": "Consolidated Report ID",
             "$ref": "ConsolidatedReport"
           },
@@ -241,15 +241,15 @@
           "states": {
             "pending": {
               "label": "Pending",
-              "description": "Not yet consolidated. Included in consolidated GL totals until matched (REQ-ICP-008)."
+              "description": "Not yet consolidated. Included in consolidated GL totals until matched."
             },
             "eliminated": {
               "label": "Eliminated",
-              "description": "Matched an active elimination rule (or forced) and removed from consolidated group totals (REQ-ICP-003)."
+              "description": "Matched an active elimination rule (or forced) and removed from consolidated group totals."
             },
             "excluded": {
               "label": "Excluded",
-              "description": "Manual override — matches a rule but intentionally retained in consolidated totals at fair-market value (REQ-ICP-004)."
+              "description": "Manual override — matches a rule but intentionally retained in consolidated totals at fair-market value."
             }
           },
           "transitions": {
@@ -257,28 +257,28 @@
               "from": "pending",
               "to": "eliminated",
               "label": "Eliminate",
-              "description": "Mark this inter-company transaction as eliminated at consolidation time. Denied once the owning ConsolidatedReport is finalized or published (REQ-ICP-006).",
+              "description": "Mark this inter-company transaction as eliminated at consolidation time. Denied once the owning ConsolidatedReport is finalized or published.",
               "requires": "OCA\\Shillinq\\Lifecycle\\EliminationGuard::canChangeEliminationStatus"
             },
             "exclude": {
               "from": "pending",
               "to": "excluded",
               "label": "Exclude from elimination",
-              "description": "Operator override retaining this transaction in consolidated totals. Denied once the owning ConsolidatedReport is finalized or published (REQ-ICP-006).",
+              "description": "Operator override retaining this transaction in consolidated totals. Denied once the owning ConsolidatedReport is finalized or published.",
               "requires": "OCA\\Shillinq\\Lifecycle\\EliminationGuard::canChangeEliminationStatus"
             },
             "restore": {
               "from": "excluded",
               "to": "pending",
               "label": "Restore to pending",
-              "description": "Undo an exclusion before the report is finalized so the transaction is reconsidered at the next consolidation run (REQ-ICP-006).",
+              "description": "Undo an exclusion before the report is finalized so the transaction is reconsidered at the next consolidation run.",
               "requires": "OCA\\Shillinq\\Lifecycle\\EliminationGuard::canChangeEliminationStatus"
             },
             "reinstate": {
               "from": "eliminated",
               "to": "pending",
               "label": "Reinstate",
-              "description": "Reverse an elimination before the report is finalized (REQ-ICP-006).",
+              "description": "Reverse an elimination before the report is finalized.",
               "requires": "OCA\\Shillinq\\Lifecycle\\EliminationGuard::canChangeEliminationStatus"
             }
           }

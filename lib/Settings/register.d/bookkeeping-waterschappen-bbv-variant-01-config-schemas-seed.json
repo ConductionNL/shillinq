@@ -13,7 +13,7 @@
         "icon": "FormatListBulletedSquare",
         "version": "0.1.0",
         "title": "BBV Programme",
-        "description": "A BBV (Besluit Begroting en Verantwoording) policy-programme master record for a single fiscal year. Each waterboard maintains its own programme taxonomy aligned with the BBVW kostentoedeling structure (REQ-BBVW-001). Records are admin-maintained and SHALL NOT be hard-deleted — operators archive a programme by transitioning status to 'archived'. Records are scoped per Administration via administrationId, making (administrationId, programmeCode, fiscalYear) the natural key the seed loader and downstream UI rely on.",
+        "description": "A BBV (Besluit Begroting en Verantwoording) policy-programme master record for a single fiscal year. Each waterboard maintains its own programme taxonomy aligned with the BBVW kostentoedeling structure. Records are admin-maintained and SHALL NOT be hard-deleted — operators archive a programme by transitioning status to 'archived'. Records are scoped per Administration via administrationId, making (administrationId, programmeCode, fiscalYear) the natural key the seed loader and downstream UI rely on.",
         "x-schema-org": "schema:DefinedTerm",
         "x-spec": "openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/specs/bookkeeping-waterschappen-bbv-variant/spec.md",
         "type": "object",
@@ -27,7 +27,7 @@
         "properties": {
           "programmeCode": {
             "type": "string",
-            "description": "Waterboard-assigned BBV programme code (REQ-BBVW-001). Unique within (administrationId, fiscalYear).",
+            "description": "Waterboard-assigned BBV programme code. Unique within (administrationId, fiscalYear).",
             "example": "1.1.1",
             "title": "Programme Code"
           },
@@ -76,7 +76,7 @@
         "icon": "LinkVariant",
         "version": "0.1.0",
         "title": "Budget BBV Mapping",
-        "description": "A many-to-one junction record linking a GL account to a BBV programme with an allocation percentage (REQ-BBVW-002). Multiple mappings per GL account are allowed when allocationPercentage values sum to 100 across active mappings — the aggregation service in chain member 02 enforces the sum invariant. The effectiveFrom / effectiveTo window lets operators re-cut allocations between fiscal years without losing the prior split. Records are admin-write / public-read (ADR-005).",
+        "description": "A many-to-one junction record linking a GL account to a BBV programme with an allocation percentage. Multiple mappings per GL account are allowed when allocationPercentage values sum to 100 across active mappings — the aggregation service in chain member 02 enforces the sum invariant. The effectiveFrom / effectiveTo window lets operators re-cut allocations between fiscal years without losing the prior split. Records are admin-write / public-read (ADR-005).",
         "x-schema-org": "schema:DefinedTerm",
         "x-spec": "openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/specs/bookkeeping-waterschappen-bbv-variant/spec.md",
         "type": "object",
@@ -90,13 +90,13 @@
         "properties": {
           "glAccountNumber": {
             "type": "string",
-            "description": "FK to Account.accountNumber within the same administration (REQ-BBVW-002).",
+            "description": "FK to Account.accountNumber within the same administration.",
             "example": "4100",
             "title": "GL Account Number"
           },
           "programmeCode": {
             "type": "string",
-            "description": "FK to BBVProgramme.programmeCode within the same administration (REQ-BBVW-002).",
+            "description": "FK to BBVProgramme.programmeCode within the same administration.",
             "example": "1.1.1",
             "title": "Programme Code"
           },

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-ib-aangifte-zzp",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "T3 — IB-aangifte (income tax return) assembly for ZZP. Declares 8 P-formulier entities (IBAangifte header + IBWinstOpgave/IBOndernemersaftrek/IBHeffingskortingenAlgemeen/IBLijfrenteAOV/IBBijtellingAuto/IBBox3Vermogen/IBAuditTrail) plus the IBTaxParameterYear metadata entity that holds annually-versioned tariffs/franchises so deployments never need a code change. Per ADR-031 all fiscal logic is declarative metadata (x-openregister-lifecycle / -aggregations / -calculations); the only PHP seam is the existing UrencriteriumGuard reused for the 1225-hour gate. Distinct from the lightweight IbAangifteExport export schema (REQ-ZZP-007)."
+    "description": "T3 — IB-aangifte (income tax return) assembly for ZZP. Declares 8 P-formulier entities (IBAangifte header + IBWinstOpgave/IBOndernemersaftrek/IBHeffingskortingenAlgemeen/IBLijfrenteAOV/IBBijtellingAuto/IBBox3Vermogen/IBAuditTrail) plus the IBTaxParameterYear metadata entity that holds annually-versioned tariffs/franchises so deployments never need a code change. Per ADR-031 all fiscal logic is declarative metadata (x-openregister-lifecycle / -aggregations / -calculations); the only PHP seam is the existing UrencriteriumGuard reused for the 1225-hour gate. Distinct from the lightweight IbAangifteExport export schema."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "FileDocumentEditOutline",
         "version": "0.1.0",
         "title": "IB-aangifte",
-        "description": "Annual income tax return (P-formulier) for an IB-ondernemer (ZZP/eenmanszaak). Header entity holding status, filing channel, fiscal year and the computed P-formulier totals; child detail lives in the IBWinst/Ondernemersaftrek/Heffingskortingen/Lijfrente/Bijtelling/Box3 entities and is herleidbaar via IBAuditTrail (REQ-IB-001, REQ-IB-009).",
+        "description": "Annual income tax return (P-formulier) for an IB-ondernemer (ZZP/eenmanszaak). Header entity holding status, filing channel, fiscal year and the computed P-formulier totals; child detail lives in the IBWinst/Ondernemersaftrek/Heffingskortingen/Lijfrente/Bijtelling/Box3 entities and is herleidbaar via IBAuditTrail.",
         "x-schema-org": "schema:GovernmentService",
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
@@ -68,7 +68,7 @@
               "PAPER"
             ],
             "nullable": true,
-            "description": "Submission channel (REQ-IB-008).",
+            "description": "Submission channel.",
             "title": "Indiening Kanaal"
           },
           "taxReturnType": {
@@ -87,14 +87,14 @@
           "taxAdvisorBeconNumber": {
             "type": "string",
             "nullable": true,
-            "description": "Beconnummer of the filing fiscal intermediary, if Becon-route (REQ-IB-008).",
+            "description": "Beconnummer of the filing fiscal intermediary, if Becon-route.",
             "example": "B12345",
             "title": "Fiscalist Becon Nummer"
           },
           "fiscalPartner": {
             "type": "object",
             "nullable": true,
-            "description": "Fiscal partner reference + allocation key for partner-verdeling optimisation (REQ-IB-010).",
+            "description": "Fiscal partner reference + allocation key for partner-verdeling optimisation.",
             "properties": {
               "bsn": {
                 "type": "string",
@@ -118,7 +118,7 @@
           "previousTaxReturnId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the superseded IBAangifte for a correctieaangifte (REQ-IB-012).",
+            "description": "FK to the superseded IBAangifte for a correctieaangifte.",
             "title": "Vorige Aangifte ID"
           },
           "profitFromEnterprise": {
@@ -198,7 +198,7 @@
           "auditTrailId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the IBAuditTrail record (REQ-IB-009).",
+            "description": "FK to the IBAuditTrail record.",
             "title": "Audit Trail ID"
           },
           "administrationId": {
@@ -231,11 +231,11 @@
             },
             "GEVALIDEERD_DOOR_FISCALIST": {
               "label": "Gevalideerd door fiscalist",
-              "description": "A Becon-route fiscalist approved the return (REQ-IB-008)."
+              "description": "A Becon-route fiscalist approved the return."
             },
             "XBRL_GEVALIDEERD": {
               "label": "XBRL gevalideerd",
-              "description": "XBRL instance generated and validated against NT17 (REQ-IB-007)."
+              "description": "XBRL instance generated and validated against NT17."
             },
             "XBRL_VALIDATIE_FOUT": {
               "label": "XBRL-validatiefout",
@@ -243,11 +243,11 @@
             },
             "INGEDIEND": {
               "label": "Ingediend",
-              "description": "Submitted via Digipoort; audit trail frozen, GL-changes require a correctieaangifte (REQ-IB-009)."
+              "description": "Submitted via Digipoort; audit trail frozen, GL-changes require a correctieaangifte."
             },
             "CORRECTIE_SUPPLETIE": {
               "label": "Correctie/suppletie",
-              "description": "A supplementary return superseding a prior filing (REQ-IB-012)."
+              "description": "A supplementary return superseding a prior filing."
             }
           },
           "transitions": {
@@ -261,19 +261,19 @@
               "from": "CONCEPT",
               "to": "GEVALIDEERD_MET_WAARSCHUWING",
               "label": "Valideren met waarschuwing",
-              "description": "Validation succeeded but the urencriterium or another non-fatal gate raised a warning (REQ-IB-002)."
+              "description": "Validation succeeded but the urencriterium or another non-fatal gate raised a warning."
             },
             "goedkeuren-fiscalist": {
               "from": "GEVALIDEERD",
               "to": "GEVALIDEERD_DOOR_FISCALIST",
               "label": "Goedkeuren (fiscalist)",
-              "description": "Becon-route fiscalist approval (REQ-IB-008)."
+              "description": "Becon-route fiscalist approval."
             },
             "genereer-xbrl": {
               "from": "GEVALIDEERD",
               "to": "XBRL_GEVALIDEERD",
               "label": "Genereer XBRL",
-              "description": "Serialise to NT17 XBRL and validate (REQ-IB-007)."
+              "description": "Serialise to NT17 XBRL and validate."
             },
             "indienen": {
               "from": "XBRL_GEVALIDEERD",
@@ -285,7 +285,7 @@
               "from": "INGEDIEND",
               "to": "CORRECTIE_SUPPLETIE",
               "label": "Correctieaangifte starten",
-              "description": "Begin a suppletie superseding this filing (REQ-IB-012)."
+              "description": "Begin a suppletie superseding this filing."
             }
           }
         },
@@ -318,7 +318,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a IB-aangifte is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a IB-aangifte is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IBWinstOpgave": {
@@ -326,7 +326,7 @@
         "icon": "ChartBoxOutline",
         "version": "0.1.0",
         "title": "IB-winstopgave",
-        "description": "Fiscal profit & loss for the return, derived from the commercial P&L with art. 3.6–3.79a corrections (representatiebeperking, niet-aftrekbare boetes, auto-bijtelling). Every line is GL-sourced and links to journaalposten via IBAuditTrail (REQ-IB-001).",
+        "description": "Fiscal profit & loss for the return, derived from the commercial P&L with art. 3.6–3.79a corrections (representatiebeperking, niet-aftrekbare boetes, auto-bijtelling). Every line is GL-sourced and links to journaalposten via IBAuditTrail.",
         "x-schema-org": "schema:AccountingTransaction",
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
@@ -479,7 +479,7 @@
         },
         "x-openregister-aggregations": {
           "revenueExcludingVat": {
-            "description": "Revenue excl. VAT summed over GL revenue postings for the fiscal year (REQ-IB-001). The matched journaalposten are linked into IBAuditTrail.",
+            "description": "Revenue excl. VAT summed over GL revenue postings for the fiscal year. The matched journaalposten are linked into IBAuditTrail.",
             "filter": {
               "accountClass": "revenue"
             },
@@ -496,7 +496,7 @@
             "from": "GLLine"
           },
           "costOfRevenue": {
-            "description": "Cost of goods sold summed over GL cost-of-sales postings (REQ-IB-001).",
+            "description": "Cost of goods sold summed over GL cost-of-sales postings.",
             "filter": {
               "accountClass": "cost-of-sales"
             },
@@ -522,7 +522,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a IB-winstopgave is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a IB-winstopgave is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IBOndernemersaftrek": {
@@ -530,7 +530,7 @@
         "icon": "AccountCashOutline",
         "version": "0.1.0",
         "title": "IB-ondernemersaftrek",
-        "description": "Self-employed deductions: zelfstandigenaftrek (gated on the 1225-urencriterium, REQ-IB-002), startersaftrek, MKB-winstvrijstelling (REQ-IB-003) and investeringsaftrek KIA/EIA/MIA/VAMIL pulled from bookkeeping-investeringsaftrek (REQ-IB-004).",
+        "description": "Self-employed deductions: zelfstandigenaftrek (gated on the 1225-urencriterium, REQ-IB-002), startersaftrek, MKB-winstvrijstelling and investeringsaftrek KIA/EIA/MIA/VAMIL pulled from bookkeeping-investeringsaftrek.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
@@ -546,7 +546,7 @@
           },
           "hoursCriterion": {
             "type": "object",
-            "description": "Urencriterium evidence (REQ-IB-002). Qualifying hours computed by UrencriteriumGuard.",
+            "description": "Urencriterium evidence. Qualifying hours computed by UrencriteriumGuard.",
             "properties": {
               "achieved": {
                 "type": "boolean",
@@ -575,7 +575,7 @@
           },
           "selfEmployedDeduction": {
             "type": "object",
-            "description": "Self-employed deduction; toegestaan only if urencriterium.behaald (REQ-IB-002).",
+            "description": "Self-employed deduction; toegestaan only if urencriterium.behaald.",
             "properties": {
               "permitted": {
                 "type": "boolean",
@@ -663,7 +663,7 @@
           },
           "investmentDeduction": {
             "type": "object",
-            "description": "KIA/EIA/MIA/VAMIL pulled from bookkeeping-investeringsaftrek with evidence refs (REQ-IB-004).",
+            "description": "KIA/EIA/MIA/VAMIL pulled from bookkeeping-investeringsaftrek with evidence refs.",
             "properties": {
               "kia": {
                 "type": "number",
@@ -696,7 +696,7 @@
           },
           "mkbProfitExemption": {
             "type": "number",
-            "description": "MKB-winstvrijstelling = winst na ondernemersaftrek × rate (REQ-IB-003) (MonetaryAmount EUR).",
+            "description": "MKB-winstvrijstelling = winst na ondernemersaftrek × rate (MonetaryAmount EUR).",
             "example": 5618.05,
             "title": "Mkb Winstvrijstelling"
           },
@@ -714,7 +714,7 @@
         },
         "x-openregister-calculations": {
           "hoursCriterion": {
-            "description": "Qualifying YTD hours for the 1225-urencriterium; excluded categories (sick/leave/vacation/non-billable-admin) do not count per Wet IB art. 3.6 (REQ-IB-002). Reuses the existing ADR-031 guard seam.",
+            "description": "Qualifying YTD hours for the 1225-urencriterium; excluded categories (sick/leave/vacation/non-billable-admin) do not count per Wet IB art. 3.6. Reuses the existing ADR-031 guard seam.",
             "basis": "art. 3.6 Wet IB 2001",
             "guard": "OCA\\Shillinq\\Guard\\UrencriteriumGuard::currentYtdHours"
           },
@@ -726,7 +726,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a IB-ondernemersaftrek is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a IB-ondernemersaftrek is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IBHeffingskortingenAlgemeen": {
@@ -734,7 +734,7 @@
         "icon": "SaleOutline",
         "version": "0.1.0",
         "title": "IB-heffingskortingen",
-        "description": "Tax credits: algemene heffingskorting (income-dependent phase-out), arbeidskorting, IACK (single parent + child <12 + working partner), ouderen- and jonggehandicaptenkorting. All tariffs read from IBTaxParameterYear (REQ-IB-006).",
+        "description": "Tax credits: algemene heffingskorting (income-dependent phase-out), arbeidskorting, IACK (single parent + child <12 + working partner), ouderen- and jonggehandicaptenkorting. All tariffs read from IBTaxParameterYear.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
@@ -820,14 +820,14 @@
         },
         "x-openregister-calculations": {
           "generalTaxCredit": {
-            "description": "AHK = max(ahkMax − ahkPhaseoutRate × (box1Inkomen − ahkPhaseoutThreshold), 0). All parameters from IBTaxParameterYear (REQ-IB-006).",
+            "description": "AHK = max(ahkMax − ahkPhaseoutRate × (box1Inkomen − ahkPhaseoutThreshold), 0). All parameters from IBTaxParameterYear.",
             "basis": "art. 8.10 Wet IB 2001",
             "parameterSource": "IBTaxParameterYear.ahkMax,ahkPhaseoutRate,ahkPhaseoutThreshold"
           }
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a IB-heffingskortingen is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a IB-heffingskortingen is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IBLijfrenteAOV": {
@@ -835,7 +835,7 @@
         "icon": "PiggyBankOutline",
         "version": "0.1.0",
         "title": "IB-lijfrente & AOV",
-        "description": "Pension-equivalent deductible premiums: jaarruimte + reserveringsruimte per art. 3.127, and fully-deductible AOV premiums. Franchise/rate/cap from IBTaxParameterYear (REQ-IB-005).",
+        "description": "Pension-equivalent deductible premiums: jaarruimte + reserveringsruimte per art. 3.127, and fully-deductible AOV premiums. Franchise/rate/cap from IBTaxParameterYear.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
@@ -851,7 +851,7 @@
           },
           "annualAllowance": {
             "type": "object",
-            "description": "Annual lijfrente room for the belastingjaar (REQ-IB-005).",
+            "description": "Annual lijfrente room for the belastingjaar.",
             "properties": {
               "calculated": {
                 "type": "number",
@@ -873,7 +873,7 @@
           },
           "accrualAllowance": {
             "type": "object",
-            "description": "Cumulative unclaimed room from the prior 10 years, capped per IBTaxParameterYear (REQ-IB-005).",
+            "description": "Cumulative unclaimed room from the prior 10 years, capped per IBTaxParameterYear.",
             "properties": {
               "calculated": {
                 "type": "number",
@@ -938,7 +938,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a IB-lijfrente & AOV is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a IB-lijfrente & AOV is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IBBijtellingAuto": {
@@ -946,7 +946,7 @@
         "icon": "CarOutline",
         "version": "0.1.0",
         "title": "IB-bijtelling auto",
-        "description": "Per-vehicle private-use bijtelling per art. 3.20 (22% regulier; EV-tiered staffel). The netto bijtelling is added back to the fiscal profit as an onttrekking (REQ-IB-013).",
+        "description": "Per-vehicle private-use bijtelling per art. 3.20 (22% regulier; EV-tiered staffel). The netto bijtelling is added back to the fiscal profit as an onttrekking.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
@@ -1058,7 +1058,7 @@
         },
         "x-openregister-calculations": {
           "benefitInKindAmount": {
-            "description": "Regulier: cataloguswaarde × evBijtellingStaffel2Pct. EV: evBijtellingStaffel1Pct on first evBijtellingStaffel1Cap, evBijtellingStaffel2Pct on the excess. Staffel parameters from IBTaxParameterYear (REQ-IB-013).",
+            "description": "Regulier: cataloguswaarde × evBijtellingStaffel2Pct. EV: evBijtellingStaffel1Pct on first evBijtellingStaffel1Cap, evBijtellingStaffel2Pct on the excess. Staffel parameters from IBTaxParameterYear.",
             "basis": "art. 3.20 Wet IB 2001",
             "guard": "OCA\\Shillinq\\Guard\\IbBijtellingGuard::computeBijtelling",
             "parameterSource": "IBTaxParameterYear.evBijtellingStaffel1Pct,evBijtellingStaffel1Cap,evBijtellingStaffel2Pct"
@@ -1066,7 +1066,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a IB-bijtelling auto is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a IB-bijtelling auto is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IBBox3Vermogen": {
@@ -1074,7 +1074,7 @@
         "icon": "BankOutline",
         "version": "0.1.0",
         "title": "IB-box 3 vermogen",
-        "description": "Box-3 savings & investments per overbruggingswet (three categories: bank/spaartegoeden, overige bezittingen, schulden). Computes both forfait and werkelijk rendement and selects the lower (REQ-IB-015).",
+        "description": "Box-3 savings & investments per overbruggingswet (three categories: bank/spaartegoeden, overige bezittingen, schulden). Computes both forfait and werkelijk rendement and selects the lower.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
@@ -1175,7 +1175,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a IB-box 3 vermogen is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a IB-box 3 vermogen is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IBAuditTrail": {
@@ -1183,7 +1183,7 @@
         "icon": "ClipboardListOutline",
         "version": "0.1.0",
         "title": "IB-audittrail",
-        "description": "Full herleidbaarheid: every P-formulier rubriek links to its source GL journaalposten or external evidence. Frozen on INGEDIEND; retained 7 years per AWR art. 52 (REQ-IB-009).",
+        "description": "Full herleidbaarheid: every P-formulier rubriek links to its source GL journaalposten or external evidence. Frozen on INGEDIEND; retained 7 years per AWR art. 52.",
         "x-schema-org": "schema:Dataset",
         "x-spec": "openspec/changes/bookkeeping-ib-aangifte-zzp/specs/bookkeeping-ib-aangifte-zzp/spec.md",
         "type": "object",
@@ -1199,7 +1199,7 @@
           },
           "rules": {
             "type": "array",
-            "description": "Audit-trail rows linking each rubriek to its source (REQ-IB-009).",
+            "description": "Audit-trail rows linking each rubriek to its source.",
             "items": {
               "type": "object",
               "required": [
@@ -1287,7 +1287,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a IB-audittrail is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a IB-audittrail is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IBTaxParameterYear": {
@@ -1403,7 +1403,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a IB-tariefparameters per jaar is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a IB-tariefparameters per jaar is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

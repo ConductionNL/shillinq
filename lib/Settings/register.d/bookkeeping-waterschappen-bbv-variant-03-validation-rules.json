@@ -17,7 +17,7 @@
         "properties": {
           "programmeCode": {
             "type": "string",
-            "description": "Waterboard-assigned BBV programme code per BBV-Waterschappen kostentoedeling (REQ-BBVW-001). Format: numeric segments separated by dots, two or three levels deep (e.g. '1.1' or '2.3.2'). Validated by the regex constraint and the per-(administrationId, fiscalYear) uniqueness rule below.",
+            "description": "Waterboard-assigned BBV programme code per BBV-Waterschappen kostentoedeling. Format: numeric segments separated by dots, two or three levels deep (e.g. '1.1' or '2.3.2'). Validated by the regex constraint and the per-(administrationId, fiscalYear) uniqueness rule below.",
             "pattern": "^\\d+\\.\\d+(\\.\\d+)?$",
             "minLength": 1,
             "maxLength": 32,
@@ -65,14 +65,14 @@
         "properties": {
           "glAccountNumber": {
             "type": "string",
-            "description": "GL account number contributing to the programme (REQ-BBVW-002). MUST exist in the Chart of Accounts (Account.accountNumber) within the same administrationId — enforced by the glAccountForeignKey rule in x-openregister-validation below.",
+            "description": "GL account number contributing to the programme. MUST exist in the Chart of Accounts (Account.accountNumber) within the same administrationId — enforced by the glAccountForeignKey rule in x-openregister-validation below.",
             "minLength": 1,
             "example": "4100",
             "title": "GL Account Number"
           },
           "allocationPercentage": {
             "type": "number",
-            "description": "Share of the GL account's budget + spend allocated to this programme. Number in [0, 100] with 0.01 precision (REQ-BBVW-008). Multiple mappings for one (administrationId, glAccountNumber, fiscalYear) MUST not exceed 100% (±0.1% tolerance) — enforced by the allocationSumPerAccount rule in x-openregister-validation below.",
+            "description": "Share of the GL account's budget + spend allocated to this programme. Number in [0, 100] with 0.01 precision. Multiple mappings for one (administrationId, glAccountNumber, fiscalYear) MUST not exceed 100% (±0.1% tolerance) — enforced by the allocationSumPerAccount rule in x-openregister-validation below.",
             "minimum": 0,
             "maximum": 100,
             "multipleOf": 0.01,
@@ -99,7 +99,7 @@
         },
         "x-openregister-calculations": {
           "effectiveToOnOrAfterFrom": {
-            "description": "Cross-field validator (REQ-BBVW-008): rejects mappings where effectiveTo is set and earlier than effectiveFrom. Returns null when valid, an error string when invalid. Empty/null effectiveTo is treated as open-ended and skips the check.",
+            "description": "Cross-field validator: rejects mappings where effectiveTo is set and earlier than effectiveFrom. Returns null when valid, an error string when invalid. Empty/null effectiveTo is treated as open-ended and skips the check.",
             "expression": "@self.effectiveTo == null || @self.effectiveTo >= @self.effectiveFrom ? null : 'effectiveTo must be on or after effectiveFrom'"
           }
         },

@@ -62,7 +62,7 @@
             "type": "number",
             "multipleOf": 0.01,
             "default": 0,
-            "description": "Physical quantity in the location. Decimal (2-decimal precision) to support fractional units (0.5 L, 2.25 kg) per design.md D1. May briefly be negative on backorder edge cases — application-level enforcement (REQ-IST-013) blocks the common case.",
+            "description": "Physical quantity in the location. Decimal (2-decimal precision) to support fractional units (0.5 L, 2.25 kg) per design.md D1. May briefly be negative on backorder edge cases — application-level enforcement blocks the common case.",
             "example": 15.0,
             "title": "Quantity On Hand"
           },

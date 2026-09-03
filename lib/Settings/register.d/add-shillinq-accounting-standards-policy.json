@@ -4,14 +4,14 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "add-accounting-standards-policy",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Adds the StandardsPolicy schema (REQ-ASP-001): a per-administration, ordered declaration of which accounting/reporting frameworks the administration follows and in which order of precedence. A single StandardsPolicy object holds a frameworks[] list, each entry carrying a framework key (fixed enum mirroring docs/standards/), an enabled flag and an integer precedence (lower = higher priority). Business logic consults the highest-precedence enabled framework via OCA\\Shillinq\\Service\\StandardsPolicyService.resolve(topic) when frameworks conflict (revenue, leases, inventory, development costs — see docs/standards/comparisons.md). The resolver ships unit-tested but is not yet applied to real posting/valuation paths (out of scope per proposal). No lifecycle/orchestrator is needed: this is configuration data edited via the StandardsPolicyEditor settings page and read by the resolver."
+    "description": "Adds the StandardsPolicy schema: a per-administration, ordered declaration of which accounting/reporting frameworks the administration follows and in which order of precedence. A single StandardsPolicy object holds a frameworks[] list, each entry carrying a framework key (fixed enum mirroring docs/standards/), an enabled flag and an integer precedence (lower = higher priority). Business logic consults the highest-precedence enabled framework via OCA\\Shillinq\\Service\\StandardsPolicyService.resolve(topic) when frameworks conflict (revenue, leases, inventory, development costs — see docs/standards/comparisons.md). The resolver ships unit-tested but is not yet applied to real posting/valuation paths (out of scope per proposal). No lifecycle/orchestrator is needed: this is configuration data edited via the StandardsPolicyEditor settings page and read by the resolver."
   },
   "components": {
     "schemas": {
       "StandardsPolicy": {
         "slug": "StandardsPolicy",
         "title": "Standards policy",
-        "description": "Per-administration accounting-standards precedence policy (REQ-ASP-001). One object per administration declares which frameworks apply and their order of precedence. Consumed by StandardsPolicyService.resolve(topic).",
+        "description": "Per-administration accounting-standards precedence policy. One object per administration declares which frameworks apply and their order of precedence. Consumed by StandardsPolicyService.resolve(topic).",
         "type": "object",
         "required": [
           "name"
@@ -27,13 +27,13 @@
           "administrationId": {
             "type": "string",
             "nullable": true,
-            "description": "Optional administration scope (REQ-ASP-001). Null = the default policy for the register. A future enhancement may key resolution by the active administration.",
+            "description": "Optional administration scope. Null = the default policy for the register. A future enhancement may key resolution by the active administration.",
             "example": "adm-001",
             "title": "Administration ID"
           },
           "frameworks": {
             "type": "array",
-            "description": "Ordered list of frameworks (REQ-ASP-002). Each entry pins a framework key to an enabled flag and an integer precedence; the editor keeps precedence consistent with display order (lower precedence = higher priority).",
+            "description": "Ordered list of frameworks. Each entry pins a framework key to an enabled flag and an integer precedence; the editor keeps precedence consistent with display order (lower precedence = higher priority).",
             "items": {
               "type": "object",
               "required": [
@@ -97,7 +97,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Standards policy is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Standards policy is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

@@ -199,7 +199,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Cancellation Policy is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Cancellation Policy is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "BookingCancellation": {
@@ -248,7 +248,7 @@
           },
           "cancelledBy": {
             "type": "string",
-            "description": "Actor that initiated the cancellation (admin user id or 'customer:<email>'). Recorded for audit (REQ-BCR-007).",
+            "description": "Actor that initiated the cancellation (admin user id or 'customer:<email>'). Recorded for audit.",
             "nullable": true,
             "example": "customer:jane@example.com",
             "title": "Cancelled By"
@@ -362,7 +362,7 @@
                 "read",
                 "update"
               ],
-              "description": "Operators record and view cancellations. No delete: cancellation records are immutable (REQ-BCR-008)."
+              "description": "Operators record and view cancellations. No delete: cancellation records are immutable."
             },
             "customer": {
               "permissions": [
@@ -375,7 +375,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Booking Cancellation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Booking Cancellation is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "Appointment": {

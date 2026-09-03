@@ -6,7 +6,7 @@
     "overheidslaag": "municipality",
     "iv3Version": "2025-1.0",
     "effectiveDate": "2025-01-01",
-    "description": "BBV taakveldenstructuur voor gemeenten per Iv3-informatievoorschrift. Representatieve subset van de 53 gemeente-taakvelden; de volledige, jaarlijks bijgewerkte catalogus wordt via openconnector geimporteerd (REQ-BBV-001).",
+    "description": "BBV taakveldenstructuur voor gemeenten per Iv3-informatievoorschrift. Representatieve subset van de 53 gemeente-taakvelden; de volledige, jaarlijks bijgewerkte catalogus wordt via openconnector geimporteerd.",
     "descriptionEn": "BBV task-field structure for municipalities per the Iv3 information regulation. A representative subset of the 53 municipal task fields; the complete, annually updated catalogue is imported via openconnector (REQ-BBV-001).",
     "url": "https://www.referentiegrootboekschema.nl",
     "translationNote": "`naam`, `hoofdfunctieNaam` and `omschrijvingIv3` are the STATUTORY Dutch strings and are what a CBS Iv3 submission carries. They are identifiers, not display text, and must never be replaced by a translation. The `*En` fields alongside them are display-only, for an English UI locale. If the two ever disagree, the Dutch one is right by definition. Entries with no `omschrijvingIv3` in the source regulation carry no `omschrijvingIv3En` either — an absent description is not translated into an invented one."

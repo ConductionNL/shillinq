@@ -4,7 +4,7 @@
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "shillinq-mcp-adoption",
-    "description": "ADR-063 read-only x-openregister-mcp dialect on the 12 curated schemas (design.md D2). Adds only configuration[\"x-openregister-mcp\"] per schema via ADR-037 key-union merge -- no property, lifecycle, or required-list is restated or altered. search+get only, scope:read, readOnlyHint:true. Zero write verbs (REQ-MCP-003). Sorts last of all fragments (zzz- prefix) so nothing merged afterwards can overwrite the declaration."
+    "description": "ADR-063 read-only x-openregister-mcp dialect on the 12 curated schemas (design.md D2). Adds only configuration[\"x-openregister-mcp\"] per schema via ADR-037 key-union merge -- no property, lifecycle, or required-list is restated or altered. search+get only, scope:read, readOnlyHint:true. Zero write verbs. Sorts last of all fragments (zzz- prefix) so nothing merged afterwards can overwrite the declaration."
   },
   "components": {
     "schemas": {

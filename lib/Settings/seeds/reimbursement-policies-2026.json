@@ -5,7 +5,7 @@
 		"source": "openspec/changes/expense-reimbursement-or-passthrough/design.md Seed Data tables",
 		"version": "2026",
 		"change": "expense-reimbursement-or-passthrough",
-		"description": "Seed ReimbursementPolicy master-data records per design.md (REQ-ERP-004, REQ-ERP-006). One policy per administration; operators may add more via Settings UI. autoApproveThreshold and requiresMarkupApprovalThreshold are consumed by OR approval-workflow (ADR-022). employeeBankAccountMapping=standard resolves Person.bankAccount at notification emission per REQ-ERP-008.",
+		"description": "Seed ReimbursementPolicy master-data records per design.md. One policy per administration; operators may add more via Settings UI. autoApproveThreshold and requiresMarkupApprovalThreshold are consumed by OR approval-workflow (ADR-022). employeeBankAccountMapping=standard resolves Person.bankAccount at notification emission per REQ-ERP-008.",
 		"imported": "2026-06-07T00:00:00Z"
 	},
 	"policies": [

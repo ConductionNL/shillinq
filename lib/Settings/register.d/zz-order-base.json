@@ -89,7 +89,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Payment is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Payment is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "OrderLine": {
@@ -170,7 +170,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Order Line is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Order Line is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

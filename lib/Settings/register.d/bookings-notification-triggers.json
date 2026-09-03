@@ -27,7 +27,7 @@
           "name": {
             "type": "string",
             "maxLength": 120,
-            "description": "Human-readable trigger name shown in the admin list (REQ-BNT-007).",
+            "description": "Human-readable trigger name shown in the admin list.",
             "example": "Booking confirmation — customer (email primary, SMS fallback)",
             "title": "Name"
           },
@@ -50,7 +50,7 @@
               "booking.cancelled",
               "booking.reminder"
             ],
-            "description": "Which booking lifecycle event fires this trigger (REQ-BNT-001). booking.created on the Booking pending→confirmed transition; booking.changed on a non-status field change (startTime, organizer, attendee, location); booking.cancelled on confirmed→cancelled / pending→cancelled; booking.reminder fires on a scheduled offset (reminderHoursBeforeStart) before bookingStart.",
+            "description": "Which booking lifecycle event fires this trigger. booking.created on the Booking pending→confirmed transition; booking.changed on a non-status field change (startTime, organizer, attendee, location); booking.cancelled on confirmed→cancelled / pending→cancelled; booking.reminder fires on a scheduled offset (reminderHoursBeforeStart) before bookingStart.",
             "example": "booking.created",
             "title": "Trigger Type"
           },
@@ -59,7 +59,7 @@
             "minimum": 1,
             "maximum": 720,
             "nullable": true,
-            "description": "Only used when triggerType == booking.reminder (REQ-BNT-001). Hours before bookingStart to dispatch the reminder. Common values: 15 (≈15 min via /60), 1, 24. OR's notification engine schedules dispatch at bookingStart − this value (±15 min tolerance); missed windows dispatch immediately.",
+            "description": "Only used when triggerType == booking.reminder. Hours before bookingStart to dispatch the reminder. Common values: 15 (≈15 min via /60), 1, 24. OR's notification engine schedules dispatch at bookingStart − this value (±15 min tolerance); missed windows dispatch immediately.",
             "example": 24,
             "title": "Reminder Hours Before Start"
           },
@@ -77,7 +77,7 @@
                 "slack"
               ]
             },
-            "description": "Channel priority order for fallback (REQ-BNT-004). Engine tries channel[0]; on adapter failure falls back to channel[1], etc. Each channel routes through the corresponding openconnector adapter. Recording every attempt in NotificationDelivery is mandatory (REQ-BNT-005).",
+            "description": "Channel priority order for fallback. Engine tries channel[0]; on adapter failure falls back to channel[1], etc. Each channel routes through the corresponding openconnector adapter. Recording every attempt in NotificationDelivery is mandatory.",
             "example": [
               "email",
               "sms"
@@ -101,7 +101,7 @@
                     "organizer",
                     "admin_group"
                   ],
-                  "description": "Recipient role (REQ-BNT-003). customer = the booking attendee; organizer = the resource staff member; admin_group = members of the Nextcloud 'admin' group.",
+                  "description": "Recipient role. customer = the booking attendee; organizer = the resource staff member; admin_group = members of the Nextcloud 'admin' group.",
                   "title": "Role"
                 },
                 "channels": {
@@ -116,18 +116,18 @@
                       "slack"
                     ]
                   },
-                  "description": "Optional per-rule channel override (REQ-BNT-003). Falls back to the trigger-level channels when omitted.",
+                  "description": "Optional per-rule channel override. Falls back to the trigger-level channels when omitted.",
                   "title": "Channels"
                 },
                 "condition": {
                   "type": "string",
-                  "description": "Optional condition expression evaluated against the booking payload (REQ-BNT-003). Supports comparisons (==, !=, >, <, >=, <=) and boolean literals. Variables: booking.price, booking.status, booking.duration. Empty / true = always send.",
+                  "description": "Optional condition expression evaluated against the booking payload. Supports comparisons (==, !=, >, <, >=, <=) and boolean literals. Variables: booking.price, booking.status, booking.duration. Empty / true = always send.",
                   "example": "booking.price > 100",
                   "title": "Condition"
                 }
               }
             },
-            "description": "Ordered list of recipient rules (REQ-BNT-003). Each rule resolves at dispatch time to one or more recipients; rules with a false condition are skipped (audited as 'skipped (condition)'). At least one rule is required.",
+            "description": "Ordered list of recipient rules. Each rule resolves at dispatch time to one or more recipients; rules with a false condition are skipped (audited as 'skipped (condition)'). At least one rule is required.",
             "title": "Recipients"
           },
           "rateLimitPerBookingPerHour": {
@@ -135,7 +135,7 @@
             "minimum": 1,
             "maximum": 100,
             "default": 10,
-            "description": "Maximum dispatches per booking per UTC calendar hour (REQ-BNT-006). Default 10. Excess dispatches are queued (status=queued) and visible in the admin monitor (REQ-BNT-008).",
+            "description": "Maximum dispatches per booking per UTC calendar hour. Default 10. Excess dispatches are queued (status=queued) and visible in the admin monitor.",
             "title": "Rate Limit Per Booking Per Hour"
           },
           "rateLimitPerOrganizerPerDay": {
@@ -143,7 +143,7 @@
             "minimum": 1,
             "maximum": 1000,
             "default": 100,
-            "description": "Maximum dispatches per organizer per UTC calendar day (REQ-BNT-006). Default 100.",
+            "description": "Maximum dispatches per organizer per UTC calendar day. Default 100.",
             "title": "Rate Limit Per Organizer Per Day"
           },
           "deduplicationWindowMinutes": {
@@ -151,20 +151,20 @@
             "minimum": 1,
             "maximum": 60,
             "default": 5,
-            "description": "Dedupe window in minutes (REQ-BNT-006). If the same (recipient, triggerType, bookingId) tuple already dispatched within this window, the second dispatch is skipped and audited as 'skipped (deduplicated)'.",
+            "description": "Dedupe window in minutes. If the same (recipient, triggerType, bookingId) tuple already dispatched within this window, the second dispatch is skipped and audited as 'skipped (deduplicated)'.",
             "title": "Deduplication Window Minutes"
           },
           "respectOptOut": {
             "type": "boolean",
             "default": true,
-            "description": "When true (default), a recipient that has opted out of this trigger type (recipient.notificationOptOut[triggerType] === true) is skipped and audited as 'skipped (opt-out)' (REQ-BNT-009). GDPR / AVG mandates honouring opt-out for marketing-style notifications; operators can set false for strictly transactional triggers.",
+            "description": "When true (default), a recipient that has opted out of this trigger type (recipient.notificationOptOut[triggerType] === true) is skipped and audited as 'skipped (opt-out)'. GDPR / AVG mandates honouring opt-out for marketing-style notifications; operators can set false for strictly transactional triggers.",
             "title": "Respect Opt Out"
           },
           "templateOverrideSlug": {
             "type": "string",
             "nullable": true,
             "maxLength": 120,
-            "description": "Optional per-trigger template slug override (REQ-BNT-002). When set, the engine fetches the named template (BookingConfirmationTemplate / BookingReminderTemplate / BookingCancellationTemplate) instead of the locale-matched default published template selected by the bookings-email-templates dispatch.",
+            "description": "Optional per-trigger template slug override. When set, the engine fetches the named template (BookingConfirmationTemplate / BookingReminderTemplate / BookingCancellationTemplate) instead of the locale-matched default published template selected by the bookings-email-templates dispatch.",
             "example": "default-confirmation-nl",
             "title": "Template Override Slug"
           },
@@ -172,14 +172,14 @@
             "type": "string",
             "nullable": true,
             "maxLength": 120,
-            "description": "Optional per-booking scope (REQ-BNT-007). When set, the trigger only fires for that single Booking slug — the modal-driven override pattern. When null, the trigger is global (applies to every Booking of the matching event type).",
+            "description": "Optional per-booking scope. When set, the trigger only fires for that single Booking slug — the modal-driven override pattern. When null, the trigger is global (applies to every Booking of the matching event type).",
             "title": "Applies To Booking Slug"
           },
           "lastDispatchedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp of the most recent successful dispatch from this trigger. Surfaced in the admin monitor (REQ-BNT-008). Stamped by the notification engine on each successful send.",
+            "description": "Timestamp of the most recent successful dispatch from this trigger. Surfaced in the admin monitor. Stamped by the notification engine on each successful send.",
             "title": "Last Dispatched At"
           },
           "activatedAt": {
@@ -224,7 +224,7 @@
               "from": "enabled",
               "to": "archived",
               "label": "Archiveren",
-              "description": "Retire an active trigger. Terminal — history retained for audit (REQ-BNT-005)."
+              "description": "Retire an active trigger. Terminal — history retained for audit."
             },
             "archiveDisabled": {
               "from": "disabled",
@@ -238,12 +238,12 @@
           "channelCount": {
             "expression": "count(@self.channels)",
             "type": "integer",
-            "description": "Number of channels configured for fallback (REQ-BNT-004). UI warns when 1 (no fallback)."
+            "description": "Number of channels configured for fallback. UI warns when 1 (no fallback)."
           },
           "recipientRuleCount": {
             "expression": "count(@self.recipients)",
             "type": "integer",
-            "description": "Number of recipient rules configured (REQ-BNT-003)."
+            "description": "Number of recipient rules configured."
           },
           "isReminder": {
             "expression": "@self.triggerType == 'booking.reminder'",
@@ -301,7 +301,7 @@
         "icon": "FileDocumentMultipleOutline",
         "version": "0.1.0",
         "title": "Notificatieleveringslogboek",
-        "description": "Immutable audit-trail record of a notification dispatch attempt (REQ-BNT-005, ADR-022). One record per (trigger, recipient, channel) attempt — fallback retries produce additional records linked by the same dispatchGroupId. Tamper-evidence is delegated to OR's audit-trail-immutable contract; the schema only declares the fields and the write-once lifecycle. Surfaces in the admin notification monitor (REQ-BNT-008) and supports operator drill-down per booking.",
+        "description": "Immutable audit-trail record of a notification dispatch attempt (REQ-BNT-005, ADR-022). One record per (trigger, recipient, channel) attempt — fallback retries produce additional records linked by the same dispatchGroupId. Tamper-evidence is delegated to OR's audit-trail-immutable contract; the schema only declares the fields and the write-once lifecycle. Surfaces in the admin notification monitor and supports operator drill-down per booking.",
         "x-schema-org": "schema:DigitalDocument",
         "type": "object",
         "required": [
@@ -328,7 +328,7 @@
               "booking.cancelled",
               "booking.reminder"
             ],
-            "description": "Event type that fired the dispatch (REQ-BNT-001).",
+            "description": "Event type that fired the dispatch.",
             "title": "Trigger Type"
           },
           "bookingId": {
@@ -352,7 +352,7 @@
               "teams",
               "slack"
             ],
-            "description": "Channel attempted for this record (REQ-BNT-004).",
+            "description": "Channel attempted for this record.",
             "title": "Channel"
           },
           "templateName": {
@@ -370,7 +370,7 @@
               "skipped",
               "queued"
             ],
-            "description": "Dispatch outcome (REQ-BNT-005). sent = adapter accepted; failed = adapter rejected after retries; skipped = blocked by opt-out / dedupe / condition; queued = rate-limit hit, queued for admin review.",
+            "description": "Dispatch outcome. sent = adapter accepted; failed = adapter rejected after retries; skipped = blocked by opt-out / dedupe / condition; queued = rate-limit hit, queued for admin review.",
             "title": "Status"
           },
           "skipReason": {
@@ -394,7 +394,7 @@
             "type": "string",
             "nullable": true,
             "maxLength": 500,
-            "description": "Human-readable error detail when status=failed (REQ-BNT-005). Adapter response message or render error; never contains raw recipient PII.",
+            "description": "Human-readable error detail when status=failed. Adapter response message or render error; never contains raw recipient PII.",
             "title": "Failure Reason"
           },
           "retryCount": {
@@ -464,7 +464,7 @@
           "isDelivered": {
             "expression": "@self.status == 'sent'",
             "type": "boolean",
-            "description": "True for successful dispatches. Drives the admin monitor 'delivered today' counter (REQ-BNT-008)."
+            "description": "True for successful dispatches. Drives the admin monitor 'delivered today' counter."
           },
           "isPiiRecord": {
             "expression": "true",
@@ -474,7 +474,7 @@
           "maskedRecipient": {
             "expression": "maskAddress(@self.recipient)",
             "type": "string",
-            "description": "Masked recipient address for list-view display (e.g. 'a***@example.com', '+31***5678'). Auditors with full-read permission see the raw value (REQ-BNT-005)."
+            "description": "Masked recipient address for list-view display (e.g. 'a***@example.com', '+31***5678'). Auditors with full-read permission see the raw value."
           }
         },
         "x-openregister-audit": {
@@ -495,7 +495,7 @@
           ],
           "retentionDays": 365,
           "tamperEvident": true,
-          "description": "Tamper-evident hash-chained audit per ADR-022 (REQ-BNT-005). Records are write-once; the OR engine enforces field-level immutability after the initial write. Retention 365 days (AVG / GDPR; configurable per administration). The admin monitor (REQ-BNT-008) reads from this schema; manual edits are forbidden — operator concerns are addressed by adding a new record (e.g. compensating skip)."
+          "description": "Tamper-evident hash-chained audit per ADR-022. Records are write-once; the OR engine enforces field-level immutability after the initial write. Retention 365 days (AVG / GDPR; configurable per administration). The admin monitor reads from this schema; manual edits are forbidden — operator concerns are addressed by adding a new record (e.g. compensating skip)."
         },
         "x-openregister-rbac": {
           "roles": {
@@ -519,7 +519,7 @@
             "booking:notification-monitor:list": "read",
             "booking:notification-monitor:show": "read"
           },
-          "description": "Read-only audit trail. No role has create / update / delete — the OR engine is the sole writer per ADR-022. The admin monitor (REQ-BNT-008) uses these read permissions. The full-PII view (raw recipient) requires the auditor role."
+          "description": "Read-only audit trail. No role has create / update / delete — the OR engine is the sole writer per ADR-022. The admin monitor uses these read permissions. The full-PII view (raw recipient) requires the auditor role."
         }
       }
     }
