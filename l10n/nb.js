@@ -1553,7 +1553,24 @@ OC.L10N.register(
         "Margin per month": "Margin per måned",
         "Cashflow": "Kontantstrøm",
         "Billable hours": "Fakturerbare timer",
-        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n faktura utestende","%n fakturaer utestende"]
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n faktura utestende","%n fakturaer utestende"],
+        "Reports": "Rapporter",
+        "Pick a report to open it.": "Velg en rapport for å åpne den.",
+        "Due": "Frist",
+        "Assignee": "Tildelt",
+        "Iv3 returns": "Iv3-rapporter",
+        "SiSa returns": "SiSa-rapporter",
+        "EMU return": "EMU-rapport",
+        "Consolidated statements": "Konsoliderte regnskaper",
+        "Budget variance": "Budsjettavvik",
+        "Generated reports": "Genererte rapporter",
+        "The quarterly Iv3 returns, and how far each one got.": "De kvartalsvise Iv3-rapportene, og hvor langt hver kom.",
+        "Single information, single audit returns per scheme.": "Single information, single audit-rapporter per ordning.",
+        "The EMU balance return.": "EMU-saldorapporten.",
+        "The group figures, consolidated across participations.": "Konserntallene, konsolidert på tvers av eierandeler.",
+        "Where the books sit against budget, and by how much.": "Hvor bøkene står mot budsjettet, og med hvor mye.",
+        "Everything Reporting & Compliance has already produced.": "Alt som Rapportering og etterlevelse allerede har produsert.",
+        "What retention destroyed, and when.": "Hva oppbevaringen destruerte, og når."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1003,6 +1003,14 @@
 			"children": []
 		},
 		{
+			"id": "ReportsMenu",
+			"label": "Reports",
+			"icon": "ChartBoxOutline",
+			"route": "Reports",
+			"section": "footer",
+			"order": 95
+		},
+		{
 			"id": "FeaturesRoadmapMenu",
 			"label": "Features & roadmap",
 			"icon": "MapMarkerPath",
@@ -2493,6 +2501,79 @@
 					]
 				},
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
+			}
+		},
+		{
+			"id": "Reports",
+			"_note": "ADR-112 / ADR-114 Decision 3. NOTHING here is invented and nothing is relocated: all seven pages already existed as routes with NO menu entry at all, reachable only by someone who already knew the URL. Carding them GIVES an entry point rather than moving one, so no functionality is lost from the main navigation. Reporting & Compliance deliberately stays in the main navigation and is NOT carded: it is a generation surface — you pick an output format and press Generate — and ADR-097 keeps work you DO in the main nav, where Dead letters sits in integriq. This app builds its own report catalogue in code, so declarative type:dashboard pages would duplicate a surface it already has.",
+			"route": "/reports",
+			"type": "reports",
+			"title": "Reports",
+			"config": {
+				"description": "Pick a report to open it.",
+				"categories": {
+					"statutory": "Statutory returns",
+					"financial": "Financial statements",
+					"housekeeping": "Housekeeping"
+				},
+				"cards": [
+					{
+						"id": "Iv3Rapportages",
+						"label": "Iv3 returns",
+						"description": "The quarterly Iv3 returns, and how far each one got.",
+						"icon": "FileChartOutline",
+						"category": "statutory",
+						"route": "Iv3Rapportages"
+					},
+					{
+						"id": "SisaRapportages",
+						"label": "SiSa returns",
+						"description": "Single information, single audit returns per scheme.",
+						"icon": "ScaleBalance",
+						"category": "statutory",
+						"route": "SisaRapportages"
+					},
+					{
+						"id": "EmuRapportage",
+						"label": "EMU return",
+						"description": "The EMU balance return.",
+						"icon": "Bank",
+						"category": "statutory",
+						"route": "EmuRapportage"
+					},
+					{
+						"id": "ConsolidatedReport",
+						"label": "Consolidated statements",
+						"description": "The group figures, consolidated across participations.",
+						"icon": "FileDocumentMultipleOutline",
+						"category": "financial",
+						"route": "ConsolidatedReport"
+					},
+					{
+						"id": "VarianceReport",
+						"label": "Budget variance",
+						"description": "Where the books sit against budget, and by how much.",
+						"icon": "TrendingUp",
+						"category": "financial",
+						"route": "VarianceReport"
+					},
+					{
+						"id": "GeneratedReportsIndex",
+						"label": "Generated reports",
+						"description": "Everything Reporting & Compliance has already produced.",
+						"icon": "FileDocumentMultipleOutline",
+						"category": "housekeeping",
+						"route": "GeneratedReportsIndex"
+					},
+					{
+						"id": "BookkeepingDestructionReport",
+						"label": "Destruction report",
+						"description": "What retention destroyed, and when.",
+						"icon": "History",
+						"category": "housekeeping",
+						"route": "BookkeepingDestructionReport"
+					}
+				]
 			}
 		},
 		{

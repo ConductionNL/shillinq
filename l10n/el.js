@@ -1553,7 +1553,24 @@ OC.L10N.register(
         "Margin per month": "Περιθώριο ανά μήνα",
         "Cashflow": "Ταμειακές ροές",
         "Billable hours": "Χρεώσιμες ώρες",
-        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n τιμολόγιο σε εκκρεμότητα","%n τιμολόγια σε εκκρεμότητα"]
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n τιμολόγιο σε εκκρεμότητα","%n τιμολόγια σε εκκρεμότητα"],
+        "Reports": "Αναφορές",
+        "Pick a report to open it.": "Επιλέξτε μια αναφορά για να την ανοίξετε.",
+        "Due": "Προθεσμία",
+        "Assignee": "Ανατέθηκε σε",
+        "Iv3 returns": "Δηλώσεις Iv3",
+        "SiSa returns": "Δηλώσεις SiSa",
+        "EMU return": "Δήλωση EMU",
+        "Consolidated statements": "Ενοποιημένες καταστάσεις",
+        "Budget variance": "Απόκλιση προϋπολογισμού",
+        "Generated reports": "Δημιουργημένες αναφορές",
+        "The quarterly Iv3 returns, and how far each one got.": "Οι τριμηνιαίες δηλώσεις Iv3 και πόσο προχώρησε καθεμιά.",
+        "Single information, single audit returns per scheme.": "Δηλώσεις single information, single audit ανά καθεστώς.",
+        "The EMU balance return.": "Η δήλωση υπολοίπου EMU.",
+        "The group figures, consolidated across participations.": "Τα στοιχεία του ομίλου, ενοποιημένα ανά συμμετοχή.",
+        "Where the books sit against budget, and by how much.": "Πού βρίσκονται τα βιβλία έναντι του προϋπολογισμού και κατά πόσο.",
+        "Everything Reporting & Compliance has already produced.": "Όλα όσα έχει ήδη παραγάγει η Αναφορά & συμμόρφωση.",
+        "What retention destroyed, and when.": "Τι κατέστρεψε η διατήρηση και πότε."
     },
     "nplurals=2; plural=(n != 1);"
 )

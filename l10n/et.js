@@ -1553,7 +1553,24 @@ OC.L10N.register(
         "Margin per month": "Marginaal kuu kohta",
         "Cashflow": "Rahavoog",
         "Billable hours": "Arveldatavad tunnid",
-        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n arve tasumata","%n arvet tasumata"]
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n arve tasumata","%n arvet tasumata"],
+        "Reports": "Aruanded",
+        "Pick a report to open it.": "Vali aruanne, et see avada.",
+        "Due": "Tähtaeg",
+        "Assignee": "Määratud",
+        "Iv3 returns": "Iv3 aruanded",
+        "SiSa returns": "SiSa aruanded",
+        "EMU return": "EMU aruanne",
+        "Consolidated statements": "Konsolideeritud aruanded",
+        "Budget variance": "Eelarve kõrvalekalle",
+        "Generated reports": "Genereeritud aruanded",
+        "The quarterly Iv3 returns, and how far each one got.": "Kvartaalsed Iv3 aruanded ja kui kaugele iga jõudis.",
+        "Single information, single audit returns per scheme.": "Single information, single audit aruanded skeemi kohta.",
+        "The EMU balance return.": "EMU saldo aruanne.",
+        "The group figures, consolidated across participations.": "Kontserni arvud, konsolideeritud osaluste lõikes.",
+        "Where the books sit against budget, and by how much.": "Kus raamatud on eelarve suhtes ja kui palju.",
+        "Everything Reporting & Compliance has already produced.": "Kõik, mida Aruandlus ja vastavus on juba loonud.",
+        "What retention destroyed, and when.": "Mida säilitus hävitas ja millal."
     },
     "nplurals=2; plural=(n != 1);"
 )

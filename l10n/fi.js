@@ -1553,7 +1553,24 @@ OC.L10N.register(
         "Margin per month": "Kate kuukausittain",
         "Cashflow": "Kassavirta",
         "Billable hours": "Laskutettavat tunnit",
-        "_%n invoice outstanding_::_%n invoices outstanding_": ["1 lasku maksamatta","%n laskua maksamatta"]
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["1 lasku maksamatta","%n laskua maksamatta"],
+        "Reports": "Raportit",
+        "Pick a report to open it.": "Valitse raportti avataksesi sen.",
+        "Due": "Määräpäivä",
+        "Assignee": "Vastuuhenkilö",
+        "Iv3 returns": "Iv3-ilmoitukset",
+        "SiSa returns": "SiSa-ilmoitukset",
+        "EMU return": "EMU-ilmoitus",
+        "Consolidated statements": "Konsolidoitu tilinpäätös",
+        "Budget variance": "Budjettipoikkeama",
+        "Generated reports": "Luodut raportit",
+        "The quarterly Iv3 returns, and how far each one got.": "Neljännesvuosittaiset Iv3-ilmoitukset ja kuinka pitkälle kukin eteni.",
+        "Single information, single audit returns per scheme.": "Single information, single audit -ilmoitukset järjestelmää kohti.",
+        "The EMU balance return.": "EMU-saldoilmoitus.",
+        "The group figures, consolidated across participations.": "Konsernin luvut, konsolidoituna omistusosuuksien yli.",
+        "Where the books sit against budget, and by how much.": "Missä kirjanpito on suhteessa budjettiin ja kuinka paljon.",
+        "Everything Reporting & Compliance has already produced.": "Kaikki, mitä Raportointi ja vaatimustenmukaisuus on jo tuottanut.",
+        "What retention destroyed, and when.": "Mitä säilytys hävitti ja milloin."
     },
     "nplurals=2; plural=(n != 1);"
 )

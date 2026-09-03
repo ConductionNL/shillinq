@@ -1553,7 +1553,24 @@ OC.L10N.register(
         "Margin per month": "Marjă pe lună",
         "Cashflow": "Flux de numerar",
         "Billable hours": "Ore facturabile",
-        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n factură restantă","%n facturi restante","%n de facturi restante"]
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n factură restantă","%n facturi restante","%n de facturi restante"],
+        "Reports": "Rapoarte",
+        "Pick a report to open it.": "Alegeți un raport pentru a-l deschide.",
+        "Due": "Scadență",
+        "Assignee": "Atribuit lui",
+        "Iv3 returns": "Raportări Iv3",
+        "SiSa returns": "Raportări SiSa",
+        "EMU return": "Raportare EMU",
+        "Consolidated statements": "Situații consolidate",
+        "Budget variance": "Abatere bugetară",
+        "Generated reports": "Rapoarte generate",
+        "The quarterly Iv3 returns, and how far each one got.": "Raportările Iv3 trimestriale și cât de departe a ajuns fiecare.",
+        "Single information, single audit returns per scheme.": "Raportări single information, single audit pe schemă.",
+        "The EMU balance return.": "Raportarea soldului EMU.",
+        "The group figures, consolidated across participations.": "Cifrele grupului, consolidate pe participații.",
+        "Where the books sit against budget, and by how much.": "Unde stau conturile față de buget și cu cât.",
+        "Everything Reporting & Compliance has already produced.": "Tot ce a produs deja Raportare și conformitate.",
+        "What retention destroyed, and when.": "Ce a distrus păstrarea și când."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1,0 +1,147 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Conduction B.V.
+ * SPDX-License-Identifier: EUPL-1.2
+ *
+ * The bottom-left app chrome, in a browser (ADR-114).
+ *
+ * gate-107 reads the manifest and can prove the entries are DECLARED. It
+ * cannot prove they RENDER, and this programme has already produced three
+ * defects of exactly that shape: an icon name that is not registered renders
+ * NO glyph (not a fallback, not a console error), an entry whose `route` names
+ * a page the app does not host renders a row that goes nowhere, and
+ * `nav.includePersonalSettings: false` silently removed the entry that reaches
+ * the user's notification preferences.
+ *
+ * Every card on this app's Reports page points at a page that ALREADY EXISTED
+ * and had no menu entry at all. That is the thing worth testing here: the
+ * cards are the first entry point those seven routes have ever had, so a card
+ * pointing at a route that does not resolve would leave them exactly as
+ * unreachable as before, while looking fixed.
+ *
+ * ⚠️ SCOPE EVERY SELECTOR TO `[data-testid="cn-nav"]`. An unscoped selector
+ * also matches Nextcloud's own user menu, which is attached-but-hidden:
+ * `waitFor({state:'attached'})` passes on it and the click never becomes
+ * actionable, so the spec fails with "Target page has been closed" — a timeout
+ * wearing a crash's clothes.
+ *
+ * ⚠️ SETTINGS ENTRIES ARE ATTACHED, NOT VISIBLE, inside a collapsed foldout.
+ */
+
+import { expect, test } from '@playwright/test'
+
+const APP_BASE = '/apps/shillinq'
+
+test.describe('app chrome (ADR-114)', () => {
+	test.beforeEach(async ({ page }) => {
+		await page.goto(`${APP_BASE}/`, { waitUntil: 'domcontentloaded' })
+		await expect(page.locator('[data-testid="cn-nav"]')).toBeVisible({
+			timeout: 30_000,
+		})
+	})
+
+	test('the footer reads Documentation, Reports, Features & roadmap, each with a glyph', async ({
+		page,
+	}) => {
+		const footer = page.locator(
+			'[data-testid="cn-nav"] .cn-app-nav__footer-list',
+		)
+		await expect(footer).toBeAttached({ timeout: 15_000 })
+
+		const rows = footer.locator('li')
+		const texts = (await rows.allInnerTexts())
+			.map((t) => t.trim())
+			.filter(Boolean)
+
+		const seen = texts.filter((t) => /Documentation|Reports|roadmap/i.test(t))
+		expect(seen.length).toBe(3)
+		expect(seen[0]).toMatch(/Documentation/i)
+		expect(seen[1]).toMatch(/Reports/i)
+		expect(seen[2]).toMatch(/roadmap/i)
+
+		for (const row of await rows.all()) {
+			await expect(
+				row.locator('svg, .material-design-icon').first(),
+			).toBeAttached()
+		}
+	})
+
+	test('Reports lists all seven returns and statements', async ({ page }) => {
+		const nav = page.locator('[data-testid="cn-nav"]')
+		await nav.locator('[data-testid="cn-nav-entry-ReportsMenu"]').click()
+		await expect(page).toHaveURL(/\/apps\/shillinq\/reports(\?|$)/, {
+			timeout: 15_000,
+		})
+
+		for (const label of [
+			'Iv3 returns',
+			'SiSa returns',
+			'EMU return',
+			'Consolidated statements',
+			'Budget variance',
+			'Generated reports',
+			'Destruction report',
+		]) {
+			await expect(
+				page.getByText(label, { exact: false }).first(),
+			).toBeVisible({ timeout: 15_000 })
+		}
+	})
+
+	test('every carded route resolves, because the card is its only entry point', async ({
+		page,
+	}) => {
+		// All seven had NO menu entry — reachable only by someone who already
+		// knew the URL. A card pointing at a route that does not resolve would
+		// leave them as unreachable as before, while looking fixed.
+		for (const path of [
+			'/iv3-rapportages',
+			'/sisa-rapportages',
+			'/emu-rapportage',
+			'/financial-statements/consolidated-report',
+			'/bookkeeping/variance-report',
+			'/reporting-compliance/generated',
+			'/bookkeeping/destruction-report',
+		]) {
+			await page.goto(`${APP_BASE}${path}`)
+			await expect(page).toHaveURL(
+				new RegExp(`${path.replace(/\//g, '\\/')}(\\?|$)`),
+				{ timeout: 15_000 },
+			)
+			await expect(page.locator('[data-testid="cn-nav"]')).toBeVisible()
+		}
+	})
+
+	test('Reporting & Compliance stays in the main navigation, because you act on it', async ({
+		page,
+	}) => {
+		// Deliberate asymmetry with the seven cards. Reporting & Compliance is a
+		// GENERATION surface — you pick an output format and press Generate —
+		// and ADR-097 keeps work you DO in the main nav, the same reasoning that
+		// keeps Dead letters out of integriq's Reports page. If a later sweep
+		// cards it with the readings, this fails rather than passing review.
+		const nav = page.locator('[data-testid="cn-nav"]')
+		await expect(
+			nav.locator('[data-testid="cn-nav-entry-ReportingCompliance"]'),
+		).toBeAttached({ timeout: 15_000 })
+	})
+
+	test('the settings foldout carries Personal settings, Admin settings and Flows', async ({
+		page,
+	}) => {
+		const nav = page.locator('[data-testid="cn-nav"]')
+
+		await expect(nav.locator('[data-testid="cn-nav-settings"]')).toBeAttached({
+			timeout: 15_000,
+		})
+		await expect(
+			nav.locator('[data-testid="cn-nav-personal-settings"]'),
+		).toBeAttached()
+		await expect(
+			nav.locator('[data-testid="cn-nav-entry-FlowsMenu"]'),
+		).toBeAttached()
+
+		const admin = nav.locator('[data-testid="cn-nav-admin-settings"]')
+		await expect(admin).toBeAttached()
+		await expect(admin).toHaveAttribute('href', /\/settings\/admin\/shillinq$/)
+	})
+})

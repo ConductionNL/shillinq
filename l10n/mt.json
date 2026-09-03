@@ -1557,7 +1557,24 @@
             "%n fatturi pendenti (2-10)",
             "%n fatturi pendenti (11-19)",
             "%n fatturi pendenti"
-        ]
+        ],
+        "Reports": "Rapporti",
+        "Pick a report to open it.": "Agħżel rapport biex tiftħu.",
+        "Due": "Skadenza",
+        "Assignee": "Assenjat lil",
+        "Iv3 returns": "Rapporti Iv3",
+        "SiSa returns": "Rapporti SiSa",
+        "EMU return": "Rapport EMU",
+        "Consolidated statements": "Rapporti kkonsolidati",
+        "Budget variance": "Varjanza tal-baġit",
+        "Generated reports": "Rapporti ġġenerati",
+        "The quarterly Iv3 returns, and how far each one got.": "Ir-rapporti trimestrali Iv3, u kemm waslet kull waħda.",
+        "Single information, single audit returns per scheme.": "Rapporti single information, single audit għal kull skema.",
+        "The EMU balance return.": "Ir-rapport tal-bilanċ EMU.",
+        "The group figures, consolidated across participations.": "Iċ-ċifri tal-grupp, ikkonsolidati fuq il-parteċipazzjonijiet.",
+        "Where the books sit against budget, and by how much.": "Fejn jinsabu l-kotba mqabbla mal-baġit, u b'kemm.",
+        "Everything Reporting & Compliance has already produced.": "Dak kollu li Rappurtar u konformità diġà pproduċa.",
+        "What retention destroyed, and when.": "X'qerdet iż-żamma, u meta."
     },
     "plurals": null
 }

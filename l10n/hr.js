@@ -1553,7 +1553,24 @@ OC.L10N.register(
         "Margin per month": "Marža po mjesecu",
         "Cashflow": "Novčani tok",
         "Billable hours": "Naplative sate",
-        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n faktura na čekanju","%n fakture na čekanju","%n faktura na čekanju"]
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n faktura na čekanju","%n fakture na čekanju","%n faktura na čekanju"],
+        "Reports": "Izvješća",
+        "Pick a report to open it.": "Odaberite izvješće da ga otvorite.",
+        "Due": "Rok",
+        "Assignee": "Dodijeljeno",
+        "Iv3 returns": "Iv3 izvješća",
+        "SiSa returns": "SiSa izvješća",
+        "EMU return": "EMU izvješće",
+        "Consolidated statements": "Konsolidirana izvješća",
+        "Budget variance": "Odstupanje od proračuna",
+        "Generated reports": "Generirana izvješća",
+        "The quarterly Iv3 returns, and how far each one got.": "Tromjesečna Iv3 izvješća i dokle je svako stiglo.",
+        "Single information, single audit returns per scheme.": "Single information, single audit izvješća po programu.",
+        "The EMU balance return.": "Izvješće o EMU saldu.",
+        "The group figures, consolidated across participations.": "Grupni podaci, konsolidirani preko sudjelovanja.",
+        "Where the books sit against budget, and by how much.": "Gdje stoje knjige u odnosu na proračun i za koliko.",
+        "Everything Reporting & Compliance has already produced.": "Sve što je Izvještavanje i usklađenost već proizvelo.",
+        "What retention destroyed, and when.": "Što je zadržavanje uništilo i kada."
     },
     "nplurals=2; plural=(n != 1);"
 )
