@@ -1570,7 +1570,9 @@ OC.L10N.register(
         "The group figures, consolidated across participations.": "Grupės skaičiai, konsoliduoti per dalyvavimus.",
         "Where the books sit against budget, and by how much.": "Kur knygos yra biudžeto atžvilgiu ir kiek.",
         "Everything Reporting & Compliance has already produced.": "Viskas, ką Ataskaitos ir atitiktis jau parengė.",
-        "What retention destroyed, and when.": "Ką saugojimas sunaikino ir kada."
+        "What retention destroyed, and when.": "Ką saugojimas sunaikino ir kada.",
+        "Store": "Parduotuvė",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Įdiekite registrus, schemas ir srautus, kuriuos paskelbė kitos organizacijos."
     },
     "nplurals=2; plural=(n != 1);"
 )

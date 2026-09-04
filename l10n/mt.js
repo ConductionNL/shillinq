@@ -1570,7 +1570,9 @@ OC.L10N.register(
         "The group figures, consolidated across participations.": "Iċ-ċifri tal-grupp, ikkonsolidati fuq il-parteċipazzjonijiet.",
         "Where the books sit against budget, and by how much.": "Fejn jinsabu l-kotba mqabbla mal-baġit, u b'kemm.",
         "Everything Reporting & Compliance has already produced.": "Dak kollu li Rappurtar u konformità diġà pproduċa.",
-        "What retention destroyed, and when.": "X'qerdet iż-żamma, u meta."
+        "What retention destroyed, and when.": "X'qerdet iż-żamma, u meta.",
+        "Store": "Ħanut",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Installa reġistri, skemi u flussi ppubblikati minn organizzazzjonijiet oħra."
     },
     "nplurals=2; plural=(n != 1);"
 )

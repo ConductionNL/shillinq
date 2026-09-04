@@ -1573,7 +1573,9 @@
         "The group figures, consolidated across participations.": "Груповите числа, консолидирани по участия.",
         "Where the books sit against budget, and by how much.": "Къде стоят книгите спрямо бюджета и с колко.",
         "Everything Reporting & Compliance has already produced.": "Всичко, което Отчетност и съответствие вече е произвело.",
-        "What retention destroyed, and when.": "Какво е унищожило съхранението и кога."
+        "What retention destroyed, and when.": "Какво е унищожило съхранението и кога.",
+        "Store": "Магазин",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Инсталирайте регистри, схеми и потоци, публикувани от други организации."
     },
     "plurals": null
 }

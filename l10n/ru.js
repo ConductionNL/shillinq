@@ -1570,7 +1570,9 @@ OC.L10N.register(
         "The group figures, consolidated across participations.": "Групповые показатели, консолидированные по участиям.",
         "Where the books sit against budget, and by how much.": "Где книги стоят относительно бюджета и на сколько.",
         "Everything Reporting & Compliance has already produced.": "Всё, что Отчётность и соответствие уже создали.",
-        "What retention destroyed, and when.": "Что уничтожило хранение и когда."
+        "What retention destroyed, and when.": "Что уничтожило хранение и когда.",
+        "Store": "Магазин",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Установите реестры, схемы и потоки, опубликованные другими организациями."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1570,7 +1570,9 @@ OC.L10N.register(
         "The group figures, consolidated across participations.": "Grupni podaci, konsolidirani preko sudjelovanja.",
         "Where the books sit against budget, and by how much.": "Gdje stoje knjige u odnosu na proračun i za koliko.",
         "Everything Reporting & Compliance has already produced.": "Sve što je Izvještavanje i usklađenost već proizvelo.",
-        "What retention destroyed, and when.": "Što je zadržavanje uništilo i kada."
+        "What retention destroyed, and when.": "Što je zadržavanje uništilo i kada.",
+        "Store": "Trgovina",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Instalirajte registre, sheme i tokove koje su objavile druge organizacije."
     },
     "nplurals=2; plural=(n != 1);"
 )

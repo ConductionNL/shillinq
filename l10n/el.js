@@ -1570,7 +1570,9 @@ OC.L10N.register(
         "The group figures, consolidated across participations.": "Τα στοιχεία του ομίλου, ενοποιημένα ανά συμμετοχή.",
         "Where the books sit against budget, and by how much.": "Πού βρίσκονται τα βιβλία έναντι του προϋπολογισμού και κατά πόσο.",
         "Everything Reporting & Compliance has already produced.": "Όλα όσα έχει ήδη παραγάγει η Αναφορά & συμμόρφωση.",
-        "What retention destroyed, and when.": "Τι κατέστρεψε η διατήρηση και πότε."
+        "What retention destroyed, and when.": "Τι κατέστρεψε η διατήρηση και πότε.",
+        "Store": "Κατάστημα",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Εγκαταστήστε μητρώα, σχήματα και ροές που έχουν δημοσιεύσει άλλοι οργανισμοί."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1570,7 +1570,9 @@ OC.L10N.register(
         "The group figures, consolidated across participations.": "A csoportszámok, a részesedéseken átívelően konszolidálva.",
         "Where the books sit against budget, and by how much.": "Hol állnak a könyvek a költségvetéshez képest, és mennyivel.",
         "Everything Reporting & Compliance has already produced.": "Minden, amit a Jelentés és megfelelés már létrehozott.",
-        "What retention destroyed, and when.": "Mit semmisített meg a megőrzés, és mikor."
+        "What retention destroyed, and when.": "Mit semmisített meg a megőrzés, és mikor.",
+        "Store": "Áruház",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Telepítsen más szervezetek által közzétett nyilvántartásokat, sémákat és folyamatokat."
     },
     "nplurals=2; plural=(n != 1);"
 )

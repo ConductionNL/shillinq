@@ -1570,7 +1570,9 @@ OC.L10N.register(
         "The group figures, consolidated across participations.": "Grup rakamları, iştirakler genelinde konsolide.",
         "Where the books sit against budget, and by how much.": "Defterlerin bütçeye göre nerede durduğu ve ne kadar.",
         "Everything Reporting & Compliance has already produced.": "Raporlama ve uyumun şimdiye kadar ürettiği her şey.",
-        "What retention destroyed, and when.": "Saklamanın neyi ne zaman imha ettiği."
+        "What retention destroyed, and when.": "Saklamanın neyi ne zaman imha ettiği.",
+        "Store": "Mağaza",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Diğer kuruluşların yayımladığı kayıtları, şemaları ve akışları yükleyin."
     },
     "nplurals=2; plural=(n != 1);"
 )

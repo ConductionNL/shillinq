@@ -1573,7 +1573,9 @@
         "The group figures, consolidated across participations.": "Cifrele grupului, consolidate pe participații.",
         "Where the books sit against budget, and by how much.": "Unde stau conturile față de buget și cu cât.",
         "Everything Reporting & Compliance has already produced.": "Tot ce a produs deja Raportare și conformitate.",
-        "What retention destroyed, and when.": "Ce a distrus păstrarea și când."
+        "What retention destroyed, and when.": "Ce a distrus păstrarea și când.",
+        "Store": "Magazin",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Instalați registre, scheme și fluxuri publicate de alte organizații."
     },
     "plurals": null
 }
