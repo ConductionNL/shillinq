@@ -175,7 +175,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 		bool $_render = true,
 		bool $_audit = true
 	): ?ObjectEntityInterface {
-		$this->unsupported('find');
+		$this->unsupported(method: 'find');
 
 	}//end find()
 
@@ -211,7 +211,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 		?IUser $currentUser = null,
 		bool $failIfExists = false
 	): ObjectEntityInterface {
-		$this->unsupported('saveObject');
+		$this->unsupported(method: 'saveObject');
 
 	}//end saveObject()
 
@@ -224,7 +224,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 	 * @return int
 	 */
 	public function count(array $config = []): int {
-		return count($this->findAll($config));
+		return count($this->findAll(config: $config));
 
 	}//end count()
 
@@ -246,7 +246,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): array|int {
-		$this->unsupported('searchObjectsBySlug');
+		$this->unsupported(method: 'searchObjectsBySlug');
 
 	}//end searchObjectsBySlug()
 
@@ -266,7 +266,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ObjectEntityInterface {
-		$this->unsupported('updateObject');
+		$this->unsupported(method: 'updateObject');
 
 	}//end updateObject()
 
@@ -292,7 +292,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 		bool $_multitenancy = true,
 		?IUser $currentUser = null
 	): ObjectEntityInterface {
-		$this->unsupported('patchObject');
+		$this->unsupported(method: 'patchObject');
 
 	}//end patchObject()
 
@@ -318,7 +318,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): ObjectEntityInterface {
-		$this->unsupported('findSilent');
+		$this->unsupported(method: 'findSilent');
 
 	}//end findSilent()
 
@@ -364,7 +364,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 		?string $uses = null,
 		?array $views = null
 	): array|int {
-		$this->unsupported('searchObjects');
+		$this->unsupported(method: 'searchObjects');
 
 	}//end searchObjects()
 
@@ -392,7 +392,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 		?IUser $currentUser = null,
 		bool $permanent = false
 	): bool {
-		$this->unsupported('deleteObject');
+		$this->unsupported(method: 'deleteObject');
 
 	}//end deleteObject()
 
@@ -418,7 +418,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 		?string $uses = null,
 		?array $views = null
 	): array {
-		$this->unsupported('searchObjectsPaginated');
+		$this->unsupported(method: 'searchObjectsPaginated');
 
 	}//end searchObjectsPaginated()
 
@@ -438,7 +438,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 		int|string|array|null $schema = null,
 		?array $ids = null
 	): array {
-		$this->unsupported('buildSearchQuery');
+		$this->unsupported(method: 'buildSearchQuery');
 
 	}//end buildSearchQuery()
 
@@ -470,9 +470,36 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 		bool $enrich = true,
 		bool $_audit = true
 	): array {
-		$this->unsupported('saveObjects');
+		$this->unsupported(method: 'saveObjects');
 
 	}//end saveObjects()
+
+	/**
+	 * Not modelled.
+	 *
+	 * @param array      $objects  Rows to append, as plain arrays.
+	 * @param string|int $register Register id, uuid or slug.
+	 * @param string|int $schema   Schema id, uuid or slug.
+	 *
+	 * @return int
+	 */
+	public function appendObjectsRaw(array $objects, string|int $register, string|int $schema): int {
+		$this->unsupported(method: 'appendObjectsRaw');
+
+	}//end appendObjectsRaw()
+
+	/**
+	 * Not modelled.
+	 *
+	 * @param string|int $register Register id, uuid or slug.
+	 * @param string|int $schema   Schema id, uuid or slug.
+	 *
+	 * @return int
+	 */
+	public function purgeExpiredObjectsRaw(string|int $register, string|int $schema): int {
+		$this->unsupported(method: 'purgeExpiredObjectsRaw');
+
+	}//end purgeExpiredObjectsRaw()
 
 	/**
 	 * Not modelled.
@@ -483,7 +510,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 	 * @return bool
 	 */
 	public function unlockObject(string|int $identifier, bool $advisory = false): bool {
-		$this->unsupported('unlockObject');
+		$this->unsupported(method: 'unlockObject');
 
 	}//end unlockObject()
 
@@ -503,7 +530,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 		?int $duration = null,
 		bool $advisory = false
 	): array {
-		$this->unsupported('lockObject');
+		$this->unsupported(method: 'lockObject');
 
 	}//end lockObject()
 
@@ -517,7 +544,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 	 * @return array
 	 */
 	public function deleteObjects(array $uuids = [], bool $_rbac = true, bool $_multitenancy = true): array {
-		$this->unsupported('deleteObjects');
+		$this->unsupported(method: 'deleteObjects');
 
 	}//end deleteObjects()
 
@@ -532,7 +559,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 	 * @return array
 	 */
 	public function getLogs(string $uuid, array $filters = [], bool $_rbac = true, bool $_multitenancy = true): array {
-		$this->unsupported('getLogs');
+		$this->unsupported(method: 'getLogs');
 
 	}//end getLogs()
 
@@ -552,7 +579,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): array {
-		$this->unsupported('getObjectUses');
+		$this->unsupported(method: 'getObjectUses');
 
 	}//end getObjectUses()
 
@@ -572,7 +599,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): array {
-		$this->unsupported('getObjectUsedBy');
+		$this->unsupported(method: 'getObjectUsedBy');
 
 	}//end getObjectUsedBy()
 
@@ -585,7 +612,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 	 * @return array
 	 */
 	public function findByRelations(string $search, bool $partialMatch = true): array {
-		$this->unsupported('findByRelations');
+		$this->unsupported(method: 'findByRelations');
 
 	}//end findByRelations()
 
@@ -607,7 +634,7 @@ final class FilteredObjectServiceStub implements ObjectServiceInterface {
 		?array $ids = null,
 		?string $uses = null
 	): int {
-		$this->unsupported('countSearchObjects');
+		$this->unsupported(method: 'countSearchObjects');
 
 	}//end countSearchObjects()
 }//end class
