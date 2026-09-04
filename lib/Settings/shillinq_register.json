@@ -6189,9 +6189,12 @@
         "properties": {
           "projectId": {
             "type": "string",
-            "description": "FK to the parent Project.id.",
+            "description": "UUID of the delivery project this person is assigned to. Planninq owns projects; shillinq declares no Project schema of its own, so this is a cross-app reference and the planninq-projects leaf renders it as the project rather than as a bare uuid.",
+            "format": "uuid",
             "example": "proj-1",
-            "title": "Project ID"
+            "title": "Project ID",
+            "referenceType": "planninq-projects",
+            "x-external-register": "planninq"
           },
           "personId": {
             "type": "string",
