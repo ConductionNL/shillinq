@@ -117,6 +117,14 @@ class DemoDataService {
 			throw new RuntimeException('No demo dataset ships with this app (' . self::DESCRIPTOR . ' not found).');
 		}
 
+		// `is_readable()` first, so an unreadable descriptor is reported as
+		// such without PHP raising its own warning on the way: under PHPUnit
+		// that warning is promoted to a suite failure, which is how a green
+		// test read as red for a permission fault the test itself set up.
+		if (is_readable($path) === false) {
+			throw new RuntimeException('The demo dataset could not be read: ' . $path);
+		}
+
 		$raw = file_get_contents($path);
 		if ($raw === false) {
 			throw new RuntimeException('The demo dataset could not be read: ' . $path);
