@@ -1570,7 +1570,9 @@ OC.L10N.register(
         "The group figures, consolidated across participations.": "Samstæðutölurnar, samræmdar yfir eignarhluti.",
         "Where the books sit against budget, and by how much.": "Hvar bókhaldið stendur gagnvart fjárhagsáætlun og um hversu mikið.",
         "Everything Reporting & Compliance has already produced.": "Allt sem Skýrslugerð og regluvarsla hefur þegar búið til.",
-        "What retention destroyed, and when.": "Hvað varðveislan eyddi og hvenær."
+        "What retention destroyed, and when.": "Hvað varðveislan eyddi og hvenær.",
+        "Store": "Verslun",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Settu upp skrár, skemu og flæði sem aðrar stofnanir hafa birt."
     },
     "nplurals=2; plural=(n != 1);"
 )

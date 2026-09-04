@@ -1570,7 +1570,9 @@ OC.L10N.register(
         "The group figures, consolidated across participations.": "Figiúirí an ghrúpa, comhdhlúite thar rannpháirtíochtaí.",
         "Where the books sit against budget, and by how much.": "Cá bhfuil na leabhair i gcoinne an bhuiséid, agus cé mhéad.",
         "Everything Reporting & Compliance has already produced.": "Gach rud atá táirgthe cheana ag Tuairisciú & comhlíonadh.",
-        "What retention destroyed, and when.": "Cad a scrios an coinneáil, agus cathain."
+        "What retention destroyed, and when.": "Cad a scrios an coinneáil, agus cathain.",
+        "Store": "Siopa",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Suiteáil cláir, scéimeanna agus sruthanna a d'fhoilsigh eagraíochtaí eile."
     },
     "nplurals=2; plural=(n != 1);"
 )

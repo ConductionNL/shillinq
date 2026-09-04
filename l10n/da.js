@@ -1570,7 +1570,9 @@ OC.L10N.register(
         "The group figures, consolidated across participations.": "Koncerntallene, konsolideret på tværs af kapitalandele.",
         "Where the books sit against budget, and by how much.": "Hvor bøgerne står i forhold til budgettet, og med hvor meget.",
         "Everything Reporting & Compliance has already produced.": "Alt, hvad Rapportering & compliance allerede har produceret.",
-        "What retention destroyed, and when.": "Hvad opbevaringen destruerede, og hvornår."
+        "What retention destroyed, and when.": "Hvad opbevaringen destruerede, og hvornår.",
+        "Store": "Butik",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Installer registre, skemaer og flows, som andre organisationer har udgivet."
     },
     "nplurals=2; plural=(n != 1);"
 )

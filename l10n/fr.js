@@ -1571,7 +1571,9 @@ OC.L10N.register(
         "The group figures, consolidated across participations.": "Les chiffres du groupe, consolidés sur les participations.",
         "Where the books sit against budget, and by how much.": "Où se situent les comptes par rapport au budget, et de combien.",
         "Everything Reporting & Compliance has already produced.": "Tout ce que Reporting & conformité a déjà produit.",
-        "What retention destroyed, and when.": "Ce que la conservation a détruit, et quand."
+        "What retention destroyed, and when.": "Ce que la conservation a détruit, et quand.",
+        "Store": "Boutique",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Installez des registres, schémas et flux publiés par d'autres organisations."
     },
     "nplurals=2; plural=(n != 1);"
 )

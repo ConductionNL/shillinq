@@ -1570,7 +1570,9 @@ OC.L10N.register(
         "The group figures, consolidated across participations.": "Konsernin luvut, konsolidoituna omistusosuuksien yli.",
         "Where the books sit against budget, and by how much.": "Missä kirjanpito on suhteessa budjettiin ja kuinka paljon.",
         "Everything Reporting & Compliance has already produced.": "Kaikki, mitä Raportointi ja vaatimustenmukaisuus on jo tuottanut.",
-        "What retention destroyed, and when.": "Mitä säilytys hävitti ja milloin."
+        "What retention destroyed, and when.": "Mitä säilytys hävitti ja milloin.",
+        "Store": "Kauppa",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Asenna muiden organisaatioiden julkaisemia rekistereitä, skeemoja ja vuokaavioita."
     },
     "nplurals=2; plural=(n != 1);"
 )
