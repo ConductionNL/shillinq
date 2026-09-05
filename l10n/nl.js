@@ -5253,7 +5253,10 @@ OC.L10N.register(
         "Everything Reporting & Compliance has already produced.": "Alles wat Rapportage & compliance al heeft opgeleverd.",
         "What retention destroyed, and when.": "Wat de bewaartermijn heeft vernietigd, en wanneer.",
         "Store": "Store",
-        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Installeer registers, schema's en flows die andere organisaties hebben gepubliceerd."
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Installeer registers, schema's en flows die andere organisaties hebben gepubliceerd.",
+        "Payroll employee": "Loonwerknemer",
+        "HR employee": "HR-werknemer",
+        "UUID of the humaniq `Employee` this payroll record is for. A plain uuid and not a `$ref`: humaniq's register is a different register, and ADR-062 rule 7 gives a cross-register target a plain string. Empty when humaniq is not installed, in which case this record stands alone and `employeeNumber` is the only key.": "UUID van de humaniq-`Employee` waar deze loonregel bij hoort. Een gewone uuid en geen `$ref`: humaniq's register is een ander register, en ADR-062 regel 7 geeft een doel in een ander register een gewone string. Leeg wanneer humaniq niet is geïnstalleerd; dan staat deze regel op zichzelf en is `employeeNumber` de enige sleutel."
     },
     "nplurals=2; plural=(n != 1);"
 )
