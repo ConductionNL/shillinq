@@ -180,6 +180,32 @@ class DemoDataServiceTest extends TestCase {
 
 	}//end testADescriptorWithNoObjectsBlockOffersTheSetWithNoCount()
 
+	/**
+	 * A descriptor that exists but cannot be read offers only declining.
+	 *
+	 * The card would otherwise promise a count read from a file the import is
+	 * about to fail on, so the offer has to fall back the same way a missing
+	 * descriptor does.
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableDescriptorOffersOnlyDeclining(): void {
+		$this->shipDescriptor();
+		$path = $this->appDir . '/lib/Settings/shillinq_mock_register.json';
+
+		if (chmod($path, 0000) === false || is_readable($path) === true) {
+			chmod($path, 0644);
+			self::markTestSkipped('this process reads regardless of mode; the arm would prove nothing');
+		}
+
+		try {
+			$this->assertSame(['none'], array_column($this->service->listChoices(), 'id'));
+		} finally {
+			chmod($path, 0644);
+		}
+
+	}//end testAnUnreadableDescriptorOffersOnlyDeclining()
+
 	public function testItImportsTheDescriptorAndReportsTheCounts(): void {
 		$this->shipDescriptor(objects: 5);
 		$spy = $this->importerSpy();

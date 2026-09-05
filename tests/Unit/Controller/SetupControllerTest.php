@@ -209,6 +209,28 @@ final class SetupControllerTest extends TestCase {
 	 *
 	 * @return void
 	 */
+	/**
+	 * The other half of the pair: picking the shipped set and running imports it.
+	 *
+	 * Without this the choice step could store an answer that nothing ever acts
+	 * on, and the only covered path through `load-demo-data` would be the one
+	 * that imports nothing.
+	 *
+	 * @return void
+	 */
+	public function testPickingTheShippedSetAndThenRunningImportsIt(): void {
+		$this->stubConfig(['demo_dataset' => 'demo']);
+		$this->demoDataService->expects($this->once())
+			->method('install')
+			->willReturn(['objects' => 42, 'schemas' => 7]);
+
+		$data = $this->controller->runAction(actionId: 'load-demo-data')->getData();
+
+		$this->assertTrue($data['success']);
+		$this->assertStringContainsString('42', $data['message']);
+
+	}//end testPickingTheShippedSetAndThenRunningImportsIt()
+
 	public function testChoosingNoneAndThenRunningImportsNothing(): void {
 		$this->stubConfig(['demo_dataset' => 'none']);
 		$this->demoDataService->expects($this->never())->method('install');

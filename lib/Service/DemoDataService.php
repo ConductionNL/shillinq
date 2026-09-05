@@ -177,16 +177,15 @@ class DemoDataService {
 	 */
 	private function shippedObjectCount(): ?int {
 		$path = $this->descriptorPath();
-		if (is_file($path) === false) {
+		// 🔴 `is_readable()`, NOT `is_file()`. A descriptor that exists but
+		// cannot be read is as good as absent for the offer, and reading it
+		// anyway emits a PHP warning that PHPUnit turns into a failing test.
+		// One guard also leaves no unreachable second one behind it.
+		if (is_readable($path) === false) {
 			return null;
 		}
 
-		$raw = file_get_contents($path);
-		if ($raw === false) {
-			return null;
-		}
-
-		$data = json_decode($raw, true);
+		$data = json_decode((string)file_get_contents($path), true);
 		if (is_array($data) === false) {
 			return null;
 		}
