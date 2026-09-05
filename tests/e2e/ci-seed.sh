@@ -495,11 +495,25 @@ setup_post '/index.php/apps/shillinq/api/setup/action/seed' '{}'
 # htaccess.IgnoreFrontController block above): the workflow invokes this
 # script with cwd at the Nextcloud server root, so `./occ` is the reachable
 # path and its presence is the correct guard.
+#
+# BOTH KEYS, AND THAT IS THE WHOLE POINT NOW. The demo-data step used to be a
+# single run-action; it is a CHOICE step followed by a load step. `status()`
+# reports the choice done when `demo_dataset` is set, and `demo_data_decided`
+# alone leaves it outstanding -- so writing only the second reopened the wizard
+# over every page and put the overlay back that this block exists to remove.
+# `skip-demo-data` writes both, which is why the apps that POST it were never
+# affected; this one writes the config directly and has to write both itself.
 if [ -f "./occ" ]; then
-	if php ./occ config:app:set shillinq demo_data_decided --value=skipped; then
-		echo "[ci-seed] demo-data step marked decided (skipped)."
+	ok=1
+	for kv in "demo_dataset=none" "demo_data_decided=skipped"; do
+		if ! php ./occ config:app:set shillinq "${kv%%=*}" --value="${kv#*=}"; then
+			ok=0
+		fi
+	done
+	if [ "$ok" = "1" ]; then
+		echo "[ci-seed] demo-data step marked decided (none chosen, skipped)."
 	else
-		echo "::warning::could not set demo_data_decided; the wizard may reopen over the SPA."
+		echo "::warning::could not record the demo-data decision; the wizard may reopen over the SPA."
 	fi
 fi
 
