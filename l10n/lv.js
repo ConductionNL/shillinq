@@ -1553,7 +1553,26 @@ OC.L10N.register(
         "Margin per month": "Peļņa mēnesī",
         "Cashflow": "Naudas plūsma",
         "Billable hours": "Apmaksājamās stundas",
-        "_%n invoice outstanding_::_%n invoices outstanding_": ["1 rēķins nav apmaksāts","%n rēķini nav apmaksāti","%n rēķinu nav apmaksāts"]
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["1 rēķins nav apmaksāts","%n rēķini nav apmaksāti","%n rēķinu nav apmaksāts"],
+        "Reports": "Pārskati",
+        "Pick a report to open it.": "Izvēlieties pārskatu, lai to atvērtu.",
+        "Due": "Termiņš",
+        "Assignee": "Piešķirts",
+        "Iv3 returns": "Iv3 pārskati",
+        "SiSa returns": "SiSa pārskati",
+        "EMU return": "EMU pārskats",
+        "Consolidated statements": "Konsolidētie pārskati",
+        "Budget variance": "Budžeta novirze",
+        "Generated reports": "Ģenerētie pārskati",
+        "The quarterly Iv3 returns, and how far each one got.": "Ceturkšņa Iv3 pārskati un cik tālu katrs nonāca.",
+        "Single information, single audit returns per scheme.": "Single information, single audit pārskati pēc shēmas.",
+        "The EMU balance return.": "EMU bilances pārskats.",
+        "The group figures, consolidated across participations.": "Grupas skaitļi, konsolidēti pa līdzdalībām.",
+        "Where the books sit against budget, and by how much.": "Kur grāmatas atrodas pret budžetu un par cik.",
+        "Everything Reporting & Compliance has already produced.": "Viss, ko Pārskatu sniegšana un atbilstība jau ir sagatavojusi.",
+        "What retention destroyed, and when.": "Ko glabāšana iznīcināja un kad.",
+        "Store": "Veikals",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Instalējiet reģistrus, shēmas un plūsmas, ko publicējušas citas organizācijas."
     },
     "nplurals=2; plural=(n != 1);"
 )

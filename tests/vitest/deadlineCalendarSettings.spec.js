@@ -10,9 +10,9 @@
 
 import { describe, expect, it } from 'vitest'
 import {
+	buildSavePayload,
 	CATEGORY_META,
 	normaliseSettings,
-	buildSavePayload,
 } from '../../src/views/deadlineCalendarSettingsHelpers.js'
 
 describe('CATEGORY_META', () => {

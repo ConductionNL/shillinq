@@ -9,7 +9,7 @@
         "icon": "Barcode",
         "version": "0.1.0",
         "title": "Barcode",
-        "description": "A scannable code (EAN, GTIN, UPC, SSCC, or internal) bound to a Product at a specific unit-of-measure. A single Product carries 1..N barcodes — one per UoM or channel (e.g. EAN-13 per unit, GTIN-14 per carton, SSCC per pallet). Declared as a separate register (not an inline array on Product) so barcodes are individually queryable, auditable, and have an independent lifecycle (deactivate without delete). Consumed by the shillinq barcode lookup endpoint and the pipelinq pos-barcode-scan module. Spec: inventory-barcode-sku. Depends on inventory-product-catalog (Product schema). The 'InventoryItem' wording in the spec refers to the shillinq Product schema.",
+        "description": "A scannable code (EAN, GTIN, UPC, SSCC, or internal) bound to a Product at a specific unit-of-measure. A single Product carries 1.N barcodes: one per UoM or channel (e.g. EAN-13 per unit, GTIN-14 per carton, SSCC per pallet). Declared as a separate register (not an inline array on Product) so barcodes are individually queryable, auditable, and have an independent lifecycle (deactivate without delete). Consumed by the shillinq barcode lookup endpoint and the pipelinq pos-barcode-scan module. Spec: inventory-barcode-sku. Depends on inventory-product-catalog (Product schema). The 'InventoryItem' wording in the spec refers to the shillinq Product schema.",
         "x-schema-org": "schema:Product",
         "x-openregister-purpose": "dimension",
         "type": "object",
@@ -65,7 +65,7 @@
             "type": "string",
             "nullable": true,
             "readOnly": true,
-            "description": "TRANSITIONAL ALIAS: deprecated — use productId. Retained for 3-way-match fallback only. Will be removed after pipelinq-product-vendor-master is confirmed live.",
+            "description": "TRANSITIONAL ALIAS: deprecated. Use productId. Retained for 3-way-match fallback only. Will be removed after pipelinq-product-vendor-master is confirmed live.",
             "deprecated": true,
             "title": "Product SKU"
           },
@@ -92,7 +92,7 @@
           "isActive": {
             "type": "boolean",
             "default": true,
-            "description": "True when the barcode is in use. Inactive barcodes (deprecated supplier/legacy codes) are retained for audit but excluded from the lookup endpoint per REQ-SKU-008.",
+            "description": "True when the barcode is in use. Inactive barcodes (deprecated supplier/legacy codes) are retained for audit but excluded from the lookup endpoint.",
             "example": true,
             "title": "Is Active"
           },

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Member 1 of 12 in the bookkeeping-waterschappen-bbv-variant chain (ADR-032). Declares the two declarative-config registers the rest of the chain reads: BBVProgramme (annual policy programme master, REQ-BBVW-001) and BudgetBBVMapping (GL-account-to-programme allocation junction, REQ-BBVW-002). Both schemas are admin-write / public-read (ADR-005) and OpenRegister-managed (ADR-022): no app-local mapper tables, no ALTER TABLE. BBVProgramme is the governance anchor — one record per fiscal-year programme code — admin-maintained and never hard-deleted (archive only via the status enum, design D1). BudgetBBVMapping is a many-to-one junction from a GL account to a BBV programme, carrying an allocation percentage and an effective-date window (design D2). Both carry many-to-one relations to Administration; BudgetBBVMapping additionally relates to BBVProgramme and Account. Slugs are concise to stay inside the 30-character magic-table cap (BudgetBBVMapping → oc_openregister_shillinq_budgetbbvmapping). The English BBVProgramme slug deliberately differs from the Dutch BBVProgramma schema added by the SUPERSEDED add-shillinq-waterschappen-bbv-variant change so the two surfaces co-exist while the chain rolls out. No imperative code lives in this slice — services, controllers, dashboards and UI are owned by chain members 02-12."
+    "description": "Member 1 of 12 in the bookkeeping-waterschappen-bbv-variant chain (ADR-032). Declares the two declarative-config registers the rest of the chain reads: BBVProgramme (annual policy programme master) and BudgetBBVMapping (GL-account-to-programme allocation junction). Both schemas are admin-write / public-read (ADR-005) and OpenRegister-managed (ADR-022): no app-local mapper tables, no ALTER TABLE. BBVProgramme is the governance anchor: one record per fiscal-year programme code. Admin-maintained and never hard-deleted (archive only via the status enum, design D1). BudgetBBVMapping is a many-to-one junction from a GL account to a BBV programme, carrying an allocation percentage and an effective-date window (design D2). Both carry many-to-one relations to Administration; BudgetBBVMapping additionally relates to BBVProgramme and Account. Slugs are concise to stay inside the 30-character magic-table cap (BudgetBBVMapping → oc_openregister_shillinq_budgetbbvmapping). The English BBVProgramme slug deliberately differs from the Dutch BBVProgramma schema added by the SUPERSEDED add-shillinq-waterschappen-bbv-variant change so the two surfaces co-exist while the chain rolls out. No imperative code lives in this slice. Services, controllers, dashboards and UI are owned by chain members 02-12."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "FormatListBulletedSquare",
         "version": "0.1.0",
         "title": "BBV Programme",
-        "description": "A BBV (Besluit Begroting en Verantwoording) policy-programme master record for a single fiscal year. Each waterboard maintains its own programme taxonomy aligned with the BBVW kostentoedeling structure (REQ-BBVW-001). Records are admin-maintained and SHALL NOT be hard-deleted — operators archive a programme by transitioning status to 'archived'. Records are scoped per Administration via administrationId, making (administrationId, programmeCode, fiscalYear) the natural key the seed loader and downstream UI rely on.",
+        "description": "A BBV (Besluit Begroting en Verantwoording) policy-programme master record for a single fiscal year. Each waterboard maintains its own programme taxonomy aligned with the BBVW kostentoedeling structure. Records are admin-maintained and SHALL NOT be hard-deleted: operators archive a programme by transitioning status to 'archived'. Records are scoped per Administration via administrationId, making (administrationId, programmeCode, fiscalYear) the natural key the seed loader and downstream UI rely on.",
         "x-schema-org": "schema:DefinedTerm",
         "x-spec": "openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/specs/bookkeeping-waterschappen-bbv-variant/spec.md",
         "type": "object",
@@ -27,7 +27,7 @@
         "properties": {
           "programmeCode": {
             "type": "string",
-            "description": "Waterboard-assigned BBV programme code (REQ-BBVW-001). Unique within (administrationId, fiscalYear).",
+            "description": "Waterboard-assigned BBV programme code. Unique within (administrationId, fiscalYear).",
             "example": "1.1.1",
             "title": "Programme Code"
           },
@@ -76,7 +76,7 @@
         "icon": "LinkVariant",
         "version": "0.1.0",
         "title": "Budget BBV Mapping",
-        "description": "A many-to-one junction record linking a GL account to a BBV programme with an allocation percentage (REQ-BBVW-002). Multiple mappings per GL account are allowed when allocationPercentage values sum to 100 across active mappings — the aggregation service in chain member 02 enforces the sum invariant. The effectiveFrom / effectiveTo window lets operators re-cut allocations between fiscal years without losing the prior split. Records are admin-write / public-read (ADR-005).",
+        "description": "A many-to-one junction record linking a GL account to a BBV programme with an allocation percentage. Multiple mappings per GL account are allowed when allocationPercentage values sum to 100 across active mappings: the aggregation service in chain member 02 enforces the sum invariant. The effectiveFrom / effectiveTo window lets operators re-cut allocations between fiscal years without losing the prior split. Records are admin-write / public-read (ADR-005).",
         "x-schema-org": "schema:DefinedTerm",
         "x-spec": "openspec/changes/bookkeeping-waterschappen-bbv-variant-01-config-schemas-seed/specs/bookkeeping-waterschappen-bbv-variant/spec.md",
         "type": "object",
@@ -90,19 +90,19 @@
         "properties": {
           "glAccountNumber": {
             "type": "string",
-            "description": "FK to Account.accountNumber within the same administration (REQ-BBVW-002).",
+            "description": "FK to Account.accountNumber within the same administration.",
             "example": "4100",
             "title": "GL Account Number"
           },
           "programmeCode": {
             "type": "string",
-            "description": "FK to BBVProgramme.programmeCode within the same administration (REQ-BBVW-002).",
+            "description": "FK to BBVProgramme.programmeCode within the same administration.",
             "example": "1.1.1",
             "title": "Programme Code"
           },
           "allocationPercentage": {
             "type": "number",
-            "description": "Allocation share for this (glAccount, programme) pair as a percentage 0–100. Multiple mappings on the same GL account MUST sum to 100 across active mappings — the chain member 02 aggregation service enforces the sum invariant.",
+            "description": "Allocation share for this (glAccount, programme) pair as a percentage 0–100. Multiple mappings on the same GL account MUST sum to 100 across active mappings: the chain member 02 aggregation service enforces the sum invariant.",
             "minimum": 0,
             "maximum": 100,
             "example": 50,

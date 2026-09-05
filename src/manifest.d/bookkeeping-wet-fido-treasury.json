@@ -165,7 +165,7 @@
 				"indexRoute": "Treasurystatuten",
 				"sidebarProps": {
 					"tabs": [
-						{"id": "documents", "label": "Documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+						{"id": "documents", "label": "Documents", "icon": "FileDocumentMultipleOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "Treasurystatuut", "objectId": ":id"}}
 						]},
 						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
@@ -226,7 +226,7 @@
 				"indexRoute": "Leningen",
 				"sidebarProps": {
 					"tabs": [
-						{"id": "documents", "label": "Documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+						{"id": "documents", "label": "Documents", "icon": "FileDocumentMultipleOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "Lening", "objectId": ":id"}}
 						]},
 						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [
@@ -284,7 +284,7 @@
 				"indexRoute": "Derivaten",
 				"sidebarProps": {
 					"tabs": [
-						{"id": "documents", "label": "Documents", "icon": "FileDocumentOutline", "order": 80, "widgets": [
+						{"id": "documents", "label": "Documents", "icon": "FileDocumentMultipleOutline", "order": 80, "widgets": [
 							{"type": "data", "componentName": "openregister-file-references", "props": {"register": "shillinq", "schema": "Derivaat", "objectId": ":id"}}
 						]},
 						{"id": "audit", "label": "Audit Trail", "icon": "History", "order": 90, "widgets": [

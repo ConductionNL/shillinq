@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "source": "Awb title 4.2 (subsidies) + VNG ASV-model 2022",
     "version": "2022",
-    "description": "ASV-model subsidie lifecycle states with their Awb article citations (REQ-SUB-006/010). Seeds the operator-facing labels and legal references behind the Subsidie x-openregister-lifecycle states.",
+    "description": "ASV-model subsidie lifecycle states with their Awb article citations. Seeds the operator-facing labels and legal references behind the Subsidie x-openregister-lifecycle states.",
     "imported": "2026-06-01T00:00:00Z"
   },
   "states": [

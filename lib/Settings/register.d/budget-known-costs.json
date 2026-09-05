@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "description": "budget-known-costs — BudgetLineDerivation, the idempotency + override ledger for known-cost regeneration (REQ-BKC-004/005). Written only by KnownCostBudgetWriter, one row per (annualBudgetId, ledgerGroupId, sourceType) triple that has ever been machine-generated. See openspec/changes/budget-known-costs/design.md §4."
+    "description": "budget-known-costs: BudgetLineDerivation, the idempotency + override ledger for known-cost regeneration. Written only by KnownCostBudgetWriter, one row per (annualBudgetId, ledgerGroupId, sourceType) triple that has ever been machine-generated. See openspec/changes/budget-known-costs/design.md §4."
   },
   "components": {
     "schemas": {
@@ -9,7 +9,7 @@
         "icon": "SourceBranch",
         "version": "0.1.0",
         "title": "Budget Line Derivation",
-        "description": "A system-managed bookkeeping row that fingerprints the last monthly amounts KnownCostBudgetWriter wrote to one BudgetLine, so regeneration is idempotent and an operator's own edit to a derived line is detected and respected rather than silently overwritten (design.md §4). Written only by KnownCostBudgetWriter, never by an operator directly. No lifecycle — derived state, not operator-authored configuration.",
+        "description": "A system-managed bookkeeping row that fingerprints the last monthly amounts KnownCostBudgetWriter wrote to one BudgetLine, so regeneration is idempotent and an operator's own edit to a derived line is detected and respected rather than silently overwritten (design.md §4). Written only by KnownCostBudgetWriter, never by an operator directly. No lifecycle: derived state, not operator-authored configuration.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-openregister-purpose": "configuration",
         "x-spec": "openspec/changes/budget-known-costs/specs/budget-known-costs/spec.md",
@@ -28,21 +28,21 @@
         "properties": {
           "administrationId": {
             "type": "string",
-            "description": "FK to the Administration owning this derivation (REQ-BKC-004).",
+            "description": "FK to the Administration owning this derivation.",
             "example": "adm-1",
             "title": "Administration ID"
           },
           "annualBudgetId": {
             "type": "string",
             "format": "uuid",
-            "description": "FK to the AnnualBudget this derivation's BudgetLine belongs to (REQ-BKC-004).",
+            "description": "FK to the AnnualBudget this derivation's BudgetLine belongs to.",
             "title": "Annual Budget ID",
             "$ref": "AnnualBudget"
           },
           "ledgerGroupId": {
             "type": "string",
             "format": "uuid",
-            "description": "FK to the LedgerGroup this derivation's BudgetLine phases amounts against (REQ-BKC-004).",
+            "description": "FK to the LedgerGroup this derivation's BudgetLine phases amounts against.",
             "title": "Ledger Group ID",
             "$ref": "LedgerGroup"
           },
@@ -52,20 +52,20 @@
               "contract",
               "recurring"
             ],
-            "description": "The BudgetLine.source value this derivation wrote (REQ-BKC-001/004).",
+            "description": "The BudgetLine.source value this derivation wrote.",
             "example": "recurring",
             "title": "Source Type"
           },
           "budgetLineId": {
             "type": "string",
             "format": "uuid",
-            "description": "FK to the BudgetLine object this derivation run created/last upserted (REQ-BKC-004).",
+            "description": "FK to the BudgetLine object this derivation run created/last upserted.",
             "title": "Budget Line ID",
             "$ref": "BudgetLine"
           },
           "contributingRecurIds": {
             "type": "array",
-            "description": "Every CashflowRecurring.recurId summed into this line — the audit trail / drill-down surface (REQ-BKC-004/009).",
+            "description": "Every CashflowRecurring.recurId summed into this line: the audit trail / drill-down surface.",
             "items": {
               "type": "string"
             },
@@ -76,7 +76,7 @@
           },
           "lastGeneratedMonthlyAmounts": {
             "type": "array",
-            "description": "The exact cents this derivation last wrote for month01..month12 — the drift-detection fingerprint (REQ-BKC-004/005). Length 12.",
+            "description": "The exact cents this derivation last wrote for month01.month12: the drift-detection fingerprint. Length 12.",
             "items": {
               "type": "integer"
             },
@@ -101,14 +101,14 @@
           "lastGeneratedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp of the last regeneration run that touched this derivation (REQ-BKC-004/009).",
+            "description": "Timestamp of the last regeneration run that touched this derivation.",
             "example": "2026-08-20T09:00:00Z",
             "title": "Last Generated At"
           },
           "overridden": {
             "type": "boolean",
             "default": false,
-            "description": "True once a run detects the live BudgetLine no longer matches lastGeneratedMonthlyAmounts — an operator's own edit, which the writer then leaves alone until the BudgetLine is deleted (REQ-BKC-005).",
+            "description": "True once a run detects the live BudgetLine no longer matches lastGeneratedMonthlyAmounts: an operator's own edit, which the writer then leaves alone until the BudgetLine is deleted.",
             "example": false,
             "title": "Overridden"
           }
@@ -134,7 +134,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a BudgetLineDerivation is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a BudgetLineDerivation is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-ifrs-16-lease",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 4-specialized — IFRS 16 Leases. Adds five new schemas (LeaseContract master register, LeasePaymentSchedule derived amortization rows, LeaseReassessmentEvent modification/remeasurement log, LeaseDisclosureTable period-end snapshot, LeasePortfolioExemption policy elections) per design.md D1–D5. RoU asset and lease-liability recognition, period interest/principal split and straight-line depreciation are computed by OCA\\Shillinq\\Service\\LeaseAmortizationCalculator + LeasePaymentScheduleService + LeaseRecognitionService via the real OpenRegister ObjectService API (find/findAll/saveObject); disclosure aggregation by LeaseDisclosureService. LeaseContract carries an x-openregister-lifecycle state machine (draft→active→modified→terminated/expired, REQ-LC-004); LeasePaymentSchedule and LeaseReassessmentEvent are read-only / immutable-once-posted. A contact/lessor counterparty is a Nextcloud-synced contact (ADR-022) referenced by FK, never a new person schema; source documents reference docudesk via FK URIs. Seed objects provide worked examples (vehicle lease, real-estate lease, short-term-exempt copier, derived schedule rows, a disclosure table and an exemption policy) per design.md."
+    "description": "Tier 4-specialized: IFRS 16 Leases. Adds five new schemas (LeaseContract master register, LeasePaymentSchedule derived amortization rows, LeaseReassessmentEvent modification/remeasurement log, LeaseDisclosureTable period-end snapshot, LeasePortfolioExemption policy elections) per design.md D1–D5. RoU asset and lease-liability recognition, period interest/principal split and straight-line depreciation are computed by OCA\\Shillinq\\Service\\LeaseAmortizationCalculator + LeasePaymentScheduleService + LeaseRecognitionService via the real OpenRegister ObjectService API (find/findAll/saveObject); disclosure aggregation by LeaseDisclosureService. LeaseContract carries an x-openregister-lifecycle state machine (draft→active→modified→terminated/expired); LeasePaymentSchedule and LeaseReassessmentEvent are read-only / immutable-once-posted. A contact/lessor counterparty is a Nextcloud-synced contact (ADR-022) referenced by FK, never a new person schema; source documents reference docudesk via FK URIs. Seed objects provide worked examples (vehicle lease, real-estate lease, short-term-exempt copier, derived schedule rows, a disclosure table and an exemption policy) per design.md."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Lease Contract",
-        "description": "IFRS 16 lease-contract master record (REQ-LC-001, REQ-LC-002): one row per lease with lessor counterparty, asset class, term, payments, IBR, classification and a declarative draft→active→modified→terminated/expired lifecycle (REQ-LC-004).",
+        "description": "IFRS 16 lease-contract master record: one row per lease with lessor counterparty, asset class, term, payments, IBR, classification and a declarative draft→active→modified→terminated/expired lifecycle.",
         "x-schema-org": "schema:Order",
         "x-spec": "openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-contracts/spec.md",
         "x-openregister-lifecycle": {
@@ -82,25 +82,25 @@
         "properties": {
           "leaseNumber": {
             "type": "string",
-            "description": "Sequential lease identifier per organisation (REQ-LC-002).",
+            "description": "Sequential lease identifier per organisation.",
             "example": "VH-2024-001",
             "title": "Lease Number"
           },
           "counterparty": {
             "type": "string",
-            "description": "Lessor counterparty — FK to the Nextcloud-synced contact / organisations register (ADR-022); never a new person schema (REQ-LC-002).",
+            "description": "Lessor counterparty: FK to the Nextcloud-synced contact / organisations register (ADR-022); never a new person schema.",
             "example": "contact:lease-hire-bv",
             "title": "Counterparty"
           },
           "description": {
             "type": "string",
-            "description": "Human-readable lease description (REQ-LC-002).",
+            "description": "Human-readable lease description.",
             "example": "Company car lease – Mercedes E-class, 3yr + 2yr extension",
             "title": "Description"
           },
           "assetClass": {
             "type": "string",
-            "description": "Underlying asset class for disclosure aggregation and CSRD E1 filtering (REQ-LC-002).",
+            "description": "Underlying asset class for disclosure aggregation and CSRD E1 filtering.",
             "enum": [
               "vehicle",
               "real-estate",
@@ -114,27 +114,27 @@
           "commencementDate": {
             "type": "string",
             "format": "date",
-            "description": "Lease commencement date (REQ-LC-002).",
+            "description": "Lease commencement date.",
             "example": "2024-01-15",
             "title": "Commencement Date"
           },
           "endDate": {
             "type": "string",
             "format": "date",
-            "description": "Scheduled non-cancellable term end date (REQ-LC-002).",
+            "description": "Scheduled non-cancellable term end date.",
             "example": "2027-01-14",
             "title": "End Date"
           },
           "nonCancellableTermMonths": {
             "type": "integer",
             "minimum": 1,
-            "description": "Non-cancellable term in whole months (REQ-LC-002).",
+            "description": "Non-cancellable term in whole months.",
             "example": 36,
             "title": "Non Cancellable Term Months"
           },
           "extensionOptions": {
             "type": "array",
-            "description": "Extension options; months reasonably-certain to be exercised extend the schedule (REQ-LC-002, REQ-LA-002).",
+            "description": "Extension options; months reasonably-certain to be exercised extend the schedule.",
             "items": {
               "type": "object",
               "properties": {
@@ -171,7 +171,7 @@
               "annual",
               "irregular"
             ],
-            "description": "Contractual payment cadence (REQ-LC-002).",
+            "description": "Contractual payment cadence.",
             "example": "monthly",
             "title": "Payment Frequency"
           },
@@ -181,20 +181,20 @@
               "in-advance",
               "in-arrears"
             ],
-            "description": "Whether each payment falls at period start (annuity-due) or end (REQ-LC-002).",
+            "description": "Whether each payment falls at period start (annuity-due) or end.",
             "example": "in-arrears",
             "title": "Payment Timing"
           },
           "basePaymentAmount": {
             "type": "number",
             "minimum": 0,
-            "description": "Contractual payment amount per period before indexation (REQ-LC-002).",
+            "description": "Contractual payment amount per period before indexation.",
             "example": 425.0,
             "title": "Base Payment Amount"
           },
           "paymentCurrency": {
             "type": "string",
-            "description": "ISO 4217 payment currency (REQ-LC-002, REQ-LA-004).",
+            "description": "ISO 4217 payment currency.",
             "example": "EUR",
             "title": "Payment Currency"
           },
@@ -206,14 +206,14 @@
               "CPI",
               "sector-index"
             ],
-            "description": "Indexation clause type (REQ-LC-002).",
+            "description": "Indexation clause type.",
             "nullable": true,
             "example": "fixed-percent",
             "title": "Indexation Clause"
           },
           "indexationRateOrSource": {
             "type": "string",
-            "description": "Fixed percent (e.g. '2.0') or index reference (e.g. 'Dutch CPI') (REQ-LC-002).",
+            "description": "Fixed percent (e.g. '2.0') or index reference (e.g. 'Dutch CPI').",
             "nullable": true,
             "example": "2.0",
             "title": "Indexation Rate Or Source"
@@ -221,7 +221,7 @@
           "initialDirectCosts": {
             "type": "number",
             "minimum": 0,
-            "description": "Initial direct costs added to the opening RoU asset (REQ-LA-001).",
+            "description": "Initial direct costs added to the opening RoU asset.",
             "nullable": true,
             "example": 150.0,
             "title": "Initial Direct Costs"
@@ -229,7 +229,7 @@
           "leaseIncentivesReceived": {
             "type": "number",
             "minimum": 0,
-            "description": "Lease incentives deducted from the opening RoU asset (REQ-LA-001).",
+            "description": "Lease incentives deducted from the opening RoU asset.",
             "nullable": true,
             "example": 0.0,
             "title": "Lease Incentives Received"
@@ -237,7 +237,7 @@
           "prepaidRentBalance": {
             "type": "number",
             "minimum": 0,
-            "description": "Prepaid rent that reduces the opening RoU asset (REQ-LA-006).",
+            "description": "Prepaid rent that reduces the opening RoU asset.",
             "nullable": true,
             "example": 0.0,
             "title": "Prepaid Rent Balance"
@@ -245,14 +245,14 @@
           "accruedRentBalance": {
             "type": "number",
             "minimum": 0,
-            "description": "Accrued rent that increases the opening RoU asset (REQ-LA-006).",
+            "description": "Accrued rent that increases the opening RoU asset.",
             "nullable": true,
             "example": 0.0,
             "title": "Accrued Rent Balance"
           },
           "restorationObligation": {
             "type": "object",
-            "description": "Estimated restoration / make-good obligation discounted into the opening RoU asset (REQ-LA-005).",
+            "description": "Estimated restoration / make-good obligation discounted into the opening RoU asset.",
             "nullable": true,
             "properties": {
               "estimatedCost": {
@@ -271,7 +271,7 @@
           "ibrPercent": {
             "type": "number",
             "minimum": 0,
-            "description": "Incremental borrowing rate at commencement, annual % (REQ-LC-002).",
+            "description": "Incremental borrowing rate at commencement, annual %.",
             "example": 4.25,
             "title": "Ibr Percent"
           },
@@ -284,13 +284,13 @@
               "external-quote",
               "N/A"
             ],
-            "description": "How the IBR was derived (REQ-LC-002).",
+            "description": "How the IBR was derived.",
             "example": "group-policy",
             "title": "Ibr Derivation Method"
           },
           "ibrSourceDocument": {
             "type": "string",
-            "description": "FK URI to the docudesk document evidencing the IBR (REQ-LC-005).",
+            "description": "FK URI to the docudesk document evidencing the IBR.",
             "nullable": true,
             "example": "docudesk:document:ibr-matrix-2024-q1",
             "title": "Ibr Source Document"
@@ -303,13 +303,13 @@
               "low-value-exempt",
               "operating-pre-IFRS16"
             ],
-            "description": "IFRS 16 classification (REQ-LC-002, REQ-LC-003).",
+            "description": "IFRS 16 classification.",
             "example": "IFRS16-capitalised",
             "title": "Classification"
           },
           "classificationRationale": {
             "type": "string",
-            "description": "Audit rationale (checklist + free text) from the classification wizard (REQ-LC-003).",
+            "description": "Audit rationale (checklist + free text) from the classification wizard.",
             "nullable": true,
             "example": "Non-cancellable term 36m; not short-term; asset value > threshold; capitalised.",
             "title": "Classification Rationale"
@@ -323,7 +323,7 @@
               "terminated",
               "expired"
             ],
-            "description": "Lifecycle state (REQ-LC-004).",
+            "description": "Lifecycle state.",
             "example": "active",
             "title": "Status"
           },
@@ -336,7 +336,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Lease Contract is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Lease Contract is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "LeasePaymentSchedule": {
@@ -344,7 +344,7 @@
         "icon": "TableClock",
         "version": "0.1.0",
         "title": "Lease Payment Schedule",
-        "description": "Derived per-period amortization row (REQ-LA-002): opening/closing lease liability, interest accrual, principal portion, and straight-line RoU depreciation. Generated by LeasePaymentScheduleService when a lease activates; read-only / immutable until a reassessment regenerates future periods.",
+        "description": "Derived per-period amortization row: opening/closing lease liability, interest accrual, principal portion, and straight-line RoU depreciation. Generated by LeasePaymentScheduleService when a lease activates; read-only / immutable until a reassessment regenerates future periods.",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-accounting/spec.md",
         "x-openregister": {
@@ -365,14 +365,14 @@
         "properties": {
           "leaseContract": {
             "type": "string",
-            "description": "FK to the parent LeaseContract (REQ-LA-002).",
+            "description": "FK to the parent LeaseContract.",
             "example": "lease-vh-2024-001",
             "title": "Lease Contract"
           },
           "periodSequence": {
             "type": "integer",
             "minimum": 1,
-            "description": "1-based payment period index (REQ-LA-002).",
+            "description": "1-based payment period index.",
             "example": 1,
             "title": "Period Sequence"
           },
@@ -413,7 +413,7 @@
           "fxRate": {
             "type": "number",
             "nullable": true,
-            "description": "FX rate to functional currency for non-functional-currency leases (REQ-LA-004; full revaluation deferred to Phase 2).",
+            "description": "FX rate to functional currency for non-functional-currency leases (full revaluation deferred to Phase 2).",
             "title": "Fx Rate"
           },
           "openingLeaseLiability": {
@@ -489,7 +489,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Lease Payment Schedule is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Lease Payment Schedule is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "LeaseReassessmentEvent": {
@@ -497,7 +497,7 @@
         "icon": "FileDocumentEditOutline",
         "version": "0.1.0",
         "title": "Lease Reassessment Event",
-        "description": "First-class IFRS 16 modification / remeasurement record (REQ-LR-001, design.md D4): event type, before/after snapshots, IBR reset, liability/RoU adjustment, approver sign-off and GL posting FK. Immutable once posted; corrections are new events.",
+        "description": "First-class IFRS 16 modification / remeasurement record (design.md D4): event type, before/after snapshots, IBR reset, liability/RoU adjustment, approver sign-off and GL posting FK. Immutable once posted; corrections are new events.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-reassessment/spec.md",
         "type": "object",
@@ -573,7 +573,7 @@
               "separate-lease"
             ],
             "nullable": true,
-            "description": "IFRS 16.44 remeasurement approach (REQ-LR-003).",
+            "description": "IFRS 16.44 remeasurement approach.",
             "title": "Remeasurement Approach"
           },
           "revisedIbrPercent": {
@@ -603,7 +603,7 @@
           "rouAssetAdjustment": {
             "type": "number",
             "nullable": true,
-            "description": "RoU asset adjustment; events > EUR 100K route to decidesk approval (REQ-LR-005).",
+            "description": "RoU asset adjustment; events > EUR 100K route to decidesk approval.",
             "title": "Rou Asset Adjustment"
           },
           "plImpact": {
@@ -661,7 +661,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Lease Reassessment Event is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Lease Reassessment Event is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "LeaseDisclosureTable": {
@@ -669,7 +669,7 @@
         "icon": "TableLarge",
         "version": "0.1.0",
         "title": "IFRS 16 Disclosure Table",
-        "description": "Period-end disclosure snapshot (REQ-LD-001, design.md D5): RoU additions/depreciation/disposals and closing balance by asset class, current/non-current lease liability, maturity analysis buckets, weighted-average IBR per class, and the expense breakdown (interest, short-term, low-value, variable). Materialised at period close so prior-period restatements do not retroactively change a published disclosure.",
+        "description": "Period-end disclosure snapshot (design.md D5): RoU additions/depreciation/disposals and closing balance by asset class, current/non-current lease liability, maturity analysis buckets, weighted-average IBR per class, and the expense breakdown (interest, short-term, low-value, variable). Materialised at period close so prior-period restatements do not retroactively change a published disclosure.",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-disclosures/spec.md",
         "type": "object",
@@ -731,7 +731,7 @@
           "maturityAnalysis": {
             "type": "object",
             "nullable": true,
-            "description": "Undiscounted liability by maturity bucket (REQ-LD-001).",
+            "description": "Undiscounted liability by maturity bucket.",
             "properties": {
               "lt1y": {
                 "type": "number",
@@ -824,7 +824,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a IFRS 16 Disclosure Table is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a IFRS 16 Disclosure Table is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "LeasePortfolioExemption": {
@@ -832,7 +832,7 @@
         "icon": "ShieldCheckOutline",
         "version": "0.1.0",
         "title": "Lease Portfolio Exemption Policy",
-        "description": "Short-term (IFRS 16.5) and low-value (IFRS 16.6) exemption policy elections by asset class (REQ-LE-001). One effective-dated policy record per administration; superseded-by self-FK keeps the policy history.",
+        "description": "Short-term (IFRS 16.5) and low-value (IFRS 16.6) exemption policy elections by asset class. One effective-dated policy record per administration; superseded-by self-FK keeps the policy history.",
         "x-schema-org": "schema:Action",
         "x-spec": "openspec/changes/bookkeeping-ifrs-16-lease/specs/bookkeeping-lease-exemptions/spec.md",
         "type": "object",
@@ -851,14 +851,14 @@
           },
           "shortTermByClass": {
             "type": "object",
-            "description": "Short-term exemption elected (true/false) per asset class (REQ-LE-001).",
+            "description": "Short-term exemption elected (true/false) per asset class.",
             "nullable": true,
             "title": "Short Term By Class"
           },
           "lowValueThreshold": {
             "type": "number",
             "minimum": 0,
-            "description": "Low-value threshold in functional currency (~USD 5,000 equivalent) (REQ-LE-002).",
+            "description": "Low-value threshold in functional currency (~USD 5,000 equivalent).",
             "example": 5000.0,
             "title": "Low Value Threshold"
           },
@@ -895,7 +895,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Lease Portfolio Exemption Policy is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Lease Portfolio Exemption Policy is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     },
@@ -908,7 +908,7 @@
         },
         "leaseNumber": "VH-2024-001",
         "counterparty": "contact:lease-hire-bv",
-        "description": "Company car lease – Mercedes E-class, 3-year term with 2-year extension option",
+        "description": "Company car lease: Mercedes E-class, 3-year term with 2-year extension option",
         "assetClass": "vehicle",
         "commencementDate": "2024-01-15",
         "endDate": "2027-01-14",
@@ -948,7 +948,7 @@
         },
         "leaseNumber": "RE-2023-005",
         "counterparty": "contact:property-partners-nv",
-        "description": "Headquarters lease – Amsterdam, 8-story office building, 5-year non-cancellable term",
+        "description": "Headquarters lease: Amsterdam, 8-story office building, 5-year non-cancellable term",
         "assetClass": "real-estate",
         "commencementDate": "2023-03-01",
         "endDate": "2028-02-28",
@@ -988,7 +988,7 @@
         },
         "leaseNumber": "IT-2024-032",
         "counterparty": "contact:copier-rental-solutions-bv",
-        "description": "Copier/printer lease – Xerox AltaLink, 12-month non-cancellable term",
+        "description": "Copier/printer lease: Xerox AltaLink, 12-month non-cancellable term",
         "assetClass": "IT-hardware",
         "commencementDate": "2024-06-01",
         "endDate": "2025-05-31",

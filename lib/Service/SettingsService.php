@@ -2799,7 +2799,7 @@ class SettingsService {
 
 				$existing = $objectService
 					->setRegister($registerSlug)
-					->setSchema('Mandate')
+					->setSchema('SpendingMandate')
 					->findAll(
 						[
 							'filters' => [
@@ -2818,7 +2818,7 @@ class SettingsService {
 				$objectService->saveObject(
 					object: $template,
 					register: $registerSlug,
-					schema: 'Mandate',
+					schema: 'SpendingMandate',
 				);
 				$seeded++;
 			}//end foreach

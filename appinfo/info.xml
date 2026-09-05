@@ -26,7 +26,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.2.9-unstable.20260831013830</version>
+    <version>0.2.12-unstable.20260901050759</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Shillinq</namespace>
@@ -200,6 +200,14 @@ Vrij en open source onder de EUPL-1.2-licentie.
                  Idempotent, register-scoped, non-destructive, fail-soft; it
                  refuses rather than merges when both slugs already exist. -->
             <step>OCA\Shillinq\Repair\RenameCommitmentSchemas</step>
+            <!--
+                Also before InitializeSettings, and separate from the Dutch-to-English
+                vocabulary pass above on purpose: this one ends a CROSS-APP slug
+                collision rather than translating a word. `Employee` was claimed by
+                this app and by humaniq, and a slug is global per organisation, so
+                SchemaMapper::find() answered whichever row it reached first.
+            -->
+            <step>OCA\Shillinq\Repair\RenameCollidingSchemaSlugs</step>
             <step>OCA\Shillinq\Repair\InitializeSettings</step>
             <step>OCA\Shillinq\Repair\InitializeBbvAdministration</step>
             <step>OCA\Shillinq\Repair\UnifyAnalyticalDimensions</step>

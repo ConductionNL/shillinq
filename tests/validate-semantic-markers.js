@@ -69,7 +69,7 @@ function walk(node, file, offenders, contextName) {
 	}
 	if (!node || typeof node !== 'object') return
 	const name = node.slug || node.title || contextName
-	if (Object.prototype.hasOwnProperty.call(node, 'x-schema-org')) {
+	if (Object.hasOwn(node, 'x-schema-org')) {
 		const marker = node['x-schema-org']
 		if (typeof marker !== 'string' || !CURIE_RE.test(marker)) {
 			offenders.push({ file, name, marker })
@@ -127,7 +127,7 @@ function countMarkers(node, box) {
 		return
 	}
 	if (!node || typeof node !== 'object') return
-	if (Object.prototype.hasOwnProperty.call(node, 'x-schema-org')) box.n += 1
+	if (Object.hasOwn(node, 'x-schema-org')) box.n += 1
 	for (const value of Object.values(node)) countMarkers(value, box)
 }
 

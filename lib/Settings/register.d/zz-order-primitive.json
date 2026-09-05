@@ -4,18 +4,18 @@
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "abstract-order-primitive",
-    "description": "The abstract Order primitive (REQ-ORD-001..003): ONE schema, discriminated by orderType, that models Subsidie (subsidie), PurchaseOrder (purchase) and DBAOpdracht (engagement) as a single transactional workspace, per the menu-IA audit's 'fold into the primitive' decision. `sales` is reserved on the discriminator for the future SalesOrder fold (NOT built by this change — no SalesOrder migration ships here). Each orderType keeps its OWN full field set as an optional, type-namespaced group (`subsidie`/`purchase`/`engagement`) so no regulatory or audit field is dropped, and its OWN lifecycle state vocabulary on the shared `state` field (gated per-transition by `orderType` — see x-openregister-lifecycle below). Money-unit note: PurchaseOrder's amounts are integer EURO CENTS (ADR-022); Subsidie/DBAOpdracht amounts are decimal EUR. The shared `totalAmount` is always decimal EUR — the purchase-group cent fields (totalExclVat/totalVat/totalInclVat) are preserved verbatim and totalAmount is derived by dividing by 100 at fold time. Composition-via-allOf was evaluated (see openspec/changes/abstract-order-primitive/SCHEMA-ANALYTICS-AND-PLAN.md) and REJECTED for this build: OpenRegister's ObjectService::findAll() is schema-scoped only (no allOf-aware cross-schema query — confirmed against SchemaMapper::resolveAllOf(), which merges `properties`/`required` but never queries across schemas), so a single-schema 'Order workspace' index can only ever show literal `OrderPrimitive` rows. The earlier partial build's `Grant` extension schema (zz-order-extensions.json, now removed) was ALSO a live slug collision with the pre-existing `Grant` (WBSO/BBV/NSO/Tozo) schema in shillinq_register.json — the two would have deep-merged via SettingsService::deepMergeConfig, corrupting the unrelated WBSO Grant schema. See tasks.md for the full account. SLUG NOTE (issue #503, 2026-07-23): the schema slug is `OrderPrimitive`, not the bare `Order` originally planned. Live-verification on 8080 found OpenRegister's schema lookup is CASE-INSENSITIVE and (in `ImportHandler::importSchema()`) explicitly bypasses multitenancy (`_multitenancy: false`) when checking for an existing schema by slug, so a slug is effectively unique INSTANCE-WIDE, not per-app or per-organisation. On the shared 8080 instance a `decidesk` schema (id 1585, slug `order`) already occupies that identifier in the SAME organisation as shillinq's own schemas — importing a schema literally named `Order` would have matched it via `LOWER(slug)` and (since `SchemaMapper::updateFromArray` is called on a match) OVERWRITTEN decidesk's live schema with this shape. `OrderPrimitive` avoids the collision and is distinctive enough to avoid future ones with any other app's generic nouns."
+    "description": "The abstract Order primitive: ONE schema, discriminated by orderType, that models Subsidie (subsidie), PurchaseOrder (purchase) and DBAOpdracht (engagement) as a single transactional workspace, per the menu-IA audit's 'fold into the primitive' decision. `sales` is reserved on the discriminator for the future SalesOrder fold (NOT built by this change: no SalesOrder migration ships here). Each orderType keeps its OWN full field set as an optional, type-namespaced group (`subsidie`/`purchase`/`engagement`) so no regulatory or audit field is dropped, and its OWN lifecycle state vocabulary on the shared `state` field (gated per-transition by `orderType`. See x-openregister-lifecycle below). Money-unit note: PurchaseOrder's amounts are integer EURO CENTS (ADR-022); Subsidie/DBAOpdracht amounts are decimal EUR. The shared `totalAmount` is always decimal EUR. The purchase-group cent fields (totalExclVat/totalVat/totalInclVat) are preserved verbatim and totalAmount is derived by dividing by 100 at fold time. Composition-via-allOf was evaluated (see openspec/changes/abstract-order-primitive/SCHEMA-ANALYTICS-AND-PLAN.md) and REJECTED for this build: OpenRegister's ObjectService:findAll is schema-scoped only (no allOf-aware cross-schema query. Confirmed against SchemaMapper:resolveAllOf, which merges `properties`/`required` but never queries across schemas), so a single-schema 'Order workspace' index can only ever show literal `OrderPrimitive` rows. The earlier partial build's `Grant` extension schema (zz-order-extensions.json, now removed) was ALSO a live slug collision with the pre-existing `Grant` (WBSO/BBV/NSO/Tozo) schema in shillinq_register.json. The two would have deep-merged via SettingsService:deepMergeConfig, corrupting the unrelated WBSO Grant schema. See tasks.md for the full account. SLUG NOTE (issue #503, 2026-07-23): the schema slug is `OrderPrimitive`, not the bare `Order` originally planned. Live-verification on 8080 found OpenRegister's schema lookup is CASE-INSENSITIVE and (in `ImportHandler:importSchema`) explicitly bypasses multitenancy (`_multitenancy: false`) when checking for an existing schema by slug, so a slug is effectively unique INSTANCE-WIDE, not per-app or per-organisation. On the shared 8080 instance a `decidesk` schema (id 1585, slug `order`) already occupies that identifier in the SAME organisation as shillinq's own schemas. Importing a schema literally named `Order` would have matched it via `LOWER(slug)` and (since `SchemaMapper:updateFromArray` is called on a match) OVERWRITTEN decidesk's live schema with this shape. `OrderPrimitive` avoids the collision and is distinctive enough to avoid future ones with any other app's generic nouns."
   },
   "components": {
     "schemas": {
       "OrderPrimitive": {
         "slug": "OrderPrimitive",
-        "icon": "FileDocumentMultipleOutline",
+        "icon": "ClipboardListOutline",
         "version": "0.1.0",
         "title": "Order",
         "x-schema-org": "schema:Order",
         "type": "object",
-        "description": "The unified transactional workspace primitive (REQ-ORD-001) folding Subsidie (subsidie), PurchaseOrder (purchase) and DBAOpdracht (engagement) behind one `orderType` discriminator. `sales`/`booking`/`quote`/`blanket` are reserved discriminator values for future folds and are NOT populated by this change. Each type's full field set lives, unabridged, in its own optional field group (`subsidie`/`purchase`/`engagement`); the shared core (number, counterparty, currency, dates, total, state) is common. Lifecycle: `state` carries the UNION of every type's own vocabulary; each transition is scoped to exactly one `orderType` (x-openregister-lifecycle.transitions.*.orderType) so a subsidie Order can never attempt a purchase transition and vice-versa (REQ-ORD-002).",
+        "description": "The unified transactional workspace primitive folding Subsidie (subsidie), PurchaseOrder (purchase) and DBAOpdracht (engagement) behind one `orderType` discriminator. `sales`/`booking`/`quote`/`blanket` are reserved discriminator values for future folds and are NOT populated by this change. Each type's full field set lives, unabridged, in its own optional field group (`subsidie`/`purchase`/`engagement`); the shared core (number, counterparty, currency, dates, total, state) is common. Lifecycle: `state` carries the UNION of every type's own vocabulary; each transition is scoped to exactly one `orderType` (x-openregister-lifecycle.transitions.*.orderType) so a subsidie Order can never attempt a purchase transition and vice-versa.",
         "required": [
           "administrationId",
           "orderType",
@@ -41,7 +41,7 @@
               "quote",
               "blanket"
             ],
-            "description": "Discriminator. Only `purchase`, `subsidie` and `engagement` are populated by this change's migration; the others are reserved for future folds (REQ-ORD-001).",
+            "description": "Discriminator. Only `purchase`, `subsidie` and `engagement` are populated by this change's migration; the others are reserved for future folds.",
             "example": "subsidy",
             "title": "Order Type"
           },
@@ -146,7 +146,7 @@
               "ACTIVE",
               "ENDED"
             ],
-            "description": "Lifecycle state. The legal subset and transitions depend on `orderType` — see x-openregister-lifecycle.initialStateByType and .transitions.*.orderType (REQ-ORD-002). subsidie: request..handled (identical to the retired Subsidie schema). purchase: draft..cancelled (identical to PurchaseOrder.statusCode). engagement: DRAFT..ENDED (identical to DBAOpdracht.intakeStatus).",
+            "description": "Lifecycle state. The legal subset and transitions depend on `orderType`: see x-openregister-lifecycle.initialStateByType and.transitions.*.orderType. Subsidie: request.handled (identical to the retired Subsidie schema). Purchase: draft.cancelled (identical to PurchaseOrder.statusCode). Engagement: DRAFT.ENDED (identical to DBAOpdracht.intakeStatus).",
             "example": "request",
             "title": "State"
           },
@@ -154,7 +154,7 @@
             "type": "object",
             "nullable": true,
             "title": "Subsidie Details",
-            "description": "Populated only when orderType=subsidie. The full field set of the retired Subsidie schema (per Awb afdeling 4.2 + VNG ASV-model 2022) — no regulatory field dropped (REQ-ORD-002/003).",
+            "description": "Populated only when orderType=subsidie. The full field set of the retired Subsidie schema (per Awb afdeling 4.2 + VNG ASV-model 2022): no regulatory field dropped.",
             "properties": {
               "subsidyNumber": {
                 "type": "string",
@@ -185,7 +185,7 @@
                   "react-eu",
                   "other"
                 ],
-                "description": "R&D subsidie regeling variant (REQ-RDS-001).",
+                "description": "R&D subsidie regeling variant.",
                 "title": "Subsidie Regeling"
               },
               "requestDate": {
@@ -206,7 +206,7 @@
                 "type": "string",
                 "format": "date",
                 "nullable": true,
-                "description": "Date of the vaststellingsbeschikking (Awb 4:46). Retention trigger start (REQ-SUB-009).",
+                "description": "Date of the vaststellingsbeschikking (Awb 4:46). Retention trigger start.",
                 "title": "Vaststelling Date"
               },
               "settlementDate": {
@@ -297,7 +297,7 @@
               "hasRepaymentPlan": {
                 "type": "boolean",
                 "default": false,
-                "description": "Whether a terugvorderingsplan (settlement plan) exists (REQ-SUB-009).",
+                "description": "Whether a terugvorderingsplan (settlement plan) exists.",
                 "title": "Has Repayment Plan"
               },
               "approvingAuthority": {
@@ -321,7 +321,7 @@
               "granteeOrganization": {
                 "type": "string",
                 "nullable": true,
-                "description": "Recipient organization name (REQ-SUB-002, English operations variant).",
+                "description": "Recipient organization name (English operations variant).",
                 "title": "Grantee Organization"
               },
               "notes": {
@@ -336,7 +336,7 @@
             "type": "object",
             "nullable": true,
             "title": "Purchase Order Details",
-            "description": "Populated only when orderType=purchase. The full field set of PurchaseOrder — amounts stay in integer EURO CENTS per ADR-022 (REQ-ORD-002/003).",
+            "description": "Populated only when orderType=purchase. The full field set of PurchaseOrder: amounts stay in integer EURO CENTS per ADR-022.",
             "properties": {
               "poNumber": {
                 "type": "string",
@@ -464,7 +464,7 @@
             "type": "object",
             "nullable": true,
             "title": "Engagement Details",
-            "description": "Populated only when orderType=engagement. The full field set of DBAOpdracht — Wet DBA compliance engagement (modelovereenkomst + risicoklasse), per REQ-ORD-002/003.",
+            "description": "Populated only when orderType=engagement. The full field set of DBAOpdracht: Wet DBA compliance engagement (modelovereenkomst + risicoklasse).",
             "properties": {
               "enterpriseId": {
                 "type": "string",
@@ -495,7 +495,7 @@
                 "type": "string",
                 "format": "date",
                 "nullable": true,
-                "description": "Actual end date; filled on the beeindiging procedure (REQ-DBA-018).",
+                "description": "Actual end date; filled on the beeindiging procedure.",
                 "title": "Feitelijke Eind Datum"
               },
               "expectedRevenue": {
@@ -509,19 +509,19 @@
                 "type": "integer",
                 "minimum": 0,
                 "default": 0,
-                "description": "Revenue realised so far, in euro cents (REQ-DBA-004).",
+                "description": "Revenue realised so far, in euro cents.",
                 "title": "Gerealiseerde Omzet"
               },
               "oneOffLowThreshold": {
                 "type": "boolean",
                 "default": false,
-                "description": "Marked 'one-off, total < EUR 5000' — shortened intake offered (REQ-DBA-001).",
+                "description": "Marked 'one-off, total < EUR 5000': shortened intake offered.",
                 "title": "Eenmalig Lage Drempel"
               },
               "modelAgreementId": {
                 "type": "string",
                 "nullable": true,
-                "description": "FK to the applicable DBAModelovereenkomst (REQ-DBA-002).",
+                "description": "FK to the applicable DBAModelovereenkomst.",
                 "title": "Model Overeenkomst ID"
               },
               "intakeDate": {
@@ -536,7 +536,7 @@
                 "minimum": 0,
                 "maximum": 100,
                 "nullable": true,
-                "description": "Running DBA risk score 0-100 (REQ-DBA-003).",
+                "description": "Running DBA risk score 0-100.",
                 "title": "Actuele Risicoscore"
               },
               "riskLevel": {
@@ -549,20 +549,20 @@
                   "HIGH",
                   "ABBREVIATED_LOW_THRESHOLD"
                 ],
-                "description": "Risk band derived from actueleRisicoscore (REQ-DBA-003).",
+                "description": "Risk band derived from actueleRisicoscore.",
                 "title": "Risico Niveau"
               },
               "openFlags": {
                 "type": "integer",
                 "minimum": 0,
                 "default": 0,
-                "description": "Count of open DBARisicoflag records (REQ-DBA-004).",
+                "description": "Count of open DBARisicoflag records.",
                 "title": "Open Flags"
               },
               "evidenceDossierId": {
                 "type": "string",
                 "nullable": true,
-                "description": "FK to the DBAEvidenceDossier for this engagement (REQ-DBA-007).",
+                "description": "FK to the DBAEvidenceDossier for this engagement.",
                 "title": "Evidence Dossier ID"
               },
               "wbaAssessmentResult": {
@@ -574,7 +574,7 @@
                   "NONE_OPINION",
                   "NON_FROM_APPLICATION"
                 ],
-                "description": "Belastingdienst WBA assessment outcome (REQ-DBA-013).",
+                "description": "Belastingdienst WBA assessment outcome.",
                 "title": "Wba Beoordeling Resultaat"
               },
               "wbaValidTo": {
@@ -587,7 +587,7 @@
               "intermediaryMode": {
                 "type": "boolean",
                 "default": false,
-                "description": "Whether the tussenkomst triangle applies (REQ-DBA-017).",
+                "description": "Whether the tussenkomst triangle applies.",
                 "title": "Intermediair Mode"
               },
               "perspective": {
@@ -597,14 +597,14 @@
                   "CONTRACTOR",
                   "CLIENT"
                 ],
-                "description": "ZZP perspective vs opdrachtgever/hire-in flow (REQ-DBA-010).",
+                "description": "ZZP perspective vs opdrachtgever/hire-in flow.",
                 "title": "Perspectief"
               },
               "retentionDeadline": {
                 "type": "string",
                 "format": "date",
                 "nullable": true,
-                "description": "Date after which the evidence dossier becomes deletable (7y after feitelijkeEindDatum, AWR art. 52, REQ-DBA-018).",
+                "description": "Date after which the evidence dossier becomes deletable (7y after feitelijkeEindDatum, AWR art. 52).",
                 "title": "Retentie Deadline"
               }
             }
@@ -717,7 +717,7 @@
             "INTAKE_REQUIRED": {
               "orderType": "engagement",
               "label": "Intake vereist",
-              "description": "First invoice pending; DBA intake must complete first (REQ-DBA-001)."
+              "description": "First invoice pending; DBA intake must complete first."
             },
             "INTAKE_COMPLETED": {
               "orderType": "engagement",

@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "fx-period-end-revaluation",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Declares FxRevaluationPosting, the append-only audit record produced by OCA\\Shillinq\\Service\\Treasury\\FxRevaluationService at period-end (REQ-MC-006/007/008 of bookkeeping-multi-currency). Fills the SoftCloseExecutor::delegateFxRevaluation() call-site (lib/Service/SoftCloseExecutor.php) that has existed since bookkeeping-soft-close-flux shipped but always returned 0 because the delegate class never existed."
+    "description": "Declares FxRevaluationPosting, the append-only audit record produced by OCA\\Shillinq\\Service\\Treasury\\FxRevaluationService at period-end (008 of bookkeeping-multi-currency). Fills the SoftCloseExecutor:delegateFxRevaluation call-site (lib/Service/SoftCloseExecutor.php) that has existed since bookkeeping-soft-close-flux shipped but always returned 0 because the delegate class never existed."
   },
   "components": {
     "schemas": {
@@ -13,7 +13,7 @@
         "icon": "CurrencyEur",
         "version": "0.1.0",
         "title": "FX Revaluation Posting",
-        "description": "Append-only audit record per FXPosition period-end revaluation (REQ-MC-008). Carries the source position, the closing rate used (and how it was resolved), the incremental unrealised movement posted, and the GL account attribution. Lifecycle: posted → reversed (manual controller correction only — this is NOT an automatic month-start reversal; see design.md 'Reversing-entry vs cumulative-adjustment decision').",
+        "description": "Append-only audit record per FXPosition period-end revaluation. Carries the source position, the closing rate used (and how it was resolved), the incremental unrealised movement posted, and the GL account attribution. Lifecycle: posted → reversed (manual controller correction only. This is NOT an automatic month-start reversal; see design.md 'Reversing-entry vs cumulative-adjustment decision').",
         "x-schema-org": "schema:MonetaryAmount",
         "x-spec": "openspec/changes/fx-period-end-revaluation/specs/bookkeeping-multi-currency/spec.md",
         "type": "object",
@@ -35,50 +35,50 @@
         "properties": {
           "administrationId": {
             "type": "string",
-            "description": "Administration the revalued FXPosition belongs to (REQ-MC-008).",
+            "description": "Administration the revalued FXPosition belongs to.",
             "example": "adm-holding-nl",
             "title": "Administration ID"
           },
           "periodId": {
             "type": "string",
-            "description": "FK to FiscalPeriod.periodId, the yyyy-mm period this revaluation closed (REQ-MC-006).",
+            "description": "FK to FiscalPeriod.periodId, the yyyy-mm period this revaluation closed.",
             "example": "2026-03",
             "title": "Period ID"
           },
           "positionId": {
             "type": "string",
-            "description": "FK to the source FXPosition record revalued (REQ-MC-008).",
+            "description": "FK to the source FXPosition record revalued.",
             "example": "fxpos-usd-adm-holding-nl",
             "title": "Position ID"
           },
           "foreignCurrency": {
             "type": "string",
-            "description": "Foreign currency of the revalued position, ISO 4217 (REQ-MC-006).",
+            "description": "Foreign currency of the revalued position, ISO 4217.",
             "example": "USD",
             "title": "Foreign Currency"
           },
           "functionalCurrency": {
             "type": "string",
-            "description": "Administration's functional currency the position was revalued into, ISO 4217 (REQ-MC-006).",
+            "description": "Administration's functional currency the position was revalued into, ISO 4217.",
             "example": "EUR",
             "title": "Functional Currency"
           },
           "netPosition": {
             "type": "number",
-            "description": "Snapshot of FXPosition.position at the moment of revaluation (REQ-MC-006).",
+            "description": "Snapshot of FXPosition.position at the moment of revaluation.",
             "example": 100000.0,
             "title": "Net Position"
           },
           "priorRate": {
             "type": "number",
             "nullable": true,
-            "description": "FXPosition.spotRate immediately before this revaluation; null when this is the position's first mark (REQ-MC-006).",
+            "description": "FXPosition.spotRate immediately before this revaluation; null when this is the position's first mark.",
             "example": 0.9,
             "title": "Prior Rate"
           },
           "closingRate": {
             "type": "number",
-            "description": "Closing rate applied this period, three-decimal FX precision (REQ-MC-006).",
+            "description": "Closing rate applied this period, three-decimal FX precision.",
             "example": 0.93,
             "title": "Closing Rate"
           },
@@ -88,13 +88,13 @@
               "live",
               "manual-fallback"
             ],
-            "description": "Whether closingRate came from a live TreasuryRateService snapshot or the position's manually-maintained spotRate fallback (REQ-MC-007).",
+            "description": "Whether closingRate came from a live TreasuryRateService snapshot or the position's manually-maintained spotRate fallback.",
             "example": "live",
             "title": "Rate Source"
           },
           "unrealisedDeltaCents": {
             "type": "integer",
-            "description": "Incremental unrealised movement posted this period, in functional-currency integer cents (money-as-cents per ADR-001 fleet rule); positive = gain, negative = loss (REQ-MC-006).",
+            "description": "Incremental unrealised movement posted this period, in functional-currency integer cents (money-as-cents per ADR-001 fleet rule); positive = gain, negative = loss.",
             "example": 300000,
             "title": "Unrealised Delta Cents"
           },
@@ -104,45 +104,45 @@
               "gain",
               "loss"
             ],
-            "description": "Sign of unrealisedDeltaCents, denormalised for reporting (REQ-MC-008).",
+            "description": "Sign of unrealisedDeltaCents, denormalised for reporting.",
             "example": "gain",
             "title": "Direction"
           },
           "targetGLAccount": {
             "type": "string",
-            "description": "Unrealised FX gain/loss P&L account this movement is attributed to (fx_revaluation_gain_account / fx_revaluation_loss_account IAppConfig keys) (REQ-MC-008).",
+            "description": "Unrealised FX gain/loss P&L account this movement is attributed to (fx_revaluation_gain_account / fx_revaluation_loss_account IAppConfig keys).",
             "example": "8020",
             "title": "Target GL Account"
           },
           "contraGLAccount": {
             "type": "string",
-            "description": "Balance-sheet FX translation adjustment (contra) account (fx_revaluation_adjustment_account IAppConfig key) (REQ-MC-008).",
+            "description": "Balance-sheet FX translation adjustment (contra) account (fx_revaluation_adjustment_account IAppConfig key).",
             "example": "1699",
             "title": "Contra GL Account"
           },
           "journalEntryId": {
             "type": "string",
-            "description": "Synthesised journal-entry linkage id for audit trail, mirroring AutoAccrualPosting.journalEntryId — no literal JournalEntry object is created (REQ-MC-008).",
+            "description": "Synthesised journal-entry linkage id for audit trail, mirroring AutoAccrualPosting.journalEntryId: no literal JournalEntry object is created.",
             "example": "je-2026-03-fx-usd-adm-holding-nl",
             "title": "Journal Entry ID"
           },
           "postedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Posting timestamp (REQ-MC-008).",
+            "description": "Posting timestamp.",
             "example": "2026-03-31T23:30:00+02:00",
             "title": "Posted At"
           },
           "postedBy": {
             "type": "string",
-            "description": "Posting actor, FxRevaluationService::SYSTEM_ACTOR (REQ-MC-008).",
+            "description": "Posting actor, FxRevaluationService:SYSTEM_ACTOR.",
             "example": "SYSTEM:FxRevaluationService",
             "title": "Posted By"
           },
           "reversalId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the reversal FxRevaluationPosting once manually reversed by a controller (REQ-MC-008).",
+            "description": "FK to the reversal FxRevaluationPosting once manually reversed by a controller.",
             "example": null,
             "title": "Reversal ID"
           },
@@ -167,7 +167,7 @@
             },
             "reversed": {
               "label": "Reversed",
-              "description": "Manually reversed by a controller to correct an erroneous automated posting; original entry preserved for audit (REQ-MC-008)."
+              "description": "Manually reversed by a controller to correct an erroneous automated posting; original entry preserved for audit."
             }
           },
           "transitions": {
@@ -175,7 +175,7 @@
               "from": "posted",
               "to": "reversed",
               "label": "Reverse posting",
-              "description": "Mark the revaluation posting as reversed; original entry preserved (REQ-MC-008).",
+              "description": "Mark the revaluation posting as reversed; original entry preserved.",
               "roles": [
                 "controller",
                 "soft-close-operator"
@@ -185,7 +185,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "FxRevaluationPosting is append-only audit evidence per REQ-MC-008 / ADR-022 — original posted entry MUST be preserved when a reversal is recorded; the reversal links back to the original via reversalId."
+          "description": "FxRevaluationPosting is append-only audit evidence / ADR-022: original posted entry MUST be preserved when a reversal is recorded; the reversal links back to the original via reversalId."
         }
       }
     }

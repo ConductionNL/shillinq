@@ -9,7 +9,7 @@
         "icon": "ClipboardListOutline",
         "version": "0.1.0",
         "title": "Inventory Cycle Count",
-        "description": "Periodic stock-take batch per REQ-ICC-001 / REQ-ICC-002. A cycle count is a count BATCH covering an operator-selected scope (full or partial by location/category). On transition draft → submitted the engine snapshots the in-scope InventoryStock into InventoryCycleCountLine rows; on counting → posted the VarianceGate (ADR-031 exception) enforces that every line with requiresReason=true carries a reasonCode FK; on posted → reconciled the CycleCountService emits one StockMove per non-zero-variance line with movementType='adjustment-style' (issue/receipt depending on sign) and movementReason='cycle-count-variance' so the existing inventory-stock-movement-ledger lifecycle handles InventoryStock update + GL materialisation. The original posted CycleCount row stays immutable; reconciliation is one-shot and idempotent on countId. No app-local CycleCountMapper / lib/Db table per ADR-024 — the register IS the persistence. xLifecycle states + the variance threshold metadata live in this fragment so the change is fully declarative.",
+        "description": "Periodic stock-take batch. A cycle count is a count BATCH covering an operator-selected scope (full or partial by location/category). On transition draft → submitted the engine snapshots the in-scope InventoryStock into InventoryCycleCountLine rows; on counting → posted the VarianceGate (ADR-031 exception) enforces that every line with requiresReason=true carries a reasonCode FK; on posted → reconciled the CycleCountService emits one StockMove per non-zero-variance line with movementType='adjustment-style' (issue/receipt depending on sign) and movementReason='cycle-count-variance' so the existing inventory-stock-movement-ledger lifecycle handles InventoryStock update + GL materialisation. The original posted CycleCount row stays immutable; reconciliation is one-shot and idempotent on countId. No app-local CycleCountMapper / lib/Db table per ADR-024: the register IS the persistence. XLifecycle states + the variance threshold metadata live in this fragment so the change is fully declarative.",
         "x-schema-org": "schema:InventoryAction",
         "x-openregister-purpose": "ledger",
         "x-spec": "openspec/changes/inventory-cycle-count/specs/inventory-cycle-count/spec.md",
@@ -25,7 +25,7 @@
         "properties": {
           "countId": {
             "type": "string",
-            "description": "Sequential count identifier unique per administration (CC-YYYY-MM-NNNNN). Operator-visible per REQ-ICC-002.",
+            "description": "Sequential count identifier unique per administration (CC-YYYY-MM-NNNNN). Operator-visible.",
             "example": "CC-2026-05-00001",
             "pattern": "^CC-[0-9]{4}-[0-9]{2}-[0-9]{5}$",
             "title": "Count ID"
@@ -33,13 +33,13 @@
           "countDate": {
             "type": "string",
             "format": "date",
-            "description": "Physical count date per REQ-ICC-002. Drives variance posting period assignment.",
+            "description": "Physical count date. Drives variance posting period assignment.",
             "example": "2026-05-20",
             "title": "Count Date"
           },
           "initiatedBy": {
             "type": "string",
-            "description": "FK to Person initiating the count per REQ-ICC-002.",
+            "description": "FK to Person initiating the count.",
             "example": "user-001",
             "title": "Initiated By"
           },
@@ -49,14 +49,14 @@
               "full",
               "partial"
             ],
-            "description": "Closed enum per REQ-ICC-002. `full` = all SKUs in the administration; `partial` = scoped to a single location or product category (REQ-ICC-008).",
+            "description": "Closed enum. `full` = all SKUs in the administration; `partial` = scoped to a single location or product category.",
             "example": "partial",
             "title": "Count Type"
           },
           "locationFilter": {
             "type": "string",
             "nullable": true,
-            "description": "Optional FK to Location.id when countType=partial. One of locationFilter / categoryFilter MUST be populated per REQ-ICC-002 / REQ-ICC-008.",
+            "description": "Optional FK to Location.id when countType=partial. One of locationFilter / categoryFilter MUST be populated.",
             "example": "loc-w01",
             "title": "Location Filter",
             "$ref": "Location"
@@ -64,7 +64,7 @@
           "categoryFilter": {
             "type": "string",
             "nullable": true,
-            "description": "Optional product-category code when countType=partial. One of locationFilter / categoryFilter MUST be populated per REQ-ICC-002 / REQ-ICC-008.",
+            "description": "Optional product-category code when countType=partial. One of locationFilter / categoryFilter MUST be populated.",
             "example": "electronics",
             "title": "Category Filter"
           },
@@ -73,7 +73,7 @@
             "minimum": 0,
             "multipleOf": 0.01,
             "nullable": true,
-            "description": "Total book value of in-scope inventory at submission (snapshot of SUM(line.expectedValue)) per REQ-ICC-002. Null while state=draft. multipleOf 0.01 per the shillinq Money discipline.",
+            "description": "Total book value of in-scope inventory at submission (snapshot of SUM(line.expectedValue)). Null while state=draft. multipleOf 0.01 per the shillinq Money discipline.",
             "example": 45000.0,
             "title": "Expected Value"
           },
@@ -82,7 +82,7 @@
             "minimum": 0,
             "multipleOf": 0.01,
             "nullable": true,
-            "description": "Total physical value (SUM(line.countedValue)) per REQ-ICC-002. Null until all lines counted.",
+            "description": "Total physical value (SUM(line.countedValue)). Null until all lines counted.",
             "example": 43750.0,
             "title": "Counted Value"
           },
@@ -90,14 +90,14 @@
             "type": "number",
             "multipleOf": 0.01,
             "nullable": true,
-            "description": "Calculated countedValue − expectedValue per REQ-ICC-002. Signed: negative = shrinkage, positive = found stock.",
+            "description": "Calculated countedValue − expectedValue. Signed: negative = shrinkage, positive = found stock.",
             "example": -1250.0,
             "title": "Variance Value"
           },
           "variancePercentage": {
             "type": "number",
             "nullable": true,
-            "description": "Calculated (varianceValue / expectedValue) × 100 per REQ-ICC-002. Null when expectedValue=0 (division-by-zero guard).",
+            "description": "Calculated (varianceValue / expectedValue) × 100. Null when expectedValue=0 (division-by-zero guard).",
             "example": -2.78,
             "title": "Variance Percentage"
           },
@@ -112,14 +112,14 @@
               "cancelled"
             ],
             "default": "draft",
-            "description": "Lifecycle state per REQ-ICC-006. draft: scope editable; submitted: line snapshot created from InventoryStock; counting: operators entering countedQuantity; posted: variance reviewed, reasonCodes attached; reconciled: StockMoves emitted, InventoryStock updated; cancelled: terminal, no GL impact.",
+            "description": "Lifecycle state. draft: scope editable; submitted: line snapshot created from InventoryStock; counting: operators entering countedQuantity; posted: variance reviewed, reasonCodes attached; reconciled: StockMoves emitted, InventoryStock updated; cancelled: terminal, no GL impact.",
             "example": "counting",
             "title": "State"
           },
           "notes": {
             "type": "string",
             "nullable": true,
-            "description": "Supervisor notes per REQ-ICC-002.",
+            "description": "Supervisor notes.",
             "example": "Zone A quarterly count",
             "title": "Notes"
           },
@@ -157,7 +157,7 @@
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration owning this count. Tenant-scoped per REQ-MA-001; cross-org reads/writes are masked 404 by AdministrationContextService.",
+            "description": "FK to Administration owning this count. Tenant-scoped; cross-org reads/writes are masked 404 by AdministrationContextService.",
             "example": "adm-consultancy-nl",
             "title": "Administration ID"
           }
@@ -174,14 +174,14 @@
             "default": 5,
             "minimum": 0,
             "maximum": 100,
-            "description": "Per REQ-ICC-004: a line whose |quantityVariance| / expectedQuantity × 100 exceeds this threshold flips requiresReason=true and MUST carry a reasonCode before the count can transition counting → posted."
+            "description": "Per: a line whose |quantityVariance| / expectedQuantity × 100 exceeds this threshold flips requiresReason=true and MUST carry a reasonCode before the count can transition counting → posted."
           },
           "valueVarianceThresholdAbsolute": {
             "type": "number",
             "default": 500,
             "minimum": 0,
             "multipleOf": 0.01,
-            "description": "Per REQ-ICC-004: a line whose |valueVariance| exceeds this absolute amount (administration base currency) flips requiresReason=true irrespective of percentage."
+            "description": "Per: a line whose |valueVariance| exceeds this absolute amount (administration base currency) flips requiresReason=true irrespective of percentage."
           }
         },
         "x-openregister-lifecycle": {
@@ -196,7 +196,7 @@
             "submitted": {
               "label": "Submitted",
               "labelNl": "Ingediend",
-              "description": "Scope is frozen. InventoryCycleCountLine rows have been created — one per in-scope (sku, locationId) pair with expectedQuantity populated from InventoryStock and countedQuantity null."
+              "description": "Scope is frozen. InventoryCycleCountLine rows have been created: one per in-scope (sku, locationId) pair with expectedQuantity populated from InventoryStock and countedQuantity null."
             },
             "counting": {
               "label": "Counting",
@@ -225,7 +225,7 @@
               "to": "submitted",
               "label": "Submit",
               "labelNl": "Indienen",
-              "description": "Freeze scope and snapshot InventoryStock into InventoryCycleCountLine rows per REQ-ICC-006 + REQ-ICC-008.",
+              "description": "Freeze scope and snapshot InventoryStock into InventoryCycleCountLine rows +.",
               "requires": "OCA\\Shillinq\\Lifecycle\\VarianceGate::requireValidScope",
               "actions": [
                 {
@@ -241,7 +241,7 @@
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "snapshot-inventory",
-                  "description": "REQ-ICC-006 + REQ-ICC-008: query InventoryStock filtered by countType / locationFilter / categoryFilter and create one InventoryCycleCountLine per in-scope (sku, locationId) pair with expectedQuantity populated and countedQuantity null. Delegated to CycleCountService::snapshotScope when the engine cannot express the filtered fan-out declaratively (ADR-031 exception path).",
+                  "description": "Query InventoryStock filtered by countType / locationFilter / categoryFilter and create one InventoryCycleCountLine per in-scope (sku, locationId) pair with expectedQuantity populated and countedQuantity null. Delegated to CycleCountService:snapshotScope when the engine cannot express the filtered fan-out declaratively (ADR-031 exception path).",
                   "actionParameters": {
                     "register": "shillinq",
                     "sourceSchema": "InventoryStock",
@@ -260,14 +260,14 @@
               "to": "counting",
               "label": "Begin counting",
               "labelNl": "Telling starten",
-              "description": "Warehouse staff begin data entry. No engine work required — a pure state flip per REQ-ICC-006."
+              "description": "Warehouse staff begin data entry. No engine work required: a pure state flip."
             },
             "post": {
               "from": "counting",
               "to": "posted",
               "label": "Post count",
               "labelNl": "Telling boeken",
-              "description": "Review variance and freeze. REQ-ICC-004 + REQ-ICC-005: VarianceGate enforces every line with requiresReason=true carries a reasonCode FK; otherwise the transition is denied with a 'variance investigation required' error.",
+              "description": "Review variance and freeze. +: VarianceGate enforces every line with requiresReason=true carries a reasonCode FK; otherwise the transition is denied with a 'variance investigation required' error.",
               "requires": "OCA\\Shillinq\\Lifecycle\\VarianceGate::requireReasonsOnPost",
               "actions": [
                 {
@@ -292,7 +292,7 @@
               "to": "reconciled",
               "label": "Reconcile",
               "labelNl": "Verwerken",
-              "description": "REQ-ICC-007: emit one StockMove per non-zero-variance line via the inventory-stock-movement-ledger lifecycle (movementReason='cycle-count-variance', referenceDocumentUri='shillinq://cycle-count/<countId>'). The StockMove lifecycle updates InventoryStock + materialises GL; the CycleCount row stays immutable.",
+              "description": "Emit one StockMove per non-zero-variance line via the inventory-stock-movement-ledger lifecycle (movementReason='cycle-count-variance', referenceDocumentUri='shillinq://cycle-count/<countId>'). The StockMove lifecycle updates InventoryStock + materialises GL; the CycleCount row stays immutable.",
               "requires": "OCA\\Shillinq\\Lifecycle\\VarianceGate::requireReasonsOnPost",
               "actions": [
                 {
@@ -308,7 +308,7 @@
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "emit-variance-adjustments",
-                  "description": "REQ-ICC-007 declarative materialisation: for each InventoryCycleCountLine with quantityVariance != 0, emit a StockMove via inventory-stock-movement-ledger. Sign rules: countedQuantity > expectedQuantity → movementType='receipt' (destinationLocationId = line.locationId, sourceLocationId=null); countedQuantity < expectedQuantity → movementType='issue' (sourceLocationId = line.locationId, destinationLocationId=null). movementReason='cycle-count-variance' always; referenceDocumentUri stamps the originating countId. Delegated to CycleCountService::emitAdjustments — the engine cannot express the fan-out + per-line sign branching natively (ADR-031 exception path).",
+                  "description": "Declarative materialisation: for each InventoryCycleCountLine with quantityVariance != 0, emit a StockMove via inventory-stock-movement-ledger. Sign rules: countedQuantity > expectedQuantity → movementType='receipt' (destinationLocationId = line.locationId, sourceLocationId=null); countedQuantity < expectedQuantity → movementType='issue' (sourceLocationId = line.locationId, destinationLocationId=null). MovementReason='cycle-count-variance' always; referenceDocumentUri stamps the originating countId. Delegated to CycleCountService:emitAdjustments. The engine cannot express the fan-out + per-line sign branching natively (ADR-031 exception path).",
                   "actionParameters": {
                     "register": "shillinq",
                     "sourceSchema": "InventoryCycleCountLine",
@@ -330,7 +330,7 @@
               "to": "cancelled",
               "label": "Cancel",
               "labelNl": "Annuleren",
-              "description": "Cancel from any non-terminal state per REQ-ICC-006. No StockMoves emitted; no GL impact. Snapshot rows remain for audit.",
+              "description": "Cancel from any non-terminal state. No StockMoves emitted; no GL impact. Snapshot rows remain for audit.",
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
@@ -370,7 +370,7 @@
               "state",
               "countDate"
             ],
-            "description": "Powers the Cycle Counts index filter by state + date range per REQ-ICC-010."
+            "description": "Powers the Cycle Counts index filter by state + date range."
           }
         ],
         "x-openregister-rbac": {
@@ -412,7 +412,7 @@
         "icon": "FormatListNumberedRtl",
         "version": "0.1.0",
         "title": "Inventory Cycle Count Line",
-        "description": "One snapshot row inside an InventoryCycleCount per REQ-ICC-003. Each line captures the (sku, locationId) pair, the expectedQuantity snapshotted from InventoryStock at submission, the operator-entered countedQuantity, and the derived variance fields. The flagging field requiresReason is computed against the configurable thresholds in InventoryCycleCount.x-openregister-metadata (quantityVarianceThresholdPercent + valueVarianceThresholdAbsolute) per REQ-ICC-004 and reused by the post transition's VarianceGate (REQ-ICC-005). All money/quantity fields are integer-cent (multipleOf 0.01) per the shillinq Money discipline.",
+        "description": "One snapshot row inside an InventoryCycleCount. Each line captures the (sku, locationId) pair, the expectedQuantity snapshotted from InventoryStock at submission, the operator-entered countedQuantity, and the derived variance fields. The flagging field requiresReason is computed against the configurable thresholds in InventoryCycleCount.x-openregister-metadata (quantityVarianceThresholdPercent + valueVarianceThresholdAbsolute) and reused by the post transition's VarianceGate. All money/quantity fields are integer-cent (multipleOf 0.01) per the shillinq Money discipline.",
         "x-schema-org": "schema:Quantity",
         "x-openregister-purpose": "ledger",
         "x-spec": "openspec/changes/inventory-cycle-count/specs/inventory-cycle-count/spec.md",
@@ -429,20 +429,20 @@
         "properties": {
           "lineId": {
             "type": "string",
-            "description": "Sequential line identifier within a count (CC-YYYY-MM-NNNNN-LLL) per REQ-ICC-003.",
+            "description": "Sequential line identifier within a count (CC-YYYY-MM-NNNNN-LLL).",
             "example": "CC-2026-05-00001-001",
             "pattern": "^CC-[0-9]{4}-[0-9]{2}-[0-9]{5}-[0-9]{3}$",
             "title": "Line ID"
           },
           "countId": {
             "type": "string",
-            "description": "FK to InventoryCycleCount per REQ-ICC-003.",
+            "description": "FK to InventoryCycleCount.",
             "example": "CC-2026-05-00001",
             "title": "Count ID"
           },
           "sku": {
             "type": "string",
-            "description": "Product SKU per REQ-ICC-003.",
+            "description": "Product SKU.",
             "example": "SKU-4521",
             "title": "SKU"
           },
@@ -464,7 +464,7 @@
             "type": "number",
             "minimum": 0,
             "multipleOf": 0.01,
-            "description": "InventoryStock.quantity snapshot at submission per REQ-ICC-003 + REQ-ICC-006. Non-negative.",
+            "description": "InventoryStock.quantity snapshot at submission +. Non-negative.",
             "example": 150,
             "title": "Expected Quantity"
           },
@@ -473,7 +473,7 @@
             "minimum": 0,
             "multipleOf": 0.01,
             "nullable": true,
-            "description": "Operator-entered physical count per REQ-ICC-003. Null while the line is un-counted. Negative values rejected per REQ-ICC-003.",
+            "description": "Operator-entered physical count. Null while the line is un-counted. Negative values rejected.",
             "example": 145,
             "title": "Counted Quantity"
           },
@@ -481,7 +481,7 @@
             "type": "number",
             "minimum": 0,
             "multipleOf": 0.01,
-            "description": "Unit cost at count date per REQ-ICC-003. Used for valueVariance + GL posting.",
+            "description": "Unit cost at count date. Used for valueVariance + GL posting.",
             "example": 45.0,
             "title": "Unit Cost"
           },
@@ -489,7 +489,7 @@
             "type": "number",
             "minimum": 0,
             "multipleOf": 0.01,
-            "description": "Calculated expectedQuantity × unitCost per REQ-ICC-003.",
+            "description": "Calculated expectedQuantity × unitCost.",
             "example": 6750.0,
             "title": "Expected Value"
           },
@@ -498,7 +498,7 @@
             "minimum": 0,
             "multipleOf": 0.01,
             "nullable": true,
-            "description": "Calculated countedQuantity × unitCost per REQ-ICC-003. Null until counted.",
+            "description": "Calculated countedQuantity × unitCost. Null until counted.",
             "example": 6525.0,
             "title": "Counted Value"
           },
@@ -506,7 +506,7 @@
             "type": "number",
             "multipleOf": 0.01,
             "nullable": true,
-            "description": "Calculated countedQuantity − expectedQuantity per REQ-ICC-003. Signed.",
+            "description": "Calculated countedQuantity − expectedQuantity. Signed.",
             "example": -5,
             "title": "Quantity Variance"
           },
@@ -514,42 +514,42 @@
             "type": "number",
             "multipleOf": 0.01,
             "nullable": true,
-            "description": "Calculated countedValue − expectedValue per REQ-ICC-003. Signed.",
+            "description": "Calculated countedValue − expectedValue. Signed.",
             "example": -225.0,
             "title": "Value Variance"
           },
           "requiresReason": {
             "type": "boolean",
             "default": false,
-            "description": "Calculated flag per REQ-ICC-004: true when |quantityVariance| > expectedQuantity × quantityVarianceThresholdPercent / 100 OR when |valueVariance| > valueVarianceThresholdAbsolute. Drives the VarianceGate check on InventoryCycleCount.post.",
+            "description": "Calculated flag: true when |quantityVariance| > expectedQuantity × quantityVarianceThresholdPercent / 100 OR when |valueVariance| > valueVarianceThresholdAbsolute. Drives the VarianceGate check on InventoryCycleCount.post.",
             "example": true,
             "title": "Requires Reason"
           },
           "reasonCode": {
             "type": "string",
             "nullable": true,
-            "description": "FK to InventoryVarianceReason.reasonId per REQ-ICC-005. MUST be populated for lines with requiresReason=true before the count can transition counting → posted.",
+            "description": "FK to InventoryVarianceReason.reasonId. MUST be populated for lines with requiresReason=true before the count can transition counting → posted.",
             "example": "DMG",
             "title": "Reason Code"
           },
           "notes": {
             "type": "string",
             "nullable": true,
-            "description": "Line-level investigation or annotation notes per REQ-ICC-003.",
+            "description": "Line-level investigation or annotation notes.",
             "example": "Found 5 units damaged in northeast corner",
             "title": "Notes"
           },
           "adjustmentStockMoveId": {
             "type": "string",
             "nullable": true,
-            "description": "Back-reference to the StockMove emitted by CycleCountService::emitAdjustments on reconcile per REQ-ICC-007. Null until reconciled or for zero-variance lines.",
+            "description": "Back-reference to the StockMove emitted by CycleCountService:emitAdjustments on reconcile. Null until reconciled or for zero-variance lines.",
             "example": "sm-2026-cc-00001-001",
             "title": "Adjustment Stock Move ID",
             "$ref": "StockMove"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration owning this line. Tenant-scoped per REQ-MA-001.",
+            "description": "FK to Administration owning this line. Tenant-scoped.",
             "example": "adm-consultancy-nl",
             "title": "Administration ID"
           }
@@ -563,23 +563,23 @@
         "x-openregister-calculations": {
           "expectedValue": {
             "expression": "expectedQuantity * unitCost",
-            "description": "REQ-ICC-003: book value of the in-scope inventory snapshot for this line."
+            "description": "Book value of the in-scope inventory snapshot for this line."
           },
           "countedValue": {
             "expression": "countedQuantity * unitCost",
-            "description": "REQ-ICC-003: physical value at count date. Null when countedQuantity is null."
+            "description": "Physical value at count date. Null when countedQuantity is null."
           },
           "quantityVariance": {
             "expression": "countedQuantity - expectedQuantity",
-            "description": "REQ-ICC-003: signed unit variance."
+            "description": "Signed unit variance."
           },
           "valueVariance": {
             "expression": "countedValue - expectedValue",
-            "description": "REQ-ICC-003: signed cash variance."
+            "description": "Signed cash variance."
           },
           "requiresReason": {
             "expression": "ABS(quantityVariance) > expectedQuantity * @metadata.quantityVarianceThresholdPercent / 100 OR ABS(valueVariance) > @metadata.valueVarianceThresholdAbsolute",
-            "description": "REQ-ICC-004 declarative threshold. CycleCountService::recalculateLine mirrors the same arithmetic when the engine cannot evaluate the expression (ADR-031 exception path — VarianceGate uses the PHP mirror for the post-time check)."
+            "description": "Declarative threshold. CycleCountService:recalculateLine mirrors the same arithmetic when the engine cannot evaluate the expression (ADR-031 exception path. VarianceGate uses the PHP mirror for the post-time check)."
           }
         },
         "x-openregister-indexes": [
@@ -596,7 +596,7 @@
               "countId",
               "requiresReason"
             ],
-            "description": "Powers the VarianceGate check on counting → posted (REQ-ICC-004)."
+            "description": "Powers the VarianceGate check on counting → posted."
           }
         ],
         "x-openregister-rbac": {
@@ -637,7 +637,7 @@
         "icon": "TagOutline",
         "version": "0.1.0",
         "title": "Inventory Variance Reason",
-        "description": "Configurable reason-code taxonomy for cycle-count variance per REQ-ICC-005. Each administration maintains its own active reason-code set (seeded with seven standard codes — DMG, OBS, ERR-COUNT, ERR-STOCK, THEFT, SYS, OTHER — by the system on first count); the operator chooses one per requiresReason=true line. Inactive codes (isActive=false) remain queryable for audit but are hidden from the UI dropdown and rejected by the VarianceGate so historical lines retain their FK while new lines cannot pick them. The category enum is closed so variance reports can roll up consistently across administrations.",
+        "description": "Configurable reason-code taxonomy for cycle-count variance. Each administration maintains its own active reason-code set (seeded with seven standard codes: DMG, OBS, ERR-COUNT, ERR-STOCK, THEFT, SYS, OTHER. By the system on first count); the operator chooses one per requiresReason=true line. Inactive codes (isActive=false) remain queryable for audit but are hidden from the UI dropdown and rejected by the VarianceGate so historical lines retain their FK while new lines cannot pick them. The category enum is closed so variance reports can roll up consistently across administrations.",
         "x-schema-org": "schema:DefinedTerm",
         "x-openregister-purpose": "dimension",
         "x-spec": "openspec/changes/inventory-cycle-count/specs/inventory-cycle-count/spec.md",
@@ -652,14 +652,14 @@
         "properties": {
           "reasonId": {
             "type": "string",
-            "description": "Reason code (e.g. DMG, OBS, ERR-COUNT) per REQ-ICC-005. Stable across administrations for the system-seeded set; admin-defined codes may diverge.",
+            "description": "Reason code (e.g. DMG, OBS, ERR-COUNT). Stable across administrations for the system-seeded set; admin-defined codes may diverge.",
             "example": "DMG",
             "pattern": "^[A-Z][A-Z0-9\\-]{0,31}$",
             "title": "Reason ID"
           },
           "name": {
             "type": "string",
-            "description": "Human-readable reason name per REQ-ICC-005.",
+            "description": "Human-readable reason name.",
             "example": "Damaged Goods",
             "title": "Name"
           },
@@ -674,27 +674,27 @@
               "system-discrepancy",
               "other"
             ],
-            "description": "Coarse category per REQ-ICC-005. Closed enum so variance reports roll up consistently.",
+            "description": "Coarse category. Closed enum so variance reports roll up consistently.",
             "example": "damage",
             "title": "Category"
           },
           "description": {
             "type": "string",
             "nullable": true,
-            "description": "Extended explanation for audit trail per REQ-ICC-005.",
+            "description": "Extended explanation for audit trail.",
             "example": "Physical damage discovered during count",
             "title": "Description"
           },
           "isActive": {
             "type": "boolean",
             "default": true,
-            "description": "Reason available for use on new counts per REQ-ICC-005. Inactive codes remain referenceable for historical lines but are hidden from the UI + rejected by the VarianceGate.",
+            "description": "Reason available for use on new counts. Inactive codes remain referenceable for historical lines but are hidden from the UI + rejected by the VarianceGate.",
             "example": true,
             "title": "Is Active"
           },
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration. Each org maintains its own reason-code set per REQ-ICC-005.",
+            "description": "FK to Administration. Each org maintains its own reason-code set.",
             "example": "adm-consultancy-nl",
             "title": "Administration ID"
           }
@@ -766,7 +766,7 @@
               "repack",
               "cycle-count-variance"
             ],
-            "description": "Admin-configurable reason code per REQ-SM-007 / REQ-SM-010 + REQ-ICC-007. inventory-cycle-count extends the enum with `cycle-count-variance` (emitted by CycleCountService::emitAdjustments on InventoryCycleCount reconcile — the originating countId is preserved in the StockMove.referenceDocumentUri as shillinq://cycle-count/<countId>).",
+            "description": "Admin-configurable reason code +. Inventory-cycle-count extends the enum with `cycle-count-variance` (emitted by CycleCountService:emitAdjustments on InventoryCycleCount reconcile. The originating countId is preserved in the StockMove.referenceDocumentUri as shillinq://cycle-count/<countId>).",
             "title": "Movement Reason"
           }
         }

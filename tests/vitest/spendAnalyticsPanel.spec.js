@@ -29,8 +29,8 @@
  * @spec openspec/changes/spend-analytics-ui/specs/spend-analytics/spec.md
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import axios from '@nextcloud/axios'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SpendAnalyticsPanel, {
 	SPEND_DIMENSIONS,
 } from '../../src/components/spend-analytics/SpendAnalyticsPanel.vue'

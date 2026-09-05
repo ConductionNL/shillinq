@@ -5,7 +5,7 @@
 		"source": "shillinq-documentation",
 		"variant": "test-gemeente",
 		"spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
-		"description": "Example IKP record for the zaalverhuur activity Q1 2026. status=voorlopig — the year-end definitief lock comes from the production run on 31 March of the following year."
+		"description": "Example IKP record for the zaalverhuur activity Q1 2026. Status=voorlopig: the year-end definitief lock comes from the production run on 31 March of the following year."
 	},
 	"ikp": [
 		{

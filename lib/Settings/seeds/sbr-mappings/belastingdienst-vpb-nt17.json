@@ -6,7 +6,7 @@
 		"variant": "belastingdienst-vpb",
 		"taxonomyVersion": "nt17",
 		"entryPoint": "belastingdienst-vpb",
-		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt17 concepts for the Belastingdienst Vennootschapsbelasting (Vpb) aangifte entry point (REQ-SBR-005, REQ-SBR-006). Fiscal corrections (VpbAangifte / FiscaleCorrectie owned by sibling bookkeeping-vpb-mkb) sit upstream of this mapping; the seed assumes the FinancialStatement has already had fiscal corrections applied.",
+		"description": "Template mapping from FinancialStatement lines to NL-taxonomie nt17 concepts for the Belastingdienst Vennootschapsbelasting (Vpb) aangifte entry point. Fiscal corrections (VpbAangifte / FiscaleCorrectie owned by sibling bookkeeping-vpb-mkb) sit upstream of this mapping; the seed assumes the FinancialStatement has already had fiscal corrections applied.",
 		"imported": "2026-06-09T00:00:00Z"
 	},
 	"mapping": {

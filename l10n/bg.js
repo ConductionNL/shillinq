@@ -1553,7 +1553,26 @@ OC.L10N.register(
         "Margin per month": "Марж на месец",
         "Cashflow": "Паричен поток",
         "Billable hours": "Фактурируеми часове",
-        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n фактура неизплатена","%n фактури неизплатени","%n фактури неизплатени"]
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["%n фактура неизплатена","%n фактури неизплатени","%n фактури неизплатени"],
+        "Reports": "Отчети",
+        "Pick a report to open it.": "Изберете отчет, за да го отворите.",
+        "Due": "Краен срок",
+        "Assignee": "Възложено на",
+        "Iv3 returns": "Iv3 отчети",
+        "SiSa returns": "SiSa отчети",
+        "EMU return": "EMU отчет",
+        "Consolidated statements": "Консолидирани отчети",
+        "Budget variance": "Бюджетно отклонение",
+        "Generated reports": "Генерирани отчети",
+        "The quarterly Iv3 returns, and how far each one got.": "Тримесечните Iv3 отчети и докъде е стигнал всеки.",
+        "Single information, single audit returns per scheme.": "Отчети single information, single audit по схема.",
+        "The EMU balance return.": "Отчетът за салдото по EMU.",
+        "The group figures, consolidated across participations.": "Груповите числа, консолидирани по участия.",
+        "Where the books sit against budget, and by how much.": "Къде стоят книгите спрямо бюджета и с колко.",
+        "Everything Reporting & Compliance has already produced.": "Всичко, което Отчетност и съответствие вече е произвело.",
+        "What retention destroyed, and when.": "Какво е унищожило съхранението и кога.",
+        "Store": "Магазин",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Инсталирайте регистри, схеми и потоци, публикувани от други организации."
     },
     "nplurals=2; plural=(n != 1);"
 )

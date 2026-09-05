@@ -1553,7 +1553,26 @@ OC.L10N.register(
         "Margin per month": "Marža per mėnesį",
         "Cashflow": "Pinigų srautas",
         "Billable hours": "Apmokestinamos valandos",
-        "_%n invoice outstanding_::_%n invoices outstanding_": ["1 sąskaita faktūra nesumokėta","%n sąskaitos faktūros nesumokėtos","%n sąskaitų faktūrų nesumokėta"]
+        "_%n invoice outstanding_::_%n invoices outstanding_": ["1 sąskaita faktūra nesumokėta","%n sąskaitos faktūros nesumokėtos","%n sąskaitų faktūrų nesumokėta"],
+        "Reports": "Ataskaitos",
+        "Pick a report to open it.": "Pasirinkite ataskaitą, kad ją atidarytumėte.",
+        "Due": "Terminas",
+        "Assignee": "Priskirta",
+        "Iv3 returns": "Iv3 ataskaitos",
+        "SiSa returns": "SiSa ataskaitos",
+        "EMU return": "EMU ataskaita",
+        "Consolidated statements": "Konsoliduotos ataskaitos",
+        "Budget variance": "Biudžeto nuokrypis",
+        "Generated reports": "Sugeneruotos ataskaitos",
+        "The quarterly Iv3 returns, and how far each one got.": "Ketvirtinės Iv3 ataskaitos ir kiek toli kiekviena nuėjo.",
+        "Single information, single audit returns per scheme.": "Single information, single audit ataskaitos pagal schemą.",
+        "The EMU balance return.": "EMU balanso ataskaita.",
+        "The group figures, consolidated across participations.": "Grupės skaičiai, konsoliduoti per dalyvavimus.",
+        "Where the books sit against budget, and by how much.": "Kur knygos yra biudžeto atžvilgiu ir kiek.",
+        "Everything Reporting & Compliance has already produced.": "Viskas, ką Ataskaitos ir atitiktis jau parengė.",
+        "What retention destroyed, and when.": "Ką saugojimas sunaikino ir kada.",
+        "Store": "Parduotuvė",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Įdiekite registrus, schemas ir srautus, kuriuos paskelbė kitos organizacijos."
     },
     "nplurals=2; plural=(n != 1);"
 )

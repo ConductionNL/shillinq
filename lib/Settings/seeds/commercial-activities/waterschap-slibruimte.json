@@ -5,7 +5,7 @@
 		"source": "shillinq-documentation",
 		"variant": "test-waterschap",
 		"spec": "openspec/changes/bookkeeping-market-government-separation/specs/bookkeeping-market-government-separation/spec.md",
-		"description": "Sample waterschap with one commercial slibruim-/biogas-service. lifecycleState=paused — copy and activate when modelling a live administration."
+		"description": "Sample waterschap with one commercial slibruim-/biogas-service. LifecycleState=paused: copy and activate when modelling a live administration."
 	},
 	"activities": [
 		{

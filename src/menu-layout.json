@@ -77,7 +77,6 @@
 	},
 	"_settingsSection_note": "Ids lifted into Nextcloud's settings foldout (the bottom-left gear / NcAppNavigationSettings, OUTSIDE the scrollable nav) by applySettingsSection in main.js — each becomes a flat top-level item with section:'settings'. This is the special settings position, not a normal menu group. ⚠️ THESE ARE MENU IDS, NOT PAGE IDS. An id here that matches no menu entry is INERT — it lifts nothing and reports nothing. That is exactly what happened to External Connections: the list carried the PAGE id `ExternalAdaptersStatus` while the MENU id is `ExternalConnections`, so the intended demotion silently did nothing and the entry kept its top-level slot. It was the only inert id in this list; verify a new id against the merged menu before adding it.",
 	"settingsSection": [
-		"GeneralSettings",
 		"DeadlineCalendarSettings",
 		"BankImportPage",
 		"MatchingRules",
@@ -120,6 +119,21 @@
 		"ImportBatches",
 		"ImportMappings"
 	],
-	"_removals_note": "EMPTIED 2026-08-10 (gate-53 / ADR-044 no-functionality-loss). This list held 160 ids and its description called them 'leaf menu-entry ids retired as duplicate navigation'. Measured against the gate's own removals-invariant output, that was true of NONE of them: 140 were the ONLY menu entry reaching their route (ADR-044 errors — retiring them left the page with no navigation at all, reachable only by typing the URL), 11 matched no merged menu entry at all (warns — dead ids), and the remaining 9 were routeless GROUP HEADERS, not leaves. The 9 vanished only as a side effect: applyMenuRemovals never drops a node that still has children, so each was pruned by the empty-shell rule (children.length === 0 && hadChildren && !isClickable) once the 140 had taken all its children away. With the 140 restored, all 9 keep their children and are not dropped by any rule — verified by assembling with removals set to exactly those 9 and finding all 9 still in the menu — so every id in this list was either harmful or inert, and the list is now empty. Do not repopulate it without checking, per id, that another surviving menu entry reaches the same route; that check is what was missing, and it cost 140 pages their nav entry in a single change. relocations (above) is the mechanism for re-homing an entry — it moves navigation, it does not delete it.",
-	"removals": []
+	"_removals_note": "ADR-112: a report is a card on the Reporting & Compliance page OR a menu entry, never both. All six pages stay routable — deep links, e2e specs and the cards address them by route name — only their menu entries go. Five were already declared as cards in src/components/reporting/reportViews.js when that file was written from the menu-IA audit; BookkeepingDestructionReport was missed there, so it is added as a card in the same change that retires its entry. Retiring an entry whose card did not exist would have removed the report from the product rather than moving it.",
+	"removals": [
+		"EmuRapportage",
+		"VarianceReport",
+		"ConsolidatedReport",
+		"BookkeepingDestructionReport",
+		"Iv3Rapportages",
+		"SisaRapportages"
+	],
+	"removalsReplacedBy": {
+		"EmuRapportage": "ReportingComplianceOverview",
+		"VarianceReport": "ReportingComplianceOverview",
+		"ConsolidatedReport": "ReportingComplianceOverview",
+		"BookkeepingDestructionReport": "ReportingComplianceOverview",
+		"Iv3Rapportages": "ReportingComplianceOverview",
+		"SisaRapportages": "ReportingComplianceOverview"
+	}
 }

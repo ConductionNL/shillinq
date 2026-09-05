@@ -9,25 +9,25 @@
  * mapping and the one-request-per-schema guarantee.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import axios from '@nextcloud/axios'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-	monthKey,
-	lastMonths,
-	classifyAccounts,
-	postedLinesByMonth,
-	signedAmount,
-	monthlyFinancialSeries,
 	billableSeries,
-	forecastByMonth,
-	openArRows,
-	openApRows,
+	classifyAccounts,
 	computeKpis,
 	computeRangeKpis,
+	forecastByMonth,
+	lastMonths,
+	monthKey,
+	monthlyFinancialSeries,
+	openApRows,
+	openArRows,
+	postedLinesByMonth,
+	signedAmount,
 } from '../../src/components/dashboard/financial/financialSeries.js'
 import {
-	useFinancialData,
 	resetFinancialData,
+	useFinancialData,
 } from '../../src/components/dashboard/financial/useFinancialData.js'
 
 const ACCOUNTS = [

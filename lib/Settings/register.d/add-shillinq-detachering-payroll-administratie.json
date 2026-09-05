@@ -6,7 +6,7 @@
         "icon": "FileImportOutline",
         "version": "0.1.0",
         "title": "Salaris Feed",
-        "description": "Raw salarisbureau import batch materialised before mapping to balanced JournalEntry records per REQ-DPA-001 and REQ-DPA-002. Decouples 'what came in' from 'what got booked' and provides an audit trail for reconciliation when a batch fails halfway.",
+        "description": "Raw salarisbureau import batch materialised before mapping to balanced JournalEntry records and. Decouples 'what came in' from 'what got booked' and provides an audit trail for reconciliation when a batch fails halfway.",
         "type": "object",
         "x-schema-org": "schema:DataFeed",
         "required": [
@@ -67,21 +67,21 @@
           "socialePremies": {
             "type": "number",
             "minimum": 0,
-            "description": "Employer social premiums (WW, ZW, WAO/WIA etc.) — CR side.",
+            "description": "Employer social premiums (WW, ZW, WAO/WIA etc.): CR side.",
             "example": 600.0,
             "title": "Sociale Premies"
           },
           "payrollTax": {
             "type": "number",
             "minimum": 0,
-            "description": "Wage tax withheld (loonbelasting + premie volksverzekeringen) — CR side.",
+            "description": "Wage tax withheld (loonbelasting + premie volksverzekeringen): CR side.",
             "example": 500.0,
             "title": "Loonheffing"
           },
           "pensioen": {
             "type": "number",
             "minimum": 0,
-            "description": "Employer pension contribution — CR side.",
+            "description": "Employer pension contribution: CR side.",
             "example": 200.0,
             "title": "Pensioen"
           },
@@ -140,7 +140,7 @@
               "from": "received",
               "to": "mapped",
               "label": "Map to journal entry",
-              "description": "Mapping engine materialised a balanced JournalEntry of subtype loonkosten per REQ-DPA-002."
+              "description": "Mapping engine materialised a balanced JournalEntry of subtype loonkosten."
             },
             "fail": {
               "from": "received",
@@ -158,7 +158,7 @@
         },
         "x-openregister-mappings": {
           "toJournalEntryLoonkosten": {
-            "description": "Declarative mapping from SalarisFeed to a balanced JournalEntry of subtype loonkosten. Produces loonkosten DR = nettoloon CR + socialePremies CR + loonheffing CR + pensioen CR per employee per loontijdvak. Satisfies REQ-DPA-002 and REQ-GL-001 balance invariant. No PHP mapper service per ADR-031.",
+            "description": "Declarative mapping from SalarisFeed to a balanced JournalEntry of subtype loonkosten. Produces loonkosten DR = nettoloon CR + socialePremies CR + loonheffing CR + pensioen CR per employee per loontijdvak. Satisfies and balance invariant. No PHP mapper service per ADR-031.",
             "target": {
               "register": "shillinq",
               "schema": "JournalEntry"
@@ -241,7 +241,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Salaris Feed is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Salaris Feed is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "OpdrachtgeversVerklaring": {
@@ -249,7 +249,7 @@
         "icon": "FileSign",
         "version": "0.1.0",
         "title": "Opdrachtgevers Verklaring",
-        "description": "Wet DBA (Deregulering Beoordeling Arbeidsrelaties) position record per ZZP assignment. Declares the opdrachtgever-opdrachtnemer relationship and risicobeoordeling per REQ-DPA-003. No PHP DBA service — lifecycle and document rendering are declarative per ADR-031.",
+        "description": "Wet DBA (Deregulering Beoordeling Arbeidsrelaties) position record per ZZP assignment. Declares the opdrachtgever-opdrachtnemer relationship and risicobeoordeling. No PHP DBA service: lifecycle and document rendering are declarative per ADR-031.",
         "type": "object",
         "x-schema-org": "schema:DigitalDocument",
         "required": [
@@ -297,7 +297,7 @@
           },
           "declarationStatus": {
             "type": "string",
-            "description": "Current lifecycle status of the opdrachtgeversverklaring per REQ-DPA-003.",
+            "description": "Current lifecycle status of the opdrachtgeversverklaring.",
             "enum": [
               "draft",
               "overeengekomen",
@@ -323,7 +323,7 @@
           },
           "riskAssessment": {
             "type": "string",
-            "description": "Wet DBA risk classification. Operator-classified per REQ-DPA-003. The docudesk template renders the chosen risico.",
+            "description": "Wet DBA risk classification. Operator-classified. The docudesk template renders the chosen risico.",
             "enum": [
               "none",
               "low",
@@ -362,7 +362,7 @@
               "from": "draft",
               "to": "overeengekomen",
               "label": "Overeenkomst bevestigen",
-              "description": "Both parties confirm agreement. Triggers document generation via docudesk template per REQ-DPA-004."
+              "description": "Both parties confirm agreement. Triggers document generation via docudesk template."
             },
             "beëindigen": {
               "from": "overeengekomen",
@@ -374,7 +374,7 @@
           "hooks": {
             "onOvereenkomen": {
               "trigger": "lifecycle:overeenkomen",
-              "description": "Trigger docudesk template render of the standaard opdrachtgeversverklaring per REQ-DPA-004. The generated document URI is written back to verklaringDocumentUri.",
+              "description": "Trigger docudesk template render of the standaard opdrachtgeversverklaring. The generated document URI is written back to verklaringDocumentUri.",
               "action": "x-openregister-docudesk-render",
               "actionParameters": {
                 "templateSlug": "shillinq-opdrachtgeversverklaring",
@@ -407,7 +407,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Opdrachtgevers Verklaring is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Opdrachtgevers Verklaring is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "IB47Record": {
@@ -415,7 +415,7 @@
         "icon": "FileDocumentOutline",
         "version": "0.1.0",
         "title": "IB47 Record",
-        "description": "Annual IB47 form payload per recipient for submission to the Belastingdienst. BSN is stored encrypted at-rest and RBAC-restricted to the payroll-officer role per REQ-DPA-005 and Risk 3. Aggregation over a tax year is declarative via x-openregister-aggregations per (belastingjaar, opdrachtgeverId). Every BSN access logs to audit-trail-immutable per ADR-022.",
+        "description": "Annual IB47 form payload per recipient for submission to the Belastingdienst. BSN is stored encrypted at-rest and RBAC-restricted to the payroll-officer role and Risk 3. Aggregation over a tax year is declarative via x-openregister-aggregations per (belastingjaar, opdrachtgeverId). Every BSN access logs to audit-trail-immutable per ADR-022.",
         "type": "object",
         "x-schema-org": "schema:TaxForm",
         "required": [
@@ -500,7 +500,7 @@
           },
           "isDryRun": {
             "type": "boolean",
-            "description": "When true this is a monthly dry-run record. When false this contributes to the final yearly batch. The aggregation invariant requires that the final yearly batch totals equal the sum of 12 monthly dry-runs (€0 tolerance) per REQ-DPA-005.",
+            "description": "When true this is a monthly dry-run record. When false this contributes to the final yearly batch. The aggregation invariant requires that the final yearly batch totals equal the sum of 12 monthly dry-runs (€0 tolerance).",
             "default": false,
             "example": false,
             "title": "Is Dry Run"
@@ -523,7 +523,7 @@
         },
         "x-openregister-aggregations": {
           "ib47TotalsPerTaxYear": {
-            "description": "Per-tax-year IB47 aggregation grouping IB47Record by (belastingjaar, opdrachtgeverId). Produces betalingenTotaal per recipient per year. Used for the final yearly batch assembly and for the dry-run vs final reconciliation invariant per REQ-DPA-005: final totals MUST equal sum of 12 monthly dry-runs (€0 tolerance).",
+            "description": "Per-tax-year IB47 aggregation grouping IB47Record by (belastingjaar, opdrachtgeverId). Produces betalingenTotaal per recipient per year. Used for the final yearly batch assembly and for the dry-run vs final reconciliation invariant: final totals MUST equal sum of 12 monthly dry-runs (€0 tolerance).",
             "filter": {
               "isDryRun": false
             },
@@ -547,7 +547,7 @@
             ]
           },
           "ib47DryRunTotalsPerMonth": {
-            "description": "Monthly dry-run aggregation for the reconciliation invariant check. Must equal the final yearly batch totals per recipient (€0 tolerance) per REQ-DPA-005.",
+            "description": "Monthly dry-run aggregation for the reconciliation invariant check. Must equal the final yearly batch totals per recipient (€0 tolerance).",
             "filter": {
               "isDryRun": true
             },
@@ -567,7 +567,7 @@
             ]
           },
           "ib47ReconciliationCheck": {
-            "description": "Invariant check: final yearly batch totals per recipient MUST equal the sum of 12 monthly dry-run totals (€0 tolerance) per REQ-DPA-005. Surfaced as a non-blocking warning when the invariant is violated before submission.",
+            "description": "Invariant check: final yearly batch totals per recipient MUST equal the sum of 12 monthly dry-run totals (€0 tolerance). Surfaced as a non-blocking warning when the invariant is violated before submission.",
             "groupBy": [
               "taxYear",
               "clientId",
@@ -651,12 +651,12 @@
             ],
             "subject": "IB47 batch submitted",
             "template": "ib47-batch-submitted",
-            "description": "Notify the payroll-officer when the IB47 yearly batch has been transmitted to the Belastingdienst via openconnector. Declarative fan-out per ADR-031. KNOWN GAP (migrate-legacy-notification-dialect): trigger is still the bare-string legacy shape — IB47Record has no status/lifecycle field for a canonical `transition` trigger to hook into; the batch-submitted event is fired by the openconnector transmission step, not an object state change. Needs a schema decision (add a submission-status field, or a new non-transition trigger type) before this rule can dispatch through the declarative engine; tracked as follow-up, not fixed by this change."
+            "description": "Notify the payroll-officer when the IB47 yearly batch has been transmitted to the Belastingdienst via openconnector. Declarative fan-out per ADR-031. KNOWN GAP (migrate-legacy-notification-dialect): trigger is still the bare-string legacy shape. IB47Record has no status/lifecycle field for a canonical `transition` trigger to hook into; the batch-submitted event is fired by the openconnector transmission step, not an object state change. Needs a schema decision (add a submission-status field, or a new non-transition trigger type) before this rule can dispatch through the declarative engine; tracked as follow-up, not fixed by this change."
           }
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a IB47 Record is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a IB47 Record is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

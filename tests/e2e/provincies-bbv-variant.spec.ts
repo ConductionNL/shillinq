@@ -36,7 +36,9 @@
  * @spec openspec/changes/bookkeeping-provincies-bbv-variant/tasks.md
  */
 
-import { test, expect, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 const DASHBOARD_ROUTE = '/bbv-provincie/compliance-dashboard'

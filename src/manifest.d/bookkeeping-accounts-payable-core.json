@@ -276,7 +276,7 @@
 					{
 						"id": "detail",
 						"label": "Detail",
-						"description": "Per-invoice breakdown grouped by vendor and due-date bucket per REQ-AP-006.",
+						"description": "Per-invoice breakdown, grouped by vendor and due-date bucket.",
 						"aggregation": "agedPayablesDetail",
 						"columns": [
 							{"key": "vendorName", "label": "Vendor", "sortable": true},
@@ -293,7 +293,7 @@
 					{
 						"id": "summary",
 						"label": "Summary",
-						"description": "Vendor totals grouped by aging bucket per REQ-AP-007.",
+						"description": "Vendor totals, grouped by aging bucket.",
 						"aggregation": "agedPayablesSummary",
 						"columns": [
 							{"key": "vendorName", "label": "Vendor", "sortable": true},
@@ -307,7 +307,7 @@
 					{
 						"id": "timeline",
 						"label": "Timeline",
-						"description": "Payment due dates with amounts and vendor summary per REQ-AP-008.",
+						"description": "Payment due dates, with amounts and a vendor summary.",
 						"aggregation": "agedPayablesTimeline",
 						"columns": [
 							{"key": "dueDate", "label": "Due Date", "sortable": true},
@@ -319,7 +319,7 @@
 					}
 				],
 				"defaultVariant": "summary",
-				"description": "AP aging report (3 variants: detail / summary / timeline) per REQ-AP-006 .. REQ-AP-008. Bucket thresholds configurable via IAppConfig['ap.aging.buckets'] (defaults 30/60/90)."
+				"description": "AP aging report, in three variants: detail, summary and timeline. Bucket thresholds are configurable via IAppConfig['ap.aging.buckets'], defaulting to 30/60/90."
 			}
 		},
 		{

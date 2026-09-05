@@ -22,13 +22,13 @@
  * @spec openspec/specs/bookkeeping-tenderned-integratie/spec.md#req-001
  */
 
-import { test, expect } from '@playwright/test'
+import type { Page } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 
-const dismissWizard = async (
-	page: import('@playwright/test').Page,
-): Promise<void> => {
+async function dismissWizard(page: Page): Promise<void> {
 	const wizard = page.locator('#firstrunwizard')
 	if (await wizard.isVisible().catch(() => false)) {
 		await page.keyboard.press('Escape').catch(() => {})

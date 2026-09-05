@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookings-confirm-flow",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "kind: feature — appointment confirmation flow. Adds the ConfirmationToken schema with token lifecycle (active → redeemed | revoked | expired) per REQ-BCF-001/002 and extends the Appointment schema with confirmation fields (confirmationDeadline, confirmedAt, confirmationTokenId) and the matching pending_confirmation → confirmed lifecycle transitions per REQ-BCF-004. Both schemas are additive over bookings-create-appointment (which already owns the Appointment monolith), merged via SettingsService::deepMergeConfig (ADR-037). No PHP model classes — tokens are managed as OR objects through ConfirmationApiController + ConfirmationTokenService."
+    "description": "kind: feature. Appointment confirmation flow. Adds the ConfirmationToken schema with token lifecycle (active → redeemed | revoked | expired) and extends the Appointment schema with confirmation fields (confirmationDeadline, confirmedAt, confirmationTokenId) and the matching pending_confirmation → confirmed lifecycle transitions. Both schemas are additive over bookings-create-appointment (which already owns the Appointment monolith), merged via SettingsService:deepMergeConfig (ADR-037). No PHP model classes. Tokens are managed as OR objects through ConfirmationApiController + ConfirmationTokenService."
   },
   "components": {
     "schemas": {
@@ -14,7 +14,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Latest time the customer can confirm before the appointment is auto-cancelled by the CancelUnconfirmedAppointments background job per REQ-BCF-005. ISO 8601 UTC. Typically appointment.createdAt + 48h.",
+            "description": "Latest time the customer can confirm before the appointment is auto-cancelled by the CancelUnconfirmedAppointments background job. ISO 8601 UTC. Typically appointment.createdAt + 48h.",
             "example": "2026-05-21T23:59:59Z",
             "title": "Confirmation Deadline"
           },
@@ -22,14 +22,14 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Timestamp when the appointment transitioned from pending_confirmation to confirmed per REQ-BCF-004. Set by ConfirmationApiController::confirm on successful token redemption.",
+            "description": "Timestamp when the appointment transitioned from pending_confirmation to confirmed. Set by ConfirmationApiController:confirm on successful token redemption.",
             "example": "2026-05-20T09:15:00Z",
             "title": "Confirmed At"
           },
           "confirmationTokenId": {
             "type": "string",
             "nullable": true,
-            "description": "FK to the currently-active ConfirmationToken.tokenId per REQ-BCF-001. Updated on token resend (REQ-BCF-006). Null for admin-created appointments that start as confirmed.",
+            "description": "FK to the currently-active ConfirmationToken.tokenId. Updated on token resend. Null for admin-created appointments that start as confirmed.",
             "example": "tok-001",
             "title": "Confirmation Token ID"
           }
@@ -40,13 +40,13 @@
               "from": "pending_confirmation",
               "to": "confirmed",
               "label": "Confirm via token",
-              "description": "Customer redeemed a valid ConfirmationToken; status moves to confirmed and confirmedAt is set per REQ-BCF-004."
+              "description": "Customer redeemed a valid ConfirmationToken; status moves to confirmed and confirmedAt is set."
             },
             "autoCancelExpired": {
               "from": "pending_confirmation",
               "to": "cancelled",
               "label": "Auto-cancel after deadline",
-              "description": "Confirmation deadline passed and the appointment is still pending; the CancelUnconfirmedAppointments background job moves it to cancelled with reason 'Confirmation deadline passed' per REQ-BCF-005."
+              "description": "Confirmation deadline passed and the appointment is still pending; the CancelUnconfirmedAppointments background job moves it to cancelled with reason 'Confirmation deadline passed'."
             }
           }
         }
@@ -56,7 +56,7 @@
         "icon": "TicketConfirmationOutline",
         "version": "0.1.0",
         "title": "Confirmation Token",
-        "description": "A short-lived secret used by a customer to confirm a pending appointment via email link or web portal per REQ-BCF-001/002. Tokens are stored as salted bcrypt hashes (never plaintext) by TokenValidator. Lifecycle: active → redeemed (on confirmation) or revoked (on resend) or expired (when expiresAt passes). One Appointment may have multiple ConfirmationToken rows over time (e.g. after resend); the appointment's confirmationTokenId points at the current active token.",
+        "description": "A short-lived secret used by a customer to confirm a pending appointment via email link or web portal. Tokens are stored as salted bcrypt hashes (never plaintext) by TokenValidator. Lifecycle: active → redeemed (on confirmation) or revoked (on resend) or expired (when expiresAt passes). One Appointment may have multiple ConfirmationToken rows over time (e.g. after resend); the appointment's confirmationTokenId points at the current active token.",
         "x-schema-org": "schema:AuthorizationToken",
         "x-openregister-purpose": "transaction",
         "type": "object",
@@ -76,13 +76,13 @@
           },
           "appointmentId": {
             "type": "string",
-            "description": "FK to Appointment.appointmentId — the appointment this token confirms (REQ-BCF-002).",
+            "description": "FK to Appointment.appointmentId: the appointment this token confirms.",
             "example": "apt-001",
             "title": "Appointment ID"
           },
           "tokenString": {
             "type": "string",
-            "description": "Salted bcrypt hash of the 32-character URL-safe random token (REQ-BCF-002). Never stored in plaintext. Validated in constant time by TokenValidator::validate per REQ-BCF-004.",
+            "description": "Salted bcrypt hash of the 32-character URL-safe random token. Never stored in plaintext. Validated in constant time by TokenValidator:validate.",
             "example": "$2y$12$abcdefghijklmnopqrstuvwxyzABCDEF1234567890",
             "title": "Token String"
           },
@@ -139,11 +139,11 @@
             },
             "redeemed": {
               "label": "Redeemed",
-              "description": "Token has been used to confirm the appointment; cannot be reused (REQ-BCF-004)."
+              "description": "Token has been used to confirm the appointment; cannot be reused."
             },
             "revoked": {
               "label": "Revoked",
-              "description": "Token has been invalidated by a resend request (REQ-BCF-006); a fresh active token replaces it."
+              "description": "Token has been invalidated by a resend request; a fresh active token replaces it."
             },
             "expired": {
               "label": "Expired",
@@ -155,13 +155,13 @@
               "from": "active",
               "to": "redeemed",
               "label": "Redeem token",
-              "description": "Customer presented the matching token to confirm the appointment (REQ-BCF-004)."
+              "description": "Customer presented the matching token to confirm the appointment."
             },
             "revoke": {
               "from": "active",
               "to": "revoked",
               "label": "Revoke token",
-              "description": "Customer requested a fresh confirmation email; old token invalidated (REQ-BCF-006)."
+              "description": "Customer requested a fresh confirmation email; old token invalidated."
             },
             "expire": {
               "from": "active",
@@ -191,7 +191,7 @@
               ]
             }
           },
-          "description": "Tokens are server-issued (system actor or scheduler resend). Customers can read but not create/update. Auditors are read-only for audit trail traceability per REQ-BCF-008."
+          "description": "Tokens are server-issued (system actor or scheduler resend). Customers can read but not create/update. Auditors are read-only for audit trail traceability."
         }
       }
     }

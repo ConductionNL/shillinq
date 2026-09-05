@@ -2,7 +2,7 @@
   "_meta": {
     "adr": "ADR-037",
     "change": "bookkeeping-cost-centers-dimensions + unify-analytical-dimensions",
-    "description": "ONE canonical AnalyticalDimension register (discriminated by dimensionType: cost-center / cost-object / custom) replacing the prior CostCenter + KostenDrager + AnalyticalDimension triple. REQ-ADIM-001..008: dimensionType discriminator, cost-center-specific props (budget/spentToDate/allocatedBudget/organizationId/responsibleUser/ondernemingsActiviteit), shared hierarchy (parentCode) + lifecycle for all types, re-homed aggregations (segmentPnl/spentToDate/allocatedBudget scoped to cost-center; byCostCenter/byCostCenterHierarchy/byCostObject/byAnalyticalDimension on GLLine), idempotent migration via UnifyAnalyticalDimensions. Seeds carry dimensionType so greenfield installs land the unified shape. GLLine FK relations re-targeted (REQ-ADIM-101). Nav filtered views + label unification (REQ-ADIM-103).",
+    "description": "ONE canonical AnalyticalDimension register (discriminated by dimensionType: cost-center / cost-object / custom) replacing the prior CostCenter + KostenDrager + AnalyticalDimension triple.008: dimensionType discriminator, cost-center-specific props (budget/spentToDate/allocatedBudget/organizationId/responsibleUser/ondernemingsActiviteit), shared hierarchy (parentCode) + lifecycle for all types, re-homed aggregations (segmentPnl/spentToDate/allocatedBudget scoped to cost-center; byCostCenter/byCostCenterHierarchy/byCostObject/byAnalyticalDimension on GLLine), idempotent migration via UnifyAnalyticalDimensions. Seeds carry dimensionType so greenfield installs land the unified shape. GLLine FK relations re-targeted. Nav filtered views + label unification.",
     "license": "EUPL-1.2",
     "copyright": "Conduction B.V."
   },
@@ -13,7 +13,7 @@
         "icon": "ChartBoxOutline",
         "version": "0.2.0",
         "title": "Analytical Dimension",
-        "description": "ONE canonical operator-extensible analytical dimension register, discriminated by dimensionType (cost-center / cost-object / custom) per REQ-ADIM-001. Replaces the prior CostCenter (kostenplaats), KostenDrager (kostendrager), and custom AnalyticalDimension registers. Cost-center rows carry budget + spentToDate + allocatedBudget + ondernemingsActiviteit; cost-object rows carry hierarchy without budget; custom rows carry dataType / isHierarchical / referenceSchema metadata. All types share code / name / parentCode / lifecycleState / administrationId. CRUD is exclusively via OpenRegister's generic object surface (ADR-022).",
+        "description": "ONE canonical operator-extensible analytical dimension register, discriminated by dimensionType (cost-center / cost-object / custom). Replaces the prior CostCenter (kostenplaats), KostenDrager (kostendrager), and custom AnalyticalDimension registers. Cost-center rows carry budget + spentToDate + allocatedBudget + ondernemingsActiviteit; cost-object rows carry hierarchy without budget; custom rows carry dataType / isHierarchical / referenceSchema metadata. All types share code / name / parentCode / lifecycleState / administrationId. CRUD is exclusively via OpenRegister's generic object surface (ADR-022).",
         "x-schema-org": "schema:DefinedTerm",
         "x-openregister-purpose": "dimension",
         "type": "object",
@@ -27,7 +27,7 @@
         "properties": {
           "code": {
             "type": "string",
-            "description": "Stable operator-facing dimension code, unique per (administrationId, dimensionType). Referenced as a key in GLLine.dimensions (custom), GLLine.costCenterCode (cost-center), GLLine.kostenDragerCode (cost-object), VpbBalansLink.costCenterId (cost-center with ondernemingsActiviteit). Preserved byte-for-byte by the UnifyAnalyticalDimensions migration per REQ-ADIM-007.",
+            "description": "Stable operator-facing dimension code, unique per (administrationId, dimensionType). Referenced as a key in GLLine.dimensions (custom), GLLine.costCenterCode (cost-center), GLLine.kostenDragerCode (cost-object), VpbBalansLink.costCenterId (cost-center with ondernemingsActiviteit). Preserved byte-for-byte by the UnifyAnalyticalDimensions migration.",
             "example": "KC-100",
             "title": "Code"
           },
@@ -51,13 +51,13 @@
               "custom",
               "project"
             ],
-            "description": "Discriminator. cost-center = kostenplaats (carries budget / ondernemingsActiviteit surface); cost-object = kostendrager (hierarchy without budget); custom = operator-defined dimension (carries dataType / isHierarchical / referenceSchema metadata); project = former CostProject folded into AnalyticalDimension per REQ-RCP-001 (carries totalBudget / totalEstimatedCosts / projectNumber / startDate / endDate / externalProjectRef / budgetVariance; budget-vs-actuals via GL-derived spentToDate). Required on every row per REQ-ADIM-001.",
+            "description": "Discriminator. cost-center = kostenplaats (carries budget / ondernemingsActiviteit surface); cost-object = kostendrager (hierarchy without budget); custom = operator-defined dimension (carries dataType / isHierarchical / referenceSchema metadata); project = former CostProject folded into AnalyticalDimension (carries totalBudget / totalEstimatedCosts / projectNumber / startDate / endDate / externalProjectRef / budgetVariance; budget-vs-actuals via GL-derived spentToDate). Required on every row.",
             "title": "Dimension Type"
           },
           "parentCode": {
             "type": "string",
             "nullable": true,
-            "description": "FK to parent AnalyticalDimension.code (within the same dimensionType and administrationId) for hierarchy navigation per REQ-CC-002. Drives the byCostCenterHierarchy / byCostObject roll-up aggregations.",
+            "description": "FK to parent AnalyticalDimension.code (within the same dimensionType and administrationId) for hierarchy navigation. Drives the byCostCenterHierarchy / byCostObject roll-up aggregations.",
             "example": "KC-000",
             "title": "Parent Code"
           },
@@ -80,7 +80,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Convenience alias of lifecycleState for active/inactive integrations per REQ-CPA-104. Applies to cost-center rows only; cost-object and custom rows should use lifecycleState directly.",
+            "description": "Convenience alias of lifecycleState for active/inactive integrations. Applies to cost-center rows only; cost-object and custom rows should use lifecycleState directly.",
             "enum": [
               "active",
               "inactive"
@@ -91,7 +91,7 @@
           },
           "budget": {
             "type": "number",
-            "description": "Allocated annual or periodic budget amount in EUR per REQ-CD-002. Applies only when dimensionType = cost-center. Constrained to two-decimal cents via multipleOf to prevent IEEE-754 drift.",
+            "description": "Allocated annual or periodic budget amount in EUR. Applies only when dimensionType = cost-center. Constrained to two-decimal cents via multipleOf to prevent IEEE-754 drift.",
             "nullable": true,
             "minimum": 0,
             "multipleOf": 0.01,
@@ -100,7 +100,7 @@
           },
           "spentToDate": {
             "type": "integer",
-            "description": "Derived via x-openregister-aggregations: sum of GLLine.amount where costCenterCode = @self.code AND side = debit per REQ-CPA-106. Applies only when dimensionType = cost-center. Read-only.",
+            "description": "Derived via x-openregister-aggregations: sum of GLLine.amount where costCenterCode = @self.code AND side = debit. Applies only when dimensionType = cost-center. Read-only.",
             "nullable": true,
             "readOnly": true,
             "example": 4500000,
@@ -108,7 +108,7 @@
           },
           "allocatedBudget": {
             "type": "integer",
-            "description": "Derived via x-openregister-calculations: budget + sum(children.allocatedBudget) recursively per REQ-CPA-107. Applies only when dimensionType = cost-center. Read-only.",
+            "description": "Derived via x-openregister-calculations: budget + sum(children.allocatedBudget) recursively. Applies only when dimensionType = cost-center. Read-only.",
             "nullable": true,
             "readOnly": true,
             "example": 15000000,
@@ -116,7 +116,7 @@
           },
           "organizationId": {
             "type": "string",
-            "description": "FK to the Organization owning this dimension per REQ-CPA-104. Typically meaningful for cost-center and cost-object rows.",
+            "description": "FK to the Organization owning this dimension. Typically meaningful for cost-center and cost-object rows.",
             "nullable": true,
             "example": "org-conduction-bv",
             "title": "Organization ID"
@@ -130,7 +130,7 @@
           },
           "enterpriseActivity": {
             "type": "boolean",
-            "description": "Marks this cost-center dimension as an ondernemingsactiviteit per Wet modernisering Vpb-plicht (2016). When true, the dimension MAY be referenced by a VpbBalansLink (REQ-VPB-002). Only meaningful when dimensionType = cost-center. Default false.",
+            "description": "Marks this cost-center dimension as an ondernemingsactiviteit per Wet modernisering Vpb-plicht (2016). When true, the dimension MAY be referenced by a VpbBalansLink. Only meaningful when dimensionType = cost-center. Default false.",
             "default": false,
             "example": false,
             "title": "Ondernemings Activiteit"
@@ -174,7 +174,7 @@
           },
           "totalBudget": {
             "type": "integer",
-            "description": "Authorised spend ceiling for project-flavoured cost centers in integer cents (e.g. 5000000 = €50.000,00) per REQ-RCP-001. Applies when dimensionType = project. Reused with spentToDate (GL-derived) and budgetVariance (calculated) for budget-vs-actuals. Optional and nullable for plain departmental cost centers.",
+            "description": "Authorised spend ceiling for project-flavoured cost centers in integer cents (e.g. 5000000 = €50.000,00). Applies when dimensionType = project. Reused with spentToDate (GL-derived) and budgetVariance (calculated) for budget-vs-actuals. Optional and nullable for plain departmental cost centers.",
             "nullable": true,
             "minimum": 0,
             "example": 5000000,
@@ -182,7 +182,7 @@
           },
           "totalEstimatedCosts": {
             "type": "integer",
-            "description": "Project-manager estimate of total project costs in integer cents per REQ-RCP-001. Applies when dimensionType = project. Optional and nullable for plain cost centers.",
+            "description": "Project-manager estimate of total project costs in integer cents. Applies when dimensionType = project. Optional and nullable for plain cost centers.",
             "nullable": true,
             "minimum": 0,
             "example": 4500000,
@@ -190,7 +190,7 @@
           },
           "projectNumber": {
             "type": "string",
-            "description": "Operator-facing project label per REQ-RCP-001 (was CostProject.projectNumber). Non-unique — code remains the unique key. Applies when dimensionType = project; ignored for plain cost centers.",
+            "description": "Operator-facing project label (was CostProject.projectNumber). Non-unique: code remains the unique key. Applies when dimensionType = project; ignored for plain cost centers.",
             "nullable": true,
             "example": "CP-2026-001",
             "title": "Project Number"
@@ -198,7 +198,7 @@
           "startDate": {
             "type": "string",
             "format": "date",
-            "description": "Time-box start date per REQ-RCP-001 (was CostProject.startDate). Applies when dimensionType = project; optional for plain cost centers.",
+            "description": "Time-box start date (was CostProject.startDate). Applies when dimensionType = project; optional for plain cost centers.",
             "nullable": true,
             "example": "2026-01-15",
             "title": "Start Date"
@@ -206,14 +206,14 @@
           "endDate": {
             "type": "string",
             "format": "date",
-            "description": "Time-box end date per REQ-RCP-001 (was CostProject.endDate). Applies when dimensionType = project; optional for plain cost centers.",
+            "description": "Time-box end date (was CostProject.endDate). Applies when dimensionType = project; optional for plain cost centers.",
             "nullable": true,
             "example": "2026-12-31",
             "title": "End Date"
           },
           "externalProjectRef": {
             "type": "string",
-            "description": "ADR-019 integration-registry reference to an external OpenProject delivery project per REQ-RCP-002. Stores an OpenProject project id/URL and cached display label only. Resolution routes through OpenRegister ExternalIntegrationRouter and the OpenProject IntegrationProvider (external storage strategy, OpenConnector-backed). shillinq stores NO OpenProject delivery data. Cardinality 0..1. Valid and inert when the OpenProject provider is not yet registered (ADR-019 permissive-on-read).",
+            "description": "ADR-019 integration-registry reference to an external OpenProject delivery project. Stores an OpenProject project id/URL and cached display label only. Resolution routes through OpenRegister ExternalIntegrationRouter and the OpenProject IntegrationProvider (external storage strategy, OpenConnector-backed). shillinq stores NO OpenProject delivery data. Cardinality 0.1. Valid and inert when the OpenProject provider is not yet registered (ADR-019 permissive-on-read).",
             "nullable": true,
             "x-openregister-reference": {
               "referenceType": "openproject",
@@ -226,7 +226,7 @@
           },
           "migratedFrom": {
             "type": "string",
-            "description": "Migration provenance marker written by RetireCostProjectStep per REQ-RCP-005. Contains the source CostProject id from which this AnalyticalDimension was created. Used for idempotency — dimensions with this marker are skipped on repair re-runs. Not editable.",
+            "description": "Migration provenance marker written by RetireCostProjectStep. Contains the source CostProject id from which this AnalyticalDimension was created. Used for idempotency: dimensions with this marker are skipped on repair re-runs. Not editable.",
             "nullable": true,
             "readOnly": true,
             "example": "cp-2026-001",
@@ -276,7 +276,7 @@
         },
         "x-openregister-aggregations": {
           "segmentPnl": {
-            "description": "Segment P&L per cost-center (REQ-CC-005): debit/credit sums of non-eliminated GLLine amounts, grouped by costCenterCode + periodId + accountNumber. Returns EVERY cost-center; narrow to one with the extraFilter query params (?costCenterCode=...). It does not correlate on @self — no caller supplies a parent row. Parent roll-up over the parentCode tree is NOT included here; byCostCenterHierarchy does that through the join.",
+            "description": "Segment P&L per cost-center: debit/credit sums of non-eliminated GLLine amounts, grouped by costCenterCode + periodId + accountNumber. Returns EVERY cost-center; narrow to one with the extraFilter query params (?costCenterCode=.). It does not correlate on @self: no caller supplies a parent row. Parent roll-up over the parentCode tree is NOT included here; byCostCenterHierarchy does that through the join.",
             "from": "GLLine",
             "where": {
               "eliminationFlag": false
@@ -306,7 +306,7 @@
             ]
           },
           "segmentPnlByCostObject": {
-            "description": "Segment P&L per cost-object (REQ-CC-005): debit/credit sums of non-eliminated GLLine amounts, grouped by costCarrierCode + periodId + accountNumber. Returns EVERY cost-object; narrow to one with the extraFilter query params (?costCarrierCode=...). Replaces the retired KostenDrager.segmentPnl; the field is costCarrierCode — kostenDragerCode is not declared on GLLine and matched nothing.",
+            "description": "Segment P&L per cost-object: debit/credit sums of non-eliminated GLLine amounts, grouped by costCarrierCode + periodId + accountNumber. Returns EVERY cost-object; narrow to one with the extraFilter query params (?costCarrierCode=.). Replaces the retired KostenDrager.segmentPnl; the field is costCarrierCode: kostenDragerCode is not declared on GLLine and matched nothing.",
             "from": "GLLine",
             "where": {
               "eliminationFlag": false
@@ -336,7 +336,7 @@
             ]
           },
           "spentToDate": {
-            "description": "Sum of GL debit postings tagged to this cost-center dimension (recursive over descendant cost-centers via parentCode self-relation) per REQ-CPA-106. Excludes eliminated intercompany lines. Scoped dimensionType = cost-center.",
+            "description": "Sum of GL debit postings tagged to this cost-center dimension (recursive over descendant cost-centers via parentCode self-relation). Excludes eliminated intercompany lines. Scoped dimensionType = cost-center.",
             "operation": "sum",
             "field": "amount",
             "source": {
@@ -353,12 +353,12 @@
         },
         "x-openregister-calculations": {
           "allocatedBudget": {
-            "description": "Roll-up budget for cost-center dimensions per REQ-CPA-107: this dimension's own budget plus the allocatedBudget of every child cost-center reached via the parentCode self-relation (recursive descent). Applies only when dimensionType = cost-center.",
+            "description": "Roll-up budget for cost-center dimensions: this dimension's own budget plus the allocatedBudget of every child cost-center reached via the parentCode self-relation (recursive descent). Applies only when dimensionType = cost-center.",
             "type": "integer",
             "formula": "(@self.budget ?? 0) + sum(@children(parentCode).allocatedBudget ?? 0)"
           },
           "budgetVariance": {
-            "description": "Budget-vs-actuals variance for project-flavoured cost centers per REQ-RCP-001: authorised spend ceiling minus GL-derived costs incurred to date. Mirrors the retired CostProject.budgetVariance. Positive = under budget, negative = over budget. Applies only when dimensionType = project and totalBudget is set; zero otherwise.",
+            "description": "Budget-vs-actuals variance for project-flavoured cost centers: authorised spend ceiling minus GL-derived costs incurred to date. Mirrors the retired CostProject.budgetVariance. Positive = under budget, negative = over budget. Applies only when dimensionType = project and totalBudget is set; zero otherwise.",
             "type": "integer",
             "formula": "(@self.totalBudget ?? 0) - (@self.spentToDate ?? 0)"
           }
@@ -383,7 +383,7 @@
       "GLLine": {
         "x-openregister-aggregations": {
           "byCostCenter": {
-            "description": "Per-cost-center roll-up of posted GL amounts within an administration per REQ-CD-004. Surfaces segment P&L per AnalyticalDimension[dimensionType=cost-center].code (joined to name for drill-down). Declared declaratively per ADR-031 — no PHP SegmentReportService. Re-targeted from CostCenter to AnalyticalDimension per REQ-ADIM-101.",
+            "description": "Per-cost-center roll-up of posted GL amounts within an administration. Surfaces segment P&L per AnalyticalDimension[dimensionType=cost-center].code (joined to name for drill-down). Declared declaratively per ADR-031: no PHP SegmentReportService. Re-targeted from CostCenter to AnalyticalDimension.",
             "metric": "sum",
             "field": "amount",
             "groupBy": [
@@ -403,7 +403,7 @@
             }
           },
           "byCostCenterHierarchy": {
-            "description": "Hierarchical roll-up of GL amounts per AnalyticalDimension[dimensionType=cost-center].parentCode tree per REQ-CD-007. Child cost-center sums propagate to parents through the self-relation; drives drill-down navigation. Declarative (ADR-031). Re-targeted from CostCenter to AnalyticalDimension per REQ-ADIM-101.",
+            "description": "Hierarchical roll-up of GL amounts per AnalyticalDimension[dimensionType=cost-center].parentCode tree. Child cost-center sums propagate to parents through the self-relation; drives drill-down navigation. Declarative (ADR-031). Re-targeted from CostCenter to AnalyticalDimension.",
             "groupBy": [
               "AnalyticalDimension.parentCode"
             ],
@@ -428,7 +428,7 @@
             ]
           },
           "byCostObject": {
-            "description": "Per-cost-object (kostendrager) roll-up of posted GL amounts per REQ-CD-004. Replaces the retired KostenDrager.segmentPnl. Joins GLLine.kostenDragerCode to AnalyticalDimension[dimensionType=cost-object].code. Declarative (ADR-031) per REQ-ADIM-004.",
+            "description": "Per-cost-object (kostendrager) roll-up of posted GL amounts. Replaces the retired KostenDrager.segmentPnl. Joins GLLine.kostenDragerCode to AnalyticalDimension[dimensionType=cost-object].code. Declarative (ADR-031).",
             "metric": "sum",
             "field": "amount",
             "groupBy": [
@@ -448,7 +448,7 @@
             }
           },
           "byProject": {
-            "description": "Per-project roll-up of posted GL amounts within an administration per REQ-CD-004. Surfaces project P&L for consultancy and grant-funded work. Declarative (ADR-031).",
+            "description": "Per-project roll-up of posted GL amounts within an administration. Surfaces project P&L for consultancy and grant-funded work. Declarative (ADR-031).",
             "metric": "sum",
             "field": "amount",
             "groupBy": [
@@ -456,7 +456,7 @@
             ],
             "filter": {},
             "join": {
-              "through": "Project",
+              "through": "engagement",
               "on": "Project.code",
               "select": [
                 "Project.name",
@@ -465,7 +465,7 @@
             }
           },
           "byAnalyticalDimension": {
-            "description": "Per-custom-dimension roll-up of posted GL amounts per REQ-CD-006. Each registered AnalyticalDimension[dimensionType=custom] contributes a group-by key drawn from GLLine.dimensions[code]. Drives the operator-extensible segment P&L surface; new custom dimensions appear automatically without PHP/Vue edits. Scoped dimensionType = custom per REQ-ADIM-004.",
+            "description": "Per-custom-dimension roll-up of posted GL amounts. Each registered AnalyticalDimension[dimensionType=custom] contributes a group-by key drawn from GLLine.dimensions[code]. Drives the operator-extensible segment P&L surface; new custom dimensions appear automatically without PHP/Vue edits. Scoped dimensionType = custom.",
             "source": "GLLine",
             "groupBy": [
               "dimensions.*"
@@ -570,7 +570,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Project",
+        "schema": "engagement",
         "slug": "proj-internal-platform"
       },
       "code": "PROJ-INT-PLAT",
@@ -584,7 +584,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Project",
+        "schema": "engagement",
         "slug": "proj-grant-research"
       },
       "code": "PROJ-GRANT-RND",

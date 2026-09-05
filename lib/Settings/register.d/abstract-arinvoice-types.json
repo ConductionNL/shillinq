@@ -4,7 +4,7 @@
     "spdx-license": "EUPL-1.2",
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "abstract-arinvoice-types",
-    "description": "Folds dunning (credit-control) and write-off (oninbaar) sub-concepts directly onto the existing ARInvoice schema. Adds an invoiceType discriminator (standard / credit-note / debit-note) plus a 'dunning' summary group (derived from the latest DunningRun for the invoice) and a 'writeOff' group (the full OninbaarAfschrijving field set). This is NOT an inheritance base — ARInvoice stays a primitive schema; these are additive properties only (version bumped). The migration FoldDunningWriteoffIntoArInvoice backfills writeOff/dunning from existing DunningRun and OninbaarAfschrijving rows. Source rows are NOT deleted."
+    "description": "Folds dunning (credit-control) and write-off (oninbaar) sub-concepts directly onto the existing ARInvoice schema. Adds an invoiceType discriminator (standard / credit-note / debit-note) plus a 'dunning' summary group (derived from the latest DunningRun for the invoice) and a 'writeOff' group (the full OninbaarAfschrijving field set). This is NOT an inheritance base: ARInvoice stays a primitive schema; these are additive properties only (version bumped). The migration FoldDunningWriteoffIntoArInvoice backfills writeOff/dunning from existing DunningRun and OninbaarAfschrijving rows. Source rows are NOT deleted."
   },
   "components": {
     "schemas": {
@@ -20,7 +20,7 @@
               "debit-note"
             ],
             "default": "standard",
-            "description": "Type discriminator on the AR invoice: 'standard' (a normal sales invoice), 'credit-note' (a credit correction — negative document referencing a prior invoice via precedingInvoiceReferences) or 'debit-note' (a debit correction). Folds the former separate credit/debit-note concept directly onto ARInvoice rather than a sub-schema.",
+            "description": "Type discriminator on the AR invoice: 'standard' (a normal sales invoice), 'credit-note' (a credit correction. Negative document referencing a prior invoice via precedingInvoiceReferences) or 'debit-note' (a debit correction). Folds the former separate credit/debit-note concept directly onto ARInvoice rather than a sub-schema.",
             "title": "Invoice Type"
           },
           "dunning": {

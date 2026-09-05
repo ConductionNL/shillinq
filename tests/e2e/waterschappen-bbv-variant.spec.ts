@@ -41,7 +41,9 @@
  * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-11-testing/tasks.md
  */
 
-import { test, expect, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 const DASHBOARD_ROUTE = '/bbv-dashboard'
@@ -445,7 +447,6 @@ test.describe('BBV mapping detail — edit flow', () => {
 				{ headers: { 'OCS-APIRequest': 'true' } },
 			)
 			if (deleted.ok() === false) {
-				// eslint-disable-next-line no-console
 				console.warn(
 					`[bbv] failed to clean up seeded mapping ${id}: HTTP ${deleted.status()}`,
 				)
@@ -533,11 +534,26 @@ test.describe('BBV scoping + validation', () => {
 		// 2. The scope is re-queryable: arm the response wait BEFORE the click,
 		//    then assert the dashboard endpoint was actually hit again. A
 		//    Refresh button that no longer re-queries fails here.
+		//
+		//    Refresh lives ONLY in the page-level Actions overflow menu. The
+		//    dashboard used to repeat it as a header button next to that menu,
+		//    shipping two Refreshes; the header one is gone and `@refresh` on
+		//    CnDashboardPage now routes the menu item to loadProgrammes. The
+		//    response assertion below is what proves that rewire is live.
 		const requery = page.waitForResponse(
 			(r) => /\/apps\/shillinq\/api\/bbv-dashboard/.test(r.url()),
 			{ timeout: 20_000 },
 		)
-		await page.getByTestId('bbv-dashboard-refresh').click()
+		await page
+			.getByRole('button', { name: /^Actions$/i })
+			.first()
+			.click()
+		// NcActionButton renders the item as role=menuitem in the popover,
+		// not role=button.
+		await page
+			.getByRole('menuitem', { name: /^Refresh$/i })
+			.first()
+			.click()
 		const response = await requery
 		expect(response.status()).toBeLessThan(400)
 

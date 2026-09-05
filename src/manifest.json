@@ -10,7 +10,8 @@
 		"completionConfigKey": "setup_completed_version",
 		"steps": [
 			{ "id": "welcome", "type": "info", "title": "Welcome to Shillinq", "body": "First choose the country (legal region) and organisation type, then the chart-of-accounts template, and create the administration. Finally you can load the chart of accounts and the reference data." },
-			{ "id": "demo-data", "type": "run-action", "action": "install-demo-data", "title": "Demo data (optional)", "required": false, "body": "Load example invoices, subscriptions and ledger entries. Skip on production." },
+			{ "id": "demo-data", "type": "choice", "display": "cards", "optionsSource": "datasets", "configKey": "demo_dataset", "title": "Load example data?", "required": false, "body": "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Pick \"None\" on a production install." },
+			{ "id": "load-demo-data", "type": "run-action", "action": "load-demo-data", "title": "Load the example data", "required": false, "body": "Loads what you picked. The data is obviously sample data, it is safe to run more than once, and you can delete it afterwards." },
 			{ "id": "country", "type": "choice", "title": "Legal region (country)", "body": "In which country is this organisation legally established? This determines the available organisation types and standards.", "configKey": "legal_country", "required": true, "options": [ { "value": "nl", "label": "Netherlands" }, { "value": "be", "label": "Belgium" }, { "value": "de", "label": "Germany" } ] },
 			{ "id": "organisation", "type": "choice", "title": "Organisation type", "configKey": "legal_region", "required": true, "dependsOn": "legal_country", "optionsByParent": { "nl": [ { "value": "municipality", "label": "Municipality" }, { "value": "provincie", "label": "Province" }, { "value": "waterschap", "label": "Water authority" }, { "value": "zzp", "label": "ZZP" }, { "value": "mkb", "label": "MKB" } ], "be": [ { "value": "vzw", "label": "VZW" }, { "value": "bv", "label": "Besloten Vennootschap (BV)" }, { "value": "eenmanszaak", "label": "Eenmanszaak" } ], "de": [ { "value": "gmbh", "label": "GmbH" }, { "value": "verein", "label": "Verein" }, { "value": "einzelunternehmen", "label": "Einzelunternehmen" } ] } },
 			{ "id": "rgs-template", "type": "choice", "title": "Chart of accounts (RGS)", "body": "A chart of accounts (RGS, Referentie GrootboekSchema) is the standardised layout of ledger accounts your balance sheet and profit-and-loss statement are based on. Based on your organisation type, a matching template is already suggested. You can adjust it.", "configKey": "rgs_template", "required": true, "suggestFrom": "legal_region", "suggestMap": { "municipality": "bbv", "provincie": "bbv", "waterschap": "bbv", "zzp": "zzp", "mkb": "mkb", "vzw": "mkb", "bv": "mkb", "eenmanszaak": "zzp", "gmbh": "mkb", "verein": "mkb", "einzelunternehmen": "zzp" }, "options": [ { "value": "mkb", "label": "MKB" }, { "value": "zzp", "label": "ZZP" }, { "value": "bbv", "label": "BBV (government)" } ] },
@@ -96,6 +97,14 @@
 		"metrics": [
 			{ "name": "customer_bridge", "type": "gauge", "source": { "kind": "provider" }, "help": "Pipelinq customer-bridge integration counters and gauges" }
 		]
+	},
+	"store": {
+	  "_note": "Configuration exchange, not rows. A configuration set carries the registers, schemas, objects, views, flows, sources and mappings that make one way of working hold together. There is deliberately NO `installable` allowlist: a set exists to introduce schemas the instance does not have YET, so listing schemas this app already owns would refuse exactly the sets worth installing. The trust boundary for a bundle is its publisher, enforced by the engine's source allowlist and trusted-key check. \u26a0\ufe0f An EMPTY `installable` means install NOTHING, not install anything \u2014 omitting the key and declaring an empty list are different things.",
+	  "types": [
+	    "openregister.configset",
+	    "openregister.flows"
+	  ],
+	  "localRegister": "shillinq"
 	},
 	"menu": [
 		{
@@ -1003,12 +1012,28 @@
 			"children": []
 		},
 		{
+		  "id": "StoreMenu",
+		  "label": "Store",
+		  "icon": "StoreOutline",
+		  "route": "Store",
+		  "section": "footer",
+		  "order": 92
+		},
+		{
+			"id": "ReportsMenu",
+			"label": "Reports",
+			"icon": "ChartBoxOutline",
+			"route": "Reports",
+			"section": "footer",
+			"order": 95
+		},
+		{
 			"id": "FeaturesRoadmapMenu",
 			"label": "Features & roadmap",
 			"icon": "MapMarkerPath",
 			"route": "FeaturesRoadmap",
 			"section": "footer",
-			"order": 91,
+			"order": 100,
 			"children": []
 		},
 		{
@@ -1150,6 +1175,18 @@
 		}
 	],
 	"pages": [
+		{
+		  "id": "Store",
+		  "route": "/store",
+		  "type": "store",
+		  "title": "Store",
+		  "config": {
+		    "app": "shillinq",
+		    "title": "Store",
+		    "description": "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them."
+		  },
+		  "_note": "ADR-114 Decision 4 / ADR-080. Declarative: openregister hosts the store plane, so this app writes NO store controller. With no registry configured the page renders the app's built-in items and makes NO network call."
+		},
 		{
 			"id": "Barcodes",
 			"route": "/inventory/barcodes",
@@ -2177,7 +2214,7 @@
 			"title": "Projects",
 			"config": {
 				"register": "shillinq",
-				"schema": "Project",
+				"schema": "engagement",
 				"columns": [
 					{
 						"key": "code",
@@ -2214,7 +2251,7 @@
 				"register": "shillinq",
 				"_note": "Project detail — a project costing dimension with contract value, WIP and revenue-recognition (RJ 270). Assignments and WIP history are listed (existing related lists); segment P&L aggregation and audit trail evidence recognition method changes.",
 				"auditTrail": true,
-				"schema": "Project",
+				"schema": "engagement",
 				"fields": [
 					{
 						"key": "code",
@@ -2493,6 +2530,79 @@
 					]
 				},
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/dimensions"
+			}
+		},
+		{
+			"id": "Reports",
+			"_note": "ADR-112 / ADR-114 Decision 3. NOTHING here is invented and nothing is relocated: all seven pages already existed as routes with NO menu entry at all, reachable only by someone who already knew the URL. Carding them GIVES an entry point rather than moving one, so no functionality is lost from the main navigation. Reporting & Compliance deliberately stays in the main navigation and is NOT carded: it is a generation surface — you pick an output format and press Generate — and ADR-097 keeps work you DO in the main nav, where Dead letters sits in integriq. This app builds its own report catalogue in code, so declarative type:dashboard pages would duplicate a surface it already has.",
+			"route": "/reports",
+			"type": "reports",
+			"title": "Reports",
+			"config": {
+				"description": "Pick a report to open it.",
+				"categories": {
+					"statutory": "Statutory returns",
+					"financial": "Financial statements",
+					"housekeeping": "Housekeeping"
+				},
+				"cards": [
+					{
+						"id": "Iv3Rapportages",
+						"label": "Iv3 returns",
+						"description": "The quarterly Iv3 returns, and how far each one got.",
+						"icon": "FileChartOutline",
+						"category": "statutory",
+						"route": "Iv3Rapportages"
+					},
+					{
+						"id": "SisaRapportages",
+						"label": "SiSa returns",
+						"description": "Single information, single audit returns per scheme.",
+						"icon": "ScaleBalance",
+						"category": "statutory",
+						"route": "SisaRapportages"
+					},
+					{
+						"id": "EmuRapportage",
+						"label": "EMU return",
+						"description": "The EMU balance return.",
+						"icon": "Bank",
+						"category": "statutory",
+						"route": "EmuRapportage"
+					},
+					{
+						"id": "ConsolidatedReport",
+						"label": "Consolidated statements",
+						"description": "The group figures, consolidated across participations.",
+						"icon": "FileDocumentMultipleOutline",
+						"category": "financial",
+						"route": "ConsolidatedReport"
+					},
+					{
+						"id": "VarianceReport",
+						"label": "Budget variance",
+						"description": "Where the books sit against budget, and by how much.",
+						"icon": "TrendingUp",
+						"category": "financial",
+						"route": "VarianceReport"
+					},
+					{
+						"id": "GeneratedReportsIndex",
+						"label": "Generated reports",
+						"description": "Everything Reporting & Compliance has already produced.",
+						"icon": "FileDocumentMultipleOutline",
+						"category": "housekeeping",
+						"route": "GeneratedReportsIndex"
+					},
+					{
+						"id": "BookkeepingDestructionReport",
+						"label": "Destruction report",
+						"description": "What retention destroyed, and when.",
+						"icon": "History",
+						"category": "housekeeping",
+						"route": "BookkeepingDestructionReport"
+					}
+				]
 			}
 		},
 		{
@@ -3224,7 +3334,7 @@
 				],
 				"defaultSort": "periodEnd",
 				"detailRoute": "BankReconciliationDetail",
-				"description": "Bank statements imported via CAMT.053, MT940, or manual CSV upload. Operators reconcile lines against AR/AP invoices or route to suspense (REQ-BR-002/REQ-BR-010).",
+				"description": "Bank statements imported via CAMT.053, MT940, or manual CSV upload. Operators reconcile lines against AR/AP invoices or route to suspense.",
 				"documentationUrl": "https://shillinq.conduction.nl/guides/import-bank-statements"
 			}
 		},
@@ -3321,7 +3431,7 @@
 						"id": "import-statement",
 						"label": "Import statement",
 						"icon": "Upload",
-						"description": "Operator uploads a CAMT.053 / MT940 / CSV file; statement + lines created per REQ-BR-002. Original file archived via docudesk."
+						"description": "Operator uploads a CAMT.053 / MT940 / CSV file; statement + lines created. Original file archived via docudesk."
 					},
 					{
 						"id": "open-reconciliation",
@@ -3349,7 +3459,7 @@
 						},
 						"type": "lifecycle-transition",
 						"transition": "complete-reconciliation",
-						"description": "All lines must be matched or routed-to-suspense (REQ-BR-008)."
+						"description": "All lines must be matched or routed-to-suspense."
 					},
 					{
 						"id": "audit-lock",
@@ -3363,7 +3473,7 @@
 						},
 						"type": "lifecycle-transition",
 						"transition": "audit-lock",
-						"description": "Auditor signs off; irreversible (REQ-BR-008)."
+						"description": "Auditor signs off; irreversible."
 					}
 				],
 				"indexRoute": "BankReconciliation",
@@ -3428,7 +3538,7 @@
 										"filter": {
 											"status": "pending"
 										},
-										"description": "Unconfirmed candidate matches for lines in this statement (REQ-BR-010). One-click confirm or reject."
+										"description": "Unconfirmed candidate matches for lines in this statement. One-click confirm or reject."
 									}
 								}
 							]
@@ -3514,7 +3624,7 @@
 				],
 				"defaultSort": "priority",
 				"detailRoute": "MatchingRuleDetail",
-				"description": "Operator-authored matching rules consumed by the ReconciliationMatch aggregation (REQ-BR-004/REQ-BR-005/REQ-BR-010). Lower priority = earlier evaluation.",
+				"description": "Operator-authored matching rules consumed by the ReconciliationMatch aggregation. Lower priority = earlier evaluation.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/matching-rules"
 			}
 		},
@@ -8072,7 +8182,7 @@
 					}
 				],
 				"defaultSort": "agingBucket",
-				"description": "AR aging report grouping open invoices by customer and aging bucket per REQ-AR-008. Excludes paid, voided, and written-off invoices.",
+				"description": "AR aging report grouping open invoices by customer and aging bucket. Excludes paid, voided, and written-off invoices.",
 				"documentationUrl": "https://shillinq.conduction.nl/guides/create-invoices"
 			}
 		},
@@ -10529,7 +10639,7 @@
 			"type": "index",
 			"title": "VAT by Period",
 			"config": {
-				"description": "REQ-VAT-010 + REQ-VAT-009: lists all settlement periods for the active administration with VAT totals broken down by rate. Aggregation source: VATAuditRecord.vatByPeriod (declarative x-openregister-aggregations).",
+				"description": "Lists all settlement periods for the active administration with VAT totals broken down by rate. Aggregation source: VATAuditRecord.vatByPeriod (declarative x-openregister-aggregations).",
 				"register": "shillinq",
 				"schema": "VATAuditRecord",
 				"aggregation": "vatByPeriod",
@@ -10595,7 +10705,7 @@
 			"type": "detail",
 			"title": "VAT Reconciliation",
 			"config": {
-				"description": "REQ-VAT-010: per-period VAT reconciliation page. Shows the contributing invoices, line-by-line VATAuditRecord entries, the four VATGLAccounts balances for the period, and a 'Ready for Filing' checklist.",
+				"description": "Per-period VAT reconciliation page. Shows the contributing invoices, line-by-line VATAuditRecord entries, the four VATGLAccounts balances for the period, and a 'Ready for Filing' checklist.",
 				"register": "shillinq",
 				"_note": "VAT Reconciliation detail — per-settlement-period VAT reconciliation (REQ-VAT-010). vatByPeriod aggregation surfaces net/VAT-per-rate/gross totals; sidebar tabs list contributing VAT audit records, the four VATGLAccounts balances and a ready-for-filing checklist. Audit trail evidences the reconciliation before the BTW-aangifte is filed.",
 				"schema": "VATAuditRecord",
@@ -11995,7 +12105,7 @@
 						"aggregation": "bufferPolicyEvaluation",
 						"schema": "CashflowWeek",
 						"register": "shillinq",
-						"description": "Stacked weekly inflows / outflows with the net saldo as overlay line and the buffer-policy band highlighted. REQ-CF-015."
+						"description": "Stacked weekly inflows / outflows with the net saldo as overlay line and the buffer-policy band highlighted."
 					},
 					{
 						"id": "buffer-status",
@@ -12148,7 +12258,7 @@
 						"type": "string"
 					}
 				],
-				"description": "Configure the cash buffer threshold and two-tier alert levels. REQ-CF-009.",
+				"description": "Configure the cash buffer threshold and two-tier alert levels.",
 				"sidebarProps": {
 					"tabs": [
 						{
@@ -12269,7 +12379,7 @@
 				],
 				"defaultSort": "name",
 				"detailRoute": "DunningLadderDetail",
-				"description": "Configure the multi-stage dunning ladder per customer group. REQ-CCD-001.",
+				"description": "Configure the multi-stage dunning ladder per customer group.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
@@ -12410,7 +12520,7 @@
 				],
 				"defaultSort": "customerId",
 				"detailRoute": "DunningKlantOverrideDetail",
-				"description": "Per-customer exceptions on the base ladder (overheid extended terms, VIP skip stage 4/5). REQ-CCD-001.",
+				"description": "Per-customer exceptions on the base ladder (overheid extended terms, VIP skip stage 4/5).",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
@@ -12538,7 +12648,7 @@
 				],
 				"defaultSort": "executedOn",
 				"detailRoute": "DunningRunDetail",
-				"description": "Per-invoice per-stage execution log with evidence trail. Immutable post-execute. REQ-CCD-002.",
+				"description": "Per-invoice per-stage execution log with evidence trail. Immutable post-execute.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
@@ -12707,7 +12817,7 @@
 				],
 				"defaultSort": "invoiceId",
 				"detailRoute": "IncassoKostenDetail",
-				"description": "BIK staffel + wettelijke rente per invoice (REQ-CCD-003).",
+				"description": "BIK staffel + wettelijke rente per invoice.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
@@ -12819,7 +12929,7 @@
 				],
 				"defaultSort": "invoiceId",
 				"detailRoute": "OninbareAfschrijvingDetail",
-				"description": "Write-offs + BTW-teruggaaf voorbereiding per art. 29 OB. REQ-CCD-010.",
+				"description": "Write-offs + BTW-teruggaaf voorbereiding per art. 29 OB.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/accounts-payable"
 			}
 		},
@@ -13113,7 +13223,7 @@
 						},
 						"successMessage": "Requisition submitted for approval.",
 						"errorMessage": "Could not submit the requisition.",
-						"description": "Submit the draft requisition for approval (REQ-REQ-002)."
+						"description": "Submit the draft requisition for approval."
 					},
 					{
 						"id": "approve-requisition",
@@ -13153,7 +13263,7 @@
 						},
 						"successMessage": "Requisition rejected.",
 						"errorMessage": "Could not reject the requisition — fill in the Rejection Reason field first.",
-						"description": "Reject the submitted requisition (REQ-REQ-004). Fill in the Rejection Reason field via edit before clicking Reject."
+						"description": "Reject the submitted requisition. Fill in the Rejection Reason field via edit before clicking Reject."
 					},
 					{
 						"id": "convert-to-purchase-order",
@@ -13172,7 +13282,7 @@
 						},
 						"successMessage": "Requisition converted to a purchase order.",
 						"errorMessage": "Could not convert the requisition — check preferred supplier and lines.",
-						"description": "Materialise the approved requisition into a PurchaseOrder via RequisitionConversionService (REQ-REQ-005)."
+						"description": "Materialise the approved requisition into a PurchaseOrder via RequisitionConversionService."
 					}
 				],
 				"indexRoute": "Requisitions",
@@ -14030,7 +14140,7 @@
 					}
 				],
 				"defaultSort": "-created",
-				"description": "Pre-filtered OR audit-log view showing only signing/approval lifecycle decisions for bookkeeping records per REQ-RAP-002. Source filter scopes results to lifecycle:*->signed transitions and updates on signedBy/approvedBy fields. Use this surface to answer 'who approved this document and when?' for accountantscontrole."
+				"description": "Pre-filtered OR audit-log view showing only signing/approval lifecycle decisions for bookkeeping records. Source filter scopes results to lifecycle:*->signed transitions and updates on signedBy/approvedBy fields. Use this surface to answer 'who approved this document and when?' for accountantscontrole."
 			}
 		},
 		{
@@ -14116,7 +14226,7 @@
 					}
 				],
 				"defaultSort": "-created",
-				"description": "Pre-filtered OR audit-log view of all mutations (create / update / delete / lifecycle) across bookkeeping records per REQ-RAP-004. The OR audit-log component renders the before/after snapshot inline; this surface is the bookkeeper's first stop for 'what changed in this record?' inquiries."
+				"description": "Pre-filtered OR audit-log view of all mutations (create / update / delete / lifecycle) across bookkeeping records. The OR audit-log component renders the before/after snapshot inline; this surface is the bookkeeper's first stop for 'what changed in this record?' inquiries."
 			}
 		},
 		{
@@ -15810,7 +15920,7 @@
 						"key": "parentActivityCode",
 						"label": "Parent Code",
 						"type": "string",
-						"help": "FK to baseline code if this is a custom administration variant (REQ-WBSO-009)"
+						"help": "FK to baseline code if this is a custom administration variant"
 					},
 					{
 						"key": "administrationId",
@@ -15962,7 +16072,7 @@
 						"key": "exportFilters",
 						"label": "Export Filters",
 						"type": "object",
-						"help": "Filters applied on generation: wbsoTagId, activityCodeId, isAllowed, employee, date range (REQ-WBSO-008)"
+						"help": "Filters applied on generation: wbsoTagId, activityCodeId, isAllowed, employee, date range"
 					},
 					{
 						"key": "generatedAt",
@@ -15978,7 +16088,7 @@
 						"key": "validationErrors",
 						"label": "Validation Errors",
 						"type": "array",
-						"help": "Empty if validated; lists untagged entry IDs and other validation failures (REQ-WBSO-006)"
+						"help": "Empty if validated; lists untagged entry IDs and other validation failures"
 					},
 					{
 						"key": "submittedAt",
@@ -16010,7 +16120,7 @@
 						},
 						"type": "lifecycle-transition",
 						"transition": "validate",
-						"description": "Run RVO validation: checks all included time entries carry WBSO tags and activity codes. Fails if any entry is untagged (REQ-WBSO-006)."
+						"description": "Run RVO validation: checks all included time entries carry WBSO tags and activity codes. Fails if any entry is untagged."
 					},
 					{
 						"id": "mark-submitted",
@@ -16678,7 +16788,7 @@
 				],
 				"defaultSort": "statementDate",
 				"detailRoute": "ReconciliationDetail",
-				"description": "Bank reconciliation sessions per REQ-REC-001. Each row is one account+period; click through to match, classify unresolved items, and produce a signed-off ReconciliationReport (REQ-REC-006).",
+				"description": "Bank reconciliation sessions. Each row is one account+period; click through to match, classify unresolved items, and produce a signed-off ReconciliationReport.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
 			}
 		},
@@ -16793,7 +16903,7 @@
 						},
 						"type": "lifecycle-transition",
 						"transition": "initiate",
-						"description": "REQ-REC-002 statement-balance verification runs server-side; non-zero variance surfaces a warning but does not block."
+						"description": "Statement-balance verification runs server-side; non-zero variance surfaces a warning but does not block."
 					},
 					{
 						"id": "verify",
@@ -16807,7 +16917,7 @@
 						},
 						"type": "lifecycle-transition",
 						"transition": "verify",
-						"description": "REQ-REC-006 closure check: all matches must be classified, sign-off comment is required."
+						"description": "Closure check: all matches must be classified, sign-off comment is required."
 					},
 					{
 						"id": "close",
@@ -16821,7 +16931,7 @@
 						},
 						"type": "lifecycle-transition",
 						"transition": "close",
-						"description": "Seal the reconciliation. After this, the session is immutable per REQ-REC-003."
+						"description": "Seal the reconciliation. After this, the session is immutable."
 					},
 					{
 						"id": "revert",
@@ -16840,7 +16950,7 @@
 					{
 						"id": "cancel",
 						"label": "Cancel",
-						"icon": "Cancel",
+						"icon": "CloseCircleOutline",
 						"visibleWhen": {
 							"field": "reconciliationStatus",
 							"in": [
@@ -16895,7 +17005,7 @@
 												"label": "Matched At"
 											}
 										],
-										"description": "Matches recorded for this reconciliation session (REQ-REC-005). Filter to resolutionStatus=null to see unresolved items needing REQ-REC-004 classification."
+										"description": "Matches recorded for this reconciliation session. Filter to resolutionStatus=null to see unresolved items needing classification."
 									}
 								}
 							]
@@ -17062,7 +17172,7 @@
 						}
 					}
 				],
-				"description": "REQ-REC-008: unresolved items across all open reconciliations, grouped by session. Bulk-classify multiple items at once with a shared reason.",
+				"description": "Unresolved items across all open reconciliations, grouped by session. Bulk-classify multiple items at once with a shared reason.",
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/bookkeeping/year-end"
 			}
 		},
@@ -17187,7 +17297,7 @@
 				],
 				"lifecycleActions": false,
 				"indexRoute": "Reconciliations",
-				"description": "REQ-REC-001 + REQ-REC-006 sealed audit artifact. Immutable once created.",
+				"description": "Sealed audit artifact. Immutable once created.",
 				"sidebarProps": {
 					"tabs": [
 						{
@@ -18374,7 +18484,7 @@
 					}
 				],
 				"defaultSort": "-created",
-				"description": "Read-only ENSIA audit-trail view for external IT auditors per REQ-ENSIA-008. Shows every create/update/delete/lifecycle event across ENSIAJaarcyclus + Evaluatievraag + Bevinding with before/after diff rendering. Post-peer-review edits carry a `reden` field enforced by ENSIAValidationGuard."
+				"description": "Read-only ENSIA audit-trail view for external IT auditors. Shows every create/update/delete/lifecycle event across ENSIAJaarcyclus + Evaluatievraag + Bevinding with before/after diff rendering. Post-peer-review edits carry a `reden` field enforced by ENSIAValidationGuard."
 			}
 		},
 		{
@@ -18390,13 +18500,13 @@
 						"id": "ensia-college-verklaring-generator",
 						"type": "action",
 						"title": "Generate college verklaring (DOCX)",
-						"description": "Renders a VNG-template Word document for college sign-off (REQ-ENSIA-006). The active ENSIA cyclus MUST be in college-akkoord status. Output is a downloadable DOCX archived on cyclus.verklaringFile via docudesk."
+						"description": "Renders a VNG-template Word document for college sign-off. The active ENSIA cyclus MUST be in college-akkoord status. Output is a downloadable DOCX archived on cyclus.verklaringFile via docudesk."
 					},
 					{
 						"id": "ensia-portal-xml-export",
 						"type": "action",
 						"title": "Export ENSIA-portal XML",
-						"description": "Renders an ENSIA-XSD-compliant XML payload for upload to the landelijke ENSIA-portal (REQ-ENSIA-007). The active ENSIA cyclus MUST be in college-akkoord with a signed verklaringFile."
+						"description": "Renders an ENSIA-XSD-compliant XML payload for upload to the landelijke ENSIA-portal. The active ENSIA cyclus MUST be in college-akkoord with a signed verklaringFile."
 					}
 				],
 				"documentationUrl": "https://shillinq.conduction.nl/user-guide/compliance/overview"

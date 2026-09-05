@@ -9,7 +9,7 @@
         "icon": "CalendarCheckOutline",
         "version": "0.1.0",
         "title": "Urencriterium jaar",
-        "description": "Per-onderneming, per-kalenderjaar rolling dashboard van het urencriterium (art. 3.6 Wet IB 2001). Houdt de doel-norm (1.225 of 800 uur), de lopende tally, de prognose tot einde jaar, de drempel-status (OP_KOERS/RISICO/KRITIEK) en het grotendeels-criterium bij. De doel-norm wordt automatisch bepaald op basis van het ondernemingsprofiel (REQ-URC-000). Save-precondition UrencriteriumYearGuard valideert norm-grondslag-consistentie en drempel-status (ADR-031 uitzonderingspad). Per onderneming één record per kalenderjaar (REQ-URC-014).",
+        "description": "Per-onderneming, per-kalenderjaar rolling dashboard van het urencriterium (art. 3.6 Wet IB 2001). Houdt de doel-norm (1.225 of 800 uur), de lopende tally, de prognose tot einde jaar, de drempel-status (OP_KOERS/RISICO/KRITIEK) en het grotendeels-criterium bij. De doel-norm wordt automatisch bepaald op basis van het ondernemingsprofiel. Save-precondition UrencriteriumYearGuard valideert norm-grondslag-consistentie en drempel-status (ADR-031 uitzonderingspad). Per onderneming één record per kalenderjaar.",
         "x-schema-org": "schema:Quantity",
         "x-openregister-purpose": "transaction",
         "type": "object",
@@ -30,7 +30,7 @@
           },
           "enterpriseId": {
             "type": "string",
-            "description": "FK naar de onderneming (eenmanszaak, VOF-aandeel, maatschap). Het urencriterium geldt per onderneming (REQ-URC-014).",
+            "description": "FK naar de onderneming (eenmanszaak, VOF-aandeel, maatschap). Het urencriterium geldt per onderneming.",
             "example": "ond-1",
             "title": "Onderneming ID"
           },
@@ -42,7 +42,7 @@
           },
           "purposeNorm": {
             "type": "integer",
-            "description": "De toe te passen urennorm: 1.225 (regulier, art. 3.6 lid 1), 800 (arbeidsongeschiktheid, art. 3.6 lid 5) of 525 (meewerkaftrek). Automatisch bepaald op init (REQ-URC-000/006).",
+            "description": "De toe te passen urennorm: 1.225 (regulier, art. 3.6 lid 1), 800 (arbeidsongeschiktheid, art. 3.6 lid 5) of 525 (meewerkaftrek). Automatisch bepaald op init.",
             "enum": [
               1225,
               800,
@@ -61,7 +61,7 @@
           "currentHours": {
             "type": "number",
             "minimum": 0,
-            "description": "Cumulatieve gerealiseerde uren voor dit kalenderjaar, dagelijks bijgewerkt door de tally-batch uit UrenDagregistratie (REQ-URC-001).",
+            "description": "Cumulatieve gerealiseerde uren voor dit kalenderjaar, dagelijks bijgewerkt door de tally-batch uit UrenDagregistratie.",
             "default": 0,
             "example": 916,
             "title": "Lopende Uren"
@@ -70,7 +70,7 @@
             "type": "number",
             "minimum": 0,
             "nullable": true,
-            "description": "Voorspelde eindstand op 31 december op basis van rolling-12-weeks gemiddelde + seizoenscorrectie (REQ-URC-002).",
+            "description": "Voorspelde eindstand op 31 december op basis van rolling-12-weeks gemiddelde + seizoenscorrectie.",
             "example": 1180,
             "title": "Prognose Einde Jaar"
           },
@@ -85,7 +85,7 @@
           },
           "thresholdStatus": {
             "type": "string",
-            "description": "Risico-status t.o.v. de norm, afgeleid van prognose vs doelNorm (REQ-URC-003).",
+            "description": "Risico-status t.o.v. de norm, afgeleid van prognose vs doelNorm.",
             "enum": [
               "ON_RATE",
               "RISK",
@@ -99,7 +99,7 @@
           "largelyCriterium": {
             "type": "string",
             "nullable": true,
-            "description": "Uitkomst grotendeels-criterium (>50% ondernemingstijd vs loondienst, art. 3.6 lid 2). NON_APPLICABLE als geen parallel loondienst (REQ-URC-007).",
+            "description": "Uitkomst grotendeels-criterium (>50% ondernemingstijd vs loondienst, art. 3.6 lid 2). NON_APPLICABLE als geen parallel loondienst.",
             "enum": [
               "NON_APPLICABLE",
               "LARGELY_ENTERPRISE",
@@ -175,7 +175,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Urencriterium jaar is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Urencriterium jaar is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "UrenDagregistratie": {
@@ -183,7 +183,7 @@
         "icon": "ClockTimeFourOutline",
         "version": "0.1.0",
         "title": "Uren dagregistratie",
-        "description": "Dagelijkse fiscaal-gecategoriseerde uren-ledger voor het urencriterium (REQ-URC-001). Apart van — en gevoed door — de billable UrenRegistratie (time-tracking) uit bookkeeping-time-tracking: time-tracking-uren stromen in als BILLABLE_KLANTWERK, niet-billable overhead (acquisitie, administratie, scholing, reistijd) wordt handmatig of agenda-afgeleid geregistreerd. De reistijd-cap (max 4 uur/dag, REQ-URC-001) en backfill-regels (REQ-URC-017) worden afgedwongen door UrenDagregistratieGuard (ADR-031). Naamkeuze UrenDagregistratie vermijdt botsing met de bestaande monolith-schema UrenRegistratie (ADR-037).",
+        "description": "Dagelijkse fiscaal-gecategoriseerde uren-ledger voor het urencriterium. Apart van: en gevoed door. De billable UrenRegistratie (time-tracking) uit bookkeeping-time-tracking: time-tracking-uren stromen in als BILLABLE_KLANTWERK, niet-billable overhead (acquisitie, administratie, scholing, reistijd) wordt handmatig of agenda-afgeleid geregistreerd. De reistijd-cap (max 4 uur/dag) en backfill-regels worden afgedwongen door UrenDagregistratieGuard (ADR-031). Naamkeuze UrenDagregistratie vermijdt botsing met de bestaande monolith-schema UrenRegistratie (ADR-037).",
         "x-schema-org": "schema:HowToStep",
         "x-openregister-purpose": "transaction",
         "type": "object",
@@ -232,7 +232,7 @@
           "hours": {
             "type": "number",
             "minimum": 0,
-            "description": "Aantal uren in deze categorie op deze dag. Voor REISTIJD_ZAKELIJK wordt maximaal 4 uur geteld (cap per dag, REQ-URC-001).",
+            "description": "Aantal uren in deze categorie op deze dag. Voor REISTIJD_ZAKELIJK wordt maximaal 4 uur geteld (cap per dag).",
             "example": 3,
             "title": "Uren"
           },
@@ -249,7 +249,7 @@
             "type": "string",
             "nullable": true,
             "readOnly": true,
-            "description": "Audit-notitie wanneer een cap is toegepast, bijv. 'Reistijd-cap toegepast: 2 uur niet meegeteld' (REQ-URC-001).",
+            "description": "Audit-notitie wanneer een cap is toegepast, bijv. 'Reistijd-cap toegepast: 2 uur niet meegeteld'.",
             "example": "Reistijd-cap toegepast: 2 uur niet meegeteld",
             "title": "Cap Notitie"
           },
@@ -269,7 +269,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "Tijdstip waarop deze regel is geregistreerd (gebruikt voor backfill-detectie, REQ-URC-017).",
+            "description": "Tijdstip waarop deze regel is geregistreerd (gebruikt voor backfill-detectie).",
             "example": "2026-05-21T18:00:00Z",
             "title": "Registratie Moment"
           },
@@ -277,21 +277,21 @@
             "type": "string",
             "nullable": true,
             "readOnly": true,
-            "description": "Backfill-label, bijv. 'Backfill T+5 dagen'. Gezet door de guard wanneer registratieMoment later is dan datum (REQ-URC-017).",
+            "description": "Backfill-label, bijv. 'Backfill T+5 dagen'. Gezet door de guard wanneer registratieMoment later is dan datum.",
             "example": "Backfill T+5 dagen",
             "title": "Backfill Label"
           },
           "backfillReason": {
             "type": "string",
             "nullable": true,
-            "description": "Verplichte reden bij backfill ouder dan 7 dagen (REQ-URC-017).",
+            "description": "Verplichte reden bij backfill ouder dan 7 dagen.",
             "example": "Factuur opgemaakt op 20 mei voor werk van 5 april",
             "title": "Backfill Reden"
           },
           "backfillEvidence": {
             "type": "string",
             "nullable": true,
-            "description": "FK naar geüpload bewijs (e-mail, factuur, agenda-event) bij backfill ouder dan 7 dagen (REQ-URC-017).",
+            "description": "FK naar geüpload bewijs (e-mail, factuur, agenda-event) bij backfill ouder dan 7 dagen.",
             "title": "Backfill Bewijs"
           }
         },
@@ -318,7 +318,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Uren dagregistratie is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Uren dagregistratie is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "UrenCategorie": {
@@ -326,7 +326,7 @@
         "icon": "TagOutline",
         "version": "0.1.0",
         "title": "Uren categorie",
-        "description": "Definitie-tabel van door de Belastingdienst erkende uren-categorieën met fiscale grondslag (Hoge Raad caselaw), wegings-/cap-regels en bewijsvereisten (REQ-URC-004). Configuratie-tabel zodat 2026+ jurisprudentie als data-update kan worden geabsorbeerd in plaats van code (design D5). Alleen admin mag na init bewerken.",
+        "description": "Definitie-tabel van door de Belastingdienst erkende uren-categorieën met fiscale grondslag (Hoge Raad caselaw), wegings-/cap-regels en bewijsvereisten. Configuratie-tabel zodat 2026+ jurisprudentie als data-update kan worden geabsorbeerd in plaats van code (design D5). Alleen admin mag na init bewerken.",
         "x-schema-org": "schema:DefinedTerm",
         "x-openregister-purpose": "dimension",
         "type": "object",
@@ -393,7 +393,7 @@
           },
           "evidenceRequired": {
             "type": "boolean",
-            "description": "Of registratie in deze categorie pas definitief wordt na evidence-upload (bijv. scholing, REQ-URC-004).",
+            "description": "Of registratie in deze categorie pas definitief wordt na evidence-upload (bijv. scholing).",
             "default": false,
             "example": false,
             "title": "Bewijs Vereist"
@@ -436,7 +436,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Uren categorie is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Uren categorie is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "UrenPrognose": {
@@ -444,7 +444,7 @@
         "icon": "ChartLineVariant",
         "version": "0.1.0",
         "title": "Uren prognose",
-        "description": "Prognose tot einde kalenderjaar op basis van een rolling-12-weeks gemiddelde + seizoenscorrectie (zomerdip, december-dip) + bekende vakanties + ingeplande opdrachten (REQ-URC-002). Modelversie wordt opgeslagen (v3.2-12wk-seasonal) zodat upgrades traceerbaar zijn. Transparant model (geen ML), leesbaar voor een boekhouder (design D3).",
+        "description": "Prognose tot einde kalenderjaar op basis van een rolling-12-weeks gemiddelde + seizoenscorrectie (zomerdip, december-dip) + bekende vakanties + ingeplande opdrachten. Modelversie wordt opgeslagen (v3.2-12wk-seasonal) zodat upgrades traceerbaar zijn. Transparant model (geen ML), leesbaar voor een boekhouder (design D3).",
         "x-schema-org": "schema:Quantity",
         "x-openregister-purpose": "transaction",
         "type": "object",
@@ -485,7 +485,7 @@
           "perMonthPrognose": {
             "type": "object",
             "nullable": true,
-            "description": "Voorspelde uren per resterende maand, keyed op maand (bijv. {\"2026-08\": 60}). Maanden met geplande vakantie staan op 0 (REQ-URC-002).",
+            "description": "Voorspelde uren per resterende maand, keyed op maand (bijv. {\"2026-08\": 60}). Maanden met geplande vakantie staan op 0.",
             "additionalProperties": {
               "type": "number"
             },
@@ -545,7 +545,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Uren prognose is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Uren prognose is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "UrenAlert": {
@@ -553,7 +553,7 @@
         "icon": "AlertOutline",
         "version": "0.1.0",
         "title": "Uren alert",
-        "description": "Waarschuwing gegenereerd op vaste momenten (kwartaal-eind) of bij prognose-omslagen (OP_KOERS -> RISICO, RISICO -> KRITIEK) met concrete handelingsperspectieven (REQ-URC-003). Bevat minimaal 3 acties tied aan de specifieke situatie van de ondernemer.",
+        "description": "Waarschuwing gegenereerd op vaste momenten (kwartaal-eind) of bij prognose-omslagen (OP_KOERS -> RISICO, RISICO -> KRITIEK) met concrete handelingsperspectieven. Bevat minimaal 3 acties tied aan de specifieke situatie van de ondernemer.",
         "x-schema-org": "schema:Message",
         "x-openregister-purpose": "transaction",
         "type": "object",
@@ -641,7 +641,7 @@
           "cause": {
             "type": "string",
             "nullable": true,
-            "description": "Toelichting op de oorzaak van de omslag (bijv. verwijzing naar een ziekteperiode, REQ-URC-003).",
+            "description": "Toelichting op de oorzaak van de omslag (bijv. verwijzing naar een ziekteperiode).",
             "example": "Ziekteperiode 1-14 september verlaagde de prognose",
             "title": "Oorzaak"
           },
@@ -650,7 +650,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Minimaal 3 concrete acties om de norm alsnog te halen (REQ-URC-003).",
+            "description": "Minimaal 3 concrete acties om de norm alsnog te halen.",
             "example": [
               "Plan 20 acquisitie-uren in oktober",
               "Heroverweeg geplande vakantie in november",
@@ -684,7 +684,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Uren alert is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Uren alert is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "UrenEvidence": {
@@ -692,7 +692,7 @@
         "icon": "FileLockOutline",
         "version": "0.1.0",
         "title": "Uren bewijsdossier",
-        "description": "Per-kwartaal PDF-A3 bewijsdossier dat een Belastingdienst-controle doorstaat (REQ-URC-010). Bevat dagregistraties, categorisering en bron-referenties, met SHA-256-hash en bewaartermijn 7 jaar (art. 52 AWR). Terugvindbaar via bewaartermijn-index op (ondernemingId, periode).",
+        "description": "Per-kwartaal PDF-A3 bewijsdossier dat een Belastingdienst-controle doorstaat. Bevat dagregistraties, categorisering en bron-referenties, met SHA-256-hash en bewaartermijn 7 jaar (art. 52 AWR). Terugvindbaar via bewaartermijn-index op (ondernemingId, periode).",
         "x-schema-org": "schema:DigitalDocument",
         "x-openregister-purpose": "transaction",
         "type": "object",
@@ -765,7 +765,7 @@
           "sha256": {
             "type": "string",
             "nullable": true,
-            "description": "SHA-256-hash van het geëxporteerde bestand voor integriteitsvalidatie bij controle (REQ-URC-010).",
+            "description": "SHA-256-hash van het geëxporteerde bestand voor integriteitsvalidatie bij controle.",
             "example": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
             "title": "Sha256"
           },
@@ -807,7 +807,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a Uren bewijsdossier is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a Uren bewijsdossier is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

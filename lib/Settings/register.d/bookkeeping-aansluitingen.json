@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-aansluitingen",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json; ADR-031 declarative-first (schemas + lifecycle + aggregations); ADR-024 generic-renderer manifest pages",
-    "description": "The Aansluiting (tie-out) framework (demand 9 — the market-gap sweep found SIX separate reconciliation gaps that are all the same capability: tie source A to source B, flag the difference, drill down, and record a per-period status). Adds two new schemas: `Aansluiting` (the declarative definition of one tie-out — source A, source B, expected relationship, tolerance) and `AansluitingResult` (the per-period computed instance — totals, difference, bucket-level drill-down, and an open/explained/resolved lifecycle with an audit-trailed explanation). This change ships the framework plus its two highest-value instances: BTW-ledger-to-aangifte (reuses VATReturnService's GL-derivation, the same engine btw-suppletie-detection already diffs) and subledger-to-GL-control-account (AR debiteuren 1300 and AP crediteuren 1600 against their open-item subledger totals — the exact comparison PeriodCloseAssistantService::detectOpenSubLedger() never makes; it only counts draft/unposted transactions, it never sums a control-account balance against a subledger total). The other four aansluitingen the gap sweep found (year-end balance reconciliation pack, ICP<->rubriek 3b, bank-balance tie-out — which MUST extend bookkeeping-reconciliation-reports rather than duplicate BankReconciliation/ReconciliationMatch, and XAF/auditfile completeness) are explicitly deferred to a named follow-up (see proposal.md). Per ADR-031, source-total resolution is declared as x-openregister-aggregations shapes for documentation, but computed via AansluitingService using the real ObjectService API — the same engine-side-fallback pattern already used by TrialBalanceService, FluxService, and IcpService, because (a) the BTW-ledger side needs the same non-aggregatable per-line vatRate/reverseCharge derivation already documented as broken for declarative aggregation in bookkeeping-vat-btw-filing, and (b) the subledger-open-item filter needs a status-enum check that differs per schema (ARInvoice.lifecycleState vs APTransaction.state) — a cross-schema polymorphism the aggregation engine cannot express. AansluitingResolutionGuard is the single-method ADR-031 exception gating explained -> resolved."
+    "description": "The Aansluiting (tie-out) framework (demand 9: the market-gap sweep found SIX separate reconciliation gaps that are all the same capability: tie source A to source B, flag the difference, drill down, and record a per-period status). Adds two new schemas: `Aansluiting` (the declarative definition of one tie-out. Source A, source B, expected relationship, tolerance) and `AansluitingResult` (the per-period computed instance. Totals, difference, bucket-level drill-down, and an open/explained/resolved lifecycle with an audit-trailed explanation). This change ships the framework plus its two highest-value instances: BTW-ledger-to-aangifte (reuses VATReturnService's GL-derivation, the same engine btw-suppletie-detection already diffs) and subledger-to-GL-control-account (AR debiteuren 1300 and AP crediteuren 1600 against their open-item subledger totals. The exact comparison PeriodCloseAssistantService:detectOpenSubLedger never makes; it only counts draft/unposted transactions, it never sums a control-account balance against a subledger total). The other four aansluitingen the gap sweep found (year-end balance reconciliation pack, ICP<->rubriek 3b, bank-balance tie-out. Which MUST extend bookkeeping-reconciliation-reports rather than duplicate BankReconciliation/ReconciliationMatch, and XAF/auditfile completeness) are explicitly deferred to a named follow-up (see proposal.md). Per ADR-031, source-total resolution is declared as x-openregister-aggregations shapes for documentation, but computed via AansluitingService using the real ObjectService API. The same engine-side-fallback pattern already used by TrialBalanceService, FluxService, and IcpService, because (a) the BTW-ledger side needs the same non-aggregatable per-line vatRate/reverseCharge derivation already documented as broken for declarative aggregation in bookkeeping-vat-btw-filing, and (b) the subledger-open-item filter needs a status-enum check that differs per schema (ARInvoice.lifecycleState vs APTransaction.state). A cross-schema polymorphism the aggregation engine cannot express. AansluitingResolutionGuard is the single-method ADR-031 exception gating explained -> resolved."
   },
   "components": {
     "schemas": {
@@ -13,14 +13,14 @@
         "icon": "ScaleBalance",
         "version": "0.1.0",
         "title": "Aansluiting",
-        "description": "The declarative definition of one tie-out: source A, source B, the expected relationship between them, and the tolerance within which a difference is not considered drift. One Aansluiting definition is computed once per fiscal period, producing an AansluitingResult. Master data — created once per tie-out, not per period.",
+        "description": "The declarative definition of one tie-out: source A, source B, the expected relationship between them, and the tolerance within which a difference is not considered drift. One Aansluiting definition is computed once per fiscal period, producing an AansluitingResult. Master data: created once per tie-out, not per period.",
         "x-schema-org": "schema:DefinedTerm",
         "x-spec": "openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md",
         "type": "object",
         "x-openregister-audit": true,
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "REQ-AT-001: changes to the declarative tie-out definition (tolerance, expected relationship, source resolvers) are audit-trailed — this is master data that governs how every AansluitingResult for this tie-out is computed."
+          "description": "Changes to the declarative tie-out definition (tolerance, expected relationship, source resolvers) are audit-trailed: this is master data that governs how every AansluitingResult for this tie-out is computed."
         },
         "required": [
           "name",
@@ -32,13 +32,13 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Human-readable name of the tie-out (REQ-AANS-001).",
+            "description": "Human-readable name of the tie-out.",
             "example": "BTW-grootboek naar aangifte",
             "title": "Name"
           },
           "reconciliationType": {
             "type": "string",
-            "description": "The resolver AansluitingService dispatches to for source A / source B totals (REQ-AANS-002). Only two are implemented in this change; additional types are a named follow-up (see proposal.md).",
+            "description": "The resolver AansluitingService dispatches to for source A / source B totals. Only two are implemented in this change; additional types are a named follow-up (see proposal.md).",
             "enum": [
               "vat-ledger-return",
               "subledger-gl-control"
@@ -62,14 +62,14 @@
           },
           "toleranceCents": {
             "type": "integer",
-            "description": "Maximum absolute difference (whole cents) still considered within tolerance (REQ-AANS-003). Below or equal: AansluitingResult.withinTolerance = true and status defaults to resolved. Above: status = open.",
+            "description": "Maximum absolute difference (whole cents) still considered within tolerance. Below or equal: AansluitingResult.withinTolerance = true and status defaults to resolved. Above: status = open.",
             "default": 100,
             "example": 100,
             "title": "Tolerance Cents"
           },
           "expectedRelationship": {
             "type": "string",
-            "description": "How source A and source B are expected to relate (REQ-AANS-003). 'equal': sourceATotal - sourceBTotal should be ~0. 'equal-with-sign-flip': sourceATotal + sourceBTotal should be ~0 (a GL control account carries the opposite sign convention from its subledger total, e.g. a liability control account).",
+            "description": "How source A and source B are expected to relate. 'equal': sourceATotal - sourceBTotal should be ~0. 'equal-with-sign-flip': sourceATotal + sourceBTotal should be ~0 (a GL control account carries the opposite sign convention from its subledger total, e.g. a liability control account).",
             "enum": [
               "equal",
               "equal-with-sign-flip"
@@ -87,7 +87,7 @@
           },
           "subLedgerType": {
             "type": "string",
-            "description": "For aansluitingType=subledger-gl-control: which subledger source B sums (REQ-AANS-005). Unused for btw-ledger-aangifte.",
+            "description": "For aansluitingType=subledger-gl-control: which subledger source B sums. Unused for btw-ledger-aangifte.",
             "enum": [
               "ar",
               "ap"
@@ -139,14 +139,14 @@
         "icon": "FileCompare",
         "version": "0.1.0",
         "title": "Aansluiting Resultaat",
-        "description": "One per-period computed instance of an Aansluiting (REQ-AANS-004): the resolved source A / source B totals, the difference, whether it is within tolerance, a bucket-level drill-down (lineDeltas), and the open -> explained -> resolved lifecycle with an audit-trailed explanation (who explained what, REQ-AANS-006). Computed by AansluitingService::compute(); one result per (aansluitingId, periodId) — recomputing replaces the totals/lineDeltas of an `open` result in place but never a result already `explained` or `resolved` (must reopen first).",
+        "description": "One per-period computed instance of an Aansluiting: the resolved source A / source B totals, the difference, whether it is within tolerance, a bucket-level drill-down (lineDeltas), and the open -> explained -> resolved lifecycle with an audit-trailed explanation (who explained what). Computed by AansluitingService:compute; one result per (aansluitingId, periodId). Recomputing replaces the totals/lineDeltas of an `open` result in place but never a result already `explained` or `resolved` (must reopen first).",
         "x-schema-org": "schema:Report",
         "x-spec": "openspec/changes/bookkeeping-aansluitingen/specs/bookkeeping-aansluitingen/spec.md",
         "type": "object",
         "x-openregister-audit": true,
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "REQ-AANS-006: every lifecycle transition (explain/resolve/reopen) and the explainedBy/explainedReasonText fields are audit-trailed."
+          "description": "Every lifecycle transition (explain/resolve/reopen) and the explainedBy/explainedReasonText fields are audit-trailed."
         },
         "required": [
           "reconciliationId",
@@ -165,33 +165,33 @@
           },
           "periodId": {
             "type": "string",
-            "description": "Fiscal period this result was computed for (REQ-AANS-004).",
+            "description": "Fiscal period this result was computed for.",
             "example": "2026-Q2",
             "title": "Period ID"
           },
           "computedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp AansluitingService::compute() last (re)computed this result.",
+            "description": "Timestamp AansluitingService:compute last (re)computed this result.",
             "nullable": true,
             "example": "2026-07-13T09:00:00+00:00",
             "title": "Computed At"
           },
           "sourceATotal": {
             "type": "number",
-            "description": "Resolved source A total in EUR (REQ-AANS-004).",
+            "description": "Resolved source A total in EUR.",
             "example": 4600.0,
             "title": "Source A Total"
           },
           "sourceBTotal": {
             "type": "number",
-            "description": "Resolved source B total in EUR (REQ-AANS-004).",
+            "description": "Resolved source B total in EUR.",
             "example": 4450.0,
             "title": "Source B Total"
           },
           "differenceCents": {
             "type": "integer",
-            "description": "The signed difference in whole cents, computed per the parent Aansluiting's expectedRelationship (REQ-AANS-003).",
+            "description": "The signed difference in whole cents, computed per the parent Aansluiting's expectedRelationship.",
             "example": 15000,
             "title": "Difference Cents"
           },
@@ -203,7 +203,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Lifecycle state (REQ-AANS-006). open: drift detected, unexplained. explained: an operator recorded a reason but has not confirmed resolution. resolved: closed out, either because it was within tolerance or an operator confirmed the explained drift is settled.",
+            "description": "Lifecycle state. open: drift detected, unexplained. explained: an operator recorded a reason but has not confirmed resolution. resolved: closed out, either because it was within tolerance or an operator confirmed the explained drift is settled.",
             "enum": [
               "open",
               "explained",
@@ -215,7 +215,7 @@
           },
           "lineDeltas": {
             "type": "array",
-            "description": "Bucket-level drill-down (REQ-AANS-005). Always carries a 'TOTAL' summary row; aansluitingType=btw-ledger-aangifte additionally carries one row per (type, taxRate) rubriek bucket; aansluitingType=subledger-gl-control additionally carries one row per open subledger item contributing to sourceBTotal.",
+            "description": "Bucket-level drill-down. Always carries a 'TOTAL' summary row; aansluitingType=btw-ledger-aangifte additionally carries one row per (type, taxRate) rubriek bucket; aansluitingType=subledger-gl-control additionally carries one row per open subledger item contributing to sourceBTotal.",
             "items": {
               "type": "object",
               "properties": {
@@ -248,7 +248,7 @@
           "explainedBy": {
             "type": "string",
             "nullable": true,
-            "description": "Actor (user id) who recorded the explanation (REQ-AANS-006).",
+            "description": "Actor (user id) who recorded the explanation.",
             "example": null,
             "title": "Explained By"
           },
@@ -256,13 +256,13 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "ISO 8601 timestamp at which the explanation was recorded (REQ-AANS-006). Null while the difference is unexplained. An explanation documents why a tie-out difference exists; it does not clear it — resolvedAt does that.",
+            "description": "ISO 8601 timestamp at which the explanation was recorded. Null while the difference is unexplained. An explanation documents why a tie-out difference exists; it does not clear it: resolvedAt does that.",
             "example": null,
             "title": "Explained At"
           },
           "explanationReasonCode": {
             "type": "string",
-            "description": "Classification of the explanation (REQ-AANS-006), mirroring the T4 bank-reconciliation resolutionStatus vocabulary (bookkeeping-reconciliation-reports REQ-REC-004) for a consistent operator vocabulary across all tie-out UIs.",
+            "description": "Classification of the explanation, mirroring the T4 bank-reconciliation resolutionStatus vocabulary (bookkeeping-reconciliation-reports) for a consistent operator vocabulary across all tie-out UIs.",
             "enum": [
               "timing",
               "error",
@@ -276,14 +276,14 @@
           "explanationReasonText": {
             "type": "string",
             "nullable": true,
-            "description": "Operator-supplied free-text reason (REQ-AANS-006). Required before a resolve transition is permitted.",
+            "description": "Operator-supplied free-text reason. Required before a resolve transition is permitted.",
             "example": null,
             "title": "Explanation Reason Text"
           },
           "resolvedBy": {
             "type": "string",
             "nullable": true,
-            "description": "Nextcloud user id of the actor who closed this tie-out difference — i.e. who confirmed the two sources now reconcile, or that the remaining difference has been corrected in the ledger. Null while the difference is still open. Distinct from explainedBy, which only documents the cause.",
+            "description": "Nextcloud user id of the actor who closed this tie-out difference: i.e. Who confirmed the two sources now reconcile, or that the remaining difference has been corrected in the ledger. Null while the difference is still open. Distinct from explainedBy, which only documents the cause.",
             "example": null,
             "title": "Resolved By"
           },
@@ -298,7 +298,7 @@
           "relatedVatCorrectionId": {
             "type": "string",
             "nullable": true,
-            "description": "For aansluitingType=btw-ledger-aangifte: FK to the VatCorrection the btw-suppletie-detection flow already created for the same drift, if any (REQ-AANS-007 integration, not duplication). Null when no correction has been prepared yet or the aansluiting is not BTW-typed.",
+            "description": "For aansluitingType=btw-ledger-aangifte: FK to the VatCorrection the btw-suppletie-detection flow already created for the same drift, if any (integration, not duplication). Null when no correction has been prepared yet or the aansluiting is not BTW-typed.",
             "example": null,
             "title": "Related Vat Correction ID"
           },
@@ -323,7 +323,7 @@
             },
             "resolved": {
               "label": "Resolved",
-              "description": "Closed out — either the drift was within tolerance, or an operator confirmed the explained drift is settled."
+              "description": "Closed out: either the drift was within tolerance, or an operator confirmed the explained drift is settled."
             }
           },
           "transitions": {
@@ -331,20 +331,20 @@
               "from": "open",
               "to": "explained",
               "label": "Explain difference",
-              "description": "Operator records explanationReasonCode + explanationReasonText (REQ-AANS-006). Requires non-empty explanationReasonText."
+              "description": "Operator records explanationReasonCode + explanationReasonText. Requires non-empty explanationReasonText."
             },
             "resolve": {
               "from": "explained",
               "to": "resolved",
               "label": "Resolve",
-              "description": "Operator confirms the explained drift is settled (REQ-AANS-006).",
+              "description": "Operator confirms the explained drift is settled.",
               "guard": "OCA\\Shillinq\\Lifecycle\\AansluitingResolutionGuard::canResolve"
             },
             "resolve-within-tolerance": {
               "from": "open",
               "to": "resolved",
               "label": "Auto-resolve (within tolerance)",
-              "description": "System-driven: a compute() finding withinTolerance=true resolves automatically without requiring an explanation (REQ-AANS-004)."
+              "description": "System-driven: a compute finding withinTolerance=true resolves automatically without requiring an explanation."
             },
             "reopen": {
               "from": "explained",
@@ -364,7 +364,7 @@
           "openCountByAdministration": {
             "field": "id",
             "metric": "count",
-            "description": "REQ-AANS-008: count of open AansluitingResult rows per administration, for a dashboard tile / period-close flag surface.",
+            "description": "Count of open AansluitingResult rows per administration, for a dashboard tile / period-close flag surface.",
             "groupBy": ["administrationId"],
             "filter": {
               "status": "open"

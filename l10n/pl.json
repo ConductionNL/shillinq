@@ -1556,7 +1556,26 @@
             "%n faktura zaległa",
             "%n faktury zaległe",
             "%n faktur zaległych"
-        ]
+        ],
+        "Reports": "Raporty",
+        "Pick a report to open it.": "Wybierz raport, aby go otworzyć.",
+        "Due": "Termin",
+        "Assignee": "Przypisane do",
+        "Iv3 returns": "Sprawozdania Iv3",
+        "SiSa returns": "Sprawozdania SiSa",
+        "EMU return": "Sprawozdanie EMU",
+        "Consolidated statements": "Sprawozdania skonsolidowane",
+        "Budget variance": "Odchylenie budżetowe",
+        "Generated reports": "Wygenerowane raporty",
+        "The quarterly Iv3 returns, and how far each one got.": "Kwartalne sprawozdania Iv3 i jak daleko każde zaszło.",
+        "Single information, single audit returns per scheme.": "Sprawozdania single information, single audit według programu.",
+        "The EMU balance return.": "Sprawozdanie o saldzie EMU.",
+        "The group figures, consolidated across participations.": "Dane grupy, skonsolidowane w ramach udziałów.",
+        "Where the books sit against budget, and by how much.": "Gdzie stoją księgi wobec budżetu i o ile.",
+        "Everything Reporting & Compliance has already produced.": "Wszystko, co Raportowanie i zgodność już wytworzyło.",
+        "What retention destroyed, and when.": "Co retencja zniszczyła i kiedy.",
+        "Store": "Sklep",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Zainstaluj rejestry, schematy i przepływy opublikowane przez inne organizacje."
     },
     "plurals": null
 }

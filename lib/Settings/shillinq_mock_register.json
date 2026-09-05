@@ -2,13 +2,13 @@
   "openapi": "3.0.0",
   "info": {
     "title": "shillinq demo data",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Demo data covering every schema this app supplies, offered as the first step of the app's setup walkthrough. Generated from the schemas themselves, so every object satisfies the schema that will validate it."
   },
   "x-openregister": {
     "type": "mock",
     "app": "shillinq",
-    "description": "Demo data for shillinq. NOT installed automatically — a mock register is imported on demand, from the setup walkthrough or `occ openregister:descriptors:list --app=shillinq --import=<slug>`."
+    "description": "Demo data for shillinq. NOT installed automatically: a mock register is imported on demand, from the setup walkthrough or `occ openregister:descriptors:list --app=shillinq --import=<slug>`."
   },
   "paths": {},
   "components": {
@@ -17,7 +17,7 @@
         "slug": "shillinq",
         "title": "Shillinq Register (demo)",
         "version": "0.7.0",
-        "description": "Demo data for Shillinq Register. Generated from the register's own schemas — see hydra-gates/scripts/lib/generate_mock_register.py."
+        "description": "Demo data for Shillinq Register. Generated from the register's own schemas: see hydra-gates/scripts/lib/generate_mock_register.py."
       }
     },
     "objects": [
@@ -11844,7 +11844,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Employee",
+          "schema": "payrollEmployee",
           "slug": "employee-employee-1-1"
         },
         "employeeNumber": "Voorbeeld Employeenumber 1",
@@ -11866,7 +11866,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Employee",
+          "schema": "payrollEmployee",
           "slug": "employee-employee-2-2"
         },
         "employeeNumber": "Voorbeeld Employeenumber 2",
@@ -11888,7 +11888,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Employee",
+          "schema": "payrollEmployee",
           "slug": "employee-employee-3-3"
         },
         "employeeNumber": "Voorbeeld Employeenumber 3",
@@ -20361,7 +20361,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Mandate",
+          "schema": "SpendingMandate",
           "slug": "mandate-voorbeeld-name-1-1"
         },
         "administrationId": "Voorbeeld Administrationid 1",
@@ -20385,7 +20385,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Mandate",
+          "schema": "SpendingMandate",
           "slug": "mandate-voorbeeld-name-2-2"
         },
         "administrationId": "Voorbeeld Administrationid 2",
@@ -20409,7 +20409,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Mandate",
+          "schema": "SpendingMandate",
           "slug": "mandate-voorbeeld-name-3-3"
         },
         "administrationId": "Voorbeeld Administrationid 3",
@@ -20620,7 +20620,7 @@
         "assessmentScope": "legal-entity",
         "thresholdImpact": 1,
         "thresholdFinancial": 1,
-        "state": "Voorbeeld State 1",
+        "state": "draft",
         "methodologyVersion": "Voorbeeld Methodologyversion 1",
         "responsibleOwner": "Voorbeeld Responsibleowner 1",
         "stakeholderGroupsConsulted": [
@@ -20650,7 +20650,7 @@
         "assessmentScope": "consolidated-group",
         "thresholdImpact": 2,
         "thresholdFinancial": 2,
-        "state": "Voorbeeld State 2",
+        "state": "in-review",
         "methodologyVersion": "Voorbeeld Methodologyversion 2",
         "responsibleOwner": "Voorbeeld Responsibleowner 2",
         "stakeholderGroupsConsulted": [
@@ -20680,7 +20680,7 @@
         "assessmentScope": "legal-entity",
         "thresholdImpact": 3,
         "thresholdFinancial": 3,
-        "state": "Voorbeeld State 3",
+        "state": "approved",
         "methodologyVersion": "Voorbeeld Methodologyversion 3",
         "responsibleOwner": "Voorbeeld Responsibleowner 3",
         "stakeholderGroupsConsulted": [
@@ -23760,7 +23760,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Project",
+          "schema": "engagement",
           "slug": "project-voorbeeld-name-1-1"
         },
         "administrationId": "Voorbeeld Administrationid 1",
@@ -23810,7 +23810,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Project",
+          "schema": "engagement",
           "slug": "project-voorbeeld-name-2-2"
         },
         "administrationId": "Voorbeeld Administrationid 2",
@@ -23860,7 +23860,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Project",
+          "schema": "engagement",
           "slug": "project-voorbeeld-name-3-3"
         },
         "administrationId": "Voorbeeld Administrationid 3",
@@ -33566,33 +33566,6 @@
         "starterDeduction": 2.0,
         "mkbProfitExemptionPercentage": 1.0,
         "source": "Voorbeeld Source 3"
-      },
-      {
-        "@self": {
-          "register": "shillinq",
-          "schema": "example",
-          "slug": "example-voorbeeld-title-1-1"
-        },
-        "title": "Voorbeeld Title 1",
-        "description": "Voorbeeld Description 1"
-      },
-      {
-        "@self": {
-          "register": "shillinq",
-          "schema": "example",
-          "slug": "example-voorbeeld-title-2-2"
-        },
-        "title": "Voorbeeld Title 2",
-        "description": "Voorbeeld Description 2"
-      },
-      {
-        "@self": {
-          "register": "shillinq",
-          "schema": "example",
-          "slug": "example-voorbeeld-title-3-3"
-        },
-        "title": "Voorbeeld Title 3",
-        "description": "Voorbeeld Description 3"
       },
       {
         "@self": {

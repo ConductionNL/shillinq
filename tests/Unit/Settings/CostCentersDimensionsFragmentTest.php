@@ -185,7 +185,7 @@ final class CostCentersDimensionsFragmentTest extends TestCase {
 			'byCostCenter MUST join through AnalyticalDimension (REQ-ADIM-101 re-targeting)'
 		);
 		self::assertSame(
-			'Project',
+			'engagement',
 			$aggs['byProject']['join']['through'],
 			'byProject MUST join through Project'
 		);
@@ -243,7 +243,7 @@ final class CostCentersDimensionsFragmentTest extends TestCase {
 
 		// Two project seeds — internal-platform + WBSO research grant.
 		foreach (['proj-internal-platform', 'proj-grant-research'] as $slug) {
-			$proj = $byKey($objects, 'Project', $slug);
+			$proj = $byKey($objects, 'engagement', $slug);
 			self::assertIsArray($proj, 'Project seed ' . $slug . ' MUST be present');
 			self::assertSame('active', $proj['lifecycleState']);
 			self::assertSame('adm-default', $proj['administrationId']);

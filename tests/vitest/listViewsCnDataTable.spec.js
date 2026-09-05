@@ -22,12 +22,12 @@
  * @spec openspec/changes/migrate-list-views-to-cndatatable/specs/list-views-cndatatable/spec.md
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import AdminInvoiceList from '../../src/views/invoice/AdminInvoiceList.vue'
-import DocumentsView from '../../src/views/bookkeeping/DocumentsView.vue'
-import TransactionsView from '../../src/views/bookkeeping/TransactionsView.vue'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ThreeWayMatchIndex from '../../src/components/three-way-match/ThreeWayMatchIndex.vue'
 import VendorPerformanceIndex from '../../src/components/vendor-performance/VendorPerformanceIndex.vue'
+import DocumentsView from '../../src/views/bookkeeping/DocumentsView.vue'
+import TransactionsView from '../../src/views/bookkeeping/TransactionsView.vue'
+import AdminInvoiceList from '../../src/views/invoice/AdminInvoiceList.vue'
 
 /** Identity translator: returns the source string (or fills {placeholders}). */
 function tIdentity(app, text, vars) {

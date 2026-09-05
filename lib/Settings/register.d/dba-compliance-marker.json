@@ -111,7 +111,7 @@
         "icon": "BriefcaseAccountOutline",
         "version": "0.1.0",
         "title": "DBA opdracht",
-        "description": "Per-opdracht engagement registratie voor Wet DBA-compliance (REQ-DBA-001). Bevat ondernemingId + klantId, intake-status, gekozen modelovereenkomst, lopende risico-score (0-100) en risico-band (LAAG/LAAG_MIDDEN/MIDDEN_HOOG/HOOG), open-flags-count en evidence-dossier-ref. De lifecycle gaat van DRAFT -> INTAKE_VEREIST -> INTAKE_VOLTOOID -> ACTIEF -> BEEINDIGD. Save-precondition DBAOpdrachtGuard valideert dat een actieve opdracht een voltooide intake heeft (ADR-031 uitzondering).",
+        "description": "Per-opdracht engagement registratie voor Wet DBA-compliance. Bevat ondernemingId + klantId, intake-status, gekozen modelovereenkomst, lopende risico-score (0-100) en risico-band (LAAG/LAAG_MIDDEN/MIDDEN_HOOG/HOOG), open-flags-count en evidence-dossier-ref. De lifecycle gaat van DRAFT -> INTAKE_VEREIST -> INTAKE_VOLTOOID -> ACTIEF -> BEEINDIGD. Save-precondition DBAOpdrachtGuard valideert dat een actieve opdracht een voltooide intake heeft (ADR-031 uitzondering).",
         "x-schema-org": "schema:Project",
         "x-openregister-purpose": "transaction",
         "x-spec": "openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md",
@@ -146,7 +146,7 @@
           },
           "assignmentName": {
             "type": "string",
-            "description": "Vrije naam van de opdracht/engagement (REQ-DBA-001).",
+            "description": "Vrije naam van de opdracht/engagement.",
             "example": "Backend ontwikkeling betaalmodule",
             "title": "Opdracht Naam"
           },
@@ -169,7 +169,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Feitelijke einddatum; gevuld bij beeindiging-procedure (REQ-DBA-018).",
+            "description": "Feitelijke einddatum; gevuld bij beeindiging-procedure.",
             "example": null,
             "title": "Feitelijke Eind Datum"
           },
@@ -184,14 +184,14 @@
           "realisedRevenue": {
             "type": "integer",
             "minimum": 0,
-            "description": "Tot dusver gerealiseerde omzet in eurocenten (gevoed door AP/AR factuurfrequentie-hook, REQ-DBA-004).",
+            "description": "Tot dusver gerealiseerde omzet in eurocenten (gevoed door AP/AR factuurfrequentie-hook).",
             "default": 0,
             "example": 1820000,
             "title": "Gerealiseerde Omzet"
           },
           "oneOffLowThreshold": {
             "type": "boolean",
-            "description": "Gemarkeerd als 'eenmalig, totaal < 5000 EUR': verkorte intake (3 vragen) wordt aangeboden (REQ-DBA-001).",
+            "description": "Gemarkeerd als 'eenmalig, totaal < 5000 EUR': verkorte intake (3 vragen) wordt aangeboden.",
             "default": false,
             "example": false,
             "title": "Eenmalig Lage Drempel"
@@ -199,7 +199,7 @@
           "modelAgreementId": {
             "type": "string",
             "nullable": true,
-            "description": "FK naar DBAModelovereenkomst die op deze opdracht van toepassing is (REQ-DBA-002).",
+            "description": "FK naar DBAModelovereenkomst die op deze opdracht van toepassing is.",
             "example": "modov-bd-2024-tussenkomstvrij-v3",
             "title": "Model Overeenkomst ID",
             "$ref": "DBAModelovereenkomst"
@@ -231,13 +231,13 @@
             "minimum": 0,
             "maximum": 100,
             "nullable": true,
-            "description": "Lopende DBA-risicoscore (0-100) per REQ-DBA-003.",
+            "description": "Lopende DBA-risicoscore (0-100).",
             "example": 34,
             "title": "Actuele Risicoscore"
           },
           "riskLevel": {
             "type": "string",
-            "description": "Risico-band afgeleid van actueleRisicoscore per REQ-DBA-003.",
+            "description": "Risico-band afgeleid van actueleRisicoscore.",
             "enum": [
               "LOW",
               "LOW_MIDDEN",
@@ -252,7 +252,7 @@
           "openFlags": {
             "type": "integer",
             "minimum": 0,
-            "description": "Aantal open DBARisicoflag-records voor deze opdracht (REQ-DBA-004).",
+            "description": "Aantal open DBARisicoflag-records voor deze opdracht.",
             "default": 0,
             "example": 2,
             "title": "Open Flags"
@@ -260,7 +260,7 @@
           "evidenceDossierId": {
             "type": "string",
             "nullable": true,
-            "description": "FK naar het DBAEvidenceDossier voor deze opdracht (REQ-DBA-007).",
+            "description": "FK naar het DBAEvidenceDossier voor deze opdracht.",
             "example": "evid-dba-opdr-2026-0042",
             "title": "Evidence Dossier ID",
             "$ref": "DBAEvidenceDossier"
@@ -268,7 +268,7 @@
           "wbaAssessmentResult": {
             "type": "string",
             "nullable": true,
-            "description": "Geuploade Belastingdienst-WBA-beoordeling (indicatie binnen/buiten dienstbetrekking) per REQ-DBA-013.",
+            "description": "Geuploade Belastingdienst-WBA-beoordeling (indicatie binnen/buiten dienstbetrekking).",
             "enum": [
               "OUTSIDE_EMPLOYMENT",
               "WITHIN_EMPLOYMENT",
@@ -288,14 +288,14 @@
           },
           "intermediaryMode": {
             "type": "boolean",
-            "description": "Indien true: tussenkomst-driehoek modelleren (ZZP-intermediair + intermediair-eindklant), REQ-DBA-017.",
+            "description": "Indien true: tussenkomst-driehoek modelleren (ZZP-intermediair + intermediair-eindklant).",
             "default": false,
             "example": false,
             "title": "Intermediair Mode"
           },
           "perspective": {
             "type": "string",
-            "description": "ZZP-perspectief (opdrachtnemer) of opdrachtgever-perspectief (inhuur-flow), REQ-DBA-010.",
+            "description": "ZZP-perspectief (opdrachtnemer) of opdrachtgever-perspectief (inhuur-flow).",
             "enum": [
               "CONTRACTOR",
               "CLIENT"
@@ -308,7 +308,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Datum waarna evidence-dossier verwijderbaar is (7 jaar na feitelijkeEindDatum per AWR art. 52, REQ-DBA-018).",
+            "description": "Datum waarna evidence-dossier verwijderbaar is (7 jaar na feitelijkeEindDatum per AWR art. 52).",
             "example": "2033-09-30",
             "title": "Retentie Deadline"
           }
@@ -323,7 +323,7 @@
             },
             "INTAKE_REQUIRED": {
               "label": "Intake vereist",
-              "description": "Eerste factuur staat op stapel; DBA-intake moet eerst worden voltooid (REQ-DBA-001)."
+              "description": "Eerste factuur staat op stapel; DBA-intake moet eerst worden voltooid."
             },
             "INTAKE_COMPLETED": {
               "label": "Intake voltooid",
@@ -331,11 +331,11 @@
             },
             "ACTIVE": {
               "label": "Actief",
-              "description": "Opdracht loopt; periodieke monitoring (REQ-DBA-004/005/006) is actief."
+              "description": "Opdracht loopt; periodieke monitoring is actief."
             },
             "ENDED": {
               "label": "Beeindigd",
-              "description": "Opdracht is afgesloten; evidence-trail gesloten en retentie-klok loopt (REQ-DBA-018)."
+              "description": "Opdracht is afgesloten; evidence-trail gesloten en retentie-klok loopt."
             }
           },
           "transitions": {
@@ -399,13 +399,13 @@
           "omzetPerKlant": {
             "field": "realisedRevenue",
             "metric": "sum",
-            "description": "Totale gerealiseerde omzet per klant (eurocenten); voedt concentratie-aggregatie REQ-DBA-005.",
+            "description": "Totale gerealiseerde omzet per klant (eurocenten); voedt concentratie-aggregatie.",
             "groupBy": ["customerId"]
           }
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a DBA opdracht is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a DBA opdracht is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "DBAIntake": {
@@ -413,7 +413,7 @@
         "icon": "ClipboardListOutline",
         "version": "0.1.0",
         "title": "DBA intake",
-        "description": "Per-opdracht vragenlijst-antwoorden voor de drie Wet DBA-pijlers (gezagsverhouding, persoonlijke arbeid, financieel risico) plus Deliveroo-arrest criteria (HR 24-3-2023). Totaalscore 0-100 berekend via x-openregister-calculations of de ADR-031 exception DBAScoreCalculator (REQ-DBA-003).",
+        "description": "Per-opdracht vragenlijst-antwoorden voor de drie Wet DBA-pijlers (gezagsverhouding, persoonlijke arbeid, financieel risico) plus Deliveroo-arrest criteria (HR 24-3-2023). Totaalscore 0-100 berekend via x-openregister-calculations of de ADR-031 exception DBAScoreCalculator.",
         "x-schema-org": "schema:Questionnaire",
         "x-openregister-purpose": "transaction",
         "x-spec": "openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md",
@@ -452,7 +452,7 @@
           },
           "abbreviatedType": {
             "type": "boolean",
-            "description": "Verkorte intake (3 vragen) i.p.v. volledige (20 vragen); voor eenmalig < 5000 EUR (REQ-DBA-001).",
+            "description": "Verkorte intake (3 vragen) i.p.v. volledige (20 vragen); voor eenmalig < 5000 EUR.",
             "default": false,
             "example": false,
             "title": "Verkort Type"
@@ -507,7 +507,7 @@
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 10,
-                "description": "Feitelijk doorgevoerde vervanging (0=meerdere keren, 10=nooit), REQ-DBA-014.",
+                "description": "Feitelijk doorgevoerde vervanging (0=meerdere keren, 10=nooit).",
                 "title": "Vervanging Feitelijk Score"
               },
               "subtotal": {
@@ -614,7 +614,7 @@
           "branchekader": {
             "type": "string",
             "nullable": true,
-            "description": "Toegepast branchekader voor extra interpretatie (REQ-DBA-015).",
+            "description": "Toegepast branchekader voor extra interpretatie.",
             "enum": [
               "NONE",
               "ICT",
@@ -629,7 +629,7 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 100,
-            "description": "Berekend totaal (REQ-DBA-003) via x-openregister-calculations of DBAScoreCalculator.",
+            "description": "Berekend totaal via x-openregister-calculations of DBAScoreCalculator.",
             "readOnly": true,
             "example": 34,
             "title": "Totaal Score"
@@ -698,7 +698,7 @@
           },
           "interpretation": {
             "formula": "case when totaalScore < 25 then 'LAAG' when totaalScore < 50 then 'LAAG_MIDDEN' when totaalScore < 75 then 'MIDDEN_HOOG' else 'HOOG' end",
-            "description": "Risico-band afgeleid van totaalScore per REQ-DBA-003."
+            "description": "Risico-band afgeleid van totaalScore."
           }
         },
         "x-openregister-rbac": {
@@ -730,7 +730,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a DBA intake is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a DBA intake is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "DBAModelovereenkomst": {
@@ -738,7 +738,7 @@
         "icon": "FileDocumentMultipleOutline",
         "version": "0.1.0",
         "title": "DBA modelovereenkomst",
-        "description": "Register van DBA modelovereenkomsten: Belastingdienst-goedgekeurde varianten (tussenkomstvrij, leverancier-zelfstandig) + eigen varianten. Houdt geldigheid en essentiele bepalingen bij (REQ-DBA-002).",
+        "description": "Register van DBA modelovereenkomsten: Belastingdienst-goedgekeurde varianten (tussenkomstvrij, leverancier-zelfstandig) + eigen varianten. Houdt geldigheid en essentiele bepalingen bij.",
         "x-schema-org": "schema:DigitalDocument",
         "x-openregister-purpose": "reference",
         "x-spec": "openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md",
@@ -867,7 +867,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a DBA modelovereenkomst is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a DBA modelovereenkomst is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "DBARisicoflag": {
@@ -875,7 +875,7 @@
         "icon": "FlagVariantOutline",
         "version": "0.1.0",
         "title": "DBA risico-flag",
-        "description": "Per-opdracht append-only flag, automatisch gegenereerd door de dagelijkse monitoring-engine (REQ-DBA-004/005/006/014/015/016). Bevat type, ernst, detectiemoment, fiscale grondslag en actie-suggestie. Immutabel (audit-trail).",
+        "description": "Per-opdracht append-only flag, automatisch gegenereerd door de dagelijkse monitoring-engine. Bevat type, ernst, detectiemoment, fiscale grondslag en actie-suggestie. Immutabel (audit-trail).",
         "x-schema-org": "schema:AlertSpecification",
         "x-openregister-purpose": "audit",
         "x-spec": "openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md",
@@ -1074,7 +1074,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a DBA risico-flag is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a DBA risico-flag is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "DBAPortfolioRisico": {
@@ -1082,7 +1082,7 @@
         "icon": "ChartDonutVariant",
         "version": "0.1.0",
         "title": "DBA portfolio-risico",
-        "description": "Maandelijkse / on-demand aggregatie van alle actieve opdrachten van een ondernemer: omzetconcentratie (>70%), langjarige relaties (>2 jaar), exclusiviteit-patronen, multiple-engagement-zelfde-concern (REQ-DBA-005/006).",
+        "description": "Maandelijkse / on-demand aggregatie van alle actieve opdrachten van een ondernemer: omzetconcentratie (>70%), langjarige relaties (>2 jaar), exclusiviteit-patronen, multiple-engagement-zelfde-concern.",
         "x-schema-org": "schema:Quantity",
         "x-openregister-purpose": "aggregation",
         "x-spec": "openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md",
@@ -1200,7 +1200,7 @@
           },
           "multipleEngagementConcern": {
             "type": "array",
-            "description": "Concern-clusters waar meerdere opdrachten lopen (REQ-DBA-006).",
+            "description": "Concern-clusters waar meerdere opdrachten lopen.",
             "items": {
               "type": "object",
               "properties": {
@@ -1268,7 +1268,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a DBA portfolio-risico is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a DBA portfolio-risico is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
       "DBAEvidenceDossier": {
@@ -1276,7 +1276,7 @@
         "icon": "FolderLockOutline",
         "version": "0.1.0",
         "title": "DBA evidence-dossier",
-        "description": "Per-opdracht stukkenlijst voor Belastingdienst-audit: getekende modelovereenkomst, eerste/laatste factuur, urenstaten, e-mailcommunicatie. Elke stuk heeft SHA-256-hash + datum. 7 jaar retentie per AWR art. 52 (REQ-DBA-007).",
+        "description": "Per-opdracht stukkenlijst voor Belastingdienst-audit: getekende modelovereenkomst, eerste/laatste factuur, urenstaten, e-mailcommunicatie. Elke stuk heeft SHA-256-hash + datum. 7 jaar retentie per AWR art. 52.",
         "x-schema-org": "schema:Collection",
         "x-openregister-purpose": "evidence",
         "x-spec": "openspec/changes/dba-compliance-marker/specs/dba-compliance-marker/spec.md",
@@ -1353,7 +1353,7 @@
             "type": "number",
             "minimum": 0,
             "maximum": 1,
-            "description": "Compleetheid 0-1 op basis van stuk-inventaris (REQ-DBA-007).",
+            "description": "Compleetheid 0-1 op basis van stuk-inventaris.",
             "readOnly": true,
             "example": 0.85,
             "title": "Compleetheid Score"
@@ -1369,7 +1369,7 @@
           },
           "emailArchiveOptIn": {
             "type": "boolean",
-            "description": "AVG-opt-in voor e-mail-archivering (REQ-DBA-012).",
+            "description": "AVG-opt-in voor e-mail-archivering.",
             "default": false,
             "example": false,
             "title": "Email Archive Opt In"
@@ -1430,7 +1430,7 @@
         },
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "Every create, update and delete of a DBA evidence-dossier is written to OpenRegister's immutable audit trail with actor and timestamp (REQ-AT-001)."
+          "description": "Every create, update and delete of a DBA evidence-dossier is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       }
     }

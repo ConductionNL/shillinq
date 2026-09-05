@@ -30,7 +30,7 @@
  * @spec openspec/changes/bookkeeping-waterschappen-bbv-variant-11-testing/tasks.md#smoke-tests
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 

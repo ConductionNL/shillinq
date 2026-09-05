@@ -26,7 +26,7 @@
  * @spec openspec/changes/bookkeeping-ifrs15-revenue/tasks.md#browser-tests
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 

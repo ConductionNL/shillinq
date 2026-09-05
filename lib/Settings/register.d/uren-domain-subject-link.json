@@ -4,7 +4,7 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "uren-domain-subject-link",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Lets an hour entry name the DOMAIN OBJECT it was worked on — a procest case today, any case/matter object tomorrow. Before this, UrenRegistratie could only be scoped inside Shillinq's own world (projectId, costProjectId, taskId, projectAssignmentId), so hours booked against a case in a domain app had nowhere to record that fact and no case could show what it had cost. Per hydra ADR-081, the domain app CLASSIFIES and Shillinq AGGREGATES: procest may show a sum of hours for its case, but the money side stays here, in the app that owns the ledger. Both fields are optional and nullable — every existing hour entry stays valid, and an entry with no subject is simply not attributable to a domain object.",
+    "description": "Lets an hour entry name the DOMAIN OBJECT it was worked on: a procest case today, any case/matter object tomorrow. Before this, UrenRegistratie could only be scoped inside Shillinq's own world (projectId, costProjectId, taskId, projectAssignmentId), so hours booked against a case in a domain app had nowhere to record that fact and no case could show what it had cost. Per hydra ADR-081, the domain app CLASSIFIES and Shillinq AGGREGATES: procest may show a sum of hours for its case, but the money side stays here, in the app that owns the ledger. Both fields are optional and nullable. Every existing hour entry stays valid, and an entry with no subject is simply not attributable to a domain object.",
     "adr-081": "hydra/openspec/architecture/adr-081-money-and-effort-ownership.md"
   },
   "components": {
@@ -13,14 +13,14 @@
         "properties": {
           "subjectApp": {
             "type": "string",
-            "description": "App id owning the domain object these hours were worked on, e.g. 'procest'. Deliberately a free string rather than an enum: ADR-081 names procest as the first consumer and 'any case/matter app tomorrow' as the next, and an enum here would make every new domain app a change to Shillinq's register. MUST be set together with subjectId — one without the other is an unresolvable reference.",
+            "description": "App id owning the domain object these hours were worked on, e.g. 'procest'. Deliberately a free string rather than an enum: ADR-081 names procest as the first consumer and 'any case/matter app tomorrow' as the next, and an enum here would make every new domain app a change to Shillinq's register. MUST be set together with subjectId: one without the other is an unresolvable reference.",
             "nullable": true,
             "example": "procest",
             "title": "Subject App"
           },
           "subjectId": {
             "type": "string",
-            "description": "Id of the domain object in subjectApp — a procest case uuid, for example. Optional: an hour entry that is purely project- or task-scoped inside Shillinq has no domain subject and leaves both fields unset. This is a WEAK reference by design, not a relatedSchema: the target lives in another app's register, so Shillinq cannot resolve or cascade it, and an hour entry MUST survive the domain object being archived.",
+            "description": "Id of the domain object in subjectApp: a procest case uuid, for example. Optional: an hour entry that is purely project- or task-scoped inside Shillinq has no domain subject and leaves both fields unset. This is a WEAK reference by design, not a relatedSchema: the target lives in another app's register, so Shillinq cannot resolve or cascade it, and an hour entry MUST survive the domain object being archived.",
             "nullable": true,
             "example": "0b3f7c1e-6b1a-4f39-9d2c-2f0c9b7a51ee",
             "title": "Subject Id"

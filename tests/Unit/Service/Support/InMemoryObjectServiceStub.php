@@ -523,6 +523,92 @@ final class InMemoryObjectServiceStub implements ObjectServiceInterface {
 	}//end saveObjects()
 
 	/**
+	 * Append rows straight into the store, mirroring OpenRegister's raw path.
+	 *
+	 * A `uuid` is stamped when absent, from the same counter as saveObject()'s
+	 * ids so a test can predict it; `expires` is kept as given for
+	 * purgeExpiredObjectsRaw() to sweep. Nothing lands in {@see $saved}: raw
+	 * rows have no audit trail in production either. Like find(), the register
+	 * argument is accepted and ignored: this stub holds one register.
+	 *
+	 * @param array      $objects  Rows to append, as plain arrays.
+	 * @param string|int $register Register id, uuid or slug (ignored).
+	 * @param string|int $schema   Schema id, uuid or slug.
+	 *
+	 * @return int The number of rows written.
+	 */
+	public function appendObjectsRaw(array $objects, string|int $register, string|int $schema): int {
+		$target = (string)$schema;
+		foreach ($objects as $object) {
+			if (isset($object['uuid']) === false || $object['uuid'] === '') {
+				$this->idCounter++;
+				$object['uuid'] = 'raw-' . $this->idCounter;
+			}
+
+			$this->data[$target][] = $object;
+		}
+
+		return count($objects);
+
+	}//end appendObjectsRaw()
+
+	/**
+	 * Hard-delete the rows on a schema whose `expires` has passed.
+	 *
+	 * Rows without an `expires`, or with one that does not parse, are kept:
+	 * that is what the real sweep does with a NULL column.
+	 *
+	 * @param string|int $register Register id, uuid or slug (ignored).
+	 * @param string|int $schema   Schema id, uuid or slug.
+	 *
+	 * @return int The number of rows removed.
+	 */
+	public function purgeExpiredObjectsRaw(string|int $register, string|int $schema): int {
+		$target = (string)$schema;
+		$now = new \DateTimeImmutable();
+		$kept = [];
+		$removed = 0;
+		foreach (($this->data[$target] ?? []) as $row) {
+			if ($this->hasExpired(expires: ($row['expires'] ?? null), now: $now) === true) {
+				$removed++;
+				continue;
+			}
+
+			$kept[] = $row;
+		}
+
+		$this->data[$target] = $kept;
+
+		return $removed;
+
+	}//end purgeExpiredObjectsRaw()
+
+	/**
+	 * Whether a row's `expires` value lies before the given moment.
+	 *
+	 * @param mixed              $expires ISO 8601 string, DateTimeInterface, or absent.
+	 * @param \DateTimeImmutable $now     The moment to compare against.
+	 *
+	 * @return bool
+	 */
+	private function hasExpired(mixed $expires, \DateTimeImmutable $now): bool {
+		if ($expires instanceof \DateTimeInterface) {
+			return $expires < $now;
+		}
+
+		if (is_string($expires) === false || $expires === '') {
+			return false;
+		}
+
+		try {
+			return new \DateTimeImmutable($expires) < $now;
+		} catch (\Exception) {
+			return false;
+		}
+
+	}//end hasExpired()
+
+	/**
 	 * Run an operation with system privileges — the stub simply runs it.
 	 *
 	 * @param callable $operation The operation to run.

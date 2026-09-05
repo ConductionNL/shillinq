@@ -162,7 +162,7 @@ final class RenameCommitmentSchemasTest extends TestCase {
 	 *
 	 * @return void
 	 */
-	public function testSlugMapCoversTheSevenRenamedSchemas(): void {
+	public function testSlugMapCoversTheRenamedSchemas(): void {
 		$reflection = new \ReflectionClass(RenameCommitmentSchemas::class);
 		$map = $reflection->getConstant('SLUG_MAP');
 
@@ -172,14 +172,20 @@ final class RenameCommitmentSchemasTest extends TestCase {
 				'Verplichtingsregel' => 'CommitmentLine',
 				'Verplichtingsmutatie' => 'CommitmentMovement',
 				'Goedkeuringsstap' => 'ApprovalStep',
-				'Mandaat' => 'Mandate',
+				// TWO sources, one target. `Mandate` was the target until a fleet
+				// audit found it collided with dossiq's administrative-law
+				// `mandate`; the two share zero declared fields, so they were
+				// renamed apart. An install still on Dutch goes straight to the
+				// namespaced slug; one already on `Mandate` follows behind.
+				'Mandaat' => 'SpendingMandate',
+				'Mandate' => 'SpendingMandate',
 				'TenderNedAanbesteding' => 'TenderNedProcurement',
 				'OpdrachtUitvoering' => 'OrderFulfilment',
 			],
 			$map
 		);
 
-	}//end testSlugMapCoversTheSevenRenamedSchemas()
+	}//end testSlugMapCoversTheRenamedSchemas()
 
 	/**
 	 * Every mapped target matches the slug the register fragment now declares.

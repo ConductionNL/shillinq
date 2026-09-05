@@ -8,7 +8,7 @@
 			"GLTransaction": {
 				"x-openregister-aggregations": {
 					"nivraBericht": {
-						"description": "NIVRA-bestand projection for a closed period: every posted GLTransaction + child GLLines + audit-trail events + period trial-balance + chart of accounts in effect. Output conforms to the NIVRA standard referenced in _meta.standardVersion. No PHP audit-export service — pure declarative aggregation + docudesk XML template per REQ-REK-002.",
+						"description": "NIVRA-bestand projection for a closed period: every posted GLTransaction + child GLLines + audit-trail events + period trial-balance + chart of accounts in effect. Output conforms to the NIVRA standard referenced in _meta.standardVersion. No PHP audit-export service: pure declarative aggregation + docudesk XML template.",
 						"params": {
 							"periodId": {
 								"type": "string",
@@ -78,7 +78,7 @@
 						}
 					},
 					"steekproef": {
-						"description": "Deterministic random sample of posted GLTransaction records for substantive testing. Given periodId, sampleSize, and seed, returns a reproducible ordered sample — re-running with the same seed yields the same records in the same order per REQ-REK-003. shillinq#425: the previously-declared `guard` (OCA\\Shillinq\\Guard\\SteekproefSampler) referenced a class that did not exist, AND OpenRegister's aggregation engine never reads a `guard` key on any aggregation at all — it was dead, unconsumed configuration regardless of the class (same defect shape as the near-duplicate `engineLimitFallback` reference on this same aggregation key in lib/Settings/shillinq_register.json, which points at a different nonexistent class, OCA\\Shillinq\\Audit\\SteekproefSampler — filed as shillinq#436 for both).",
+						"description": "Deterministic random sample of posted GLTransaction records for substantive testing. Given periodId, sampleSize, and seed, returns a reproducible ordered sample: re-running with the same seed yields the same records in the same order. Shillinq#425: the previously-declared `guard` (OCA\\Shillinq\\Guard\\SteekproefSampler) referenced a class that did not exist, AND OpenRegister's aggregation engine never reads a `guard` key on any aggregation at all. It was dead, unconsumed configuration regardless of the class (same defect shape as the near-duplicate `engineLimitFallback` reference on this same aggregation key in lib/Settings/shillinq_register.json, which points at a different nonexistent class, OCA\\Shillinq\\Audit\\SteekproefSampler. Filed as shillinq#436 for both).",
 						"params": {
 							"periodId": {
 								"type": "string",
@@ -99,7 +99,7 @@
 							"seed": {
 								"type": "string",
 								"required": true,
-								"description": "Reproducibility seed — same seed with same period produces the same sample. Convention: 'audit-YYYY-qN' or operator-supplied string."
+								"description": "Reproducibility seed: same seed with same period produces the same sample. Convention: 'audit-YYYY-qN' or operator-supplied string."
 							}
 						},
 						"filter": {
@@ -149,7 +149,7 @@
 						}
 					},
 					"ledenraadpleging": {
-						"description": "Redacted slice of posted GLTransaction records for raadsleden review. Fields tagged redactFor: ['raadsleden'] are replaced by a stable SHA-256 hash (description-level free-text) or [REDACTED] placeholder (AP/AR sub-ledger refs) per REQ-REK-004. Numeric and account-code fields remain intact. No PHP redaction service — redaction profile is declared as aggregation metadata per ADR-031.",
+						"description": "Redacted slice of posted GLTransaction records for raadsleden review. Fields tagged redactFor: ['raadsleden'] are replaced by a stable SHA-256 hash (description-level free-text) or [REDACTED] placeholder (AP/AR sub-ledger refs). Numeric and account-code fields remain intact. No PHP redaction service: redaction profile is declared as aggregation metadata per ADR-031.",
 						"params": {
 							"periodId": {
 								"type": "string",
@@ -182,7 +182,7 @@
 										"raadsleden"
 									],
 									"strategy": "stable-hash",
-									"description": "Free-text posting description may carry personal data (e.g. 'Salaris Jan Bakker maart 2026'). Replaced by SHA-256(description) per REQ-REK-004."
+									"description": "Free-text posting description may carry personal data (e.g. 'Salaris Jan Bakker maart 2026'). Replaced by SHA-256(description)."
 								},
 								"GLLine.description": {
 									"redactFor": [
@@ -197,7 +197,7 @@
 									],
 									"strategy": "placeholder",
 									"placeholder": "[REDACTED]",
-									"description": "AP/AR sub-ledger reference numbers that may identify persons. Replaced by [REDACTED] placeholder per REQ-REK-004."
+									"description": "AP/AR sub-ledger reference numbers that may identify persons. Replaced by [REDACTED] placeholder."
 								}
 							}
 						},

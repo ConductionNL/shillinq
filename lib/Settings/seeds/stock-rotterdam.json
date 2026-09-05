@@ -1,6 +1,6 @@
 {
 	"_meta": {
-		"description": "InventoryStock seed for Rotterdam Warehouse (regional logistics hub). Same five demo SKUs as Amsterdam but different quantities and reservation / in-transit ratios — demonstrates that multi-location stock is independent per (productSku, locationCode) per REQ-IST-005 + REQ-IST-009. Idempotent dedupe per REQ-IST-002.",
+		"description": "InventoryStock seed for Rotterdam Warehouse (regional logistics hub). Same five demo SKUs as Amsterdam but different quantities and reservation / in-transit ratios: demonstrates that multi-location stock is independent per (productSku, locationCode) +. Idempotent dedupe.",
 		"spec": "openspec/changes/inventory-stock-tracking/specs/inventory-stock-tracking/spec.md",
 		"req": "REQ-IST-009",
 		"source": "Nextcloud Inventory",

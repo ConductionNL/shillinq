@@ -9,7 +9,7 @@
         "icon": "CalendarClockOutline",
         "version": "0.1.0",
         "title": "Availability Rule",
-        "description": "Per-resource availability rule header introduced by bookings-availability-rules (REQ-BAR-001). Owns the resource FK, status lifecycle (draft → active → archived, reactivate to draft), and the effective-date window (effectiveFrom / effectiveUntil). Child ResourceBreak and BookingConstraint records reference this entity via availabilityRule. Multi-tenant isolation via administrationId per ADR-005. Lifecycle is fully declarative per ADR-031.",
+        "description": "Per-resource availability rule header introduced by bookings-availability-rules. Owns the resource FK, status lifecycle (draft → active → archived, reactivate to draft), and the effective-date window (effectiveFrom / effectiveUntil). Child ResourceBreak and BookingConstraint records reference this entity via availabilityRule. Multi-tenant isolation via administrationId per ADR-005. Lifecycle is fully declarative per ADR-031.",
         "x-schema-org": "schema:OpeningHoursSpecification",
         "x-openregister-purpose": "dimension",
         "type": "object",
@@ -34,13 +34,13 @@
           },
           "resource": {
             "type": "string",
-            "description": "FK to Resource.resourceId — the resource this rule applies to (REQ-BAR-006). Declared by bookings-resource-calendar.",
+            "description": "FK to Resource.resourceId: the resource this rule applies to. Declared by bookings-resource-calendar.",
             "example": "res-001",
             "title": "Resource"
           },
           "status": {
             "type": "string",
-            "description": "Availability rule lifecycle state (REQ-BAR-004). draft = under construction, active = applies to availability lookups within its effective window, archived = soft-deleted.",
+            "description": "Availability rule lifecycle state. draft = under construction, active = applies to availability lookups within its effective window, archived = soft-deleted.",
             "enum": [
               "draft",
               "active",
@@ -54,7 +54,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Date the rule begins to apply (REQ-BAR-005). null = applies immediately on activation.",
+            "description": "Date the rule begins to apply. null = applies immediately on activation.",
             "example": "2026-01-01",
             "title": "Effective From"
           },
@@ -62,7 +62,7 @@
             "type": "string",
             "format": "date",
             "nullable": true,
-            "description": "Date the rule stops applying (REQ-BAR-005). null = permanent until archived.",
+            "description": "Date the rule stops applying. null = permanent until archived.",
             "example": null,
             "title": "Effective Until"
           },
@@ -118,7 +118,7 @@
         "icon": "CoffeeOutline",
         "version": "0.1.0",
         "title": "Resource Break",
-        "description": "Recurring break window inside an AvailabilityRule (REQ-BAR-002). Captures the day-of-week + start/end time + break type (lunch, coffee, prep, other). isRecurring defaults to true (weekly). endTime MUST be strictly greater than startTime. Lifecycle is declarative per ADR-031: active → archived.",
+        "description": "Recurring break window inside an AvailabilityRule. Captures the day-of-week + start/end time + break type (lunch, coffee, prep, other). isRecurring defaults to true (weekly). endTime MUST be strictly greater than startTime. Lifecycle is declarative per ADR-031: active → archived.",
         "x-schema-org": "schema:Action",
         "x-openregister-purpose": "dimension",
         "type": "object",
@@ -147,7 +147,7 @@
           },
           "availabilityRule": {
             "type": "string",
-            "description": "FK to AvailabilityRule.availabilityRuleId (REQ-BAR-006).",
+            "description": "FK to AvailabilityRule.availabilityRuleId.",
             "example": "rule-001",
             "title": "Availability Rule"
           },
@@ -222,7 +222,7 @@
         },
         "x-openregister-calculations": {
           "endTimeAfterStartValidator": {
-            "description": "Cross-field validator (REQ-BAR-002): rejects records where endTime is not strictly greater than startTime. Returns a validation error string when invalid, null when valid.",
+            "description": "Cross-field validator: rejects records where endTime is not strictly greater than startTime. Returns a validation error string when invalid, null when valid.",
             "expression": "compareTimes(@self.endTime, @self.startTime) > 0 ? null : 'endTime must be strictly greater than startTime'"
           }
         },
@@ -254,7 +254,7 @@
         "icon": "ClockAlertOutline",
         "version": "0.1.0",
         "title": "Booking Constraint",
-        "description": "Booking-policy constraints attached to an AvailabilityRule (REQ-BAR-003). Carries the advance-notice window, pre/post buffer minutes, cancellation deadline hours, and the blackoutDates array of {startDate, endDate, reason} ranges. All numeric fields MUST be >= 0; maxAdvanceNoticeDays MUST be >= minAdvanceNoticeDays when set. Lifecycle is declarative per ADR-031: active → archived.",
+        "description": "Booking-policy constraints attached to an AvailabilityRule. Carries the advance-notice window, pre/post buffer minutes, cancellation deadline hours, and the blackoutDates array of {startDate, endDate, reason} ranges. All numeric fields MUST be >= 0; maxAdvanceNoticeDays MUST be >= minAdvanceNoticeDays when set. Lifecycle is declarative per ADR-031: active → archived.",
         "x-schema-org": "schema:Restriction",
         "x-openregister-purpose": "dimension",
         "type": "object",
@@ -279,14 +279,14 @@
           },
           "availabilityRule": {
             "type": "string",
-            "description": "FK to AvailabilityRule.availabilityRuleId (REQ-BAR-006).",
+            "description": "FK to AvailabilityRule.availabilityRuleId.",
             "example": "rule-001",
             "title": "Availability Rule"
           },
           "minAdvanceNoticeDays": {
             "type": "integer",
             "minimum": 0,
-            "description": "Minimum days in advance a booking may be made (REQ-BAR-003). 0 = same-day allowed.",
+            "description": "Minimum days in advance a booking may be made. 0 = same-day allowed.",
             "default": 0,
             "example": 1,
             "title": "Min Advance Notice Days"
@@ -374,7 +374,7 @@
         },
         "x-openregister-calculations": {
           "maxAdvanceNoticeBoundsValidator": {
-            "description": "Cross-field validator (REQ-BAR-003): rejects records where maxAdvanceNoticeDays is set and is less than minAdvanceNoticeDays. Returns null when valid.",
+            "description": "Cross-field validator: rejects records where maxAdvanceNoticeDays is set and is less than minAdvanceNoticeDays. Returns null when valid.",
             "expression": "@self.maxAdvanceNoticeDays == null || @self.maxAdvanceNoticeDays >= @self.minAdvanceNoticeDays ? null : 'maxAdvanceNoticeDays must be >= minAdvanceNoticeDays'"
           }
         },
@@ -458,7 +458,7 @@
       "status": "active",
       "effectiveFrom": "2026-01-01",
       "effectiveUntil": null,
-      "description": "Behandelstoel 1 — standaardrooster"
+      "description": "Behandelstoel 1: standaardrooster"
     },
     {
       "@self": {

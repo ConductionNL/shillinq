@@ -4,7 +4,7 @@
 		"spdx-copyright": "2026 Conduction B.V.",
 		"source": "RvO Energielijst 2026 per 1 januari (Uitvoeringsregeling energie-investeringsaftrek, Wet IB 2001 art. 3.42)",
 		"version": "2026",
-		"description": "Representative baseline of the RvO Energielijst 2026 (EIA). This is a non-exhaustive starter set covering the most common MKB categories; operators extend it from the published RvO list for the full ~170 codes. Codes are resolved against the opdrachtverleningDatum year, not the current year (REQ-INV-002).",
+		"description": "Representative baseline of the RvO Energielijst 2026 (EIA). This is a non-exhaustive starter set covering the most common MKB categories; operators extend it from the published RvO list for the full ~170 codes. Codes are resolved against the opdrachtverleningDatum year, not the current year.",
 		"imported": "2026-06-05T00:00:00Z"
 	},
 	"energielijstCodes": [

@@ -5,7 +5,7 @@
 		"source": "shillinq-default",
 		"variant": "initial",
 		"change": "bookkeeping-multi-administratie",
-		"description": "Default Administration seeded on a fresh install so single-administratie installs have a valid administrationId FK target. Idempotent on administrationCode (REQ-MA-001, REQ-MA-007). The operator overrides name / kvkNumber / legalForm on first login."
+		"description": "Default Administration seeded on a fresh install so single-administratie installs have a valid administrationId FK target. Idempotent on administrationCode. The operator overrides name / kvkNumber / legalForm on first login."
 	},
 	"administrations": [
 		{

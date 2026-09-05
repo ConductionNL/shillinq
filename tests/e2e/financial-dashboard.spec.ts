@@ -57,7 +57,7 @@
  * @e2e apphost-adoption::app-ui-is-unaffected-by-the-generic-controllers
  */
 
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const APP = '/apps/shillinq'
 

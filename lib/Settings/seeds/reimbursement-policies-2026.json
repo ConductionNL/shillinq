@@ -5,7 +5,7 @@
 		"source": "openspec/changes/expense-reimbursement-or-passthrough/design.md Seed Data tables",
 		"version": "2026",
 		"change": "expense-reimbursement-or-passthrough",
-		"description": "Seed ReimbursementPolicy master-data records per design.md (REQ-ERP-004, REQ-ERP-006). One policy per administration; operators may add more via Settings UI. autoApproveThreshold and requiresMarkupApprovalThreshold are consumed by OR approval-workflow (ADR-022). employeeBankAccountMapping=standard resolves Person.bankAccount at notification emission per REQ-ERP-008.",
+		"description": "Seed ReimbursementPolicy master-data records per design.md. One policy per administration; operators may add more via Settings UI. autoApproveThreshold and requiresMarkupApprovalThreshold are consumed by OR approval-workflow (ADR-022). employeeBankAccountMapping=standard resolves Person.bankAccount at notification emission.",
 		"imported": "2026-06-07T00:00:00Z"
 	},
 	"policies": [
@@ -22,7 +22,7 @@
 		{
 			"policyId": "POL-NL-02",
 			"name": "Netherlands High-Touch",
-			"description": "Stricter Dutch SMB expense policy for complex multi-customer pass-through claims. Reimbursable claims at or below €100 auto-approve (tighter than POL-NL-01); pass-through markup amounts ≥€100 trigger an extra approver gate per REQ-ERP-006. Intended for consultancy administrations with material pass-through billing.",
+			"description": "Stricter Dutch SMB expense policy for complex multi-customer pass-through claims. Reimbursable claims at or below €100 auto-approve (tighter than POL-NL-01); pass-through markup amounts ≥€100 trigger an extra approver gate. Intended for consultancy administrations with material pass-through billing.",
 			"autoApproveThreshold": 100.00,
 			"requiresMarkupApprovalThreshold": 100.00,
 			"passthroughDebitAccountCode": "1300",

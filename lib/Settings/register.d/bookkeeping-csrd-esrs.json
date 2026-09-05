@@ -4,16 +4,16 @@
     "spdx-copyright": "2026 Conduction B.V.",
     "change": "bookkeeping-csrd-esrs",
     "adr": "ADR-037 modular register fragment — never edit shillinq_register.json",
-    "description": "Tier 3 — CSRD/ESRS sustainability reporting. Ten new schemas (MaterialityAssessment, IroRecord, EsrsDataPoint, GhgInventory, EmissionSource, ValueChainActor, EsrsPolicy, EsrsAction, EsrsTarget, AssuranceEngagement) plus an additive FixedAsset extension (E1/E4 climate + biodiversity tagging). All quantitative logic is declarative (x-openregister-calculations / x-openregister-aggregations) per ADR-031 — no GHGCalculator.php / ImpactScorer.php services. Lifecycle automation per x-openregister-lifecycle; cross-schema/aggregation preconditions delegated to OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard (ADR-031 exception path). Seed data pre-loads the ESRS topical taxonomy and a worked FY2025 sample set. Extensions to journal-entry-line and organisations are DEFERRED to the bookkeeping-general-ledger / organisations dependency apps (those schemas are not yet present in shillinq) — see tasks.md."
+    "description": "Tier 3: CSRD/ESRS sustainability reporting. Ten new schemas (MaterialityAssessment, IroRecord, EsrsDataPoint, GhgInventory, EmissionSource, ValueChainActor, EsrsPolicy, EsrsAction, EsrsTarget, AssuranceEngagement) plus an additive FixedAsset extension (E1/E4 climate + biodiversity tagging). All quantitative logic is declarative (x-openregister-calculations / x-openregister-aggregations) per ADR-031. No GHGCalculator.php / ImpactScorer.php services. Lifecycle automation per x-openregister-lifecycle; cross-schema/aggregation preconditions delegated to OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard (ADR-031 exception path). Seed data pre-loads the ESRS topical taxonomy and a worked FY2025 sample set. Extensions to journal-entry-line and organisations are DEFERRED to the bookkeeping-general-ledger / organisations dependency apps (those schemas are not yet present in shillinq). See tasks.md."
   },
   "components": {
     "schemas": {
       "MaterialityAssessment": {
         "slug": "MaterialityAssessment",
         "icon": "ScaleBalance",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "title": "Materiality Assessment",
-        "description": "Root governance record for the CSRD double-materiality determination per reporting period (REQ-CSR-001). Enumerates the ESRS topical taxonomy, captures impact + financial materiality scores, stakeholder-consultation evidence, and the locked double-materiality matrix. Mandatory before any topical disclosure is published (design D2). One per period; restatement via supersededBy self-FK.",
+        "description": "Root governance record for the CSRD double-materiality determination per reporting period. Enumerates the ESRS topical taxonomy, captures impact + financial materiality scores, stakeholder-consultation evidence, and the locked double-materiality matrix. Mandatory before any topical disclosure is published (design D2). One per period; restatement via supersededBy self-FK.",
         "x-schema-org": "schema:GovernmentService",
         "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
         "type": "object",
@@ -27,7 +27,7 @@
         "properties": {
           "reportingPeriod": {
             "type": "string",
-            "description": "Fiscal reporting period, e.g. FY2025 (REQ-CSR-001).",
+            "description": "Fiscal reporting period, e.g. FY2025.",
             "example": "FY2025",
             "title": "Reporting Period"
           },
@@ -43,17 +43,17 @@
               "legal-entity",
               "consolidated-group"
             ],
-            "description": "Consolidation boundary the assessment applies to (design D1 / open question 3 — manual scope declaration).",
+            "description": "Consolidation boundary the assessment applies to (design D1 / open question 3: manual scope declaration).",
             "title": "Assessment Scope"
           },
           "responsibleOwner": {
             "type": "string",
-            "description": "Nextcloud user id of the responsible owner (FK to NC user directory — a person is an NC entity, never an invented schema).",
+            "description": "Nextcloud user id of the responsible owner (FK to NC user directory: a person is an NC entity, never an invented schema).",
             "title": "Responsible Owner"
           },
           "stakeholderGroupsConsulted": {
             "type": "array",
-            "description": "Stakeholder consultation evidence. At least one method per consulted group is mandatory before approval (REQ-CSR-001).",
+            "description": "Stakeholder consultation evidence. At least one method per consulted group is mandatory before approval.",
             "items": {
               "type": "object",
               "required": [
@@ -113,7 +113,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 5,
-            "description": "Impact-materiality threshold (1-5 scale). A topic is impact-material when its impact score is at or above this threshold (REQ-CSR-001).",
+            "description": "Impact-materiality threshold (1-5 scale). A topic is impact-material when its impact score is at or above this threshold.",
             "example": 3,
             "title": "Threshold Impact"
           },
@@ -127,7 +127,7 @@
           },
           "doubleMaterialityMatrixSnapshot": {
             "type": "object",
-            "description": "Locked snapshot keyed by ESRS topic → {impactScore, financialScore, material, rationale}. Built from the IroRecord children at sign-off (REQ-CSR-001).",
+            "description": "Locked snapshot keyed by ESRS topic → {impactScore, financialScore, material, rationale}. Built from the IroRecord children at sign-off.",
             "additionalProperties": true,
             "title": "Double Materiality Matrix Snapshot"
           },
@@ -157,6 +157,19 @@
             "description": "Self-FK (slug/uuid) to the assessment that supersedes this one on restatement.",
             "nullable": true,
             "title": "Superseded By"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "in-review",
+              "approved",
+              "locked"
+            ],
+            "default": "draft",
+            "description": "Where this assessment sits in its sign-off cycle.",
+            "example": "draft",
+            "title": "State"
           }
         },
         "x-openregister-lifecycle": {
@@ -173,7 +186,7 @@
             },
             "approved": {
               "label": "Approved",
-              "description": "Board-signed-off. Matrix frozen; material topics drive topical-module activation (REQ-CSR-001)."
+              "description": "Board-signed-off. Matrix frozen; material topics drive topical-module activation."
             },
             "locked": {
               "label": "Locked",
@@ -185,14 +198,14 @@
               "from": "draft",
               "to": "in-review",
               "label": "Submit for board review",
-              "description": "Submit once every topic is scored and at least one stakeholder group is consulted (REQ-CSR-001).",
+              "description": "Submit once every topic is scored and at least one stakeholder group is consulted.",
               "requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canSubmitMateriality"
             },
             "approve": {
               "from": "in-review",
               "to": "approved",
               "label": "Board sign-off",
-              "description": "Board approver signs off. Non-material topics must carry a written rationale (REQ-CSR-001).",
+              "description": "Board approver signs off. Non-material topics must carry a written rationale.",
               "requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canApproveMateriality"
             },
             "publish": {
@@ -215,7 +228,7 @@
         "icon": "Sitemap",
         "version": "0.1.0",
         "title": "IRO Record",
-        "description": "Per-topic Impact / Risk / Opportunity entry feeding a MaterialityAssessment (REQ-CSR-001, design D1). impactScore and financialMaterialityScore are computed declaratively; material is derived from the parent assessment thresholds.",
+        "description": "Per-topic Impact / Risk / Opportunity entry feeding a MaterialityAssessment (design D1). impactScore and financialMaterialityScore are computed declaratively; material is derived from the parent assessment thresholds.",
         "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
         "type": "object",
         "required": [
@@ -369,7 +382,7 @@
           },
           "rationale": {
             "type": "string",
-            "description": "Mandatory rationale for non-material determinations (REQ-CSR-001).",
+            "description": "Mandatory rationale for non-material determinations.",
             "nullable": true,
             "title": "Rationale"
           }
@@ -377,12 +390,12 @@
         "x-openregister-calculations": {
           "impactScore": {
             "type": "number",
-            "description": "Composite impact-materiality score: (severityOrMagnitude + scope + likelihood) weighted by irremediable character (REQ-CSR-001, design D1). Declarative formula per ADR-031 — no ImpactScorer.php.",
+            "description": "Composite impact-materiality score: (severityOrMagnitude + scope + likelihood) weighted by irremediable character (design D1). Declarative formula per ADR-031: no ImpactScorer.php.",
             "expr": "(@self.severityOrMagnitude + @self.scope + @self.likelihood) * (@self.irremediableCharacter ? 1.0 : 0.8)"
           },
           "financialMaterialityScore": {
             "type": "number",
-            "description": "Financial-materiality composite. Average of severity and likelihood as financial proxies until the per-dimension financial inputs are split out (REQ-CSR-001).",
+            "description": "Financial-materiality composite. Average of severity and likelihood as financial proxies until the per-dimension financial inputs are split out.",
             "expr": "(@self.severityOrMagnitude + @self.likelihood) / 2"
           }
         }
@@ -392,7 +405,7 @@
         "icon": "TableLarge",
         "version": "0.1.0",
         "title": "ESRS Data Point",
-        "description": "One row per ESRS-mandated data point per period (~1,100 per period across the 12 standards) (REQ-CSR-002, design D3). Configurable source + progressive approval lifecycle. No transition to approved without a source reference (assurance-critical control).",
+        "description": "One row per ESRS-mandated data point per period (~1,100 per period across the 12 standards) (design D3). Configurable source + progressive approval lifecycle. No transition to approved without a source reference (assurance-critical control).",
         "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
         "type": "object",
         "required": [
@@ -462,7 +475,7 @@
               "supplier-survey",
               "proxy-estimate"
             ],
-            "description": "Configured source of the value (REQ-CSR-002, design D3).",
+            "description": "Configured source of the value (design D3).",
             "title": "Value Source"
           },
           "sourceReference": {
@@ -521,7 +534,7 @@
           },
           "restatedFrom": {
             "type": "string",
-            "description": "Self-FK to the prior-period data point this value restates (REQ-CSR-002, design D8).",
+            "description": "Self-FK to the prior-period data point this value restates (design D8).",
             "nullable": true,
             "title": "Restated From"
           },
@@ -556,11 +569,11 @@
             },
             "locked-for-assurance": {
               "label": "Locked for assurance",
-              "description": "Read-only to the entity; auditor may annotate but not change the value (REQ-CSR-004, design D5)."
+              "description": "Read-only to the entity; auditor may annotate but not change the value (design D5)."
             },
             "assured": {
               "label": "Assured",
-              "description": "Auditor signed off. Ready for XBRL mapping (REQ-CSR-005)."
+              "description": "Auditor signed off. Ready for XBRL mapping."
             },
             "published": {
               "label": "Published",
@@ -572,13 +585,13 @@
               "from": "draft",
               "to": "in-review",
               "label": "Submit for review",
-              "description": "Preparer submits the value for review (REQ-CSR-002)."
+              "description": "Preparer submits the value for review."
             },
             "approve": {
               "from": "in-review",
               "to": "approved",
               "label": "Approve",
-              "description": "Reviewer approves. Blocked unless a source reference is present (REQ-CSR-002 assurance control).",
+              "description": "Reviewer approves. Blocked unless a source reference is present (assurance control).",
               "requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canApproveDataPoint"
             },
             "reject": {
@@ -597,13 +610,13 @@
               "from": "locked-for-assurance",
               "to": "assured",
               "label": "Auditor sign-off",
-              "description": "Auditor signs off the data point (REQ-CSR-004)."
+              "description": "Auditor signs off the data point."
             },
             "publish": {
               "from": "assured",
               "to": "published",
               "label": "Publish",
-              "description": "Publish with the filed report (REQ-CSR-005)."
+              "description": "Publish with the filed report."
             },
             "restate": {
               "from": "published",
@@ -620,7 +633,7 @@
         "icon": "Molecule",
         "version": "0.1.0",
         "title": "GHG Inventory",
-        "description": "GHG Protocol Scope 1/2/3 calculation engine per period (REQ-CSR-003, design D4). Totals are declarative aggregations over the period's EmissionSource rows — no GHGCalculator.php (ADR-031). Base-year recalculation flagged at the >=5% boundary-change threshold.",
+        "description": "GHG Protocol Scope 1/2/3 calculation engine per period (design D4). Totals are declarative aggregations over the period's EmissionSource rows: no GHGCalculator.php (ADR-031). Base-year recalculation flagged at the >=5% boundary-change threshold.",
         "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
         "type": "object",
         "required": [
@@ -652,7 +665,7 @@
               "financial-control",
               "operational-control"
             ],
-            "description": "Consolidation approach (REQ-CSR-003).",
+            "description": "Consolidation approach.",
             "title": "Consolidation Approach"
           },
           "gasesIncluded": {
@@ -693,14 +706,14 @@
           },
           "esrsTaxonomyVersion": {
             "type": "string",
-            "description": "Pinned EFRAG ESRS XBRL taxonomy version for this period (REQ-CSR-005, design D7).",
+            "description": "Pinned EFRAG ESRS XBRL taxonomy version for this period (design D7).",
             "example": "EFRAG-ESRS-2024-01",
             "nullable": true,
             "title": "Esrs Taxonomy Version"
           },
           "baseYearRecalculationFlag": {
             "type": "boolean",
-            "description": "True when a >=5% boundary change has triggered base-year recalculation (REQ-CSR-003, design D4).",
+            "description": "True when a >=5% boundary change has triggered base-year recalculation (design D4).",
             "default": false,
             "title": "Base Year Recalculation Flag"
           },
@@ -751,7 +764,7 @@
         },
         "x-openregister-aggregations": {
           "scope1Total": {
-            "description": "total-Scope-1 = SUM(EmissionSource.co2eResult) for scope=1 rows of this inventory (REQ-CSR-003 / design D4).",
+            "description": "total-Scope-1 = SUM(EmissionSource.co2eResult) for scope=1 rows of this inventory (design D4).",
             "join": {
               "schema": "EmissionSource",
               "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope = '1'"
@@ -765,7 +778,7 @@
             ]
           },
           "scope2LocationBasedTotal": {
-            "description": "total-Scope-2-location-based = SUM(co2eResult) for scope=2 rows using grid-average factors (REQ-CSR-003).",
+            "description": "total-Scope-2-location-based = SUM(co2eResult) for scope=2 rows using grid-average factors.",
             "join": {
               "schema": "EmissionSource",
               "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope = '2' AND EmissionSource.scope2Method = 'location-based'"
@@ -779,7 +792,7 @@
             ]
           },
           "scope2MarketBasedTotal": {
-            "description": "total-Scope-2-market-based = SUM(co2eResult) for scope=2 rows using contract-specific factors (REQ-CSR-003).",
+            "description": "total-Scope-2-market-based = SUM(co2eResult) for scope=2 rows using contract-specific factors.",
             "join": {
               "schema": "EmissionSource",
               "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope = '2' AND EmissionSource.scope2Method = 'market-based'"
@@ -793,7 +806,7 @@
             ]
           },
           "scope3ByCategory": {
-            "description": "total-Scope-3 broken down by the 15 GHG Protocol categories: SUM(co2eResult) grouped by category for scope LIKE '3-cat-%' rows (REQ-CSR-003).",
+            "description": "total-Scope-3 broken down by the 15 GHG Protocol categories: SUM(co2eResult) grouped by category for scope LIKE '3-cat-%' rows.",
             "join": {
               "schema": "EmissionSource",
               "condition": "EmissionSource.inventory = @self.id AND EmissionSource.scope LIKE '3-cat-%'"
@@ -844,7 +857,7 @@
               "from": "draft",
               "to": "calculated",
               "label": "Roll up inventory",
-              "description": "Run the on-demand Scope 1/2/3 aggregation (REQ-CSR-003)."
+              "description": "Run the on-demand Scope 1/2/3 aggregation."
             },
             "approve": {
               "from": "calculated",
@@ -884,7 +897,7 @@
         "icon": "Factory",
         "version": "0.1.0",
         "title": "Emission Source",
-        "description": "Per-activity row feeding a GhgInventory (REQ-CSR-003, design D4). co2eResult is a declarative calculation (activityData x emissionFactor) — no PHP service.",
+        "description": "Per-activity row feeding a GhgInventory (design D4). Co2eResult is a declarative calculation (activityData x emissionFactor): no PHP service.",
         "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
         "type": "object",
         "required": [
@@ -920,7 +933,7 @@
               "3-cat-14",
               "3-cat-15"
             ],
-            "description": "GHG Protocol scope / Scope 3 category (REQ-CSR-003).",
+            "description": "GHG Protocol scope / Scope 3 category.",
             "title": "Scope"
           },
           "category": {
@@ -935,7 +948,7 @@
               "location-based",
               "market-based"
             ],
-            "description": "For scope=2 rows: which Scope-2 accounting method this row contributes to (REQ-CSR-003).",
+            "description": "For scope=2 rows: which Scope-2 accounting method this row contributes to.",
             "nullable": true,
             "title": "Scope2Method"
           },
@@ -990,7 +1003,7 @@
               "AR5",
               "AR6"
             ],
-            "description": "IPCC GWP version for comparability (REQ-CSR-003).",
+            "description": "IPCC GWP version for comparability.",
             "nullable": true,
             "title": "Gwp Version"
           },
@@ -1001,7 +1014,7 @@
               "medium",
               "low"
             ],
-            "description": "Uncertainty rating; spend-based proxies are typically high (REQ-CSR-003).",
+            "description": "Uncertainty rating; spend-based proxies are typically high.",
             "nullable": true,
             "title": "Uncertainty Rating"
           },
@@ -1015,7 +1028,7 @@
         "x-openregister-calculations": {
           "co2eResult": {
             "type": "number",
-            "description": "co2eResult = activityData x emissionFactor (tCO2e). Declarative per ADR-031 / design D4 — no GHGCalculator.php.",
+            "description": "co2eResult = activityData x emissionFactor (tCO2e). Declarative per ADR-031 / design D4: no GHGCalculator.php.",
             "expr": "@self.activityData * @self.emissionFactor"
           }
         }
@@ -1025,7 +1038,7 @@
         "icon": "Truck",
         "version": "0.1.0",
         "title": "Value Chain Actor",
-        "description": "Supplier / customer / portfolio-company in the reporting boundary (REQ-CSR-002, design D1). counterparty references the organisations entity master (FK by slug/uuid) — that schema lives in the organisations dependency app, never re-invented here.",
+        "description": "Supplier / customer / portfolio-company in the reporting boundary (design D1). Counterparty references the organisations entity master (FK by slug/uuid): that schema lives in the organisations dependency app, never re-invented here.",
         "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
         "type": "object",
         "required": [
@@ -1135,7 +1148,7 @@
         "icon": "FileDocumentOutline",
         "version": "0.1.0",
         "title": "ESRS Policy",
-        "description": "ESRS-2 governance triad — policy declaration on a material topic (design D1).",
+        "description": "ESRS-2 governance triad: policy declaration on a material topic (design D1).",
         "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
         "type": "object",
         "required": [
@@ -1233,7 +1246,7 @@
         "icon": "RunFast",
         "version": "0.1.0",
         "title": "ESRS Action",
-        "description": "ESRS-2 governance triad — concrete time-bound intervention on a material topic (design D1).",
+        "description": "ESRS-2 governance triad: concrete time-bound intervention on a material topic (design D1).",
         "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
         "type": "object",
         "required": [
@@ -1339,7 +1352,7 @@
         "icon": "BullseyeArrow",
         "version": "0.1.0",
         "title": "ESRS Target",
-        "description": "ESRS-2 governance triad — measurable, preferably science-based goal on a material topic (design D1).",
+        "description": "ESRS-2 governance triad: measurable, preferably science-based goal on a material topic (design D1).",
         "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
         "type": "object",
         "required": [
@@ -1451,7 +1464,7 @@
         "icon": "ClipboardCheckOutline",
         "version": "0.1.0",
         "title": "Assurance Engagement",
-        "description": "External-auditor assurance engagement per period (REQ-CSR-004, design D5). Limited assurance (year 1) escalating to reasonable assurance (FY2028+). Findings tracked to management response; submission confirmation captured for XBRL/KvK deposition.",
+        "description": "External-auditor assurance engagement per period (design D5). Limited assurance (year 1) escalating to reasonable assurance (FY2028+). Findings tracked to management response; submission confirmation captured for XBRL/KvK deposition.",
         "x-spec": "openspec/changes/bookkeeping-csrd-esrs/specs/bookkeeping-csrd-esrs/index.md",
         "type": "object",
         "required": [
@@ -1484,7 +1497,7 @@
               "limited",
               "reasonable"
             ],
-            "description": "Assurance level (REQ-CSR-004).",
+            "description": "Assurance level.",
             "title": "Engagement Level"
           },
           "scopeStatement": {
@@ -1592,7 +1605,7 @@
           },
           "findings": {
             "type": "array",
-            "description": "Auditor findings tracked to management response (REQ-CSR-004).",
+            "description": "Auditor findings tracked to management response.",
             "items": {
               "type": "object",
               "required": [
@@ -1658,7 +1671,7 @@
           },
           "submissionKvkReceiptId": {
             "type": "string",
-            "description": "KvK ESEF submission receipt id (REQ-CSR-005).",
+            "description": "KvK ESEF submission receipt id.",
             "nullable": true,
             "title": "Submission KvK Receipt ID"
           },
@@ -1704,7 +1717,7 @@
             },
             "fieldwork": {
               "label": "Fieldwork",
-              "description": "Auditor performing controls + substantive testing on locked data points (REQ-CSR-004)."
+              "description": "Auditor performing controls + substantive testing on locked data points."
             },
             "findings-open": {
               "label": "Findings open",
@@ -1716,7 +1729,7 @@
             },
             "submitted": {
               "label": "Submitted",
-              "description": "iXBRL report deposited with KvK/AFM (REQ-CSR-005)."
+              "description": "iXBRL report deposited with KvK/AFM."
             }
           },
           "transitions": {
@@ -1724,7 +1737,7 @@
               "from": "draft",
               "to": "fieldwork",
               "label": "Start fieldwork",
-              "description": "Begin walkthrough once data points are locked-for-assurance (REQ-CSR-004)."
+              "description": "Begin walkthrough once data points are locked-for-assurance."
             },
             "raiseFindings": {
               "from": "fieldwork",
@@ -1736,7 +1749,7 @@
               "from": "findings-open",
               "to": "opinion-issued",
               "label": "Issue opinion",
-              "description": "Partner issues the opinion once all findings are resolved/accepted (REQ-CSR-004).",
+              "description": "Partner issues the opinion once all findings are resolved/accepted.",
               "requires": "OCA\\Shillinq\\Lifecycle\\CsrdEsrsGuard::canIssueOpinion"
             },
             "issueOpinionNoFindings": {
@@ -1749,7 +1762,7 @@
               "from": "opinion-issued",
               "to": "submitted",
               "label": "Submit to KvK/AFM",
-              "description": "Deposit the validated iXBRL report (REQ-CSR-005)."
+              "description": "Deposit the validated iXBRL report."
             }
           }
         }
@@ -1759,14 +1772,14 @@
           "isBiodiversitySensitiveAreaOverlap": {
             "type": "boolean",
             "default": false,
-            "description": "REQ-CSR ESRS E4 — whether the asset's location overlaps a Natura 2000 / Key Biodiversity Area (computed from geolocation against the WDPA overlay, or manual override). Additive ADR-037 extension merged onto the monolith FixedAsset schema (design D6).",
+            "description": "REQ-CSR ESRS E4: whether the asset's location overlaps a Natura 2000 / Key Biodiversity Area (computed from geolocation against the WDPA overlay, or manual override). Additive ADR-037 extension merged onto the monolith FixedAsset schema (design D6).",
             "title": "Is Biodiversity Sensitive Area Overlap"
           },
           "physicalClimateRiskRating": {
             "type": "integer",
             "minimum": 1,
             "maximum": 5,
-            "description": "REQ-CSR ESRS E1 — physical-climate-risk rating (1-5) for the asset's site, manually assessed from flood/fire/drought exposure (design D6). Additive ADR-037 extension.",
+            "description": "REQ-CSR ESRS E1: physical-climate-risk rating (1-5) for the asset's site, manually assessed from flood/fire/drought exposure (design D6). Additive ADR-037 extension.",
             "nullable": true,
             "title": "Physical Climate Risk Rating"
           }

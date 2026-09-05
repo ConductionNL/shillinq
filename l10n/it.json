@@ -1556,7 +1556,26 @@
             "1 fattura in sospeso",
             "%n fatture in sospeso"
         ],
-        "Manual Journals": "Giornali manuali"
+        "Manual Journals": "Giornali manuali",
+        "Reports": "Report",
+        "Pick a report to open it.": "Scegli un report per aprirlo.",
+        "Due": "Scadenza",
+        "Assignee": "Assegnato a",
+        "Iv3 returns": "Dichiarazioni Iv3",
+        "SiSa returns": "Dichiarazioni SiSa",
+        "EMU return": "Dichiarazione EMU",
+        "Consolidated statements": "Bilanci consolidati",
+        "Budget variance": "Scostamento di bilancio",
+        "Generated reports": "Report generati",
+        "The quarterly Iv3 returns, and how far each one got.": "Le dichiarazioni Iv3 trimestrali e a che punto è arrivata ciascuna.",
+        "Single information, single audit returns per scheme.": "Dichiarazioni single information, single audit per regime.",
+        "The EMU balance return.": "La dichiarazione del saldo EMU.",
+        "The group figures, consolidated across participations.": "I dati del gruppo, consolidati sulle partecipazioni.",
+        "Where the books sit against budget, and by how much.": "Dove stanno i conti rispetto al bilancio, e di quanto.",
+        "Everything Reporting & Compliance has already produced.": "Tutto ciò che Reportistica e conformità ha già prodotto.",
+        "What retention destroyed, and when.": "Cosa ha distrutto la conservazione, e quando.",
+        "Store": "Store",
+        "Install finance configurations that other organisations have published: a chart of accounts, a reporting layout, or the flows behind them.": "Installa registri, schemi e flussi pubblicati da altre organizzazioni."
     },
     "plurals": null
 }

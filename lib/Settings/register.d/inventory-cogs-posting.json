@@ -10,13 +10,13 @@
         "version": "0.1.0",
         "title": "Inventory GL Posting Configuration",
         "titleNl": "Voorraad GL Boekingsconfiguratie",
-        "description": "Per-administration mapping from inventory stock-movement event types (sale dispatch, goods receipt, count variance) to General Ledger account numbers. One active record per administrationId. Drives the declarative posting lifecycle on InventoryValuation (REQ-CG-002 / REQ-CG-003 / REQ-CG-004). Holds FK account numbers (cogsAccountNumber, inventoryAssetAccountNumber, grIrClearingAccountNumber, inventoryAdjustmentAccountNumber) that MUST resolve to existing Account records in the same administration (REQ-CG-001 FK invariant). When isActive=false or any account is missing, the lifecycle action skips the GLTransaction materialisation and emits a structured warning event — no zero-cost or unmatched GL entries are written. Schema.org Thing.",
+        "description": "Per-administration mapping from inventory stock-movement event types (sale dispatch, goods receipt, count variance) to General Ledger account numbers. One active record per administrationId. Drives the declarative posting lifecycle on InventoryValuation. Holds FK account numbers (cogsAccountNumber, inventoryAssetAccountNumber, grIrClearingAccountNumber, inventoryAdjustmentAccountNumber) that MUST resolve to existing Account records in the same administration (FK invariant). When isActive=false or any account is missing, the lifecycle action skips the GLTransaction materialisation and emits a structured warning event: no zero-cost or unmatched GL entries are written. Schema.org Thing.",
         "x-schema-org": "schema:Thing",
         "x-openregister-purpose": "config",
         "x-spec": "openspec/changes/inventory-cogs-posting/specs/inventory-cogs-posting/spec.md",
         "x-openregister-audit-trail": {
           "enabled": true,
-          "description": "InventoryGLConfig changes (account number remapping, isActive toggle) MUST be audit-trail-immutable per REQ-AT-001 / ADR-022 — every change to a GL account routing is bookkeeping-relevant: it changes where future COGS / inventory-asset / count-variance postings land and is subject to operator + auditor review."
+          "description": "InventoryGLConfig changes (account number remapping, isActive toggle) MUST be audit-trail-immutable / ADR-022: every change to a GL account routing is bookkeeping-relevant: it changes where future COGS / inventory-asset / count-variance postings land and is subject to operator + auditor review."
         },
         "type": "object",
         "required": [
@@ -30,44 +30,44 @@
         "properties": {
           "administrationId": {
             "type": "string",
-            "description": "FK to Administration owning this posting configuration (REQ-MA-001 multi-administratie scope). One active config per administrationId.",
+            "description": "FK to Administration owning this posting configuration (multi-administratie scope). One active config per administrationId.",
             "example": "adm-demo-1",
             "title": "Administration ID"
           },
           "cogsAccountNumber": {
             "type": "string",
-            "description": "FK to Account.accountNumber — debited on sale/dispatch event (Dr COGS). Default RGS 3.5 MKB '7000' Kostprijs omzet. MUST resolve to an existing Account in the same administration (REQ-CG-001 FK invariant).",
+            "description": "FK to Account.accountNumber: debited on sale/dispatch event (Dr COGS). Default RGS 3.5 MKB '7000' Kostprijs omzet. MUST resolve to an existing Account in the same administration (FK invariant).",
             "example": "7000",
             "title": "COGS Account Number"
           },
           "inventoryAssetAccountNumber": {
             "type": "string",
-            "description": "FK to Account.accountNumber — debited on goods receipt (Dr Inventory Asset) and credited on COGS posting / negative variance. Default RGS 3.5 MKB '1400' Voorraden. MUST resolve to an existing Account in the same administration.",
+            "description": "FK to Account.accountNumber: debited on goods receipt (Dr Inventory Asset) and credited on COGS posting / negative variance. Default RGS 3.5 MKB '1400' Voorraden. MUST resolve to an existing Account in the same administration.",
             "example": "1400",
             "title": "Inventory Asset Account Number"
           },
           "grIrClearingAccountNumber": {
             "type": "string",
-            "description": "FK to Account.accountNumber — credited on goods receipt (Cr GR/IR clearing); subsequently debited by AP invoice posting per REQ-AP-003. Default RGS 3.5 MKB '1800' GR/IR clearing. MUST resolve to an existing Account in the same administration. Two-step pattern avoids double-posting (REQ-CG-003).",
+            "description": "FK to Account.accountNumber: credited on goods receipt (Cr GR/IR clearing); subsequently debited by AP invoice posting. Default RGS 3.5 MKB '1800' GR/IR clearing. MUST resolve to an existing Account in the same administration. Two-step pattern avoids double-posting.",
             "example": "1800",
             "title": "Gr Ir Clearing Account Number"
           },
           "inventoryAdjustmentAccountNumber": {
             "type": "string",
-            "description": "FK to Account.accountNumber — debited on negative count variance / credited on positive count variance (REQ-CG-004). Default RGS 3.5 MKB '7100' Voorraadmutaties. MUST resolve to an existing Account in the same administration.",
+            "description": "FK to Account.accountNumber: debited on negative count variance / credited on positive count variance. Default RGS 3.5 MKB '7100' Voorraadmutaties. MUST resolve to an existing Account in the same administration.",
             "example": "7100",
             "title": "Inventory Adjustment Account Number"
           },
           "isActive": {
             "type": "boolean",
             "default": true,
-            "description": "Whether perpetual inventory GL posting is enabled for this administration. When false, the InventoryValuation lifecycle action skips materialisation and logs a 'posting_disabled' structured warning (REQ-CG-002 skip scenario).",
+            "description": "Whether perpetual inventory GL posting is enabled for this administration. When false, the InventoryValuation lifecycle action skips materialisation and logs a 'posting_disabled' structured warning (skip scenario).",
             "title": "Is Active"
           },
           "description": {
             "type": "string",
             "nullable": true,
-            "description": "Operator notes — e.g. 'NL RGS 3.5 MKB defaults applied' or 'overridden to match parent corporate chart'.",
+            "description": "Operator notes: e.g. 'NL RGS 3.5 MKB defaults applied' or 'overridden to match parent corporate chart'.",
             "example": "Shillinq demo administratie 2026",
             "title": "Description"
           }
@@ -142,7 +142,7 @@
           "glTransactionId": {
             "type": "string",
             "nullable": true,
-            "description": "Back-reference to the materialised GLTransaction.id produced by the most recent lifecycle posting action (postCOGS, postReceipt, postVariance). Enables drill-down from the inventory snapshot to its GL impact (REQ-CG-005 D5). Same pattern as APInvoice.glTransactionId.",
+            "description": "Back-reference to the materialised GLTransaction.id produced by the most recent lifecycle posting action (postCOGS, postReceipt, postVariance). Enables drill-down from the inventory snapshot to its GL impact (D5). Same pattern as APInvoice.glTransactionId.",
             "example": "glt-2026-0001",
             "title": "GL Transaction ID"
           },
@@ -155,7 +155,7 @@
               "countVariance",
               "returnDispatch"
             ],
-            "description": "The stock-movement event that drove the most recent GL posting. Used by the lifecycle action to dispatch to postCOGS / postReceipt / postVariance per REQ-CG-002 / REQ-CG-003 / REQ-CG-004. returnDispatch reverses a prior saleDispatch (REQ-CG-005 reversal scenario).",
+            "description": "The stock-movement event that drove the most recent GL posting. Used by the lifecycle action to dispatch to postCOGS / postReceipt / postVariance. returnDispatch reverses a prior saleDispatch (reversal scenario).",
             "title": "Posting Event"
           }
         },
@@ -166,14 +166,14 @@
               "to": "active",
               "label": "Post COGS on sale dispatch",
               "labelNl": "COGS boeken bij verkoopafgifte",
-              "description": "REQ-CG-002: when an InventoryValuation snapshot decreases by a saleDispatch event, materialise a balanced GLTransaction with Dr InventoryGLConfig.cogsAccountNumber / Cr InventoryGLConfig.inventoryAssetAccountNumber for delta_quantity * unitCost. Guard: unitCost != null AND active InventoryGLConfig with isActive=true exists for administrationId. Skips with structured warning (reasons: 'unitCost_missing', 'posting_disabled', 'config_missing') without writing partial GL entries.",
+              "description": "When an InventoryValuation snapshot decreases by a saleDispatch event, materialise a balanced GLTransaction with Dr InventoryGLConfig.cogsAccountNumber / Cr InventoryGLConfig.inventoryAssetAccountNumber for delta_quantity * unitCost. Guard: unitCost != null AND active InventoryGLConfig with isActive=true exists for administrationId. Skips with structured warning (reasons: 'unitCost_missing', 'posting_disabled', 'config_missing') without writing partial GL entries.",
               "requires": "OCA\\Shillinq\\Lifecycle\\InventoryPostingGuard::canPost",
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "materialise-gl-transaction",
                   "condition": "@self.postingEvent == 'saleDispatch'",
-                  "description": "REQ-CG-002 declarative GL posting. Dr COGS / Cr Inventory Asset. journalCode='inkoop'; subLedgerType='inventory'; subLedgerRef=@self.id.",
+                  "description": "Declarative GL posting. Dr COGS / Cr Inventory Asset. journalCode='inkoop'; subLedgerType='inventory'; subLedgerRef=@self.id.",
                   "actionParameters": {
                     "register": "shillinq",
                     "targetSchema": "GLTransaction",
@@ -200,14 +200,14 @@
               "to": "active",
               "label": "Post inventory asset on goods receipt",
               "labelNl": "Voorraad boeken bij goederenontvangst",
-              "description": "REQ-CG-003: when an InventoryValuation snapshot increases by a goodsReceipt event, materialise a balanced GLTransaction with Dr InventoryGLConfig.inventoryAssetAccountNumber / Cr InventoryGLConfig.grIrClearingAccountNumber for received_quantity * unitCost. GR/IR clearing is subsequently settled by the AP invoice posting per bookkeeping-accounts-payable-core REQ-AP-003 (two-step pattern; avoids double-posting). Same skip conditions as postCOGS (REQ-CG-003 skip scenario).",
+              "description": "When an InventoryValuation snapshot increases by a goodsReceipt event, materialise a balanced GLTransaction with Dr InventoryGLConfig.inventoryAssetAccountNumber / Cr InventoryGLConfig.grIrClearingAccountNumber for received_quantity * unitCost. GR/IR clearing is subsequently settled by the AP invoice posting per bookkeeping-accounts-payable-core (two-step pattern; avoids double-posting). Same skip conditions as postCOGS (skip scenario).",
               "requires": "OCA\\Shillinq\\Lifecycle\\InventoryPostingGuard::canPost",
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "materialise-gl-transaction",
                   "condition": "@self.postingEvent == 'goodsReceipt'",
-                  "description": "REQ-CG-003 declarative GL posting. Dr Inventory Asset / Cr GR/IR clearing. journalCode='inkoop'; subLedgerType='inventory'; subLedgerRef=@self.id.",
+                  "description": "Declarative GL posting. Dr Inventory Asset / Cr GR/IR clearing. journalCode='inkoop'; subLedgerType='inventory'; subLedgerRef=@self.id.",
                   "actionParameters": {
                     "register": "shillinq",
                     "targetSchema": "GLTransaction",
@@ -234,14 +234,14 @@
               "to": "active",
               "label": "Post count variance",
               "labelNl": "Telverschil boeken",
-              "description": "REQ-CG-004: on a non-zero count-variance event, materialise a balanced GLTransaction whose Dr/Cr direction reflects the sign of (actualQuantity - bookQuantity). Positive variance: Dr Inventory Asset / Cr Inventory Adjustment. Negative variance: Dr Inventory Adjustment / Cr Inventory Asset. journalCode='memo'. ADR-031 exception (D4): direction is resolved by InventoryPostingGuard::direction(int) because the declarative DSL cannot express sign conditionals inline today. Zero variance is a strict no-op (no GLTransaction). Same skip conditions as postCOGS.",
+              "description": "On a non-zero count-variance event, materialise a balanced GLTransaction whose Dr/Cr direction reflects the sign of (actualQuantity - bookQuantity). Positive variance: Dr Inventory Asset / Cr Inventory Adjustment. Negative variance: Dr Inventory Adjustment / Cr Inventory Asset. journalCode='memo'. ADR-031 exception (D4): direction is resolved by InventoryPostingGuard:direction(int) because the declarative DSL cannot express sign conditionals inline today. Zero variance is a strict no-op (no GLTransaction). Same skip conditions as postCOGS.",
               "requires": "OCA\\Shillinq\\Lifecycle\\InventoryPostingGuard::canPostVariance",
               "actions": [
                 {
                   "trigger": "x-openregister-lifecycle-action",
                   "action": "materialise-gl-transaction",
                   "condition": "@self.postingEvent == 'countVariance'",
-                  "description": "REQ-CG-004 declarative GL posting (direction from PHP guard per ADR-031 exception). journalCode='memo'; subLedgerType='inventory'; subLedgerRef=@self.id. Zero-delta skipped by canPostVariance guard.",
+                  "description": "Declarative GL posting (direction from PHP guard per ADR-031 exception). journalCode='memo'; subLedgerType='inventory'; subLedgerRef=@self.id. Zero-delta skipped by canPostVariance guard.",
                   "actionParameters": {
                     "register": "shillinq",
                     "targetSchema": "GLTransaction",
@@ -277,7 +277,7 @@
             "enum": [
               "inventory"
             ],
-            "description": "Sub-ledger discriminator. T2 owns the actual sub-ledger registers. 'inventory' added by inventory-cogs-posting REQ-CG-005 + REQ-GL-009 extension (list-concat with base enum); subLedgerRef points to the InventoryValuation UUID that triggered the lifecycle posting (saleDispatch / goodsReceipt / countVariance).",
+            "description": "Sub-ledger discriminator. T2 owns the actual sub-ledger registers. 'inventory' added by inventory-cogs-posting + extension (list-concat with base enum); subLedgerRef points to the InventoryValuation UUID that triggered the lifecycle posting (saleDispatch / goodsReceipt / countVariance).",
             "title": "Sub Ledger Type"
           }
         }

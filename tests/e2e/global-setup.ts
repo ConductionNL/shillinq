@@ -20,11 +20,13 @@
  * adopter).
  */
 
-import { chromium, request, type FullConfig, type Page } from '@playwright/test'
-import { resolveBaseURL } from './base-url'
+import type { FullConfig, Page } from '@playwright/test'
+
+import { chromium, request } from '@playwright/test'
 import { execSync } from 'child_process'
-import * as path from 'path'
 import * as fs from 'fs'
+import * as path from 'path'
+import { resolveBaseURL } from './base-url.ts'
 
 const AUTH_DIR = path.resolve(__dirname, '.auth')
 const STORAGE_STATE = path.join(AUTH_DIR, 'admin.json')
@@ -72,13 +74,12 @@ function ensureBundleBuilt(): void {
 		return
 	}
 	if (fs.existsSync(BUNDLE_PATH)) {
-		// eslint-disable-next-line no-console
 		console.log(
 			`[playwright globalSetup] bundle at ${BUNDLE_PATH} is only `
 				+ `${fs.statSync(BUNDLE_PATH).size} bytes (floor ${MIN_BUNDLE_BYTES}); rebuilding.`,
 		)
 	}
-	// eslint-disable-next-line no-console
+
 	console.log(
 		`[playwright globalSetup] bundle missing at ${BUNDLE_PATH}; running 'npm run build' once…`,
 	)
@@ -170,7 +171,7 @@ async function markWalkthroughSeen(page: Page): Promise<void> {
 				+ 'The walkthrough overlay would intercept pointer events for the whole run.',
 		)
 	}
-	// eslint-disable-next-line no-console
+
 	console.log(
 		`[playwright globalSetup] ${WALKTHROUGH_SEEN_KEY} = ${version} (walkthrough will not auto-start)`,
 	)
@@ -212,7 +213,7 @@ async function markSetupWizardDismissed(page: Page): Promise<void> {
 				+ 'The setup wizard would render over the shell and intercept pointer events for the whole run.',
 		)
 	}
-	// eslint-disable-next-line no-console
+
 	console.log(
 		'[playwright globalSetup] cn-setup-wizard-dismissed:shillinq:0..20 = 1 (setup wizard will not auto-open)',
 	)

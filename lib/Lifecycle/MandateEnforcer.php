@@ -142,7 +142,7 @@ class MandateEnforcer {
 		$amount = (int)($commitment['total_amount_excl_vat'] ?? 0);
 		$admin = (string)($commitment['administrationId'] ?? '');
 
-		$mandaten = $this->findMany(schema: 'Mandate', filters: ['administrationId' => $admin]);
+		$mandaten = $this->findMany(schema: 'SpendingMandate', filters: ['administrationId' => $admin]);
 
 		$best = null;
 		foreach ($mandaten as $mandate) {
