@@ -666,11 +666,11 @@
           "description": "Every create, update and delete of a CommitmentMovement is written to OpenRegister's immutable audit trail with actor and timestamp."
         }
       },
-      "Mandate": {
-        "slug": "Mandate",
+      "SpendingMandate": {
+        "slug": "SpendingMandate",
         "icon": "AccountKey",
         "version": "0.1.0",
-        "title": "Mandate",
+        "title": "Spending mandate",
         "description": "Authorization record defining who may sign commitments up to what amount, for which soort_verplichting, with optional second-signature thresholds (D6). Enforced by MandateEnforcer on the verplichting aangaan transition. A register (not an enum) so operators can manage mandates over time.",
         "x-openregister-purpose": "dimension",
         "type": "object",
@@ -1065,7 +1065,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Mandate",
+        "schema": "SpendingMandate",
         "slug": "vpl-mandaat-inkoop-50k"
       },
       "administrationId": "adm-demo",
@@ -1086,7 +1086,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Mandate",
+        "schema": "SpendingMandate",
         "slug": "vpl-mandaat-directeur-250k"
       },
       "administrationId": "adm-demo",
@@ -1109,7 +1109,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Mandate",
+        "schema": "SpendingMandate",
         "slug": "vpl-mandaat-cfo-override"
       },
       "administrationId": "adm-demo",

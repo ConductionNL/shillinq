@@ -102,7 +102,20 @@ class RenameCommitmentSchemas implements IRepairStep {
 		'Verplichtingsregel' => 'CommitmentLine',
 		'Verplichtingsmutatie' => 'CommitmentMovement',
 		'Goedkeuringsstap' => 'ApprovalStep',
-		'Mandaat' => 'Mandate',
+		// TWO sources, one target, and the order matters. `Mandate` was itself the
+		// target of this map until a fleet audit found it collided with dossiq's
+		// administrative-law `mandate`: a schema slug is global per organisation
+		// and SchemaMapper::find() matches LOWER(slug), so whichever row was
+		// reached first answered for both. The two share ZERO declared fields —
+		// this one is a spending ceiling in the verplichtingenadministratie,
+		// dossiq's is a mandaat with a legal basis — so they are renamed apart.
+		//
+		// An install still on Dutch goes straight to the namespaced slug; one
+		// already on `Mandate` follows a step behind. If somehow BOTH exist, the
+		// second pass finds its target occupied and refuses rather than merging,
+		// which is what renameOne()'s guard is for.
+		'Mandaat' => 'SpendingMandate',
+		'Mandate' => 'SpendingMandate',
 		'TenderNedAanbesteding' => 'TenderNedProcurement',
 		'OpdrachtUitvoering' => 'OrderFulfilment',
 	];

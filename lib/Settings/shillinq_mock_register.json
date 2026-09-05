@@ -20361,7 +20361,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Mandate",
+          "schema": "SpendingMandate",
           "slug": "mandate-voorbeeld-name-1-1"
         },
         "administrationId": "Voorbeeld Administrationid 1",
@@ -20385,7 +20385,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Mandate",
+          "schema": "SpendingMandate",
           "slug": "mandate-voorbeeld-name-2-2"
         },
         "administrationId": "Voorbeeld Administrationid 2",
@@ -20409,7 +20409,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Mandate",
+          "schema": "SpendingMandate",
           "slug": "mandate-voorbeeld-name-3-3"
         },
         "administrationId": "Voorbeeld Administrationid 3",
