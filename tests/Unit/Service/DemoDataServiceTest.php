@@ -108,6 +108,78 @@ class DemoDataServiceTest extends TestCase {
 		};
 	}
 
+	/**
+	 * Declining is offered even when no dataset ships.
+	 *
+	 * 🔴 "NO THANKS" HAS TO BE SAYABLE. This app implemented a
+	 * `skip-demo-data` action that no manifest step could reach, so the step
+	 * stayed outstanding and CnAppRoot reopened the wizard over every page
+	 * unless the operator imported data they did not want.
+	 *
+	 * @return void
+	 */
+	public function testDecliningIsOfferedEvenWhenNoDatasetShips(): void {
+		$choices = $this->service->listChoices();
+
+		$this->assertSame(['none'], array_column($choices, 'id'));
+		$this->assertNotSame('', $choices[0]['description']);
+		$this->assertNotSame('', $choices[0]['icon']);
+
+	}//end testDecliningIsOfferedEvenWhenNoDatasetShips()
+
+	/**
+	 * The shipped dataset is offered with the count it actually carries.
+	 *
+	 * The card promises a number, so it has to come from the file that will be
+	 * imported rather than from a manifest that could disagree with it.
+	 *
+	 * @return void
+	 */
+	public function testTheShippedDatasetIsOfferedWithItsRealCount(): void {
+		$this->shipDescriptor(objects: 5);
+
+		$choices = $this->service->listChoices();
+
+		$this->assertSame(['none', 'demo'], array_column($choices, 'id'));
+		$this->assertSame(5, $choices[1]['objectCount']);
+		$this->assertNotSame('', $choices[1]['label']);
+		// 🔴 NO NUMBER IN THE SENTENCE. The wizard translates a card's
+		// description by literal lookup, so an interpolated count would leave a
+		// Dutch operator reading English.
+		$this->assertDoesNotMatchRegularExpression('/\d/', $choices[1]['description']);
+
+	}//end testTheShippedDatasetIsOfferedWithItsRealCount()
+
+	/**
+	 * A malformed descriptor offers nothing rather than an import that cannot run.
+	 *
+	 * @return void
+	 */
+	public function testAMalformedDescriptorOffersOnlyDeclining(): void {
+		file_put_contents($this->appDir . '/lib/Settings/shillinq_mock_register.json', 'not json at all');
+
+		$this->assertSame(['none'], array_column($this->service->listChoices(), 'id'));
+
+	}//end testAMalformedDescriptorOffersOnlyDeclining()
+
+	/**
+	 * A descriptor with no objects block is a real dataset with nothing to count.
+	 *
+	 * @return void
+	 */
+	public function testADescriptorWithNoObjectsBlockOffersTheSetWithNoCount(): void {
+		file_put_contents(
+			$this->appDir . '/lib/Settings/shillinq_mock_register.json',
+			json_encode(['components' => ['schemas' => []]])
+		);
+
+		$choices = $this->service->listChoices();
+
+		$this->assertSame(['none', 'demo'], array_column($choices, 'id'));
+		$this->assertSame(0, $choices[1]['objectCount']);
+
+	}//end testADescriptorWithNoObjectsBlockOffersTheSetWithNoCount()
+
 	public function testItImportsTheDescriptorAndReportsTheCounts(): void {
 		$this->shipDescriptor(objects: 5);
 		$spy = $this->importerSpy();
