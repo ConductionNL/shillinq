@@ -37,6 +37,32 @@ async function dismissWizard(page: Page): Promise<void> {
 		await page.keyboard.press('Escape').catch(() => {})
 		await wizard.waitFor({ state: 'hidden', timeout: 4_000 }).catch(() => {})
 	}
+
+	// 🔴 NEXTCLOUD'S WIZARD IS NOT THE ONLY MASK. Every nc-vue dialog renders a
+	// `modal-mask` whose subtree intercepts pointer events, so ANY of them
+	// turns the next click into a full timeout that reads as a broken page.
+	// This run was stopped by `cn-support-dialog`, not by the first-run wizard
+	// and not by the setup wizard:
+	//
+	//   <div data-testid-modal="cn-support-dialog" class="dialog__modal modal-mask">
+	//   subtree intercepts pointer events
+	//
+	// What OPENED it is not established — nothing in src/ mounts it, so it
+	// comes from the shared chrome. This does not explain the dialog; it stops
+	// an open dialog being reported as a broken invoice row.
+	const modal = page.locator('[data-testid="cn-modal"]')
+	if (
+		await modal
+			.first()
+			.isVisible()
+			.catch(() => false)
+	) {
+		await page.keyboard.press('Escape').catch(() => {})
+		await modal
+			.first()
+			.waitFor({ state: 'hidden', timeout: 4_000 })
+			.catch(() => {})
+	}
 }
 
 /**
