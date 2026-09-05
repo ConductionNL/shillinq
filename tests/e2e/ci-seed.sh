@@ -349,6 +349,24 @@ except json.JSONDecodeError:
     sys.exit(1)
 items = body if isinstance(body, list) else body.get('results', [])
 slugs = {i.get('slug') for i in items if isinstance(i, dict)}
+
+# A PAGE IS NOT THE POPULATION. `total` is what the instance holds; `items` is
+# what this request returned. On a shared instance carrying several apps those
+# differ wildly, and a slug that simply fell off the page reads exactly like a
+# slug the import never created — with an error message that blames the import.
+# Refuse to judge rather than report a false absence.
+total = None
+if isinstance(body, dict):
+    for _k in ('total', 'count'):
+        if isinstance(body.get(_k), int):
+            total = body[_k]
+            break
+if total is not None and total > len(items):
+    print(f'::error::{kind} listing is TRUNCATED: {len(items)} of {total} returned.')
+    print('::error::Raise the _limit on this request. A missing slug cannot be '
+          'distinguished from one that fell off the page, so this check is '
+          'refusing to report either.')
+    sys.exit(1)
 missing = [s for s in required if s not in slugs]
 print(f'[ci-seed] {kind} present: {len(slugs)}')
 
@@ -393,7 +411,7 @@ verify "$REG_BODY" registers "$REG_CODE" 2000
 SCH_BODY="$(mktemp)"
 SCH_CODE="$(curl -sS -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
 	-o "$SCH_BODY" -w '%{http_code}' --max-time 300 \
-	"${BASE}/index.php/apps/openregister/api/schemas?_limit=5000" || echo 000)"
+	"${BASE}/index.php/apps/openregister/api/schemas?_limit=10000" || echo 000)"
 verify "$SCH_BODY" schemas "$SCH_CODE" 5000
 
 # The register existing is still not the same as it being READABLE by the admin
@@ -1088,7 +1106,7 @@ for path in \
 	"/index.php/apps/shillinq/" \
 	"/index.php/apps/shillinq/api/settings" \
 	"/index.php/settings/admin/shillinq" \
-	"/index.php/apps/openregister/api/registers?_limit=1"
+	"/index.php/apps/openregister/api/registers?_limit=2000"
 do
 	code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 300 \
 		-u "${USER_NAME}:${USER_PASS}" \
