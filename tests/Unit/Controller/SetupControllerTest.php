@@ -118,6 +118,109 @@ final class SetupControllerTest extends TestCase {
 	}//end stubConfig()
 
 	/**
+	 * The status document carries the datasets the choice step offers.
+	 *
+	 * 🔴 THIS RESPONSE *IS* THE OPTION LIST. The step declares
+	 * `optionsSource: datasets` and carries no options of its own, so a dataset
+	 * missing here is a dataset nobody can pick.
+	 *
+	 * @return void
+	 */
+	public function testStatusCarriesTheOptionListTheChoiceStepReads(): void {
+		$this->stubConfig([]);
+		$this->demoDataService->method('listChoices')->willReturn(
+			[
+				['id' => 'none', 'label' => 'None', 'description' => 'Nothing.', 'objectCount' => 0, 'icon' => 'CloseCircleOutline'],
+				['id' => 'demo', 'label' => 'Example data', 'description' => 'Sample values.', 'objectCount' => 8, 'icon' => 'DatabaseOutline'],
+			]
+		);
+
+		$data = $this->controller->status()->getData();
+
+		$this->assertSame(['none', 'demo'], array_column($data['datasets'], 'id'));
+		$this->assertSame(8, $data['datasets'][1]['objectCount']);
+		$this->assertArrayHasKey('load-demo-data', $data['steps']);
+
+	}//end testStatusCarriesTheOptionListTheChoiceStepReads()
+
+	/**
+	 * Choosing none closes both steps without running anything.
+	 *
+	 * 🔴 THE DEFECT THIS FIXES. This app implemented `skip-demo-data` and no
+	 * manifest step could reach it, so declining was unsayable: the step stayed
+	 * `done: false` and CnAppRoot reopened the wizard over every page unless
+	 * the operator imported data they did not want.
+	 *
+	 * @return void
+	 */
+	public function testChoosingNoneClosesBothStepsWithoutRunningAnything(): void {
+		$this->stubConfig(['demo_dataset' => 'none']);
+		$this->demoDataService->method('listChoices')->willReturn([]);
+
+		$steps = $this->controller->status()->getData()['steps'];
+
+		$this->assertTrue($steps['demo-data']['done']);
+		$this->assertTrue($steps['load-demo-data']['done']);
+
+	}//end testChoosingNoneClosesBothStepsWithoutRunningAnything()
+
+	/**
+	 * An unknown dataset is refused rather than stored.
+	 *
+	 * Storing it would leave the load step pointing at nothing, so the failure
+	 * would surface one step later with no clue why.
+	 *
+	 * @return void
+	 */
+	public function testAnUnknownDatasetIsRefusedRatherThanStored(): void {
+		$this->request->method('getParam')->willReturn('atlantis');
+		$this->request->method('getParams')->willReturn(['demo_dataset' => 'atlantis']);
+		$this->demoDataService->method('listChoices')->willReturn(
+			[['id' => 'none', 'label' => 'None', 'description' => '', 'objectCount' => 0, 'icon' => '']]
+		);
+
+		$this->appConfig->expects($this->never())->method('setValueString');
+
+		$this->assertFalse($this->controller->saveConfig()->getData()['success']);
+
+	}//end testAnUnknownDatasetIsRefusedRatherThanStored()
+
+	/**
+	 * Running the load step with no dataset picked refuses rather than guessing.
+	 *
+	 * 🔴 NO SILENT DEFAULT. Importing because the operator clicked Run one step
+	 * early would plant example objects nobody asked for.
+	 *
+	 * @return void
+	 */
+	public function testLoadingWithoutAChoiceRefusesRatherThanGuessing(): void {
+		$this->stubConfig([]);
+		$this->demoDataService->expects($this->never())->method('install');
+
+		$data = $this->controller->runAction(actionId: 'load-demo-data')->getData();
+
+		$this->assertFalse($data['success']);
+		$this->assertStringContainsString('Pick a dataset', $data['message']);
+
+	}//end testLoadingWithoutAChoiceRefusesRatherThanGuessing()
+
+	/**
+	 * Choosing none and then running imports nothing, rather than refusing.
+	 *
+	 * @return void
+	 */
+	public function testChoosingNoneAndThenRunningImportsNothing(): void {
+		$this->stubConfig(['demo_dataset' => 'none']);
+		$this->demoDataService->expects($this->never())->method('install');
+
+		$data = $this->controller->runAction(actionId: 'load-demo-data')->getData();
+
+		$this->assertTrue($data['success']);
+		$this->assertStringContainsString('No example data', $data['message']);
+
+	}//end testChoosingNoneAndThenRunningImportsNothing()
+
+	/**
 	 * status() reports every step undone and `completed: false` on a fresh install.
 	 *
 	 * @return void
@@ -268,21 +371,34 @@ final class SetupControllerTest extends TestCase {
 	}//end testRunActionInstallDemoDataFailureLeavesTheStepUndecided()
 
 	/**
-	 * Skipping is a DECISION, not the absence of one: it records `skipped` so
+	 * Skipping is a DECISION, not the absence of one: it records the answer so
 	 * the optional wizard stops offering the step, and imports nothing.
+	 *
+	 * 🔴 AND IT ANSWERS *BOTH* STEPS. The step split into a choice plus a
+	 * run-action, and CnAppRoot opens the wizard while ANY optional step is
+	 * outstanding — so writing only the decision flag would leave the choice
+	 * open and the wizard covering every page.
 	 *
 	 * @return void
 	 */
 	public function testRunActionSkipDemoDataRecordsTheDecisionWithoutImporting(): void {
 		$this->demoDataService->expects($this->never())->method('install');
 
-		$this->appConfig->expects($this->once())
-			->method('setValueString')
-			->with('shillinq', 'demo_data_decided', 'skipped');
+		$written = [];
+		$this->appConfig->method('setValueString')
+			->willReturnCallback(
+				static function (string $app, string $key, string $value) use (&$written): bool {
+					$written[$key] = $value;
+
+					return true;
+				}
+			);
 
 		$data = $this->controller->runAction('skip-demo-data')->getData();
 
 		self::assertTrue($data['success']);
+		self::assertSame('skipped', $written['demo_data_decided'] ?? null);
+		self::assertSame('none', $written['demo_dataset'] ?? null, 'skipping IS choosing none');
 
 	}//end testRunActionSkipDemoDataRecordsTheDecisionWithoutImporting()
 
