@@ -7,12 +7,12 @@
   },
   "components": {
     "schemas": {
-      "Employee": {
-        "slug": "Employee",
+      "payrollEmployee": {
+        "slug": "payrollEmployee",
         "icon": "AccountTieOutline",
         "version": "0.1.0",
-        "title": "Employee",
-        "description": "Employee / detached worker / freelancer master record. Carries legal name, BSN (11-proef validated, masked on display per ADR-005), contract classification and onboarding/exit dates. A contact/person is a Nextcloud entity; this register holds the payroll-administration projection only.",
+        "title": "Payroll employee",
+        "description": "The payroll and detachering facet of a person: contract type, tax classification, GL salary-expense account, placement agency. NOT the person themselves. humaniq's `Employee` owns that, and `employee` above points at it. The two used to share the slug `Employee`, so SchemaMapper::find() answered whichever row it reached first.",
         "x-schema-org": "schema:Person",
         "x-spec": "openspec/changes/bookkeeping-detachering-payroll-administratie/specs.md",
         "type": "object",
@@ -26,6 +26,11 @@
           "state"
         ],
         "properties": {
+          "employee": {
+            "type": "string",
+            "title": "HR employee",
+            "description": "UUID of the humaniq `Employee` this payroll record is for. A plain uuid and not a `$ref`: humaniq's register is a different register, and ADR-062 rule 7 gives a cross-register target a plain string. Empty when humaniq is not installed, in which case this record stands alone and `employeeNumber` is the only key."
+          },
           "employeeNumber": {
             "type": "string",
             "description": "Employee number, unique per administration.",
@@ -241,7 +246,7 @@
             "description": "FK to Employee.",
             "example": "employee-001-john-smith",
             "title": "Employee ID",
-            "$ref": "Employee"
+            "$ref": "payrollEmployee"
           },
           "period": {
             "type": "string",
@@ -674,7 +679,7 @@
             "type": "string",
             "description": "Human-readable summary (gross, deductions, net, tax details). No raw BSN (ADR-005).",
             "nullable": true,
-            "example": "Loonstrookje mei 2026 — bruto 3500,00 / netto 2500,00.",
+            "example": "Loonstrookje mei 2026: bruto 3500,00 / netto 2500,00.",
             "title": "Content"
           },
           "fileUri": {
@@ -769,7 +774,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Employee",
+        "schema": "payrollEmployee",
         "slug": "employee-001-john-smith"
       },
       "employeeNumber": "EMP-001",
@@ -790,7 +795,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Employee",
+        "schema": "payrollEmployee",
         "slug": "employee-002-maria-garcia"
       },
       "employeeNumber": "EMP-002",
@@ -811,7 +816,7 @@
     {
       "@self": {
         "register": "shillinq",
-        "schema": "Employee",
+        "schema": "payrollEmployee",
         "slug": "employee-003-freelancer-tech"
       },
       "employeeNumber": "EMP-003",
@@ -935,7 +940,7 @@
       "payrollId": "payroll-2026-05-emp-001",
       "letterType": "loonstrookje",
       "generatedDate": "2026-05-15",
-      "content": "Loonstrookje mei 2026 — bruto 3500,00 / inhoudingen 1000,00 / netto 2500,00.",
+      "content": "Loonstrookje mei 2026: bruto 3500,00 / inhoudingen 1000,00 / netto 2500,00.",
       "archiveStatus": "current",
       "retentionExpiryDate": "2033-05-15",
       "administrationId": "adm-consultancy-nl"

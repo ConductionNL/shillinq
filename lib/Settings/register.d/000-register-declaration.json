@@ -177,7 +177,7 @@
                     "EliminationJournal",
                     "EliminationRule",
                     "EmissionSource",
-                    "Employee",
+                    "payrollEmployee",
                     "EnergielijstCode",
                     "EsrsAction",
                     "EsrsDataPoint",

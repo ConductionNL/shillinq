@@ -11844,7 +11844,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Employee",
+          "schema": "payrollEmployee",
           "slug": "employee-employee-1-1"
         },
         "employeeNumber": "Voorbeeld Employeenumber 1",
@@ -11866,7 +11866,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Employee",
+          "schema": "payrollEmployee",
           "slug": "employee-employee-2-2"
         },
         "employeeNumber": "Voorbeeld Employeenumber 2",
@@ -11888,7 +11888,7 @@
       {
         "@self": {
           "register": "shillinq",
-          "schema": "Employee",
+          "schema": "payrollEmployee",
           "slug": "employee-employee-3-3"
         },
         "employeeNumber": "Voorbeeld Employeenumber 3",
