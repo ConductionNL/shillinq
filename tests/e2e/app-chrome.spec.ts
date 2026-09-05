@@ -134,6 +134,8 @@ test.describe('app chrome (ADR-114)', () => {
 	test('every carded route resolves, because the card is its only entry point', async ({
 		page,
 	}) => {
+		test.slow()
+
 		// All seven had NO menu entry — reachable only by someone who already
 		// knew the URL. A card pointing at a route that does not resolve would
 		// leave them as unreachable as before, while looking fixed.
@@ -146,7 +148,15 @@ test.describe('app chrome (ADR-114)', () => {
 			'/reporting-compliance/generated',
 			'/bookkeeping/destruction-report',
 		]) {
-			await page.goto(`${APP_BASE}${path}`)
+			// 🔴 `domcontentloaded`, NOT the default `load`. Nextcloud's
+			// notification poll keeps the network busy, so waiting for the load
+			// event waits for something that does not settle — the loop dies
+			// partway through and names whichever route it was on, which reads
+			// as a broken route. The SPA mounts after DOM ready, and the
+			// assertions below are what prove the mount.
+			await page.goto(`${APP_BASE}${path}`, {
+				waitUntil: 'domcontentloaded',
+			})
 			await expect(page).toHaveURL(
 				new RegExp(`${escapeRegExp(path)}(\\?|$)`),
 				{ timeout: 15_000 },
