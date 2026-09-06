@@ -65,6 +65,7 @@ use OCA\Shillinq\Reporting\GeneratedFile;
 use OCA\Shillinq\Reporting\ReportCatalogue;
 use OCA\Shillinq\Reporting\ReportGeneratorInterface;
 use OCA\Shillinq\Reporting\ReportSection;
+use OCA\Shillinq\Support\FleetAppId;
 use RuntimeException;
 use Throwable;
 
@@ -98,20 +99,22 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	];
 
 	/**
-	 * The app id docudesk registers under (IAppManager::isInstalled probe).
+	 * The canonical fleet name of the document app, resolved through
+	 * {@see FleetAppId} so both the id probe and the service lookups follow
+	 * that app across its rename instead of pinning to one release.
 	 */
-	private const DOCUDESK_APP_ID = 'docudesk';
+	private const DOCUMENT_APP = 'filinq';
 
 	/**
-	 * docudesk's rendering service, resolved by string FQCN only (no
-	 * compile-time import).
+	 * The rendering service, named relative to the document app's root and
+	 * resolved by string FQCN only (no compile-time import).
 	 */
-	private const DOCUMENT_SERVICE_FQCN = 'OCA\\DocuDesk\\Service\\DocumentService';
+	private const DOCUMENT_SERVICE_CLASS = 'Service\\DocumentService';
 
 	/**
-	 * docudesk's template lookup service, resolved by string FQCN only.
+	 * The template lookup service, named relative to the document app's root.
 	 */
-	private const TEMPLATE_SERVICE_FQCN = 'OCA\\DocuDesk\\Service\\TemplateService';
+	private const TEMPLATE_SERVICE_CLASS = 'Service\\TemplateService';
 
 	/**
 	 * The docudesk template namespace shillinq's own templates live under.
@@ -370,7 +373,7 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	protected function docudeskAvailable(): bool {
 		try {
 			$appManager = \OCP\Server::get(\OCP\App\IAppManager::class);
-			if ($appManager->isInstalled(self::DOCUDESK_APP_ID) === false) {
+			if (FleetAppId::isInstalled($appManager, self::DOCUMENT_APP) === false) {
 				return false;
 			}
 
@@ -384,22 +387,52 @@ abstract class AbstractDocumentReportGenerator implements ReportGeneratorInterfa
 	}//end docudeskAvailable()
 
 	/**
-	 * docudesk's DocumentService, resolved by string FQCN only.
+	 * filinq's DocumentService, resolved by string FQCN only.
 	 *
-	 * @return object
+	 * @return object The service.
+	 *
+	 * @throws RuntimeException When no candidate namespace resolves.
 	 */
 	protected function documentService(): object {
-		return \OCP\Server::get(self::DOCUMENT_SERVICE_FQCN);
+		return $this->documentAppService(relative: self::DOCUMENT_SERVICE_CLASS);
 	}//end documentService()
 
 	/**
-	 * docudesk's TemplateService, resolved by string FQCN only.
+	 * filinq's TemplateService, resolved by string FQCN only.
 	 *
-	 * @return object
+	 * @return object The service.
+	 *
+	 * @throws RuntimeException When no candidate namespace resolves.
 	 */
 	protected function templateService(): object {
-		return \OCP\Server::get(self::TEMPLATE_SERVICE_FQCN);
+		return $this->documentAppService(relative: self::TEMPLATE_SERVICE_CLASS);
 	}//end templateService()
+
+	/**
+	 * Resolve one document-app service across every namespace it has shipped under.
+	 *
+	 * Pinned to a single FQCN, both lookups above threw for every instance
+	 * running filinq after its August 2026 rename — and because
+	 * `docudeskAvailable()` catches Throwable, that throw was read as "the app
+	 * is absent" and every document report silently fell back.
+	 *
+	 * @param string $relative Class name below the app root.
+	 *
+	 * @return object The resolved service.
+	 *
+	 * @throws RuntimeException When no candidate namespace resolves.
+	 */
+	private function documentAppService(string $relative): object {
+		foreach (FleetAppId::classCandidates(self::DOCUMENT_APP, $relative) as $fqcn) {
+			try {
+				return \OCP\Server::get($fqcn);
+			} catch (Throwable $e) {
+				continue;
+			}
+		}
+
+		throw new RuntimeException('filinq service '.$relative.' is not available under any known namespace.');
+	}//end documentAppService()
 
 	/**
 	 * Template selection: config-UUID first, then namespace/category

@@ -48,6 +48,7 @@ namespace OCA\Shillinq\Listener;
 use DateTime;
 use OCA\Shillinq\AppInfo\Application;
 use OCA\Shillinq\Service\Extraction\ExtractionPrefillService;
+use OCA\Shillinq\Support\FleetAppId;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
@@ -109,18 +110,16 @@ class ExtractionCompletedListener implements IEventListener {
 	 * @spec openspec/specs/receipt-extraction-consume/spec.md
 	 */
 	public function handle(Event $event): void {
-		// Guarded by class_exists so the listener is inert when docudesk is
-		// not installed (registration is safe even then — see class docblock).
-		if (class_exists(\OCA\DocuDesk\Event\FinancialExtractionCompletedEvent::class) === false) {
-			return;
-		}
-
-		if (($event instanceof \OCA\DocuDesk\Event\FinancialExtractionCompletedEvent) === false) {
+		// Match against EVERY namespace filinq has shipped this event under,
+		// not one. A hardcoded `instanceof \OCA\DocuDesk\Event\…` was false for
+		// every event filinq dispatched after its August 2026 rename, and an
+		// instanceof that is merely false reports nothing at all.
+		if (FleetAppId::isInstanceOf($event, 'filinq', 'Event\FinancialExtractionCompletedEvent') === false) {
 			return;
 		}
 
 		try {
-			$this->apply(event: $event);
+			$this->apply(payload: $this->readPayload(event: $event));
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'ExtractionCompletedListener: failed to apply extraction-completed event — fail-soft',
@@ -131,15 +130,46 @@ class ExtractionCompletedListener implements IEventListener {
 	}//end handle()
 
 	/**
+	 * Read the cross-app event into a shape this app owns.
+	 *
+	 * The event class lives in filinq and its namespace has moved once
+	 * already, so it cannot be named in a type hint here without pinning this
+	 * listener to one filinq release. Reading it into a plain array at the
+	 * boundary keeps every method below fully typed, and keeps the accessor
+	 * names — the actual cross-app contract — in one readable place.
+	 *
+	 * @param Event $event The dispatched filinq FinancialExtractionCompletedEvent.
+	 *
+	 * @return array{documentUri: string, docType: string,
+	 *     fields: array<string, mixed>, fieldConfidence: array<string, mixed>,
+	 *     overallConfidence: float, requestedBy: string} The normalised payload.
+	 *
+	 * @psalm-suppress UndefinedMethod
+	 * @phpstan-ignore-next-line
+	 */
+	private function readPayload(Event $event): array {
+		return [
+			'documentUri'       => (string)$event->getDocumentUri(),
+			'docType'           => (string)$event->getDocType(),
+			'fields'            => (array)$event->getFields(),
+			'fieldConfidence'   => (array)$event->getFieldConfidence(),
+			'overallConfidence' => (float)$event->getOverallConfidence(),
+			'requestedBy'       => (string)$event->getRequestedBy(),
+		];
+
+	}//end readPayload()
+
+	/**
 	 * Apply one extraction-completed payload to a draft.
 	 *
-	 * @param \OCA\DocuDesk\Event\FinancialExtractionCompletedEvent $event The event.
+	 * @param array<string, mixed> $payload The normalised event payload, shaped
+	 *                                      as {@see self::readPayload()} returns.
 	 *
 	 * @return void
 	 */
-	private function apply(\OCA\DocuDesk\Event\FinancialExtractionCompletedEvent $event): void {
-		$documentUri = trim($event->getDocumentUri());
-		$docType = trim($event->getDocType());
+	private function apply(array $payload): void {
+		$documentUri = trim($payload['documentUri']);
+		$docType = trim($payload['docType']);
 		if ($documentUri === '' || $docType === '') {
 			return;
 		}
@@ -158,15 +188,15 @@ class ExtractionCompletedListener implements IEventListener {
 
 		$administrationId = ($existing['administrationId'] ?? null);
 		if (is_string($administrationId) === false || $administrationId === '') {
-			$administrationId = $this->resolveAdministrationId(userId: $event->getRequestedBy());
+			$administrationId = $this->resolveAdministrationId(userId: $payload['requestedBy']);
 		}
 
 		$draft = $this->prefillService->buildDraft(
 			docType: $docType,
 			documentUri: $documentUri,
-			fields: $event->getFields(),
-			fieldConfidence: $event->getFieldConfidence(),
-			overallConfidence: $event->getOverallConfidence(),
+			fields: $payload['fields'],
+			fieldConfidence: $payload['fieldConfidence'],
+			overallConfidence: $payload['overallConfidence'],
 			existingDraft: $existing,
 			administrationId: (string)$administrationId
 		);
@@ -179,7 +209,7 @@ class ExtractionCompletedListener implements IEventListener {
 				'schema' => $schema,
 				'documentUri' => $documentUri,
 				'created' => $isNew,
-				'requestedBy' => $event->getRequestedBy(),
+				'requestedBy' => $payload['requestedBy'],
 			]
 		);
 
@@ -187,7 +217,7 @@ class ExtractionCompletedListener implements IEventListener {
 			// REQ-RXC-001 "unmatched documentUri is not dropped" — surface
 			// the new draft to whoever requested the extraction.
 			$this->notifyRequester(
-				requestedBy: $event->getRequestedBy(),
+				requestedBy: $payload['requestedBy'],
 				schema: $schema,
 				draft: $saved
 			);

@@ -32,9 +32,9 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service\Signing;
 
 use InvalidArgumentException;
-use OCA\Decidesk\Event\DecisionRequestedEvent;
 use OCA\Shillinq\Service\ApprovalActivityEmitter;
 use OCA\Shillinq\Service\SettingsService;
+use OCA\Shillinq\Support\FleetAppId;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -114,17 +114,21 @@ class SignoffDecisionService {
 		}
 
 		// Fail closed when decidesk is not installed — never auto-approve.
-		if (class_exists(DecisionRequestedEvent::class) === false) {
+		// Resolved across every namespace decidiq has shipped this event under.
+		// This guard THROWS, so a stale name here blocks sign-off outright
+		// rather than failing silently the way the listener side did.
+		$eventClass = FleetAppId::resolveClass('decidiq', 'Event\\DecisionRequestedEvent');
+		if ($eventClass === null) {
 			$this->logger->warning(
-				'SignoffDecisionService: decidesk not installed — sign-off cannot be delegated (fail closed)'
+				'SignoffDecisionService: decidiq not installed — sign-off cannot be delegated (fail closed)'
 			);
-			throw new RuntimeException('decidesk is not installed; sign-off decision cannot be raised.');
+			throw new RuntimeException('decidiq is not installed; sign-off decision cannot be raised.');
 		}
 
 		$subjectId = (string)($financeObject['id'] ?? $financeObject['_id'] ?? '');
 		$subjectLabel = (string)($financeObject['name'] ?? $financeObject['title'] ?? $subjectId);
 
-		$event = new DecisionRequestedEvent(
+		$event = new $eventClass(
 			sourceApp: 'shillinq',
 			subjectRegister: $this->settingsService->getRegisterSlug(),
 			subjectSchema: $subjectSchema,

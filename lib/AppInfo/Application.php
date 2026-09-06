@@ -38,8 +38,8 @@ use OCA\Shillinq\Guard\ProjectTransitionGuard;
 use OCA\Shillinq\Guard\RateScheduleOverlapGuard;
 use OCA\Shillinq\Guard\SubsidieRepaymentGuard;
 use OCA\Shillinq\Guard\VatSubmissionGuard;
-use OCA\Shillinq\Lifecycle\APGuard;
 use OCA\Shillinq\Lifecycle\AnnualBudgetDefaultGuard;
+use OCA\Shillinq\Lifecycle\APGuard;
 use OCA\Shillinq\Lifecycle\FiscalYearGuard;
 use OCA\Shillinq\Lifecycle\FourEyesPaymentRunGuard;
 use OCA\Shillinq\Lifecycle\GLReversalGuard;
@@ -52,6 +52,7 @@ use OCA\Shillinq\Listener\AppointmentCreatedListener;
 use OCA\Shillinq\Listener\BookingCreatedTimelinePublishListener;
 use OCA\Shillinq\Listener\BookingLifecycleTransitionListener;
 use OCA\Shillinq\Listener\CommitmentMaterialisationListener;
+use OCA\Shillinq\Listener\CommitmentTransitionListener;
 use OCA\Shillinq\Listener\ContractObligationTaskListener;
 use OCA\Shillinq\Listener\DbaInvoiceMonitorListener;
 use OCA\Shillinq\Listener\DeepLinkRegistrationListener;
@@ -71,7 +72,6 @@ use OCA\Shillinq\Listener\PosStockDecrementListener;
 use OCA\Shillinq\Listener\ReconciliationMatchToReportListener;
 use OCA\Shillinq\Listener\StockMoveTransitionedListener;
 use OCA\Shillinq\Listener\TenderNedAwardDetectedListener;
-use OCA\Shillinq\Listener\CommitmentTransitionListener;
 use OCA\Shillinq\Notification\DeadlineReminderNotifier;
 use OCA\Shillinq\Notification\PosStockUnmatchedLineNotifier;
 use OCA\Shillinq\Notification\RoleFallbackResolver;
@@ -128,6 +128,7 @@ use OCA\Shillinq\Service\Pipelinq\PipelinqAdminNotifier;
 use OCA\Shillinq\Service\Pipelinq\TimelineRetryQueue;
 use OCA\Shillinq\Service\Sms\LogSmsProviderAdapter;
 use OCA\Shillinq\Service\Sms\SmsProviderAdapterInterface;
+use OCA\Shillinq\Support\FleetAppId;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -743,20 +744,29 @@ class Application extends App implements IBootstrap {
 		// signing request+outcome listeners, registered as one unit.
 		(new SigningDelegationRegistration())->register(context: $context);
 
-		// Change receipt-extraction-consume (REQ-RXC-001) — consume docudesk's
-		// cross-app OCA\DocuDesk\Event\FinancialExtractionCompletedEvent (the
-		// canonical nl.conduction.docudesk.extraction.completed wire contract,
-		// owned by docudesk's financial-document-field-extraction spec) into an
-		// uncommitted, confidence-scored SupplierInvoice/Receipt draft
+		// Change receipt-extraction-consume (REQ-RXC-001) — consume filinq's
+		// cross-app FinancialExtractionCompletedEvent (the canonical
+		// extraction.completed wire contract, owned by filinq's
+		// financial-document-field-extraction spec) into an uncommitted,
+		// confidence-scored SupplierInvoice/Receipt draft
 		// (ExtractionCompletedListener + ExtractionPrefillService). Registering
-		// by the docudesk event FQCN is safe even when the class is not
-		// autoloadable — NC only needs the string key; handle() itself is
-		// class_exists-guarded so the listener is inert when docudesk is not
-		// installed. Fail-soft: never blocks docudesk's synchronous dispatch.
-		$context->registerEventListener(
-			event: \OCA\DocuDesk\Event\FinancialExtractionCompletedEvent::class,
-			listener: ExtractionCompletedListener::class
-		);
+		// by the event FQCN is safe even when the class is not autoloadable —
+		// NC only needs the string key; handle() itself is guarded so the
+		// listener is inert when filinq is not installed. Fail-soft: never
+		// blocks filinq's synchronous dispatch.
+		//
+		// ⚠️ Registered under EVERY candidate namespace, not one. filinq moved
+		// OCA\DocuDesk -> OCA\Filinq in August 2026 and this listener, bound to
+		// the old name alone, went dark without an error: dispatch matches on
+		// the concrete event class, so a name the producer no longer uses
+		// simply never fires. Candidate names that never materialise are inert,
+		// which is why registering both is the safe shape and picking one is not.
+		foreach (FleetAppId::classCandidates(canonical: 'filinq', relative: 'Event\FinancialExtractionCompletedEvent') as $eventClass) {
+			$context->registerEventListener(
+				event: $eventClass,
+				listener: ExtractionCompletedListener::class
+			);
+		}
 
 		// Change inventory-pos-decrement (shillinq#504) — consume pipelinq's
 		// cross-app OCA\Pipelinq\Event\PosStockMovedEvent (nl.pipelinq.pos.stock.moved),
