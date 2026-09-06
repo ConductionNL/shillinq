@@ -37,8 +37,7 @@ import type { APIRequestContext } from '@playwright/test'
 
 import { expect, test } from '@playwright/test'
 
-const HOURS_BASE =
-	'/index.php/apps/openregister/api/objects/shillinq/UrenRegistratie'
+const HOURS_BASE = '/index.php/apps/openregister/api/objects/humaniq/TimeEntry'
 const SUBJECT_COST = '/index.php/apps/shillinq/api/subject-cost'
 const HEADERS = { 'OCS-APIRequest': 'true' }
 
@@ -48,47 +47,90 @@ const HEADERS = { 'OCS-APIRequest': 'true' }
  */
 const SUBJECT_ID = `case-e2e-${Date.now()}-${Math.floor(Math.random() * 10_000)}`
 const SUBJECT_APP = 'dossiq'
-/**
- * `ADM-001` is the administration first-time setup creates and ci-seed.sh gives
- * the admin user its only AdministrationMembership in. A fixture booked into
- * any other administration is correctly invisible to a scoped read, which is
- * the trap this constant exists to avoid: the endpoint answers 200 with zero
- * hours, and that reads as a broken query rather than as the scope rule
- * working.
- */
-const ADMINISTRATION_ID = 'ADM-001'
 
 /**
- * A second administration the caller is NOT a member of, for the scoping
- * assertion below.
+ * An employee id to book against, and the administration humaniq will stamp
+ * onto the row from that employee.
+ *
+ * Resolved from the register rather than invented. `employeeId` is
+ * format-checked as a uuid, and `TimeEntryStampListener` copies
+ * `administrationId` FROM THE EMPLOYEE, so a made-up id yields a row with no
+ * administration, which the endpoint then correctly refuses to attribute. That
+ * failure looks exactly like a broken query.
  */
-const OTHER_ADMINISTRATION_ID = 'adm-e2e-subject-cost-other'
-const PERSON_ID = 'person-e2e-subject-cost'
+let employeeId = ''
+let administrationId = ''
+
+/**
+ * A fresh, non-overlapping start for each booked row.
+ *
+ * Each call advances the clock so two rows never share a window: humaniq
+ * refuses impossible spans and derives hours from them, so overlapping
+ * fixtures are both a refusal risk and an unreadable total.
+ *
+ * @returns An ISO-8601 start stamp.
+ */
+let spanCursor = 8
+function spanStart(): string {
+	return `2026-03-02T${String(spanCursor).padStart(2, '0')}:00:00+00:00`
+}
+
+/**
+ * The end of the current span, `hours` after its start, advancing the cursor.
+ *
+ * @param hours The intended length in hours.
+ *
+ * @returns An ISO-8601 end stamp.
+ */
+function spanEnd(hours: number): string {
+	const end = spanCursor + hours
+	const h = Math.floor(end)
+	const m = Math.round((end - h) * 60)
+	// Advance to the next WHOLE hour. A fractional cursor formatted straight
+	// into the stamp produced `T13.5:00:00`, which OpenRegister coerced to
+	// null and reported as a type error on a field the fixture had plainly
+	// set.
+	spanCursor = Math.ceil(end) + 1
+	return `2026-03-02T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00+00:00`
+}
 
 /**
  * Book hours against the run's subject.
  *
+ * `startedAt` and `endedAt` are REQUIRED by the effective merged schema, even
+ * though the fragment that declares the property set lists `required: []`.
+ * Omitting them is a 400 that never reaches the endpoint under test.
+ *
+ * The span, not the number, decides the hours. humaniq's
+ * TimeEntryStampListener DERIVES `hours` from `startedAt`/`endedAt` and
+ * ignores whatever the client sent, so two rows written with one fixed span
+ * both come back as that span's length. Sending 2 and 1.5 with a shared
+ * 09:00-11:00 window yielded a total of 4, not 3.5, and read as a broken
+ * aggregate rather than as the writer doing its job.
+ *
  * @param request The API context.
  * @param hours The hours to book.
- * @param administrationId The administration to book them into.
+ * @param type The `<app>:<schema>` literal to book under.
+ * @param employee The employee to book for.
  *
  * @returns The created object's id.
  */
 async function bookHours(
 	request: APIRequestContext,
 	hours: number,
-	administrationId: string = ADMINISTRATION_ID,
+	type: string = `${SUBJECT_APP}:case`,
+	employee: string = '',
 ): Promise<string> {
 	const created = await request.post(HOURS_BASE, {
 		headers: HEADERS,
 		data: {
-			administrationId,
-			personId: PERSON_ID,
-			date: '2026-03-02',
+			employeeId: employee !== '' ? employee : employeeId,
 			hours,
 			description: 'subject-cost endpoint e2e fixture',
-			subjectApp: SUBJECT_APP,
-			subjectId: SUBJECT_ID,
+			domainObjectType: type,
+			domainObjectRef: SUBJECT_ID,
+			startedAt: spanStart(),
+			endedAt: spanEnd(hours),
 		},
 	})
 	expect(
@@ -101,8 +143,50 @@ async function bookHours(
 	return String(id)
 }
 
+/**
+ * Whether humaniq is installed on the instance under test.
+ *
+ * `format=json` is not optional. Without it OCS answers XML, the app name
+ * comes back as `<element>humaniq</element>`, and a grep for the JSON spelling
+ * silently matches nothing, reporting "not installed" on an instance where it
+ * plainly is.
+ *
+ * @param request The API context.
+ *
+ * @returns True when humaniq is enabled.
+ */
+async function humaniqInstalled(request: APIRequestContext): Promise<boolean> {
+	const res = await request.get(
+		'/ocs/v2.php/cloud/apps?filter=enabled&format=json',
+		{ headers: { ...HEADERS, Accept: 'application/json' } },
+	)
+	if (res.ok() === false) {
+		return false
+	}
+	return (await res.text()).includes('"humaniq"')
+}
+
 test.describe('subject cost endpoint', () => {
+	let humaniq = false
 	const created: string[] = []
+
+	test.beforeAll(async ({ request }) => {
+		humaniq = await humaniqInstalled(request)
+		if (humaniq === false) {
+			return
+		}
+
+		const res = await request.get(
+			'/index.php/apps/openregister/api/objects/humaniq/Employee?_limit=1',
+			{ headers: HEADERS },
+		)
+		if (res.ok() === false) {
+			return
+		}
+		const row = ((await res.json())?.results ?? [])[0] ?? {}
+		employeeId = String(row.id ?? '')
+		administrationId = String(row.administrationId ?? '')
+	})
 
 	test.afterAll(async ({ request }) => {
 		for (const id of created) {
@@ -117,9 +201,30 @@ test.describe('subject cost endpoint', () => {
 		}
 	})
 
-	test('the endpoint answers for a subject with booked hours', async ({
+	test('hours booked through humaniq are aggregated for the subject', async ({
 		request,
 	}) => {
+		if (humaniq === false) {
+			// Assert the DOCUMENTED degradation rather than skipping. shillinq
+			// does not declare humaniq as a dependency, so "no hours store" is
+			// a supported state and the endpoint must answer 200 with zero,
+			// never 500. A skip would report green while proving nothing about
+			// the branch this instance actually runs, and shillinq's own CI
+			// stack installs openregister only.
+			const degraded = await request.get(SUBJECT_COST, {
+				headers: HEADERS,
+				params: { subjectApp: SUBJECT_APP, subjectId: SUBJECT_ID },
+			})
+			expect(degraded.status()).toBe(200)
+			expect((await degraded.json()).hours).toBe(0)
+			return
+		}
+
+		expect(
+			employeeId,
+			'an employee must be resolvable, or the stamped administration is empty and every row is refused',
+		).not.toBe('')
+
 		created.push(await bookHours(request, 2))
 		created.push(await bookHours(request, 1.5))
 
@@ -128,7 +233,7 @@ test.describe('subject cost endpoint', () => {
 			params: {
 				subjectApp: SUBJECT_APP,
 				subjectId: SUBJECT_ID,
-				administrationId: ADMINISTRATION_ID,
+				administrationId,
 			},
 		})
 
@@ -141,47 +246,43 @@ test.describe('subject cost endpoint', () => {
 		expect(body.subjectApp).toBe(SUBJECT_APP)
 		expect(body.subjectId).toBe(SUBJECT_ID)
 		expect(body.hours).toBe(3.5)
-		// hrmq is absent here, so the documented refusal is the correct answer.
-		// Asserted rather than ignored: a cost appearing out of nowhere would
-		// mean a rate was invented, which is the one thing the capability
-		// exists to prevent.
-		expect(body.complete).toBe(false)
-		expect(body.costCents).toBeNull()
-		expect(body.unpricedPersonIds).toContain(PERSON_ID)
+		expect(body.unscopedRowsExcluded).toBe(0)
+		// A cost appearing here would mean a rate was invented. Whether one
+		// resolves depends on the employee having a priced contract, so the
+		// assertion is on the SHAPE: either a complete total, or the
+		// documented refusal that names who could not be priced.
+		if (body.complete === false) {
+			expect(body.costCents).toBeNull()
+			expect(body.unpricedPersonIds).toContain(employeeId)
+		} else {
+			expect(typeof body.costCents).toBe('number')
+		}
 	})
 
-	test('hours in another administration stay out of a scoped read', async ({
+	test('hours booked against another app are not this subject', async ({
 		request,
 	}) => {
-		// Booked as the admin, who may write anywhere, then read back with the
-		// scope narrowed to ADM-001. Without the narrowing the Nextcloud-admin
-		// bypass would (correctly) include both, so this is the one shape in
-		// which an admin-run suite can assert the scope rule at all.
-		created.push(await bookHours(request, 8, OTHER_ADMINISTRATION_ID))
+		test.skip(humaniq === false, 'no hours store without humaniq')
 
-		const scoped = await request.get(SUBJECT_COST, {
+		// Same uuid, different owning app. Filtering on domainObjectRef alone
+		// would count these, which is almost always the same answer and
+		// occasionally, silently, not.
+		created.push(await bookHours(request, 4, 'planninq:project'))
+
+		const response = await request.get(SUBJECT_COST, {
 			headers: HEADERS,
 			params: {
 				subjectApp: SUBJECT_APP,
 				subjectId: SUBJECT_ID,
-				administrationId: ADMINISTRATION_ID,
+				administrationId,
 			},
 		})
-		expect(scoped.status()).toBe(200)
-		expect(
-			(await scoped.json()).hours,
-			"the other administration's eight hours must not be counted",
-		).toBe(3.5)
 
-		const unscoped = await request.get(SUBJECT_COST, {
-			headers: HEADERS,
-			params: { subjectApp: SUBJECT_APP, subjectId: SUBJECT_ID },
-		})
-		expect(unscoped.status()).toBe(200)
+		expect(response.status()).toBe(200)
 		expect(
-			(await unscoped.json()).hours,
-			'a Nextcloud admin reads every administration',
-		).toBe(11.5)
+			(await response.json()).hours,
+			"planninq's four hours are not this case's",
+		).toBe(3.5)
 	})
 
 	test('a subject with no booked hours reports zero, not an error', async ({

@@ -30,8 +30,6 @@ declare(strict_types=1);
 
 namespace OCA\Shillinq\Service;
 
-use OCA\Shillinq\AppInfo\Application;
-use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -58,18 +56,33 @@ use Throwable;
  */
 class SubjectCostService {
 	/**
-	 * The schema holding booked hours.
+	 * The schema holding hours booked against a domain object.
+	 *
+	 * This is humaniq's `TimeEntry`, NOT shillinq's own `UrenRegistratie`, and
+	 * the difference is the whole reason this reads across a register boundary.
+	 *
+	 * Both apps carry an hour store. `UrenRegistratie` declares
+	 * `subjectApp` / `subjectId` and NOTHING WRITES THEM: zero references in
+	 * shillinq's src, zero across its 223 manifest pages, only the mock
+	 * register and a test fixture. `TimeEntry` declares `domainObjectRef` /
+	 * `domainObjectType` and humaniq's `humaniq-hours` leaf (ADR-066) writes
+	 * them from a real surface a person can use on any object.
+	 *
+	 * So the store with the tidy-looking link had no writer, and the store
+	 * with the writer is in the other app. Reading the first one made this
+	 * endpoint answer 0 hours for every subject on every real instance while
+	 * looking entirely correct.
 	 *
 	 * @var string
 	 */
-	private const HOURS_SCHEMA = 'UrenRegistratie';
+	private const HOURS_SCHEMA = 'TimeEntry';
 
 	/**
 	 * Wire collaborators.
 	 *
 	 * @param ContainerInterface $container Container, for the lazy ObjectService resolve.
-	 * @param IAppConfig $appConfig App config, for the register slug.
-	 * @param HrmqCostRateAdapter $rates Wage-rate resolution over hrmq.
+	 * @param HrmqCostRateAdapter $rates Wage-rate resolution, and the one place
+	 *     that knows which register slug humaniq answers to.
 	 * @param SubjectCostAggregator $aggregator Pure aggregation policy.
 	 * @param LoggerInterface $logger PSR logger.
 	 *
@@ -79,7 +92,6 @@ class SubjectCostService {
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
-		private readonly IAppConfig $appConfig,
 		private readonly HrmqCostRateAdapter $rates,
 		private readonly SubjectCostAggregator $aggregator,
 		private readonly LoggerInterface $logger,
@@ -175,18 +187,14 @@ class SubjectCostService {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$rows = $objectService
-				->setRegister($this->register())
+				->setRegister($this->rates->registerSlug())
 				->setSchema(self::HOURS_SCHEMA)
-				->findAll(
-					[
-						'filters' => [
-							'subjectApp' => $subjectApp,
-							'subjectId' => $subjectId,
-						],
-					]
-				);
+				->findAll(['filters' => ['domainObjectRef' => $subjectId]]);
 		} catch (Throwable $e) {
-			$this->logger->error(
+			// An absent humaniq is the ordinary case, not a fault: shillinq
+			// does not declare it as a dependency. Logged at debug so an instance
+			// without it does not fill the log on every case page.
+			$this->logger->debug(
 				'SubjectCostService: could not read hours for subject',
 				[
 					'subjectApp' => $subjectApp,
@@ -204,13 +212,51 @@ class SubjectCostService {
 		$normalised = [];
 		foreach ($rows as $row) {
 			$row = $this->toArray(row: $row);
-			if ($row !== null) {
-				$normalised[] = $row;
+			if ($row === null) {
+				continue;
 			}
+
+			if ($this->belongsToApp(row: $row, subjectApp: $subjectApp) === false) {
+				continue;
+			}
+
+			$normalised[] = [
+				'personId' => trim((string)($row['employeeId'] ?? '')),
+				'hours' => ($row['hours'] ?? null),
+				'administrationId' => ($row['administrationId'] ?? null),
+			];
 		}
 
 		return $normalised;
 	}//end hourRows()
+
+	/**
+	 * Whether an hour row belongs to the app the caller asked about.
+	 *
+	 * `domainObjectType` is the `<app>:<schema>` literal the leaf writes, for
+	 * example `dossiq:case` (see humaniq's CnHoursWidget). Filtering on
+	 * `domainObjectRef` alone would be a uuid match across every app, which is
+	 * almost always the same answer and occasionally, silently, not.
+	 *
+	 * A row carrying no `domainObjectType` is kept: the uuid matched, and
+	 * discarding it would drop real effort over a field the writer may
+	 * legitimately have left unset.
+	 *
+	 * @param array<string, mixed> $row The hour row.
+	 * @param string $subjectApp The app the caller asked about.
+	 *
+	 * @return bool True when the row belongs to that app.
+	 *
+	 * @spec openspec/specs/subject-cost-aggregation/spec.md#requirement-a-subject-cost-is-reachable-over-http
+	 */
+	private function belongsToApp(array $row, string $subjectApp): bool {
+		$type = trim((string)($row['domainObjectType'] ?? ''));
+		if ($type === '') {
+			return true;
+		}
+
+		return str_starts_with($type, $subjectApp . ':');
+	}//end belongsToApp()
 
 	/**
 	 * Normalise an ObjectService row to an array.
@@ -248,19 +294,4 @@ class SubjectCostService {
 		return null;
 	}//end toArray()
 
-	/**
-	 * The configured register slug, defaulting to the app id.
-	 *
-	 * @return string The register slug.
-	 *
-	 * @spec openspec/specs/subject-cost-aggregation/spec.md
-	 */
-	private function register(): string {
-		$register = $this->appConfig->getValueString(Application::APP_ID, 'register', 'shillinq');
-		if ($register === '') {
-			return 'shillinq';
-		}
-
-		return $register;
-	}//end register()
 }//end class

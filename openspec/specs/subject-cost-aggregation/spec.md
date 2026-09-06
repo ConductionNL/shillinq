@@ -11,8 +11,18 @@ Shillinq **aggregates**, because Shillinq owns the general ledger. The wage
 half of an hour's cost is hrmq's and is served by
 `POST /api/employees/cost-rate`; the ledger-derived additions are Shillinq's.
 
-`UrenRegistratie.subjectApp` / `subjectId` are what make an hour attributable
-to a domain object at all.
+`TimeEntry.domainObjectRef` / `domainObjectType` are what make an hour
+attributable to a domain object at all. They live in humaniq's register, and
+humaniq's `humaniq-hours` leaf (ADR-066) writes them from a surface a person
+can use on any object.
+
+⚠️ **Not `UrenRegistratie.subjectApp` / `subjectId`, and the difference cost a
+shipped endpoint.** shillinq carries its own hour store, and it declares that
+pair, and NOTHING WRITES THEM: zero references in `src`, zero across 223
+manifest pages, only the mock register. Aggregating that store answered 0
+hours for every subject on every real instance while looking correct. The
+store with the tidy-looking link had no writer; the store with the writer is
+in the other app.
 
 ## Requirements
 
@@ -79,6 +89,16 @@ owns it.
 The capability SHALL be exposed as `GET /api/subject-cost`, taking
 `subjectApp` and `subjectId` and returning the aggregate for that domain
 object. Both are required; a request missing either SHALL be refused with 400.
+
+`subjectId` SHALL be matched against `TimeEntry.domainObjectRef`, and
+`subjectApp` against the `<app>:` prefix of `domainObjectType`. Matching the
+uuid alone would be an accidental cross-app match: almost always the same
+answer, and occasionally, silently, not. A row carrying no `domainObjectType`
+SHALL be kept, because the uuid matched and the writer may legitimately have
+left the type unset.
+
+Where humaniq is absent the endpoint SHALL answer 200 with zero hours rather
+than an error. shillinq does not declare humaniq as a dependency.
 
 This requirement exists because the capability was built without it. The
 aggregator and the wage-rate adapter were implemented, spec-tagged and
