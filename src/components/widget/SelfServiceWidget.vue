@@ -257,6 +257,10 @@ const DEFAULT_RESOURCE_ID = 'res-001'
 // final selection to the widget API. The component keeps state local —
 // it has no Pinia/Vuex dependency so it can be embedded outside the
 // shillinq SPA (web-component / npm scenarios).
+// Instance counter for the DOM ids below. Module scope, so every widget
+// mounted in this bundle gets its own number.
+let nextWidgetId = 1
+
 export default {
 	name: 'SelfServiceWidget',
 	props: {
@@ -302,7 +306,15 @@ export default {
 	},
 
 	data() {
-		const uid = Math.random().toString(36).slice(2, 10)
+		// A COUNTER, NOT A RANDOM NUMBER. This value only ever builds DOM
+		// element ids (`wsw-service-<uid>` and friends) so two widgets on one
+		// page do not collide on `id`/`for`. CodeQL read the name and the
+		// `toString(36)` shape as a token being minted and raised
+		// js/insecure-randomness (alert 19, high). Counting is the honest
+		// answer: it is what the code actually needs, it cannot collide at
+		// all where eight random characters could, and it leaves nothing for
+		// the next reader to wonder about.
+		const uid = String(nextWidgetId++)
 		return {
 			step: 'service',
 			services: [],
