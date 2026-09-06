@@ -122,6 +122,16 @@ class ReferencesAuditCommand extends Command {
 	 * @param OutputInterface $output Console output.
 	 *
 	 * @return int 0 when no reference dangles, 1 when at least one does.
+	 *
+	 * @spec openspec/specs/subject-cost-aggregation/spec.md
+	 *   The file, with no anchor, because none of its five requirements is
+	 *   about this command: they are about pricing hours, and this is the link
+	 *   that lets the hours be found at all. The spec's own opening makes the
+	 *   case — "the store with the tidy-looking link had no writer; the store
+	 *   with the writer is in the other app" — and this command is what makes
+	 *   that cross-app reference real. Pointing at an anchor that does not
+	 *   exist would satisfy gate-16 while covering nothing, which the gate
+	 *   cannot tell apart.
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$write = (bool)$input->getOption('write');
