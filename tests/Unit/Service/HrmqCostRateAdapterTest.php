@@ -211,15 +211,38 @@ class HrmqCostRateAdapterTest extends TestCase {
 			__DIR__ . '/../../../lib/Service/HrmqCostRateAdapter.php'
 		);
 
-		self::assertStringNotContainsString(
-			needle: 'use OCA\\Hrmq\\',
+		foreach (['use OCA\\Hrmq\\', 'use OCA\\Humaniq\\'] as $import) {
+			self::assertStringNotContainsString(
+				needle: $import,
+				haystack: $source,
+				message: $import . ' makes it one edit away from a fatal constructor typehint'
+			);
+		}
+
+		self::assertStringContainsString(
+			needle: 'class_exists(class: $candidate)',
 			haystack: $source,
-			message: 'importing an hrmq symbol makes it one edit away from a fatal constructor typehint'
+			message: 'the cost-rate service must be probed before it is resolved'
+		);
+
+		// BOTH names, newest first. The app renamed hrmq to humaniq and its
+		// namespace moved with it, so the single old name matched nothing and
+		// ratesFor() returned an empty map on every instance without ever
+		// erroring. Pinning the pair here is what stops that returning.
+		self::assertStringContainsString(
+			needle: "'OCA\\\\Humaniq\\\\Service\\\\EmployeeCostRateService'",
+			haystack: $source,
+			message: 'the CURRENT humaniq service name must be probed, or no rate ever resolves'
 		);
 		self::assertStringContainsString(
-			needle: 'class_exists(class: self::HRMQ_COST_RATE_SERVICE)',
+			needle: "'OCA\\\\Hrmq\\\\Service\\\\EmployeeCostRateService'",
 			haystack: $source,
-			message: 'the hrmq service must be probed before it is resolved'
+			message: 'the pre-rename name stays as a fallback: the two apps update independently'
+		);
+		self::assertStringContainsString(
+			needle: "private const REGISTERS = ['humaniq', 'hrmq'];",
+			haystack: $source,
+			message: 'the register slug moved with the app id (humaniq#160) and both must be probed'
 		);
 	}
 

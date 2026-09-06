@@ -23,7 +23,6 @@ namespace OCA\Shillinq\Tests\Unit\Service;
 use OCA\Shillinq\Service\HrmqCostRateAdapter;
 use OCA\Shillinq\Service\SubjectCostAggregator;
 use OCA\Shillinq\Service\SubjectCostService;
-use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
@@ -122,15 +121,12 @@ class SubjectCostServiceTest extends TestCase {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($objectService);
 
-		$appConfig = $this->createMock(IAppConfig::class);
-		$appConfig->method('getValueString')->willReturn('shillinq');
-
 		$adapter = $this->createMock(HrmqCostRateAdapter::class);
 		$adapter->method('ratesFor')->willReturn($rates);
+		$adapter->method('registerSlug')->willReturn('humaniq');
 
 		return new SubjectCostService(
 			$container,
-			$appConfig,
 			$adapter,
 			new SubjectCostAggregator(new NullLogger()),
 			new NullLogger()
@@ -156,8 +152,8 @@ class SubjectCostServiceTest extends TestCase {
 	public function testInScopeHoursAreSummedAndPriced(): void {
 		$service = $this->service(
 			[
-				['personId' => 'p1', 'hours' => 2.0, 'administrationId' => 'adm-1'],
-				['personId' => 'p1', 'hours' => 1.5, 'administrationId' => 'adm-1'],
+				['employeeId' => 'p1', 'hours' => 2.0, 'administrationId' => 'adm-1'],
+				['employeeId' => 'p1', 'hours' => 1.5, 'administrationId' => 'adm-1'],
 			],
 			['p1' => 5000]
 		);
@@ -180,7 +176,7 @@ class SubjectCostServiceTest extends TestCase {
 		$this->service([])->costFor('dossiq', 'case-1', ['adm-1']);
 
 		self::assertSame(
-			['subjectApp' => 'dossiq', 'subjectId' => 'case-1'],
+			['domainObjectRef' => 'case-1'],
 			$this->lastFilters,
 			'the hour read must be narrowed by subject, or it grows with the ledger'
 		);
@@ -194,8 +190,8 @@ class SubjectCostServiceTest extends TestCase {
 	public function testRowsOutsideTheScopeAreExcluded(): void {
 		$service = $this->service(
 			[
-				['personId' => 'p1', 'hours' => 2.0, 'administrationId' => 'adm-1'],
-				['personId' => 'p2', 'hours' => 8.0, 'administrationId' => 'adm-2'],
+				['employeeId' => 'p1', 'hours' => 2.0, 'administrationId' => 'adm-1'],
+				['employeeId' => 'p2', 'hours' => 8.0, 'administrationId' => 'adm-2'],
 			],
 			['p1' => 1000, 'p2' => 1000]
 		);
@@ -214,9 +210,9 @@ class SubjectCostServiceTest extends TestCase {
 	public function testUnattributableRowsAreExcludedAndCounted(): void {
 		$service = $this->service(
 			[
-				['personId' => 'p1', 'hours' => 2.0, 'administrationId' => 'adm-1'],
-				['personId' => 'p1', 'hours' => 4.0],
-				['personId' => 'p1', 'hours' => 1.0, 'administrationId' => ''],
+				['employeeId' => 'p1', 'hours' => 2.0, 'administrationId' => 'adm-1'],
+				['employeeId' => 'p1', 'hours' => 4.0],
+				['employeeId' => 'p1', 'hours' => 1.0, 'administrationId' => ''],
 			],
 			['p1' => 1000]
 		);
@@ -236,8 +232,8 @@ class SubjectCostServiceTest extends TestCase {
 	public function testAnUnpricedPersonWithholdsTheTotal(): void {
 		$service = $this->service(
 			[
-				['personId' => 'p1', 'hours' => 2.0, 'administrationId' => 'adm-1'],
-				['personId' => 'p2', 'hours' => 3.0, 'administrationId' => 'adm-1'],
+				['employeeId' => 'p1', 'hours' => 2.0, 'administrationId' => 'adm-1'],
+				['employeeId' => 'p2', 'hours' => 3.0, 'administrationId' => 'adm-1'],
 			],
 			['p1' => 1000]
 		);
@@ -261,7 +257,7 @@ class SubjectCostServiceTest extends TestCase {
 			 * @return array<string, mixed> The serialised row.
 			 */
 			public function jsonSerialize(): array {
-				return ['personId' => 'p1', 'hours' => 2.0, 'administrationId' => 'adm-1'];
+				return ['employeeId' => 'p1', 'hours' => 2.0, 'administrationId' => 'adm-1'];
 			}
 		};
 
@@ -293,9 +289,9 @@ class SubjectCostServiceTest extends TestCase {
 	public function testANullScopeReadsEveryAdministration(): void {
 		$service = $this->service(
 			[
-				['personId' => 'p1', 'hours' => 2.0, 'administrationId' => 'adm-1'],
-				['personId' => 'p1', 'hours' => 8.0, 'administrationId' => 'adm-2'],
-				['personId' => 'p1', 'hours' => 1.0],
+				['employeeId' => 'p1', 'hours' => 2.0, 'administrationId' => 'adm-1'],
+				['employeeId' => 'p1', 'hours' => 8.0, 'administrationId' => 'adm-2'],
+				['employeeId' => 'p1', 'hours' => 1.0],
 			],
 			['p1' => 1000]
 		);
@@ -304,5 +300,40 @@ class SubjectCostServiceTest extends TestCase {
 
 		self::assertSame(10.0, $result['hours']);
 		self::assertSame(1, $result['unscopedRowsExcluded']);
+	}
+
+	/**
+	 * An hour row booked against a DIFFERENT app's object is not this
+	 * subject's, even when the uuid matches.
+	 *
+	 * @return void
+	 */
+	public function testRowsBelongingToAnotherAppAreExcluded(): void {
+		$service = $this->service(
+			[
+				['employeeId' => 'p1', 'hours' => 2.0, 'administrationId' => 'adm-1', 'domainObjectType' => 'dossiq:case'],
+				['employeeId' => 'p1', 'hours' => 8.0, 'administrationId' => 'adm-1', 'domainObjectType' => 'planninq:project'],
+			],
+			['p1' => 1000]
+		);
+
+		$result = $service->costFor('dossiq', 'case-1', ['adm-1']);
+
+		self::assertSame(2.0, $result['hours'], 'planninq\'s eight hours are not this case\'s');
+	}
+
+	/**
+	 * A row with no domainObjectType is kept: the uuid matched, and the
+	 * writer may legitimately have left the type unset.
+	 *
+	 * @return void
+	 */
+	public function testRowsWithNoDomainObjectTypeAreKept(): void {
+		$service = $this->service(
+			[['employeeId' => 'p1', 'hours' => 2.0, 'administrationId' => 'adm-1']],
+			['p1' => 1000]
+		);
+
+		self::assertSame(2.0, $service->costFor('dossiq', 'case-1', ['adm-1'])['hours']);
 	}
 }//end class
