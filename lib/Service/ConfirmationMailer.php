@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Shillinq\Service;
 
 use OCA\Shillinq\AppInfo\Application;
+use OCA\Shillinq\Support\FleetAppId;
 use OCP\IURLGenerator;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -140,12 +141,11 @@ class ConfirmationMailer {
 	 * @return bool True when handed off (or logged for resend).
 	 */
 	private function dispatch(array $payload, string $email): bool {
-		$callService = null;
-		try {
-			$callService = $this->container->get('OCA\OpenConnector\Service\CallService');
-		} catch (Throwable) {
-			$callService = null;
-		}
+		// Resolved across every namespace integriq has shipped under: bound to
+		// 'OCA\OpenConnector\...' alone this get() throws on any current
+		// instance, and the catch below turns that into "channel unavailable"
+		// — a confirmation email that is logged for resend and never sent.
+		$callService = FleetAppId::getService($this->container, 'integriq', 'Service\CallService');
 
 		try {
 			if ($callService !== null && method_exists($callService, 'send') === true) {

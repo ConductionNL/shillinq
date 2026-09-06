@@ -42,6 +42,7 @@ use OCA\Shillinq\Listener\ACMReportSignTransitionListener;
 use OCA\Shillinq\Listener\AnnualReportSignoffRequestListener;
 use OCA\Shillinq\Listener\SigningConcludedListener;
 use OCA\Shillinq\Listener\SignoffDecisionConcludedListener;
+use OCA\Shillinq\Support\FleetAppId;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
@@ -85,13 +86,19 @@ final class SigningDelegationRegistration {
 		// ActuarialValuation / AnnualReport) and fires the LOCAL GL /
 		// lifecycle consequence (the accounting consequence stays in
 		// shillinq). The listener filters to getSourceApp()==='shillinq' and
-		// is inert when decidesk is not installed (the event never fires).
-		// Registering by the decidesk event FQCN is safe even when the class
-		// is not autoloadable — NC only needs the string key.
-		$context->registerEventListener(
-			event: \OCA\Decidesk\Event\DecisionConcludedEvent::class,
-			listener: SignoffDecisionConcludedListener::class
-		);
+		// is inert when decidiq is not installed (the event never fires).
+		// Registering by the event FQCN is safe even when the class is not
+		// autoloadable — NC only needs the string key.
+		//
+		// ⚠️ Registered under EVERY candidate namespace: decidiq moved
+		// OCA\Decidesk -> OCA\Decidiq in the same fleet rename that moved
+		// filinq, with the same silent outcome.
+		foreach (FleetAppId::classCandidates(canonical: 'decidiq', relative: 'Event\DecisionConcludedEvent') as $eventClass) {
+			$context->registerEventListener(
+				event: $eventClass,
+				listener: SignoffDecisionConcludedListener::class
+			);
+		}
 
 		// Change shillinq-signing-via-events (REQ-SIGN-001) — wire the
 		// declarative `ACMReport.sign` lifecycle transition (`draft` ->
@@ -113,19 +120,25 @@ final class SigningDelegationRegistration {
 		// OCA\DocuDesk\Event\SigningConcludedEvent. The document signing REQUEST
 		// is dispatched synchronously from SigningDelegationService
 		// (DocumentSigningRequestedEvent via IEventDispatcher, fail-closed when
-		// docudesk is absent — shillinq NEVER signs on local authority); this
+		// filinq is absent — shillinq NEVER signs on local authority); this
 		// listener projects the signed/declined/expired/cancelled outcome back
 		// onto the originating finance object (ACMReport / AnnualReport /
 		// ManagementLetter) and fires the LOCAL submission/GL consequence (the
 		// accounting consequence stays in shillinq) exactly once on `signed`.
 		// The listener filters to getSourceApp()==='shillinq' and is inert when
-		// docudesk is not installed (the event never fires). Registering by the
-		// docudesk event FQCN is safe even when the class is not autoloadable —
-		// NC only needs the string key.
-		$context->registerEventListener(
-			event: \OCA\DocuDesk\Event\SigningConcludedEvent::class,
-			listener: SigningConcludedListener::class
-		);
+		// filinq is not installed (the event never fires). Registering by the
+		// event FQCN is safe even when the class is not autoloadable — NC only
+		// needs the string key.
+		//
+		// ⚠️ Registered under EVERY candidate namespace. Bound to OCA\DocuDesk
+		// alone this listener went dark the moment filinq renamed, and the
+		// symptom was silence: a signed document simply never came back.
+		foreach (FleetAppId::classCandidates(canonical: 'filinq', relative: 'Event\SigningConcludedEvent') as $eventClass) {
+			$context->registerEventListener(
+				event: $eventClass,
+				listener: SigningConcludedListener::class
+			);
+		}
 
 	}//end register()
 }//end class

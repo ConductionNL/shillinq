@@ -77,8 +77,10 @@ final class SigningDelegationRegistrationTest extends TestCase {
 		(new SigningDelegationRegistration())->register($this->recordingContext());
 
 		$byListener = [];
+		$byListenerAll = [];
 		foreach ($this->listeners as [$event, $listener]) {
 			$byListener[$listener] = $event;
+			$byListenerAll[$listener][] = $event;
 		}
 
 		// The two shillinq-side request legs ride OpenRegister transitions.
@@ -91,17 +93,29 @@ final class SigningDelegationRegistrationTest extends TestCase {
 			($byListener[ACMReportSignTransitionListener::class] ?? null)
 		);
 
-		// The two outcome legs ride the OTHER app's terminal event. These are
-		// registered by FQCN string even when the class is not autoloadable,
-		// which is safe — but it also means a typo cannot fail at build time,
-		// so the exact keys are pinned here.
+		// The two outcome legs ride the OTHER app's terminal event, and each is
+		// registered under EVERY namespace that app has shipped the event under.
+		// Registering by FQCN string is safe even when the class is not
+		// autoloadable, but it also means a wrong name cannot fail at build
+		// time — it just never fires. Both spellings are pinned here because
+		// dropping either one is exactly the regression this suite exists for:
+		// the new name alone breaks an instance on an older release, and the
+		// old name alone is what took these two listeners dark in August 2026.
+		$eventsFor = static function (string $listener) use ($byListenerAll): array {
+			$events = ($byListenerAll[$listener] ?? []);
+			sort($events);
+			return $events;
+		};
+
 		self::assertSame(
-			'OCA\Decidesk\Event\DecisionConcludedEvent',
-			($byListener[SignoffDecisionConcludedListener::class] ?? null)
+			['OCA\Decidesk\Event\DecisionConcludedEvent', 'OCA\Decidiq\Event\DecisionConcludedEvent'],
+			$eventsFor(SignoffDecisionConcludedListener::class),
+			'The decision outcome leg must be registered under both decidiq spellings.'
 		);
 		self::assertSame(
-			'OCA\DocuDesk\Event\SigningConcludedEvent',
-			($byListener[SigningConcludedListener::class] ?? null)
+			['OCA\DocuDesk\Event\SigningConcludedEvent', 'OCA\Filinq\Event\SigningConcludedEvent'],
+			$eventsFor(SigningConcludedListener::class),
+			'The signing outcome leg must be registered under both filinq spellings.'
 		);
 
 	}//end testEachListenerIsBoundToItsOwnEvent()
@@ -139,7 +153,15 @@ final class SigningDelegationRegistrationTest extends TestCase {
 			);
 		}
 
-		self::assertCount(4, $this->listeners, 'Exactly the two request+outcome pairs.');
+		// Six, not four: the two request legs ride a single OpenRegister event
+		// each, while the two outcome legs are registered once per candidate
+		// namespace of the app that raises them. A count of four here would
+		// mean an outcome leg had been pinned back to one spelling.
+		self::assertCount(
+			6,
+			$this->listeners,
+			'Two request legs plus two outcome legs, each outcome leg under both namespace spellings.'
+		);
 
 	}//end testRequestAndOutcomeLegsAreRegisteredTogether()
 }//end class
