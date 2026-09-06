@@ -168,7 +168,7 @@ test.describe('subject cost endpoint', () => {
 		expect(scoped.status()).toBe(200)
 		expect(
 			(await scoped.json()).hours,
-			'the other administration\'s eight hours must not be counted',
+			"the other administration's eight hours must not be counted",
 		).toBe(3.5)
 
 		const unscoped = await request.get(SUBJECT_COST, {
